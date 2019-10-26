@@ -1,0 +1,9 @@
+.DS_Store
+
+/.dockerignore
+/.git
+/.idea
+/config/master.key
+/log
+/nonoto.iml
+/tmp

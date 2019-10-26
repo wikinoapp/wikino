@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  postgresql:
+    image: postgres:11.5-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ../_postgresql/nonoto/data:/var/lib/postgresql/data
