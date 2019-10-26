@@ -28,6 +28,10 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
+  asset_ip_address = Socket.ip_address_list.detect{ |addr| addr.ipv4_private? }.ip_address
+  asset_port = ENV.fetch("WEBPACK_DEV_SERVER_PORT")
+  config.action_controller.asset_host = "http://#{asset_ip_address}:#{asset_port}"
+
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
