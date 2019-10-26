@@ -1,6 +1,7 @@
 /.bundle
 /config/master.key
 /log/*
+/node_modules
 /nonoto.iml
-/public/assets
+/public/packs
 /tmp/*
