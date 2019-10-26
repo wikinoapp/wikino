@@ -13,6 +13,7 @@ gem "bootsnap", require: false
 gem "commonmarker" # Using github-markup
 gem "github-markup"
 gem "graphql"
+gem "meta-tags"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"
