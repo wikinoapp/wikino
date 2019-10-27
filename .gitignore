@@ -3,5 +3,6 @@
 /log/*
 /node_modules
 /nonoto.iml
+/package-lock.json
 /public/packs
 /tmp/*
