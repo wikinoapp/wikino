@@ -24,4 +24,5 @@
 #
 
 class OauthProvider < ApplicationRecord
+  enum name: %i(google)
 end

@@ -6,6 +6,7 @@ import VueCompositionApi from '@vue/composition-api'
 import VueI18n from 'vue-i18n'
 
 import Home from './components/pages/Home.vue'
+import Welcome from './components/pages/Welcome.vue'
 
 Vue.config.productionTip = false
 Vue.use(VueCompositionApi)
@@ -14,6 +15,7 @@ Vue.use(VueI18n)
 const i18n = new VueI18n()
 
 Vue.component('p-home', Home)
+Vue.component('p-welcome', Welcome)
 
 document.addEventListener('turbolinks:load', _event => {
   new Vue({

@@ -1,4 +1,5 @@
 /.bundle
+/.env.development.local
 /config/master.key
 /log/*
 /node_modules

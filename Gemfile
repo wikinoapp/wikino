@@ -14,6 +14,7 @@ gem "commonmarker" # Using github-markup
 gem "github-markup"
 gem "graphql"
 gem "meta-tags"
+gem "omniauth-google-oauth2"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"
