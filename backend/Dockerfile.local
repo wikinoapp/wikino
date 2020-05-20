@@ -1,0 +1,24 @@
+FROM ruby:2.7.1-alpine
+
+LABEL maintainer="https://shimba.co" \
+      description="A note taking app."
+
+RUN apk update && \
+    apk add -t \
+        build-dependencies \
+        build-base \
+        git \
+        postgresql \
+        postgresql-dev
+
+# Set to run `ls` in Pry
+# https://github.com/pry/pry/issues/1494#issuecomment-162336567
+ENV PAGER=busybox\ less
+
+WORKDIR /app/
+
+COPY Gemfile* ./
+RUN gem install bundler && \
+    bundle install -j$(getconf _NPROCESSORS_ONLN)
+
+EXPOSE 3000
