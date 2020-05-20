@@ -12,22 +12,26 @@ services:
     depends_on:
       - postgresql
     ports:
-      - 3001:3000
+      - 4000:3000
     tty: true
     volumes:
       - ./backend:/app
-      - gems_vol:/usr/local/bundle
+      - nonoto_gems_vol:/usr/local/bundle
 
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: ./app/frontend/Dockerfile
-  #   command: /bin/ash -c 'yarn webpack:start'
-  #   volumes:
-  #     - .:/nonoto
-  #     - node_modules_vol:/nonoto/node_modules
-  #   ports:
-  #     - 8080:8080
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile.local
+    env_file:
+      - ./frontend/.env.development
+      - ./frontend/.env.development.local
+    command: /bin/ash -c 'npm run dev'
+    volumes:
+      - ./frontend:/app
+      - nonoto_node_modules_vol:/app/node_modules
+    ports:
+      - 4001:3000
+    tty: true
 
   postgresql:
     image: postgres:12.3-alpine
@@ -39,5 +43,5 @@ services:
       - ../_postgresql/nonoto/data:/var/lib/postgresql/data
 
 volumes:
-  gems_vol:
-  node_modules_vol:
+  nonoto_gems_vol:
+  nonoto_node_modules_vol:

@@ -4,4 +4,7 @@
 /backend/log/*
 /backend/tmp/*
 
+/frontend/.env.development.local
+/frontend/.next
+
 /nonoto.iml

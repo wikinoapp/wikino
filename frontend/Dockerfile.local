@@ -1,0 +1,17 @@
+FROM node:12.16.3-alpine
+
+LABEL maintainer="https://shimba.co" \
+      description="A note taking app."
+
+RUN apk update && \
+    apk add -t \
+        git
+
+ENV PATH=./node_modules/.bin/:$PATH
+
+WORKDIR /app/
+
+COPY package.json package-lock.json ./
+RUN npm install
+
+EXPOSE 8080
