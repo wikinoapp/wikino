@@ -1,10 +1,10 @@
 /api/.bundle
 /api/.env.development.local
+/api/.rakeTasks
 /api/config/master.key
 /api/log/*
 /api/tmp/*
 
 /web/.env.development.local
 /web/.next
-
-/nonoto.iml
+/web/web.iml
