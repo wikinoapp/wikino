@@ -23,4 +23,9 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class OauthProvider < ApplicationRecord
+  extend Enumerize
+
+  enumerize :name, in: %i(google)
+
+  belongs_to :user
 end

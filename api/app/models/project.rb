@@ -23,4 +23,16 @@
 #  fk_rails_...  (team_id => teams.id)
 #
 class Project < ApplicationRecord
+  extend Enumerize
+
+  enumerize :visibility, in: %i(public private), default: :private
+
+  validates :projectname,
+    presence: true,
+    length: { maximum: 30 },
+    format: { with: /\A[A-Za-z0-9_-]+\z/ },
+    uniqueness: { scope: :team_id, case_sensitive: false }
+
+  belongs_to :team
+  has_many :project_members
 end

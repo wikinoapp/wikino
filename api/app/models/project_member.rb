@@ -22,4 +22,6 @@
 #  fk_rails_...  (team_member_id => team_members.id)
 #
 class ProjectMember < ApplicationRecord
+  belongs_to :project
+  belongs_to :team_member
 end

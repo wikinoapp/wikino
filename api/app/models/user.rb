@@ -19,4 +19,12 @@
 #  index_users_on_username    (username) UNIQUE
 #
 class User < ApplicationRecord
+  validates :username,
+    presence: true,
+    length: { maximum: 20 },
+    format: { with: /\A[A-Za-z0-9_-]+\z/ },
+    uniqueness: { case_sensitive: false }
+
+  has_many :oauth_providers
+  has_many :team_members
 end
