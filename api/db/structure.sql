@@ -122,8 +122,7 @@ CREATE TABLE public.projects (
     deleted_at timestamp without time zone,
     team_id uuid NOT NULL,
     projectname character varying NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    visibility character varying NOT NULL
+    visibility character varying DEFAULT 'private'::character varying NOT NULL
 );
 
 

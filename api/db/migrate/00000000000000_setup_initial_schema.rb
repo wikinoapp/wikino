@@ -52,11 +52,17 @@ class SetupInitialSchema < ActiveRecord::Migration[6.0]
       t.datetime :deleted_at
       t.references :team, null: false, foreign_key: true, type: :uuid
       t.string :projectname, null: false
-      t.string :name, null: false, default: ""
-      t.string :visibility, null: false
+      t.string :visibility, null: false, default: "private"
     end
     add_index :projects, :deleted_at
     add_index :projects, %i(team_id projectname), unique: true
+
+    create_table :project_members, id: :uuid do |t|
+      t.timestamps null: false
+      t.references :project, null: false, foreign_key: true, type: :uuid
+      t.references :team_member, null: false, foreign_key: true, type: :uuid
+    end
+    add_index :project_members, %i(project_id team_member_id), unique: true
 
     create_table :notes, id: :uuid do |t|
       t.timestamps null: false
@@ -67,13 +73,6 @@ class SetupInitialSchema < ActiveRecord::Migration[6.0]
       t.text :body, null: false, default: ""
     end
     add_index :notes, %i(team_id number), unique: true
-
-    create_table :project_members, id: :uuid do |t|
-      t.timestamps null: false
-      t.references :project, null: false, foreign_key: true, type: :uuid
-      t.references :team_member, null: false, foreign_key: true, type: :uuid
-    end
-    add_index :project_members, %i(project_id team_member_id), unique: true
 
     create_table :tags, id: :uuid do |t|
       t.timestamps null: false

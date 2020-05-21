@@ -6,9 +6,8 @@
 #
 #  id          :uuid             not null, primary key
 #  deleted_at  :datetime
-#  name        :string           default(""), not null
 #  projectname :string           not null
-#  visibility  :string           not null
+#  visibility  :string           default("private"), not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #  team_id     :uuid             not null
