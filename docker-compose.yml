@@ -1,13 +1,13 @@
 version: "3.7"
 
 services:
-  backend:
+  api:
     build:
-      context: ./backend
+      context: ./api
       dockerfile: ./Dockerfile.local
     env_file:
-      - ./backend/.env.development
-      - ./backend/.env.development.local
+      - ./api/.env.development
+      - ./api/.env.development.local
     command: /bin/ash -c 'rm -rf tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0'
     depends_on:
       - postgresql
@@ -15,19 +15,19 @@ services:
       - 4000:3000
     tty: true
     volumes:
-      - ./backend:/app
+      - ./api:/app
       - nonoto_gems_vol:/usr/local/bundle
 
-  frontend:
+  web:
     build:
-      context: ./frontend
+      context: ./web
       dockerfile: ./Dockerfile.local
     env_file:
-      - ./frontend/.env.development
-      - ./frontend/.env.development.local
+      - ./web/.env.development
+      - ./web/.env.development.local
     command: /bin/ash -c 'npm run dev'
     volumes:
-      - ./frontend:/app
+      - ./web:/app
       - nonoto_node_modules_vol:/app/node_modules
     ports:
       - 4001:3000
