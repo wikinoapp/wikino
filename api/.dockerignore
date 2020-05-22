@@ -1,0 +1,5 @@
+.DS_Store
+
+/config/master.key
+/log
+/tmp

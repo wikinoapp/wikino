@@ -16,7 +16,7 @@ services:
     tty: true
     volumes:
       - ./api:/app
-      - nonoto_gems_vol:/usr/local/bundle
+      - /usr/local/bundle
 
   web:
     build:
@@ -43,5 +43,4 @@ services:
       - ../_postgresql/nonoto/data:/var/lib/postgresql/data
 
 volumes:
-  nonoto_gems_vol:
   nonoto_node_modules_vol:
