@@ -7,4 +7,5 @@
 
 /web/.env.development.local
 /web/.next
+/web/node_modules
 /web/web.iml

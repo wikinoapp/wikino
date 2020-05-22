@@ -28,7 +28,8 @@ services:
     command: /bin/ash -c 'npm run dev'
     volumes:
       - ./web:/app
-      - nonoto_node_modules_vol:/app/node_modules
+      - next_vol:/app/.next/
+      - node_modules_vol:/app/node_modules/
     ports:
       - 4001:3000
     tty: true
@@ -43,4 +44,5 @@ services:
       - ../_postgresql/nonoto/data:/var/lib/postgresql/data
 
 volumes:
-  nonoto_node_modules_vol:
+  next_vol:
+  node_modules_vol:
