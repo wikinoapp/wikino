@@ -8,6 +8,7 @@ RUN apk update && \
         build-dependencies \
         build-base \
         git \
+        curl \
         postgresql \
         postgresql-dev
 
@@ -15,7 +16,7 @@ RUN apk update && \
 # https://github.com/pry/pry/issues/1494#issuecomment-162336567
 ENV PAGER=busybox\ less
 
-WORKDIR /app/
+WORKDIR /api/
 
 COPY Gemfile* ./
 RUN gem install bundler && \

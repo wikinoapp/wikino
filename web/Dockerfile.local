@@ -5,13 +5,14 @@ LABEL maintainer="https://shimba.co" \
 
 RUN apk update && \
     apk add -t \
-        git
+        git \
+        curl
 
 ENV PATH=./node_modules/.bin/:$PATH
 
-WORKDIR /app/
+WORKDIR /web/
 
 COPY package.json package-lock.json ./
 RUN npm install
 
-EXPOSE 8080
+EXPOSE 3000

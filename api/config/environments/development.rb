@@ -50,6 +50,7 @@ Rails.application.configure do
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
   config.hosts += [
+    "api",
     ENV.fetch("NONOTO_DOMAIN")
   ]
 end

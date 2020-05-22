@@ -1,7 +1,18 @@
-import * as React from 'react'
+import withApollo from '../lib/with-apollo'
+import { useViewerQuery } from '../lib/graphql-client-api'
 
-function HomePage() {
-  return <div>Welcome to Next.js!</div>
+const Index = () => {
+  const viewerQuery = useViewerQuery()
+
+  if (viewerQuery.data) {
+    return (
+      <div>
+        Hello, {viewerQuery.data.testField}
+      </div>
+    )
+  }
+
+  return <div>...</div>
 }
 
-export default HomePage
+export default withApollo(Index)

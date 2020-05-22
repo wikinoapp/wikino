@@ -1,0 +1,12 @@
+schema: http://api:3000/api/local/graphql
+documents: "./lib/queries/*.graphql"
+generates:
+  lib/graphql-client-api.tsx:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-react-apollo
+    config:
+      withComponent: false
+      withHooks: true
+      withHOC: false

@@ -1,3 +1,11 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+  if Rails.env.development?
+    scope module: :local_api do
+      constraints(format: "json") do
+        match "/api/local/graphql", via: :post, as: :graphql, to: "graphql#execute"
+      end
+    end
+  end
 end

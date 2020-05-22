@@ -15,7 +15,7 @@ services:
       - 4000:3000
     tty: true
     volumes:
-      - ./api:/app
+      - ./api:/api
       - /usr/local/bundle
 
   web:
@@ -26,10 +26,12 @@ services:
       - ./web/.env.development
       - ./web/.env.development.local
     command: /bin/ash -c 'npm run dev'
+    depends_on:
+      - api
     volumes:
-      - ./web:/app
-      - next_vol:/app/.next/
-      - node_modules_vol:/app/node_modules/
+      - ./web:/web
+      - next_vol:/web/.next/
+      - node_modules_vol:/web/node_modules/
     ports:
       - 4001:3000
     tty: true
