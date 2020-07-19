@@ -1,9 +1,0 @@
-/.bundle
-/.env.development.local
-/config/master.key
-/log/*
-/node_modules
-/nonoto.iml
-/package-lock.json
-/public/packs
-/tmp/*
