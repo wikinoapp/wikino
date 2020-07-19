@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  webpack:
+    build:
+      context: .
+      dockerfile: ./app/frontend/Dockerfile.local
+    command: /bin/ash -c 'npm run webpack:start'
+    volumes:
+      - .:/nonoto
+      - node_modules_vol:/nonoto/node_modules
+    ports:
+      - 8080:8080
+  postgresql:
+    image: postgres:12.3-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ../_postgresql/nonoto/data:/var/lib/postgresql/data
+  redis:
+    image: redis:6.0.5-alpine
+    ports:
+      - 6379:6379
+  selenium:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - 4444:4444
+
+volumes:
+  # Exclude the bundle/node_modules directory
+  # https://stackoverflow.com/questions/29181032/add-a-volume-to-docker-but-exclude-a-sub-folder
+  node_modules_vol:

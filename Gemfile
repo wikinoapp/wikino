@@ -1,35 +1,58 @@
-source 'https://rubygems.org'
+# frozen_string_literal: true
+
+source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.7.1'
+ruby "2.7.1"
 
-# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 6.0.3', '>= 6.0.3.2'
-# Use postgresql as the database for Active Record
-gem 'pg', '>= 0.18', '< 2.0'
-# Use Puma as the app server
-gem 'puma', '~> 4.1'
-# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.7'
-# Use Active Model has_secure_password
-# gem 'bcrypt', '~> 3.1.7'
+gem "rails", "~> 6.0.0"
 
-# Reduces boot times through caching; required in config/boot.rb
-gem 'bootsnap', '>= 1.4.2', require: false
+gem "activerecord-session_store"
+gem "devise"
+gem "dry-struct"
+gem "email_validator"
+gem "enumerize"
+gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
+gem "graphql-batch"
+gem "pg"
+gem "puma"
+gem "puma_worker_killer"
+gem "rack-mini-profiler"
+gem "view_component"
 
 group :development, :test do
-  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  gem "awesome_print"
+  gem "dotenv-rails"
+  gem "pry-rails"
+  gem "rspec-mocks"
+  gem "rspec-rails"
+  gem "rspec_junit_formatter" # Using on CircleCI
 end
 
 group :development do
-  # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
-  gem 'web-console', '>= 3.3.0'
-  gem 'listen', '~> 3.2'
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring'
-  gem 'spring-watcher-listen', '~> 2.0.0'
+  gem "active_record_query_trace"
+  gem "annotate"
+  gem "better_errors"
+  gem "binding_of_caller" # Using better_errors
+  gem "bullet"
+  gem "listen" # Using with `rails s` since Rails 5
+  gem "rubocop"
+  gem "solargraph"
+  gem "spring-commands-rspec", require: false
+  gem "spring"
 end
 
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+group :test do
+  gem "capybara"
+  gem "factory_bot_rails"
+  gem "selenium-webdriver"
+  # Use < 0.18 until the following issue will be resolved.
+  # https://github.com/codeclimate/test-reporter/issues/418
+  gem "simplecov", "< 0.18", require: false
+  gem "timecop"
+  gem "webdrivers", require: !ENV["CI"] # Added to run spec with Chrome on local machine
+end
+
+group :production do
+  gem "lograge"
+end
