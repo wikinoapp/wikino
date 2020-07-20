@@ -68,4 +68,8 @@ Rails.application.configure do
 
   # https://github.com/ruckus/active-record-query-trace
   ActiveRecordQueryTrace.enabled = true
+
+  config.hosts += [
+    ENV.fetch("NONOTO_DOMAIN")
+  ]
 end
