@@ -10,21 +10,21 @@ services:
       - .:/nonoto
       - node_modules_vol:/nonoto/node_modules
     ports:
-      - 8080:8080
+      - 8081:8080
   postgresql:
     image: postgres:12.3-alpine
     ports:
-      - 5432:5432
+      - 5433:5432
     volumes:
       - ../_postgresql/nonoto/data:/var/lib/postgresql/data
   redis:
     image: redis:6.0.5-alpine
     ports:
-      - 6379:6379
+      - 6380:6379
   selenium:
     image: selenium/standalone-chrome:latest
     ports:
-      - 4444:4444
+      - 4445:4444
 
 volumes:
   # Exclude the bundle/node_modules directory
