@@ -1,4 +1,7 @@
 {
-  "web.css": "/packs/web-2e5ecff37347778c9b4d.css",
-  "web.js": "/packs/web-2e5ecff37347778c9b4d.js"
+  "dark.css": "/packs/dark-35f4118b7b1b7fdb0ab7.css",
+  "dark.js": "/packs/dark-35f4118b7b1b7fdb0ab7.js",
+  "light.css": "/packs/light-35f4118b7b1b7fdb0ab7.css",
+  "light.js": "/packs/light-35f4118b7b1b7fdb0ab7.js",
+  "web.js": "/packs/web-35f4118b7b1b7fdb0ab7.js"
 }
