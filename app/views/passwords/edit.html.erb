@@ -1,0 +1,37 @@
+<% content_for :page_title, page_title_with_suffix(t("page_titles.reset_password")) %>
+
+<div class="container">
+  <div class="justify-content-center row">
+    <div class="col-12 col-lg-6 py-5">
+      <div class="mb-5 text-center">
+        <%= link_to root_path, class: "display-1 text-body" do %>
+          の
+        <% end %>
+      </div>
+
+      <div class="px-3 mb-3">
+        <h1 class="my-5 text-center">
+          <%= t "page_titles.reset_password" %>
+        </h1>
+
+        <%= form_with model: resource, url: password_path, html: { class: "mb-3", method: :patch }, local: true do |f| %>
+          <%= render "application/components/error_panel", resource: resource %>
+
+          <%= f.hidden_field :reset_password_token %>
+
+          <div class="form-group">
+            <%= f.label :password %>
+            <%= f.password_field :password, autocomplete: "off", autofocus: true, class: "form-control", required: true, tabindex: 1 %>
+          </div>
+
+          <div class="text-center">
+            <%= f.button class: "btn btn-primary", tabindex: 2 do %>
+              <i class="fas fa-paper-plane mr-1"></i>
+              <%= t "verbs.submit" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
