@@ -2,4 +2,5 @@
 /.env.development.local
 /config/master.key
 /log/*
+/public/packs
 /tmp/*
