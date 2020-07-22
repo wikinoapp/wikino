@@ -1,10 +1,10 @@
 .DS_Store
 
 /.dockerignore
+/.env.development.local
 /.git
 /.idea
 /config/master.key
 /log
 /node_modules
-/nonoto.iml
 /tmp

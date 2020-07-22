@@ -1,0 +1,5 @@
+<p><%= @resource.email %>さん、こんにちは。</p>
+
+<p>Nonotoをご利用の前に、下のリンクをクリックしてメールアドレスの確認をお願いします。</p>
+
+<p><%= link_to 'メールアドレスを確認する', confirmation_url(confirmation_token: @token) %></p>

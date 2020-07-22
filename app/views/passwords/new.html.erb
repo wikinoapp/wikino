@@ -1,0 +1,41 @@
+<% content_for :page_title, page_title_with_suffix(t("page_titles.forgot_password")) %>
+
+<div class="container">
+  <div class="justify-content-center row">
+    <div class="col-12 col-lg-6 py-5">
+      <div class="mb-5 text-center">
+        <%= link_to root_path, class: "display-1 text-body" do %>
+          の
+        <% end %>
+      </div>
+
+      <div class="px-3 mb-3">
+        <h1 class="my-5 text-center">
+          <%= t "page_titles.forgot_password" %>
+        </h1>
+
+        <%= form_with model: resource, url: password_path, html: { class: "mb-3" }, local: true do |f| %>
+          <%= render "application/components/error_panel", resource: resource %>
+
+          <div class="form-group">
+            <%= f.label :email %>
+            <%= f.email_field :email, autofocus: true, class: "form-control", placeholder: "nonoto@example.com", required: true, tabindex: 1, type: "email" %>
+          </div>
+
+          <div class="text-center">
+            <%= f.button class: "btn btn-primary", tabindex: 2 do %>
+              <i class="fas fa-paper-plane mr-1"></i>
+              <%= t "verbs.submit" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="text-center">
+        <small>
+          <%= t "messages.sign_up.sign_in_link_html", link: link_to(t("nouns.sign_in"), sign_in_path) %>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

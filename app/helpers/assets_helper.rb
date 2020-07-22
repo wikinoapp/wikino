@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
 module AssetsHelper
-  class BundleNotFoundError < StandardError; end
+  class BundleNotFound < StandardError; end
 
   def asset_bundle_path(entry, **options)
-    raise BundleNotFoundError, "Could not find bundle with name #{entry}" unless manifest.key?(entry)
+    raise BundleNotFound, "Could not find bundle with name #{entry}" unless manifest.key?(entry)
 
     asset_path(manifest.fetch(entry), **options)
   end
 
   def asset_bundle_url(entry, options = {})
-    raise BundleNotFoundError, "Could not find bundle with name #{entry}" unless manifest.key?(entry)
+    raise BundleNotFound, "Could not find bundle with name #{entry}" unless manifest.key?(entry)
 
-    options = options.merge(host: ENV.fetch("NONOTO_ASSET_URL"))
+    options = options.merge(host: ENV.fetch("ANNICT_ASSET_URL"))
     asset_url(manifest.fetch(entry), options)
   end
 

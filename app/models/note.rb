@@ -1,31 +1,35 @@
 # frozen_string_literal: true
-
 # == Schema Information
 #
 # Table name: notes
 #
 #  id         :uuid             not null, primary key
-#  body       :text
-#  number     :integer          not null
+#  body       :text             default(""), not null
+#  number     :bigint           not null
+#  title      :string           default(""), not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  creator_id :uuid             not null
-#  project_id :uuid             not null
-#  team_id    :uuid             not null
+#  user_id    :uuid             not null
 #
 # Indexes
 #
-#  index_notes_on_creator_id          (creator_id)
-#  index_notes_on_project_id          (project_id)
-#  index_notes_on_team_id             (team_id)
-#  index_notes_on_team_id_and_number  (team_id,number) UNIQUE
+#  index_notes_on_created_at          (created_at)
+#  index_notes_on_updated_at          (updated_at)
+#  index_notes_on_user_id             (user_id)
+#  index_notes_on_user_id_and_number  (user_id,number) UNIQUE
+#  index_notes_on_user_id_and_title   (user_id,title) UNIQUE
 #
 # Foreign Keys
 #
-#  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
-#  fk_rails_...  (team_id => teams.id)
+#  fk_rails_...  (user_id => users.id)
 #
-
 class Note < ApplicationRecord
+  belongs_to :user
+
+  has_many :referenced_references, class_name: "Reference", dependent: :destroy, foreign_key: :referencing_note_id
+  has_many :referenced_notes, class_name: "Note", source: :note, through: :referenced_references
+  has_many :referencing_references, class_name: "Reference", dependent: :destroy, foreign_key: :note_id
+  has_many :referencing_notes, class_name: "Note", through: :referencing_references
+  has_many :taggings, dependent: :destroy
+  has_many :tags, through: :taggings
 end

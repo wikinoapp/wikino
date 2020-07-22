@@ -1,5 +1,6 @@
 AllCops:
-  TargetRubyVersion: 2.4
+  NewCops: enable
+  TargetRubyVersion: 2.7
   Exclude:
     - "vendor/**/*"
 
@@ -12,20 +13,23 @@ Layout/EmptyLineAfterMagicComment:
 Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
 
-Layout/AlignArguments:
+Layout/ArgumentAlignment:
   EnforcedStyle: with_fixed_indentation
 
-Layout/AlignArray:
+Layout/ArrayAlignment:
   Enabled: false
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   EnforcedStyle: with_fixed_indentation
 
 Layout/DotPosition:
   EnforcedStyle: trailing
 
-Layout/IndentFirstArrayElement:
+Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
+
+Layout/LineLength:
+  Max: 128
 
 Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
@@ -35,12 +39,6 @@ Layout/MultilineMethodCallIndentation:
 
 Lint/UnusedMethodArgument:
   Enabled: false
-
-Metrics/LineLength:
-  Max: 120
-  # Ignore lines with comments
-  # http://stackoverflow.com/questions/26342570/rubocop-linelength-how-to-ignore-lines-with-comments
-  IgnoredPatterns: ['\A( *)#']
 
 Metrics/AbcSize:
   Enabled: false
@@ -57,14 +55,35 @@ Metrics/MethodLength:
 Metrics/CyclomaticComplexity:
   Enabled: false
 
+Naming/AccessorMethodName:
+  Enabled: false
+
 Style/AsciiComments:
   Enabled: false
 
 Style/Documentation:
   Enabled: false
 
+Style/DoubleNegation:
+  Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
+
+Style/IfUnlessModifier:
+  Enabled: false
+
 Style/Lambda:
   Enabled: false
+
+Style/NumericPredicate:
+  EnforcedStyle: comparison
 
 Style/PercentLiteralDelimiters:
   PreferredDelimiters:

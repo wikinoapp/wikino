@@ -1,4 +1,3 @@
-<% title = "Nonoto" %>
-<% set_meta_tags(title: title, prefix: false) %>
+<h1>Hi, <%= current_user.email %>!</h1>
 
-<p-home></p-home>
+<%= link_to t("nouns.sign_out"), sign_out_path, method: :delete %>

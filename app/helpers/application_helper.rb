@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-  def nonoto_config
-    config = {
-      locale: I18n.locale.to_s
-    }
+  def site_theme
+    cookies[:site_theme]
+  end
 
-    javascript_tag "window.NonotoConfig = #{config.to_json.html_safe};"
+  def page_title_with_suffix(page_title)
+    "#{page_title} | Nonoto"
   end
 end

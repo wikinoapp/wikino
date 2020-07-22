@@ -1,33 +1,32 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <%= display_meta_tags(default_meta_tags) %>
+    <title><%= yield :page_title %></title>
 
-    <meta http-equiv="x-dns-prefetch-control" content="on">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="dns-prefetch" href="//kit.fontawesome.com">
-
-    <link rel="shortcut icon" href="/images/favicon.png" type="image/png">
-    <link rel="author" href="/humans.txt" type="text/plain">
-    <link rel="canonical" href="<%= request.protocol %><%= request.host_with_port %><%= request.path %>">
+    <link rel="canonical" href="<%= "#{request.protocol}#{request.host_with_port}#{request.path}" %>">
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= nonoto_config %>
-
-    <%= stylesheet_bundle_tag "application.css", media: "all", "data-turbolinks-track": "reload" %>
-    <%= javascript_bundle_tag "application.js", defer: "", "data-turbolinks-track": "reload" %>
-  </head>
-  <body>
-    <div id="app">
-      <%= yield %>
-    </div>
     <script>
-      // Set this config to rerender icon when Vue's state changed
+      <%# Set this config to rerender icon when Vue's state changed %>
       window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
     </script>
-    <script src="https://kit.fontawesome.com/0099029c12.js" crossorigin="anonymous"></script>
+    <script data-mutate-approach="sync" crossorigin="anonymous" src="https://kit.fontawesome.com/0099029c12.js" defer></script>
+
+    <% if site_theme == "dark" %>
+      <%= stylesheet_bundle_tag "dark.css", media: "all", "data-turbolinks-track": "reload" %>
+    <% else %>
+      <%= stylesheet_bundle_tag "light.css", media: "all", "data-turbolinks-track": "reload" %>
+    <% end %>
+
+    <%= javascript_bundle_tag "web.js", defer: "", "data-turbolinks-track": "reload" %>
+  </head>
+
+  <body>
+    <%= render FlashComponent.new(flash) %>
+    <%= yield %>
   </body>
 </html>

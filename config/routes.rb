@@ -1,27 +1,24 @@
 # frozen_string_literal: true
 
-module ActionDispatch
-  module Routing
-    class Mapper
-      def draw(routes_name)
-        instance_eval(File.read(Rails.root.join("config/routes/#{routes_name}.rb")))
-      end
-    end
-  end
-end
-
-class MemberConstraint
-  def matches?(request)
-    !User.without_deleted.find_by_session(request.session).nil?
-  end
-end
-
-class GuestConstraint
-  def matches?(request)
-    !MemberConstraint.new.matches?(request)
-  end
-end
-
 Rails.application.routes.draw do
-  draw :web
+  devise_for :users, skip: %i(passwords registrations sessions)
+
+  constraints format: "html" do
+    devise_scope :user do
+      match "/password",      via: :patch,  as: :password,          to: "passwords#update"
+      match "/password",      via: :post,                           to: "passwords#create"
+      match "/password/edit", via: :get,    as: :edit_password,     to: "passwords#edit"
+      match "/password/new",  via: :get,    as: :new_password,      to: "passwords#new"
+      match "/sign_in",       via: :get,    as: :new_user_session,  to: "sessions#new"
+      match "/sign_in",       via: :get,    as: :sign_in,           to: "sessions#new"
+      match "/sign_in",       via: :post,   as: :user_session,      to: "sessions#create"
+      match "/sign_out",      via: :delete, as: :sign_out,          to: "sessions#destroy"
+      match "/sign_up",       via: :get,    as: :sign_up,           to: "registrations#new"
+      match "/sign_up",       via: :post,   as: :user_registration, to: "registrations#create"
+    end
+
+    match "/home", via: :get, as: :home, to: "home#show"
+  end
+
+  root "welcome#show"
 end

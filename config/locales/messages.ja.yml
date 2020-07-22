@@ -1,0 +1,12 @@
+ja:
+  messages:
+    sign_in:
+      forgot_password: パスワード忘れた？
+      remember_me: パスワードを記憶する
+      sign_up_link_html: アカウント持ってない？ %{link}
+      welcome_back: おかえりなさい！
+    sign_up:
+      confirmation_mail_has_sent: 確認メールを送信しました。メールをご確認ください。
+      join_nonoto: Nonotoを始める
+      password_hint: 8文字以上入力してください。
+      sign_in_link_html: 登録済みですか？ %{link}

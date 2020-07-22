@@ -1,44 +1,37 @@
 # frozen_string_literal: true
-
 # == Schema Information
 #
 # Table name: users
 #
-#  id         :uuid             not null, primary key
-#  deleted_at :datetime
-#  email      :citext           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id                     :uuid             not null, primary key
+#  confirmation_sent_at   :datetime
+#  confirmation_token     :string
+#  confirmed_at           :datetime
+#  email                  :string           not null
+#  encrypted_password     :string           not null
+#  remember_created_at    :datetime
+#  reset_password_sent_at :datetime
+#  reset_password_token   :string
+#  unconfirmed_email      :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #
 # Indexes
 #
-#  index_users_on_deleted_at  (deleted_at)
-#  index_users_on_email       (email) UNIQUE
+#  index_users_on_confirmation_token    (confirmation_token) UNIQUE
+#  index_users_on_email                 (email) UNIQUE
+#  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #
-
 class User < ApplicationRecord
-  include SoftDeletable
+  # Include default devise modules. Others available are:
+  # , :lockable, :timeoutable, :trackable and :omniauthable
+  devise :confirmable, :database_authenticatable, :recoverable, :registerable, :rememberable, :validatable
 
-  has_many :oauth_providers, dependent: :destroy
+  has_many :notes, dependent: :destroy
+  has_many :tags, dependent: :destroy
 
-  def self.find_by_session(session)
-    find_by(id: session[:user_id])
-  end
-
-  def self.sign_up_with_google!(oauth_auth:, oauth_params:)
-    email = oauth_auth.dig("info", "email")
-    user = User.new(email: email)
-
-    transaction do
-      user.save!
-      user.oauth_providers.create!(
-        name: :google,
-        uid: oauth_auth["uid"],
-        token: oauth_auth.dig("credentials", "token"),
-        token_expires_at: oauth_auth.dig("credentials", "expires_at")
-      )
-    end
-
-    user
-  end
+  validates :email,
+    presence: true,
+    uniqueness: { case_sensitive: false },
+    email: true
 end
