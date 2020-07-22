@@ -1,24 +1,16 @@
-# README
+# Nonoto
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Running the app
 
-Things you may want to cover:
+```
+$ sudo sh -c "echo '127.0.0.1  nonoto.test' >> /etc/hosts"
+$ git clone git@github.com:HakunaLtd/nonoto.git
+$ cd nonoto
+$ bundle install
+$ touch .env.development.local
+$ bundle exec rails db:setup
+$ docker-compose up --build
+$ bundle exec rails s -p 3001
+```
 
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+You should then be able to open [http://nonoto.test:3001](http://nonoto.test:3001) in your browser.
