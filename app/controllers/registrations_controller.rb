@@ -10,7 +10,12 @@ class RegistrationsController < Devise::RegistrationsController
 
     return render(:new) unless @new_user.valid?
 
-    @new_user.save!
+    ActiveRecord::Base.transaction do
+      @new_user.save!
+      team = Team.create!
+      team.team_members.create!(user: @new_user)
+      team.projects.create!(name: "Personal")
+    end
 
     flash[:notice] = t("messages.sign_up.confirmation_mail_has_sent")
     redirect_to root_path
