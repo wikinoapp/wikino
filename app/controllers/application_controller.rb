@@ -13,9 +13,9 @@ class ApplicationController < ActionController::Base
 
   def current_team
     return unless user_signed_in?
-    return current_user.teams.first unless params[:team_id]
+    return current_user.teams.first unless params[:teamname]
 
-    current_user.teams.find(params[:team_id])
+    current_user.teams.find_by!(teamname: params[:teamname])
   end
 
   def current_team_member

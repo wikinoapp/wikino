@@ -8,6 +8,7 @@ module Types
       field :number, GraphQL::Types::BigInt, null: false
       field :title, String, null: false
       field :body, String, null: false
+      field :team, Types::Object::TeamType, null: false
     end
   end
 end

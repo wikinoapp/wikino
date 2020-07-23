@@ -22,9 +22,11 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     add_index :users, :confirmation_token, unique: true
 
     create_table :teams do |t|
+      t.citext :teamname, null: false
       t.string :name, null: false, default: ""
       t.timestamps null: false
     end
+    add_index :teams, :teamname, unique: true
 
     create_table :team_members do |t|
       t.references :user, null: false, foreign_key: true

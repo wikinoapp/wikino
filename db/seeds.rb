@@ -5,7 +5,7 @@ user_1 = User.where(email: "user_1@example.com").first_or_create!(password: "use
 user_1.confirm
 
 puts "Creating teams..."
-team_1 = Team.where(name: "Team 1").first_or_create!
+team_1 = Team.where(teamname: "team-1").first_or_create!(name: "Team 1")
 
 puts "Creating team_members..."
 team_member_1 = team_1.team_members.where(user: user_1).first_or_create!(name: "User 1")

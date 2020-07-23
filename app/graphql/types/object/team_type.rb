@@ -5,6 +5,7 @@ module Types
     class TeamType < Types::Object::Base
       implements GraphQL::Types::Relay::Node
 
+      field :teamname, String, null: false
       field :name, String, null: false
 
       field :note, Types::Object::NoteType, null: true do

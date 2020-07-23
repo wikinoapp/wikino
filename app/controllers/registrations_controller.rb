@@ -12,7 +12,7 @@ class RegistrationsController < Devise::RegistrationsController
 
     ActiveRecord::Base.transaction do
       @new_user.save!
-      team = Team.create!
+      team = Team.create!(teamname: SecureRandom.alphanumeric)
       team.team_members.create!(user: @new_user)
       team.projects.create!(name: "Personal")
     end

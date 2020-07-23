@@ -4,6 +4,7 @@ class NoteEntity < ApplicationEntity
   attribute? :number, Types::Integer
   attribute? :title, Types::String
   attribute? :body, Types::String
+  attribute? :team, TeamEntity
 
   def self.from_node(note_node)
     attrs = {}
@@ -18,6 +19,10 @@ class NoteEntity < ApplicationEntity
 
     if body = note_node["body"]
       attrs[:body] = body
+    end
+
+    if team_node = note_node["team"]
+      attrs[:team] = TeamEntity.from_node(team_node)
     end
 
     new attrs

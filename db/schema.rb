@@ -87,9 +87,11 @@ ActiveRecord::Schema.define(version: 1) do
   end
 
   create_table "teams", force: :cascade do |t|
+    t.citext "teamname", null: false
     t.string "name", default: "", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["teamname"], name: "index_teams_on_teamname", unique: true
   end
 
   create_table "users", force: :cascade do |t|

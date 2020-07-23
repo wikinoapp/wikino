@@ -6,8 +6,13 @@
 #
 #  id         :bigint           not null, primary key
 #  name       :string           default(""), not null
+#  teamname   :citext           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_teams_on_teamname  (teamname) UNIQUE
 #
 class Team < ApplicationRecord
   has_many :projects, dependent: :destroy

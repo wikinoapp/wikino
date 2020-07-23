@@ -17,9 +17,9 @@ Rails.application.routes.draw do
       match "/sign_up",       via: :post,   as: :user_registration, to: "registrations#create"
     end
 
-    constraints(team_id: /[0-9]+/) do
-      match "/:team_id/notes",              via: :get, as: :note_list,   to: "notes#index"
-      match "/:team_id/notes/:note_number", via: :get, as: :note_detail, to: "notes#show"
+    constraints(teamname: /[A-Za-z0-9-]+/) do
+      match "/+:teamname/notes",              via: :get, as: :note_list,   to: "notes#index"
+      match "/+:teamname/notes/:note_number", via: :get, as: :note_detail, to: "notes#show"
     end
   end
 
