@@ -15,12 +15,8 @@ query($first: Int, $last: Int, $before: String, $after: String) {
       }
 
       nodes {
-        number
+        databaseId
         title
-
-        team {
-          teamname
-        }
       }
     }
   }

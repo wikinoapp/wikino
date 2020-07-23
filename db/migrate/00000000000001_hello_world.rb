@@ -21,38 +21,13 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     add_index :users, :reset_password_token, unique: true
     add_index :users, :confirmation_token, unique: true
 
-    create_table :teams do |t|
-      t.citext :teamname, null: false
-      t.string :name, null: false, default: ""
-      t.timestamps null: false
-    end
-    add_index :teams, :teamname, unique: true
-
-    create_table :team_members do |t|
-      t.references :user, null: false, foreign_key: true
-      t.references :team, null: false, foreign_key: true
-      t.string :name, null: false, default: ""
-      t.timestamps null: false
-    end
-    add_index :team_members, %i(user_id team_id), unique: true
-
-    create_table :projects do |t|
-      t.references :team, null: false, foreign_key: true
-      t.string :name, null: false, default: ""
-      t.timestamps null: false
-    end
-
     create_table :notes do |t|
-      t.references :team, null: false, foreign_key: true
-      t.references :project, null: false, foreign_key: true
-      t.references :team_member, null: false, foreign_key: true
-      t.bigint :number, null: false
-      t.string :title, null: false, default: ""
+      t.references :user, null: false, foreign_key: true
+      t.citext :title, null: false, default: ""
       t.text :body, null: false, default: ""
       t.timestamps null: false
     end
-    add_index :notes, %i(team_id number), unique: true
-    add_index :notes, %i(project_id title), unique: true
+    add_index :notes, %i(user_id title), unique: true
     add_index :notes, :created_at
     add_index :notes, :updated_at
 
@@ -65,11 +40,11 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     add_index :references, :created_at
 
     create_table :tags do |t|
-      t.references :project, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true
       t.citext :name, null: false
       t.timestamps null: false
     end
-    add_index :tags, %i(project_id name), unique: true
+    add_index :tags, %i(user_id name), unique: true
     add_index :tags, :updated_at
 
     create_table :taggings do |t|

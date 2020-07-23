@@ -14,6 +14,6 @@ class NotesController < ApplicationController
   def show
     @note_entity = NoteDetail::FetchNoteRepository.
       new(graphql_client: graphql_client).
-      fetch(note_number: params[:note_number])
+      fetch(database_id: params[:note_id])
   end
 end

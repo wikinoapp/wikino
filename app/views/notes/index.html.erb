@@ -4,10 +4,12 @@
 
 <%= link_to t("nouns.sign_out"), sign_out_path, method: :delete %>
 
+<%= link_to t("page_titles.new_note"), new_note_path %>
+
 <ul>
   <% @note_entities.each do |note_entity| %>
     <li>
-      <%= link_to note_detail_path(teamname: note_entity.team.teamname, note_number: note_entity.number) do %>
+      <%= link_to note_detail_path(note_id: note_entity.database_id) do %>
         <%= note_entity.title %>
       <% end %>
     </li>

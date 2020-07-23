@@ -18,29 +18,15 @@ ActiveRecord::Schema.define(version: 1) do
   enable_extension "plpgsql"
 
   create_table "notes", force: :cascade do |t|
-    t.bigint "team_id", null: false
-    t.bigint "project_id", null: false
-    t.bigint "team_member_id", null: false
-    t.bigint "number", null: false
-    t.string "title", default: "", null: false
+    t.bigint "user_id", null: false
+    t.citext "title", default: "", null: false
     t.text "body", default: "", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["created_at"], name: "index_notes_on_created_at"
-    t.index ["project_id", "title"], name: "index_notes_on_project_id_and_title", unique: true
-    t.index ["project_id"], name: "index_notes_on_project_id"
-    t.index ["team_id", "number"], name: "index_notes_on_team_id_and_number", unique: true
-    t.index ["team_id"], name: "index_notes_on_team_id"
-    t.index ["team_member_id"], name: "index_notes_on_team_member_id"
     t.index ["updated_at"], name: "index_notes_on_updated_at"
-  end
-
-  create_table "projects", force: :cascade do |t|
-    t.bigint "team_id", null: false
-    t.string "name", default: "", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["team_id"], name: "index_projects_on_team_id"
+    t.index ["user_id", "title"], name: "index_notes_on_user_id_and_title", unique: true
+    t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
   create_table "references", force: :cascade do |t|
@@ -66,32 +52,13 @@ ActiveRecord::Schema.define(version: 1) do
   end
 
   create_table "tags", force: :cascade do |t|
-    t.bigint "project_id", null: false
+    t.bigint "user_id", null: false
     t.citext "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["project_id", "name"], name: "index_tags_on_project_id_and_name", unique: true
-    t.index ["project_id"], name: "index_tags_on_project_id"
     t.index ["updated_at"], name: "index_tags_on_updated_at"
-  end
-
-  create_table "team_members", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "team_id", null: false
-    t.string "name", default: "", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["team_id"], name: "index_team_members_on_team_id"
-    t.index ["user_id", "team_id"], name: "index_team_members_on_user_id_and_team_id", unique: true
-    t.index ["user_id"], name: "index_team_members_on_user_id"
-  end
-
-  create_table "teams", force: :cascade do |t|
-    t.citext "teamname", null: false
-    t.string "name", default: "", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["teamname"], name: "index_teams_on_teamname", unique: true
+    t.index ["user_id", "name"], name: "index_tags_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -111,15 +78,10 @@ ActiveRecord::Schema.define(version: 1) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "notes", "projects"
-  add_foreign_key "notes", "team_members"
-  add_foreign_key "notes", "teams"
-  add_foreign_key "projects", "teams"
+  add_foreign_key "notes", "users"
   add_foreign_key "references", "notes"
   add_foreign_key "references", "notes", column: "referencing_note_id"
   add_foreign_key "taggings", "notes"
   add_foreign_key "taggings", "tags"
-  add_foreign_key "tags", "projects"
-  add_foreign_key "team_members", "teams"
-  add_foreign_key "team_members", "users"
+  add_foreign_key "tags", "users"
 end
