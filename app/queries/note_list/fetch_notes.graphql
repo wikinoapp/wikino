@@ -1,0 +1,23 @@
+query($first: Int, $last: Int, $before: String, $after: String) {
+  viewer {
+    notes(
+      orderBy: { field: UPDATED_AT, direction: DESC },
+      first: $first,
+      last: $last,
+      before: $before,
+      after: $after
+    ) {
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+
+      nodes {
+        number
+        title
+      }
+    }
+  }
+}

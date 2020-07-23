@@ -17,7 +17,13 @@ Rails.application.routes.draw do
       match "/sign_up",       via: :post,   as: :user_registration, to: "registrations#create"
     end
 
-    match "/home", via: :get, as: :home, to: "home#show"
+    match "/notes", via: :get, as: :note_list, to: "notes#index"
+  end
+
+  constraints(format: "json") do
+    if Rails.env.development?
+      match "/api/local/graphql", via: :post, as: :local_graphql_api, to: "api/local/graphql#execute"
+    end
   end
 
   root "welcome#show"
