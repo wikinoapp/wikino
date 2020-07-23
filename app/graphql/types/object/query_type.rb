@@ -3,6 +3,9 @@
 module Types
   module Object
     class QueryType < Types::Object::Base
+      add_field GraphQL::Types::Relay::NodeField
+      add_field GraphQL::Types::Relay::NodesField
+
       field :viewer, Types::Object::UserType, null: false
 
       def viewer
