@@ -5,7 +5,6 @@
 #
 #  id         :uuid             not null, primary key
 #  body       :text             default(""), not null
-#  number     :bigint           not null
 #  title      :string           default(""), not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -13,11 +12,10 @@
 #
 # Indexes
 #
-#  index_notes_on_created_at          (created_at)
-#  index_notes_on_updated_at          (updated_at)
-#  index_notes_on_user_id             (user_id)
-#  index_notes_on_user_id_and_number  (user_id,number) UNIQUE
-#  index_notes_on_user_id_and_title   (user_id,title) UNIQUE
+#  index_notes_on_created_at         (created_at)
+#  index_notes_on_updated_at         (updated_at)
+#  index_notes_on_user_id            (user_id)
+#  index_notes_on_user_id_and_title  (user_id,title) UNIQUE
 #
 # Foreign Keys
 #
