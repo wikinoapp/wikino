@@ -2,6 +2,7 @@
 
 puts "Creating users..."
 user_1 = User.where(email: "user_1@example.com").first_or_create!(password: "user1user1")
+user_1.confirm
 
 puts "Creating notes..."
 user_1_note_1 = user_1.notes.where(number: 1).first_or_create!(title: "Note 1", body: "Note 1")
