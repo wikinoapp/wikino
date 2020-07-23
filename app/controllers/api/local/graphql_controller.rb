@@ -10,7 +10,7 @@ module Api
         query = params[:query]
         operation_name = params[:operationName]
         context = {
-          viewer: User.find(params[:user_id])
+          viewer: TeamMember.find(params[:team_member_id])
         }
         result = NonotoSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
         render json: result

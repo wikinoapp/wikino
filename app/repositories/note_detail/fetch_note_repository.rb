@@ -2,9 +2,9 @@
 
 module NoteDetail
   class FetchNoteRepository < ApplicationRepository
-    def fetch(note_id:)
-      result = execute(variables: { noteId: note_id })
-      note_node = result.to_h.dig("data", "node")
+    def fetch(note_number:)
+      result = execute(variables: { noteNumber: note_number })
+      note_node = result.to_h.dig("data", "viewer", "team", "note")
 
       raise ActiveRecord::RecordNotFound unless note_node
 

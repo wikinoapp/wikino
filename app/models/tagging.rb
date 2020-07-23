@@ -3,11 +3,11 @@
 #
 # Table name: taggings
 #
-#  id         :uuid             not null, primary key
+#  id         :bigint           not null, primary key
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  note_id    :uuid             not null
-#  tag_id     :uuid             not null
+#  note_id    :bigint           not null
+#  tag_id     :bigint           not null
 #
 # Indexes
 #

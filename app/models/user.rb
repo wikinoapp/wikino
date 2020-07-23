@@ -3,11 +3,11 @@
 #
 # Table name: users
 #
-#  id                     :uuid             not null, primary key
+#  id                     :bigint           not null, primary key
 #  confirmation_sent_at   :datetime
 #  confirmation_token     :string
 #  confirmed_at           :datetime
-#  email                  :string           not null
+#  email                  :citext           not null
 #  encrypted_password     :string           not null
 #  remember_created_at    :datetime
 #  reset_password_sent_at :datetime
@@ -24,9 +24,11 @@
 #
 class User < ApplicationRecord
   # Include default devise modules. Others available are:
-  # , :lockable, :timeoutable, :trackable and :omniauthable
+  # :lockable, :timeoutable, :trackable and :omniauthable
   devise :confirmable, :database_authenticatable, :recoverable, :registerable, :rememberable, :validatable
 
+  has_many :team_members, dependent: :destroy
+  has_many :teams, through: :team_members
   has_many :notes, dependent: :destroy
   has_many :tags, dependent: :destroy
 

@@ -15,7 +15,7 @@ query($first: Int, $last: Int, $before: String, $after: String) {
       }
 
       nodes {
-        id
+        number
         title
       }
     }

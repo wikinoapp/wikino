@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class NoteEntity < ApplicationEntity
-  attribute? :id, Types::String
+  attribute? :number, Types::Integer
   attribute? :title, Types::String
   attribute? :body, Types::String
 
   def self.from_node(note_node)
     attrs = {}
 
-    if id = note_node["id"]
-      attrs[:id] = id
+    if number = note_node["number"]
+      attrs[:number] = number.to_i
     end
 
     if title = note_node["title"]

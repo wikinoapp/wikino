@@ -1,8 +1,10 @@
-query($noteId: ID!) {
-  node(id: $noteId) {
-    ... on Note {
-      title
-      body
+query($noteNumber: BigInt!) {
+  viewer {
+    team {
+      note(noteNumber: $noteNumber) {
+        title
+        body
+      }
     }
   }
 }

@@ -5,8 +5,7 @@ module Types
     class NoteType < Types::Object::Base
       implements GraphQL::Types::Relay::Node
 
-      global_id_field :id
-
+      field :number, GraphQL::Types::BigInt, null: false
       field :title, String, null: false
       field :body, String, null: false
     end

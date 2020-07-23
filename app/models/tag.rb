@@ -3,24 +3,24 @@
 #
 # Table name: tags
 #
-#  id         :uuid             not null, primary key
+#  id         :bigint           not null, primary key
 #  name       :citext           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  user_id    :uuid             not null
+#  project_id :bigint           not null
 #
 # Indexes
 #
-#  index_tags_on_updated_at        (updated_at)
-#  index_tags_on_user_id           (user_id)
-#  index_tags_on_user_id_and_name  (user_id,name) UNIQUE
+#  index_tags_on_project_id           (project_id)
+#  index_tags_on_project_id_and_name  (project_id,name) UNIQUE
+#  index_tags_on_updated_at           (updated_at)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (user_id => users.id)
+#  fk_rails_...  (project_id => projects.id)
 #
 class Tag < ApplicationRecord
-  belongs_to :user
+  belongs_to :project
 
   has_many :taggings, dependent: :destroy
   has_many :notes, through: :taggings

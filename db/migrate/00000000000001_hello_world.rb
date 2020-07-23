@@ -5,8 +5,8 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     enable_extension(:pgcrypto) unless extension_enabled?("pgcrypto")
     enable_extension(:citext) unless extension_enabled?("citext")
 
-    create_table :users, id: :uuid do |t|
-      t.string :email, null: false
+    create_table :users do |t|
+      t.citext :email, null: false
       t.string :encrypted_password, null: false
       t.string :reset_password_token
       t.datetime :reset_password_sent_at
@@ -21,35 +21,58 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     add_index :users, :reset_password_token, unique: true
     add_index :users, :confirmation_token, unique: true
 
-    create_table :notes, id: :uuid do |t|
-      t.references :user, null: false, foreign_key: true, type: :uuid
+    create_table :teams do |t|
+      t.string :name, null: false, default: ""
+      t.timestamps null: false
+    end
+
+    create_table :team_members do |t|
+      t.references :user, null: false, foreign_key: true
+      t.references :team, null: false, foreign_key: true
+      t.string :name, null: false, default: ""
+      t.timestamps null: false
+    end
+    add_index :team_members, %i(user_id team_id), unique: true
+
+    create_table :projects do |t|
+      t.references :team, null: false, foreign_key: true
+      t.string :name, null: false, default: ""
+      t.timestamps null: false
+    end
+
+    create_table :notes do |t|
+      t.references :team, null: false, foreign_key: true
+      t.references :project, null: false, foreign_key: true
+      t.references :team_member, null: false, foreign_key: true
+      t.bigint :number, null: false
       t.string :title, null: false, default: ""
       t.text :body, null: false, default: ""
       t.timestamps null: false
     end
-    add_index :notes, %i(user_id title), unique: true
+    add_index :notes, %i(team_id number), unique: true
+    add_index :notes, %i(project_id title), unique: true
     add_index :notes, :created_at
     add_index :notes, :updated_at
 
-    create_table :references, id: :uuid do |t|
-      t.references :note, null: false, foreign_key: true, type: :uuid
-      t.references :referencing_note, null: false, foreign_key: { to_table: :notes }, type: :uuid
+    create_table :references do |t|
+      t.references :note, null: false, foreign_key: true
+      t.references :referencing_note, null: false, foreign_key: { to_table: :notes }
       t.timestamps null: false
     end
     add_index :references, %i(note_id referencing_note_id), unique: true
     add_index :references, :created_at
 
-    create_table :tags, id: :uuid do |t|
-      t.references :user, null: false, foreign_key: true, type: :uuid
+    create_table :tags do |t|
+      t.references :project, null: false, foreign_key: true
       t.citext :name, null: false
       t.timestamps null: false
     end
-    add_index :tags, %i(user_id name), unique: true
+    add_index :tags, %i(project_id name), unique: true
     add_index :tags, :updated_at
 
-    create_table :taggings, id: :uuid do |t|
-      t.references :note, null: false, foreign_key: true, type: :uuid
-      t.references :tag, null: false, foreign_key: true, type: :uuid
+    create_table :taggings do |t|
+      t.references :note, null: false, foreign_key: true
+      t.references :tag, null: false, foreign_key: true
       t.timestamps null: false
     end
     add_index :taggings, %i(note_id tag_id), unique: true
