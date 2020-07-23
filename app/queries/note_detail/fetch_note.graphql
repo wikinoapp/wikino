@@ -1,0 +1,8 @@
+query($noteId: ID!) {
+  node(id: $noteId) {
+    ... on Note {
+      title
+      body
+    }
+  }
+}

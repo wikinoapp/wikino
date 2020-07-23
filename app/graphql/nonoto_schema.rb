@@ -13,11 +13,16 @@ class NonotoSchema < GraphQL::Schema
   end
 
   def self.object_from_id(id, query_ctx = nil)
-    resource_name, resource_id = GraphQL::Schema::UniqueWithinType.decode(id)
+    return unless query_ctx
 
-    return nil if resource_name.blank? || resource_id.blank?
+    begin
+      resource_type, resource_id = GraphQL::Schema::UniqueWithinType.decode(id)
+    rescue ArgumentError => e
+      Rails.logger.warn "Could not decode data: #{e}, #{id}"
+    end
+    return if resource_type.blank? || resource_id.blank?
 
-    Object.const_get(resource_name).find(resource_id)
+    user_resources(query_ctx[:viewer], resource_type).find(resource_id)
   end
 
   def self.resolve_type(_type, obj, _ctx)
@@ -25,7 +30,20 @@ class NonotoSchema < GraphQL::Schema
     when Note
       Types::Object::NoteType
     else
-      raise("Unexpected object: #{obj}")
+      raise "Unexpected object: #{obj}"
+    end
+  end
+
+  class << self
+    private
+
+    def user_resources(user, resource_type)
+      case resource_type
+      when "Note"
+        user.notes
+      else
+        raise "Unexpected resource_type: #{resource_type}"
+      end
     end
   end
 end

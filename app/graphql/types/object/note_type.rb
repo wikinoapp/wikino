@@ -7,7 +7,6 @@ module Types
 
       global_id_field :id
 
-      field :number, Integer, null: false
       field :title, String, null: false
       field :body, String, null: false
     end

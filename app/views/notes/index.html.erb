@@ -7,7 +7,9 @@
 <ul>
   <% @note_entities.each do |note_entity| %>
     <li>
-      <%= note_entity.title %>
+      <%= link_to note_detail_path(note_entity.id) do %>
+        <%= note_entity.title %>
+      <% end %>
     </li>
   <% end %>
 </ul>

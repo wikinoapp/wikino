@@ -17,7 +17,8 @@ Rails.application.routes.draw do
       match "/sign_up",       via: :post,   as: :user_registration, to: "registrations#create"
     end
 
-    match "/notes", via: :get, as: :note_list, to: "notes#index"
+    match "/notes/:note_id", via: :get, as: :note_detail, to: "notes#show"
+    match "/notes",          via: :get, as: :note_list,   to: "notes#index"
   end
 
   constraints(format: "json") do
