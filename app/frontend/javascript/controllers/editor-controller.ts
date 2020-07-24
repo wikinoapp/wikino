@@ -68,11 +68,14 @@ export default class extends Controller {
       const cursor = doc.getCursor();
       // console.log('cursor: ', cursor);
       const currentLine = doc.getLine(cursor.line);
-      console.log('currentLine: ', currentLine);
+      // console.log('currentLine: ', currentLine);
       const prevChars = currentLine.slice(0, cursor.ch);
-      // console.log('prevChars: ', prevChars);
+      console.log('prevChars: ', prevChars);
       // console.log('changed! currentLine: ', currentLine);
       // console.log('getSelection: ', doc.getSelection());
+
+      const symbolValue = this.symbolValue(prevChars, '[');
+      console.log('symbolValue: ', symbolValue);
 
       [
         ['(', ')'],
@@ -85,17 +88,33 @@ export default class extends Controller {
       });
 
       const isSurrounded = this.isSurrounded(currentLine, cursor.ch, '[', ']');
-      console.log('isSurrounded: ', isSurrounded);
+      // console.log('isSurrounded: ', isSurrounded);
       if (isSurrounded) {
         const surroundedChars = this.surroundedChars(currentLine, cursor.ch, '[', ']').replace(/^\[(.*)\]$/, '$1');
-        console.log('surroundedChars: ', surroundedChars);
+        // console.log('surroundedChars: ', surroundedChars);
       }
     });
   }
 
+  symbolValue(str: string, symbol: string) {
+    const startCharMatches = str
+      .split('')
+      .reverse()
+      .join('')
+      .match(new RegExp(`^\\S+?\\${symbol}`));
+
+    return startCharMatches
+      ? startCharMatches[0]
+          .split('')
+          .reverse()
+          .join('')
+          .replace(new RegExp(`\\${symbol}`), '')
+      : '';
+  }
+
   startChars(line: string, ch: number, startChar: string) {
     const prevChars = line.slice(0, ch);
-    console.log('prevChars: ', prevChars);
+    // console.log('prevChars: ', prevChars);
     const prevMatches = prevChars
       .split('')
       .reverse()
@@ -107,7 +126,7 @@ export default class extends Controller {
 
   endChars(line: string, ch: number, endChar: string) {
     const nextChars = line.slice(ch, line.length);
-    console.log('nextChars: ', nextChars);
+    // console.log('nextChars: ', nextChars);
     const nextMatches = nextChars.match(new RegExp(`^(.*?)\\${endChar}`));
 
     return nextMatches ? nextMatches[0] : '';
@@ -127,7 +146,7 @@ export default class extends Controller {
   surroundedChars(line: string, ch: number, startChar: string, endChar: string) {
     const startChars = this.startChars(line, ch, startChar);
     const endChars = this.endChars(line, ch, endChar);
-    console.log(`startChars: ${startChars}, endChars: ${endChars}`);
+    // console.log(`startChars: ${startChars}, endChars: ${endChars}`);
 
     return startChars + endChars;
   }
