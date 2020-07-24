@@ -88,7 +88,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules', path.resolve(__dirname, 'app', 'frontend')],
-    extensions: ['.css', '.gif', '.jpeg', '.jpg', '.js', '.json', '.png', '.scss', '.svg', '.ts'],
+    extensions: ['.js', '.ts', '.css', '.scss'],
   },
   plugins: [
     new ManifestPlugin({
