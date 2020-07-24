@@ -28,7 +28,6 @@ class User < ApplicationRecord
   devise :confirmable, :database_authenticatable, :recoverable, :registerable, :rememberable, :validatable
 
   has_many :notes, dependent: :destroy
-  has_many :tags, dependent: :destroy
 
   validates :email,
     presence: true,

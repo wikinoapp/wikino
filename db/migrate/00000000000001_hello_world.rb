@@ -38,21 +38,5 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     end
     add_index :references, %i(note_id referencing_note_id), unique: true
     add_index :references, :created_at
-
-    create_table :tags do |t|
-      t.references :user, null: false, foreign_key: true
-      t.citext :name, null: false
-      t.timestamps null: false
-    end
-    add_index :tags, %i(user_id name), unique: true
-    add_index :tags, :updated_at
-
-    create_table :taggings do |t|
-      t.references :note, null: false, foreign_key: true
-      t.references :tag, null: false, foreign_key: true
-      t.timestamps null: false
-    end
-    add_index :taggings, %i(note_id tag_id), unique: true
-    add_index :taggings, :created_at
   end
 end

@@ -40,27 +40,6 @@ ActiveRecord::Schema.define(version: 1) do
     t.index ["referencing_note_id"], name: "index_references_on_referencing_note_id"
   end
 
-  create_table "taggings", force: :cascade do |t|
-    t.bigint "note_id", null: false
-    t.bigint "tag_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["created_at"], name: "index_taggings_on_created_at"
-    t.index ["note_id", "tag_id"], name: "index_taggings_on_note_id_and_tag_id", unique: true
-    t.index ["note_id"], name: "index_taggings_on_note_id"
-    t.index ["tag_id"], name: "index_taggings_on_tag_id"
-  end
-
-  create_table "tags", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.citext "name", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["updated_at"], name: "index_tags_on_updated_at"
-    t.index ["user_id", "name"], name: "index_tags_on_user_id_and_name", unique: true
-    t.index ["user_id"], name: "index_tags_on_user_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.citext "email", null: false
     t.string "encrypted_password", null: false
@@ -81,7 +60,4 @@ ActiveRecord::Schema.define(version: 1) do
   add_foreign_key "notes", "users"
   add_foreign_key "references", "notes"
   add_foreign_key "references", "notes", column: "referencing_note_id"
-  add_foreign_key "taggings", "notes"
-  add_foreign_key "taggings", "tags"
-  add_foreign_key "tags", "users"
 end
