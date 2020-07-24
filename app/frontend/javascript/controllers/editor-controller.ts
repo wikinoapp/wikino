@@ -1,5 +1,6 @@
 import CodeMirror, { Editor, EditorFromTextArea } from 'codemirror';
-import gfm from 'codemirror/mode/gfm/gfm.js';
+import 'codemirror/mode/gfm/gfm';
+
 import { Controller } from 'stimulus';
 
 export default class extends Controller {
@@ -11,8 +12,10 @@ export default class extends Controller {
     const editor: EditorFromTextArea = CodeMirror.fromTextArea(this.textAreaTarget, {
       mode: {
         name: 'gfm',
-        gitHubSpice: true,
+        highlightFormatting: true,
+        gitHubSpice: false,
       },
+      theme: 'default',
       lineNumbers: true,
       indentWithTabs: false,
       tabSize: 2,
