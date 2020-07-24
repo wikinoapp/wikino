@@ -17,8 +17,8 @@ ActiveRecord::Schema.define(version: 1) do
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
 
-  create_table "notes", force: :cascade do |t|
-    t.bigint "user_id", null: false
+  create_table "notes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
     t.citext "title", default: "", null: false
     t.text "body", default: "", null: false
     t.datetime "created_at", precision: 6, null: false
@@ -29,9 +29,9 @@ ActiveRecord::Schema.define(version: 1) do
     t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
-  create_table "references", force: :cascade do |t|
-    t.bigint "note_id", null: false
-    t.bigint "referencing_note_id", null: false
+  create_table "references", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "note_id", null: false
+    t.uuid "referencing_note_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["created_at"], name: "index_references_on_created_at"
@@ -40,7 +40,7 @@ ActiveRecord::Schema.define(version: 1) do
     t.index ["referencing_note_id"], name: "index_references_on_referencing_note_id"
   end
 
-  create_table "users", force: :cascade do |t|
+  create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.citext "email", null: false
     t.string "encrypted_password", null: false
     t.string "reset_password_token"

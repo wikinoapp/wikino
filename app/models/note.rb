@@ -3,12 +3,12 @@
 #
 # Table name: notes
 #
-#  id         :bigint           not null, primary key
+#  id         :uuid             not null, primary key
 #  body       :text             default(""), not null
 #  title      :citext           default(""), not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  user_id    :bigint           not null
+#  user_id    :uuid             not null
 #
 # Indexes
 #

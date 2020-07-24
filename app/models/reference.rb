@@ -3,11 +3,11 @@
 #
 # Table name: references
 #
-#  id                  :bigint           not null, primary key
+#  id                  :uuid             not null, primary key
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  note_id             :bigint           not null
-#  referencing_note_id :bigint           not null
+#  note_id             :uuid             not null
+#  referencing_note_id :uuid             not null
 #
 # Indexes
 #

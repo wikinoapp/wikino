@@ -7,7 +7,7 @@ module Types
 
       global_id_field :id
 
-      field :database_id, GraphQL::Types::BigInt, null: false
+      field :database_id, String, null: false
       field :title, String, null: false
       field :body, String, null: false
     end

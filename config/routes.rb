@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  UUID_FORMAT = /[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}/i.freeze
+
   devise_for :users, skip: %i(passwords registrations sessions)
 
   constraints format: "html" do
@@ -19,7 +21,7 @@ Rails.application.routes.draw do
 
     match "/notes",          via: :get,  as: :note_list,   to: "notes#index"
     match "/notes",          via: :post, as: :create_note, to: "notes#create"
-    match "/notes/:note_id", via: :get,  as: :note_detail, to: "notes#show", note_id: /[0-9]+/
+    match "/notes/:note_id", via: :get,  as: :note_detail, to: "notes#show", note_id: UUID_FORMAT
     match "/notes/new",      via: :get,  as: :new_note,    to: "notes#new"
   end
 

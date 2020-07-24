@@ -6,7 +6,7 @@ module Types
       implements GraphQL::Types::Relay::Node
 
       field :note, Types::Objects::NoteType, null: true do
-        argument :database_id, GraphQL::Types::BigInt, required: true
+        argument :database_id, String, required: true
       end
 
       field :notes, Types::Objects::NoteType.connection_type, null: false do

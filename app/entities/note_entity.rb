@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NoteEntity < ApplicationEntity
-  attribute? :database_id, Types::Integer
+  attribute? :database_id, Types::String
   attribute? :title, Types::String
   attribute? :body, Types::String
 
@@ -9,7 +9,7 @@ class NoteEntity < ApplicationEntity
     attrs = {}
 
     if database_id = note_node["databaseId"]
-      attrs[:database_id] = database_id.to_i
+      attrs[:database_id] = database_id
     end
 
     if title = note_node["title"]

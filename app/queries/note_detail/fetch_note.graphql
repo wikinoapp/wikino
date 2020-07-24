@@ -1,4 +1,4 @@
-query($databaseId: BigInt!) {
+query($databaseId: String!) {
   viewer {
     note(databaseId: $databaseId) {
       title
