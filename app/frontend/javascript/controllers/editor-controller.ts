@@ -36,15 +36,20 @@ export default class extends Controller {
         const doc = cm.getDoc();
         const cursor = doc.getCursor();
         const prevLine = doc.getLine(cursor.line);
-        const trimmedPrevLine = prevLine.trim();
 
+        const trimmedPrevLine = prevLine.trim();
         const indentSpaceMatches = prevLine.match(/^ +/);
         const indentSpace = indentSpaceMatches ? indentSpaceMatches[0] : '';
         const firstChar = trimmedPrevLine.charAt(0);
 
         let replacement = '';
         if (firstChar === '-' || firstChar === '*') {
-          replacement = `\n${indentSpace}${firstChar} `;
+          if (trimmedPrevLine === '-' || trimmedPrevLine === '*') {
+            doc.getLineHandle(cursor.line).text = '';
+            replacement = `\n${indentSpace}`;
+          } else {
+            replacement = `\n${indentSpace}${firstChar} `;
+          }
         } else {
           replacement = `\n${indentSpace}`;
         }
