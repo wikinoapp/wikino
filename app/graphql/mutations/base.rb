@@ -2,9 +2,9 @@
 
 module Mutations
   class Base < GraphQL::Schema::RelayClassicMutation
-    argument_class Types::Argument::Base
-    field_class Types::Field::Base
-    input_object_class Types::InputObject::Base
-    object_class Types::Object::Base
+    argument_class Types::Arguments::Base
+    field_class Types::Fields::Base
+    input_object_class Types::InputObjects::Base
+    object_class Types::Objects::Base
   end
 end

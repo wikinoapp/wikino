@@ -4,8 +4,8 @@ module Mutations
   class CreateNote < Mutations::Base
     argument :body, String, required: true
 
-    field :note, Types::Object::NoteType, null: true
-    field :errors, [Types::Object::MutationErrorType], null: false
+    field :note, Types::Objects::NoteType, null: true
+    field :errors, [Types::Objects::MutationErrorType], null: false
 
     def resolve(body:)
       viewer = context[:viewer]

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Types
-  module Object
-    class QueryType < Types::Object::Base
+  module Objects
+    class QueryType < Types::Objects::Base
       add_field GraphQL::Types::Relay::NodeField
       add_field GraphQL::Types::Relay::NodesField
 
-      field :viewer, Types::Object::UserType, null: false
+      field :viewer, Types::Objects::UserType, null: false
 
       def viewer
         context[:viewer]

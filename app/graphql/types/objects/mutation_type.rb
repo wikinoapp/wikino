@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Types
-  module Object
-    class MutationType < Types::Object::Base
+  module Objects
+    class MutationType < Types::Objects::Base
       field :createNote, mutation: Mutations::CreateNote
     end
   end

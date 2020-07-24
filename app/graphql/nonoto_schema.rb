@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class NonotoSchema < GraphQL::Schema
-  mutation Types::Object::MutationType
-  query Types::Object::QueryType
+  mutation Types::Objects::MutationType
+  query Types::Objects::QueryType
 
   use GraphQL::Execution::Interpreter
   use GraphQL::Analysis::AST
@@ -28,7 +28,7 @@ class NonotoSchema < GraphQL::Schema
   def self.resolve_type(_type, obj, _ctx)
     case obj
     when Note
-      Types::Object::NoteType
+      Types::Objects::NoteType
     else
       raise "Unexpected object: #{obj}"
     end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Types
-  module Enum
-    class OrderDirection < Types::Enum::Base
+  module Enums
+    class OrderDirection < Types::Enums::Base
       value "ASC", "Ascending"
       value "DESC", "Descending"
     end

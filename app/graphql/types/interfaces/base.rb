@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Types
-  module Interface
+  module Interfaces
     module Base
       include GraphQL::Schema::Interface
 
-      field_class Types::Field::Base
+      field_class Types::Fields::Base
     end
   end
 end

@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 module Types
-  module Object
-    class UserType < Types::Object::Base
+  module Objects
+    class UserType < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
-      field :note, Types::Object::NoteType, null: true do
+      field :note, Types::Objects::NoteType, null: true do
         argument :database_id, GraphQL::Types::BigInt, required: true
       end
 
-      field :notes, Types::Object::NoteType.connection_type, null: false do
-        argument :order_by, Types::InputObject::NoteOrder, required: true
+      field :notes, Types::Objects::NoteType.connection_type, null: false do
+        argument :order_by, Types::InputObjects::NoteOrder, required: true
       end
 
       def note(database_id:)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Types
-  module Argument
+  module Arguments
     class Base < GraphQL::Schema::Argument
     end
   end

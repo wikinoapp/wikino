@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Types
-  module Enum
-    class Base < GraphQL::Schema::Enum
+  module Scalars
+    class Base < GraphQL::Schema::Scalar
     end
   end
 end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Types
-  module Object
-    class MutationErrorType < Types::Object::Base
+  module Objects
+    class MutationErrorType < Types::Objects::Base
       field :message, String, null: false
     end
   end
