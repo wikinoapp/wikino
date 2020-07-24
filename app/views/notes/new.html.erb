@@ -1,0 +1,19 @@
+<% content_for :page_title, page_title_with_suffix(t("page_titles.new_note")) %>
+
+<div class="container">
+  <%= form_with model: @note, url: create_note_path, local: true do |f| %>
+    <%= render "application/components/error_panel", resource: f.object %>
+
+    <div class="form-group">
+      <%= f.label :body %>
+      <%= f.text_area :body, autofocus: true, class: "form-control", rows: 10, tabindex: 1 %>
+    </div>
+
+    <div class="text-center">
+      <%= f.button class: "btn btn-primary", tabindex: 3 do %>
+        <i class="fas fa-rocket mr-1"></i>
+        <%= t "verbs.submit" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

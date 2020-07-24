@@ -1,0 +1,17 @@
+mutation (
+  $body: String!
+) {
+  createNote(
+    input: {
+      body: $body
+    }
+  ) {
+    note {
+      databaseId
+    }
+
+    errors {
+      message
+    }
+  }
+}

@@ -1,0 +1,5 @@
+en:
+  activerecord:
+    attributes:
+      note:
+        mutation_error: ""

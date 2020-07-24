@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     match "/notes",          via: :get,  as: :note_list,   to: "notes#index"
     match "/notes",          via: :post, as: :create_note, to: "notes#create"
     match "/notes/:note_id", via: :get,  as: :note_detail, to: "notes#show", note_id: /[0-9]+/
+    match "/notes/new",      via: :get,  as: :new_note,    to: "notes#new"
   end
 
   constraints(format: "json") do

@@ -30,4 +30,11 @@ class Note < ApplicationRecord
   has_many :referencing_notes, class_name: "Note", through: :referencing_references
   has_many :taggings, dependent: :destroy
   has_many :tags, through: :taggings
+
+  validates :title, presence: true
+  validates :body, presence: true
+
+  def set_title!
+    self.title = body.split("\n").first&.strip
+  end
 end
