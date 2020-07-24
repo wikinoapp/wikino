@@ -2,7 +2,7 @@
 
 module NoteDetail
   class FetchNoteRepository < ApplicationRepository
-    def fetch(database_id:)
+    def call(database_id:)
       result = execute(variables: { databaseId: database_id })
       note_node = result.to_h.dig("data", "viewer", "note")
 

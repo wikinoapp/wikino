@@ -2,7 +2,7 @@
 
 module NoteList
   class FetchNotesRepository < ApplicationRepository
-    def fetch(pagination:)
+    def call(pagination:)
       result = execute(variables: {
         first: pagination.first,
         last: pagination.last,

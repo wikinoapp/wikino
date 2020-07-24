@@ -6,7 +6,7 @@ class NotesController < ApplicationController
   def index
     @note_entities, @page_info_entity = NoteList::FetchNotesRepository.
       new(graphql_client: graphql_client).
-      fetch(
+      call(
         pagination: Pagination.new(before: params[:before], after: params[:after], per: 30)
       )
   end
@@ -14,7 +14,7 @@ class NotesController < ApplicationController
   def show
     @note_entity = NoteDetail::FetchNoteRepository.
       new(graphql_client: graphql_client).
-      fetch(database_id: params[:note_id])
+      call(database_id: params[:note_id])
   end
 
   def new
