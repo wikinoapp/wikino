@@ -4,4 +4,8 @@
   <%= @note_entity.title %>
 </h1>
 
-<%= @note_entity.body %>
+<p>
+  <%= @note_entity.body %>
+</p>
+
+<%= link_to "Notes", note_list_path %>
