@@ -60,5 +60,75 @@ export default class extends Controller {
         cm.replaceSelection(replacement);
       },
     });
+
+    editor.on('inputRead', (cm: Editor, changeObj: any) => {
+      // console.log('event.key: ', event.key);
+      // console.log('changeObj: ', changeObj);
+      const doc = cm.getDoc();
+      const cursor = doc.getCursor();
+      // console.log('cursor: ', cursor);
+      const currentLine = doc.getLine(cursor.line);
+      console.log('currentLine: ', currentLine);
+      const prevChars = currentLine.slice(0, cursor.ch);
+      // console.log('prevChars: ', prevChars);
+      // console.log('changed! currentLine: ', currentLine);
+      // console.log('getSelection: ', doc.getSelection());
+
+      [
+        ['(', ')'],
+        ['[', ']'],
+        ['{', '}'],
+      ].forEach((pair) => {
+        if (changeObj.text[0] === pair[0]) {
+          cm.replaceSelection(pair[1], 'start');
+        }
+      });
+
+      const isSurrounded = this.isSurrounded(currentLine, cursor.ch, '[', ']');
+      console.log('isSurrounded: ', isSurrounded);
+      if (isSurrounded) {
+        const surroundedChars = this.surroundedChars(currentLine, cursor.ch, '[', ']').replace(/^\[(.*)\]$/, '$1');
+        console.log('surroundedChars: ', surroundedChars);
+      }
+    });
+  }
+
+  startChars(line: string, ch: number, startChar: string) {
+    const prevChars = line.slice(0, ch);
+    console.log('prevChars: ', prevChars);
+    const prevMatches = prevChars
+      .split('')
+      .reverse()
+      .join('')
+      .match(new RegExp(`^(.*?)\\${startChar}`));
+
+    return prevMatches ? prevMatches[0].split('').reverse().join('') : '';
+  }
+
+  endChars(line: string, ch: number, endChar: string) {
+    const nextChars = line.slice(ch, line.length);
+    console.log('nextChars: ', nextChars);
+    const nextMatches = nextChars.match(new RegExp(`^(.*?)\\${endChar}`));
+
+    return nextMatches ? nextMatches[0] : '';
+  }
+
+  isSurrounded(line: string, ch: number, startChar: string, endChar: string) {
+    // console.log(`line: ${line}, ch: ${ch}`);
+    // console.log('startFrom: ', startFrom);
+
+    // console.log('endTo: ', endTo);
+    const startChars = this.startChars(line, ch, startChar);
+    const endChars = this.endChars(line, ch, endChar);
+
+    return startChars.includes(startChar) && endChars.includes(endChar);
+  }
+
+  surroundedChars(line: string, ch: number, startChar: string, endChar: string) {
+    const startChars = this.startChars(line, ch, startChar);
+    const endChars = this.endChars(line, ch, endChar);
+    console.log(`startChars: ${startChars}, endChars: ${endChars}`);
+
+    return startChars + endChars;
   }
 }
