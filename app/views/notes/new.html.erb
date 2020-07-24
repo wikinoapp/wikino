@@ -4,9 +4,8 @@
   <%= form_with model: @note, url: create_note_path, local: true do |f| %>
     <%= render "application/components/error_panel", resource: f.object %>
 
-    <div class="form-group">
-      <%= f.label :body %>
-      <%= f.text_area :body, autofocus: true, class: "form-control", rows: 10, tabindex: 1 %>
+    <div data-controller="editor">
+      <textarea class="d-none" data-target="editor.textArea"></textarea>
     </div>
 
     <div class="text-center">
