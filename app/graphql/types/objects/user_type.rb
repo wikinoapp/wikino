@@ -10,6 +10,7 @@ module Types
       end
 
       field :notes, Types::Objects::NoteType.connection_type, null: false do
+        argument :q, String, required: false
         argument :order_by, Types::InputObjects::NoteOrder, required: true
       end
 
@@ -17,9 +18,16 @@ module Types
         object.notes.find(database_id)
       end
 
-      def notes(order_by:)
+      def notes(q: "", order_by:)
         order = OrderProperty.build(order_by)
-        object.notes.order(order.field => order.direction)
+
+        notes = object.notes
+
+        if q.present?
+          notes = notes.where("title like ?", "%#{q}%")
+        end
+
+        notes.order(order.field => order.direction)
       end
     end
   end

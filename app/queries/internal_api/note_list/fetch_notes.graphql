@@ -1,0 +1,14 @@
+query($q: String) {
+  viewer {
+    notes(
+      q: $q
+      orderBy: { field: UPDATED_AT, direction: DESC },
+      first: 5
+    ) {
+      nodes {
+        databaseId
+        title
+      }
+    }
+  }
+}

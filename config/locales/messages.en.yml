@@ -1,5 +1,7 @@
 en:
   messages:
+    edit_note:
+      create_new_note: Create new note
     sign_in:
       forgot_password: Forgot password?
       remember_me: Remember me

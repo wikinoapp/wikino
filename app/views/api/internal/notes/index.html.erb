@@ -1,0 +1,20 @@
+<ul class="list-group">
+  <% @note_entities.each do |note_entity| %>
+    <li
+      class="list-group-item"
+      data-target="editor-hints.hint"
+      data-note-id="<%= note_entity.database_id %>"
+      data-note-title="<%= note_entity.title %>"
+    >
+      <%= note_entity.title %>
+    </li>
+  <% end %>
+
+  <li
+    class="list-group-item"
+    data-target="editor-hints.hint"
+  >
+    <i class="fas fa-plus mr-1"></i>
+    <%= t "messages.edit_note.create_new_note" %>
+  </li>
+</ul>

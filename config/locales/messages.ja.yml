@@ -1,5 +1,7 @@
 ja:
   messages:
+    edit_note:
+      create_new_note: ノートを新規作成する
     sign_in:
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する
