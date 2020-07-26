@@ -36,11 +36,11 @@ export default class extends Controller {
       // console.log('this.selectedHintIndex: ', this.selectedHintIndex);
 
       const selectedNoteId = selectedHintElm.dataset.noteId;
-      const selectedNoteTitle = selectedHintElm.dataset.noteTitle;
+      const selectedNoteName = selectedHintElm.dataset.noteName;
       const createNewNote = selectedHintElm.dataset.createNewNote;
       if (code === 'Enter') {
-        if (selectedNoteId && selectedNoteTitle) {
-          new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteTitle }).dispatch();
+        if (selectedNoteId && selectedNoteName) {
+          new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteName }).dispatch();
         } else if (createNewNote) {
           new EventDispatcher('editor:create-new-note', { newNoteName: this.newNoteNameTarget.innerText }).dispatch();
         }
@@ -53,7 +53,7 @@ export default class extends Controller {
     });
 
     document.addEventListener('editor-hints:show', (event: any) => {
-      const newNoteName = event.detail.linkTitle;
+      const newNoteName = event.detail.linkName;
 
       this.element.classList.remove('d-none');
       this.newNoteNameTarget.innerText = newNoteName;

@@ -24,7 +24,7 @@ module Types
         notes = object.notes
 
         if q.present?
-          notes = notes.where("title like ?", "%#{q}%")
+          notes = notes.where("name like ?", "%#{q}%")
         end
 
         notes.order(order.field => order.direction)

@@ -123,12 +123,12 @@ export default class extends Controller {
     });
 
     document.addEventListener('editor:select-hint', (event: any) => {
-      const { selectedNoteId, selectedNoteTitle } = event.detail;
+      const { selectedNoteId, selectedNoteName } = event.detail;
       // console.log('selectedNoteId: ', selectedNoteId);
       // console.log('currentLine: ', this.getCurrentLine());
       // console.log('cursor.ch: ', this.pos.ch);
 
-      this.replaceBracketsWithNoteLink(selectedNoteId, selectedNoteTitle);
+      this.replaceBracketsWithNoteLink(selectedNoteId, selectedNoteName);
       this.hideHints();
     });
 
@@ -142,7 +142,7 @@ export default class extends Controller {
         })
         .then((res) => {
           const noteId = res.data.database_id;
-          const noteName = res.data.title;
+          const noteName = res.data.name;
 
           this.replaceBracketsWithNoteLink(noteId, noteName);
           this.hideHints();
@@ -213,15 +213,15 @@ export default class extends Controller {
   showHints() {
     // console.log('showHints() > this.pos: ', this.pos);
     // console.log('showHints() > this.getPrevChars(): ', this.getPrevChars());
-    const linkTitle = this.symbolValue(this.getPrevChars(), '[');
-    console.log('showHints() > linkTitle: ', linkTitle);
+    const linkName = this.symbolValue(this.getPrevChars(), '[');
+    console.log('showHints() > linkName: ', linkName);
     // console.log('showHints() > this.isComposing: ', this.isComposing);
 
-    if (!this.isComposing && linkTitle) {
+    if (!this.isComposing && linkName) {
       axios
         .get('/api/internal/notes', {
           params: {
-            q: linkTitle,
+            q: linkName,
           },
         })
         .then((res) => {
@@ -229,7 +229,7 @@ export default class extends Controller {
           // console.log('hintsHtml: ', hintsHtml);
           this.hintsTarget.innerHTML = hintsHtml;
           this.isHintsDisplayed = true;
-          new EventDispatcher('editor-hints:show', { linkTitle }).dispatch();
+          new EventDispatcher('editor-hints:show', { linkName }).dispatch();
 
           const cursorCoords = this.cm.cursorCoords(false, 'window');
           // console.log('cursorCoords: ', cursorCoords);

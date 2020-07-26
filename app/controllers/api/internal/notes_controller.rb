@@ -14,7 +14,7 @@ module Api
           new(graphql_client: graphql_client).
           call(params: { body: params[:note_name] })
 
-        render json: { database_id: note_entity.database_id, title: note_entity.title }
+        render json: { database_id: note_entity.database_id, name: note_entity.name }
       end
     end
   end

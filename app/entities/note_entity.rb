@@ -2,7 +2,7 @@
 
 class NoteEntity < ApplicationEntity
   attribute? :database_id, Types::String
-  attribute? :title, Types::String
+  attribute? :name, Types::String
   attribute? :body, Types::String
 
   def self.from_node(note_node)
@@ -12,8 +12,8 @@ class NoteEntity < ApplicationEntity
       attrs[:database_id] = database_id
     end
 
-    if title = note_node["title"]
-      attrs[:title] = title
+    if name = note_node["name"]
+      attrs[:name] = name
     end
 
     if body = note_node["body"]

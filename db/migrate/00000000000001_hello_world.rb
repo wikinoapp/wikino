@@ -23,11 +23,11 @@ class HelloWorld < ActiveRecord::Migration[6.0]
 
     create_table :notes, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
-      t.citext :title, null: false, default: ""
+      t.citext :name, null: false, default: ""
       t.text :body, null: false, default: ""
       t.timestamps null: false
     end
-    add_index :notes, %i(user_id title), unique: true
+    add_index :notes, %i(user_id name), unique: true
     add_index :notes, :created_at
     add_index :notes, :updated_at
 

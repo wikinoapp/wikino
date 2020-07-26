@@ -13,7 +13,7 @@ module Mutations
       note = viewer.notes.new(
         body: body
       )
-      note.set_title!
+      note.set_name!
 
       unless note.valid?
         return {
