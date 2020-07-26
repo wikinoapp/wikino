@@ -69,6 +69,13 @@ export default class extends Controller {
 
         this.cm.replaceSelection(replacement);
       },
+
+      Esc: () => {
+        console.log('esc!');
+        if (this.isHintsDisplayed) {
+          this.hideHints();
+        }
+      },
     });
 
     this.cm.on('change', (cm: Editor, changeObj: any) => {
@@ -154,7 +161,7 @@ export default class extends Controller {
   }
 
   isKeyForHints(code: string) {
-    return ['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(code);
+    return ['ArrowUp', 'ArrowDown', 'Enter'].includes(code);
   }
 
   symbolValue(str: string, symbol: string) {
