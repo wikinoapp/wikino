@@ -1,7 +1,7 @@
 en:
   messages:
     edit_note:
-      create_new_note: Create new note
+      create_new_note_html: "Create '<span data-target='editor-hints.newNoteName'></span>' note"
     sign_in:
       forgot_password: Forgot password?
       remember_me: Remember me

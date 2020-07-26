@@ -47,7 +47,7 @@ export default class extends Controller {
       },
 
       Enter: () => {
-        console.log('enter!');
+        // console.log('enter!');
         const prevLine = this.doc.getLine(this.pos.line);
 
         const trimmedPrevLine = prevLine.trim();
@@ -71,7 +71,17 @@ export default class extends Controller {
       },
     });
 
-    this.cm.on('inputRead', (_cm: Editor, changeObj: any) => {
+    this.cm.on('change', (cm: Editor, changeObj: any) => {
+      console.log('change!');
+      this.cm = cm;
+      this.doc = this.cm.getDoc();
+      this.pos = this.doc.getCursor();
+    });
+
+    this.cm.on('inputRead', (cm: Editor, changeObj: any) => {
+      this.cm = cm;
+      this.doc = this.cm.getDoc();
+      this.pos = this.doc.getCursor();
       // console.log('changeObj: ', changeObj);
       const inputChar = changeObj.text[0];
       // console.log('inputChar: ', inputChar);
@@ -86,13 +96,14 @@ export default class extends Controller {
         }
       });
 
-      this.showHints(this.getPrevChars());
+      this.showHints();
     });
 
     this.cm.on('keydown', (cm: Editor, event: KeyboardEvent) => {
-      // console.log('keydown! event.code: ', event.code);
-      this.doc = cm.getDoc();
+      this.cm = cm;
+      this.doc = this.cm.getDoc();
       this.pos = this.doc.getCursor();
+      // console.log('keydown! event.code: ', event.code);
 
       if (this.isHintsDisplayed && this.isKeyForHints(event.code)) {
         new EventDispatcher('editor-hints:keydown', { code: event.code }).dispatch();
@@ -108,7 +119,7 @@ export default class extends Controller {
     this.element.addEventListener('compositionend', () => {
       // console.log('compositionend! this.pos: ', this.pos);
       this.isComposing = false;
-      this.showHints(this.getPrevChars());
+      this.showHints();
     });
 
     document.addEventListener('editor:select-hint', (event: any) => {
@@ -116,36 +127,29 @@ export default class extends Controller {
       // console.log('selectedNoteId: ', selectedNoteId);
       // console.log('currentLine: ', this.getCurrentLine());
       // console.log('cursor.ch: ', this.pos.ch);
-      const prevChars = this.getCurrentLine().slice(0, this.pos.ch);
-      // console.log('prevChars: ', prevChars);
-      const startBracketMatch = this.reverseString(prevChars).match(/\[/);
-      // console.log('startBracketMatch: ', startBracketMatch);
-      let startBracketIndex: number = -1;
-      if (typeof startBracketMatch?.index === 'number') {
-        startBracketIndex = this.pos.ch - (startBracketMatch.index + 1);
-        // console.log('startBracketIndex: ', startBracketIndex);
-      }
 
-      const afterChars = this.getCurrentLine().slice(this.pos.ch);
-      // console.log('afterChars: ', afterChars);
-      const endBracketMatch = afterChars.match(/]/);
-      // console.log('endBracketMatch: ', endBracketMatch);
-      let endBracketIndex: number = -1;
-      if (typeof endBracketMatch?.index === 'number') {
-        endBracketIndex = this.pos.ch + endBracketMatch.index;
-        // console.log('endBracketIndex: ', endBracketIndex);
-      }
+      this.replaceBracketsWithNoteLink(selectedNoteId, selectedNoteTitle);
+      this.hideHints();
+    });
 
-      if (startBracketIndex >= 0 && endBracketIndex >= 0) {
-        this.doc.replaceRange(
-          `[${selectedNoteTitle}](/notes/${selectedNoteId})`,
-          { line: this.pos.line, ch: startBracketIndex },
-          { line: this.pos.line, ch: endBracketIndex + 1 },
-        );
+    document.addEventListener('editor:create-new-note', (event: any) => {
+      const { newNoteName } = event.detail;
+      console.log('newNoteName: ', newNoteName);
 
-        this.isHintsDisplayed = false;
-        new EventDispatcher('editor-hints:hide').dispatch();
-      }
+      axios
+        .post('/api/internal/notes', {
+          note_name: newNoteName,
+        })
+        .then((res) => {
+          const noteId = res.data.database_id;
+          const noteName = res.data.title;
+
+          this.replaceBracketsWithNoteLink(noteId, noteName);
+          this.hideHints();
+        })
+        .catch((err) => {
+          console.log('err: ', err);
+        });
     });
   }
 
@@ -171,9 +175,47 @@ export default class extends Controller {
     return this.getCurrentLine().slice(0, this.pos.ch);
   }
 
-  showHints(prevChars: string) {
-    const linkTitle = this.symbolValue(prevChars, '[');
-    // console.log('linkTitle: ', linkTitle);
+  replaceBracketsWithNoteLink(noteId: string, noteName: string) {
+    const prevChars = this.getCurrentLine().slice(0, this.pos.ch);
+    // console.log('prevChars: ', prevChars);
+    const startBracketMatch = this.reverseString(prevChars).match(/\[/);
+    // console.log('startBracketMatch: ', startBracketMatch);
+    let startBracketIndex: number = -1;
+    if (typeof startBracketMatch?.index === 'number') {
+      startBracketIndex = this.pos.ch - (startBracketMatch.index + 1);
+      // console.log('startBracketIndex: ', startBracketIndex);
+    }
+
+    const afterChars = this.getCurrentLine().slice(this.pos.ch);
+    // console.log('afterChars: ', afterChars);
+    const endBracketMatch = afterChars.match(/]/);
+    // console.log('endBracketMatch: ', endBracketMatch);
+    let endBracketIndex: number = -1;
+    if (typeof endBracketMatch?.index === 'number') {
+      endBracketIndex = this.pos.ch + endBracketMatch.index;
+      // console.log('endBracketIndex: ', endBracketIndex);
+    }
+
+    if (startBracketIndex >= 0 && endBracketIndex >= 0) {
+      this.doc.replaceRange(
+        `[${noteName}](/notes/${noteId})`,
+        { line: this.pos.line, ch: startBracketIndex },
+        { line: this.pos.line, ch: endBracketIndex + 1 },
+      );
+    }
+  }
+
+  hideHints() {
+    this.isHintsDisplayed = false;
+    new EventDispatcher('editor-hints:hide').dispatch();
+  }
+
+  showHints() {
+    // console.log('showHints() > this.pos: ', this.pos);
+    // console.log('showHints() > this.getPrevChars(): ', this.getPrevChars());
+    const linkTitle = this.symbolValue(this.getPrevChars(), '[');
+    console.log('showHints() > linkTitle: ', linkTitle);
+    // console.log('showHints() > this.isComposing: ', this.isComposing);
 
     if (!this.isComposing && linkTitle) {
       axios
@@ -187,7 +229,7 @@ export default class extends Controller {
           // console.log('hintsHtml: ', hintsHtml);
           this.hintsTarget.innerHTML = hintsHtml;
           this.isHintsDisplayed = true;
-          new EventDispatcher('editor-hints:show').dispatch();
+          new EventDispatcher('editor-hints:show', { linkTitle }).dispatch();
 
           const cursorCoords = this.cm.cursorCoords(false, 'window');
           // console.log('cursorCoords: ', cursorCoords);

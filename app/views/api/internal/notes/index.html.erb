@@ -1,4 +1,4 @@
-<ul class="list-group">
+<ul class="c-editor-hints list-group">
   <% @note_entities.each do |note_entity| %>
     <li
       class="list-group-item"
@@ -13,8 +13,9 @@
   <li
     class="list-group-item"
     data-target="editor-hints.hint"
+    data-create-new-note="true"
   >
     <i class="fas fa-plus mr-1"></i>
-    <%= t "messages.edit_note.create_new_note" %>
+    <%= t "messages.edit_note.create_new_note_html" %>
   </li>
 </ul>

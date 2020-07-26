@@ -7,10 +7,14 @@ module Api
 
       def index
         @note_entities = InternalApi::NoteList::FetchNotesRepository.new(graphql_client: graphql_client).call(q: params[:q])
+      end
 
-        if @note_entities.blank?
-          head :ok
-        end
+      def create
+        note_entity, mutation_error_entities = CreateNoteRepository.
+          new(graphql_client: graphql_client).
+          call(params: { body: params[:note_name] })
+
+        render json: { database_id: note_entity.database_id, title: note_entity.title }
       end
     end
   end

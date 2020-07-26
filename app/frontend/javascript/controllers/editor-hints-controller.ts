@@ -2,10 +2,11 @@ import { Controller } from 'stimulus';
 import { EventDispatcher } from '../utils/event-dispatcher';
 
 export default class extends Controller {
-  static targets = ['hint'];
+  static targets = ['hint', 'newNoteName'];
 
   selectedHintIndex!: number;
   hintTargets!: [HTMLElement];
+  newNoteNameTarget!: HTMLElement;
 
   initialize() {
     // console.log('hints!');
@@ -36,8 +37,13 @@ export default class extends Controller {
 
       const selectedNoteId = selectedHintElm.dataset.noteId;
       const selectedNoteTitle = selectedHintElm.dataset.noteTitle;
-      if (code === 'Enter' && selectedNoteId) {
-        new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteTitle }).dispatch();
+      const createNewNote = selectedHintElm.dataset.createNewNote;
+      if (code === 'Enter') {
+        if (selectedNoteId && selectedNoteTitle) {
+          new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteTitle }).dispatch();
+        } else if (createNewNote) {
+          new EventDispatcher('editor:create-new-note', { newNoteName: this.newNoteNameTarget.innerText }).dispatch();
+        }
         event.preventDefault();
       }
     });
@@ -46,8 +52,11 @@ export default class extends Controller {
       this.element.classList.add('d-none');
     });
 
-    document.addEventListener('editor-hints:show', (_event: any) => {
+    document.addEventListener('editor-hints:show', (event: any) => {
+      const newNoteName = event.detail.linkTitle;
+
       this.element.classList.remove('d-none');
+      this.newNoteNameTarget.innerText = newNoteName;
     });
   }
 }
