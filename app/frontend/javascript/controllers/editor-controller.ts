@@ -1,4 +1,3 @@
-import axios from 'axios';
 import CodeMirror, { Doc, Editor, EditorFromTextArea, Position } from 'codemirror';
 import { Controller } from 'stimulus';
 
@@ -9,7 +8,7 @@ import { EventDispatcher } from '../utils/event-dispatcher';
 export default class extends Controller {
   static targets = ['hints', 'textArea'];
 
-  hintsTarget!: HTMLElement;
+  element!: HTMLElement;
   textAreaTarget!: HTMLTextAreaElement;
   isHintsDisplayed!: boolean;
   isComposing!: boolean;
@@ -71,7 +70,7 @@ export default class extends Controller {
       },
 
       Esc: () => {
-        console.log('esc!');
+        // console.log('esc!');
         if (this.isHintsDisplayed) {
           this.hideHints();
         }
@@ -79,7 +78,7 @@ export default class extends Controller {
     });
 
     this.cm.on('change', (cm: Editor, changeObj: any) => {
-      console.log('change!');
+      // console.log('change!');
       this.cm = cm;
       this.doc = this.cm.getDoc();
       this.pos = this.doc.getCursor();
@@ -139,24 +138,11 @@ export default class extends Controller {
       this.hideHints();
     });
 
-    document.addEventListener('editor:create-new-note', (event: any) => {
-      const { newNoteName } = event.detail;
-      console.log('newNoteName: ', newNoteName);
+    document.addEventListener('editor:created-new-note', (event: any) => {
+      const { noteId, noteName } = event.detail;
 
-      axios
-        .post('/api/internal/notes', {
-          note_name: newNoteName,
-        })
-        .then((res) => {
-          const noteId = res.data.database_id;
-          const noteName = res.data.name;
-
-          this.replaceBracketsWithNoteLink(noteId, noteName);
-          this.hideHints();
-        })
-        .catch((err) => {
-          console.log('err: ', err);
-        });
+      this.replaceBracketsWithNoteLink(noteId, noteName);
+      this.hideHints();
     });
   }
 
@@ -221,33 +207,14 @@ export default class extends Controller {
     // console.log('showHints() > this.pos: ', this.pos);
     // console.log('showHints() > this.getPrevChars(): ', this.getPrevChars());
     const linkName = this.symbolValue(this.getPrevChars(), '[');
-    console.log('showHints() > linkName: ', linkName);
+    // console.log('showHints() > linkName: ', linkName);
+
     // console.log('showHints() > this.isComposing: ', this.isComposing);
-
     if (!this.isComposing && linkName) {
-      axios
-        .get('/api/internal/notes', {
-          params: {
-            q: linkName,
-          },
-        })
-        .then((res) => {
-          const hintsHtml = res.data ? res.data : null;
-          // console.log('hintsHtml: ', hintsHtml);
-          this.hintsTarget.innerHTML = hintsHtml;
-          this.isHintsDisplayed = true;
-          new EventDispatcher('editor-hints:show', { linkName }).dispatch();
+      const cursorCoords = this.cm.cursorCoords(false, 'window');
 
-          const cursorCoords = this.cm.cursorCoords(false, 'window');
-          // console.log('cursorCoords: ', cursorCoords);
-          this.hintsTarget.style.left = `${cursorCoords.left - 10}px`;
-          this.hintsTarget.style.top = `${cursorCoords.top + 25}px`;
-          // const bracketStartCoords = cm.charCoords(bracketStartPos);
-          // console.log('bracketStartCoords: ', bracketStartCoords);
-        })
-        .catch((err) => {
-          console.log('err: ', err);
-        });
+      this.isHintsDisplayed = true;
+      new EventDispatcher('editor-hints:show', { linkName, cursorCoords }).dispatch();
     }
   }
 }

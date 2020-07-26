@@ -1,9 +1,11 @@
+import axios from 'axios';
 import { Controller } from 'stimulus';
 import { EventDispatcher } from '../utils/event-dispatcher';
 
 export default class extends Controller {
   static targets = ['hint', 'newNoteName'];
 
+  element!: HTMLElement;
   selectedHintIndex!: number;
   hintTargets!: [HTMLElement];
   newNoteNameTarget!: HTMLElement;
@@ -42,8 +44,23 @@ export default class extends Controller {
         if (selectedNoteId && selectedNoteName) {
           new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteName }).dispatch();
         } else if (createNewNote) {
-          new EventDispatcher('editor:create-new-note', { newNoteName: this.newNoteNameTarget.innerText }).dispatch();
+          const newNoteName = this.newNoteNameTarget.innerText;
+
+          axios
+            .post('/api/internal/notes', {
+              note_name: newNoteName,
+            })
+            .then((res: any) => {
+              const noteId = res.data.database_id;
+              const noteName = res.data.name;
+
+              new EventDispatcher('editor:created-new-note', { noteId, noteName }).dispatch();
+            })
+            .catch((err) => {
+              console.log('err: ', err);
+            });
         }
+
         event.preventDefault();
       }
     });
@@ -53,10 +70,29 @@ export default class extends Controller {
     });
 
     document.addEventListener('editor-hints:show', (event: any) => {
-      const newNoteName = event.detail.linkName;
+      const { linkName, cursorCoords } = event.detail;
+      // console.log('cursorCoords: ', cursorCoords);
 
-      this.element.classList.remove('d-none');
-      this.newNoteNameTarget.innerText = newNoteName;
+      axios
+        .get('/api/internal/notes', {
+          params: {
+            q: linkName,
+          },
+        })
+        .then((res: any) => {
+          const hintsHtml = res.data ? res.data : null;
+          // console.log('hintsHtml: ', hintsHtml);
+          this.element.innerHTML = hintsHtml;
+          this.newNoteNameTarget.innerText = linkName;
+
+          this.element.style.left = `${cursorCoords.left - 10}px`;
+          this.element.style.top = `${cursorCoords.top + 25}px`;
+
+          this.element.classList.remove('d-none');
+        })
+        .catch((err: any) => {
+          console.log('err: ', err);
+        });
     });
   }
 }
