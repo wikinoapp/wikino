@@ -9,8 +9,8 @@ user_2.confirm
 
 
 puts "Creating notes..."
-note_1 = user_1.notes.where(name: "Note 1").first_or_create!(body: "This is the Note 1.")
-note_2 = user_1.notes.where(name: "Note 2").first_or_create!(body: "This is the Note 2.")
+note_1 = user_1.notes.where(title: "Note 1").first_or_create!(body: "This is the Note 1.")
+note_2 = user_1.notes.where(title: "Note 2").first_or_create!(body: "This is the Note 2.")
 
 
 puts "Creating references..."

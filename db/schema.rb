@@ -19,13 +19,13 @@ ActiveRecord::Schema.define(version: 1) do
 
   create_table "notes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
-    t.citext "name", default: "", null: false
+    t.citext "title", default: "", null: false
     t.text "body", default: "", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["created_at"], name: "index_notes_on_created_at"
     t.index ["updated_at"], name: "index_notes_on_updated_at"
-    t.index ["user_id", "name"], name: "index_notes_on_user_id_and_name", unique: true
+    t.index ["user_id", "title"], name: "index_notes_on_user_id_and_title", unique: true
     t.index ["user_id"], name: "index_notes_on_user_id"
   end
 

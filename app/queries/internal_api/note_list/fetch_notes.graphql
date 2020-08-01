@@ -7,7 +7,7 @@ query($q: String) {
     ) {
       nodes {
         databaseId
-        name
+        title
       }
     }
   }

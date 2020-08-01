@@ -2,7 +2,7 @@
 
 module Mutations
   class CreateNote < Mutations::Base
-    argument :body, String, required: true
+    argument :body, String, required: false
 
     field :note, Types::Objects::NoteType, null: true
     field :errors, [Types::Objects::MutationErrorType], null: false
@@ -13,7 +13,7 @@ module Mutations
       note = viewer.notes.new(
         body: body
       )
-      note.set_name!
+      note.set_title!
 
       unless note.valid?
         return {

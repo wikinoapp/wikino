@@ -10,7 +10,7 @@
   <% @note_entities.each do |note_entity| %>
     <li>
       <%= link_to note_detail_path(note_id: note_entity.database_id) do %>
-        <%= note_entity.name %>
+        <%= note_entity.title %>
       <% end %>
     </li>
   <% end %>

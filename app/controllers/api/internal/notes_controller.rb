@@ -12,9 +12,9 @@ module Api
       def create
         note_entity, mutation_error_entities = CreateNoteRepository.
           new(graphql_client: graphql_client).
-          call(params: { body: params[:note_name] })
+          call(params: { body: params[:note_title] })
 
-        render json: { database_id: note_entity.database_id, name: note_entity.name }
+        render json: { database_id: note_entity.database_id, title: note_entity.title }
       end
     end
   end

@@ -44,17 +44,17 @@ export default class extends Controller {
         if (selectedNoteId && selectedNoteName) {
           new EventDispatcher('editor:select-hint', { selectedNoteId, selectedNoteName }).dispatch();
         } else if (createNewNote) {
-          const newNoteName = this.newNoteNameTarget.innerText;
+          const newNoteTitle = this.newNoteNameTarget.innerText;
 
           axios
             .post('/api/internal/notes', {
-              note_name: newNoteName,
+              note_title: newNoteTitle,
             })
             .then((res: any) => {
               const noteId = res.data.database_id;
-              const noteName = res.data.name;
+              const noteTitle = res.data.title;
 
-              new EventDispatcher('editor:created-new-note', { noteId, noteName }).dispatch();
+              new EventDispatcher('editor:created-new-note', { noteId, noteTitle }).dispatch();
             })
             .catch((err) => {
               console.log('err: ', err);

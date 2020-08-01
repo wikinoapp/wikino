@@ -8,7 +8,7 @@ mutation (
   ) {
     note {
       databaseId
-      name
+      title
     }
 
     errors {
