@@ -10,7 +10,7 @@ services:
       - .:/nonoto
       - node_modules_vol:/nonoto/node_modules
     ports:
-      - 8081:8080
+      - 8081:8081
   postgresql:
     image: postgres:12.3-alpine
     ports:

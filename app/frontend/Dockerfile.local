@@ -15,4 +15,4 @@ WORKDIR /nonoto/
 COPY package.json package-lock.json ./
 RUN npm install
 
-EXPOSE 8080
+EXPOSE 8081
