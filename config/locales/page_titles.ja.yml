@@ -1,7 +1,7 @@
 ja:
   page_titles:
+    edit_note: "%{note_title}"
     forgot_password: パスワード忘れた？
-    new_note: 新規ノート
     reset_password: パスワードリセット
     sign_in: ログイン
     sign_up: ユーザ登録

@@ -19,11 +19,11 @@ Rails.application.routes.draw do
       match "/sign_up",       via: :post,   as: :user_registration, to: "registrations#create"
     end
 
-    match "/api/internal/notes", via: :get,  as: :internal_api_note_list, to: "api/internal/notes#index"
-    match "/notes",              via: :get,  as: :note_list,              to: "notes#index"
-    match "/notes",              via: :post, as: :create_note,            to: "notes#create"
-    match "/notes/:note_id",     via: :get,  as: :note_detail,            to: "notes#show", note_id: UUID_FORMAT
-    match "/notes/new",          via: :get,  as: :new_note,               to: "notes#new"
+    match "/api/internal/notes",  via: :get,  as: :internal_api_note_list, to: "api/internal/notes#index"
+    match "/new",                 via: :get,  as: :new_note,               to: "notes#new"
+    match "/notes",               via: :get,  as: :note_list,              to: "notes#index"
+    match "/notes/:note_id",      via: :get,  as: :note_detail,            to: "notes#show", note_id: UUID_FORMAT
+    match "/notes/:note_id/edit", via: :get,  as: :edit_note,              to: "notes#edit", note_id: UUID_FORMAT
   end
 
   constraints(format: "json") do

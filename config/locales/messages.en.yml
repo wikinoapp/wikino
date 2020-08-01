@@ -1,5 +1,7 @@
 en:
   messages:
+    _common:
+      unexpected_error: Sorry, something went wrong. Please try again.
     edit_note:
       create_new_note_html: "Create '<span data-target='editor-hints.newNoteName'></span>' note"
     sign_in:

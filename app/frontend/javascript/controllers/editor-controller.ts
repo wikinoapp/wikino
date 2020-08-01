@@ -8,6 +8,7 @@ import { EventDispatcher } from '../utils/event-dispatcher';
 export default class extends Controller {
   static targets = ['hints', 'textArea'];
 
+  data!: any;
   element!: HTMLElement;
   textAreaTarget!: HTMLTextAreaElement;
   isHintsDisplayed!: boolean;
@@ -30,6 +31,8 @@ export default class extends Controller {
     });
     this.doc = this.cm.getDoc();
     this.pos = this.doc.getCursor();
+
+    this.doc.setValue(this.data.get('noteBody') || '');
 
     this.cm.setOption('extraKeys', {
       Tab: () => {

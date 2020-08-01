@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
 class CreateNoteRepository < ApplicationRepository
-  def call(params:)
-    result = execute(variables: {
-      body: params[:body]
-    })
+  def call(params: {})
+    variables = {}
+
+    if body = params[:body]
+      variables[:body] = body
+    end
+
+    result = execute(variables: variables)
 
     error_nodes = result.dig("data", "createNote", "errors")
     if error_nodes.present?

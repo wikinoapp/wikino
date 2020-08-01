@@ -1,5 +1,5 @@
 mutation (
-  $body: String!
+  $body: String
 ) {
   createNote(
     input: {

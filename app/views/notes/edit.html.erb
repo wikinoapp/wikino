@@ -1,0 +1,15 @@
+<% content_for :page_title, page_title_with_suffix(t("page_titles.edit_note", note_title: @note_entity.title)) %>
+
+<div class="container">
+  <form
+    class="c-editor"
+    data-controller="editor"
+    data-editor-note-body="<%= @note_entity.body %>"
+  >
+    <textarea
+      class="d-none"
+      data-target="editor.textArea"
+    ></textarea>
+    <div class="c-editor__hints" data-controller="editor-hints"></div>
+  </form>
+</div>

@@ -12,28 +12,27 @@ class NotesController < ApplicationController
   end
 
   def show
-    @note_entity = NoteDetail::FetchNoteRepository.
+    note_entity = NoteDetail::FetchNoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
+
+    redirect_to edit_note_path(note_entity.database_id)
   end
 
   def new
-    @note = current_user.notes.new
-  end
-
-  def create
-    note_entity, mutation_error_entities = CreateNoteRepository.new(graphql_client: graphql_client).call(params: note_params)
+    note_entity, mutation_error_entities = CreateNoteRepository.new(graphql_client: graphql_client).call
 
     if mutation_error_entities
-      @note = current_user.notes.new(note_params)
-      mutation_error_entities.each do |error_entity|
-        @note.errors.add(:mutation_error, error_entity.message)
-      end
-
-      return render(:new)
+      return redirect_to root_path, alert: t("messages._common.unexpected_error")
     end
 
-    redirect_to note_detail_path(note_entity.database_id)
+    redirect_to edit_note_path(note_entity.database_id)
+  end
+
+  def edit
+    @note_entity = NoteDetail::FetchNoteRepository.
+      new(graphql_client: graphql_client).
+      call(database_id: params[:note_id])
   end
 
   private

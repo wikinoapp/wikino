@@ -29,10 +29,9 @@ class Note < ApplicationRecord
   has_many :referencing_references, class_name: "Reference", dependent: :destroy, foreign_key: :note_id
   has_many :referencing_notes, class_name: "Note", through: :referencing_references
 
-  validates :title, presence: true
-  validates :body, presence: true
+  validates :title, uniqueness: { scope: :user_id }
 
   def set_title!
-    self.title = body&.split("\n")&.first&.strip
+    self.title = body.split("\n").first&.strip || "No Title - #{Time.zone.now.strftime('%Y-%m-%d %H:%M:%S.%L UTC')}"
   end
 end

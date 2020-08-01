@@ -7,11 +7,11 @@ module Mutations
     field :note, Types::Objects::NoteType, null: true
     field :errors, [Types::Objects::MutationErrorType], null: false
 
-    def resolve(body:)
+    def resolve(body: nil)
       viewer = context[:viewer]
 
       note = viewer.notes.new(
-        body: body
+        body: body || ""
       )
       note.set_title!
 

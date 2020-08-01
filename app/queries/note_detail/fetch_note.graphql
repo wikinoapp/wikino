@@ -1,6 +1,7 @@
 query($databaseId: String!) {
   viewer {
     note(databaseId: $databaseId) {
+      databaseId
       title
       body
     }
