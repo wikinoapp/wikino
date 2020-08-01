@@ -16,6 +16,7 @@ development:
 test:
   <<: *default
   host: <%= ENV.fetch("POSTGRES_HOST", "0.0.0.0") %>
+  port: 5433
   username: postgres
   password:
   database: nonoto_test
