@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module NoteDetail
+module EditNote
   class FetchNoteRepository < ApplicationRepository
     def call(database_id:)
       result = execute(variables: { databaseId: database_id })

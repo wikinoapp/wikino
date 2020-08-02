@@ -9,12 +9,22 @@ module Api
         @note_entities = InternalApi::NoteList::FetchNotesRepository.new(graphql_client: graphql_client).call(q: params[:q])
       end
 
-      def create
-        note_entity, mutation_error_entities = CreateNoteRepository.
+      def update
+        note_entity = UpdateNote::FetchNoteRepository.
           new(graphql_client: graphql_client).
-          call(params: { body: params[:note_title] })
+          call(database_id: params[:note_id])
 
-        render json: { database_id: note_entity.database_id, title: note_entity.title }
+        updated_note_entity, mutation_error_entities = UpdateNoteRepository.
+          new(graphql_client: graphql_client).
+          call(id: note_entity.id, body: note_params[:body])
+
+        render json: { updated_at: updated_note_entity.updated_at }
+      end
+
+      private
+
+      def note_params
+        params.require(:note).permit(:body)
       end
     end
   end

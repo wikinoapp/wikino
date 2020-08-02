@@ -27,7 +27,7 @@ Rails.application.routes.draw do
   end
 
   constraints(format: "json") do
-    match "/api/internal/notes", via: :post, to: "api/internal/notes#create"
+    match "/api/internal/notes/:note_id", via: :patch, to: "api/internal/notes#update"
 
     if Rails.env.development?
       match "/api/local/graphql", via: :post, as: :local_graphql_api, to: "api/local/graphql#execute"

@@ -21,6 +21,7 @@
     "codemirror": "latest",
     "core-js": "latest",
     "jquery": "latest",
+    "lodash": "latest",
     "popper.js": "latest",
     "postcss-smart-import": "latest",
     "stimulus": "latest",

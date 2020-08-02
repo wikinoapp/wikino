@@ -1,15 +1,42 @@
 <% content_for :page_title, page_title_with_suffix(t("page_titles.edit_note", note_title: @note_entity.title)) %>
 
-<div class="container">
-  <form
-    class="c-editor"
-    data-controller="editor"
-    data-editor-note-body="<%= @note_entity.body %>"
-  >
-    <textarea
-      class="d-none"
-      data-target="editor.textArea"
-    ></textarea>
-    <div class="c-editor__hints" data-controller="editor-hints"></div>
-  </form>
+<div class="container-fluid py-3">
+  <div class="row">
+    <div class="col">
+      <div
+        class="c-note-time text-right"
+        data-controller="note-time"
+        data-note-time-init-time="<%= @note_entity.updated_at %>"
+      ></div>
+
+      <form
+        class="c-editor"
+        data-controller="editor"
+        data-editor-note-database-id="<%= @note_entity.database_id %>"
+        data-editor-note-body="<%= @note_entity.body %>"
+      >
+        <textarea
+          class="d-none"
+          data-target="editor.textArea"
+        ></textarea>
+
+        <div class="c-editor__hints" data-controller="editor-hints"></div>
+      </form>
+    </div>
+
+    <div class="col">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="#">
+            <%= t "nouns.links" %>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <%= t "nouns.preview" %>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>

@@ -12,7 +12,7 @@ class NotesController < ApplicationController
   end
 
   def show
-    note_entity = NoteDetail::FetchNoteRepository.
+    note_entity = EditNote::FetchNoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
 
@@ -30,7 +30,7 @@ class NotesController < ApplicationController
   end
 
   def edit
-    @note_entity = NoteDetail::FetchNoteRepository.
+    @note_entity = EditNote::FetchNoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
   end

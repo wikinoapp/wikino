@@ -42,11 +42,15 @@ class NonotoSchema < GraphQL::Schema
 
       user = query_ctx[:viewer]
 
+      unless user
+        raise "Viewer not found in context: #{query_ctx.inspect}"
+      end
+
       case resource_type
       when "Note"
         user.notes
       else
-        raise "Unexpected resource_type: #{resource_type}"
+        raise "Unexpected resource_type: #{resource_type.inspect}"
       end
     end
   end

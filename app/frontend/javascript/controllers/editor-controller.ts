@@ -1,4 +1,6 @@
+import axios from 'axios';
 import CodeMirror, { Doc, Editor, EditorFromTextArea, Position } from 'codemirror';
+import debounce from 'lodash/debounce';
 import { Controller } from 'stimulus';
 
 import 'codemirror/mode/gfm/gfm';
@@ -16,8 +18,13 @@ export default class extends Controller {
   cm!: Editor;
   pos!: Position;
   doc!: Doc;
+  noteDatabaseId!: string;
+  isSaving!: boolean;
 
   initialize() {
+    this.noteDatabaseId = this.data.get('noteDatabaseId');
+    this.isSaving = false;
+
     this.cm = CodeMirror.fromTextArea(this.textAreaTarget, {
       mode: {
         name: 'gfm',
@@ -86,6 +93,16 @@ export default class extends Controller {
       this.doc = this.cm.getDoc();
       this.pos = this.doc.getCursor();
     });
+
+    this.cm.on(
+      'change',
+      debounce((cm: Editor, changeObj: any) => {
+        console.log('debounced change');
+        if (!this.isSaving) {
+          this.saveNote();
+        }
+      }, 300),
+    );
 
     this.cm.on('inputRead', (cm: Editor, changeObj: any) => {
       this.cm = cm;
@@ -219,5 +236,29 @@ export default class extends Controller {
       this.isHintsDisplayed = true;
       new EventDispatcher('editor-hints:show', { linkName, cursorCoords }).dispatch();
     }
+  }
+
+  saveNote() {
+    console.log('this.doc.getValue(): ', this.doc.getValue());
+
+    this.isSaving = true;
+
+    axios
+      .patch(`/api/internal/notes/${this.noteDatabaseId}`, {
+        note: {
+          body: this.doc.getValue(),
+        },
+      })
+      .then((res: any) => {
+        const updatedAt = res.data.updated_at;
+
+        new EventDispatcher('note-time:update-time', { updatedAt }).dispatch();
+      })
+      .catch((err) => {
+        console.log('err: ', err);
+      })
+      .then(() => {
+        this.isSaving = false;
+      });
   }
 }
