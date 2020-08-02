@@ -2,10 +2,6 @@
 
 <h1>Hi, <%= current_user.email %>!</h1>
 
-<%= link_to t("nouns.sign_out"), sign_out_path, method: :delete %>
-
-<%= link_to t("page_titles.new_note"), new_note_path %>
-
 <ul>
   <% @note_entities.each do |note_entity| %>
     <li>
