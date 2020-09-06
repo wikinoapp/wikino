@@ -1,29 +1,11 @@
 import { deleteCharBackward, deleteCharForward } from '@codemirror/next/commands';
-import { EditorSelection, EditorState, IndentContext, StateCommand, Transaction } from '@codemirror/next/state';
+import { EditorSelection, EditorState, IndentContext, StateCommand } from '@codemirror/next/state';
 import { Line, Text } from '@codemirror/next/text';
 import { KeyBinding } from '@codemirror/next/view';
 import { NodeProp } from 'lezer-tree';
 
-// export const withListComplement = (command: ({ state, dispatch }: any) => boolean): StateCommand => {
-//   return ({ state, dispatch }): boolean => {
-//     const changes = state.changeByRange(({ from, to }) => {
-//       console.log(`from: ${from}, to: ${to}`);
-//       let line = state.doc.lineAt(from);
-//       console.log('line: ', line);
-//
-//       return {
-//         changes: { from, to: to, insert: Text.of(['- ']) },
-//         range: EditorSelection.cursor(from + 2),
-//       };
-//     });
-//
-//     const tr = state.update(changes, { scrollIntoView: true });
-//     dispatch(tr);
-//     command({ state: tr.state, dispatch });
-//     return true;
-//   };
-// };
-
+// Original:
+// https://github.com/codemirror/codemirror.next/blob/469db41099a5dff31aca59e79dfb902b111a1acc/commands/src/commands.ts#L481-L489
 function isBetweenBrackets(state: EditorState, pos: number): { from: number; to: number } | null {
   if (/\(\)|\[\]|\{\}/.test(state.sliceDoc(pos - 1, pos + 1))) return { from: pos, to: pos };
   let context = state.tree.resolve(pos);
@@ -42,6 +24,8 @@ function isBetweenBrackets(state: EditorState, pos: number): { from: number; to:
   return null;
 }
 
+// Original:
+// https://github.com/codemirror/codemirror.next/blob/469db41099a5dff31aca59e79dfb902b111a1acc/commands/src/commands.ts#L467-L473
 function getIndentation(cx: IndentContext, pos: number): number {
   for (let f of cx.state.facet(EditorState.indentation)) {
     let result = f(cx, pos);
@@ -53,7 +37,6 @@ function getIndentation(cx: IndentContext, pos: number): number {
 function listString(line: Line) {
   const lineString = line.doc.sliceString(line.from, line.to).trim();
   const firstChar = lineString.charAt(0);
-  // console.log('firstChar: ', firstChar);
 
   if (firstChar === '-' || firstChar === '*') {
     return `${firstChar} `;
@@ -68,15 +51,12 @@ function listString(line: Line) {
 
 function isListBlank(line: Line) {
   const lineString = line.doc.sliceString(line.from, line.to).trim();
-  // console.log('lineString: ', lineString);
+
   return /^(\-|\*|(1\.))$/.test(lineString);
 }
 
-/// Replace the selection with a newline and indent the newly created
-/// line(s). If the current line consists only of whitespace, this
-/// will also delete that whitespace. When the cursor is between
-/// matching brackets, an additional newline will be inserted after
-/// the cursor.
+// Original:
+// https://github.com/codemirror/codemirror.next/blob/469db41099a5dff31aca59e79dfb902b111a1acc/commands/src/commands.ts#L496-L514
 const insertNewlineAndIndent: StateCommand = ({ state, dispatch }): boolean => {
   let changes = state.changeByRange(({ from, to }) => {
     let cx = new IndentContext(state, { simulateBreak: from });
@@ -90,24 +70,27 @@ const insertNewlineAndIndent: StateCommand = ({ state, dispatch }): boolean => {
     }
 
     let insert = [''];
-    console.log('line: ', line);
-    console.log(`from: ${from}, to: ${to}, indent: ${indent}, insert: ${insert}`);
-    let lineStr = listString(line);
+
     if (isListBlank(line)) {
       insert.push('');
+
       return {
         changes: { from: line.from, to: to, insert: Text.of(insert) },
         range: EditorSelection.cursor(line.from + 1),
       };
     } else {
+      const lineStr = listString(line);
       insert.push(`${state.indentString(indent)}${lineStr}`);
+
       return {
         changes: { from, to, insert: Text.of(insert) },
         range: EditorSelection.cursor(from + 1 + indent + lineStr.length),
       };
     }
   });
+
   dispatch(state.update(changes, { scrollIntoView: true }));
+
   return true;
 };
 
