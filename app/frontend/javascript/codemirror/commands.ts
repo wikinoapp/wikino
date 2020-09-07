@@ -1,4 +1,4 @@
-import { deleteCharBackward, deleteCharForward } from '@codemirror/next/commands';
+import { deleteCharBackward, deleteCharForward, indentLess, indentMore } from '@codemirror/next/commands';
 import { EditorSelection, EditorState, IndentContext, StateCommand } from '@codemirror/next/state';
 import { Line, Text } from '@codemirror/next/text';
 import { KeyBinding } from '@codemirror/next/view';
@@ -98,4 +98,6 @@ export const nonotoKeymap: readonly KeyBinding[] = [
   { key: 'Enter', run: insertNewlineAndIndent },
   { key: 'Backspace', run: deleteCharBackward },
   { key: 'Delete', run: deleteCharForward },
+  { key: 'Tab', run: indentMore, preventDefault: true },
+  { key: 'Shift-Tab', run: indentLess, preventDefault: true },
 ];
