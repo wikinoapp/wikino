@@ -4,6 +4,7 @@ query($databaseId: String!) {
       databaseId
       title
       body
+      bodyHtml
       updatedAt
     }
   }

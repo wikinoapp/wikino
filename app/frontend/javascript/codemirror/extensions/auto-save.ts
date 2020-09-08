@@ -22,7 +22,9 @@ export function autoSave(noteDatabaseId: string): Extension {
             },
           })
           .then((res: any) => {
-            new EventDispatcher('note-time:update-time', { updatedAt: res.data.updated_at }).dispatch();
+            const { bodyHtml, updatedAt } = res.data;
+            new EventDispatcher('note-time:update-time', { updatedAt }).dispatch();
+            new EventDispatcher('note-preview:update-preview', { bodyHtml }).dispatch();
           })
           .catch((err) => {
             console.log('err: ', err);

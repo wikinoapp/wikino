@@ -26,6 +26,11 @@
     </div>
 
     <div class="col">
+      <div
+        data-controller="note-preview"
+      >
+        <%= @note_entity.body_html.html_safe %>
+      </div>
     </div>
   </div>
 </div>

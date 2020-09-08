@@ -18,7 +18,10 @@ module Api
           new(graphql_client: graphql_client).
           call(id: note_entity.id, body: note_params[:body])
 
-        render json: { updated_at: updated_note_entity.updated_at }
+        render json: {
+          bodyHtml: updated_note_entity.body_html,
+          updatedAt: updated_note_entity.updated_at
+        }
       end
 
       private

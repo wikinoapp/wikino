@@ -5,6 +5,7 @@ class NoteEntity < ApplicationEntity
   attribute? :database_id, Types::String
   attribute? :title, Types::String
   attribute? :body, Types::String
+  attribute? :body_html, Types::String
   attribute? :updated_at, Types::Params::Time
 
   def self.from_node(note_node)
@@ -24,6 +25,10 @@ class NoteEntity < ApplicationEntity
 
     if body = note_node["body"]
       attrs[:body] = body
+    end
+
+    if body_html = note_node["bodyHtml"]
+      attrs[:body_html] = body_html
     end
 
     if updated_at = note_node["updatedAt"]
