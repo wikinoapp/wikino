@@ -5,6 +5,7 @@ import { EditorView, keymap } from '@codemirror/next/view';
 import { Controller } from 'stimulus';
 
 import { nonotoKeymap } from '../codemirror/commands';
+import { autoSave } from '../codemirror/extensions/auto-save';
 
 export default class extends Controller {
   element!: HTMLElement;
@@ -19,7 +20,12 @@ export default class extends Controller {
     const editorView = new EditorView({
       state: EditorState.create({
         doc: this.noteBody,
-        extensions: [closeBrackets(), history(), keymap([...closeBracketsKeymap, ...historyKeymap, ...nonotoKeymap])],
+        extensions: [
+          autoSave(this.noteDatabaseId),
+          closeBrackets(),
+          history(),
+          keymap([...closeBracketsKeymap, ...historyKeymap, ...nonotoKeymap]),
+        ],
       }),
     });
 
