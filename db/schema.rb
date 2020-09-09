@@ -21,6 +21,7 @@ ActiveRecord::Schema.define(version: 1) do
     t.uuid "user_id", null: false
     t.citext "title", default: "", null: false
     t.text "body", default: "", null: false
+    t.text "body_html", default: "", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["created_at"], name: "index_notes_on_created_at"

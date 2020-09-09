@@ -25,6 +25,7 @@ class HelloWorld < ActiveRecord::Migration[6.0]
       t.references :user, null: false, foreign_key: true, type: :uuid
       t.citext :title, null: false, default: ""
       t.text :body, null: false, default: ""
+      t.text :body_html, null: false, default: ""
       t.timestamps null: false
     end
     add_index :notes, %i(user_id title), unique: true

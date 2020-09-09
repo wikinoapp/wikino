@@ -11,6 +11,7 @@ module Mutations
     def resolve(id:, body:)
       note = NonotoSchema.object_from_id(id, context)
       note.body = body
+      note.body_html = render_html(body)
       note.set_title!
 
       unless note.valid?
@@ -26,6 +27,16 @@ module Mutations
         note: note,
         errors: []
       }
+    end
+
+    private
+
+    def render_html(body)
+      GitHub::Markup.render_s(
+        GitHub::Markups::MARKUP_MARKDOWN,
+        body,
+        options: { commonmarker_opts: %i(HARDBREAKS) }
+      )
     end
   end
 end
