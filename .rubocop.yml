@@ -29,7 +29,7 @@ Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
 
 Layout/LineLength:
-  Max: 128
+  Max: 150
 
 Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
