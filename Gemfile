@@ -16,6 +16,7 @@ gem "enumerize"
 gem "github-markup"
 gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
 gem "graphql-batch"
+gem "nokogiri"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"

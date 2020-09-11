@@ -364,6 +364,7 @@ DEPENDENCIES
   graphql-batch
   listen
   lograge
+  nokogiri
   pg
   pry-rails
   puma

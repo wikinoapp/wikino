@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  UUID_FORMAT = /[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}/i.freeze
-
   devise_for :users, skip: %i(passwords registrations sessions)
 
   constraints format: "html" do

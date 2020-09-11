@@ -23,7 +23,10 @@ module Mutations
         }
       end
 
-      note.save
+      ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+        note.save!
+        note.link!
+      end
 
       {
         note: note,
