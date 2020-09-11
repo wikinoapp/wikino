@@ -32,12 +32,12 @@ class HelloWorld < ActiveRecord::Migration[6.0]
     add_index :notes, :created_at
     add_index :notes, :updated_at
 
-    create_table :references, id: :uuid do |t|
+    create_table :links, id: :uuid do |t|
       t.references :note, null: false, foreign_key: true, type: :uuid
-      t.references :referencing_note, null: false, foreign_key: { to_table: :notes }, type: :uuid
+      t.references :target_note, null: false, foreign_key: { to_table: :notes }, type: :uuid
       t.timestamps null: false
     end
-    add_index :references, %i(note_id referencing_note_id), unique: true
-    add_index :references, :created_at
+    add_index :links, %i(note_id target_note_id), unique: true
+    add_index :links, :created_at
   end
 end

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "github/markup"
-
 module Types
   module Objects
     class NoteType < Types::Objects::Base
@@ -14,6 +12,8 @@ module Types
       field :body, String, null: false
       field :body_html, String, null: false
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
+      field :links, Types::Objects::LinkType.connection_type, null: false
+      field :backlinks, Types::Objects::BacklinkType.connection_type, null: false
     end
   end
 end

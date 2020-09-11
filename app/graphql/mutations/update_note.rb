@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "github/markup"
+
 module Mutations
   class UpdateNote < Mutations::Base
     argument :id, ID, required: true

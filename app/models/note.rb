@@ -25,10 +25,10 @@
 class Note < ApplicationRecord
   belongs_to :user
 
-  has_many :referenced_references, class_name: "Reference", dependent: :destroy, foreign_key: :referencing_note_id
-  has_many :referenced_notes, class_name: "Note", source: :note, through: :referenced_references
-  has_many :referencing_references, class_name: "Reference", dependent: :destroy, foreign_key: :note_id
-  has_many :referencing_notes, class_name: "Note", through: :referencing_references
+  has_many :backlinks, class_name: "Link", dependent: :destroy, foreign_key: :target_note_id
+  has_many :links, class_name: "Link", dependent: :destroy, foreign_key: :note_id
+  has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
+  has_many :referencing_notes, class_name: "Note", through: :links
 
   validates :title, uniqueness: { scope: :user_id }
 
