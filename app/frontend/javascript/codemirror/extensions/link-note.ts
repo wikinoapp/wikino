@@ -7,12 +7,11 @@ import {
   closeCompletion,
 } from '@codemirror/next/autocomplete';
 import { Extension } from '@codemirror/next/state';
-import { Line, Text } from '@codemirror/next/text';
+import { Line } from '@codemirror/next/text';
 import { EditorView, KeyBinding } from '@codemirror/next/view';
-import debounce from 'lodash/debounce';
 
-import { EventDispatcher } from '../../utils/event-dispatcher';
 import { reverseString } from '../../utils/string';
+import { nonotoConfig } from '../../utils/nonoto-config';
 
 export function linkNote(): Extension {
   return EditorView.inputHandler.of(handleInput);
@@ -25,7 +24,7 @@ function handleInput(view: EditorView, from: number, to: number, insert: string)
   console.log(`from: ${from}, to: ${to}, insert: ${insert}`);
 
   let line = view.state.doc.lineAt(from);
-  console.log('line: ', line);
+  // console.log('line: ', line);
 
   return false;
 }
@@ -89,7 +88,7 @@ function applyCompletion(databaseId: string, title: string) {
     const line = state.doc.lineAt(from);
     const pos = linkStartPos(line, from);
     console.log(`pos: ${pos}`);
-    const text = `[${title}](/notes/${databaseId})`;
+    const text = `[${title}](${nonotoConfig.nonotoUrl}/notes/${databaseId})`;
     view.dispatch(
       state.update({
         changes: { from: pos, to: from + 2, insert: text },

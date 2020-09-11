@@ -8,4 +8,12 @@ module ApplicationHelper
   def page_title_with_suffix(page_title)
     "#{page_title} | Nonoto"
   end
+
+  def nonoto_config
+    config = {
+      nonotoUrl: ENV.fetch("NONOTO_URL"),
+    }.freeze
+
+    javascript_tag "window.NonotoConfig = #{config.to_json.html_safe};"
+  end
 end
