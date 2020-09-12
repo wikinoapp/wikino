@@ -6,7 +6,15 @@ import { EditorView } from '@codemirror/next/view';
 import { reverseString } from '../../utils/string';
 import { nonotoConfig } from '../../utils/nonoto-config';
 
+function isEnclosedLinkSymbols(line: Line, pos: number) {
+  return linkStartPos(line, pos) !== -1 && linkEndPos(line, pos) !== -1;
+}
+
 function linkKeyword(line: Line, pos: number) {
+  if (!isEnclosedLinkSymbols(line, pos)) {
+    return null;
+  }
+
   const str = line.slice(0, pos + 1);
   const found = reverseString(str).match(/^].*\S\[\[/);
 
@@ -34,6 +42,26 @@ function linkStartPos(line: Line, from: number) {
 
   while (i <= chars.length) {
     if (chars[i] === '[' && chars[i + 1] === '[') {
+      return pos - 2;
+    } else {
+      i = i + 1;
+      pos = pos - 1;
+    }
+  }
+
+  return -1;
+}
+
+function linkEndPos(line: Line, from: number) {
+  const chars = line.doc
+    .slice(from - 1, line.to)
+    .toString()
+    .split('');
+  let pos = from;
+  let i = 0;
+
+  while (i <= chars.length) {
+    if (chars[i] === ']' && chars[i + 1] === ']') {
       return pos - 2;
     } else {
       i = i + 1;

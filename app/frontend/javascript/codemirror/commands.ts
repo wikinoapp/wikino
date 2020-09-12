@@ -1,3 +1,4 @@
+import { closeCompletion } from '@codemirror/next/autocomplete';
 import { deleteCharBackward, deleteCharForward, indentLess, indentMore } from '@codemirror/next/commands';
 import { EditorSelection, EditorState, IndentContext, StateCommand } from '@codemirror/next/state';
 import { Line, Text } from '@codemirror/next/text';
@@ -100,4 +101,5 @@ export const nonotoKeymap: readonly KeyBinding[] = [
   { key: 'Delete', run: deleteCharForward },
   { key: 'Tab', run: indentMore, preventDefault: true },
   { key: 'Shift-Tab', run: indentLess, preventDefault: true },
+  { key: 'Escape', run: closeCompletion },
 ];
