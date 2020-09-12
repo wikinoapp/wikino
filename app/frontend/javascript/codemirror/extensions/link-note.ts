@@ -134,6 +134,7 @@ export async function linkNoteCompletionSource(context: CompletionContext): Prom
   options.push({
     label: nonotoConfig.i18n.messages.createNoteWithKeyword.replace('__keyword__', keyword),
     apply: await createNote(keyword),
+    boost: -1,
   });
 
   return {
