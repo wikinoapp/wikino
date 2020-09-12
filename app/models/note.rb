@@ -3,13 +3,14 @@
 #
 # Table name: notes
 #
-#  id         :uuid             not null, primary key
-#  body       :text             default(""), not null
-#  body_html  :text             default(""), not null
-#  title      :citext           default(""), not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  user_id    :uuid             not null
+#  id              :uuid             not null, primary key
+#  body            :text             default(""), not null
+#  body_html       :text             default(""), not null
+#  cover_image_url :string
+#  title           :citext           default(""), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  user_id         :uuid             not null
 #
 # Indexes
 #

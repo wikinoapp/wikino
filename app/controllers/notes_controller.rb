@@ -7,7 +7,7 @@ class NotesController < ApplicationController
     @note_entities, @page_info_entity = NoteList::NotesRepository.
       new(graphql_client: graphql_client).
       call(
-        pagination: Pagination.new(before: params[:before], after: params[:after], per: 30)
+        pagination: Pagination.new(before: params[:before], after: params[:after], per: 60)
       )
   end
 

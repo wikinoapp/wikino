@@ -8,6 +8,7 @@ ruby "2.7.1"
 gem "rails", "~> 6.0.0"
 
 gem "activerecord-session_store"
+gem "addressable"
 gem "commonmarker" # Using github-markup
 gem "devise"
 gem "dry-struct"

@@ -1,0 +1,27 @@
+.c-note-card {
+  height: 110px;
+  position: relative;
+
+  &__background-image {
+    filter: brightness(35%);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    z-index: 0;
+  }
+
+  &__title {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    display: -webkit-box;
+    font-size: 0.9rem;
+    overflow: hidden;
+  }
+
+  .card-body {
+    z-index: 1;
+  }
+}

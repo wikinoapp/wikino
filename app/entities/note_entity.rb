@@ -6,6 +6,7 @@ class NoteEntity < ApplicationEntity
   attribute? :title, Types::String
   attribute? :body, Types::String
   attribute? :body_html, Types::String
+  attribute? :cover_image_url, Types::String
   attribute? :updated_at, Types::Params::Time
   attribute? :links, Types::Array.of(LinkEntity)
   attribute? :backlinks, Types::Array.of(LinkEntity)
@@ -31,6 +32,10 @@ class NoteEntity < ApplicationEntity
 
     if body_html = node["bodyHtml"]
       attrs[:body_html] = body_html
+    end
+
+    if cover_image_url = node["coverImageUrl"]
+      attrs[:cover_image_url] = cover_image_url
     end
 
     if updated_at = node["updatedAt"]

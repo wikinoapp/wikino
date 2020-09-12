@@ -1,13 +1,13 @@
 <% content_for :page_title, "Nonoto" %>
 
-<h1>Hi, <%= current_user.email %>!</h1>
+<div class="container py-3">
+  <div class="mb-1 row row-cols-2 row-cols-md-6">
+    <% @note_entities.each do |note_entity| %>
+      <div class="col mb-2 px-1">
+        <%= render NoteCardComponent.new(note_entity: note_entity) %>
+      </div>
+    <% end %>
+  </div>
 
-<ul>
-  <% @note_entities.each do |note_entity| %>
-    <li>
-      <%= link_to note_path(note_entity.database_id) do %>
-        <%= note_entity.title %>
-      <% end %>
-    </li>
-  <% end %>
-</ul>
+  <%= render PaginationComponent.new(page_info_entity: @page_info_entity, resources_path: current_path_with_query) %>
+</div>

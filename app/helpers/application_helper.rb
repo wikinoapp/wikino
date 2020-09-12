@@ -9,6 +9,10 @@ module ApplicationHelper
     "#{page_title} | Nonoto"
   end
 
+  def current_path_with_query
+    [request.path, request.query_string].select(&:present?).join("?")
+  end
+
   def nonoto_config
     config = {
       nonotoUrl: ENV.fetch("NONOTO_URL"),

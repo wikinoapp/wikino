@@ -26,6 +26,7 @@ class HelloWorld < ActiveRecord::Migration[6.0]
       t.citext :title, null: false, default: ""
       t.text :body, null: false, default: ""
       t.text :body_html, null: false, default: ""
+      t.string :cover_image_url
       t.timestamps null: false
     end
     add_index :notes, %i(user_id title), unique: true

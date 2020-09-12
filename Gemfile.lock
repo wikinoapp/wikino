@@ -348,6 +348,7 @@ PLATFORMS
 DEPENDENCIES
   active_record_query_trace
   activerecord-session_store
+  addressable
   annotate
   awesome_print
   better_errors

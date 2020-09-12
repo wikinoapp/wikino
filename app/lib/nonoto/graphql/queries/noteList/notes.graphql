@@ -17,6 +17,7 @@ query($first: Int, $last: Int, $before: String, $after: String) {
       nodes {
         databaseId
         title
+        coverImageUrl
       }
     }
   }

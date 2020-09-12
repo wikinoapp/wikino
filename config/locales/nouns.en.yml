@@ -3,6 +3,8 @@ en:
     dark: Dark
     light: Light
     new_note: New note
+    next_page: Next
+    prev_page: Prev
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up
