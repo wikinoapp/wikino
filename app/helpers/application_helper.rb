@@ -12,6 +12,11 @@ module ApplicationHelper
   def nonoto_config
     config = {
       nonotoUrl: ENV.fetch("NONOTO_URL"),
+      i18n: {
+        messages: {
+          createNoteWithKeyword: t('messages.edit_note.create_note_with_keyword')
+        }
+      }
     }.freeze
 
     javascript_tag "window.NonotoConfig = #{config.to_json.html_safe};"

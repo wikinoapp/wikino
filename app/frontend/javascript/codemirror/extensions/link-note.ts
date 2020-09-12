@@ -1,50 +1,13 @@
 import axios from 'axios';
-import {
-  Completion,
-  CompletionResult,
-  CompletionContext,
-  startCompletion,
-  closeCompletion,
-} from '@codemirror/next/autocomplete';
-import { Extension } from '@codemirror/next/state';
+import { Completion, CompletionResult, CompletionContext } from '@codemirror/next/autocomplete';
 import { Line } from '@codemirror/next/text';
-import { EditorView, KeyBinding } from '@codemirror/next/view';
+import { EditorView } from '@codemirror/next/view';
 
 import { reverseString } from '../../utils/string';
 import { nonotoConfig } from '../../utils/nonoto-config';
 
-export function linkNote(): Extension {
-  return EditorView.inputHandler.of(handleInput);
-}
-
-function handleInput(view: EditorView, from: number, to: number, insert: string) {
-  if (insert !== '[') {
-    return false;
-  }
-  console.log(`from: ${from}, to: ${to}, insert: ${insert}`);
-
-  let line = view.state.doc.lineAt(from);
-  // console.log('line: ', line);
-
-  return false;
-}
-
-function symbolValue(str: string, symbol: string) {
-  const startCharMatches = reverseString(str).match(new RegExp(`^\\S+?\\${symbol}`));
-
-  return startCharMatches ? reverseString(startCharMatches[0]).replace(new RegExp(`\\${symbol}`), '') : null;
-}
-
-function prevString() {}
-
-export const completionKeymap: readonly KeyBinding[] = [
-  { key: '[', run: startCompletion },
-  { key: 'Escape', run: closeCompletion },
-];
-
 function linkKeyword(line: Line, pos: number) {
   const str = line.slice(0, pos + 1);
-  // console.log(`linkKeyword > line.from: ${line.from}, pos: ${pos}, str: ${str}`);
   const found = reverseString(str).match(/^].*\S\[\[/);
 
   return found ? reverseString(found[0].replace(/\[|]/g, '')) : '';
@@ -66,7 +29,6 @@ async function searchNotes(keyword: string) {
 
 function linkStartPos(line: Line, from: number) {
   const chars = reverseString(line.doc.slice(line.from, from).toString()).split('');
-  console.log(`line.from: ${line.from}, from: ${from}, chars: ${chars}`);
   let pos = from;
   let i = 0;
 
@@ -87,8 +49,8 @@ function applyCompletion(databaseId: string, title: string) {
     const { state } = view;
     const line = state.doc.lineAt(from);
     const pos = linkStartPos(line, from);
-    console.log(`pos: ${pos}`);
     const text = `[${title}](${nonotoConfig.nonotoUrl}/notes/${databaseId})`;
+
     view.dispatch(
       state.update({
         changes: { from: pos, to: from + 2, insert: text },
@@ -98,27 +60,57 @@ function applyCompletion(databaseId: string, title: string) {
   };
 }
 
+function createNote(keyword: string) {
+  return async (view: EditorView, completion: Completion, from: number, to: number) => {
+    const { state } = view;
+    const line = state.doc.lineAt(from);
+    const pos = linkStartPos(line, from);
+
+    try {
+      const res = (await axios.post('/api/internal/notes', {
+        keyword,
+      })) as any;
+
+      const { databaseId, title } = res.data;
+
+      const text = `[${title}](${nonotoConfig.nonotoUrl}/notes/${databaseId})`;
+      view.dispatch(
+        state.update({
+          changes: { from: pos, to: from + 2, insert: text },
+          selection: { anchor: pos + text.length },
+        }),
+      );
+    } catch (err) {
+      console.log('err: ', err);
+    }
+  };
+}
+
 export async function linkNoteCompletionSource(context: CompletionContext): Promise<CompletionResult | null> {
   const { state, pos } = context;
   const line = state.doc.lineAt(pos);
   const keyword = linkKeyword(line, pos);
-  console.log(`state: ${state}, pos: ${pos}, keyword: ${keyword}`);
 
   if (!keyword) {
     return null;
   }
 
   const notes = await searchNotes(keyword);
-  console.log('notes: ', notes);
+
+  const options = notes.map((note: any) => {
+    return {
+      label: note.title,
+      apply: applyCompletion(note.databaseId, note.title),
+    };
+  });
+  options.push({
+    label: nonotoConfig.i18n.messages.createNoteWithKeyword.replace('__keyword__', keyword),
+    apply: await createNote(keyword),
+  });
 
   return {
     from: pos,
     to: pos,
-    options: notes.map((note: any) => {
-      return {
-        label: note.title,
-        apply: applyCompletion(note.databaseId, note.title),
-      };
-    }),
+    options,
   };
 }
