@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-  def site_theme
-    cookies[:site_theme]
+  def color_scheme
+    cookies[:color_scheme].presence || "system-default"
   end
 
   def page_title_with_suffix(page_title)

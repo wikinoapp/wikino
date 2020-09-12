@@ -1,5 +1,5 @@
 .c-editor {
-  height: calc(100vh - #{$n-navbar-height});
+  height: calc(100vh - var(--n-navbar-height));
 
   .cm-wrap {
     height: 100%;

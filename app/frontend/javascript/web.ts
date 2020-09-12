@@ -1,5 +1,6 @@
-import axios from 'axios';
 import ujs from '@rails/ujs';
+import axios from 'axios';
+import 'bootstrap/js/dist/dropdown';
 import { Application } from 'stimulus';
 import { definitionsFromContext } from 'stimulus/webpack-helpers';
 import Turbolinks from 'turbolinks';

@@ -1,6 +1,9 @@
 ja:
   nouns:
+    dark: ダーク
+    light: ライト
     new_note: 新規ノート
     sign_in: ログイン
     sign_out: ログアウト
     sign_up: ユーザ登録
+    system_default: 自動

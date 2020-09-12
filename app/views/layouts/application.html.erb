@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
+<html
+  data-appearance-switcher-color-scheme="<%= color_scheme %>"
+  data-controller="appearance-switcher"
+  lang="<%= I18n.locale %>"
+>
   <head>
     <title><%= yield :page_title %></title>
 
@@ -18,12 +22,7 @@
     </script>
     <script data-mutate-approach="sync" crossorigin="anonymous" src="https://kit.fontawesome.com/0099029c12.js" defer></script>
 
-    <% if site_theme == "dark" %>
-      <%= stylesheet_bundle_tag "dark.css", media: "all", "data-turbolinks-track": "reload" %>
-    <% else %>
-      <%= stylesheet_bundle_tag "light.css", media: "all", "data-turbolinks-track": "reload" %>
-    <% end %>
-
+    <%= stylesheet_bundle_tag "web.css", media: "all", "data-turbolinks-track": "reload" %>
     <%= javascript_bundle_tag "web.js", defer: "", "data-turbolinks-track": "reload" %>
   </head>
 

@@ -1,0 +1,17 @@
+:root {
+  @include common-variables;
+
+  &[data-appearance-switcher-color-scheme="light"] {
+    @include light-variables;
+  }
+
+  &[data-appearance-switcher-color-scheme="dark"] {
+    @include dark-variables;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance-switcher-color-scheme="light"]) {
+    @include dark-variables;
+  }
+}

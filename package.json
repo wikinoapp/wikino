@@ -21,6 +21,7 @@
     "bootstrap": "latest",
     "core-js": "latest",
     "jquery": "latest",
+    "js-cookie": "^2.2.1",
     "lezer-tree": "^0.10.0",
     "lodash": "latest",
     "popper.js": "latest",

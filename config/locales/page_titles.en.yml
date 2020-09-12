@@ -1,5 +1,6 @@
 en:
   page_titles:
+    appearance_list: Appearances
     edit_note: "%{note_title}"
     forgot_password: Forgot password?
     reset_password: Reset password
