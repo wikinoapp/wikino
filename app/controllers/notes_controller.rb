@@ -12,11 +12,9 @@ class NotesController < ApplicationController
   end
 
   def show
-    note_entity = EditNote::NoteRepository.
+    @note_entity = EditNote::NoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
-
-    redirect_to edit_note_path(note_entity.database_id)
   end
 
   def new
@@ -26,13 +24,7 @@ class NotesController < ApplicationController
       return redirect_to root_path, alert: t("messages._common.unexpected_error")
     end
 
-    redirect_to edit_note_path(note_entity.database_id)
-  end
-
-  def edit
-    @note_entity = EditNote::NoteRepository.
-      new(graphql_client: graphql_client).
-      call(database_id: params[:note_id])
+    redirect_to note_path(note_entity.database_id)
   end
 
   private

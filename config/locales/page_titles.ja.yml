@@ -1,7 +1,7 @@
 ja:
   page_titles:
     appearance_list: 外観モード
-    edit_note: "%{note_title}"
+    note: "%{note_title}"
     forgot_password: パスワード忘れた？
     reset_password: パスワードリセット
     sign_in: ログイン

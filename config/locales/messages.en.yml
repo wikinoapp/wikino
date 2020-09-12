@@ -2,7 +2,7 @@ en:
   messages:
     _common:
       unexpected_error: Sorry, something went wrong. Please try again.
-    edit_note:
+    note:
       create_note_with_keyword: Create note with '__keyword__'
     sign_in:
       forgot_password: Forgot password?

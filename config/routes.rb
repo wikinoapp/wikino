@@ -21,8 +21,7 @@ Rails.application.routes.draw do
     match "/my/appearance",       via: :get,  as: :appearance,             to: "my/appearances#show"
     match "/new",                 via: :get,  as: :new_note,               to: "notes#new"
     match "/notes",               via: :get,  as: :note_list,              to: "notes#index"
-    match "/notes/:note_id",      via: :get,  as: :note_detail,            to: "notes#show", note_id: UUID_FORMAT
-    match "/notes/:note_id/edit", via: :get,  as: :edit_note,              to: "notes#edit", note_id: UUID_FORMAT
+    match "/notes/:note_id",      via: :get,  as: :note,                   to: "notes#show", note_id: UUID_FORMAT
   end
 
   constraints(format: "json") do

@@ -14,7 +14,7 @@ module ApplicationHelper
       nonotoUrl: ENV.fetch("NONOTO_URL"),
       i18n: {
         messages: {
-          createNoteWithKeyword: t('messages.edit_note.create_note_with_keyword')
+          createNoteWithKeyword: t('messages.note.create_note_with_keyword')
         }
       }
     }.freeze
