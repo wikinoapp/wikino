@@ -4,7 +4,32 @@ query($databaseId: String!) {
       databaseId
       title
       body
+      bodyHtml
       updatedAt
+      links {
+        nodes {
+          note {
+            databaseId
+            title
+            backlinks {
+              nodes {
+                note {
+                  databaseId
+                  title
+                }
+              }
+            }
+          }
+        }
+      }
+      backlinks {
+        nodes {
+          note {
+            databaseId
+            title
+          }
+        }
+      }
     }
   }
 }

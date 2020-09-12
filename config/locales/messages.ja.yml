@@ -3,7 +3,7 @@ ja:
     _common:
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
     edit_note:
-      create_new_note_html: "「<span data-target='editor-hints.newNoteName'></span>」のノートを作成する"
+      create_note_with_keyword: "「__keyword__」のノートを作成する"
     sign_in:
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する

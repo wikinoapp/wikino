@@ -1,0 +1,9 @@
+<% link_entities.each do |link_entity| %>
+  <ul>
+    <li>
+      <%= link_to edit_note_path(note_id: link_entity.note.database_id) do %>
+        <%= link_entity.note.title %>
+      <% end %>
+    </li>
+  </ul>
+<% end %>

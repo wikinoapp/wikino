@@ -9,7 +9,33 @@ mutation (
     }
   ) {
     note {
+      databaseId
+      bodyHtml
       updatedAt
+      links {
+        nodes {
+          note {
+            databaseId
+            title
+            backlinks {
+              nodes {
+                note {
+                  databaseId
+                  title
+                }
+              }
+            }
+          }
+        }
+      }
+      backlinks {
+        nodes {
+          note {
+            databaseId
+            title
+          }
+        }
+      }
     }
 
     errors {

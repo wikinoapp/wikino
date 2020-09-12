@@ -8,12 +8,16 @@ ruby "2.7.1"
 gem "rails", "~> 6.0.0"
 
 gem "activerecord-session_store"
+gem "commonmarker" # Using github-markup
 gem "devise"
 gem "dry-struct"
 gem "email_validator"
 gem "enumerize"
+gem "github-markup"
 gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
 gem "graphql-batch"
+gem "jb"
+gem "nokogiri"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"

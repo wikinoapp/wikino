@@ -3,7 +3,7 @@ en:
     _common:
       unexpected_error: Sorry, something went wrong. Please try again.
     edit_note:
-      create_new_note_html: "Create '<span data-target='editor-hints.newNoteName'></span>' note"
+      create_note_with_keyword: Create note with '__keyword__'
     sign_in:
       forgot_password: Forgot password?
       remember_me: Remember me

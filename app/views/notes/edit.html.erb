@@ -1,42 +1,44 @@
 <% content_for :page_title, page_title_with_suffix(t("page_titles.edit_note", note_title: @note_entity.title)) %>
 
-<div class="container-fluid py-3">
+<div class="container-fluid">
+  <div
+    class="d-none"
+    data-controller="note-preview"
+  >
+    <%= @note_entity.body_html.html_safe %>
+  </div>
   <div class="row">
-    <div class="col">
+    <div class="col-8">
+      <div class="c-editor py-3">
+        <div
+          class="h-100"
+          data-controller="editor"
+          data-editor-note-database-id="<%= @note_entity.database_id %>"
+          data-editor-note-body="<%= @note_entity.body %>"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div class="col-4">
       <div
         class="c-note-time text-right"
         data-controller="note-time"
         data-note-time-init-time="<%= @note_entity.updated_at %>"
       ></div>
+      <h2 class="h4">
+        <%= t "nouns.links" %>
+      </h2>
+      <div data-controller="note-links">
+        <%= render LinksComponent.new(note_entity: @note_entity) %>
+      </div>
 
-      <form
-        class="c-editor"
-        data-controller="editor"
-        data-editor-note-database-id="<%= @note_entity.database_id %>"
-        data-editor-note-body="<%= @note_entity.body %>"
-      >
-        <textarea
-          class="d-none"
-          data-target="editor.textArea"
-        ></textarea>
-
-        <div class="c-editor__hints" data-controller="editor-hints"></div>
-      </form>
-    </div>
-
-    <div class="col">
-      <ul class="nav nav-tabs">
-        <li class="nav-item">
-          <a class="nav-link active" href="#">
-            <%= t "nouns.links" %>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            <%= t "nouns.preview" %>
-          </a>
-        </li>
-      </ul>
+      <h2 class="h4">
+        <%= t "nouns.backlinks" %>
+      </h2>
+      <div data-controller="note-backlinks">
+        <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+      </div>
     </div>
   </div>
 </div>

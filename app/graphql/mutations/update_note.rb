@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "github/markup"
+
 module Mutations
   class UpdateNote < Mutations::Base
     argument :id, ID, required: true
@@ -11,6 +13,7 @@ module Mutations
     def resolve(id:, body:)
       note = NonotoSchema.object_from_id(id, context)
       note.body = body
+      note.body_html = render_html(body)
       note.set_title!
 
       unless note.valid?
@@ -20,12 +23,25 @@ module Mutations
         }
       end
 
-      note.save
+      ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+        note.save!
+        note.link!
+      end
 
       {
         note: note,
         errors: []
       }
+    end
+
+    private
+
+    def render_html(body)
+      GitHub::Markup.render_s(
+        GitHub::Markups::MARKUP_MARKDOWN,
+        body,
+        options: { commonmarker_opts: %i(HARDBREAKS) }
+      )
     end
   end
 end
