@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+json = {
+  note: {
+    bodyHtml: @updated_note_entity.body_html,
+    updatedAt: @updated_note_entity.updated_at
+  },
+  linksHtml: render(LinksComponent.new(note_entity: @updated_note_entity)),
+  backlinksHtml: render(BacklinksComponent.new(link_entities: @updated_note_entity.backlinks))
+}
+
+json

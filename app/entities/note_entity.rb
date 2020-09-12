@@ -7,33 +7,41 @@ class NoteEntity < ApplicationEntity
   attribute? :body, Types::String
   attribute? :body_html, Types::String
   attribute? :updated_at, Types::Params::Time
+  attribute? :links, Types::Array.of(LinkEntity)
+  attribute? :backlinks, Types::Array.of(LinkEntity)
 
-  def self.from_node(note_node)
+  def self.from_node(node)
     attrs = {}
 
-    if id = note_node["id"]
+    if id = node["id"]
       attrs[:id] = id
     end
 
-    if database_id = note_node["databaseId"]
+    if database_id = node["databaseId"]
       attrs[:database_id] = database_id
     end
 
-    if title = note_node["title"]
+    if title = node["title"]
       attrs[:title] = title
     end
 
-    if body = note_node["body"]
+    if body = node["body"]
       attrs[:body] = body
     end
 
-    if body_html = note_node["bodyHtml"]
+    if body_html = node["bodyHtml"]
       attrs[:body_html] = body_html
     end
 
-    if updated_at = note_node["updatedAt"]
+    if updated_at = node["updatedAt"]
       attrs[:updated_at] = updated_at
     end
+
+    link_nodes = node.dig("links", "nodes")
+    attrs[:links] = LinkEntity.from_nodes(link_nodes || [])
+
+    backlink_nodes = node.dig("backlinks", "nodes")
+    attrs[:backlinks] = LinkEntity.from_nodes(backlink_nodes || [])
 
     new attrs
   end

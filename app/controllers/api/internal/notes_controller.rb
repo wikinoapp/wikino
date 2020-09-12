@@ -23,14 +23,9 @@ module Api
           new(graphql_client: graphql_client).
           call(database_id: params[:note_id])
 
-        updated_note_entity, mutation_error_entities = UpdateNoteRepository.
+        @updated_note_entity, mutation_error_entities = UpdateNoteRepository.
           new(graphql_client: graphql_client).
           call(id: note_entity.id, body: note_params[:body])
-
-        render json: {
-          bodyHtml: updated_note_entity.body_html,
-          updatedAt: updated_note_entity.updated_at
-        }
       end
 
       private

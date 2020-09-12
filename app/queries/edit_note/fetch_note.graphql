@@ -6,6 +6,30 @@ query($databaseId: String!) {
       body
       bodyHtml
       updatedAt
+      links {
+        nodes {
+          note {
+            databaseId
+            title
+            backlinks {
+              nodes {
+                note {
+                  databaseId
+                  title
+                }
+              }
+            }
+          }
+        }
+      }
+      backlinks {
+        nodes {
+          note {
+            databaseId
+            title
+          }
+        }
+      }
     }
   }
 }

@@ -59,7 +59,7 @@ class Note < ApplicationRecord
     end
 
     (target_note_ids - referencing_notes.pluck(:id)).uniq.each do |target_note_id|
-      links.first_or_create!(note: self, target_note_id: target_note_id)
+      links.where(note: self, target_note_id: target_note_id).first_or_create!
     end
   end
 end
