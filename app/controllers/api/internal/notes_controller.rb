@@ -6,7 +6,7 @@ module Api
       before_action :authenticate_user!
 
       def index
-        note_entities = InternalApi::NoteList::FetchNotesRepository.new(graphql_client: graphql_client).call(q: params[:q])
+        note_entities = InternalApi::NoteList::NotesRepository.new(graphql_client: graphql_client).call(q: params[:q])
 
         render json: {
           notes: note_entities.map do |note_entity|
@@ -27,7 +27,7 @@ module Api
       end
 
       def update
-        note_entity = UpdateNote::FetchNoteRepository.
+        note_entity = UpdateNote::NoteRepository.
           new(graphql_client: graphql_client).
           call(database_id: params[:note_id])
 

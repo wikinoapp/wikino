@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module NoteList
-  class FetchNotesRepository < ApplicationRepository
+  class NotesRepository < ApplicationRepository
     def call(pagination:)
-      result = execute(variables: {
+      result = query(variables: {
         first: pagination.first,
         last: pagination.last,
         before: pagination.before,

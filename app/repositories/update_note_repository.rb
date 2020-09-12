@@ -2,7 +2,7 @@
 
 class UpdateNoteRepository < ApplicationRepository
   def call(id:, body:)
-    result = execute(variables: {
+    result = mutate(variables: {
       id: id,
       body: body
     })

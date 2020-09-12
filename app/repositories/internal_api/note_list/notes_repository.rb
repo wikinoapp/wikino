@@ -2,9 +2,9 @@
 
 module InternalApi
   module NoteList
-    class FetchNotesRepository < ApplicationRepository
+    class NotesRepository < ApplicationRepository
       def call(q:)
-        result = execute(variables: { q: q || "" })
+        result = query(variables: { q: q || "" })
         data = result.to_h.dig("data", "viewer", "notes")
 
         NoteEntity.from_nodes(data["nodes"])

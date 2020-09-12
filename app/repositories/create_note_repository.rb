@@ -8,7 +8,7 @@ class CreateNoteRepository < ApplicationRepository
       variables[:body] = body
     end
 
-    result = execute(variables: variables)
+    result = mutate(variables: variables)
 
     error_nodes = result.dig("data", "createNote", "errors")
     if error_nodes.present?

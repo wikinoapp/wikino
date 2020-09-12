@@ -4,7 +4,7 @@ class NotesController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    @note_entities, @page_info_entity = NoteList::FetchNotesRepository.
+    @note_entities, @page_info_entity = NoteList::NotesRepository.
       new(graphql_client: graphql_client).
       call(
         pagination: Pagination.new(before: params[:before], after: params[:after], per: 30)
@@ -12,7 +12,7 @@ class NotesController < ApplicationController
   end
 
   def show
-    note_entity = EditNote::FetchNoteRepository.
+    note_entity = EditNote::NoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
 
@@ -30,7 +30,7 @@ class NotesController < ApplicationController
   end
 
   def edit
-    @note_entity = EditNote::FetchNoteRepository.
+    @note_entity = EditNote::NoteRepository.
       new(graphql_client: graphql_client).
       call(database_id: params[:note_id])
   end
