@@ -2,7 +2,7 @@
   "name": "nonoto",
   "private": true,
   "engines": {
-    "node": "12.18.2"
+    "node": "14.15.0"
   },
   "scripts": {
     "webpack:start": "webpack-dev-server",

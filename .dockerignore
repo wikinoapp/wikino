@@ -1,5 +1,6 @@
 .DS_Store
 
+/.devcontainer
 /.dockerignore
 /.env.development.local
 /.git
@@ -8,3 +9,4 @@
 /log
 /node_modules
 /tmp
+/volumes

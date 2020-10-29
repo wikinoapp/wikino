@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "2.7.1"
+ruby "2.7.2"
 
 gem "rails", "~> 6.0.0"
 
@@ -43,8 +43,8 @@ group :development do
   gem "listen" # Using with `rails s` since Rails 5
   gem "rubocop"
   gem "solargraph"
-  gem "spring-commands-rspec", require: false
   gem "spring"
+  gem "spring-commands-rspec", require: false
 end
 
 group :test do
