@@ -1,17 +1,17 @@
 :root {
-  @include common-variables;
+  @include n-common-variables;
 
-  &[data-appearance-switcher-color-scheme="light"] {
-    @include light-variables;
+  &[data-appearance-switcher-color-scheme='light'] {
+    @include n-light-variables;
   }
 
-  &[data-appearance-switcher-color-scheme="dark"] {
-    @include dark-variables;
+  &[data-appearance-switcher-color-scheme='dark'] {
+    @include n-dark-variables;
   }
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-appearance-switcher-color-scheme="light"]) {
-    @include dark-variables;
+  :root:not([data-appearance-switcher-color-scheme='light']) {
+    @include n-dark-variables;
   }
 }

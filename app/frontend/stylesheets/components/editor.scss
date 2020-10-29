@@ -2,6 +2,16 @@
   height: calc(100vh - var(--n-navbar-height));
 
   .cm-wrap {
+    background-color: var(--n-editor-color-bg);
     height: 100%;
+    padding: 1rem;
+  }
+
+  .cm-focused {
+    outline: unset !important;
+  }
+
+  .cm-content {
+    caret-color: var(--n-editor-color-caret) !important;
   }
 }

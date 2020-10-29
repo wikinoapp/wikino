@@ -1,3 +1,7 @@
 .c-navbar {
-  height: $n-navbar-height;
+  height: var(--n-navbar-height);
+
+  .bg-dark {
+    background-color: #495464;
+  }
 }
