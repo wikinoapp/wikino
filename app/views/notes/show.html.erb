@@ -8,7 +8,7 @@
     <%= @note_entity.body_html.html_safe %>
   </div>
   <div class="row">
-    <div class="col-8 pl-0">
+    <div class="col-8 px-0">
       <div class="c-editor">
         <div
           class="h-100"
@@ -20,22 +20,40 @@
       </div>
     </div>
 
-    <div class="col-4">
-      <div
-        class="c-note-time text-right"
-        data-controller="note-time"
-        data-note-time-init-time="<%= @note_entity.updated_at %>"
-      ></div>
+    <div class="col-4 py-3">
+      <h2 class="h4">
+        <%= t "nouns.info" %>
+      </h2>
+
+      <dl>
+        <dt class="font-weight-bold small text-muted text-uppercase">
+          <%= t "nouns.updated_at" %>
+        </dt>
+        <dd>
+          <div
+            class="c-note-time"
+            data-controller="note-time"
+            data-note-time-init-time="<%= @note_entity.updated_at %>"
+          ></div>
+        </dd>
+      </dl>
+
+      <hr>
+
       <h2 class="h4">
         <%= t "nouns.links" %>
       </h2>
+
       <div data-controller="note-links">
         <%= render LinksComponent.new(note_entity: @note_entity) %>
       </div>
 
+      <hr>
+
       <h2 class="h4">
         <%= t "nouns.backlinks" %>
       </h2>
+
       <div data-controller="note-backlinks">
         <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
       </div>

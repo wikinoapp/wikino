@@ -14,4 +14,8 @@
   .cm-content {
     caret-color: var(--n-editor-color-caret) !important;
   }
+
+  .cm-line {
+    padding: 0 !important;
+  }
 }
