@@ -37,6 +37,7 @@
     "@babel/plugin-transform-typescript": "latest",
     "@babel/preset-typescript": "latest",
     "@types/jquery": "latest",
+    "@types/js-cookie": "^2.2.6",
     "@types/turbolinks": "latest",
     "@types/webpack-env": "latest",
     "css-loader": "latest",
