@@ -4,26 +4,26 @@ import { Controller } from 'stimulus';
 export default class extends Controller {
   element!: HTMLElement;
 
-  setLight(event) {
+  setLight(event: any) {
     this.resetActive();
     event.target.classList.add('active');
     this.setColorScheme('light');
   }
 
-  setDark(event) {
+  setDark(event: any) {
     this.resetActive();
     event.target.classList.add('active');
     this.setColorScheme('dark');
   }
 
-  setSystemDefault(event) {
+  setSystemDefault(event: any) {
     this.resetActive();
     event.target.classList.add('active');
     this.setColorScheme('system-default');
   }
 
   resetActive() {
-    const elms = this.element.getElementsByClassName('active');
+    const elms: any = this.element.getElementsByClassName('active');
 
     for (let elm of elms) {
       elm.classList.remove('active');
