@@ -27,6 +27,16 @@ class NotesController < ApplicationController
     redirect_to note_path(note_entity.database_id)
   end
 
+  def destroy
+    _, mutation_error_entities = DeleteNoteRepository.new(graphql_client: graphql_client).call(database_id: params[:note_id])
+
+    if mutation_error_entities
+      return redirect_to root_path, alert: t("messages._common.unexpected_error")
+    end
+
+    redirect_to note_list_path, notice: t("messages.note.note_deleted")
+  end
+
   private
 
   def note_params

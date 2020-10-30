@@ -22,6 +22,26 @@
 
     <div class="col-4 py-3">
       <h2 class="h4">
+        <%= t "nouns.links" %>
+      </h2>
+
+      <div data-controller="note-links">
+        <%= render LinksComponent.new(note_entity: @note_entity) %>
+      </div>
+
+      <hr>
+
+      <h2 class="h4">
+        <%= t "nouns.backlinks" %>
+      </h2>
+
+      <div data-controller="note-backlinks">
+        <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+      </div>
+
+      <hr>
+
+      <h2 class="h4">
         <%= t "nouns.info" %>
       </h2>
 
@@ -41,22 +61,17 @@
       <hr>
 
       <h2 class="h4">
-        <%= t "nouns.links" %>
+        <%= t "nouns.actions" %>
       </h2>
 
-      <div data-controller="note-links">
-        <%= render LinksComponent.new(note_entity: @note_entity) %>
-      </div>
-
-      <hr>
-
-      <h2 class="h4">
-        <%= t "nouns.backlinks" %>
-      </h2>
-
-      <div data-controller="note-backlinks">
-        <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
-      </div>
+      <ul class="list-unstyled">
+        <li>
+          <%= link_to note_path(@note_entity.database_id), method: :delete, data: { confirm: t("messages.note.are_you_sure_delete") } do %>
+            <i class="fal fa-trash-alt mr-1"></i>
+            <%= t "messages.note.delete_note" %>
+          <% end %>
+        </li>
+      </ul>
     </div>
   </div>
 </div>
