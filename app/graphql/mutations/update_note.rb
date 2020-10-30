@@ -7,7 +7,7 @@ module Mutations
     argument :id, ID, required: true
     argument :body, String, required: true
 
-    field :note, Types::Objects::NoteType, null: false
+    field :note, Types::Objects::NoteType, null: true
     field :errors, [Types::Objects::MutationErrorType], null: false
 
     def resolve(id:, body:)
