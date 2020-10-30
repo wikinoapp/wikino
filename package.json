@@ -12,7 +12,7 @@
   "dependencies": {
     "@babel/core": "latest",
     "@babel/preset-env": "latest",
-    "@codemirror/next": "latest",
+    "@codemirror/next": "^0.14.0",
     "@rails/ujs": "latest",
     "autoprefixer": "latest",
     "autosize": "latest",
