@@ -8,6 +8,7 @@ en:
       delete_note: Delete Note
       no_links: No Links
       note_deleted: Note was successfully deleted.
+      note_duplicated_html: Note <a href="/notes/%{database_id}">%{title}</a> already exists.
     sign_in:
       forgot_password: Forgot password?
       remember_me: Remember me

@@ -22,7 +22,13 @@ export function autoSave(noteDatabaseId: string): Extension {
             },
           })
           .then((res: any) => {
-            const { note, linksHtml, backlinksHtml } = res.data;
+            const { note, linksHtml, backlinksHtml, errorCode, alertHtml } = res.data;
+
+            if (errorCode === 'DUPLICATED') {
+              new EventDispatcher('note-alert:update', { alertHtml }).dispatch();
+              return
+            }
+
             const { bodyHtml, modifiedAt } = note;
 
             new EventDispatcher('note-time:update', { modifiedAt }).dispatch();

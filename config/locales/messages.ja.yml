@@ -8,6 +8,7 @@ ja:
       delete_note: ノートを削除
       no_links: リンクはありません
       note_deleted: ノートを削除しました
+      note_duplicated_html: ノート「<a href="/notes/%{database_id}">%{title}</a>」はすでにあります。
     sign_in:
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する

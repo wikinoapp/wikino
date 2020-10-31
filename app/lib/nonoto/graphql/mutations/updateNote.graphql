@@ -2,6 +2,7 @@ mutation($id: ID!, $body: String!) {
   updateNote(input: { id: $id, body: $body }) {
     note {
       databaseId
+      title
       bodyHtml
       modifiedAt
       links {
@@ -30,8 +31,8 @@ mutation($id: ID!, $body: String!) {
       }
     }
 
-    errors {
-      message
+    error {
+      code
     }
   }
 }

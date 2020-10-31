@@ -18,13 +18,13 @@ module Api
       end
 
       def update
-        note_entity = UpdateNote::NoteRepository.
+        fetched_note_entity = UpdateNote::NoteRepository.
           new(graphql_client: graphql_client).
           call(database_id: params[:note_id])
 
-        @updated_note_entity, mutation_error_entities = UpdateNoteRepository.
+        @note_entity, @error_code = UpdateNoteRepository.
           new(graphql_client: graphql_client).
-          call(id: note_entity.id, body: note_params[:body])
+          call(id: fetched_note_entity.id, body: note_params[:body])
       end
 
       private

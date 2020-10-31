@@ -7,13 +7,9 @@ class UpdateNoteRepository < ApplicationRepository
       body: body
     })
 
-    error_nodes = result.dig("data", "updateNote", "errors")
-    if error_nodes.present?
-      return [nil, MutationErrorEntity.from_nodes(error_nodes)]
-    end
-
     note_node = result.dig("data", "updateNote", "note")
+    error_node = result.dig("data", "updateNote", "error")
 
-    [NoteEntity.from_node(note_node), nil]
+    [NoteEntity.from_node(note_node), error_node&.dig("code")]
   end
 end

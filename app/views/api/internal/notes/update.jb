@@ -1,24 +1,35 @@
 # frozen_string_literal: true
 
-links_html = if @updated_note_entity.links.present?
-  render LinksComponent.new(note_entity: @updated_note_entity)
+if @error_code == "DUPLICATED"
+  {
+    errorCode: "DUPLICATED",
+    alertHtml: <<~ALERT
+      <div class="alert alert-danger">
+        #{t("messages.note.note_duplicated_html", database_id: @note_entity.database_id, title: @note_entity.title)}
+      </div>
+    ALERT
+  }
 else
-  render EmptyComponent.new(message: t("messages.note.no_links"))
+  links_html = if @note_entity && @note_entity.links.present?
+    render LinksComponent.new(note_entity: @note_entity)
+  else
+    render EmptyComponent.new(message: t("messages.note.no_links"))
+  end
+
+  backlinks_html = if @note_entity.backlinks.present?
+    render BacklinksComponent.new(link_entities: @note_entity.backlinks)
+  else
+    render EmptyComponent.new(message: t("messages.note.no_links"))
+  end
+
+  json = {
+    note: {
+      bodyHtml: @note_entity.body_html,
+      modifiedAt: @note_entity.modified_at
+    },
+    linksHtml: links_html,
+    backlinksHtml: backlinks_html
+  }
+
+  json
 end
-
-backlinks_html = if @updated_note_entity.backlinks.present?
-  render BacklinksComponent.new(link_entities: @updated_note_entity.backlinks)
-else
-  render EmptyComponent.new(message: t("messages.note.no_links"))
-end
-
-json = {
-  note: {
-    bodyHtml: @updated_note_entity.body_html,
-    modifiedAt: @updated_note_entity.modified_at
-  },
-  linksHtml: links_html,
-  backlinksHtml: backlinks_html
-}
-
-json

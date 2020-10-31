@@ -8,7 +8,7 @@ module Mutations
     argument :body, String, required: true
 
     field :note, Types::Objects::NoteType, null: true
-    field :errors, [Types::Objects::MutationErrorType], null: false
+    field :error, Types::Objects::UpdateNoteErrorType, null: true
 
     def resolve(id:, body:)
       note = NonotoSchema.object_from_id(id, context)
@@ -18,9 +18,25 @@ module Mutations
       note.modified_at = Time.zone.now
 
       unless note.valid?
+        error_detail = note.errors.details.dig(:title, 0, :error)
+
+        if error_detail == :taken
+          viewer = context[:viewer]
+          original_note = viewer.notes.where.not(id: note.id).find_by(title: note.title)
+
+          return {
+            note: original_note,
+            error: {
+              code: "DUPLICATED"
+            }
+          }
+        end
+
         return {
           note: nil,
-          errors: note.errors.full_messages.map { |msg| { message: msg } }
+          error: {
+            code: "INVALID"
+          }
         }
       end
 
@@ -31,7 +47,7 @@ module Mutations
 
       {
         note: note,
-        errors: []
+        error: nil
       }
     end
 
