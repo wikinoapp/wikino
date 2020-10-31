@@ -6,26 +6,6 @@ import { KeyBinding } from '@codemirror/next/view';
 import { NodeProp } from 'lezer-tree';
 
 // Original:
-// https://github.com/codemirror/codemirror.next/blob/469db41099a5dff31aca59e79dfb902b111a1acc/commands/src/commands.ts#L481-L489
-function isBetweenBrackets(state: EditorState, pos: number): { from: number; to: number } | null {
-  if (/\(\)|\[\]|\{\}/.test(state.sliceDoc(pos - 1, pos + 1))) return { from: pos, to: pos };
-  let context = state.tree.resolve(pos);
-  let before = context.childBefore(pos),
-    after = context.childAfter(pos),
-    closedBy;
-  if (
-    before &&
-    after &&
-    before.end <= pos &&
-    after.start >= pos &&
-    (closedBy = before.type.prop(NodeProp.closedBy)) &&
-    closedBy.indexOf(after.name) > -1
-  )
-    return { from: before.end, to: after.start };
-  return null;
-}
-
-// Original:
 // https://github.com/codemirror/codemirror.next/blob/469db41099a5dff31aca59e79dfb902b111a1acc/commands/src/commands.ts#L467-L473
 function getIndentation(cx: IndentContext, pos: number): number {
   for (let f of cx.state.facet(EditorState.indentation)) {
