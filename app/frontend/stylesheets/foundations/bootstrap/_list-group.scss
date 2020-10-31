@@ -1,0 +1,11 @@
+.list-group {
+  .list-group-item {
+    background-color: var(--bs-list-group-item-bg);
+    color: var(--bs-list-group-item-body-color);
+
+    &.active {
+      border-color: var(--bs-list-group-item-active-border-color);
+      color: var(--bs-list-group-item-active-body-color);
+    }
+  }
+}
