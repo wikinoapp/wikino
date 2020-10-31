@@ -1,5 +1,11 @@
 .c-pagination {
-  li {
+  .page-item {
     width: 104px;
+  }
+
+  .page-link {
+    background-color: var(--n-note-card-color-bg) !important;
+    border: none !important;
+    color: var(--n-note-card-color-body);
   }
 }
