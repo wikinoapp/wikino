@@ -1,12 +1,24 @@
 # frozen_string_literal: true
 
+links_html = if @updated_note_entity.links.present?
+  render LinksComponent.new(note_entity: @updated_note_entity)
+else
+  render EmptyComponent.new(message: t("messages.note.no_links"))
+end
+
+backlinks_html = if @updated_note_entity.backlinks.present?
+  render BacklinksComponent.new(link_entities: @updated_note_entity.backlinks)
+else
+  render EmptyComponent.new(message: t("messages.note.no_links"))
+end
+
 json = {
   note: {
     bodyHtml: @updated_note_entity.body_html,
     updatedAt: @updated_note_entity.updated_at
   },
-  linksHtml: render(LinksComponent.new(note_entity: @updated_note_entity)),
-  backlinksHtml: render(BacklinksComponent.new(link_entities: @updated_note_entity.backlinks))
+  linksHtml: links_html,
+  backlinksHtml: backlinks_html
 }
 
 json

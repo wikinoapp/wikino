@@ -1,4 +1,5 @@
 .c-note-card {
+  background-color: var(--n-note-card-color-bg);
   height: 110px;
   position: relative;
 
@@ -23,5 +24,9 @@
 
   .card-body {
     z-index: 1;
+  }
+
+  .text-body {
+    color: var(--n-note-card-color-body) !important;
   }
 }

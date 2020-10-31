@@ -1,22 +1,18 @@
-<% link_entities.each do |link_entity| %>
-  <ul>
-    <li>
-      <%= link_to note_path(note_id: link_entity.note.database_id) do %>
-        <%= link_entity.note.title %>
-      <% end %>
-    </li>
+<div class="container">
+  <% link_entities.each do |link_entity| %>
+    <div class="row row-cols-2">
+      <div class="col mb-2 px-1">
+        <%= render NoteCardComponent.new(note_entity: link_entity.note) %>
+      </div>
 
-    <% backlink_entities = link_entity.note.backlinks.select { |be| note_entity.database_id != be.note.database_id } %>
-    <% if backlink_entities.present? %>
-      <ul>
+      <% backlink_entities = link_entity.note.backlinks.select { |be| note_entity.database_id != be.note.database_id } %>
+      <% if backlink_entities.present? %>
         <% backlink_entities.each do |backlink_entity| %>
-          <li>
-            <%= link_to note_path(note_id: backlink_entity.note.database_id) do %>
-              <%= backlink_entity.note.title %>
-            <% end %>
-          </li>
+          <div class="col mb-2 px-1">
+            <%= render NoteCardComponent.new(note_entity: backlink_entity.note) %>
+          </div>
         <% end %>
-      </ul>
-    <% end %>
-  </ul>
-<% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

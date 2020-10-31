@@ -1,10 +1,12 @@
 @mixin n-dark-variables {
   --n-editor-color-bg: var(--n-color-primary-09);
   --n-editor-color-caret: var(--n-color-primary-00);
+  --n-note-card-color-bg: var(--n-color-primary-08);
+  --n-note-card-color-body: var(--n-color-primary-01);
 
   --bs-body-bg: var(--n-color-primary-10);
   --bs-body-color: var(--n-color-primary-02);
   --bs-hr-border-color: var(--n-color-primary-08);
-  --bs-link-color: #378ad3;
+  --bs-link-color: #3291ff;
   --bs-text-muted: var(--n-color-primary-05);
 }

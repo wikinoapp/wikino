@@ -26,20 +26,28 @@
       </h2>
 
       <div data-controller="note-links">
-        <%= render LinksComponent.new(note_entity: @note_entity) %>
+        <% if @note_entity.links.present? %>
+          <%= render LinksComponent.new(note_entity: @note_entity) %>
+        <% else %>
+          <%= render EmptyComponent.new(message: t("messages.note.no_links")) %>
+        <% end %>
       </div>
 
-      <hr>
+      <hr class="mt-2">
 
       <h2 class="h4">
         <%= t "nouns.backlinks" %>
       </h2>
 
       <div data-controller="note-backlinks">
-        <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+        <% if @note_entity.backlinks.present? %>
+          <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+        <% else %>
+          <%= render EmptyComponent.new(message: t("messages.note.no_links")) %>
+        <% end %>
       </div>
 
-      <hr>
+      <hr class="mt-2">
 
       <h2 class="h4">
         <%= t "nouns.info" %>
