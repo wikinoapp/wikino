@@ -39,20 +39,10 @@ class Note < ApplicationRecord
   end
 
   def link!
-    doc = Nokogiri::HTML(body_html)
+    titles = body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
 
-    target_note_ids = doc.css("a[href*='#{ENV.fetch('NONOTO_URL')}']").each_with_object([]) do |element, ary|
-      href = element.attr(:href)
-      url_regex = %r{\A#{Regexp.escape(ENV.fetch('NONOTO_URL'))}/notes/(#{UUID_FORMAT})}
-
-      next unless url_regex.match?(href)
-
-      note_id = href.match(url_regex).captures.first
-      target_note = user.notes.find_by(id: note_id)
-
-      next unless target_note
-
-      ary << target_note.id
+    target_note_ids = titles.map do |title|
+      user.notes.where(title: title).first_or_create!.id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq

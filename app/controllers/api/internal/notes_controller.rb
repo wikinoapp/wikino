@@ -11,7 +11,6 @@ module Api
         render json: {
           notes: note_entities.map do |note_entity|
             {
-              databaseId: note_entity.database_id,
               title: note_entity.title
             }
           end

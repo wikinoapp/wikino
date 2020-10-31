@@ -15,7 +15,7 @@ function linkKeyword(line: Line, pos: number) {
     return null;
   }
 
-  const str = line.slice(0, pos + 1);
+  const str = line.slice(0, pos - line.from + 1);
   const found = reverseString(str).match(/^].*\S\[\[/);
 
   return found ? reverseString(found[0].replace(/\[|]/g, '')) : '';
@@ -31,7 +31,7 @@ async function searchNotes(keyword: string) {
 
     return res?.data?.notes || [];
   } catch (err) {
-    console.log('err: ', err);
+    console.error(err);
   }
 }
 
@@ -72,45 +72,19 @@ function linkEndPos(line: Line, from: number) {
   return -1;
 }
 
-function applyCompletion(databaseId: string, title: string) {
+function applyCompletion(title: string) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     const { state } = view;
     const line = state.doc.lineAt(from);
     const pos = linkStartPos(line, from);
-    const text = `[${title}](${nonotoConfig.nonotoUrl}/notes/${databaseId})`;
+    const insert = `[[${title}]]`
 
     view.dispatch(
       state.update({
-        changes: { from: pos, to: from + 2, insert: text },
-        selection: { anchor: pos + text.length },
+        changes: { from: pos, to: from + 2, insert },
+        selection: { anchor: pos + insert.length },
       }),
     );
-  };
-}
-
-function createNote(keyword: string) {
-  return async (view: EditorView, completion: Completion, from: number, to: number) => {
-    const { state } = view;
-    const line = state.doc.lineAt(from);
-    const pos = linkStartPos(line, from);
-
-    try {
-      const res = (await axios.post('/api/internal/notes', {
-        keyword,
-      })) as any;
-
-      const { databaseId, title } = res.data;
-
-      const text = `[${title}](${nonotoConfig.nonotoUrl}/notes/${databaseId})`;
-      view.dispatch(
-        state.update({
-          changes: { from: pos, to: from + 2, insert: text },
-          selection: { anchor: pos + text.length },
-        }),
-      );
-    } catch (err) {
-      console.log('err: ', err);
-    }
   };
 }
 
@@ -128,13 +102,8 @@ export async function linkNoteCompletionSource(context: CompletionContext): Prom
   const options = notes.map((note: any) => {
     return {
       label: note.title,
-      apply: applyCompletion(note.databaseId, note.title),
+      apply: applyCompletion(note.title),
     };
-  });
-  options.push({
-    label: nonotoConfig.i18n.messages.createNoteWithKeyword.replace('__keyword__', keyword),
-    apply: await createNote(keyword),
-    boost: -1,
   });
 
   return {

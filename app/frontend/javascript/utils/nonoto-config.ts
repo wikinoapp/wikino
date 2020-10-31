@@ -2,7 +2,6 @@ type NonotoConfig = {
   nonotoUrl: string;
   i18n: {
     messages: {
-      createNoteWithKeyword: string;
     };
   };
 };

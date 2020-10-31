@@ -17,9 +17,7 @@ module ApplicationHelper
     config = {
       nonotoUrl: ENV.fetch("NONOTO_URL"),
       i18n: {
-        messages: {
-          createNoteWithKeyword: t('messages.note.create_note_with_keyword')
-        }
+        messages: {}
       }
     }.freeze
 
