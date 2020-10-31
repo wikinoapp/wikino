@@ -1,6 +1,7 @@
 <nav class="c-navbar navbar navbar-expand-lg navbar-dark bg-dark">
   <%= link_to root_path, class: "font-weight-bold navbar-brand" do %>
     の
+    <span class="small">(α)</small>
   <% end %>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -28,10 +29,10 @@
         </li>
       <% else %>
         <li class="nav-item">
-          <%= link_to t("nouns.sign_up"), sign_up_path %>
+          <%= link_to t("nouns.sign_up"), sign_up_path, class: "nav-link disabled" %>
         </li>
         <li class="nav-item">
-          <%= link_to t("nouns.sign_in"), sign_in_path %>
+          <%= link_to t("nouns.sign_in"), sign_in_path, class: "nav-link" %>
         </li>
       <% end %>
     </ul>
