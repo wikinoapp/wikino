@@ -24,7 +24,7 @@ export default class extends Controller {
         extensions: [
           autoSave(this.noteDatabaseId),
           autocompletion({
-            override: [linkNoteCompletionSource],
+            override: [linkNoteCompletionSource]
           }),
           closeBrackets(),
           history(),
