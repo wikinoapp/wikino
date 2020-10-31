@@ -1,3 +1,14 @@
+// Spacing
+
+$spacer: 1rem;
+$spacers: (
+  3: $spacer * 0.75,
+  4: $spacer,
+  5: $spacer * 1.25,
+  6: $spacer * 1.5,
+  7: $spacer * 2,
+);
+
 // Components
 
 $border-radius: 0.3rem;

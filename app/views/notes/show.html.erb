@@ -20,7 +20,7 @@
       </div>
     </div>
 
-    <div class="col-4 py-3">
+    <div class="col-4 py-4">
       <div
         class="c-note-alert"
         data-controller="note-alert"
@@ -32,7 +32,9 @@
 
       <div data-controller="note-links">
         <% if @note_entity.links.present? %>
-          <%= render LinksComponent.new(note_entity: @note_entity) %>
+          <div class="px-3">
+            <%= render LinksComponent.new(note_entity: @note_entity) %>
+          </div>
         <% else %>
           <%= render EmptyComponent.new(message: t("messages.note.no_links")) %>
         <% end %>
@@ -46,7 +48,9 @@
 
       <div data-controller="note-backlinks">
         <% if @note_entity.backlinks.present? %>
-          <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+          <div class="px-3">
+            <%= render BacklinksComponent.new(link_entities: @note_entity.backlinks) %>
+          </div>
         <% else %>
           <%= render EmptyComponent.new(message: t("messages.note.no_links")) %>
         <% end %>

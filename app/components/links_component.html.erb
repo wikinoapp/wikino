@@ -1,18 +1,16 @@
-<div class="container">
-  <% link_entities.each do |link_entity| %>
-    <div class="row row-cols-2">
-      <div class="col mb-2 px-1">
-        <%= render NoteCardComponent.new(note_entity: link_entity.note) %>
-      </div>
-
-      <% backlink_entities = link_entity.note.backlinks.select { |be| note_entity.database_id != be.note.database_id } %>
-      <% if backlink_entities.present? %>
-        <% backlink_entities.each do |backlink_entity| %>
-          <div class="col mb-2 px-1">
-            <%= render NoteCardComponent.new(note_entity: backlink_entity.note) %>
-          </div>
-        <% end %>
-      <% end %>
+<% link_entities.each do |link_entity| %>
+  <div class="row row-cols-2">
+    <div class="col mb-2 px-1">
+      <%= render NoteCardComponent.new(note_entity: link_entity.note) %>
     </div>
-  <% end %>
-</div>
+
+    <% backlink_entities = link_entity.note.backlinks.select { |be| note_entity.database_id != be.note.database_id } %>
+    <% if backlink_entities.present? %>
+      <% backlink_entities.each do |backlink_entity| %>
+        <div class="col mb-2 px-1">
+          <%= render NoteCardComponent.new(note_entity: backlink_entity.note) %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

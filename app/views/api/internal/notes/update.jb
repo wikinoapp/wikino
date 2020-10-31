@@ -11,13 +11,17 @@ if @error_code == "DUPLICATED"
   }
 else
   links_html = if @note_entity && @note_entity.links.present?
-    render LinksComponent.new(note_entity: @note_entity)
+    tag.div class: "px-3" do
+      render LinksComponent.new(note_entity: @note_entity)
+    end
   else
     render EmptyComponent.new(message: t("messages.note.no_links"))
   end
 
   backlinks_html = if @note_entity.backlinks.present?
-    render BacklinksComponent.new(link_entities: @note_entity.backlinks)
+    tag.div class: "px-3" do
+      render BacklinksComponent.new(link_entities: @note_entity.backlinks)
+    end
   else
     render EmptyComponent.new(message: t("messages.note.no_links"))
   end
