@@ -3,6 +3,7 @@
 /.env.development.local
 /config/master.key
 /log/*
+/node_modules
 /public/packs
 /tmp/*
 /volumes
