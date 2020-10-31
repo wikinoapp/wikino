@@ -6,6 +6,7 @@ ja:
     info: Info
     light: ライト
     links: リンク
+    modified_at: 編集日時
     new_note: 新規ノート
     next_page: 次のページ
     prev_page: 前のページ
@@ -13,4 +14,3 @@ ja:
     sign_out: ログアウト
     sign_up: ユーザ登録
     system_default: 自動
-    updated_at: 更新日時

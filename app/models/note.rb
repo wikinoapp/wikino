@@ -7,6 +7,7 @@
 #  body            :text             default(""), not null
 #  body_html       :text             default(""), not null
 #  cover_image_url :string
+#  modified_at     :datetime
 #  title           :citext           default(""), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null

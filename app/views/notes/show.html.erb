@@ -55,13 +55,13 @@
 
       <dl>
         <dt class="font-weight-bold small text-muted text-uppercase">
-          <%= t "nouns.updated_at" %>
+          <%= t "nouns.modified_at" %>
         </dt>
         <dd>
           <div
             class="c-note-time"
             data-controller="note-time"
-            data-note-time-init-time="<%= @note_entity.updated_at %>"
+            data-note-time-init-time="<%= @note_entity.modified_at %>"
           ></div>
         </dd>
       </dl>

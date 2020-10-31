@@ -7,7 +7,7 @@ class NoteEntity < ApplicationEntity
   attribute? :body, Types::String
   attribute? :body_html, Types::String
   attribute? :cover_image_url, Types::String
-  attribute? :updated_at, Types::Params::Time
+  attribute? :modified_at, Types::Params::Time
   attribute? :links, Types::Array.of(LinkEntity)
   attribute? :backlinks, Types::Array.of(LinkEntity)
 
@@ -38,8 +38,8 @@ class NoteEntity < ApplicationEntity
       attrs[:cover_image_url] = cover_image_url
     end
 
-    if updated_at = node["updatedAt"]
-      attrs[:updated_at] = updated_at
+    if modified_at = node["modifiedAt"]
+      attrs[:modified_at] = modified_at
     end
 
     link_nodes = node.dig("links", "nodes")

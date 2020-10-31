@@ -21,7 +21,7 @@ module Types
       def notes(q: "", order_by:)
         order = OrderProperty.build(order_by)
 
-        notes = object.notes
+        notes = object.notes.where.not(modified_at: nil)
 
         if q.present?
           notes = notes.where("title like ?", "%#{q}%")

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_00_00_000001) do
+ActiveRecord::Schema.define(version: 2020_00_00_000002) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -36,6 +36,7 @@ ActiveRecord::Schema.define(version: 2020_00_00_000001) do
     t.string "cover_image_url"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.datetime "modified_at"
     t.index ["created_at"], name: "index_notes_on_created_at"
     t.index ["updated_at"], name: "index_notes_on_updated_at"
     t.index ["user_id", "title"], name: "index_notes_on_user_id_and_title", unique: true

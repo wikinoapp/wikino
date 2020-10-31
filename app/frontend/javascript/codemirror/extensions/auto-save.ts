@@ -23,9 +23,9 @@ export function autoSave(noteDatabaseId: string): Extension {
           })
           .then((res: any) => {
             const { note, linksHtml, backlinksHtml } = res.data;
-            const { bodyHtml, updatedAt } = note;
+            const { bodyHtml, modifiedAt } = note;
 
-            new EventDispatcher('note-time:update', { updatedAt }).dispatch();
+            new EventDispatcher('note-time:update', { modifiedAt }).dispatch();
             new EventDispatcher('note-preview:update', { bodyHtml }).dispatch();
             new EventDispatcher('note-links:update', { linksHtml }).dispatch();
             new EventDispatcher('note-backlinks:update', { backlinksHtml }).dispatch();

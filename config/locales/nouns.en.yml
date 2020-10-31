@@ -6,6 +6,7 @@ en:
     info: Info
     light: Light
     links: Links
+    modified_at: Modified at
     new_note: New note
     next_page: Next
     prev_page: Prev
@@ -13,4 +14,3 @@ en:
     sign_out: Sign out
     sign_up: Sign up
     system_default: System default
-    updated_at: Updated at

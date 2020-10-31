@@ -15,7 +15,7 @@ end
 json = {
   note: {
     bodyHtml: @updated_note_entity.body_html,
-    updatedAt: @updated_note_entity.updated_at
+    modifiedAt: @updated_note_entity.modified_at
   },
   linksHtml: links_html,
   backlinksHtml: backlinks_html

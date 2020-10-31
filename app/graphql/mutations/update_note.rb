@@ -15,6 +15,7 @@ module Mutations
       note.body = body
       note.body_html = render_html(body)
       note.set_title!
+      note.modified_at = Time.zone.now
 
       unless note.valid?
         return {

@@ -6,9 +6,9 @@ export default class extends Controller {
 
   initialize() {
     document.addEventListener('note-time:update', (event: any) => {
-      const { updatedAt } = event.detail;
+      const { modifiedAt } = event.detail;
 
-      this.element.innerText = updatedAt;
+      this.element.innerText = modifiedAt;
     });
   }
 

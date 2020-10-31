@@ -5,7 +5,7 @@ query($databaseId: String!) {
       title
       body
       bodyHtml
-      updatedAt
+      modifiedAt
       links {
         nodes {
           note {
