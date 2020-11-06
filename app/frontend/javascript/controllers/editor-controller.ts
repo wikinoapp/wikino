@@ -7,6 +7,7 @@ import { Controller } from 'stimulus';
 
 import { nonotoKeymap } from '../codemirror/commands';
 import { autoSave } from '../codemirror/extensions/auto-save';
+import { autocompletionPlugin } from '../codemirror/extensions/autocomplete';
 import { linkNoteCompletionSource } from '../codemirror/extensions/link-note';
 
 export default class extends Controller {
@@ -26,6 +27,7 @@ export default class extends Controller {
           autocompletion({
             override: [linkNoteCompletionSource]
           }),
+          autocompletionPlugin,
           closeBrackets(),
           history(),
           keymap([...closeBracketsKeymap, ...historyKeymap, ...nonotoKeymap]),
