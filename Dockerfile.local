@@ -1,15 +1,12 @@
-FROM ruby:2.7.2-alpine
+FROM ruby:2.7.2-buster
 
-LABEL maintainer="https://shimba.co" \
-  description="A note taking service."
+LABEL maintainer="https://www.kiraka.net" \
+  description="A place for writing notes."
 
-RUN apk update && \
-  apk add -t \
-  build-dependencies \
-  build-base \
+RUN apt update && \
+  apt install -y \
   git \
   postgresql \
-  postgresql-dev \
   imagemagick
 
 ENV RAILS_ENV=development
