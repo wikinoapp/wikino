@@ -25,7 +25,6 @@ gem "puma_worker_killer"
 gem "rack-cors"
 gem "rack-mini-profiler"
 gem "view_component"
-gem "warden"
 
 group :development, :test do
   gem "awesome_print"

@@ -19,9 +19,6 @@
 class User < ApplicationRecord
   include SoftDeletable
 
-  # Include default devise modules. Others available are:
-  # :lockable, :timeoutable, :trackable and :omniauthable
-  # devise :confirmable, :database_authenticatable, :recoverable, :registerable, :rememberable, :validatable
   has_secure_token :access_token
 
   has_many :notes, dependent: :destroy
