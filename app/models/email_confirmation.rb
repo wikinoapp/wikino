@@ -31,6 +31,10 @@ class EmailConfirmation < ApplicationRecord
     self.token = SecureRandom.uuid
     self.expires_at = Time.zone.now + 2.hours
 
+    if sign_up? && User.only_kept.where(email: email).exists?
+      self.event = :sign_in
+    end
+
     if invalid?
       return self
     end
