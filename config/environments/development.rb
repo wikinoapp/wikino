@@ -73,6 +73,7 @@ Rails.application.configure do
   ActiveRecordQueryTrace.enabled = true
 
   config.hosts += [
+    ENV.fetch("NONOTO_API_DOMAIN"),
     ENV.fetch("NONOTO_DOMAIN")
   ]
 end

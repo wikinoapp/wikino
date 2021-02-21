@@ -9,8 +9,8 @@ gem "rails", "~> 6.0.0"
 
 gem "activerecord-session_store"
 gem "addressable"
+gem "by_star"
 gem "commonmarker" # Using github-markup
-gem "devise"
 gem "dry-struct"
 gem "email_validator"
 gem "enumerize"
@@ -22,8 +22,10 @@ gem "nokogiri"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"
+gem "rack-cors"
 gem "rack-mini-profiler"
 gem "view_component"
+gem "warden"
 
 group :development, :test do
   gem "awesome_print"

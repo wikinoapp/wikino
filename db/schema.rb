@@ -10,12 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_00_00_000002) do
+ActiveRecord::Schema.define(version: 2020_00_00_000001) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+
+  create_table "email_confirmations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.citext "email", null: false
+    t.integer "event", null: false
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["token"], name: "index_email_confirmations_on_token", unique: true
+  end
 
   create_table "links", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "note_id", null: false
@@ -34,9 +44,9 @@ ActiveRecord::Schema.define(version: 2020_00_00_000002) do
     t.text "body", default: "", null: false
     t.text "body_html", default: "", null: false
     t.string "cover_image_url"
+    t.datetime "modified_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.datetime "modified_at"
     t.index ["created_at"], name: "index_notes_on_created_at"
     t.index ["updated_at"], name: "index_notes_on_updated_at"
     t.index ["user_id", "title"], name: "index_notes_on_user_id_and_title", unique: true
@@ -45,19 +55,13 @@ ActiveRecord::Schema.define(version: 2020_00_00_000002) do
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.citext "email", null: false
-    t.string "encrypted_password", null: false
-    t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.datetime "remember_created_at"
-    t.string "confirmation_token"
-    t.datetime "confirmed_at"
-    t.datetime "confirmation_sent_at"
-    t.string "unconfirmed_email"
+    t.string "access_token", null: false
+    t.datetime "signed_up_at", null: false
+    t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
+    t.index ["access_token"], name: "index_users_on_access_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "links", "notes"

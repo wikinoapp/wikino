@@ -27,5 +27,9 @@ module Nonoto
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # config.middleware.insert_after ActionDispatch::Flash, Warden::Manager do |manager|
+    #   manager.default_strategies :sign_in_token
+    # end
   end
 end
