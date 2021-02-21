@@ -3,29 +3,23 @@
 #
 # Table name: users
 #
-#  id                     :uuid             not null, primary key
-#  confirmation_sent_at   :datetime
-#  confirmation_token     :string
-#  confirmed_at           :datetime
-#  email                  :citext           not null
-#  encrypted_password     :string           not null
-#  remember_created_at    :datetime
-#  reset_password_sent_at :datetime
-#  reset_password_token   :string
-#  unconfirmed_email      :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
+#  id           :uuid             not null, primary key
+#  access_token :string           not null
+#  deleted_at   :datetime
+#  email        :citext           not null
+#  signed_up_at :datetime         not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
 #
 # Indexes
 #
-#  index_users_on_confirmation_token    (confirmation_token) UNIQUE
-#  index_users_on_email                 (email) UNIQUE
-#  index_users_on_reset_password_token  (reset_password_token) UNIQUE
+#  index_users_on_access_token  (access_token) UNIQUE
+#  index_users_on_email         (email) UNIQUE
 #
 class User < ApplicationRecord
-  # Include default devise modules. Others available are:
-  # :lockable, :timeoutable, :trackable and :omniauthable
-  devise :confirmable, :database_authenticatable, :recoverable, :registerable, :rememberable, :validatable
+  include SoftDeletable
+
+  has_secure_token :access_token
 
   has_many :notes, dependent: :destroy
 

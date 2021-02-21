@@ -6,7 +6,7 @@ module Types
       add_field GraphQL::Types::Relay::NodeField
       add_field GraphQL::Types::Relay::NodesField
 
-      field :viewer, Types::Objects::UserType, null: false
+      field :viewer, Types::Objects::UserType, null: true
 
       def viewer
         context[:viewer]
