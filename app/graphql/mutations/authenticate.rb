@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Mutations
-  class SignUp < Mutations::Base
+  class Authenticate < Mutations::Base
     argument :token, String, required: true
 
     field :user, Types::Objects::UserType, null: true
@@ -25,6 +25,9 @@ module Mutations
           errors: user.errors.full_messages.map { |message| { message: message } }
         }
       end
+
+      user.regenerate_access_token
+      email_confirmation.destroy
 
       {
         user: user,
