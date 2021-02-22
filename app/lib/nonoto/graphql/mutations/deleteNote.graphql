@@ -1,7 +1,0 @@
-mutation($id: ID) {
-  deleteNote(input: { id: $id }) {
-    errors {
-      message
-    }
-  }
-}

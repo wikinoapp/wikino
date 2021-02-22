@@ -5,26 +5,22 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby "2.7.2"
 
-gem "rails", "~> 6.0.0"
+gem "rails", "~> 6.1.3"
 
 gem "activerecord-session_store"
 gem "addressable"
+gem 'bootsnap', '>= 1.4.4', require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
-gem "dry-struct"
 gem "email_validator"
-gem "enumerize"
 gem "github-markup"
 gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
 gem "graphql-batch"
-gem "jb"
-gem "nokogiri"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"
 gem "rack-cors"
 gem "rack-mini-profiler"
-gem "view_component"
 
 group :development, :test do
   gem "awesome_print"
@@ -49,14 +45,10 @@ group :development do
 end
 
 group :test do
-  gem "capybara"
   gem "factory_bot_rails"
-  gem "selenium-webdriver"
   # Use < 0.18 until the following issue will be resolved.
   # https://github.com/codeclimate/test-reporter/issues/418
   gem "simplecov", "< 0.18", require: false
-  gem "timecop"
-  gem "webdrivers", require: !ENV["CI"] # Added to run spec with Chrome on local machine
 end
 
 group :production do
