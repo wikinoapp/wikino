@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-class EmailConfirmationMailer < ActionMailer::Base
-  default from: "Nonoto <no-reply@nonoto.app>"
-
+class EmailConfirmationMailer < ApplicationMailer
   def confirmation(email_confirmation_id, state)
     email_confirmation = EmailConfirmation.find(email_confirmation_id)
     email_confirmation.state = state
