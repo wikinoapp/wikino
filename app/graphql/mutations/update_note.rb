@@ -25,9 +25,10 @@ module Mutations
           original_note = viewer.notes.where.not(id: note.id).find_by(title: note.title)
 
           return {
-            note: original_note,
+            note: nil,
             error: {
-              code: "DUPLICATED"
+              code: "DUPLICATED",
+              original_note: original_note
             }
           }
         end
