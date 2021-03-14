@@ -7,22 +7,19 @@ class HelloWorld < ActiveRecord::Migration[6.0]
 
     create_table :users, id: :uuid do |t|
       t.citext :email, null: false
-      t.string :access_token, null: false
-      t.datetime :signed_up_at, null: false
-      t.datetime :deleted_at
+      t.string :encrypted_password, null: false
+      t.string :reset_password_token
+      t.datetime :reset_password_sent_at
+      t.datetime :remember_created_at
+      t.string :confirmation_token
+      t.datetime :confirmed_at
+      t.datetime :confirmation_sent_at
+      t.string :unconfirmed_email # Only if using reconfirmable
       t.timestamps null: false
     end
     add_index :users, :email, unique: true
-    add_index :users, :access_token, unique: true
-
-    create_table :email_confirmations, id: :uuid do |t|
-      t.citext :email, null: false
-      t.integer :event, null: false
-      t.string :token, null: false
-      t.datetime :expires_at, null: false
-      t.timestamps null: false
-    end
-    add_index :email_confirmations, :token, unique: true
+    add_index :users, :reset_password_token, unique: true
+    add_index :users, :confirmation_token, unique: true
 
     create_table :notes, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
@@ -30,7 +27,6 @@ class HelloWorld < ActiveRecord::Migration[6.0]
       t.text :body, null: false, default: ""
       t.text :body_html, null: false, default: ""
       t.string :cover_image_url
-      t.datetime :modified_at
       t.timestamps null: false
     end
     add_index :notes, %i(user_id title), unique: true

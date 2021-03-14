@@ -8,7 +8,7 @@ module Internal
 
     def authenticate_with_access_token
       @current_user = authenticate_with_http_token do |token|
-        User.only_kept.find_by(access_token: token)
+        AccessToken.find_by(token: token)&.user
       end
     end
 

@@ -19,9 +19,8 @@
 class User < ApplicationRecord
   include SoftDeletable
 
-  has_secure_token :access_token
-
   has_many :notes, dependent: :destroy
+  has_one :access_token, dependent: :destroy
 
   validates :email,
     presence: true,

@@ -5,7 +5,7 @@ module Types
     class UserType < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
-      field :access_token, String, null: false
+      field :access_token, Types::Objects::AccessTokenType, null: true
 
       field :note, Types::Objects::NoteType, null: true do
         argument :database_id, String, required: true

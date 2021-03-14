@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Mutations
-  class Authenticate < Mutations::Base
+  class SignIn < Mutations::Base
     argument :token, String, required: true
 
     field :user, Types::Objects::UserType, null: true
@@ -17,17 +17,12 @@ module Mutations
         }
       end
 
-      user = User.only_kept.where(email: email_confirmation.email).first_or_create(signed_up_at: Time.zone.now)
-
-      if user.invalid?
-        return {
-          user: nil,
-          errors: user.errors.full_messages.map { |message| { message: message } }
-        }
+      user = nil
+      ActiveRecord::Base.transaction do
+        user = User.only_kept.where(email: email_confirmation.email).first_or_create!(signed_up_at: Time.zone.now)
+        user.build_access_token.save!
+        email_confirmation.destroy!
       end
-
-      user.regenerate_access_token
-      email_confirmation.destroy
 
       {
         user: user,
