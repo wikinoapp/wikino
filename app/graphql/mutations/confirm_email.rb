@@ -10,6 +10,20 @@ module Mutations
     field :errors, [Types::Objects::MutationErrorType], null: false
 
     def resolve(email:, event:, state:)
+      if event == "SIGN_IN"
+        user = User.only_kept.find_by(email: email)
+
+        unless user
+          return {
+            email_confirmation: nil,
+            errors: [{
+              message: "Account not found. Sign up instead?",
+              code: "ACCOUNT_NOT_FOUND"
+            }]
+          }
+        end
+      end
+
       email_confirmation = EmailConfirmation.new(email: email, event: event.downcase, state: state).save_and_send_email
 
       if email_confirmation.invalid?
