@@ -35,14 +35,16 @@ class Note < ApplicationRecord
   validates :title, uniqueness: { scope: :user_id }
 
   def set_title!
-    self.title = body.split("\n").first&.strip || "No Title - #{Time.zone.now.strftime('%Y-%m-%d %H:%M:%S.%L UTC')}"
+    trimmed_title = body.split("\n").first&.strip&.delete_prefix("# ")
+    self.title = trimmed_title.presence || "No Title @#{Time.zone.now.to_i}"
   end
 
   def link!
     titles = body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
 
     target_note_ids = titles.map do |title|
-      user.notes.where(title: title).first_or_create!.id
+      trimmed_title = title.strip
+      user.notes.where(title: trimmed_title).first_or_create!(body: "# #{trimmed_title}").id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
