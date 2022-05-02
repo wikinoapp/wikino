@@ -23,7 +23,6 @@ gem "rack-cors"
 gem "rack-mini-profiler"
 
 group :development, :test do
-  gem "awesome_print"
   gem "dotenv-rails"
   gem "pry-rails"
   gem "rspec-mocks"
@@ -33,15 +32,9 @@ end
 
 group :development do
   gem "active_record_query_trace"
-  gem "annotate"
-  gem "better_errors"
-  gem "binding_of_caller" # Using better_errors
   gem "bullet"
   gem "listen" # Using with `rails s` since Rails 5
   gem "rubocop"
-  gem "solargraph"
-  gem "spring"
-  gem "spring-commands-rspec", require: false
 end
 
 group :test do
