@@ -4,10 +4,6 @@ class NonotoSchema < GraphQL::Schema
   mutation Types::Objects::MutationType
   query Types::Objects::QueryType
 
-  use GraphQL::Execution::Interpreter
-  use GraphQL::Analysis::AST
-  use GraphQL::Pagination::Connections
-
   use GraphQL::Batch
 
   def self.id_from_object(object, type_definition, query_ctx = nil)

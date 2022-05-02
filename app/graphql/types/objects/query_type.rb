@@ -3,8 +3,8 @@
 module Types
   module Objects
     class QueryType < Types::Objects::Base
-      add_field GraphQL::Types::Relay::NodeField
-      add_field GraphQL::Types::Relay::NodesField
+      include GraphQL::Types::Relay::HasNodeField
+      include GraphQL::Types::Relay::HasNodesField
 
       field :viewer, Types::Objects::UserType, null: true
 
