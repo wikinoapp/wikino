@@ -8,5 +8,6 @@ $ git clone git@github.com:kiraka/nonoto-api.git
 $ cd nonoto
 $ touch .env.development.local
 $ docker compose up
+$ bin/setup
 $ bin/rails s
 ```
