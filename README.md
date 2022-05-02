@@ -1,14 +1,12 @@
-# Nonoto
+# Nonoto API
 
 ## Running the app
 
 ```
-$ sudo sh -c "echo '127.0.0.1  nonoto.test' >> /etc/hosts"
-$ git clone git@github.com:HakunaLtd/nonoto.git
+$ sudo sh -c "echo '127.0.0.1  api.nonoto.test' >> /etc/hosts"
+$ git clone git@github.com:kiraka/nonoto-api.git
 $ cd nonoto
 $ touch .env.development.local
-$ docker-compose up
-$ docker-compose exec rails bundle exec rails db:setup
+$ docker compose up
+$ ./bin/rails s -p 4000
 ```
-
-You should then be able to open [http://nonoto.test:3000](http://nonoto.test:3000) in your browser.
