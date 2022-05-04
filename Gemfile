@@ -28,13 +28,16 @@ group :development, :test do
   gem "rspec-mocks"
   gem "rspec-rails"
   gem "rspec_junit_formatter" # Using on CircleCI
+  gem "rubocop-graphql", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "standard"
 end
 
 group :development do
   gem "active_record_query_trace"
   gem "bullet"
   gem "listen" # Using with `rails s` since Rails 5
-  gem "rubocop"
 end
 
 group :test do
