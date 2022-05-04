@@ -24,6 +24,7 @@ gem "rack-mini-profiler"
 
 group :development, :test do
   gem "dotenv-rails"
+  gem "factory_bot_rails"
   gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
@@ -41,7 +42,6 @@ group :development do
 end
 
 group :test do
-  gem "factory_bot_rails"
   # Use < 0.18 until the following issue will be resolved.
   # https://github.com/codeclimate/test-reporter/issues/418
   gem "simplecov", "< 0.18", require: false
