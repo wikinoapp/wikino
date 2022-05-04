@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class NonotoSchema < GraphQL::Schema
+  description "A schema of Nonoto."
+
   mutation Types::Objects::MutationType
   query Types::Objects::QueryType
 
