@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   postgresql:
-    image: postgres:14.2-bullseye
+    image: postgres:14.2
     ports:
       - 45432:5432
     volumes:

@@ -24,21 +24,24 @@ gem "rack-mini-profiler"
 
 group :development, :test do
   gem "dotenv-rails"
+  gem "factory_bot_rails"
   gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
   gem "rspec_junit_formatter" # Using on CircleCI
+  gem "rubocop-graphql", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "standard"
 end
 
 group :development do
   gem "active_record_query_trace"
   gem "bullet"
   gem "listen" # Using with `rails s` since Rails 5
-  gem "rubocop"
 end
 
 group :test do
-  gem "factory_bot_rails"
   # Use < 0.18 until the following issue will be resolved.
   # https://github.com/codeclimate/test-reporter/issues/418
   gem "simplecov", "< 0.18", require: false

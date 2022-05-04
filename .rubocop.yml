@@ -1,101 +1,29 @@
+require:
+  - rubocop-graphql
+  - rubocop-rails
+  - rubocop-rspec
+  - standard
+
+inherit_gem:
+  standard: config/ruby-3.0.yml
+
+inherit_from:
+  - .rubocop_todo.yml
+
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.7
   Exclude:
-    - "vendor/**/*"
+    - public/**/*
+    - vendor/**/*
 
-Layout/CaseIndentation:
-  EnforcedStyle: end
-
-Layout/EmptyLineAfterMagicComment:
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecexamplelength
+RSpec/ExampleLength:
   Enabled: false
 
-Layout/EndAlignment:
-  EnforcedStyleAlignWith: variable
-
-Layout/ArgumentAlignment:
-  EnforcedStyle: with_fixed_indentation
-
-Layout/ArrayAlignment:
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecmultipleexpectations
+RSpec/MultipleExpectations:
   Enabled: false
 
-Layout/ParameterAlignment:
-  EnforcedStyle: with_fixed_indentation
-
-Layout/DotPosition:
-  EnforcedStyle: trailing
-
-Layout/FirstArrayElementIndentation:
-  EnforcedStyle: consistent
-
-Layout/LineLength:
-  Max: 150
-
-Layout/MultilineOperationIndentation:
-  EnforcedStyle: indented
-
-Layout/MultilineMethodCallIndentation:
-  EnforcedStyle: indented
-
-Lint/UnusedMethodArgument:
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecmultiplememoizedhelpers
+RSpec/MultipleMemoizedHelpers:
   Enabled: false
-
-Metrics/AbcSize:
-  Enabled: false
-
-Metrics/BlockLength:
-  Enabled: false
-
-Metrics/ClassLength:
-  Enabled: false
-
-Metrics/MethodLength:
-  Enabled: false
-
-Metrics/CyclomaticComplexity:
-  Enabled: false
-
-Naming/AccessorMethodName:
-  Enabled: false
-
-Style/AsciiComments:
-  Enabled: false
-
-Style/Documentation:
-  Enabled: false
-
-Style/DoubleNegation:
-  Enabled: false
-
-Style/HashEachMethods:
-  Enabled: true
-
-Style/HashTransformKeys:
-  Enabled: true
-
-Style/HashTransformValues:
-  Enabled: true
-
-Style/IfUnlessModifier:
-  Enabled: false
-
-Style/Lambda:
-  Enabled: false
-
-Style/NumericPredicate:
-  EnforcedStyle: comparison
-
-Style/PercentLiteralDelimiters:
-  PreferredDelimiters:
-    "%":  ()
-    "%i": ()
-    "%q": ()
-    "%Q": ()
-    "%r": "{}"
-    "%s": ()
-    "%w": ()
-    "%W": ()
-    "%x": ()
-
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
