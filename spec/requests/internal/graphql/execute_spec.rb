@@ -18,7 +18,7 @@ describe "POST /internal/graphql", type: :request do
   end
   let!(:headers) { {"Authorization" => "Bearer #{access_token.token}"} }
 
-  it "should response" do
+  it "responses" do
     post "/internal/graphql", params: {variables: {noteId: note.id}, query: query}, headers: headers
 
     expect(response.status).to eq(200)
@@ -27,7 +27,7 @@ describe "POST /internal/graphql", type: :request do
         viewer: {
           note: {
             databaseId: note.id,
-            title: note.title,
+            title: note.title
           }
         }
       }
