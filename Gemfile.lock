@@ -91,6 +91,8 @@ GEM
     diff-lcs (1.5.0)
     digest (3.1.0)
     docile (1.4.0)
+    doorkeeper (5.5.4)
+      railties (>= 5)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
       dotenv (= 2.7.6)
@@ -286,6 +288,7 @@ DEPENDENCIES
   bullet
   by_star
   commonmarker
+  doorkeeper
   dotenv-rails
   email_validator
   factory_bot_rails
