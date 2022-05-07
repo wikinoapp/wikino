@@ -28,19 +28,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: access_tokens; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.access_tokens (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    token character varying NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: ar_internal_metadata; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -58,10 +45,11 @@ CREATE TABLE public.ar_internal_metadata (
 
 CREATE TABLE public.email_confirmations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    email public.citext NOT NULL,
+    email character varying NOT NULL,
+    original_email character varying NOT NULL,
     event integer NOT NULL,
     token character varying NOT NULL,
-    expires_at timestamp without time zone NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -81,6 +69,21 @@ CREATE TABLE public.links (
 
 
 --
+-- Name: note_contents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.note_contents (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    note_id uuid NOT NULL,
+    body public.citext DEFAULT ''::public.citext NOT NULL,
+    body_html text DEFAULT ''::text NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: notes; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -88,12 +91,11 @@ CREATE TABLE public.notes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     title public.citext DEFAULT ''::public.citext NOT NULL,
-    body text DEFAULT ''::text NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
-    cover_image_url character varying,
+    content_type character varying NOT NULL,
+    content_id uuid NOT NULL,
+    modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    modified_at timestamp without time zone
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -107,33 +109,36 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: stacked_note_contents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stacked_note_contents (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    note_id uuid NOT NULL,
+    body public.citext DEFAULT ''::public.citext NOT NULL,
+    body_html text DEFAULT ''::text NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    email public.citext NOT NULL,
-    encrypted_password character varying NOT NULL,
-    reset_password_token character varying,
-    reset_password_sent_at timestamp without time zone,
-    remember_created_at timestamp without time zone,
-    confirmation_token character varying,
-    confirmed_at timestamp without time zone,
-    confirmation_sent_at timestamp without time zone,
-    unconfirmed_email character varying,
+    email character varying NOT NULL,
+    original_email character varying NOT NULL,
+    sign_in_count integer DEFAULT 0 NOT NULL,
+    signed_up_at timestamp(6) without time zone NOT NULL,
+    current_sign_in_at timestamp(6) without time zone,
+    last_sign_in_at timestamp(6) without time zone,
+    deleted_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    signed_up_at timestamp without time zone NOT NULL,
-    deleted_at timestamp without time zone
+    updated_at timestamp(6) without time zone NOT NULL
 );
-
-
---
--- Name: access_tokens access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.access_tokens
-    ADD CONSTRAINT access_tokens_pkey PRIMARY KEY (id);
 
 
 --
@@ -161,6 +166,14 @@ ALTER TABLE ONLY public.links
 
 
 --
+-- Name: note_contents note_contents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_contents
+    ADD CONSTRAINT note_contents_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -177,25 +190,19 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: stacked_note_contents stacked_note_contents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stacked_note_contents
+    ADD CONSTRAINT stacked_note_contents_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
-
-
---
--- Name: index_access_tokens_on_token; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_access_tokens_on_token ON public.access_tokens USING btree (token);
-
-
---
--- Name: index_access_tokens_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_access_tokens_on_user_id ON public.access_tokens USING btree (user_id);
 
 
 --
@@ -234,6 +241,27 @@ CREATE INDEX index_links_on_target_note_id ON public.links USING btree (target_n
 
 
 --
+-- Name: index_note_contents_on_note_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_note_contents_on_note_id ON public.note_contents USING btree (note_id);
+
+
+--
+-- Name: index_note_contents_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_contents_on_user_id ON public.note_contents USING btree (user_id);
+
+
+--
+-- Name: index_note_contents_on_user_id_and_note_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_contents_on_user_id_and_note_id ON public.note_contents USING btree (user_id, note_id);
+
+
+--
 -- Name: index_notes_on_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -241,10 +269,10 @@ CREATE INDEX index_notes_on_created_at ON public.notes USING btree (created_at);
 
 
 --
--- Name: index_notes_on_updated_at; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_modified_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_updated_at ON public.notes USING btree (updated_at);
+CREATE INDEX index_notes_on_modified_at ON public.notes USING btree (modified_at);
 
 
 --
@@ -262,10 +290,24 @@ CREATE UNIQUE INDEX index_notes_on_user_id_and_title ON public.notes USING btree
 
 
 --
--- Name: index_users_on_confirmation_token; Type: INDEX; Schema: public; Owner: -
+-- Name: index_stacked_note_contents_on_note_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_confirmation_token ON public.users USING btree (confirmation_token);
+CREATE INDEX index_stacked_note_contents_on_note_id ON public.stacked_note_contents USING btree (note_id);
+
+
+--
+-- Name: index_stacked_note_contents_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stacked_note_contents_on_user_id ON public.stacked_note_contents USING btree (user_id);
+
+
+--
+-- Name: index_stacked_note_contents_on_user_id_and_note_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stacked_note_contents_on_user_id_and_note_id ON public.stacked_note_contents USING btree (user_id, note_id);
 
 
 --
@@ -276,10 +318,19 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
--- Name: index_users_on_reset_password_token; Type: INDEX; Schema: public; Owner: -
+-- Name: note_contents fk_rails_28bd55fa9f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_reset_password_token ON public.users USING btree (reset_password_token);
+ALTER TABLE ONLY public.note_contents
+    ADD CONSTRAINT fk_rails_28bd55fa9f FOREIGN KEY (note_id) REFERENCES public.notes(id);
+
+
+--
+-- Name: stacked_note_contents fk_rails_3af95f6ef1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stacked_note_contents
+    ADD CONSTRAINT fk_rails_3af95f6ef1 FOREIGN KEY (note_id) REFERENCES public.notes(id);
 
 
 --
@@ -291,6 +342,14 @@ ALTER TABLE ONLY public.links
 
 
 --
+-- Name: note_contents fk_rails_67e211fca5; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_contents
+    ADD CONSTRAINT fk_rails_67e211fca5 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: notes fk_rails_7f2323ad43; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -299,11 +358,11 @@ ALTER TABLE ONLY public.notes
 
 
 --
--- Name: access_tokens fk_rails_96fc070778; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: stacked_note_contents fk_rails_ca3dbfe673; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.access_tokens
-    ADD CONSTRAINT fk_rails_96fc070778 FOREIGN KEY (user_id) REFERENCES public.users(id);
+ALTER TABLE ONLY public.stacked_note_contents
+    ADD CONSTRAINT fk_rails_ca3dbfe673 FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -321,7 +380,7 @@ ALTER TABLE ONLY public.links
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20200000000001'),
-('20210000000001');
+('20220505022747'),
+('20220505022901');
 
 
