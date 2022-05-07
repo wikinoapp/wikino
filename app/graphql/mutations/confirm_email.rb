@@ -10,33 +10,22 @@ module Mutations
     field :errors, [Types::Objects::MutationErrorType], null: false
 
     def resolve(email:, event:, state:)
-      if event == "SIGN_IN"
-        user = User.only_kept.find_by(email: email)
+      email_confirmation = EmailConfirmation.new(email:, state:, event: event.downcase)
 
-        unless user
-          return {
-            email_confirmation: nil,
-            errors: [{
-              message: "Account not found. Sign up instead?",
-              code: "ACCOUNT_NOT_FOUND"
-            }]
-          }
-        end
+      if email_confirmation.event_sign_in? && !email_confirmation.user_exists?
+        return email_confirmation.graphql.user_not_found_error
       end
-
-      email_confirmation = EmailConfirmation.new(email: email, event: event.downcase, state: state).save_and_send_email
 
       if email_confirmation.invalid?
-        return {
-          email_confirmation: nil,
-          errors: email_confirmation.errors.full_messages.map { |message| { message: message } }
-        }
+        return email_confirmation.graphql.invalid_error
       end
 
-      {
-        email_confirmation: email_confirmation,
-        errors: []
-      }
+      ActiveRecord::Base.transaction do
+        email_confirmation.save!
+        EmailConfirmationMailer.confirmation(email_confirmation.id, email_confirmation.state).deliver_later!
+      end
+
+      email_confirmation.graphql.success
     end
   end
 end
