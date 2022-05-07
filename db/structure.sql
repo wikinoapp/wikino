@@ -159,7 +159,7 @@ CREATE TABLE public.oauth_applications (
     redirect_uri text NOT NULL,
     scopes character varying DEFAULT ''::character varying NOT NULL,
     confidential boolean DEFAULT true NOT NULL,
-    skip_authorization boolean DEFAULT false NOT NULL,
+    official boolean DEFAULT false NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
