@@ -1,21 +1,5 @@
 # frozen_string_literal: true
 
-# == Schema Information
-#
-# Table name: email_confirmations
-#
-#  id         :uuid             not null, primary key
-#  email      :citext           not null
-#  event      :integer          not null
-#  expires_at :datetime         not null
-#  token      :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#
-# Indexes
-#
-#  index_email_confirmations_on_token  (token) UNIQUE
-#
 class EmailConfirmation < ApplicationRecord
   enum event: %i(sign_in sign_up)
 

@@ -1,29 +1,5 @@
 # frozen_string_literal: true
-# == Schema Information
-#
-# Table name: notes
-#
-#  id              :uuid             not null, primary key
-#  body            :text             default(""), not null
-#  body_html       :text             default(""), not null
-#  cover_image_url :string
-#  modified_at     :datetime
-#  title           :citext           default(""), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  user_id         :uuid             not null
-#
-# Indexes
-#
-#  index_notes_on_created_at         (created_at)
-#  index_notes_on_updated_at         (updated_at)
-#  index_notes_on_user_id            (user_id)
-#  index_notes_on_user_id_and_title  (user_id,title) UNIQUE
-#
-# Foreign Keys
-#
-#  fk_rails_...  (user_id => users.id)
-#
+
 class Note < ApplicationRecord
   belongs_to :user
 
