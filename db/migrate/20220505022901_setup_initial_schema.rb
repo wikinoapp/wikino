@@ -12,8 +12,6 @@ class SetupInitialSchema < ActiveRecord::Migration[7.0]
     create_table :notes, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
       t.citext :title, null: false, default: ""
-      t.string :content_type, null: false
-      t.uuid :content_id, null: false
       t.datetime :modified_at, null: false
       t.timestamps
     end
@@ -23,12 +21,12 @@ class SetupInitialSchema < ActiveRecord::Migration[7.0]
 
     create_table :note_contents, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
-      t.references :note, null: false, foreign_key: true, type: :uuid, index: {unique: true}
+      t.references :note, null: false, foreign_key: true, type: :uuid
       t.citext :body, null: false, default: ""
       t.text :body_html, null: false, default: ""
       t.timestamps
     end
-    add_index :note_contents, %i[user_id note_id]
+    add_index :note_contents, %i[user_id note_id], unique: true
 
     create_table :archived_note_contents, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid

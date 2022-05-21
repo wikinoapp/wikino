@@ -3,6 +3,8 @@
 class Note < ApplicationRecord
   belongs_to :user
 
+  has_one :content, class_name: "NoteContent", dependent: :destroy
+
   has_many :backlinks, class_name: "Link", dependent: :destroy, foreign_key: :target_note_id
   has_many :links, class_name: "Link", dependent: :destroy, foreign_key: :note_id
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
@@ -11,16 +13,16 @@ class Note < ApplicationRecord
   validates :title, uniqueness: { scope: :user_id }
 
   def set_title!
-    trimmed_title = body.split("\n").first&.strip&.delete_prefix("# ")
+    trimmed_title = content.body.split("\n").first&.strip&.delete_prefix("# ")
     self.title = trimmed_title.presence || "No Title @#{Time.zone.now.to_i}"
   end
 
   def link!
-    titles = body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
+    titles = content.body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
 
     target_note_ids = titles.map do |title|
       trimmed_title = title.strip
-      user.notes.where(title: trimmed_title).first_or_create!(body: "# #{trimmed_title}").id
+      user.notes.where(title: trimmed_title).first_or_create!.id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq

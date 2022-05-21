@@ -90,8 +90,6 @@ CREATE TABLE public.notes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     title public.citext DEFAULT ''::public.citext NOT NULL,
-    content_type character varying NOT NULL,
-    content_id uuid NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -229,7 +227,7 @@ CREATE INDEX index_links_on_target_note_id ON public.links USING btree (target_n
 -- Name: index_note_contents_on_note_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_note_contents_on_note_id ON public.note_contents USING btree (note_id);
+CREATE INDEX index_note_contents_on_note_id ON public.note_contents USING btree (note_id);
 
 
 --
@@ -243,7 +241,7 @@ CREATE INDEX index_note_contents_on_user_id ON public.note_contents USING btree 
 -- Name: index_note_contents_on_user_id_and_note_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_note_contents_on_user_id_and_note_id ON public.note_contents USING btree (user_id, note_id);
+CREATE UNIQUE INDEX index_note_contents_on_user_id_and_note_id ON public.note_contents USING btree (user_id, note_id);
 
 
 --
