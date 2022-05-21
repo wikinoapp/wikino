@@ -116,7 +116,6 @@ GraphQL/OrderedFields:
 # This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLineAfterMagicComment:
   Exclude:
-    - 'app/models/access_token.rb'
     - 'app/models/link.rb'
     - 'app/models/note.rb'
     - 'app/models/user.rb'
