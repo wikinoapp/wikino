@@ -8,8 +8,8 @@ class NonotoSchema < GraphQL::Schema
 
   use GraphQL::Batch
 
-  def self.id_from_object(object, type_definition, query_ctx = nil)
-    GraphQL::Schema::UniqueWithinType.encode(type_definition.name, object.id).delete("=")
+  def self.id_from_object(object, type_definition, query_ctx)
+    GraphQL::Schema::UniqueWithinType.encode(object.class.name, object.id).delete("=")
   end
 
   def self.object_from_id(id, query_ctx = nil)
