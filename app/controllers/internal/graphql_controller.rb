@@ -6,7 +6,7 @@ class Internal::GraphqlController < ActionController::API
   def execute
     variables = ensure_hash(params[:variables])
     context = {
-      viewer: current_user,
+      viewer: current_user
     }
     result = NonotoSchema.execute(params[:query], variables:, context:)
 
