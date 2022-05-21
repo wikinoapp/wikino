@@ -2,27 +2,12 @@
 
 class SetupInitialSchema < ActiveRecord::Migration[7.0]
   def change
-    create_table :email_confirmations, id: :uuid do |t|
-      t.string :email, null: false
-      t.string :original_email, null: false
-      t.integer :event, null: false
-      t.string :token, null: false
-      t.datetime :expires_at, null: false
-      t.timestamps
-    end
-    add_index :email_confirmations, :token, unique: true
-
     create_table :users, id: :uuid do |t|
-      t.string :email, null: false
-      t.string :original_email, null: false
-      t.integer :sign_in_count, default: 0, null: false
-      t.datetime :signed_up_at, null: false
-      t.datetime :current_sign_in_at
-      t.datetime :last_sign_in_at
+      t.string :auth0_user_id, null: false
       t.datetime :deleted_at
       t.timestamps
     end
-    add_index :users, :email, unique: true
+    add_index :users, :auth0_user_id, unique: true
 
     create_table :notes, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
@@ -45,14 +30,14 @@ class SetupInitialSchema < ActiveRecord::Migration[7.0]
     end
     add_index :note_contents, %i(user_id note_id)
 
-    create_table :stacked_note_contents, id: :uuid do |t|
+    create_table :archived_note_contents, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
       t.references :note, null: false, foreign_key: true, type: :uuid
       t.citext :body, null: false, default: ""
       t.text :body_html, null: false, default: ""
       t.timestamps
     end
-    add_index :stacked_note_contents, %i(user_id note_id)
+    add_index :archived_note_contents, %i(user_id note_id)
 
     create_table :links, id: :uuid do |t|
       t.references :note, null: false, foreign_key: true, type: :uuid

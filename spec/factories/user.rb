@@ -2,8 +2,6 @@
 
 FactoryBot.define do
   factory :user do
-    sequence(:email) { |n| "user_#{n}@example.com" }
-    encrypted_password { "password" }
-    signed_up_at { Time.current }
+    sequence(:auth0_user_id) { |n| "auth0|00000000000000000000000#{n}" }
   end
 end

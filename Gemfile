@@ -12,11 +12,11 @@ gem "addressable"
 gem 'bootsnap', '>= 1.4.4', require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
-gem "doorkeeper"
 gem "email_validator"
 gem "github-markup"
 gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
 gem "graphql-batch"
+gem "jwt"
 gem "pg"
 gem "puma"
 gem "puma_worker_killer"

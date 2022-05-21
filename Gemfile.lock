@@ -91,8 +91,6 @@ GEM
     diff-lcs (1.5.0)
     digest (3.1.0)
     docile (1.4.0)
-    doorkeeper (5.5.4)
-      railties (>= 5)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
       dotenv (= 2.7.6)
@@ -117,6 +115,7 @@ GEM
       promise.rb (~> 0.7.2)
     i18n (1.10.0)
       concurrent-ruby (~> 1.0)
+    jwt (2.3.0)
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
@@ -288,13 +287,13 @@ DEPENDENCIES
   bullet
   by_star
   commonmarker
-  doorkeeper
   dotenv-rails
   email_validator
   factory_bot_rails
   github-markup
   graphql (>= 1.10.0.pre3)
   graphql-batch
+  jwt
   listen
   lograge
   pg
