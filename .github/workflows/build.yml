@@ -3,8 +3,8 @@ name: Build
 on: [push]
 
 jobs:
-  lint_rubocop:
-    name: Lint with RuboCop
+  sorbet:
+    name: Run Sorbet
     runs-on: ubuntu-latest
 
     steps:
@@ -16,12 +16,26 @@ jobs:
           ruby-version: 3.1.2
           bundler-cache: true
 
-      - name: Run RuboCop
-        run: |
-          bundle exec rubocop
+      - run: bundle exec srb tc
 
-  test_rspec:
-    name: Test with RSpec
+
+  rubocop:
+    name: Run RuboCop
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1.2
+          bundler-cache: true
+
+      - run: bundle exec rubocop
+
+  rspec:
+    name: Run RSpec
     runs-on: ubuntu-latest
     env:
       RAILS_ENV: test
@@ -58,6 +72,5 @@ jobs:
           bin/rails db:create
           bin/rails db:schema:load
 
-      - name: Run RSpec
-        run: |
-          bundle exec rspec
+      - run: bundle exec rspec
+

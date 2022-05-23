@@ -22,6 +22,8 @@ gem "puma"
 gem "puma_worker_killer"
 gem "rack-cors"
 gem "rack-mini-profiler"
+gem "sorbet-rails"
+gem "sorbet-runtime"
 
 group :development, :test do
   gem "dotenv-rails"
@@ -40,6 +42,8 @@ group :development do
   gem "active_record_query_trace"
   gem "bullet"
   gem "listen" # Using with `rails s` since Rails 5
+  gem "sorbet"
+  gem "tapioca", require: false
 end
 
 group :test do
