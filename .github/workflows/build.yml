@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   sorbet:
-    name: Type check with Sorbet
+    name: Run Sorbet
     runs-on: ubuntu-latest
 
     steps:
@@ -16,12 +16,11 @@ jobs:
           ruby-version: 3.1.2
           bundler-cache: true
 
-      - name: Run type check
-        run: |
-          bundle exec srb tc
+      - run: bundle exec srb tc
 
-  lint_rubocop:
-    name: Lint with RuboCop
+
+  rubocop:
+    name: Run RuboCop
     runs-on: ubuntu-latest
 
     steps:
@@ -33,12 +32,10 @@ jobs:
           ruby-version: 3.1.2
           bundler-cache: true
 
-      - name: Run RuboCop
-        run: |
-          bundle exec rubocop
+      - run: bundle exec rubocop
 
-  test_rspec:
-    name: Test with RSpec
+  rspec:
+    name: Run RSpec
     runs-on: ubuntu-latest
     env:
       RAILS_ENV: test
@@ -75,6 +72,5 @@ jobs:
           bin/rails db:create
           bin/rails db:schema:load
 
-      - name: Run RSpec
-        run: |
-          bundle exec rspec
+      - run: bundle exec rspec
+
