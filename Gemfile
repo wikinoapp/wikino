@@ -43,6 +43,7 @@ group :development do
   gem "bullet"
   gem "listen" # Using with `rails s` since Rails 5
   gem "sorbet"
+  gem "tapioca", require: false
 end
 
 group :test do
