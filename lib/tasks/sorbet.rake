@@ -6,6 +6,7 @@ namespace :sorbet do
     system "bundle exec srb rbi sorbet-typed"
 
     system "bundle exec tapioca gem"
+    system "bundle exec tapioca dsl"
 
     system "bundle exec rails rails_rbi:routes"
     system "bundle exec rails rails_rbi:models"
