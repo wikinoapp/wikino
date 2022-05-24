@@ -17,6 +17,5 @@ module InternalApi::NoteList::NotesRepository::NoteEntity; end
 module NoteList::NotesRepository::NoteEntity; end
 module NoteList::NotesRepository::PageInfoEntity; end
 module RDoc::Task; end
-module T::Private::Methods::Signature; end
 module UpdateNote::NoteRepository::NoteEntity; end
 module UpdateNoteRepository::NoteEntity; end

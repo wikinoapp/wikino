@@ -2,6 +2,7 @@ require:
   - rubocop-graphql
   - rubocop-rails
   - rubocop-rspec
+  - rubocop-sorbet
   - standard
 
 inherit_gem:

@@ -35,6 +35,7 @@ group :development, :test do
   gem "rubocop-graphql", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
+  gem "rubocop-sorbet", require: false
   gem "standard"
 end
 
@@ -44,6 +45,7 @@ group :development do
   gem "listen" # Using with `rails s` since Rails 5
   gem "sorbet"
   gem "tapioca", require: false
+  gem "unparser", require: false # Used by rubocop-sorbet
 end
 
 group :test do
