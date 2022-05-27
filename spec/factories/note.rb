@@ -6,5 +6,11 @@ FactoryBot.define do
     user
     sequence(:title) { |n| "Note #{n}" }
     modified_at { Time.zone.now }
+
+    trait :with_content do
+      after(:create) do |note|
+        create(:note_content, user: note.user, note:)
+      end
+    end
   end
 end

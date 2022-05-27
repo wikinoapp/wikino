@@ -1,0 +1,8 @@
+en:
+  form:
+    errors:
+      models:
+        forms/note:
+          attributes:
+            title:
+              title_should_be_unique: has already existed

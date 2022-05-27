@@ -1,7 +1,9 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 class Note < ApplicationRecord
+  extend T::Sig
+
   belongs_to :user
 
   has_one :content, class_name: "NoteContent", dependent: :destroy
@@ -11,19 +13,15 @@ class Note < ApplicationRecord
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
-  validates :title, uniqueness: { scope: :user_id }
+  delegate :body, to: :content
 
-  def set_title!
-    trimmed_title = content.body.split("\n").first&.strip&.delete_prefix("# ")
-    self.title = trimmed_title.presence || "No Title @#{Time.zone.now.to_i}"
-  end
-
+  sig { void }
   def link!
-    titles = content.body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
+    titles = body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
 
     target_note_ids = titles.map do |title|
       trimmed_title = title.strip
-      user.notes.where(title: trimmed_title).first_or_create!.id
+      T.must(user).notes.where(title: trimmed_title).first_or_create!.id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq

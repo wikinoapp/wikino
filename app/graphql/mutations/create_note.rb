@@ -1,34 +1,29 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Mutations
   class CreateNote < Mutations::Base
+    extend T::Sig
+
+    argument :title, String, required: true
     argument :body, String, required: false
 
     field :note, Types::Objects::NoteType, null: true
     field :errors, [Types::Objects::MutationErrorType], null: false
 
-    def resolve(body: nil)
-      viewer = context[:viewer]
+    sig { params(title: String, body: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
+    def resolve(title:, body: nil)
+      user = context[:viewer]
+      form = Forms::Note.new(user:, title:, body:)
 
-      note = viewer.notes.new(
-        body: body || ""
-      )
-      note.set_title!
+      ActiveRecord::Base.transaction do
+        result = Commands::CreateNote.new(user:, form:).run
 
-      unless note.valid?
-        return {
-          note: nil,
-          errors: note.errors.full_messages.map { |msg| { message: msg } }
+        {
+          note: result.note,
+          errors: result.errors.map { |error| { message: error.message } }
         }
       end
-
-      note.save
-
-      {
-        note: note,
-        errors: []
-      }
     end
   end
 end
