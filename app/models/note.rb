@@ -13,15 +13,12 @@ class Note < ApplicationRecord
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
-  delegate :body, to: :content
+  delegate :body, to: :content, allow_nil: true
 
   sig { void }
   def link!
-    titles = body.scan(%r{\[\[.*?\]\]}).map { |str| str.delete_prefix("[[").delete_suffix("]]") }
-
-    target_note_ids = titles.map do |title|
-      trimmed_title = title.strip
-      T.must(user).notes.where(title: trimmed_title).first_or_create!.id
+    target_note_ids = titles_in_body.map do |title|
+      T.must(user).notes.where(title:).first_or_create!.id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
@@ -32,5 +29,10 @@ class Note < ApplicationRecord
     (target_note_ids - referencing_notes.pluck(:id)).uniq.each do |target_note_id|
       links.where(note: self, target_note_id: target_note_id).first_or_create!
     end
+  end
+
+  sig { returns(T::Array[String]) }
+  def titles_in_body
+    body&.scan(%r{\[\[(.*?)\]\]})&.flatten || []
   end
 end
