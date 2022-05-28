@@ -6,3 +6,8 @@ en:
           attributes:
             title:
               title_should_be_unique: has already existed
+
+        forms/note_destruction:
+          attributes:
+            note:
+              only_own_note_could_be_destroyed: can't destroy

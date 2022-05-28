@@ -8,4 +8,9 @@ class NotePolicy < ApplicationPolicy
   def show?
     T.cast(record, Note).user == user
   end
+
+  sig { returns(T::Boolean) }
+  def destroy?
+    T.cast(record, Note).user == user
+  end
 end

@@ -6,3 +6,8 @@ ja:
           attributes:
             title:
               title_should_be_unique: はすでに存在します
+
+        forms/note_destruction:
+          attributes:
+            note:
+              only_own_note_could_be_destroyed: は削除できません
