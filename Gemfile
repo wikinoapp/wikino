@@ -23,7 +23,6 @@ gem "puma_worker_killer"
 gem "pundit"
 gem "rack-cors"
 gem "rack-mini-profiler"
-gem "sorbet-rails"
 gem "sorbet-runtime"
 
 group :development, :test do
