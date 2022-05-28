@@ -16,14 +16,14 @@ module Mutations
       user = context[:viewer]
       form = Forms::Note.new(user:, title:, body:)
 
-      ActiveRecord::Base.transaction do
-        result = Commands::CreateNote.new(user:, form:).run
-
-        {
-          note: result.note,
-          errors: result.errors.map { |error| { message: error.message } }
-        }
+      result = ActiveRecord::Base.transaction do
+        Commands::CreateNote.new(user:, form:).run
       end
+
+      {
+        note: result.note,
+        errors: result.errors.map { |error| { message: error.message } }
+      }
     end
   end
 end

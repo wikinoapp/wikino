@@ -10,7 +10,7 @@ module Mutations
     def resolve(id:)
       note = NonotoSchema.object_from_id(id, context)
 
-      note.destroy!
+      note&.destroy!
 
       {
         errors: []

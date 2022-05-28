@@ -35,4 +35,9 @@ class Note < ApplicationRecord
   def titles_in_body
     body&.scan(%r{\[\[(.*?)\]\]})&.flatten || []
   end
+
+  sig { params(ctx: GraphQL::Query::Context).returns(T::Boolean) }
+  def visible_in_graphql?(ctx:)
+    user == ctx[:viewer]
+  end
 end

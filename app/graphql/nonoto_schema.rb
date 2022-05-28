@@ -1,7 +1,9 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 class NonotoSchema < GraphQL::Schema
+  extend T::Sig
+
   description "A schema of Nonoto."
 
   mutation Types::Objects::MutationType
@@ -9,50 +11,14 @@ class NonotoSchema < GraphQL::Schema
 
   use GraphQL::Batch
 
-  def self.id_from_object(object, type_definition, query_ctx)
-    GraphQL::Schema::UniqueWithinType.encode(object.class.name, object.id).delete("=")
+  sig { params(object: ApplicationRecord, _type: T.untyped, _ctx: T.untyped).returns(String) }
+  def self.id_from_object(object, _type = nil, _ctx = nil)
+    object.to_gid_param
   end
 
-  def self.object_from_id(id, query_ctx = nil)
-    return unless query_ctx
-
-    begin
-      resource_type, resource_id = GraphQL::Schema::UniqueWithinType.decode(id)
-    rescue ArgumentError => e
-      Rails.logger.warn "Could not decode data: #{e}, #{id}"
-    end
-    return if resource_type.blank? || resource_id.blank?
-
-    scoped_resources(resource_type, query_ctx).find(resource_id)
-  end
-
-  def self.resolve_type(_type, obj, _ctx)
-    case obj
-    when Note
-      Types::Objects::NoteType
-    else
-      raise "Unexpected object: #{obj}"
-    end
-  end
-
-  class << self
-    private
-
-    def scoped_resources(resource_type, query_ctx = nil)
-      return unless query_ctx
-
-      user = query_ctx[:viewer]
-
-      unless user
-        raise "Viewer not found in context: #{query_ctx.inspect}"
-      end
-
-      case resource_type
-      when "Note"
-        user.notes
-      else
-        raise "Unexpected resource_type: #{resource_type.inspect}"
-      end
-    end
+  sig { params(node_id: String, ctx: GraphQL::Query::Context).returns(T.nilable(ApplicationRecord)) }
+  def self.object_from_id(node_id, ctx)
+    object = GlobalID.find(node_id)
+    object if object.visible_in_graphql?(ctx:)
   end
 end
