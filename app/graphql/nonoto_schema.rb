@@ -16,8 +16,11 @@ class NonotoSchema < GraphQL::Schema
     object.to_gid_param
   end
 
-  sig { params(node_id: String, _ctx: T.nilable(GraphQL::Query::Context)).returns(T.nilable(ApplicationRecord)) }
-  def self.object_from_id(node_id, _ctx = nil)
-    GlobalID.find(node_id)
+  sig { params(node_id: String, ctx: GraphQL::Query::Context).returns(T.nilable(ApplicationRecord)) }
+  def self.object_from_id(node_id, ctx)
+    global_id = GlobalID.parse(node_id)
+    scope = Pundit.policy_scope(ctx[:viewer], global_id&.model_class)
+
+    scope&.find_by(id: global_id&.model_id)
   end
 end

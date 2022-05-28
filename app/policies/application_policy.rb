@@ -4,8 +4,11 @@
 class ApplicationPolicy
   extend T::Sig
 
+  sig { returns(User) }
+  attr_reader :user
+
   sig { returns(ApplicationRecord) }
-  attr_reader :user, :record
+  attr_reader :record
 
   sig { params(user: User, record: ApplicationRecord).void }
   def initialize(user, record)
@@ -50,24 +53,25 @@ class ApplicationPolicy
 
   class Scope
     extend T::Sig
+    extend T::Helpers
 
-    sig { params(user: User, scope: ActiveRecord::Relation).void }
+    abstract!
+
+    sig { params(user: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
     def initialize(user, scope)
       @user = user
       @scope = scope
     end
 
-    sig { void }
-    def resolve
-      raise NotImplementedError, "You must define #resolve in #{self.class}"
-    end
+    sig { abstract.returns(ActiveRecord::Relation) }
+    def resolve; end
 
     private
 
-    sig { returns(ApplicationRecord) }
+    sig { returns(User) }
     attr_reader :user
 
-    sig { returns(ActiveRecord::Relation) }
+    sig { returns(T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))) }
     attr_reader :scope
   end
 end

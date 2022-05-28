@@ -61,7 +61,7 @@ describe Mutations::DeleteNote do
       expect(Note.count).to eq(1)
 
       expect(result["errors"]).to be_nil
-      expect(result.dig("data", "deleteNote", "errors")).to eq([{"message" => "Note can't destroy"}])
+      expect(result.dig("data", "deleteNote", "errors")).to eq([{"message" => "Note can't be blank"}])
     end
   end
 end

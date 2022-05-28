@@ -11,7 +11,7 @@ module Mutations
 
     sig { params(id: String).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(id:)
-      note = NonotoSchema.object_from_id(id)
+      note = NonotoSchema.object_from_id(id, context)
       form = Forms::NoteDestruction.new(user: context[:viewer], note:)
 
       result = ActiveRecord::Base.transaction do

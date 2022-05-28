@@ -13,4 +13,11 @@ class NotePolicy < ApplicationPolicy
   def destroy?
     T.cast(record, Note).user == user
   end
+
+  class Scope < ApplicationPolicy::Scope
+    sig { override.returns(ActiveRecord::Relation) }
+    def resolve
+      user.notes
+    end
+  end
 end
