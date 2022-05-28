@@ -20,6 +20,7 @@ RSpec.describe Commands::CreateNote, type: :model do
       expect(result.note.user).to eq(user)
       expect(result.note.title).to eq("Hello")
       expect(result.note.body).to eq("World")
+      expect(result.errors).to eq([])
     end
   end
 
