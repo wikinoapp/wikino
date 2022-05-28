@@ -5,10 +5,10 @@ module Commands
   class CreateNote
     extend T::Sig
 
-    sig { params(user: User, form: Forms::Note).void }
-    def initialize(user:, form:)
-      @user = user
+    sig { params(form: Forms::Note).void }
+    def initialize(form:)
       @form = form
+      @user = T.let(form.user, T.nilable(User))
     end
 
     sig { returns(Result) }
@@ -18,7 +18,7 @@ module Commands
       end
 
       modified_at = created_at = updated_at = Time.current
-      note = user.notes.new(title: form.title, modified_at:, created_at:, updated_at:)
+      note = T.must(user).notes.new(title: form.title, modified_at:, created_at:, updated_at:)
       note.build_content(user:, body: form.body)
       note.save!
       note.link!
@@ -26,7 +26,7 @@ module Commands
       Result.new(note:, errors: [])
     end
 
-    sig { returns(User) }
+    sig { returns(T.nilable(User)) }
     private def user
       @user
     end

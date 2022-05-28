@@ -17,7 +17,7 @@ module Mutations
       form = Forms::Note.new(user:, title:, body:)
 
       result = ActiveRecord::Base.transaction do
-        Commands::CreateNote.new(user:, form:).run
+        Commands::CreateNote.new(form:).run
       end
 
       {

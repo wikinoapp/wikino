@@ -7,7 +7,7 @@ RSpec.describe Commands::CreateNote, type: :model do
 
     it "creates a note" do
       form = Forms::Note.new(user:, title: "Hello", body: "World")
-      command = Commands::CreateNote.new(user:, form:)
+      command = Commands::CreateNote.new(form:)
 
       expect(Note.count).to eq(0)
       expect(NoteContent.count).to eq(0)
@@ -33,7 +33,7 @@ RSpec.describe Commands::CreateNote, type: :model do
 
     it "returns errors" do
       form = Forms::Note.new(user:, title: "Hello", body: "World")
-      command = Commands::CreateNote.new(user:, form:)
+      command = Commands::CreateNote.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
