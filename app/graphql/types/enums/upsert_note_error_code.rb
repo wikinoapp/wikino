@@ -3,8 +3,9 @@
 
 module Types
   module Enums
-    class MutationErrorCode < Types::Enums::Base
+    class UpsertNoteErrorCode < Types::Enums::Base
       value "INVALID_ERROR"
+      value "DUPLICATED_NOTE_ERROR"
     end
   end
 end

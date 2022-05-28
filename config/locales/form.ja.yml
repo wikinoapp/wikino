@@ -11,3 +11,8 @@ ja:
           attributes:
             note:
               only_own_note_could_be_destroyed: は削除できません
+
+        forms/update_note_form:
+          attributes:
+            title:
+              title_should_be_unique: はすでに存在します
