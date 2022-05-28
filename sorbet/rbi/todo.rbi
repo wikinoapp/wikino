@@ -4,6 +4,7 @@
 
 # typed: strict
 
+module ::SafeType::BooleanMixin; end
 module CreateNoteRepository::MutationErrorEntity; end
 module CreateNoteRepository::NoteEntity; end
 module DeleteNoteRepository::MutationErrorEntity; end
@@ -13,6 +14,5 @@ module InternalApi::NoteList::NotesRepository::NoteEntity; end
 module NoteList::NotesRepository::NoteEntity; end
 module NoteList::NotesRepository::PageInfoEntity; end
 module RDoc::Task; end
-module SafeType::BooleanMixin; end
 module UpdateNote::NoteRepository::NoteEntity; end
 module UpdateNoteRepository::NoteEntity; end
