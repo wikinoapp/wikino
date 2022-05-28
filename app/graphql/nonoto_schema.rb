@@ -19,6 +19,6 @@ class NonotoSchema < GraphQL::Schema
   sig { params(node_id: String, ctx: GraphQL::Query::Context).returns(T.nilable(ApplicationRecord)) }
   def self.object_from_id(node_id, ctx)
     object = GlobalID.find(node_id)
-    object if object.visible_in_graphql?(ctx:)
+    Pundit.policy(ctx[:viewer], object)
   end
 end
