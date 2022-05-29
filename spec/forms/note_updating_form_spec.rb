@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Forms::UpdateNoteForm do
+RSpec.describe NoteUpdatingForm do
   describe "validations" do
     describe "#title_should_be_unique" do
       context "same note" do
@@ -9,7 +9,7 @@ RSpec.describe Forms::UpdateNoteForm do
         let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
         it "returns no error" do
-          form = Forms::UpdateNoteForm.new(user:, note:, title: "Hello")
+          form = NoteUpdatingForm.new(user:, note:, title: "Hello")
           form.valid?
           expect(form.errors.of_kind?(:title, :title_should_be_unique)).to eq(false)
         end
@@ -24,7 +24,7 @@ RSpec.describe Forms::UpdateNoteForm do
         end
 
         it "returns error" do
-          form = Forms::UpdateNoteForm.new(user:, note:, title: "Original Hello")
+          form = NoteUpdatingForm.new(user:, note:, title: "Original Hello")
           form.valid?
           expect(form.errors.of_kind?(:title, :title_should_be_unique)).to eq(true)
         end

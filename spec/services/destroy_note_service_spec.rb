@@ -1,19 +1,19 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Commands::DestroyNote, type: :model do
+RSpec.describe DestroyNoteService, type: :model do
   context "success" do
     let!(:user) { create(:user) }
     let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
     it "destroys the note" do
-      form = Forms::NoteDestruction.new(user:, note:)
-      command = Commands::DestroyNote.new(form:)
+      form = NoteDestroyingForm.new(user:, note:)
+      service = DestroyNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
 
-      result = command.run
+      result = service.call
 
       expect(Note.count).to eq(0)
       expect(NoteContent.count).to eq(0)
@@ -28,13 +28,13 @@ RSpec.describe Commands::DestroyNote, type: :model do
     let!(:note) { create(:note, :with_content, user: other_user, title: "Hello") }
 
     it "returns errors" do
-      form = Forms::NoteDestruction.new(user:, note:)
-      command = Commands::DestroyNote.new(form:)
+      form = NoteDestroyingForm.new(user:, note:)
+      service = DestroyNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
 
-      result = command.run
+      result = service.call
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)

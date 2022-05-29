@@ -1,14 +1,14 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Services::UpdateNoteService, type: :model do
+RSpec.describe UpdateNoteService, type: :model do
   context "success" do
     let!(:user) { create(:user) }
     let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
     it "updates the note" do
-      form = Forms::UpdateNoteForm.new(user:, note:, title: "Hello", body: "World")
-      service = Services::UpdateNoteService.new(form:)
+      form = NoteUpdatingForm.new(user:, note:, title: "Hello", body: "World")
+      service = UpdateNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
@@ -29,8 +29,8 @@ RSpec.describe Services::UpdateNoteService, type: :model do
     let!(:note) { create(:note, :with_content, user: user, title: "Hello") }
 
     it "returns errors" do
-      form = Forms::UpdateNoteForm.new(user:, note:, title: "Original Hello", body: "a" * 1_000_001)
-      service = Services::UpdateNoteService.new(form:)
+      form = NoteUpdatingForm.new(user:, note:, title: "Original Hello", body: "a" * 1_000_001)
+      service = UpdateNoteService.new(form:)
 
       expect(Note.count).to eq(2)
       expect(NoteContent.count).to eq(2)

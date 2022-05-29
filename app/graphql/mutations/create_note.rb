@@ -14,10 +14,10 @@ module Mutations
     sig { params(title: String, body: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(title:, body: nil)
       user = context[:viewer]
-      form = Forms::Note.new(user:, title:, body:)
+      form = NoteCreatingForm.new(user:, title:, body:)
 
       result = ActiveRecord::Base.transaction do
-        Commands::CreateNote.new(form:).run
+        CreateNoteService.new(form:).call
       end
 
       {

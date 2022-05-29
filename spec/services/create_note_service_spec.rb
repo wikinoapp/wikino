@@ -1,18 +1,18 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Commands::CreateNote, type: :model do
+RSpec.describe CreateNoteService, type: :model do
   context "success" do
     let!(:user) { create(:user) }
 
     it "creates a note" do
-      form = Forms::Note.new(user:, title: "Hello", body: "World")
-      command = Commands::CreateNote.new(form:)
+      form = NoteCreatingForm.new(user:, title: "Hello", body: "World")
+      service = CreateNoteService.new(form:)
 
       expect(Note.count).to eq(0)
       expect(NoteContent.count).to eq(0)
 
-      result = command.run
+      result = service.call
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
@@ -32,13 +32,13 @@ RSpec.describe Commands::CreateNote, type: :model do
     end
 
     it "returns errors" do
-      form = Forms::Note.new(user:, title: "Hello", body: "World")
-      command = Commands::CreateNote.new(form:)
+      form = NoteCreatingForm.new(user:, title: "Hello", body: "World")
+      service = CreateNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
 
-      result = command.run
+      result = service.call
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)

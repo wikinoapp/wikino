@@ -12,10 +12,10 @@ module Mutations
     sig { params(id: String).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(id:)
       note = NonotoSchema.object_from_id(id, context)
-      form = Forms::NoteDestruction.new(user: context[:viewer], note:)
+      form = NoteDestroyingForm.new(user: context[:viewer], note:)
 
       result = ActiveRecord::Base.transaction do
-        Commands::DestroyNote.new(form:).run
+        DestroyNoteService.new(form:).call
       end
 
       {

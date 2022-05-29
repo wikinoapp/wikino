@@ -15,10 +15,10 @@ module Mutations
     sig { params(id: String, title: String, body: String).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(id:, title:, body:)
       note = NonotoSchema.object_from_id(id, context)
-      form = Forms::UpdateNoteForm.new(user: context[:viewer], note:, title:, body:)
+      form = NoteUpdatingForm.new(user: context[:viewer], note:, title:, body:)
 
       result = ActiveRecord::Base.transaction do
-        Services::UpdateNoteService.new(form:).call
+        UpdateNoteService.new(form:).call
       end
 
       {

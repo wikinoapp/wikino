@@ -1,10 +1,15 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Forms::NoteUpsertable, type: :model do
-  class TestNoteUpsertableForm < Forms::ApplicationForm
-    extend T::Sig
-    include Forms::NoteUpsertable
+RSpec.describe NoteInputtable, type: :model do
+  class TestNoteInputtableForm < ApplicationForm
+    include NoteInputtable
+
+    private
+
+    def user_notes
+      user.notes
+    end
   end
 
   describe "validations" do
@@ -14,11 +19,11 @@ RSpec.describe Forms::NoteUpsertable, type: :model do
       it "checks body length" do
         body = "a" * 1_000_000
 
-        form = TestNoteUpsertableForm.new(user:, body:)
+        form = TestNoteInputtableForm.new(user:, body:)
         form.valid?
         expect(form.errors.of_kind?(:body, :too_long)).to eq(false)
 
-        form = TestNoteUpsertableForm.new(user:, body: body + "a")
+        form = TestNoteInputtableForm.new(user:, body: body + "a")
         form.valid?
         expect(form.errors.of_kind?(:body, :too_long)).to eq(true)
       end

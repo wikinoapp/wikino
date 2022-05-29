@@ -2,17 +2,17 @@ en:
   form:
     errors:
       models:
-        forms/note:
+        note_creating_form:
           attributes:
             title:
               title_should_be_unique: has already existed
 
-        forms/note_destruction:
+        note_destroying_form:
           attributes:
             note:
               only_own_note_could_be_destroyed: can't destroy
 
-        forms/update_note_form:
+        note_updating_form:
           attributes:
             title:
               title_should_be_unique: has already existed
