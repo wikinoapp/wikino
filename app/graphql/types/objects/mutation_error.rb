@@ -3,9 +3,8 @@
 
 module Types
   module Objects
-    class MutationErrorType < Types::Objects::Base
+    class MutationError < Types::Objects::Base
       field :message, String, null: false
-      field :code, Types::Enums::MutationErrorCode, null: false
     end
   end
 end

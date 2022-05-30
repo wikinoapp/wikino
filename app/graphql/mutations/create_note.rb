@@ -9,7 +9,7 @@ module Mutations
     argument :body, String, required: false
 
     field :note, Types::Objects::NoteType, null: true
-    field :errors, [Types::Objects::MutationErrorType], null: false
+    field :errors, [Types::Unions::CreateNoteError], null: false
 
     sig { params(title: String, body: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(title:, body: nil)
@@ -22,7 +22,7 @@ module Mutations
 
       {
         note: result.note,
-        errors: result.errors.map { |error| { message: error.message } }
+        errors: result.errors
       }
     end
   end
