@@ -6,8 +6,8 @@ class NonotoSchema < GraphQL::Schema
 
   description "A schema of Nonoto."
 
-  mutation Types::Objects::MutationType
-  query Types::Objects::QueryType
+  mutation Types::Objects::Mutation
+  query Types::Objects::Query
 
   use GraphQL::Batch
 

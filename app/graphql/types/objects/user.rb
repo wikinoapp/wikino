@@ -3,14 +3,14 @@
 
 module Types
   module Objects
-    class UserType < Types::Objects::Base
+    class User < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
-      field :note, Types::Objects::NoteType, null: true do
+      field :note, Types::Objects::Note, null: true do
         argument :database_id, String, required: true
       end
 
-      field :notes, Types::Objects::NoteType.connection_type, null: false do
+      field :notes, Types::Objects::Note.connection_type, null: false do
         argument :q, String, required: false
         argument :order_by, Types::InputObjects::NoteOrder, required: true
       end

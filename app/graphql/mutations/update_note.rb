@@ -9,7 +9,7 @@ module Mutations
     argument :title, String, required: true
     argument :body, String, required: true
 
-    field :note, Types::Objects::NoteType, null: true
+    field :note, Types::Objects::Note, null: true
     field :errors, [Types::Unions::UpdateNoteError], null: false
 
     sig { params(id: String, title: String, body: String).returns(T::Hash[Symbol, T.untyped]) }

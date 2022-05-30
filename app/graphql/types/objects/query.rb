@@ -3,11 +3,11 @@
 
 module Types
   module Objects
-    class QueryType < Types::Objects::Base
+    class Query < Types::Objects::Base
       include GraphQL::Types::Relay::HasNodeField
       include GraphQL::Types::Relay::HasNodesField
 
-      field :viewer, Types::Objects::UserType, null: true
+      field :viewer, Types::Objects::User, null: true
 
       def viewer
         context[:viewer]

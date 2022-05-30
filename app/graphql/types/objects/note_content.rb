@@ -3,7 +3,7 @@
 
 module Types
   module Objects
-    class NoteContentType < Types::Objects::Base
+    class NoteContent < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
       global_id_field :id

@@ -3,10 +3,10 @@
 
 module Types
   module Objects
-    class LinkType < Types::Objects::Base
+    class Link < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
-      field :note, Types::Objects::NoteType, null: false
+      field :note, Types::Objects::Note, null: false
 
       def note
         RecordLoader.for(Note).load(object.target_note_id)

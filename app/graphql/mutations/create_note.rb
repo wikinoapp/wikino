@@ -8,7 +8,7 @@ module Mutations
     argument :title, String, required: true
     argument :body, String, required: false
 
-    field :note, Types::Objects::NoteType, null: true
+    field :note, Types::Objects::Note, null: true
     field :errors, [Types::Unions::CreateNoteError], null: false
 
     sig { params(title: String, body: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
