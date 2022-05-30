@@ -24,7 +24,16 @@ describe Mutations::UpdateNote do
             }
 
             errors {
-              message
+              ... on MutationError {
+                message
+              }
+
+              ... on DuplicatedNoteError {
+                message
+                originalNote {
+                  title
+                }
+              }
             }
           }
         }
@@ -44,34 +53,84 @@ describe Mutations::UpdateNote do
   end
 
   context "failure" do
-    let!(:user) { create(:user) }
-    let!(:other_user) { create(:user) }
-    let!(:note) { create(:note, :with_content, user: other_user, title: "Hello") }
-    let!(:variables) { {noteId: NonotoSchema.id_from_object(note)} }
-    let!(:context) { {viewer: user} }
     let!(:query) do
       <<~GRAPHQL
-        mutation($noteId: ID!) {
-          deleteNote(input: {
-            id: $noteId
+        mutation($noteId: ID!, $title: String!, $body: String!) {
+          updateNote(input: {
+            id: $noteId,
+            title: $title,
+            body: $body
           }) {
+            note {
+              title
+
+              content {
+                body
+              }
+            }
+
             errors {
-              message
+              ... on MutationError {
+                message
+              }
+
+              ... on DuplicatedNoteError {
+                message
+                originalNote {
+                  title
+                }
+              }
             }
           }
         }
       GRAPHQL
     end
 
-    it "returns errors" do
-      expect(Note.count).to eq(1)
+    context "basic mutation error" do
+      let!(:user) { create(:user) }
+      let!(:original_title) { "Hello" }
+      let!(:note) { create(:note, :with_content, user:, title: original_title) }
+      let!(:variables) { {noteId: NonotoSchema.id_from_object(note), title: "Updated Hello!", body: "a" * 1_000_001} }
+      let!(:context) { {viewer: user} }
 
-      result = NonotoSchema.execute(query, variables:, context:)
+      it "returns errors" do
+        expect(Note.count).to eq(1)
 
-      expect(Note.count).to eq(1)
+        result = NonotoSchema.execute(query, variables:, context:)
 
-      expect(result["errors"]).to be_nil
-      expect(result.dig("data", "deleteNote", "errors")).to eq([{"message" => "Note can't be blank"}])
+        expect(Note.count).to eq(1)
+
+        expect(result["errors"]).to be_nil
+        expect(result.dig("data", "updateNote", "errors")).to eq([{"message" => "Body is too long (maximum is 1000000 characters)"}])
+
+        note = Note.first
+        expect(note.title).to eq(original_title)
+      end
+    end
+
+    context "duplicated note error" do
+      let!(:user) { create(:user) }
+      let!(:original_title) { "Hello1" }
+      let!(:note) { create(:note, :with_content, user:, title: original_title) }
+      let!(:other_note) { create(:note, :with_content, user:, title: "Hello2") }
+      let!(:variables) { {noteId: NonotoSchema.id_from_object(note), title: "Hello2", body: "World"} }
+      let!(:context) { {viewer: user} }
+
+      it "returns errors" do
+        expect(Note.count).to eq(2)
+
+        result = NonotoSchema.execute(query, variables:, context:)
+
+        expect(Note.count).to eq(2)
+
+        expect(result["errors"]).to be_nil
+        expect(result.dig("data", "updateNote", "errors")).to eq([{
+          "message" => "Title has already existed",
+          "originalNote" => {"title" => "Hello2"}
+        }])
+
+        expect(Note.find(note.id).title).to eq(original_title)
+      end
     end
   end
 end
