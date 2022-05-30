@@ -64,7 +64,8 @@ class ApplicationPolicy
     end
 
     sig { abstract.returns(ActiveRecord::Relation) }
-    def resolve; end
+    def resolve
+    end
 
     private
 

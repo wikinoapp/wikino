@@ -6,8 +6,8 @@ module Types
     class Backlink < Types::Objects::Base
       implements GraphQL::Types::Relay::Node
 
-      field :title, String, null: false
       field :note, Types::Objects::Note, null: false
+      field :title, String, null: false
 
       def title
         note.then(&:title)

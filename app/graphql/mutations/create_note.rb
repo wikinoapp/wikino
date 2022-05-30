@@ -5,8 +5,8 @@ module Mutations
   class CreateNote < Mutations::Base
     extend T::Sig
 
-    argument :title, String, required: true
     argument :body, String, required: false
+    argument :title, String, required: true
 
     field :note, Types::Objects::Note, null: true
     field :errors, [Types::Unions::CreateNoteError], null: false

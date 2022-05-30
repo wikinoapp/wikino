@@ -9,13 +9,13 @@ RSpec.describe NoteDestroyingForm, type: :model do
       let!(:note) { create(:note, :with_content, user: other_user, title: "Hello") }
 
       it "checks a user who creates the note" do
-        form = NoteDestroyingForm.new(user:, note:)
+        form = described_class.new(user:, note:)
         form.valid?
-        expect(form.errors.of_kind?(:note, :only_own_note_could_be_destroyed)).to eq(true)
+        expect(form.errors.of_kind?(:note, :only_own_note_could_be_destroyed)).to be(true)
 
-        form = NoteDestroyingForm.new(user: other_user, note:)
+        form = described_class.new(user: other_user, note:)
         form.valid?
-        expect(form.errors.of_kind?(:note, :only_own_note_could_be_destroyed)).to eq(false)
+        expect(form.errors.of_kind?(:note, :only_own_note_could_be_destroyed)).to be(false)
       end
     end
   end

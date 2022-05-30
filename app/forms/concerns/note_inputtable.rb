@@ -64,7 +64,7 @@ module NoteInputtable
     GitHub::Markup.render_s(
       GitHub::Markups::MARKUP_MARKDOWN,
       body,
-      options: { commonmarker_opts: %i(HARDBREAKS) }
+      options: {commonmarker_opts: %i[HARDBREAKS]}
     )
   end
 end

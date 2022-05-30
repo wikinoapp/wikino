@@ -53,28 +53,28 @@ describe Mutations::CreateNote do
       let!(:context) { {viewer: user} }
       let!(:query) do
         <<~GRAPHQL
-        mutation($body: String!) {
-          createNote(input: {
-            title: "Hello",
-            body: $body
-          }) {
-            note {
-              id
-            }
-            errors {
-              ... on MutationError {
-                message
+          mutation($body: String!) {
+            createNote(input: {
+              title: "Hello",
+              body: $body
+            }) {
+              note {
+                id
               }
+              errors {
+                ... on MutationError {
+                  message
+                }
 
-              ... on DuplicatedNoteError {
-                message
-                originalNote {
-                  title
+                ... on DuplicatedNoteError {
+                  message
+                  originalNote {
+                    title
+                  }
                 }
               }
             }
           }
-        }
         GRAPHQL
       end
 
@@ -98,28 +98,28 @@ describe Mutations::CreateNote do
       let!(:context) { {viewer: user} }
       let!(:query) do
         <<~GRAPHQL
-        mutation($title: String!) {
-          createNote(input: {
-            title: $title,
-            body: "World"
-          }) {
-            note {
-              id
-            }
-            errors {
-              ... on MutationError {
-                message
+          mutation($title: String!) {
+            createNote(input: {
+              title: $title,
+              body: "World"
+            }) {
+              note {
+                id
               }
+              errors {
+                ... on MutationError {
+                  message
+                }
 
-              ... on DuplicatedNoteError {
-                message
-                originalNote {
-                  title
+                ... on DuplicatedNoteError {
+                  message
+                  originalNote {
+                    title
+                  }
                 }
               }
             }
           }
-        }
         GRAPHQL
       end
 

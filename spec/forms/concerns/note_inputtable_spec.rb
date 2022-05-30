@@ -21,11 +21,11 @@ RSpec.describe NoteInputtable, type: :model do
 
         form = TestNoteInputtableForm.new(user:, body:)
         form.valid?
-        expect(form.errors.of_kind?(:body, :too_long)).to eq(false)
+        expect(form.errors.of_kind?(:body, :too_long)).to be(false)
 
         form = TestNoteInputtableForm.new(user:, body: body + "a")
         form.valid?
-        expect(form.errors.of_kind?(:body, :too_long)).to eq(true)
+        expect(form.errors.of_kind?(:body, :too_long)).to be(true)
       end
     end
   end

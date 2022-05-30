@@ -9,9 +9,9 @@ RSpec.describe NoteUpdatingForm do
         let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
         it "returns no error" do
-          form = NoteUpdatingForm.new(user:, note:, title: "Hello")
+          form = described_class.new(user:, note:, title: "Hello")
           form.valid?
-          expect(form.errors.of_kind?(:title, :title_should_be_unique)).to eq(false)
+          expect(form.errors.of_kind?(:title, :title_should_be_unique)).to be(false)
         end
       end
 
@@ -24,9 +24,9 @@ RSpec.describe NoteUpdatingForm do
         end
 
         it "returns error" do
-          form = NoteUpdatingForm.new(user:, note:, title: "Original Hello")
+          form = described_class.new(user:, note:, title: "Original Hello")
           form.valid?
-          expect(form.errors.of_kind?(:title, :title_should_be_unique)).to eq(true)
+          expect(form.errors.of_kind?(:title, :title_should_be_unique)).to be(true)
         end
       end
     end

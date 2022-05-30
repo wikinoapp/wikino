@@ -4,9 +4,9 @@
 module Types
   module Objects
     class Mutation < Types::Objects::Base
-      field :createNote, mutation: Mutations::CreateNote
-      field :deleteNote, mutation: Mutations::DeleteNote
-      field :updateNote, mutation: Mutations::UpdateNote
+      field :create_note, mutation: Mutations::CreateNote
+      field :delete_note, mutation: Mutations::DeleteNote
+      field :update_note, mutation: Mutations::UpdateNote
     end
   end
 end
