@@ -40,9 +40,12 @@ RSpec.describe UpdateNoteService, type: :model do
       expect(Note.count).to eq(2)
       expect(NoteContent.count).to eq(2)
 
-      expect(result.errors.map(&:code)).to eq(["INVALID_ERROR", "DUPLICATED_NOTE_ERROR"])
-      expect(result.errors.map(&:message)).to eq(["Body is too long (maximum is 1000000 characters)", "Title has already existed"])
-      expect(result.errors.map(&:original_note)).to eq([nil, original_note])
+      error1 = result.errors[0]
+      expect(error1.message).to eq("Body is too long (maximum is 1000000 characters)")
+
+      error2 = result.errors[1]
+      expect(error2.message).to eq("Title has already existed")
+      expect(error2.original_note).to eq(original_note)
     end
   end
 end
