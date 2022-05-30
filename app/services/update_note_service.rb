@@ -13,15 +13,7 @@ class UpdateNoteService < ApplicationService
   sig { returns(Result) }
   def call
     if form.invalid?
-      errors = form.errors.map do |error|
-        if error.attribute == :title && error.type == :title_should_be_unique
-          Error.new(code: "DUPLICATED_NOTE_ERROR", message: error.full_message, original_note: form.original_note)
-        else
-          Error.new(code: "INVALID_ERROR", message: error.full_message)
-        end
-      end
-
-      return Result.new(note: nil, errors:)
+      return Result.new(note: nil, errors: errors_from_form(form))
     end
 
     note = T.must(form.note)
