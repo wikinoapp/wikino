@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class CreateNoteService < ApplicationService
+  extend T::Sig
+
   sig { params(form: NoteCreatingForm).void }
   def initialize(form:)
     @form = form

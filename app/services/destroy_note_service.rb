@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class DestroyNoteService < ApplicationService
+  extend T::Sig
+
   sig { params(form: NoteDestroyingForm).void }
   def initialize(form:)
     @form = form

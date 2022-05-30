@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class UpdateNoteService < ApplicationService
+  extend T::Sig
   include NoteUpsertable
 
   sig { params(form: NoteUpdatingForm).void }

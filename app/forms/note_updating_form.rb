@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class NoteUpdatingForm < ApplicationForm
+  extend T::Sig
   include NoteInputtable
 
   sig { returns(T.nilable(::Note)) }

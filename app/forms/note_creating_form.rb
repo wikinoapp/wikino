@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class NoteCreatingForm < ApplicationForm
+  extend T::Sig
   include NoteInputtable
 
   # @overload
