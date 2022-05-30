@@ -6,6 +6,7 @@ require "github/markup"
 module NoteInputtable
   extend T::Sig
   extend ActiveSupport::Concern
+  include Kernel
 
   included do
     validates :user, presence: true
@@ -44,7 +45,7 @@ module NoteInputtable
 
   sig { returns(ActiveRecord::Relation) }
   def user_notes
-    T.must(user).notes
+    raise NotImplementedError
   end
 
   sig { void }

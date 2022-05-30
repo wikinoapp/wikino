@@ -10,4 +10,9 @@ class NoteCreatingForm < ApplicationForm
   def persisted?
     false
   end
+
+  sig { returns(ActiveRecord::Relation) }
+  def user_notes
+    T.must(user).notes
+  end
 end
