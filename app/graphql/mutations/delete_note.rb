@@ -7,7 +7,7 @@ module Mutations
 
     argument :id, ID, required: true
 
-    field :errors, [Types::Objects::MutationErrorType], null: false
+    field :errors, [Types::Unions::DeleteNoteError], null: false
 
     sig { params(id: String).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(id:)
@@ -19,7 +19,7 @@ module Mutations
       end
 
       {
-        errors: result.errors.map { |error| { message: error.message } }
+        errors: result.errors
       }
     end
   end

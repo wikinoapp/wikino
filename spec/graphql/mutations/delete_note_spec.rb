@@ -14,7 +14,9 @@ describe Mutations::DeleteNote do
             id: $noteId
           }) {
             errors {
-              message
+              ... on MutationError {
+                message
+              }
             }
           }
         }
@@ -46,7 +48,9 @@ describe Mutations::DeleteNote do
             id: $noteId
           }) {
             errors {
-              message
+              ... on MutationError {
+                message
+              }
             }
           }
         }

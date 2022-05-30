@@ -12,7 +12,7 @@ class DestroyNoteService < ApplicationService
   sig { returns(Result) }
   def call
     if form.invalid?
-      return Result.new(errors: form.errors.full_messages.map { |message| Error.new(message:) })
+      return Result.new(errors: errors_from_form(form))
     end
 
     T.must(form.note).destroy!
@@ -24,6 +24,11 @@ class DestroyNoteService < ApplicationService
 
   sig { returns(NoteDestroyingForm) }
   attr_reader :form
+
+  sig { params(form: NoteDestroyingForm).returns(T::Array[Error]) }
+  def errors_from_form(form)
+    form.errors.map { |error| Error.new(message: error.full_message) }
+  end
 
   class Error < T::Struct
     const :message, String
