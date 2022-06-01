@@ -1,20 +1,24 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Types
   module Objects
     class Backlink < Types::Objects::Base
+      extend T::Sig
+
       implements GraphQL::Types::Relay::Node
 
       field :note, Types::Objects::Note, null: false
       field :title, String, null: false
 
+      sig { returns(Promise) }
       def title
         note.then(&:title)
       end
 
+      sig { returns(Promise) }
       def note
-        RecordLoader.for(Note).load(object.note_id)
+        RecordLoader.for(::Note).load(object.note_id)
       end
     end
   end

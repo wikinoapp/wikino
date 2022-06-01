@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 # https://github.com/Shopify/graphql-batch/blob/8873ffdcbb3aea3a44aa64fa7a5470d678157ba1/examples/association_loader.rb

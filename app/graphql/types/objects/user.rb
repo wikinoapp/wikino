@@ -1,9 +1,11 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Types
   module Objects
     class User < Types::Objects::Base
+      extend T::Sig
+
       implements GraphQL::Types::Relay::Node
 
       field :note, Types::Objects::Note, null: true do
@@ -15,10 +17,12 @@ module Types
         argument :q, String, required: false
       end
 
+      sig { params(database_id: String).returns(::Note) }
       def note(database_id:)
         object.notes.find(database_id)
       end
 
+      sig { params(order_by: T::Hash[Symbol, String], q: String).returns(ActiveRecord::Relation) }
       def notes(order_by:, q: "")
         order = OrderProperty.build(order_by)
 
