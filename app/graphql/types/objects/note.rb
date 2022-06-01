@@ -21,6 +21,11 @@ module Types
       def backlinks
         AssociationLoader.for(::Note, :backlinks).load(object)
       end
+
+      sig { returns(Promise) }
+      def content
+        RecordLoader.for(::Note).load(object.id)
+      end
     end
   end
 end
