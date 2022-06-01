@@ -13,7 +13,7 @@ class Note < ApplicationRecord
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
-  delegate :body, to: :content, allow_nil: true
+  delegate :body, :body_html, to: :content, allow_nil: true
 
   sig { void }
   def link!
