@@ -11,8 +11,7 @@ class JsonWebToken
       iss: "https://#{ENV.fetch("NONOTO_AUTH0_DOMAIN")}/",
       verify_iss: true,
       aud: ENV.fetch("NONOTO_AUTH0_CLIENT_ID"),
-      verify_aud: true
-    ) do |header|
+      verify_aud: true) do |header|
       jwks_hash[header["kid"]]
     end
   end

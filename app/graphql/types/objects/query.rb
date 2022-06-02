@@ -11,7 +11,7 @@ module Types
 
       field :viewer, Types::Objects::User, null: true
 
-      sig { returns(T.nilable(::User))}
+      sig { returns(T.nilable(::User)) }
       def viewer
         context[:viewer]
       end
