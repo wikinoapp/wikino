@@ -22,9 +22,9 @@ module Types
         object.notes.find(database_id)
       end
 
-      sig { params(order_by: T::Hash[Symbol, String], q: String).returns(ActiveRecord::Relation) }
+      sig { params(order_by: Types::InputObjects::NoteOrder, q: String).returns(ActiveRecord::Relation) }
       def notes(order_by:, q: "")
-        order = OrderProperty.build(order_by)
+        order = OrderProperty.build(order_by.to_h)
 
         notes = object.notes.where.not(modified_at: nil)
 

@@ -22,7 +22,7 @@ module Internal
       @current_user = T.let(begin
         authenticate_with_http_token do |id_token|
           payload, _header = JsonWebToken.decode_id_token(id_token)
-          auth0_user_id = payload["sub"]
+          auth0_user_id = T.must(payload)["sub"]
 
           User.only_kept.where(auth0_user_id:).first_or_create!
         end
