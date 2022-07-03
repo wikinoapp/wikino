@@ -6,7 +6,7 @@ module Mutations
     extend T::Sig
 
     argument :id, ID, "The ID of the note to modify.", required: true
-    argument :title, "The title of the note.", String, required: true
+    argument :title, String, "The title of the note.", required: true
     argument :body, String, "The body of the note.", required: true
 
     field :note, Types::Objects::Note, null: true
