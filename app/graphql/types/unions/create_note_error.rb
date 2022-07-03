@@ -6,6 +6,8 @@ module Types
     class CreateNoteError < Types::Unions::Base
       extend T::Sig
 
+      description "A mutation error."
+
       possible_types Types::Objects::MutationError, Types::Objects::DuplicatedNoteError
 
       sig do

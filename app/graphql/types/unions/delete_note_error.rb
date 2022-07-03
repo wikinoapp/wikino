@@ -6,6 +6,8 @@ module Types
     class DeleteNoteError < Types::Unions::Base
       extend T::Sig
 
+      description "A mutation error."
+
       possible_types Types::Objects::MutationError
 
       sig { params(_object: DestroyNoteService::Error, _context: GraphQL::Query::Context).returns(T.class_of(Types::Objects::MutationError)) }

@@ -6,9 +6,11 @@ module Types
     class Link < Types::Objects::Base
       extend T::Sig
 
+      description "A link."
+
       implements GraphQL::Types::Relay::Node
 
-      field :note, Types::Objects::Note, null: false
+      field :note, Types::Objects::Note, "A note.", null: false
 
       sig { returns(Promise) }
       def note

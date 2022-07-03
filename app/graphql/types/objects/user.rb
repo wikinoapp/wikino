@@ -6,15 +6,17 @@ module Types
     class User < Types::Objects::Base
       extend T::Sig
 
+      description "A user."
+
       implements GraphQL::Types::Relay::Node
 
-      field :note, Types::Objects::Note, null: true do
-        argument :database_id, String, required: true
+      field :note, Types::Objects::Note, "Fetches a note associated with the user.", null: true do
+        argument :database_id, String, "Identifies the primary key from the database.", required: true
       end
 
-      field :notes, Types::Objects::Note.connection_type, null: false do
-        argument :order_by, Types::InputObjects::NoteOrder, required: true
-        argument :q, String, required: false
+      field :notes, Types::Objects::Note.connection_type, "Fetches a list of notes associated with the user.", null: false do
+        argument :order_by, Types::InputObjects::NoteOrder, "A note order.", required: true
+        argument :q, String, "A search keyword.", required: false
       end
 
       sig { params(database_id: String).returns(::Note) }

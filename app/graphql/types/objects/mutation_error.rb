@@ -4,7 +4,9 @@
 module Types
   module Objects
     class MutationError < Types::Objects::Base
-      field :message, String, null: false
+      description "A mutation error."
+
+      field :message, String, "An error message.", null: false
     end
   end
 end
