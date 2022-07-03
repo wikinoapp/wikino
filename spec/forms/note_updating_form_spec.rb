@@ -4,7 +4,7 @@
 RSpec.describe NoteUpdatingForm do
   describe "validations" do
     describe "#title_should_be_unique" do
-      context "same note" do
+      context "when the note is updated to same title before update" do
         let!(:user) { create(:user) }
         let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
@@ -15,7 +15,7 @@ RSpec.describe NoteUpdatingForm do
         end
       end
 
-      context "different note" do
+      context "when the note title is updated to same title with other note" do
         let!(:user) { create(:user) }
         let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 

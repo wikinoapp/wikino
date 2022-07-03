@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe DestroyNoteService, type: :model do
-  context "success" do
+  context "when the service succeeds" do
     let!(:user) { create(:user) }
     let!(:note) { create(:note, :with_content, user:, title: "Hello") }
 
@@ -22,7 +22,7 @@ RSpec.describe DestroyNoteService, type: :model do
     end
   end
 
-  context "failure" do
+  context "when the service fails" do
     let!(:user) { create(:user) }
     let!(:other_user) { create(:user) }
     let!(:note) { create(:note, :with_content, user: other_user, title: "Hello") }

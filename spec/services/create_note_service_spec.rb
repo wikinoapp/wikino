@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe CreateNoteService, type: :model do
-  context "success" do
+  context "when the service succeeds" do
     let!(:user) { create(:user) }
 
     it "creates a note" do
@@ -24,7 +24,7 @@ RSpec.describe CreateNoteService, type: :model do
     end
   end
 
-  context "failure" do
+  context "when the service fails" do
     let!(:user) { create(:user) }
 
     before do

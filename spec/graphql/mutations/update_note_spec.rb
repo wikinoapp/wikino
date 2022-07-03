@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 describe Mutations::UpdateNote do
-  context "success" do
+  context "when the mutation succeeds" do
     let!(:user) { create(:user) }
     let!(:note) { create(:note, :with_content, user:, title: "Hello") }
     let!(:variables) { {noteId: NonotoSchema.id_from_object(note), title: note.title, body: "World"} }
@@ -52,7 +52,7 @@ describe Mutations::UpdateNote do
     end
   end
 
-  context "failure" do
+  context "when the mutation fails" do
     let!(:query) do
       <<~GRAPHQL
         mutation($noteId: ID!, $title: String!, $body: String!) {
@@ -86,7 +86,7 @@ describe Mutations::UpdateNote do
       GRAPHQL
     end
 
-    context "basic mutation error" do
+    context "when the basic mutation error is occurred" do
       let!(:user) { create(:user) }
       let!(:original_title) { "Hello" }
       let!(:note) { create(:note, :with_content, user:, title: original_title) }
@@ -108,13 +108,16 @@ describe Mutations::UpdateNote do
       end
     end
 
-    context "duplicated note error" do
+    context "when the duplicated note error is occurred" do
       let!(:user) { create(:user) }
       let!(:original_title) { "Hello1" }
       let!(:note) { create(:note, :with_content, user:, title: original_title) }
-      let!(:other_note) { create(:note, :with_content, user:, title: "Hello2") }
       let!(:variables) { {noteId: NonotoSchema.id_from_object(note), title: "Hello2", body: "World"} }
       let!(:context) { {viewer: user} }
+
+      before do
+        create(:note, :with_content, user:, title: "Hello2")
+      end
 
       it "returns errors" do
         expect(Note.count).to eq(2)
