@@ -5,9 +5,9 @@ module Mutations
   class UpdateNote < Mutations::Base
     extend T::Sig
 
-    argument :id, ID, required: true
-    argument :title, String, required: true
-    argument :body, String, required: true
+    argument :id, ID, "The ID of the note to modify.", required: true
+    argument :title, "The title of the note.", String, required: true
+    argument :body, String, "The body of the note.", required: true
 
     field :note, Types::Objects::Note, null: true
     field :errors, [Types::Unions::UpdateNoteError], null: false
