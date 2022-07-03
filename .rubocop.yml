@@ -18,6 +18,19 @@ AllCops:
     - public/**/*
     - vendor/**/*
 
+# https://github.com/DmitryTsepelev/rubocop-graphql/blob/8909103d9b7160d415ba4ae12db6c46bc2c8d221/lib/rubocop/cop/graphql/extract_input_type.rb
+GraphQL/ExtractInputType:
+  Enabled: false
+
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecdescribeclass
+RSpec/DescribeClass:
+  Exclude:
+    - spec/graphql/queries/**/*
+
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecdescribedclass
+RSpec/DescribedClass:
+  Enabled: false
+
 # https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecexamplelength
 RSpec/ExampleLength:
   Enabled: false
@@ -28,4 +41,8 @@ RSpec/MultipleExpectations:
 
 # https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecmultiplememoizedhelpers
 RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+# https://docs.rubocop.org/rubocop-rspec/cops_rspec.html#rspecnestedgroups
+RSpec/NestedGroups:
   Enabled: false

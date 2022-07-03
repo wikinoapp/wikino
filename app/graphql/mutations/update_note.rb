@@ -1,66 +1,30 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
-
-require "github/markup"
 
 module Mutations
   class UpdateNote < Mutations::Base
-    argument :id, ID, required: true
-    argument :body, String, required: true
+    extend T::Sig
 
-    field :note, Types::Objects::NoteType, null: true
-    field :error, Types::Objects::UpdateNoteErrorType, null: true
+    argument :id, ID, "The ID of the note to modify.", required: true
+    argument :title, String, "The title of the note.", required: true
+    argument :body, String, "The body of the note.", required: true
 
-    def resolve(id:, body:)
+    field :note, Types::Objects::Note, null: true
+    field :errors, [Types::Unions::UpdateNoteError], null: false
+
+    sig { params(id: String, title: String, body: String).returns(T::Hash[Symbol, T.untyped]) }
+    def resolve(id:, title:, body:)
       note = NonotoSchema.object_from_id(id, context)
-      note.body = body
-      note.body_html = render_html(body)
-      note.set_title!
-      note.modified_at = Time.zone.now
+      form = NoteUpdatingForm.new(user: context[:viewer], note:, title:, body:)
 
-      unless note.valid?
-        error_detail = note.errors.details.dig(:title, 0, :error)
-
-        if error_detail == :taken
-          viewer = context[:viewer]
-          original_note = viewer.notes.where.not(id: note.id).find_by(title: note.title)
-
-          return {
-            note: nil,
-            error: {
-              code: "DUPLICATED",
-              original_note: original_note
-            }
-          }
-        end
-
-        return {
-          note: nil,
-          error: {
-            code: "INVALID"
-          }
-        }
-      end
-
-      ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-        note.save!
-        note.link!
+      result = ActiveRecord::Base.transaction do
+        UpdateNoteService.new(form:).call
       end
 
       {
-        note: note,
-        error: nil
+        note: result.note,
+        errors: result.errors
       }
-    end
-
-    private
-
-    def render_html(body)
-      GitHub::Markup.render_s(
-        GitHub::Markups::MARKUP_MARKDOWN,
-        body,
-        options: { commonmarker_opts: %i(HARDBREAKS) }
-      )
     end
   end
 end

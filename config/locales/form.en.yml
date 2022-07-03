@@ -1,0 +1,18 @@
+en:
+  form:
+    errors:
+      models:
+        note_creating_form:
+          attributes:
+            title:
+              title_should_be_unique: has already existed
+
+        note_destroying_form:
+          attributes:
+            note:
+              only_own_note_could_be_destroyed: can't destroy
+
+        note_updating_form:
+          attributes:
+            title:
+              title_should_be_unique: has already existed

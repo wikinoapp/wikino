@@ -1,23 +1,25 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Mutations
   class DeleteNote < Mutations::Base
+    extend T::Sig
+
     argument :id, ID, required: true
 
-    field :errors, [Types::Objects::MutationErrorType], null: false
+    field :errors, [Types::Unions::DeleteNoteError], null: false
 
+    sig { params(id: String).returns(T::Hash[Symbol, T.untyped]) }
     def resolve(id:)
       note = NonotoSchema.object_from_id(id, context)
+      form = NoteDestroyingForm.new(user: context[:viewer], note:)
 
-      note.destroy!
+      result = ActiveRecord::Base.transaction do
+        DestroyNoteService.new(form:).call
+      end
 
       {
-        errors: []
-      }
-    rescue ActiveRecord::RecordNotDestroyed => e
-      {
-        errors: e.record.errors.full_messages.map { |message| { message: message } }
+        errors: result.errors
       }
     end
   end

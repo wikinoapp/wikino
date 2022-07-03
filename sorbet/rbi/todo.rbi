@@ -4,10 +4,7 @@
 
 # typed: strict
 
-module ActiveStorage::Blob::Analyzable; end
-module ActiveStorage::Blob::Identifiable; end
-module ActiveStorage::Record; end
-module ActiveStorage::Variant; end
+module ::SafeType::BooleanMixin; end
 module CreateNoteRepository::MutationErrorEntity; end
 module CreateNoteRepository::NoteEntity; end
 module DeleteNoteRepository::MutationErrorEntity; end

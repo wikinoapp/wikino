@@ -1,6 +1,7 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
+# https://github.com/Shopify/graphql-batch/blob/8873ffdcbb3aea3a44aa64fa7a5470d678157ba1/examples/association_loader.rb
 class AssociationLoader < GraphQL::Batch::Loader
   def self.validate(model, association_name)
     new(model, association_name)
@@ -8,6 +9,7 @@ class AssociationLoader < GraphQL::Batch::Loader
   end
 
   def initialize(model, association_name)
+    super()
     @model = model
     @association_name = association_name
     validate
@@ -38,7 +40,7 @@ class AssociationLoader < GraphQL::Batch::Loader
   end
 
   def preload_association(records)
-    ::ActiveRecord::Associations::Preloader.new.preload(records, @association_name)
+    ::ActiveRecord::Associations::Preloader.new(records: records, associations: @association_name).call
   end
 
   def read_association(record)
