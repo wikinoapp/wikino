@@ -1,4 +1,4 @@
-# typed: ignore
+# typed: false
 # frozen_string_literal: true
 
 RSpec.describe NoteInputtable, type: :model do
