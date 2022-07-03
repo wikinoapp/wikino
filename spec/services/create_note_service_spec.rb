@@ -7,7 +7,7 @@ RSpec.describe CreateNoteService, type: :model do
 
     it "creates a note" do
       form = NoteCreatingForm.new(user:, title: "Hello", body: "World")
-      service = described_class.new(form:)
+      service = CreateNoteService.new(form:)
 
       expect(Note.count).to eq(0)
       expect(NoteContent.count).to eq(0)
@@ -33,7 +33,7 @@ RSpec.describe CreateNoteService, type: :model do
 
     it "returns errors" do
       form = NoteCreatingForm.new(user:, title: "Hello", body: "World")
-      service = described_class.new(form:)
+      service = CreateNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)

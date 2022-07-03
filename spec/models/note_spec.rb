@@ -20,7 +20,7 @@ RSpec.describe Note, type: :model do
         ["[[[a]]] [[[b]]]", ["[a", "[b"]],
         ["[[[ a ]]]", ["[ a "]]
       ].each do |(body, expected)|
-        note = described_class.new(content: NoteContent.new(body:))
+        note = Note.new(content: NoteContent.new(body:))
         expect(note.titles_in_body).to eq(expected)
       end
     end

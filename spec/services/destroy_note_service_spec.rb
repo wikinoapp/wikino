@@ -8,7 +8,7 @@ RSpec.describe DestroyNoteService, type: :model do
 
     it "destroys the note" do
       form = NoteDestroyingForm.new(user:, note:)
-      service = described_class.new(form:)
+      service = DestroyNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
@@ -29,7 +29,7 @@ RSpec.describe DestroyNoteService, type: :model do
 
     it "returns errors" do
       form = NoteDestroyingForm.new(user:, note:)
-      service = described_class.new(form:)
+      service = DestroyNoteService.new(form:)
 
       expect(Note.count).to eq(1)
       expect(NoteContent.count).to eq(1)
