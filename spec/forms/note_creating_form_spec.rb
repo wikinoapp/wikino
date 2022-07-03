@@ -27,7 +27,10 @@ RSpec.describe NoteCreatingForm, type: :model do
 
     describe "#title_should_be_unique" do
       let!(:user) { create(:user) }
-      let!(:note) { create(:note, :with_content, user:, title: "Hello") }
+
+      before do
+        create(:note, :with_content, user:, title: "Hello")
+      end
 
       it "checks unique title" do
         form = described_class.new(user:, title: "Hello")
