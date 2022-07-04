@@ -546,24 +546,3 @@ module Kernel
     def load(path, wrap = T.unsafe(nil)); end
   end
 end
-
-# == Attribute Accessors per Thread
-#
-# Extends the module object with class/module and instance accessors for
-# class/module attributes, just like the native attr* accessors for instance
-# attributes, but does so on a per-thread basis.
-#
-# So the values are scoped within the Thread.current space under the class name
-# of the module.
-#
-# Note that it can also be scoped per-fiber if +Rails.application.config.active_support.isolation_level+
-# is set to +:fiber+.
-class Module
-  include ::Module::Concerning
-
-  def autoload(const, path); end
-end
-
-Module::DELEGATION_RESERVED_KEYWORDS = T.let(T.unsafe(nil), Array)
-Module::DELEGATION_RESERVED_METHOD_NAMES = T.let(T.unsafe(nil), Set)
-Module::RUBY_RESERVED_KEYWORDS = T.let(T.unsafe(nil), Array)

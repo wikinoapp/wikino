@@ -5,14 +5,4 @@
 # typed: strict
 
 module ::SafeType::BooleanMixin; end
-module CreateNoteRepository::MutationErrorEntity; end
-module CreateNoteRepository::NoteEntity; end
-module DeleteNoteRepository::MutationErrorEntity; end
-module EditNote::NoteRepository::NoteEntity; end
 module GitHub::Markups::MARKUP_MARKDOWN; end
-module InternalApi::NoteList::NotesRepository::NoteEntity; end
-module NoteList::NotesRepository::NoteEntity; end
-module NoteList::NotesRepository::PageInfoEntity; end
-module RDoc::Task; end
-module UpdateNote::NoteRepository::NoteEntity; end
-module UpdateNoteRepository::NoteEntity; end

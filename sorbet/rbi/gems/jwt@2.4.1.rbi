@@ -38,10 +38,12 @@ JWT::Algos::ALGOS = T.let(T.unsafe(nil), Array)
 module JWT::Algos::Ecdsa
   private
 
+  def curve_by_name(name); end
   def sign(to_sign); end
   def verify(to_verify); end
 
   class << self
+    def curve_by_name(name); end
     def sign(to_sign); end
     def verify(to_verify); end
   end
@@ -146,14 +148,6 @@ end
 
 JWT::Algos::Unsupported::SUPPORTED = T.let(T.unsafe(nil), Array)
 
-# Base64 helpers
-class JWT::Base64
-  class << self
-    def url_decode(str); end
-    def url_encode(str); end
-  end
-end
-
 class JWT::ClaimsValidator
   # @return [ClaimsValidator] a new instance of ClaimsValidator
   def initialize(payload); end
@@ -181,6 +175,7 @@ class JWT::Decode
 
   private
 
+  def algorithm; end
   def allowed_algorithms; end
   def decode_crypto; end
 
@@ -190,20 +185,30 @@ class JWT::Decode
   def header; end
 
   # @return [Boolean]
+  def none_algorithm?; end
+
+  # @return [Boolean]
   def options_includes_algo_in_header?; end
 
   def parse_and_decode(segment); end
   def payload; end
   def segment_length; end
+  def set_key; end
   def signing_input; end
 
   # @raise [JWT::DecodeError]
   def validate_segment_count!; end
 
+  # @raise [JWT::IncorrectAlgorithm]
+  def verify_algo; end
+
   def verify_claims; end
 
-  # @raise [JWT::IncorrectAlgorithm]
+  # @raise [JWT::DecodeError]
   def verify_signature; end
+
+  # @return [Boolean]
+  def verify_signature_for?(key); end
 end
 
 class JWT::DecodeError < ::StandardError; end
@@ -436,10 +441,15 @@ end
 
 # Signature logic for JWT
 module JWT::Signature
-  extend ::JWT::Signature
+  private
 
   def sign(algorithm, msg, key); end
   def verify(algorithm, key, signing_input, signature); end
+
+  class << self
+    def sign(algorithm, msg, key); end
+    def verify(algorithm, key, signing_input, signature); end
+  end
 end
 
 class JWT::Signature::ToSign < ::Struct
@@ -539,6 +549,7 @@ class JWT::Signature::ToVerify < ::Struct
   end
 end
 
+class JWT::UnsupportedEcdsaCurve < ::JWT::IncorrectAlgorithm; end
 class JWT::VerificationError < ::JWT::DecodeError; end
 
 # JWT verify methods
@@ -555,9 +566,7 @@ class JWT::Verify
   # @raise [JWT::InvalidIatError]
   def verify_iat; end
 
-  # @raise [JWT::InvalidIssuerError]
   def verify_iss; end
-
   def verify_jti; end
 
   # @raise [JWT::ImmatureSignature]
@@ -588,3 +597,20 @@ class JWT::Verify
 end
 
 JWT::Verify::DEFAULTS = T.let(T.unsafe(nil), Hash)
+
+# If the x5c header certificate chain can be validated by trusted root
+# certificates, and none of the certificates are revoked, returns the public
+# key from the first certificate.
+# See https://tools.ietf.org/html/rfc7515#section-4.1.6
+class JWT::X5cKeyFinder
+  # @raise [ArgumentError]
+  # @return [X5cKeyFinder] a new instance of X5cKeyFinder
+  def initialize(root_certificates, crls = T.unsafe(nil)); end
+
+  def from(x5c_header_or_certificates); end
+
+  private
+
+  def build_store(root_certificates, crls); end
+  def parse_certificates(x5c_header_or_certificates); end
+end

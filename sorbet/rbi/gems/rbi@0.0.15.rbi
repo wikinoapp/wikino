@@ -2187,6 +2187,9 @@ class RBI::TreeBuilder < ::RBI::ASTVisitor
   sig { returns(T::Array[::RBI::Sig]) }
   def current_sigs; end
 
+  sig { returns(T::Array[::RBI::Comment]) }
+  def current_sigs_comments; end
+
   sig { params(node: ::AST::Node).returns(T::Array[::RBI::Comment]) }
   def node_comments(node); end
 

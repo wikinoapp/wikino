@@ -547,7 +547,6 @@ end
 
 Bullet::StackTraceFilter::VENDOR_PATH = T.let(T.unsafe(nil), String)
 
-# Same as above, except in Object.
 class Object < ::BasicObject
   include ::ActiveSupport::ToJsonWithActiveSupportEncoder
   include ::ActiveSupport::Dependencies::RequireDependency
@@ -560,8 +559,6 @@ class Object < ::BasicObject
   def bullet_primary_key_value; end
 end
 
-# Enhance the String class with a XML escaped character version of
-# to_s.
 class String
   include ::Comparable
   include ::JSON::Ext::Generator::GeneratorMethods::String

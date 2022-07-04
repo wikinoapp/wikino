@@ -391,6 +391,22 @@ class RuboCop::Cop::Sorbet::ForbidTUnsafe < ::RuboCop::Cop::Cop
   def t_unsafe?(param0 = T.unsafe(nil)); end
 end
 
+# This cop disallows using `T.untyped` anywhere.
+#
+# @example
+#
+#   # bad
+#   sig { params(my_argument: T.untyped).void }
+#   def foo(my_argument); end
+#
+#   # good
+#   sig { params(my_argument: String).void }
+#   def foo(my_argument); end
+class RuboCop::Cop::Sorbet::ForbidTUntyped < ::RuboCop::Cop::Cop
+  def on_send(node); end
+  def t_untyped?(param0 = T.unsafe(nil)); end
+end
+
 # This cop disallows use of `T.untyped` or `T.nilable(T.untyped)`
 # as a prop type for `T::Struct`.
 #
