@@ -445,6 +445,7 @@ RuboCop::Cop::GraphQL::ObjectDescription::MSG = T.let(T.unsafe(nil), String)
 #   end
 #   end
 class RuboCop::Cop::GraphQL::OrderedArguments < ::RuboCop::Cop::Base
+  include ::RuboCop::Cop::RangeHelp
   include ::RuboCop::GraphQL::SwapRange
   extend ::RuboCop::Cop::AutoCorrector
 
@@ -488,6 +489,7 @@ RuboCop::Cop::GraphQL::OrderedArguments::MSG = T.let(T.unsafe(nil), String)
 #   field :name, String, null: true
 #   end
 class RuboCop::Cop::GraphQL::OrderedFields < ::RuboCop::Cop::Base
+  include ::RuboCop::Cop::RangeHelp
   include ::RuboCop::GraphQL::SwapRange
   extend ::RuboCop::Cop::AutoCorrector
 
@@ -586,7 +588,7 @@ RuboCop::Cop::GraphQL::ResolverMethodLength::MSG = T.let(T.unsafe(nil), String)
 class RuboCop::Cop::GraphQL::UnusedArgument < ::RuboCop::Cop::Base
   extend ::RuboCop::Cop::AutoCorrector
 
-  def argument_declarations(param0); end
+  def argument_declaration?(param0 = T.unsafe(nil)); end
   def on_class(node); end
   def resolve_method_definition(param0); end
 
@@ -594,6 +596,10 @@ class RuboCop::Cop::GraphQL::UnusedArgument < ::RuboCop::Cop::Base
 
   def arg_end(node); end
   def arg_name(declared_arg); end
+
+  # @return [Boolean]
+  def block_or_lambda?(node); end
+
   def find_declared_arg_nodes(node); end
   def find_resolve_method_node(node); end
   def find_unresolved_args(method_node, declared_arg_nodes); end
@@ -604,11 +610,15 @@ class RuboCop::Cop::GraphQL::UnusedArgument < ::RuboCop::Cop::Base
   def inferred_arg_name(name_as_string); end
   def method_name(node); end
   def register_offense(node, unresolved_args); end
+
+  # @return [Boolean]
+  def scope_changing_syntax?(node); end
+
+  # @return [Boolean]
+  def scoped_node?(node); end
 end
 
 RuboCop::Cop::GraphQL::UnusedArgument::MSG = T.let(T.unsafe(nil), String)
-
-# @deprecated IgnoredPattern class has been replaced with AllowedPattern.
 RuboCop::Cop::IgnoredPattern = RuboCop::Cop::AllowedPattern
 
 # RuboCop GraphQL project namespace
@@ -836,6 +846,8 @@ module RuboCop::GraphQL::Sorbet
 end
 
 module RuboCop::GraphQL::SwapRange
+  include ::RuboCop::Cop::RangeHelp
+
   def declaration(node); end
   def swap_range(corrector, current, previous); end
 end

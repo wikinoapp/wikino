@@ -20,7 +20,6 @@ Bignum = Integer
 class FalseClass
   include ::JSON::Ext::Generator::GeneratorMethods::FalseClass
   include ::MessagePack::CoreExt
-  include ::SafeType::BooleanMixin
 
   private
 
@@ -48,7 +47,6 @@ class Hash
   def to_msgpack_with_packer(packer); end
 end
 
-# Enhance the Integer class with a XML escaped character conversion.
 class Integer < ::Numeric
   include ::ActiveSupport::NumericWithFormat
   include ::ActiveSupport::DeprecatedNumericWithFormat
@@ -229,7 +227,6 @@ end
 class TrueClass
   include ::JSON::Ext::Generator::GeneratorMethods::TrueClass
   include ::MessagePack::CoreExt
-  include ::SafeType::BooleanMixin
 
   private
 

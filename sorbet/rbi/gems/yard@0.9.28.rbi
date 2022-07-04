@@ -386,7 +386,6 @@ end
 Rack::Request::ALLOWED_SCHEMES = T.let(T.unsafe(nil), Array)
 Rack::Request::SCHEME_WHITELIST = T.let(T.unsafe(nil), Array)
 
-# Extensions to the core String class
 class String
   include ::Comparable
   include ::JSON::Ext::Generator::GeneratorMethods::String
@@ -486,7 +485,6 @@ class WEBrick::HTTPRequest
   def xhr?; end
 end
 
-# same as Mongrel, Thin and Puma
 WEBrick::HTTPRequest::MAX_HEADER_LENGTH = T.let(T.unsafe(nil), Integer)
 
 # Gem::YARDoc provides methods to generate YARDoc and yri data for installed gems
@@ -525,6 +523,9 @@ module YARD
 
     # @return [Boolean] whether YARD is being run in Ruby 2.0
     def ruby2?; end
+
+    # @return [Boolean] whether YARD is being run in Ruby 3.1
+    def ruby31?; end
 
     # @return [Boolean] whether YARD is being run in Ruby 3.0
     def ruby3?; end
@@ -7303,6 +7304,7 @@ class YARD::Parser::Ruby::ModuleNode < ::YARD::Parser::Ruby::KeywordNode
 end
 
 class YARD::Parser::Ruby::ParameterNode < ::YARD::Parser::Ruby::AstNode
+  def args_forward; end
   def block_param; end
   def double_splat_param; end
   def named_params; end

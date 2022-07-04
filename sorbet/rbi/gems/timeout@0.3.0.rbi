@@ -32,11 +32,11 @@ module Timeout
   # Note that this is both a method of module Timeout, so you can <tt>include
   # Timeout</tt> into your classes so they have a #timeout method, as well as
   # a module method, so you can call it directly as Timeout.timeout().
-  #
-  # @raise [e]
   def timeout(sec, klass = T.unsafe(nil), message = T.unsafe(nil), &block); end
 
   class << self
+    def ensure_timeout_thread_created; end
+
     # Perform an operation in a block, raising an error if it takes longer than
     # +sec+ seconds to complete.
     #
@@ -62,13 +62,16 @@ module Timeout
     # Note that this is both a method of module Timeout, so you can <tt>include
     # Timeout</tt> into your classes so they have a #timeout method, as well as
     # a module method, so you can call it directly as Timeout.timeout().
-    #
-    # @raise [e]
     def timeout(sec, klass = T.unsafe(nil), message = T.unsafe(nil), &block); end
+
+    private
+
+    def create_timeout_thread; end
   end
 end
 
-Timeout::CALLER_OFFSET = T.let(T.unsafe(nil), Integer)
+# :stopdoc:
+Timeout::CONDVAR = T.let(T.unsafe(nil), Thread::ConditionVariable)
 
 # Raised by Timeout.timeout when the block times out.
 class Timeout::Error < ::RuntimeError
@@ -82,7 +85,25 @@ class Timeout::Error < ::RuntimeError
   end
 end
 
-# :stopdoc:
-Timeout::THIS_FILE = T.let(T.unsafe(nil), Regexp)
+Timeout::QUEUE = T.let(T.unsafe(nil), Thread::Queue)
+Timeout::QUEUE_MUTEX = T.let(T.unsafe(nil), Thread::Mutex)
 
+class Timeout::Request
+  # @return [Request] a new instance of Request
+  def initialize(thread, timeout, exception_class, message); end
+
+  # Returns the value of attribute deadline.
+  def deadline; end
+
+  # @return [Boolean]
+  def done?; end
+
+  # @return [Boolean]
+  def expired?(now); end
+
+  def finished; end
+  def interrupt; end
+end
+
+Timeout::TIMEOUT_THREAD_MUTEX = T.let(T.unsafe(nil), Thread::Mutex)
 Timeout::VERSION = T.let(T.unsafe(nil), String)

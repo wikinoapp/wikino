@@ -10,7 +10,7 @@ module PG
 
   class << self
     # Convenience alias for PG::Connection.new.
-    def connect(*args, **kwargs); end
+    def connect(*args, &block); end
 
     def init_openssl(_arg0, _arg1); end
     def init_ssl(_arg0); end
@@ -898,6 +898,7 @@ class PG::Connection
   def get_result; end
 
   def host; end
+  def hostaddr; end
   def internal_encoding; end
   def internal_encoding=(_arg0); end
   def is_busy; end
@@ -1166,9 +1167,7 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def async_connect(*args, **kwargs); end
+    def async_connect(*args); end
 
     # call-seq:
     #    PG::Connection.ping(connection_hash)       -> Integer
@@ -1250,9 +1249,7 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def connect(*args, **kwargs); end
+    def connect(*args); end
 
     # Convert Hash options to connection String
     #
@@ -1260,12 +1257,7 @@ class PG::Connection
     def connect_hash_to_string(hash); end
 
     def connect_start(*_arg0); end
-
-    # Decode a connection string to Hash options
-    #
-    # Value are properly unquoted and unescaped.
-    def connect_string_to_hash(str); end
-
+    def conninfo_parse(_arg0); end
     def encrypt_password(_arg0, _arg1); end
     def escape(_arg0); end
     def escape_bytea(_arg0); end
@@ -1323,9 +1315,7 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def new(*args, **kwargs); end
+    def new(*args); end
 
     # call-seq:
     #    PG::Connection.new -> conn
@@ -1378,9 +1368,7 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def open(*args, **kwargs); end
+    def open(*args); end
 
     # Parse the connection +args+ into a connection-parameter string.
     # See PG::Connection.new for valid arguments.
@@ -1392,9 +1380,8 @@ class PG::Connection
     # * URI object
     # * positional arguments
     #
-    # The method adds the option "hostaddr" and "fallback_application_name" if they aren't already set.
-    # The URI and the options string is passed through and "hostaddr" as well as "fallback_application_name"
-    # are added to the end.
+    # The method adds the option "fallback_application_name" if it isn't already set.
+    # It returns a connection string with "key=value" pairs.
     def parse_connect_args(*args); end
 
     # call-seq:
@@ -1473,9 +1460,7 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def setdb(*args, **kwargs); end
+    def setdb(*args); end
 
     # call-seq:
     #    PG::Connection.new -> conn
@@ -1528,25 +1513,23 @@ class PG::Connection
     # connection will have its +client_encoding+ set accordingly.
     #
     # Raises a PG::Error if the connection fails.
-    #
-    # @raise [PG::ConnectionBad]
-    def setdblogin(*args, **kwargs); end
+    def setdblogin(*args); end
 
     def sync_connect(*_arg0); end
     def sync_ping(*_arg0); end
     def unescape_bytea(_arg0); end
+
+    private
+
+    def connect_internal(opts, errors = T.unsafe(nil)); end
+    def connect_to_hosts(*args); end
+    def host_is_named_pipe?(host_string); end
   end
 end
 
 # The order the options are passed to the ::connect method.
 PG::Connection::CONNECT_ARGUMENT_ORDER = T.let(T.unsafe(nil), Array)
 
-# URI defined in RFC3986
-# This regexp is modified to allow host to specify multiple comma separated components captured as <hostports> and to disallow comma in hostnames.
-# Taken from: https://github.com/ruby/ruby/blob/be04006c7d2f9aeb7e9d8d09d945b3a9c7850202/lib/uri/rfc3986_parser.rb#L6
-PG::Connection::HOST_AND_PORT = T.let(T.unsafe(nil), Regexp)
-
-PG::Connection::POSTGRESQL_URI = T.let(T.unsafe(nil), Regexp)
 class PG::ConnectionBad < ::PG::Error; end
 class PG::ConnectionDoesNotExist < ::PG::ConnectionException; end
 class PG::ConnectionException < ::PG::ServerError; end
@@ -1679,6 +1662,9 @@ class PG::ERIETriggerProtocolViolated < ::PG::ExternalRoutineInvocationException
 PG::ERROR_CLASSES = T.let(T.unsafe(nil), Hash)
 
 class PG::Error < ::StandardError
+  # @return [Error] a new instance of Error
+  def initialize(msg = T.unsafe(nil), connection: T.unsafe(nil), result: T.unsafe(nil)); end
+
   def connection; end
   def error; end
   def result; end
