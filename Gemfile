@@ -12,7 +12,6 @@ gem "addressable"
 gem "bootsnap", require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
-gem "email_validator"
 gem "github-markup"
 gem "graphql"
 gem "graphql-batch"
@@ -31,7 +30,6 @@ group :development, :test do
   gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
-  gem "rspec_junit_formatter" # Using on CircleCI
   gem "rubocop-graphql", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
@@ -46,12 +44,6 @@ group :development do
   gem "sorbet"
   gem "tapioca", require: false
   gem "unparser", require: false # Used by rubocop-sorbet
-end
-
-group :test do
-  # Use < 0.18 until the following issue will be resolved.
-  # https://github.com/codeclimate/test-reporter/issues/418
-  gem "simplecov", "< 0.22", require: false
 end
 
 group :production do

@@ -90,13 +90,10 @@ GEM
     crass (1.0.6)
     diff-lcs (1.5.0)
     digest (3.1.0)
-    docile (1.4.0)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
       dotenv (= 2.7.6)
       railties (>= 3.2)
-    email_validator (2.2.3)
-      activemodel
     erubi (1.10.0)
     factory_bot (6.2.1)
       activesupport (>= 5.0.0)
@@ -237,8 +234,6 @@ GEM
       rspec-mocks (~> 3.10)
       rspec-support (~> 3.10)
     rspec-support (3.11.0)
-    rspec_junit_formatter (0.5.1)
-      rspec-core (>= 2, < 4, != 2.12.0)
     rubocop (1.29.1)
       parallel (~> 1.10)
       parser (>= 3.1.0.0)
@@ -264,12 +259,6 @@ GEM
     rubocop-sorbet (0.6.11)
       rubocop (>= 0.90.0)
     ruby-progressbar (1.11.0)
-    simplecov (0.21.2)
-      docile (~> 1.1)
-      simplecov-html (~> 0.11)
-      simplecov_json_formatter (~> 0.1)
-    simplecov-html (0.12.3)
-    simplecov_json_formatter (0.1.4)
     sorbet (0.5.10139)
       sorbet-static (= 0.5.10139)
     sorbet-runtime (0.5.10139)
@@ -334,7 +323,6 @@ DEPENDENCIES
   by_star
   commonmarker
   dotenv-rails
-  email_validator
   factory_bot_rails
   github-markup
   graphql
@@ -352,12 +340,10 @@ DEPENDENCIES
   rails (~> 7.0.0)
   rspec-mocks
   rspec-rails
-  rspec_junit_formatter
   rubocop-graphql
   rubocop-rails
   rubocop-rspec
   rubocop-sorbet
-  simplecov (< 0.22)
   sorbet
   sorbet-runtime
   standard
