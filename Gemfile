@@ -5,16 +5,16 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby "3.1.2"
 
-gem "rails", "~> 7.0.3"
+gem "rails", "~> 7.0.0"
 
 gem "activerecord-session_store"
 gem "addressable"
-gem 'bootsnap', '>= 1.4.4', require: false
+gem "bootsnap", require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
 gem "email_validator"
 gem "github-markup"
-gem "graphql", ">= 1.10.0.pre3" # https://github.com/rmosolgo/graphql-ruby/pull/2640
+gem "graphql"
 gem "graphql-batch"
 gem "jwt"
 gem "pg"
