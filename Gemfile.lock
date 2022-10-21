@@ -129,7 +129,6 @@ GEM
     marcel (1.0.2)
     method_source (1.0.0)
     mini_mime (1.1.2)
-    mini_portile2 (2.8.0)
     minitest (5.16.2)
     msgpack (1.5.3)
     multi_json (1.15.0)
@@ -148,8 +147,7 @@ GEM
       net-protocol
       timeout
     nio4r (2.5.8)
-    nokogiri (1.13.6)
-      mini_portile2 (~> 2.8.0)
+    nokogiri (1.13.9-x86_64-linux)
       racc (~> 1.4)
     parallel (1.22.1)
     parser (3.1.2.0)
@@ -262,14 +260,6 @@ GEM
     sorbet (0.5.10139)
       sorbet-static (= 0.5.10139)
     sorbet-runtime (0.5.10139)
-    sorbet-static (0.5.10139-universal-darwin-14)
-    sorbet-static (0.5.10139-universal-darwin-15)
-    sorbet-static (0.5.10139-universal-darwin-16)
-    sorbet-static (0.5.10139-universal-darwin-17)
-    sorbet-static (0.5.10139-universal-darwin-18)
-    sorbet-static (0.5.10139-universal-darwin-19)
-    sorbet-static (0.5.10139-universal-darwin-20)
-    sorbet-static (0.5.10139-universal-darwin-21)
     sorbet-static (0.5.10139-x86_64-linux)
     sorbet-static-and-runtime (0.5.10139)
       sorbet (= 0.5.10139)
@@ -312,7 +302,7 @@ GEM
     zeitwerk (2.6.0)
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   active_record_query_trace
