@@ -88,6 +88,8 @@ GEM
     commonmarker (0.23.5)
     concurrent-ruby (1.1.10)
     crass (1.0.6)
+    cssbundling-rails (1.1.1)
+      railties (>= 6.0.0)
     diff-lcs (1.5.0)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
@@ -111,6 +113,8 @@ GEM
       promise.rb (~> 0.7.2)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
+    jsbundling-rails (1.0.3)
+      railties (>= 6.0.0)
     jwt (2.4.1)
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
@@ -149,6 +153,11 @@ GEM
       ast (~> 2.4.1)
     pg (1.4.1)
     promise.rb (0.7.4)
+    propshaft (0.6.4)
+      actionpack (>= 7.0.0)
+      activesupport (>= 7.0.0)
+      rack
+      railties (>= 7.0.0)
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -314,15 +323,18 @@ DEPENDENCIES
   bullet
   by_star
   commonmarker
+  cssbundling-rails
   dotenv-rails
   factory_bot_rails
   github-markup
   graphql
   graphql-batch
+  jsbundling-rails
   jwt
   listen
   lograge
   pg
+  propshaft
   pry-rails
   puma
   puma_worker_killer
