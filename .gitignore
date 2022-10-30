@@ -7,3 +7,6 @@
 /public/packs
 /tmp/*
 /volumes
+
+/app/assets/builds/*
+!/app/assets/builds/.keep
