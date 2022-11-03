@@ -2,5 +2,5 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  root "welcome#show"
+  root "welcome/show#call"
 end
