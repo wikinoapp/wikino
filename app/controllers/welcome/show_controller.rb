@@ -4,6 +4,8 @@
 class Welcome::ShowController < ApplicationController
   extend T::Sig
 
+  include Authenticatable
+
   sig { returns(T.untyped) }
   def call
   end
