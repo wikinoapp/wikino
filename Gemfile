@@ -25,6 +25,7 @@ gem "pundit"
 gem "rack-cors"
 gem "rack-mini-profiler"
 gem "sorbet-runtime"
+gem "view_component"
 
 group :development, :test do
   gem "dotenv-rails"
