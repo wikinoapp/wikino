@@ -350,7 +350,6 @@ DEPENDENCIES
   factory_bot_rails
   github-markup
   jsbundling-rails
-  jwt
   listen
   lograge
   omniauth-auth0
