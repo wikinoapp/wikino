@@ -73,8 +73,8 @@ class Note
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Note).void)).returns(::Note) }
     def find_or_initialize_by(attributes, &block); end
 
-    sig { returns(T.nilable(::Note)) }
-    def find_sole_by; end
+    sig { params(arg: T.untyped, args: T.untyped).returns(::Note) }
+    def find_sole_by(arg, *args); end
 
     sig { params(limit: T.untyped).returns(T.untyped) }
     def first(limit = nil); end
@@ -145,7 +145,7 @@ class Note
     sig { returns(::Note) }
     def second_to_last!; end
 
-    sig { returns(T.nilable(::Note)) }
+    sig { returns(::Note) }
     def sole; end
 
     sig do

@@ -5,3 +5,4 @@
 # typed: false
 
 module GitHub::Markups::MARKUP_MARKDOWN; end
+module URI::File; end
