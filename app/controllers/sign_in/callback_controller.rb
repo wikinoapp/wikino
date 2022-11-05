@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class SignIn::CallbackController < ApplicationController
-  extend T::Sig
-
   include Authenticatable
 
   before_action :require_no_authentication
