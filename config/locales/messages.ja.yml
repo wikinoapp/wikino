@@ -2,6 +2,12 @@ ja:
   messages:
     _common:
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
+    auth:
+      callback:
+        sign_in_failed: ログインに失敗しました
+    sign_out:
+      callback:
+        sign_out_success: ログアウトしました
     note:
       are_you_sure_delete: 'ノートを削除しますか？'
       create_note_with_keyword: '「__keyword__」のノートを作成する'

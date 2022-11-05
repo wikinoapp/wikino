@@ -2,6 +2,12 @@ en:
   messages:
     _common:
       unexpected_error: Sorry, something went wrong. Please try again.
+    auth:
+      callback:
+        sign_in_failed: Sign in failed
+    sign_out:
+      callback:
+        sign_out_success: Signed out
     note:
       are_you_sure_delete: 'Are you sure you want to delete this note?'
       create_note_with_keyword: Create note with '__keyword__'
