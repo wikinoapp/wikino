@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Auth::FailureController < ApplicationController
+class SignIn::FailureController < ApplicationController
   extend T::Sig
 
   include Authenticatable

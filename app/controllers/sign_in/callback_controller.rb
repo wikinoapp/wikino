@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Auth::CallbackController < ApplicationController
+class SignIn::CallbackController < ApplicationController
   extend T::Sig
 
   include Authenticatable
@@ -14,7 +14,7 @@ class Auth::CallbackController < ApplicationController
     authentication = Authentication.new(auth0_user_id: auth_info.uid)
 
     if authentication.invalid?
-      flash[:alert] = t("messages.auth.callback.sign_in_failed")
+      flash[:alert] = t("messages.sign_in.sign_in_failed")
       return redirect_to(root_path)
     end
 

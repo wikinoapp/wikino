@@ -7,7 +7,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     ENV.fetch("NONOTO_AUTH0_CLIENT_ID"),
     ENV.fetch("NONOTO_AUTH0_CLIENT_SECRET"),
     ENV.fetch("NONOTO_AUTH0_DOMAIN"),
-    callback_path: "/auth/callback",
+    callback_path: "/sign_in/callback",
     authorize_params: {
       scope: "openid profile"
     }
