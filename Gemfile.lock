@@ -107,10 +107,6 @@ GEM
     github-markup (4.0.1)
     globalid (1.0.0)
       activesupport (>= 5.0)
-    graphql (2.0.11)
-    graphql-batch (0.5.1)
-      graphql (>= 1.10, < 3)
-      promise.rb (~> 0.7.2)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
     jsbundling-rails (1.0.3)
@@ -152,7 +148,6 @@ GEM
     parser (3.1.2.0)
       ast (~> 2.4.1)
     pg (1.4.1)
-    promise.rb (0.7.4)
     propshaft (0.6.4)
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -247,8 +242,6 @@ GEM
       unicode-display_width (>= 1.4.0, < 3.0)
     rubocop-ast (1.18.0)
       parser (>= 3.1.1.0)
-    rubocop-graphql (0.14.4)
-      rubocop (>= 0.87, < 2)
     rubocop-performance (1.13.3)
       rubocop (>= 1.7.0, < 2.0)
       rubocop-ast (>= 0.4.0)
@@ -327,8 +320,6 @@ DEPENDENCIES
   dotenv-rails
   factory_bot_rails
   github-markup
-  graphql
-  graphql-batch
   jsbundling-rails
   jwt
   listen
@@ -344,7 +335,6 @@ DEPENDENCIES
   rails (~> 7.0.0)
   rspec-mocks
   rspec-rails
-  rubocop-graphql
   rubocop-rails
   rubocop-rspec
   rubocop-sorbet
