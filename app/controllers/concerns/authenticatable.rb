@@ -59,4 +59,12 @@ module Authenticatable
       redirect_to root_path
     end
   end
+
+  sig { returns(T.untyped) }
+  def require_no_authentication
+    if user_signed_in?
+      flash[:notice] = t("messages.authentication.already_signed_in")
+      redirect_to root_path
+    end
+  end
 end

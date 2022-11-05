@@ -4,7 +4,9 @@ en:
       unexpected_error: Sorry, something went wrong. Please try again.
     auth:
       callback:
-        sign_in_failed: Sign in failed
+        sign_in_failed: Sign in failed.
+    authentication:
+      already_signed_in: Already signed in.
     sign_out:
       callback:
         sign_out_success: Signed out

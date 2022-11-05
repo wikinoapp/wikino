@@ -5,6 +5,8 @@ ja:
     auth:
       callback:
         sign_in_failed: ログインに失敗しました
+    authentication:
+      already_signed_in: すでにログインしています
     sign_out:
       callback:
         sign_out_success: ログアウトしました

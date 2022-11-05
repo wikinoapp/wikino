@@ -6,6 +6,8 @@ class Auth::CallbackController < ApplicationController
 
   include Authenticatable
 
+  before_action :require_no_authentication
+
   sig { returns(T.untyped) }
   def call
     auth_info = request.env["omniauth.auth"]
