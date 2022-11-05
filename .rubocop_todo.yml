@@ -6,112 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 13
-GraphQL/ArgumentDescription:
-  Exclude:
-    - 'app/graphql/mutations/confirm_email.rb'
-    - 'app/graphql/mutations/create_note.rb'
-    - 'app/graphql/mutations/delete_note.rb'
-    - 'app/graphql/mutations/sign_in.rb'
-    - 'app/graphql/mutations/update_note.rb'
-    - 'app/graphql/types/input_objects/note_order.rb'
-    - 'app/graphql/types/objects/user_type.rb'
-
-# Offense count: 1
-# Configuration parameters: MaxArguments.
-GraphQL/ExtractInputType:
-  Exclude:
-    - 'app/graphql/mutations/confirm_email.rb'
-
-# Offense count: 1
-# Configuration parameters: MaxFields, Prefixes.
-# Prefixes: is, with, avg, min, max
-GraphQL/ExtractType:
-  Exclude:
-    - 'app/graphql/types/objects/mutation_type.rb'
-
-# Offense count: 37
-GraphQL/FieldDescription:
-  Exclude:
-    - 'app/graphql/mutations/confirm_email.rb'
-    - 'app/graphql/mutations/create_note.rb'
-    - 'app/graphql/mutations/delete_note.rb'
-    - 'app/graphql/mutations/sign_in.rb'
-    - 'app/graphql/mutations/sign_out.rb'
-    - 'app/graphql/mutations/update_note.rb'
-    - 'app/graphql/types/objects/access_token_type.rb'
-    - 'app/graphql/types/objects/backlink_type.rb'
-    - 'app/graphql/types/objects/email_confirmation_type.rb'
-    - 'app/graphql/types/objects/link_type.rb'
-    - 'app/graphql/types/objects/mutation_error_type.rb'
-    - 'app/graphql/types/objects/mutation_type.rb'
-    - 'app/graphql/types/objects/note_type.rb'
-    - 'app/graphql/types/objects/query_type.rb'
-    - 'app/graphql/types/objects/update_note_error_type.rb'
-    - 'app/graphql/types/objects/user_type.rb'
-
-# Offense count: 6
-# This cop supports safe auto-correction (--auto-correct).
-GraphQL/FieldName:
-  Exclude:
-    - 'app/graphql/types/objects/mutation_type.rb'
-
-# Offense count: 33
-GraphQL/ObjectDescription:
-  Exclude:
-    - 'app/graphql/association_loader.rb'
-    - 'app/graphql/mutations/base.rb'
-    - 'app/graphql/mutations/confirm_email.rb'
-    - 'app/graphql/mutations/create_note.rb'
-    - 'app/graphql/mutations/delete_note.rb'
-    - 'app/graphql/mutations/sign_in.rb'
-    - 'app/graphql/mutations/sign_out.rb'
-    - 'app/graphql/mutations/update_note.rb'
-    - 'app/graphql/record_loader.rb'
-    - 'app/graphql/types/arguments/base.rb'
-    - 'app/graphql/types/enums/base.rb'
-    - 'app/graphql/types/enums/email_confirmation_event.rb'
-    - 'app/graphql/types/enums/mutation_error_code.rb'
-    - 'app/graphql/types/enums/note_order_field.rb'
-    - 'app/graphql/types/enums/order_direction.rb'
-    - 'app/graphql/types/enums/update_note_error_code.rb'
-    - 'app/graphql/types/fields/base.rb'
-    - 'app/graphql/types/input_objects/base.rb'
-    - 'app/graphql/types/input_objects/note_order.rb'
-    - 'app/graphql/types/interfaces/base.rb'
-    - 'app/graphql/types/objects/access_token_type.rb'
-    - 'app/graphql/types/objects/backlink_type.rb'
-    - 'app/graphql/types/objects/base.rb'
-    - 'app/graphql/types/objects/email_confirmation_type.rb'
-    - 'app/graphql/types/objects/link_type.rb'
-    - 'app/graphql/types/objects/mutation_error_type.rb'
-    - 'app/graphql/types/objects/mutation_type.rb'
-    - 'app/graphql/types/objects/note_type.rb'
-    - 'app/graphql/types/objects/query_type.rb'
-    - 'app/graphql/types/objects/update_note_error_type.rb'
-    - 'app/graphql/types/objects/user_type.rb'
-    - 'app/graphql/types/scalars/base.rb'
-    - 'app/graphql/types/unions/base.rb'
-
-# Offense count: 3
-# This cop supports safe auto-correction (--auto-correct).
-GraphQL/OrderedArguments:
-  Exclude:
-    - 'app/graphql/mutations/update_note.rb'
-    - 'app/graphql/types/input_objects/note_order.rb'
-    - 'app/graphql/types/objects/user_type.rb'
-
-# Offense count: 8
-# This cop supports safe auto-correction (--auto-correct).
-GraphQL/OrderedFields:
-  Exclude:
-    - 'app/graphql/mutations/create_note.rb'
-    - 'app/graphql/mutations/sign_in.rb'
-    - 'app/graphql/mutations/update_note.rb'
-    - 'app/graphql/types/objects/backlink_type.rb'
-    - 'app/graphql/types/objects/mutation_error_type.rb'
-    - 'app/graphql/types/objects/note_type.rb'
-
 # Offense count: 4
 # This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLineAfterMagicComment:
@@ -162,12 +56,6 @@ Layout/SpaceInsideArrayLiteralBrackets:
 # SupportedStylesForEmptyBraces: space, no_space
 Layout/SpaceInsideHashLiteralBraces:
   Exclude:
-    - 'app/controllers/local/graphql_controller.rb'
-    - 'app/graphql/mutations/confirm_email.rb'
-    - 'app/graphql/mutations/create_note.rb'
-    - 'app/graphql/mutations/delete_note.rb'
-    - 'app/graphql/mutations/sign_in.rb'
-    - 'app/graphql/mutations/update_note.rb'
     - 'app/models/note.rb'
     - 'app/models/user.rb'
     - 'app/repositories/edit_note/note_repository.rb'
@@ -202,14 +90,6 @@ Rails/DurationArithmetic:
 Rails/EnumHash:
   Exclude:
     - 'app/models/email_confirmation.rb'
-
-# Offense count: 1
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: numeric, symbolic
-Rails/HttpStatus:
-  Exclude:
-    - 'app/controllers/local/graphql_controller.rb'
 
 # Offense count: 2
 # Configuration parameters: IgnoreScopes, Include.
@@ -268,18 +148,11 @@ Style/GlobalStdStream:
   Exclude:
     - 'config/environments/production.rb'
 
-# Offense count: 1
-# This cop supports safe auto-correction (--auto-correct).
-Style/KeywordParametersOrder:
-  Exclude:
-    - 'app/graphql/types/objects/user_type.rb'
-
 # Offense count: 4
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: PreferredDelimiters.
 Style/PercentLiteralDelimiters:
   Exclude:
-    - 'app/graphql/mutations/update_note.rb'
     - 'app/models/email_confirmation.rb'
     - 'db/migrate/20200000000001_hello_world.rb'
 

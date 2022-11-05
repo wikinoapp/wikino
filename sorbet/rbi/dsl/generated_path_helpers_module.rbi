@@ -9,7 +9,10 @@ module GeneratedPathHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def internal_graphql_path(*args); end
+  def auth_callback_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def auth_failure_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def rails_info_path(*args); end
@@ -22,4 +25,13 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def rails_mailers_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def root_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_out_callback_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_out_path(*args); end
 end

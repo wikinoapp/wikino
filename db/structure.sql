@@ -17,10 +17,24 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 
 
 --
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 SET default_tablespace = '';
@@ -114,7 +128,10 @@ CREATE TABLE public.users (
     auth0_user_id character varying NOT NULL,
     deleted_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    sign_in_count integer DEFAULT 0 NOT NULL,
+    current_signed_in_at timestamp(6) without time zone,
+    last_signed_in_at timestamp(6) without time zone
 );
 
 
@@ -343,6 +360,7 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20220505022747'),
-('20220505022901');
+('20220505022901'),
+('20221103142919');
 
 

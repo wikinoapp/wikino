@@ -12,11 +12,14 @@ gem "addressable"
 gem "bootsnap", require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
+gem "cssbundling-rails"
 gem "github-markup"
-gem "graphql"
-gem "graphql-batch"
+gem "jsbundling-rails"
 gem "jwt"
+gem "omniauth-auth0"
+gem "omniauth-rails_csrf_protection"
 gem "pg"
+gem "propshaft"
 gem "puma"
 gem "puma_worker_killer"
 gem "pundit"
@@ -30,7 +33,6 @@ group :development, :test do
   gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
-  gem "rubocop-graphql", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-sorbet", require: false
