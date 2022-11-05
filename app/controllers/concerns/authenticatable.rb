@@ -6,7 +6,7 @@ module Authenticatable
   extend ActiveSupport::Concern
 
   included do
-    helper_method :current_user, :sign_in_with_auth0_path, :sign_up_with_auth0_path
+    helper_method :current_user, :sign_in_with_auth0_path, :sign_up_with_auth0_path, :user_signed_in?
   end
 
   sig { returns(String) }

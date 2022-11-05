@@ -1,0 +1,41 @@
+<nav class="c-navbar navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <%= link_to root_path, class: "fw-bold navbar-brand" do %>
+      の
+      <span class="small">(α)</span>
+    <% end %>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto">
+        <% if user_signed_in? %>
+          <li class="nav-item">
+            <%= link_to t("nouns.new_note"), "#", class: "nav-link", data: { turbolinks: false } %>
+          </li>
+        <% end %>
+      </ul>
+      <ul class="navbar-nav">
+        <% if user_signed_in? %>
+          <li class="dropdown nav-item">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Menu
+            </a>
+            <div class="dropdown-menu dropdown-menu-md-end" aria-labelledby="navbarDropdown">
+              <%= link_to t("nouns.sign_out"), sign_out_path, class: "dropdown-item", method: :delete %>
+            </div>
+          </li>
+        <% else %>
+          <li class="nav-item">
+            <%= link_to t("nouns.sign_up"), sign_up_path, class: "nav-link disabled" %>
+          </li>
+          <li class="nav-item">
+            <%= link_to t("nouns.sign_in"), sign_in_path, class: "nav-link" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</nav>
