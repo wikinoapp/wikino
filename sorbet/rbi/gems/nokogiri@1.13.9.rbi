@@ -4097,11 +4097,15 @@ class Nokogiri::XML::Reader
   def attribute(_arg0); end
   def attribute_at(_arg0); end
   def attribute_count; end
+  def attribute_hash; end
   def attribute_nodes; end
 
-  # Get the attributes of the current node as a Hash
+  # Get the attributes and namespaces of the current node as a Hash.
   #
-  # [Returns] (Hash<String, String>) Attribute names and values
+  # This is the union of Reader#attribute_hash and Reader#namespaces
+  #
+  # [Returns]
+  #   (Hash<String, String>) Attribute names and values, and namespace prefixes and hrefs.
   def attributes; end
 
   def attributes?; end

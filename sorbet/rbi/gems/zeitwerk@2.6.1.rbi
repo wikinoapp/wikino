@@ -326,9 +326,13 @@ module Zeitwerk::Loader::Config
   # @private
   def collapse_glob_patterns; end
 
-  # Absolute paths of the root directories. This is a read-only collection,
-  # please push here via `push_dir`.
-  def dirs; end
+  # If `namespaces` is falsey (default), returns an array with the absolute
+  # paths of the root directories as strings. If truthy, returns a hash table
+  # instead. Keys are the absolute paths of the root directories as strings,
+  # values are their corresponding namespaces, class or module objects.
+  #
+  # These are read-only collections, please add to them with `push_dir`.
+  def dirs(namespaces: T.unsafe(nil)); end
 
   # Let eager load ignore the given files or directories. The constants defined
   # in those files are still autoloadable.
@@ -450,11 +454,12 @@ module Zeitwerk::Loader::Config
   def reloading_enabled?; end
 
   # Absolute paths of the root directories. Stored in a hash to preserve
-  # order, easily handle duplicates, and also be able to have a fast lookup,
-  # needed for detecting nested paths.
+  # order, easily handle duplicates, have a fast lookup needed for detecting
+  # nested paths, and store custom namespaces as values.
   #
-  #   "/Users/fxn/blog/app/assets"   => true,
-  #   "/Users/fxn/blog/app/channels" => true,
+  #   "/Users/fxn/blog/app/assets"   => Object,
+  #   "/Users/fxn/blog/app/channels" => Object,
+  #   "/Users/fxn/blog/adapters"     => ActiveJob::QueueAdapters,
   #   ...
   #
   # This is a private collection maintained by the loader. The public

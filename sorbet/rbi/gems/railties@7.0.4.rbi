@@ -62,6 +62,13 @@ module Rails
     #   Rails.env = "staging" # => "staging"
     def env=(environment); end
 
+    # Returns the ActiveSupport::ErrorReporter of the current Rails project,
+    # otherwise it returns +nil+ if there is no project.
+    #
+    #   Rails.error.handle(IOError) do
+    #     # ...
+    #   end
+    #   Rails.error.report(error)
     def error; end
 
     # Returns the currently loaded version of Rails as a <tt>Gem::Version</tt>.
@@ -903,9 +910,9 @@ module Rails::Application::Finisher::InterlockHook
   end
 end
 
-class Rails::Application::Finisher::MutexHook
-  # @return [MutexHook] a new instance of MutexHook
-  def initialize(mutex = T.unsafe(nil)); end
+class Rails::Application::Finisher::MonitorHook
+  # @return [MonitorHook] a new instance of MonitorHook
+  def initialize(monitor = T.unsafe(nil)); end
 
   def complete(_state); end
   def run; end
@@ -2111,6 +2118,7 @@ class Rails::Railtie
   def config; end
 
   def configure(&block); end
+  def inspect; end
   def railtie_name(*_arg0, **_arg1, &_arg2); end
   def railtie_namespace; end
 

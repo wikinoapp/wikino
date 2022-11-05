@@ -276,28 +276,37 @@ class Net::IMAP < ::Net::Protocol
   # Sends an AUTHENTICATE command to authenticate the client.
   # The +auth_type+ parameter is a string that represents
   # the authentication mechanism to be used. Currently Net::IMAP
-  # supports the authentication mechanisms:
+  # supports the following mechanisms:
   #
-  #   LOGIN:: login using cleartext user and password.
-  #   CRAM-MD5:: login with cleartext user and encrypted password
-  #              (see [RFC-2195] for a full description).  This
-  #              mechanism requires that the server have the user's
-  #              password stored in clear-text password.
+  # PLAIN:: Login using cleartext user and password.  Secure with TLS.
+  #         See Net::IMAP::PlainAuthenticator.
+  # CRAM-MD5::   DEPRECATED: Use PLAIN (or DIGEST-MD5) with TLS.
+  # DIGEST-MD5:: DEPRECATED by RFC6331. Must be secured using TLS.
+  #              See Net::IMAP::DigestMD5Authenticator.
+  # LOGIN::      DEPRECATED: Use PLAIN.
   #
-  # For both of these mechanisms, there should be two +args+: username
-  # and (cleartext) password.  A server may not support one or the other
-  # of these mechanisms; check #capability for a capability of
-  # the form "AUTH=LOGIN" or "AUTH=CRAM-MD5".
+  # Most mechanisms require two args: authentication identity (e.g. username)
+  # and credentials (e.g. a password).  But each mechanism requires and allows
+  # different arguments; please consult the documentation for the specific
+  # mechanisms you are using.  <em>Several obsolete mechanisms are available
+  # for backwards compatibility.  Using deprecated mechanisms will issue
+  # warnings.</em>
   #
-  # Authentication is done using the appropriate authenticator object:
-  # see +add_authenticator+ for more information on plugging in your own
-  # authenticator.
+  # Servers do not support all mechanisms and clients must not attempt to use
+  # a mechanism unless "AUTH=#{mechanism}" is listed as a #capability.
+  # Clients must not attempt to authenticate or #login when +LOGINDISABLED+ is
+  # listed with the capabilities.  Server capabilities, especially auth
+  # mechanisms, do change after calling #starttls so they need to be checked
+  # again.
   #
   # For example:
   #
-  #    imap.authenticate('LOGIN', user, password)
+  #    imap.authenticate('PLAIN', user, password)
   #
   # A Net::IMAP::NoResponseError is raised if authentication fails.
+  #
+  # See +Net::IMAP::Authenticators+ for more information on plugging in your
+  # own authenticator.
   def authenticate(auth_type, *args); end
 
   # Sends a CAPABILITY command, and returns an array of
@@ -923,7 +932,7 @@ module Net::IMAP::Authenticators
 
   # Builds an authenticator for Net::IMAP#authenticate.  +args+ will be passed
   # directly to the chosen authenticator's +#initialize+.
-  def authenticator(auth_type, *args); end
+  def authenticator(mechanism, *authargs, **properties, &callback); end
 
   private
 
@@ -1088,7 +1097,7 @@ end
 # traffic.  With TLS +CRAM-MD5+ is okay, but so is +PLAIN+
 class Net::IMAP::CramMD5Authenticator
   # @return [CramMD5Authenticator] a new instance of CramMD5Authenticator
-  def initialize(user, password); end
+  def initialize(user, password, warn_deprecation: T.unsafe(nil), **_ignored); end
 
   def process(challenge); end
 
@@ -1115,7 +1124,7 @@ Net::IMAP::DRAFTS = T.let(T.unsafe(nil), Symbol)
 # security.  It is included for compatibility with existing servers.
 class Net::IMAP::DigestMD5Authenticator
   # @return [DigestMD5Authenticator] a new instance of DigestMD5Authenticator
-  def initialize(user, password, authname = T.unsafe(nil)); end
+  def initialize(user, password, authname = T.unsafe(nil), warn_deprecation: T.unsafe(nil)); end
 
   def process(challenge); end
 
@@ -1204,7 +1213,7 @@ end
 # for both specification and deprecation.
 class Net::IMAP::LoginAuthenticator
   # @return [LoginAuthenticator] a new instance of LoginAuthenticator
-  def initialize(user, password); end
+  def initialize(user, password, warn_deprecation: T.unsafe(nil), **_ignored); end
 
   def process(data); end
 end
@@ -1587,3 +1596,14 @@ Net::IMAP::TRASH = T.let(T.unsafe(nil), Symbol)
 class Net::IMAP::UnknownResponseError < ::Net::IMAP::ResponseError; end
 
 Net::IMAP::VERSION = T.let(T.unsafe(nil), String)
+
+class Net::IMAP::XOauth2Authenticator
+  # @return [XOauth2Authenticator] a new instance of XOauth2Authenticator
+  def initialize(user, oauth2_token); end
+
+  def process(_data); end
+
+  private
+
+  def build_oauth2_string(user, oauth2_token); end
+end

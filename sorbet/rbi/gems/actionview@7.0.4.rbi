@@ -733,6 +733,23 @@ class ActionView::FileSystemResolver < ::ActionView::Resolver
   def unbound_templates_from_path(path); end
 end
 
+# Use FixtureResolver in your tests to simulate the presence of files on the
+# file system. This is used internally by Rails' own test suite, and is
+# useful for testing extensions that have no way of knowing what the file
+# system will look like at runtime.
+class ActionView::FixtureResolver < ::ActionView::FileSystemResolver
+  # @return [FixtureResolver] a new instance of FixtureResolver
+  def initialize(hash = T.unsafe(nil)); end
+
+  def data; end
+  def to_s; end
+
+  private
+
+  def source_for_template(template); end
+  def template_glob(glob); end
+end
+
 module ActionView::Helpers
   include ::ActiveSupport::Benchmarkable
   include ::ActionView::Helpers::ActiveModelHelper
@@ -5263,7 +5280,8 @@ module ActionView::Helpers::FormHelper
   # Returns an input tag of type "number".
   #
   # ==== Options
-  # * Accepts same options as number_field_tag
+  #
+  # Supports the same options as FormTagHelper#number_field_tag.
   def number_field(object_name, method, options = T.unsafe(nil)); end
 
   # Returns an input tag of the "password" type tailored for accessing a specified attribute (identified by +method+) on an object
@@ -5315,7 +5333,8 @@ module ActionView::Helpers::FormHelper
   # Returns an input tag of type "range".
   #
   # ==== Options
-  # * Accepts same options as range_field_tag
+  #
+  # Supports the same options as FormTagHelper#range_field_tag.
   def range_field(object_name, method, options = T.unsafe(nil)); end
 
   # Returns an input of type "search" for accessing a specified attribute (identified by +method+) on an object
@@ -5400,10 +5419,12 @@ module ActionView::Helpers::FormHelper
   # formatted by trying to call +strftime+ with "%H:%M" on the object's value.
   # It is also possible to override this by passing the "value" option.
   #
-  # === Options
-  # * Accepts same options as time_field_tag
+  # ==== Options
   #
-  # === Example
+  # Supports the same options as FormTagHelper#time_field_tag.
+  #
+  # ==== Examples
+  #
   #   time_field("task", "started_at")
   #   # => <input id="task_started_at" name="task[started_at]" type="time" />
   #
@@ -6249,9 +6270,11 @@ module ActionView::Helpers::FormTagHelper
   # Creates a text field of type "color".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   color_field_tag 'name'
   #   # => <input id="name" name="name" type="color" />
   #
@@ -6268,9 +6291,11 @@ module ActionView::Helpers::FormTagHelper
   # Creates a text field of type "date".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   date_field_tag 'name'
   #   # => <input id="name" name="name" type="date" />
   #
@@ -6286,20 +6311,24 @@ module ActionView::Helpers::FormTagHelper
 
   # Creates a text field of type "datetime-local".
   #
-  # === Options
+  # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:step</tt> - The acceptable value granularity.
-  # * Otherwise accepts the same options as text_field_tag.
   def datetime_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   # Creates a text field of type "datetime-local".
   #
-  # === Options
+  # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:step</tt> - The acceptable value granularity.
-  # * Otherwise accepts the same options as text_field_tag.
   def datetime_local_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   def default_enforce_utf8; end
@@ -6308,9 +6337,11 @@ module ActionView::Helpers::FormTagHelper
   # Creates a text field of type "email".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   email_field_tag 'name'
   #   # => <input id="name" name="name" type="email" />
   #
@@ -6532,25 +6563,30 @@ module ActionView::Helpers::FormTagHelper
 
   # Creates a text field of type "month".
   #
-  # === Options
+  # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:step</tt> - The acceptable value granularity.
-  # * Otherwise accepts the same options as text_field_tag.
   def month_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   # Creates a number field.
   #
   # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:in</tt> - A range specifying the <tt>:min</tt> and
   #   <tt>:max</tt> values.
   # * <tt>:within</tt> - Same as <tt>:in</tt>.
   # * <tt>:step</tt> - The acceptable value granularity.
-  # * Otherwise accepts the same options as text_field_tag.
   #
   # ==== Examples
+  #
   #   number_field_tag 'quantity'
   #   # => <input id="quantity" name="quantity" type="number" />
   #
@@ -6616,9 +6652,11 @@ module ActionView::Helpers::FormTagHelper
   # Creates a text field of type "tel".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   telephone_field_tag 'name'
   #   # => <input id="name" name="name" type="tel" />
   #
@@ -6656,15 +6694,18 @@ module ActionView::Helpers::FormTagHelper
   # Creates a range form element.
   #
   # ==== Options
-  # * Accepts the same options as number_field_tag.
+  #
+  # Supports the same options as #number_field_tag.
   def range_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   # Creates a text field of type "search".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   search_field_tag 'name'
   #   # => <input id="name" name="name" type="search" />
   #
@@ -6781,9 +6822,11 @@ module ActionView::Helpers::FormTagHelper
   # Creates a text field of type "tel".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   telephone_field_tag 'name'
   #   # => <input id="name" name="name" type="tel" />
   #
@@ -6868,20 +6911,24 @@ module ActionView::Helpers::FormTagHelper
 
   # Creates a text field of type "time".
   #
-  # === Options
+  # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:step</tt> - The acceptable value granularity.
   # * <tt>:include_seconds</tt> - Include seconds and ms in the output timestamp format (true by default).
-  # * Otherwise accepts the same options as text_field_tag.
   def time_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   # Creates a text field of type "url".
   #
   # ==== Options
-  # * Accepts the same options as text_field_tag.
+  #
+  # Supports the same options as #text_field_tag.
   #
   # ==== Examples
+  #
   #   url_field_tag 'name'
   #   # => <input id="name" name="name" type="url" />
   #
@@ -6895,17 +6942,19 @@ module ActionView::Helpers::FormTagHelper
   #   # => <input disabled="disabled" class="special_input" id="url" name="url" type="url" value="http://rubyonrails.org" />
   def url_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
-  # Creates the hidden UTF8 enforcer tag. Override this method in a helper
+  # Creates the hidden UTF-8 enforcer tag. Override this method in a helper
   # to customize the tag.
   def utf8_enforcer_tag; end
 
   # Creates a text field of type "week".
   #
-  # === Options
+  # ==== Options
+  #
+  # Supports the same options as #text_field_tag. Additionally, supports:
+  #
   # * <tt>:min</tt> - The minimum acceptable value.
   # * <tt>:max</tt> - The maximum acceptable value.
   # * <tt>:step</tt> - The acceptable value granularity.
-  # * Otherwise accepts the same options as text_field_tag.
   def week_field_tag(name, value = T.unsafe(nil), options = T.unsafe(nil)); end
 
   private
@@ -8660,13 +8709,13 @@ module ActionView::Helpers::TranslationHelper
 
   # Delegates to <tt>I18n.localize</tt> with no additional functionality.
   #
-  # See https://www.rubydoc.info/github/svenfuchs/i18n/master/I18n/Backend/Base:localize
+  # See https://www.rubydoc.info/gems/i18n/I18n/Backend/Base:localize
   # for more information.
   def l(object, **options); end
 
   # Delegates to <tt>I18n.localize</tt> with no additional functionality.
   #
-  # See https://www.rubydoc.info/github/svenfuchs/i18n/master/I18n/Backend/Base:localize
+  # See https://www.rubydoc.info/gems/i18n/I18n/Backend/Base:localize
   # for more information.
   def localize(object, **options); end
 
@@ -8787,7 +8836,7 @@ module ActionView::Helpers::TranslationHelper
   end
 end
 
-ActionView::Helpers::TranslationHelper::MISSING_TRANSLATION = T.let(T.unsafe(nil), Object)
+ActionView::Helpers::TranslationHelper::MISSING_TRANSLATION = T.let(T.unsafe(nil), Integer)
 ActionView::Helpers::TranslationHelper::NO_DEFAULT = T.let(T.unsafe(nil), Array)
 
 # Provides a set of methods for making links and getting URLs that
@@ -9904,6 +9953,10 @@ module ActionView::ModelNaming
   def model_name_from_record_or_class(record_or_class); end
 end
 
+class ActionView::NullResolver < ::ActionView::Resolver
+  def find_templates(name, prefix, partial, details, locals = T.unsafe(nil)); end
+end
+
 class ActionView::ObjectRenderer < ::ActionView::PartialRenderer
   include ::ActionView::AbstractRenderer::ObjectRendering
 
@@ -10724,7 +10777,9 @@ module ActionView::Rendering
 
   def initialize; end
 
+  # Override process to set up I18n proxy.
   def process(*_arg0, **_arg1, &_arg2); end
+
   def render_to_body(options = T.unsafe(nil)); end
 
   # Returns the value of attribute rendered_format.
@@ -10881,6 +10936,9 @@ module ActionView::RoutingUrlFor
   #
   #   <%= url_for(action: 'jump', anchor: 'tax&ship') %>
   #   # => /testing/jump/#tax&ship
+  #
+  #   <%= url_for(Workshop) %>
+  #   # => /workshops
   #
   #   <%= url_for(Workshop.new) %>
   #   # relies on Workshop answering a persisted? call (and in this case returning false)

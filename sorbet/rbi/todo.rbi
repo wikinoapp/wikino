@@ -4,5 +4,4 @@
 
 # typed: strict
 
-module ::SafeType::BooleanMixin; end
 module GitHub::Markups::MARKUP_MARKDOWN; end

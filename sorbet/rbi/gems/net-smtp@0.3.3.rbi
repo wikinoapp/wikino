@@ -673,6 +673,7 @@ class Net::SMTP < ::Net::Protocol
 
   def cram_secret(secret, mask); end
   def critical; end
+  def digest_class; end
   def do_finish; end
   def do_helo(helo_domain); end
   def do_start(helo_domain, user, secret, authtype); end
@@ -785,7 +786,7 @@ class Net::SMTP::Address
   # mail address [String]
   def address; end
 
-  # paramters [Array<String>]
+  # parameters [Array<String>]
   def parameters; end
 
   def to_s; end

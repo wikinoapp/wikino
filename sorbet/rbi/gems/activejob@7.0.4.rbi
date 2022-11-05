@@ -186,8 +186,6 @@ class ActiveJob::Base
     def rescue_handlers?; end
     def retry_jitter; end
     def retry_jitter=(value); end
-    def return_false_on_aborted_enqueue; end
-    def return_false_on_aborted_enqueue=(value); end
     def skip_after_callbacks_if_terminated(*args, **_arg1, &block); end
     def skip_after_callbacks_if_terminated=(*args, **_arg1, &block); end
   end
@@ -228,8 +226,6 @@ module ActiveJob::Callbacks
     def __callbacks; end
     def __callbacks=(value); end
     def __callbacks?; end
-    def return_false_on_aborted_enqueue; end
-    def return_false_on_aborted_enqueue=(value); end
   end
 
   module GeneratedInstanceMethods
@@ -566,6 +562,19 @@ end
 
 # Includes the +perform_later+ method for job initialization.
 module ActiveJob::Enqueuing::ClassMethods
+  # Push a job onto the queue. By default the arguments must be either String,
+  # Integer, Float, NilClass, TrueClass, FalseClass, BigDecimal, Symbol, Date,
+  # Time, DateTime, ActiveSupport::TimeWithZone, ActiveSupport::Duration,
+  # Hash, ActiveSupport::HashWithIndifferentAccess, Array, Range, or
+  # GlobalID::Identification instances, although this can be extended by adding
+  # custom serializers.
+  #
+  # Returns an instance of the job class queued with arguments available in
+  # Job#arguments or false if the enqueue did not succeed.
+  #
+  # After the attempted enqueue, the job will be yielded to an optional block.
+  #
+  # @yield [job]
   def perform_later(*_arg0, **_arg1, &_arg2); end
 
   private
@@ -731,6 +740,10 @@ end
 # Includes methods for executing and performing jobs instantly.
 module ActiveJob::Execution::ClassMethods
   def execute(job_data); end
+
+  # Performs the job immediately.
+  #
+  #   MyJob.perform_now("mike")
   def perform_now(*_arg0, **_arg1, &_arg2); end
 end
 
