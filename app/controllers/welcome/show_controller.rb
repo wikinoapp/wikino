@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Welcome::ShowController < ActionController::Base
+class Welcome::ShowController < ApplicationController
   extend T::Sig
 
   sig { returns(T.untyped) }
