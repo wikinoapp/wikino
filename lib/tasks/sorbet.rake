@@ -7,6 +7,5 @@ namespace :sorbet do
     system "bundle exec tapioca dsl"
     system "bundle exec tapioca todo"
     system "bundle exec tapioca annotations"
-    system "bundle exec srb rbi suggest-typed"
   end
 end
