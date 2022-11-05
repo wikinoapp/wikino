@@ -14,5 +14,8 @@
     "bootstrap": "^5.2.2",
     "esbuild": "^0.15.12",
     "sass": "^1.55.0"
+  },
+  "devDependencies": {
+    "prettier": "2.7.1"
   }
 }
