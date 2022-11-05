@@ -9,6 +9,12 @@ module GeneratedUrlHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
+  def preview_view_component_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def preview_view_components_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def rails_info_properties_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

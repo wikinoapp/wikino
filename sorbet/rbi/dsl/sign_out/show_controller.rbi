@@ -10,6 +10,8 @@ class SignOut::ShowController
 
   module HelperMethods
     include ::ActionController::Base::HelperMethods
+    include ::PreviewHelper
+    include ::ApplicationController::HelperMethods
 
     sig { returns(T.nilable(::User)) }
     def current_user; end
@@ -19,6 +21,9 @@ class SignOut::ShowController
 
     sig { returns(::String) }
     def sign_up_with_auth0_path; end
+
+    sig { returns(T::Boolean) }
+    def user_signed_in?; end
   end
 
   class HelperProxy < ::ActionView::Base
