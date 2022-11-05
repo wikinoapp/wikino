@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-class Auth::FailureController < ActionController::Base
+class Auth::FailureController < ApplicationController
   extend T::Sig
 
   def call

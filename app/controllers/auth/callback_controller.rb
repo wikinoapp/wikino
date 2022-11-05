@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-class Auth::CallbackController < ActionController::Base
+class Auth::CallbackController < ApplicationController
   extend T::Sig
 
   include Authenticatable
