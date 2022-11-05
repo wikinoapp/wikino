@@ -1,7 +1,7 @@
 # typed: strict
 
 # DO NOT EDIT MANUALLY
-# This file was pulled from https://raw.githubusercontent.com/Shopify/rbi-central/main.
+# This file was pulled from a central RBI files repository.
 # Please run `bin/tapioca annotations` to update it.
 
 class ActionController::API
@@ -30,12 +30,7 @@ class ActionController::Metal < AbstractController::Base
 end
 
 module ActionController::MimeResponds
-  sig do
-    params(
-      mimes: T.nilable(Symbol),
-      block: T.nilable(T.proc.params(arg0: ActionController::MimeResponds::Collector).void)
-    ).void
-  end
+  sig { params(mimes: T.nilable(Symbol), block: T.nilable(T.proc.params(arg0: ActionController::MimeResponds::Collector).void)).void }
   def respond_to(*mimes, &block); end
 end
 
@@ -115,19 +110,11 @@ class ActionController::Parameters
   sig { params(key: T.any(String, Symbol)).returns(T.nilable(T.any(String, Numeric, ActionController::Parameters))) }
   def [](key); end
 
-  sig do
-    params(
-      key: T.any(String, Symbol, T::Array[T.any(String, Symbol)]),
-    ).returns(T.any(String, Numeric, T::Array[T.untyped], ActionController::Parameters))
-  end
+  sig { params(key: T.any(String, Symbol, T::Array[T.any(String, Symbol)])).returns(T.any(String, Numeric, T::Array[T.untyped], ActionController::Parameters)) }
   def require(key); end
 
   # required is an alias of require
-  sig do
-    params(
-      key: T.any(String, Symbol, T::Array[T.any(String, Symbol)])
-    ).returns(T.any(String, Numeric, T::Array[T.untyped], ActionController::Parameters))
-  end
+  sig { params(key: T.any(String, Symbol, T::Array[T.any(String, Symbol)])).returns(T.any(String, Numeric, T::Array[T.untyped], ActionController::Parameters)) }
   def required(key); end
 
   sig { params(other_hash: T.untyped).returns(ActionController::Parameters) }
@@ -215,8 +202,6 @@ class ActionController::Parameters
 end
 
 module ActionController::RequestForgeryProtection
-  private
-
   sig { returns(T::Boolean) }
   def protect_against_forgery?; end
 
@@ -236,11 +221,11 @@ end
 
 module ActionDispatch::Http::Parameters
   sig { returns(ActionController::Parameters) }
-  def parameters(); end
+  def parameters; end
 
   # params is an alias of parameters
   sig { returns(ActionController::Parameters) }
-  def params(); end
+  def params; end
 end
 
 module ActionDispatch::Integration::Runner
@@ -261,8 +246,6 @@ class ActionDispatch::IntegrationTest
   # @method_missing: delegated to ActionDispatch::Integration::Runner
   sig { returns(ActionDispatch::Request::Session) }
   def session; end
-
-  private
 
   # @method_missing: delegated to ActionDispatch::Integration::Session
   sig { returns(ActionDispatch::TestResponse) }

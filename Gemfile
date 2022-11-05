@@ -15,7 +15,6 @@ gem "commonmarker" # Using github-markup
 gem "cssbundling-rails"
 gem "github-markup"
 gem "jsbundling-rails"
-gem "jwt"
 gem "omniauth-auth0"
 gem "omniauth-rails_csrf_protection"
 gem "pg"
@@ -26,11 +25,11 @@ gem "pundit"
 gem "rack-cors"
 gem "rack-mini-profiler"
 gem "sorbet-runtime"
+gem "view_component"
 
 group :development, :test do
   gem "dotenv-rails"
   gem "factory_bot_rails"
-  gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
   gem "rubocop-rails", require: false

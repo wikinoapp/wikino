@@ -1,11 +1,13 @@
 # typed: strong
 
 # DO NOT EDIT MANUALLY
-# This file was pulled from https://raw.githubusercontent.com/Shopify/rbi-central/main.
+# This file was pulled from a central RBI files repository.
 # Please run `bin/tapioca annotations` to update it.
 
 module ActionView
-  TemplateError = T.type_alias { Template::Error }
+  TemplateError = T.type_alias {
+  Template::Error
+}
 
   class MissingTemplate < ActionView::ActionViewError
     sig { returns(String) }
@@ -48,28 +50,12 @@ end
 module ActionView::Helpers::UrlHelper
   extend ActiveSupport::Concern
   include ActionView::Helpers::TagHelper
-
   mixes_in_class_methods ActionView::Helpers::UrlHelper::ClassMethods
 
-  sig do
-    params(
-      name: String,
-      options: T.untyped,
-      html_options: T.untyped,
-      block: T.untyped
-    ).returns(ActiveSupport::SafeBuffer)
-  end
+  sig { params(name: String, options: T.untyped, html_options: T.untyped, block: T.untyped).returns(ActiveSupport::SafeBuffer) }
   def link_to(name = nil, options = nil, html_options = nil, &block); end
 
-  sig do
-    params(
-      condition: T.untyped,
-      name: String,
-      options: T.untyped,
-      html_options: T.untyped,
-      block: T.untyped
-    ).returns(T.untyped)
-  end
+  sig { params(condition: T.untyped, name: String, options: T.untyped, html_options: T.untyped, block: T.untyped).returns(T.untyped) }
   def link_to_if(condition, name, options = {}, html_options = {}, &block); end
 end
 

@@ -1,7 +1,7 @@
 # typed: strong
 
 # DO NOT EDIT MANUALLY
-# This file was pulled from https://raw.githubusercontent.com/Shopify/rbi-central/main.
+# This file was pulled from a central RBI files repository.
 # Please run `bin/tapioca annotations` to update it.
 
 module Rails

@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class SignOut::Callback::ShowController < ApplicationController
-  extend T::Sig
-
   include Authenticatable
 
   before_action :authenticate_user
