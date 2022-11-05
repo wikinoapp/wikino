@@ -20,7 +20,7 @@ module Authenticatable
   end
 
   def sign_in(user)
-    user.track_sign_in!(request)
+    user.track_sign_in!
     session[:user_id] = user.id
   end
 end
