@@ -3,8 +3,8 @@
 
 Rails.application.routes.draw do
   # standard:disable Layout/ExtraSpacing
-  match "/auth/callback",     via: :get, as: :auth_callback,     to: "auth/callback#call"
-  match "/auth/failure",      via: :get, as: :auth_failure,      to: "auth/failure#call"
+  match "/sign_in/callback",  via: :get, as: :sign_in_callback,  to: "sign_in/callback#call"
+  match "/sign_in/failure",   via: :get, as: :sign_in_failure,   to: "sign_in/failure#call"
   match "/sign_out",          via: :get, as: :sign_out,          to: "sign_out/show#call"
   match "/sign_out/callback", via: :get, as: :sign_out_callback, to: "sign_out/callback/show#call"
   # standard:enable Layout/ExtraSpacing
