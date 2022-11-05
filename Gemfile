@@ -30,7 +30,6 @@ gem "view_component"
 group :development, :test do
   gem "dotenv-rails"
   gem "factory_bot_rails"
-  gem "pry-rails"
   gem "rspec-mocks"
   gem "rspec-rails"
   gem "rubocop-rails", require: false
