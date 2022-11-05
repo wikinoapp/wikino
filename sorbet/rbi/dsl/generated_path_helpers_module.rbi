@@ -28,4 +28,10 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def root_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_out_callback_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_out_path(*args); end
 end

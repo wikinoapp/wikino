@@ -5,9 +5,6 @@
 # Please instead update this file by running `bin/tapioca dsl Auth::FailureController`.
 
 class Auth::FailureController
-  include GeneratedUrlHelpersModule
-  include GeneratedPathHelpersModule
-
   sig { returns(HelperProxy) }
   def helpers; end
 

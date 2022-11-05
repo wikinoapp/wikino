@@ -11,10 +11,10 @@ class Welcome::ShowController
   module HelperMethods
     include ::ActionController::Base::HelperMethods
 
-    sig { returns(T.untyped) }
+    sig { returns(::String) }
     def sign_in_with_auth0_path; end
 
-    sig { returns(T.untyped) }
+    sig { returns(::String) }
     def sign_up_with_auth0_path; end
   end
 

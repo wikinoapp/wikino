@@ -5,6 +5,9 @@ ja:
     auth:
       callback:
         sign_in_failed: ログインに失敗しました
+    sign_out:
+      callback:
+        sign_out_success: ログアウトしました
     note:
       are_you_sure_delete: 'ノートを削除しますか？'
       create_note_with_keyword: '「__keyword__」のノートを作成する'
