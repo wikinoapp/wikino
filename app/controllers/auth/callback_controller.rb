@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 class Auth::CallbackController < ApplicationController
@@ -6,6 +6,7 @@ class Auth::CallbackController < ApplicationController
 
   include Authenticatable
 
+  sig { returns(T.untyped) }
   def call
     auth_info = request.env["omniauth.auth"]
     authentication = Authentication.new(auth0_user_id: auth_info.uid)
