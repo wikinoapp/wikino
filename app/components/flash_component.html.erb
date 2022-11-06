@@ -1,0 +1,6 @@
+<div class="<%= class_names("alert alert-dismissible align-items-center border-0 d-flex rounded-0", alert_bg_class) %>">
+  <span class="<%= class_names("far h3 mb-0 me-2", icon_class) %>"></span>
+  <span><%= @flash[flash_type] %></span>
+
+  <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+</div>
