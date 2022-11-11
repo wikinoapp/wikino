@@ -6,10 +6,6 @@ class Welcome::ShowController < ApplicationController
 
   sig { returns(T.untyped) }
   def call
-    if user_signed_in?
-      return render :call_signed_in
-    end
-
-    render :call
+    redirect_to(note_list_path) if user_signed_in?
   end
 end
