@@ -8,7 +8,7 @@ $ cd nonoto
 $ touch .env.development.local
 $ docker compose up
 $ yarn
-$ ./bin/dev
-$ ./bin/setup
-$ ./bin/rails s
+$ bin/dev
+$ bin/setup
+$ bin/rails s
 ```

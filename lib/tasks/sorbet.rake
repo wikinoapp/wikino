@@ -3,9 +3,9 @@
 
 namespace :sorbet do
   task update: :environment do
-    system "bundle exec tapioca gem"
-    system "bundle exec tapioca dsl"
-    system "bundle exec tapioca todo"
-    system "bundle exec tapioca annotations"
+    system "bin/tapioca gem"
+    system "bin/tapioca dsl"
+    system "bin/tapioca todo"
+    system "bin/tapioca annotations"
   end
 end
