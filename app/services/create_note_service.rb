@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 class CreateNoteService < ApplicationService
-  extend T::Sig
   include NoteUpsertable
 
   sig { params(form: NoteCreatingForm).void }
