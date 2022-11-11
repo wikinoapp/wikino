@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class NoteDestroyingForm < ApplicationForm
-  extend T::Sig
-
   sig { returns(T.nilable(User)) }
   attr_accessor :user
 
