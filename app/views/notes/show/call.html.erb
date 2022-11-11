@@ -1,3 +1,6 @@
 <% set_meta_tags(title: @note.title) %>
 
-<%= @note.title %>
+<form>
+  <input id="nonoto-trix" type="hidden">
+  <trix-editor input="nonoto-trix"></trix-editor>
+</form>
