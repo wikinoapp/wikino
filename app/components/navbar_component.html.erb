@@ -13,7 +13,7 @@
       <ul class="navbar-nav me-auto">
         <% if user_signed_in? %>
           <li class="nav-item">
-            <%= link_to t("nouns.new_note"), "#", class: "nav-link", data: { turbolinks: false } %>
+            <%= link_to t("nouns.new_note"), new_note_path, class: "nav-link", data: { turbolinks: false } %>
           </li>
         <% end %>
       </ul>
