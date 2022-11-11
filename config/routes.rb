@@ -3,6 +3,7 @@
 
 Rails.application.routes.draw do
   # standard:disable Layout/ExtraSpacing
+  match "/notes",             via: :get, as: :note_list,         to: "notes/index#call"
   match "/sign_in/callback",  via: :get, as: :sign_in_callback,  to: "sign_in/callback#call"
   match "/sign_in/failure",   via: :get, as: :sign_in_failure,   to: "sign_in/failure#call"
   match "/sign_out",          via: :get, as: :sign_out,          to: "sign_out/show#call"
