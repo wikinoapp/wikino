@@ -1,6 +1,5 @@
 <% set_meta_tags(title: @note.title) %>
 
 <form>
-  <input id="nonoto-trix" type="hidden">
-  <trix-editor input="nonoto-trix"></trix-editor>
+  <%= render EditorComponent.new(id: "nonoto-trix") %>
 </form>
