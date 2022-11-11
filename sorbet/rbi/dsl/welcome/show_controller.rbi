@@ -10,6 +10,7 @@ class Welcome::ShowController
 
   module HelperMethods
     include ::ActionController::Base::HelperMethods
+    include ::ApplicationHelper
     include ::PreviewHelper
     include ::ApplicationController::HelperMethods
 

@@ -15,6 +15,7 @@ gem "commonmarker" # Using github-markup
 gem "cssbundling-rails"
 gem "github-markup"
 gem "jsbundling-rails"
+gem "meta-tags"
 gem "omniauth-auth0"
 gem "omniauth-rails_csrf_protection"
 gem "pg"

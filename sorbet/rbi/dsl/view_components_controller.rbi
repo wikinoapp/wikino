@@ -10,6 +10,7 @@ class ViewComponentsController
 
   module HelperMethods
     include ::ActionController::Base::HelperMethods
+    include ::ApplicationHelper
     include ::PreviewHelper
   end
 
