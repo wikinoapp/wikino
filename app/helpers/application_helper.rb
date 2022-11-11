@@ -11,6 +11,7 @@ module ApplicationHelper
       site: "Nonoto",
       separator: " |",
       description: "A note taking app.",
+      canonical: "#{request.protocol}#{request.host_with_port}#{request.path}"
     )
   end
 end
