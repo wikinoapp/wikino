@@ -126,12 +126,12 @@ CREATE TABLE public.schema_migrations (
 CREATE TABLE public.users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     auth0_user_id character varying NOT NULL,
-    deleted_at timestamp(6) without time zone,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
     sign_in_count integer DEFAULT 0 NOT NULL,
     current_signed_in_at timestamp(6) without time zone,
-    last_signed_in_at timestamp(6) without time zone
+    last_signed_in_at timestamp(6) without time zone,
+    deleted_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -262,24 +262,24 @@ CREATE UNIQUE INDEX index_note_contents_on_user_id_and_note_id ON public.note_co
 
 
 --
--- Name: index_notes_on_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_created_at ON public.notes USING btree (created_at);
-
-
---
--- Name: index_notes_on_modified_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_modified_at ON public.notes USING btree (modified_at);
-
-
---
 -- Name: index_notes_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_notes_on_user_id ON public.notes USING btree (user_id);
+
+
+--
+-- Name: index_notes_on_user_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_user_id_and_created_at ON public.notes USING btree (user_id, created_at);
+
+
+--
+-- Name: index_notes_on_user_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_user_id_and_modified_at ON public.notes USING btree (user_id, modified_at);
 
 
 --
@@ -360,7 +360,6 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20220505022747'),
-('20220505022901'),
-('20221103142919');
+('20220505022901');
 
 

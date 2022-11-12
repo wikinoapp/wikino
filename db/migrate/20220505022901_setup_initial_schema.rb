@@ -5,6 +5,9 @@ class SetupInitialSchema < ActiveRecord::Migration[7.0]
   def change
     create_table :users, id: :uuid do |t|
       t.string :auth0_user_id, null: false
+      t.integer :sign_in_count, default: 0, null: false
+      t.datetime :current_signed_in_at
+      t.datetime :last_signed_in_at
       t.datetime :deleted_at
       t.timestamps
     end
@@ -17,8 +20,8 @@ class SetupInitialSchema < ActiveRecord::Migration[7.0]
       t.timestamps
     end
     add_index :notes, %i[user_id title], unique: true
-    add_index :notes, :created_at
-    add_index :notes, :modified_at
+    add_index :notes, %i[user_id created_at]
+    add_index :notes, %i[user_id modified_at]
 
     create_table :note_contents, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
