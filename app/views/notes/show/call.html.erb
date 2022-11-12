@@ -1,5 +1,9 @@
 <% set_meta_tags(title: @note.title) %>
 
-<form>
-  <%= render EditorComponent.new(id: "nonoto-trix") %>
-</form>
+<div class="gx-3 row">
+  <div class="col-8">
+    <%= render EditorComponent.new(id: "nonoto-trix", body: @note.body) %>
+  </div>
+
+  <div class="col-4"></div>
+</div>

@@ -1,2 +1,4 @@
-<input id="<%= @id %>" type="hidden">
-<trix-editor input="<%= @id %>"></trix-editor>
+<div class="c-editor">
+  <input id="<%= @id %>" type="hidden" value="<%= @body %>">
+  <trix-editor input="<%= @id %>"></trix-editor>
+</div>
