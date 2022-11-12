@@ -5,5 +5,7 @@
     <%= render EditorComponent.new(id: "nonoto-trix", body: @note.body) %>
   </div>
 
-  <div class="col-4"></div>
+  <div class="col-4">
+    <turbo-frame id="note-info" src="<%= note_info_path(note_id: @note.id) %>"></turbo-frame>
+  </div>
 </div>
