@@ -7,3 +7,4 @@ import './editor';
 
 ujs.start();
 window.Stimulus = Application.start();
+Turbo.start();
