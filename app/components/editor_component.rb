@@ -2,14 +2,17 @@
 # frozen_string_literal: true
 
 class EditorComponent < ApplicationComponent
-  sig { params(id: String, body: String).void }
-  def initialize(id:, body:)
+  sig { params(id: String, note: Note).void }
+  def initialize(id:, note:)
     @id = id
-    @body = body
+    @note = note
   end
 
   private
 
   sig { returns(String) }
-  attr_reader :body, :id
+  attr_reader :id
+
+  sig { returns(Note) }
+  attr_reader :note
 end
