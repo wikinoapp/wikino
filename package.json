@@ -16,7 +16,7 @@
     "@rails/ujs": "^7.0.4",
     "bootstrap": "^5.2.2",
     "esbuild": "^0.15.13",
-    "sass": "^1.56.1"
+    "sass": "^1.58.0"
   },
   "devDependencies": {
     "prettier": "2.7.1"
