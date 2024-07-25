@@ -6,8 +6,8 @@
 
 module Api::Internal::Notes::UpdateController::NoteUpdatingForm; end
 module CreateNoteService::NoteCreatingForm; end
-module Faraday::Connection; end
 module Faraday::Request; end
+module Faraday::Response; end
 module JsonWebToken::JWT; end
 module NoteUpsertable::NoteCreatingForm; end
 module NoteUpsertable::NoteUpdatingForm; end
