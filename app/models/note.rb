@@ -9,7 +9,7 @@ class Note < ApplicationRecord
   has_one :content, class_name: "NoteContent", dependent: :destroy
 
   has_many :backlinks, class_name: "Link", dependent: :destroy, foreign_key: :target_note_id
-  has_many :links, class_name: "Link", dependent: :destroy, foreign_key: :note_id
+  has_many :links, class_name: "Link", dependent: :destroy
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
