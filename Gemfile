@@ -44,6 +44,12 @@ group :development do
   gem "tapioca", require: false
 end
 
+group :test do
+  gem "cuprite"
+  gem "capybara"
+  gem "vcr"
+end
+
 group :production do
   gem "lograge"
 end

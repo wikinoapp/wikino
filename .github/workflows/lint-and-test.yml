@@ -1,0 +1,112 @@
+name: Lint and test
+
+on: push
+
+jobs:
+  zeitwerk:
+    name: Zeitwerk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.4
+          bundler-cache: true
+      - run: bin/rails zeitwerk:check
+
+  sorbet:
+    name: Sorbet
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.4
+          bundler-cache: true
+      - run: bin/rails sorbet:update
+      - name: Push RBI files or fail
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
+              git config user.email 49699333+dependabot[bot]@users.noreply.github.com
+              git config user.name dependabot[bot]
+              git add .
+              git commit -m "Update RBI files"
+              git push
+            else
+              echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
+              exit 1
+            fi
+          fi
+      - run: bin/srb tc
+
+  standard:
+    name: Standard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.4
+          bundler-cache: true
+      - run: bin/standardrb
+
+  rspec:
+    name: RSpec
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres@localhost:5432/nonoto_test
+      RAILS_ENV: test
+    services:
+      postgresql:
+        image: postgres:14.6
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: nonoto_test
+          POSTGRES_PASSWORD: ""
+          POSTGRES_HOST_AUTH_METHOD: trust
+        # Adding a health check via options
+        # https://github.community/t5/GitHub-Actions/Github-Actions-services-not-reachable/td-p/30050
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+      - name: Install Yarn
+        run: |
+          npm install --global yarn@1.22.22
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+      - run: chrome --version
+      - name: Setup Ruby and install gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.4
+          bundler-cache: true
+      - name: Setup Database
+        run: |
+          bin/rails db:schema:load
+      - name: Precompile assets
+        # E2Eテストのために実行する
+        run: |
+          bin/rails assets:precompile
+      - run: bin/rspec
+      - name: Upload Capybara screenshot
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: capybara-screenshots
+          path: '**/tmp/capybara/'
