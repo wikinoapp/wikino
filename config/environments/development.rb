@@ -36,20 +36,6 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
-  config.action_mailer.perform_caching = false
-  config.action_mailer.default_url_options = { host: ENV.fetch("NONOTO_HOST") }
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    user_name: ENV.fetch("MAILTRAP_USERNAME"),
-    password: ENV.fetch("MAILTRAP_PASSWORD"),
-    address: "smtp.mailtrap.io",
-    domain: "smtp.mailtrap.io",
-    port: "2525",
-    authentication: :cram_md5
-  }
-
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
@@ -74,11 +60,12 @@ Rails.application.configure do
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
 
-  # Use an evented file watcher to asynchronously detect changes in source code,
-  # routes, locales, etc. This feature depends on the listen gem.
-  config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+  # -----------------------------------------------------------------------------------------
+  # ここから独自の設定
+  # -----------------------------------------------------------------------------------------
 
-  config.action_controller.asset_host = ENV.fetch("NONOTO_ASSET_URL")
+  config.action_mailer.default_url_options = {host: ENV.fetch("NONOTO_HOST"), port: ENV.fetch("NONOTO_PORT")}
+  config.action_mailer.delivery_method = :letter_opener_web
 
   config.after_initialize do
     Bullet.enable        = true
@@ -87,10 +74,8 @@ Rails.application.configure do
     Bullet.rails_logger  = true
   end
 
-  # https://github.com/ruckus/active-record-query-trace
-  ActiveRecordQueryTrace.enabled = true
-
   config.hosts += [
-    ENV.fetch("NONOTO_DOMAIN")
+    ENV.fetch("NONOTO_HOST"),
+    "www.#{ENV.fetch("NONOTO_HOST")}"
   ]
 end

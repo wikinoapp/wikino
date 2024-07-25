@@ -10,5 +10,7 @@
 /docker-compose.override.yml
 /log/*
 /node_modules
+/nonoto.iml
+/private
 /tmp/*
 !/app/assets/builds/.keep

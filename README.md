@@ -1,14 +1,12 @@
 # Nonoto
 
-## Running the app
+## 開発環境のセットアップ
 
 ```
-$ git clone git@github.com:kiraka/nonoto.git
-$ cd nonoto
-$ touch .env.development.local
-$ docker compose up
-$ yarn
-$ bin/dev
-$ bin/setup
-$ bin/rails s
+git clone git@github.com:nonoto/nonoto.git
+cd nonoto
+docker compose up
+docker compose exec app bin/setup
+docker compose exec app bin/dev
+docker compose exec app bin/rails server
 ```

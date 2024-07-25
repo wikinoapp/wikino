@@ -1,0 +1,36 @@
+FROM ruby:3.3.4-slim-bookworm
+
+RUN \
+  apt update && \
+  apt dist-upgrade -yq && \
+  apt install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    lsb-release \
+    # PostgreSQLやNode.jsのインストールに必要
+    gnupg
+
+# PostgreSQLのセットアップ
+RUN \
+  curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+  echo "deb https://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+  apt update && \
+  apt install -y --no-install-recommends \
+    libpq-dev \
+    postgresql-client-16
+
+# Node.jsのセットアップ
+RUN \
+  # https://github.com/nodesource/distributions/wiki/How-to-select-the-Node.js-version-to-install
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+  apt install -y --no-install-recommends \
+    nodejs=20.16.0-1nodesource1
+
+RUN npm install --global yarn@1.22.22
+
+RUN gem install bundler -v 2.5.16
+
+WORKDIR /app
+
+CMD ["bash"]
