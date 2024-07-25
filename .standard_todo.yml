@@ -1,0 +1,16 @@
+# Auto generated files with errors to ignore.
+# Remove from this list as you refactor files.
+---
+ignore:
+- app/controllers/concerns/authenticatable.rb:
+  - Rails/EnvironmentVariableAccess
+- app/lib/json_web_token.rb:
+  - Rails/EnvironmentVariableAccess
+- app/models/note.rb:
+  - Rails/InverseOf
+- config/environments/production.rb:
+  - Style/GlobalStdStream
+- config/initializers/backtrace_silencers.rb:
+  - Rails/EnvironmentVariableAccess
+- spec/rails_helper.rb:
+  - Style/RedundantInterpolation
