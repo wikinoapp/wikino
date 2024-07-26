@@ -8,7 +8,7 @@ class User < ApplicationRecord
 
   has_many :notes, dependent: :destroy
 
-  sig { params(note: Note).returns(T.any(ActiveRecord::Associations::HasManyAssociation, Note::PrivateRelation)) }
+  T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }
   def notes_except(note)
     note.new_record? ? notes : notes.where.not(id: note.id)
   end

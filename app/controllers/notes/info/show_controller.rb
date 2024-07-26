@@ -8,6 +8,6 @@ class Notes::Info::ShowController < ApplicationController
 
   sig { returns(T.untyped) }
   def call
-    @note = T.must(current_user).notes.find(params[:note_id])
+    # @note = T.must(current_user).notes.find(params[:note_id])
   end
 end

@@ -23,10 +23,10 @@ class Note < ApplicationRecord
     user&.notes_except(self)&.find_by(title:)
   end
 
-  sig { returns(String) }
-  def body_html
-    render_html(body)
-  end
+  # sig { returns(String) }
+  # def body_html
+  #   render_html(body)
+  # end
 
   sig { returns(T::Array[String]) }
   def titles_in_body
@@ -49,10 +49,8 @@ class Note < ApplicationRecord
     end
   end
 
-  private
-
   sig { params(text: String).returns(String) }
-  def render_html(text)
+  private def render_html(text)
     GitHub::Markup.render_s(
       GitHub::Markups::MARKUP_MARKDOWN,
       text,
