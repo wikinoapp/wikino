@@ -13,4 +13,5 @@
 /nonoto.iml
 /private
 /tmp/*
+/vendor/bundle
 !/app/assets/builds/.keep
