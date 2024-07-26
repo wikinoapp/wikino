@@ -1,7 +1,7 @@
-import { Application } from '@hotwired/stimulus';
-import * as Turbo from '@hotwired/turbo';
-import ujs from '@rails/ujs';
-import 'bootstrap';
+import '@hotwired/turbo';
 
-ujs.start();
-window.Stimulus = Application.start();
+import { Application } from '@hotwired/stimulus';
+
+const application = Application.start();
+application.debug = false;
+window.Stimulus = application;

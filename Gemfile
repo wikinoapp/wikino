@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "3.1.2"
+ruby "3.3.4"
 
 gem "rails", "~> 7.0.0"
 
@@ -16,35 +16,38 @@ gem "cssbundling-rails"
 gem "github-markup"
 gem "jsbundling-rails"
 gem "meta-tags"
-gem "omniauth-auth0"
-gem "omniauth-rails_csrf_protection"
 gem "pg"
 gem "propshaft"
 gem "puma"
-gem "puma_worker_killer"
 gem "pundit"
 gem "rack-cors"
-gem "rack-mini-profiler"
 gem "sorbet-runtime"
+gem "strong_migrations"
 gem "view_component"
 
 group :development, :test do
   gem "dotenv-rails"
   gem "factory_bot_rails"
   gem "rspec-rails"
+  gem "rubocop-factory_bot", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
-  gem "rubocop-sorbet", require: false
   gem "standard"
+  gem "standard-rails"
+  gem "standard-sorbet"
 end
 
 group :development do
-  gem "active_record_query_trace"
   gem "bullet"
-  gem "listen" # Using with `rails s` since Rails 5
+  gem "letter_opener_web"
   gem "sorbet"
   gem "tapioca", require: false
-  gem "unparser", require: false # Used by rubocop-sorbet
+end
+
+group :test do
+  gem "cuprite"
+  gem "capybara"
+  gem "vcr"
 end
 
 group :production do

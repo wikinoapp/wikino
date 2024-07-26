@@ -8,6 +8,11 @@ class User < ApplicationRecord
 
   has_many :notes, dependent: :destroy
 
+  T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }
+  def notes_except(note)
+    note.new_record? ? notes : notes.where.not(id: note.id)
+  end
+
   # ログイン情報を記録する
   # Deviseの #update_tracked_fields を参考にしている
   # https://github.com/heartcombo/devise/blob/451ff6d49c71e543962d2b29d77f2e744b2d47e1/lib/devise/models/trackable.rb#L20-L31

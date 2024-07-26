@@ -1,0 +1,11 @@
+<% set_meta_tags(title: @note.title) %>
+
+<div class="gx-3 row">
+  <div class="col-8">
+    <%= render EditorComponent.new(id: "nonoto-trix", note: @note) %>
+  </div>
+
+  <div class="col-4">
+    <turbo-frame id="note-info" src="<%= note_info_path(note_id: @note.id) %>"></turbo-frame>
+  </div>
+</div>

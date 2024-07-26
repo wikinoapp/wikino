@@ -3,6 +3,7 @@
 
 class ApplicationForm
   extend T::Sig
+
   include ActiveModel::Model
 
   # @overload
