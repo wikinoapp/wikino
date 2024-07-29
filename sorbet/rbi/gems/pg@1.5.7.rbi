@@ -26,6 +26,13 @@ module PG
     # source://pg//lib/pg.rb#67
     def make_shareable(obj); end
 
+    # Ruby-3.4+ prints a warning, if bigdecimal is required but not in the Gemfile.
+    # But it's a false positive, since we enable bigdecimal depending features only if it's available.
+    # And most people don't need these features.
+    #
+    # source://pg//lib/pg.rb#132
+    def require_bigdecimal_without_warning; end
+
     def threadsafe?; end
 
     # Get the PG library version.
@@ -334,19 +341,19 @@ class PG::BasicTypeRegistry
 
   # Alias the +old+ type to the +new+ type.
   #
-  # source://pg//lib/pg/basic_type_registry.rb#209
+  # source://pg//lib/pg/basic_type_registry.rb#216
   def alias_type(format, new, old); end
 
   # Retrieve a Hash of all en- or decoders for a given wire format.
   # The hash key is the name as defined in table +pg_type+.
   # The hash value is the registered coder object.
   #
-  # source://pg//lib/pg/basic_type_registry.rb#181
+  # source://pg//lib/pg/basic_type_registry.rb#188
   def coders_for(format, direction); end
 
   # Populate the registry with all builtin types of ruby-pg
   #
-  # source://pg//lib/pg/basic_type_registry.rb#222
+  # source://pg//lib/pg/basic_type_registry.rb#229
   def define_default_types; end
 
   # Register an encoder or decoder instance for casting a PostgreSQL type.
@@ -354,12 +361,12 @@ class PG::BasicTypeRegistry
   # Coder#name must correspond to the +typname+ column in the +pg_type+ table.
   # Coder#format can be 0 for text format and 1 for binary.
   #
-  # source://pg//lib/pg/basic_type_registry.rb#190
+  # source://pg//lib/pg/basic_type_registry.rb#197
   def register_coder(coder); end
 
   # Populate the registry with all builtin types of ruby-pg
   #
-  # source://pg//lib/pg/basic_type_registry.rb#222
+  # source://pg//lib/pg/basic_type_registry.rb#229
   def register_default_types; end
 
   # Register the given +encoder_class+ and/or +decoder_class+ for casting a PostgreSQL type.
@@ -367,7 +374,7 @@ class PG::BasicTypeRegistry
   # +name+ must correspond to the +typname+ column in the +pg_type+ table.
   # +format+ can be 0 for text format and 1 for binary.
   #
-  # source://pg//lib/pg/basic_type_registry.rb#202
+  # source://pg//lib/pg/basic_type_registry.rb#209
   def register_type(format, name, encoder_class, decoder_class); end
 end
 
@@ -470,7 +477,7 @@ class PG::BasicTypeRegistry::CoderMapsBundle
   def init_maps(registry, result); end
 end
 
-# source://pg//lib/pg/basic_type_registry.rb#301
+# source://pg//lib/pg/basic_type_registry.rb#308
 PG::BasicTypeRegistry::DEFAULT_TYPE_REGISTRY = T.let(T.unsafe(nil), PG::BasicTypeRegistry)
 
 # source://pg//lib/pg.rb#76
@@ -824,7 +831,7 @@ class PG::Connection
   # Returns +nil+ on success, or a string containing the
   # error message if a failure occurs.
   #
-  # source://pg//lib/pg/connection.rb#587
+  # source://pg//lib/pg/connection.rb#595
   def async_cancel; end
 
   def async_describe_portal(_arg0); end
@@ -851,7 +858,7 @@ class PG::Connection
   # Available since PostgreSQL-10.
   # See also corresponding {libpq function}[https://www.postgresql.org/docs/current/libpq-misc.html#LIBPQ-PQENCRYPTPASSWORDCONN].
   #
-  # source://pg//lib/pg/connection.rb#555
+  # source://pg//lib/pg/connection.rb#563
   def async_encrypt_password(password, username, algorithm = T.unsafe(nil)); end
 
   def async_exec(*_arg0); end
@@ -876,7 +883,7 @@ class PG::Connection
   #
   # See also #copy_data.
   #
-  # source://pg//lib/pg/connection.rb#423
+  # source://pg//lib/pg/connection.rb#431
   def async_get_copy_data(async = T.unsafe(nil), decoder = T.unsafe(nil)); end
 
   def async_get_last_result; end
@@ -896,7 +903,7 @@ class PG::Connection
   # and the PG::Result object will  automatically be cleared when the block terminates.
   # In this instance, <code>conn.exec</code> returns the value of the block.
   #
-  # source://pg//lib/pg/connection.rb#400
+  # source://pg//lib/pg/connection.rb#408
   def async_get_result; end
 
   # call-seq:
@@ -905,7 +912,7 @@ class PG::Connection
   # Returns the blocking status of the database connection.
   # Returns +true+ if the connection is set to nonblocking mode and +false+ if blocking.
   #
-  # source://pg//lib/pg/connection.rb#471
+  # source://pg//lib/pg/connection.rb#479
   def async_isnonblocking; end
 
   def async_prepare(*_arg0); end
@@ -928,7 +935,7 @@ class PG::Connection
   #
   # See also #copy_data.
   #
-  # source://pg//lib/pg/connection.rb#495
+  # source://pg//lib/pg/connection.rb#503
   def async_put_copy_data(buffer, encoder = T.unsafe(nil)); end
 
   # call-seq:
@@ -944,7 +951,7 @@ class PG::Connection
   # not sent (*false* is only possible if the connection
   # is in nonblocking mode, and this command would block).
   #
-  # source://pg//lib/pg/connection.rb#525
+  # source://pg//lib/pg/connection.rb#533
   def async_put_copy_end(*args); end
 
   def async_query(*_arg0); end
@@ -955,7 +962,7 @@ class PG::Connection
   # Resets the backend connection. This method closes the
   # backend connection and tries to re-connect.
   #
-  # source://pg//lib/pg/connection.rb#567
+  # source://pg//lib/pg/connection.rb#575
   def async_reset; end
 
   def async_set_client_encoding(_arg0); end
@@ -976,7 +983,7 @@ class PG::Connection
   #
   # Returns +nil+.
   #
-  # source://pg//lib/pg/connection.rb#457
+  # source://pg//lib/pg/connection.rb#465
   def async_setnonblocking(enabled); end
 
   def backend_key; end
@@ -992,7 +999,7 @@ class PG::Connection
   # Returns +nil+ on success, or a string containing the
   # error message if a failure occurs.
   #
-  # source://pg//lib/pg/connection.rb#587
+  # source://pg//lib/pg/connection.rb#595
   def cancel; end
 
   # Read all pending socket input to internal memory and raise an exception in case of errors.
@@ -1006,7 +1013,7 @@ class PG::Connection
   # The method doesn't verify that the server is still responding.
   # To verify that the communication to the server works, it is recommended to use something like <tt>conn.exec('')</tt> instead.
   #
-  # source://pg//lib/pg/connection.rb#379
+  # source://pg//lib/pg/connection.rb#387
   def check_socket; end
 
   def client_encoding=(_arg0); end
@@ -1015,13 +1022,13 @@ class PG::Connection
   # Returns an array of Hashes with connection defaults. See ::conndefaults
   # for details.
   #
-  # source://pg//lib/pg/connection.rb#321
+  # source://pg//lib/pg/connection.rb#329
   def conndefaults; end
 
   # Returns a Hash with connection defaults. See ::conndefaults_hash
   # for details.
   #
-  # source://pg//lib/pg/connection.rb#337
+  # source://pg//lib/pg/connection.rb#345
   def conndefaults_hash; end
 
   def connect_poll; end
@@ -1034,58 +1041,12 @@ class PG::Connection
   #
   # See also #conninfo
   #
-  # source://pg//lib/pg/connection.rb#345
+  # source://pg//lib/pg/connection.rb#353
   def conninfo_hash; end
 
   def consume_input; end
 
-  # call-seq:
-  #     conn.copy_data( sql [, coder] ) {|sql_result| ... } -> PG::Result
-  #
-  # Execute a copy process for transferring data to or from the server.
-  #
-  # This issues the SQL COPY command via #exec. The response to this
-  # (if there is no error in the command) is a PG::Result object that
-  # is passed to the block, bearing a status code of PGRES_COPY_OUT or
-  # PGRES_COPY_IN (depending on the specified copy direction).
-  # The application should then use #put_copy_data or #get_copy_data
-  # to receive or transmit data rows and should return from the block
-  # when finished.
-  #
-  # #copy_data returns another PG::Result object when the data transfer
-  # is complete. An exception is raised if some problem was encountered,
-  # so it isn't required to make use of any of them.
-  # At this point further SQL commands can be issued via #exec.
-  # (It is not possible to execute other SQL commands using the same
-  # connection while the COPY operation is in progress.)
-  #
-  # This method ensures, that the copy process is properly terminated
-  # in case of client side or server side failures. Therefore, in case
-  # of blocking mode of operation, #copy_data is preferred to raw calls
-  # of #put_copy_data, #get_copy_data and #put_copy_end.
-  #
-  # _coder_ can be a PG::Coder derivation
-  # (typically PG::TextEncoder::CopyRow or PG::TextDecoder::CopyRow).
-  # This enables encoding of data fields given to #put_copy_data
-  # or decoding of fields received by #get_copy_data.
-  #
-  # Example with CSV input format:
-  #   conn.exec "create table my_table (a text,b text,c text,d text)"
-  #   conn.copy_data "COPY my_table FROM STDIN CSV" do
-  #     conn.put_copy_data "some,data,to,copy\n"
-  #     conn.put_copy_data "more,data,to,copy\n"
-  #   end
-  # This creates +my_table+ and inserts two CSV rows.
-  #
-  # The same with text format encoder PG::TextEncoder::CopyRow
-  # and Array input:
-  #   enco = PG::TextEncoder::CopyRow.new
-  #   conn.copy_data "COPY my_table FROM STDIN", enco do
-  #     conn.put_copy_data ['some', 'data', 'to', 'copy']
-  #     conn.put_copy_data ['more', 'data', 'to', 'copy']
-  #   end
-  #
-  # Also PG::BinaryEncoder::CopyRow can be used to send data in binary format to the server.
+  # PG::BinaryEncoder::CopyRow can be used to send data in binary format to the server.
   # In this case copy_data generates the header and trailer data automatically:
   #   enco = PG::BinaryEncoder::CopyRow.new
   #   conn.copy_data "COPY my_table FROM STDIN (FORMAT binary)", enco do
@@ -1129,7 +1090,7 @@ class PG::Connection
   #
   # @raise [PG::NotInBlockingMode]
   #
-  # source://pg//lib/pg/connection.rb#211
+  # source://pg//lib/pg/connection.rb#214
   def copy_data(sql, coder = T.unsafe(nil)); end
 
   def db; end
@@ -1162,7 +1123,7 @@ class PG::Connection
   # Available since PostgreSQL-10.
   # See also corresponding {libpq function}[https://www.postgresql.org/docs/current/libpq-misc.html#LIBPQ-PQENCRYPTPASSWORDCONN].
   #
-  # source://pg//lib/pg/connection.rb#555
+  # source://pg//lib/pg/connection.rb#563
   def encrypt_password(password, username, algorithm = T.unsafe(nil)); end
 
   def enter_pipeline_mode; end
@@ -1201,7 +1162,7 @@ class PG::Connection
   #
   # See also #copy_data.
   #
-  # source://pg//lib/pg/connection.rb#423
+  # source://pg//lib/pg/connection.rb#431
   def get_copy_data(async = T.unsafe(nil), decoder = T.unsafe(nil)); end
 
   def get_last_result; end
@@ -1221,7 +1182,7 @@ class PG::Connection
   # and the PG::Result object will  automatically be cleared when the block terminates.
   # In this instance, <code>conn.exec</code> returns the value of the block.
   #
-  # source://pg//lib/pg/connection.rb#400
+  # source://pg//lib/pg/connection.rb#408
   def get_result; end
 
   def host; end
@@ -1242,7 +1203,7 @@ class PG::Connection
   # Returns the blocking status of the database connection.
   # Returns +true+ if the connection is set to nonblocking mode and +false+ if blocking.
   #
-  # source://pg//lib/pg/connection.rb#471
+  # source://pg//lib/pg/connection.rb#479
   def isnonblocking; end
 
   def lo_close(_arg0); end
@@ -1279,7 +1240,7 @@ class PG::Connection
   # Returns the blocking status of the database connection.
   # Returns +true+ if the connection is set to nonblocking mode and +false+ if blocking.
   #
-  # source://pg//lib/pg/connection.rb#471
+  # source://pg//lib/pg/connection.rb#479
   def nonblocking?; end
 
   def notifies; end
@@ -1311,7 +1272,7 @@ class PG::Connection
   #
   # See also #copy_data.
   #
-  # source://pg//lib/pg/connection.rb#495
+  # source://pg//lib/pg/connection.rb#503
   def put_copy_data(buffer, encoder = T.unsafe(nil)); end
 
   # call-seq:
@@ -1327,7 +1288,7 @@ class PG::Connection
   # not sent (*false* is only possible if the connection
   # is in nonblocking mode, and this command would block).
   #
-  # source://pg//lib/pg/connection.rb#525
+  # source://pg//lib/pg/connection.rb#533
   def put_copy_end(*args); end
 
   def query(*_arg0); end
@@ -1339,7 +1300,7 @@ class PG::Connection
   # Resets the backend connection. This method closes the
   # backend connection and tries to re-connect.
   #
-  # source://pg//lib/pg/connection.rb#567
+  # source://pg//lib/pg/connection.rb#575
   def reset; end
 
   def reset_poll; end
@@ -1376,7 +1337,7 @@ class PG::Connection
   #
   # Returns +nil+.
   #
-  # source://pg//lib/pg/connection.rb#457
+  # source://pg//lib/pg/connection.rb#465
   def setnonblocking(enabled); end
 
   def socket; end
@@ -1394,7 +1355,7 @@ class PG::Connection
   #
   # See also #ssl_attribute
   #
-  # source://pg//lib/pg/connection.rb#362
+  # source://pg//lib/pg/connection.rb#370
   def ssl_attributes; end
 
   def ssl_in_use?; end
@@ -1426,7 +1387,7 @@ class PG::Connection
   # and a +COMMIT+ at the end of the block, or
   # +ROLLBACK+ if any exception occurs.
   #
-  # source://pg//lib/pg/connection.rb#305
+  # source://pg//lib/pg/connection.rb#308
   def transaction; end
 
   def transaction_status; end
@@ -1442,7 +1403,7 @@ class PG::Connection
 
   private
 
-  # source://pg//lib/pg/connection.rb#642
+  # source://pg//lib/pg/connection.rb#650
   def async_connect_or_reset(poll_meth); end
 
   def flush_data=(_arg0); end
@@ -1465,7 +1426,7 @@ class PG::Connection
     # Do not use this method in production code.
     # Any issues with the default setting of <tt>async_api=true</tt> should be reported to the maintainers instead.
     #
-    # source://pg//lib/pg/connection.rb#946
+    # source://pg//lib/pg/connection.rb#954
     def async_api=(enable); end
 
     # call-seq:
@@ -1520,7 +1481,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def async_connect(*args); end
 
     # call-seq:
@@ -1547,10 +1508,10 @@ class PG::Connection
     #
     # See also check_socket for a way to check the connection without doing any server communication.
     #
-    # source://pg//lib/pg/connection.rb#867
+    # source://pg//lib/pg/connection.rb#875
     def async_ping(*args); end
 
-    # source://pg//lib/pg/connection.rb#923
+    # source://pg//lib/pg/connection.rb#931
     def async_send_api=(enable); end
 
     def conndefaults; end
@@ -1560,7 +1521,7 @@ class PG::Connection
     #
     # See also #conndefaults
     #
-    # source://pg//lib/pg/connection.rb#329
+    # source://pg//lib/pg/connection.rb#337
     def conndefaults_hash; end
 
     # call-seq:
@@ -1615,7 +1576,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def connect(*args); end
 
     # Convert Hash options to connection String
@@ -1685,7 +1646,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def new(*args); end
 
     # call-seq:
@@ -1740,7 +1701,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def open(*args); end
 
     # Parse the connection +args+ into a connection-parameter string.
@@ -1783,7 +1744,7 @@ class PG::Connection
     #
     # See also check_socket for a way to check the connection without doing any server communication.
     #
-    # source://pg//lib/pg/connection.rb#867
+    # source://pg//lib/pg/connection.rb#875
     def ping(*args); end
 
     # Quote a single +value+ for use in a connection-parameter string.
@@ -1845,7 +1806,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def setdb(*args); end
 
     # call-seq:
@@ -1900,7 +1861,7 @@ class PG::Connection
     #
     # Raises a PG::Error if the connection fails.
     #
-    # source://pg//lib/pg/connection.rb#763
+    # source://pg//lib/pg/connection.rb#771
     def setdblogin(*args); end
 
     def sync_connect(*_arg0); end
@@ -1909,13 +1870,13 @@ class PG::Connection
 
     private
 
-    # source://pg//lib/pg/connection.rb#815
+    # source://pg//lib/pg/connection.rb#823
     def connect_to_hosts(*args); end
 
-    # source://pg//lib/pg/connection.rb#837
+    # source://pg//lib/pg/connection.rb#845
     def host_is_named_pipe?(host_string); end
 
-    # source://pg//lib/pg/connection.rb#784
+    # source://pg//lib/pg/connection.rb#792
     def resolve_hosts(iopts); end
   end
 end
@@ -2334,6 +2295,13 @@ class PG::Result
     def res_status(_arg0); end
   end
 end
+
+# PG::Connection#transaction uses this exception to distinguish a deliberate rollback from other exceptional situations.
+# Normally, raising an exception will cause the .transaction method to rollback the database transaction and pass on the exception.
+# But if you raise an PG::RollbackTransaction exception, then the database transaction will be rolled back, without passing on the exception.
+#
+# source://pg//lib/pg/exceptions.rb#27
+class PG::RollbackTransaction < ::StandardError; end
 
 class PG::SEInvalidSpecification < ::PG::SavepointException; end
 class PG::SREFunctionExecutedNoReturnStatement < ::PG::SqlRoutineException; end
