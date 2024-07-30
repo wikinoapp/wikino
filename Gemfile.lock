@@ -112,7 +112,7 @@ GEM
     concurrent-ruby (1.3.3)
     connection_pool (2.4.1)
     crass (1.0.6)
-    cssbundling-rails (1.4.0)
+    cssbundling-rails (1.4.1)
       railties (>= 6.0.0)
     cuprite (0.15.1)
       capybara (~> 3.0)
@@ -193,11 +193,11 @@ GEM
       net-protocol
     netrc (0.11.0)
     nio4r (2.7.3)
-    nokogiri (1.16.6-aarch64-linux)
+    nokogiri (1.16.7-aarch64-linux)
       racc (~> 1.4)
-    nokogiri (1.16.6-arm64-darwin)
+    nokogiri (1.16.7-arm64-darwin)
       racc (~> 1.4)
-    nokogiri (1.16.6-x86_64-linux)
+    nokogiri (1.16.7-x86_64-linux)
       racc (~> 1.4)
     parallel (1.25.1)
     parser (3.3.4.0)
@@ -217,7 +217,7 @@ GEM
       nio4r (~> 2.0)
     pundit (2.3.2)
       activesupport (>= 3.0.0)
-    racc (1.8.0)
+    racc (1.8.1)
     rack (3.1.7)
     rack-cors (2.0.2)
       rack (>= 2.0.0)
@@ -382,7 +382,7 @@ GEM
     yard-sorbet (0.9.0)
       sorbet-runtime
       yard
-    zeitwerk (2.6.16)
+    zeitwerk (2.6.17)
 
 PLATFORMS
   aarch64-linux
