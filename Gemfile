@@ -13,6 +13,7 @@ gem "bootsnap", require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
 gem "cssbundling-rails"
+gem "discard"
 gem "github-markup"
 gem "jsbundling-rails"
 gem "meta-tags"

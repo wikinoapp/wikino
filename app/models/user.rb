@@ -4,9 +4,7 @@
 class User < ApplicationRecord
   extend T::Sig
 
-  include SoftDeletable
-
-  has_many :notes, dependent: :destroy
+  include Discard::Model
 
   T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }
   def notes_except(note)
