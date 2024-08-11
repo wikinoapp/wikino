@@ -10,6 +10,6 @@ class ApplicationForm
   # @overload
   sig { returns(Symbol) }
   def self.i18n_scope
-    :form
+    :forms
   end
 end

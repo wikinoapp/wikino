@@ -1,0 +1,81 @@
+<% title = t("meta.title.sign_in.show") %>
+<% set_meta_tags(title:) %>
+
+<%= render ::Layouts::SimpleLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <div class="text-center">
+      <div class="mt-12">
+        <%= link_to root_path, class: "inline-block" do %>
+          <%# render Icons::LogoIconComponent.new(size: "50px") %>
+        <% end %>
+      </div>
+
+      <h1 class="font-bold mt-8 text-3xl">
+        <%= title %>
+      </h1>
+    </div>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= form_with model: @form, url: session_list_path do |f| %>
+          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+          <%= f.label :space_identifier, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.space_identifier") %>
+              </span>
+            </div>
+
+            <%= f.text_field(:space_identifier, {
+              autofocus: true,
+              class: "input input-bordered w-full",
+              required: true,
+              tabindex: 1
+            }) %>
+          <% end %>
+
+          <%= f.label :email, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.email") %>
+              </span>
+            </div>
+
+            <%= f.email_field(:email, {
+              autocomplete: "username",
+              class: "input input-bordered w-full",
+              required: true,
+              tabindex: 2
+            }) %>
+          <% end %>
+
+          <%= f.label :password, class: "form-control mt-8" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.password") %>
+              </span>
+
+              <span class="label-text-alt">
+                <%# link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 5 %>
+              </span>
+            </div>
+
+            <%= f.password_field(:password, {
+              autocomplete: "current-password",
+              class: "input input-bordered w-full",
+              required: true,
+              tabindex: 3
+            }) %>
+          <% end %>
+
+          <div class="mt-8 text-center">
+            <%= f.button class: "btn btn-primary no-animation rounded-full", tabindex: 4, type: :submit do %>
+              <%= t("verbs.sign_in") %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

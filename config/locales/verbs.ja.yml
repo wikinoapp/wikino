@@ -1,4 +1,5 @@
 ja:
   verbs:
+    sign_in: ログインする
     sign_up: アカウントを作成する
     submit: 送信する

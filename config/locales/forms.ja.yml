@@ -9,9 +9,15 @@ ja:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
         email: メールアドレス
+      session_form:
+        email: メールアドレス
+        password: パスワード
+        space_identifier: スペースの識別子
     errors:
       models:
         email_confirmation_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
+        session_form:
+          unauthenticated: ログインに失敗しました。スペースの識別子かメールアドレス、またはパスワードが間違っています

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier",           via: :get,    as: :space,                   to: "spaces/show#call"
   match "/s/:space_identifier/notes/new", via: :get,    as: :new_note,                to: "notes/new#call"
   match "/s/:space_identifier/session",   via: :delete, as: :session,                 to: "sessions/destroy#call"
+  match "/sessions",                      via: :post,   as: :session_list,            to: "sessions/create#call"
   match "/sign_in",                       via: :get,    as: :sign_in,                 to: "sign_in/show#call"
   match "/sign_up",                       via: :get,    as: :sign_up,                 to: "sign_up/show#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
