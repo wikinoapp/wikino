@@ -24,6 +24,7 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     def sign_out
+      DestroySessionUseCase.new.call(session_token:)
       cookies.delete(Session::COOKIE_KEY)
 
       true
@@ -32,8 +33,8 @@ module ControllerConcerns
     sig(:final) { returns(T.nilable(User)) }
     def viewer
       @viewer ||= T.let(begin
-        return unless cookies.signed[Session::COOKIE_KEY]
-        Session.find_by(token: cookies.signed[Session::COOKIE_KEY])&.user
+        return unless session_token
+        Session.find_by(token: session_token)&.user
       end, T.nilable(User))
     end
 
@@ -67,6 +68,11 @@ module ControllerConcerns
     def after_authentication_url
       session.delete(:return_to_after_authenticating) ||
         space_url(space_identifier: viewer!.space_identifier)
+    end
+
+    sig(:final) { returns(T.nilable(String)) }
+    def session_token
+      cookies.signed[Session::COOKIE_KEY]
     end
 
     sig(:final) { returns(T.nilable(String)) }
