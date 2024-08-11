@@ -1,0 +1,12 @@
+<%= @email %> さん、こんにちは。<br>
+<br>
+確認用コードは下記になります。<br>
+<br>
+<strong><%= @code %></strong><br>
+<br>
+確認用コードの有効期間は15分です。<br>
+<br>
+もしこのメールに心当たりが無い場合は無視してください。<br>
+<br>
+Nonoto<br>
+<%= link_to ENV.fetch("NONOTO_URL"), ENV.fetch("NONOTO_URL") %>

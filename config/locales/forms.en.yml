@@ -1,0 +1,17 @@
+en:
+  forms:
+    attributes:
+      account_form:
+        email: Email
+        password: Password
+        space_identifier: Identifier
+      email_confirmation_form:
+        confirmation_code: Confirmation code
+      new_email_confirmation_form:
+        email: Email
+    errors:
+      models:
+        email_confirmation_form:
+          attributes:
+            confirmation_code:
+              incorrect_or_expired: is incorrect or expired

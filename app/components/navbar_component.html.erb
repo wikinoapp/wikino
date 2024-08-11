@@ -1,41 +1,23 @@
-<nav class="c-navbar navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
+<nav class="flex justify-between px-2 py-4">
+  <div>
     <%= link_to root_path, class: "fw-bold navbar-brand" do %>
       の
       <span class="small">(α)</span>
     <% end %>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <% if signed_in? %>
+      <%= link_to t("nouns.new_note"), new_note_path %>
+    <% end %>
+  </div>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto">
-        <% if user_signed_in? %>
-          <li class="nav-item">
-            <%= link_to t("nouns.new_note"), new_note_path, class: "nav-link", data: { turbolinks: false } %>
-          </li>
-        <% end %>
-      </ul>
-      <ul class="navbar-nav">
-        <% if user_signed_in? %>
-          <li class="dropdown nav-item">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Menu
-            </a>
-            <div class="dropdown-menu dropdown-menu-md-end" aria-labelledby="navbarDropdown">
-              <%= link_to t("nouns.sign_out"), helpers.sign_out_path, class: "dropdown-item" %>
-            </div>
-          </li>
-        <% else %>
-          <li class="nav-item">
-            <%= link_to t("nouns.sign_up"), helpers.sign_up_with_auth0_path, class: "nav-link", method: :post %>
-          </li>
-          <li class="nav-item">
-            <%= link_to t("nouns.sign_in"), helpers.sign_in_with_auth0_path, class: "nav-link", method: :post %>
-          </li>
-        <% end %>
-      </ul>
-    </div>
+  <div>
+    <% if signed_in? %>
+      <%= button_to t("nouns.sign_out"), sign_out_path, method: :delete %>
+    <% else %>
+      <div class="flex gap-2">
+        <%= link_to t("nouns.sign_up"), sign_up_path %>
+        <%= link_to t("nouns.sign_in"), sign_in_path %>
+      </div>
+    <% end %>
   </div>
 </nav>

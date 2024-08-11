@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class ApplicationMailer < ActionMailer::Base
-  default from: "Nonoto <no-reply@nonoto.app>"
-  layout "mailer"
+  extend T::Sig
+
+  default from: "Nonoto <no-reply@#{Nonoto.config.email_domain}>"
 end

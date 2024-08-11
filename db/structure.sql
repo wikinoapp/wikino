@@ -71,7 +71,7 @@ CREATE TABLE public.ar_internal_metadata (
 CREATE TABLE public.email_confirmations (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     email character varying NOT NULL,
-    event character varying NOT NULL,
+    event integer NOT NULL,
     code character varying NOT NULL,
     started_at timestamp without time zone NOT NULL,
     succeeded_at timestamp without time zone,
@@ -99,7 +99,7 @@ CREATE TABLE public.note_links (
 
 CREATE TABLE public.note_revisions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
+    space_id uuid NOT NULL,
     note_id uuid NOT NULL,
     editor_id uuid NOT NULL,
     title public.citext DEFAULT ''::public.citext NOT NULL,
@@ -111,13 +111,41 @@ CREATE TABLE public.note_revisions (
 
 
 --
+-- Name: notebook_members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notebook_members (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    notebook_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role character varying NOT NULL
+);
+
+
+--
+-- Name: notebooks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notebooks (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    identifier public.citext NOT NULL,
+    name character varying DEFAULT ''::character varying NOT NULL,
+    description character varying DEFAULT ''::character varying NOT NULL,
+    visibility integer NOT NULL,
+    discarded_at timestamp without time zone
+);
+
+
+--
 -- Name: notes; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.notes (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    project_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    notebook_id uuid NOT NULL,
     author_id uuid NOT NULL,
     number integer NOT NULL,
     title public.citext DEFAULT ''::public.citext NOT NULL,
@@ -126,47 +154,6 @@ CREATE TABLE public.notes (
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: project_members; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.project_members (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    project_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    role character varying NOT NULL
-);
-
-
---
--- Name: project_profiles; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.project_profiles (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    project_id uuid NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: projects; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.projects (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    identifier public.citext NOT NULL,
-    visibility character varying NOT NULL,
-    discarded_at timestamp without time zone
 );
 
 
@@ -185,7 +172,7 @@ CREATE TABLE public.schema_migrations (
 
 CREATE TABLE public.sessions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
+    space_id uuid NOT NULL,
     user_id uuid NOT NULL,
     token character varying NOT NULL,
     ip_address character varying DEFAULT ''::character varying NOT NULL,
@@ -197,27 +184,14 @@ CREATE TABLE public.sessions (
 
 
 --
--- Name: team_profiles; Type: TABLE; Schema: public; Owner: -
+-- Name: spaces; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.team_profiles (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: teams; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.teams (
+CREATE TABLE public.spaces (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     identifier public.citext NOT NULL,
-    visibility character varying NOT NULL,
+    name character varying NOT NULL,
+    plan integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
     discarded_at timestamp without time zone,
     created_at timestamp(6) without time zone NOT NULL,
@@ -231,22 +205,9 @@ CREATE TABLE public.teams (
 
 CREATE TABLE public.user_passwords (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
+    space_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    password_digest character varying NOT NULL
-);
-
-
---
--- Name: user_profiles; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.user_profiles (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
+    password_digest character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -258,11 +219,13 @@ CREATE TABLE public.user_profiles (
 
 CREATE TABLE public.users (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    team_id uuid NOT NULL,
+    space_id uuid NOT NULL,
     email character varying NOT NULL,
     atname public.citext NOT NULL,
-    role character varying NOT NULL,
-    locale character varying NOT NULL,
+    role integer NOT NULL,
+    name character varying DEFAULT ''::character varying NOT NULL,
+    description character varying DEFAULT ''::character varying NOT NULL,
+    locale integer NOT NULL,
     time_zone character varying NOT NULL,
     sign_in_count integer DEFAULT 0 NOT NULL,
     current_signed_in_at timestamp without time zone,
@@ -307,35 +270,27 @@ ALTER TABLE ONLY public.note_revisions
 
 
 --
+-- Name: notebook_members notebook_members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notebook_members
+    ADD CONSTRAINT notebook_members_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notebooks notebooks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notebooks
+    ADD CONSTRAINT notebooks_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notes
     ADD CONSTRAINT notes_pkey PRIMARY KEY (id);
-
-
---
--- Name: project_members project_members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project_members
-    ADD CONSTRAINT project_members_pkey PRIMARY KEY (id);
-
-
---
--- Name: project_profiles project_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project_profiles
-    ADD CONSTRAINT project_profiles_pkey PRIMARY KEY (id);
-
-
---
--- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.projects
-    ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 
 --
@@ -355,19 +310,11 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: team_profiles team_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: spaces spaces_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.team_profiles
-    ADD CONSTRAINT team_profiles_pkey PRIMARY KEY (id);
-
-
---
--- Name: teams teams_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.teams
-    ADD CONSTRAINT teams_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.spaces
+    ADD CONSTRAINT spaces_pkey PRIMARY KEY (id);
 
 
 --
@@ -376,14 +323,6 @@ ALTER TABLE ONLY public.teams
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT user_passwords_pkey PRIMARY KEY (id);
-
-
---
--- Name: user_profiles user_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_profiles
-    ADD CONSTRAINT user_profiles_pkey PRIMARY KEY (id);
 
 
 --
@@ -444,10 +383,59 @@ CREATE INDEX index_note_revisions_on_note_id ON public.note_revisions USING btre
 
 
 --
--- Name: index_note_revisions_on_team_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_note_revisions_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_note_revisions_on_team_id ON public.note_revisions USING btree (team_id);
+CREATE INDEX index_note_revisions_on_space_id ON public.note_revisions USING btree (space_id);
+
+
+--
+-- Name: index_notebook_members_on_notebook_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notebook_members_on_notebook_id ON public.notebook_members USING btree (notebook_id);
+
+
+--
+-- Name: index_notebook_members_on_notebook_id_and_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_notebook_members_on_notebook_id_and_user_id ON public.notebook_members USING btree (notebook_id, user_id);
+
+
+--
+-- Name: index_notebook_members_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notebook_members_on_space_id ON public.notebook_members USING btree (space_id);
+
+
+--
+-- Name: index_notebook_members_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notebook_members_on_user_id ON public.notebook_members USING btree (user_id);
+
+
+--
+-- Name: index_notebooks_on_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notebooks_on_discarded_at ON public.notebooks USING btree (discarded_at);
+
+
+--
+-- Name: index_notebooks_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notebooks_on_space_id ON public.notebooks USING btree (space_id);
+
+
+--
+-- Name: index_notebooks_on_space_id_and_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_notebooks_on_space_id_and_identifier ON public.notebooks USING btree (space_id, identifier);
 
 
 --
@@ -458,115 +446,52 @@ CREATE INDEX index_notes_on_author_id ON public.notes USING btree (author_id);
 
 
 --
--- Name: index_notes_on_project_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_notebook_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_project_id ON public.notes USING btree (project_id);
-
-
---
--- Name: index_notes_on_project_id_and_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_project_id_and_created_at ON public.notes USING btree (project_id, created_at);
+CREATE INDEX index_notes_on_notebook_id ON public.notes USING btree (notebook_id);
 
 
 --
--- Name: index_notes_on_project_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_notebook_id_and_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_project_id_and_modified_at ON public.notes USING btree (project_id, modified_at);
-
-
---
--- Name: index_notes_on_project_id_and_title; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_notes_on_project_id_and_title ON public.notes USING btree (project_id, title);
+CREATE INDEX index_notes_on_notebook_id_and_created_at ON public.notes USING btree (notebook_id, created_at);
 
 
 --
--- Name: index_notes_on_team_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_notebook_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_team_id ON public.notes USING btree (team_id);
-
-
---
--- Name: index_notes_on_team_id_and_number; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_notes_on_team_id_and_number ON public.notes USING btree (team_id, number);
+CREATE INDEX index_notes_on_notebook_id_and_modified_at ON public.notes USING btree (notebook_id, modified_at);
 
 
 --
--- Name: index_project_members_on_project_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_notebook_id_and_title; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_project_members_on_project_id ON public.project_members USING btree (project_id);
-
-
---
--- Name: index_project_members_on_project_id_and_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_project_members_on_project_id_and_user_id ON public.project_members USING btree (project_id, user_id);
+CREATE UNIQUE INDEX index_notes_on_notebook_id_and_title ON public.notes USING btree (notebook_id, title);
 
 
 --
--- Name: index_project_members_on_team_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_project_members_on_team_id ON public.project_members USING btree (team_id);
-
-
---
--- Name: index_project_members_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_project_members_on_user_id ON public.project_members USING btree (user_id);
+CREATE INDEX index_notes_on_space_id ON public.notes USING btree (space_id);
 
 
 --
--- Name: index_project_profiles_on_project_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_space_id_and_number; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_project_profiles_on_project_id ON public.project_profiles USING btree (project_id);
-
-
---
--- Name: index_project_profiles_on_team_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_project_profiles_on_team_id ON public.project_profiles USING btree (team_id);
+CREATE UNIQUE INDEX index_notes_on_space_id_and_number ON public.notes USING btree (space_id, number);
 
 
 --
--- Name: index_projects_on_discarded_at; Type: INDEX; Schema: public; Owner: -
+-- Name: index_sessions_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_on_discarded_at ON public.projects USING btree (discarded_at);
-
-
---
--- Name: index_projects_on_team_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_projects_on_team_id ON public.projects USING btree (team_id);
-
-
---
--- Name: index_projects_on_team_id_and_identifier; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_projects_on_team_id_and_identifier ON public.projects USING btree (team_id, identifier);
-
-
---
--- Name: index_sessions_on_team_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_sessions_on_team_id ON public.sessions USING btree (team_id);
+CREATE INDEX index_sessions_on_space_id ON public.sessions USING btree (space_id);
 
 
 --
@@ -584,31 +509,24 @@ CREATE INDEX index_sessions_on_user_id ON public.sessions USING btree (user_id);
 
 
 --
--- Name: index_team_profiles_on_team_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_spaces_on_discarded_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_team_profiles_on_team_id ON public.team_profiles USING btree (team_id);
-
-
---
--- Name: index_teams_on_discarded_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_teams_on_discarded_at ON public.teams USING btree (discarded_at);
+CREATE INDEX index_spaces_on_discarded_at ON public.spaces USING btree (discarded_at);
 
 
 --
--- Name: index_teams_on_identifier; Type: INDEX; Schema: public; Owner: -
+-- Name: index_spaces_on_identifier; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_teams_on_identifier ON public.teams USING btree (identifier);
+CREATE UNIQUE INDEX index_spaces_on_identifier ON public.spaces USING btree (identifier);
 
 
 --
--- Name: index_user_passwords_on_team_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_user_passwords_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_user_passwords_on_team_id ON public.user_passwords USING btree (team_id);
+CREATE INDEX index_user_passwords_on_space_id ON public.user_passwords USING btree (space_id);
 
 
 --
@@ -619,20 +537,6 @@ CREATE UNIQUE INDEX index_user_passwords_on_user_id ON public.user_passwords USI
 
 
 --
--- Name: index_user_profiles_on_team_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_user_profiles_on_team_id ON public.user_profiles USING btree (team_id);
-
-
---
--- Name: index_user_profiles_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_user_profiles_on_user_id ON public.user_profiles USING btree (user_id);
-
-
---
 -- Name: index_users_on_discarded_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -640,40 +544,40 @@ CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_
 
 
 --
--- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
+-- Name: index_users_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
-
-
---
--- Name: index_users_on_team_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_users_on_team_id ON public.users USING btree (team_id);
+CREATE INDEX index_users_on_space_id ON public.users USING btree (space_id);
 
 
 --
--- Name: index_users_on_team_id_and_atname; Type: INDEX; Schema: public; Owner: -
+-- Name: index_users_on_space_id_and_atname; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_team_id_and_atname ON public.users USING btree (team_id, atname);
-
-
---
--- Name: notes fk_rails_024ba0b8ac; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_024ba0b8ac FOREIGN KEY (team_id) REFERENCES public.teams(id);
+CREATE UNIQUE INDEX index_users_on_space_id_and_atname ON public.users USING btree (space_id, atname);
 
 
 --
--- Name: user_profiles fk_rails_05c4e004ba; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: index_users_on_space_id_and_email; Type: INDEX; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.user_profiles
-    ADD CONSTRAINT fk_rails_05c4e004ba FOREIGN KEY (team_id) REFERENCES public.teams(id);
+CREATE UNIQUE INDEX index_users_on_space_id_and_email ON public.users USING btree (space_id, email);
+
+
+--
+-- Name: user_passwords fk_rails_081bbe105f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_passwords
+    ADD CONSTRAINT fk_rails_081bbe105f FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: sessions fk_rails_0f63041bba; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT fk_rails_0f63041bba FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -685,11 +589,11 @@ ALTER TABLE ONLY public.note_revisions
 
 
 --
--- Name: project_profiles fk_rails_2743b28230; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: notebook_members fk_rails_20746a9f4e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.project_profiles
-    ADD CONSTRAINT fk_rails_2743b28230 FOREIGN KEY (project_id) REFERENCES public.projects(id);
+ALTER TABLE ONLY public.notebook_members
+    ADD CONSTRAINT fk_rails_20746a9f4e FOREIGN KEY (notebook_id) REFERENCES public.notebooks(id);
 
 
 --
@@ -701,11 +605,11 @@ ALTER TABLE ONLY public.note_links
 
 
 --
--- Name: project_profiles fk_rails_3055a88975; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: notebook_members fk_rails_31a94f289c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.project_profiles
-    ADD CONSTRAINT fk_rails_3055a88975 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+ALTER TABLE ONLY public.notebook_members
+    ADD CONSTRAINT fk_rails_31a94f289c FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -717,27 +621,11 @@ ALTER TABLE ONLY public.notes
 
 
 --
--- Name: user_passwords fk_rails_430625b096; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: notes fk_rails_551dbc7e34; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.user_passwords
-    ADD CONSTRAINT fk_rails_430625b096 FOREIGN KEY (team_id) REFERENCES public.teams(id);
-
-
---
--- Name: project_members fk_rails_49ebe01c9d; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project_members
-    ADD CONSTRAINT fk_rails_49ebe01c9d FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: team_profiles fk_rails_7321f01a77; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.team_profiles
-    ADD CONSTRAINT fk_rails_7321f01a77 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT fk_rails_551dbc7e34 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -749,35 +637,27 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: user_profiles fk_rails_87a6352e58; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_profiles
-    ADD CONSTRAINT fk_rails_87a6352e58 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: sessions fk_rails_88177e68bd; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sessions
-    ADD CONSTRAINT fk_rails_88177e68bd FOREIGN KEY (team_id) REFERENCES public.teams(id);
-
-
---
--- Name: notes fk_rails_99e097b079; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_99e097b079 FOREIGN KEY (project_id) REFERENCES public.projects(id);
-
-
---
--- Name: users fk_rails_b2bbf87303; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: users fk_rails_96e4c019e9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT fk_rails_b2bbf87303 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+    ADD CONSTRAINT fk_rails_96e4c019e9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: notebook_members fk_rails_a308d701fa; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notebook_members
+    ADD CONSTRAINT fk_rails_a308d701fa FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: notes fk_rails_c35dc4ab10; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT fk_rails_c35dc4ab10 FOREIGN KEY (notebook_id) REFERENCES public.notebooks(id);
 
 
 --
@@ -789,27 +669,19 @@ ALTER TABLE ONLY public.note_revisions
 
 
 --
+-- Name: note_revisions fk_rails_c76e6bbeed; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_revisions
+    ADD CONSTRAINT fk_rails_c76e6bbeed FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
 -- Name: user_passwords fk_rails_c7888e4144; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: note_revisions fk_rails_d0081ec84a; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_revisions
-    ADD CONSTRAINT fk_rails_d0081ec84a FOREIGN KEY (team_id) REFERENCES public.teams(id);
-
-
---
--- Name: project_members fk_rails_d23d6decaf; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project_members
-    ADD CONSTRAINT fk_rails_d23d6decaf FOREIGN KEY (team_id) REFERENCES public.teams(id);
 
 
 --
@@ -821,19 +693,11 @@ ALTER TABLE ONLY public.note_links
 
 
 --
--- Name: projects fk_rails_ecc227a0c2; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: notebooks fk_rails_fdfcb32d32; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.projects
-    ADD CONSTRAINT fk_rails_ecc227a0c2 FOREIGN KEY (team_id) REFERENCES public.teams(id);
-
-
---
--- Name: project_members fk_rails_f3b43b5269; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project_members
-    ADD CONSTRAINT fk_rails_f3b43b5269 FOREIGN KEY (project_id) REFERENCES public.projects(id);
+ALTER TABLE ONLY public.notebooks
+    ADD CONSTRAINT fk_rails_fdfcb32d32 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --

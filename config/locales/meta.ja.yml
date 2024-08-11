@@ -1,0 +1,15 @@
+ja:
+  meta:
+    description:
+      default: ノートアプリ
+    title:
+      accounts:
+        new: アカウント情報の登録
+      email_confirmations:
+        edit: 確認用コード入力
+      sign_up:
+        new: アカウント作成
+      spaces:
+        show: スペース
+      welcome:
+        show: ノートアプリ

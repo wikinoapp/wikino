@@ -1,0 +1,15 @@
+en:
+  meta:
+    description:
+      default: A note taking app.
+    title:
+      accounts:
+        new: Create an account
+      email_confirmations:
+        edit: Verification
+      sign_up:
+        new: Sign up
+      spaces:
+        show: Space
+      welcome:
+        show: A note taking app.

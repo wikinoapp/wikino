@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 class User < ApplicationRecord
@@ -6,21 +6,61 @@ class User < ApplicationRecord
 
   include Discard::Model
 
+  ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
+  ATNAME_MIN_LENGTH = 2
+  ATNAME_MAX_LENGTH = 20
+
+  enum :role, {
+    Role::Owner.serialize => 0
+  }, prefix: true
+
+  belongs_to :space
+  has_many :sessions, dependent: :restrict_with_exception
+  has_one :user_password, dependent: :restrict_with_exception
+
+  delegate :identifier, to: :space, prefix: :space
+
+  sig { params(email: String).returns(String) }
+  def self.generate_random_atname(email:)
+    "#{email.split("@").first}-#{SecureRandom.alphanumeric(4)}"
+  end
+
+  sig do
+    params(
+      email: String,
+      password: String,
+      locale: Locale,
+      time_zone: String,
+      current_time: ActiveSupport::TimeWithZone
+    ).returns(User)
+  end
+  def self.create_initial_user!(email:, password:, locale:, time_zone:, current_time:)
+    user = create!(
+      email:,
+      atname: generate_random_atname(email:),
+      role: Role::Owner.serialize,
+      locale: locale.serialize,
+      time_zone:,
+      joined_at: current_time
+    )
+    user.create_user_password!(space: user.space, password:)
+
+    user
+  end
+
   T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }
   def notes_except(note)
     note.new_record? ? notes : notes.where.not(id: note.id)
   end
 
-  # ログイン情報を記録する
-  # Deviseの #update_tracked_fields を参考にしている
-  # https://github.com/heartcombo/devise/blob/451ff6d49c71e543962d2b29d77f2e744b2d47e1/lib/devise/models/trackable.rb#L20-L31
-  def track_sign_in!
-    old_current, new_current = current_signed_in_at, Time.now.utc
-    self.last_signed_in_at = old_current || new_current
-    self.current_signed_in_at = new_current
+  sig { params(email_confirmation: EmailConfirmation).void }
+  def run_after_email_confirmation_success!(email_confirmation:)
+    return unless email_confirmation.succeeded?
 
-    self.sign_in_count += 1
+    if email_confirmation.deserialized_event == EmailConfirmationEvent::EmailUpdate
+      update!(email: email_confirmation.email)
+    end
 
-    save!(validate: false)
+    nil
   end
 end

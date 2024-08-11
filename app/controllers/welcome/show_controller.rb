@@ -1,11 +1,18 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Welcome::ShowController < ApplicationController
-  include Authenticatable
+module Welcome
+  class ShowController < ApplicationController
+    include ControllerConcerns::Authenticatable
+    include ControllerConcerns::Localizable
 
-  sig { returns(T.untyped) }
-  def call
-    redirect_to(note_list_path) if user_signed_in?
+    around_action :set_locale
+
+    sig { returns(T.untyped) }
+    def call
+      if signed_in?
+        redirect_to(team_root_url(subdomain: viewer!.team_identifier))
+      end
+    end
   end
 end

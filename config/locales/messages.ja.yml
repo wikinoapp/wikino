@@ -2,11 +2,27 @@ ja:
   messages:
     _common:
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
+    accounts:
+      email_hint_html: |-
+        変更したい場合は再度<a href="/sign_up">アカウント作成ページ</a>からお願いします
+      password_hint_html: |-
+        8文字以上入力してください
+      signed_up_successfully: アカウントを作成しました。Nonotoにようこそ！
+      terms_html: |-
+        <a class="link link-info" href="/terms" rel="nofollow" target="_blank">利用規約</a>
+        と
+        <a class="link link-info" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
+        に同意のうえでアカウントを作成してください
     authentication:
       already_signed_in: すでにログインしています
+    email_confirmations:
+      confirmation_mail_sent: 確認用のメールを送信しました
+      enter_code: メールに記載されている確認用コードを入力してください
     sign_out:
       callback:
         sign_out_success: ログアウトしました
+    spaces:
+      new_space: 新しいスペース
     note:
       are_you_sure_delete: 'ノートを削除しますか？'
       create_note_with_keyword: '「__keyword__」のノートを作成する'
@@ -21,7 +37,8 @@ ja:
       sign_up_link_html: アカウント持ってない？ %{link}
       welcome_back: おかえりなさい！
     sign_up:
-      confirmation_mail_has_sent: 確認メールを送信しました。メールをご確認ください。
-      join_nonoto: Nonotoを始める
-      password_hint: 8文字以上入力してください。
-      sign_in_link_html: 登録済みですか？ %{link}
+      already_have_an_account_html: |-
+        登録済みですか？ <a class="link link-info" href="/sign_in">ログイン</a>
+      description_html: |-
+        お使いのメールアドレスをご入力ください<br>
+        アカウント作成用のメールを送信します

@@ -86,6 +86,7 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.2)
     base64 (0.2.0)
+    bcrypt (3.1.20)
     bigdecimal (3.1.8)
     bootsnap (1.18.3)
       msgpack (~> 1.2)
@@ -126,6 +127,8 @@ GEM
       dotenv (= 3.1.2)
       railties (>= 6.1)
     drb (2.2.1)
+    email_validator (2.2.4)
+      activemodel
     erubi (1.13.0)
     factory_bot (6.4.6)
       activesupport (>= 5.0.0)
@@ -140,8 +143,12 @@ GEM
     github-markup (5.0.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    http_accept_language (2.1.1)
     i18n (1.14.5)
       concurrent-ruby (~> 1.0)
+    inline_svg (1.9.0)
+      activesupport (>= 3.0)
+      nokogiri (>= 1.6)
     io-console (0.7.2)
     irb (1.14.0)
       rdoc (>= 4.0.0)
@@ -394,6 +401,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord-session_store
   addressable
+  bcrypt
   bootsnap
   bullet
   by_star
@@ -403,8 +411,11 @@ DEPENDENCIES
   cuprite
   discard
   dotenv-rails
+  email_validator
   factory_bot_rails
   github-markup
+  http_accept_language
+  inline_svg
   jsbundling-rails
   letter_opener_web
   lograge

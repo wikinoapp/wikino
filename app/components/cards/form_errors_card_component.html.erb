@@ -1,0 +1,15 @@
+<div class="<%= class_names("card bg-error", class_name) %>" role="alert">
+  <div class="card-body">
+    <div class="font-bold text-lg">
+      <%= t "nouns.error" %>
+    </div>
+
+    <ul class="list-disc list-inside">
+      <% @errors.full_messages.each do |message| %>
+        <li>
+          <%= message %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>

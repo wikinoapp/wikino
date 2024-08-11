@@ -5,6 +5,7 @@ class ApplicationForm
   extend T::Sig
 
   include ActiveModel::Model
+  include ActiveModel::Attributes
 
   # @overload
   sig { returns(Symbol) }

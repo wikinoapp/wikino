@@ -9,12 +9,16 @@ gem "rails", "~> 7.1.0"
 
 gem "activerecord-session_store"
 gem "addressable"
+gem "bcrypt" # `has_secure_password` で使っている
 gem "bootsnap", require: false
 gem "by_star"
 gem "commonmarker" # Using github-markup
 gem "cssbundling-rails"
 gem "discard"
+gem "email_validator"
 gem "github-markup"
+gem "http_accept_language"
+gem "inline_svg"
 gem "jsbundling-rails"
 gem "meta-tags"
 gem "pg"

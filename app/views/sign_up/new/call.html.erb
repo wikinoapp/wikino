@@ -1,0 +1,55 @@
+<% title = t("meta.title.sign_up.new") %>
+<% set_meta_tags(title:) %>
+
+<%= render ::Layouts::SimpleLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <div class="text-center">
+      <div class="mt-12">
+        <%= link_to root_path, class: "inline-block" do %>
+          <%# render Icons::LogoIconComponent.new(size: "50px") %>
+        <% end %>
+      </div>
+
+      <h1 class="font-bold mt-8 text-3xl">
+        <%= title %>
+      </h1>
+
+      <p class="mt-4">
+        <%= t("messages.sign_up.description_html") %>
+      </p>
+
+      <p class="mt-4">
+        <%= t("messages.sign_up.already_have_an_account_html") %>
+      </p>
+    </div>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= form_with model: @form, url: sign_up_path do |f| %>
+          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+          <%= f.label :email, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.email_confirmation_form.email") %>
+              </span>
+            </div>
+
+            <%= f.email_field(:email, {
+              autocomplete: "username",
+              autofocus: true,
+              class: "input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
+
+          <div class="mt-8 text-center">
+            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
+              <%= t("verbs.submit") %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

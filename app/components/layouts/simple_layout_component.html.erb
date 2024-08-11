@@ -1,0 +1,9 @@
+<div class="flex flex-col min-h-[100svh]">
+  <div class="flex-1">
+    <%= content %>
+  </div>
+
+  <div class="bottom-0 flex p-4 sticky z-50">
+    <%= render Toasts::FlashToastComponent.new(flash:) %>
+  </div>
+</div>
