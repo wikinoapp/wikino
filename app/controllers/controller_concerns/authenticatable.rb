@@ -59,13 +59,14 @@ module ControllerConcerns
     def require_no_authentication
       if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
-        redirect_to home_path
+        redirect_to space_path(space_identifier: viewer!.space_identifier)
       end
     end
 
     sig(:final) { returns(String) }
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
+      session.delete(:return_to_after_authenticating) ||
+        space_url(space_identifier: viewer!.space_identifier)
     end
 
     sig(:final) { returns(T.nilable(String)) }

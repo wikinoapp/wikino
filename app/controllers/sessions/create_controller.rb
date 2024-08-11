@@ -26,7 +26,7 @@ module Sessions
       sign_in(result.session)
 
       flash[:notice] = t("messages.accounts.signed_in_successfully")
-      redirect_to space_path(space_identifier: viewer!.space_identifier)
+      redirect_to after_authentication_url
     end
 
     sig { returns(ActionController::Parameters) }

@@ -3,10 +3,10 @@
 
 module Notes
   class NewController < ApplicationController
-    #   include Authenticatable
-    #
-    #   before_action :authenticate_user
-    #
+    include ControllerConcerns::Authenticatable
+
+    before_action :require_authentication
+
     #   sig { returns(T.untyped) }
     #   def call
     #     @note = current_user.notes.new
