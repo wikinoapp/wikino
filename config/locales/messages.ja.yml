@@ -9,9 +9,9 @@ ja:
         8文字以上入力してください
       signed_up_successfully: アカウントを作成しました。Nonotoにようこそ！
       terms_html: |-
-        <a class="link link-info" href="/terms" rel="nofollow" target="_blank">利用規約</a>
+        <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と
-        <a class="link link-info" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
+        <a class="link link-secondary" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
         に同意のうえでアカウントを作成してください
     authentication:
       already_signed_in: すでにログインしています
@@ -31,6 +31,8 @@ ja:
       note_deleted: ノートを削除しました
       note_duplicated_html: ノート「<a href="/notes/%{database_id}">%{title}</a>」はすでにあります。
     sign_in:
+      dont_have_an_account_html: |-
+        アカウント持ってない？ <a class="link link-primary" href="/sign_up">アカウント作成</a>
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する
       sign_in_failed: ログインに失敗しました
@@ -38,7 +40,7 @@ ja:
       welcome_back: おかえりなさい！
     sign_up:
       already_have_an_account_html: |-
-        登録済みですか？ <a class="link link-info" href="/sign_in">ログイン</a>
+        登録済みですか？ <a class="link link-primary" href="/sign_in">ログイン</a>
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します

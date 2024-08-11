@@ -1,25 +1,33 @@
-<nav class="flex justify-between px-2 py-4">
-  <div>
-    <%= link_to root_path, class: "fw-bold navbar-brand" do %>
-      の
-      <span class="small">(α)</span>
-    <% end %>
-
-    <% if signed_in? %>
-      <%= link_to t("nouns.new_note"), new_note_path %>
+<nav class="navbar bg-base-100">
+  <div class="flex-1">
+    <%= link_to root_path do %>
+      <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-base-content") %>
     <% end %>
   </div>
 
   <div>
     <% if signed_in? %>
-      <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
-        method: :delete
-      } %>
-    <% else %>
-      <div class="flex gap-2">
-        <%= link_to t("nouns.sign_up"), sign_up_path %>
-        <%= link_to t("nouns.sign_in"), sign_in_path %>
-      </div>
+      <%= link_to t("nouns.new_note"), new_note_path %>
     <% end %>
+  </div>
+
+  <div class="flex-none">
+    <ul class="menu menu-horizontal px-1">
+      <% if signed_in? %>
+        <li>
+          <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
+            method: :delete
+          } %>
+        </li>
+      <% else %>
+        <li>
+          <%= link_to t("nouns.sign_up"), sign_up_path %>
+        </li>
+
+        <li>
+          <%= link_to t("nouns.sign_in"), sign_in_path %>
+        </li>
+      <% end %>
+    </ul>
   </div>
 </nav>

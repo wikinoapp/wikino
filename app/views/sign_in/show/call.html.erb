@@ -6,13 +6,17 @@
     <div class="text-center">
       <div class="mt-12">
         <%= link_to root_path, class: "inline-block" do %>
-          <%# render Icons::LogoIconComponent.new(size: "50px") %>
+          <%= render Nonoto::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
         <% end %>
       </div>
 
       <h1 class="font-bold mt-8 text-3xl">
         <%= title %>
       </h1>
+
+      <p class="mt-4">
+        <%= t("messages.sign_in.dont_have_an_account_html") %>
+      </p>
     </div>
 
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
@@ -35,7 +39,7 @@
             }) %>
           <% end %>
 
-          <%= f.label :email, class: "form-control" do %>
+          <%= f.label :email, class: "form-control mt-4" do %>
             <div class="label">
               <span class="label-text">
                 <%= t("forms.attributes.session_form.email") %>
@@ -50,7 +54,7 @@
             }) %>
           <% end %>
 
-          <%= f.label :password, class: "form-control mt-8" do %>
+          <%= f.label :password, class: "form-control mt-4" do %>
             <div class="label">
               <span class="label-text">
                 <%= t("forms.attributes.session_form.password") %>

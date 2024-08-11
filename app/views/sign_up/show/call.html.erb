@@ -6,7 +6,7 @@
     <div class="text-center">
       <div class="mt-12">
         <%= link_to root_path, class: "inline-block" do %>
-          <%# render Icons::LogoIconComponent.new(size: "50px") %>
+          <%= render Nonoto::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
         <% end %>
       </div>
 
@@ -31,7 +31,7 @@
           <%= f.label :email, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.email_confirmation_form.email") %>
+                <%= t("forms.attributes.new_email_confirmation_form.email") %>
               </span>
             </div>
 

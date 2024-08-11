@@ -6,7 +6,7 @@
     <div class="text-center">
       <div class="mt-12">
         <%= link_to root_path, class: "inline-block" do %>
-          <%= render Icons::LogoIconComponent.new(size: "50px") %>
+          <%= render Nonoto::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
         <% end %>
       </div>
 
