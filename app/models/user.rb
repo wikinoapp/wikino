@@ -14,30 +14,31 @@ class User < ApplicationRecord
     Role::Owner.serialize => 0
   }, prefix: true
 
+  enum :locale, {
+    Locale::En.serialize => 0,
+    Locale::Ja.serialize => 1
+  }, prefix: true
+
   belongs_to :space
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
   delegate :identifier, to: :space, prefix: :space
 
-  sig { params(email: String).returns(String) }
-  def self.generate_random_atname(email:)
-    "#{email.split("@").first}-#{SecureRandom.alphanumeric(4)}"
-  end
-
   sig do
     params(
       email: String,
+      atname: String,
       password: String,
       locale: Locale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(User)
   end
-  def self.create_initial_user!(email:, password:, locale:, time_zone:, current_time:)
+  def self.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
     user = create!(
       email:,
-      atname: generate_random_atname(email:),
+      atname:,
       role: Role::Owner.serialize,
       locale: locale.serialize,
       time_zone:,
@@ -46,6 +47,11 @@ class User < ApplicationRecord
     user.create_user_password!(space: user.space, password:)
 
     user
+  end
+
+  sig { returns(Locale) }
+  def deserialized_locale
+    Locale.deserialize(locale)
   end
 
   T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }

@@ -6,23 +6,17 @@ Rails.application.routes.draw do
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
 
-  constraints(Nonoto::RoutingConstraint::SpaceSubdomain.new) do
-    # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
-    match "/notes/new", via: :get,    as: :new_note, to: "notes/new#call"
-    match "/sign_out",  via: :delete, as: :sign_out, to: "sessions/destroy#call"
-    # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
-
-    root "spaces/show#call", as: :space_root
-  end
-
   # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
-  match "/accounts",                via: :post,  as: :account_list,            to: "accounts/create#call"
-  match "/accounts/new",            via: :get,   as: :new_account,             to: "accounts/new#call"
-  match "/email_confirmation",      via: :patch, as: :email_confirmation,      to: "email_confirmations/update#call"
-  match "/email_confirmation/edit", via: :get,   as: :edit_email_confirmation, to: "email_confirmations/edit#call"
-  match "/sign_in",                 via: :get,   as: :sign_in,                 to: "sessions/new#call"
-  match "/sign_up",                 via: :get,   as: :sign_up,                 to: "sign_up/new#call"
-  match "/sign_up",                 via: :post,                                to: "sign_up/create#call"
+  match "/accounts",                      via: :post,   as: :account_list,            to: "accounts/create#call"
+  match "/accounts/new",                  via: :get,    as: :new_account,             to: "accounts/new#call"
+  match "/email_confirmation",            via: :patch,  as: :email_confirmation,      to: "email_confirmations/update#call"
+  match "/email_confirmation",            via: :post,                                 to: "email_confirmations/create#call"
+  match "/email_confirmation/edit",       via: :get,    as: :edit_email_confirmation, to: "email_confirmations/edit#call"
+  match "/s/:space_identifier",           via: :get,    as: :space,                   to: "spaces/show#call"
+  match "/s/:space_identifier/notes/new", via: :get,    as: :new_note,                to: "notes/new#call"
+  match "/s/:space_identifier/session",   via: :delete, as: :session,                 to: "sessions/destroy#call"
+  match "/sign_in",                       via: :get,    as: :sign_in,                 to: "sign_in/show#call"
+  match "/sign_up",                       via: :get,    as: :sign_up,                 to: "sign_up/show#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 
   root "welcome/show#call"

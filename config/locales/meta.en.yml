@@ -8,7 +8,7 @@ en:
       email_confirmations:
         edit: Verification
       sign_up:
-        new: Sign up
+        show: Sign up
       spaces:
         show: Space
       welcome:

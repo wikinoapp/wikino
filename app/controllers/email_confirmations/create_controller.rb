@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-module SignUp
+module EmailConfirmations
   class CreateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable

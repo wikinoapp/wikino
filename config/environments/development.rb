@@ -89,7 +89,6 @@ Rails.application.configure do
 
   config.hosts += [
     ENV.fetch("NONOTO_HOST"),
-    "www.#{ENV.fetch("NONOTO_HOST")}",
-    *ENV.fetch("NONOTO_SPACE_IDENTIFIERS").split(",").map { |identifier| "#{identifier}.#{ENV.fetch("NONOTO_HOST")}" }
+    "www.#{ENV.fetch("NONOTO_HOST")}"
   ]
 end

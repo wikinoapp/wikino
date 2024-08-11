@@ -50,7 +50,8 @@ module ControllerConcerns
     sig(:final) { returns(T.untyped) }
     def require_authentication
       unless signed_in?
-        redirect_to root_path
+        session[:return_to_after_authenticating] = request.url
+        redirect_to sign_in_path
       end
     end
 
@@ -60,6 +61,11 @@ module ControllerConcerns
         flash[:notice] = t("messages.authentication.already_signed_in")
         redirect_to home_path
       end
+    end
+
+    sig(:final) { returns(String) }
+    def after_authentication_url
+      session.delete(:return_to_after_authenticating) || root_url
     end
 
     sig(:final) { returns(T.nilable(String)) }

@@ -12,7 +12,9 @@
 
   <div>
     <% if signed_in? %>
-      <%= button_to t("nouns.sign_out"), sign_out_path, method: :delete %>
+      <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
+        method: :delete
+      } %>
     <% else %>
       <div class="flex gap-2">
         <%= link_to t("nouns.sign_up"), sign_up_path %>

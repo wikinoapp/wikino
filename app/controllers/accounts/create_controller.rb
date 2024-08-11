@@ -26,7 +26,9 @@ module Accounts
       end
 
       account_result = CreateAccountUseCase.new.call(
+        space_identifier: @form.space_identifier.not_nil!,
         email: @form.email.not_nil!,
+        atname: @form.atname.not_nil!,
         locale: Locale.deserialize(@form.locale),
         password: @form.password.not_nil!,
         time_zone: @form.time_zone.not_nil!
@@ -41,7 +43,7 @@ module Accounts
       sign_in(session_result.session)
 
       flash[:notice] = t("messages.accounts.signed_up_successfully")
-      redirect_to(space_root_url(subdomain: viewer!.space_identifier), allow_other_host: true)
+      redirect_to space_path(space_identifier: viewer!.space_identifier)
     end
 
     sig { returns(ActionController::Parameters) }

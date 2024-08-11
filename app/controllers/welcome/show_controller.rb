@@ -11,7 +11,7 @@ module Welcome
     sig { returns(T.untyped) }
     def call
       if signed_in?
-        redirect_to(team_root_url(subdomain: viewer!.team_identifier))
+        redirect_to(space_path(space_identifier: viewer!.space_identifier))
       end
     end
   end

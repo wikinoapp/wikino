@@ -8,7 +8,7 @@ ja:
       email_confirmations:
         edit: 確認用コード入力
       sign_up:
-        new: アカウント作成
+        show: アカウント作成
       spaces:
         show: スペース
       welcome:

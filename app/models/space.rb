@@ -18,15 +18,13 @@ class Space < ApplicationRecord
 
   has_many :users, dependent: :restrict_with_exception
 
-  sig { returns(String) }
-  def self.generate_random_identifier
-    "space-#{SecureRandom.alphanumeric(4)}"
+  sig do
+    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: Locale)
+      .returns(Space)
   end
-
-  sig { params(current_time: ActiveSupport::TimeWithZone, locale: Locale).returns(Space) }
-  def self.create_initial_space!(current_time:, locale:)
+  def self.create_initial_space!(identifier:, current_time:, locale:)
     create!(
-      identifier: generate_random_identifier,
+      identifier:,
       plan: Plan::Small.serialize,
       name: I18n.t("messages.spaces.new_space", locale: locale.serialize),
       joined_at: current_time

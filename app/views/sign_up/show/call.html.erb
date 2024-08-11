@@ -1,4 +1,4 @@
-<% title = t("meta.title.sign_up.new") %>
+<% title = t("meta.title.sign_up.show") %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::SimpleLayoutComponent.new do %>
@@ -25,7 +25,7 @@
 
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: sign_up_path do |f| %>
+        <%= form_with model: @form, url: email_confirmation_path do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <%= f.label :email, class: "form-control" do %>
