@@ -1,17 +1,17 @@
 <nav class="navbar bg-base-100">
-  <div class="flex-1">
+  <div class="navbar-start">
     <%= link_to root_path do %>
       <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-base-content") %>
     <% end %>
   </div>
 
-  <div>
+  <div class="navbar-center">
     <% if signed_in? %>
       <%= link_to t("nouns.new_note"), new_note_path %>
     <% end %>
   </div>
 
-  <div class="flex-none">
+  <div class="navbar-end">
     <ul class="menu menu-horizontal px-1">
       <% if signed_in? %>
         <li>

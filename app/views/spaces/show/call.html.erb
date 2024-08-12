@@ -1,4 +1,7 @@
 <% title = t("meta.title.spaces.show") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render NavbarComponent.new %>
+<%= render ::Layouts::BasicLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+  <% end %>
+<% end %>

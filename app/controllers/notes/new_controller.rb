@@ -7,9 +7,9 @@ module Notes
 
     before_action :require_authentication
 
-    #   sig { returns(T.untyped) }
-    #   def call
-    #     @note = current_user.notes.new
-    #   end
+    # sig { returns(T.untyped) }
+    # def call
+    #   @note = current_user.notes.new
+    # end
   end
 end
