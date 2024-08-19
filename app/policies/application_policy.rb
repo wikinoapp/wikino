@@ -5,14 +5,14 @@ class ApplicationPolicy
   extend T::Sig
 
   sig { returns(User) }
-  attr_reader :user
+  attr_reader :viewer
 
   sig { returns(ApplicationRecord) }
   attr_reader :record
 
-  sig { params(user: User, record: ApplicationRecord).void }
-  def initialize(user, record)
-    @user = user
+  sig { params(viewer: User, record: ApplicationRecord).void }
+  def initialize(viewer, record)
+    @viewer = viewer
     @record = record
   end
 
@@ -57,22 +57,23 @@ class ApplicationPolicy
 
     abstract!
 
-    sig { params(user: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
-    def initialize(user, scope)
-      @user = user
+    sig { params(viewer: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
+    def initialize(viewer, scope)
+      @viewer = viewer
       @scope = scope
     end
 
     sig { abstract.returns(ActiveRecord::Relation) }
     def resolve
+      raise NoMethodError, "You must define #resolve in #{self.class}"
     end
 
-    private
-
     sig { returns(User) }
-    attr_reader :user
+    attr_reader :viewer
+    private :viewer
 
     sig { returns(T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))) }
     attr_reader :scope
+    private :scope
   end
 end

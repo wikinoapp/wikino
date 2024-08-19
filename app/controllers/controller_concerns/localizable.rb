@@ -11,24 +11,24 @@ module ControllerConcerns
       I18n.with_locale(current_locale.serialize, &action)
     end
 
-    sig(:final) { returns(T.nilable(Locale)) }
+    sig(:final) { returns(T.nilable(UserLocale)) }
     private def instant_locale
-      @instant_locale ||= T.let(Locale.try_deserialize(params[:locale]), T.nilable(Locale))
+      @instant_locale ||= T.let(UserLocale.try_deserialize(params[:locale]), T.nilable(UserLocale))
     end
 
-    sig(:final) { returns(Locale) }
+    sig(:final) { returns(UserLocale) }
     private def preferred_locale
       preferred_languages = http_accept_language.user_preferred_languages
       # Chrome returns "ja", but Safari would return "ja-JP", not "ja".
-      (preferred_languages.present? && preferred_languages.all? { |lang| !lang.match?(/ja/) }) ? Locale::En : default_locale
+      (preferred_languages.present? && preferred_languages.all? { |lang| !lang.match?(/ja/) }) ? UserLocale::En : default_locale
     end
 
-    sig(:final) { returns(Locale) }
+    sig(:final) { returns(UserLocale) }
     private def default_locale
-      Locale::Ja
+      UserLocale::Ja
     end
 
-    sig(:final) { returns(Locale) }
+    sig(:final) { returns(UserLocale) }
     private def current_locale
       instant_locale.presence || viewer&.deserialized_locale.presence || preferred_locale
     end

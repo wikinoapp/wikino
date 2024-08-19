@@ -16,10 +16,12 @@ class Space < ApplicationRecord
     Plan::Large.serialize => 2
   }, prefix: true
 
+  has_many :notebooks, dependent: :restrict_with_exception
+  has_many :notes, dependent: :restrict_with_exception
   has_many :users, dependent: :restrict_with_exception
 
   sig do
-    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: Locale)
+    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: UserLocale)
       .returns(Space)
   end
   def self.create_initial_space!(identifier:, current_time:, locale:)

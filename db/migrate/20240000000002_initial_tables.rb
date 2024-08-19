@@ -83,7 +83,9 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :notebook, foreign_key: true, null: false, type: :uuid
       t.references :user, foreign_key: true, null: false, type: :uuid
-      t.string :role, null: false
+      t.integer :role, null: false
+      t.timestamp :joined_at, null: false
+      t.datetime :last_note_modified_at
 
       t.index %i[notebook_id user_id], unique: true
     end
@@ -104,6 +106,17 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[notebook_id title], unique: true
       t.index %i[notebook_id created_at]
       t.index %i[notebook_id modified_at]
+    end
+
+    create_table :note_editors, id: false do |t|
+      t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+      t.references :space, foreign_key: true, null: false, type: :uuid
+      t.references :note, foreign_key: true, null: false, type: :uuid
+      t.references :user, foreign_key: true, null: false, type: :uuid
+      t.datetime :last_note_modified_at, null: false
+      t.timestamps
+
+      t.index %i[note_id user_id], unique: true
     end
 
     create_table :note_revisions, id: false do |t|

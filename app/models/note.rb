@@ -4,24 +4,27 @@
 class Note < ApplicationRecord
   extend T::Sig
 
-  belongs_to :user
+  belongs_to :author, class_name: "User"
+  belongs_to :notebook
+  belongs_to :space
 
   has_one :content, class_name: "NoteContent", dependent: :destroy
 
   has_many :backlinks, class_name: "Link", dependent: :destroy, foreign_key: :target_note_id
   has_many :links, class_name: "Link", dependent: :destroy
+  has_many :note_editors, dependent: :restrict_with_exception
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
   validates :body, length: {maximum: 1_000_000}
-  validates :original, absence: true
+  # validates :original, absence: true
 
   delegate :body, :body_html, to: :content, allow_nil: true
 
-  sig { returns(T.nilable(Note)) }
-  def original
-    user&.notes_except(self)&.find_by(title:)
-  end
+  # sig { returns(T.nilable(Note)) }
+  # def original
+  #   user&.notes_except(self)&.find_by(title:)
+  # end
 
   # sig { returns(String) }
   # def body_html

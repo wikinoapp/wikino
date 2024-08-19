@@ -81,6 +81,21 @@ CREATE TABLE public.email_confirmations (
 
 
 --
+-- Name: note_editors; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.note_editors (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    note_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    last_note_modified_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: note_links; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -119,7 +134,9 @@ CREATE TABLE public.notebook_members (
     space_id uuid NOT NULL,
     notebook_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    role character varying NOT NULL
+    role integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    last_note_modified_at timestamp(6) without time zone
 );
 
 
@@ -254,6 +271,14 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
+-- Name: note_editors note_editors_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_editors
+    ADD CONSTRAINT note_editors_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: note_links note_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -345,6 +370,34 @@ CREATE UNIQUE INDEX index_email_confirmations_on_email_and_code ON public.email_
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
+
+
+--
+-- Name: index_note_editors_on_note_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_editors_on_note_id ON public.note_editors USING btree (note_id);
+
+
+--
+-- Name: index_note_editors_on_note_id_and_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_note_editors_on_note_id_and_user_id ON public.note_editors USING btree (note_id, user_id);
+
+
+--
+-- Name: index_note_editors_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_editors_on_space_id ON public.note_editors USING btree (space_id);
+
+
+--
+-- Name: index_note_editors_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_editors_on_user_id ON public.note_editors USING btree (user_id);
 
 
 --
@@ -621,11 +674,35 @@ ALTER TABLE ONLY public.notes
 
 
 --
+-- Name: note_editors fk_rails_3aad465980; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_editors
+    ADD CONSTRAINT fk_rails_3aad465980 FOREIGN KEY (note_id) REFERENCES public.notes(id);
+
+
+--
 -- Name: notes fk_rails_551dbc7e34; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notes
     ADD CONSTRAINT fk_rails_551dbc7e34 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: note_editors fk_rails_697e19aba9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_editors
+    ADD CONSTRAINT fk_rails_697e19aba9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: note_editors fk_rails_6a191dd9ab; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_editors
+    ADD CONSTRAINT fk_rails_6a191dd9ab FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
