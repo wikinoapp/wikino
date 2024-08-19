@@ -12,7 +12,7 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@hotwired/turbo": "^8.0.5",
-    "esbuild": "^0.23.0"
+    "esbuild": "^0.23.1"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
