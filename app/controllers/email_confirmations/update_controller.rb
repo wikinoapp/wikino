@@ -38,7 +38,7 @@ module EmailConfirmations
 
     sig { params(email_confirmation: EmailConfirmation).void }
     private def flash_message(email_confirmation)
-      if email_confirmation.event_sign_up?
+      if email_confirmation.event_email_update?
         flash[:notice] = t("messages.email_confirmations.email_updated")
       end
 

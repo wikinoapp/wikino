@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class NewNotebookForm < ApplicationForm
+class NewListForm < ApplicationForm
   sig { returns(User) }
   attr_accessor :viewer
 
@@ -16,7 +16,7 @@ class NewNotebookForm < ApplicationForm
 
   sig { void }
   private def identifier_uniqueness
-    if viewer && viewer.space.notebooks.find_by(identifier:)
+    if viewer && viewer.space.lists.find_by(identifier:)
       errors.add(:identifier, :uniqueness)
     end
   end

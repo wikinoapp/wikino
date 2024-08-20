@@ -5,7 +5,7 @@ class Note < ApplicationRecord
   extend T::Sig
 
   belongs_to :author, class_name: "User"
-  belongs_to :notebook
+  belongs_to :list
   belongs_to :space
 
   has_one :content, class_name: "NoteContent", dependent: :destroy

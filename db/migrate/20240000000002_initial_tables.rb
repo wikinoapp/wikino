@@ -66,7 +66,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    create_table :notebooks, id: false do |t|
+    create_table :lists, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.citext :identifier, null: false
@@ -78,22 +78,22 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[space_id identifier], unique: true
     end
 
-    create_table :notebook_members, id: false do |t|
+    create_table :list_members, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :notebook, foreign_key: true, null: false, type: :uuid
+      t.references :list, foreign_key: true, null: false, type: :uuid
       t.references :user, foreign_key: true, null: false, type: :uuid
       t.integer :role, null: false
       t.timestamp :joined_at, null: false
       t.datetime :last_note_modified_at
 
-      t.index %i[notebook_id user_id], unique: true
+      t.index %i[list_id user_id], unique: true
     end
 
     create_table :notes, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :notebook, foreign_key: true, null: false, type: :uuid
+      t.references :list, foreign_key: true, null: false, type: :uuid
       t.references :author, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :number, null: false
       t.citext :title, default: "", null: false
@@ -103,9 +103,9 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.timestamps
 
       t.index %i[space_id number], unique: true
-      t.index %i[notebook_id title], unique: true
-      t.index %i[notebook_id created_at]
-      t.index %i[notebook_id modified_at]
+      t.index %i[list_id title], unique: true
+      t.index %i[list_id created_at]
+      t.index %i[list_id modified_at]
     end
 
     create_table :note_editors, id: false do |t|

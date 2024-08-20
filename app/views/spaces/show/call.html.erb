@@ -3,10 +3,10 @@
 
 <%= render ::Layouts::BasicLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <%= link_to t("nouns.new_notebook"), new_notebook_path(space_identifier: viewer!.space_identifier) %>
+    <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier) %>
 
-    <% @last_note_modified_notebooks.first(9).each do |notebook| %>
-      <%= render Cards::NotebookCardComponent.new(notebook:) %>
+    <% @last_note_modified_lists.first(9).each do |list| %>
+      <%= render Cards::ListCardComponent.new(list:) %>
     <% end %>
   <% end %>
 <% end %>

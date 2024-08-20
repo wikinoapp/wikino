@@ -21,8 +21,8 @@ class User < ApplicationRecord
 
   belongs_to :space
   has_many :note_editors, dependent: :restrict_with_exception
-  has_many :notebook_members, dependent: :restrict_with_exception
-  has_many :notebooks, through: :notebook_members
+  has_many :list_members, dependent: :restrict_with_exception
+  has_many :lists, through: :list_members
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
@@ -62,24 +62,24 @@ class User < ApplicationRecord
     note.new_record? ? notes : notes.where.not(id: note.id)
   end
 
-  T::Sig::WithoutRuntime.sig { returns(Notebook::PrivateRelation) }
-  def viewable_notebooks
-    Notebook
-      .left_joins(:notebook_members)
+  T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
+  def viewable_lists
+    List
+      .left_joins(:list_members)
       .merge(
-        Notebook.visibility_public.or(
-          NotebookMember.where(user_id: self.id)
+        List.visibility_public.or(
+          ListMember.where(user_id: self.id)
         )
       )
       .distinct
   end
 
-  T::Sig::WithoutRuntime.sig { returns(Notebook::PrivateRelation) }
-  def last_note_modified_notebooks
-    notebooks.merge(
-      notebook_members
-        .order(NotebookMember.arel_table[:last_note_modified_at].desc.nulls_last)
-        .order(NotebookMember.arel_table[:joined_at].desc)
+  T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
+  def last_note_modified_lists
+    lists.merge(
+      list_members
+        .order(ListMember.arel_table[:last_note_modified_at].desc.nulls_last)
+        .order(ListMember.arel_table[:joined_at].desc)
     )
   end
 
@@ -90,19 +90,19 @@ class User < ApplicationRecord
     )
   end
 
-  sig { params(notebook: Notebook).returns(T::Boolean) }
-  def can_view_notebook?(notebook:)
-    viewable_notebooks.where(id: notebook.id).exists?
+  sig { params(list: List).returns(T::Boolean) }
+  def can_view_list?(list:)
+    viewable_lists.where(id: list.id).exists?
   end
 
-  sig { params(notebook: Notebook).returns(T::Boolean) }
-  def can_update_notebook?(notebook:)
-    notebooks.where(id: notebook.id).exists?
+  sig { params(list: List).returns(T::Boolean) }
+  def can_update_list?(list:)
+    lists.where(id: list.id).exists?
   end
 
-  sig { params(notebook: Notebook).returns(T::Boolean) }
-  def can_destroy_notebook?(notebook:)
-    notebook_members.find_by(notebook:)&.role&.admin? == true
+  sig { params(list: List).returns(T::Boolean) }
+  def can_destroy_list?(list:)
+    list_members.find_by(list:)&.role&.admin? == true
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }

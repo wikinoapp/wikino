@@ -5,7 +5,8 @@ class EmailConfirmation < ApplicationRecord
   EXPIRES_IN = T.let(15.minutes, ActiveSupport::Duration)
 
   enum :event, {
-    EmailConfirmationEvent::SignUp.serialize => 0
+    EmailConfirmationEvent::SignUp.serialize => 0,
+    EmailConfirmationEvent::EmailUpdate.serialize => 0
   }, prefix: true
 
   scope :active, -> { where(succeeded_at: nil).where("started_at > ?", EXPIRES_IN.ago) }

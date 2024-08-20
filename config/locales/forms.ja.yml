@@ -9,7 +9,7 @@ ja:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
         email: メールアドレス
-      new_notebook_form:
+      new_list_form:
         identifier: 識別子
         visibility: 公開設定
         name: 名前

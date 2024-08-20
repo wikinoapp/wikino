@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateNotebookUseCase < ApplicationUseCase
+class CreateListUseCase < ApplicationUseCase
   class Result < T::Struct
-    const :notebook, Notebook
+    const :list, List
   end
 
   sig do
@@ -11,10 +11,10 @@ class CreateNotebookUseCase < ApplicationUseCase
       .returns(Result)
   end
   def call(viewer:, identifier:, visibility:, name:, description:)
-    notebook = ActiveRecord::Base.transaction do
-      viewer.space.notebooks.create!(identifier:, visibility:, name:, description:)
+    list = ActiveRecord::Base.transaction do
+      viewer.space.lists.create!(identifier:, visibility:, name:, description:)
     end
 
-    Result.new(notebook:)
+    Result.new(list:)
   end
 end

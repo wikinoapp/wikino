@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-module Notebooks
+module Lists
   class NewController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
@@ -10,7 +10,7 @@ module Notebooks
 
     sig { returns(T.untyped) }
     def call
-      @form = NewNotebookForm.new
+      @form = NewListForm.new
     end
   end
 end

@@ -1,7 +1,7 @@
 <%= render Nonoto::UI::Card.new(class_name:) do %>
   <%= render Nonoto::UI::Card::Body.new do %>
-    <%= link_to notebook_path(space_identifier: viewer!.space_identifier, notebook_id: notebook.id) do %>
-      <%= notebook.name %>
+    <%= link_to list_path(viewer!.space_identifier, list.id) do %>
+      <%= list.name %>
     <% end %>
   <% end %>
 <% end %>

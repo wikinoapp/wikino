@@ -81,6 +81,36 @@ CREATE TABLE public.email_confirmations (
 
 
 --
+-- Name: list_members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.list_members (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    list_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    last_note_modified_at timestamp(6) without time zone
+);
+
+
+--
+-- Name: lists; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lists (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    identifier public.citext NOT NULL,
+    name character varying DEFAULT ''::character varying NOT NULL,
+    description character varying DEFAULT ''::character varying NOT NULL,
+    visibility integer NOT NULL,
+    discarded_at timestamp without time zone
+);
+
+
+--
 -- Name: note_editors; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -126,43 +156,13 @@ CREATE TABLE public.note_revisions (
 
 
 --
--- Name: notebook_members; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.notebook_members (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    notebook_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    role integer NOT NULL,
-    joined_at timestamp without time zone NOT NULL,
-    last_note_modified_at timestamp(6) without time zone
-);
-
-
---
--- Name: notebooks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.notebooks (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    identifier public.citext NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
-    visibility integer NOT NULL,
-    discarded_at timestamp without time zone
-);
-
-
---
 -- Name: notes; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.notes (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    notebook_id uuid NOT NULL,
+    list_id uuid NOT NULL,
     author_id uuid NOT NULL,
     number integer NOT NULL,
     title public.citext DEFAULT ''::public.citext NOT NULL,
@@ -271,6 +271,22 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
+-- Name: list_members list_members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.list_members
+    ADD CONSTRAINT list_members_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lists lists_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lists
+    ADD CONSTRAINT lists_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: note_editors note_editors_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -292,22 +308,6 @@ ALTER TABLE ONLY public.note_links
 
 ALTER TABLE ONLY public.note_revisions
     ADD CONSTRAINT note_revisions_pkey PRIMARY KEY (id);
-
-
---
--- Name: notebook_members notebook_members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notebook_members
-    ADD CONSTRAINT notebook_members_pkey PRIMARY KEY (id);
-
-
---
--- Name: notebooks notebooks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notebooks
-    ADD CONSTRAINT notebooks_pkey PRIMARY KEY (id);
 
 
 --
@@ -370,6 +370,55 @@ CREATE UNIQUE INDEX index_email_confirmations_on_email_and_code ON public.email_
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
+
+
+--
+-- Name: index_list_members_on_list_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_list_members_on_list_id ON public.list_members USING btree (list_id);
+
+
+--
+-- Name: index_list_members_on_list_id_and_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_list_members_on_list_id_and_user_id ON public.list_members USING btree (list_id, user_id);
+
+
+--
+-- Name: index_list_members_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_list_members_on_space_id ON public.list_members USING btree (space_id);
+
+
+--
+-- Name: index_list_members_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_list_members_on_user_id ON public.list_members USING btree (user_id);
+
+
+--
+-- Name: index_lists_on_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_lists_on_discarded_at ON public.lists USING btree (discarded_at);
+
+
+--
+-- Name: index_lists_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_lists_on_space_id ON public.lists USING btree (space_id);
+
+
+--
+-- Name: index_lists_on_space_id_and_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_lists_on_space_id_and_identifier ON public.lists USING btree (space_id, identifier);
 
 
 --
@@ -443,55 +492,6 @@ CREATE INDEX index_note_revisions_on_space_id ON public.note_revisions USING btr
 
 
 --
--- Name: index_notebook_members_on_notebook_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notebook_members_on_notebook_id ON public.notebook_members USING btree (notebook_id);
-
-
---
--- Name: index_notebook_members_on_notebook_id_and_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_notebook_members_on_notebook_id_and_user_id ON public.notebook_members USING btree (notebook_id, user_id);
-
-
---
--- Name: index_notebook_members_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notebook_members_on_space_id ON public.notebook_members USING btree (space_id);
-
-
---
--- Name: index_notebook_members_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notebook_members_on_user_id ON public.notebook_members USING btree (user_id);
-
-
---
--- Name: index_notebooks_on_discarded_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notebooks_on_discarded_at ON public.notebooks USING btree (discarded_at);
-
-
---
--- Name: index_notebooks_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notebooks_on_space_id ON public.notebooks USING btree (space_id);
-
-
---
--- Name: index_notebooks_on_space_id_and_identifier; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_notebooks_on_space_id_and_identifier ON public.notebooks USING btree (space_id, identifier);
-
-
---
 -- Name: index_notes_on_author_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -499,31 +499,31 @@ CREATE INDEX index_notes_on_author_id ON public.notes USING btree (author_id);
 
 
 --
--- Name: index_notes_on_notebook_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_list_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_notebook_id ON public.notes USING btree (notebook_id);
-
-
---
--- Name: index_notes_on_notebook_id_and_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_notebook_id_and_created_at ON public.notes USING btree (notebook_id, created_at);
+CREATE INDEX index_notes_on_list_id ON public.notes USING btree (list_id);
 
 
 --
--- Name: index_notes_on_notebook_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_list_id_and_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_notebook_id_and_modified_at ON public.notes USING btree (notebook_id, modified_at);
+CREATE INDEX index_notes_on_list_id_and_created_at ON public.notes USING btree (list_id, created_at);
 
 
 --
--- Name: index_notes_on_notebook_id_and_title; Type: INDEX; Schema: public; Owner: -
+-- Name: index_notes_on_list_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_notes_on_notebook_id_and_title ON public.notes USING btree (notebook_id, title);
+CREATE INDEX index_notes_on_list_id_and_modified_at ON public.notes USING btree (list_id, modified_at);
+
+
+--
+-- Name: index_notes_on_list_id_and_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_notes_on_list_id_and_title ON public.notes USING btree (list_id, title);
 
 
 --
@@ -642,27 +642,11 @@ ALTER TABLE ONLY public.note_revisions
 
 
 --
--- Name: notebook_members fk_rails_20746a9f4e; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notebook_members
-    ADD CONSTRAINT fk_rails_20746a9f4e FOREIGN KEY (notebook_id) REFERENCES public.notebooks(id);
-
-
---
 -- Name: note_links fk_rails_28b9ac6b4e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.note_links
     ADD CONSTRAINT fk_rails_28b9ac6b4e FOREIGN KEY (target_note_id) REFERENCES public.notes(id);
-
-
---
--- Name: notebook_members fk_rails_31a94f289c; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notebook_members
-    ADD CONSTRAINT fk_rails_31a94f289c FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -679,6 +663,22 @@ ALTER TABLE ONLY public.notes
 
 ALTER TABLE ONLY public.note_editors
     ADD CONSTRAINT fk_rails_3aad465980 FOREIGN KEY (note_id) REFERENCES public.notes(id);
+
+
+--
+-- Name: list_members fk_rails_43c6abed89; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.list_members
+    ADD CONSTRAINT fk_rails_43c6abed89 FOREIGN KEY (list_id) REFERENCES public.lists(id);
+
+
+--
+-- Name: notes fk_rails_551143b4f2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT fk_rails_551143b4f2 FOREIGN KEY (list_id) REFERENCES public.lists(id);
 
 
 --
@@ -722,19 +722,19 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: notebook_members fk_rails_a308d701fa; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: list_members fk_rails_9bb6ff5a7a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notebook_members
-    ADD CONSTRAINT fk_rails_a308d701fa FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.list_members
+    ADD CONSTRAINT fk_rails_9bb6ff5a7a FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
--- Name: notes fk_rails_c35dc4ab10; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: lists fk_rails_c2b88abd0a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_c35dc4ab10 FOREIGN KEY (notebook_id) REFERENCES public.notebooks(id);
+ALTER TABLE ONLY public.lists
+    ADD CONSTRAINT fk_rails_c2b88abd0a FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -770,11 +770,11 @@ ALTER TABLE ONLY public.note_links
 
 
 --
--- Name: notebooks fk_rails_fdfcb32d32; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: list_members fk_rails_ef08b83c98; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notebooks
-    ADD CONSTRAINT fk_rails_fdfcb32d32 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.list_members
+    ADD CONSTRAINT fk_rails_ef08b83c98 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --

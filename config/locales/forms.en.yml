@@ -9,7 +9,7 @@ en:
         confirmation_code: Confirmation code
       new_email_confirmation_form:
         email: Email
-      new_notebook_form:
+      new_list_form:
         identifier: Identifier
         visibility: Visibility
         name: Name

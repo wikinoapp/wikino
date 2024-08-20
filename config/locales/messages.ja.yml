@@ -18,6 +18,8 @@ ja:
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください
+    list:
+      created: リストを作成しました
     sign_out:
       callback:
         sign_out_success: ログアウトしました
@@ -30,8 +32,6 @@ ja:
       no_links: リンクはありません
       note_deleted: ノートを削除しました
       note_duplicated_html: ノート「<a href="/notes/%{database_id}">%{title}</a>」はすでにあります。
-    notebook:
-      created: ノートブックを作成しました
     sign_in:
       dont_have_an_account_html: |-
         アカウント持ってない？ <a class="link link-primary" href="/sign_up">アカウント作成</a>

@@ -17,7 +17,7 @@
 
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: account_list_path do |f| %>
+        <%= form_with model: @form, url: accounts_path do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <%= f.label :email, class: "form-control" do %>

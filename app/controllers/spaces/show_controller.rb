@@ -10,7 +10,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      @last_note_modified_notebooks = viewer!.last_note_modified_notebooks.limit(10)
+      @last_note_modified_lists = viewer!.last_note_modified_lists.limit(10)
       @last_modified_notes = viewer!.last_modified_notes.limit(31)
     end
   end
