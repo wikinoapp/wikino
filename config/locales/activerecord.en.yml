@@ -3,3 +3,7 @@ en:
     attributes:
       note:
         mutation_error: ""
+      notebook:
+        visibility:
+          private: Private
+          public: Public

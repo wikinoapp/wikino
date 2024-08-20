@@ -30,6 +30,8 @@ ja:
       no_links: リンクはありません
       note_deleted: ノートを削除しました
       note_duplicated_html: ノート「<a href="/notes/%{database_id}">%{title}</a>」はすでにあります。
+    notebook:
+      created: ノートブックを作成しました
     sign_in:
       dont_have_an_account_html: |-
         アカウント持ってない？ <a class="link link-primary" href="/sign_up">アカウント作成</a>

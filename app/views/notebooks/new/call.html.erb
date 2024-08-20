@@ -1,0 +1,92 @@
+<% title = t("meta.title.notebooks.new") %>
+<% set_meta_tags(title:, reverse: false) %>
+
+<%= render ::Layouts::BasicLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <h1>
+      <%= title %>
+    </h1>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= form_with model: @form, url: notebook_list_path(space_identifier: viewer!.space_identifier) do |f| %>
+          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+          <%= f.label :identifier, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_notebook_form.identifier") %>
+              </span>
+            </div>
+
+            <%= f.text_area :identifier, {
+              class: "input input-bordered w-full"
+            } %>
+
+            <div class="label">
+              <span class="label-text-alt">
+                <%= t("messages.accounts.email_hint_html") %>
+              </span>
+            </div>
+          <% end %>
+
+          <div>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_notebook_form.visibility") %>
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div>
+                <label class="cursor-pointer flex gap-2 items-center">
+                  <%= f.radio_button :visibility, NotebookVisibility::Public.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.notebook.visibility.public") %>
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <label class="cursor-pointer flex gap-2 items-center">
+                  <%= f.radio_button :visibility, NotebookVisibility::Private.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.notebook.visibility.private") %>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <%= f.label :name, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_notebook_form.name") %>
+              </span>
+            </div>
+
+            <%= f.text_area(:name, class: "input input-bordered w-full") %>
+          <% end %>
+
+          <%= f.label :description, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_notebook_form.description") %>
+              </span>
+            </div>
+
+            <%= f.text_area(:description, class: "input input-bordered w-full") %>
+          <% end %>
+
+          <div class="mt-8 text-center">
+            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
+              <%= t("verbs.submit") %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

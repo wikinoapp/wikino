@@ -33,7 +33,7 @@ class User < ApplicationRecord
       email: String,
       atname: String,
       password: String,
-      locale: Locale,
+      locale: UserLocale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(User)

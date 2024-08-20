@@ -11,7 +11,7 @@ class CreateAccountUseCase < ApplicationUseCase
       space_identifier: String,
       email: String,
       atname: String,
-      locale: Locale,
+      locale: UserLocale,
       password: String,
       time_zone: String
     ).returns(Result)

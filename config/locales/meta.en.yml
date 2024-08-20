@@ -7,6 +7,8 @@ en:
         new: Create an account
       email_confirmations:
         edit: Verification
+      notebooks:
+        new: New notebook
       sign_in:
         show: Sign in
       sign_up:

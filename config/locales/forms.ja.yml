@@ -9,6 +9,11 @@ ja:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
         email: メールアドレス
+      new_notebook_form:
+        identifier: 識別子
+        visibility: 公開設定
+        name: 名前
+        description: 説明
       session_form:
         email: メールアドレス
         password: パスワード

@@ -7,6 +7,8 @@ ja:
         new: アカウント情報の登録
       email_confirmations:
         edit: 確認用コード入力
+      notebooks:
+        new: 新規ノートブック
       sign_in:
         show: ログイン
       sign_up:

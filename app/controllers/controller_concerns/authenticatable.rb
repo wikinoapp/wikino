@@ -50,7 +50,8 @@ module ControllerConcerns
 
     sig(:final) { returns(T.untyped) }
     def require_authentication
-      unless signed_in?
+      if !signed_in? || viewer!.space_identifier != params[:space_identifier]
+        sign_out
         session[:return_to_after_authenticating] = request.url
         redirect_to sign_in_path
       end
