@@ -12,7 +12,9 @@ class CreateListUseCase < ApplicationUseCase
   end
   def call(viewer:, identifier:, visibility:, name:, description:)
     list = ActiveRecord::Base.transaction do
-      viewer.space.lists.create!(identifier:, visibility:, name:, description:)
+      list = viewer.space.lists.create!(identifier:, visibility:, name:, description:)
+      list.add_member(user: viewer, role: ListMemberRole::Admin)
+      list
     end
 
     Result.new(list:)
