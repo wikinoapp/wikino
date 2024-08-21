@@ -8,11 +8,11 @@ module ControllerConcerns
 
     included do
       include Pundit::Authorization
-    end
 
-    sig { returns(User) }
-    def pundit_user
-      viewer!
+      sig { returns(User) }
+      def pundit_user
+        viewer!
+      end
     end
   end
 end

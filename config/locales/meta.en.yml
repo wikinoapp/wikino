@@ -9,6 +9,7 @@ en:
         edit: Verification
       lists:
         new: New list
+        show: List
       sign_in:
         show: Sign in
       sign_up:

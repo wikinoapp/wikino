@@ -1,0 +1,16 @@
+<% title = t("meta.title.lists.show") %>
+<% set_meta_tags(title:, reverse: false) %>
+
+<%= render ::Layouts::BasicLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <h1>
+      <%= title %>
+    </h1>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= @list.identifier %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
