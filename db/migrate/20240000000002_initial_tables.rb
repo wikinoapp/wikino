@@ -69,13 +69,14 @@ class InitialTables < ActiveRecord::Migration[7.1]
     create_table :lists, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.citext :identifier, null: false
-      t.string :name, default: "", null: false
+      t.integer :number, null: false
+      t.string :name, null: false
       t.string :description, default: "", null: false
       t.integer :visibility, null: false
       t.timestamp :discarded_at, index: true
 
-      t.index %i[space_id identifier], unique: true
+      t.index %i[space_id number], unique: true
+      t.index %i[space_id name], unique: true
     end
 
     create_table :list_members, id: false do |t|

@@ -6,6 +6,8 @@ class List < ApplicationRecord
 
   include Discard::Model
 
+  acts_as_sequenced column: :number, scope: :space_id
+
   enum :visibility, {
     ListVisibility::Public.serialize => 0,
     ListVisibility::Private.serialize => 1

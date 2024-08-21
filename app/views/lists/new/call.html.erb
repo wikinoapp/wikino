@@ -12,22 +12,24 @@
         <%= form_with model: @form, url: lists_path(viewer!.space_identifier) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :identifier, class: "form-control" do %>
+          <%= f.label :name, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.new_list_form.identifier") %>
+                <%= t("forms.attributes.new_list_form.name") %>
               </span>
             </div>
 
-            <%= f.text_area :identifier, {
-              class: "input input-bordered w-full"
-            } %>
+            <%= f.text_area(:name, class: "input input-bordered w-full") %>
+          <% end %>
 
+          <%= f.label :description, class: "form-control" do %>
             <div class="label">
-              <span class="label-text-alt">
-                <%= t("messages.accounts.email_hint_html") %>
+              <span class="label-text">
+                <%= t("forms.attributes.new_list_form.description") %>
               </span>
             </div>
+
+            <%= f.text_area(:description, class: "input input-bordered w-full") %>
           <% end %>
 
           <div>
@@ -59,26 +61,6 @@
               </div>
             </div>
           </div>
-
-          <%= f.label :name, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_list_form.name") %>
-              </span>
-            </div>
-
-            <%= f.text_area(:name, class: "input input-bordered w-full") %>
-          <% end %>
-
-          <%= f.label :description, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_list_form.description") %>
-              </span>
-            </div>
-
-            <%= f.text_area(:description, class: "input input-bordered w-full") %>
-          <% end %>
 
           <div class="mt-8 text-center">
             <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>

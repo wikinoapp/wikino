@@ -20,23 +20,21 @@ module Lists
 
       result = CreateListUseCase.new.call(
         viewer: viewer!,
-        identifier: @form.identifier.not_nil!,
-        visibility: @form.visibility.not_nil!,
         name: @form.name.not_nil!,
-        description: @form.description.not_nil!
+        description: @form.description.not_nil!,
+        visibility: @form.visibility.not_nil!
       )
 
       flash[:notice] = t("messages.list.created")
-      redirect_to list_path(viewer!.space_identifier, result.list.identifier)
+      redirect_to list_path(viewer!.space_identifier, result.list.number)
     end
 
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:new_list_form), ActionController::Parameters).permit(
-        :identifier,
-        :visibility,
         :name,
-        :description
+        :description,
+        :visibility
       )
     end
   end

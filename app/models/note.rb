@@ -4,6 +4,8 @@
 class Note < ApplicationRecord
   extend T::Sig
 
+  acts_as_sequenced column: :number, scope: :space_id
+
   belongs_to :author, class_name: "User"
   belongs_to :list
   belongs_to :space

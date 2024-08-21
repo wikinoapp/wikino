@@ -6,13 +6,10 @@ class CreateListUseCase < ApplicationUseCase
     const :list, List
   end
 
-  sig do
-    params(viewer: User, identifier: String, visibility: String, name: String, description: String)
-      .returns(Result)
-  end
-  def call(viewer:, identifier:, visibility:, name:, description:)
+  sig { params(viewer: User, name: String, description: String, visibility: String).returns(Result) }
+  def call(viewer:, name:, description:, visibility:)
     list = ActiveRecord::Base.transaction do
-      list = viewer.space.lists.create!(identifier:, visibility:, name:, description:)
+      list = viewer.space.lists.create!(name:, description:, visibility:)
       list.add_member(user: viewer, role: ListMemberRole::Admin)
       list
     end

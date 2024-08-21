@@ -102,8 +102,8 @@ CREATE TABLE public.list_members (
 CREATE TABLE public.lists (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    identifier public.citext NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
+    number integer NOT NULL,
+    name character varying NOT NULL,
     description character varying DEFAULT ''::character varying NOT NULL,
     visibility integer NOT NULL,
     discarded_at timestamp without time zone
@@ -415,10 +415,17 @@ CREATE INDEX index_lists_on_space_id ON public.lists USING btree (space_id);
 
 
 --
--- Name: index_lists_on_space_id_and_identifier; Type: INDEX; Schema: public; Owner: -
+-- Name: index_lists_on_space_id_and_name; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_lists_on_space_id_and_identifier ON public.lists USING btree (space_id, identifier);
+CREATE UNIQUE INDEX index_lists_on_space_id_and_name ON public.lists USING btree (space_id, name);
+
+
+--
+-- Name: index_lists_on_space_id_and_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_lists_on_space_id_and_number ON public.lists USING btree (space_id, number);
 
 
 --

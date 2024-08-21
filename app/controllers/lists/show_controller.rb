@@ -12,7 +12,7 @@ module Lists
 
     sig { returns(T.untyped) }
     def call
-      @list = viewer!.space.lists.kept.find_by!(identifier: params[:list_identifier])
+      @list = viewer!.space.lists.kept.find_by!(number: params[:list_number])
       authorize(@list, :show?)
     end
   end
