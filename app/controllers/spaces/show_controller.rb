@@ -4,8 +4,10 @@
 module Spaces
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
+    include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
 
+    around_action :set_locale
     before_action :require_authentication
 
     sig { returns(T.untyped) }
