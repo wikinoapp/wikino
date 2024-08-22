@@ -32,13 +32,10 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.string :email, null: false
       t.citext :atname, null: false
       t.integer :role, null: false
-      t.string :name, default: "", null: false
-      t.string :description, default: "", null: false
+      t.string :name, null: false
+      t.string :description, null: false
       t.integer :locale, null: false
       t.string :time_zone, null: false
-      t.integer :sign_in_count, default: 0, null: false
-      t.timestamp :current_signed_in_at
-      t.timestamp :last_signed_in_at
       t.timestamp :joined_at, null: false
       t.timestamp :discarded_at, index: true
       t.timestamps
@@ -60,8 +57,8 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :user, foreign_key: true, null: false, type: :uuid
       t.string :token, index: {unique: true}, null: false
-      t.string :ip_address, default: "", null: false
-      t.string :user_agent, default: "", null: false
+      t.string :ip_address, null: false
+      t.string :user_agent, null: false
       t.datetime :signed_in_at, null: false
       t.timestamps
     end
@@ -71,7 +68,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.integer :number, null: false
       t.string :name, null: false
-      t.string :description, default: "", null: false
+      t.string :description, null: false
       t.integer :visibility, null: false
       t.timestamp :discarded_at, index: true
 
@@ -97,16 +94,26 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :list, foreign_key: true, null: false, type: :uuid
       t.references :author, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :number, null: false
-      t.citext :title, default: "", null: false
-      t.citext :body, default: "", null: false
-      t.text :body_html, default: "", null: false
+      t.citext :body, null: false
+      t.text :body_html, null: false
       t.datetime :modified_at, null: false
+      t.boolean :draft, null: false
       t.timestamps
 
       t.index %i[space_id number], unique: true
-      t.index %i[list_id title], unique: true
       t.index %i[list_id created_at]
       t.index %i[list_id modified_at]
+    end
+
+    create_table :note_titles, id: false do |t|
+      t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+      t.references :space, foreign_key: true, null: false, type: :uuid
+      t.references :list, foreign_key: true, null: false, type: :uuid
+      t.references :note, foreign_key: true, null: false, type: :uuid
+      t.citext :value, null: false
+      t.timestamps
+
+      t.index %i[list_id title], unique: true
     end
 
     create_table :note_editors, id: false do |t|
@@ -125,9 +132,9 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :note, foreign_key: true, null: false, type: :uuid
       t.references :editor, foreign_key: {to_table: :users}, null: false, type: :uuid
-      t.citext :title, default: "", null: false
-      t.citext :body, null: false, default: ""
-      t.text :body_html, null: false, default: ""
+      t.citext :title, null: false
+      t.citext :body, null: false
+      t.text :body_html, null: false
       t.timestamps
     end
 
