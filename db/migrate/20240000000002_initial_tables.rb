@@ -113,7 +113,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.citext :value, null: false
       t.timestamps
 
-      t.index %i[list_id title], unique: true
+      t.index %i[list_id value], unique: true
     end
 
     create_table :note_editors, id: false do |t|

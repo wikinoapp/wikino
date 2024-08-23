@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class List < ApplicationRecord
-  extend T::Sig
-
   include Discard::Model
 
   acts_as_sequenced column: :number, scope: :space_id

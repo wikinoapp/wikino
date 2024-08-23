@@ -104,7 +104,7 @@ CREATE TABLE public.lists (
     space_id uuid NOT NULL,
     number integer NOT NULL,
     name character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
+    description character varying NOT NULL,
     visibility integer NOT NULL,
     discarded_at timestamp without time zone
 );
@@ -147,9 +147,24 @@ CREATE TABLE public.note_revisions (
     space_id uuid NOT NULL,
     note_id uuid NOT NULL,
     editor_id uuid NOT NULL,
-    title public.citext DEFAULT ''::public.citext NOT NULL,
-    body public.citext DEFAULT ''::public.citext NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
+    title public.citext NOT NULL,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: note_titles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.note_titles (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    list_id uuid NOT NULL,
+    note_id uuid NOT NULL,
+    value public.citext NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -165,10 +180,10 @@ CREATE TABLE public.notes (
     list_id uuid NOT NULL,
     author_id uuid NOT NULL,
     number integer NOT NULL,
-    title public.citext DEFAULT ''::public.citext NOT NULL,
-    body public.citext DEFAULT ''::public.citext NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
+    draft boolean NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -192,8 +207,8 @@ CREATE TABLE public.sessions (
     space_id uuid NOT NULL,
     user_id uuid NOT NULL,
     token character varying NOT NULL,
-    ip_address character varying DEFAULT ''::character varying NOT NULL,
-    user_agent character varying DEFAULT ''::character varying NOT NULL,
+    ip_address character varying NOT NULL,
+    user_agent character varying NOT NULL,
     signed_in_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -240,13 +255,10 @@ CREATE TABLE public.users (
     email character varying NOT NULL,
     atname public.citext NOT NULL,
     role integer NOT NULL,
-    name character varying DEFAULT ''::character varying NOT NULL,
-    description character varying DEFAULT ''::character varying NOT NULL,
+    name character varying NOT NULL,
+    description character varying NOT NULL,
     locale integer NOT NULL,
     time_zone character varying NOT NULL,
-    sign_in_count integer DEFAULT 0 NOT NULL,
-    current_signed_in_at timestamp without time zone,
-    last_signed_in_at timestamp without time zone,
     joined_at timestamp without time zone NOT NULL,
     discarded_at timestamp without time zone,
     created_at timestamp(6) without time zone NOT NULL,
@@ -308,6 +320,14 @@ ALTER TABLE ONLY public.note_links
 
 ALTER TABLE ONLY public.note_revisions
     ADD CONSTRAINT note_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: note_titles note_titles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_titles
+    ADD CONSTRAINT note_titles_pkey PRIMARY KEY (id);
 
 
 --
@@ -499,6 +519,34 @@ CREATE INDEX index_note_revisions_on_space_id ON public.note_revisions USING btr
 
 
 --
+-- Name: index_note_titles_on_list_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_titles_on_list_id ON public.note_titles USING btree (list_id);
+
+
+--
+-- Name: index_note_titles_on_list_id_and_value; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_note_titles_on_list_id_and_value ON public.note_titles USING btree (list_id, value);
+
+
+--
+-- Name: index_note_titles_on_note_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_titles_on_note_id ON public.note_titles USING btree (note_id);
+
+
+--
+-- Name: index_note_titles_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_titles_on_space_id ON public.note_titles USING btree (space_id);
+
+
+--
 -- Name: index_notes_on_author_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -524,13 +572,6 @@ CREATE INDEX index_notes_on_list_id_and_created_at ON public.notes USING btree (
 --
 
 CREATE INDEX index_notes_on_list_id_and_modified_at ON public.notes USING btree (list_id, modified_at);
-
-
---
--- Name: index_notes_on_list_id_and_title; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_notes_on_list_id_and_title ON public.notes USING btree (list_id, title);
 
 
 --
@@ -657,6 +698,14 @@ ALTER TABLE ONLY public.note_links
 
 
 --
+-- Name: note_titles fk_rails_351995fab7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_titles
+    ADD CONSTRAINT fk_rails_351995fab7 FOREIGN KEY (list_id) REFERENCES public.lists(id);
+
+
+--
 -- Name: notes fk_rails_36c9deba43; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -766,6 +815,22 @@ ALTER TABLE ONLY public.note_revisions
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: note_titles fk_rails_d0f615735f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_titles
+    ADD CONSTRAINT fk_rails_d0f615735f FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: note_titles fk_rails_d1935c4974; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_titles
+    ADD CONSTRAINT fk_rails_d1935c4974 FOREIGN KEY (note_id) REFERENCES public.notes(id);
 
 
 --

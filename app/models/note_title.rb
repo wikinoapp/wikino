@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-class NoteEditor < ApplicationRecord
+class NoteTitle < ApplicationRecord
   belongs_to :space
+  belongs_to :list
   belongs_to :note
-  belongs_to :user
 end

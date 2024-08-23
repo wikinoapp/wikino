@@ -20,6 +20,7 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space
+  has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id
   has_many :note_editors, dependent: :restrict_with_exception
   has_many :list_members, dependent: :restrict_with_exception
   has_many :lists, through: :list_members
@@ -43,6 +44,8 @@ class User < ApplicationRecord
       email:,
       atname:,
       role: UserRole::Owner.serialize,
+      name: "",
+      description: "",
       locale: locale.serialize,
       time_zone:,
       joined_at: current_time
@@ -114,5 +117,17 @@ class User < ApplicationRecord
     end
 
     nil
+  end
+
+  sig { params(list: List).returns(Note) }
+  def create_note!(list:)
+    notes.create!(
+      space:,
+      list:,
+      body: "",
+      body_html: "",
+      modified_at: Time.current,
+      draft: true
+    )
   end
 end

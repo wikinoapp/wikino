@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Notes
-  class ShowController < ApplicationController
+  class EditController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
@@ -14,7 +14,14 @@ module Notes
 
     sig { returns(T.untyped) }
     def call
-      authorize(@note, :show?)
+      authorize(@note, :edit?)
+
+      @form = EditNoteForm.new(
+        list_number: @note.list.number,
+        title: @note.title&.value,
+        body: @note.body,
+        draft: @note.draft?
+      )
     end
   end
 end
