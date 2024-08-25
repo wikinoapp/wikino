@@ -4,7 +4,7 @@
 class NotePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   def show?
-    # T.cast(record, Note).user == user
+    viewer.role_owner?
   end
 
   sig { returns(T::Boolean) }

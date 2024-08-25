@@ -1,11 +1,11 @@
-<% set_meta_tags(title: @note.title) %>
+<% set_meta_tags(title: @note.title, reverse: false) %>
 
-<div class="gx-3 row">
-  <div class="col-8">
-    <%= render EditorComponent.new(id: "nonoto-trix", note: @note) %>
-  </div>
+<%= render ::Layouts::BasicLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <h1>
+      <%= @note.title %>
+    </h1>
 
-  <div class="col-4">
-    <turbo-frame id="note-info" src="<%= note_info_path(note_id: @note.id) %>"></turbo-frame>
-  </div>
-</div>
+    <%= @note.body_html.html_safe %>
+  <% end %>
+<% end %>
