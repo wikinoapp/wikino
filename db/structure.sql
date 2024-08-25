@@ -131,6 +131,7 @@ CREATE TABLE public.note_editors (
 
 CREATE TABLE public.note_links (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
     source_note_id uuid NOT NULL,
     target_note_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -180,10 +181,11 @@ CREATE TABLE public.notes (
     list_id uuid NOT NULL,
     author_id uuid NOT NULL,
     number integer NOT NULL,
+    title public.citext,
     body public.citext NOT NULL,
     body_html text NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
-    draft boolean NOT NULL,
+    archived_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -435,6 +437,13 @@ CREATE INDEX index_lists_on_space_id ON public.lists USING btree (space_id);
 
 
 --
+-- Name: index_lists_on_space_id_and_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_lists_on_space_id_and_discarded_at ON public.lists USING btree (space_id, discarded_at);
+
+
+--
 -- Name: index_lists_on_space_id_and_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -488,6 +497,13 @@ CREATE INDEX index_note_links_on_source_note_id ON public.note_links USING btree
 --
 
 CREATE UNIQUE INDEX index_note_links_on_source_note_id_and_target_note_id ON public.note_links USING btree (source_note_id, target_note_id);
+
+
+--
+-- Name: index_note_links_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_note_links_on_space_id ON public.note_links USING btree (space_id);
 
 
 --
@@ -561,24 +577,31 @@ CREATE INDEX index_notes_on_list_id ON public.notes USING btree (list_id);
 
 
 --
--- Name: index_notes_on_list_id_and_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_list_id_and_created_at ON public.notes USING btree (list_id, created_at);
-
-
---
--- Name: index_notes_on_list_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_list_id_and_modified_at ON public.notes USING btree (list_id, modified_at);
-
-
---
 -- Name: index_notes_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_notes_on_space_id ON public.notes USING btree (space_id);
+
+
+--
+-- Name: index_notes_on_space_id_and_archived_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_space_id_and_archived_at ON public.notes USING btree (space_id, archived_at);
+
+
+--
+-- Name: index_notes_on_space_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_space_id_and_created_at ON public.notes USING btree (space_id, created_at);
+
+
+--
+-- Name: index_notes_on_space_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_space_id_and_modified_at ON public.notes USING btree (space_id, modified_at);
 
 
 --
@@ -631,6 +654,13 @@ CREATE INDEX index_user_passwords_on_space_id ON public.user_passwords USING btr
 
 
 --
+-- Name: index_user_passwords_on_space_id_and_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_passwords_on_space_id_and_user_id ON public.user_passwords USING btree (space_id, user_id);
+
+
+--
 -- Name: index_user_passwords_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -656,6 +686,13 @@ CREATE INDEX index_users_on_space_id ON public.users USING btree (space_id);
 --
 
 CREATE UNIQUE INDEX index_users_on_space_id_and_atname ON public.users USING btree (space_id, atname);
+
+
+--
+-- Name: index_users_on_space_id_and_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_space_id_and_discarded_at ON public.users USING btree (space_id, discarded_at);
 
 
 --
@@ -847,6 +884,14 @@ ALTER TABLE ONLY public.note_links
 
 ALTER TABLE ONLY public.list_members
     ADD CONSTRAINT fk_rails_ef08b83c98 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: note_links fk_rails_fee2b41b8e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.note_links
+    ADD CONSTRAINT fk_rails_fee2b41b8e FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --

@@ -126,8 +126,7 @@ class User < ApplicationRecord
       list:,
       body: "",
       body_html: "",
-      modified_at: Time.current,
-      draft: true
+      modified_at: Time.current
     )
   end
 end

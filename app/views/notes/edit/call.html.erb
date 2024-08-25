@@ -8,6 +8,25 @@
         <%= form_with model: @form, url: note_path(viewer!.space_identifier, @note.number) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
+          <div>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.edit_note_form.list_number") %>
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div>
+                <label class="cursor-pointer flex gap-2 items-center">
+                  <%= f.select(
+                    :list_number,
+                    options_from_collection_for_select(@viewable_lists, :number, :name, f.object.list_number)
+                  ) %>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <%= f.label :title, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
@@ -27,22 +46,6 @@
 
             <%= f.text_area(:body, class: "input input-bordered w-full") %>
           <% end %>
-
-          <div>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.edit_note_form.draft") %>
-              </span>
-            </div>
-
-            <div class="flex flex-col gap-4">
-              <div>
-                <label class="cursor-pointer flex gap-2 items-center">
-                  <%= f.check_box :draft %>
-                </label>
-              </div>
-            </div>
-          </div>
 
           <div class="mt-8 text-center">
             <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>

@@ -42,6 +42,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
 
       t.index %i[space_id email], unique: true
       t.index %i[space_id atname], unique: true
+      t.index %i[space_id discarded_at]
     end
 
     create_table :user_passwords, id: false do |t|
@@ -50,6 +51,8 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :user, foreign_key: true, index: {unique: true}, null: false, type: :uuid
       t.string :password_digest, null: false
       t.timestamps
+
+      t.index %i[space_id user_id]
     end
 
     create_table :sessions, id: false do |t|
@@ -74,6 +77,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
 
       t.index %i[space_id number], unique: true
       t.index %i[space_id name], unique: true
+      t.index %i[space_id discarded_at]
     end
 
     create_table :list_members, id: false do |t|
@@ -94,15 +98,17 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :list, foreign_key: true, null: false, type: :uuid
       t.references :author, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :number, null: false
+      t.citext :title
       t.citext :body, null: false
       t.text :body_html, null: false
       t.datetime :modified_at, null: false
-      t.boolean :draft, null: false
+      t.datetime :archived_at
       t.timestamps
 
       t.index %i[space_id number], unique: true
-      t.index %i[list_id created_at]
-      t.index %i[list_id modified_at]
+      t.index %i[space_id created_at]
+      t.index %i[space_id modified_at]
+      t.index %i[space_id archived_at]
     end
 
     create_table :note_titles, id: false do |t|
@@ -140,6 +146,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
 
     create_table :note_links, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+      t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :source_note, foreign_key: {to_table: :notes}, null: false, type: :uuid
       t.references :target_note, foreign_key: {to_table: :notes}, null: false, type: :uuid
       t.timestamps

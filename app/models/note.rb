@@ -14,6 +14,8 @@ class Note < ApplicationRecord
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
 
+  scope :published, -> { where(archived_at: nil) }
+
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
 

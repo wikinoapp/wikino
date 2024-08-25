@@ -19,9 +19,9 @@ module Notes
       @form = EditNoteForm.new(
         list_number: @note.list.number,
         title: @note.title&.value,
-        body: @note.body,
-        draft: @note.draft?
+        body: @note.body
       )
+      @viewable_lists = viewer!.viewable_lists
     end
   end
 end
