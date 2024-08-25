@@ -10,6 +10,8 @@ ja:
       lists:
         new: 新規リスト
         show: リスト
+      notes:
+        edit: 記事の編集
       sign_in:
         show: ログイン
       sign_up:

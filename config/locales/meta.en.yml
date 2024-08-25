@@ -10,6 +10,8 @@ en:
       lists:
         new: New list
         show: List
+      notes:
+        edit: Edit note
       sign_in:
         show: Sign in
       sign_up:
