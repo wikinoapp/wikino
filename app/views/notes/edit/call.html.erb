@@ -5,7 +5,7 @@
   <%= render Containers::BasicContainerComponent.new do %>
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: note_path(viewer!.space_identifier, @note.number) do |f| %>
+        <%= form_with model: @form, method: :patch, url: note_path(viewer!.space_identifier, @note.number) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <div>
@@ -49,7 +49,7 @@
 
           <div class="mt-8 text-center">
             <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-              <%= t("verbs.submit") %>
+              <%= t("verbs.save") %>
             <% end %>
           </div>
         <% end %>

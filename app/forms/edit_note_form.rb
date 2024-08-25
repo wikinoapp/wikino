@@ -9,7 +9,12 @@ class EditNoteForm < ApplicationForm
   attribute :title, :string
   attribute :body, :string, default: ""
 
-  validates :list_number, presence: true
+  validates :list, presence: true
   validates :title, presence: true
   validates :body, presence: true
+
+  sig { returns(List) }
+  def list
+    viewer.viewable_lists.find_by(number: list_number)
+  end
 end

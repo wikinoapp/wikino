@@ -13,11 +13,10 @@ gem "addressable"
 gem "bcrypt" # `has_secure_password` で使っている
 gem "bootsnap", require: false
 gem "by_star"
-gem "commonmarker" # Using github-markup
+gem "commonmarker"
 gem "cssbundling-rails"
 gem "discard"
 gem "email_validator"
-gem "github-markup"
 gem "http_accept_language"
 gem "inline_svg"
 gem "jsbundling-rails"

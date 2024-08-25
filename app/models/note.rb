@@ -7,12 +7,12 @@ class Note < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :list
   belongs_to :space
-  has_one :title, class_name: "NoteTitle", dependent: :restrict_with_exception
   has_many :backlinks, class_name: "Link", dependent: :restrict_with_exception, foreign_key: :target_note_id
   has_many :links, class_name: "Link", dependent: :restrict_with_exception
   has_many :editors, class_name: "NoteEditor", dependent: :restrict_with_exception
   has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
+  has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
 
   scope :published, -> { where(archived_at: nil) }
 
@@ -22,11 +22,6 @@ class Note < ApplicationRecord
   # sig { returns(T.nilable(Note)) }
   # def original
   #   user&.notes_except(self)&.find_by(title:)
-  # end
-
-  # sig { returns(String) }
-  # def body_html
-  #   render_html(body)
   # end
 
   sig { returns(T::Array[String]) }
@@ -50,19 +45,15 @@ class Note < ApplicationRecord
     end
   end
 
-  sig { params(user: User).returns(NoteEditor) }
-  def add_editor(user:)
-    editors.where(space:, user:).first_or_create!(
+  sig { params(editor: User).returns(NoteEditor) }
+  def add_editor!(editor:)
+    editors.where(space:, user: editor).first_or_create!(
       last_note_modified_at: modified_at
     )
   end
 
-  sig { params(text: String).returns(String) }
-  private def render_html(text)
-    GitHub::Markup.render_s(
-      GitHub::Markups::MARKUP_MARKDOWN,
-      text,
-      options: {commonmarker_opts: %i[HARDBREAKS]}
-    )
+  sig { params(editor: User, body: String, body_html: String).returns(NoteRevision) }
+  def create_revision!(editor:, body:, body_html:)
+    revisions.create!(space:, editor:, body:, body_html:)
   end
 end

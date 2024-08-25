@@ -31,6 +31,7 @@ en:
       no_links: No Links
       note_deleted: Note was successfully deleted.
       note_duplicated_html: Note <a href="/notes/%{database_id}">%{title}</a> already exists.
+      saved: Note saved.
     sign_in:
       dont_have_an_account_html: |-
         Don't have an account? <a class="link link-primary" href="/sign_up">Sign up</a>.

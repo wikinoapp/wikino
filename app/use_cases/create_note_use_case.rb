@@ -10,7 +10,7 @@ class CreateNoteUseCase < ApplicationUseCase
   def call(list:, viewer:)
     note = ActiveRecord::Base.transaction do
       note = viewer.create_note!(list:)
-      note.add_editor(user: viewer)
+      note.add_editor!(editor: viewer)
       note
     end
 

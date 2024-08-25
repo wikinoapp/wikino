@@ -142,7 +142,6 @@ GEM
       concurrent-ruby (~> 1.1)
       webrick (~> 1.7)
       websocket-driver (~> 0.7)
-    github-markup (5.0.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
     http_accept_language (2.1.1)
@@ -419,7 +418,6 @@ DEPENDENCIES
   dotenv-rails
   email_validator
   factory_bot_rails
-  github-markup
   http_accept_language
   inline_svg
   jsbundling-rails

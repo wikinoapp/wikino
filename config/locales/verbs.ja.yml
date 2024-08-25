@@ -1,5 +1,6 @@
 ja:
   verbs:
+    save: 保存する
     sign_in: ログインする
     sign_up: アカウントを作成する
     submit: 送信する

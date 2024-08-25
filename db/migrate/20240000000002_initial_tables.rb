@@ -109,17 +109,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[space_id created_at]
       t.index %i[space_id modified_at]
       t.index %i[space_id archived_at]
-    end
-
-    create_table :note_titles, id: false do |t|
-      t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
-      t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :list, foreign_key: true, null: false, type: :uuid
-      t.references :note, foreign_key: true, null: false, type: :uuid
-      t.citext :value, null: false
-      t.timestamps
-
-      t.index %i[list_id value], unique: true
+      t.index %i[list_id title], unique: true
     end
 
     create_table :note_editors, id: false do |t|
@@ -133,12 +123,23 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[note_id user_id], unique: true
     end
 
+    create_table :draft_notes, id: false do |t|
+      t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+      t.references :space, foreign_key: true, null: false, type: :uuid
+      t.references :editor, foreign_key: {to_table: :users}, null: false, type: :uuid
+      t.references :note, foreign_key: true, null: false, type: :uuid
+      t.citext :body, null: false
+      t.text :body_html, null: false
+      t.timestamps
+
+      t.index %i[editor_id note_id], unique: true
+    end
+
     create_table :note_revisions, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :note, foreign_key: true, null: false, type: :uuid
       t.references :editor, foreign_key: {to_table: :users}, null: false, type: :uuid
-      t.citext :title, null: false
+      t.references :note, foreign_key: true, null: false, type: :uuid
       t.citext :body, null: false
       t.text :body_html, null: false
       t.timestamps

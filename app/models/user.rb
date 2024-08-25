@@ -124,6 +124,7 @@ class User < ApplicationRecord
     notes.create!(
       space:,
       list:,
+      title: nil,
       body: "",
       body_html: "",
       modified_at: Time.current
