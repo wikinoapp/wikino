@@ -32,7 +32,13 @@ class Note < ApplicationRecord
   sig { void }
   def link!
     target_note_ids = titles_in_body.map do |title|
-      T.must(list).notes.where(title:).first_or_create!.id
+      T.must(list).notes.where(title:).first_or_create!(
+        space:,
+        author:,
+        body: "",
+        body_html: "",
+        modified_at: Time.current
+      ).id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
