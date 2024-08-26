@@ -13,6 +13,7 @@ class List < ApplicationRecord
 
   belongs_to :space
   has_many :list_members, dependent: :restrict_with_exception
+  has_many :notes, dependent: :restrict_with_exception
 
   scope :public_only, -> { where(visibility: ListVisibility::Public.serialize) }
 

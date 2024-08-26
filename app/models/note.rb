@@ -7,10 +7,10 @@ class Note < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :list
   belongs_to :space
-  has_many :backlinks, class_name: "Link", dependent: :restrict_with_exception, foreign_key: :target_note_id
-  has_many :links, class_name: "Link", dependent: :restrict_with_exception
+  has_many :backlinks, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :target_note_id
+  has_many :links, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :source_note_id
   has_many :editors, class_name: "NoteEditor", dependent: :restrict_with_exception
-  has_many :referenced_notes, class_name: "Note", source: :note, through: :backlinks
+  has_many :referenced_notes, class_name: "Note", source: :source_note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
 
@@ -32,7 +32,7 @@ class Note < ApplicationRecord
   sig { void }
   def link!
     target_note_ids = titles_in_body.map do |title|
-      T.must(user).notes.where(title:).first_or_create!.id
+      T.must(list).notes.where(title:).first_or_create!.id
     end
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
@@ -41,7 +41,7 @@ class Note < ApplicationRecord
     end
 
     (target_note_ids - referencing_notes.pluck(:id)).uniq.each do |target_note_id|
-      links.where(note: self, target_note_id: target_note_id).first_or_create!
+      links.where(target_note_id: target_note_id).first_or_create!(space:)
     end
   end
 
