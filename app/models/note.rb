@@ -14,7 +14,8 @@ class Note < ApplicationRecord
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
 
-  scope :published, -> { where(archived_at: nil) }
+  scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
+  scope :initial, -> { where(title: nil) }
 
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
@@ -29,17 +30,12 @@ class Note < ApplicationRecord
     body&.scan(%r{\[\[(.*?)\]\]})&.flatten || []
   end
 
-  sig { void }
-  def link!
-    target_note_ids = titles_in_body.map do |title|
-      T.must(list).notes.where(title:).first_or_create!(
-        space:,
-        author:,
-        body: "",
-        body_html: "",
-        modified_at: Time.current
-      ).id
+  sig { params(editor: User).void }
+  def link!(editor:)
+    target_notes = titles_in_body.map do |title|
+      editor.create_linked_note!(list:, title:)
     end
+    target_note_ids = target_notes.pluck(:id)
 
     delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
     if delete_note_ids.present?
@@ -47,7 +43,7 @@ class Note < ApplicationRecord
     end
 
     (target_note_ids - referencing_notes.pluck(:id)).uniq.each do |target_note_id|
-      links.where(target_note_id: target_note_id).first_or_create!(space:)
+      links.where(target_note_id:).first_or_create!(space:)
     end
   end
 

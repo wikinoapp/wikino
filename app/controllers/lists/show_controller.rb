@@ -14,6 +14,7 @@ module Lists
 
     sig { returns(T.untyped) }
     def call
+      @notes = @list.notes.published
     end
   end
 end

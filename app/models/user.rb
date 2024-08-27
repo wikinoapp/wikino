@@ -120,11 +120,20 @@ class User < ApplicationRecord
   end
 
   sig { params(list: List).returns(Note) }
-  def create_note!(list:)
-    notes.create!(
+  def create_initial_note!(list:)
+    notes.initial.where(list:).first_or_create!(
       space:,
-      list:,
       title: nil,
+      body: "",
+      body_html: "",
+      modified_at: Time.current
+    )
+  end
+
+  sig { params(list: List, title: String).returns(Note) }
+  def create_linked_note!(list:, title:)
+    notes.where(list:, title:).first_or_create!(
+      space:,
       body: "",
       body_html: "",
       modified_at: Time.current

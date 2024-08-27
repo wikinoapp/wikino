@@ -102,12 +102,14 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.citext :body, null: false
       t.text :body_html, null: false
       t.datetime :modified_at, null: false
+      t.datetime :published_at
       t.datetime :archived_at
       t.timestamps
 
       t.index %i[space_id number], unique: true
       t.index %i[space_id created_at]
       t.index %i[space_id modified_at]
+      t.index %i[space_id published_at]
       t.index %i[space_id archived_at]
       t.index %i[list_id title], unique: true
     end

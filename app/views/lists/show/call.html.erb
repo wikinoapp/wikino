@@ -9,11 +9,19 @@
 
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
-        <%= @list.number %>
+        <%= @list.name %>
 
         <div>
           <%= link_to(t("nouns.new_note"), new_note_path(viewer!.space_identifier, @list.number)) %>
         </div>
+
+        <ul>
+          <% @notes.each do |note| %>
+            <li>
+              <%= link_to note.title, note_path(viewer!.space_identifier, note.number) %>
+            </li>
+          <% end %>
+        </ul>
       <% end %>
     <% end %>
   <% end %>

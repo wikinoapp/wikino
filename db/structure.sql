@@ -185,6 +185,7 @@ CREATE TABLE public.notes (
     body public.citext NOT NULL,
     body_html text NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
+    published_at timestamp(6) without time zone,
     archived_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -616,6 +617,13 @@ CREATE INDEX index_notes_on_space_id_and_modified_at ON public.notes USING btree
 --
 
 CREATE UNIQUE INDEX index_notes_on_space_id_and_number ON public.notes USING btree (space_id, number);
+
+
+--
+-- Name: index_notes_on_space_id_and_published_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_space_id_and_published_at ON public.notes USING btree (space_id, published_at);
 
 
 --

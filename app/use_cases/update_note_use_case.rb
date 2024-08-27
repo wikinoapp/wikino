@@ -9,15 +9,22 @@ class UpdateNoteUseCase < ApplicationUseCase
   sig { params(viewer: User, note: Note, list: List, title: String, body: String).returns(Result) }
   def call(viewer:, note:, list:, title:, body:)
     note = ActiveRecord::Base.transaction do
-      note.update!(
+      now = Time.current
+
+      note.attributes = {
         list:,
         title:,
         body:,
-        body_html: Markup.new(text: body).render_html
-      )
+        body_html: Markup.new(text: body).render_html,
+        modified_at: now
+      }
+      note.published_at = now if note.published_at.nil?
+      note.save!
+
       note.add_editor!(editor: viewer)
       note.create_revision!(editor: viewer, body:, body_html: body)
-      note.link!
+      note.link!(editor: viewer)
+
       note
     end
 
