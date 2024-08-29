@@ -1,12 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class ListMember < ApplicationRecord
-  extend T::Sig
-
+class ListMembership < ApplicationRecord
   belongs_to :space
   belongs_to :list
-  belongs_to :user
+  belongs_to :member, class_name: "User"
 
   enum :role, {
     ListMemberRole::Admin.serialize => 0,

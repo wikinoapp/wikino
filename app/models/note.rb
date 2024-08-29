@@ -9,7 +9,7 @@ class Note < ApplicationRecord
   belongs_to :space
   has_many :backlinks, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :target_note_id
   has_many :links, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :source_note_id
-  has_many :editors, class_name: "NoteEditor", dependent: :restrict_with_exception
+  has_many :editorships, class_name: "NoteEditorship", dependent: :restrict_with_exception
   has_many :referenced_notes, class_name: "Note", source: :source_note, through: :backlinks
   has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
@@ -47,11 +47,13 @@ class Note < ApplicationRecord
     end
   end
 
-  sig { params(editor: User).returns(NoteEditor) }
+  sig { params(editor: User).void }
   def add_editor!(editor:)
-    editors.where(space:, user: editor).first_or_create!(
+    editorships.where(space:, editor:).first_or_create!(
       last_note_modified_at: modified_at
     )
+    
+    nil
   end
 
   sig { params(editor: User, body: String, body_html: String).returns(NoteRevision) }

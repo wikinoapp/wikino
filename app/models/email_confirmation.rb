@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class EmailConfirmation < ApplicationRecord
+  CODE_LENGTH = T.let(6, Integer)
   EXPIRES_IN = T.let(15.minutes, ActiveSupport::Duration)
 
   enum :event, {
@@ -13,11 +14,12 @@ class EmailConfirmation < ApplicationRecord
   scope :succeeded, -> { where.not(succeeded_at: nil) }
 
   validates :email, presence: true
-  validates :code, format: {with: /\A\d{6}\z/}, presence: true
+  validates :code, format: {with: /\A[A-Z0-9]{#{CODE_LENGTH}}\z/o}, presence: true
 
   sig { returns(String) }
   def self.generate_code
-    6.times.map { rand(10) }.join
+    characters = ("0".."9").to_a + ("A".."Z").to_a
+    Array.new(CODE_LENGTH) { characters.sample }.join
   end
 
   sig { returns(T::Boolean) }

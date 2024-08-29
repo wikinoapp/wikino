@@ -12,13 +12,15 @@ class List < ApplicationRecord
   }, prefix: true
 
   belongs_to :space
-  has_many :list_members, dependent: :restrict_with_exception
+  has_many :memberships, class_name: "ListMembership", dependent: :restrict_with_exception
   has_many :notes, dependent: :restrict_with_exception
 
   scope :public_only, -> { where(visibility: ListVisibility::Public.serialize) }
 
-  sig { params(user: User, role: ListMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
-  def add_member(user:, role:, joined_at: Time.current)
-    list_members.create!(space: user.space, user:, role: role.serialize, joined_at:)
+  sig { params(member: User, role: ListMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
+  def add_member!(member:, role:, joined_at: Time.current)
+    memberships.create!(space: member.space, member:, role: role.serialize, joined_at:)
+
+    nil
   end
 end

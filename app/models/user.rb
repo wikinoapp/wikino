@@ -21,9 +21,9 @@ class User < ApplicationRecord
 
   belongs_to :space
   has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id
-  has_many :note_editors, dependent: :restrict_with_exception
-  has_many :list_members, dependent: :restrict_with_exception
-  has_many :lists, through: :list_members
+  has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id
+  has_many :list_memberships, dependent: :restrict_with_exception, foreign_key: :member_id
+  has_many :lists, through: :list_memberships
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
@@ -68,10 +68,10 @@ class User < ApplicationRecord
   T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
   def viewable_lists
     List
-      .left_joins(:list_members)
+      .left_joins(:memberships)
       .merge(
         List.visibility_public.or(
-          ListMember.where(user_id: self.id)
+          ListMembership.where(member: self)
         )
       )
       .distinct
@@ -80,16 +80,16 @@ class User < ApplicationRecord
   T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
   def last_note_modified_lists
     lists.merge(
-      list_members
-        .order(ListMember.arel_table[:last_note_modified_at].desc.nulls_last)
-        .order(ListMember.arel_table[:joined_at].desc)
+      list_memberships
+        .order(ListMembership.arel_table[:last_note_modified_at].desc.nulls_last)
+        .order(ListMembership.arel_table[:joined_at].desc)
     )
   end
 
   T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
   def last_modified_notes
-    space.notes.joins(:note_editors).merge(
-      note_editors.order(NoteEditor.arel_table[:last_note_modified_at].desc)
+    space.notes.joins(:note_editorships).merge(
+      note_editorships.order(NoteEditorship.arel_table[:last_note_modified_at].desc)
     )
   end
 
@@ -105,7 +105,7 @@ class User < ApplicationRecord
 
   sig { params(list: List).returns(T::Boolean) }
   def can_destroy_list?(list:)
-    list_members.find_by(list:)&.role&.admin? == true
+    list_memberships.find_by(list:)&.role&.admin? == true
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }

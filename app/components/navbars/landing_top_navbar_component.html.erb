@@ -1,0 +1,19 @@
+<nav class="navbar bg-base-100">
+  <div class="navbar-start">
+    <%= link_to root_path do %>
+      <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-base-content") %>
+    <% end %>
+  </div>
+
+  <div class="navbar-end">
+    <ul class="menu menu-horizontal px-1">
+      <li>
+        <%= link_to t("nouns.sign_up"), sign_up_path %>
+      </li>
+
+      <li>
+        <%= link_to t("nouns.sign_in"), sign_in_path %>
+      </li>
+    </ul>
+  </div>
+</nav>
