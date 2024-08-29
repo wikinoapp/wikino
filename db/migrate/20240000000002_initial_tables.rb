@@ -7,13 +7,10 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.string :email, null: false
       t.integer :event, null: false
-      t.string :code, null: false
-      t.timestamp :started_at, null: false
+      t.string :code, index: {unique: true}, null: false
+      t.timestamp :started_at, index: true, null: false
       t.timestamp :succeeded_at
       t.timestamps
-
-      t.index :started_at
-      t.index %i[email code], unique: true
     end
 
     create_table :spaces, id: false do |t|
@@ -80,16 +77,16 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[space_id discarded_at]
     end
 
-    create_table :list_members, id: false do |t|
+    create_table :list_memberships, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :list, foreign_key: true, null: false, type: :uuid
-      t.references :user, foreign_key: true, null: false, type: :uuid
+      t.references :member, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :role, null: false
       t.timestamp :joined_at, null: false
       t.datetime :last_note_modified_at
 
-      t.index %i[list_id user_id], unique: true
+      t.index %i[list_id member_id], unique: true
     end
 
     create_table :notes, id: false do |t|
@@ -114,15 +111,15 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[list_id title], unique: true
     end
 
-    create_table :note_editors, id: false do |t|
+    create_table :note_editorships, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :note, foreign_key: true, null: false, type: :uuid
-      t.references :user, foreign_key: true, null: false, type: :uuid
+      t.references :editor, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.datetime :last_note_modified_at, null: false
       t.timestamps
 
-      t.index %i[note_id user_id], unique: true
+      t.index %i[note_id editor_id], unique: true
     end
 
     create_table :draft_notes, id: false do |t|
