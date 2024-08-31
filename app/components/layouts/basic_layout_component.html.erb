@@ -1,17 +1,9 @@
-<div class="flex flex-col min-h-[100svh]">
-  <%# render Navbars::TopNavbarComponent.new %>
+<div class="flex min-h-[100svh]">
+  <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
 
-  <div class="<%= class_names("flex-1", main_class_name) %>">
+  <div class="<%= class_names("", main_class_name) %>">
     <%= content %>
-  </div>
 
-  <% if with_footer %>
-    <div class="mb-[100px] lg:mb-4">
-      <%= render FooterComponent.new %>
-    </div>
-  <% end %>
-
-  <div class="bottom-0 fixed flex flex-col gap-4 left-1/2 p-4 translate-x-[-50%] z-50">
     <%= render FlashToastComponent.new(flash:) %>
     <%= render Navbars::BottomNavbarComponent.new %>
   </div>

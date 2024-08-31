@@ -1,4 +1,8 @@
 <% title = t("meta.title.welcome.show") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render Navbars::LandingTopNavbarComponent.new %>
+<%= render ::Layouts::LandingLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    Welcome to Nonoto!
+  <% end %>
+<% end %>

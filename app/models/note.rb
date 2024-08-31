@@ -52,7 +52,7 @@ class Note < ApplicationRecord
     editorships.where(space:, editor:).first_or_create!(
       last_note_modified_at: modified_at
     )
-    
+
     nil
   end
 

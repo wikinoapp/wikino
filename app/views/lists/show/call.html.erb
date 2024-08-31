@@ -1,7 +1,7 @@
 <% title = t("meta.title.lists.show") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render ::Layouts::BasicLayoutComponent.new do %>
+<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
   <%= render Containers::BasicContainerComponent.new do %>
     <h1>
       <%= title %>

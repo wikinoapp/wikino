@@ -1,10 +1,8 @@
 <% title = t("meta.title.spaces.show") %>
-<% set_meta_tags(title:, reverse: false) %>
+<% set_meta_tags(title:) %>
 
-<%= render ::Layouts::BasicLayoutComponent.new do %>
+<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier) %>
-
     <% @last_note_modified_lists.first(9).each do |list| %>
       <%= render Cards::ListCardComponent.new(list:) %>
     <% end %>

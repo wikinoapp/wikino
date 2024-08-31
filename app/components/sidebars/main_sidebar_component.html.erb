@@ -1,0 +1,31 @@
+<nav class="bg-base-300 w-[240px]">
+  <div class="text-center">
+    <%= link_to root_path, class: "inline-block py-4 w-full" do %>
+      <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
+    <% end %>
+  </div>
+
+  <div class="p-4">
+    <div class="font-bold text-xs">
+      <%= t("nouns.lists") %>
+    </div>
+
+    <ul class="mt-2">
+      <% joined_lists.each do |list| %>
+        <li>
+          <%= link_to list_path(viewer!.space_identifier, list.number) do %>
+            <%= list.name %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier) %>
+
+    <hr class="border-stone-600 my-4">
+
+    <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
+      method: :delete
+    } %>
+  </div>
+</nav>
