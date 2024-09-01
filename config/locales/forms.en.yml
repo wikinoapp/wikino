@@ -5,6 +5,9 @@ en:
         email: Email
         password: Password
         space_identifier: Identifier
+      edit_note_form:
+        title: Title
+        body: Body
       email_confirmation_form:
         confirmation_code: Confirmation code
       new_email_confirmation_form:

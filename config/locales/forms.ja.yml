@@ -5,6 +5,9 @@ ja:
         email: メールアドレス
         password: パスワード
         space_identifier: 識別子
+      edit_note_form:
+        title: タイトル
+        body: 本文
       email_confirmation_form:
         confirmation_code: 確認用コード
       new_email_confirmation_form:

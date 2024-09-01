@@ -9,7 +9,7 @@ en:
         edit: Verification
       lists:
         new: New list
-        show: List
+        show: "%{list_name} | %{space_name}"
       notes:
         edit: Edit note
       sign_in:

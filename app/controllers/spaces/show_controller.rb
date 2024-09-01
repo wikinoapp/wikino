@@ -6,7 +6,7 @@ module Spaces
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
-    include ControllerConcerns::SidebarSettable
+    include ControllerConcerns::SidebarResourcesSettable
 
     around_action :set_locale
     before_action :require_authentication

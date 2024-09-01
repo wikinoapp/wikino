@@ -1,13 +1,18 @@
-<% set_meta_tags(title: @note.title, reverse: false) %>
+<% title = @note.title %>
+<% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
 
-<%= render ::Layouts::BasicLayoutComponent.new do %>
+<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <%= link_to t("verbs.edit"), edit_note_path(viewer!.space_identifier, @note.number) %>
-
-    <h1>
-      <%= @note.title %>
+    <h1 class="antialiased font-semibold text-2xl">
+      <%= title %>
     </h1>
 
-    <%= @note.body_html.html_safe %>
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= @note.body_html.html_safe %>
+      <% end %>
+    <% end %>
+
+    <%= link_to t("verbs.edit"), edit_note_path(viewer!.space_identifier, @note.number) %>
   <% end %>
 <% end %>

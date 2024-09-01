@@ -27,7 +27,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
-  delegate :identifier, to: :space, prefix: :space
+  delegate :identifier, :name, to: :space, prefix: :space
 
   sig do
     params(

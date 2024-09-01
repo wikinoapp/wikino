@@ -9,7 +9,7 @@ ja:
         edit: 確認用コード入力
       lists:
         new: 新規リスト
-        show: リスト
+        show: "%{list_name} | %{space_name}"
       notes:
         edit: 記事の編集
       sign_in:

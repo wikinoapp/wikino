@@ -6,7 +6,7 @@ module Lists
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SidebarSettable
+    include ControllerConcerns::SidebarResourcesSettable
     include ControllerConcerns::ListSettable
 
     around_action :set_locale

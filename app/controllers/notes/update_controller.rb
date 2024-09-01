@@ -6,6 +6,7 @@ module Notes
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SidebarResourcesSettable
     include ControllerConcerns::NoteSettable
 
     around_action :set_locale
@@ -19,6 +20,8 @@ module Notes
       @form = EditNoteForm.new(form_params.merge(viewer: viewer!))
 
       if @form.invalid?
+        set_joined_lists
+        @viewable_lists = viewer!.viewable_lists
         return render("notes/edit/call", status: :unprocessable_entity)
       end
 

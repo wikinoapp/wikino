@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module ControllerConcerns
-  module SidebarSettable
+  module SidebarResourcesSettable
     extend T::Sig
     extend ActiveSupport::Concern
 

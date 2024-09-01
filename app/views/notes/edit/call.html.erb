@@ -1,8 +1,12 @@
 <% title = t("meta.title.notes.edit") %>
-<% set_meta_tags(title:, reverse: false) %>
+<% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
 
-<%= render ::Layouts::BasicLayoutComponent.new do %>
+<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
   <%= render Containers::BasicContainerComponent.new do %>
+    <h1 class="antialiased font-semibold text-2xl">
+      <%= title %>
+    </h1>
+
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
         <%= form_with model: @form, method: :patch, url: note_path(viewer!.space_identifier, @note.number) do |f| %>
