@@ -126,6 +126,7 @@ class User < ApplicationRecord
       title: nil,
       body: "",
       body_html: "",
+      linked_note_ids: [],
       modified_at: Time.current
     )
   end

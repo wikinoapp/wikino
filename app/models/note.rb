@@ -7,11 +7,7 @@ class Note < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :list
   belongs_to :space
-  has_many :backlinks, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :target_note_id
-  has_many :links, class_name: "NoteLink", dependent: :restrict_with_exception, foreign_key: :source_note_id
   has_many :editorships, class_name: "NoteEditorship", dependent: :restrict_with_exception
-  has_many :referenced_notes, class_name: "Note", source: :source_note, through: :backlinks
-  has_many :referencing_notes, class_name: "Note", through: :links, source: :target_note
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
 
   scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
@@ -25,6 +21,16 @@ class Note < ApplicationRecord
   #   user&.notes_except(self)&.find_by(title:)
   # end
 
+  T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
+  def linked_notes
+    Note.where(id: linked_note_ids)
+  end
+
+  T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
+  def backlinked_notes
+    Note.where("'#{id}' = ANY (linked_note_ids)")
+  end
+
   sig { returns(T::Array[String]) }
   def titles_in_body
     body&.scan(%r{\[\[(.*?)\]\]})&.flatten || []
@@ -32,19 +38,11 @@ class Note < ApplicationRecord
 
   sig { params(editor: User).void }
   def link!(editor:)
-    target_notes = titles_in_body.map do |title|
+    linked_notes = titles_in_body.map do |title|
       editor.create_linked_note!(list:, title:)
     end
-    target_note_ids = target_notes.pluck(:id)
 
-    delete_note_ids = (referencing_notes.pluck(:id) - target_note_ids).uniq
-    if delete_note_ids.present?
-      links.where(target_note_id: delete_note_ids).destroy_all
-    end
-
-    (target_note_ids - referencing_notes.pluck(:id)).uniq.each do |target_note_id|
-      links.where(target_note_id:).first_or_create!(space:)
-    end
+    update!(linked_note_ids: linked_notes.pluck(:id))
   end
 
   sig { params(editor: User).void }

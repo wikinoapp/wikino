@@ -15,4 +15,6 @@
 
     <%= link_to t("verbs.edit"), edit_note_path(viewer!.space_identifier, @note.number) %>
   <% end %>
+
+  <%= render Sidebars::NoteSidebarComponent.new(linked_notes: [], backlinked_notes: [])  %>
 <% end %>

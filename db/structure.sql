@@ -71,10 +71,13 @@ CREATE TABLE public.ar_internal_metadata (
 CREATE TABLE public.draft_notes (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    editor_id uuid NOT NULL,
     note_id uuid NOT NULL,
+    editor_id uuid NOT NULL,
+    list_id uuid NOT NULL,
+    title public.citext,
     body public.citext NOT NULL,
     body_html text NOT NULL,
+    linked_note_ids character varying[] NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -142,20 +145,6 @@ CREATE TABLE public.note_editorships (
 
 
 --
--- Name: note_links; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.note_links (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    source_note_id uuid NOT NULL,
-    target_note_id uuid NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: note_revisions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -184,6 +173,7 @@ CREATE TABLE public.notes (
     title public.citext,
     body public.citext NOT NULL,
     body_html text NOT NULL,
+    linked_note_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     published_at timestamp(6) without time zone,
     archived_at timestamp(6) without time zone,
@@ -318,14 +308,6 @@ ALTER TABLE ONLY public.note_editorships
 
 
 --
--- Name: note_links note_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_links
-    ADD CONSTRAINT note_links_pkey PRIMARY KEY (id);
-
-
---
 -- Name: note_revisions note_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -393,6 +375,20 @@ CREATE INDEX index_draft_notes_on_editor_id ON public.draft_notes USING btree (e
 --
 
 CREATE UNIQUE INDEX index_draft_notes_on_editor_id_and_note_id ON public.draft_notes USING btree (editor_id, note_id);
+
+
+--
+-- Name: index_draft_notes_on_linked_note_ids; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_notes_on_linked_note_ids ON public.draft_notes USING gin (linked_note_ids);
+
+
+--
+-- Name: index_draft_notes_on_list_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_notes_on_list_id ON public.draft_notes USING btree (list_id);
 
 
 --
@@ -515,34 +511,6 @@ CREATE INDEX index_note_editorships_on_space_id ON public.note_editorships USING
 
 
 --
--- Name: index_note_links_on_source_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_links_on_source_note_id ON public.note_links USING btree (source_note_id);
-
-
---
--- Name: index_note_links_on_source_note_id_and_target_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_note_links_on_source_note_id_and_target_note_id ON public.note_links USING btree (source_note_id, target_note_id);
-
-
---
--- Name: index_note_links_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_links_on_space_id ON public.note_links USING btree (space_id);
-
-
---
--- Name: index_note_links_on_target_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_links_on_target_note_id ON public.note_links USING btree (target_note_id);
-
-
---
 -- Name: index_note_revisions_on_editor_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -568,6 +536,13 @@ CREATE INDEX index_note_revisions_on_space_id ON public.note_revisions USING btr
 --
 
 CREATE INDEX index_notes_on_author_id ON public.notes USING btree (author_id);
+
+
+--
+-- Name: index_notes_on_linked_note_ids; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_notes_on_linked_note_ids ON public.notes USING gin (linked_note_ids);
 
 
 --
@@ -750,14 +725,6 @@ ALTER TABLE ONLY public.note_revisions
 
 
 --
--- Name: note_links fk_rails_28b9ac6b4e; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_links
-    ADD CONSTRAINT fk_rails_28b9ac6b4e FOREIGN KEY (target_note_id) REFERENCES public.notes(id);
-
-
---
 -- Name: notes fk_rails_36c9deba43; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -886,14 +853,6 @@ ALTER TABLE ONLY public.user_passwords
 
 
 --
--- Name: note_links fk_rails_dfb5d04224; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_links
-    ADD CONSTRAINT fk_rails_dfb5d04224 FOREIGN KEY (source_note_id) REFERENCES public.notes(id);
-
-
---
 -- Name: draft_notes fk_rails_eb8f12795b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -902,11 +861,11 @@ ALTER TABLE ONLY public.draft_notes
 
 
 --
--- Name: note_links fk_rails_fee2b41b8e; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: draft_notes fk_rails_ee0e90ed9a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_links
-    ADD CONSTRAINT fk_rails_fee2b41b8e FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.draft_notes
+    ADD CONSTRAINT fk_rails_ee0e90ed9a FOREIGN KEY (list_id) REFERENCES public.lists(id);
 
 
 --

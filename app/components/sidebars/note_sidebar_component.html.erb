@@ -1,0 +1,9 @@
+<ul class="mt-2">
+  <% linked_notes.each do |note| %>
+    <li>
+      <%= link_to note_path(viewer!.space_identifier, note.number) do %>
+        <%= note.title %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

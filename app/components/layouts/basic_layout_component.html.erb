@@ -1,7 +1,7 @@
 <div class="flex min-h-[100svh]">
   <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
 
-  <div class="<%= class_names("", main_class_name) %>">
+  <div class="<%= class_names("flex-1", main_class_name) %>">
     <%= content %>
 
     <%= render FlashToastComponent.new(flash:) %>
