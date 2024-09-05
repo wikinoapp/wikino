@@ -17,6 +17,8 @@ module Notes
     sig { returns(T.untyped) }
     def call
       authorize(@note, :show?)
+
+      @links = @note.build_links
     end
   end
 end

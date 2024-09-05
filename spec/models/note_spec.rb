@@ -25,4 +25,17 @@ RSpec.describe Note, type: :model do
       end
     end
   end
+
+  describe "#fetch_links" do
+    context "記事にリンクが含まれているとき" do
+      let!(:note_1) { create(:note) }
+      let!(:note_2) { create(:note) }
+      let!(:note_3) { create(:note) }
+      let!(:target_note) { create(:note, linked_note_ids: [note_1.id, note_2.id, note_3.id]) }
+
+      it do
+        expect(target_note.fetch_links).to eq([note_3, note_2, note_1])
+      end
+    end
+  end
 end

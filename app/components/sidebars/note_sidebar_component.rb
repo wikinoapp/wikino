@@ -3,22 +3,18 @@
 
 module Sidebars
   class NoteSidebarComponent < ApplicationComponent
-    T::Sig::WithoutRuntime.sig do  params(
-      linked_notes: Note::PrivateRelation,
-      backlinked_notes: Note::PrivateRelation
-    ).void
-    end
-    def initialize(linked_notes:, backlinked_notes:)
-      @linked_notes = linked_notes
-      @backlinked_notes = backlinked_notes
+    sig { params(links: T::Array[Link], backlinks: T::Array[Backlink]).void }
+    def initialize(links:, backlinks:)
+      @links = links
+      @backlinks = backlinks
     end
 
-    T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
-    attr_reader :linked_notes
-    private :linked_notes
+    sig { returns(T::Array[Link]) }
+    attr_reader :links
+    private :links
 
-    T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
-    attr_reader :backlinked_notes
-    private :backlinked_notes
+    sig { returns(T::Array[Backlink]) }
+    attr_reader :backlinks
+    private :backlinks
   end
 end

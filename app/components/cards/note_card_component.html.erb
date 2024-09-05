@@ -1,0 +1,7 @@
+<%= render Nonoto::UI::Card.new(class_name:) do %>
+  <%= render Nonoto::UI::Card::Body.new do %>
+    <%= link_to note_path(viewer!.space_identifier, note.number) do %>
+      <%= note.title %>
+    <% end %>
+  <% end %>
+<% end %>

@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class Note < ApplicationRecord
+  include ModelConcerns::NoteEditable
+
   acts_as_sequenced column: :number, scope: :space_id
 
   belongs_to :author, class_name: "User"

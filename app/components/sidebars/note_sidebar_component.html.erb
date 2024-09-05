@@ -1,9 +1,29 @@
+<div>
+  <%= t("nouns.links") %>
+</div>
+
 <ul class="mt-2">
-  <% linked_notes.each do |note| %>
+  <% links.each do |link| %>
     <li>
-      <%= link_to note_path(viewer!.space_identifier, note.number) do %>
-        <%= note.title %>
-      <% end %>
+      <%= render Cards::NoteCardComponent.new(note: link.note) %>
+    </li>
+
+    <% link.backlinked_notes.each do |note| %>
+      <li>
+        <%= render Cards::NoteCardComponent.new(note:) %>
+      </li>
+    <% end %>
+  <% end %>
+</ul>
+
+<div>
+  <%= t("nouns.backlinks") %>
+</div>
+
+<ul class="mt-2">
+  <% backlinks.each do |backlink| %>
+    <li>
+      <%= render Cards::NoteCardComponent.new(note: backlink.note) %>
     </li>
   <% end %>
 </ul>

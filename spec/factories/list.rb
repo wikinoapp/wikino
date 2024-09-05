@@ -4,7 +4,7 @@
 FactoryBot.define do
   factory :list do
     space
-    sequence(:identifier) { |n| "identifier_#{n}" }
+    sequence(:number) { |n| n }
     sequence(:name) { |n| "List #{n}" }
     description { "Note description" }
     visibility { ListVisibility::Public.serialize }
