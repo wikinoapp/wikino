@@ -26,15 +26,27 @@ RSpec.describe Note, type: :model do
     end
   end
 
-  describe "#fetch_links" do
+  describe "#fetch_link_list" do
     context "記事にリンクが含まれているとき" do
-      let!(:note_1) { create(:note) }
-      let!(:note_2) { create(:note) }
-      let!(:note_3) { create(:note) }
-      let!(:target_note) { create(:note, linked_note_ids: [note_1.id, note_2.id, note_3.id]) }
+      let!(:note_1) { create(:note, modified_at: Time.zone.parse("2024-01-01")) }
+      let!(:note_2) { create(:note, modified_at: Time.zone.parse("2024-01-02")) }
+      let!(:note_3) { create(:note, modified_at: Time.zone.parse("2024-01-03")) }
+      let!(:note_4) { create(:note, linked_note_ids: [note_3.id], modified_at: Time.zone.parse("2024-01-04")) }
+      let!(:target_note) { create(:note, linked_note_ids: [note_1.id, note_3.id]) }
 
-      it do
-        expect(target_note.fetch_links).to eq([note_3, note_2, note_1])
+      it "リンクの構造体を返すこと" do
+        link_list = target_note.fetch_link_list
+
+        expect(link_list.links.size).to eq(2)
+
+        link_0 = link_list.links[0]
+        expect(link_0.note).to eq(note_3)
+        expect(link_0.backlinked_notes.size).to eq(1)
+        expect(link_0.backlinked_notes[0]).to eq(note_4)
+
+        link_1 = link_list.links[1]
+        expect(link_1.note).to eq(note_1)
+        expect(link_1.backlinked_notes.size).to eq(0)
       end
     end
   end

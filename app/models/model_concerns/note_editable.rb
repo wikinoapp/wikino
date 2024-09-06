@@ -5,46 +5,36 @@ module ModelConcerns::NoteEditable
   extend ActiveSupport::Concern
   extend T::Sig
 
-  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(T::Array[Link]) }
-  def fetch_links(before: nil, after: nil)
-    page = linked_notes.cursor_paginate(
+  sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(LinkList) }
+  def fetch_link_list(before: nil, after: nil, limit: 15)
+    added_note_ids = [id]
+
+    page = linked_notes.where.not(id: added_note_ids).cursor_paginate(
       after:,
       before:,
-      limit: 2,
+      limit:,
       order: {modified_at: :desc, id: :desc}
     ).fetch
     notes = page.records
     page_info = PageInfo.from_cursor_paginate(page:)
 
-    backlinked_note_data = notes.each_with_object({}) do |note, hash|
-      page = note.backlinked_notes.cursor_paginate(
+    links = notes.map do |note|
+      added_note_ids << note.id
+
+      page = note.backlinked_notes.where.not(id: added_note_ids).cursor_paginate(
         after:,
         before:,
-        limit: 2,
+        limit:,
         order: {modified_at: :desc, id: :desc}
       ).fetch
       backlinked_notes = page.records
-      page_info = PageInfo.from_cursor_paginate(page:)
 
-      hash[note.id] = {backlinked_notes:, page_info:}
-    end
-
-    added_note_ids = []
-
-    links = notes.each do |note|
-      added_note_ids << note.id
-
-      # すでにリンクに追加されている記事は除外する
-      backlinked_notes = backlinked_note_data[note.id][:backlinked_notes].filter do |backlinked_note|
-        !backlinked_note.id.in?(added_note_ids)
-      end
-
-      added_note_ids.concat(backlinked_notes.map(&:id))
+      added_note_ids.concat(backlinked_notes.pluck(:id))
 
       Link.new(
         note:,
         backlinked_notes:,
-        page_info: backlinked_note_data[note.id][:page_info]
+        page_info: PageInfo.from_cursor_paginate(page:)
       )
     end
 
