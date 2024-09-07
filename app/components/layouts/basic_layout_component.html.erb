@@ -1,9 +1,17 @@
-<div class="flex min-h-[100svh]">
-  <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
+<div class="flex flex-col min-h-[100svh]">
+  <div>
+    <%= render Navbars::TopNavbarComponent.new %>
+  </div>
 
-  <div class="<%= class_names("flex-1", main_class_name) %>">
-    <%= content %>
+  <div class="flex flex-1">
+    <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
 
+    <div class="flex-1">
+      <%= content %>
+    </div>
+  </div>
+
+  <div>
     <%= render FlashToastComponent.new(flash:) %>
     <%= render Navbars::BottomNavbarComponent.new %>
   </div>

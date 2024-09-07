@@ -2,6 +2,6 @@
 # frozen_string_literal: true
 
 module Navbars
-  class LandingTopNavbarComponent < ApplicationComponent
+  class TopNavbarComponent < ApplicationComponent
   end
 end

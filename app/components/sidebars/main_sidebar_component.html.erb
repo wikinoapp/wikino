@@ -1,10 +1,4 @@
-<nav class="bg-base-200 hidden lg:block lg:w-[240px]">
-  <div class="text-center">
-    <%= link_to root_path, class: "inline-block py-4 w-full" do %>
-      <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
-    <% end %>
-  </div>
-
+<nav class="hidden sticky xl:block xl:w-[240px]">
   <div class="p-4">
     <div class="font-bold text-xs">
       <%= t("nouns.lists") %>

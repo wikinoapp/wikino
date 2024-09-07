@@ -3,15 +3,15 @@
 
 module Sidebars
   class NoteSidebarComponent < ApplicationComponent
-    sig { params(links: T::Array[Link], backlinks: T::Array[Backlink]).void }
-    def initialize(links:, backlinks:)
-      @links = links
+    sig { params(link_list: LinkList, backlinks: T::Array[Backlink]).void }
+    def initialize(link_list:, backlinks:)
+      @link_list = link_list
       @backlinks = backlinks
     end
 
-    sig { returns(T::Array[Link]) }
-    attr_reader :links
-    private :links
+    sig { returns(LinkList) }
+    attr_reader :link_list
+    private :link_list
 
     sig { returns(T::Array[Backlink]) }
     attr_reader :backlinks

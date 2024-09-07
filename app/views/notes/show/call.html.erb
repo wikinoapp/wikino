@@ -2,19 +2,21 @@
 <% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
 
 <%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
-  <%= render Containers::BasicContainerComponent.new do %>
-    <h1 class="antialiased font-semibold text-2xl">
-      <%= title %>
-    </h1>
+  <div class="flex flex-row gap-4 p-4">
+    <div class="basis-3/4">
+      <h1 class="antialiased font-semibold text-2xl">
+        <%= title %>
+      </h1>
 
-    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Nonoto::UI::Card::Body.new do %>
+      <div class="mt-8">
         <%= @note.body_html.html_safe %>
-      <% end %>
-    <% end %>
+      </div>
 
-    <%= link_to t("verbs.edit"), edit_note_path(viewer!.space_identifier, @note.number) %>
-  <% end %>
+      <%= link_to t("verbs.edit"), edit_note_path(viewer!.space_identifier, @note.number) %>
+    </div>
 
-  <%= render Sidebars::NoteSidebarComponent.new(links: [], backlinks: [])  %>
+    <div class="basis-1/4">
+      <%= render Sidebars::NoteSidebarComponent.new(link_list: @link_list, backlinks: [])  %>
+    </div>
+  </div>
 <% end %>

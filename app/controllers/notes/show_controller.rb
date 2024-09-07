@@ -18,7 +18,7 @@ module Notes
     def call
       authorize(@note, :show?)
 
-      @links = @note.build_links
+      @link_list = @note.fetch_link_list
     end
   end
 end
