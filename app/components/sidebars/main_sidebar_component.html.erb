@@ -1,4 +1,4 @@
-<nav class="hidden sticky xl:block xl:w-[240px]">
+<nav class="hidden sticky lg:block lg:w-[240px]">
   <div class="p-4">
     <div class="font-bold text-xs">
       <%= t("nouns.lists") %>
@@ -17,9 +17,15 @@
     <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier) %>
 
     <hr class="border-stone-600 my-4">
+  </div>
+</nav>
 
-    <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
-      method: :delete
-    } %>
+<nav class="hidden sticky sm:max-lg:block sm:max-lg:w-[80px]">
+  <div class="p-4">
+    <div class="flex flex-col gap-4">
+      <%= link_to space_path do %>
+        Home
+      <% end %>
+    </div>
   </div>
 </nav>
