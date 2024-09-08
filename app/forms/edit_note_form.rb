@@ -17,4 +17,8 @@ class EditNoteForm < ApplicationForm
   def list
     viewer.viewable_lists.find_by(number: list_number)
   end
+
+  def viewable_lists
+    viewer.viewable_lists
+  end
 end

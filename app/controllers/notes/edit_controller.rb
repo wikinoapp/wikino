@@ -18,12 +18,18 @@ module Notes
     def call
       authorize(@note, :edit?)
 
+      @draft_note = viewer!.draft_notes.find_by(note: @note)
+      note_editable = @draft_note.presence || @note
+
       @form = EditNoteForm.new(
-        list_number: @note.list.number,
-        title: @note.title,
-        body: @note.body
+        viewer: viewer!,
+        list_number: note_editable.list.number,
+        title: note_editable.title,
+        body: note_editable.body
       )
-      @viewable_lists = viewer!.viewable_lists
+
+      @link_list = note_editable.fetch_link_list
+      @backlink_list = note_editable.fetch_backlink_list
     end
   end
 end

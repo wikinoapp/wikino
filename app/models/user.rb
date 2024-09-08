@@ -20,6 +20,7 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space
+  has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id
   has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id
   has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id
   has_many :list_memberships, dependent: :restrict_with_exception, foreign_key: :member_id
