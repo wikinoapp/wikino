@@ -24,10 +24,10 @@
       <%= t("nouns.backlinks") %>
     </div>
 
-    <ul class="mt-2">
-      <% backlinks.each do |backlink| %>
+    <ul class="gap-2 grid grid-cols-2 mt-2">
+      <% backlink_list.backlinks.each do |backlink| %>
         <li>
-          <%= render Cards::NoteCardComponent.new(note: backlink.note) %>
+          <%= render Cards::NoteCardComponent.new(note: backlink.note, class_name: "bg-base-300") %>
         </li>
       <% end %>
     </ul>

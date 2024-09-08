@@ -40,4 +40,20 @@ module ModelConcerns::NoteEditable
 
     LinkList.new(links:, page_info:)
   end
+
+  sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkList) }
+  def fetch_backlink_list(before: nil, after: nil, limit: 15)
+    page = backlinked_notes.cursor_paginate(
+      after:,
+      before:,
+      limit:,
+      order: {modified_at: :desc, id: :desc}
+    ).fetch
+
+    backlinks = page.records.map do |note|
+      Backlink.new(note:)
+    end
+
+    BacklinkList.new(backlinks:, page_info: PageInfo.from_cursor_paginate(page:))
+  end
 end

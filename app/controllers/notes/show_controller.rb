@@ -19,6 +19,7 @@ module Notes
       authorize(@note, :show?)
 
       @link_list = @note.fetch_link_list
+      @backlink_list = @note.fetch_backlink_list
     end
   end
 end
