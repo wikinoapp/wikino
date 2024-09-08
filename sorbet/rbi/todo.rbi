@@ -4,4 +4,5 @@
 
 # typed: false
 
+module List::PrivateRelation; end
 module Rack::Server; end
