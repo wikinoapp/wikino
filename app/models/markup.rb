@@ -12,7 +12,7 @@ class Markup
   sig { returns(String) }
   def render_html
     Commonmarker.to_html(text, options: {
-      render: { hardbreaks: false }
+      render: {hardbreaks: false}
     })
   end
 

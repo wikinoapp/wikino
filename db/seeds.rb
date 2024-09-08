@@ -37,5 +37,5 @@ UpdateNoteUseCase.new.call(
   note: note_1,
   list: public_list_1,
   title: "公開ノート1",
-  body: "1つ目の公開ノートです",
+  body: "1つ目の公開ノートです"
 )
