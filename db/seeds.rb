@@ -24,7 +24,7 @@ create_list_use_case_result_2 = CreateListUseCase.new.call(
   description: "1つ目の非公開リストです",
   visibility: ListVisibility::Private.serialize
 )
-private_list_1 = create_list_use_case_result_2.list
+create_list_use_case_result_2.list
 
 create_initial_note_use_case_result_1 = CreateInitialNoteUseCase.new.call(
   list: public_list_1,

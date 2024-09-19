@@ -16,7 +16,7 @@ module ControllerConcerns
         value: session.token,
         httponly: true,
         same_site: :lax,
-        domain: ".#{ENV.fetch("NONOTO_HOST")}"
+        domain: ".#{Nonoto.config.host}"
       }
 
       true

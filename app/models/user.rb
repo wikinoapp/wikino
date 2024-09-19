@@ -20,10 +20,10 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space
-  has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id
-  has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id
-  has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id
-  has_many :list_memberships, dependent: :restrict_with_exception, foreign_key: :member_id
+  has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id, inverse_of: :author
+  has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :list_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :lists, through: :list_memberships
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
