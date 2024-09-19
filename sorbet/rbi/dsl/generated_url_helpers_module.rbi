@@ -10,16 +10,34 @@ module GeneratedUrlHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def api_internal_note_url(*args); end
+  def accounts_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_email_confirmation_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_note_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def email_confirmation_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def letter_opener_web_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def lists_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def new_account_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def new_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_note_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def note_info_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def note_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def note_url(*args); end
@@ -46,14 +64,17 @@ module GeneratedUrlHelpersModule
   def root_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_in_callback_url(*args); end
+  def session_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_in_failure_url(*args); end
+  def sessions_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_out_callback_url(*args); end
+  def sign_in_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_out_url(*args); end
+  def sign_up_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_url(*args); end
 end

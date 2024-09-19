@@ -4,5 +4,5 @@
 
 # typed: false
 
-module List::PrivateRelation; end
+module ::NoteContent; end
 module Rack::Server; end
