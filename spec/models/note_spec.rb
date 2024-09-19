@@ -30,7 +30,7 @@ RSpec.describe Note, type: :model do
     context "記事にリンクが含まれているとき" do
       let!(:note_a) { create(:note, modified_at: Time.zone.parse("2024-01-01")) }
       let!(:note_b) { create(:note, modified_at: Time.zone.parse("2024-01-02")) }
-      let!(:note_c) { create(:note, modified_at: Time.zone.parse("2024-01-03")) }
+      let!(:note_c) { create(:note, linked_note_ids: [note_b.id], modified_at: Time.zone.parse("2024-01-03")) }
       let!(:note_d) { create(:note, linked_note_ids: [note_c.id], modified_at: Time.zone.parse("2024-01-04")) }
       let!(:target_note) { create(:note, linked_note_ids: [note_a.id, note_c.id]) }
 
