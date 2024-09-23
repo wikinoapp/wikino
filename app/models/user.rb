@@ -78,7 +78,7 @@ class User < ApplicationRecord
       .distinct
   end
 
-  sig { returns(List::PrivateAssociationRelation) }
+  sig { returns(List::PrivateRelation) }
   def last_note_modified_lists
     lists.merge(
       list_memberships
@@ -87,9 +87,9 @@ class User < ApplicationRecord
     )
   end
 
-  sig { returns(Note::PrivateAssociationRelation) }
+  sig { returns(Note::PrivateRelation) }
   def last_modified_notes
-    space.not_nil!.notes.joins(:note_editorships).merge(
+    space.not_nil!.notes.joins(:editorships).merge(
       note_editorships.order(NoteEditorship.arel_table[:last_note_modified_at].desc)
     )
   end
