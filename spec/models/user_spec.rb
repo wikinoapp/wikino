@@ -13,8 +13,8 @@ RSpec.describe User, type: :model do
       before do
         create(:list, :private, space:, name: "リストD")
 
-        create(:list_member, :admin, space:, list: list_b, user: viewer)
-        create(:list_member, :member, space:, list: list_c, user: viewer)
+        create(:list_membership, :admin, space:, list: list_b, member: viewer)
+        create(:list_membership, :member, space:, list: list_c, member: viewer)
       end
 
       it "閲覧可能なリストを返すこと" do
@@ -35,10 +35,10 @@ RSpec.describe User, type: :model do
       before do
         create(:list, space:, name: "リストE")
 
-        create(:list_member, space:, list: list_a, user: viewer, joined_at: Time.zone.parse("2024-08-18 0:00:00"), last_note_modified_at: nil)
-        create(:list_member, space:, list: list_b, user: viewer, joined_at: Time.zone.parse("2024-08-18 1:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 0:00:00"))
-        create(:list_member, space:, list: list_c, user: viewer, joined_at: Time.zone.parse("2024-08-18 2:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 1:00:00"))
-        create(:list_member, space:, list: list_d, user: viewer, joined_at: Time.zone.parse("2024-08-18 3:00:00"), last_note_modified_at: nil)
+        create(:list_membership, space:, list: list_a, member: viewer, joined_at: Time.zone.parse("2024-08-18 0:00:00"), last_note_modified_at: nil)
+        create(:list_membership, space:, list: list_b, member: viewer, joined_at: Time.zone.parse("2024-08-18 1:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 0:00:00"))
+        create(:list_membership, space:, list: list_c, member: viewer, joined_at: Time.zone.parse("2024-08-18 2:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 1:00:00"))
+        create(:list_membership, space:, list: list_d, member: viewer, joined_at: Time.zone.parse("2024-08-18 3:00:00"), last_note_modified_at: nil)
       end
 
       it "記事が編集された順にリストが取得できること" do
@@ -60,10 +60,10 @@ RSpec.describe User, type: :model do
       let!(:note_c) { create(:note, space:, list:, author: user_b, title: "ノートC") }
 
       before do
-        create(:note_editor, space:, note: note_a, user: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 0:00:00"))
-        create(:note_editor, space:, note: note_b, user: user_b, last_note_modified_at: Time.zone.parse("2024-08-18 1:00:00"))
-        create(:note_editor, space:, note: note_c, user: user_b, last_note_modified_at: Time.zone.parse("2024-08-18 2:00:00"))
-        create(:note_editor, space:, note: note_c, user: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
+        create(:note_editorship, space:, note: note_a, editor: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 0:00:00"))
+        create(:note_editorship, space:, note: note_b, editor: user_b, last_note_modified_at: Time.zone.parse("2024-08-18 1:00:00"))
+        create(:note_editorship, space:, note: note_c, editor: user_b, last_note_modified_at: Time.zone.parse("2024-08-18 2:00:00"))
+        create(:note_editorship, space:, note: note_c, editor: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
       end
 
       it "最後に編集した記事から取得できること" do
