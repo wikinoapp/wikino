@@ -27,7 +27,7 @@ module Notes
 
       result = UpdateNoteUseCase.new.call(
         viewer: viewer!,
-        note: @note,
+        note: @note.not_nil!,
         list: @form.list.not_nil!,
         title: @form.title.not_nil!,
         body: @form.body.not_nil!

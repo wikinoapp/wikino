@@ -78,7 +78,7 @@ class User < ApplicationRecord
       .distinct
   end
 
-  sig { returns(List::PrivateRelation) }
+  sig { returns(List::PrivateAssociationRelation) }
   def last_note_modified_lists
     lists.merge(
       list_memberships

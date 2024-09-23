@@ -17,7 +17,7 @@ class CreateAccountUseCase < ApplicationUseCase
     ).returns(Result)
   end
   def call(space_identifier:, email:, atname:, locale:, password:, time_zone:)
-    current_time = Time.current
+    current_time = Time.zone.now
 
     user = ActiveRecord::Base.transaction do
       space = Space.create_initial_space!(identifier: space_identifier, current_time:, locale:)

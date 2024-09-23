@@ -18,7 +18,7 @@ class List < ApplicationRecord
   scope :public_only, -> { where(visibility: ListVisibility::Public.serialize) }
 
   sig { params(member: User, role: ListMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
-  def add_member!(member:, role:, joined_at: Time.current)
+  def add_member!(member:, role:, joined_at: Time.zone.now)
     memberships.create!(space: member.space, member:, role: role.serialize, joined_at:)
 
     nil

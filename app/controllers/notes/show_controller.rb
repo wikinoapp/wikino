@@ -18,8 +18,8 @@ module Notes
     def call
       authorize(@note, :show?)
 
-      @link_list = T.let(@note.fetch_link_list.not_nil!, LinkList)
-      @backlink_list = T.let(@note.fetch_backlink_list.not_nil!, BacklinkList)
+      @link_list = T.let(@note.not_nil!.fetch_link_list, T.nilable(LinkList))
+      @backlink_list = T.let(@note.not_nil!.fetch_backlink_list, T.nilable(BacklinkList))
     end
   end
 end

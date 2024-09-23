@@ -21,7 +21,7 @@ class Space < ApplicationRecord
   has_many :users, dependent: :restrict_with_exception
 
   sig do
-    params(identifier: String, current_time: T.any(ActiveSupport::TimeWithZone, Time), locale: UserLocale)
+    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: UserLocale)
       .returns(Space)
   end
   def self.create_initial_space!(identifier:, current_time:, locale:)

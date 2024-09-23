@@ -9,9 +9,9 @@ class CreateInitialNoteUseCase < ApplicationUseCase
   sig { params(list: List, viewer: User).returns(Result) }
   def call(list:, viewer:)
     note = ActiveRecord::Base.transaction do
-      note = viewer.create_initial_note!(list:)
-      note.add_editor!(editor: viewer)
-      note
+      new_note = viewer.create_initial_note!(list:)
+      new_note.add_editor!(editor: viewer)
+      new_note
     end
 
     Result.new(note:)
