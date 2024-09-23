@@ -1,0 +1,50 @@
+<% title = t("meta.title.email_confirmations.edit") %>
+<% set_meta_tags(title:) %>
+
+<%= render ::Layouts::SimpleLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <div class="text-center">
+      <div class="mt-12">
+        <%= link_to root_path, class: "inline-block" do %>
+          <%= render Nonoto::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
+        <% end %>
+      </div>
+
+      <h1 class="font-bold mt-8 text-3xl">
+        <%= title %>
+      </h1>
+
+      <p class="mt-4">
+        <%= t("messages.email_confirmations.enter_code") %>
+      </p>
+    </div>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= form_with(
+          method: :patch,
+          model: @form,
+          url: email_confirmation_path(after: params[:after])
+        ) do |f| %>
+          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+          <%= f.label :confirmation_code, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.email_confirmation_form.confirmation_code") %>
+              </span>
+            </div>
+
+            <%= f.text_field :confirmation_code, autofocus: true, class: "input input-bordered w-full" %>
+          <% end %>
+
+          <div class="mt-8 text-center">
+            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
+              <%= t("verbs.submit") %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

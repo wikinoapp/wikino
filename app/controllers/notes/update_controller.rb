@@ -1,0 +1,49 @@
+# typed: true
+# frozen_string_literal: true
+
+module Notes
+  class UpdateController < ApplicationController
+    include ControllerConcerns::Authenticatable
+    include ControllerConcerns::Authorizable
+    include ControllerConcerns::Localizable
+    include ControllerConcerns::SidebarResourcesSettable
+    include ControllerConcerns::NoteSettable
+
+    around_action :set_locale
+    before_action :require_authentication
+    before_action :set_note
+
+    sig { returns(T.untyped) }
+    def call
+      authorize(@note, :update?)
+
+      @form = EditNoteForm.new(form_params.merge(viewer: viewer!))
+
+      if @form.invalid?
+        set_joined_lists
+        @viewable_lists = viewer!.viewable_lists
+        return render("notes/edit/call", status: :unprocessable_entity)
+      end
+
+      result = UpdateNoteUseCase.new.call(
+        viewer: viewer!,
+        note: @note.not_nil!,
+        list: @form.list.not_nil!,
+        title: @form.title.not_nil!,
+        body: @form.body.not_nil!
+      )
+
+      flash[:notice] = t("messages.note.saved")
+      redirect_to note_path(viewer!.space_identifier, result.note.number)
+    end
+
+    sig { returns(ActionController::Parameters) }
+    private def form_params
+      T.cast(params.require(:edit_note_form), ActionController::Parameters).permit(
+        :list_number,
+        :title,
+        :body
+      )
+    end
+  end
+end

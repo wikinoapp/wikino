@@ -1,0 +1,26 @@
+<% title = t("meta.title.lists.show", space_name: viewer!.space_name, list_name: @list.name) %>
+<% set_meta_tags(title:) %>
+
+<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <h1 class="antialiased font-semibold text-2xl">
+      <%= @list.name %>
+    </h1>
+
+    <div>
+      <%= link_to(t("nouns.new_note"), new_note_path(viewer!.space_identifier, @list.number), class: "link") %>
+    </div>
+
+    <div class="gap-2 grid grid-cols-6">
+      <% @notes.each do |note| %>
+        <%= link_to note_path(viewer!.space_identifier, note.number) do %>
+          <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+            <%= render Nonoto::UI::Card::Body.new do %>
+              <%= note.title %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

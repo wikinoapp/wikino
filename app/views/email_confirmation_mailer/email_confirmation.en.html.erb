@@ -1,0 +1,12 @@
+Hello, <%= @email %>.<br>
+<br>
+The confirmation code is as follows.
+<br>
+<strong><%= @code %></strong><br>
+<br>
+The confirmation code is valid for 15 minutes.<br>
+<br>
+If this email does not concern you, please ignore it.<br>
+<br>
+Nonoto<br>
+<%= link_to ENV.fetch("NONOTO_URL"), ENV.fetch("NONOTO_URL") %>

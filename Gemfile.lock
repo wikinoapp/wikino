@@ -66,6 +66,8 @@ GEM
       multi_json (~> 1.11, >= 1.11.2)
       rack (>= 2.0.8, < 4)
       railties (>= 6.1)
+    activerecord_cursor_paginate (0.2.0)
+      activerecord (>= 7.0)
     activestorage (7.1.3.4)
       actionpack (= 7.1.3.4)
       activejob (= 7.1.3.4)
@@ -86,6 +88,7 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.2)
     base64 (0.2.0)
+    bcrypt (3.1.20)
     bigdecimal (3.1.8)
     bootsnap (1.18.3)
       msgpack (~> 1.2)
@@ -119,11 +122,15 @@ GEM
       ferrum (~> 0.15.0)
     date (3.3.4)
     diff-lcs (1.5.1)
+    discard (1.3.0)
+      activerecord (>= 4.2, < 8)
     dotenv (3.1.2)
     dotenv-rails (3.1.2)
       dotenv (= 3.1.2)
       railties (>= 6.1)
     drb (2.2.1)
+    email_validator (2.2.4)
+      activemodel
     erubi (1.13.0)
     factory_bot (6.4.6)
       activesupport (>= 5.0.0)
@@ -135,11 +142,14 @@ GEM
       concurrent-ruby (~> 1.1)
       webrick (~> 1.7)
       websocket-driver (~> 0.7)
-    github-markup (5.0.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    http_accept_language (2.1.1)
     i18n (1.14.5)
       concurrent-ruby (~> 1.0)
+    inline_svg (1.9.0)
+      activesupport (>= 3.0)
+      nokogiri (>= 1.6)
     io-console (0.7.2)
     irb (1.14.0)
       rdoc (>= 4.0.0)
@@ -249,6 +259,9 @@ GEM
     rails-html-sanitizer (1.6.0)
       loofah (~> 2.21)
       nokogiri (~> 1.14)
+    rails-i18n (7.0.9)
+      i18n (>= 0.7, < 2)
+      railties (>= 6.0.0, < 8)
     railties (7.1.3.4)
       actionpack (= 7.1.3.4)
       activesupport (= 7.1.3.4)
@@ -316,6 +329,9 @@ GEM
     rubocop-sorbet (0.7.8)
       rubocop (>= 0.90.0)
     ruby-progressbar (1.13.0)
+    sequenced (4.0.0)
+      activerecord (>= 3.0)
+      activesupport (>= 3.0)
     sorbet (0.5.11495)
       sorbet-static (= 0.5.11495)
     sorbet-runtime (0.5.11495)
@@ -391,7 +407,9 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord-session_store
+  activerecord_cursor_paginate
   addressable
+  bcrypt
   bootsnap
   bullet
   by_star
@@ -399,9 +417,12 @@ DEPENDENCIES
   commonmarker
   cssbundling-rails
   cuprite
+  discard
   dotenv-rails
+  email_validator
   factory_bot_rails
-  github-markup
+  http_accept_language
+  inline_svg
   jsbundling-rails
   letter_opener_web
   lograge
@@ -412,10 +433,12 @@ DEPENDENCIES
   pundit
   rack-cors
   rails (~> 7.1.0)
+  rails-i18n
   rspec-rails
   rubocop-factory_bot
   rubocop-rails
   rubocop-rspec
+  sequenced
   sorbet
   sorbet-runtime
   standard

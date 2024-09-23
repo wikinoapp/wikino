@@ -1,0 +1,18 @@
+shared:
+  email_domain: <%= ENV["NONOTO_EMAIL_DOMAIN"] %>
+  host: <%= ENV["NONOTO_HOST"] %>
+  reserved_atnames:
+    - admin
+    - administrator
+    - administrators
+    - admins
+    - atname
+    - example
+    - me
+    - self
+  reserved_space_identifiers:
+    - about
+    - api
+    - app
+    - web
+    - www

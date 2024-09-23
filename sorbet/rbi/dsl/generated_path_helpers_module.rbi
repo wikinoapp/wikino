@@ -10,16 +10,34 @@ module GeneratedPathHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def api_internal_note_path(*args); end
+  def accounts_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_email_confirmation_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_note_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def email_confirmation_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def letter_opener_web_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def lists_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def new_account_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def new_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_note_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def note_info_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def note_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def note_path(*args); end
@@ -46,14 +64,17 @@ module GeneratedPathHelpersModule
   def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_in_callback_path(*args); end
+  def session_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_in_failure_path(*args); end
+  def sessions_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_out_callback_path(*args); end
+  def sign_in_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sign_out_path(*args); end
+  def sign_up_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_path(*args); end
 end

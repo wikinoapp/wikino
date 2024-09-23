@@ -1,0 +1,31 @@
+ja:
+  forms:
+    attributes:
+      account_form:
+        email: メールアドレス
+        password: パスワード
+        space_identifier: 識別子
+      edit_note_form:
+        title: タイトル
+        body: 本文
+      email_confirmation_form:
+        confirmation_code: 確認用コード
+      new_email_confirmation_form:
+        email: メールアドレス
+      new_list_form:
+        identifier: 識別子
+        visibility: 公開設定
+        name: 名前
+        description: 説明
+      session_form:
+        email: メールアドレス
+        password: パスワード
+        space_identifier: スペースの識別子
+    errors:
+      models:
+        email_confirmation_form:
+          attributes:
+            confirmation_code:
+              incorrect_or_expired: が間違っているか古くなっています
+        session_form:
+          unauthenticated: ログインに失敗しました。スペースの識別子かメールアドレス、またはパスワードが間違っています

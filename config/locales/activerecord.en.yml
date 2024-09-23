@@ -1,5 +1,9 @@
 en:
   activerecord:
     attributes:
+      list:
+        visibility:
+          private: Private
+          public: Public
       note:
         mutation_error: ""

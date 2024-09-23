@@ -8,6 +8,7 @@
 class User
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
+  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -15,6 +16,14 @@ class User
 
   sig { returns(NilClass) }
   def to_ary; end
+
+  class << self
+    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
+    def locales; end
+
+    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
+    def roles; end
+  end
 
   module CommonRelationMethods
     sig { params(block: T.nilable(T.proc.params(record: ::User).returns(T.untyped))).returns(T::Boolean) }
@@ -265,7 +274,101 @@ class User
     def third_to_last!; end
   end
 
+  module EnumMethodsModule
+    sig { void }
+    def locale_en!; end
+
+    sig { returns(T::Boolean) }
+    def locale_en?; end
+
+    sig { void }
+    def locale_ja!; end
+
+    sig { returns(T::Boolean) }
+    def locale_ja?; end
+
+    sig { void }
+    def role_owner!; end
+
+    sig { returns(T::Boolean) }
+    def role_owner?; end
+  end
+
   module GeneratedAssociationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def build_space(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserPassword) }
+    def build_user_password(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def create_space(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def create_space!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserPassword) }
+    def create_user_password(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserPassword) }
+    def create_user_password!(*args, &blk); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def draft_note_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def draft_note_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :draft_notes`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::DraftNote::PrivateCollectionProxy) }
+    def draft_notes; end
+
+    sig { params(value: T::Enumerable[::DraftNote]).void }
+    def draft_notes=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def list_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def list_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def list_membership_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def list_membership_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :list_memberships`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::ListMembership::PrivateCollectionProxy) }
+    def list_memberships; end
+
+    sig { params(value: T::Enumerable[::ListMembership]).void }
+    def list_memberships=(value); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :lists, through: :list_memberships`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::List::PrivateCollectionProxy) }
+    def lists; end
+
+    sig { params(value: T::Enumerable[::List]).void }
+    def lists=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def note_editorship_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def note_editorship_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :note_editorships`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::NoteEditorship::PrivateCollectionProxy) }
+    def note_editorships; end
+
+    sig { params(value: T::Enumerable[::NoteEditorship]).void }
+    def note_editorships=(value); end
+
     sig { returns(T::Array[T.untyped]) }
     def note_ids; end
 
@@ -279,6 +382,44 @@ class User
 
     sig { params(value: T::Enumerable[::Note]).void }
     def notes=(value); end
+
+    sig { returns(T.nilable(::Space)) }
+    def reload_space; end
+
+    sig { returns(T.nilable(::UserPassword)) }
+    def reload_user_password; end
+
+    sig { void }
+    def reset_space; end
+
+    sig { void }
+    def reset_user_password; end
+
+    sig { returns(T::Array[T.untyped]) }
+    def session_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def session_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :sessions`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::Session::PrivateCollectionProxy) }
+    def sessions; end
+
+    sig { params(value: T::Enumerable[::Session]).void }
+    def sessions=(value); end
+
+    sig { returns(T.nilable(::Space)) }
+    def space; end
+
+    sig { params(value: T.nilable(::Space)).void }
+    def space=(value); end
+
+    sig { returns(T.nilable(::UserPassword)) }
+    def user_password; end
+
+    sig { params(value: T.nilable(::UserPassword)).void }
+    def user_password=(value); end
   end
 
   module GeneratedAssociationRelationMethods
@@ -295,7 +436,7 @@ class User
     def create_with(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def deleted(*args, &blk); end
+    def discarded(*args, &blk); end
 
     sig { params(value: T::Boolean).returns(PrivateAssociationRelation) }
     def distinct(value = true); end
@@ -371,6 +512,9 @@ class User
     def joins(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def kept(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def left_joins(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -378,6 +522,12 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def limit(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def locale_en(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def locale_ja(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def lock(*args, &blk); end
@@ -389,6 +539,15 @@ class User
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_locale_en(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_locale_ja(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_role_owner(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -396,9 +555,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def only(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def only_kept(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def optimizer_hints(*args, &blk); end
@@ -434,6 +590,9 @@ class User
     def rewhere(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def role_owner(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def select(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -441,6 +600,9 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def structurally_compatible?(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def undiscarded(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def uniq!(*args, &blk); end
@@ -473,54 +635,57 @@ class User
     def with(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def with_discarded(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def without(*args, &blk); end
   end
 
   module GeneratedAttributeMethods
     sig { returns(::String) }
-    def auth0_user_id; end
+    def atname; end
 
     sig { params(value: ::String).returns(::String) }
-    def auth0_user_id=(value); end
+    def atname=(value); end
 
     sig { returns(T::Boolean) }
-    def auth0_user_id?; end
+    def atname?; end
 
     sig { returns(T.nilable(::String)) }
-    def auth0_user_id_before_last_save; end
+    def atname_before_last_save; end
 
     sig { returns(T.untyped) }
-    def auth0_user_id_before_type_cast; end
+    def atname_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def auth0_user_id_came_from_user?; end
+    def atname_came_from_user?; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def auth0_user_id_change; end
+    def atname_change; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def auth0_user_id_change_to_be_saved; end
+    def atname_change_to_be_saved; end
 
     sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def auth0_user_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def atname_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def auth0_user_id_in_database; end
+    def atname_in_database; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def auth0_user_id_previous_change; end
+    def atname_previous_change; end
 
     sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def auth0_user_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def atname_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def auth0_user_id_previously_was; end
+    def atname_previously_was; end
 
     sig { returns(T.nilable(::String)) }
-    def auth0_user_id_was; end
+    def atname_was; end
 
     sig { void }
-    def auth0_user_id_will_change!; end
+    def atname_will_change!; end
 
     sig { returns(::ActiveSupport::TimeWithZone) }
     def created_at; end
@@ -567,84 +732,74 @@ class User
     sig { void }
     def created_at_will_change!; end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at; end
+    sig { returns(::String) }
+    def description; end
 
-    sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at=(value); end
+    sig { params(value: ::String).returns(::String) }
+    def description=(value); end
 
     sig { returns(T::Boolean) }
-    def current_signed_in_at?; end
+    def description?; end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at_before_last_save; end
+    sig { returns(T.nilable(::String)) }
+    def description_before_last_save; end
 
     sig { returns(T.untyped) }
-    def current_signed_in_at_before_type_cast; end
+    def description_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def current_signed_in_at_came_from_user?; end
+    def description_came_from_user?; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def current_signed_in_at_change; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def description_change; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def current_signed_in_at_change_to_be_saved; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def description_change_to_be_saved; end
 
-    sig do
-      params(
-        from: T.nilable(::ActiveSupport::TimeWithZone),
-        to: T.nilable(::ActiveSupport::TimeWithZone)
-      ).returns(T::Boolean)
-    end
-    def current_signed_in_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def description_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at_in_database; end
+    sig { returns(T.nilable(::String)) }
+    def description_in_database; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def current_signed_in_at_previous_change; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def description_previous_change; end
 
-    sig do
-      params(
-        from: T.nilable(::ActiveSupport::TimeWithZone),
-        to: T.nilable(::ActiveSupport::TimeWithZone)
-      ).returns(T::Boolean)
-    end
-    def current_signed_in_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def description_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at_previously_was; end
+    sig { returns(T.nilable(::String)) }
+    def description_previously_was; end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def current_signed_in_at_was; end
+    sig { returns(T.nilable(::String)) }
+    def description_was; end
 
     sig { void }
-    def current_signed_in_at_will_change!; end
+    def description_will_change!; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at; end
+    def discarded_at; end
 
     sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at=(value); end
+    def discarded_at=(value); end
 
     sig { returns(T::Boolean) }
-    def deleted_at?; end
+    def discarded_at?; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at_before_last_save; end
+    def discarded_at_before_last_save; end
 
     sig { returns(T.untyped) }
-    def deleted_at_before_type_cast; end
+    def discarded_at_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def deleted_at_came_from_user?; end
+    def discarded_at_came_from_user?; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def deleted_at_change; end
+    def discarded_at_change; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def deleted_at_change_to_be_saved; end
+    def discarded_at_change_to_be_saved; end
 
     sig do
       params(
@@ -652,13 +807,13 @@ class User
         to: T.nilable(::ActiveSupport::TimeWithZone)
       ).returns(T::Boolean)
     end
-    def deleted_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def discarded_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at_in_database; end
+    def discarded_at_in_database; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def deleted_at_previous_change; end
+    def discarded_at_previous_change; end
 
     sig do
       params(
@@ -666,16 +821,61 @@ class User
         to: T.nilable(::ActiveSupport::TimeWithZone)
       ).returns(T::Boolean)
     end
-    def deleted_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def discarded_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at_previously_was; end
+    def discarded_at_previously_was; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def deleted_at_was; end
+    def discarded_at_was; end
 
     sig { void }
-    def deleted_at_will_change!; end
+    def discarded_at_will_change!; end
+
+    sig { returns(::String) }
+    def email; end
+
+    sig { params(value: ::String).returns(::String) }
+    def email=(value); end
+
+    sig { returns(T::Boolean) }
+    def email?; end
+
+    sig { returns(T.nilable(::String)) }
+    def email_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def email_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def email_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def email_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def email_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def email_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def email_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def email_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def email_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def email_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def email_was; end
+
+    sig { void }
+    def email_will_change!; end
 
     sig { returns(::String) }
     def id; end
@@ -767,72 +967,165 @@ class User
     sig { void }
     def id_will_change!; end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at; end
+    sig { returns(::ActiveSupport::TimeWithZone) }
+    def joined_at; end
 
-    sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at=(value); end
+    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
+    def joined_at=(value); end
 
     sig { returns(T::Boolean) }
-    def last_signed_in_at?; end
+    def joined_at?; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at_before_last_save; end
+    def joined_at_before_last_save; end
 
     sig { returns(T.untyped) }
-    def last_signed_in_at_before_type_cast; end
+    def joined_at_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def last_signed_in_at_came_from_user?; end
+    def joined_at_came_from_user?; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_signed_in_at_change; end
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def joined_at_change; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_signed_in_at_change_to_be_saved; end
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def joined_at_change_to_be_saved; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def joined_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def joined_at_in_database; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def joined_at_previous_change; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def joined_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def joined_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def joined_at_was; end
+
+    sig { void }
+    def joined_at_will_change!; end
+
+    sig { returns(::String) }
+    def locale; end
+
+    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
+    def locale=(value); end
+
+    sig { returns(T::Boolean) }
+    def locale?; end
+
+    sig { returns(T.nilable(::String)) }
+    def locale_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def locale_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def locale_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def locale_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def locale_change_to_be_saved; end
 
     sig do
       params(
-        from: T.nilable(::ActiveSupport::TimeWithZone),
-        to: T.nilable(::ActiveSupport::TimeWithZone)
+        from: T.any(::String, ::Symbol, ::Integer),
+        to: T.any(::String, ::Symbol, ::Integer)
       ).returns(T::Boolean)
     end
-    def last_signed_in_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def locale_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at_in_database; end
+    sig { returns(T.nilable(::String)) }
+    def locale_in_database; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_signed_in_at_previous_change; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def locale_previous_change; end
 
     sig do
       params(
-        from: T.nilable(::ActiveSupport::TimeWithZone),
-        to: T.nilable(::ActiveSupport::TimeWithZone)
+        from: T.any(::String, ::Symbol, ::Integer),
+        to: T.any(::String, ::Symbol, ::Integer)
       ).returns(T::Boolean)
     end
-    def last_signed_in_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def locale_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at_previously_was; end
+    sig { returns(T.nilable(::String)) }
+    def locale_previously_was; end
 
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_signed_in_at_was; end
-
-    sig { void }
-    def last_signed_in_at_will_change!; end
+    sig { returns(T.nilable(::String)) }
+    def locale_was; end
 
     sig { void }
-    def restore_auth0_user_id!; end
+    def locale_will_change!; end
+
+    sig { returns(::String) }
+    def name; end
+
+    sig { params(value: ::String).returns(::String) }
+    def name=(value); end
+
+    sig { returns(T::Boolean) }
+    def name?; end
+
+    sig { returns(T.nilable(::String)) }
+    def name_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def name_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def name_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def name_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def name_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def name_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def name_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def name_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def name_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def name_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def name_was; end
+
+    sig { void }
+    def name_will_change!; end
+
+    sig { void }
+    def restore_atname!; end
 
     sig { void }
     def restore_created_at!; end
 
     sig { void }
-    def restore_current_signed_in_at!; end
+    def restore_description!; end
 
     sig { void }
-    def restore_deleted_at!; end
+    def restore_discarded_at!; end
+
+    sig { void }
+    def restore_email!; end
 
     sig { void }
     def restore_id!; end
@@ -841,19 +1134,86 @@ class User
     def restore_id_value!; end
 
     sig { void }
-    def restore_last_signed_in_at!; end
+    def restore_joined_at!; end
 
     sig { void }
-    def restore_sign_in_count!; end
+    def restore_locale!; end
+
+    sig { void }
+    def restore_name!; end
+
+    sig { void }
+    def restore_role!; end
+
+    sig { void }
+    def restore_space_id!; end
+
+    sig { void }
+    def restore_time_zone!; end
 
     sig { void }
     def restore_updated_at!; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_auth0_user_id; end
+    sig { returns(::String) }
+    def role; end
+
+    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
+    def role=(value); end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_auth0_user_id?; end
+    def role?; end
+
+    sig { returns(T.nilable(::String)) }
+    def role_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def role_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def role_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_change_to_be_saved; end
+
+    sig do
+      params(
+        from: T.any(::String, ::Symbol, ::Integer),
+        to: T.any(::String, ::Symbol, ::Integer)
+      ).returns(T::Boolean)
+    end
+    def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def role_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_previous_change; end
+
+    sig do
+      params(
+        from: T.any(::String, ::Symbol, ::Integer),
+        to: T.any(::String, ::Symbol, ::Integer)
+      ).returns(T::Boolean)
+    end
+    def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def role_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def role_was; end
+
+    sig { void }
+    def role_will_change!; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_atname; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_atname?; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -861,17 +1221,23 @@ class User
     sig { returns(T::Boolean) }
     def saved_change_to_created_at?; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def saved_change_to_current_signed_in_at; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_description; end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_current_signed_in_at?; end
+    def saved_change_to_description?; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def saved_change_to_deleted_at; end
+    def saved_change_to_discarded_at; end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_deleted_at?; end
+    def saved_change_to_discarded_at?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_email; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_email?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_id; end
@@ -885,17 +1251,41 @@ class User
     sig { returns(T::Boolean) }
     def saved_change_to_id_value?; end
 
-    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def saved_change_to_last_signed_in_at; end
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def saved_change_to_joined_at; end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_last_signed_in_at?; end
+    def saved_change_to_joined_at?; end
 
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def saved_change_to_sign_in_count; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_locale; end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_sign_in_count?; end
+    def saved_change_to_locale?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_name; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_name?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_role; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_role?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_space_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_space_id?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_time_zone; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_time_zone?; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
@@ -903,50 +1293,95 @@ class User
     sig { returns(T::Boolean) }
     def saved_change_to_updated_at?; end
 
-    sig { returns(::Integer) }
-    def sign_in_count; end
+    sig { returns(::String) }
+    def space_id; end
 
-    sig { params(value: ::Integer).returns(::Integer) }
-    def sign_in_count=(value); end
+    sig { params(value: ::String).returns(::String) }
+    def space_id=(value); end
 
     sig { returns(T::Boolean) }
-    def sign_in_count?; end
+    def space_id?; end
 
-    sig { returns(T.nilable(::Integer)) }
-    def sign_in_count_before_last_save; end
+    sig { returns(T.nilable(::String)) }
+    def space_id_before_last_save; end
 
     sig { returns(T.untyped) }
-    def sign_in_count_before_type_cast; end
+    def space_id_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def sign_in_count_came_from_user?; end
+    def space_id_came_from_user?; end
 
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def sign_in_count_change; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_change; end
 
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def sign_in_count_change_to_be_saved; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_change_to_be_saved; end
 
-    sig { params(from: ::Integer, to: ::Integer).returns(T::Boolean) }
-    def sign_in_count_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::Integer)) }
-    def sign_in_count_in_database; end
+    sig { returns(T.nilable(::String)) }
+    def space_id_in_database; end
 
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def sign_in_count_previous_change; end
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_previous_change; end
 
-    sig { params(from: ::Integer, to: ::Integer).returns(T::Boolean) }
-    def sign_in_count_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::Integer)) }
-    def sign_in_count_previously_was; end
+    sig { returns(T.nilable(::String)) }
+    def space_id_previously_was; end
 
-    sig { returns(T.nilable(::Integer)) }
-    def sign_in_count_was; end
+    sig { returns(T.nilable(::String)) }
+    def space_id_was; end
 
     sig { void }
-    def sign_in_count_will_change!; end
+    def space_id_will_change!; end
+
+    sig { returns(::String) }
+    def time_zone; end
+
+    sig { params(value: ::String).returns(::String) }
+    def time_zone=(value); end
+
+    sig { returns(T::Boolean) }
+    def time_zone?; end
+
+    sig { returns(T.nilable(::String)) }
+    def time_zone_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def time_zone_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def time_zone_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def time_zone_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def time_zone_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def time_zone_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def time_zone_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def time_zone_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def time_zone_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def time_zone_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def time_zone_was; end
+
+    sig { void }
+    def time_zone_will_change!; end
 
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
@@ -994,16 +1429,19 @@ class User
     def updated_at_will_change!; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_auth0_user_id?; end
+    def will_save_change_to_atname?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_created_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_current_signed_in_at?; end
+    def will_save_change_to_description?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_deleted_at?; end
+    def will_save_change_to_discarded_at?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_email?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_id?; end
@@ -1012,10 +1450,22 @@ class User
     def will_save_change_to_id_value?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_last_signed_in_at?; end
+    def will_save_change_to_joined_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_sign_in_count?; end
+    def will_save_change_to_locale?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_name?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_role?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_space_id?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_time_zone?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_updated_at?; end
@@ -1035,7 +1485,7 @@ class User
     def create_with(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def deleted(*args, &blk); end
+    def discarded(*args, &blk); end
 
     sig { params(value: T::Boolean).returns(PrivateRelation) }
     def distinct(value = true); end
@@ -1077,6 +1527,9 @@ class User
     def joins(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def kept(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def left_joins(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1084,6 +1537,12 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def limit(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def locale_en(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def locale_ja(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def lock(*args, &blk); end
@@ -1095,6 +1554,15 @@ class User
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_locale_en(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_locale_ja(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_role_owner(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1102,9 +1570,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def only(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def only_kept(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def optimizer_hints(*args, &blk); end
@@ -1140,6 +1605,9 @@ class User
     def rewhere(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def role_owner(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def select(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1147,6 +1615,9 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def structurally_compatible?(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def undiscarded(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def uniq!(*args, &blk); end
@@ -1159,6 +1630,9 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def with(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def with_discarded(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def without(*args, &blk); end

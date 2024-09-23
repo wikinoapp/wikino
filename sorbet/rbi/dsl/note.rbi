@@ -266,103 +266,96 @@ class Note
   end
 
   module GeneratedAssociationMethods
-    sig { returns(T::Array[T.untyped]) }
-    def backlink_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def backlink_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :backlinks`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::Link::PrivateCollectionProxy) }
-    def backlinks; end
-
-    sig { params(value: T::Enumerable[::Link]).void }
-    def backlinks=(value); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::NoteContent) }
-    def build_content(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def build_user(*args, &blk); end
-
-    sig { returns(T.nilable(::NoteContent)) }
-    def content; end
-
-    sig { params(value: T.nilable(::NoteContent)).void }
-    def content=(value); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::NoteContent) }
-    def create_content(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::NoteContent) }
-    def create_content!(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def create_user(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def create_user!(*args, &blk); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def link_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def link_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :links`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::Link::PrivateCollectionProxy) }
-    def links; end
-
-    sig { params(value: T::Enumerable[::Link]).void }
-    def links=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def referenced_note_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def referenced_note_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :referenced_notes, through: :backlinks`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::Note::PrivateCollectionProxy) }
-    def referenced_notes; end
-
-    sig { params(value: T::Enumerable[::Note]).void }
-    def referenced_notes=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def referencing_note_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def referencing_note_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :referencing_notes, through: :links`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::Note::PrivateCollectionProxy) }
-    def referencing_notes; end
-
-    sig { params(value: T::Enumerable[::Note]).void }
-    def referencing_notes=(value); end
-
-    sig { returns(T.nilable(::NoteContent)) }
-    def reload_content; end
-
     sig { returns(T.nilable(::User)) }
-    def reload_user; end
-
-    sig { void }
-    def reset_content; end
-
-    sig { void }
-    def reset_user; end
-
-    sig { returns(T.nilable(::User)) }
-    def user; end
+    def author; end
 
     sig { params(value: T.nilable(::User)).void }
-    def user=(value); end
+    def author=(value); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    def build_author(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
+    def build_list(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def build_space(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    def create_author(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    def create_author!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
+    def create_list(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
+    def create_list!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def create_space(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
+    def create_space!(*args, &blk); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def editorship_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def editorship_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :editorships`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::NoteEditorship::PrivateCollectionProxy) }
+    def editorships; end
+
+    sig { params(value: T::Enumerable[::NoteEditorship]).void }
+    def editorships=(value); end
+
+    sig { returns(T.nilable(::List)) }
+    def list; end
+
+    sig { params(value: T.nilable(::List)).void }
+    def list=(value); end
+
+    sig { returns(T.nilable(::User)) }
+    def reload_author; end
+
+    sig { returns(T.nilable(::List)) }
+    def reload_list; end
+
+    sig { returns(T.nilable(::Space)) }
+    def reload_space; end
+
+    sig { void }
+    def reset_author; end
+
+    sig { void }
+    def reset_list; end
+
+    sig { void }
+    def reset_space; end
+
+    sig { returns(T::Array[T.untyped]) }
+    def revision_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def revision_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Note` class because it declared `has_many :revisions`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::NoteRevision::PrivateCollectionProxy) }
+    def revisions; end
+
+    sig { params(value: T::Enumerable[::NoteRevision]).void }
+    def revisions=(value); end
+
+    sig { returns(T.nilable(::Space)) }
+    def space; end
+
+    sig { params(value: T.nilable(::Space)).void }
+    def space=(value); end
   end
 
   module GeneratedAssociationRelationMethods
@@ -410,6 +403,9 @@ class Note
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def includes(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def initial(*args, &blk); end
 
     sig do
       params(
@@ -491,6 +487,9 @@ class Note
     def preload(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def published(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def readonly(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -555,6 +554,196 @@ class Note
   end
 
   module GeneratedAttributeMethods
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at; end
+
+    sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at=(value); end
+
+    sig { returns(T::Boolean) }
+    def archived_at?; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def archived_at_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def archived_at_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def archived_at_change; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def archived_at_change_to_be_saved; end
+
+    sig do
+      params(
+        from: T.nilable(::ActiveSupport::TimeWithZone),
+        to: T.nilable(::ActiveSupport::TimeWithZone)
+      ).returns(T::Boolean)
+    end
+    def archived_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def archived_at_previous_change; end
+
+    sig do
+      params(
+        from: T.nilable(::ActiveSupport::TimeWithZone),
+        to: T.nilable(::ActiveSupport::TimeWithZone)
+      ).returns(T::Boolean)
+    end
+    def archived_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def archived_at_was; end
+
+    sig { void }
+    def archived_at_will_change!; end
+
+    sig { returns(::String) }
+    def author_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def author_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def author_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def author_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def author_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def author_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def author_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def author_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def author_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def author_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def author_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def author_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def author_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def author_id_was; end
+
+    sig { void }
+    def author_id_will_change!; end
+
+    sig { returns(::String) }
+    def body; end
+
+    sig { params(value: ::String).returns(::String) }
+    def body=(value); end
+
+    sig { returns(T::Boolean) }
+    def body?; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def body_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def body_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def body_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(::String) }
+    def body_html; end
+
+    sig { params(value: ::String).returns(::String) }
+    def body_html=(value); end
+
+    sig { returns(T::Boolean) }
+    def body_html?; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def body_html_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def body_html_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_html_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_html_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def body_html_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_html_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def body_html_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_was; end
+
+    sig { void }
+    def body_html_will_change!; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def body_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def body_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_was; end
+
+    sig { void }
+    def body_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def created_at; end
 
@@ -690,6 +879,96 @@ class Note
     sig { void }
     def id_will_change!; end
 
+    sig { returns(T::Array[::String]) }
+    def linked_note_ids; end
+
+    sig { params(value: T::Array[::String]).returns(T::Array[::String]) }
+    def linked_note_ids=(value); end
+
+    sig { returns(T::Boolean) }
+    def linked_note_ids?; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def linked_note_ids_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def linked_note_ids_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def linked_note_ids_came_from_user?; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def linked_note_ids_change; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def linked_note_ids_change_to_be_saved; end
+
+    sig { params(from: T::Array[::String], to: T::Array[::String]).returns(T::Boolean) }
+    def linked_note_ids_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def linked_note_ids_in_database; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def linked_note_ids_previous_change; end
+
+    sig { params(from: T::Array[::String], to: T::Array[::String]).returns(T::Boolean) }
+    def linked_note_ids_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def linked_note_ids_previously_was; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def linked_note_ids_was; end
+
+    sig { void }
+    def linked_note_ids_will_change!; end
+
+    sig { returns(::String) }
+    def list_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def list_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def list_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def list_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def list_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def list_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def list_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def list_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def list_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def list_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def list_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def list_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def list_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def list_id_was; end
+
+    sig { void }
+    def list_id_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def modified_at; end
 
@@ -735,6 +1014,118 @@ class Note
     sig { void }
     def modified_at_will_change!; end
 
+    sig { returns(::Integer) }
+    def number; end
+
+    sig { params(value: ::Integer).returns(::Integer) }
+    def number=(value); end
+
+    sig { returns(T::Boolean) }
+    def number?; end
+
+    sig { returns(T.nilable(::Integer)) }
+    def number_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def number_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def number_came_from_user?; end
+
+    sig { returns(T.nilable([::Integer, ::Integer])) }
+    def number_change; end
+
+    sig { returns(T.nilable([::Integer, ::Integer])) }
+    def number_change_to_be_saved; end
+
+    sig { params(from: ::Integer, to: ::Integer).returns(T::Boolean) }
+    def number_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::Integer)) }
+    def number_in_database; end
+
+    sig { returns(T.nilable([::Integer, ::Integer])) }
+    def number_previous_change; end
+
+    sig { params(from: ::Integer, to: ::Integer).returns(T::Boolean) }
+    def number_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::Integer)) }
+    def number_previously_was; end
+
+    sig { returns(T.nilable(::Integer)) }
+    def number_was; end
+
+    sig { void }
+    def number_will_change!; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at; end
+
+    sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at=(value); end
+
+    sig { returns(T::Boolean) }
+    def published_at?; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def published_at_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def published_at_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def published_at_change; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def published_at_change_to_be_saved; end
+
+    sig do
+      params(
+        from: T.nilable(::ActiveSupport::TimeWithZone),
+        to: T.nilable(::ActiveSupport::TimeWithZone)
+      ).returns(T::Boolean)
+    end
+    def published_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def published_at_previous_change; end
+
+    sig do
+      params(
+        from: T.nilable(::ActiveSupport::TimeWithZone),
+        to: T.nilable(::ActiveSupport::TimeWithZone)
+      ).returns(T::Boolean)
+    end
+    def published_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def published_at_was; end
+
+    sig { void }
+    def published_at_will_change!; end
+
+    sig { void }
+    def restore_archived_at!; end
+
+    sig { void }
+    def restore_author_id!; end
+
+    sig { void }
+    def restore_body!; end
+
+    sig { void }
+    def restore_body_html!; end
+
     sig { void }
     def restore_created_at!; end
 
@@ -745,7 +1136,22 @@ class Note
     def restore_id_value!; end
 
     sig { void }
+    def restore_linked_note_ids!; end
+
+    sig { void }
+    def restore_list_id!; end
+
+    sig { void }
     def restore_modified_at!; end
+
+    sig { void }
+    def restore_number!; end
+
+    sig { void }
+    def restore_published_at!; end
+
+    sig { void }
+    def restore_space_id!; end
 
     sig { void }
     def restore_title!; end
@@ -753,8 +1159,29 @@ class Note
     sig { void }
     def restore_updated_at!; end
 
-    sig { void }
-    def restore_user_id!; end
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def saved_change_to_archived_at; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_archived_at?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_author_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_author_id?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_body; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_body?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_body_html; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_body_html?; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -774,13 +1201,43 @@ class Note
     sig { returns(T::Boolean) }
     def saved_change_to_id_value?; end
 
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def saved_change_to_linked_note_ids; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_linked_note_ids?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_list_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_list_id?; end
+
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_modified_at; end
 
     sig { returns(T::Boolean) }
     def saved_change_to_modified_at?; end
 
+    sig { returns(T.nilable([::Integer, ::Integer])) }
+    def saved_change_to_number; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_number?; end
+
+    sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
+    def saved_change_to_published_at; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_published_at?; end
+
     sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_space_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_space_id?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def saved_change_to_title; end
 
     sig { returns(T::Boolean) }
@@ -792,16 +1249,55 @@ class Note
     sig { returns(T::Boolean) }
     def saved_change_to_updated_at?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_user_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_user_id?; end
-
     sig { returns(::String) }
-    def title; end
+    def space_id; end
 
     sig { params(value: ::String).returns(::String) }
+    def space_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def space_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def space_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def space_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def space_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def space_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def space_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def space_id_was; end
+
+    sig { void }
+    def space_id_will_change!; end
+
+    sig { returns(T.nilable(::String)) }
+    def title; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
     def title=(value); end
 
     sig { returns(T::Boolean) }
@@ -816,22 +1312,22 @@ class Note
     sig { returns(T::Boolean) }
     def title_came_from_user?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def title_change; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def title_change_to_be_saved; end
 
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    sig { params(from: T.nilable(::String), to: T.nilable(::String)).returns(T::Boolean) }
     def title_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
     def title_in_database; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def title_previous_change; end
 
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    sig { params(from: T.nilable(::String), to: T.nilable(::String)).returns(T::Boolean) }
     def title_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
@@ -888,50 +1384,17 @@ class Note
     sig { void }
     def updated_at_will_change!; end
 
-    sig { returns(::String) }
-    def user_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def user_id=(value); end
+    sig { returns(T::Boolean) }
+    def will_save_change_to_archived_at?; end
 
     sig { returns(T::Boolean) }
-    def user_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def user_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def user_id_before_type_cast; end
+    def will_save_change_to_author_id?; end
 
     sig { returns(T::Boolean) }
-    def user_id_came_from_user?; end
+    def will_save_change_to_body?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def user_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def user_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def user_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def user_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def user_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def user_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def user_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def user_id_was; end
-
-    sig { void }
-    def user_id_will_change!; end
+    sig { returns(T::Boolean) }
+    def will_save_change_to_body_html?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_created_at?; end
@@ -943,16 +1406,28 @@ class Note
     def will_save_change_to_id_value?; end
 
     sig { returns(T::Boolean) }
+    def will_save_change_to_linked_note_ids?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_list_id?; end
+
+    sig { returns(T::Boolean) }
     def will_save_change_to_modified_at?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_number?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_published_at?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_space_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_title?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_updated_at?; end
-
-    sig { returns(T::Boolean) }
-    def will_save_change_to_user_id?; end
   end
 
   module GeneratedRelationMethods
@@ -1002,6 +1477,9 @@ class Note
     def includes(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def initial(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def invert_where(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1045,6 +1523,9 @@ class Note
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def preload(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def published(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def readonly(*args, &blk); end

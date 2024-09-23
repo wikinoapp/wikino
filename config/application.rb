@@ -40,6 +40,12 @@ module Nonoto
     # ここから独自の設定
     # -----------------------------------------------------------------------------------------
 
+    require_dependency Rails.root.join("lib/nonoto")
+
     config.active_record.schema_format = :sql
+
+    config.i18n.available_locales = %i[en ja]
+
+    config.mewst = config_for(:nonoto)
   end
 end

@@ -15,17 +15,14 @@ class Welcome::ShowController
     include ::PreviewHelper
     include ::ApplicationController::HelperMethods
 
-    sig { returns(T.nilable(::User)) }
-    def current_user; end
-
-    sig { returns(::String) }
-    def sign_in_with_auth0_path; end
-
-    sig { returns(::String) }
-    def sign_up_with_auth0_path; end
-
     sig { returns(T::Boolean) }
-    def user_signed_in?; end
+    def signed_in?; end
+
+    sig { returns(T.nilable(::User)) }
+    def viewer; end
+
+    sig { returns(::User) }
+    def viewer!; end
   end
 
   class HelperProxy < ::ActionView::Base

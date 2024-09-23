@@ -1,0 +1,35 @@
+<div class="flex flex-col gap-4 min-w-[350px]">
+  <div>
+    <div class="antialiased font-bold">
+      <%= t("nouns.links") %>
+    </div>
+
+    <% link_list.links.each do |link| %>
+      <ul class="gap-2 grid grid-cols-2 mt-2">
+        <li>
+          <%= render Cards::NoteCardComponent.new(note: link.note, class_name: "bg-base-300") %>
+        </li>
+
+        <% link.backlinked_notes.each do |note| %>
+          <li>
+            <%= render Cards::NoteCardComponent.new(note:, class_name: "bg-base-200") %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div>
+    <div class="antialiased font-bold">
+      <%= t("nouns.backlinks") %>
+    </div>
+
+    <ul class="gap-2 grid grid-cols-2 mt-2">
+      <% backlink_list.backlinks.each do |backlink| %>
+        <li>
+          <%= render Cards::NoteCardComponent.new(note: backlink.note, class_name: "bg-base-300") %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>

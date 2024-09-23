@@ -5,10 +5,11 @@ class ApplicationForm
   extend T::Sig
 
   include ActiveModel::Model
+  include ActiveModel::Attributes
 
   # @overload
   sig { returns(Symbol) }
   def self.i18n_scope
-    :form
+    :forms
   end
 end

@@ -1,0 +1,44 @@
+<div
+  aria-atomic="true"
+  class="duration-150 ease-in-out hidden me-auto ms-auto transition"
+  data-controller="flash-toast"
+  data-flash-toast-type-value="<%= flash_toast_type %>"
+  data-flash-toast-message-html-value="<%= flash[flash_toast_type] %>"
+  id="flash-toast"
+>
+  <div
+    class="alert bg-base-300 border-gray-300 flex justify-between p-2"
+    data-flash-toast-target="alert"
+  >
+    <div class="flex items-center toast-body">
+      <span class="me-2">
+        <span
+          class="hidden"
+          data-flash-toast-target="noticeIcon"
+        >
+          <%= render Nonoto::UI::Icon.new(name: "check_circle_fill", size: "36px") %>
+        </span>
+
+        <span
+          class="hidden"
+          data-flash-toast-target="alertIcon"
+        >
+          <%= render Nonoto::UI::Icon.new(name: "alert_fill", size: "36px") %>
+        </span>
+      </span>
+
+      <span
+        class="grow"
+        data-flash-toast-target="message"
+      ></span>
+    </div>
+
+    <button
+      aria-label="Close"
+      data-action="flash-toast#hideFlashToast"
+      type="button"
+    >
+      <%= render Nonoto::UI::Icon.new(name: "close_fill") %>
+    </button>
+  </div>
+</div>

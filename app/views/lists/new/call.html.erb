@@ -1,0 +1,74 @@
+<% title = t("meta.title.lists.new") %>
+<% set_meta_tags(title:, reverse: false) %>
+
+<%= render ::Layouts::BasicLayoutComponent.new do %>
+  <%= render Containers::BasicContainerComponent.new do %>
+    <h1>
+      <%= title %>
+    </h1>
+
+    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Nonoto::UI::Card::Body.new do %>
+        <%= form_with model: @form, url: lists_path(viewer!.space_identifier) do |f| %>
+          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+          <%= f.label :name, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_list_form.name") %>
+              </span>
+            </div>
+
+            <%= f.text_field(:name, class: "input input-bordered w-full") %>
+          <% end %>
+
+          <%= f.label :description, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_list_form.description") %>
+              </span>
+            </div>
+
+            <%= f.text_area(:description, class: "input input-bordered w-full") %>
+          <% end %>
+
+          <div>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_list_form.visibility") %>
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div>
+                <label class="cursor-pointer flex gap-2 items-center">
+                  <%= f.radio_button :visibility, ListVisibility::Public.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.list.visibility.public") %>
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <label class="cursor-pointer flex gap-2 items-center">
+                  <%= f.radio_button :visibility, ListVisibility::Private.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.list.visibility.private") %>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 text-center">
+            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
+              <%= t("verbs.submit") %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

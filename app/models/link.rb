@@ -1,7 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Link < ApplicationRecord
-  belongs_to :note
-  belongs_to :target_note, class_name: "Note"
+class Link < T::Struct
+  const :note, Note
+  const :backlinked_notes, T::Array[Note]
+  const :page_info, PageInfo
 end
