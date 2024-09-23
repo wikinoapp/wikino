@@ -35,13 +35,13 @@ class Note < ApplicationRecord
 
   sig { returns(T::Array[String]) }
   def titles_in_body
-    body&.scan(%r{\[\[(.*?)\]\]})&.flatten || []
+    body.scan(%r{\[\[(.*?)\]\]}).flatten
   end
 
   sig { params(editor: User).void }
   def link!(editor:)
     linked_notes = titles_in_body.map do |title|
-      editor.create_linked_note!(list:, title:)
+      editor.create_linked_note!(list: list.not_nil!, title:)
     end
 
     update!(linked_note_ids: linked_notes.pluck(:id))

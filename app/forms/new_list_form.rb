@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class NewListForm < ApplicationForm
-  sig { returns(User) }
+  sig { returns(T.nilable(User)) }
   attr_accessor :viewer
 
   attribute :name, :string

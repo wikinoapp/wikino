@@ -61,12 +61,12 @@ class User < ApplicationRecord
     UserLocale.deserialize(locale)
   end
 
-  T::Sig::WithoutRuntime.sig { params(note: Note).returns(Note::PrivateRelation) }
+  sig { params(note: Note).returns(T.any(Note::PrivateCollectionProxy, Note::PrivateAssociationRelation)) }
   def notes_except(note)
     note.new_record? ? notes : notes.where.not(id: note.id)
   end
 
-  T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
+  sig { returns(List::PrivateRelation) }
   def viewable_lists
     List
       .left_joins(:memberships)
@@ -78,7 +78,7 @@ class User < ApplicationRecord
       .distinct
   end
 
-  T::Sig::WithoutRuntime.sig { returns(List::PrivateRelation) }
+  sig { returns(List::PrivateRelation) }
   def last_note_modified_lists
     lists.merge(
       list_memberships
@@ -87,9 +87,9 @@ class User < ApplicationRecord
     )
   end
 
-  T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
+  sig { returns(Note::PrivateAssociationRelation) }
   def last_modified_notes
-    space.notes.joins(:note_editorships).merge(
+    space.not_nil!.notes.joins(:note_editorships).merge(
       note_editorships.order(NoteEditorship.arel_table[:last_note_modified_at].desc)
     )
   end
@@ -106,7 +106,7 @@ class User < ApplicationRecord
 
   sig { params(list: List).returns(T::Boolean) }
   def can_destroy_list?(list:)
-    list_memberships.find_by(list:)&.role&.admin? == true
+    list_memberships.find_by(list:)&.role_admin? == true
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }

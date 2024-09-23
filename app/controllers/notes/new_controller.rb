@@ -16,7 +16,7 @@ module Notes
     def call
       authorize(Note.new, :new?)
 
-      result = CreateInitialNoteUseCase.new.call(list: @list, viewer: viewer!)
+      result = CreateInitialNoteUseCase.new.call(list: @list.not_nil!, viewer: viewer!)
 
       redirect_to edit_note_path(viewer!.space_identifier, result.note.number)
     end

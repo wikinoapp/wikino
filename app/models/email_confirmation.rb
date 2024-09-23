@@ -22,6 +22,11 @@ class EmailConfirmation < ApplicationRecord
     Array.new(CODE_LENGTH) { characters.sample }.join
   end
 
+  sig { returns(EmailConfirmationEvent) }
+  def deserialized_event
+    EmailConfirmationEvent.deserialize(event)
+  end
+
   sig { returns(T::Boolean) }
   def succeeded?
     !succeeded_at.nil?

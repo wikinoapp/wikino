@@ -63,7 +63,7 @@ class ApplicationPolicy
       @scope = scope
     end
 
-    sig { abstract.returns(ActiveRecord::Relation) }
+    sig { abstract.void }
     def resolve
       raise NoMethodError, "You must define #resolve in #{self.class}"
     end

@@ -20,5 +20,6 @@ class NotePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   def destroy?
     # T.cast(record, Note).user == user
+    false
   end
 end

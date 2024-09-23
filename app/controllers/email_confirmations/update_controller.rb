@@ -49,6 +49,8 @@ module EmailConfirmations
     private def success_path(email_confirmation)
       if email_confirmation.event_sign_up?
         new_account_path
+      else
+        root_path
       end
     end
   end

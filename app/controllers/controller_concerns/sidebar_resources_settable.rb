@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     private def set_joined_lists
-      @joined_lists = viewer!.lists
+      @joined_lists = T.let(viewer!.lists, T.nilable(List::PrivateRelation))
     end
   end
 end

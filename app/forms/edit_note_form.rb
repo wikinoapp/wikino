@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class EditNoteForm < ApplicationForm
-  sig { returns(User) }
+  sig { returns(T.nilable(User)) }
   attr_accessor :viewer
 
   attribute :list_number, :integer
@@ -13,12 +13,13 @@ class EditNoteForm < ApplicationForm
   validates :title, presence: true
   validates :body, presence: true
 
-  sig { returns(List) }
+  sig { returns(T.nilable(List)) }
   def list
-    viewer.viewable_lists.find_by(number: list_number)
+    viewer&.viewable_lists&.find_by(number: list_number)
   end
 
+  sig { returns(List::PrivateRelation) }
   def viewable_lists
-    viewer.viewable_lists
+    viewer.not_nil!.viewable_lists
   end
 end

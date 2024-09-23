@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     private def set_note
-      @note = viewer!.space.notes.find_by!(number: params[:note_number])
+      @note = T.let(viewer!.space.notes.find_by!(number: params[:note_number]), T.nilable(Note))
     end
   end
 end

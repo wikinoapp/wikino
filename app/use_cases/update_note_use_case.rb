@@ -9,7 +9,7 @@ class UpdateNoteUseCase < ApplicationUseCase
   sig { params(viewer: User, note: Note, list: List, title: String, body: String).returns(Result) }
   def call(viewer:, note:, list:, title:, body:)
     note = ActiveRecord::Base.transaction do
-      now = Time.current
+      now = Time.zone.now
 
       note.attributes = {
         list:,

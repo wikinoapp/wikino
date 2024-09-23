@@ -4,7 +4,7 @@
 class UnreservedSpaceIdentifierValidator < ActiveModel::EachValidator
   extend T::Sig
 
-  sig { params(record: T.any(AccountForm), attribute: Symbol, identifier: String).void }
+  sig { params(record: AccountForm, attribute: Symbol, identifier: String).void }
   def validate_each(record, attribute, identifier)
     return if identifier.blank?
 

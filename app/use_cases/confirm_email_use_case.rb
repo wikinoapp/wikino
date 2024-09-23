@@ -10,7 +10,7 @@ class ConfirmEmailUseCase < ApplicationUseCase
   def call(viewer:, email_confirmation:)
     ActiveRecord::Base.transaction do
       email_confirmation.success!
-      viewer&.run_after_email_confirmation_success(email_confirmation:)
+      viewer&.run_after_email_confirmation_success!(email_confirmation:)
     end
 
     Result.new(email_confirmation:)

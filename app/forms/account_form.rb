@@ -18,12 +18,12 @@ class AccountForm < ApplicationForm
 
   sig { returns(String) }
   def space_identifier
-    @space_identifier ||= SecureRandom.alphanumeric(6)
+    @space_identifier ||= T.let(SecureRandom.alphanumeric(6), String)
   end
 
   sig { returns(String) }
   def atname
-    @atname ||= SecureRandom.alphanumeric(6)
+    @atname ||= T.let(SecureRandom.alphanumeric(6), String)
   end
 
   sig { void }

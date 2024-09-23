@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     private def set_list
-      @list = viewer!.space.lists.kept.find_by!(number: params[:list_number])
+      @list = T.let(viewer!.space.lists.kept.find_by!(number: params[:list_number]), T.nilable(List))
       authorize(@list, :show?)
     end
   end
