@@ -4,5 +4,4 @@
 
 # typed: false
 
-module ::NoteContent; end
 module Rack::Server; end
