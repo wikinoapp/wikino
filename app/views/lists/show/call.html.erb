@@ -1,7 +1,7 @@
 <% title = t("meta.title.lists.show", space_name: viewer!.space_name, list_name: @list.name) %>
 <% set_meta_tags(title:) %>
 
-<%= render ::Layouts::BasicLayoutComponent.new(joined_lists: @joined_lists) do %>
+<%= render ::Layouts::MainLayoutComponent.new(joined_lists: @joined_lists) do %>
   <%= render Containers::BasicContainerComponent.new do %>
     <h1 class="antialiased font-semibold text-2xl">
       <%= @list.name %>

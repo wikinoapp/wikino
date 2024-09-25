@@ -1,0 +1,14 @@
+<div class="flex">
+  <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
+
+  <div class="flex flex-1 flex-col min-h-[100svh]">
+    <div>
+      <%= content %>
+    </div>
+
+    <div>
+      <%= render FlashToastComponent.new(flash:) %>
+      <%= render Navbars::BottomNavbarComponent.new %>
+    </div>
+  </div>
+</div>
