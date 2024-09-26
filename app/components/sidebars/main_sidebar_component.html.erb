@@ -1,7 +1,9 @@
 <nav class="bg-base-200 sticky">
   <div class="hidden lg:block lg:w-[240px]">
     <div class="flex flex-col gap-4 p-4">
-      <%= link_to root_path do %>
+      <%= link_to root_path, {
+        data: {turbo_action: "advance", turbo_frame: "main-content"}
+      } do %>
         <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
       <% end %>
 
@@ -11,7 +13,10 @@
 
       <ul class="flex flex-col gap-2">
         <li>
-          <%= link_to space_path, class: "flex gap-2 items-center" do %>
+          <%= link_to space_path, {
+            class: "flex gap-2 items-center",
+            data: {turbo_action: "advance", turbo_frame: "main-content"}
+          } do %>
             <%= render Nonoto::UI::Icon.new(name: "house", size: "18px", class_name: "fill-white") %>
 
             <%= t("nouns.home") %>
@@ -20,21 +25,21 @@
       </ul>
 
       <div>
-        <div class="font-bold text-xs">
-          <%= t("nouns.lists") %>
+        <div class="flex flex-col gap-2">
+          <div class="font-bold text-xs">
+            <%= t("nouns.lists") %>
+          </div>
+
+          <turbo-frame
+            id="joined_lists"
+            loading="lazy"
+            src="<%= frame_joined_lists_path %>"
+          ></turbo-frame>
         </div>
 
-        <ul class="mt-2">
-          <% joined_lists.each do |list| %>
-            <li>
-              <%= link_to list_path(viewer!.space_identifier, list.number) do %>
-                <%= list.name %>
-              <% end %>
-            </li>
-          <% end %>
-        </ul>
-
-        <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier) %>
+        <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier), {
+          data: {turbo_action: "advance", turbo_frame: "main-content"}
+        } %>
       </div>
 
       <hr class="border-stone-600">

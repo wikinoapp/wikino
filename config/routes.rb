@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   match "/email_confirmation",                               via: :patch,  as: :email_confirmation,      to: "email_confirmations/update#call"
   match "/email_confirmation",                               via: :post,                                 to: "email_confirmations/create#call"
   match "/email_confirmation/edit",                          via: :get,    as: :edit_email_confirmation, to: "email_confirmations/edit#call"
+  match "/frame/joined_lists",                               via: :get,    as: :frame_joined_lists,      to: "frame/joined_lists/index#call"
   match "/s/:space_identifier",                              via: :get,    as: :space,                   to: "spaces/show#call"
   match "/s/:space_identifier/lists",                        via: :post,   as: :lists,                   to: "lists/create#call"
   match "/s/:space_identifier/lists/:list_number",           via: :get,    as: :list,                    to: "lists/show#call",                 list_number: /\d+/

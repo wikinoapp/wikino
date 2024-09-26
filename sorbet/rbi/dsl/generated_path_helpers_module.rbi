@@ -22,6 +22,9 @@ module GeneratedPathHelpersModule
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def frame_joined_lists_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

@@ -22,6 +22,9 @@ module GeneratedUrlHelpersModule
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def frame_joined_lists_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

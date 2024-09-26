@@ -1,0 +1,13 @@
+<turbo-frame id="joined_lists">
+  <ul>
+    <% @joined_lists.each do |list| %>
+      <li>
+        <%= link_to list_path(viewer!.space_identifier, list.number), {
+          data: {turbo_action: "advance", turbo_frame: "main-content"}
+        } do %>
+          <%= list.name %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</turbo-frame>

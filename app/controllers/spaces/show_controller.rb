@@ -6,11 +6,9 @@ module Spaces
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
-    include ControllerConcerns::SidebarResourcesSettable
 
     around_action :set_locale
     before_action :require_authentication
-    before_action :set_joined_lists
 
     sig { returns(T.untyped) }
     def call

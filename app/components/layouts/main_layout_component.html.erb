@@ -1,10 +1,10 @@
 <div class="flex">
-  <%= render Sidebars::MainSidebarComponent.new(joined_lists:) %>
+  <%= render Sidebars::MainSidebarComponent.new %>
 
   <div class="flex flex-1 flex-col min-h-[100svh]">
-    <div>
+    <turbo-frame data-turbo-action="advance" id="main-content">
       <%= content %>
-    </div>
+    </turbo-frame>
 
     <div>
       <%= render FlashToastComponent.new(flash:) %>

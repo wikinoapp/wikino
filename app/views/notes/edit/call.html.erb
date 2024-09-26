@@ -1,7 +1,7 @@
 <% title = t("meta.title.notes.edit") %>
 <% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
 
-<%= render ::Layouts::MainLayoutComponent.new(joined_lists: @joined_lists) do %>
+<%= render ::Layouts::MainLayoutComponent.new do %>
   <div class="flex flex-row gap-4 p-4">
     <div class="basis-3/4">
       <h1 class="antialiased font-semibold text-2xl">
