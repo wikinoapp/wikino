@@ -160,7 +160,8 @@ class User < ApplicationRecord
       space:,
       body: "",
       body_html: "",
-      modified_at: Time.current
+      linked_note_ids: [],
+      modified_at: Time.zone.now
     )
   end
 end

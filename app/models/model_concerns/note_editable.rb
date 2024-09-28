@@ -8,7 +8,7 @@ module ModelConcerns
 
     sig { returns(T::Array[String]) }
     def titles_in_body
-      body.scan(%r{\[\[(.*?)\]\]}).flatten
+      body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
     end
 
     T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
