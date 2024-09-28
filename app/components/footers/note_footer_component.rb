@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Sidebars
-  class NoteSidebarComponent < ApplicationComponent
+module Footers
+  class NoteFooterComponent < ApplicationComponent
     sig { params(link_list: LinkList, backlink_list: BacklinkList).void }
     def initialize(link_list:, backlink_list:)
       @link_list = link_list
