@@ -1,9 +1,9 @@
 en:
   activerecord:
     attributes:
-      list:
+      note:
+        mutation_error: ''
+      notebook:
         visibility:
           private: Private
           public: Public
-      note:
-        mutation_error: ""

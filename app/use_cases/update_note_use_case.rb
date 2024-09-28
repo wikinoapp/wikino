@@ -6,13 +6,13 @@ class UpdateNoteUseCase < ApplicationUseCase
     const :note, Note
   end
 
-  sig { params(viewer: User, note: Note, list: List, title: String, body: String).returns(Result) }
-  def call(viewer:, note:, list:, title:, body:)
+  sig { params(viewer: User, note: Note, notebook: Notebook, title: String, body: String).returns(Result) }
+  def call(viewer:, note:, notebook:, title:, body:)
     note = ActiveRecord::Base.transaction do
       now = Time.zone.now
 
       note.attributes = {
-        list:,
+        notebook:,
         title:,
         body:,
         body_html: Markup.new(text: body).render_html,

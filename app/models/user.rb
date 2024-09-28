@@ -23,8 +23,8 @@ class User < ApplicationRecord
   has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id, inverse_of: :author
   has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :list_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
-  has_many :lists, through: :list_memberships
+  has_many :notebook_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
+  has_many :notebooks, through: :notebook_memberships
   has_many :sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
@@ -66,24 +66,24 @@ class User < ApplicationRecord
     note.new_record? ? notes : notes.where.not(id: note.id)
   end
 
-  sig { returns(List::PrivateRelation) }
-  def viewable_lists
-    List
+  sig { returns(Notebook::PrivateRelation) }
+  def viewable_notebooks
+    Notebook
       .left_joins(:memberships)
       .merge(
-        List.visibility_public.or(
-          ListMembership.where(member: self)
+        Notebook.visibility_public.or(
+          NotebookMembership.where(member: self)
         )
       )
       .distinct
   end
 
-  sig { returns(List::PrivateAssociationRelation) }
-  def last_note_modified_lists
-    lists.merge(
-      list_memberships
-        .order(ListMembership.arel_table[:last_note_modified_at].desc.nulls_last)
-        .order(ListMembership.arel_table[:joined_at].desc)
+  sig { returns(Notebook::PrivateAssociationRelation) }
+  def last_note_modified_notebooks
+    notebooks.merge(
+      notebook_memberships
+        .order(NotebookMembership.arel_table[:last_note_modified_at].desc.nulls_last)
+        .order(NotebookMembership.arel_table[:joined_at].desc)
     )
   end
 
@@ -94,19 +94,19 @@ class User < ApplicationRecord
     )
   end
 
-  sig { params(list: List).returns(T::Boolean) }
-  def can_view_list?(list:)
-    viewable_lists.where(id: list.id).exists?
+  sig { params(notebook: Notebook).returns(T::Boolean) }
+  def can_view_notebook?(notebook:)
+    viewable_notebooks.where(id: notebook.id).exists?
   end
 
-  sig { params(list: List).returns(T::Boolean) }
-  def can_update_list?(list:)
-    lists.where(id: list.id).exists?
+  sig { params(notebook: Notebook).returns(T::Boolean) }
+  def can_update_notebook?(notebook:)
+    notebooks.where(id: notebook.id).exists?
   end
 
-  sig { params(list: List).returns(T::Boolean) }
-  def can_destroy_list?(list:)
-    list_memberships.find_by(list:)&.role_admin? == true
+  sig { params(notebook: Notebook).returns(T::Boolean) }
+  def can_destroy_notebook?(notebook:)
+    notebook_memberships.find_by(notebook:)&.role_admin? == true
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }
@@ -120,9 +120,9 @@ class User < ApplicationRecord
     nil
   end
 
-  sig { params(list: List).returns(Note) }
-  def create_initial_note!(list:)
-    notes.initial.where(list:).first_or_create!(
+  sig { params(notebook: Notebook).returns(Note) }
+  def create_initial_note!(notebook:)
+    notes.initial.where(notebook:).first_or_create!(
       space:,
       title: nil,
       body: "",
@@ -132,9 +132,9 @@ class User < ApplicationRecord
     )
   end
 
-  sig { params(list: List, title: String).returns(Note) }
-  def create_linked_note!(list:, title:)
-    notes.where(list:, title:).first_or_create!(
+  sig { params(notebook: Notebook, title: String).returns(Note) }
+  def create_linked_note!(notebook:, title:)
+    notes.where(notebook:, title:).first_or_create!(
       space:,
       body: "",
       body_html: "",

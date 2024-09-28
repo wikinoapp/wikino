@@ -1,4 +1,4 @@
-<% title = t("meta.title.lists.new") %>
+<% title = t("meta.title.notebooks.new") %>
 <% set_meta_tags(title:, reverse: false) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
@@ -9,13 +9,13 @@
 
     <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
       <%= render Nonoto::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: lists_path(viewer!.space_identifier) do |f| %>
+        <%= form_with model: @form, url: notebooks_path(viewer!.space_identifier) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <%= f.label :name, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.new_list_form.name") %>
+                <%= t("forms.attributes.new_notebook_form.name") %>
               </span>
             </div>
 
@@ -25,7 +25,7 @@
           <%= f.label :description, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.new_list_form.description") %>
+                <%= t("forms.attributes.new_notebook_form.description") %>
               </span>
             </div>
 
@@ -35,27 +35,27 @@
           <div>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.new_list_form.visibility") %>
+                <%= t("forms.attributes.new_notebook_form.visibility") %>
               </span>
             </div>
 
             <div class="flex flex-col gap-4">
               <div>
                 <label class="cursor-pointer flex gap-2 items-center">
-                  <%= f.radio_button :visibility, ListVisibility::Public.serialize, class: "radio" %>
+                  <%= f.radio_button :visibility, NotebookVisibility::Public.serialize, class: "radio" %>
 
                   <span class="label-text">
-                    <%= t("activerecord.attributes.list.visibility.public") %>
+                    <%= t("activerecord.attributes.notebook.visibility.public") %>
                   </span>
                 </label>
               </div>
 
               <div>
                 <label class="cursor-pointer flex gap-2 items-center">
-                  <%= f.radio_button :visibility, ListVisibility::Private.serialize, class: "radio" %>
+                  <%= f.radio_button :visibility, NotebookVisibility::Private.serialize, class: "radio" %>
 
                   <span class="label-text">
-                    <%= t("activerecord.attributes.list.visibility.private") %>
+                    <%= t("activerecord.attributes.notebook.visibility.private") %>
                   </span>
                 </label>
               </div>

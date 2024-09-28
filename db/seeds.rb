@@ -10,24 +10,24 @@ create_account_use_case_result = CreateAccountUseCase.new.call(
 )
 viewer = create_account_use_case_result.user
 
-create_list_use_case_result_1 = CreateListUseCase.new.call(
+create_notebook_use_case_result_1 = CreateNotebookUseCase.new.call(
   viewer:,
-  name: "公開リスト1",
-  description: "1つ目の公開リストです",
-  visibility: ListVisibility::Public.serialize
+  name: "公開ノートブック1",
+  description: "1つ目の公開ノートブックです",
+  visibility: NotebookVisibility::Public.serialize
 )
-public_list_1 = create_list_use_case_result_1.list
+public_notebook_1 = create_notebook_use_case_result_1.notebook
 
-create_list_use_case_result_2 = CreateListUseCase.new.call(
+create_notebook_use_case_result_2 = CreateNotebookUseCase.new.call(
   viewer:,
-  name: "非公開リスト1",
-  description: "1つ目の非公開リストです",
-  visibility: ListVisibility::Private.serialize
+  name: "非公開ノートブック1",
+  description: "1つ目の非公開ノートブックです",
+  visibility: NotebookVisibility::Private.serialize
 )
-create_list_use_case_result_2.list
+create_notebook_use_case_result_2.notebook
 
 create_initial_note_use_case_result_1 = CreateInitialNoteUseCase.new.call(
-  list: public_list_1,
+  notebook: public_notebook_1,
   viewer:
 )
 note_1 = create_initial_note_use_case_result_1.note
@@ -35,7 +35,7 @@ note_1 = create_initial_note_use_case_result_1.note
 UpdateNoteUseCase.new.call(
   viewer:,
   note: note_1,
-  list: public_list_1,
+  notebook: public_notebook_1,
   title: "公開ノート1",
   body: "1つ目の公開ノートです"
 )

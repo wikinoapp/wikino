@@ -7,7 +7,7 @@ class Note < ApplicationRecord
   acts_as_sequenced column: :number, scope: :space_id
 
   belongs_to :author, class_name: "User"
-  belongs_to :list
+  belongs_to :notebook
   belongs_to :space
   has_many :editorships, class_name: "NoteEditorship", dependent: :restrict_with_exception
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
@@ -41,7 +41,7 @@ class Note < ApplicationRecord
   sig { params(editor: User).void }
   def link!(editor:)
     linked_notes = titles_in_body.map do |title|
-      editor.create_linked_note!(list: list.not_nil!, title:)
+      editor.create_linked_note!(notebook: notebook.not_nil!, title:)
     end
 
     update!(linked_note_ids: linked_notes.pluck(:id))

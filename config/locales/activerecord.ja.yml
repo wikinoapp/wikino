@@ -1,9 +1,9 @@
 ja:
   activerecord:
     attributes:
-      list:
+      note:
+        mutation_error: ''
+      notebook:
         visibility:
           private: 非公開
           public: 公開
-      note:
-        mutation_error: ""

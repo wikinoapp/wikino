@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 module ControllerConcerns
-  module ListSettable
+  module NotebookSettable
     def authorize(*args)
     end
-    
+
     def params
     end
 

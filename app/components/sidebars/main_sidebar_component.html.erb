@@ -27,17 +27,17 @@
       <div>
         <div class="flex flex-col gap-2">
           <div class="font-bold text-xs">
-            <%= t("nouns.lists") %>
+            <%= t("nouns.notebooks") %>
           </div>
 
           <turbo-frame
-            id="joined_lists"
+            id="joined_notebooks"
             loading="lazy"
-            src="<%= frame_joined_lists_path %>"
+            src="<%= frame_joined_notebooks_path %>"
           ></turbo-frame>
         </div>
 
-        <%= link_to t("nouns.new_list"), new_list_path(viewer!.space_identifier), {
+        <%= link_to t("nouns.new_notebook"), new_notebook_path(viewer!.space_identifier), {
           data: {turbo_action: "advance", turbo_frame: "main-content"}
         } %>
       </div>

@@ -7,9 +7,9 @@ ja:
         new: アカウント情報の登録
       email_confirmations:
         edit: 確認用コード入力
-      lists:
-        new: 新規リスト
-        show: "%{list_name} | %{space_name}"
+      notebooks:
+        new: 新規ノートブック
+        show: '%{notebook_name} | %{space_name}'
       notes:
         edit: 記事の編集
       sign_in:

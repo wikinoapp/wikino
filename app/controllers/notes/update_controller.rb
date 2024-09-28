@@ -19,14 +19,13 @@ module Notes
       @form = EditNoteForm.new(form_params.merge(viewer: viewer!))
 
       if @form.invalid?
-        @viewable_lists = viewer!.viewable_lists
         return render("notes/edit/call", status: :unprocessable_entity)
       end
 
       result = UpdateNoteUseCase.new.call(
         viewer: viewer!,
         note: @note.not_nil!,
-        list: @form.list.not_nil!,
+        notebook: @form.notebook.not_nil!,
         title: @form.title.not_nil!,
         body: @form.body.not_nil!
       )
@@ -38,7 +37,7 @@ module Notes
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:edit_note_form), ActionController::Parameters).permit(
-        :list_number,
+        :notebook_number,
         :title,
         :body
       )

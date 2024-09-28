@@ -13,10 +13,10 @@ class EditNoteForm
   def body=(value); end
 
   sig { returns(T.nilable(::Integer)) }
-  def list_number; end
+  def notebook_number; end
 
   sig { params(value: T.nilable(::Integer)).returns(T.nilable(::Integer)) }
-  def list_number=(value); end
+  def notebook_number=(value); end
 
   sig { returns(T.nilable(::String)) }
   def title; end

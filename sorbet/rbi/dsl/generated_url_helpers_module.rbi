@@ -22,28 +22,28 @@ module GeneratedUrlHelpersModule
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_lists_url(*args); end
+  def frame_joined_notebooks_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def lists_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def new_account_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_note_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def new_notebook_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def note_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def notebook_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def notebooks_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end

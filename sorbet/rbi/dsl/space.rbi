@@ -293,24 +293,24 @@ class Space
 
   module GeneratedAssociationMethods
     sig { returns(T::Array[T.untyped]) }
-    def list_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def list_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :lists`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::List::PrivateCollectionProxy) }
-    def lists; end
-
-    sig { params(value: T::Enumerable[::List]).void }
-    def lists=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
     def note_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
     def note_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def notebook_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def notebook_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :notebooks`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::Notebook::PrivateCollectionProxy) }
+    def notebooks; end
+
+    sig { params(value: T::Enumerable[::Notebook]).void }
+    def notebooks=(value); end
 
     # This method is created by ActiveRecord on the `Space` class because it declared `has_many :notes`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)

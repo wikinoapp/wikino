@@ -1,14 +1,14 @@
-<% title = t("meta.title.lists.show", space_name: viewer!.space_name, list_name: @list.name) %>
+<% title = t("meta.title.notebooks.show", space_name: viewer!.space_name, notebook_name: @notebook.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
     <h1 class="antialiased font-semibold text-2xl">
-      <%= @list.name %>
+      <%= @notebook.name %>
     </h1>
 
     <div>
-      <%= link_to(t("nouns.new_note"), new_note_path(viewer!.space_identifier, @list.number), class: "link") %>
+      <%= link_to(t("nouns.new_note"), new_note_path(viewer!.space_identifier, @notebook.number), class: "link") %>
     </div>
 
     <div class="gap-2 grid grid-cols-6">

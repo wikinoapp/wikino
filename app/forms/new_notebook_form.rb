@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class NewListForm < ApplicationForm
+class NewNotebookForm < ApplicationForm
   sig { returns(T.nilable(User)) }
   attr_accessor :viewer
 

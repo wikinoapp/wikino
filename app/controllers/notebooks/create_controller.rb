@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-module Lists
+module Notebooks
   class CreateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
@@ -12,26 +12,26 @@ module Lists
 
     sig { returns(T.untyped) }
     def call
-      @form = NewListForm.new(form_params.merge(viewer: viewer!))
+      @form = NewNotebookForm.new(form_params.merge(viewer: viewer!))
 
       if @form.invalid?
-        return render("lists/new/call", status: :unprocessable_entity)
+        return render("notebooks/new/call", status: :unprocessable_entity)
       end
 
-      result = CreateListUseCase.new.call(
+      result = CreateNotebookUseCase.new.call(
         viewer: viewer!,
         name: @form.name.not_nil!,
         description: @form.description.not_nil!,
         visibility: @form.visibility.not_nil!
       )
 
-      flash[:notice] = t("messages.list.created")
-      redirect_to list_path(viewer!.space_identifier, result.list.number)
+      flash[:notice] = t("messages.notebook.created")
+      redirect_to notebook_path(viewer!.space_identifier, result.notebook.number)
     end
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:new_list_form), ActionController::Parameters).permit(
+      T.cast(params.require(:new_notebook_form), ActionController::Parameters).permit(
         :name,
         :description,
         :visibility

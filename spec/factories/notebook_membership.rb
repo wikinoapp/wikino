@@ -2,19 +2,19 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :list_membership do
+  factory :notebook_membership do
     space
-    list
+    notebook
     member { association :user }
-    role { ListMemberRole::Admin.serialize }
+    role { NotebookMemberRole::Admin.serialize }
     joined_at { Time.current }
 
     trait :admin do
-      role { ListMemberRole::Admin.serialize }
+      role { NotebookMemberRole::Admin.serialize }
     end
 
     trait :member do
-      role { ListMemberRole::Member.serialize }
+      role { NotebookMemberRole::Member.serialize }
     end
   end
 end

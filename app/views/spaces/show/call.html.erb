@@ -3,8 +3,8 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <% @last_note_modified_lists.first(9).each do |list| %>
-      <%= render Cards::ListCardComponent.new(list:) %>
+    <% @last_note_modified_notebooks.first(9).each do |notebook| %>
+      <%= render Cards::NotebookCardComponent.new(notebook:) %>
     <% end %>
   <% end %>
 <% end %>

@@ -314,11 +314,11 @@ class DraftNote
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def build_editor(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def build_list(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::Note) }
     def build_note(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def build_notebook(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end
@@ -329,17 +329,17 @@ class DraftNote
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def create_editor!(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def create_list(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def create_list!(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::Note) }
     def create_note(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Note) }
     def create_note!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def create_notebook(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def create_notebook!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def create_space(*args, &blk); end
@@ -353,26 +353,26 @@ class DraftNote
     sig { params(value: T.nilable(::User)).void }
     def editor=(value); end
 
-    sig { returns(T.nilable(::List)) }
-    def list; end
-
-    sig { params(value: T.nilable(::List)).void }
-    def list=(value); end
-
     sig { returns(T.nilable(::Note)) }
     def note; end
 
     sig { params(value: T.nilable(::Note)).void }
     def note=(value); end
 
+    sig { returns(T.nilable(::Notebook)) }
+    def notebook; end
+
+    sig { params(value: T.nilable(::Notebook)).void }
+    def notebook=(value); end
+
     sig { returns(T.nilable(::User)) }
     def reload_editor; end
 
-    sig { returns(T.nilable(::List)) }
-    def reload_list; end
-
     sig { returns(T.nilable(::Note)) }
     def reload_note; end
+
+    sig { returns(T.nilable(::Notebook)) }
+    def reload_notebook; end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
@@ -381,10 +381,10 @@ class DraftNote
     def reset_editor; end
 
     sig { void }
-    def reset_list; end
+    def reset_note; end
 
     sig { void }
-    def reset_note; end
+    def reset_notebook; end
 
     sig { void }
     def reset_space; end
@@ -902,51 +902,6 @@ class DraftNote
     def linked_note_ids_will_change!; end
 
     sig { returns(::String) }
-    def list_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def list_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def list_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def list_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def list_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def list_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def list_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_was; end
-
-    sig { void }
-    def list_id_will_change!; end
-
-    sig { returns(::String) }
     def note_id; end
 
     sig { params(value: ::String).returns(::String) }
@@ -991,6 +946,51 @@ class DraftNote
     sig { void }
     def note_id_will_change!; end
 
+    sig { returns(::String) }
+    def notebook_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def notebook_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def notebook_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def notebook_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def notebook_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def notebook_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def notebook_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_was; end
+
+    sig { void }
+    def notebook_id_will_change!; end
+
     sig { void }
     def restore_body!; end
 
@@ -1013,10 +1013,10 @@ class DraftNote
     def restore_linked_note_ids!; end
 
     sig { void }
-    def restore_list_id!; end
+    def restore_note_id!; end
 
     sig { void }
-    def restore_note_id!; end
+    def restore_notebook_id!; end
 
     sig { void }
     def restore_space_id!; end
@@ -1070,16 +1070,16 @@ class DraftNote
     def saved_change_to_linked_note_ids?; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_list_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_list_id?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_note_id; end
 
     sig { returns(T::Boolean) }
     def saved_change_to_note_id?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_notebook_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_notebook_id?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_space_id; end
@@ -1256,10 +1256,10 @@ class DraftNote
     def will_save_change_to_linked_note_ids?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_list_id?; end
+    def will_save_change_to_note_id?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_note_id?; end
+    def will_save_change_to_notebook_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_space_id?; end

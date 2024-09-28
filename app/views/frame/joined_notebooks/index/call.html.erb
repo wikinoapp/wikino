@@ -1,0 +1,13 @@
+<turbo-frame id="joined_notebooks">
+  <ul>
+    <% @joined_notebooks.each do |notebook| %>
+      <li>
+        <%= link_to notebook_path(viewer!.space_identifier, notebook.number), {
+          data: {turbo_action: "advance", turbo_frame: "main-content"}
+        } do %>
+          <%= notebook.name %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</turbo-frame>

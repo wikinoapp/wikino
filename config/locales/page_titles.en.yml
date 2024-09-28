@@ -1,7 +1,6 @@
 en:
   page_titles:
-    appearance_list: Appearances
-    note: "%{note_title}"
+    note: '%{note_title}'
     forgot_password: Forgot password?
     reset_password: Reset password
     sign_in: Sign in

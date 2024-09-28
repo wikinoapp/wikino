@@ -18,8 +18,8 @@ ja:
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください
-    list:
-      created: リストを作成しました
+    notebook:
+      created: ノートブックを作成しました
     sign_out:
       callback:
         sign_out_success: ログアウトしました

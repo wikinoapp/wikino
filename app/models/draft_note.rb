@@ -5,7 +5,7 @@ class DraftNote < ApplicationRecord
   include ModelConcerns::NoteEditable
 
   belongs_to :space
-  belongs_to :list
+  belongs_to :notebook
   belongs_to :note
   belongs_to :editor, class_name: "User"
 end

@@ -22,7 +22,7 @@
             <div>
               <div class="label">
                 <span class="label-text">
-                  <%= t("forms.attributes.edit_note_form.list_number") %>
+                  <%= t("forms.attributes.edit_note_form.notebook_number") %>
                 </span>
               </div>
 
@@ -30,8 +30,8 @@
                 <div>
                   <label class="cursor-pointer flex gap-2 items-center">
                     <%= f.select(
-                      :list_number,
-                      options_from_collection_for_select(f.object.viewable_lists, :number, :name, f.object.list_number)
+                      :notebook_number,
+                      options_from_collection_for_select(f.object.viewable_notebooks, :number, :name, f.object.notebook_number)
                     ) %>
                   </label>
                 </div>

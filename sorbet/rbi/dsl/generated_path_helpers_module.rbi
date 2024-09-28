@@ -22,28 +22,28 @@ module GeneratedPathHelpersModule
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_lists_path(*args); end
+  def frame_joined_notebooks_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def lists_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def new_account_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_note_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def new_notebook_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def note_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def notebook_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def notebooks_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end

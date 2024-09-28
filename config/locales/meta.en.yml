@@ -7,9 +7,9 @@ en:
         new: Create an account
       email_confirmations:
         edit: Verification
-      lists:
-        new: New list
-        show: "%{list_name} | %{space_name}"
+      notebooks:
+        new: New notebook
+        show: '%{notebook_name} | %{space_name}'
       notes:
         edit: Edit note
       sign_in:

@@ -17,8 +17,8 @@ en:
     email_confirmations:
       confirmation_mail_sent: Confirmation mail has been sent.
       enter_code: Enter the confirmation code in the email.
-    list:
-      created: List created.
+    notebook:
+      created: Notebook created.
     sign_out:
       callback:
         sign_out_success: Signed out

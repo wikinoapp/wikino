@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Frame
-  module JoinedLists
+  module JoinedNotebooks
     class IndexController < ApplicationController
       include ControllerConcerns::Authenticatable
       include ControllerConcerns::Authorizable
@@ -12,7 +12,7 @@ module Frame
 
       sig { returns(T.untyped) }
       def call
-        @joined_lists = T.let(viewer!.lists, T.nilable(List::PrivateRelation))
+        @joined_notebooks = T.let(viewer!.notebooks, T.nilable(Notebook::PrivateRelation))
       end
     end
   end

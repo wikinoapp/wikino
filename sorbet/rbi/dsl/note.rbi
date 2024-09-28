@@ -275,8 +275,8 @@ class Note
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def build_author(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def build_list(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def build_notebook(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end
@@ -287,11 +287,11 @@ class Note
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def create_author!(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def create_list(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def create_notebook(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::List) }
-    def create_list!(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
+    def create_notebook!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def create_space(*args, &blk); end
@@ -313,17 +313,17 @@ class Note
     sig { params(value: T::Enumerable[::NoteEditorship]).void }
     def editorships=(value); end
 
-    sig { returns(T.nilable(::List)) }
-    def list; end
+    sig { returns(T.nilable(::Notebook)) }
+    def notebook; end
 
-    sig { params(value: T.nilable(::List)).void }
-    def list=(value); end
+    sig { params(value: T.nilable(::Notebook)).void }
+    def notebook=(value); end
 
     sig { returns(T.nilable(::User)) }
     def reload_author; end
 
-    sig { returns(T.nilable(::List)) }
-    def reload_list; end
+    sig { returns(T.nilable(::Notebook)) }
+    def reload_notebook; end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
@@ -332,7 +332,7 @@ class Note
     def reset_author; end
 
     sig { void }
-    def reset_list; end
+    def reset_notebook; end
 
     sig { void }
     def reset_space; end
@@ -924,51 +924,6 @@ class Note
     sig { void }
     def linked_note_ids_will_change!; end
 
-    sig { returns(::String) }
-    def list_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def list_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def list_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def list_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def list_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def list_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def list_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def list_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def list_id_was; end
-
-    sig { void }
-    def list_id_will_change!; end
-
     sig { returns(::ActiveSupport::TimeWithZone) }
     def modified_at; end
 
@@ -1013,6 +968,51 @@ class Note
 
     sig { void }
     def modified_at_will_change!; end
+
+    sig { returns(::String) }
+    def notebook_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def notebook_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def notebook_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def notebook_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def notebook_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def notebook_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def notebook_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def notebook_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def notebook_id_was; end
+
+    sig { void }
+    def notebook_id_will_change!; end
 
     sig { returns(::Integer) }
     def number; end
@@ -1139,10 +1139,10 @@ class Note
     def restore_linked_note_ids!; end
 
     sig { void }
-    def restore_list_id!; end
+    def restore_modified_at!; end
 
     sig { void }
-    def restore_modified_at!; end
+    def restore_notebook_id!; end
 
     sig { void }
     def restore_number!; end
@@ -1207,17 +1207,17 @@ class Note
     sig { returns(T::Boolean) }
     def saved_change_to_linked_note_ids?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_list_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_list_id?; end
-
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_modified_at; end
 
     sig { returns(T::Boolean) }
     def saved_change_to_modified_at?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_notebook_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_notebook_id?; end
 
     sig { returns(T.nilable([::Integer, ::Integer])) }
     def saved_change_to_number; end
@@ -1409,10 +1409,10 @@ class Note
     def will_save_change_to_linked_note_ids?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_list_id?; end
+    def will_save_change_to_modified_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_modified_at?; end
+    def will_save_change_to_notebook_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_number?; end

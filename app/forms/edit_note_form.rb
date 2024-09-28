@@ -5,21 +5,21 @@ class EditNoteForm < ApplicationForm
   sig { returns(T.nilable(User)) }
   attr_accessor :viewer
 
-  attribute :list_number, :integer
+  attribute :notebook_number, :integer
   attribute :title, :string
   attribute :body, :string, default: ""
 
-  validates :list, presence: true
+  validates :notebook, presence: true
   validates :title, presence: true
   validates :body, presence: true
 
-  sig { returns(T.nilable(List)) }
-  def list
-    viewer&.viewable_lists&.find_by(number: list_number)
+  sig { returns(T.nilable(Notebook)) }
+  def notebook
+    viewer&.viewable_notebooks&.find_by(number: notebook_number)
   end
 
-  sig { returns(List::PrivateRelation) }
-  def viewable_lists
-    viewer.not_nil!.viewable_lists
+  sig { returns(Notebook::PrivateRelation) }
+  def viewable_notebooks
+    viewer.not_nil!.viewable_notebooks
   end
 end
