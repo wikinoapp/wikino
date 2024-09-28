@@ -5,7 +5,7 @@ module FormConcerns
   module PasswordValidatable
     def self.validate(*args)
     end
-    
+
     def self.validates(*args)
     end
   end

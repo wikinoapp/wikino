@@ -2,74 +2,92 @@
 <% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
-  <div class="flex flex-row gap-4 p-4">
-    <div class="basis-3/4">
-      <h1 class="antialiased font-semibold text-2xl">
-        <%= title %>
-      </h1>
+  <div class="flex flex-col gap-4 p-4">
+    <% if @draft_note.present? %>
+      <div class="alert alert-warning" role="alert">
+        現在下書きを表示しています
+      </div>
+    <% end %>
 
-      <% if @draft_note.present? %>
-        <div class="alert alert-warning" role="alert">
-          現在下書きを表示しています
+    <%= form_with(
+      class: "flex flex-col gap-4",
+      data: { controller: "note-editor-form" },
+      model: @form,
+      method: :patch,
+      url: note_path(viewer!.space_identifier, @note.number)
+    ) do |f| %>
+      <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+
+      <div>
+        <div class="label">
+          <span class="label-text">
+            <%= t("forms.attributes.edit_note_form.notebook_number") %>
+          </span>
         </div>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <label class="cursor-pointer flex gap-2 items-center">
+              <%= f.select(
+                :notebook_number,
+                options_from_collection_for_select(f.object.viewable_notebooks, :number, :name, f.object.notebook_number),
+                {},
+                {
+                  class: "select select-bordered",
+                  data: {action: "note-editor-form#saveAsDraft"}
+                }
+              ) %>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <%= f.label :title, class: "form-control" do %>
+        <div class="label">
+          <span class="label-text">
+            <%= t("forms.attributes.edit_note_form.title") %>
+          </span>
+        </div>
+
+        <%= f.text_field(:title, {
+          class: "input input-bordered w-full",
+          data: {action: "note-editor-form#saveAsDraft"}
+        }) %>
       <% end %>
 
-      <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
-        <%= render Nonoto::UI::Card::Body.new do %>
-          <%= form_with model: @form, method: :patch, url: note_path(viewer!.space_identifier, @note.number) do |f| %>
-            <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+      <%= f.label :body, class: "form-control" do %>
+        <div class="label">
+          <span class="label-text">
+            <%= t("forms.attributes.edit_note_form.body") %>
+          </span>
+        </div>
 
-            <div>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.edit_note_form.notebook_number") %>
-                </span>
-              </div>
+        <%= f.text_area(:body, {
+          class: "textarea textarea-bordered w-full",
+          data: {action: "note-editor-form#saveAsDraft"}
+        }) %>
+      <% end %>
 
-              <div class="flex flex-col gap-4">
-                <div>
-                  <label class="cursor-pointer flex gap-2 items-center">
-                    <%= f.select(
-                      :notebook_number,
-                      options_from_collection_for_select(f.object.viewable_notebooks, :number, :name, f.object.notebook_number)
-                    ) %>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <%= f.label :title, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.edit_note_form.title") %>
-                </span>
-              </div>
-
-              <%= f.text_field(:title, class: "input input-bordered w-full") %>
-            <% end %>
-
-            <%= f.label :body, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.edit_note_form.body") %>
-                </span>
-              </div>
-
-              <%= f.text_area(:body, class: "input input-bordered w-full") %>
-            <% end %>
-
-            <div class="mt-8 text-center">
-              <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-                <%= t("verbs.save") %>
-              <% end %>
-            </div>
+      <div class="flex gap-4 items-center">
+        <div>
+          <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
+            <%= t("verbs.save") %>
           <% end %>
-        <% end %>
-      <% end %>
-    </div>
 
-    <div class="basis-1/4">
-      <%= render Sidebars::NoteSidebarComponent.new(link_list: @link_list, backlink_list: @backlink_list)  %>
-    </div>
+          <input
+            class="hidden"
+            data-note-editor-form-target="draftSaveButton"
+            formaction="<%= draft_note_path(viewer!.space_identifier, @note.number) %>"
+            type="submit"
+          >
+        </div>
+
+        <turbo-frame id="note-editor-draft-saved-time"></turbo-frame>
+      </div>
+    <% end %>
+
+    <turbo-frame id="note-editor-link-list">
+      <%= render Footers::NoteFooterComponent.new(link_list: @link_list, backlink_list: @backlink_list)  %>
+    </turbo-frame>
   </div>
 <% end %>

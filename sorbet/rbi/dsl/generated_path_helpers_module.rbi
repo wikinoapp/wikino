@@ -13,6 +13,9 @@ module GeneratedPathHelpersModule
   def accounts_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def draft_note_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def edit_email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

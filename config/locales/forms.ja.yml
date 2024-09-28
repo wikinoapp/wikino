@@ -6,6 +6,7 @@ ja:
         password: パスワード
         space_identifier: 識別子
       edit_note_form:
+        notebook_number: ノートブック
         title: タイトル
         body: 本文
       email_confirmation_form:

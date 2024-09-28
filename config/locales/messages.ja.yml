@@ -15,6 +15,7 @@ ja:
         に同意のうえでアカウントを作成してください
     authentication:
       already_signed_in: すでにログインしています
+    draft_saved_time_html: '下書き保存: <span class="font-bold">%{time}</span>'
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください

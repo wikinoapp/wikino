@@ -901,6 +901,51 @@ class DraftNote
     sig { void }
     def linked_note_ids_will_change!; end
 
+    sig { returns(::ActiveSupport::TimeWithZone) }
+    def modified_at; end
+
+    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
+    def modified_at=(value); end
+
+    sig { returns(T::Boolean) }
+    def modified_at?; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def modified_at_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def modified_at_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def modified_at_came_from_user?; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def modified_at_change; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def modified_at_change_to_be_saved; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def modified_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def modified_at_in_database; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def modified_at_previous_change; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def modified_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def modified_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def modified_at_was; end
+
+    sig { void }
+    def modified_at_will_change!; end
+
     sig { returns(::String) }
     def note_id; end
 
@@ -1013,6 +1058,9 @@ class DraftNote
     def restore_linked_note_ids!; end
 
     sig { void }
+    def restore_modified_at!; end
+
+    sig { void }
     def restore_note_id!; end
 
     sig { void }
@@ -1068,6 +1116,12 @@ class DraftNote
 
     sig { returns(T::Boolean) }
     def saved_change_to_linked_note_ids?; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def saved_change_to_modified_at; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_modified_at?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_note_id; end
@@ -1254,6 +1308,9 @@ class DraftNote
 
     sig { returns(T::Boolean) }
     def will_save_change_to_linked_note_ids?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_modified_at?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_note_id?; end

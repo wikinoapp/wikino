@@ -6,6 +6,7 @@ en:
         password: Password
         space_identifier: Identifier
       edit_note_form:
+        notebook_number: Notebook
         title: Title
         body: Body
       email_confirmation_form:

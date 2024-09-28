@@ -23,30 +23,6 @@ class Note < ApplicationRecord
   #   user&.notes_except(self)&.find_by(title:)
   # end
 
-  T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
-  def linked_notes
-    Note.where(id: linked_note_ids)
-  end
-
-  T::Sig::WithoutRuntime.sig { returns(Note::PrivateRelation) }
-  def backlinked_notes
-    Note.where("'#{id}' = ANY (linked_note_ids)")
-  end
-
-  sig { returns(T::Array[String]) }
-  def titles_in_body
-    body.scan(%r{\[\[(.*?)\]\]}).flatten
-  end
-
-  sig { params(editor: User).void }
-  def link!(editor:)
-    linked_notes = titles_in_body.map do |title|
-      editor.create_linked_note!(notebook: notebook.not_nil!, title:)
-    end
-
-    update!(linked_note_ids: linked_notes.pluck(:id))
-  end
-
   sig { params(editor: User).void }
   def add_editor!(editor:)
     editorships.where(space:, editor:).first_or_create!(

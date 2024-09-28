@@ -6,10 +6,22 @@ module ModelConcerns
     def backlinked_notes
     end
 
+    def body
+    end
+
     def id
     end
 
+    def linked_note_ids
+    end
+
     def linked_notes
+    end
+
+    def notebook
+    end
+
+    def update!(*args)
     end
   end
 end

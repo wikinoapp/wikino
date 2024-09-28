@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   match "/email_confirmation/edit",                                  via: :get,    as: :edit_email_confirmation, to: "email_confirmations/edit#call"
   match "/frame/joined_notebooks",                                   via: :get,    as: :frame_joined_notebooks,  to: "frame/joined_notebooks/index#call"
   match "/s/:space_identifier",                                      via: :get,    as: :space,                   to: "spaces/show#call"
+  match "/s/:space_identifier/draft_notes/:note_number",             via: :patch,  as: :draft_note,              to: "draft_notes/update#call",             note_number: /\d+/
   match "/s/:space_identifier/notebooks",                            via: :post,   as: :notebooks,               to: "notebooks/create#call"
   match "/s/:space_identifier/notebooks/:notebook_number",           via: :get,    as: :notebook,                to: "notebooks/show#call",                 notebook_number: /\d+/
   match "/s/:space_identifier/notebooks/:notebook_number/notes/new", via: :get,    as: :new_note,                to: "notes/new#call",                      notebook_number: /\d+/

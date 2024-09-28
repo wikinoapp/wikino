@@ -132,6 +132,21 @@ class User < ApplicationRecord
     )
   end
 
+  sig { params(note: Note).returns(DraftNote) }
+  def find_or_create_draft_note!(note:)
+    draft_notes.create_with(
+      space:,
+      notebook: note.notebook,
+      title: note.title,
+      body: note.body,
+      body_html: note.body_html,
+      linked_note_ids: note.linked_note_ids,
+      modified_at: Time.zone.now
+    ).find_or_create_by!(note:)
+  rescue ActiveRecord::RecordNotUnique
+    retry
+  end
+
   sig { params(notebook: Notebook, title: String).returns(Note) }
   def create_linked_note!(notebook:, title:)
     notes.where(notebook:, title:).first_or_create!(

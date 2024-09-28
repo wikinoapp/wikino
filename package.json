@@ -12,7 +12,8 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@hotwired/turbo": "^8.0.5",
-    "esbuild": "^0.23.0"
+    "esbuild": "^0.23.0",
+    "stimulus-use": "^0.52.2"
   },
   "devDependencies": {
     "daisyui": "^4.12.10",

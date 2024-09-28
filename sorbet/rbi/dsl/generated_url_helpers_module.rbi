@@ -13,6 +13,9 @@ module GeneratedUrlHelpersModule
   def accounts_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def draft_note_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def edit_email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

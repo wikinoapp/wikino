@@ -78,6 +78,7 @@ CREATE TABLE public.draft_notes (
     body public.citext NOT NULL,
     body_html text NOT NULL,
     linked_note_ids character varying[] NOT NULL,
+    modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );

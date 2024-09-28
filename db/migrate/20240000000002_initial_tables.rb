@@ -133,6 +133,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.citext :body, null: false
       t.text :body_html, null: false
       t.string :linked_note_ids, array: true, index: {using: "gin"}, null: false
+      t.datetime :modified_at, null: false
       t.timestamps
 
       t.index %i[editor_id note_id], unique: true
