@@ -147,6 +147,13 @@ class User < ApplicationRecord
     retry
   end
 
+  sig { params(note: Note).void }
+  def destroy_draft_note!(note:)
+    draft_notes.where(note:).destroy_all
+
+    nil
+  end
+
   sig { params(notebook: Notebook, title: String).returns(Note) }
   def create_linked_note!(notebook:, title:)
     notes.where(notebook:, title:).first_or_create!(

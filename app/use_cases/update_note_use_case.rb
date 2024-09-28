@@ -24,6 +24,7 @@ class UpdateNoteUseCase < ApplicationUseCase
       note.add_editor!(editor: viewer)
       note.create_revision!(editor: viewer, body:, body_html: body)
       note.link!(editor: viewer)
+      viewer.destroy_draft_note!(note:)
 
       note
     end
