@@ -19,7 +19,7 @@ module DraftNotes
       result = UpdateDraftNoteUseCase.new.call(
         viewer: viewer!,
         note: @note.not_nil!,
-        notebook_number: form_params[:notebook_number],
+        topic_number: form_params[:topic_number],
         title: form_params[:title],
         body: form_params[:body]
       )
@@ -33,7 +33,7 @@ module DraftNotes
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:edit_note_form), ActionController::Parameters).permit(
-        :notebook_number,
+        :topic_number,
         :title,
         :body
       )

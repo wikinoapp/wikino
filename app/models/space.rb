@@ -16,7 +16,7 @@ class Space < ApplicationRecord
     Plan::Large.serialize => 2
   }, prefix: true
 
-  has_many :notebooks, dependent: :restrict_with_exception
+  has_many :topics, dependent: :restrict_with_exception
   has_many :notes, dependent: :restrict_with_exception
   has_many :users, dependent: :restrict_with_exception
 

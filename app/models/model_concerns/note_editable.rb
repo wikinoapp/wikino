@@ -76,7 +76,7 @@ module ModelConcerns
     sig { params(editor: User).void }
     def link!(editor:)
       linked_notes = titles_in_body.map do |title|
-        editor.create_linked_note!(notebook: notebook.not_nil!, title:)
+        editor.create_linked_note!(topic: topic.not_nil!, title:)
       end
 
       update!(linked_note_ids: linked_notes.pluck(:id))

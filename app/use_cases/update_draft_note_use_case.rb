@@ -10,19 +10,19 @@ class UpdateDraftNoteUseCase < ApplicationUseCase
     params(
       viewer: User,
       note: Note,
-      notebook_number: T.nilable(String),
+      topic_number: T.nilable(String),
       title: T.nilable(String),
       body: T.nilable(String)
     ).returns(Result)
   end
-  def call(viewer:, note:, notebook_number:, title:, body:)
+  def call(viewer:, note:, topic_number:, title:, body:)
     updated_draft_note = ActiveRecord::Base.transaction do
       draft_note = viewer.find_or_create_draft_note!(note:)
-      notebook = viewer.viewable_notebooks.find_by(number: notebook_number).presence || note.notebook
+      topic = viewer.viewable_topics.find_by(number: topic_number).presence || note.topic
       new_body = body.presence || ""
 
       draft_note.attributes = {
-        notebook:,
+        topic:,
         title:,
         body: new_body,
         body_html: Markup.new(text: new_body).render_html,

@@ -4,7 +4,7 @@
 FactoryBot.define do
   factory :note do
     space
-    notebook
+    topic
     sequence(:number) { |n| n }
     sequence(:title) { |n| "Note #{n}" }
     sequence(:body) { |n| "Body #{n}" }

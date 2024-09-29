@@ -1,0 +1,7 @@
+<%= render Nonoto::UI::Card.new(class_name:) do %>
+  <%= render Nonoto::UI::Card::Body.new do %>
+    <%= link_to topic_path(viewer!.space_identifier, topic.number) do %>
+      <%= topic.name %>
+    <% end %>
+  <% end %>
+<% end %>

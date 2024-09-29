@@ -21,7 +21,7 @@
       <div>
         <div class="label">
           <span class="label-text">
-            <%= t("forms.attributes.edit_note_form.notebook_number") %>
+            <%= t("forms.attributes.edit_note_form.topic_number") %>
           </span>
         </div>
 
@@ -29,8 +29,8 @@
           <div>
             <label class="cursor-pointer flex gap-2 items-center">
               <%= f.select(
-                :notebook_number,
-                options_from_collection_for_select(f.object.viewable_notebooks, :number, :name, f.object.notebook_number),
+                :topic_number,
+                options_from_collection_for_select(f.object.viewable_topics, :number, :name, f.object.topic_number),
                 {},
                 {
                   class: "select select-bordered",

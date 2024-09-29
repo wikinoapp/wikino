@@ -12,13 +12,13 @@ Rails.application.routes.draw do
   match "/email_confirmation",                                       via: :patch,  as: :email_confirmation,      to: "email_confirmations/update#call"
   match "/email_confirmation",                                       via: :post,                                 to: "email_confirmations/create#call"
   match "/email_confirmation/edit",                                  via: :get,    as: :edit_email_confirmation, to: "email_confirmations/edit#call"
-  match "/frame/joined_notebooks",                                   via: :get,    as: :frame_joined_notebooks,  to: "frame/joined_notebooks/index#call"
+  match "/frame/joined_topics",                                   via: :get,    as: :frame_joined_topics,  to: "frame/joined_topics/index#call"
   match "/s/:space_identifier",                                      via: :get,    as: :space,                   to: "spaces/show#call"
   match "/s/:space_identifier/draft_notes/:note_number",             via: :patch,  as: :draft_note,              to: "draft_notes/update#call",             note_number: /\d+/
-  match "/s/:space_identifier/notebooks",                            via: :post,   as: :notebooks,               to: "notebooks/create#call"
-  match "/s/:space_identifier/notebooks/:notebook_number",           via: :get,    as: :notebook,                to: "notebooks/show#call",                 notebook_number: /\d+/
-  match "/s/:space_identifier/notebooks/:notebook_number/notes/new", via: :get,    as: :new_note,                to: "notes/new#call",                      notebook_number: /\d+/
-  match "/s/:space_identifier/notebooks/new",                        via: :get,    as: :new_notebook,            to: "notebooks/new#call"
+  match "/s/:space_identifier/topics",                            via: :post,   as: :topics,               to: "topics/create#call"
+  match "/s/:space_identifier/topics/:topic_number",           via: :get,    as: :topic,                to: "topics/show#call",                 topic_number: /\d+/
+  match "/s/:space_identifier/topics/:topic_number/notes/new", via: :get,    as: :new_note,                to: "notes/new#call",                      topic_number: /\d+/
+  match "/s/:space_identifier/topics/new",                        via: :get,    as: :new_topic,            to: "topics/new#call"
   match "/s/:space_identifier/notes/:note_number",                   via: :get,    as: :note,                    to: "notes/show#call",                     note_number: /\d+/
   match "/s/:space_identifier/notes/:note_number",                   via: :patch,                                to: "notes/update#call",                   note_number: /\d+/
   match "/s/:space_identifier/notes/:note_number/edit",              via: :get,    as: :edit_note,               to: "notes/edit#call",                     note_number: /\d+/

@@ -12,7 +12,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      @last_note_modified_notebooks = T.let(viewer!.last_note_modified_notebooks.limit(10), T.nilable(Notebook::PrivateRelation))
+      @last_note_modified_topics = T.let(viewer!.last_note_modified_topics.limit(10), T.nilable(Topic::PrivateRelation))
       @last_modified_notes = T.let(viewer!.last_modified_notes.limit(31), T.nilable(Note::PrivateRelation))
     end
   end

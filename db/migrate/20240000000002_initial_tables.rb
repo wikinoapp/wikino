@@ -63,7 +63,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    create_table :notebooks, id: false do |t|
+    create_table :topics, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.integer :number, null: false
@@ -77,22 +77,22 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[space_id discarded_at]
     end
 
-    create_table :notebook_memberships, id: false do |t|
+    create_table :topic_memberships, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :notebook, foreign_key: true, null: false, type: :uuid
+      t.references :topic, foreign_key: true, null: false, type: :uuid
       t.references :member, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :role, null: false
       t.timestamp :joined_at, null: false
       t.datetime :last_note_modified_at
 
-      t.index %i[notebook_id member_id], unique: true
+      t.index %i[topic_id member_id], unique: true
     end
 
     create_table :notes, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
-      t.references :notebook, foreign_key: true, null: false, type: :uuid
+      t.references :topic, foreign_key: true, null: false, type: :uuid
       t.integer :number, null: false
       t.citext :title
       t.citext :body, null: false
@@ -108,7 +108,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.index %i[space_id modified_at]
       t.index %i[space_id published_at]
       t.index %i[space_id archived_at]
-      t.index %i[notebook_id title], unique: true
+      t.index %i[topic_id title], unique: true
     end
 
     create_table :note_editorships, id: false do |t|
@@ -127,7 +127,7 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :note, foreign_key: true, null: false, type: :uuid
       t.references :editor, foreign_key: {to_table: :users}, null: false, type: :uuid
-      t.references :notebook, foreign_key: true, null: false, type: :uuid
+      t.references :topic, foreign_key: true, null: false, type: :uuid
       t.citext :title
       t.citext :body, null: false
       t.text :body_html, null: false

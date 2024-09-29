@@ -21,7 +21,7 @@ module Notes
 
       @form = EditNoteForm.new(
         viewer: viewer!,
-        notebook_number: note_editable.notebook.number,
+        topic_number: note_editable.topic.number,
         title: note_editable.title,
         body: note_editable.body
       )

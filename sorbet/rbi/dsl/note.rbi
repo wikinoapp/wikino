@@ -266,23 +266,23 @@ class Note
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
-    def build_notebook(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
-    def create_notebook(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
-    def create_notebook!(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
+    def build_topic(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def create_space(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def create_space!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
+    def create_topic(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
+    def create_topic!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
     def editorship_ids; end
@@ -298,23 +298,17 @@ class Note
     sig { params(value: T::Enumerable[::NoteEditorship]).void }
     def editorships=(value); end
 
-    sig { returns(T.nilable(::Notebook)) }
-    def notebook; end
-
-    sig { params(value: T.nilable(::Notebook)).void }
-    def notebook=(value); end
-
-    sig { returns(T.nilable(::Notebook)) }
-    def reload_notebook; end
-
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
 
-    sig { void }
-    def reset_notebook; end
+    sig { returns(T.nilable(::Topic)) }
+    def reload_topic; end
 
     sig { void }
     def reset_space; end
+
+    sig { void }
+    def reset_topic; end
 
     sig { returns(T::Array[T.untyped]) }
     def revision_ids; end
@@ -335,6 +329,12 @@ class Note
 
     sig { params(value: T.nilable(::Space)).void }
     def space=(value); end
+
+    sig { returns(T.nilable(::Topic)) }
+    def topic; end
+
+    sig { params(value: T.nilable(::Topic)).void }
+    def topic=(value); end
   end
 
   module GeneratedAssociationRelationMethods
@@ -903,51 +903,6 @@ class Note
     sig { void }
     def modified_at_will_change!; end
 
-    sig { returns(::String) }
-    def notebook_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def notebook_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def notebook_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def notebook_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def notebook_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def notebook_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def notebook_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def notebook_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def notebook_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def notebook_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def notebook_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def notebook_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def notebook_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def notebook_id_was; end
-
-    sig { void }
-    def notebook_id_will_change!; end
-
     sig { returns(::Integer) }
     def number; end
 
@@ -1073,9 +1028,6 @@ class Note
     def restore_modified_at!; end
 
     sig { void }
-    def restore_notebook_id!; end
-
-    sig { void }
     def restore_number!; end
 
     sig { void }
@@ -1086,6 +1038,9 @@ class Note
 
     sig { void }
     def restore_title!; end
+
+    sig { void }
+    def restore_topic_id!; end
 
     sig { void }
     def restore_updated_at!; end
@@ -1138,12 +1093,6 @@ class Note
     sig { returns(T::Boolean) }
     def saved_change_to_modified_at?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_notebook_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_notebook_id?; end
-
     sig { returns(T.nilable([::Integer, ::Integer])) }
     def saved_change_to_number; end
 
@@ -1167,6 +1116,12 @@ class Note
 
     sig { returns(T::Boolean) }
     def saved_change_to_title?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_topic_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_topic_id?; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
@@ -1264,6 +1219,51 @@ class Note
     sig { void }
     def title_will_change!; end
 
+    sig { returns(::String) }
+    def topic_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def topic_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def topic_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def topic_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def topic_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def topic_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def topic_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def topic_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def topic_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def topic_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def topic_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def topic_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def topic_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def topic_id_was; end
+
+    sig { void }
+    def topic_id_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
 
@@ -1334,9 +1334,6 @@ class Note
     def will_save_change_to_modified_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_notebook_id?; end
-
-    sig { returns(T::Boolean) }
     def will_save_change_to_number?; end
 
     sig { returns(T::Boolean) }
@@ -1347,6 +1344,9 @@ class Note
 
     sig { returns(T::Boolean) }
     def will_save_change_to_title?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_topic_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_updated_at?; end

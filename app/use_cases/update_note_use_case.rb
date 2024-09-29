@@ -6,12 +6,12 @@ class UpdateNoteUseCase < ApplicationUseCase
     const :note, Note
   end
 
-  sig { params(viewer: User, note: Note, notebook: Notebook, title: String, body: String).returns(Result) }
-  def call(viewer:, note:, notebook:, title:, body:)
+  sig { params(viewer: User, note: Note, topic: Topic, title: String, body: String).returns(Result) }
+  def call(viewer:, note:, topic:, title:, body:)
     now = Time.zone.now
 
     note.attributes = {
-      notebook:,
+      topic:,
       title:,
       body:,
       body_html: Markup.new(text: body).render_html,

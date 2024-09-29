@@ -25,7 +25,7 @@ module Notes
       result = UpdateNoteUseCase.new.call(
         viewer: viewer!,
         note: @note.not_nil!,
-        notebook: @form.notebook.not_nil!,
+        topic: @form.topic.not_nil!,
         title: @form.title.not_nil!,
         body: @form.body.not_nil!
       )
@@ -37,7 +37,7 @@ module Notes
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:edit_note_form), ActionController::Parameters).permit(
-        :notebook_number,
+        :topic_number,
         :title,
         :body
       )

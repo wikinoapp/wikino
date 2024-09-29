@@ -6,10 +6,10 @@ class CreateInitialNoteUseCase < ApplicationUseCase
     const :note, Note
   end
 
-  sig { params(notebook: Notebook, viewer: User).returns(Result) }
-  def call(notebook:, viewer:)
+  sig { params(topic: Topic, viewer: User).returns(Result) }
+  def call(topic:, viewer:)
     note = ActiveRecord::Base.transaction do
-      new_note = Note.create_as_initial!(notebook:)
+      new_note = Note.create_as_initial!(topic:)
       new_note.add_editor!(editor: viewer)
       new_note
     end

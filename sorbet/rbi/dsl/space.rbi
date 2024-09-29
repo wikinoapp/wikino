@@ -298,20 +298,6 @@ class Space
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
     def note_ids=(ids); end
 
-    sig { returns(T::Array[T.untyped]) }
-    def notebook_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def notebook_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :notebooks`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::Notebook::PrivateCollectionProxy) }
-    def notebooks; end
-
-    sig { params(value: T::Enumerable[::Notebook]).void }
-    def notebooks=(value); end
-
     # This method is created by ActiveRecord on the `Space` class because it declared `has_many :notes`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
     sig { returns(::Note::PrivateCollectionProxy) }
@@ -319,6 +305,20 @@ class Space
 
     sig { params(value: T::Enumerable[::Note]).void }
     def notes=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def topic_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def topic_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :topics`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::Topic::PrivateCollectionProxy) }
+    def topics; end
+
+    sig { params(value: T::Enumerable[::Topic]).void }
+    def topics=(value); end
 
     sig { returns(T::Array[T.untyped]) }
     def user_ids; end

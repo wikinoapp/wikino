@@ -2,49 +2,49 @@
 # frozen_string_literal: true
 
 RSpec.describe User, type: :model do
-  describe "#viewable_notebooks" do
-    context "リストが存在するとき" do
+  describe "#viewable_topics" do
+    context "トピックが存在するとき" do
       let!(:space) { create(:space) }
       let!(:viewer) { create(:user, space:) }
-      let!(:notebook_a) { create(:notebook, :public, space:, name: "リストA") }
-      let!(:notebook_b) { create(:notebook, :private, space:, name: "リストB") }
-      let!(:notebook_c) { create(:notebook, :private, space:, name: "リストC") }
+      let!(:topic_a) { create(:topic, :public, space:, name: "トピックA") }
+      let!(:topic_b) { create(:topic, :private, space:, name: "トピックB") }
+      let!(:topic_c) { create(:topic, :private, space:, name: "トピックC") }
 
       before do
-        create(:notebook, :private, space:, name: "リストD")
+        create(:topic, :private, space:, name: "トピックD")
 
-        create(:notebook_membership, :admin, space:, notebook: notebook_b, member: viewer)
-        create(:notebook_membership, :member, space:, notebook: notebook_c, member: viewer)
+        create(:topic_membership, :admin, space:, topic: topic_b, member: viewer)
+        create(:topic_membership, :member, space:, topic: topic_c, member: viewer)
       end
 
-      it "閲覧可能なリストを返すこと" do
-        expect(viewer.viewable_notebooks).to contain_exactly(notebook_a, notebook_b, notebook_c)
+      it "閲覧可能なトピックを返すこと" do
+        expect(viewer.viewable_topics).to contain_exactly(topic_a, topic_b, topic_c)
       end
     end
   end
 
-  describe "#last_note_modified_notebooks" do
-    context "リストが存在するとき" do
+  describe "#last_note_modified_topics" do
+    context "トピックが存在するとき" do
       let!(:space) { create(:space) }
       let!(:viewer) { create(:user, space:) }
-      let!(:notebook_a) { create(:notebook, space:, name: "リストA") }
-      let!(:notebook_b) { create(:notebook, space:, name: "リストB") }
-      let!(:notebook_c) { create(:notebook, space:, name: "リストC") }
-      let!(:notebook_d) { create(:notebook, space:, name: "リストD") }
+      let!(:topic_a) { create(:topic, space:, name: "トピックA") }
+      let!(:topic_b) { create(:topic, space:, name: "トピックB") }
+      let!(:topic_c) { create(:topic, space:, name: "トピックC") }
+      let!(:topic_d) { create(:topic, space:, name: "トピックD") }
 
       before do
-        create(:notebook, space:, name: "リストE")
+        create(:topic, space:, name: "トピックE")
 
-        create(:notebook_membership, space:, notebook: notebook_a, member: viewer, joined_at: Time.zone.parse("2024-08-18 0:00:00"), last_note_modified_at: nil)
-        create(:notebook_membership, space:, notebook: notebook_b, member: viewer, joined_at: Time.zone.parse("2024-08-18 1:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 0:00:00"))
-        create(:notebook_membership, space:, notebook: notebook_c, member: viewer, joined_at: Time.zone.parse("2024-08-18 2:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 1:00:00"))
-        create(:notebook_membership, space:, notebook: notebook_d, member: viewer, joined_at: Time.zone.parse("2024-08-18 3:00:00"), last_note_modified_at: nil)
+        create(:topic_membership, space:, topic: topic_a, member: viewer, joined_at: Time.zone.parse("2024-08-18 0:00:00"), last_note_modified_at: nil)
+        create(:topic_membership, space:, topic: topic_b, member: viewer, joined_at: Time.zone.parse("2024-08-18 1:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 0:00:00"))
+        create(:topic_membership, space:, topic: topic_c, member: viewer, joined_at: Time.zone.parse("2024-08-18 2:00:00"), last_note_modified_at: Time.zone.parse("2024-08-19 1:00:00"))
+        create(:topic_membership, space:, topic: topic_d, member: viewer, joined_at: Time.zone.parse("2024-08-18 3:00:00"), last_note_modified_at: nil)
       end
 
-      it "記事が編集された順にリストが取得できること" do
+      it "記事が編集された順にトピックが取得できること" do
         expect(
-          viewer.last_note_modified_notebooks.pluck(:name)
-        ).to eq(%w[リストC リストB リストD リストA])
+          viewer.last_note_modified_topics.pluck(:name)
+        ).to eq(%w[トピックC トピックB トピックD トピックA])
       end
     end
   end
@@ -54,10 +54,10 @@ RSpec.describe User, type: :model do
       let!(:space) { create(:space) }
       let!(:user_a) { create(:user, space:) }
       let!(:user_b) { create(:user, space:) }
-      let!(:notebook) { create(:notebook, space:) }
-      let!(:note_a) { create(:note, space:, notebook:, title: "ノートA") }
-      let!(:note_b) { create(:note, space:, notebook:, title: "ノートB") }
-      let!(:note_c) { create(:note, space:, notebook:, title: "ノートC") }
+      let!(:topic) { create(:topic, space:) }
+      let!(:note_a) { create(:note, space:, topic:, title: "ノートA") }
+      let!(:note_b) { create(:note, space:, topic:, title: "ノートB") }
+      let!(:note_c) { create(:note, space:, topic:, title: "ノートC") }
 
       before do
         create(:note_editorship, space:, note: note_a, editor: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 0:00:00"))

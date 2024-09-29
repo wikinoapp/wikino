@@ -6,14 +6,14 @@ en:
         password: Password
         space_identifier: Identifier
       edit_note_form:
-        notebook_number: Notebook
+        topic_number: Topic
         title: Title
         body: Body
       email_confirmation_form:
         confirmation_code: Confirmation code
       new_email_confirmation_form:
         email: Email
-      new_notebook_form:
+      new_topic_form:
         identifier: Identifier
         visibility: Visibility
         name: Name

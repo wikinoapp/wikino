@@ -12,15 +12,15 @@ class EditNoteForm
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
   def body=(value); end
 
-  sig { returns(T.nilable(::Integer)) }
-  def notebook_number; end
-
-  sig { params(value: T.nilable(::Integer)).returns(T.nilable(::Integer)) }
-  def notebook_number=(value); end
-
   sig { returns(T.nilable(::String)) }
   def title; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
   def title=(value); end
+
+  sig { returns(T.nilable(::Integer)) }
+  def topic_number; end
+
+  sig { params(value: T.nilable(::Integer)).returns(T.nilable(::Integer)) }
+  def topic_number=(value); end
 end

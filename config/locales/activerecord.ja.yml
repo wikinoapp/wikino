@@ -3,7 +3,7 @@ ja:
     attributes:
       note:
         mutation_error: ''
-      notebook:
+      topic:
         visibility:
           private: 非公開
           public: 公開

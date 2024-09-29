@@ -18,7 +18,7 @@ module ModelConcerns
     def linked_notes
     end
 
-    def notebook
+    def topic
     end
 
     def update!(*args)

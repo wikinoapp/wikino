@@ -25,7 +25,7 @@ module GeneratedUrlHelpersModule
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_notebooks_url(*args); end
+  def frame_joined_topics_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
@@ -37,16 +37,10 @@ module GeneratedUrlHelpersModule
   def new_note_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def new_notebook_url(*args); end
+  def new_topic_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def note_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def notebook_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def notebooks_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
@@ -83,4 +77,10 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def topic_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def topics_url(*args); end
 end

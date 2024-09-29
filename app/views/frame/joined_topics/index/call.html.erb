@@ -1,0 +1,13 @@
+<turbo-frame id="joined_topics">
+  <ul>
+    <% @joined_topics.each do |topic| %>
+      <li>
+        <%= link_to topic_path(viewer!.space_identifier, topic.number), {
+          data: {turbo_action: "advance", turbo_frame: "main-content"}
+        } do %>
+          <%= topic.name %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</turbo-frame>

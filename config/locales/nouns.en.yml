@@ -9,9 +9,9 @@ en:
     links: Links
     modified_at: Modified at
     new_note: New note
-    new_notebook: New notebook
+    new_topic: New topic
     next_page: Next
-    notebooks: Notebooks
+    topics: Topics
     prev_page: Prev
     sign_in: Sign in
     sign_out: Sign out

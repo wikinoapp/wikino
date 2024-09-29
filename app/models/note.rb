@@ -6,7 +6,7 @@ class Note < ApplicationRecord
 
   acts_as_sequenced column: :number, scope: :space_id
 
-  belongs_to :notebook
+  belongs_to :topic
   belongs_to :space
   has_many :editorships, class_name: "NoteEditorship", dependent: :restrict_with_exception
   has_many :revisions, class_name: "NoteRevision", dependent: :restrict_with_exception
@@ -22,10 +22,10 @@ class Note < ApplicationRecord
   #   user&.notes_except(self)&.find_by(title:)
   # end
 
-  sig { params(notebook: Notebook).returns(Note) }
-  def self.create_as_initial!(notebook:)
-    initial.where(notebook:).first_or_create!(
-      space: notebook.space,
+  sig { params(topic: Topic).returns(Note) }
+  def self.create_as_initial!(topic:)
+    initial.where(topic:).first_or_create!(
+      space: topic.space,
       title: nil,
       body: "",
       body_html: "",
