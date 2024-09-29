@@ -21,8 +21,8 @@ class User < ApplicationRecord
 
   belongs_to :space
   has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :notes, dependent: :restrict_with_exception, foreign_key: :author_id, inverse_of: :author
   has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :notes, through: :note_editorships
   has_many :notebook_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :notebooks, through: :notebook_memberships
   has_many :sessions, dependent: :restrict_with_exception
@@ -118,18 +118,6 @@ class User < ApplicationRecord
     end
 
     nil
-  end
-
-  sig { params(notebook: Notebook).returns(Note) }
-  def create_initial_note!(notebook:)
-    notes.initial.where(notebook:).first_or_create!(
-      space:,
-      title: nil,
-      body: "",
-      body_html: "",
-      linked_note_ids: [],
-      modified_at: Time.current
-    )
   end
 
   sig { params(note: Note).returns(DraftNote) }

@@ -93,7 +93,6 @@ class InitialTables < ActiveRecord::Migration[7.1]
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
       t.references :notebook, foreign_key: true, null: false, type: :uuid
-      t.references :author, foreign_key: {to_table: :users}, null: false, type: :uuid
       t.integer :number, null: false
       t.citext :title
       t.citext :body, null: false

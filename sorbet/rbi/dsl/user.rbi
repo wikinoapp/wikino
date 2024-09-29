@@ -375,8 +375,8 @@ class User
     sig { params(value: T::Enumerable[::Notebook]).void }
     def notebooks=(value); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :notes`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :notes, through: :note_editorships`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
     sig { returns(::Note::PrivateCollectionProxy) }
     def notes; end
 

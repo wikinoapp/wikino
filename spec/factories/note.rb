@@ -5,7 +5,6 @@ FactoryBot.define do
   factory :note do
     space
     notebook
-    author { association :user }
     sequence(:number) { |n| n }
     sequence(:title) { |n| "Note #{n}" }
     sequence(:body) { |n| "Body #{n}" }

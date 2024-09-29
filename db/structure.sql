@@ -169,7 +169,6 @@ CREATE TABLE public.notes (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     notebook_id uuid NOT NULL,
-    author_id uuid NOT NULL,
     number integer NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
@@ -533,13 +532,6 @@ CREATE UNIQUE INDEX index_notebooks_on_space_id_and_number ON public.notebooks U
 
 
 --
--- Name: index_notes_on_author_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_author_id ON public.notes USING btree (author_id);
-
-
---
 -- Name: index_notes_on_linked_note_ids; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -731,14 +723,6 @@ ALTER TABLE ONLY public.sessions
 
 ALTER TABLE ONLY public.note_revisions
     ADD CONSTRAINT fk_rails_1369420e41 FOREIGN KEY (editor_id) REFERENCES public.users(id);
-
-
---
--- Name: notes fk_rails_36c9deba43; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_36c9deba43 FOREIGN KEY (author_id) REFERENCES public.users(id);
 
 
 --

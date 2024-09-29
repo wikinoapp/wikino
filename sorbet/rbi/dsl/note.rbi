@@ -266,26 +266,11 @@ class Note
   end
 
   module GeneratedAssociationMethods
-    sig { returns(T.nilable(::User)) }
-    def author; end
-
-    sig { params(value: T.nilable(::User)).void }
-    def author=(value); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def build_author(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
     def build_notebook(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def create_author(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
-    def create_author!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Notebook) }
     def create_notebook(*args, &blk); end
@@ -319,17 +304,11 @@ class Note
     sig { params(value: T.nilable(::Notebook)).void }
     def notebook=(value); end
 
-    sig { returns(T.nilable(::User)) }
-    def reload_author; end
-
     sig { returns(T.nilable(::Notebook)) }
     def reload_notebook; end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
-
-    sig { void }
-    def reset_author; end
 
     sig { void }
     def reset_notebook; end
@@ -608,51 +587,6 @@ class Note
 
     sig { void }
     def archived_at_will_change!; end
-
-    sig { returns(::String) }
-    def author_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def author_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def author_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def author_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def author_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def author_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def author_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def author_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def author_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def author_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def author_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def author_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def author_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def author_id_was; end
-
-    sig { void }
-    def author_id_will_change!; end
 
     sig { returns(::String) }
     def body; end
@@ -1118,9 +1052,6 @@ class Note
     def restore_archived_at!; end
 
     sig { void }
-    def restore_author_id!; end
-
-    sig { void }
     def restore_body!; end
 
     sig { void }
@@ -1164,12 +1095,6 @@ class Note
 
     sig { returns(T::Boolean) }
     def saved_change_to_archived_at?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_author_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_author_id?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_body; end
@@ -1386,9 +1311,6 @@ class Note
 
     sig { returns(T::Boolean) }
     def will_save_change_to_archived_at?; end
-
-    sig { returns(T::Boolean) }
-    def will_save_change_to_author_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_body?; end

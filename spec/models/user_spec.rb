@@ -55,9 +55,9 @@ RSpec.describe User, type: :model do
       let!(:user_a) { create(:user, space:) }
       let!(:user_b) { create(:user, space:) }
       let!(:notebook) { create(:notebook, space:) }
-      let!(:note_a) { create(:note, space:, notebook:, author: user_a, title: "ノートA") }
-      let!(:note_b) { create(:note, space:, notebook:, author: user_b, title: "ノートB") }
-      let!(:note_c) { create(:note, space:, notebook:, author: user_b, title: "ノートC") }
+      let!(:note_a) { create(:note, space:, notebook:, title: "ノートA") }
+      let!(:note_b) { create(:note, space:, notebook:, title: "ノートB") }
+      let!(:note_c) { create(:note, space:, notebook:, title: "ノートC") }
 
       before do
         create(:note_editorship, space:, note: note_a, editor: user_a, last_note_modified_at: Time.zone.parse("2024-08-18 0:00:00"))

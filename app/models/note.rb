@@ -6,7 +6,6 @@ class Note < ApplicationRecord
 
   acts_as_sequenced column: :number, scope: :space_id
 
-  belongs_to :author, class_name: "User"
   belongs_to :notebook
   belongs_to :space
   has_many :editorships, class_name: "NoteEditorship", dependent: :restrict_with_exception
@@ -22,6 +21,18 @@ class Note < ApplicationRecord
   # def original
   #   user&.notes_except(self)&.find_by(title:)
   # end
+
+  sig { params(notebook: Notebook).returns(Note) }
+  def self.create_as_initial!(notebook:)
+    initial.where(notebook:).first_or_create!(
+      space: notebook.space,
+      title: nil,
+      body: "",
+      body_html: "",
+      linked_note_ids: [],
+      modified_at: Time.zone.now
+    )
+  end
 
   sig { params(editor: User).void }
   def add_editor!(editor:)
