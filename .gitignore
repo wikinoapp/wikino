@@ -10,7 +10,7 @@
 /docker-compose.override.yml
 /log/*
 /node_modules
-/nonoto.iml
+/wikino.iml
 /private
 /tmp/*
 /vendor/bundle

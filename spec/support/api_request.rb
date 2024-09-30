@@ -3,6 +3,6 @@
 
 RSpec.configure do |config|
   config.before :each, type: :request do
-    host! "api.nonoto.test"
+    host! "api.wikino.test"
   end
 end

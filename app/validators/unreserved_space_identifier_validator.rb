@@ -15,6 +15,6 @@ class UnreservedSpaceIdentifierValidator < ActiveModel::EachValidator
 
   sig { params(identifier: String).returns(T::Boolean) }
   private def reserved?(identifier)
-    Nonoto.config.reserved_space_identifiers.include?(identifier)
+    Wikino.config.reserved_space_identifiers.include?(identifier)
   end
 end

@@ -1,6 +1,6 @@
 ja:
   email_confirmation_mailer:
     sign_in_event:
-      subject: Nonotoにログイン
+      subject: Wikinoにログイン
     sign_up_event:
-      subject: Nonotoのアカウント作成用リンク
+      subject: Wikinoのアカウント作成用リンク

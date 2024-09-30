@@ -77,7 +77,7 @@ Rails.application.configure do
   # ここから独自の設定
   # -----------------------------------------------------------------------------------------
 
-  config.action_mailer.default_url_options = {host: ENV.fetch("NONOTO_HOST"), port: ENV.fetch("NONOTO_PORT")}
+  config.action_mailer.default_url_options = {host: ENV.fetch("WIKINO_HOST"), port: ENV.fetch("WIKINO_PORT")}
   config.action_mailer.delivery_method = :letter_opener_web
 
   config.after_initialize do
@@ -88,7 +88,7 @@ Rails.application.configure do
   end
 
   config.hosts += [
-    ENV.fetch("NONOTO_HOST"),
-    "www.#{ENV.fetch("NONOTO_HOST")}"
+    ENV.fetch("WIKINO_HOST"),
+    "www.#{ENV.fetch("WIKINO_HOST")}"
   ]
 end

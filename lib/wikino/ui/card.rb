@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Nonoto
+module Wikino
   module UI
-    class Card < Nonoto::UI::Base
+    class Card < Wikino::UI::Base
       sig { params(class_name: String).void }
       def initialize(class_name: "")
         @class_name = class_name

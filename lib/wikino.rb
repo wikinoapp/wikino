@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-module Nonoto
+module Wikino
   def self.config
     Rails.configuration.mewst
   end

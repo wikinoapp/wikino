@@ -15,7 +15,7 @@ require "action_view/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-module Nonoto
+module Wikino
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.1
@@ -40,12 +40,12 @@ module Nonoto
     # ここから独自の設定
     # -----------------------------------------------------------------------------------------
 
-    require_dependency Rails.root.join("lib/nonoto")
+    require_dependency Rails.root.join("lib/wikino")
 
     config.active_record.schema_format = :sql
 
     config.i18n.available_locales = %i[en ja]
 
-    config.mewst = config_for(:nonoto)
+    config.mewst = config_for(:wikino)
   end
 end

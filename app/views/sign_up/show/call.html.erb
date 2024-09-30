@@ -6,7 +6,7 @@
     <div class="text-center">
       <div class="mt-12">
         <%= link_to root_path, class: "inline-block" do %>
-          <%= render Nonoto::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
+          <%= render Wikino::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
         <% end %>
       </div>
 
@@ -23,8 +23,8 @@
       </p>
     </div>
 
-    <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Nonoto::UI::Card::Body.new do %>
+    <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
+      <%= render Wikino::UI::Card::Body.new do %>
         <%= form_with model: @form, url: email_confirmation_path do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 

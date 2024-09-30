@@ -16,7 +16,7 @@ module ControllerConcerns
         value: session.token,
         httponly: true,
         same_site: :lax,
-        domain: ".#{Nonoto.config.host}"
+        domain: ".#{Wikino.config.host}"
       }
 
       true

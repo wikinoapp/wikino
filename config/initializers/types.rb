@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module T
-  module Nonoto
+  module Wikino
     extend T::Sig
 
     DatabaseId = T.type_alias { String }

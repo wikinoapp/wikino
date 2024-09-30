@@ -7,7 +7,7 @@ ja:
         変更したい場合は再度<a href="/sign_up">アカウント作成ページ</a>からお願いします
       password_hint_html: |-
         8文字以上入力してください
-      signed_up_successfully: アカウントを作成しました。Nonotoにようこそ！
+      signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
       terms_html: |-
         <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と

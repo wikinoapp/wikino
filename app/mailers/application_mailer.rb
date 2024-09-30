@@ -4,5 +4,5 @@
 class ApplicationMailer < ActionMailer::Base
   extend T::Sig
 
-  default from: "Nonoto <no-reply@#{Nonoto.config.email_domain}>"
+  default from: "Wikino <no-reply@#{Wikino.config.email_domain}>"
 end

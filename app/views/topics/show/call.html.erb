@@ -14,8 +14,8 @@
     <div class="gap-2 grid grid-cols-6">
       <% @pages.each do |page| %>
         <%= link_to page_path(viewer!.space_identifier, page.number) do %>
-          <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
-            <%= render Nonoto::UI::Card::Body.new do %>
+          <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
+            <%= render Wikino::UI::Card::Body.new do %>
               <%= page.title %>
             <% end %>
           <% end %>

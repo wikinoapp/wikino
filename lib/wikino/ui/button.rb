@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Nonoto
+module Wikino
   module UI
-    class Button < Nonoto::UI::Base
+    class Button < Wikino::UI::Base
       sig { params(as: Symbol, class_name: String, options: T::Hash[Symbol, T.anything]).void }
       def initialize(as: :button, class_name: "", **options)
         @as = as

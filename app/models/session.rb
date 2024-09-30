@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class Session < ApplicationRecord
-  COOKIE_KEY = :nonoto_session_token
+  COOKIE_KEY = :wikino_session_token
 
   has_secure_token
 

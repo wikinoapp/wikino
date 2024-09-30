@@ -4,7 +4,7 @@
       <%= link_to root_path, {
         data: {turbo_action: "advance", turbo_frame: "main-content"}
       } do %>
-        <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
       <% end %>
 
       <div>
@@ -17,7 +17,7 @@
             class: "flex gap-2 items-center",
             data: {turbo_action: "advance", turbo_frame: "main-content"}
           } do %>
-            <%= render Nonoto::UI::Icon.new(name: "house", size: "18px", class_name: "fill-white") %>
+            <%= render Wikino::UI::Icon.new(name: "house", size: "18px", class_name: "fill-white") %>
 
             <%= t("nouns.home") %>
           <% end %>
@@ -67,11 +67,11 @@
   <div class="hidden sm:max-lg:block sm:max-lg:w-[56px]">
     <div class="flex flex-col gap-4 p-4">
       <%= link_to root_path do %>
-        <%= render Nonoto::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
       <% end %>
 
       <%= link_to space_path do %>
-        <%= render Nonoto::UI::Icon.new(name: "house", size: "24px", class_name: "fill-white") %>
+        <%= render Wikino::UI::Icon.new(name: "house", size: "24px", class_name: "fill-white") %>
       <% end %>
     </div>
   </div>

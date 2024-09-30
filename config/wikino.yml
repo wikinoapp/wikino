@@ -1,6 +1,6 @@
 shared:
-  email_domain: <%= ENV["NONOTO_EMAIL_DOMAIN"] %>
-  host: <%= ENV["NONOTO_HOST"] %>
+  email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
+  host: <%= ENV["WIKINO_HOST"] %>
   reserved_atnames:
     - admin
     - administrator

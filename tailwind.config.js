@@ -7,8 +7,8 @@ module.exports = {
     './app/javascript/**/*.ts',
     './app/views/**/*.erb',
     './config/locales/*.yml',
-    './lib/nonoto/ui/**/*.erb',
-    './lib/nonoto/ui/**/*.rb',
+    './lib/wikino/ui/**/*.erb',
+    './lib/wikino/ui/**/*.rb',
     './public/*.html',
   ],
   theme: {

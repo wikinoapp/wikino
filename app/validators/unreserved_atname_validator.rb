@@ -15,6 +15,6 @@ class UnreservedAtnameValidator < ActiveModel::EachValidator
 
   sig { params(atname: String).returns(T::Boolean) }
   private def reserved?(atname)
-    Nonoto.config.reserved_atnames.include?(atname)
+    Wikino.config.reserved_atnames.include?(atname)
   end
 end

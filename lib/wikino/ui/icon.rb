@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Nonoto
+module Wikino
   module UI
-    class Icon < Nonoto::UI::Base
+    class Icon < Wikino::UI::Base
       sig { params(name: String, size: String, class_name: String).void }
       def initialize(name:, size: "16px", class_name: "")
         @name = name
