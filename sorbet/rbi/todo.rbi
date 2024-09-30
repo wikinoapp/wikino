@@ -4,5 +4,4 @@
 
 # typed: false
 
-module ::TopicberRole::Admin; end
 module Rack::Server; end

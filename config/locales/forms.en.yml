@@ -5,7 +5,7 @@ en:
         email: Email
         password: Password
         space_identifier: Identifier
-      edit_note_form:
+      edit_page_form:
         topic_number: Topic
         title: Title
         body: Body

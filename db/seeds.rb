@@ -26,16 +26,16 @@ create_topic_use_case_result_2 = CreateTopicUseCase.new.call(
 )
 create_topic_use_case_result_2.topic
 
-create_initial_note_use_case_result_1 = CreateInitialNoteUseCase.new.call(
+create_initial_page_use_case_result_1 = CreateInitialPageUseCase.new.call(
   topic: public_topic_1,
   viewer:
 )
-note_1 = create_initial_note_use_case_result_1.note
+page_1 = create_initial_page_use_case_result_1.page
 
-UpdateNoteUseCase.new.call(
+UpdatePageUseCase.new.call(
   viewer:,
-  note: note_1,
+  page: page_1,
   topic: public_topic_1,
-  title: "公開ノート1",
-  body: "1つ目の公開ノートです"
+  title: "公開ページ1",
+  body: "1つ目の公開ページです"
 )

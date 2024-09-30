@@ -293,18 +293,18 @@ class Space
 
   module GeneratedAssociationMethods
     sig { returns(T::Array[T.untyped]) }
-    def note_ids; end
+    def page_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def note_ids=(ids); end
+    def page_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :notes`.
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :pages`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::Note::PrivateCollectionProxy) }
-    def notes; end
+    sig { returns(::Page::PrivateCollectionProxy) }
+    def pages; end
 
-    sig { params(value: T::Enumerable[::Note]).void }
-    def notes=(value); end
+    sig { params(value: T::Enumerable[::Page]).void }
+    def pages=(value); end
 
     sig { returns(T::Array[T.untyped]) }
     def topic_ids; end

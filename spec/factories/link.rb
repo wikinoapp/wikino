@@ -3,7 +3,7 @@
 
 FactoryBot.define do
   factory :link do
-    note
-    target_note factory: :note
+    page
+    target_page factory: :page
   end
 end

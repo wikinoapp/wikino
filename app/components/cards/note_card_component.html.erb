@@ -1,7 +1,0 @@
-<%= link_to note_path(viewer!.space_identifier, note.number), data: {turbo_frame: "main-content"} do %>
-  <%= render Nonoto::UI::Card.new(class_name:) do %>
-    <%= render Nonoto::UI::Card::Body.new do %>
-      <%= note.title %>
-    <% end %>
-  <% end %>
-<% end %>

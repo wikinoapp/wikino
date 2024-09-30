@@ -738,28 +738,28 @@ class TopicMembership
     def joined_at_will_change!; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at; end
+    def last_page_modified_at; end
 
     sig { params(value: T.nilable(::ActiveSupport::TimeWithZone)).returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at=(value); end
+    def last_page_modified_at=(value); end
 
     sig { returns(T::Boolean) }
-    def last_note_modified_at?; end
+    def last_page_modified_at?; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at_before_last_save; end
+    def last_page_modified_at_before_last_save; end
 
     sig { returns(T.untyped) }
-    def last_note_modified_at_before_type_cast; end
+    def last_page_modified_at_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def last_note_modified_at_came_from_user?; end
+    def last_page_modified_at_came_from_user?; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_note_modified_at_change; end
+    def last_page_modified_at_change; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_note_modified_at_change_to_be_saved; end
+    def last_page_modified_at_change_to_be_saved; end
 
     sig do
       params(
@@ -767,13 +767,13 @@ class TopicMembership
         to: T.nilable(::ActiveSupport::TimeWithZone)
       ).returns(T::Boolean)
     end
-    def last_note_modified_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def last_page_modified_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at_in_database; end
+    def last_page_modified_at_in_database; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def last_note_modified_at_previous_change; end
+    def last_page_modified_at_previous_change; end
 
     sig do
       params(
@@ -781,16 +781,16 @@ class TopicMembership
         to: T.nilable(::ActiveSupport::TimeWithZone)
       ).returns(T::Boolean)
     end
-    def last_note_modified_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def last_page_modified_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at_previously_was; end
+    def last_page_modified_at_previously_was; end
 
     sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def last_note_modified_at_was; end
+    def last_page_modified_at_was; end
 
     sig { void }
-    def last_note_modified_at_will_change!; end
+    def last_page_modified_at_will_change!; end
 
     sig { returns(::String) }
     def member_id; end
@@ -847,7 +847,7 @@ class TopicMembership
     def restore_joined_at!; end
 
     sig { void }
-    def restore_last_note_modified_at!; end
+    def restore_last_page_modified_at!; end
 
     sig { void }
     def restore_member_id!; end
@@ -935,10 +935,10 @@ class TopicMembership
     def saved_change_to_joined_at?; end
 
     sig { returns(T.nilable([T.nilable(::ActiveSupport::TimeWithZone), T.nilable(::ActiveSupport::TimeWithZone)])) }
-    def saved_change_to_last_note_modified_at; end
+    def saved_change_to_last_page_modified_at; end
 
     sig { returns(T::Boolean) }
-    def saved_change_to_last_note_modified_at?; end
+    def saved_change_to_last_page_modified_at?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_member_id; end
@@ -1064,7 +1064,7 @@ class TopicMembership
     def will_save_change_to_joined_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_last_note_modified_at?; end
+    def will_save_change_to_last_page_modified_at?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_member_id?; end

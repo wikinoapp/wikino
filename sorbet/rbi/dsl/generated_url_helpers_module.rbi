@@ -10,22 +10,22 @@ module GeneratedUrlHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def accounts_url(*args); end
+  def account_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def draft_note_url(*args); end
+  def draft_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def edit_email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def edit_note_url(*args); end
+  def edit_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_topics_url(*args); end
+  def frame_joined_topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
@@ -34,13 +34,13 @@ module GeneratedUrlHelpersModule
   def new_account_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def new_note_url(*args); end
+  def new_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def note_url(*args); end
+  def page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
@@ -64,10 +64,10 @@ module GeneratedUrlHelpersModule
   def root_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def session_url(*args); end
+  def session_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sessions_url(*args); end
+  def session_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def sign_in_url(*args); end
@@ -79,8 +79,8 @@ module GeneratedUrlHelpersModule
   def space_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topic_url(*args); end
+  def topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topics_url(*args); end
+  def topic_url(*args); end
 end

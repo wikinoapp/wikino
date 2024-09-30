@@ -3,7 +3,7 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <% @last_note_modified_topics.first(9).each do |topic| %>
+    <% @last_page_modified_topics.first(9).each do |topic| %>
       <%= render Cards::TopicCardComponent.new(topic:) %>
     <% end %>
   <% end %>

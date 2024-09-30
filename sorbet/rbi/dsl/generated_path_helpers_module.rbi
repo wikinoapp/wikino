@@ -10,22 +10,22 @@ module GeneratedPathHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def accounts_path(*args); end
+  def account_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def draft_note_path(*args); end
+  def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def edit_email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def edit_note_path(*args); end
+  def edit_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_topics_path(*args); end
+  def frame_joined_topic_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
@@ -34,13 +34,13 @@ module GeneratedPathHelpersModule
   def new_account_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def new_note_path(*args); end
+  def new_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def note_path(*args); end
+  def page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end
@@ -64,10 +64,10 @@ module GeneratedPathHelpersModule
   def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def session_path(*args); end
+  def session_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def sessions_path(*args); end
+  def session_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
@@ -79,8 +79,8 @@ module GeneratedPathHelpersModule
   def space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topic_path(*args); end
+  def topic_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topics_path(*args); end
+  def topic_path(*args); end
 end

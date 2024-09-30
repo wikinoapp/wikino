@@ -3,5 +3,5 @@
 
 class BacklinkList < T::Struct
   const :backlinks, T::Array[Backlink]
-  const :page_info, PageInfo
+  const :pagination, Pagination
 end

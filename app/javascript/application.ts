@@ -3,7 +3,7 @@ import '@hotwired/turbo';
 import { Application } from '@hotwired/stimulus';
 
 import FlashToastController from './controllers/flash-toast-controller';
-import NoteEditorFormController from './controllers/note-editor-form-controller';
+import PageEditorFormController from './controllers/page-editor-form-controller';
 
 declare global {
   interface Window {
@@ -16,4 +16,4 @@ application.debug = false;
 window.Stimulus = application;
 
 window.Stimulus.register('flash-toast', FlashToastController);
-window.Stimulus.register('note-editor-form', NoteEditorFormController);
+window.Stimulus.register('page-editor-form', PageEditorFormController);

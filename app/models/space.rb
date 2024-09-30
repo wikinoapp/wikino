@@ -17,7 +17,7 @@ class Space < ApplicationRecord
   }, prefix: true
 
   has_many :topics, dependent: :restrict_with_exception
-  has_many :notes, dependent: :restrict_with_exception
+  has_many :pages, dependent: :restrict_with_exception
   has_many :users, dependent: :restrict_with_exception
 
   sig do

@@ -1,7 +1,7 @@
 ja:
   activerecord:
     attributes:
-      note:
+      page:
         mutation_error: ''
       topic:
         visibility:

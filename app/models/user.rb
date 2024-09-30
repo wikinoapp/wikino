@@ -20,9 +20,9 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space
-  has_many :draft_notes, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :note_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :notes, through: :note_editorships
+  has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :pages, through: :page_editorships
   has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :topics, through: :topic_memberships
   has_many :sessions, dependent: :restrict_with_exception
@@ -61,9 +61,9 @@ class User < ApplicationRecord
     UserLocale.deserialize(locale)
   end
 
-  sig { params(note: Note).returns(T.any(Note::PrivateCollectionProxy, Note::PrivateAssociationRelation)) }
-  def notes_except(note)
-    note.new_record? ? notes : notes.where.not(id: note.id)
+  sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }
+  def pages_except(page)
+    page.new_record? ? pages : pages.where.not(id: page.id)
   end
 
   sig { returns(Topic::PrivateRelation) }
@@ -79,18 +79,18 @@ class User < ApplicationRecord
   end
 
   sig { returns(Topic::PrivateAssociationRelation) }
-  def last_note_modified_topics
+  def last_page_modified_topics
     topics.merge(
       topic_memberships
-        .order(TopicMembership.arel_table[:last_note_modified_at].desc.nulls_last)
+        .order(TopicMembership.arel_table[:last_page_modified_at].desc.nulls_last)
         .order(TopicMembership.arel_table[:joined_at].desc)
     )
   end
 
-  sig { returns(Note::PrivateAssociationRelation) }
-  def last_modified_notes
-    space.not_nil!.notes.joins(:editorships).merge(
-      note_editorships.order(NoteEditorship.arel_table[:last_note_modified_at].desc)
+  sig { returns(Page::PrivateAssociationRelation) }
+  def last_modified_pages
+    space.not_nil!.pages.joins(:editorships).merge(
+      page_editorships.order(PageEditorship.arel_table[:last_page_modified_at].desc)
     )
   end
 
@@ -120,35 +120,35 @@ class User < ApplicationRecord
     nil
   end
 
-  sig { params(note: Note).returns(DraftNote) }
-  def find_or_create_draft_note!(note:)
-    draft_notes.create_with(
+  sig { params(page: Page).returns(DraftPage) }
+  def find_or_create_draft_page!(page:)
+    draft_pages.create_with(
       space:,
-      topic: note.topic,
-      title: note.title,
-      body: note.body,
-      body_html: note.body_html,
-      linked_note_ids: note.linked_note_ids,
+      topic: page.topic,
+      title: page.title,
+      body: page.body,
+      body_html: page.body_html,
+      linked_page_ids: page.linked_page_ids,
       modified_at: Time.zone.now
-    ).find_or_create_by!(note:)
+    ).find_or_create_by!(page:)
   rescue ActiveRecord::RecordNotUnique
     retry
   end
 
-  sig { params(note: Note).void }
-  def destroy_draft_note!(note:)
-    draft_notes.where(note:).destroy_all
+  sig { params(page: Page).void }
+  def destroy_draft_page!(page:)
+    draft_pages.where(page:).destroy_all
 
     nil
   end
 
-  sig { params(topic: Topic, title: String).returns(Note) }
-  def create_linked_note!(topic:, title:)
-    notes.where(topic:, title:).first_or_create!(
+  sig { params(topic: Topic, title: String).returns(Page) }
+  def create_linked_page!(topic:, title:)
+    pages.where(topic:, title:).first_or_create!(
       space:,
       body: "",
       body_html: "",
-      linked_note_ids: [],
+      linked_page_ids: [],
       modified_at: Time.zone.now
     )
   end

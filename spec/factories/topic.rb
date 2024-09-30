@@ -6,7 +6,7 @@ FactoryBot.define do
     space
     sequence(:number) { |n| n }
     sequence(:name) { |n| "Topic #{n}" }
-    description { "Note description" }
+    description { "Page description" }
     visibility { TopicVisibility::Public.serialize }
 
     trait :public do

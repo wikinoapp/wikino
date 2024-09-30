@@ -3,5 +3,5 @@
 
 class LinkList < T::Struct
   const :links, T::Array[Link]
-  const :page_info, PageInfo
+  const :pagination, Pagination
 end

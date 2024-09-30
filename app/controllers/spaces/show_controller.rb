@@ -12,8 +12,8 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      @last_note_modified_topics = T.let(viewer!.last_note_modified_topics.limit(10), T.nilable(Topic::PrivateRelation))
-      @last_modified_notes = T.let(viewer!.last_modified_notes.limit(31), T.nilable(Note::PrivateRelation))
+      @last_page_modified_topics = T.let(viewer!.last_page_modified_topics.limit(10), T.nilable(Topic::PrivateRelation))
+      @last_modified_pages = T.let(viewer!.last_modified_pages.limit(31), T.nilable(Page::PrivateRelation))
     end
   end
 end

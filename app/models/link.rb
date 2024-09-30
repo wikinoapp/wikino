@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class Link < T::Struct
-  const :note, Note
-  const :backlinked_notes, T::Array[Note]
-  const :page_info, PageInfo
+  const :page, Page
+  const :backlinked_pages, T::Array[Page]
+  const :pagination, Pagination
 end

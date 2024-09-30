@@ -26,13 +26,13 @@ ja:
         sign_out_success: ログアウトしました
     spaces:
       new_space: 新しいスペース
-    note:
-      are_you_sure_delete: 'ノートを削除しますか？'
-      create_note_with_keyword: '「__keyword__」のノートを作成する'
-      delete_note: ノートを削除
+    page:
+      are_you_sure_delete: 'ページを削除しますか？'
+      create_page_with_keyword: '「__keyword__」のページを作成する'
+      delete_page: ページを削除
       no_links: リンクはありません
-      note_deleted: ノートを削除しました
-      note_duplicated_html: ノート「<a href="/notes/%{database_id}">%{title}</a>」はすでにあります。
+      page_deleted: ページを削除しました
+      page_duplicated_html: ページ「<a href="/pages/%{database_id}">%{title}</a>」はすでにあります。
       saved: 記事を保存しました
     sign_in:
       dont_have_an_account_html: |-

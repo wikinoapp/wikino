@@ -1,7 +1,7 @@
 ja:
   meta:
     description:
-      default: ノートアプリ
+      default: 個人でもグループでも使えるWikiアプリ
     title:
       accounts:
         new: アカウント情報の登録
@@ -10,7 +10,7 @@ ja:
       topics:
         new: 新規トピック
         show: '%{topic_name} | %{space_name}'
-      notes:
+      pages:
         edit: 記事の編集
       sign_in:
         show: ログイン
@@ -19,4 +19,4 @@ ja:
       spaces:
         show: スペース
       welcome:
-        show: ノートアプリ
+        show: Wikiアプリ

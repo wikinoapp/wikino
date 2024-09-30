@@ -5,7 +5,7 @@ ja:
         email: メールアドレス
         password: パスワード
         space_identifier: 識別子
-      edit_note_form:
+      edit_page_form:
         topic_number: トピック
         title: タイトル
         body: 本文

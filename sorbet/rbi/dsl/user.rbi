@@ -314,46 +314,46 @@ class User
     def create_user_password!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def draft_note_ids; end
+    def draft_page_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def draft_note_ids=(ids); end
+    def draft_page_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :draft_notes`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :draft_pages`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::DraftNote::PrivateCollectionProxy) }
-    def draft_notes; end
+    sig { returns(::DraftPage::PrivateCollectionProxy) }
+    def draft_pages; end
 
-    sig { params(value: T::Enumerable[::DraftNote]).void }
-    def draft_notes=(value); end
+    sig { params(value: T::Enumerable[::DraftPage]).void }
+    def draft_pages=(value); end
 
     sig { returns(T::Array[T.untyped]) }
-    def note_editorship_ids; end
+    def page_editorship_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def note_editorship_ids=(ids); end
+    def page_editorship_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :note_editorships`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :page_editorships`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::NoteEditorship::PrivateCollectionProxy) }
-    def note_editorships; end
+    sig { returns(::PageEditorship::PrivateCollectionProxy) }
+    def page_editorships; end
 
-    sig { params(value: T::Enumerable[::NoteEditorship]).void }
-    def note_editorships=(value); end
+    sig { params(value: T::Enumerable[::PageEditorship]).void }
+    def page_editorships=(value); end
 
     sig { returns(T::Array[T.untyped]) }
-    def note_ids; end
+    def page_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def note_ids=(ids); end
+    def page_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :notes, through: :note_editorships`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :pages, through: :page_editorships`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::Note::PrivateCollectionProxy) }
-    def notes; end
+    sig { returns(::Page::PrivateCollectionProxy) }
+    def pages; end
 
-    sig { params(value: T::Enumerable[::Note]).void }
-    def notes=(value); end
+    sig { params(value: T::Enumerable[::Page]).void }
+    def pages=(value); end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end

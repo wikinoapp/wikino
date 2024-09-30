@@ -1,7 +1,7 @@
 en:
   meta:
     description:
-      default: A note taking app.
+      default: A wiki app for individuals and groups.
     title:
       accounts:
         new: Create an account
@@ -10,8 +10,8 @@ en:
       topics:
         new: New topic
         show: '%{topic_name} | %{space_name}'
-      notes:
-        edit: Edit note
+      pages:
+        edit: Edit page
       sign_in:
         show: Sign in
       sign_up:
@@ -19,4 +19,4 @@ en:
       spaces:
         show: Space
       welcome:
-        show: A note taking app.
+        show: A wiki app

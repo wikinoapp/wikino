@@ -1,0 +1,15 @@
+<% set_meta_tags(canonical: root_url) %>
+
+<h1>
+  Hello, <%= current_user.id %>!
+</h1>
+
+<div class="gx-1 row">
+  <% @pages.each do |page| %>
+    <div class="col-3">
+      <%= link_to page_path(page_id: page.id) do %>
+        <%= page.title %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

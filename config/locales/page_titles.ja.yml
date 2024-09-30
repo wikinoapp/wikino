@@ -1,6 +1,6 @@
 ja:
   page_titles:
-    note: '%{note_title}'
+    page: '%{page_title}'
     forgot_password: パスワード忘れた？
     reset_password: パスワードリセット
     sign_in: ログイン

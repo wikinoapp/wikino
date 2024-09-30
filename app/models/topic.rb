@@ -13,7 +13,7 @@ class Topic < ApplicationRecord
 
   belongs_to :space
   has_many :memberships, class_name: "TopicMembership", dependent: :restrict_with_exception
-  has_many :notes, dependent: :restrict_with_exception
+  has_many :pages, dependent: :restrict_with_exception
 
   scope :public_only, -> { where(visibility: TopicVisibility::Public.serialize) }
 

@@ -8,15 +8,15 @@
     </h1>
 
     <div>
-      <%= link_to(t("nouns.new_note"), new_note_path(viewer!.space_identifier, @topic.number), class: "link") %>
+      <%= link_to(t("nouns.new_page"), new_page_path(viewer!.space_identifier, @topic.number), class: "link") %>
     </div>
 
     <div class="gap-2 grid grid-cols-6">
-      <% @notes.each do |note| %>
-        <%= link_to note_path(viewer!.space_identifier, note.number) do %>
+      <% @pages.each do |page| %>
+        <%= link_to page_path(viewer!.space_identifier, page.number) do %>
           <%= render Nonoto::UI::Card.new(class_name: "mt-8") do %>
             <%= render Nonoto::UI::Card::Body.new do %>
-              <%= note.title %>
+              <%= page.title %>
             <% end %>
           <% end %>
         <% end %>

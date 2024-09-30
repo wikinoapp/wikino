@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 class EditorComponent < ApplicationComponent
-  sig { params(id: String, note: Note).void }
-  def initialize(id:, note:)
+  sig { params(id: String, page: Page).void }
+  def initialize(id:, page:)
     @id = id
-    @note = note
+    @page = page
   end
 
   private
@@ -13,6 +13,6 @@ class EditorComponent < ApplicationComponent
   sig { returns(String) }
   attr_reader :id
 
-  sig { returns(Note) }
-  attr_reader :note
+  sig { returns(Page) }
+  attr_reader :page
 end

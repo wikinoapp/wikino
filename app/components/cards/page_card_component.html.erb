@@ -1,0 +1,7 @@
+<%= link_to page_path(viewer!.space_identifier, page.number), data: {turbo_frame: "main-content"} do %>
+  <%= render Nonoto::UI::Card.new(class_name:) do %>
+    <%= render Nonoto::UI::Card::Body.new do %>
+      <%= page.title %>
+    <% end %>
+  <% end %>
+<% end %>

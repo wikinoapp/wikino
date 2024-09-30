@@ -65,19 +65,19 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
--- Name: draft_notes; Type: TABLE; Schema: public; Owner: -
+-- Name: draft_pages; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.draft_notes (
+CREATE TABLE public.draft_pages (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    note_id uuid NOT NULL,
+    page_id uuid NOT NULL,
     editor_id uuid NOT NULL,
     topic_id uuid NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
     body_html text NOT NULL,
-    linked_note_ids character varying[] NOT NULL,
+    linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -101,29 +101,29 @@ CREATE TABLE public.email_confirmations (
 
 
 --
--- Name: note_editorships; Type: TABLE; Schema: public; Owner: -
+-- Name: page_editorships; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.note_editorships (
+CREATE TABLE public.page_editorships (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    note_id uuid NOT NULL,
+    page_id uuid NOT NULL,
     editor_id uuid NOT NULL,
-    last_note_modified_at timestamp(6) without time zone NOT NULL,
+    last_page_modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
 
 --
--- Name: note_revisions; Type: TABLE; Schema: public; Owner: -
+-- Name: page_revisions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.note_revisions (
+CREATE TABLE public.page_revisions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     editor_id uuid NOT NULL,
-    note_id uuid NOT NULL,
+    page_id uuid NOT NULL,
     body public.citext NOT NULL,
     body_html text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -132,10 +132,10 @@ CREATE TABLE public.note_revisions (
 
 
 --
--- Name: notes; Type: TABLE; Schema: public; Owner: -
+-- Name: pages; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notes (
+CREATE TABLE public.pages (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     topic_id uuid NOT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE public.notes (
     title public.citext,
     body public.citext NOT NULL,
     body_html text NOT NULL,
-    linked_note_ids character varying[] NOT NULL,
+    linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     published_at timestamp(6) without time zone,
     archived_at timestamp(6) without time zone,
@@ -205,7 +205,7 @@ CREATE TABLE public.topic_memberships (
     member_id uuid NOT NULL,
     role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
-    last_note_modified_at timestamp(6) without time zone
+    last_page_modified_at timestamp(6) without time zone
 );
 
 
@@ -268,11 +268,11 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
--- Name: draft_notes draft_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: draft_pages draft_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.draft_notes
-    ADD CONSTRAINT draft_notes_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT draft_pages_pkey PRIMARY KEY (id);
 
 
 --
@@ -284,27 +284,27 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
--- Name: note_editorships note_editorships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editorships page_editorships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_editorships
-    ADD CONSTRAINT note_editorships_pkey PRIMARY KEY (id);
-
-
---
--- Name: note_revisions note_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_revisions
-    ADD CONSTRAINT note_revisions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.page_editorships
+    ADD CONSTRAINT page_editorships_pkey PRIMARY KEY (id);
 
 
 --
--- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: page_revisions page_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT notes_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT page_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pages pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT pages_pkey PRIMARY KEY (id);
 
 
 --
@@ -364,45 +364,45 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: index_draft_notes_on_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_draft_pages_on_editor_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_draft_notes_on_editor_id ON public.draft_notes USING btree (editor_id);
-
-
---
--- Name: index_draft_notes_on_editor_id_and_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_draft_notes_on_editor_id_and_note_id ON public.draft_notes USING btree (editor_id, note_id);
+CREATE INDEX index_draft_pages_on_editor_id ON public.draft_pages USING btree (editor_id);
 
 
 --
--- Name: index_draft_notes_on_linked_note_ids; Type: INDEX; Schema: public; Owner: -
+-- Name: index_draft_pages_on_editor_id_and_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_draft_notes_on_linked_note_ids ON public.draft_notes USING gin (linked_note_ids);
-
-
---
--- Name: index_draft_notes_on_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_draft_notes_on_note_id ON public.draft_notes USING btree (note_id);
+CREATE UNIQUE INDEX index_draft_pages_on_editor_id_and_page_id ON public.draft_pages USING btree (editor_id, page_id);
 
 
 --
--- Name: index_draft_notes_on_space_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_draft_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_draft_notes_on_space_id ON public.draft_notes USING btree (space_id);
+CREATE INDEX index_draft_pages_on_linked_page_ids ON public.draft_pages USING gin (linked_page_ids);
 
 
 --
--- Name: index_draft_notes_on_topic_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_draft_pages_on_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_draft_notes_on_topic_id ON public.draft_notes USING btree (topic_id);
+CREATE INDEX index_draft_pages_on_page_id ON public.draft_pages USING btree (page_id);
+
+
+--
+-- Name: index_draft_pages_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_pages_on_space_id ON public.draft_pages USING btree (space_id);
+
+
+--
+-- Name: index_draft_pages_on_topic_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_pages_on_topic_id ON public.draft_pages USING btree (topic_id);
 
 
 --
@@ -420,115 +420,115 @@ CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmatio
 
 
 --
--- Name: index_note_editorships_on_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editorships_on_editor_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_note_editorships_on_editor_id ON public.note_editorships USING btree (editor_id);
-
-
---
--- Name: index_note_editorships_on_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_editorships_on_note_id ON public.note_editorships USING btree (note_id);
+CREATE INDEX index_page_editorships_on_editor_id ON public.page_editorships USING btree (editor_id);
 
 
 --
--- Name: index_note_editorships_on_note_id_and_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editorships_on_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_note_editorships_on_note_id_and_editor_id ON public.note_editorships USING btree (note_id, editor_id);
-
-
---
--- Name: index_note_editorships_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_editorships_on_space_id ON public.note_editorships USING btree (space_id);
+CREATE INDEX index_page_editorships_on_page_id ON public.page_editorships USING btree (page_id);
 
 
 --
--- Name: index_note_revisions_on_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editorships_on_page_id_and_editor_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_note_revisions_on_editor_id ON public.note_revisions USING btree (editor_id);
-
-
---
--- Name: index_note_revisions_on_note_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_note_revisions_on_note_id ON public.note_revisions USING btree (note_id);
+CREATE UNIQUE INDEX index_page_editorships_on_page_id_and_editor_id ON public.page_editorships USING btree (page_id, editor_id);
 
 
 --
--- Name: index_note_revisions_on_space_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editorships_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_note_revisions_on_space_id ON public.note_revisions USING btree (space_id);
-
-
---
--- Name: index_notes_on_linked_note_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_linked_note_ids ON public.notes USING gin (linked_note_ids);
+CREATE INDEX index_page_editorships_on_space_id ON public.page_editorships USING btree (space_id);
 
 
 --
--- Name: index_notes_on_space_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_revisions_on_editor_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_space_id ON public.notes USING btree (space_id);
-
-
---
--- Name: index_notes_on_space_id_and_archived_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_space_id_and_archived_at ON public.notes USING btree (space_id, archived_at);
+CREATE INDEX index_page_revisions_on_editor_id ON public.page_revisions USING btree (editor_id);
 
 
 --
--- Name: index_notes_on_space_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_revisions_on_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_space_id_and_created_at ON public.notes USING btree (space_id, created_at);
-
-
---
--- Name: index_notes_on_space_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_space_id_and_modified_at ON public.notes USING btree (space_id, modified_at);
+CREATE INDEX index_page_revisions_on_page_id ON public.page_revisions USING btree (page_id);
 
 
 --
--- Name: index_notes_on_space_id_and_number; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_revisions_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_notes_on_space_id_and_number ON public.notes USING btree (space_id, number);
-
-
---
--- Name: index_notes_on_space_id_and_published_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_notes_on_space_id_and_published_at ON public.notes USING btree (space_id, published_at);
+CREATE INDEX index_page_revisions_on_space_id ON public.page_revisions USING btree (space_id);
 
 
 --
--- Name: index_notes_on_topic_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_notes_on_topic_id ON public.notes USING btree (topic_id);
+CREATE INDEX index_pages_on_linked_page_ids ON public.pages USING gin (linked_page_ids);
 
 
 --
--- Name: index_notes_on_topic_id_and_title; Type: INDEX; Schema: public; Owner: -
+-- Name: index_pages_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_notes_on_topic_id_and_title ON public.notes USING btree (topic_id, title);
+CREATE INDEX index_pages_on_space_id ON public.pages USING btree (space_id);
+
+
+--
+-- Name: index_pages_on_space_id_and_archived_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_archived_at ON public.pages USING btree (space_id, archived_at);
+
+
+--
+-- Name: index_pages_on_space_id_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_created_at ON public.pages USING btree (space_id, created_at);
+
+
+--
+-- Name: index_pages_on_space_id_and_modified_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_modified_at ON public.pages USING btree (space_id, modified_at);
+
+
+--
+-- Name: index_pages_on_space_id_and_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_pages_on_space_id_and_number ON public.pages USING btree (space_id, number);
+
+
+--
+-- Name: index_pages_on_space_id_and_published_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_published_at ON public.pages USING btree (space_id, published_at);
+
+
+--
+-- Name: index_pages_on_topic_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_topic_id ON public.pages USING btree (topic_id);
+
+
+--
+-- Name: index_pages_on_topic_id_and_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_pages_on_topic_id_and_title ON public.pages USING btree (topic_id, title);
 
 
 --
@@ -686,14 +686,6 @@ CREATE UNIQUE INDEX index_users_on_space_id_and_email ON public.users USING btre
 
 
 --
--- Name: note_editorships fk_rails_073da806f1; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_editorships
-    ADD CONSTRAINT fk_rails_073da806f1 FOREIGN KEY (note_id) REFERENCES public.notes(id);
-
-
---
 -- Name: user_passwords fk_rails_081bbe105f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -718,35 +710,19 @@ ALTER TABLE ONLY public.topic_memberships
 
 
 --
--- Name: note_revisions fk_rails_1369420e41; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editorships fk_rails_2088082077; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_revisions
-    ADD CONSTRAINT fk_rails_1369420e41 FOREIGN KEY (editor_id) REFERENCES public.users(id);
-
-
---
--- Name: draft_notes fk_rails_3c34fe5ce9; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.draft_notes
-    ADD CONSTRAINT fk_rails_3c34fe5ce9 FOREIGN KEY (editor_id) REFERENCES public.users(id);
+ALTER TABLE ONLY public.page_editorships
+    ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (editor_id) REFERENCES public.users(id);
 
 
 --
--- Name: note_editorships fk_rails_4334fca710; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editorships fk_rails_3b3700fcdf; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_editorships
-    ADD CONSTRAINT fk_rails_4334fca710 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
-
-
---
--- Name: draft_notes fk_rails_4558c6c8bc; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.draft_notes
-    ADD CONSTRAINT fk_rails_4558c6c8bc FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+ALTER TABLE ONLY public.page_editorships
+    ADD CONSTRAINT fk_rails_3b3700fcdf FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -758,19 +734,27 @@ ALTER TABLE ONLY public.topic_memberships
 
 
 --
--- Name: notes fk_rails_551dbc7e34; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: pages fk_rails_5d9ff2d9dc; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_551dbc7e34 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_5d9ff2d9dc FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
--- Name: draft_notes fk_rails_68dda7ba4a; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_revisions fk_rails_6eb3eeb6b7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.draft_notes
-    ADD CONSTRAINT fk_rails_68dda7ba4a FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_6eb3eeb6b7 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+
+--
+-- Name: page_revisions fk_rails_74648de0a3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_74648de0a3 FOREIGN KEY (editor_id) REFERENCES public.users(id);
 
 
 --
@@ -782,11 +766,35 @@ ALTER TABLE ONLY public.sessions
 
 
 --
+-- Name: pages fk_rails_793c81c055; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_793c81c055 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
 -- Name: topic_memberships fk_rails_80fd6512fa; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.topic_memberships
     ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (member_id) REFERENCES public.users(id);
+
+
+--
+-- Name: draft_pages fk_rails_8d9bc1217e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_8d9bc1217e FOREIGN KEY (editor_id) REFERENCES public.users(id);
+
+
+--
+-- Name: draft_pages fk_rails_8e68719216; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_8e68719216 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
 
 
 --
@@ -806,27 +814,19 @@ ALTER TABLE ONLY public.topics
 
 
 --
--- Name: note_editorships fk_rails_bab5887bb7; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: draft_pages fk_rails_a989662ed2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_editorships
-    ADD CONSTRAINT fk_rails_bab5887bb7 FOREIGN KEY (editor_id) REFERENCES public.users(id);
-
-
---
--- Name: note_revisions fk_rails_c65b77d10b; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.note_revisions
-    ADD CONSTRAINT fk_rails_c65b77d10b FOREIGN KEY (note_id) REFERENCES public.notes(id);
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_a989662ed2 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
--- Name: note_revisions fk_rails_c76e6bbeed; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: draft_pages fk_rails_b87bfd2937; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.note_revisions
-    ADD CONSTRAINT fk_rails_c76e6bbeed FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_b87bfd2937 FOREIGN KEY (page_id) REFERENCES public.pages(id);
 
 
 --
@@ -838,19 +838,19 @@ ALTER TABLE ONLY public.user_passwords
 
 
 --
--- Name: notes fk_rails_df43b04c40; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_revisions fk_rails_d3466381ba; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT fk_rails_df43b04c40 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_d3466381ba FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
--- Name: draft_notes fk_rails_eb8f12795b; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editorships fk_rails_fc18bdf1dd; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.draft_notes
-    ADD CONSTRAINT fk_rails_eb8f12795b FOREIGN KEY (note_id) REFERENCES public.notes(id);
+ALTER TABLE ONLY public.page_editorships
+    ADD CONSTRAINT fk_rails_fc18bdf1dd FOREIGN KEY (page_id) REFERENCES public.pages(id);
 
 
 --

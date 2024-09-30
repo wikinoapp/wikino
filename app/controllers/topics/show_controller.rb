@@ -14,7 +14,7 @@ module Topics
 
     sig { returns(T.untyped) }
     def call
-      @notes = @topic.not_nil!.notes.published
+      @pages = @topic.not_nil!.pages.published
     end
   end
 end

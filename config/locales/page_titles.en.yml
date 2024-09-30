@@ -1,6 +1,6 @@
 en:
   page_titles:
-    note: '%{note_title}'
+    page: '%{page_title}'
     forgot_password: Forgot password?
     reset_password: Reset password
     sign_in: Sign in
