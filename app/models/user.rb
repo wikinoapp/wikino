@@ -144,12 +144,15 @@ class User < ApplicationRecord
 
   sig { params(topic: Topic, title: String).returns(Page) }
   def create_linked_page!(topic:, title:)
-    pages.where(topic:, title:).first_or_create!(
+    page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
       space:,
       body: "",
       body_html: "",
       linked_page_ids: [],
       modified_at: Time.zone.now
     )
+    page_editorships.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
+
+    page
   end
 end

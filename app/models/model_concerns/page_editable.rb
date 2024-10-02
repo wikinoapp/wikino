@@ -6,9 +6,20 @@ module ModelConcerns
     extend ActiveSupport::Concern
     extend T::Sig
 
-    sig { returns(T::Array[String]) }
-    def titles_in_body
-      body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
+    sig { returns(T::Array[PagePath]) }
+    def paths_in_body
+      current_topic_name = topic.name
+      titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
+
+      titles_with_topic.map do |title_with_topic|
+        topic_name, page_title = title_with_topic.split("/", 2)
+
+        if page_title.nil?
+          PagePath.new(topic_name: current_topic_name, page_title: topic_name)
+        else
+          PagePath.new(topic_name:, page_title:)
+        end
+      end
     end
 
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
@@ -75,11 +86,19 @@ module ModelConcerns
 
     sig { params(editor: User).void }
     def link!(editor:)
-      linked_pages = titles_in_body.map do |title|
-        editor.create_linked_page!(topic: topic.not_nil!, title:)
+      topics = Topic.where(name: paths_in_body.map(&:topic_name))
+
+      linked_pages = paths_in_body.each_with_object([]) do |path, ary|
+        page_topic = topics.find { |topic| topic.name == path.topic_name }
+
+        if page_topic
+          ary << editor.create_linked_page!(topic: page_topic, title: path.page_title)
+        end
       end
 
       update!(linked_page_ids: linked_pages.pluck(:id))
+
+      nil
     end
   end
 end

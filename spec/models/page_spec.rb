@@ -2,26 +2,58 @@
 # frozen_string_literal: true
 
 RSpec.describe Page, type: :model do
-  describe "#titles_in_body" do
-    it "returns titles" do
-      [
-        ["[[a]]", ["a"]],
-        ["[[ a ]]", ["a"]],
-        ["[[Hello]]", ["Hello"]],
-        ["[[こんにちは✌️]]", ["こんにちは✌️"]],
-        ["[[a]] [[b]]", %w[a b]],
-        ["[[Hello]] [[World]]", ["Hello", "World"]],
-        ["[[こんにちは]] [[世界🌏]]", ["こんにちは", "世界🌏"]],
-        ["[ [a] ]", []],
-        ["[[a]", []],
-        # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
-        ["[[[a]]]", ["[a"]],
-        ["[[[a]]] [[b]]", ["[a", "b"]],
-        ["[[[a]]] [[[b]]]", ["[a", "[b"]],
-        ["[[[ a ]]]", ["[ a"]]
-      ].each do |(body, expected)|
-        page = Page.new(body:)
-        expect(page.titles_in_body).to eq(expected)
+  describe "#paths_in_body" do
+    context "記事本文にリンク記法が書かれているとき" do
+      let!(:page) { create(:page) }
+      let!(:topic) { page.topic }
+
+      it "パスのリストを返すこと" do
+        [
+          # トピックを省略している場合
+          ["[[a]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
+          ["[[ a ]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
+          ["[[Hello]]", [PagePath.new(topic_name: topic.name, page_title: "Hello")]],
+          ["[[こんにちは✌️]]", [PagePath.new(topic_name: topic.name, page_title: "こんにちは✌️")]],
+          ["[[a]] [[b]]", [
+            PagePath.new(topic_name: topic.name, page_title: "a"),
+            PagePath.new(topic_name: topic.name, page_title: "b")
+          ]],
+          ["[[Hello]] [[World]]", [
+            PagePath.new(topic_name: topic.name, page_title: "Hello"),
+            PagePath.new(topic_name: topic.name, page_title: "World")
+          ]],
+          ["[[こんにちは]] [[世界🌏]]", [
+            PagePath.new(topic_name: topic.name, page_title: "こんにちは"),
+            PagePath.new(topic_name: topic.name, page_title: "世界🌏")
+          ]],
+          ["[ [a] ]", []],
+          ["[[a]", []],
+          # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
+          ["[[[a]]]", [PagePath.new(topic_name: topic.name, page_title: "[a")]],
+          ["[[[a]]] [[b]]", [
+            PagePath.new(topic_name: topic.name, page_title: "[a"),
+            PagePath.new(topic_name: topic.name, page_title: "b")
+          ]],
+          ["[[[a]]] [[[b]]]", [
+            PagePath.new(topic_name: topic.name, page_title: "[a"),
+            PagePath.new(topic_name: topic.name, page_title: "[b")
+          ]],
+          ["[[[ a ]]]", [PagePath.new(topic_name: topic.name, page_title: "[ a")]],
+
+          # トピックを指定している場合
+          ["[[foo/a]]", [PagePath.new(topic_name: "foo", page_title: "a")]],
+          ["[[ foo/a ]]", [PagePath.new(topic_name: "foo", page_title: "a")]],
+          ["[[ foo / a ]]", [PagePath.new(topic_name: "foo ", page_title: " a")]],
+          ["[[foo/a]] [[bar/b]]", [
+            PagePath.new(topic_name: "foo", page_title: "a"),
+            PagePath.new(topic_name: "bar", page_title: "b")
+          ]],
+          ["[[foo/a/b]]", [PagePath.new(topic_name: "foo", page_title: "a/b")]]
+        ].each do |(body, expected)|
+          page.body = body
+
+          expect(page.paths_in_body).to eq(expected)
+        end
       end
     end
   end
@@ -47,6 +79,35 @@ RSpec.describe Page, type: :model do
         link_b = link_list.links[1]
         expect(link_b.page).to eq(page_a)
         expect(link_b.backlinked_pages.size).to eq(0)
+      end
+    end
+  end
+
+  describe "#link!" do
+    context "記事にリンクが含まれているとき" do
+      let!(:space) { create(:space) }
+      let!(:user) { create(:user, space:) }
+      let!(:topic_a) { create(:topic, space:, name: "トピックA") }
+      let!(:topic_b) { create(:topic, space:, name: "トピックB") }
+      let!(:page_a) { create(:page, space:, topic: topic_a, title: "Page A") }
+
+      it "リンクを作成すること" do
+        expect(Page.count).to eq(1)
+
+        page_a.body = <<~BODY
+          [[Page B]]
+          [[トピックB/Page C]]
+          [[存在しないトピック/Page D]]
+        BODY
+        page_a.link!(editor: user)
+
+        expect(Page.count).to eq(3)
+        page_b = space.pages.find_by(topic: topic_a, title: "Page B")
+        expect(page_b).to be_present
+        page_c = space.pages.find_by(topic: topic_b, title: "Page C")
+        expect(page_c).to be_present
+
+        expect(page_a.linked_page_ids).to eq([page_b.id, page_c.id])
       end
     end
   end
