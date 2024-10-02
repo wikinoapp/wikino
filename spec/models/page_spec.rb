@@ -3,25 +3,29 @@
 
 RSpec.describe Page, type: :model do
   describe "#titles_in_body" do
-    it "returns titles" do
-      [
-        ["[[a]]", ["a"]],
-        ["[[ a ]]", ["a"]],
-        ["[[Hello]]", ["Hello"]],
-        ["[[こんにちは✌️]]", ["こんにちは✌️"]],
-        ["[[a]] [[b]]", %w[a b]],
-        ["[[Hello]] [[World]]", ["Hello", "World"]],
-        ["[[こんにちは]] [[世界🌏]]", ["こんにちは", "世界🌏"]],
-        ["[ [a] ]", []],
-        ["[[a]", []],
-        # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
-        ["[[[a]]]", ["[a"]],
-        ["[[[a]]] [[b]]", ["[a", "b"]],
-        ["[[[a]]] [[[b]]]", ["[a", "[b"]],
-        ["[[[ a ]]]", ["[ a"]]
-      ].each do |(body, expected)|
-        page = Page.new(body:)
-        expect(page.titles_in_body).to eq(expected)
+    context "トピックが存在するとき" do
+      let!(:topic) { create(:topic) }
+
+      it "returns titles" do
+        [
+          ["[[a]]", ["#{topic.name}/a"]],
+          ["[[ a ]]", ["#{topic.name}/a"]],
+          ["[[Hello]]", ["#{topic.name}/Hello"]],
+          ["[[こんにちは✌️]]", ["#{topic.name}/こんにちは✌️"]],
+          ["[[a]] [[b]]", ["#{topic.name}/a", "#{topic.name}/b"]],
+          ["[[Hello]] [[World]]", ["#{topic.name}/Hello", "#{topic.name}/World"]],
+          ["[[こんにちは]] [[世界🌏]]", ["#{topic.name}/こんにちは", "#{topic.name}/世界🌏"]],
+          ["[ [a] ]", []],
+          ["[[a]", []],
+          # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
+          ["[[[a]]]", ["#{topic.name}/[a"]],
+          ["[[[a]]] [[b]]", ["#{topic.name}/[a", "#{topic.name}/b"]],
+          ["[[[a]]] [[[b]]]", ["#{topic.name}/[a", "#{topic.name}/[b"]],
+          ["[[[ a ]]]", ["#{topic.name}/[ a"]]
+        ].each do |(body, expected)|
+          page = Page.new(space: topic.space, topic:, body:)
+          expect(page.titles_in_body).to eq(expected)
+        end
       end
     end
   end
