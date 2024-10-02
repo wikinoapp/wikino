@@ -11,7 +11,7 @@
         <input class="input input-bordered" type="text" placeholder="Search...">
       </div>
 
-      <ul class="flex flex-col gap-2">
+      <ul class="flex flex-col gap-4">
         <li>
           <%= link_to space_path, {
             class: "flex gap-2 items-center",
@@ -24,32 +24,42 @@
         </li>
       </ul>
 
-      <div>
-        <div class="flex flex-col gap-2">
-          <div class="font-bold text-xs">
-            <%= t("nouns.topics") %>
-          </div>
+      <div class="flex flex-col gap-2">
+        <div class="font-bold text-xs">
+          <%= t("nouns.topics") %>
+        </div>
 
+        <div class="flex flex-col gap-2">
           <turbo-frame
             id="joined_topics"
             loading="lazy"
             src="<%= frame_joined_topic_list_path %>"
           ></turbo-frame>
-        </div>
 
-        <%= link_to t("nouns.new_topic"), new_topic_path(viewer!.space_identifier), {
-          data: {turbo_action: "advance", turbo_frame: "main-content"}
-        } %>
+          <%= link_to new_topic_path(viewer!.space_identifier), {
+            class: "flex gap-2 items-center",
+            data: {turbo_action: "advance", turbo_frame: "main-content"}
+          } do %>
+            <%= render Wikino::UI::Icon.new(name: "plus", size: "18px", class_name: "fill-white") %>
+
+            <%= t("nouns.new_topic") %>
+          <% end %>
+        </div>
       </div>
 
       <hr class="border-stone-600">
 
-      <ul>
+      <ul class="flex flex-col gap-4">
         <% if signed_in? %>
           <li>
-            <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
+            <%= button_to session_path(space_identifier: viewer!.space_identifier), {
+              class: "flex gap-2 items-center",
               method: :delete
-            } %>
+            } do %>
+              <%= render Wikino::UI::Icon.new(name: "sign-out", size: "18px", class_name: "fill-white") %>
+
+              <%= t("nouns.sign_out") %>
+            <% end %>
           </li>
         <% else %>
           <li>

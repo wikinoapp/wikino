@@ -1,10 +1,13 @@
 <turbo-frame id="joined_topics">
-  <ul>
+  <ul class="flex flex-col gap-2">
     <% @joined_topics.each do |topic| %>
       <li>
         <%= link_to topic_path(viewer!.space_identifier, topic.number), {
+          class: "flex gap-2 items-center",
           data: {turbo_action: "advance", turbo_frame: "main-content"}
         } do %>
+          <%= render Icons::TopicIconComponent.new(topic:, size: "18px", class_name: "fill-white") %>
+
           <%= topic.name %>
         <% end %>
       </li>

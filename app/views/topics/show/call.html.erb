@@ -3,23 +3,31 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <h1 class="antialiased font-semibold text-2xl">
-      <%= @topic.name %>
-    </h1>
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-2">
+        <h1 class="antialiased font-bold text-2xl">
+          <%= @topic.name %>
+        </h1>
 
-    <div>
-      <%= link_to(t("nouns.new_page"), new_page_path(viewer!.space_identifier, @topic.number), class: "link") %>
+        <% if @topic.description.present? %>
+          <p class="text-gray-400 text-sm">
+            <%= @topic.description %>
+          </p>
+        <% end %>
+      </div>
+
+      <%= link_to new_page_path(viewer!.space_identifier, @topic.number), class: "btn btn-primary" do %>
+        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-black") %>
+
+        <%= t("nouns.new_page") %>
+      <% end %>
     </div>
+
+    <hr class="my-4">
 
     <div class="gap-2 grid grid-cols-6">
       <% @pages.each do |page| %>
-        <%= link_to page_path(viewer!.space_identifier, page.number) do %>
-          <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
-            <%= render Wikino::UI::Card::Body.new do %>
-              <%= page.title %>
-            <% end %>
-          <% end %>
-        <% end %>
+        <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
       <% end %>
     </div>
   <% end %>
