@@ -8,30 +8,18 @@ module ModelConcerns
 
     sig { returns(T::Array[PagePath]) }
     def paths_in_body
-      raise StandardError("topic needs to be present") if topic.nil?
-
-      titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
-      topic_names = titles_with_topic.map do |title_with_topic|
-        topic_name, page_title = title_with_topic.split("/", 2)
-        page_title.nil? ? nil : topic_name
-      end.compact
-      topics = space.topics.where(name: topic_names)
-      topics_with_name = topic_names.each_with_object({}) do |topic_name, hash|
-        hash[topic_name] = topics.find { |topic| topic.name == topic_name }
-      end
       current_topic_name = topic.name
+      titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
 
       titles_with_topic.map do |title_with_topic|
         topic_name, page_title = title_with_topic.split("/", 2)
 
-        if !topic_name.nil? && !page_title.nil? && topics_with_name[topic_name].nil?
-          nil
-        elsif !topic_name.nil? && page_title.nil?
-          "#{current_topic_name}/#{topic_name}"
+        if page_title.nil?
+          PagePath.new(topic_name: current_topic_name, page_title: topic_name)
         else
-          title_with_topic
+          PagePath.new(topic_name:, page_title:)
         end
-      end.compact
+      end
     end
 
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
@@ -98,11 +86,19 @@ module ModelConcerns
 
     sig { params(editor: User).void }
     def link!(editor:)
-      linked_pages = titles_in_body.map do |title|
-        editor.create_linked_page!(topic: topic.not_nil!, title:)
+      topics = Topic.where(name: paths_in_body.map(&:topic_name))
+
+      linked_pages = paths_in_body.each_with_object([]) do |path, ary|
+        page_topic = topics.find { |topic| topic.name == path.topic_name }
+
+        if page_topic
+          ary << editor.create_linked_page!(topic: page_topic, title: path.page_title)
+        end
       end
 
       update!(linked_page_ids: linked_pages.pluck(:id))
+
+      nil
     end
   end
 end

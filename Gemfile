@@ -29,6 +29,7 @@ gem "rack-cors"
 gem "rails-i18n"
 gem "sequenced"
 gem "sorbet-runtime"
+gem "sorbet-struct-comparable"
 gem "strong_migrations"
 gem "view_component"
 
