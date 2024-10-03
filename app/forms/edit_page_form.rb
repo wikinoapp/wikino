@@ -11,7 +11,7 @@ class EditPageForm < ApplicationForm
 
   validates :topic, presence: true
   validates :title, presence: true
-  validates :body, presence: true
+  validates :body, presence: true, allow_blank: true
 
   sig { returns(T.nilable(Topic)) }
   def topic
