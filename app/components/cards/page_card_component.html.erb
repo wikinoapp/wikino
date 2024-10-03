@@ -1,7 +1,17 @@
 <%= link_to page_path(viewer!.space_identifier, page.number), data: {turbo_frame: "main-content"} do %>
-  <%= render Wikino::UI::Card.new(class_name:) do %>
-    <%= render Wikino::UI::Card::Body.new do %>
-      <%= page.title %>
-    <% end %>
+  <%= render Wikino::UI::Card.new(class_name: class_names(class_name, "px-4 py-2")) do %>
+    <div class="flex flex-col gap-1">
+      <div class="flex gap-1 items-center">
+        <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-400") %>
+
+        <div class="text-gray-400 text-xs">
+          <%= page.topic.name %>
+        </div>
+      </div>
+
+      <div class="font-bold text-sm">
+        <%= page.title %>
+      </div>
+    </div>
   <% end %>
 <% end %>
