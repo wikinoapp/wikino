@@ -49,6 +49,16 @@ class UserPassword
   sig { returns(NilClass) }
   def to_ary; end
 
+  class << self
+    sig do
+      params(
+        attributes: T.untyped,
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(::UserPassword)
+    end
+    def new(attributes = nil, &block); end
+  end
+
   module CommonRelationMethods
     sig { params(block: T.nilable(T.proc.params(record: ::UserPassword).returns(T.untyped))).returns(T::Boolean) }
     def any?(&block); end
@@ -56,6 +66,13 @@ class UserPassword
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::UserPassword).void)).returns(::UserPassword) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -71,6 +88,13 @@ class UserPassword
     sig { params(column_name: NilClass, block: T.proc.params(object: ::UserPassword).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::UserPassword).void)).returns(::UserPassword) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -79,6 +103,13 @@ class UserPassword
     end
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::UserPassword).void)).returns(::UserPassword) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -89,12 +120,24 @@ class UserPassword
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::UserPassword).void)
       ).returns(::UserPassword)
     end
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -183,6 +226,12 @@ class UserPassword
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::UserPassword).void)
       ).returns(::UserPassword)
@@ -191,12 +240,24 @@ class UserPassword
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::UserPassword).void)
       ).returns(::UserPassword)
     end
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -214,7 +275,7 @@ class UserPassword
     sig { params(arg: T.untyped, args: T.untyped).returns(::UserPassword) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::UserPassword)) }
+    sig { returns(T.nilable(::UserPassword)) }
     sig { params(limit: Integer).returns(T::Array[::UserPassword]) }
     def first(limit = nil); end
 
@@ -264,7 +325,7 @@ class UserPassword
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::UserPassword)) }
+    sig { returns(T.nilable(::UserPassword)) }
     sig { params(limit: Integer).returns(T::Array[::UserPassword]) }
     def last(limit = nil); end
 
@@ -283,6 +344,13 @@ class UserPassword
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::UserPassword).void)).returns(::UserPassword) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::UserPassword).void)
+      ).returns(T::Array[::UserPassword])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -328,7 +396,7 @@ class UserPassword
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::UserPassword)) }
+    sig { returns(T.nilable(::UserPassword)) }
     sig { params(limit: Integer).returns(T::Array[::UserPassword]) }
     def take(limit = nil); end
 
@@ -385,11 +453,23 @@ class UserPassword
     sig { params(value: T.nilable(::Space)).void }
     def space=(value); end
 
+    sig { returns(T::Boolean) }
+    def space_changed?; end
+
+    sig { returns(T::Boolean) }
+    def space_previously_changed?; end
+
     sig { returns(T.nilable(::User)) }
     def user; end
 
     sig { params(value: T.nilable(::User)).void }
     def user=(value); end
+
+    sig { returns(T::Boolean) }
+    def user_changed?; end
+
+    sig { returns(T::Boolean) }
+    def user_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods

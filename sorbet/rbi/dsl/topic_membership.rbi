@@ -18,6 +18,14 @@ class TopicMembership
   def to_ary; end
 
   class << self
+    sig do
+      params(
+        attributes: T.untyped,
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(::TopicMembership)
+    end
+    def new(attributes = nil, &block); end
+
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def roles; end
   end
@@ -29,6 +37,13 @@ class TopicMembership
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::TopicMembership).void)).returns(::TopicMembership) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -44,6 +59,13 @@ class TopicMembership
     sig { params(column_name: NilClass, block: T.proc.params(object: ::TopicMembership).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::TopicMembership).void)).returns(::TopicMembership) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -52,6 +74,13 @@ class TopicMembership
     end
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::TopicMembership).void)).returns(::TopicMembership) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -62,12 +91,24 @@ class TopicMembership
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::TopicMembership).void)
       ).returns(::TopicMembership)
     end
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -156,6 +197,12 @@ class TopicMembership
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::TopicMembership).void)
       ).returns(::TopicMembership)
@@ -164,12 +211,24 @@ class TopicMembership
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::TopicMembership).void)
       ).returns(::TopicMembership)
     end
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -187,7 +246,7 @@ class TopicMembership
     sig { params(arg: T.untyped, args: T.untyped).returns(::TopicMembership) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::TopicMembership)) }
+    sig { returns(T.nilable(::TopicMembership)) }
     sig { params(limit: Integer).returns(T::Array[::TopicMembership]) }
     def first(limit = nil); end
 
@@ -237,7 +296,7 @@ class TopicMembership
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::TopicMembership)) }
+    sig { returns(T.nilable(::TopicMembership)) }
     sig { params(limit: Integer).returns(T::Array[::TopicMembership]) }
     def last(limit = nil); end
 
@@ -256,6 +315,13 @@ class TopicMembership
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::TopicMembership).void)).returns(::TopicMembership) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::TopicMembership).void)
+      ).returns(T::Array[::TopicMembership])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -301,7 +367,7 @@ class TopicMembership
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::TopicMembership)) }
+    sig { returns(T.nilable(::TopicMembership)) }
     sig { params(limit: Integer).returns(T::Array[::TopicMembership]) }
     def take(limit = nil); end
 
@@ -369,6 +435,12 @@ class TopicMembership
     sig { params(value: T.nilable(::User)).void }
     def member=(value); end
 
+    sig { returns(T::Boolean) }
+    def member_changed?; end
+
+    sig { returns(T::Boolean) }
+    def member_previously_changed?; end
+
     sig { returns(T.nilable(::User)) }
     def reload_member; end
 
@@ -393,11 +465,23 @@ class TopicMembership
     sig { params(value: T.nilable(::Space)).void }
     def space=(value); end
 
+    sig { returns(T::Boolean) }
+    def space_changed?; end
+
+    sig { returns(T::Boolean) }
+    def space_previously_changed?; end
+
     sig { returns(T.nilable(::Topic)) }
     def topic; end
 
     sig { params(value: T.nilable(::Topic)).void }
     def topic=(value); end
+
+    sig { returns(T::Boolean) }
+    def topic_changed?; end
+
+    sig { returns(T::Boolean) }
+    def topic_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods

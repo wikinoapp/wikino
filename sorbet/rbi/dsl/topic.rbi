@@ -18,6 +18,9 @@ class Topic
   def to_ary; end
 
   class << self
+    sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
+    def new(attributes = nil, &block); end
+
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def visibilities; end
   end
@@ -29,6 +32,13 @@ class Topic
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def build(attributes = nil, &block); end
 
@@ -39,15 +49,41 @@ class Topic
     sig { params(column_name: NilClass, block: T.proc.params(object: ::Topic).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def create!(attributes = nil, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def create_or_find_by!(attributes, &block); end
 
@@ -124,12 +160,30 @@ class Topic
     end
     def find_in_batches(start: nil, finish: nil, batch_size: 1000, error_on_ignore: nil, order: :asc, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def find_or_create_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def find_or_initialize_by(attributes, &block); end
 
@@ -142,7 +196,7 @@ class Topic
     sig { params(arg: T.untyped, args: T.untyped).returns(::Topic) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Topic)) }
+    sig { returns(T.nilable(::Topic)) }
     sig { params(limit: Integer).returns(T::Array[::Topic]) }
     def first(limit = nil); end
 
@@ -192,7 +246,7 @@ class Topic
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Topic)) }
+    sig { returns(T.nilable(::Topic)) }
     sig { params(limit: Integer).returns(T::Array[::Topic]) }
     def last(limit = nil); end
 
@@ -211,6 +265,13 @@ class Topic
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Topic).void)
+      ).returns(T::Array[::Topic])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Topic).void)).returns(::Topic) }
     def new(attributes = nil, &block); end
 
@@ -251,7 +312,7 @@ class Topic
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Topic)) }
+    sig { returns(T.nilable(::Topic)) }
     sig { params(limit: Integer).returns(T::Array[::Topic]) }
     def take(limit = nil); end
 
@@ -334,6 +395,12 @@ class Topic
 
     sig { params(value: T.nilable(::Space)).void }
     def space=(value); end
+
+    sig { returns(T::Boolean) }
+    def space_changed?; end
+
+    sig { returns(T::Boolean) }
+    def space_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods

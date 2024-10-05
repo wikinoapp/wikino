@@ -18,6 +18,9 @@ class Space
   def to_ary; end
 
   class << self
+    sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
+    def new(attributes = nil, &block); end
+
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def plans; end
   end
@@ -29,6 +32,13 @@ class Space
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def build(attributes = nil, &block); end
 
@@ -39,15 +49,41 @@ class Space
     sig { params(column_name: NilClass, block: T.proc.params(object: ::Space).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def create!(attributes = nil, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def create_or_find_by!(attributes, &block); end
 
@@ -124,12 +160,30 @@ class Space
     end
     def find_in_batches(start: nil, finish: nil, batch_size: 1000, error_on_ignore: nil, order: :asc, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def find_or_create_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def find_or_initialize_by(attributes, &block); end
 
@@ -142,7 +196,7 @@ class Space
     sig { params(arg: T.untyped, args: T.untyped).returns(::Space) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Space)) }
+    sig { returns(T.nilable(::Space)) }
     sig { params(limit: Integer).returns(T::Array[::Space]) }
     def first(limit = nil); end
 
@@ -192,7 +246,7 @@ class Space
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Space)) }
+    sig { returns(T.nilable(::Space)) }
     sig { params(limit: Integer).returns(T::Array[::Space]) }
     def last(limit = nil); end
 
@@ -211,6 +265,13 @@ class Space
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::Space).void)
+      ).returns(T::Array[::Space])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::Space).void)).returns(::Space) }
     def new(attributes = nil, &block); end
 
@@ -251,7 +312,7 @@ class Space
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::Space)) }
+    sig { returns(T.nilable(::Space)) }
     sig { params(limit: Integer).returns(T::Array[::Space]) }
     def take(limit = nil); end
 
