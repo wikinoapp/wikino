@@ -21,6 +21,9 @@ class User
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def locales; end
 
+    sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
+    def new(attributes = nil, &block); end
+
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def roles; end
   end
@@ -32,6 +35,13 @@ class User
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def build(attributes = nil, &block); end
 
@@ -42,15 +52,41 @@ class User
     sig { params(column_name: NilClass, block: T.proc.params(object: ::User).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def create!(attributes = nil, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def create_or_find_by!(attributes, &block); end
 
@@ -127,12 +163,30 @@ class User
     end
     def find_in_batches(start: nil, finish: nil, batch_size: 1000, error_on_ignore: nil, order: :asc, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def find_or_create_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def find_or_initialize_by(attributes, &block); end
 
@@ -145,7 +199,7 @@ class User
     sig { params(arg: T.untyped, args: T.untyped).returns(::User) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::User)) }
     sig { params(limit: Integer).returns(T::Array[::User]) }
     def first(limit = nil); end
 
@@ -195,7 +249,7 @@ class User
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::User)) }
     sig { params(limit: Integer).returns(T::Array[::User]) }
     def last(limit = nil); end
 
@@ -214,6 +268,13 @@ class User
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::User).void)
+      ).returns(T::Array[::User])
+    end
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def new(attributes = nil, &block); end
 
@@ -254,7 +315,7 @@ class User
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::User)) }
     sig { params(limit: Integer).returns(T::Array[::User]) }
     def take(limit = nil); end
 
@@ -386,6 +447,12 @@ class User
 
     sig { params(value: T.nilable(::Space)).void }
     def space=(value); end
+
+    sig { returns(T::Boolean) }
+    def space_changed?; end
+
+    sig { returns(T::Boolean) }
+    def space_previously_changed?; end
 
     sig { returns(T::Array[T.untyped]) }
     def topic_ids; end

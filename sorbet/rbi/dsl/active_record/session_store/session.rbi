@@ -15,6 +15,16 @@ class ActiveRecord::SessionStore::Session
   sig { returns(NilClass) }
   def to_ary; end
 
+  class << self
+    sig do
+      params(
+        attributes: T.untyped,
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(::ActiveRecord::SessionStore::Session)
+    end
+    def new(attributes = nil, &block); end
+  end
+
   module CommonRelationMethods
     sig do
       params(
@@ -26,6 +36,17 @@ class ActiveRecord::SessionStore::Session
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig do
+      params(
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(::ActiveRecord::SessionStore::Session)
+    end
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -48,12 +69,34 @@ class ActiveRecord::SessionStore::Session
 
     sig do
       params(
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(::ActiveRecord::SessionStore::Session)
+    end
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
       ).returns(::ActiveRecord::SessionStore::Session)
     end
     def create(attributes = nil, &block); end
 
+    sig do
+      params(
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(::ActiveRecord::SessionStore::Session)
+    end
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -64,12 +107,24 @@ class ActiveRecord::SessionStore::Session
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
       ).returns(::ActiveRecord::SessionStore::Session)
     end
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -158,6 +213,12 @@ class ActiveRecord::SessionStore::Session
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
       ).returns(::ActiveRecord::SessionStore::Session)
@@ -166,12 +227,24 @@ class ActiveRecord::SessionStore::Session
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
       ).returns(::ActiveRecord::SessionStore::Session)
     end
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -189,7 +262,7 @@ class ActiveRecord::SessionStore::Session
     sig { params(arg: T.untyped, args: T.untyped).returns(::ActiveRecord::SessionStore::Session) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
+    sig { returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
     sig { params(limit: Integer).returns(T::Array[::ActiveRecord::SessionStore::Session]) }
     def first(limit = nil); end
 
@@ -239,7 +312,7 @@ class ActiveRecord::SessionStore::Session
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
+    sig { returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
     sig { params(limit: Integer).returns(T::Array[::ActiveRecord::SessionStore::Session]) }
     def last(limit = nil); end
 
@@ -262,6 +335,17 @@ class ActiveRecord::SessionStore::Session
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig do
+      params(
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(::ActiveRecord::SessionStore::Session)
+    end
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::ActiveRecord::SessionStore::Session).void)
+      ).returns(T::Array[::ActiveRecord::SessionStore::Session])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -315,7 +399,7 @@ class ActiveRecord::SessionStore::Session
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
+    sig { returns(T.nilable(::ActiveRecord::SessionStore::Session)) }
     sig { params(limit: Integer).returns(T::Array[::ActiveRecord::SessionStore::Session]) }
     def take(limit = nil); end
 

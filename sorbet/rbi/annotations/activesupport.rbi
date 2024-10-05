@@ -287,6 +287,8 @@ class String
   sig { returns(TrueClass) }
   def acts_like_string?; end
 
+  # This is the subset of `#[]` sigs that have just 1 parameter.
+  # https://github.com/sorbet/sorbet/blob/40ad87b4dc7be23fa00c1369ac9f927053c68907/rbi/core/string.rbi#L270-L303
   sig { params(position: Integer).returns(T.nilable(String)) }
   sig { params(position: T.any(T::Range[Integer], Regexp)).returns(T.nilable(String)) }
   sig { params(position: String).returns(T.nilable(String)) }

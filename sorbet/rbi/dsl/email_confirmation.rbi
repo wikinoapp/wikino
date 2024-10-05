@@ -19,6 +19,14 @@ class EmailConfirmation
   class << self
     sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
     def events; end
+
+    sig do
+      params(
+        attributes: T.untyped,
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(::EmailConfirmation)
+    end
+    def new(attributes = nil, &block); end
   end
 
   module CommonRelationMethods
@@ -28,6 +36,13 @@ class EmailConfirmation
     sig { params(column_name: T.any(String, Symbol)).returns(T.any(Integer, Float, BigDecimal)) }
     def average(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)).returns(::EmailConfirmation) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -43,6 +58,13 @@ class EmailConfirmation
     sig { params(column_name: NilClass, block: T.proc.params(object: ::EmailConfirmation).void).returns(Integer) }
     def count(column_name = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)).returns(::EmailConfirmation) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -51,6 +73,13 @@ class EmailConfirmation
     end
     def create(attributes = nil, &block); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)).returns(::EmailConfirmation) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -61,12 +90,24 @@ class EmailConfirmation
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
       ).returns(::EmailConfirmation)
     end
     def create_or_find_by(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -155,6 +196,12 @@ class EmailConfirmation
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
       ).returns(::EmailConfirmation)
@@ -163,12 +210,24 @@ class EmailConfirmation
 
     sig do
       params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
+    sig do
+      params(
         attributes: T.untyped,
         block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
       ).returns(::EmailConfirmation)
     end
     def find_or_create_by!(attributes, &block); end
 
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -186,7 +245,7 @@ class EmailConfirmation
     sig { params(arg: T.untyped, args: T.untyped).returns(::EmailConfirmation) }
     def find_sole_by(arg, *args); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::EmailConfirmation)) }
+    sig { returns(T.nilable(::EmailConfirmation)) }
     sig { params(limit: Integer).returns(T::Array[::EmailConfirmation]) }
     def first(limit = nil); end
 
@@ -236,7 +295,7 @@ class EmailConfirmation
     sig { params(record: T.untyped).returns(T::Boolean) }
     def include?(record); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::EmailConfirmation)) }
+    sig { returns(T.nilable(::EmailConfirmation)) }
     sig { params(limit: Integer).returns(T::Array[::EmailConfirmation]) }
     def last(limit = nil); end
 
@@ -255,6 +314,13 @@ class EmailConfirmation
     sig { params(column_name: T.any(String, Symbol)).returns(T.untyped) }
     def minimum(column_name); end
 
+    sig { params(block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)).returns(::EmailConfirmation) }
+    sig do
+      params(
+        attributes: T::Array[T.untyped],
+        block: T.nilable(T.proc.params(object: ::EmailConfirmation).void)
+      ).returns(T::Array[::EmailConfirmation])
+    end
     sig do
       params(
         attributes: T.untyped,
@@ -300,7 +366,7 @@ class EmailConfirmation
     end
     def sum(initial_value_or_column = nil, &block); end
 
-    sig { params(limit: NilClass).returns(T.nilable(::EmailConfirmation)) }
+    sig { returns(T.nilable(::EmailConfirmation)) }
     sig { params(limit: Integer).returns(T::Array[::EmailConfirmation]) }
     def take(limit = nil); end
 
