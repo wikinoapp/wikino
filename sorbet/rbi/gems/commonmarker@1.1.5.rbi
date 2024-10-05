@@ -49,25 +49,25 @@ module Commonmarker::Config
   extend ::Commonmarker::Utils
 
   class << self
-    # source://commonmarker//lib/commonmarker/config.rb#53
+    # source://commonmarker//lib/commonmarker/config.rb#62
     def merged_with_defaults(options); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#73
+    # source://commonmarker//lib/commonmarker/config.rb#82
     def process_extension_options(option); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#57
+    # source://commonmarker//lib/commonmarker/config.rb#66
     def process_options(options); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#73
+    # source://commonmarker//lib/commonmarker/config.rb#82
     def process_parse_options(option); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#65
+    # source://commonmarker//lib/commonmarker/config.rb#74
     def process_plugins(plugins); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#73
+    # source://commonmarker//lib/commonmarker/config.rb#82
     def process_render_options(option); end
 
-    # source://commonmarker//lib/commonmarker/config.rb#89
+    # source://commonmarker//lib/commonmarker/config.rb#98
     def process_syntax_highlighter_plugin(plugin); end
   end
 end
@@ -78,7 +78,7 @@ end
 # source://commonmarker//lib/commonmarker/config.rb#7
 Commonmarker::Config::OPTIONS = T.let(T.unsafe(nil), Hash)
 
-# source://commonmarker//lib/commonmarker/config.rb#43
+# source://commonmarker//lib/commonmarker/config.rb#52
 Commonmarker::Config::PLUGINS = T.let(T.unsafe(nil), Hash)
 
 # source://commonmarker//lib/commonmarker/constants.rb#4
