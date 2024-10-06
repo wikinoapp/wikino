@@ -1,6 +1,7 @@
 shared:
   email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
   host: <%= ENV["WIKINO_HOST"] %>
+  resend_api_key: <%= ENV["WIKINO_RESEND_API_KEY"] %>
   reserved_atnames:
     - admin
     - administrator
