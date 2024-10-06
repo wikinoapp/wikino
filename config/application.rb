@@ -46,6 +46,6 @@ module Wikino
 
     config.i18n.available_locales = %i[en ja]
 
-    config.mewst = config_for(:wikino)
+    config.wikino = config_for(:wikino)
   end
 end

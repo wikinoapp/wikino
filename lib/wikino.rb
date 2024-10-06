@@ -3,6 +3,6 @@
 
 module Wikino
   def self.config
-    Rails.configuration.mewst
+    Rails.configuration.wikino
   end
 end
