@@ -89,4 +89,12 @@ Rails.application.configure do
   # ]
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # -----------------------------------------------------------------------------------------
+  # ここから独自の設定
+  # -----------------------------------------------------------------------------------------
+
+  config.action_mailer.delivery_method = :resend
+
+  config.lograge.enabled = true
 end
