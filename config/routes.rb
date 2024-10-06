@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   match "/email_confirmation",                                 via: :post,                                 to: "email_confirmations/create#call"
   match "/email_confirmation/edit",                            via: :get,    as: :edit_email_confirmation, to: "email_confirmations/edit#call"
   match "/frame/joined_topics",                                via: :get,    as: :frame_joined_topic_list, to: "frame/joined_topics/index#call"
+  match "/manifest",                                           via: :get,    as: :manifest,                to: "manifests/show#call"
   match "/s/:space_identifier",                                via: :get,    as: :space,                   to: "spaces/show#call"
   match "/s/:space_identifier/draft_pages/:page_number",       via: :patch,  as: :draft_page,              to: "draft_pages/update#call",             page_number: /\d+/
   match "/s/:space_identifier/topics",                         via: :post,   as: :topic_list,              to: "topics/create#call"
