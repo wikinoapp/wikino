@@ -12,6 +12,7 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@hotwired/turbo": "^8.0.10",
+    "codemirror": "^6.0.1",
     "esbuild": "^0.24.0",
     "stimulus-use": "^0.52.2"
   },
