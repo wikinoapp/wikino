@@ -2873,31 +2873,31 @@ class RuboCop::Cop::RSpec::IndexedLet < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#104
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#105
   def allowed_identifiers; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#98
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#99
   def cop_config_patterns_values; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#78
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#79
   def filter_indexed_lets(candidates); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#87
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#88
   def indexed_let?(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#94
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#95
   def let_name_stripped_index(node); end
 end
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#76
+# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#77
 RuboCop::Cop::RSpec::IndexedLet::INDEX_REGEX = T.let(T.unsafe(nil), Regexp)
 
 # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#51
 RuboCop::Cop::RSpec::IndexedLet::MSG = T.let(T.unsafe(nil), String)
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#75
+# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#76
 RuboCop::Cop::RSpec::IndexedLet::SUFFIX_INDEX_REGEX = T.let(T.unsafe(nil), Regexp)
 
 # A helper for `inflected` style
@@ -3791,59 +3791,59 @@ class RuboCop::Cop::RSpec::MetadataStyle < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#66
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#61
   def autocorrect_pair(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#71
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#66
   def autocorrect_symbol(corrector, node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#78
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#73
   def bad_metadata_pair?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#82
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#77
   def bad_metadata_symbol?(_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#86
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#81
   def format_symbol_to_pair_source(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#90
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#85
   def insert_pair(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#101
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#96
   def insert_pair_as_last_argument(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#110
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#105
   def insert_pair_to_empty_hash_metadata(corrector, node, hash_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#117
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#112
   def insert_pair_to_non_empty_hash_metadata(corrector, node, hash_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#124
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#119
   def insert_symbol(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#131
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#126
   def message_for_style; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#138
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#133
   def on_metadata_pair(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#146
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#141
   def on_metadata_symbol(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#154
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#149
   def remove_pair(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#164
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#159
   def remove_pair_following(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#176
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#171
   def remove_pair_preceding(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#188
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/metadata_style.rb#183
   def remove_symbol(corrector, node); end
 end
 
@@ -6290,6 +6290,35 @@ end
 # source://rubocop-rspec//lib/rubocop/cop/rspec/spec_file_path_suffix.rb#24
 RuboCop::Cop::RSpec::SpecFilePathSuffix::MSG = T.let(T.unsafe(nil), String)
 
+# Do not use a string as `instance_double` constant.
+#
+# @example
+#   # bad
+#   instance_double('User', name: 'John')
+#
+#   # good
+#   instance_double(User, name: 'John')
+#
+# source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#20
+class RuboCop::Cop::RSpec::StringAsInstanceDoubleConstant < ::RuboCop::Cop::RSpec::Base
+  extend ::RuboCop::Cop::AutoCorrector
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#39
+  def autocorrect(corrector, node); end
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#31
+  def on_send(node); end
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#27
+  def stringified_instance_double_const?(param0 = T.unsafe(nil)); end
+end
+
+# source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#23
+RuboCop::Cop::RSpec::StringAsInstanceDoubleConstant::MSG = T.let(T.unsafe(nil), String)
+
+# source://rubocop-rspec//lib/rubocop/cop/rspec/string_as_instance_double_constant.rb#24
+RuboCop::Cop::RSpec::StringAsInstanceDoubleConstant::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
 # Checks that message expectations do not have a configured response.
 #
 # @example
@@ -6660,29 +6689,27 @@ RuboCop::Cop::RSpec::UndescriptiveLiteralsDescription::MSG = T.let(T.unsafe(nil)
 #
 # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#33
 class RuboCop::Cop::RSpec::UnspecifiedException < ::RuboCop::Cop::RSpec::Base
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#38
-  def empty_raise_error_or_exception(param0 = T.unsafe(nil)); end
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#42
+  def expect_to?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#47
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#46
   def on_send(node); end
 
   private
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#59
-  def block_with_args?(node); end
-
-  # @return [Boolean]
-  #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#55
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#54
   def empty_exception_matcher?(node); end
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#64
+  def find_expect_to(node); end
 end
 
 # source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#34
 RuboCop::Cop::RSpec::UnspecifiedException::MSG = T.let(T.unsafe(nil), String)
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#35
+# source://rubocop-rspec//lib/rubocop/cop/rspec/unspecified_exception.rb#36
 RuboCop::Cop::RSpec::UnspecifiedException::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 # Helps check offenses with variable definitions
