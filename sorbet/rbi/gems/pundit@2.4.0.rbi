@@ -15,37 +15,37 @@ module Pundit
     # @api public
     # @see [Pundit::Context#authorize]
     #
-    # source://pundit//lib/pundit.rb#71
+    # source://pundit//lib/pundit.rb#74
     def authorize(user, record, query, policy_class: T.unsafe(nil), cache: T.unsafe(nil)); end
 
     # @api public
     # @private
     #
-    # source://pundit//lib/pundit.rb#60
+    # source://pundit//lib/pundit.rb#63
     def included(base); end
 
     # @api public
     # @see [Pundit::Context#policy]
     #
-    # source://pundit//lib/pundit.rb#92
+    # source://pundit//lib/pundit.rb#95
     def policy(user, *args, **kwargs, &block); end
 
     # @api public
     # @see [Pundit::Context#policy!]
     #
-    # source://pundit//lib/pundit.rb#97
+    # source://pundit//lib/pundit.rb#100
     def policy!(user, *args, **kwargs, &block); end
 
     # @api public
     # @see [Pundit::Context#policy_scope]
     #
-    # source://pundit//lib/pundit.rb#82
+    # source://pundit//lib/pundit.rb#85
     def policy_scope(user, *args, **kwargs, &block); end
 
     # @api public
     # @see [Pundit::Context#policy_scope!]
     #
-    # source://pundit//lib/pundit.rb#87
+    # source://pundit//lib/pundit.rb#90
     def policy_scope!(user, *args, **kwargs, &block); end
   end
 end
@@ -203,7 +203,7 @@ end
 #
 # @api public
 #
-# source://pundit//lib/pundit.rb#51
+# source://pundit//lib/pundit.rb#54
 class Pundit::AuthorizationNotPerformedError < ::Pundit::Error; end
 
 # source://pundit//lib/pundit/cache_store/null_store.rb#4
@@ -346,11 +346,11 @@ module Pundit::Generators; end
 
 # @api private
 #
-# source://pundit//lib/pundit.rb#103
+# source://pundit//lib/pundit.rb#106
 module Pundit::Helper
   # @api private
   #
-  # source://pundit//lib/pundit.rb#104
+  # source://pundit//lib/pundit.rb#107
   def policy_scope(scope); end
 end
 
@@ -358,7 +358,7 @@ end
 #
 # @api public
 #
-# source://pundit//lib/pundit.rb#47
+# source://pundit//lib/pundit.rb#50
 class Pundit::InvalidConstructorError < ::Pundit::Error; end
 
 # Error that will be raised when authorization has failed
@@ -393,7 +393,7 @@ end
 #
 # @api public
 #
-# source://pundit//lib/pundit.rb#58
+# source://pundit//lib/pundit.rb#61
 class Pundit::NotDefinedError < ::Pundit::Error; end
 
 # Finds policy and scope classes for given object.
@@ -478,7 +478,7 @@ end
 #
 # @api public
 #
-# source://pundit//lib/pundit.rb#55
+# source://pundit//lib/pundit.rb#58
 class Pundit::PolicyScopingNotPerformedError < ::Pundit::AuthorizationNotPerformedError; end
 
 # @api public
