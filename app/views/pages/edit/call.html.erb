@@ -62,10 +62,20 @@
           </span>
         </div>
 
-        <%= f.text_area(:body, {
-          class: "textarea textarea-bordered w-full",
-          data: {action: "page-editor-form#saveAsDraft"}
-        }) %>
+        <div
+          data-controller="page-editor"
+          data-page-editor-body-value="<%= f.object.body %>"
+        >
+          <div data-page-editor-target="codeMirror"></div>
+
+          <%= f.text_area(:body, {
+            class: "hidden",
+            data: {
+              action: "page-editor-form#saveAsDraft",
+              page_editor_target: "textarea"
+            }
+          }) %>
+        </div>
       <% end %>
 
       <div class="flex gap-4 items-center">
