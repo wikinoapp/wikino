@@ -27,9 +27,11 @@ import { EditorView, basicSetup } from 'codemirror';
 export default class extends Controller<HTMLDivElement> {
   static targets = ['codeMirror', 'textarea'];
   static values = {
+    autofocus: Boolean,
     body: String,
   };
 
+  declare readonly autofocusValue: boolean;
   declare readonly bodyValue: string;
   declare readonly codeMirrorTarget: HTMLDivElement;
   declare readonly textareaTarget: HTMLTextAreaElement;
@@ -81,6 +83,10 @@ export default class extends Controller<HTMLDivElement> {
       state,
       parent: this.codeMirrorTarget,
     });
+
+    if (this.autofocusValue) {
+      this.editorView.focus();
+    }
   }
 
   disconnect() {
