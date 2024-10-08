@@ -22,4 +22,14 @@ class EditPageForm < ApplicationForm
   def viewable_topics
     viewer.not_nil!.viewable_topics
   end
+
+  sig { returns(T::Boolean) }
+  def autofocus_title?
+    title.blank?
+  end
+
+  sig { returns(T::Boolean) }
+  def autofocus_body?
+    !autofocus_title?
+  end
 end

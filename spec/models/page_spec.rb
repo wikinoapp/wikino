@@ -9,6 +9,8 @@ RSpec.describe Page, type: :model do
 
       it "パスのリストを返すこと" do
         [
+          # 何も入力していないとき
+          ["[[]]", []],
           # トピックを省略している場合
           ["[[a]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
           ["[[ a ]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
