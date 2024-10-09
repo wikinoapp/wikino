@@ -16,14 +16,14 @@ services:
       - app_gems_data:/usr/local/bundle
 
   postgresql:
-    image: postgres:16.3
+    image: postgres:17.0
     ports:
       - "5432:5432"
     volumes:
-      - postgresql_data:/var/lib/postgresql/data:delegated
+      - postgresql17_data:/var/lib/postgresql/data:delegated
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
 volumes:
   app_gems_data:
-  postgresql_data:
+  postgresql17_data:
