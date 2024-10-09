@@ -2,50 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-.wikino-markdown blockquote {
-  @apply border-gray-300 border-l-4 pl-4 pr-4 text-base text-gray-600;
-}
+@layer components {
+  .wikino-markdown blockquote {
+    @apply border-gray-300 border-l-4 pl-4 pr-4 text-base text-gray-600;
+  }
 
-.wikino-markdown code {
-  @apply bg-gray-200 font-mono inline px-1 py-4 rounded text-sm;
-}
+  .wikino-markdown code {
+    @apply bg-gray-200 font-mono inline px-1 py-4 rounded text-sm;
+  }
 
-.wikino-markdown h1 {
-  @apply border-b font-semibold leading-tight mb-4 mt-6 pb-2 text-4xl;
-}
+  .wikino-markdown h1 {
+    @apply border-b font-semibold leading-tight mb-4 mt-6 pb-2 text-4xl;
+  }
 
-.wikino-markdown h2 {
-  @apply border-b font-semibold leading-tight mb-4 mt-6 pb-2 text-2xl;
-}
+  .wikino-markdown h2 {
+    @apply border-b font-semibold leading-tight mb-4 mt-6 pb-2 text-2xl;
+  }
 
-.wikino-markdown h3 {
-  @apply font-semibold leading-snug mb-4 mt-6 text-lg;
-}
+  .wikino-markdown h3 {
+    @apply font-semibold leading-snug mb-4 mt-6 text-lg;
+  }
 
-.wikino-markdown h4 {
-  @apply font-semibold leading-none mb-4 mt-6 text-base;
-}
+  .wikino-markdown h4 {
+    @apply font-semibold leading-none mb-4 mt-6 text-base;
+  }
 
-.wikino-markdown h5 {
-  @apply font-semibold leading-tight mb-4 mt-6 text-sm;
-}
+  .wikino-markdown h5 {
+    @apply font-semibold leading-tight mb-4 mt-6 text-sm;
+  }
 
-.wikino-markdown h6 {
-  @apply font-semibold leading-tight mb-4 mt-6 text-gray-600 text-sm;
-}
+  .wikino-markdown h6 {
+    @apply font-semibold leading-tight mb-4 mt-6 text-gray-600 text-sm;
+  }
 
-.wikino-markdown ol {
-  @apply list-decimal mb-4 pl-8 text-base;
-}
+  .wikino-markdown ol {
+    @apply list-decimal mb-4 pl-8 text-base;
+  }
 
-.wikino-markdown pre {
-  @apply bg-gray-100 mb-4 p-4 rounded;
-}
+  .wikino-markdown pre {
+    @apply bg-gray-100 mb-4 p-4 rounded;
+  }
 
-.wikino-markdown pre code {
-  @apply bg-transparent block overflow-visible p-0 rounded-none;
-}
+  .wikino-markdown pre code {
+    @apply bg-transparent block overflow-visible p-0 rounded-none;
+  }
 
-.wikino-markdown ul {
-  @apply list-disc mb-4 pl-8 text-base;
+  .wikino-markdown ul {
+    @apply list-disc mb-4 pl-8 text-base;
+  }
 }
