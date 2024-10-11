@@ -1,7 +1,7 @@
 <div class="flex">
   <%= render Sidebars::MainSidebarComponent.new %>
 
-  <div class="flex flex-1 flex-col min-h-[100svh]">
+  <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] sm:max-lg:w-[calc(100%-56px)] w-full">
     <turbo-frame data-turbo-action="advance" id="main-content">
       <%= content %>
     </turbo-frame>

@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer components {
+  /*
+    ============================================================================
+    .wikino-markdown
+    ============================================================================
+  */
   .wikino-markdown blockquote {
     @apply border-gray-300 border-l-4 pl-4 pr-4 text-base text-gray-600;
   }
@@ -50,4 +55,25 @@
   .wikino-markdown ul {
     @apply list-disc mb-4 pl-8 text-base;
   }
+}
+
+/*
+  ============================================================================
+  CodeMirror
+  ============================================================================
+*/
+.cm-editor {
+  @apply px-2 textarea textarea-bordered;
+}
+
+.cm-editor.cm-focused {
+  @apply !outline !outline-2 !outline-offset-2 !outline-gray-300;
+}
+
+.cm-editor .cm-gutters {
+  @apply bg-transparent;
+}
+
+.cm-editor .cm-lineNumbers {
+  @apply dark:bg-base-100;
 }

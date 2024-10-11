@@ -46,7 +46,6 @@ export default class extends Controller<HTMLDivElement> {
       doc: this.bodyValue,
       extensions: [
         lineNumbers(),
-        highlightActiveLineGutter(),
         highlightSpecialChars(),
         history(),
         foldGutter(),
@@ -60,7 +59,6 @@ export default class extends Controller<HTMLDivElement> {
         autocompletion(),
         rectangularSelection(),
         crosshairCursor(),
-        highlightActiveLine(),
         highlightSelectionMatches(),
         keymap.of([
           ...closeBracketsKeymap,
