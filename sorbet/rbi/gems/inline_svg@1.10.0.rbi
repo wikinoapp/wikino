@@ -15,13 +15,13 @@ module InlineSvg
   class << self
     # Returns the value of attribute configuration.
     #
-    # source://inline_svg//lib/inline_svg.rb#89
+    # source://inline_svg//lib/inline_svg.rb#90
     def configuration; end
 
-    # source://inline_svg//lib/inline_svg.rb#91
+    # source://inline_svg//lib/inline_svg.rb#92
     def configure; end
 
-    # source://inline_svg//lib/inline_svg.rb#99
+    # source://inline_svg//lib/inline_svg.rb#100
     def reset_configuration!; end
   end
 end
@@ -152,62 +152,62 @@ class InlineSvg::CachedAssetFile
   def read_assets(acc, paths); end
 end
 
-# source://inline_svg//lib/inline_svg.rb#18
+# source://inline_svg//lib/inline_svg.rb#19
 class InlineSvg::Configuration
   # @return [Configuration] a new instance of Configuration
   #
-  # source://inline_svg//lib/inline_svg.rb#23
+  # source://inline_svg//lib/inline_svg.rb#24
   def initialize; end
 
-  # source://inline_svg//lib/inline_svg.rb#63
+  # source://inline_svg//lib/inline_svg.rb#64
   def add_custom_transformation(options); end
 
   # Returns the value of attribute asset_file.
   #
-  # source://inline_svg//lib/inline_svg.rb#21
+  # source://inline_svg//lib/inline_svg.rb#22
   def asset_file; end
 
-  # source://inline_svg//lib/inline_svg.rb#30
+  # source://inline_svg//lib/inline_svg.rb#31
   def asset_file=(custom_asset_file); end
 
   # Returns the value of attribute asset_finder.
   #
-  # source://inline_svg//lib/inline_svg.rb#21
+  # source://inline_svg//lib/inline_svg.rb#22
   def asset_finder; end
 
-  # source://inline_svg//lib/inline_svg.rb#43
+  # source://inline_svg//lib/inline_svg.rb#44
   def asset_finder=(finder); end
 
   # Returns the value of attribute custom_transformations.
   #
-  # source://inline_svg//lib/inline_svg.rb#21
+  # source://inline_svg//lib/inline_svg.rb#22
   def custom_transformations; end
 
-  # source://inline_svg//lib/inline_svg.rb#70
+  # source://inline_svg//lib/inline_svg.rb#71
   def raise_on_file_not_found=(value); end
 
   # @return [Boolean]
   #
-  # source://inline_svg//lib/inline_svg.rb#74
+  # source://inline_svg//lib/inline_svg.rb#75
   def raise_on_file_not_found?; end
 
   # Returns the value of attribute svg_not_found_css_class.
   #
-  # source://inline_svg//lib/inline_svg.rb#21
+  # source://inline_svg//lib/inline_svg.rb#22
   def svg_not_found_css_class; end
 
-  # source://inline_svg//lib/inline_svg.rb#57
+  # source://inline_svg//lib/inline_svg.rb#58
   def svg_not_found_css_class=(css_class); end
 
   private
 
   # @return [Boolean]
   #
-  # source://inline_svg//lib/inline_svg.rb#80
+  # source://inline_svg//lib/inline_svg.rb#81
   def incompatible_transformation?(klass); end
 end
 
-# source://inline_svg//lib/inline_svg.rb#19
+# source://inline_svg//lib/inline_svg.rb#20
 class InlineSvg::Configuration::Invalid < ::ArgumentError; end
 
 # source://inline_svg//lib/inline_svg/transform_pipeline/transformations/transformation.rb#39
@@ -491,9 +491,12 @@ class InlineSvg::WebpackAssetFinder
   private
 
   # source://inline_svg//lib/inline_svg/webpack_asset_finder.rb#25
+  def asset_helper; end
+
+  # source://inline_svg//lib/inline_svg/webpack_asset_finder.rb#34
   def dev_server_asset(file_path); end
 
-  # source://inline_svg//lib/inline_svg/webpack_asset_finder.rb#40
+  # source://inline_svg//lib/inline_svg/webpack_asset_finder.rb#49
   def fetch_from_dev_server(file_path); end
 
   class << self
