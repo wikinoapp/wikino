@@ -1,15 +1,15 @@
-<%= link_to page_path(viewer!.space_identifier, page.number), data: {turbo_frame: "main-content"} do %>
-  <%= render Wikino::UI::Card.new(class_name: class_names(class_name, "px-4 py-2")) do %>
+<%= render Wikino::UI::Card.new(class_name: class_names(class_name, "grid min-h-[96px] hover:ring-1 hover:ring-primary px-4 py-2 transition")) do %>
+  <%= link_to page_path(viewer!.space_identifier, page.number), data: {turbo_frame: "main-content"} do %>
     <div class="flex flex-col gap-1">
       <div class="flex gap-1 items-center">
-        <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-400") %>
+        <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-slate-500") %>
 
-        <div class="text-gray-400 text-xs">
+        <div class="text-slate-500 text-xs">
           <%= page.topic.name %>
         </div>
       </div>
 
-      <div class="font-bold text-sm">
+      <div class="font-bold line-clamp-3 text-sm">
         <%= page.title %>
       </div>
     </div>

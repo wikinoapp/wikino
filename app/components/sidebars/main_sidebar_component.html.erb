@@ -1,23 +1,29 @@
 <nav class="bg-base-200 sticky">
-  <div class="hidden lg:block lg:w-[240px]">
-    <div class="flex flex-col gap-4 p-4">
+  <div class="hidden lg:flex lg:flex-col lg:gap-2 lg:p-2 lg:w-[240px]">
+    <div class="p-2">
       <%= link_to root_path, {
         data: {turbo_action: "advance", turbo_frame: "main-content"}
       } do %>
-        <%= render Wikino::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-white") %>
       <% end %>
+    </div>
 
-      <div>
-        <input class="input input-bordered" type="text" placeholder="Search...">
+    <div class="flex flex-col gap-4">
+      <div class="px-2">
+        <input
+          class="bg-transparent border-slate-400 focus:border-slate-200 input text-slate-200 transition"
+          type="text"
+          placeholder="Search..."
+        >
       </div>
 
       <ul class="flex flex-col gap-4">
         <li>
           <%= link_to space_path, {
-            class: "flex gap-2 items-center",
+            class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
             data: {turbo_action: "advance", turbo_frame: "main-content"}
           } do %>
-            <%= render Wikino::UI::Icon.new(name: "house", size: "18px", class_name: "fill-white") %>
+            <%= render Wikino::UI::Icon.new(name: "house", size: "18px", class_name: "fill-slate-200") %>
 
             <%= t("nouns.home") %>
           <% end %>
@@ -25,11 +31,11 @@
       </ul>
 
       <div class="flex flex-col gap-2">
-        <div class="font-bold text-xs">
+        <div class="font-bold px-2 text-slate-400 text-xs">
           <%= t("nouns.topics") %>
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col">
           <turbo-frame
             id="joined_topics"
             loading="lazy"
@@ -37,10 +43,10 @@
           ></turbo-frame>
 
           <%= link_to new_topic_path(viewer!.space_identifier), {
-            class: "flex gap-2 items-center",
+            class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
             data: {turbo_action: "advance", turbo_frame: "main-content"}
           } do %>
-            <%= render Wikino::UI::Icon.new(name: "plus", size: "18px", class_name: "fill-white") %>
+            <%= render Wikino::UI::Icon.new(name: "plus", size: "18px", class_name: "fill-slate-200") %>
 
             <%= t("nouns.new_topic") %>
           <% end %>
@@ -53,21 +59,21 @@
         <% if signed_in? %>
           <li>
             <%= button_to session_path(space_identifier: viewer!.space_identifier), {
-              class: "flex gap-2 items-center",
+              class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
               method: :delete
             } do %>
-              <%= render Wikino::UI::Icon.new(name: "sign-out", size: "18px", class_name: "fill-white") %>
+              <%= render Wikino::UI::Icon.new(name: "sign-out", size: "18px", class_name: "fill-slate-200") %>
 
               <%= t("nouns.sign_out") %>
             <% end %>
           </li>
         <% else %>
           <li>
-            <%= link_to t("nouns.sign_up"), sign_up_path %>
+            <%= link_to t("nouns.sign_up"), sign_up_path, class: "text-slate-200" %>
           </li>
 
           <li>
-            <%= link_to t("nouns.sign_in"), sign_in_path %>
+            <%= link_to t("nouns.sign_in"), sign_in_path, class: "text-slate-200" %>
           </li>
         <% end %>
       </ul>

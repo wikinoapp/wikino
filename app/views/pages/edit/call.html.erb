@@ -9,93 +9,97 @@
       </div>
     <% end %>
 
-    <%= form_with(
-      class: "flex flex-col gap-4",
-      data: { controller: "page-editor-form" },
-      model: @form,
-      method: :patch,
-      url: page_path(viewer!.space_identifier, @page.number)
-    ) do |f| %>
-      <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+      <%= form_with(
+        class: "flex flex-col gap-4",
+        data: { controller: "page-editor-form" },
+        model: @form,
+        method: :patch,
+        url: page_path(viewer!.space_identifier, @page.number)
+      ) do |f| %>
+        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-      <div>
-        <div class="label">
-          <span class="label-text">
-            <%= t("forms.attributes.edit_page_form.topic_number") %>
-          </span>
-        </div>
+        <div>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.edit_page_form.topic_number") %>
+            </span>
+          </div>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="cursor-pointer flex gap-2 items-center">
-              <%= f.select(
-                :topic_number,
-                options_from_collection_for_select(f.object.viewable_topics, :number, :name, f.object.topic_number),
-                {},
-                {
-                  class: "select select-bordered",
-                  data: {action: "page-editor-form#saveAsDraft"}
-                }
-              ) %>
-            </label>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="cursor-pointer flex gap-2 items-center">
+                <%= f.select(
+                  :topic_number,
+                  options_from_collection_for_select(f.object.viewable_topics, :number, :name, f.object.topic_number),
+                  {},
+                  {
+                    class: "bg-base-300 select select-bordered",
+                    data: {action: "page-editor-form#saveAsDraft"}
+                  }
+                ) %>
+              </label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <%= f.label :title, class: "form-control" do %>
-        <div class="label">
-          <span class="label-text">
-            <%= t("forms.attributes.edit_page_form.title") %>
-          </span>
-        </div>
+        <%= f.label :title, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.edit_page_form.title") %>
+            </span>
+          </div>
 
-        <%= f.text_field(:title, {
-          autofocus: f.object.autofocus_title?,
-          class: "input input-bordered w-full",
-          data: {action: "page-editor-form#saveAsDraft"}
-        }) %>
-      <% end %>
-
-      <%= f.label :body, class: "form-control" do %>
-        <div class="label">
-          <span class="label-text">
-            <%= t("forms.attributes.edit_page_form.body") %>
-          </span>
-        </div>
-
-        <div
-          data-controller="page-editor"
-          data-page-editor-body-value="<%= f.object.body %>"
-          data-page-editor-autofocus-value="<%= f.object.autofocus_body? %>"
-        >
-          <div data-page-editor-target="codeMirror"></div>
-
-          <%= f.text_area(:body, {
-            class: "hidden",
-            data: {
-              action: "page-editor-form#saveAsDraft",
-              page_editor_target: "textarea"
-            }
+          <%= f.text_field(:title, {
+            autofocus: f.object.autofocus_title?,
+            class: "bg-base-300 input input-bordered w-full",
+            data: {action: "page-editor-form#saveAsDraft"}
           }) %>
+        <% end %>
+
+        <%= f.label :body, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.edit_page_form.body") %>
+            </span>
+          </div>
+
+          <div
+            data-controller="page-editor"
+            data-page-editor-body-value="<%= f.object.body %>"
+            data-page-editor-autofocus-value="<%= f.object.autofocus_body? %>"
+          >
+            <div data-page-editor-target="codeMirror"></div>
+
+            <%= f.text_area(:body, {
+              class: "hidden",
+              data: {
+                action: "page-editor-form#saveAsDraft",
+                page_editor_target: "textarea"
+              }
+            }) %>
+          </div>
+        <% end %>
+
+        <div class="flex gap-4 items-center">
+          <div>
+            <%= f.button class: "btn btn-primary no-animation", type: :submit do %>
+              <%= render Wikino::UI::Icon.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-content") %>
+
+              <%= t("verbs.save") %>
+            <% end %>
+
+            <input
+              class="hidden"
+              data-page-editor-form-target="draftSaveButton"
+              formaction="<%= draft_page_path(viewer!.space_identifier, @page.number) %>"
+              type="submit"
+            >
+          </div>
+
+          <turbo-frame id="page-editor-draft-saved-time"></turbo-frame>
         </div>
       <% end %>
-
-      <div class="flex gap-4 items-center">
-        <div>
-          <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-            <%= t("verbs.save") %>
-          <% end %>
-
-          <input
-            class="hidden"
-            data-page-editor-form-target="draftSaveButton"
-            formaction="<%= draft_page_path(viewer!.space_identifier, @page.number) %>"
-            type="submit"
-          >
-        </div>
-
-        <turbo-frame id="page-editor-draft-saved-time"></turbo-frame>
-      </div>
     <% end %>
 
     <turbo-frame id="page-editor-link-list">

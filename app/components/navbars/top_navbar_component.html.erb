@@ -1,7 +1,7 @@
 <nav class="navbar px-4">
   <div class="navbar-start">
     <%= link_to root_path do %>
-      <%= render Wikino::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
+      <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-primary") %>
     <% end %>
   </div>
 
@@ -12,7 +12,7 @@
   </div>
 
   <div class="navbar-end">
-    <ul class="menu menu-horizontal px-1">
+    <ul class="gap-2 menu menu-horizontal px-1">
       <% if signed_in? %>
         <li>
           <%= button_to t("nouns.sign_out"), session_path(space_identifier: viewer!.space_identifier), {
@@ -21,11 +21,11 @@
         </li>
       <% else %>
         <li>
-          <%= link_to t("nouns.sign_up"), sign_up_path %>
+          <%= link_to t("nouns.sign_up"), sign_up_path, aria: {disabled: true}, class: "btn btn-disabled btn-ghost" %>
         </li>
 
         <li>
-          <%= link_to t("nouns.sign_in"), sign_in_path %>
+          <%= link_to t("nouns.sign_in"), sign_in_path, class: "btn btn-ghost" %>
         </li>
       <% end %>
     </ul>
