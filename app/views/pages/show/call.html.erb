@@ -15,9 +15,9 @@
       </div>
 
       <%= link_to edit_page_path(viewer!.space_identifier, @page.number), {
-        class: "btn btn-primary"
+        class: "btn btn-primary no-animation"
       } do %>
-        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-black") %>
+        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
         <%= t("verbs.edit") %>
       <% end %>

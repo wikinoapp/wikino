@@ -1,3 +1,6 @@
+const colors = require('tailwindcss/colors');
+const daisyuiThemes = require('daisyui/src/theming/themes')
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -21,8 +24,13 @@ module.exports = {
     themes: [
       {
         light: {
-          ...require('daisyui/src/theming/themes')['light'],
-          primary: 'black',
+          ...daisyuiThemes['light'],
+          'base-100': colors.fuchsia[50],       // ページ全体の背景色
+          'base-200': '#0e0d25',                // サイドバーの背景色
+          'base-300': colors.white,             // カードの背景色
+          'base-content': colors.slate[950],    // テキストの色
+          'primary-content': colors.violet[50],
+          'primary': colors.violet[600],
         },
       },
     ],

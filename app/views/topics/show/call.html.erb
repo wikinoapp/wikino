@@ -16,8 +16,8 @@
         <% end %>
       </div>
 
-      <%= link_to new_page_path(viewer!.space_identifier, @topic.number), class: "btn btn-primary" do %>
-        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-black") %>
+      <%= link_to new_page_path(viewer!.space_identifier, @topic.number), class: "btn btn-primary no-animation" do %>
+        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
         <%= t("nouns.new_page") %>
       <% end %>
