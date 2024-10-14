@@ -12,6 +12,7 @@ class EditPageForm < ApplicationForm
   validates :topic, presence: true
   validates :title, presence: true
   validates :body, presence: true, allow_blank: true
+  validate :title_uniqueness
 
   sig { returns(T.nilable(Topic)) }
   def topic
@@ -31,5 +32,15 @@ class EditPageForm < ApplicationForm
   sig { returns(T::Boolean) }
   def autofocus_body?
     !autofocus_title?
+  end
+
+  sig { void }
+  private def title_uniqueness
+    page = topic&.pages&.find_by(title:)
+
+    if page
+      edit_page_path = "/s/#{topic.not_nil!.space.identifier}/pages/#{page.number}/edit"
+      errors.add(:title, I18n.t("forms.errors.models.edit_page_form.uniqueness_html", edit_page_path:))
+    end
   end
 end
