@@ -10,6 +10,7 @@ class Page < ApplicationRecord
   belongs_to :space
   has_many :editorships, class_name: "PageEditorship", dependent: :restrict_with_exception
   has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
+  has_many_attached :files
 
   scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
   scope :initial, -> { where(title: nil) }
