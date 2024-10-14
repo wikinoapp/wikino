@@ -12,45 +12,45 @@ RSpec.describe Page, type: :model do
           # 何も入力していないとき
           ["[[]]", []],
           # トピックを省略している場合
-          ["[[a]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
-          ["[[ a ]]", [PagePath.new(topic_name: topic.name, page_title: "a")]],
-          ["[[Hello]]", [PagePath.new(topic_name: topic.name, page_title: "Hello")]],
-          ["[[こんにちは✌️]]", [PagePath.new(topic_name: topic.name, page_title: "こんにちは✌️")]],
+          ["[[a]]", [PageLocation.new(topic_name: topic.name, page_title: "a")]],
+          ["[[ a ]]", [PageLocation.new(topic_name: topic.name, page_title: "a")]],
+          ["[[Hello]]", [PageLocation.new(topic_name: topic.name, page_title: "Hello")]],
+          ["[[こんにちは✌️]]", [PageLocation.new(topic_name: topic.name, page_title: "こんにちは✌️")]],
           ["[[a]] [[b]]", [
-            PagePath.new(topic_name: topic.name, page_title: "a"),
-            PagePath.new(topic_name: topic.name, page_title: "b")
+            PageLocation.new(topic_name: topic.name, page_title: "a"),
+            PageLocation.new(topic_name: topic.name, page_title: "b")
           ]],
           ["[[Hello]] [[World]]", [
-            PagePath.new(topic_name: topic.name, page_title: "Hello"),
-            PagePath.new(topic_name: topic.name, page_title: "World")
+            PageLocation.new(topic_name: topic.name, page_title: "Hello"),
+            PageLocation.new(topic_name: topic.name, page_title: "World")
           ]],
           ["[[こんにちは]] [[世界🌏]]", [
-            PagePath.new(topic_name: topic.name, page_title: "こんにちは"),
-            PagePath.new(topic_name: topic.name, page_title: "世界🌏")
+            PageLocation.new(topic_name: topic.name, page_title: "こんにちは"),
+            PageLocation.new(topic_name: topic.name, page_title: "世界🌏")
           ]],
           ["[ [a] ]", []],
           ["[[a]", []],
           # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
-          ["[[[a]]]", [PagePath.new(topic_name: topic.name, page_title: "[a")]],
+          ["[[[a]]]", [PageLocation.new(topic_name: topic.name, page_title: "[a")]],
           ["[[[a]]] [[b]]", [
-            PagePath.new(topic_name: topic.name, page_title: "[a"),
-            PagePath.new(topic_name: topic.name, page_title: "b")
+            PageLocation.new(topic_name: topic.name, page_title: "[a"),
+            PageLocation.new(topic_name: topic.name, page_title: "b")
           ]],
           ["[[[a]]] [[[b]]]", [
-            PagePath.new(topic_name: topic.name, page_title: "[a"),
-            PagePath.new(topic_name: topic.name, page_title: "[b")
+            PageLocation.new(topic_name: topic.name, page_title: "[a"),
+            PageLocation.new(topic_name: topic.name, page_title: "[b")
           ]],
-          ["[[[ a ]]]", [PagePath.new(topic_name: topic.name, page_title: "[ a")]],
+          ["[[[ a ]]]", [PageLocation.new(topic_name: topic.name, page_title: "[ a")]],
 
           # トピックを指定している場合
-          ["[[foo/a]]", [PagePath.new(topic_name: "foo", page_title: "a")]],
-          ["[[ foo/a ]]", [PagePath.new(topic_name: "foo", page_title: "a")]],
-          ["[[ foo / a ]]", [PagePath.new(topic_name: "foo ", page_title: " a")]],
+          ["[[foo/a]]", [PageLocation.new(topic_name: "foo", page_title: "a")]],
+          ["[[ foo/a ]]", [PageLocation.new(topic_name: "foo", page_title: "a")]],
+          ["[[ foo / a ]]", [PageLocation.new(topic_name: "foo ", page_title: " a")]],
           ["[[foo/a]] [[bar/b]]", [
-            PagePath.new(topic_name: "foo", page_title: "a"),
-            PagePath.new(topic_name: "bar", page_title: "b")
+            PageLocation.new(topic_name: "foo", page_title: "a"),
+            PageLocation.new(topic_name: "bar", page_title: "b")
           ]],
-          ["[[foo/a/b]]", [PagePath.new(topic_name: "foo", page_title: "a/b")]]
+          ["[[foo/a/b]]", [PageLocation.new(topic_name: "foo", page_title: "a/b")]]
         ].each do |(body, expected)|
           page.body = body
 

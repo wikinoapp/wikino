@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class PagePath < T::Struct
+class PageLocation < T::Struct
   include T::Struct::ActsAsComparable
 
   const :topic_name, String

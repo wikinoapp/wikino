@@ -6,7 +6,7 @@ module ModelConcerns
     extend ActiveSupport::Concern
     extend T::Sig
 
-    sig { returns(T::Array[PagePath]) }
+    sig { returns(T::Array[PageLocation]) }
     def paths_in_body
       current_topic_name = topic.name
       titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
@@ -15,9 +15,9 @@ module ModelConcerns
         topic_name, page_title = title_with_topic.split("/", 2)
 
         if !topic_name.nil? && !page_title.nil?
-          ary << PagePath.new(topic_name:, page_title:)
+          ary << PageLocation.new(topic_name:, page_title:)
         elsif !topic_name.nil? && page_title.nil?
-          ary << PagePath.new(topic_name: current_topic_name, page_title: topic_name)
+          ary << PageLocation.new(topic_name: current_topic_name, page_title: topic_name)
         else
           next
         end
