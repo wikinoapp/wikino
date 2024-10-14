@@ -5,6 +5,9 @@ class EditPageForm < ApplicationForm
   sig { returns(T.nilable(User)) }
   attr_accessor :viewer
 
+  sig { returns(T.nilable(Page)) }
+  attr_accessor :page
+
   attribute :topic_number, :integer
   attribute :title, :string
   attribute :body, :string, default: ""
@@ -36,10 +39,12 @@ class EditPageForm < ApplicationForm
 
   sig { void }
   private def title_uniqueness
-    page = topic&.pages&.find_by(title:)
+    return if topic.nil?
 
-    if page
-      edit_page_path = "/s/#{topic.not_nil!.space.not_nil!.identifier}/pages/#{page.number}/edit"
+    other_page = topic.not_nil!.pages.where.not(id: page.not_nil!.id).find_by(title:)
+
+    if other_page
+      edit_page_path = "/s/#{topic.not_nil!.space.not_nil!.identifier}/pages/#{other_page.number}/edit"
       errors.add(:title, I18n.t("forms.errors.models.edit_page_form.uniqueness_html", edit_page_path:))
     end
   end

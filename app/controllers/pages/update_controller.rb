@@ -16,7 +16,7 @@ module Pages
     def call
       authorize(@page, :update?)
 
-      @form = EditPageForm.new(form_params.merge(viewer: viewer!))
+      @form = EditPageForm.new(form_params.merge(viewer: viewer!, page: @page.not_nil!))
 
       if @form.invalid?
         @link_list = @page.not_nil!.fetch_link_list
