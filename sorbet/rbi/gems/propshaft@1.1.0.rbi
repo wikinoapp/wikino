@@ -5,87 +5,82 @@
 # Please instead update this file by running `bin/tapioca gem propshaft`.
 
 
-# source://propshaft//lib/propshaft.rb#5
+# source://propshaft//lib/propshaft.rb#6
 module Propshaft
-  # source://propshaft//lib/propshaft.rb#6
+  # source://propshaft//lib/propshaft.rb#7
   def logger; end
 
-  # source://propshaft//lib/propshaft.rb#6
+  # source://propshaft//lib/propshaft.rb#7
   def logger=(val); end
 
   class << self
-    # source://propshaft//lib/propshaft.rb#6
+    # source://propshaft//lib/propshaft.rb#7
     def logger; end
 
-    # source://propshaft//lib/propshaft.rb#6
+    # source://propshaft//lib/propshaft.rb#7
     def logger=(val); end
   end
 end
 
-# source://propshaft//lib/propshaft/assembly.rb#10
+# source://propshaft//lib/propshaft/assembly.rb#11
 class Propshaft::Assembly
   # @return [Assembly] a new instance of Assembly
   #
-  # source://propshaft//lib/propshaft/assembly.rb#13
+  # source://propshaft//lib/propshaft/assembly.rb#14
   def initialize(config); end
 
-  # source://propshaft//lib/propshaft/assembly.rb#38
+  # source://propshaft//lib/propshaft/assembly.rb#39
   def compilers; end
 
   # Returns the value of attribute config.
   #
-  # source://propshaft//lib/propshaft/assembly.rb#11
+  # source://propshaft//lib/propshaft/assembly.rb#12
   def config; end
 
-  # source://propshaft//lib/propshaft/assembly.rb#17
+  # source://propshaft//lib/propshaft/assembly.rb#18
   def load_path; end
 
-  # source://propshaft//lib/propshaft/assembly.rb#33
+  # source://propshaft//lib/propshaft/assembly.rb#34
   def processor; end
 
-  # source://propshaft//lib/propshaft/assembly.rb#21
+  # source://propshaft//lib/propshaft/assembly.rb#22
   def resolver; end
 
-  # source://propshaft//lib/propshaft/assembly.rb#47
+  # source://propshaft//lib/propshaft/assembly.rb#48
   def reveal(path_type = T.unsafe(nil)); end
 
-  # source://propshaft//lib/propshaft/assembly.rb#29
+  # source://propshaft//lib/propshaft/assembly.rb#30
   def server; end
-
-  private
-
-  # source://propshaft//lib/propshaft/assembly.rb#56
-  def manifest_path; end
 end
 
 # source://propshaft//lib/propshaft/asset.rb#4
 class Propshaft::Asset
   # @return [Asset] a new instance of Asset
   #
-  # source://propshaft//lib/propshaft/asset.rb#7
+  # source://propshaft//lib/propshaft/asset.rb#16
   def initialize(path, logical_path:, load_path:); end
 
-  # source://propshaft//lib/propshaft/asset.rb#39
+  # source://propshaft//lib/propshaft/asset.rb#48
   def ==(other_asset); end
 
-  # source://propshaft//lib/propshaft/asset.rb#11
-  def content; end
+  # source://propshaft//lib/propshaft/asset.rb#20
+  def content(encoding: T.unsafe(nil)); end
 
-  # source://propshaft//lib/propshaft/asset.rb#15
+  # source://propshaft//lib/propshaft/asset.rb#24
   def content_type; end
 
-  # source://propshaft//lib/propshaft/asset.rb#23
+  # source://propshaft//lib/propshaft/asset.rb#32
   def digest; end
 
-  # source://propshaft//lib/propshaft/asset.rb#27
+  # source://propshaft//lib/propshaft/asset.rb#36
   def digested_path; end
 
   # @return [Boolean]
   #
-  # source://propshaft//lib/propshaft/asset.rb#35
+  # source://propshaft//lib/propshaft/asset.rb#44
   def fresh?(digest); end
 
-  # source://propshaft//lib/propshaft/asset.rb#19
+  # source://propshaft//lib/propshaft/asset.rb#28
   def length; end
 
   # Returns the value of attribute load_path.
@@ -107,11 +102,16 @@ class Propshaft::Asset
 
   # @return [Boolean]
   #
-  # source://propshaft//lib/propshaft/asset.rb#48
+  # source://propshaft//lib/propshaft/asset.rb#57
   def already_digested?; end
 
-  # source://propshaft//lib/propshaft/asset.rb#44
+  # source://propshaft//lib/propshaft/asset.rb#53
   def content_with_compile_references; end
+
+  class << self
+    # source://propshaft//lib/propshaft/asset.rb#8
+    def extract_path_and_digest(digested_path); end
+  end
 end
 
 # Base compiler from which other compilers can inherit
@@ -169,6 +169,26 @@ end
 
 # source://propshaft//lib/propshaft/compiler/css_asset_urls.rb#6
 Propshaft::Compiler::CssAssetUrls::ASSET_URL_PATTERN = T.let(T.unsafe(nil), Regexp)
+
+# source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#5
+class Propshaft::Compiler::JsAssetUrls < ::Propshaft::Compiler
+  # source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#8
+  def compile(asset, input); end
+
+  # source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#12
+  def referenced_by(asset, references: T.unsafe(nil)); end
+
+  private
+
+  # source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#36
+  def asset_url(resolved_path, logical_path, fingerprint, pattern); end
+
+  # source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#26
+  def resolve_path(directory, filename); end
+end
+
+# source://propshaft//lib/propshaft/compiler/js_asset_urls.rb#6
+Propshaft::Compiler::JsAssetUrls::ASSET_URL_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 # source://propshaft//lib/propshaft/compiler/source_mapping_urls.rb#5
 class Propshaft::Compiler::SourceMappingUrls < ::Propshaft::Compiler
@@ -363,9 +383,6 @@ class Propshaft::OutputPath
   # source://propshaft//lib/propshaft/output_path.rb#51
   def all_files_from_tree(path); end
 
-  # source://propshaft//lib/propshaft/output_path.rb#55
-  def extract_path_and_digest(digested_path); end
-
   # source://propshaft//lib/propshaft/output_path.rb#41
   def fresh_version_within_limit(mtime, count, expires_at:, limit:); end
 
@@ -377,31 +394,36 @@ end
 class Propshaft::Processor
   # @return [Processor] a new instance of Processor
   #
-  # source://propshaft//lib/propshaft/processor.rb#8
-  def initialize(load_path:, output_path:, compilers:); end
+  # source://propshaft//lib/propshaft/processor.rb#6
+  def initialize(load_path:, output_path:, compilers:, manifest_path:); end
 
-  # source://propshaft//lib/propshaft/processor.rb#23
+  # source://propshaft//lib/propshaft/processor.rb#22
   def clean(count); end
 
-  # source://propshaft//lib/propshaft/processor.rb#19
+  # source://propshaft//lib/propshaft/processor.rb#18
   def clobber; end
 
   # Returns the value of attribute compilers.
   #
-  # source://propshaft//lib/propshaft/processor.rb#6
+  # source://propshaft//lib/propshaft/processor.rb#4
   def compilers; end
 
   # Returns the value of attribute load_path.
   #
-  # source://propshaft//lib/propshaft/processor.rb#6
+  # source://propshaft//lib/propshaft/processor.rb#4
   def load_path; end
+
+  # Returns the value of attribute manifest_path.
+  #
+  # source://propshaft//lib/propshaft/processor.rb#4
+  def manifest_path; end
 
   # Returns the value of attribute output_path.
   #
-  # source://propshaft//lib/propshaft/processor.rb#6
+  # source://propshaft//lib/propshaft/processor.rb#4
   def output_path; end
 
-  # source://propshaft//lib/propshaft/processor.rb#13
+  # source://propshaft//lib/propshaft/processor.rb#12
   def process; end
 
   private
@@ -412,7 +434,7 @@ class Propshaft::Processor
   # source://propshaft//lib/propshaft/processor.rb#65
   def copy_asset(asset); end
 
-  # source://propshaft//lib/propshaft/processor.rb#28
+  # source://propshaft//lib/propshaft/processor.rb#27
   def ensure_output_path_exists; end
 
   # source://propshaft//lib/propshaft/processor.rb#50
@@ -421,12 +443,9 @@ class Propshaft::Processor
   # source://propshaft//lib/propshaft/processor.rb#40
   def output_assets; end
 
-  # source://propshaft//lib/propshaft/processor.rb#33
+  # source://propshaft//lib/propshaft/processor.rb#32
   def write_manifest; end
 end
-
-# source://propshaft//lib/propshaft/processor.rb#4
-Propshaft::Processor::MANIFEST_FILENAME = T.let(T.unsafe(nil), String)
 
 # source://propshaft//lib/propshaft/quiet_assets.rb#1
 class Propshaft::QuietAssets
@@ -463,7 +482,7 @@ class Propshaft::Resolver::Dynamic
   def prefix; end
 
   # source://propshaft//lib/propshaft/resolver/dynamic.rb#15
-  def read(logical_path); end
+  def read(logical_path, options = T.unsafe(nil)); end
 
   # source://propshaft//lib/propshaft/resolver/dynamic.rb#9
   def resolve(logical_path); end
@@ -487,7 +506,7 @@ class Propshaft::Resolver::Static
   def prefix; end
 
   # source://propshaft//lib/propshaft/resolver/static.rb#15
-  def read(logical_path); end
+  def read(logical_path, encoding: T.unsafe(nil)); end
 
   # source://propshaft//lib/propshaft/resolver/static.rb#9
   def resolve(logical_path); end
