@@ -24,6 +24,8 @@ en:
         space_identifier: Space identifier
     errors:
       models:
+        edit_page_form:
+          uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
         email_confirmation_form:
           attributes:
             confirmation_code:
