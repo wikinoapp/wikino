@@ -39,7 +39,7 @@ class EditPageForm < ApplicationForm
     page = topic&.pages&.find_by(title:)
 
     if page
-      edit_page_path = "/s/#{topic.not_nil!.space.identifier}/pages/#{page.number}/edit"
+      edit_page_path = "/s/#{topic.not_nil!.space.not_nil!.identifier}/pages/#{page.number}/edit"
       errors.add(:title, I18n.t("forms.errors.models.edit_page_form.uniqueness_html", edit_page_path:))
     end
   end
