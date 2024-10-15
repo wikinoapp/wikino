@@ -10,79 +10,79 @@
 # source://rspec-rails//lib/rspec/rails/feature_check.rb#1
 module RSpec
   class << self
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#70
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#70
     def clear_examples; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#85
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#85
     def configuration; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#49
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#49
     def configuration=(_arg0); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#97
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#97
     def configure; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#194
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#194
     def const_missing(name); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def context(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#122
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#122
     def current_example; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#128
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#128
     def current_example=(example); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#154
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#154
     def current_scope; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#134
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#134
     def current_scope=(scope); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def describe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def example_group(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def fcontext(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def fdescribe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def feature(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def ffeature(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#58
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#58
     def reset; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
     def shared_context(name, *args, &block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
     def shared_examples(name, *args, &block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
     def shared_examples_for(name, *args, &block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#160
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#160
     def world; end
 
-    # source://rspec-core/3.13.0/lib/rspec/core.rb#49
+    # source://rspec-core/3.13.1/lib/rspec/core.rb#49
     def world=(_arg0); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def xcontext(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def xdescribe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.0/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
     def xfeature(*args, &example_group_block); end
   end
 end
@@ -209,6 +209,7 @@ module RSpec::Rails::ControllerExampleGroup
   include ::RSpec::Rails::RailsExampleGroup
   include ::ActiveSupport::Testing::ConstantLookup
   include ::ActionController::TemplateAssertions
+  include ::ActionDispatch::Assertions::RoutingAssertions
   include ::ActionDispatch::Assertions
   include ::ActionController::TestCase::Behavior
   include ::RSpec::Rails::ViewRendering
@@ -220,6 +221,7 @@ module RSpec::Rails::ControllerExampleGroup
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
   mixes_in_class_methods ::ActiveSupport::Testing::ConstantLookup::ClassMethods
   mixes_in_class_methods ::ActionController::TestCase::Behavior::ClassMethods
+  mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::ViewRendering::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::ControllerExampleGroup::ClassMethods
 
@@ -296,9 +298,12 @@ module RSpec::Rails::ControllerExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -323,8 +328,11 @@ module RSpec::Rails::ControllerExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -561,9 +569,12 @@ module RSpec::Rails::FeatureExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -588,8 +599,11 @@ module RSpec::Rails::FeatureExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -660,27 +674,27 @@ class RSpec::Rails::FixtureFileUploadSupport::RailsFixtureFileWrapper
   include ::ActionDispatch::TestProcess
   include ::ActiveSupport::Testing::FileFixtures
 
-  # source://activesupport/7.0.8.4/lib/active_support/testing/file_fixtures.rb#20
+  # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
   def file_fixture_path; end
 
-  # source://activesupport/7.0.8.4/lib/active_support/testing/file_fixtures.rb#20
+  # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
   def file_fixture_path?; end
 
   class << self
-    # source://activesupport/7.0.8.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path; end
 
-    # source://activesupport/7.0.8.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path=(value); end
 
-    # source://activesupport/7.0.8.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path?; end
 
-    # source://rspec-rails//lib/rspec/rails/fixture_file_upload_support.rb#32
-    def fixture_path; end
+    # source://rspec-rails//lib/rspec/rails/fixture_file_upload_support.rb#34
+    def fixture_paths; end
 
-    # source://rspec-rails//lib/rspec/rails/fixture_file_upload_support.rb#32
-    def fixture_path=(_arg0); end
+    # source://rspec-rails//lib/rspec/rails/fixture_file_upload_support.rb#34
+    def fixture_paths=(_arg0); end
 
     # Get instance of wrapper
     #
@@ -707,22 +721,24 @@ module RSpec::Rails::FixtureSupport
   mixes_in_class_methods ::ActiveRecord::TestFixtures::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
 
-  # Monkey patched to avoid collisions with 'let(:name)' in Rails 6.1 and after
-  # and let(:method_name) before Rails 6.1.
+  # Monkey patched to avoid collisions with 'let(:name)' since Rails 6.1
   #
   # @private prevent ActiveSupport::TestFixtures to start a DB transaction.
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#15
+  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#14
   def run_in_transaction?; end
 
   module GeneratedClassMethods
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -744,8 +760,11 @@ module RSpec::Rails::FixtureSupport
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -764,7 +783,7 @@ module RSpec::Rails::FixtureSupport
   end
 end
 
-# source://rspec-rails//lib/rspec/rails/fixture_support.rb#38
+# source://rspec-rails//lib/rspec/rails/fixture_support.rb#37
 module RSpec::Rails::FixtureSupport::Fixtures
   extend ::ActiveSupport::Concern
 
@@ -773,11 +792,11 @@ end
 
 # source://rspec-rails//lib/rspec/rails/fixture_support.rb#0
 module RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
-  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#62
+  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#43
   def fixtures(*args); end
 
-  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#72
-  def proxy_method_warning_if_called_in_before_context_scope(method_name); end
+  # source://rspec-rails//lib/rspec/rails/fixture_support.rb#51
+  def proxy_method_warning_if_called_in_before_context_scope(method_name, fixture_name); end
 end
 
 # Container module for helper specs.
@@ -796,6 +815,8 @@ module RSpec::Rails::HelperExampleGroup
   include ::RSpec::Rails::FixtureSupport::Fixtures
   include ::RSpec::Rails::FixtureSupport
   include ::RSpec::Rails::RailsExampleGroup
+  include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions
   include ::AbstractController::Helpers
   include ::ActionView::Helpers::UrlHelper
   include ::ActionView::Helpers::SanitizeHelper
@@ -812,6 +833,7 @@ module RSpec::Rails::HelperExampleGroup
   mixes_in_class_methods ::RSpec::Rails::MinitestAssertionAdapter::ClassMethods
   mixes_in_class_methods ::ActiveRecord::TestFixtures::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
+  mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
   mixes_in_class_methods ::AbstractController::Helpers::ClassMethods
   mixes_in_class_methods ::ActionView::Helpers::UrlHelper::ClassMethods
   mixes_in_class_methods ::ActionView::Helpers::SanitizeHelper::ClassMethods
@@ -838,12 +860,18 @@ module RSpec::Rails::HelperExampleGroup
     def _helper_methods; end
     def _helper_methods=(value); end
     def _helper_methods?; end
+    def content_class; end
+    def content_class=(value); end
+    def content_class?; end
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -868,8 +896,11 @@ module RSpec::Rails::HelperExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -923,9 +954,12 @@ module RSpec::Rails::JobExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -947,8 +981,11 @@ module RSpec::Rails::JobExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -1068,9 +1105,12 @@ module RSpec::Rails::MailerExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -1098,8 +1138,11 @@ module RSpec::Rails::MailerExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -1220,7 +1263,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#218
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
   def enqueue_email(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1269,7 +1312,7 @@ module RSpec::Rails::Matchers
   #   expect(from).to include "_#{to}"
   #   }
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#342
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#394
   def enqueue_job(job = T.unsafe(nil)); end
 
   # Passes if an email has been enqueued inside block.
@@ -1318,7 +1361,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#218
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
   def enqueue_mail(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued. May chain at_least, at_most or exactly to specify a number of times.
@@ -1351,7 +1394,7 @@ module RSpec::Rails::Matchers
   #   HelloJob.set(queue: "low").perform_later(42)
   #   expect(HelloJob).to have_been_enqueued.with(42).on_queue("low").at(:no_wait)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#377
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#429
   def have_been_enqueued; end
 
   # Passes if a job has been performed. May chain at_least, at_most or exactly to specify a number of times.
@@ -1382,7 +1425,7 @@ module RSpec::Rails::Matchers
   #   HelloJob.set(wait_until: Date.tomorrow.noon, queue: "low").perform_later(42)
   #   expect(HelloJob).to have_been_performed.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#450
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#502
   def have_been_performed; end
 
   # Passes if an email has been enqueued inside block.
@@ -1431,7 +1474,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#218
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
   def have_enqueued_email(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1480,7 +1523,7 @@ module RSpec::Rails::Matchers
   #   expect(from).to include "_#{to}"
   #   }
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#342
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#394
   def have_enqueued_job(job = T.unsafe(nil)); end
 
   # Passes if an email has been enqueued inside block.
@@ -1529,7 +1572,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#218
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
   def have_enqueued_mail(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if `response` has a matching HTTP status code.
@@ -1566,38 +1609,38 @@ module RSpec::Rails::Matchers
   # @api public
   # @example
   #   expect {
-  #   perform_jobs { HeavyLiftingJob.perform_later }
+  #   perform_enqueued_jobs { HeavyLiftingJob.perform_later }
   #   }.to have_performed_job
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.perform_later
   #   HeavyLiftingJob.perform_later
   #   }
   #   }.to have_performed_job(HelloJob).exactly(:once)
   #
   #   expect {
-  #   perform_jobs { 3.times { HelloJob.perform_later } }
+  #   perform_enqueued_jobs { 3.times { HelloJob.perform_later } }
   #   }.to have_performed_job(HelloJob).at_least(2).times
   #
   #   expect {
-  #   perform_jobs { HelloJob.perform_later }
+  #   perform_enqueued_jobs { HelloJob.perform_later }
   #   }.to have_performed_job(HelloJob).at_most(:twice)
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.perform_later
   #   HeavyLiftingJob.perform_later
   #   }
   #   }.to have_performed_job(HelloJob).and have_performed_job(HeavyLiftingJob)
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.set(wait_until: Date.tomorrow.noon, queue: "low").perform_later(42)
   #   }
   #   }.to have_performed_job.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#417
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#469
   def have_performed_job(job = T.unsafe(nil)); end
 
   # Passes if a job has been performed inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1605,38 +1648,38 @@ module RSpec::Rails::Matchers
   # @api public
   # @example
   #   expect {
-  #   perform_jobs { HeavyLiftingJob.perform_later }
+  #   perform_enqueued_jobs { HeavyLiftingJob.perform_later }
   #   }.to have_performed_job
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.perform_later
   #   HeavyLiftingJob.perform_later
   #   }
   #   }.to have_performed_job(HelloJob).exactly(:once)
   #
   #   expect {
-  #   perform_jobs { 3.times { HelloJob.perform_later } }
+  #   perform_enqueued_jobs { 3.times { HelloJob.perform_later } }
   #   }.to have_performed_job(HelloJob).at_least(2).times
   #
   #   expect {
-  #   perform_jobs { HelloJob.perform_later }
+  #   perform_enqueued_jobs { HelloJob.perform_later }
   #   }.to have_performed_job(HelloJob).at_most(:twice)
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.perform_later
   #   HeavyLiftingJob.perform_later
   #   }
   #   }.to have_performed_job(HelloJob).and have_performed_job(HeavyLiftingJob)
   #
   #   expect {
-  #   perform_jobs {
+  #   perform_enqueued_jobs {
   #   HelloJob.set(wait_until: Date.tomorrow.noon, queue: "low").perform_later(42)
   #   }
   #   }.to have_performed_job.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#417
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#469
   def perform_job(job = T.unsafe(nil)); end
 
   # Check email sending with specific parameters.
@@ -1657,7 +1700,7 @@ module RSpec::Rails::Matchers
   # @private
   # @raise [StandardError]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#458
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#510
   def check_active_job_adapter; end
 end
 
@@ -1739,73 +1782,78 @@ class RSpec::Rails::Matchers::ActiveJob::Base < ::RSpec::Rails::Matchers::BaseMa
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#33
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#39
   def at(time_or_date); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#47
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#53
   def at_least(count); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#52
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#58
   def at_most(count); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#42
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#34
+  def at_priority(priority); end
+
+  # @api private
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#48
   def exactly(count); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#73
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#79
   def failure_message; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#84
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#92
   def failure_message_when_negated; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#88
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#96
   def message_expectation_modifier; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#28
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#29
   def on_queue(queue); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#61
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#67
   def once; end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#96
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#104
   def supports_block_expectations?; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#69
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#75
   def thrice; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#57
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#63
   def times; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#65
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#71
   def twice; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#22
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#23
   def with(*args, &block); end
 
   private
@@ -1813,180 +1861,202 @@ class RSpec::Rails::Matchers::ActiveJob::Base < ::RSpec::Rails::Matchers::BaseMa
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#145
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#170
   def arguments_match?(job); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#161
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#213
   def at_match?(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#130
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#145
   def base_job_message(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#121
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#135
   def base_message; end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#102
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#110
   def check(jobs); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#170
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#192
+  def check_args_signature_mismatch(job_class, job_method, args); end
+
+  # @api private
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#222
   def check_for_inprecise_value(scheduled_at); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#208
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#260
   def deserialize_arguments(job); end
+
+  # @api private
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#180
+  def detect_args_signature_mismatch(jobs); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#141
-  def job_match?(job); end
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#166
+  def job_matches?(job); end
+
+  # @api private
+  # @return [Boolean]
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#162
+  def matches_constraints?(job); end
+
+  # @api private
+  # @return [Boolean]
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#207
+  def priority_match?(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#214
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#266
   def queue_adapter; end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#155
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#201
   def queue_match?(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#201
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#253
   def serialize_and_deserialize_arguments(args); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#191
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#243
   def set_expected_number(relativity, count); end
 end
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#248
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#300
 class RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#257
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#309
   def does_not_match?(proc); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#252
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#304
   def matches?(job); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#249
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#301
 RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#250
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#302
 RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#286
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#338
 class RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#290
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#342
   def matches?(job); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#287
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#339
 RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#288
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#340
 RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#221
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#273
 class RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [HaveEnqueuedJob] a new instance of HaveEnqueuedJob
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#225
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#277
   def initialize(job); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#240
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#292
   def does_not_match?(proc); end
 
   # @api private
   # @raise [ArgumentError]
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#230
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#282
   def matches?(proc); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#222
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#274
 RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#223
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#275
 RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#265
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#317
 class RSpec::Rails::Matchers::ActiveJob::HavePerformedJob < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [HavePerformedJob] a new instance of HavePerformedJob
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#269
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#321
   def initialize(job); end
 
   # @api private
   # @raise [ArgumentError]
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#274
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#326
   def matches?(proc); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#266
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#318
 RSpec::Rails::Matchers::ActiveJob::HavePerformedJob::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#267
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#319
 RSpec::Rails::Matchers::ActiveJob::HavePerformedJob::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # Base class to build matchers. Should not be instantiated directly.
@@ -2323,7 +2393,7 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#43
   def failure_message; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#49
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#51
   def failure_message_when_negated; end
 
   # @raise [ArgumentError]
@@ -2339,62 +2409,68 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#77
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#79
   def arguments_match?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#92
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#110
   def base_mailer_args; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#55
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#57
   def base_message; end
 
   # @raise [StandardError]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#100
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#118
   def check_active_job_adapter; end
 
   # Ruby 3.1 changed how params were serialized on Rails 6.1
   # so we override the active job implementation and customize it here.
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#138
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#156
   def deserialize_arguments(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#65
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#94
+  def detect_args_signature_mismatch(jobs); end
+
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#67
   def expected_count_message; end
+
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#178
+  def extract_args_without_parameterized_params(job); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#73
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#75
   def job_match?(job); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#160
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#191
   def legacy_mail?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#122
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#140
   def mail_job_message(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#69
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#71
   def mailer_class_name; end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#164
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#195
   def parameterized_mail?(job); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#168
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#199
   def unified_mail?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#106
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#124
   def unmatching_mail_jobs; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#112
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#130
   def unmatching_mail_jobs_message; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#96
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#114
   def yield_mail_args(block); end
 end
 
@@ -2461,7 +2537,7 @@ end
 #   expect(response).to have_http_status(:missing)
 #   expect(response).to have_http_status(:redirect)
 # @see RSpec::Rails::Matchers#have_http_status
-# @see https://github.com/rails/rails/blob/6-0-stable/actionpack/lib/action_dispatch/testing/test_response.rb `ActionDispatch::TestResponse`
+# @see https://github.com/rails/rails/blob/7-2-stable/actionpack/lib/action_dispatch/testing/test_response.rb `ActionDispatch::TestResponse`
 #
 # source://rspec-rails//lib/rspec/rails/matchers/have_http_status.rb#237
 class RSpec::Rails::Matchers::HaveHttpStatus::GenericStatus < ::RSpec::Rails::Matchers::BaseMatcher
@@ -3081,9 +3157,12 @@ module RSpec::Rails::ModelExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3105,8 +3184,11 @@ module RSpec::Rails::ModelExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3129,7 +3211,7 @@ end
 #
 # @api public
 #
-# source://rspec-rails//lib/rspec/rails/example/rails_example_group.rb#14
+# source://rspec-rails//lib/rspec/rails/example/rails_example_group.rb#12
 module RSpec::Rails::RailsExampleGroup
   include ::RSpec::Rails::TaggedLoggingAdapter
   include ::ActiveSupport::CurrentAttributes::TestHelper
@@ -3153,9 +3235,12 @@ module RSpec::Rails::RailsExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3177,8 +3262,11 @@ module RSpec::Rails::RailsExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3203,20 +3291,20 @@ end
 class RSpec::Rails::Railtie < ::Rails::Railtie
   private
 
-  # source://rspec-rails//lib/rspec-rails.rb#57
+  # source://rspec-rails//lib/rspec-rails.rb#68
   def config_default_preview_path(options); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec-rails.rb#40
+  # source://rspec-rails//lib/rspec-rails.rb#57
   def config_preview_path?(options); end
 
-  # source://rspec-rails//lib/rspec-rails.rb#33
+  # source://rspec-rails//lib/rspec-rails.rb#50
   def setup_preview_path(app); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec-rails.rb#64
+  # source://rspec-rails//lib/rspec-rails.rb#81
   def supports_action_mailer_previews?(config); end
 end
 
@@ -3226,8 +3314,8 @@ end
 #
 # source://rspec-rails//lib/rspec/rails/example/request_example_group.rb#5
 module RSpec::Rails::RequestExampleGroup
-  include ::ActionDispatch::Assertions::ResponseAssertions
   include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions::ResponseAssertions
   include ::Rails::Dom::Testing::Assertions::DomAssertions
   include ::Rails::Dom::Testing::Assertions::SelectorAssertions
   include ::Rails::Dom::Testing::Assertions
@@ -3245,6 +3333,8 @@ module RSpec::Rails::RequestExampleGroup
   include ::RSpec::Rails::FixtureSupport::Fixtures
   include ::RSpec::Rails::FixtureSupport
   include ::RSpec::Rails::RailsExampleGroup
+  include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions
   include ::ActionDispatch::Routing::UrlFor
   include ::ActionDispatch::IntegrationTest::UrlOptions
   include ::ActionDispatch::IntegrationTest::Behavior
@@ -3254,6 +3344,7 @@ module RSpec::Rails::RequestExampleGroup
   mixes_in_class_methods ::RSpec::Rails::MinitestAssertionAdapter::ClassMethods
   mixes_in_class_methods ::ActiveRecord::TestFixtures::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
+  mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
   mixes_in_class_methods ::ActionDispatch::IntegrationTest::Behavior::ClassMethods
 
   # Delegates to `Rails.application`.
@@ -3267,9 +3358,12 @@ module RSpec::Rails::RequestExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3291,8 +3385,11 @@ module RSpec::Rails::RequestExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3386,9 +3483,12 @@ module RSpec::Rails::RoutingExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3410,8 +3510,11 @@ module RSpec::Rails::RoutingExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3494,8 +3597,8 @@ end
 module RSpec::Rails::SystemExampleGroup
   include ::RSpec::Rails::Matchers::RedirectTo
   include ::RSpec::Rails::Matchers::RenderTemplate
-  include ::ActionDispatch::Assertions::ResponseAssertions
   include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions::ResponseAssertions
   include ::Rails::Dom::Testing::Assertions::DomAssertions
   include ::Rails::Dom::Testing::Assertions::SelectorAssertions
   include ::Rails::Dom::Testing::Assertions
@@ -3511,6 +3614,8 @@ module RSpec::Rails::SystemExampleGroup
   include ::RSpec::Rails::FixtureSupport::Fixtures
   include ::RSpec::Rails::FixtureSupport
   include ::RSpec::Rails::RailsExampleGroup
+  include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions
   include ::ActionDispatch::SystemTesting::TestHelpers::SetupAndTeardown
   include ::ActionDispatch::SystemTesting::TestHelpers::ScreenshotHelper
   include ::RSpec::Rails::SystemExampleGroup::BlowAwayTeardownHooks
@@ -3520,6 +3625,7 @@ module RSpec::Rails::SystemExampleGroup
   mixes_in_class_methods ::RSpec::Rails::MinitestAssertionAdapter::ClassMethods
   mixes_in_class_methods ::ActiveRecord::TestFixtures::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
+  mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
 
   # Delegates to `Rails.application`.
   #
@@ -3527,6 +3633,12 @@ module RSpec::Rails::SystemExampleGroup
   #
   # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#94
   def app; end
+
+  # @api public
+  # @private
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#88
+  def metadata; end
 
   # @api public
   # @private
@@ -3546,9 +3658,12 @@ module RSpec::Rails::SystemExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3570,8 +3685,11 @@ module RSpec::Rails::SystemExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3614,6 +3732,50 @@ end
 #
 # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#15
 RSpec::Rails::SystemExampleGroup::CHARS_TO_TRANSLATE = T.let(T.unsafe(nil), Array)
+
+# Default driver to assign if none specified.
+#
+# @api public
+#
+# source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#99
+RSpec::Rails::SystemExampleGroup::DEFAULT_DRIVER = T.let(T.unsafe(nil), Symbol)
+
+# Allows failure screenshot to work whilst not exposing metadata
+#
+# @api public
+# @private
+#
+# source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#50
+class RSpec::Rails::SystemExampleGroup::SuppressRailsScreenshotMetadata
+  # @api public
+  # @return [SuppressRailsScreenshotMetadata] a new instance of SuppressRailsScreenshotMetadata
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#51
+  def initialize; end
+
+  # @api public
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#55
+  def [](key); end
+
+  # @api public
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#63
+  def []=(key, value); end
+
+  # @api public
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#71
+  def method_missing(_name, *_args, &_block); end
+
+  private
+
+  # @api public
+  # @raise [RSpec::Core::ExampleGroup::WrongScopeError]
+  #
+  # source://rspec-rails//lib/rspec/rails/example/system_example_group.rb#77
+  def raise_wrong_scope_error; end
+end
 
 # @private
 #
@@ -3679,6 +3841,8 @@ module RSpec::Rails::ViewExampleGroup
   include ::RSpec::Rails::FixtureSupport::Fixtures
   include ::RSpec::Rails::FixtureSupport
   include ::RSpec::Rails::RailsExampleGroup
+  include ::ActionDispatch::Assertions::RoutingAssertions
+  include ::ActionDispatch::Assertions
   include ::AbstractController::Helpers
   include ::ActionView::Helpers::UrlHelper
   include ::ActionView::Helpers::SanitizeHelper
@@ -3698,6 +3862,7 @@ module RSpec::Rails::ViewExampleGroup
   mixes_in_class_methods ::RSpec::Rails::MinitestAssertionAdapter::ClassMethods
   mixes_in_class_methods ::ActiveRecord::TestFixtures::ClassMethods
   mixes_in_class_methods ::RSpec::Rails::FixtureSupport::Fixtures::ClassMethods
+  mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
   mixes_in_class_methods ::AbstractController::Helpers::ClassMethods
   mixes_in_class_methods ::ActionView::Helpers::UrlHelper::ClassMethods
   mixes_in_class_methods ::ActionView::Helpers::SanitizeHelper::ClassMethods
@@ -3709,12 +3874,18 @@ module RSpec::Rails::ViewExampleGroup
     def _helper_methods; end
     def _helper_methods=(value); end
     def _helper_methods?; end
+    def content_class; end
+    def content_class=(value); end
+    def content_class?; end
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path=(value); end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths=(value); end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
@@ -3739,8 +3910,11 @@ module RSpec::Rails::ViewExampleGroup
     def fixture_class_names; end
     def fixture_class_names=(value); end
     def fixture_class_names?; end
-    def fixture_path; end
-    def fixture_path?; end
+    def fixture_paths; end
+    def fixture_paths?; end
+    def fixture_sets; end
+    def fixture_sets=(value); end
+    def fixture_sets?; end
     def fixture_table_names; end
     def fixture_table_names=(value); end
     def fixture_table_names?; end
