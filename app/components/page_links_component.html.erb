@@ -19,8 +19,8 @@
     <% end %>
 
     <% if link_list.pagination.has_next %>
-      <turbo-frame id="page-links-link-list">
-        <%= link_to "次へ", frame_page_link_list_path(page.space.identifier, page.number) %>
+      <turbo-frame class="gap-2 grid grid-cols-4" id="page-links-link-list">
+        <%= render Buttons::PagePaginationButtonComponent.new(page:, pagination: link_list.pagination) %>
       </turbo-frame>
     <% end %>
   </div>

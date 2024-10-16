@@ -16,7 +16,7 @@ Rails.application.routes.draw do
   match "/manifest",                                           via: :get,    as: :manifest,                to: "manifests/show#call"
   match "/s/:space_identifier",                                via: :get,    as: :space,                   to: "spaces/show#call"
   match "/s/:space_identifier/draft_pages/:page_number",       via: :patch,  as: :draft_page,              to: "draft_pages/update#call",             page_number: /\d+/
-  match "/s/:space_identifier/frame/pages/:page_number/links", via: :get,    as: :frame_page_link_list,    to: "frame/links/index#call",              page_number: /\d+/
+  match "/s/:space_identifier/frame/pages/:page_number/links", via: :post,   as: :frame_page_link_list,    to: "frame/links/index#call",              page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",             via: :get,    as: :page,                    to: "pages/show#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",             via: :patch,                                to: "pages/update#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/edit",        via: :get,    as: :edit_page,               to: "pages/edit#call",                     page_number: /\d+/
