@@ -375,7 +375,7 @@ GEM
       lint_roller (~> 1.1)
       rubocop-sorbet (~> 0.7.0)
     stringio (3.1.1)
-    strong_migrations (2.0.0)
+    strong_migrations (2.0.1)
       activerecord (>= 6.1)
     tapioca (0.16.3)
       bundler (>= 2.2.25)
