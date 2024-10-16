@@ -825,11 +825,18 @@ class StrongMigrations::WrappedConnection
   # source://strong_migrations//lib/strong_migrations/schema_dumper.rb#17
   def columns(*args, **options); end
 
-  # source://activesupport/7.0.8.4/lib/active_support/core_ext/module/delegation.rb#302
+  # source://activesupport/7.1.3.4/lib/active_support/core_ext/module/delegation.rb#331
   def method_missing(method, *args, **_arg2, &block); end
+
+  # forward private methods with send
+  # method_missing cannot tell how method was called
+  # this is not ideal, but other solutions have drawbacks
+  #
+  # source://strong_migrations//lib/strong_migrations/schema_dumper.rb#24
+  def send(name, *_arg1, **_arg2, &_arg3); end
 
   private
 
-  # source://activesupport/7.0.8.4/lib/active_support/core_ext/module/delegation.rb#294
+  # source://activesupport/7.1.3.4/lib/active_support/core_ext/module/delegation.rb#323
   def respond_to_missing?(name, include_private = T.unsafe(nil)); end
 end
