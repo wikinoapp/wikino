@@ -75,12 +75,12 @@ RSpec.describe Page, type: :model do
 
         link_a = link_list.links[0]
         expect(link_a.page).to eq(page_c)
-        expect(link_a.backlinked_pages.size).to eq(1)
-        expect(link_a.backlinked_pages[0]).to eq(page_d)
+        expect(link_a.backlink_list.backlinks.size).to eq(1)
+        expect(link_a.backlink_list.backlinks[0]).to eql(Backlink.new(page: page_d))
 
         link_b = link_list.links[1]
         expect(link_b.page).to eq(page_a)
-        expect(link_b.backlinked_pages.size).to eq(0)
+        expect(link_b.backlink_list.backlinks.size).to eq(0)
       end
     end
   end

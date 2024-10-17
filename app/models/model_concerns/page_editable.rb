@@ -57,14 +57,14 @@ module ModelConcerns
           order: {modified_at: :desc, id: :desc}
         ).fetch
         backlinked_pages = cursor_paginate_page.records
+        backlink_list = BacklinkList.new(
+          backlinks: backlinked_pages.map { |page| Backlink.new(page:) },
+          pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+        )
 
         added_page_ids.concat(backlinked_pages.pluck(:id))
 
-        Link.new(
-          page:,
-          backlinked_pages:,
-          pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
-        )
+        Link.new(page:, backlink_list:)
       end
 
       LinkList.new(links:, pagination:)
