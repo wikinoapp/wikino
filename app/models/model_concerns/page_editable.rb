@@ -6,6 +6,11 @@ module ModelConcerns
     extend ActiveSupport::Concern
     extend T::Sig
 
+    sig { returns(Page) }
+    def original_page
+      instance_of?(Page) ? self : page
+    end
+
     sig { returns(T::Array[PageLocation]) }
     def paths_in_body
       current_topic_name = topic.name
@@ -58,7 +63,8 @@ module ModelConcerns
         ).fetch
         backlinked_pages = cursor_paginate_page.records
         backlink_list = BacklinkList.new(
-          backlinks: backlinked_pages.map { |page| Backlink.new(page:) },
+          page:,
+          backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page: backlinked_page) },
           pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
         )
 
@@ -67,7 +73,7 @@ module ModelConcerns
         Link.new(page:, backlink_list:)
       end
 
-      LinkList.new(links:, pagination:)
+      LinkList.new(page: original_page, links:, pagination:)
     end
 
     sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkList) }
@@ -83,7 +89,11 @@ module ModelConcerns
         Backlink.new(page:)
       end
 
-      BacklinkList.new(backlinks:, pagination: Pagination.from_cursor_paginate(cursor_paginate_page:))
+      BacklinkList.new(
+        page: original_page,
+        backlinks:,
+        pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+      )
     end
 
     sig { params(editor: User).void }
