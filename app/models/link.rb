@@ -5,5 +5,5 @@ class Link < T::Struct
   include T::Struct::ActsAsComparable
 
   const :page, Page
-  const :backlink_list, BacklinkList
+  const :backlink_collection, BacklinkCollection
 end

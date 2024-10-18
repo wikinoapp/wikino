@@ -3,18 +3,18 @@
 
 module Footers
   class PageFooterComponent < ApplicationComponent
-    sig { params(link_list: LinkList, backlink_list: BacklinkList).void }
-    def initialize(link_list:, backlink_list:)
-      @link_list = link_list
-      @backlink_list = backlink_list
+    sig { params(link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
+    def initialize(link_collection:, backlink_collection:)
+      @link_collection = link_collection
+      @backlink_collection = backlink_collection
     end
 
-    sig { returns(LinkList) }
-    attr_reader :link_list
-    private :link_list
+    sig { returns(LinkCollection) }
+    attr_reader :link_collection
+    private :link_collection
 
-    sig { returns(BacklinkList) }
-    attr_reader :backlink_list
-    private :backlink_list
+    sig { returns(BacklinkCollection) }
+    attr_reader :backlink_collection
+    private :backlink_collection
   end
 end

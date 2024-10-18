@@ -4,8 +4,8 @@
       <%= t("nouns.links") %>
     </div>
 
-    <% if link_list.links.present? %>
-      <%= render PageLinkListComponent.new(link_list:) %>
+    <% if link_collection.links.present? %>
+      <%= render LinkCollectionComponent.new(link_collection:) %>
     <% else %>
       <%= t("messages._common.no_links") %>
     <% end %>
@@ -16,9 +16,9 @@
       <%= t("nouns.backlinks") %>
     </div>
 
-    <% if backlink_list.backlinks.present? %>
+    <% if backlink_collection.backlinks.present? %>
       <ul class="gap-2 grid grid-cols-4">
-        <%= render PageBacklinkListComponent.new(backlink_list:) %>
+        <%= render BacklinkCollectionComponent.new(backlink_collection:) %>
       </ul>
     <% else %>
       <%= t("messages._common.no_backlinks") %>

@@ -45,9 +45,9 @@ module ModelConcerns
         after: T.nilable(String),
         link_limit: Integer,
         backlink_limit: Integer
-      ).returns(LinkList)
+      ).returns(LinkCollection)
     end
-    def fetch_link_list(before: nil, after: nil, link_limit: 15, backlink_limit: 14)
+    def fetch_link_collection(before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
       cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
@@ -69,7 +69,7 @@ module ModelConcerns
           order: {modified_at: :desc, id: :desc}
         ).fetch
         backlinked_pages = cursor_paginate_page.records
-        backlink_list = BacklinkList.new(
+        backlink_collection = BacklinkCollection.new(
           page:,
           backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page: backlinked_page) },
           pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
@@ -77,14 +77,14 @@ module ModelConcerns
 
         added_page_ids.concat(backlinked_pages.pluck(:id))
 
-        Link.new(page:, backlink_list:)
+        Link.new(page:, backlink_collection:)
       end
 
-      LinkList.new(page: original_page, links:, pagination:)
+      LinkCollection.new(page: original_page, links:, pagination:)
     end
 
-    sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkList) }
-    def fetch_backlink_list(before: nil, after: nil, limit: 15)
+    sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }
+    def fetch_backlink_collection(before: nil, after: nil, limit: 15)
       cursor_paginate_page = backlinked_pages.cursor_paginate(
         after:,
         before:,
@@ -96,7 +96,7 @@ module ModelConcerns
         Backlink.new(page:)
       end
 
-      BacklinkList.new(
+      BacklinkCollection.new(
         page: original_page,
         backlinks:,
         pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)

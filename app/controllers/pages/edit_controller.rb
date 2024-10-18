@@ -26,8 +26,8 @@ module Pages
         body: page_editable.body
       )
 
-      @link_list = page_editable.fetch_link_list
-      @backlink_list = page_editable.fetch_backlink_list
+      @link_collection = page_editable.fetch_link_collection
+      @backlink_collection = page_editable.fetch_backlink_collection
     end
   end
 end

@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Frame
-  module Links
+  module Backlinks
     class IndexController < ApplicationController
       include ControllerConcerns::Authenticatable
       include ControllerConcerns::Authorizable
@@ -20,7 +20,7 @@ module Frame
         draft_page = viewer!.draft_pages.find_by(page: @page)
         page_editable = draft_page.presence || @page
 
-        @link_collection = page_editable.fetch_link_collection(after: params[:after])
+        @backlink_collection = page_editable.fetch_backlink_collection(after: params[:after])
 
         render(content_type: "text/vnd.turbo-stream.html", layout: false)
       end

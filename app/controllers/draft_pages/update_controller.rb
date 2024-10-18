@@ -24,8 +24,8 @@ module DraftPages
         body: form_params[:body]
       )
       @draft_page = result.draft_page
-      @link_list = @draft_page.fetch_link_list
-      @backlink_list = @draft_page.fetch_backlink_list
+      @link_collection = @draft_page.fetch_link_collection
+      @backlink_collection = @draft_page.fetch_backlink_collection
 
       render(content_type: "text/vnd.turbo-stream.html", layout: false)
     end
