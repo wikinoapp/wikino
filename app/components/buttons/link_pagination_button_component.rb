@@ -3,15 +3,13 @@
 
 module Buttons
   class LinkPaginationButtonComponent < ApplicationComponent
-    sig { params(link_collection: LinkCollection).void }
-    def initialize(link_collection:)
-      @link_collection = link_collection
+    sig { params(path: String).void }
+    def initialize(path:)
+      @path = path
     end
 
-    sig { returns(LinkCollection) }
-    attr_reader :link_collection
-    private :link_collection
-
-    delegate :page, :pagination, to: :link_collection
+    sig { returns(String) }
+    attr_reader :path
+    private :path
   end
 end
