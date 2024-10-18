@@ -17,9 +17,9 @@
     </div>
 
     <% if backlink_collection.backlinks.present? %>
-      <ul class="gap-2 grid grid-cols-4">
+      <div class="gap-2 grid grid-cols-4">
         <%= render BacklinkCollectionComponent.new(backlink_collection:) %>
-      </ul>
+      </div>
     <% else %>
       <%= t("messages._common.no_backlinks") %>
     <% end %>

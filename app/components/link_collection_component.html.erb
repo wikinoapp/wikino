@@ -1,10 +1,7 @@
 <div class="flex flex-col gap-2">
   <% link_collection.links.each do |link| %>
-    <ul class="gap-2 grid grid-cols-4">
-      <li>
-        <%= render Cards::PageCardComponent.new(page: link.page, class_name: "bg-base-300") %>
-      </li>
-
+    <div class="gap-2 grid grid-cols-4">
+      <%= render Cards::PageCardComponent.new(page: link.page, class_name: "bg-base-300") %>
       <%= render BacklinkCollectionComponent.new(backlink_collection: link.backlink_collection) %>
     </ul>
   <% end %>

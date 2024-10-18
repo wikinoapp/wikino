@@ -1,13 +1,9 @@
 <% backlink_collection.backlinks.each do |backlink| %>
-  <li>
-    <%= render Cards::PageCardComponent.new(page: backlink.page, class_name: "bg-base-300") %>
-  </li>
+  <%= render Cards::PageCardComponent.new(page: backlink.page, class_name: "bg-base-300") %>
 <% end %>
 
-<li>
-  <% if backlink_collection.pagination.has_next %>
-    <turbo-frame id="backlink-collection">
-      <%= render Buttons::BacklinkPaginationButtonComponent.new(backlink_collection:) %>
-    </turbo-frame>
-  <% end %>
-</li>
+<% if backlink_collection.pagination.has_next %>
+  <turbo-frame id="backlink-collection">
+    <%= render Buttons::BacklinkPaginationButtonComponent.new(backlink_collection:) %>
+  </turbo-frame>
+<% end %>
