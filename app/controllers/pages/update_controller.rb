@@ -19,8 +19,8 @@ module Pages
       @form = EditPageForm.new(form_params.merge(viewer: viewer!, page: @page.not_nil!))
 
       if @form.invalid?
-        @link_list = @page.not_nil!.fetch_link_list
-        @backlink_list = @page.not_nil!.fetch_backlink_list
+        @link_collection = @page.not_nil!.fetch_link_collection
+        @backlink_collection = @page.not_nil!.fetch_backlink_collection
 
         return render("pages/edit/call", status: :unprocessable_entity)
       end

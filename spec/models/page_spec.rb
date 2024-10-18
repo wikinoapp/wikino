@@ -60,7 +60,7 @@ RSpec.describe Page, type: :model do
     end
   end
 
-  describe "#fetch_link_list" do
+  describe "#fetch_link_collection" do
     context "記事にリンクが含まれているとき" do
       let!(:page_a) { create(:page, modified_at: Time.zone.parse("2024-01-01")) }
       let!(:page_b) { create(:page, modified_at: Time.zone.parse("2024-01-02")) }
@@ -69,18 +69,18 @@ RSpec.describe Page, type: :model do
       let!(:target_page) { create(:page, linked_page_ids: [page_a.id, page_c.id]) }
 
       it "リンクの構造体を返すこと" do
-        link_list = target_page.fetch_link_list
+        link_collection = target_page.fetch_link_collection
 
-        expect(link_list.links.size).to eq(2)
+        expect(link_collection.links.size).to eq(2)
 
-        link_a = link_list.links[0]
+        link_a = link_collection.links[0]
         expect(link_a.page).to eq(page_c)
-        expect(link_a.backlinked_pages.size).to eq(1)
-        expect(link_a.backlinked_pages[0]).to eq(page_d)
+        expect(link_a.backlink_collection.backlinks.size).to eq(1)
+        expect(link_a.backlink_collection.backlinks[0]).to eql(Backlink.new(page: page_d))
 
-        link_b = link_list.links[1]
+        link_b = link_collection.links[1]
         expect(link_b.page).to eq(page_a)
-        expect(link_b.backlinked_pages.size).to eq(0)
+        expect(link_b.backlink_collection.backlinks.size).to eq(0)
       end
     end
   end

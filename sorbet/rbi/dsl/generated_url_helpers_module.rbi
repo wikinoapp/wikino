@@ -28,6 +28,12 @@ module GeneratedUrlHelpersModule
   def frame_joined_topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def frame_page_backlink_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def frame_page_link_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

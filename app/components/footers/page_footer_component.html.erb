@@ -1,1 +1,27 @@
-<%= render PageLinksComponent.new(link_list:, backlink_list:) %>
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-2">
+    <div class="antialiased font-bold">
+      <%= t("nouns.links") %>
+    </div>
+
+    <% if link_collection.links.present? %>
+      <%= render LinkCollectionComponent.new(link_collection:) %>
+    <% else %>
+      <%= t("messages._common.no_links") %>
+    <% end %>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <div class="antialiased font-bold">
+      <%= t("nouns.backlinks") %>
+    </div>
+
+    <% if backlink_collection.backlinks.present? %>
+      <div class="gap-2 grid grid-cols-4">
+        <%= render BacklinkCollectionComponent.new(backlink_collection:) %>
+      </div>
+    <% else %>
+      <%= t("messages._common.no_backlinks") %>
+    <% end %>
+  </div>
+</div>

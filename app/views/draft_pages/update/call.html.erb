@@ -6,8 +6,11 @@
   </template>
 </turbo-stream>
 
-<turbo-stream action="update" target="page-editor-link-list">
+<turbo-stream action="update" target="page-editor-footer">
   <template>
-    <%= render Footers::PageFooterComponent.new(link_list: @link_list, backlink_list: @backlink_list)  %>
+    <%= render Footers::PageFooterComponent.new(
+      link_collection: @link_collection,
+      backlink_collection: @backlink_collection
+    ) %>
   </template>
 </turbo-stream>

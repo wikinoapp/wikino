@@ -3,8 +3,15 @@
 
 module ModelConcerns
   module PageEditable
+    include Kernel
+
     extend ActiveSupport::Concern
     extend T::Sig
+
+    sig { returns(Page) }
+    def original_page
+      (instance_of?(DraftPage) ? T.bind(self, DraftPage).page : T.bind(self, Page)).not_nil!
+    end
 
     sig { returns(T::Array[PageLocation]) }
     def paths_in_body
@@ -29,19 +36,21 @@ module ModelConcerns
       Page.where(id: linked_page_ids)
     end
 
-    T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
-    def backlinked_pages
-      Page.where("'#{id}' = ANY (linked_page_ids)")
+    sig do
+      params(
+        before: T.nilable(String),
+        after: T.nilable(String),
+        link_limit: Integer,
+        backlink_limit: Integer
+      ).returns(LinkCollection)
     end
-
-    sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(LinkList) }
-    def fetch_link_list(before: nil, after: nil, limit: 15)
+    def fetch_link_collection(before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
       cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
         after:,
         before:,
-        limit:,
+        limit: link_limit,
         order: {modified_at: :desc, id: :desc}
       ).fetch
       pages = cursor_paginate_page.records
@@ -53,37 +62,22 @@ module ModelConcerns
         cursor_paginate_page = page.backlinked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
           after:,
           before:,
-          limit:,
+          limit: backlink_limit,
           order: {modified_at: :desc, id: :desc}
         ).fetch
         backlinked_pages = cursor_paginate_page.records
+        backlink_collection = BacklinkCollection.new(
+          page:,
+          backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page: backlinked_page) },
+          pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+        )
 
         added_page_ids.concat(backlinked_pages.pluck(:id))
 
-        Link.new(
-          page:,
-          backlinked_pages:,
-          pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
-        )
+        Link.new(page:, backlink_collection:)
       end
 
-      LinkList.new(links:, pagination:)
-    end
-
-    sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkList) }
-    def fetch_backlink_list(before: nil, after: nil, limit: 15)
-      cursor_paginate_page = backlinked_pages.cursor_paginate(
-        after:,
-        before:,
-        limit:,
-        order: {modified_at: :desc, id: :desc}
-      ).fetch
-
-      backlinks = cursor_paginate_page.records.map do |page|
-        Backlink.new(page:)
-      end
-
-      BacklinkList.new(backlinks:, pagination: Pagination.from_cursor_paginate(cursor_paginate_page:))
+      LinkCollection.new(page: original_page, links:, pagination:)
     end
 
     sig { params(editor: User).void }

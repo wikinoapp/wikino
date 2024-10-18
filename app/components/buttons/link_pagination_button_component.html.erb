@@ -1,0 +1,11 @@
+<%= button_to path, {
+  class: "bg-gray-200 card grid hover:ring-1 hover:ring-primary items-center justify-center min-h-[96px] px-4 py-2 transition w-full"
+} do %>
+  <div class="flex gap-1 items-center justify-center">
+    <%= render Wikino::UI::Icon.new(name: "caret-down") %>
+
+    <span class="font-bold text-sm">
+      <%= t("verbs.more") %>
+    </span>
+  </div>
+<% end %>

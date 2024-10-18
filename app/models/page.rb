@@ -34,6 +34,31 @@ class Page < ApplicationRecord
     )
   end
 
+  T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
+  def backlinked_pages
+    Page.where("'#{id}' = ANY (linked_page_ids)")
+  end
+
+  sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }
+  def fetch_backlink_collection(before: nil, after: nil, limit: 15)
+    cursor_paginate_page = backlinked_pages.cursor_paginate(
+      after:,
+      before:,
+      limit:,
+      order: {modified_at: :desc, id: :desc}
+    ).fetch
+
+    backlinks = cursor_paginate_page.records.map do |page|
+      Backlink.new(page:)
+    end
+
+    BacklinkCollection.new(
+      page: original_page,
+      backlinks:,
+      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+    )
+  end
+
   sig { params(editor: User).void }
   def add_editor!(editor:)
     editorships.where(space:, editor:).first_or_create!(
