@@ -27,7 +27,7 @@ module Pages
       )
 
       @link_collection = page_editable.fetch_link_collection
-      @backlink_collection = @page.fetch_backlink_collection
+      @backlink_collection = @page.not_nil!.fetch_backlink_collection
     end
   end
 end

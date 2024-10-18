@@ -3,12 +3,14 @@
 
 module ModelConcerns
   module PageEditable
+    include Kernel
+
     extend ActiveSupport::Concern
     extend T::Sig
 
     sig { returns(Page) }
     def original_page
-      instance_of?(Page) ? self : page
+      (instance_of?(DraftPage) ? T.bind(self, DraftPage).page : T.bind(self, Page)).not_nil!
     end
 
     sig { returns(T::Array[PageLocation]) }

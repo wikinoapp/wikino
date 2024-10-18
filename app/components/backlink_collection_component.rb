@@ -4,9 +4,9 @@
 class BacklinkCollectionComponent < ApplicationComponent
   sig { params(backlink_collection: BacklinkCollection).void }
   def initialize(backlink_collection:)
-    @page = backlink_collection.page
-    @backlinks = backlink_collection.backlinks
-    @pagination = backlink_collection.pagination
+    @page = T.let(backlink_collection.page, Page)
+    @backlinks = T.let(backlink_collection.backlinks, T::Array[Backlink])
+    @pagination = T.let(backlink_collection.pagination, Pagination)
   end
 
   sig { returns(Page) }

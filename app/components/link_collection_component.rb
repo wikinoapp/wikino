@@ -4,9 +4,9 @@
 class LinkCollectionComponent < ApplicationComponent
   sig { params(link_collection: LinkCollection).void }
   def initialize(link_collection:)
-    @page = link_collection.page
-    @links = link_collection.links
-    @pagination = link_collection.pagination
+    @page = T.let(link_collection.page, Page)
+    @links = T.let(link_collection.links, T::Array[Link])
+    @pagination = T.let(link_collection.pagination, Pagination)
   end
 
   sig { returns(Page) }

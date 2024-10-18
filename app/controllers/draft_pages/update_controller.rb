@@ -25,7 +25,7 @@ module DraftPages
       )
       @draft_page = result.draft_page
       @link_collection = @draft_page.fetch_link_collection
-      @backlink_collection = @draft_page.page.fetch_backlink_collection
+      @backlink_collection = @draft_page.page.not_nil!.fetch_backlink_collection
 
       render(content_type: "text/vnd.turbo-stream.html", layout: false)
     end
