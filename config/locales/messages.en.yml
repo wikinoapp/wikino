@@ -1,6 +1,8 @@
 en:
   messages:
     _common:
+      no_backlinks: No Backlinks
+      no_links: No Links
       unexpected_error: Sorry, something went wrong. Please try again.
     accounts:
       email_hint_html: |-

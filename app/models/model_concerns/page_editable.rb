@@ -39,14 +39,21 @@ module ModelConcerns
       Page.where("'#{id}' = ANY (linked_page_ids)")
     end
 
-    sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(LinkList) }
-    def fetch_link_list(before: nil, after: nil, limit: 15)
+    sig do
+      params(
+        before: T.nilable(String),
+        after: T.nilable(String),
+        link_limit: Integer,
+        backlink_limit: Integer
+      ).returns(LinkList)
+    end
+    def fetch_link_list(before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
       cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
         after:,
         before:,
-        limit:,
+        limit: link_limit,
         order: {modified_at: :desc, id: :desc}
       ).fetch
       pages = cursor_paginate_page.records
@@ -58,7 +65,7 @@ module ModelConcerns
         cursor_paginate_page = page.backlinked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
           after:,
           before:,
-          limit:,
+          limit: backlink_limit,
           order: {modified_at: :desc, id: :desc}
         ).fetch
         backlinked_pages = cursor_paginate_page.records

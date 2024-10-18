@@ -1,23 +1,5 @@
-<turbo-stream action="replace" target="page-links-link-list">
+<turbo-stream action="replace" target="page-link-list">
   <template>
-    <% @link_list.links.each do |link| %>
-      <ul class="gap-2 grid grid-cols-4">
-        <li>
-          <%= render Cards::PageCardComponent.new(page: link.page, class_name: "bg-base-300") %>
-        </li>
-
-        <% link.backlinked_pages.each do |page| %>
-          <li>
-            <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
-          </li>
-        <% end %>
-      </ul>
-    <% end %>
-
-    <% if @link_list.pagination.has_next %>
-      <turbo-frame class="gap-2 grid grid-cols-4" id="page-links-link-list">
-        <%= render Buttons::PagePaginationButtonComponent.new(page: @page, pagination: @link_list.pagination) %>
-      </turbo-frame>
-    <% end %>
+    <%= render PageLinkListComponent.new(link_list: @link_list) %>
   </template>
 </turbo-stream>
