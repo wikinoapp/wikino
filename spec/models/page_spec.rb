@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Page, type: :model do
-  describe "#paths_in_body" do
+  describe "#locations_in_body" do
     context "記事本文にリンク記法が書かれているとき" do
       let!(:page) { create(:page) }
       let!(:topic) { page.topic }
@@ -54,7 +54,7 @@ RSpec.describe Page, type: :model do
         ].each do |(body, expected)|
           page.body = body
 
-          expect(page.paths_in_body).to eq(expected)
+          expect(page.locations_in_body).to eq(expected)
         end
       end
     end

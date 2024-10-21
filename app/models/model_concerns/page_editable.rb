@@ -14,7 +14,7 @@ module ModelConcerns
     end
 
     sig { returns(T::Array[PageLocation]) }
-    def paths_in_body
+    def locations_in_body
       current_topic_name = topic.name
       titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
 
@@ -82,9 +82,9 @@ module ModelConcerns
 
     sig { params(editor: User).void }
     def link!(editor:)
-      topics = Topic.where(name: paths_in_body.map(&:topic_name))
+      topics = Topic.where(name: locations_in_body.map(&:topic_name))
 
-      linked_pages = paths_in_body.each_with_object([]) do |path, ary|
+      linked_pages = locations_in_body.each_with_object([]) do |path, ary|
         page_topic = topics.find { |topic| topic.name == path.topic_name }
 
         if page_topic
