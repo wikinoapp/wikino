@@ -48,6 +48,7 @@ end
 group :development do
   gem "bullet"
   gem "letter_opener_web"
+  gem "rails_live_reload"
   gem "sorbet"
   gem "tapioca", require: false
 end
