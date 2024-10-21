@@ -35,6 +35,9 @@ en:
       page_deleted: Page was successfully deleted.
       page_duplicated_html: Page <a href="/pages/%{database_id}">%{title}</a> already exists.
       saved: Page saved.
+    pagination:
+      next_html: 'Next&nbsp;&rsaquo;'
+      prev_html: '&lsaquo;&nbsp;Prev'
     sign_in:
       dont_have_an_account_html: |-
         Don't have an account? <a class="link link-primary" href="/sign_up">Sign up</a>.

@@ -14,7 +14,15 @@ module Topics
 
     sig { returns(T.untyped) }
     def call
-      @pages = @topic.not_nil!.pages.published
+      cursor_paginate_page = @topic.not_nil!.pages.published.cursor_paginate(
+        after: params[:after].presence,
+        before: params[:before].presence,
+        limit: 100,
+        order: {modified_at: :desc, id: :desc}
+      ).fetch
+
+      @pages = cursor_paginate_page.records
+      @pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
     end
   end
 end

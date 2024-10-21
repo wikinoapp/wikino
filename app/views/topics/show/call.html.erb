@@ -25,10 +25,22 @@
 
     <hr class="my-4">
 
-    <div class="gap-2 grid grid-cols-6">
-      <% @pages.each do |page| %>
-        <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
-      <% end %>
-    </div>
+    <% if @pages.present? %>
+      <div class="flex flex-col gap-4">
+        <div class="gap-2 grid grid-cols-6">
+          <% @pages.each do |page| %>
+            <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+          <% end %>
+        </div>
+
+        <div class="flex justify-center">
+          <%= render PaginationComponent.new(
+            pagination: @pagination,
+            previous_path: topic_path(before: @pagination.previous_cursor),
+            next_path: topic_path(after: @pagination.next_cursor)
+          ) %>
+        </div>
+      </div>
+    <% end %>
   <% end %>
 <% end %>

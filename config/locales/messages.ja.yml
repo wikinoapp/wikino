@@ -36,6 +36,9 @@ ja:
       page_deleted: ページを削除しました
       page_duplicated_html: ページ「<a href="/pages/%{database_id}">%{title}</a>」はすでにあります。
       saved: 記事を保存しました
+    pagination:
+      next_html: '次へ&nbsp;&rsaquo;'
+      prev_html: '&lsaquo;&nbsp;前へ'
     sign_in:
       dont_have_an_account_html: |-
         アカウント持ってない？ <a class="link link-primary" href="/sign_up">アカウント作成</a>
