@@ -18,9 +18,9 @@ module Frame
         authorize(@page, :show?)
 
         draft_page = viewer!.draft_pages.find_by(page: @page)
-        page_editable = draft_page.presence || @page
+        pageable = draft_page.presence || @page
 
-        @link_collection = page_editable.fetch_link_collection(after: params[:after])
+        @link_collection = pageable.fetch_link_collection(after: params[:after])
 
         render(content_type: "text/vnd.turbo-stream.html", layout: false)
       end

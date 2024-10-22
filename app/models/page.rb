@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class Page < ApplicationRecord
-  include ModelConcerns::PageEditable
+  include ModelConcerns::Pageable
 
   acts_as_sequenced column: :number, scope: :space_id
 

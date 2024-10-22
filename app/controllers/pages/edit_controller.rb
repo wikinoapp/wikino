@@ -17,16 +17,16 @@ module Pages
       authorize(@page, :edit?)
 
       @draft_page = viewer!.draft_pages.find_by(page: @page)
-      page_editable = @draft_page.presence || @page
+      pageable = @draft_page.presence || @page
 
       @form = EditPageForm.new(
         viewer: viewer!,
-        topic_number: page_editable.topic.number,
-        title: page_editable.title,
-        body: page_editable.body
+        topic_number: pageable.topic.number,
+        title: pageable.title,
+        body: pageable.body
       )
 
-      @link_collection = page_editable.fetch_link_collection
+      @link_collection = pageable.fetch_link_collection
       @backlink_collection = @page.not_nil!.fetch_backlink_collection
     end
   end

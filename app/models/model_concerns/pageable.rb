@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module ModelConcerns
-  module PageEditable
+  module Pageable
     include Kernel
 
     extend ActiveSupport::Concern

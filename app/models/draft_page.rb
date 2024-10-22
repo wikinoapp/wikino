@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class DraftPage < ApplicationRecord
-  include ModelConcerns::PageEditable
+  include ModelConcerns::Pageable
 
   belongs_to :space
   belongs_to :topic
