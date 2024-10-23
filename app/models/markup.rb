@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "html_pipeline"
+require "html_pipeline/convert_filter/markdown_filter"
+
 class Markup
   extend T::Sig
 
@@ -11,28 +14,20 @@ class Markup
 
   sig { params(text: String).returns(String) }
   def render_html(text:)
-    doc = Commonmarker.parse(text, options: {
-      parse: {smart: true},
-      render: {hardbreaks: false}
-    })
-    page_locations = PageLocation.scan_text(text, current_topic:)
-    pages_with_page_location = Page.pages_with_page_location(space: current_topic.space, page_locations:)
+    pipeline = HTMLPipeline.new(
+      text_filters: [],
+      convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(context: {
+        markdown: {
+          parse: {smart: true},
+          render: {hardbreaks: false}
+        }
+      }),
+      sanitization_config: HTMLPipeline::SanitizationFilter::DEFAULT_CONFIG,
+      node_filters: []
+    )
+    result = pipeline.call(text)
 
-    doc.walk do |node|
-      if node.type == :text
-        location_keys = node.string_content.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
-
-        location_keys.each do |location_key|
-          page_location = PageLocation.from_location_key(location_key:, current_topic:)
-
-          if page_location && pages_with_page_location[page_location]
-            node.string_content = pages_with_page_location[page_location].id.to_s
-          end
-        end
-      end
-    end
-
-    doc.to_html
+    result[:output].to_s
   end
 
   sig { returns(Topic) }
