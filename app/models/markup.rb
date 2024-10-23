@@ -16,12 +16,14 @@ class Markup
   def render_html(text:)
     pipeline = HTMLPipeline.new(
       text_filters: [],
-      convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(context: {
-        markdown: {
-          parse: {smart: true},
-          render: {hardbreaks: false}
+      convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
+        context: {
+          markdown: {
+            parse: {smart: true},
+            render: {hardbreaks: false}
+          }
         }
-      }),
+      ),
       sanitization_config: HTMLPipeline::SanitizationFilter::DEFAULT_CONFIG,
       node_filters: []
     )
