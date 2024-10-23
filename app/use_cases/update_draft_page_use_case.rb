@@ -25,7 +25,7 @@ class UpdateDraftPageUseCase < ApplicationUseCase
         topic:,
         title:,
         body: new_body,
-        body_html: Markup.new(text: new_body).render_html,
+        body_html: Markup.new(current_topic: topic).render_html(text: new_body),
         modified_at: Time.zone.now
       }
       draft_page.save!

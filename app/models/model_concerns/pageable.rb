@@ -15,20 +15,7 @@ module ModelConcerns
 
     sig { returns(T::Array[PageLocation]) }
     def locations_in_body
-      current_topic_name = topic.name
-      titles_with_topic = body.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
-
-      titles_with_topic.each_with_object([]) do |title_with_topic, ary|
-        topic_name, page_title = title_with_topic.split("/", 2)
-
-        if !topic_name.nil? && !page_title.nil?
-          ary << PageLocation.new(topic_name:, page_title:)
-        elsif !topic_name.nil? && page_title.nil?
-          ary << PageLocation.new(topic_name: current_topic_name, page_title: topic_name)
-        else
-          next
-        end
-      end
+      PageLocation.scan_text(body, current_topic: topic)
     end
 
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }

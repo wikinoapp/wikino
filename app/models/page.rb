@@ -22,6 +22,17 @@ class Page < ApplicationRecord
   #   user&.pages_except(self)&.find_by(title:)
   # end
 
+  sig { params(space: Space, page_locations: T::Array[PageLocation]).returns(T::Hash[PageLocation, T.nilable(Page)]) }
+  def self.pages_with_page_location(space:, page_locations:)
+    topics = space.topics.where(name: page_locations.map(&:topic_name))
+    pages = space.pages.where(title: page_locations.map(&:page_title))
+
+    page_locations.each_with_object({}) do |page_location, hash|
+      topic = topics.find { |topic| topic.name == page_location.topic_name }
+      hash[page_location] = pages.find { |page| page.topic == topic && page.title == page_location.page_title }
+    end
+  end
+
   sig { params(topic: Topic).returns(Page) }
   def self.create_as_initial!(topic:)
     initial.where(topic:).first_or_create!(
