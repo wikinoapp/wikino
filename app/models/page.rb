@@ -22,14 +22,11 @@ class Page < ApplicationRecord
   #   user&.pages_except(self)&.find_by(title:)
   # end
 
-  sig { params(space: Space, page_locations: T::Array[PageLocation]).returns(T::Hash[PageLocation, T.nilable(Page)]) }
-  def self.pages_with_page_location(space:, page_locations:)
-    topics = space.topics.where(name: page_locations.map(&:topic_name))
-    pages = space.pages.where(title: page_locations.map(&:page_title))
-
-    page_locations.each_with_object({}) do |page_location, hash|
-      topic = topics.find { |topic| topic.name == page_location.topic_name }
-      hash[page_location] = pages.find { |page| page.topic == topic && page.title == page_location.page_title }
+  sig { params(page_locations: T::Array[PageLocation]).returns(T::Array[Page]) }
+  def self.find_all_by_page_location(page_locations:)
+    page_locations.group_by(&:topic).each_with_object([]) do |(topic, locations), ary|
+      pages = topic.pages.where(title: locations.map(&:page_title))
+      ary.concat(pages)
     end
   end
 

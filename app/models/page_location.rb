@@ -6,27 +6,32 @@ class PageLocation < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :topic_name, String
+  const :topic, Topic
   const :page_title, String
 
-  sig { params(location_key: String, current_topic: Topic).returns(T.nilable(PageLocation)) }
-  def self.from_location_key(location_key:, current_topic:)
-    topic_name, page_title = location_key.split("/", 2)
-
-    if !topic_name.nil? && !page_title.nil?
-      new(topic_name:, page_title:)
-    elsif !topic_name.nil? && page_title.nil?
-      new(topic_name: current_topic.name, page_title: topic_name)
-    end
-  end
-
   sig { params(text: String, current_topic: Topic).returns(T::Array[PageLocation]) }
-  def self.scan_text(text, current_topic:)
+  def self.scan_text(text:, current_topic:)
     location_keys = text.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
 
-    location_keys.each_with_object([]) do |location_key, ary|
-      page_location = from_location_key(location_key:, current_topic:)
-      ary << page_location if page_location
+    locations = location_keys.each_with_object([]) do |location_key, ary|
+      topic_name, page_title = location_key.split("/", 2)
+
+      if !topic_name.nil? && !page_title.nil?
+        ary << {topic_name:, page_title:}
+      elsif !topic_name.nil? && page_title.nil?
+        ary << {topic_name: current_topic.name, page_title: topic_name}
+      end
+    end
+
+    current_space = current_topic.space
+    topics = current_space.topics.where(name: locations.pluck(:topic_name))
+
+    locations.each_with_object([]) do |location, ary|
+      topic = topics.find { |topic| topic.name == location[:topic_name] }
+
+      if topic
+        ary << new(topic:, page_title: location[:page_title])
+      end
     end
   end
 end

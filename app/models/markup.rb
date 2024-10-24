@@ -14,6 +14,9 @@ class Markup
 
   sig { params(text: String).returns(String) }
   def render_html(text:)
+    page_locations = PageLocation.scan_text(text:, current_topic:)
+    pages = Page.find_all_by_page_location(page_locations:)
+
     pipeline = HTMLPipeline.new(
       text_filters: [],
       convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
@@ -25,7 +28,14 @@ class Markup
         }
       ),
       sanitization_config: HTMLPipeline::SanitizationFilter::DEFAULT_CONFIG,
-      node_filters: []
+      node_filters: [
+        MarkupFilters::PageLinkFilter.new(
+          context: {
+            page_locations:,
+            pages:
+          }
+        )
+      ]
     )
     result = pipeline.call(text)
 
