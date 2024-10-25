@@ -6,6 +6,9 @@ class PageLocationKey < T::Struct
 
   include T::Struct::ActsAsComparable
 
+  # 例: "topic_name/page_title"
+  const :raw, String
+
   const :topic_name, String
   const :page_title, String
 
@@ -17,9 +20,9 @@ class PageLocationKey < T::Struct
       topic_name, page_title = location_key.split("/", 2)
 
       if !topic_name.nil? && !page_title.nil?
-        ary << new(topic_name:, page_title:)
+        ary << new(raw: location_key, topic_name:, page_title:)
       elsif !topic_name.nil? && page_title.nil?
-        ary << new(topic_name: current_topic.name, page_title: topic_name)
+        ary << new(raw: location_key, topic_name: current_topic.name, page_title: topic_name)
       end
     end
   end

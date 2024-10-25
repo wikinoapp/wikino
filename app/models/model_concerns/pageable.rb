@@ -13,11 +13,6 @@ module ModelConcerns
       (instance_of?(DraftPage) ? T.bind(self, DraftPage).page : T.bind(self, Page)).not_nil!
     end
 
-    sig { returns(T::Array[PageLocation]) }
-    def locations_in_body
-      PageLocation.scan_text(body, current_topic: topic)
-    end
-
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
     def linked_pages
       Page.where(id: linked_page_ids)
@@ -69,13 +64,14 @@ module ModelConcerns
 
     sig { params(editor: User).void }
     def link!(editor:)
-      topics = Topic.where(name: locations_in_body.map(&:topic_name))
+      location_keys = PageLocationKey.scan_text(text: body, current_topic: topic)
+      topics = Topic.where(name: location_keys.map(&:topic_name))
 
-      linked_pages = locations_in_body.each_with_object([]) do |path, ary|
-        page_topic = topics.find { |topic| topic.name == path.topic_name }
+      linked_pages = location_keys.each_with_object([]) do |location_key, ary|
+        page_topic = topics.find { |topic| topic.name == location_key.topic_name }
 
         if page_topic
-          ary << editor.create_linked_page!(topic: page_topic, title: path.page_title)
+          ary << editor.create_linked_page!(topic: page_topic, title: location_key.page_title)
         end
       end
 

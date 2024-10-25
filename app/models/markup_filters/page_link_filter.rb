@@ -26,19 +26,29 @@ module MarkupFilters
     end
 
     # @override
-    def handle_text_chunk(text)
-      content = text.to_s
+    sig { params(text_chunk: Selma::HTML::TextChunk).void }
+    def handle_text_chunk(text_chunk)
+      text = text_chunk.to_s
 
-      return if !content.include?("[[") || !content.include?("]]")
+      return if !text.include?("[[") || !text.include?("]]")
 
-      location_keys = PageLocationKey.scan_text(text: content, current_topic:)
+      location_keys = PageLocationKey.scan_text(text:, current_topic:)
       location_keys.each do |location_key|
         page_location = page_locations.find { |page_location| page_location.key == location_key }
 
         if page_location
-          text.replace("#{content} (##{page_location.page.number})", as: :html)
+          replaced_text = text.gsub(
+            /\[\[#{location_key.raw}\]\]/,
+            view_context.render(PageLinkComponent.new(current_space: current_topic.space, page_location:))
+          )
+          text_chunk.replace(replaced_text, as: :html)
         end
       end
+    end
+
+    sig { returns(ActionView::Base) }
+    private def view_context
+      @view_context ||= ApplicationController.new.view_context
     end
 
     sig { returns(Topic) }
