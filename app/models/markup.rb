@@ -14,8 +14,8 @@ class Markup
 
   sig { params(text: String).returns(String) }
   def render_html(text:)
-    page_locations = PageLocation.scan_text(text:, current_topic:)
-    pages = Page.all_from_page_locations(page_locations:).preload(:topic)
+    location_keys = PageLocationKey.scan_text(text:, current_topic:)
+    page_locations = PageLocation.build_with_keys(current_space: current_topic.space, keys: location_keys)
 
     pipeline = HTMLPipeline.new(
       text_filters: [],
@@ -31,7 +31,8 @@ class Markup
       node_filters: [
         MarkupFilters::PageLinkFilter.new(
           context: {
-            pages:
+            current_topic:,
+            page_locations:
           }
         )
       ]

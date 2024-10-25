@@ -6,20 +6,21 @@ class PageLocation < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :topic_name, Topic
-  const :page_title, String
+  const :key, PageLocationKey
+  const :topic, Topic
+  const :page, Page
 
-  sig { params(text: String, current_topic: Topic).returns(T::Array[PageLocation]) }
-  def self.scan_text(text:, current_topic:)
-    location_keys = text.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
+  sig { params(current_space: Space, keys: T::Array[PageLocationKey]).returns(T::Array[PageLocation]) }
+  def self.build_with_keys(current_space:, keys:)
+    topics = current_space.topics.where(name: keys.map(&:topic_name))
+    pages = current_space.pages.where(title: keys.map(&:page_title))
 
-    location_keys.each_with_object([]) do |location_key, ary|
-      topic_name, page_title = location_key.split("/", 2)
+    keys.each_with_object([]) do |key, ary|
+      topic = topics.find { |topic| topic.name == key.topic_name }
+      page = pages.find { |page| page.topic == topic && page.title == key.page_title }
 
-      if !topic_name.nil? && !page_title.nil?
-        ary << new(topic_name:, page_title:)
-      elsif !topic_name.nil? && page_title.nil?
-        ary << new(topic_name: current_topic.name, page_title: topic_name)
+      if page
+        ary << new(key:, topic:, page:)
       end
     end
   end

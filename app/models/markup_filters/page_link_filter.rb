@@ -8,12 +8,13 @@ module MarkupFilters
     # @override
     def initialize(context: {}, result: {})
       super
-      @pages = T.let(context[:pages], Page::PrivateRelation)
+      @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
+      @current_topic = T.let(context[:current_topic], Topic)
     end
 
     # @override
     def validate
-      needs(:pages)
+      needs(:current_topic, :page_locations)
     end
 
     # @override
@@ -30,19 +31,12 @@ module MarkupFilters
 
       return if !content.include?("[[") || !content.include?("]]")
 
-      location_keys = content.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
+      location_keys = PageLocationKey.scan_text(text: content, current_topic:)
       location_keys.each do |location_key|
-        topic_name, page_title = location_key.split("/", 2)
+        page_location = page_locations.find { |page_location| page_location.key == location_key }
 
-        page = nil
-        if !topic_name.nil? && !page_title.nil?
-          page = pages.find { |page| page.topic.name == topic_name && page.title == page_title }
-        elsif !topic_name.nil? && page_title.nil?
-          page = pages.find { |page| page.topic.name == current_topic.name && page.title == topic_name }
-        end
-
-        if page
-          text.replace("#{content} (##{page.number})")
+        if page_location
+          text.replace("#{content} (##{page_location.page.number})", as: :html)
         end
       end
     end
@@ -51,8 +45,8 @@ module MarkupFilters
     attr_reader :current_topic
     private :current_topic
 
-    sig { returns(T::Array[Page]) }
-    attr_reader :pages
-    private :pages
+    sig { returns(T::Array[PageLocation]) }
+    attr_reader :page_locations
+    private :page_locations
   end
 end
