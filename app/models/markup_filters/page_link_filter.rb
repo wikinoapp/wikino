@@ -8,13 +8,12 @@ module MarkupFilters
     # @override
     def initialize(context: {}, result: {})
       super
-      @current_topic = T.let(context[:current_topic], Topic)
-      @pages = T.let(context[:pages], T::Array[Page])
+      @pages = T.let(context[:pages], Page::PrivateRelation)
     end
 
     # @override
     def validate
-      needs(:current_topic, :pages)
+      needs(:pages)
     end
 
     # @override
