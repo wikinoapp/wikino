@@ -6,6 +6,7 @@ module MarkupFilters
     extend T::Sig
 
     # @override
+    sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
       super
       @current_topic = T.let(context[:current_topic], Topic)
@@ -13,11 +14,13 @@ module MarkupFilters
     end
 
     # @override
+    sig { void }
     def validate
       needs(:current_topic, :page_locations)
     end
 
     # @override
+    sig { returns(Selma::Selector) }
     def selector
       Selma::Selector.new(
         match_text_within: "*",
@@ -39,7 +42,7 @@ module MarkupFilters
         if page_location
           replaced_text = text.gsub(
             /\[\[#{location_key.raw}\]\]/,
-            view_context.render(PageLinkComponent.new(current_space: current_topic.space, page_location:))
+            view_context.render(PageLinkComponent.new(current_space: current_topic.space.not_nil!, page_location:))
           )
           text_chunk.replace(replaced_text, as: :html)
         end
@@ -56,7 +59,7 @@ module MarkupFilters
 
     sig { returns(ActionView::Base) }
     private def view_context
-      @view_context ||= ApplicationController.new.view_context
+      ApplicationController.new.view_context
     end
   end
 end

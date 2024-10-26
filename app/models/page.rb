@@ -22,14 +22,6 @@ class Page < ApplicationRecord
   #   user&.pages_except(self)&.find_by(title:)
   # end
 
-  sig { params(current_space: Space, page_locations: T::Array[PageLocation]).returns(Page::PrivateRelation) }
-  def self.all_from_page_locations(current_space:, page_locations:)
-    page_ids = page_locations.group_by(&:topic_name).each_with_object([]) do |(topic_name, locations), ary|
-      ary.concat(current_space.pages.joins(:topic).where(topics: {name: topic_name}, title: locations.map(&:page_title)).pluck(:id))
-    end
-    where(id: page_ids)
-  end
-
   sig { params(topic: Topic).returns(Page) }
   def self.create_as_initial!(topic:)
     initial.where(topic:).first_or_create!(

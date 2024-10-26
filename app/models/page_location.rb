@@ -19,7 +19,7 @@ class PageLocation < T::Struct
       topic = topics.find { |topic| topic.name == key.topic_name }
       page = pages.find { |page| page.topic_id == topic&.id && page.title == key.page_title }
 
-      if page
+      if topic && page
         ary << new(key:, topic:, page:)
       end
     end
