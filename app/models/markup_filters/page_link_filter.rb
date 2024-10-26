@@ -31,7 +31,7 @@ module MarkupFilters
     # @override
     sig { params(text_chunk: Selma::HTML::TextChunk).void }
     def handle_text_chunk(text_chunk)
-      text = text_chunk.to_s
+      text = CGI.unescapeHTML(text_chunk.to_s)
 
       return if !text.include?("[[") || !text.include?("]]")
 
