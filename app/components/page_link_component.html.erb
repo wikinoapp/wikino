@@ -1,9 +1,9 @@
 <% if page_location.key.raw.include?("/") %>
   <div class="flex">
-    <%= link_to page_location.topic.name, topic_path %>
+    <%= link_to page_location.topic.name, topic_path, class: "link link-primary" %>
     <span>/</span>
-    <%= link_to page_location.page.title, page_path %>
+    <%= link_to page_location.page.title, page_path, class: "link link-primary" %>
   </div>
 <% else %>
-  <%= link_to page_location.page.title, page_path %>
+  <%= link_to page_location.page.title, page_path, class: "link link-primary" %>
 <% end %>

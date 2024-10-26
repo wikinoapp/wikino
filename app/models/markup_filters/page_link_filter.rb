@@ -8,8 +8,8 @@ module MarkupFilters
     # @override
     def initialize(context: {}, result: {})
       super
-      @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
       @current_topic = T.let(context[:current_topic], Topic)
+      @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
     end
 
     # @override
@@ -46,11 +46,6 @@ module MarkupFilters
       end
     end
 
-    sig { returns(ActionView::Base) }
-    private def view_context
-      @view_context ||= ApplicationController.new.view_context
-    end
-
     sig { returns(Topic) }
     attr_reader :current_topic
     private :current_topic
@@ -58,5 +53,10 @@ module MarkupFilters
     sig { returns(T::Array[PageLocation]) }
     attr_reader :page_locations
     private :page_locations
+
+    sig { returns(ActionView::Base) }
+    private def view_context
+      @view_context ||= ApplicationController.new.view_context
+    end
   end
 end
