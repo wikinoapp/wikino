@@ -1,5 +1,7 @@
 <div class="flex">
-  <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] sm:max-lg:w-[calc(100%-56px)] w-full z-10">
+  <%= render Sidebars::MainSidebarComponent.new %>
+
+  <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] sm:max-lg:w-[calc(100%-56px)] w-full">
     <turbo-frame data-turbo-action="advance" id="main-content">
       <%= content %>
     </turbo-frame>
@@ -8,9 +10,5 @@
       <%= render FlashToastComponent.new(flash:) %>
       <%= render Navbars::BottomNavbarComponent.new %>
     </div>
-  </div>
-
-  <div class="order-first z-20">
-    <%= render Sidebars::MainSidebarComponent.new %>
   </div>
 </div>
