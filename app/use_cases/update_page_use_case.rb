@@ -14,7 +14,7 @@ class UpdatePageUseCase < ApplicationUseCase
       topic:,
       title:,
       body:,
-      body_html: Markup.new(text: body).render_html,
+      body_html: Markup.new(current_topic: topic).render_html(text: body),
       modified_at: now
     }
     page.published_at = now if page.published_at.nil?

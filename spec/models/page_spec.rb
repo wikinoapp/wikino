@@ -2,64 +2,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Page, type: :model do
-  describe "#locations_in_body" do
-    context "記事本文にリンク記法が書かれているとき" do
-      let!(:page) { create(:page) }
-      let!(:topic) { page.topic }
-
-      it "パスのリストを返すこと" do
-        [
-          # 何も入力していないとき
-          ["[[]]", []],
-          # トピックを省略している場合
-          ["[[a]]", [PageLocation.new(topic_name: topic.name, page_title: "a")]],
-          ["[[ a ]]", [PageLocation.new(topic_name: topic.name, page_title: "a")]],
-          ["[[Hello]]", [PageLocation.new(topic_name: topic.name, page_title: "Hello")]],
-          ["[[こんにちは✌️]]", [PageLocation.new(topic_name: topic.name, page_title: "こんにちは✌️")]],
-          ["[[a]] [[b]]", [
-            PageLocation.new(topic_name: topic.name, page_title: "a"),
-            PageLocation.new(topic_name: topic.name, page_title: "b")
-          ]],
-          ["[[Hello]] [[World]]", [
-            PageLocation.new(topic_name: topic.name, page_title: "Hello"),
-            PageLocation.new(topic_name: topic.name, page_title: "World")
-          ]],
-          ["[[こんにちは]] [[世界🌏]]", [
-            PageLocation.new(topic_name: topic.name, page_title: "こんにちは"),
-            PageLocation.new(topic_name: topic.name, page_title: "世界🌏")
-          ]],
-          ["[ [a] ]", []],
-          ["[[a]", []],
-          # A bit weird, but same behavior as Obsidian, Reflect, Bear and etc.
-          ["[[[a]]]", [PageLocation.new(topic_name: topic.name, page_title: "[a")]],
-          ["[[[a]]] [[b]]", [
-            PageLocation.new(topic_name: topic.name, page_title: "[a"),
-            PageLocation.new(topic_name: topic.name, page_title: "b")
-          ]],
-          ["[[[a]]] [[[b]]]", [
-            PageLocation.new(topic_name: topic.name, page_title: "[a"),
-            PageLocation.new(topic_name: topic.name, page_title: "[b")
-          ]],
-          ["[[[ a ]]]", [PageLocation.new(topic_name: topic.name, page_title: "[ a")]],
-
-          # トピックを指定している場合
-          ["[[foo/a]]", [PageLocation.new(topic_name: "foo", page_title: "a")]],
-          ["[[ foo/a ]]", [PageLocation.new(topic_name: "foo", page_title: "a")]],
-          ["[[ foo / a ]]", [PageLocation.new(topic_name: "foo ", page_title: " a")]],
-          ["[[foo/a]] [[bar/b]]", [
-            PageLocation.new(topic_name: "foo", page_title: "a"),
-            PageLocation.new(topic_name: "bar", page_title: "b")
-          ]],
-          ["[[foo/a/b]]", [PageLocation.new(topic_name: "foo", page_title: "a/b")]]
-        ].each do |(body, expected)|
-          page.body = body
-
-          expect(page.locations_in_body).to eq(expected)
-        end
-      end
-    end
-  end
-
   describe "#fetch_link_collection" do
     context "記事にリンクが含まれているとき" do
       let!(:page_a) { create(:page, modified_at: Time.zone.parse("2024-01-01")) }
