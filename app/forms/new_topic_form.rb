@@ -2,9 +2,6 @@
 # frozen_string_literal: true
 
 class NewTopicForm < ApplicationForm
-  sig { returns(T.nilable(User)) }
-  attr_accessor :viewer
-
   attribute :name, :string
   attribute :description, :string, default: ""
   attribute :visibility, :string

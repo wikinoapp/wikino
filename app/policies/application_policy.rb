@@ -5,14 +5,14 @@ class ApplicationPolicy
   extend T::Sig
 
   sig { returns(User) }
-  attr_reader :viewer
+  attr_reader :user
 
   sig { returns(ApplicationRecord) }
   attr_reader :record
 
-  sig { params(viewer: User, record: ApplicationRecord).void }
-  def initialize(viewer, record)
-    @viewer = viewer
+  sig { params(user: User, record: ApplicationRecord).void }
+  def initialize(user, record)
+    @user = user
     @record = record
   end
 
@@ -57,9 +57,9 @@ class ApplicationPolicy
 
     abstract!
 
-    sig { params(viewer: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
-    def initialize(viewer, scope)
-      @viewer = viewer
+    sig { params(user: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
+    def initialize(user, scope)
+      @user = user
       @scope = scope
     end
 
@@ -68,8 +68,8 @@ class ApplicationPolicy
     end
 
     sig { returns(User) }
-    attr_reader :viewer
-    private :viewer
+    attr_reader :user
+    private :user
 
     sig { returns(T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))) }
     attr_reader :scope

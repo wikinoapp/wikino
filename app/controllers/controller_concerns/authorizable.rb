@@ -11,7 +11,7 @@ module ControllerConcerns
 
       sig { returns(User) }
       def pundit_user
-        viewer!
+        Current.user!
       end
     end
   end

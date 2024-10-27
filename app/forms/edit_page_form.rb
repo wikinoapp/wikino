@@ -2,9 +2,6 @@
 # frozen_string_literal: true
 
 class EditPageForm < ApplicationForm
-  sig { returns(T.nilable(User)) }
-  attr_accessor :viewer
-
   sig { returns(T.nilable(Page)) }
   attr_accessor :page
 
@@ -19,12 +16,12 @@ class EditPageForm < ApplicationForm
 
   sig { returns(T.nilable(Topic)) }
   def topic
-    viewer&.viewable_topics&.find_by(number: topic_number)
+    Current.user!.viewable_topics&.find_by(number: topic_number)
   end
 
   sig { returns(Topic::PrivateRelation) }
   def viewable_topics
-    viewer.not_nil!.viewable_topics
+    Current.user!.viewable_topics
   end
 
   sig { returns(T::Boolean) }

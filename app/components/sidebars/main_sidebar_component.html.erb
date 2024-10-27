@@ -39,10 +39,10 @@
           <turbo-frame
             id="joined_topics"
             loading="lazy"
-            src="<%= frame_joined_topic_list_path(viewer!.space_identifier) %>"
+            src="<%= frame_joined_topic_list_path(Current.space!.identifier) %>"
           ></turbo-frame>
 
-          <%= link_to new_topic_path(viewer!.space_identifier), {
+          <%= link_to new_topic_path(Current.space!.identifier), {
             class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
             data: {turbo_action: "advance", turbo_frame: "main-content"}
           } do %>
@@ -58,7 +58,7 @@
       <ul class="flex flex-col gap-4">
         <% if signed_in? %>
           <li>
-            <%= button_to session_path(space_identifier: viewer!.space_identifier), {
+            <%= button_to session_path(space_identifier: Current.space!.identifier), {
               class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
               method: :delete
             } do %>

@@ -3,7 +3,5 @@
 
 module ControllerConcerns
   module Authorizable
-    def viewer!
-    end
   end
 end

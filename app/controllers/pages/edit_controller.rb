@@ -16,11 +16,10 @@ module Pages
     def call
       authorize(@page, :edit?)
 
-      @draft_page = viewer!.draft_pages.find_by(page: @page)
+      @draft_page = Current.user!.draft_pages.find_by(page: @page)
       pageable = @draft_page.presence || @page
 
       @form = EditPageForm.new(
-        viewer: viewer!,
         topic_number: pageable.topic.number,
         title: pageable.title,
         body: pageable.body

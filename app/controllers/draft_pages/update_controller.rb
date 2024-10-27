@@ -17,7 +17,6 @@ module DraftPages
       authorize(@page, :update?)
 
       result = UpdateDraftPageUseCase.new.call(
-        viewer: viewer!,
         page: @page.not_nil!,
         topic_number: form_params[:topic_number],
         title: form_params[:title],

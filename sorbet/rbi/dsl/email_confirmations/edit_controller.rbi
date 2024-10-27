@@ -17,12 +17,6 @@ class EmailConfirmations::EditController
 
     sig { returns(T::Boolean) }
     def signed_in?; end
-
-    sig { returns(T.nilable(::User)) }
-    def viewer; end
-
-    sig { returns(::User) }
-    def viewer!; end
   end
 
   class HelperProxy < ::ActionView::Base

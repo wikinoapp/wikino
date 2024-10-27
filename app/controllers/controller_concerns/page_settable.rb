@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     private def set_page
-      @page = T.let(viewer!.space.pages.find_by!(number: params[:page_number]), T.nilable(Page))
+      @page = T.let(Current.space!.pages.find_by!(number: params[:page_number]), T.nilable(Page))
     end
   end
 end

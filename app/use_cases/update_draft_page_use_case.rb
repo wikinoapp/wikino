@@ -8,17 +8,16 @@ class UpdateDraftPageUseCase < ApplicationUseCase
 
   sig do
     params(
-      viewer: User,
       page: Page,
       topic_number: T.nilable(String),
       title: T.nilable(String),
       body: T.nilable(String)
     ).returns(Result)
   end
-  def call(viewer:, page:, topic_number:, title:, body:)
+  def call(page:, topic_number:, title:, body:)
     updated_draft_page = ActiveRecord::Base.transaction do
-      draft_page = viewer.find_or_create_draft_page!(page:)
-      topic = viewer.viewable_topics.find_by(number: topic_number).presence || page.topic
+      draft_page = Current.user!.find_or_create_draft_page!(page:)
+      topic = Current.user!.viewable_topics.find_by(number: topic_number).presence || page.topic
       new_body = body.presence || ""
 
       draft_page.attributes = {
@@ -30,7 +29,7 @@ class UpdateDraftPageUseCase < ApplicationUseCase
       }
       draft_page.save!
 
-      draft_page.link!(editor: viewer)
+      draft_page.link!(editor: Current.user!)
 
       draft_page
     end

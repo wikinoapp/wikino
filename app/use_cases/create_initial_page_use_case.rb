@@ -6,11 +6,11 @@ class CreateInitialPageUseCase < ApplicationUseCase
     const :page, Page
   end
 
-  sig { params(topic: Topic, viewer: User).returns(Result) }
-  def call(topic:, viewer:)
+  sig { params(topic: Topic).returns(Result) }
+  def call(topic:)
     page = ActiveRecord::Base.transaction do
       new_page = Page.create_as_initial!(topic:)
-      new_page.add_editor!(editor: viewer)
+      new_page.add_editor!(editor: Current.user!)
       new_page
     end
 

@@ -1,5 +1,5 @@
 <% title = @page.title %>
-<% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
+<% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <div class="flex flex-col gap-4 p-4">
@@ -14,7 +14,7 @@
         </div>
       </div>
 
-      <%= link_to edit_page_path(viewer!.space_identifier, @page.number), {
+      <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
         class: "btn btn-primary no-animation"
       } do %>
         <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>

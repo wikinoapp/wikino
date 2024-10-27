@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     private def set_topic
-      @topic = T.let(viewer!.space.topics.kept.find_by!(number: params[:topic_number]), T.nilable(Topic))
+      @topic = T.let(Current.space!.topics.kept.find_by!(number: params[:topic_number]), T.nilable(Topic))
       authorize(@topic, :show?)
     end
   end

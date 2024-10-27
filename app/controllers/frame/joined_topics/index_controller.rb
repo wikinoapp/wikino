@@ -10,9 +10,11 @@ module Frame
 
       layout false
 
+      before_action :require_authentication
+
       sig { returns(T.untyped) }
       def call
-        @joined_topics = T.let(viewer!.topics, T.nilable(Topic::PrivateRelation))
+        @joined_topics = T.let(Current.user!.topics, T.nilable(Topic::PrivateRelation))
       end
     end
   end

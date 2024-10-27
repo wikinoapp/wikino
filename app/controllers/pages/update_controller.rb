@@ -16,7 +16,7 @@ module Pages
     def call
       authorize(@page, :update?)
 
-      @form = EditPageForm.new(form_params.merge(viewer: viewer!, page: @page.not_nil!))
+      @form = EditPageForm.new(form_params.merge(page: @page.not_nil!))
 
       if @form.invalid?
         @link_collection = @page.not_nil!.fetch_link_collection
@@ -26,7 +26,6 @@ module Pages
       end
 
       result = UpdatePageUseCase.new.call(
-        viewer: viewer!,
         page: @page.not_nil!,
         topic: @form.topic.not_nil!,
         title: @form.title.not_nil!,
@@ -34,7 +33,7 @@ module Pages
       )
 
       flash[:notice] = t("messages.page.saved")
-      redirect_to page_path(viewer!.space_identifier, result.page.number)
+      redirect_to page_path(Current.space!.identifier, result.page.number)
     end
 
     sig { returns(ActionController::Parameters) }

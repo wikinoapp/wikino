@@ -6,8 +6,8 @@ class UpdatePageUseCase < ApplicationUseCase
     const :page, Page
   end
 
-  sig { params(viewer: User, page: Page, topic: Topic, title: String, body: String).returns(Result) }
-  def call(viewer:, page:, topic:, title:, body:)
+  sig { params(page: Page, topic: Topic, title: String, body: String).returns(Result) }
+  def call(page:, topic:, title:, body:)
     now = Time.zone.now
 
     page.attributes = {
@@ -21,10 +21,10 @@ class UpdatePageUseCase < ApplicationUseCase
 
     updated_page = ActiveRecord::Base.transaction do
       page.save!
-      page.add_editor!(editor: viewer)
-      page.create_revision!(editor: viewer, body:, body_html: body)
-      page.link!(editor: viewer)
-      viewer.destroy_draft_page!(page:)
+      page.add_editor!(editor: Current.user!)
+      page.create_revision!(editor: Current.user!, body:, body_html: body)
+      page.link!(editor: Current.user!)
+      Current.user!.destroy_draft_page!(page:)
 
       page
     end

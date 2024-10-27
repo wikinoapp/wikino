@@ -6,17 +6,17 @@ class TopicPolicy < ApplicationPolicy
 
   sig { returns(T::Boolean) }
   def show?
-    viewer.can_update_topic?(topic:)
+    user.can_update_topic?(topic:)
   end
 
   sig { returns(T::Boolean) }
   def update?
-    viewer.can_update_topic?(topic:)
+    user.can_update_topic?(topic:)
   end
 
   sig { returns(T::Boolean) }
   def destroy?
-    viewer.can_destroy_topic?(topic:)
+    user.can_destroy_topic?(topic:)
   end
 
   sig { returns(Topic) }

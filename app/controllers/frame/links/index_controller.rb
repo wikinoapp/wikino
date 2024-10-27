@@ -17,7 +17,7 @@ module Frame
       def call
         authorize(@page, :show?)
 
-        draft_page = viewer!.draft_pages.find_by(page: @page)
+        draft_page = Current.user!.draft_pages.find_by(page: @page)
         pageable = draft_page.presence || @page
 
         @link_collection = pageable.fetch_link_collection(after: params[:after])

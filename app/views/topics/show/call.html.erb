@@ -1,4 +1,4 @@
-<% title = t("meta.title.topics.show", space_name: viewer!.space_name, topic_name: @topic.name) %>
+<% title = t("meta.title.topics.show", space_name: Current.space!.name, topic_name: @topic.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
@@ -16,7 +16,7 @@
         <% end %>
       </div>
 
-      <%= link_to new_page_path(viewer!.space_identifier, @topic.number), class: "btn btn-primary no-animation" do %>
+      <%= link_to new_page_path(Current.space!.identifier, @topic.number), class: "btn btn-primary no-animation" do %>
         <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
         <%= t("nouns.new_page") %>
