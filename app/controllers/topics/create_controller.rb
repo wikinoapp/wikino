@@ -12,21 +12,20 @@ module Topics
 
     sig { returns(T.untyped) }
     def call
-      @form = NewTopicForm.new(form_params.merge(viewer: viewer!))
+      @form = NewTopicForm.new(form_params)
 
       if @form.invalid?
         return render("topics/new/call", status: :unprocessable_entity)
       end
 
       result = CreateTopicUseCase.new.call(
-        viewer: viewer!,
         name: @form.name.not_nil!,
         description: @form.description.not_nil!,
         visibility: @form.visibility.not_nil!
       )
 
       flash[:notice] = t("messages.topic.created")
-      redirect_to topic_path(viewer!.space_identifier, result.topic.number)
+      redirect_to topic_path(Current.space!.identifier, result.topic.number)
     end
 
     sig { returns(ActionController::Parameters) }

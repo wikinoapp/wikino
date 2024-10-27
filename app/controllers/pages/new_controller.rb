@@ -16,9 +16,9 @@ module Pages
     def call
       authorize(Page.new, :new?)
 
-      result = CreateInitialPageUseCase.new.call(topic: @topic.not_nil!, viewer: viewer!)
+      result = CreateInitialPageUseCase.new.call(topic: @topic.not_nil!)
 
-      redirect_to edit_page_path(viewer!.space_identifier, result.page.number)
+      redirect_to edit_page_path(Current.space!.identifier, result.page.number)
     end
   end
 end

@@ -8,8 +8,5 @@ module ControllerConcerns
 
     def params
     end
-
-    def viewer!
-    end
   end
 end

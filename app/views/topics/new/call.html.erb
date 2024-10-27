@@ -9,7 +9,7 @@
 
     <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
       <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: topic_list_path(viewer!.space_identifier) do |f| %>
+        <%= form_with model: @form, url: topic_list_path(Current.space!.identifier) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <%= f.label :name, class: "form-control" do %>

@@ -5,8 +5,5 @@ module ControllerConcerns
   module PageSettable
     def params
     end
-
-    def viewer!
-    end
   end
 end

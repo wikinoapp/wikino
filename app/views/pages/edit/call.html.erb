@@ -1,5 +1,5 @@
 <% title = t("meta.title.pages.edit") %>
-<% set_meta_tags(title: "#{title} | #{viewer!.space_name}") %>
+<% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <div class="flex flex-col gap-4 p-4">
@@ -15,7 +15,7 @@
         data: { controller: "page-editor-form" },
         model: @form,
         method: :patch,
-        url: page_path(viewer!.space_identifier, @page.number)
+        url: page_path(Current.space!.identifier, @page.number)
       ) do |f| %>
         <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
@@ -92,7 +92,7 @@
             <input
               class="hidden"
               data-page-editor-form-target="draftSaveButton"
-              formaction="<%= draft_page_path(viewer!.space_identifier, @page.number) %>"
+              formaction="<%= draft_page_path(Current.space!.identifier, @page.number) %>"
               type="submit"
             >
           </div>

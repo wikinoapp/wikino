@@ -2,7 +2,7 @@
   <ul class="flex flex-col">
     <% @joined_topics.each do |topic| %>
       <li>
-        <%= link_to topic_path(viewer!.space_identifier, topic.number), {
+        <%= link_to topic_path(Current.space!.identifier, topic.number), {
           class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
           data: {turbo_action: "advance", turbo_frame: "main-content"}
         } do %>
