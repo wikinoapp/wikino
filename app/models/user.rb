@@ -66,12 +66,14 @@ class User < ApplicationRecord
     page.new_record? ? pages : pages.where.not(id: page.id)
   end
 
-  sig { returns(Topic::PrivateRelation) }
+  sig { returns(Topic::PrivateAssociationRelation) }
   def viewable_topics
-    Topic
+    space
+      .not_nil!
+      .topics
       .left_joins(:memberships)
       .merge(
-        Topic.visibility_public.or(
+        space.not_nil!.topics.visibility_public.or(
           TopicMembership.where(member: self)
         )
       )

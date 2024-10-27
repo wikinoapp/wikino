@@ -15,7 +15,7 @@ module ModelConcerns
 
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
     def linked_pages
-      Page.where(id: linked_page_ids)
+      space.not_nil!.pages.where(id: linked_page_ids)
     end
 
     sig do
@@ -65,7 +65,7 @@ module ModelConcerns
     sig { params(editor: User).void }
     def link!(editor:)
       location_keys = PageLocationKey.scan_text(text: body, current_topic: topic)
-      topics = Topic.where(name: location_keys.map(&:topic_name))
+      topics = space.not_nil!.topics.where(name: location_keys.map(&:topic_name).uniq)
 
       linked_pages = location_keys.each_with_object([]) do |location_key, ary|
         page_topic = topics.find { |topic| topic.name == location_key.topic_name }

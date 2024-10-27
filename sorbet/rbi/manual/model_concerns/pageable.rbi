@@ -18,6 +18,9 @@ module ModelConcerns
     def linked_pages
     end
 
+    def space
+    end
+
     def topic
     end
 

@@ -34,9 +34,9 @@ class Page < ApplicationRecord
     )
   end
 
-  T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
+  T::Sig::WithoutRuntime.sig { returns(Page::PrivateAssociationRelationWhereChain) }
   def backlinked_pages
-    Page.where("'#{id}' = ANY (linked_page_ids)")
+    space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
   end
 
   sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }
