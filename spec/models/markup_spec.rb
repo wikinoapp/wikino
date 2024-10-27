@@ -6,6 +6,13 @@ RSpec.describe Markup, type: :model do
     html.gsub(/\s+/, " ").strip
   end
 
+  it "渡したテキストが空文字列のときは空文字列を返すこと" do
+    topic = create(:topic)
+    actual = Markup.new(current_topic: topic).render_html(text: "")
+
+    expect(actual).to eq("")
+  end
+
   describe MarkupFilters::PageLinkFilter do
     it "リンク記法がリンクに置き換わること" do
       space = create(:space)
@@ -33,26 +40,26 @@ RSpec.describe Markup, type: :model do
         <ul>
           <li>Test</li>
           <li>
-            <a class="link link-primary" href="/s/identifier_1/pages/#{page_1.number}">Page 1</a>
+            <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
           </li>
           <li>
             <div class="flex">
-              <a class="link link-primary" href="/s/identifier_1/topics/#{topic_1.number}">トピック1</a>
+              <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
               <span>/</span>
-              <a class="link link-primary" href="/s/identifier_1/pages/#{page_1.number}">Page 1</a>
+              <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
             </div>
           </li>
           <li>[[Page 2]]</li>
           <li>
             <div class="flex">
-              <a class="link link-primary" href="/s/identifier_1/topics/#{topic_2.number}">トピック2</a>
+              <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_2.number}">トピック2</a>
               <span>/</span>
-              <a class="link link-primary" href="/s/identifier_1/pages/#{page_2.number}">Page 2</a>
+              <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a>
             </div>
           </li>
           <li>[[存在しないページ]]</li>
           <li>
-            <a class="link link-primary" href="/s/identifier_1/pages/#{page_3.number}">Notebook -&gt; List</a>
+            <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a>
           </li>
         </ul>
       HTML
