@@ -1,0 +1,14 @@
+<details class="dropdown z-30">
+  <summary class="btn btn-ghost btn-sm flex items-center px-0 text-slate-300">
+    <span>
+      <%= Current.space!.identifier %>
+    </span>
+
+    <%= render Wikino::UI::Icon.new(name: "caret-down", size: "12px", class_name: "fill-slate-300") %>
+  </summary>
+
+  <ul class="menu dropdown-content bg-base-300 rounded-box w-52 p-2 shadow">
+    <li><a>Item 1</a></li>
+    <li><a>Item 2</a></li>
+  </ul>
+</details>
