@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "selma"
 require "html_pipeline"
 require "html_pipeline/convert_filter/markdown_filter"
 
@@ -29,7 +30,7 @@ class Markup
           }
         }
       ),
-      sanitization_config: HTMLPipeline::SanitizationFilter::DEFAULT_CONFIG,
+      sanitization_config:,
       node_filters: [
         MarkupFilters::PageLinkFilter.new(
           context: {
@@ -47,4 +48,19 @@ class Markup
   sig { returns(Topic) }
   attr_reader :current_topic
   private :current_topic
+
+  sig { returns(T::Hash[T.any(Symbol, String), T.untyped]) }
+  private def sanitization_config
+    default_sanitization_config = HTMLPipeline::SanitizationFilter::DEFAULT_CONFIG
+
+    Selma::Sanitizer::Config.merge(
+      default_sanitization_config,
+      {
+        elements: default_sanitization_config[:elements] + [
+          # タスクリスト記法 (`- [ ]`) のために許可する
+          "input"
+        ]
+      }
+    )
+  end
 end
