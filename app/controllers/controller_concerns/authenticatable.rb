@@ -12,6 +12,8 @@ module ControllerConcerns
 
     sig(:final) { params(session: Session).returns(T::Boolean) }
     def sign_in(session)
+      Current.user = session.user
+
       cookies.signed.permanent[Session::COOKIE_KEY] = {
         value: session.token,
         httponly: true,
@@ -68,8 +70,8 @@ module ControllerConcerns
     private def restore_session
       return false unless session_token
 
-      user = Session.find_by(token: session_token)&.user
-      Current.user = user
+      session = Session.find_by(token: session_token)
+      sign_in(session) if session
 
       true
     end
