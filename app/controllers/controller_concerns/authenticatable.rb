@@ -14,8 +14,15 @@ module ControllerConcerns
     def sign_in(session)
       Current.user = session.user
 
-      cookies.signed.permanent[Session::COOKIE_KEY] = {
+      cookies.signed.permanent[Session::TOKEN_COOKIE_KEY] = {
         value: session.token,
+        httponly: true,
+        same_site: :lax,
+        domain: ".#{Wikino.config.host}"
+      }
+
+      cookies.signed.permanent[Session::USER_IDS_COOKIE_KEY] = {
+        value: (cookie_user_ids + [session.user.id]).uniq.join(","),
         httponly: true,
         same_site: :lax,
         domain: ".#{Wikino.config.host}"
@@ -27,7 +34,7 @@ module ControllerConcerns
     sig(:final) { returns(T::Boolean) }
     def sign_out
       DestroySessionUseCase.new.call(session_token: session_token.not_nil!)
-      cookies.delete(Session::COOKIE_KEY)
+      cookies.delete(Session::TOKEN_COOKIE_KEY)
 
       true
     end
@@ -63,7 +70,12 @@ module ControllerConcerns
 
     sig(:final) { returns(T.nilable(String)) }
     private def session_token
-      cookies.signed[Session::COOKIE_KEY]
+      cookies.signed[Session::TOKEN_COOKIE_KEY]
+    end
+
+    sig(:final) { returns(T::Array[String]) }
+    private def cookie_user_ids
+      cookies.signed[Session::USER_IDS_COOKIE_KEY]&.split(",") || []
     end
 
     sig(:final) { returns(T::Boolean) }

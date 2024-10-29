@@ -2,6 +2,6 @@
 # frozen_string_literal: true
 
 module Dropdowns
-  class SpaceSwitchDropdownComponent < ApplicationComponent
+  class UserSwitchDropdownComponent < ApplicationComponent
   end
 end

@@ -7,8 +7,11 @@
     <%= render Wikino::UI::Icon.new(name: "caret-down", size: "12px", class_name: "fill-slate-300") %>
   </summary>
 
-  <ul class="bg-base-300 dropdown-content menu p-2 rounded-box shadow w-52">
-    <li><a>Item 1</a></li>
-    <li><a>Item 2</a></li>
+  <div class="dropdown-content">
+    <turbo-frame
+      id="switchable-users"
+      loading="lazy"
+      src="<%= frame_switchable_user_list_path %>"
+    ></turbo-frame>
   </ul>
 </details>

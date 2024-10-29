@@ -1,0 +1,17 @@
+<turbo-frame id="switchable-users">
+  <ul class="bg-base-300 menu p-2 rounded-box shadow w-52">
+    <% @users.each do |user| %>
+      <li>
+        <%= button_to "", class: "text-left w-full" do %>
+          <div class="font-bold">
+            <%= user.space.name %>
+          </div>
+
+          <div class="text-gray-400 text-sm">
+            @<%= user.atname %>
+          </div>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</turbo-frame>
