@@ -1,5 +1,6 @@
 ja:
   verbs:
+    add_user: ユーザーを追加する
     edit: 編集する
     more: もっと見る
     save: 保存する

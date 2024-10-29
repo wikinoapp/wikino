@@ -19,6 +19,7 @@ module Frame
           .joins(:space)
           .kept
           .where(id: cookie_user_ids)
+          .where.not(id: Current.user.id)
           .merge(Space.order(:identifier))
           .preload(:space, :sessions)
       end

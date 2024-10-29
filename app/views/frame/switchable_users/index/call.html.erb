@@ -1,8 +1,8 @@
 <turbo-frame id="switchable-users">
-  <ul class="bg-base-300 menu p-2 rounded-box shadow w-52">
+  <ul class="bg-base-300 menu p-0 rounded-box shadow w-52">
     <% @users.each do |user| %>
-      <li>
-        <%= button_to "", class: "text-left w-full" do %>
+      <li class="p-2">
+        <%= button_to "", form_class: "px-2", class: "text-left w-full" do %>
           <div class="font-bold">
             <%= user.space.name %>
           </div>
@@ -13,5 +13,19 @@
         <% end %>
       </li>
     <% end %>
+
+    <% if @users.present? %>
+      <li class="border-slate-900 border-t m-0"></li>
+    <% end %>
+
+    <li class="p-2">
+      <%= link_to sign_in_path(skip_no_authentication: true), class: "flex gap-2 items-center px-2" do %>
+        <%= render Wikino::UI::Icon.new(name: "user-plus", size: "14px", class_name: "fill-base-content") %>
+
+        <span>
+          <%= t("verbs.add_user") %>
+        </span>
+      <% end %>
+    </li>
   </ul>
 </turbo-frame>
