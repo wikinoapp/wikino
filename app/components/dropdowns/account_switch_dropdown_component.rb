@@ -2,6 +2,6 @@
 # frozen_string_literal: true
 
 module Dropdowns
-  class UserSwitchDropdownComponent < ApplicationComponent
+  class AccountSwitchDropdownComponent < ApplicationComponent
   end
 end

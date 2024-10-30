@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Frame
-  module SwitchableUsers
+  module SwitchableAccounts
     class IndexController < ApplicationController
       include ControllerConcerns::Authenticatable
       include ControllerConcerns::Localizable
