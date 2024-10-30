@@ -5,10 +5,12 @@ ja:
       no_links: リンクはありません
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
     accounts:
+      account_switched_successfully: アカウントを切り替えました
       email_hint_html: |-
         変更したい場合は再度<a href="/sign_up">アカウント作成ページ</a>からお願いします
       password_hint_html: |-
         8文字以上入力してください
+      signed_in_successfully: ログインしました
       signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
       terms_html: |-
         <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>

@@ -2,7 +2,11 @@
   <ul class="bg-base-300 menu p-0 rounded-box shadow w-52">
     <% @users.each do |user| %>
       <li class="p-2">
-        <%= button_to "", form_class: "px-2", class: "text-left w-full" do %>
+        <%= button_to(account_switch_path(Current.space!.identifier, user.id), {
+          class: "text-left w-full",
+          data: {turbo_frame: "_top"},
+          form_class: "px-2",
+        }) do %>
           <div class="font-bold">
             <%= user.space.name %>
           </div>
@@ -27,7 +31,7 @@
         <%= render Wikino::UI::Icon.new(name: "user-plus", size: "14px", class_name: "fill-base-content") %>
 
         <span>
-          <%= t("verbs.add_user") %>
+          <%= t("verbs.add_account") %>
         </span>
       <% end %>
     </li>

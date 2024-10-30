@@ -5,10 +5,12 @@ en:
       no_links: No Links
       unexpected_error: Sorry, something went wrong. Please try again.
     accounts:
+      account_switched_successfully: Account switched successfully.
       email_hint_html: |-
         If you want to change it, please create an account again from the <a href="/sign_up">Sign up</a> page.
       password_hint_html: |-
         Please enter 8 or more characters.
+      signed_in_successfully: Signed in successfully.
       signed_up_successfully: Account created successfully. Welcome!
       terms_html: |-
         Please create an account after agreeing to the
