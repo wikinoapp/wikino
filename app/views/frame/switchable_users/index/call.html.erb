@@ -19,7 +19,11 @@
     <% end %>
 
     <li class="p-2">
-      <%= link_to sign_in_path(skip_no_authentication: true), class: "flex gap-2 items-center px-2" do %>
+      <%= link_to(
+        sign_in_path(skip_no_authentication: true),
+        class: "flex gap-2 items-center px-2",
+        data: {turbo_frame: "_top"}
+      ) do %>
         <%= render Wikino::UI::Icon.new(name: "user-plus", size: "14px", class_name: "fill-base-content") %>
 
         <span>

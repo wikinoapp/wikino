@@ -83,14 +83,16 @@ module ControllerConcerns
       return false unless session_token
 
       session = Session.find_by(token: session_token)
-      sign_in(session) if session
+      return false unless session
+
+      sign_in(session)
 
       true
     end
 
     sig(:final) { returns(T::Boolean) }
     private def check_space_identifier
-      Current.space.identifier == params[:space_identifier]
+      Current.space!.identifier == params[:space_identifier]
     end
 
     sig(:final) { void }

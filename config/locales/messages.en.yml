@@ -40,7 +40,7 @@ en:
       prev_html: '&lsaquo;&nbsp;Prev'
     sign_in:
       dont_have_an_account_html: |-
-        Don't have an account? <a class="link link-primary" href="/sign_up">Sign up</a>.
+        Don't have an account? <a class="link link-primary" href="%{sign_up_path}">Sign up</a>.
       forgot_password: Forgot password?
       remember_me: Remember me
       sign_in_failed: Sign in failed.
@@ -48,7 +48,7 @@ en:
       welcome_back: Welcome back!
     sign_up:
       already_have_an_account_html: |-
-        Already have an account? <a class="link link-primary" href="/sign_in">Sign in</a>.
+        Already have an account? <a class="link link-primary" href="%{sign_in_path}">Sign in</a>.
       description_html: |-
         Enter your email address.<br>
         We will send you an email to create an account.
