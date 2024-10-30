@@ -46,7 +46,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     def require_authentication
-      (restore_session && check_space_identifier) || request_authentication
+      restore_session || request_authentication
     end
 
     sig(:final) { returns(T.untyped) }
@@ -88,11 +88,6 @@ module ControllerConcerns
       sign_in(session)
 
       true
-    end
-
-    sig(:final) { returns(T::Boolean) }
-    private def check_space_identifier
-      Current.space!.identifier == params[:space_identifier]
     end
 
     sig(:final) { void }
