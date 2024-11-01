@@ -1,0 +1,39 @@
+<turbo-frame id="switchable-accounts">
+  <ul class="bg-base-300 menu p-0 rounded-box shadow w-52">
+    <% @users.each do |user| %>
+      <li class="p-2">
+        <%= button_to(account_switch_path(Current.space!.identifier, user.id), {
+          class: "text-left w-full",
+          data: {turbo_frame: "_top"},
+          form_class: "px-2",
+        }) do %>
+          <div class="font-bold">
+            <%= user.space.name %>
+          </div>
+
+          <div class="text-gray-400 text-sm">
+            @<%= user.atname %>
+          </div>
+        <% end %>
+      </li>
+    <% end %>
+
+    <% if @users.present? %>
+      <li class="border-slate-900 border-t m-0"></li>
+    <% end %>
+
+    <li class="p-2">
+      <%= link_to(
+        sign_in_path(skip_no_authentication: true),
+        class: "flex gap-2 items-center px-2",
+        data: {turbo_frame: "_top"}
+      ) do %>
+        <%= render Wikino::UI::Icon.new(name: "user-plus", size: "14px", class_name: "fill-base-content") %>
+
+        <span>
+          <%= t("verbs.add_account") %>
+        </span>
+      <% end %>
+    </li>
+  </ul>
+</turbo-frame>

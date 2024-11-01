@@ -5,10 +5,12 @@ ja:
       no_links: リンクはありません
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
     accounts:
+      account_switched_successfully: アカウントを切り替えました
       email_hint_html: |-
         変更したい場合は再度<a href="/sign_up">アカウント作成ページ</a>からお願いします
       password_hint_html: |-
         8文字以上入力してください
+      signed_in_successfully: ログインしました
       signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
       terms_html: |-
         <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
@@ -41,7 +43,7 @@ ja:
       prev_html: '&lsaquo;&nbsp;前へ'
     sign_in:
       dont_have_an_account_html: |-
-        アカウント持ってない？ <a class="link link-primary" href="/sign_up">アカウント作成</a>
+        アカウント持ってない？ <a class="link link-primary" href="%{sign_up_path}">アカウント作成</a>
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する
       sign_in_failed: ログインに失敗しました
@@ -49,7 +51,7 @@ ja:
       welcome_back: おかえりなさい！
     sign_up:
       already_have_an_account_html: |-
-        登録済みですか？ <a class="link link-primary" href="/sign_in">ログイン</a>
+        登録済みですか？ <a class="link link-primary" href="%{sign_in_path}">ログイン</a>
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します

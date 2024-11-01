@@ -1,14 +1,16 @@
-<nav class="bg-base-200 sticky">
+<aside class="<%= class_names("bg-base-200 h-screen order-first sticky top-0", class_name) %>">
   <div class="hidden lg:flex lg:flex-col lg:gap-2 lg:p-2 lg:w-[240px]">
-    <div class="p-2">
+    <div class="flex gap-2 items-center p-2">
       <%= link_to root_path, {
         data: {turbo_action: "advance", turbo_frame: "main-content"}
       } do %>
         <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-white") %>
       <% end %>
+
+      <%= render Dropdowns::AccountSwitchDropdownComponent.new %>
     </div>
 
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 h-screen overflow-y-auto">
       <div class="px-2">
         <input
           class="bg-transparent border-slate-400 focus:border-slate-200 input text-slate-200 transition w-full"
@@ -35,7 +37,7 @@
           <%= t("nouns.topics") %>
         </div>
 
-        <div class="flex flex-col">
+        <div class="flex flex-col h-full">
           <turbo-frame
             id="joined_topics"
             loading="lazy"
@@ -91,4 +93,4 @@
       <% end %>
     </div>
   </div>
-</nav>
+</aside>

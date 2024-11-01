@@ -1,0 +1,17 @@
+<details class="dropdown">
+  <summary class="btn btn-ghost btn-sm flex gap-1 items-center no-animation px-0 text-slate-300">
+    <span>
+      <%= Current.space!.identifier %>
+    </span>
+
+    <%= render Wikino::UI::Icon.new(name: "caret-down", size: "12px", class_name: "fill-slate-300") %>
+  </summary>
+
+  <div class="dropdown-content">
+    <turbo-frame
+      id="switchable-accounts"
+      loading="lazy"
+      src="<%= frame_switchable_account_list_path %>"
+    ></turbo-frame>
+  </ul>
+</details>

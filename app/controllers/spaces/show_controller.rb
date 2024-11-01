@@ -9,6 +9,7 @@ module Spaces
 
     around_action :set_locale
     before_action :require_authentication
+    before_action :authorize_space
 
     sig { returns(T.untyped) }
     def call

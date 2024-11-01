@@ -3,5 +3,9 @@
 
 module ControllerConcerns
   module Authorizable
+    include Pundit::Authorization
+
+    def params
+    end
   end
 end
