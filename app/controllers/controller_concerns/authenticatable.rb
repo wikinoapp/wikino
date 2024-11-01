@@ -22,7 +22,7 @@ module ControllerConcerns
       }
 
       cookies.signed.permanent[Session::USER_IDS_COOKIE_KEY] = {
-        value: (cookie_user_ids + [session.user.id]).uniq.join(","),
+        value: (cookie_user_ids + [session.user_id]).uniq.join(","),
         httponly: true,
         same_site: :lax,
         domain: ".#{Wikino.config.host}"
