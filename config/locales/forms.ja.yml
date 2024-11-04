@@ -14,10 +14,12 @@ ja:
       new_email_confirmation_form:
         email: メールアドレス
       new_topic_form:
-        identifier: 識別子
-        visibility: 公開設定
-        name: 名前
         description: 説明
+        identifier: 識別子
+        name: 名前
+        visibility_private_hint: 非公開トピックに投稿されたページはこのスペース内でのみ公開されます。
+        visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます。
+        visibility: 公開設定
       session_form:
         email: メールアドレス
         password: パスワード

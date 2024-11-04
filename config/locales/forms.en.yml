@@ -14,10 +14,12 @@ en:
       new_email_confirmation_form:
         email: Email
       new_topic_form:
-        identifier: Identifier
-        visibility: Visibility
-        name: Name
         description: Description
+        identifier: Identifier
+        name: Name
+        visibility_private_hint: Pages posted in private topics are visible only in this space.
+        visibility_public_hint: Pages posted in public topics are visible on the internet.
+        visibility: Visibility
       session_form:
         email: Email
         password: Password
