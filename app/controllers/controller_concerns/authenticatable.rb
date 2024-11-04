@@ -85,6 +85,9 @@ module ControllerConcerns
       session = Session.find_by(token: session_token)
       return false unless session
 
+      space = Space.kept.find_by(identifier: params[:space_identifier])
+      return false if space != session.space
+
       sign_in(session)
 
       true
