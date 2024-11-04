@@ -1,10 +1,10 @@
-<% title = t("meta.title.spaces.show") %>
+<% title = t("meta.title.spaces.show", space_name: Current.space!.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
     <h1 class="antialiased font-bold text-2xl">
-      <%= title %>
+      <%= t("nouns.home") %>
     </h1>
 
     <hr class="my-4">

@@ -12,11 +12,12 @@ ja:
         show: '%{topic_name} | %{space_name}'
       pages:
         edit: 記事の編集
+        show: '%{page_title} | %{space_name}'
       sign_in:
         show: ログイン
       sign_up:
         show: アカウント作成
       spaces:
-        show: ホーム
+        show: 'ホーム | %{space_name}'
       welcome:
         show: Wikiアプリ

@@ -1,12 +1,12 @@
-<% title = @page.title %>
-<% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
+<% title = t("meta.title.pages.show", space_name: Current.space!.name, page_title: @page.title) %>
+<% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <div class="flex flex-col gap-4 p-4">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <h1 class="antialiased font-bold text-2xl">
-          <%= title %>
+          <%= @page.title %>
         </h1>
 
         <div class="text-gray-400 text-sm">
