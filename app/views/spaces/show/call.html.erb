@@ -3,8 +3,24 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <% @last_page_modified_topics.first(9).each do |topic| %>
-      <%= render Cards::TopicCardComponent.new(topic:) %>
+    <% if @pinned_pages.present? || @pages.present? %>
+      <div class="flex flex-col gap-4">
+        <% if @pinned_pages.present? %>
+          <div class="gap-2 grid grid-cols-6">
+            <% @pinned_pages.each do |page| %>
+              <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+            <% end %>
+          </div>
+        <% end %>
+
+        <% if @pages.present? %>
+          <div class="gap-2 grid grid-cols-6">
+            <% @pages.each do |page| %>
+              <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 <% end %>

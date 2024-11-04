@@ -10,12 +10,23 @@ module Spaces
 
     around_action :set_locale
     before_action :set_current_space
-    before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      @last_page_modified_topics = T.let(Current.user!.last_page_modified_topics.limit(10), T.nilable(Topic::PrivateRelation))
-      @last_modified_pages = T.let(Current.user!.last_modified_pages.limit(31), T.nilable(Page::PrivateRelation))
+      restore_session
+
+      if signed_in?
+        @pinned_pages = Current.space!.pages.published.pinned.order(pinned_at: :desc, id: :desc)
+        @pages = Current.space!.pages.published.not_pinned.order(modified_at: :desc, id: :desc).limit(30)
+      else
+        @pinned_pages = Current.space!.pages.published.pinned
+          .joins(:topic).merge(Topic.visibility_public)
+          .order(pinned_at: :desc, id: :desc)
+        @pages = Current.space!.pages.published.not_pinned
+          .joins(:topic).merge(Topic.visibility_public)
+          .order(modified_at: :desc, id: :desc)
+          .limit(30)
+      end
     end
   end
 end
