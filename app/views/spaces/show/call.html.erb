@@ -3,9 +3,19 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <h1 class="antialiased font-bold text-2xl">
-      <%= t("nouns.home") %>
-    </h1>
+    <div class="flex items-center justify-between">
+      <h1 class="antialiased font-bold text-2xl">
+        <%= t("nouns.home") %>
+      </h1>
+
+      <% unless signed_in? %>
+        <%= link_to atom_path(Current.space!.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
+          <%= render Wikino::UI::Icon.new(name: "rss", size: "16px", class_name: "fill-primary") %>
+
+          <%= t("nouns.rss_feed") %>
+        <% end %>
+      <% end %>
+    </div>
 
     <hr class="my-4">
 
