@@ -18,7 +18,9 @@ module Topics
       @topic = Current.space!.topics.kept.find_by!(number: params[:topic_number])
       authorize(@topic, :show?)
 
-      cursor_paginate_page = @topic.not_nil!.pages.published.cursor_paginate(
+      @pinned_pages = @topic.pages.published.pinned.order(pinned_at: :desc, id: :desc)
+
+      cursor_paginate_page = @topic.not_nil!.pages.published.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,

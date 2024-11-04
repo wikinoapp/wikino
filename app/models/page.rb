@@ -13,6 +13,8 @@ class Page < ApplicationRecord
 
   scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
   scope :initial, -> { where(title: nil) }
+  scope :pinned, -> { where.not(pinned_at: nil) }
+  scope :not_pinned, -> { where(pinned_at: nil) }
 
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
@@ -32,6 +34,11 @@ class Page < ApplicationRecord
       linked_page_ids: [],
       modified_at: Time.zone.now
     )
+  end
+
+  sig { returns(T::Boolean) }
+  def pinned?
+    pinned_at.present?
   end
 
   T::Sig::WithoutRuntime.sig { returns(Page::PrivateAssociationRelationWhereChain) }

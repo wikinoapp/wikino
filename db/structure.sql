@@ -11,6 +11,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
 -- Name: citext; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -149,7 +163,8 @@ CREATE TABLE public.pages (
     published_at timestamp(6) without time zone,
     archived_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    pinned_at timestamp without time zone
 );
 
 
@@ -512,6 +527,13 @@ CREATE UNIQUE INDEX index_pages_on_space_id_and_number ON public.pages USING btr
 
 
 --
+-- Name: index_pages_on_space_id_and_pinned_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_pinned_at ON public.pages USING btree (space_id, pinned_at);
+
+
+--
 -- Name: index_pages_on_space_id_and_published_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -861,6 +883,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20241104061506'),
 ('20240000000002'),
 ('20240000000001');
 
