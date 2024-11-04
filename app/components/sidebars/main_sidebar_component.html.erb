@@ -9,6 +9,10 @@
 
       <% if signed_in? %>
         <%= render Dropdowns::AccountSwitchDropdownComponent.new %>
+      <% else %>
+        <div class="font-bold text-slate-300 text-sm">
+          <%= Current.space!.identifier %>
+        </div>
       <% end %>
     </div>
 
