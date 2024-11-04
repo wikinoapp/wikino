@@ -42,8 +42,13 @@ class Page < ApplicationRecord
   end
 
   sig { returns(T::Boolean) }
+  def published?
+    published_at.present?
+  end
+
+  sig { returns(T::Boolean) }
   def modified?
-    modified_at > published_at
+    published? && modified_at > published_at
   end
 
   T::Sig::WithoutRuntime.sig { returns(Page::PrivateAssociationRelationWhereChain) }
