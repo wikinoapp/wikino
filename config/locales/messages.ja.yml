@@ -44,6 +44,7 @@ ja:
     pagination:
       next_html: '次へ&nbsp;&rsaquo;'
       prev_html: '&lsaquo;&nbsp;前へ'
+    published_with_html: '<a class="link link-primary" href="/" target="_blank">Wikino</a>によって公開されています'
     sign_in:
       dont_have_an_account_html: |-
         アカウント持ってない？ <a class="link link-primary" href="%{sign_up_path}">アカウント作成</a>

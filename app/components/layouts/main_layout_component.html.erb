@@ -4,6 +4,12 @@
       <%= content %>
     </turbo-frame>
 
+    <% unless signed_in? %>
+      <div class="mt-4">
+        <%= render Footers::PublicFooterComponent.new %>
+      </div>
+    <% end %>
+
     <div>
       <%= render FlashToastComponent.new(flash:) %>
       <%= render Navbars::BottomNavbarComponent.new %>

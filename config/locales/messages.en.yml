@@ -43,6 +43,7 @@ en:
     pagination:
       next_html: 'Next&nbsp;&rsaquo;'
       prev_html: '&lsaquo;&nbsp;Prev'
+    published_with_html: Published with <a class="link link-primary" href="/" target="_blank">Wikino</a>
     sign_in:
       dont_have_an_account_html: |-
         Don't have an account? <a class="link link-primary" href="%{sign_up_path}">Sign up</a>.
