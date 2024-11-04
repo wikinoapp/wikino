@@ -1,7 +1,7 @@
 ja:
   meta:
     description:
-      default: 個人でもグループでも使えるWikiアプリ
+      default: リンクで見つかるWikiアプリ
     title:
       accounts:
         new: アカウント情報の登録
@@ -20,4 +20,4 @@ ja:
       spaces:
         show: 'ホーム | %{space_name}'
       welcome:
-        show: Wikiアプリ
+        show: リンクで見つかるWikiアプリ
