@@ -37,6 +37,14 @@
           </div>
         <% end %>
 
+        <% if @pages.present? %>
+          <div class="gap-2 grid grid-cols-6">
+            <% @pages.each do |page| %>
+              <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+            <% end %>
+          </div>
+        <% end %>
+
         <div class="flex justify-center">
           <%= render PaginationComponent.new(
             pagination: @pagination,
