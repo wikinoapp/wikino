@@ -23,6 +23,9 @@ ja:
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください
+    time:
+      ago_modified: '%{time}前に編集'
+      ago_published: '%{time}前に公開'
     topic:
       created: トピックを作成しました
     sign_out:

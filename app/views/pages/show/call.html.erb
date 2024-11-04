@@ -16,9 +16,23 @@
             <%= @page.topic.name %>
           <% end %>
 
-          <div class="text-gray-400 text-sm">
-            <%= @page.published_at %>
+          <div
+            class="text-gray-400 text-sm"
+            data-controller="absolute-time"
+            data-absolute-time-utc-time-value="<%= @page.published_at.iso8601 %>"
+          >
+            <%= t("messages.time.ago_published", time: time_ago_in_words(@page.published_at)) %>
           </div>
+
+          <% if @page.modified? %>
+            <div
+              class="text-gray-400 text-sm"
+              data-controller="absolute-time"
+              data-absolute-time-utc-time-value="<%= @page.modified_at.iso8601 %>"
+            >
+              <%= t("messages.time.ago_modified", time: time_ago_in_words(@page.modified_at)) %>
+            </div>
+          <% end %>
         </div>
       </div>
 
