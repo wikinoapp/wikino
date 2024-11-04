@@ -17,6 +17,6 @@ en:
       sign_up:
         show: Sign up
       spaces:
-        show: Space
+        show: Home
       welcome:
         show: A wiki app

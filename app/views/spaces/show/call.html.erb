@@ -3,6 +3,12 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
+    <h1 class="antialiased font-bold text-2xl">
+      <%= title %>
+    </h1>
+
+    <hr class="my-4">
+
     <% if @pinned_pages.present? || @pages.present? %>
       <div class="flex flex-col gap-4">
         <% if @pinned_pages.present? %>
@@ -20,6 +26,14 @@
             <% end %>
           </div>
         <% end %>
+
+        <div class="flex justify-center">
+          <%= render PaginationComponent.new(
+            pagination: @pagination,
+            previous_path: space_path(Current.space!.identifier, before: @pagination.previous_cursor),
+            next_path: space_path(Current.space!.identifier, after: @pagination.next_cursor)
+          ) %>
+        </div>
       </div>
     <% end %>
   <% end %>
