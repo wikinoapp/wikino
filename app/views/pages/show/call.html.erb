@@ -9,8 +9,16 @@
           <%= @page.title %>
         </h1>
 
-        <div class="text-gray-400 text-sm">
-          <%= @page.published_at %>
+        <div class="flex gap-2 items-center">
+          <%= link_to topic_path(@page.space.identifier, @page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
+            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-slate-500") %>
+
+            <%= @page.topic.name %>
+          <% end %>
+
+          <div class="text-gray-400 text-sm">
+            <%= @page.published_at %>
+          </div>
         </div>
       </div>
 
