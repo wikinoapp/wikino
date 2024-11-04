@@ -3,12 +3,14 @@
 
 module Pages
   class UpdateController < ApplicationController
+    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
     include ControllerConcerns::PageSettable
 
     around_action :set_locale
+    before_action :set_current_space
     before_action :require_authentication
     before_action :set_page
 

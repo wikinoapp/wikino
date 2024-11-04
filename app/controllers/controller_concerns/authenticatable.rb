@@ -33,7 +33,7 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     def sign_out
-      DestroySessionUseCase.new.call(session_token: session_token.not_nil!)
+      DestroySessionUseCase.new.call(session_token:) if session_token
       cookies.delete(Session::TOKEN_COOKIE_KEY)
 
       true
@@ -46,7 +46,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     def require_authentication
-      restore_session || request_authentication
+      (restore_session && check_space_identifier) || request_authentication
     end
 
     sig(:final) { returns(T.untyped) }
@@ -85,12 +85,14 @@ module ControllerConcerns
       session = Session.find_by(token: session_token)
       return false unless session
 
-      space = Space.kept.find_by(identifier: params[:space_identifier])
-      return false if space != session.space
-
       sign_in(session)
 
       true
+    end
+
+    sig(:final) { returns(T::Boolean) }
+    private def check_space_identifier
+      Current.space! == Space.kept.find_by(identifier: params[:space_identifier])
     end
 
     sig(:final) { void }

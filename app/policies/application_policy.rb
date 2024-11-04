@@ -4,13 +4,13 @@
 class ApplicationPolicy
   extend T::Sig
 
-  sig { returns(User) }
+  sig { returns(T.nilable(User)) }
   attr_reader :user
 
   sig { returns(ApplicationRecord) }
   attr_reader :record
 
-  sig { params(user: User, record: ApplicationRecord).void }
+  sig { params(user: T.nilable(User), record: ApplicationRecord).void }
   def initialize(user, record)
     @user = user
     @record = record

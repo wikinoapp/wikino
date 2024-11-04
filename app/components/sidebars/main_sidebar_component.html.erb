@@ -7,17 +7,21 @@
         <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-white") %>
       <% end %>
 
-      <%= render Dropdowns::AccountSwitchDropdownComponent.new %>
+      <% if signed_in? %>
+        <%= render Dropdowns::AccountSwitchDropdownComponent.new %>
+      <% end %>
     </div>
 
     <div class="flex flex-col gap-4 h-screen overflow-y-auto">
-      <div class="px-2">
-        <input
-          class="bg-transparent border-slate-400 focus:border-slate-200 input text-slate-200 transition w-full"
-          type="text"
-          placeholder="Search..."
-        >
-      </div>
+      <% if signed_in? %>
+        <div class="px-2">
+          <input
+            class="bg-transparent border-slate-400 focus:border-slate-200 input text-slate-200 transition w-full"
+            type="text"
+            placeholder="Search..."
+          >
+        </div>
+      <% end %>
 
       <ul class="flex flex-col gap-4">
         <li>
@@ -32,30 +36,34 @@
         </li>
       </ul>
 
-      <div class="flex flex-col gap-2">
-        <div class="font-bold px-2 text-slate-400 text-xs">
-          <%= t("nouns.topics") %>
+      <% if signed_in? %>
+        <div class="flex flex-col gap-2">
+          <div class="font-bold px-2 text-slate-400 text-xs">
+            <%= t("nouns.topics") %>
+          </div>
+
+          <div class="flex flex-col h-full">
+            <turbo-frame
+              id="joined_topics"
+              loading="lazy"
+              src="<%= frame_joined_topic_list_path(Current.space!.identifier) %>"
+            ></turbo-frame>
+
+            <%= link_to new_topic_path(Current.space!.identifier), {
+              class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
+              data: {turbo_action: "advance", turbo_frame: "main-content"}
+            } do %>
+              <%= render Wikino::UI::Icon.new(name: "plus", size: "18px", class_name: "fill-slate-200") %>
+
+              <%= t("nouns.new_topic") %>
+            <% end %>
+          </div>
         </div>
+      <% end %>
 
-        <div class="flex flex-col h-full">
-          <turbo-frame
-            id="joined_topics"
-            loading="lazy"
-            src="<%= frame_joined_topic_list_path(Current.space!.identifier) %>"
-          ></turbo-frame>
-
-          <%= link_to new_topic_path(Current.space!.identifier), {
-            class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
-            data: {turbo_action: "advance", turbo_frame: "main-content"}
-          } do %>
-            <%= render Wikino::UI::Icon.new(name: "plus", size: "18px", class_name: "fill-slate-200") %>
-
-            <%= t("nouns.new_topic") %>
-          <% end %>
-        </div>
-      </div>
-
-      <hr class="border-stone-600">
+      <% if signed_in? %>
+        <hr class="border-stone-600">
+      <% end %>
 
       <ul class="flex flex-col gap-4">
         <% if signed_in? %>
@@ -68,14 +76,6 @@
 
               <%= t("nouns.sign_out") %>
             <% end %>
-          </li>
-        <% else %>
-          <li>
-            <%= link_to t("nouns.sign_up"), sign_up_path, class: "text-slate-200" %>
-          </li>
-
-          <li>
-            <%= link_to t("nouns.sign_in"), sign_in_path, class: "text-slate-200" %>
           </li>
         <% end %>
       </ul>

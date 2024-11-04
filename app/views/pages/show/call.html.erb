@@ -14,12 +14,14 @@
         </div>
       </div>
 
-      <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
-        class: "btn btn-primary no-animation"
-      } do %>
-        <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
+      <% if policy(@page).update? %>
+        <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
+          class: "btn btn-primary no-animation"
+        } do %>
+          <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
-        <%= t("verbs.edit") %>
+          <%= t("verbs.edit") %>
+        <% end %>
       <% end %>
     </div>
 

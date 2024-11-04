@@ -22,7 +22,6 @@ class Current < ActiveSupport::CurrentAttributes
   T::Sig::WithoutRuntime.sig { params(user: T.nilable(User)).void }
   def user=(user)
     super
-    self.space = user&.space
     Time.zone = user&.time_zone
   end
 

@@ -4,17 +4,19 @@
 class PagePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   def show?
+    return true if user.nil? && record.topic.visibility_public?
+    return false if user.nil?
     user.role_owner?
   end
 
   sig { returns(T::Boolean) }
   def create?
-    user.role_owner?
+    user&.role_owner? == true
   end
 
   sig { returns(T::Boolean) }
   def update?
-    user.role_owner?
+    create?
   end
 
   sig { returns(T::Boolean) }

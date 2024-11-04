@@ -3,13 +3,14 @@
 
 module Spaces
   class ShowController < ApplicationController
+    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
 
     around_action :set_locale
+    before_action :set_current_space
     before_action :require_authentication
-    before_action :authorize_space
 
     sig { returns(T.untyped) }
     def call
