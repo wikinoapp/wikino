@@ -60,7 +60,7 @@ module ControllerConcerns
     sig(:final) { returns(String) }
     def after_authentication_url
       session.delete(:return_to_after_authenticating) ||
-        space_url(space_identifier: Current.space!.identifier)
+        space_url(Current.user!.space.not_nil!.identifier)
     end
 
     sig(:final) { returns(T.nilable(String)) }
