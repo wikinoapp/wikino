@@ -9,7 +9,7 @@ RSpec.describe "GET /sign_in", type: :request do
 
     get "/sign_in"
 
-    expect(response).to have_http_status(:found)
+    expect(response.status).to eq(302)
     space = user.space
     expect(response).to redirect_to(space_path(space.identifier))
   end
@@ -21,14 +21,14 @@ RSpec.describe "GET /sign_in", type: :request do
 
     get "/sign_in?skip_no_authentication=true"
 
-    expect(response).to have_http_status(:ok)
+    expect(response.status).to eq(200)
     expect(response.body).to include("ログイン")
   end
 
   it "ログインしていないとき、ログインページが表示されること" do
     get "/sign_in"
 
-    expect(response).to have_http_status(:ok)
+    expect(response.status).to eq(200)
     expect(response.body).to include("ログイン")
   end
 end

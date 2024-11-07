@@ -9,7 +9,7 @@ RSpec.describe "GET /", type: :request do
 
     get "/"
 
-    expect(response).to have_http_status(:found)
+    expect(response.status).to eq(302)
     space = user.space
     expect(response).to redirect_to(space_path(space.identifier))
   end
@@ -17,7 +17,7 @@ RSpec.describe "GET /", type: :request do
   it "ログインしていないとき、ランディングページが表示されること" do
     get "/"
 
-    expect(response).to have_http_status(:ok)
+    expect(response.status).to eq(200)
     expect(response.body).to include("Wikinoにようこそ！")
   end
 end

@@ -66,4 +66,24 @@ RSpec.describe "POST /sessions", type: :request do
     # ログインしたのでセッションが1つ生まれるはず
     expect(Session.count).to eq(1)
   end
+
+  it "入力値が間違っているときはログインできないこと" do
+    # ログインしていないのでセッションはまだ無い
+    expect(Session.count).to eq(0)
+
+    user = create(:user, :with_password)
+
+    post("/sessions", params: {
+      session_form: {
+        space_identifier: user.space.identifier,
+        email: user.email,
+        password: "password" # パスワードを間違えている
+      }
+    })
+    expect(response.status).to eq(422)
+    expect(response.body).to include("ログインに失敗しました")
+
+    # ログインに失敗したのでセッションは作られていないはず
+    expect(Session.count).to eq(0)
+  end
 end

@@ -9,7 +9,7 @@ RSpec.describe "GET /sign_up", type: :request do
 
     get "/sign_up"
 
-    expect(response).to have_http_status(:found)
+    expect(response.status).to eq(302)
     space = user.space
     expect(response).to redirect_to(space_path(space.identifier))
   end
@@ -21,14 +21,14 @@ RSpec.describe "GET /sign_up", type: :request do
 
     get "/sign_in?skip_no_authentication=true"
 
-    expect(response).to have_http_status(:ok)
+    expect(response.status).to eq(200)
     expect(response.body).to include("アカウント作成")
   end
 
   it "ログインしていないとき、アカウント作成ページが表示されること" do
     get "/sign_up"
 
-    expect(response).to have_http_status(:ok)
+    expect(response.status).to eq(200)
     expect(response.body).to include("アカウント作成")
   end
 end
