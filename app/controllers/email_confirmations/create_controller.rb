@@ -14,7 +14,7 @@ module EmailConfirmations
       @form = NewEmailConfirmationForm.new(form_params)
 
       if @form.invalid?
-        return render("sign_up/new/call", status: :unprocessable_entity)
+        return render("sign_up/show/call", status: :unprocessable_entity)
       end
 
       result = CreateEmailConfirmationUseCase.new.call(
