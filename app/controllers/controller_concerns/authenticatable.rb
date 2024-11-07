@@ -51,9 +51,13 @@ module ControllerConcerns
 
     sig(:final) { returns(T.untyped) }
     def require_no_authentication
+      return if params[:skip_no_authentication].present?
+
+      restore_session
+
       if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
-        redirect_to space_path(space_identifier: Current.space!.identifier)
+        redirect_to space_path(Current.user!.space.not_nil!.identifier)
       end
     end
 
