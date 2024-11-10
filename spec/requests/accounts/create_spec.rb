@@ -84,6 +84,7 @@ RSpec.describe "POST /accounts", type: :request do
 
     post("/accounts", params: {
       account_form: {
+        space_identifier: "example",
         password: "passw0rd"
       }
     })

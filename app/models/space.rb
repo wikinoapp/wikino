@@ -9,6 +9,7 @@ class Space < ApplicationRecord
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
   IDENTIFIER_MIN_LENGTH = 2
   IDENTIFIER_MAX_LENGTH = 20
+  RESERVED_IDENTIFIERS = %w[www].freeze
 
   enum :plan, {
     Plan::Free.serialize => 0,

@@ -20,7 +20,26 @@
         <%= form_with model: @form, url: account_list_path do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :email, class: "form-control" do %>
+          <%= f.label :space_identifier, class: "form-control mt-4" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.account_form.space_identifier") %>
+              </span>
+            </div>
+
+            <%= f.text_field(:space_identifier,
+              class: "input input-bordered w-full",
+              required: true
+            ) %>
+
+            <div class="label">
+              <span class="label-text-alt">
+                <%= t("messages.accounts.space_identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
+              </span>
+            </div>
+          <% end %>
+
+          <%= f.label :email, class: "form-control mt-4" do %>
             <div class="label">
               <span class="label-text">
                 <%= t("forms.attributes.account_form.email") %>
@@ -28,7 +47,7 @@
             </div>
 
             <%= text_field_tag(:email, f.object.email, {
-              class: "input input-bordered w-full",
+              class: "!bg-gray-300 !border-gray-300 input input-bordered w-full",
               disabled: true
             }) %>
 
@@ -46,7 +65,11 @@
               </span>
             </div>
 
-            <%= f.password_field :password, autocomplete: "new-password", class: "input input-bordered w-full", required: true %>
+            <%= f.password_field(:password,
+              autocomplete: "new-password",
+              class: "input input-bordered w-full",
+              required: true
+            ) %>
 
             <div class="label">
               <span class="label-text-alt">

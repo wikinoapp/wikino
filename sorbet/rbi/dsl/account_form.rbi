@@ -25,6 +25,12 @@ class AccountForm
   def password=(value); end
 
   sig { returns(T.nilable(::String)) }
+  def space_identifier; end
+
+  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+  def space_identifier=(value); end
+
+  sig { returns(T.nilable(::String)) }
   def time_zone; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
