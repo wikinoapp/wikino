@@ -24,18 +24,18 @@ Rails.application.routes.draw do
     match "/topics/new",                         via: :get,    as: :new_topic,                     to: "topics/new#call"
     match "/users/:user_id/account_switch",      via: :post,   as: :account_switch,                to: "account_switches/create#call"
 
-    root "home/show#call", as: :home
+    root "home/show#call",                                     as: :home
   end
 
-  match "/accounts",                                               via: :post,   as: :account_list,                  to: "accounts/create#call"
-  match "/accounts/new",                                           via: :get,    as: :new_account,                   to: "accounts/new#call"
-  match "/email_confirmation",                                     via: :patch,  as: :email_confirmation,            to: "email_confirmations/update#call"
-  match "/email_confirmation",                                     via: :post,                                       to: "email_confirmations/create#call"
-  match "/email_confirmation/edit",                                via: :get,    as: :edit_email_confirmation,       to: "email_confirmations/edit#call"
-  match "/manifest",                                               via: :get,    as: :manifest,                      to: "manifests/show#call"
-  match "/sessions",                                               via: :post,   as: :session_list,                  to: "sessions/create#call"
-  match "/sign_in",                                                via: :get,    as: :sign_in,                       to: "sign_in/show#call"
-  match "/sign_up",                                                via: :get,    as: :sign_up,                       to: "sign_up/show#call"
+  match "/accounts",                             via: :post,   as: :account_list,                  to: "accounts/create#call"
+  match "/accounts/new",                         via: :get,    as: :new_account,                   to: "accounts/new#call"
+  match "/email_confirmation",                   via: :patch,  as: :email_confirmation,            to: "email_confirmations/update#call"
+  match "/email_confirmation",                   via: :post,                                       to: "email_confirmations/create#call"
+  match "/email_confirmation/edit",              via: :get,    as: :edit_email_confirmation,       to: "email_confirmations/edit#call"
+  match "/manifest",                             via: :get,    as: :manifest,                      to: "manifests/show#call"
+  match "/sessions",                             via: :post,   as: :session_list,                  to: "sessions/create#call"
+  match "/sign_in",                              via: :get,    as: :sign_in,                       to: "sign_in/show#call"
+  match "/sign_up",                              via: :get,    as: :sign_up,                       to: "sign_up/show#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 
   root "welcome/show#call"
