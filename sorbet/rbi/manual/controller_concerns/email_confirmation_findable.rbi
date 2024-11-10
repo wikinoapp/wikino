@@ -6,7 +6,7 @@ module ControllerConcerns
     def redirect_to(*args)
     end
 
-    def root_path
+    def root_url(*args)
     end
 
     def session

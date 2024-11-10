@@ -26,10 +26,10 @@ module ControllerConcerns
     def sign_in_path
     end
 
-    def space_path(*args)
+    def home_path(*args)
     end
 
-    def space_url(*args)
+    def home_url(*args)
     end
 
     def t(*args)

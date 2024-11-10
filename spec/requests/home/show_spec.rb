@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe "GET /s/:space_identifier", type: :request do
+RSpec.describe "GET /", type: :request do
   it "ログインしていないとき、公開トピックのページが表示されること" do
     space = create(:space, :small)
     public_topic = create(:topic, :public, space:)
@@ -9,7 +9,8 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
     create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
-    get "/s/#{space.identifier}"
+    host! space.host_name
+    get "/"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
@@ -28,7 +29,8 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
 
     sign_in(user:)
 
-    get "/s/#{space.identifier}"
+    host! space.host_name
+    get "/"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
@@ -49,7 +51,8 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
 
     sign_in(user:)
 
-    get "/s/#{space.identifier}"
+    host! space.host_name
+    get "/"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")

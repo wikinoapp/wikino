@@ -43,6 +43,9 @@ module GeneratedPathHelpersModule
   def frame_switchable_account_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def home_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -92,9 +95,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_path(*args); end

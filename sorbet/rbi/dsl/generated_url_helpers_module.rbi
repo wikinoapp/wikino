@@ -43,6 +43,9 @@ module GeneratedUrlHelpersModule
   def frame_switchable_account_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def home_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -92,9 +95,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_url(*args); end

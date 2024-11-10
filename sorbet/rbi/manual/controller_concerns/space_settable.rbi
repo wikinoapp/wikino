@@ -4,5 +4,8 @@
 module ControllerConcerns
   module SpaceSettable
     include ActionController::StrongParameters
+
+    def request
+    end
   end
 end
