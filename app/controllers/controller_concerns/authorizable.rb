@@ -9,15 +9,9 @@ module ControllerConcerns
     included do
       include Pundit::Authorization
 
-      sig { returns(User) }
+      sig { returns(T.nilable(User)) }
       def pundit_user
-        Current.user!
-      end
-
-      sig(:final) { void }
-      private def authorize_space
-        space = Space.find_by!(identifier: params[:space_identifier])
-        authorize(space, :show?)
+        Current.user
       end
     end
   end

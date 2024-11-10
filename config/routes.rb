@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/pages/:page_number",                 via: :get,    as: :page,                          to: "pages/show#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                 via: :patch,                                      to: "pages/update#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/edit",            via: :get,    as: :edit_page,                     to: "pages/edit#call",                     page_number: /\d+/
+  match "/s/:space_identifier/atom",                               via: :get,    as: :atom,                          to: "atom/show#call"
   match "/s/:space_identifier/session",                            via: :delete, as: :session,                       to: "sessions/destroy#call"
   match "/s/:space_identifier/topics",                             via: :post,   as: :topic_list,                    to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",               via: :get,    as: :topic,                         to: "topics/show#call",                    topic_number: /\d+/

@@ -22,6 +22,9 @@ en:
     email_confirmations:
       confirmation_mail_sent: Confirmation mail has been sent.
       enter_code: Enter the confirmation code in the email.
+    time:
+      ago_modified: 'Modified %{time} ago'
+      ago_published: 'Published %{time} ago'
     topic:
       created: Topic created.
     sign_out:
@@ -40,6 +43,7 @@ en:
     pagination:
       next_html: 'Next&nbsp;&rsaquo;'
       prev_html: '&lsaquo;&nbsp;Prev'
+    published_with_html: Published with <a class="link link-primary" href="/" target="_blank">Wikino</a>
     sign_in:
       dont_have_an_account_html: |-
         Don't have an account? <a class="link link-primary" href="%{sign_up_path}">Sign up</a>.

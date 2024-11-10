@@ -16,6 +16,9 @@ module GeneratedPathHelpersModule
   def account_switch_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def atom_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

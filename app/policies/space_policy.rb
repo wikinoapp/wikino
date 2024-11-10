@@ -4,6 +4,6 @@
 class SpacePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   def show?
-    user.space == record
+    user&.space == record
   end
 end

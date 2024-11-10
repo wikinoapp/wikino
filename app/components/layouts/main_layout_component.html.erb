@@ -1,14 +1,23 @@
 <div class="flex">
-  <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] sm:max-lg:w-[calc(100%-56px)] w-full">
-    <turbo-frame data-turbo-action="advance" id="main-content">
-      <%= content %>
-    </turbo-frame>
+  <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] overflow-y-auto pb-[100px] sm:max-lg:w-[calc(100%-56px)] w-full">
+    <div class="flex-1">
+      <turbo-frame data-turbo-action="advance" id="main-content">
+        <%= content %>
+      </turbo-frame>
 
-    <div>
-      <%= render FlashToastComponent.new(flash:) %>
-      <%= render Navbars::BottomNavbarComponent.new %>
+      <% unless signed_in? %>
+        <div class="mt-4">
+          <%= render Footers::PublicFooterComponent.new %>
+        </div>
+      <% end %>
     </div>
   </div>
 
+  <%# サイドバー内のドロップダウンがメインコンテンツより下にならないようにするため order-first を使用している %>
   <%= render Sidebars::MainSidebarComponent.new(class_name: "order-first") %>
+</div>
+
+<div class="bottom-0 fixed flex flex-col gap-4 left-1/2 p-4 translate-x-[-50%] z-50">
+  <%= render FlashToastComponent.new(flash:) %>
+  <%= render Navbars::BottomNavbarComponent.new %>
 </div>

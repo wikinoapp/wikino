@@ -6,17 +6,25 @@ class TopicPolicy < ApplicationPolicy
 
   sig { returns(T::Boolean) }
   def show?
-    user.can_update_topic?(topic:)
+    return true if user.nil? && T.cast(record, Topic).visibility_public?
+    return false if user.nil?
+
+    user.not_nil!.can_update_topic?(topic:)
+  end
+
+  sig { returns(T::Boolean) }
+  def create?
+    user&.can_update_topic?(topic:) == true
   end
 
   sig { returns(T::Boolean) }
   def update?
-    user.can_update_topic?(topic:)
+    create?
   end
 
   sig { returns(T::Boolean) }
   def destroy?
-    user.can_destroy_topic?(topic:)
+    user&.can_destroy_topic?(topic:) == true
   end
 
   sig { returns(Topic) }

@@ -22,7 +22,7 @@ class Frame::SwitchableAccounts::IndexController
     sig { params(scope: T.untyped).returns(T.untyped) }
     def pundit_policy_scope(scope); end
 
-    sig { returns(::User) }
+    sig { returns(T.nilable(::User)) }
     def pundit_user; end
 
     sig { returns(T::Boolean) }

@@ -1,7 +1,7 @@
 en:
   meta:
     description:
-      default: A wiki app for individuals and groups.
+      default: A wiki app that you can find with links.
     title:
       accounts:
         new: Create an account
@@ -12,11 +12,12 @@ en:
         show: '%{topic_name} | %{space_name}'
       pages:
         edit: Edit page
+        show: '%{page_title} | %{space_name}'
       sign_in:
         show: Sign in
       sign_up:
         show: Sign up
       spaces:
-        show: Space
+        show: 'Home | %{space_name}'
       welcome:
-        show: A wiki app
+        show: Find through links.

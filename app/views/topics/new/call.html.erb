@@ -3,70 +3,84 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <h1>
+    <h1 class="antialiased font-bold text-2xl">
       <%= title %>
     </h1>
 
-    <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: topic_list_path(Current.space!.identifier) do |f| %>
-          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <hr class="my-4">
 
-          <%= f.label :name, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_topic_form.name") %>
-              </span>
-            </div>
+    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+      <%= form_with(
+        class: "flex flex-col gap-4",
+        model: @form,
+        url: topic_list_path(Current.space!.identifier)
+      ) do |f| %>
+        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-            <%= f.text_field(:name, class: "input input-bordered w-full") %>
-          <% end %>
+        <%= f.label :name, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.new_topic_form.name") %>
+            </span>
+          </div>
 
-          <%= f.label :description, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_topic_form.description") %>
-              </span>
-            </div>
+          <%= f.text_field(:name, {
+            autofocus: true,
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          }) %>
+        <% end %>
 
-            <%= f.text_area(:description, class: "input input-bordered w-full") %>
-          <% end %>
+        <%= f.label :description, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.new_topic_form.description") %>
+            </span>
+          </div>
 
-          <div>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_topic_form.visibility") %>
-              </span>
-            </div>
+          <%= f.text_area(:description, class: "bg-base-300 input input-bordered w-full") %>
+        <% end %>
 
-            <div class="flex flex-col gap-4">
-              <div>
-                <label class="cursor-pointer flex gap-2 items-center">
-                  <%= f.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
+        <div>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.new_topic_form.visibility") %>
+            </span>
+          </div>
 
-                  <span class="label-text">
-                    <%= t("activerecord.attributes.topic.visibility.public") %>
-                  </span>
-                </label>
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="cursor-pointer flex gap-2 items-center">
+                <%= f.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
+
+                <span class="label-text">
+                  <%= t("activerecord.attributes.topic.visibility.public") %>
+                </span>
+              </label>
+
+              <div class="label-text-alt pl-[32px]">
+                <%= t("forms.attributes.new_topic_form.visibility_public_hint") %>
               </div>
+            </div>
 
-              <div>
-                <label class="cursor-pointer flex gap-2 items-center">
-                  <%= f.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
+            <div class="flex flex-col gap-2">
+              <label class="cursor-pointer flex gap-2 items-center">
+                <%= f.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
 
-                  <span class="label-text">
-                    <%= t("activerecord.attributes.topic.visibility.private") %>
-                  </span>
-                </label>
+                <span class="label-text">
+                  <%= t("activerecord.attributes.topic.visibility.private") %>
+                </span>
+              </label>
+
+              <div class="label-text-alt pl-[32px]">
+                <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="mt-8 text-center">
-            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-              <%= t("verbs.submit") %>
-            <% end %>
-          </div>
+        <%= f.button class: "btn btn-primary no-animation w-fit", type: :submit do %>
+          <%= t("verbs.submit") %>
         <% end %>
       <% end %>
     <% end %>

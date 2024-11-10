@@ -4,13 +4,13 @@
 class ApplicationPolicy
   extend T::Sig
 
-  sig { returns(User) }
+  sig { returns(T.nilable(User)) }
   attr_reader :user
 
   sig { returns(ApplicationRecord) }
   attr_reader :record
 
-  sig { params(user: User, record: ApplicationRecord).void }
+  sig { params(user: T.nilable(User), record: ApplicationRecord).void }
   def initialize(user, record)
     @user = user
     @record = record
@@ -49,30 +49,5 @@ class ApplicationPolicy
   sig { returns(T::Boolean) }
   def destroy?
     false
-  end
-
-  class Scope
-    extend T::Sig
-    extend T::Helpers
-
-    abstract!
-
-    sig { params(user: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
-    def initialize(user, scope)
-      @user = user
-      @scope = scope
-    end
-
-    sig { abstract.returns(ActiveRecord::Relation) }
-    def resolve
-    end
-
-    sig { returns(User) }
-    attr_reader :user
-    private :user
-
-    sig { returns(T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))) }
-    attr_reader :scope
-    private :scope
   end
 end

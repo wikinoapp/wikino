@@ -3,7 +3,6 @@
 
 module ControllerConcerns
   module PageSettable
-    def params
-    end
+    include ActionController::StrongParameters
   end
 end

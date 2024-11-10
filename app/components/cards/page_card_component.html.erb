@@ -1,13 +1,25 @@
-<%= render Wikino::UI::Card.new(class_name: class_names(class_name, "grid min-h-[96px] hover:ring-1 hover:ring-primary px-4 py-2 transition")) do %>
+<%= render Wikino::UI::Card.new(
+  class_name: class_names(
+    class_name,
+    "grid min-h-[96px] hover:ring-1 hover:ring-primary px-4 py-2 transition",
+    "relative": page.pinned?
+  )
+) do %>
+  <% if page.pinned? %>
+    <%= render Wikino::UI::Icon.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-red-500") %>
+  <% end %>
+
   <%= link_to page_path(Current.space!.identifier, page.number), data: {turbo_frame: "main-content"} do %>
     <div class="flex flex-col gap-1">
-      <div class="flex gap-1 items-center">
-        <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-slate-500") %>
+      <% if show_topic_name %>
+        <div class="flex gap-1 items-center">
+          <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-slate-500") %>
 
-        <div class="text-slate-500 text-xs">
-          <%= page.topic.name %>
+          <div class="text-slate-500 text-xs">
+            <%= page.topic.name %>
+          </div>
         </div>
-      </div>
+      <% end %>
 
       <div class="font-bold line-clamp-3 text-sm">
         <%= page.title %>

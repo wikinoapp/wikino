@@ -14,11 +14,15 @@
         <%= title %>
       </h1>
 
-      <p class="mt-4">
+      <p class="hidden mt-4">
         <%= t("messages.sign_up.description_html") %>
       </p>
 
-      <p class="mt-4">
+      <p class="font-bold mt-4 text-red-500">
+        現在アカウント作成はできません。
+      </p>
+
+      <p class="hidden mt-4">
         <%= t("messages.sign_up.already_have_an_account_html",
           sign_in_path: params[:skip_no_authentication].nil? ? sign_in_path : sign_in_path(skip_no_authentication: true)
         ) %>

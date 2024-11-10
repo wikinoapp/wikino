@@ -43,7 +43,7 @@ module Accounts
       sign_in(session_result.session)
 
       flash[:notice] = t("messages.accounts.signed_up_successfully")
-      redirect_to space_path(space_identifier: Current.space!.identifier)
+      redirect_to after_authentication_url
     end
 
     sig { returns(ActionController::Parameters) }

@@ -16,5 +16,11 @@ FactoryBot.define do
     trait :owner do
       role { UserRole::Owner.serialize }
     end
+
+    trait :with_password do
+      after(:create) do |user|
+        create(:user_password, space: user.space, user:)
+      end
+    end
   end
 end
