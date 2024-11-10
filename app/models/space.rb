@@ -6,7 +6,7 @@ class Space < ApplicationRecord
 
   include Discard::Model
 
-  IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
+  IDENTIFIER_FORMAT = /\A[a-z0-9-]+\z/
   IDENTIFIER_MIN_LENGTH = 2
   IDENTIFIER_MAX_LENGTH = 20
   RESERVED_IDENTIFIERS = %w[www].freeze
