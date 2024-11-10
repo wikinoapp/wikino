@@ -1,7 +1,7 @@
 <%= render Containers::BasicContainerComponent.new do %>
   <div class="flex flex-col gap-2">
     <div class="text-center">
-      <%= link_to root_path, class: "text-stone-900 font-['Itim'] text-3xl" do %>
+      <%= link_to root_url(subdomain: false), class: "text-stone-900 font-['Itim'] text-3xl" do %>
         Wikino
       <% end %>
     </div>

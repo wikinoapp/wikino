@@ -47,7 +47,7 @@ module EmailConfirmations
       if email_confirmation.event_sign_up?
         new_account_path
       else
-        root_path
+        root_url(subdomain: false)
       end
     end
   end

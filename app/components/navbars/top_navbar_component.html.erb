@@ -1,6 +1,6 @@
 <nav class="navbar px-4">
   <div class="navbar-start">
-    <%= link_to root_path do %>
+    <%= link_to root_url(subdomain: false) do %>
       <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-primary") %>
     <% end %>
   </div>

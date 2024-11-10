@@ -5,7 +5,7 @@
   <%= render Containers::BasicContainerComponent.new do %>
     <div class="text-center">
       <div class="mt-12">
-        <%= link_to root_path, class: "inline-block" do %>
+        <%= link_to root_url(subdomain: false), class: "inline-block" do %>
           <%= render Wikino::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
         <% end %>
       </div>
