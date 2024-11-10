@@ -50,29 +50,4 @@ class ApplicationPolicy
   def destroy?
     false
   end
-
-  class Scope
-    extend T::Sig
-    extend T::Helpers
-
-    abstract!
-
-    sig { params(user: User, scope: T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))).void }
-    def initialize(user, scope)
-      @user = user
-      @scope = scope
-    end
-
-    sig { abstract.returns(ActiveRecord::Relation) }
-    def resolve
-    end
-
-    sig { returns(User) }
-    attr_reader :user
-    private :user
-
-    sig { returns(T.any(ActiveRecord::Relation, T.class_of(ApplicationRecord))) }
-    attr_reader :scope
-    private :scope
-  end
 end
