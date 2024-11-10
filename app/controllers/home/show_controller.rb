@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-module Spaces
+module Home
   class ShowController < ApplicationController
     include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable

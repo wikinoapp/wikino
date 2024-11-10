@@ -88,7 +88,6 @@ Rails.application.configure do
   end
 
   config.hosts += [
-    ENV.fetch("WIKINO_HOST"),
-    "www.#{ENV.fetch("WIKINO_HOST")}"
+    ".#{ENV.fetch("WIKINO_HOST")}"
   ]
 end

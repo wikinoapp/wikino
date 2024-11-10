@@ -21,7 +21,7 @@ module Pages
 
       result = CreateInitialPageUseCase.new.call(topic:)
 
-      redirect_to edit_page_path(Current.space!.identifier, result.page.number)
+      redirect_to edit_page_path(result.page.number)
     end
   end
 end

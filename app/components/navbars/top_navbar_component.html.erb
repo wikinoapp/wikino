@@ -15,7 +15,7 @@
     <ul class="gap-2 menu menu-horizontal px-1">
       <% if signed_in? %>
         <li>
-          <%= button_to t("nouns.sign_out"), session_path(space_identifier: Current.space!.identifier), {
+          <%= button_to t("nouns.sign_out"), session_path, {
             method: :delete
           } %>
         </li>

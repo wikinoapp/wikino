@@ -15,7 +15,7 @@ module Sessions
     def call
       sign_out
 
-      redirect_to root_path
+      redirect_to(root_url(subdomain: false), allow_other_host: true)
     end
   end
 end

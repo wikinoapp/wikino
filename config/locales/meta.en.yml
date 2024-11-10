@@ -7,6 +7,8 @@ en:
         new: Create an account
       email_confirmations:
         edit: Verification
+      home:
+        show: 'Home | %{space_name}'
       topics:
         new: New topic
         show: '%{topic_name} | %{space_name}'
@@ -17,7 +19,5 @@ en:
         show: Sign in
       sign_up:
         show: Sign up
-      spaces:
-        show: 'Home | %{space_name}'
       welcome:
         show: Find through links.

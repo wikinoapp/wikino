@@ -7,7 +7,7 @@
 <div class="gx-1 row">
   <% @pages.each do |page| %>
     <div class="col-3">
-      <%= link_to page_path(page_id: page.id) do %>
+      <%= link_to page_path(page.id) do %>
         <%= page.title %>
       <% end %>
     </div>

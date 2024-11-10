@@ -10,7 +10,7 @@
         </h1>
 
         <div class="flex gap-2 items-center">
-          <%= link_to topic_path(@page.space.identifier, @page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
+          <%= link_to topic_path(@page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
             <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-slate-500") %>
 
             <%= @page.topic.name %>
@@ -39,7 +39,7 @@
       </div>
 
       <% if policy(@page).update? %>
-        <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
+        <%= link_to edit_page_path(@page.number), {
           class: "btn btn-primary no-animation"
         } do %>
           <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>

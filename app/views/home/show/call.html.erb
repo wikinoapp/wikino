@@ -1,4 +1,4 @@
-<% title = t("meta.title.spaces.show", space_name: Current.space!.name) %>
+<% title = t("meta.title.home.show", space_name: Current.space!.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
@@ -9,7 +9,7 @@
       </h1>
 
       <% unless signed_in? %>
-        <%= link_to atom_path(Current.space!.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
+        <%= link_to atom_path, class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
           <%= render Wikino::UI::Icon.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 
           <%= t("nouns.rss_feed") %>
@@ -40,8 +40,8 @@
         <div class="flex justify-center">
           <%= render PaginationComponent.new(
             pagination: @pagination,
-            previous_path: space_path(Current.space!.identifier, before: @pagination.previous_cursor),
-            next_path: space_path(Current.space!.identifier, after: @pagination.next_cursor)
+            previous_path: home_path(before: @pagination.previous_cursor),
+            next_path: home_path(after: @pagination.next_cursor)
           ) %>
         </div>
       </div>

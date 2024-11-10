@@ -26,7 +26,7 @@ module Sessions
       sign_in(result.session)
 
       flash[:notice] = t("messages.accounts.signed_in_successfully")
-      redirect_to after_authentication_url
+      redirect_to(after_authentication_url, allow_other_host: true)
     end
 
     sig { returns(ActionController::Parameters) }

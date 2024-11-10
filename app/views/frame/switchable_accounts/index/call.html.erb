@@ -2,7 +2,7 @@
   <ul class="bg-base-300 menu p-0 rounded-box shadow w-52">
     <% @users.each do |user| %>
       <li class="p-2">
-        <%= button_to(account_switch_path(Current.space!.identifier, user.id), {
+        <%= button_to(account_switch_path(user.id), {
           class: "text-left w-full",
           data: {turbo_frame: "_top"},
           form_class: "px-2",

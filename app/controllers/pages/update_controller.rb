@@ -35,7 +35,7 @@ module Pages
       )
 
       flash[:notice] = t("messages.page.saved")
-      redirect_to page_path(Current.space!.identifier, result.page.number)
+      redirect_to page_path(result.page.number)
     end
 
     sig { returns(ActionController::Parameters) }

@@ -13,7 +13,7 @@
       <%= form_with(
         class: "flex flex-col gap-4",
         model: @form,
-        url: topic_list_path(Current.space!.identifier)
+        url: topic_list_path
       ) do |f| %>
         <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 

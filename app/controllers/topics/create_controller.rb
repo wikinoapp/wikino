@@ -25,7 +25,7 @@ module Topics
       )
 
       flash[:notice] = t("messages.topic.created")
-      redirect_to topic_path(Current.space!.identifier, result.topic.number)
+      redirect_to topic_path(result.topic.number)
     end
 
     sig { returns(ActionController::Parameters) }

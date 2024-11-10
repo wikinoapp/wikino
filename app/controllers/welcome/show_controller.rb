@@ -13,7 +13,7 @@ module Welcome
       restore_session
 
       if signed_in?
-        redirect_to(space_path(Current.user!.space.not_nil!.identifier))
+        redirect_to home_path
       end
     end
   end

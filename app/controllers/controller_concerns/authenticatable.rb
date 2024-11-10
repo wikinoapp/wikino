@@ -46,7 +46,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     def require_authentication
-      (restore_session && check_space_identifier) || request_authentication
+      restore_session || request_authentication
     end
 
     sig(:final) { returns(T.untyped) }
@@ -57,14 +57,14 @@ module ControllerConcerns
 
       if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
-        redirect_to space_path(Current.user!.space.not_nil!.identifier)
+        redirect_to home_path
       end
     end
 
     sig(:final) { returns(String) }
     def after_authentication_url
       session.delete(:return_to_after_authenticating) ||
-        space_url(Current.user!.space.not_nil!.identifier)
+        home_url(subdomain: Current.user!.space.not_nil!.identifier)
     end
 
     sig(:final) { returns(T.nilable(String)) }
@@ -92,11 +92,6 @@ module ControllerConcerns
       sign_in(session)
 
       true
-    end
-
-    sig(:final) { returns(T::Boolean) }
-    private def check_space_identifier
-      Current.space! == Space.kept.find_by(identifier: params[:space_identifier])
     end
 
     sig(:final) { void }

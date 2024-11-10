@@ -9,7 +9,7 @@
     <%= render Wikino::UI::Icon.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-red-500") %>
   <% end %>
 
-  <%= link_to page_path(Current.space!.identifier, page.number), data: {turbo_frame: "main-content"} do %>
+  <%= link_to page_path(page.number), data: {turbo_frame: "main-content"} do %>
     <div class="flex flex-col gap-1">
       <% if show_topic_name %>
         <div class="flex gap-1 items-center">

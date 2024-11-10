@@ -15,7 +15,7 @@
         data: { controller: "page-editor-form" },
         model: @form,
         method: :patch,
-        url: page_path(Current.space!.identifier, @page.number)
+        url: page_path(@page.number)
       ) do |f| %>
         <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
@@ -92,7 +92,7 @@
             <input
               class="hidden"
               data-page-editor-form-target="draftSaveButton"
-              formaction="<%= draft_page_path(Current.space!.identifier, @page.number) %>"
+              formaction="<%= draft_page_path(@page.number) %>"
               type="submit"
             >
           </div>

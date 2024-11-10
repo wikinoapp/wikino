@@ -29,7 +29,7 @@
 
       <ul class="flex flex-col gap-4">
         <li>
-          <%= link_to space_path, {
+          <%= link_to home_path, {
             class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
             data: {turbo_action: "advance", turbo_frame: "main-content"}
           } do %>
@@ -50,10 +50,10 @@
             <turbo-frame
               id="joined_topics"
               loading="lazy"
-              src="<%= frame_joined_topic_list_path(Current.space!.identifier) %>"
+              src="<%= frame_joined_topic_list_path %>"
             ></turbo-frame>
 
-            <%= link_to new_topic_path(Current.space!.identifier), {
+            <%= link_to new_topic_path, {
               class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
               data: {turbo_action: "advance", turbo_frame: "main-content"}
             } do %>
@@ -72,7 +72,7 @@
       <ul class="flex flex-col gap-4">
         <% if signed_in? %>
           <li>
-            <%= button_to session_path(space_identifier: Current.space!.identifier), {
+            <%= button_to session_path, {
               class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
               method: :delete
             } do %>
@@ -92,7 +92,7 @@
         <%= render Wikino::UI::Icon.new(name: "logo", size: "24px", class_name: "fill-white") %>
       <% end %>
 
-      <%= link_to space_path do %>
+      <%= link_to home_path do %>
         <%= render Wikino::UI::Icon.new(name: "house", size: "24px", class_name: "fill-white") %>
       <% end %>
     </div>

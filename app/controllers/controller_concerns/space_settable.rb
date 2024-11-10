@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { void }
     def set_current_space
-      Current.space = Space.kept.find_by!(identifier: params[:space_identifier])
+      Current.space = Space.kept.find_by!(identifier: request.subdomain)
     end
   end
 end
