@@ -6,9 +6,10 @@ class TopicPolicy < ApplicationPolicy
 
   sig { returns(T::Boolean) }
   def show?
-    return true if user.nil? && record.visibility_public?
+    return true if user.nil? && T.cast(record, Topic).visibility_public?
     return false if user.nil?
-    user.can_update_topic?(topic:)
+
+    user.not_nil!.can_update_topic?(topic:)
   end
 
   sig { returns(T::Boolean) }
@@ -23,7 +24,7 @@ class TopicPolicy < ApplicationPolicy
 
   sig { returns(T::Boolean) }
   def destroy?
-    user.can_destroy_topic?(topic:)
+    user&.can_destroy_topic?(topic:) == true
   end
 
   sig { returns(Topic) }

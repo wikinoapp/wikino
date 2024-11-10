@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module ControllerConcerns
-  module PageSettable
+  module SpaceSettable
     include ActionController::StrongParameters
   end
 end

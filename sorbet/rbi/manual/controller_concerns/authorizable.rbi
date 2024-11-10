@@ -3,9 +3,7 @@
 
 module ControllerConcerns
   module Authorizable
+    include ActionController::StrongParameters
     include Pundit::Authorization
-
-    def params
-    end
   end
 end

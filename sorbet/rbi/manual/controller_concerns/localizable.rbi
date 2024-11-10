@@ -3,10 +3,9 @@
 
 module ControllerConcerns
   module Localizable
-    def http_accept_language
-    end
+    include ActionController::StrongParameters
 
-    def params
+    def http_accept_language
     end
 
     def viewer

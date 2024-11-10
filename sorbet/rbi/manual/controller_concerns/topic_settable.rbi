@@ -3,10 +3,9 @@
 
 module ControllerConcerns
   module TopicSettable
-    def authorize(*args)
-    end
+    include ActionController::StrongParameters
 
-    def params
+    def authorize(*args)
     end
   end
 end

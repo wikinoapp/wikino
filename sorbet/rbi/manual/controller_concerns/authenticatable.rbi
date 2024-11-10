@@ -3,6 +3,8 @@
 
 module ControllerConcerns
   module Authenticatable
+    include ActionController::StrongParameters
+
     def self.helper_method(*args)
     end
 
@@ -10,9 +12,6 @@ module ControllerConcerns
     end
 
     def flash
-    end
-
-    def params
     end
 
     def redirect_to(*args)

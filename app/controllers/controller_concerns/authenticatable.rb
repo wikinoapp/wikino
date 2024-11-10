@@ -33,7 +33,7 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     def sign_out
-      DestroySessionUseCase.new.call(session_token:) if session_token
+      DestroySessionUseCase.new.call(session_token: session_token.not_nil!) if session_token
       cookies.delete(Session::TOKEN_COOKIE_KEY)
 
       true

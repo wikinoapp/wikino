@@ -1,10 +1,9 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module RequestHelpers
   extend T::Sig
 
-  sig { params(user: User, password: String).void }
   def sign_in(user:, password: "passw0rd")
     expect(cookies[Session::TOKEN_COOKIE_KEY]).to be_nil
     expect(cookies[Session::USER_IDS_COOKIE_KEY]).to be_nil

@@ -16,6 +16,9 @@ module GeneratedUrlHelpersModule
   def account_switch_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def atom_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def draft_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
