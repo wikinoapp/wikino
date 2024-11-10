@@ -7,11 +7,15 @@ en:
     accounts:
       account_switched_successfully: Account switched successfully.
       email_hint_html: |-
-        If you want to change it, please create an account again from the <a href="/sign_up">Sign up</a> page.
+        If you want to change it, please create an account again from the <a class="link" href="/sign_up" tabindex="-1">Sign up</a> page.
       password_hint_html: |-
         Please enter 8 or more characters.
       signed_in_successfully: Signed in successfully.
       signed_up_successfully: Account created successfully. Welcome!
+      space_identifier_hint_html: |-
+        This identifier is used in the URL of the space.<br>
+        It must be at least %{min_length} characters long and can only contain alphanumeric characters and hyphens.
+        You can change it later.
       terms_html: |-
         Please create an account after agreeing to the
         <a href="/terms" rel="nofollow" target="_blank">Terms of Service</a>

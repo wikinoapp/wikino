@@ -11,9 +11,3 @@ shared:
     - example
     - me
     - self
-  reserved_space_identifiers:
-    - about
-    - api
-    - app
-    - web
-    - www

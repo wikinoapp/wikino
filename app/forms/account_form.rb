@@ -4,22 +4,22 @@
 class AccountForm < ApplicationForm
   include FormConcerns::PasswordValidatable
 
+  attribute :space_identifier, :string
   attribute :email, :string
   attribute :locale, :string
   attribute :password, :string
   attribute :time_zone, :string
 
-  validates :space_identifier, presence: true
+  validates :space_identifier,
+    exclusion: {in: Space::RESERVED_IDENTIFIERS},
+    format: {with: Space::IDENTIFIER_FORMAT},
+    length: {minimum: Space::IDENTIFIER_MIN_LENGTH, maximum: Space::IDENTIFIER_MAX_LENGTH},
+    presence: true
   validates :email, email: true, presence: true
   validates :atname, presence: true
   validates :locale, presence: true
   validates :time_zone, presence: true
   validate :space_identifier_uniqueness
-
-  sig { returns(String) }
-  def space_identifier
-    @space_identifier ||= T.let(SecureRandom.alphanumeric(6), T.nilable(String))
-  end
 
   sig { returns(String) }
   def atname

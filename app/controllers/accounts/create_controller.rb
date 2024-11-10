@@ -48,7 +48,8 @@ module Accounts
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:account_form), ActionController::Parameters).permit(:password)
+      T.cast(params.require(:account_form), ActionController::Parameters)
+        .permit(:space_identifier, :password)
     end
   end
 end
