@@ -18,7 +18,7 @@ module ControllerConcerns
         value: session.token,
         httponly: true,
         same_site: :lax,
-        domain: ".#{Wikino.config.host}"
+        domain: Current.user!.space.not_nil!.host_name
       }
 
       cookies.signed.permanent[Session::USER_IDS_COOKIE_KEY] = {

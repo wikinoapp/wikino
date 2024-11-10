@@ -33,4 +33,9 @@ class Space < ApplicationRecord
       joined_at: current_time
     )
   end
+
+  sig { returns(String) }
+  def host_name
+    "#{identifier}.#{Wikino.config.host}"
+  end
 end
