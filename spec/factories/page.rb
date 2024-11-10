@@ -11,5 +11,9 @@ FactoryBot.define do
     sequence(:body_html) { |n| "<div>Body #{n}</div>" }
     linked_page_ids { [] }
     modified_at { Time.current }
+
+    trait :published do
+      published_at { modified_at }
+    end
   end
 end
