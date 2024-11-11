@@ -17,7 +17,7 @@ module ControllerConcerns
       tokens = session_tokens || {}
       # ハッシュの先頭に追加する
       tokens = tokens.except(session.space.identifier).reverse_merge(session.space.identifier => session.token)
-      store_session_tokens_to_cookie(tokens:)
+      store_session_tokens_to_cookie(token_str: hash_to_string(tokens))
 
       true
     end
@@ -28,7 +28,9 @@ module ControllerConcerns
         space_identifier = Current.space!.identifier
 
         DestroySessionUseCase.new.call(session_token: session_tokens[space_identifier])
-        store_session_tokens_to_cookie(tokens: session_tokens.except(space_identifier))
+
+        tokens = session_tokens.except(space_identifier)
+        store_session_tokens_to_cookie(token_str: hash_to_string(tokens))
       end
 
       true
@@ -69,10 +71,10 @@ module ControllerConcerns
 
     sig(:final) { returns(T.nilable(T::Hash[String, String])) }
     private def session_tokens
-      tokens = cookies.signed[Session::TOKENS_COOKIE_KEY]
-      return unless tokens
+      token_str = cookies.signed[Session::TOKENS_COOKIE_KEY]
+      return unless token_str
 
-      JSON.parse(tokens)
+      string_to_hash(token_str)
     end
 
     sig(:final) { returns(T::Array[String]) }
@@ -106,14 +108,26 @@ module ControllerConcerns
       redirect_to sign_in_path
     end
 
-    sig(:final) { params(tokens: T::Hash[String, String]).void }
-    private def store_session_tokens_to_cookie(tokens:)
+    sig(:final) { params(token_str: String).void }
+    private def store_session_tokens_to_cookie(token_str:)
       cookies.signed.permanent[Session::TOKENS_COOKIE_KEY] = {
-        value: tokens.to_json,
+        value: token_str,
         httponly: true,
         same_site: :lax,
         domain: ".#{Wikino.config.host}"
       }
+    end
+
+    # 例: "a:1|b:2" => { "a" => "1", "b" => "2" }
+    sig { params(str: String).returns(T::Hash[String, String]) }
+    private def string_to_hash(str)
+      str.split("|").map { |pair| pair.split(":") }.to_h { |k, v| [k, v] }
+    end
+
+    # 例: { "a" => "1", "b" => "2" } => "a:1|b:2"
+    sig { params(hash: T::Hash[String, String]).returns(String) }
+    def hash_to_string(hash)
+      hash.map { |k, v| "#{k}:#{v}" }.join("|")
     end
   end
 end
