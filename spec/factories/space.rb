@@ -3,7 +3,7 @@
 
 FactoryBot.define do
   factory :space do
-    sequence(:identifier) { |n| "identifier_#{n}" }
+    sequence(:identifier) { |n| "identifier#{n}" }
     sequence(:name) { |n| "Space #{n}" }
     plan { Plan::Small.serialize }
     joined_at { Time.current }

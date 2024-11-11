@@ -7,11 +7,10 @@ module Welcome
     include ControllerConcerns::Localizable
 
     around_action :set_locale
+    before_action :restore_session
 
     sig { returns(T.untyped) }
     def call
-      restore_session
-
       if signed_in?
         redirect_to(space_path(Current.user!.space.not_nil!.identifier))
       end

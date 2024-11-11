@@ -23,7 +23,7 @@
 
     <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
       <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: session_list_path do |f| %>
+        <%= form_with model: @form, url: params[:skip_no_authentication].nil? ? session_list_path : session_list_path(skip_no_authentication: true) do |f| %>
           <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
           <%= f.label :space_identifier, class: "form-control" do %>

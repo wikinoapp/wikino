@@ -7,7 +7,6 @@ ruby "3.3.4"
 
 gem "rails", "~> 7.1.0"
 
-gem "activerecord-session_store"
 gem "activerecord_cursor_paginate"
 gem "addressable"
 gem "bcrypt" # `has_secure_password` で使っている
