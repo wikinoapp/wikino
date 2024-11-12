@@ -111,6 +111,11 @@ class User < ApplicationRecord
     topic_memberships.find_by(topic:)&.role_admin? == true
   end
 
+  sig { params(topic: Topic).returns(T::Boolean) }
+  def joined_topic?(topic:)
+    topics.include?(topic)
+  end
+
   sig { params(email_confirmation: EmailConfirmation).void }
   def run_after_email_confirmation_success!(email_confirmation:)
     return unless email_confirmation.succeeded?
