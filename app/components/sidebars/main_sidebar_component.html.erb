@@ -50,7 +50,7 @@
             <turbo-frame
               id="joined_topics"
               loading="lazy"
-              src="<%= frame_joined_topic_list_path(Current.space!.identifier) %>"
+              src="<%= joined_topic_list_path(Current.space!.identifier) %>"
             ></turbo-frame>
 
             <%= link_to new_topic_path(Current.space!.identifier), {
