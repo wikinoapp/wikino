@@ -11,7 +11,7 @@ ja:
         new: 新規トピック
         show: '%{topic_name} | %{space_name}'
       pages:
-        edit: 記事の編集
+        edit: ページの編集
         show: '%{page_title} | %{space_name}'
       sign_in:
         show: ログイン

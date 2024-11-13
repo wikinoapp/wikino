@@ -41,7 +41,7 @@ RSpec.describe User, type: :model do
         create(:topic_membership, space:, topic: topic_d, member: user, joined_at: Time.zone.parse("2024-08-18 3:00:00"), last_page_modified_at: nil)
       end
 
-      it "記事が編集された順にトピックが取得できること" do
+      it "ページが編集された順にトピックが取得できること" do
         expect(
           user.last_page_modified_topics.pluck(:name)
         ).to eq(%w[トピックC トピックB トピックD トピックA])
@@ -50,7 +50,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#last_modified_pages" do
-    context "記事が存在するとき" do
+    context "ページが存在するとき" do
       let!(:space) { create(:space) }
       let!(:user_a) { create(:user, space:) }
       let!(:user_b) { create(:user, space:) }
@@ -66,7 +66,7 @@ RSpec.describe User, type: :model do
         create(:page_editorship, space:, page: page_c, editor: user_a, last_page_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
       end
 
-      it "最後に編集した記事から取得できること" do
+      it "最後に編集したページから取得できること" do
         expect(user_a.last_modified_pages.pluck(:title)).to eq(%w[ページC ページA])
       end
     end
