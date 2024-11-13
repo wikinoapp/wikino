@@ -10,11 +10,10 @@ module Spaces
 
     around_action :set_locale
     before_action :set_current_space
+    before_action :restore_session
 
     sig { returns(T.untyped) }
     def call
-      restore_session
-
       @pinned_pages = viewable_pages.pinned.order(pinned_at: :desc, id: :desc)
 
       cursor_paginate_page = viewable_pages.not_pinned.cursor_paginate(
