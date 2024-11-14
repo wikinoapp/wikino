@@ -3,6 +3,7 @@
 
 module SwitchableAccounts
   class IndexController < ApplicationController
+    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
@@ -10,6 +11,7 @@ module SwitchableAccounts
     layout false
 
     around_action :set_locale
+    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
