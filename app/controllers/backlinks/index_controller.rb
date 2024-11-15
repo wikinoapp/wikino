@@ -22,7 +22,7 @@ module Backlinks
     def call
       authorize(@page, :show?)
 
-      @backlink_collection = @page.fetch_backlink_collection(after: params[:after])
+      @backlink_collection = @page.not_nil!.fetch_backlink_collection(after: params[:after])
 
       render(content_type: "text/vnd.turbo-stream.html", layout: false)
     end

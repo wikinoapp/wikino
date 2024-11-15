@@ -31,16 +31,7 @@ module GeneratedPathHelpersModule
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_topic_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_page_backlink_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_page_link_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_switchable_account_list_path(*args); end
+  def joined_topic_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
@@ -56,6 +47,12 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def page_backlink_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def page_link_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def page_path(*args); end
@@ -95,6 +92,9 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def switchable_account_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_path(*args); end

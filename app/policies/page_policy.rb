@@ -13,7 +13,7 @@ class PagePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   def create?
     user&.role_owner? == true ||
-      user&.joined_topic?(T.cast(record, Page).topic.not_nil!) == true
+      user&.joined_topic?(topic: T.cast(record, Page).topic.not_nil!) == true
   end
 
   sig { returns(T::Boolean) }

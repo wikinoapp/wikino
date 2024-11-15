@@ -51,7 +51,7 @@ class Page < ApplicationRecord
     published? && modified_at > published_at
   end
 
-  T::Sig::WithoutRuntime.sig { returns(Page::PrivateAssociationRelationWhereChain) }
+  T::Sig::WithoutRuntime.sig { returns(T.any(Page::PrivateAssociationRelationWhereChain, Page::PrivateAssociationRelation)) }
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
 
