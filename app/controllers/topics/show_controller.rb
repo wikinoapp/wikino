@@ -10,11 +10,12 @@ module Topics
 
     around_action :set_locale
     before_action :set_current_space
+    before_action :restore_session
+
+    rescue_from Pundit::NotAuthorizedError, with: :render_404
 
     sig { returns(T.untyped) }
     def call
-      restore_session
-
       @topic = Current.space!.topics.kept.find_by!(number: params[:topic_number])
       authorize(@topic, :show?)
 

@@ -9,7 +9,7 @@ class TopicPolicy < ApplicationPolicy
     return true if user.nil? && T.cast(record, Topic).visibility_public?
     return false if user.nil?
 
-    user.not_nil!.can_update_topic?(topic:)
+    user.not_nil!.can_view_topic?(topic:)
   end
 
   sig { returns(T::Boolean) }
