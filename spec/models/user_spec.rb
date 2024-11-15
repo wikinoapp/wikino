@@ -3,23 +3,19 @@
 
 RSpec.describe User, type: :model do
   describe "#viewable_topics" do
-    context "トピックが存在するとき" do
-      let!(:space) { create(:space) }
-      let!(:user) { create(:user, space:) }
-      let!(:topic_a) { create(:topic, :public, space:, name: "トピックA") }
-      let!(:topic_b) { create(:topic, :private, space:, name: "トピックB") }
-      let!(:topic_c) { create(:topic, :private, space:, name: "トピックC") }
+    it "トピックが存在するとき、閲覧可能なトピックを返すこと" do
+      space = create(:space)
+      user = create(:user, space:)
 
-      before do
-        create(:topic, :private, space:, name: "トピックD")
+      topic_a = create(:topic, :public, space:, name: "トピックA")
+      topic_b = create(:topic, :private, space:, name: "トピックB")
+      topic_c = create(:topic, :private, space:, name: "トピックC")
+      topic_d = create(:topic, :private, space:, name: "トピックD")
 
-        create(:topic_membership, :admin, space:, topic: topic_b, member: user)
-        create(:topic_membership, :member, space:, topic: topic_c, member: user)
-      end
+      create(:topic_membership, :admin, space:, topic: topic_b, member: user)
+      create(:topic_membership, :member, space:, topic: topic_c, member: user)
 
-      it "閲覧可能なトピックを返すこと" do
-        expect(user.viewable_topics).to contain_exactly(topic_a, topic_b, topic_c)
-      end
+      expect(user.viewable_topics).to contain_exactly(topic_a, topic_b, topic_c, topic_d)
     end
   end
 
