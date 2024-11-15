@@ -15,7 +15,13 @@ module ModelConcerns
 
     T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
     def linked_pages
-      space.not_nil!.pages.where(id: linked_page_ids)
+      pages = space.not_nil!.pages.where(id: linked_page_ids)
+
+      if Current.user
+        pages
+      else
+        pages.joins(:topic).merge(Topic.visibility_public)
+      end
     end
 
     sig do

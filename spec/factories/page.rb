@@ -15,5 +15,9 @@ FactoryBot.define do
     trait :published do
       published_at { modified_at }
     end
+
+    trait :not_published do
+      published_at { nil }
+    end
   end
 end

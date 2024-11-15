@@ -43,7 +43,7 @@ ja:
       no_links: リンクはありません
       page_deleted: ページを削除しました
       page_duplicated_html: ページ「<a href="/pages/%{database_id}">%{title}</a>」はすでにあります。
-      saved: 記事を保存しました
+      saved: ページを保存しました
     pagination:
       next_html: '次へ&nbsp;&rsaquo;'
       prev_html: '&lsaquo;&nbsp;前へ'

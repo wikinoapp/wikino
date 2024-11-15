@@ -14,16 +14,16 @@ Rails.application.routes.draw do
   match "/email_confirmation/edit",                                via: :get,    as: :edit_email_confirmation,       to: "email_confirmations/edit#call"
   match "/manifest",                                               via: :get,    as: :manifest,                      to: "manifests/show#call"
   match "/s/:space_identifier",                                    via: :get,    as: :space,                         to: "spaces/show#call"
-  match "/s/:space_identifier/draft_pages/:page_number",           via: :patch,  as: :draft_page,                    to: "draft_pages/update#call",             page_number: /\d+/
-  match "/s/:space_identifier/frame/joined_topics",                via: :get,    as: :frame_joined_topic_list,       to: "frame/joined_topics/index#call"
-  match "/s/:space_identifier/frame/pages/:page_number/backlinks", via: :post,   as: :frame_page_backlink_list,      to: "frame/backlinks/index#call",          page_number: /\d+/
-  match "/s/:space_identifier/frame/pages/:page_number/links",     via: :post,   as: :frame_page_link_list,          to: "frame/links/index#call",              page_number: /\d+/
-  match "/s/:space_identifier/frame/switchable_accounts",          via: :get,    as: :frame_switchable_account_list, to: "frame/switchable_accounts/index#call"
+  match "/s/:space_identifier/atom",                               via: :get,    as: :atom,                          to: "atom/show#call"
+  match "/s/:space_identifier/joined_topics",                      via: :get,    as: :joined_topic_list,             to: "joined_topics/index#call"
   match "/s/:space_identifier/pages/:page_number",                 via: :get,    as: :page,                          to: "pages/show#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                 via: :patch,                                      to: "pages/update#call",                   page_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/backlinks",       via: :post,   as: :page_backlink_list,            to: "backlinks/index#call",                page_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/draft_page",      via: :patch,  as: :draft_page,                    to: "draft_pages/update#call",             page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/edit",            via: :get,    as: :edit_page,                     to: "pages/edit#call",                     page_number: /\d+/
-  match "/s/:space_identifier/atom",                               via: :get,    as: :atom,                          to: "atom/show#call"
+  match "/s/:space_identifier/pages/:page_number/links",           via: :post,   as: :page_link_list,                to: "links/index#call",                    page_number: /\d+/
   match "/s/:space_identifier/session",                            via: :delete, as: :session,                       to: "sessions/destroy#call"
+  match "/s/:space_identifier/switchable_accounts",                via: :get,    as: :switchable_account_list,       to: "switchable_accounts/index#call"
   match "/s/:space_identifier/topics",                             via: :post,   as: :topic_list,                    to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",               via: :get,    as: :topic,                         to: "topics/show#call",                    topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/pages/new",     via: :get,    as: :new_page,                      to: "pages/new#call",                      topic_number: /\d+/

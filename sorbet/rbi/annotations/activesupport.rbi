@@ -439,12 +439,15 @@ class String
 end
 
 class ActiveSupport::ErrorReporter
+  # @version >= 7.1.0.beta1
   sig { type_parameters(:Block, :Fallback).params(error_classes: T.class_of(Exception), severity: T.nilable(Symbol), context: T.nilable(T::Hash[Symbol, T.untyped]), fallback: T.nilable(T.proc.returns(T.type_parameter(:Fallback))), source: T.nilable(String), blk: T.proc.returns(T.type_parameter(:Block))).returns(T.any(T.type_parameter(:Block), T.type_parameter(:Fallback))) }
   def handle(*error_classes, severity: T.unsafe(nil), context: T.unsafe(nil), fallback: T.unsafe(nil), source: T.unsafe(nil), &blk); end
 
+  # @version >= 7.1.0.beta1
   sig { type_parameters(:Block).params(error_classes: T.class_of(Exception), severity: T.nilable(Symbol), context: T.nilable(T::Hash[Symbol, T.untyped]), source: T.nilable(String), blk: T.proc.returns(T.type_parameter(:Block))).returns(T.type_parameter(:Block)) }
   def record(*error_classes, severity: T.unsafe(nil), context: T.unsafe(nil), source: T.unsafe(nil), &blk); end
 
+  # @version >= 7.1.0.beta1
   sig { params(error: Exception, handled: T::Boolean, severity: T.nilable(Symbol), context: T::Hash[Symbol, T.untyped], source: T.nilable(String)).void }
   def report(error, handled: true, severity: T.unsafe(nil), context: T.unsafe(nil), source: T.unsafe(nil)); end
 end

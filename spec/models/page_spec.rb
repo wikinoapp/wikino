@@ -3,7 +3,7 @@
 
 RSpec.describe Page, type: :model do
   describe "#fetch_link_collection" do
-    it "記事にリンクが含まれているときリンクの構造体を返すこと" do
+    it "ページにリンクが含まれているときリンクの構造体を返すこと" do
       space = create(:space)
       page_a = create(:page, space:, modified_at: Time.zone.parse("2024-01-01"))
       page_b = create(:page, space:, modified_at: Time.zone.parse("2024-01-02"))
@@ -27,7 +27,7 @@ RSpec.describe Page, type: :model do
   end
 
   describe "#link!" do
-    context "記事にリンクが含まれているとき" do
+    context "ページにリンクが含まれているとき" do
       let!(:space) { create(:space) }
       let!(:user) { create(:user, space:) }
       let!(:topic_a) { create(:topic, space:, name: "トピックA") }

@@ -11,12 +11,13 @@ module Pages
 
     around_action :set_locale
     before_action :set_current_space
+    before_action :restore_session
     before_action :set_page
+
+    rescue_from Pundit::NotAuthorizedError, with: :render_404
 
     sig { returns(T.untyped) }
     def call
-      restore_session
-
       authorize(@page, :show?)
 
       @link_collection = T.let(@page.not_nil!.fetch_link_collection, T.nilable(LinkCollection))

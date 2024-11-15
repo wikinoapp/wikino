@@ -31,16 +31,7 @@ module GeneratedUrlHelpersModule
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def frame_joined_topic_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_page_backlink_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_page_link_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def frame_switchable_account_list_url(*args); end
+  def joined_topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
@@ -56,6 +47,12 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def page_backlink_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def page_link_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def page_url(*args); end
@@ -95,6 +92,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def switchable_account_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_url(*args); end

@@ -73,7 +73,7 @@ class User < ApplicationRecord
       .topics
       .left_joins(:memberships)
       .merge(
-        space.not_nil!.topics.visibility_public.or(
+        space.not_nil!.topics.public_or_private.or(
           TopicMembership.where(member: self)
         )
       )
@@ -109,6 +109,11 @@ class User < ApplicationRecord
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
     topic_memberships.find_by(topic:)&.role_admin? == true
+  end
+
+  sig { params(topic: Topic).returns(T::Boolean) }
+  def joined_topic?(topic:)
+    topics.include?(topic)
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }
