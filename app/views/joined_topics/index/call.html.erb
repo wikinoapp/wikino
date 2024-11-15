@@ -3,10 +3,10 @@
     <% @joined_topics.each do |topic| %>
       <li>
         <%= link_to topic_path(Current.space!.identifier, topic.number), {
-          class: "text-slate-300 flex gap-2 hover:bg-slate-800 hover:rounded hover:text-slate-200 items-center p-2 w-full",
+          class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full",
           data: {turbo_action: "advance", turbo_frame: "main-content"}
         } do %>
-          <%= render Icons::TopicIconComponent.new(topic:, size: "18px", class_name: "fill-slate-200") %>
+          <%= render Icons::TopicIconComponent.new(topic:, size: "18px", class_name: "fill-gray-200") %>
 
           <%= topic.name %>
         <% end %>
