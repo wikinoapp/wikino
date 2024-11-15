@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe "GET /s/:space_identifier/switchable_accounts", type: :request do
+RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   it "ログインしていない & 公開トピックのページのとき、ページが表示されること" do
     space = create(:space, :small)
     public_topic = create(:topic, :public, space:)
