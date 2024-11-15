@@ -73,7 +73,7 @@ class User < ApplicationRecord
       .topics
       .left_joins(:memberships)
       .merge(
-        space.not_nil!.topics.visibility_public.or(
+        space.not_nil!.topics.public_or_private.or(
           TopicMembership.where(member: self)
         )
       )
