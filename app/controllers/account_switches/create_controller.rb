@@ -25,7 +25,7 @@ module AccountSwitches
       sign_in(result.session)
 
       flash[:notice] = t("messages.accounts.account_switched_successfully")
-      redirect_to space_path(Current.space!.identifier)
+      redirect_to space_path(Current.user!.space.not_nil!.identifier)
     end
   end
 end
