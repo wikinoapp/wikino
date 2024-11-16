@@ -1,9 +1,7 @@
 <div class="flex">
   <div class="flex flex-col lg:w-[calc(100%-240px)] min-h-[100svh] overflow-y-auto pb-[100px] sm:max-lg:w-[calc(100%-56px)] w-full">
     <div class="flex-1">
-      <turbo-frame data-turbo-action="advance" id="main-content">
-        <%= content %>
-      </turbo-frame>
+      <%= content %>
 
       <% unless signed_in? %>
         <div class="mt-4">
