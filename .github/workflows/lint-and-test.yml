@@ -68,6 +68,25 @@ jobs:
           bundler-cache: true
       - run: bin/erb_lint --lint-all
 
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+      - name: Install Yarn
+        run: |
+          npm install --global yarn@1.22.22
+      - name: Install npm packages
+        run: |
+          yarn install
+      - name: Prettier check
+        run: |
+          yarn prettier . --check
+
   rspec:
     name: RSpec
     runs-on: ubuntu-latest
