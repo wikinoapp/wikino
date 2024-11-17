@@ -9,15 +9,15 @@ en:
         edit: Verification
       topics:
         new: New topic
-        show: '%{topic_name} | %{space_name}'
+        show: "%{topic_name} | %{space_name}"
       pages:
         edit: Edit page
-        show: '%{page_title} | %{space_name}'
+        show: "%{page_title} | %{space_name}"
       sign_in:
         show: Sign in
       sign_up:
         show: Sign up
       spaces:
-        show: 'Home | %{space_name}'
+        show: "Home | %{space_name}"
       welcome:
         show: Find through links.

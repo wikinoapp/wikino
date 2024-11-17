@@ -9,15 +9,15 @@ ja:
         edit: 確認用コード入力
       topics:
         new: 新規トピック
-        show: '%{topic_name} | %{space_name}'
+        show: "%{topic_name} | %{space_name}"
       pages:
         edit: ページの編集
-        show: '%{page_title} | %{space_name}'
+        show: "%{page_title} | %{space_name}"
       sign_in:
         show: ログイン
       sign_up:
         show: アカウント作成
       spaces:
-        show: 'ホーム | %{space_name}'
+        show: "ホーム | %{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ

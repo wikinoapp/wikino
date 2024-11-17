@@ -5,20 +5,20 @@
   <div class="flex flex-col gap-4 p-4">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
-        <h1 class="antialiased font-bold text-2xl">
+        <h1 class="text-2xl font-bold antialiased">
           <%= @page.title %>
         </h1>
 
-        <div class="flex gap-2 items-center">
+        <div class="flex items-center gap-2">
           <%= link_to topic_path(@page.space.identifier, @page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
-            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-slate-500") %>
+            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-gray-500") %>
 
             <%= @page.topic.name %>
           <% end %>
 
           <% if @page.published? %>
             <div
-              class="text-gray-400 text-sm"
+              class="text-sm text-gray-400"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.published_at.iso8601 %>"
             >
@@ -28,7 +28,7 @@
 
           <% if @page.modified? %>
             <div
-              class="text-gray-400 text-sm"
+              class="text-sm text-gray-400"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.modified_at.iso8601 %>"
             >

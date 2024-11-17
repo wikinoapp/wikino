@@ -7,12 +7,17 @@
 
   <div class="navbar-center">
     <% if signed_in? %>
-      <input class="input input-bordered" type="text" placeholder="Search...">
+      <input
+        autocomplete="off"
+        class="input input-bordered"
+        placeholder="Search..."
+        type="text"
+      >
     <% end %>
   </div>
 
   <div class="navbar-end">
-    <ul class="gap-2 menu menu-horizontal px-1">
+    <ul class="menu menu-horizontal gap-2 px-1">
       <% if signed_in? %>
         <li>
           <%= button_to t("nouns.sign_out"), session_path(space_identifier: Current.space!.identifier), {

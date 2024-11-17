@@ -10,11 +10,11 @@
         <% end %>
       </div>
 
-      <h1 class="font-bold mt-8 text-3xl">
+      <h1 class="mt-8 text-3xl font-bold">
         <%= title %>
       </h1>
 
-      <p class="hidden mt-4">
+      <p class="mt-4 hidden">
         <%= t("messages.sign_in.dont_have_an_account_html",
           sign_up_path: params[:skip_no_authentication].nil? ? sign_up_path : sign_up_path(skip_no_authentication: true)
         ) %>
