@@ -7,7 +7,12 @@
 
   <div class="navbar-center">
     <% if signed_in? %>
-      <input class="input input-bordered" type="text" placeholder="Search...">
+      <input
+        autocomplete="off"
+        class="input input-bordered"
+        placeholder="Search..."
+        type="text"
+      >
     <% end %>
   </div>
 
