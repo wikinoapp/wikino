@@ -27,8 +27,8 @@ en:
       confirmation_mail_sent: Confirmation mail has been sent.
       enter_code: Enter the confirmation code in the email.
     time:
-      ago_modified: 'Modified %{time} ago'
-      ago_published: 'Published %{time} ago'
+      ago_modified: "Modified %{time} ago"
+      ago_published: "Published %{time} ago"
     topic:
       created: Topic created.
     sign_out:
@@ -37,7 +37,7 @@ en:
     spaces:
       new_space: New Space
     page:
-      are_you_sure_delete: 'Are you sure you want to delete this page?'
+      are_you_sure_delete: "Are you sure you want to delete this page?"
       create_page_with_keyword: Create page with '__keyword__'
       delete_page: Delete Page
       no_links: No Links
@@ -45,8 +45,8 @@ en:
       page_duplicated_html: Page <a href="/pages/%{database_id}">%{title}</a> already exists.
       saved: Page saved.
     pagination:
-      next_html: 'Next&nbsp;&rsaquo;'
-      prev_html: '&lsaquo;&nbsp;Prev'
+      next_html: "Next&nbsp;&rsaquo;"
+      prev_html: "&lsaquo;&nbsp;Prev"
     published_with_html: Published with <a class="link link-primary" href="/" target="_blank">Wikino</a>
     sign_in:
       dont_have_an_account_html: |-

@@ -17,7 +17,7 @@
   </div>
 
   <div class="navbar-end">
-    <ul class="gap-2 menu menu-horizontal px-1">
+    <ul class="menu menu-horizontal gap-2 px-1">
       <% if signed_in? %>
         <li>
           <%= button_to t("nouns.sign_out"), session_path(space_identifier: Current.space!.identifier), {
@@ -36,3 +36,4 @@
     </ul>
   </div>
 </nav>
+

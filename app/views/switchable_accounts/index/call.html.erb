@@ -1,5 +1,5 @@
 <turbo-frame id="switchable-accounts">
-  <ul class="bg-base-300 menu p-0 rounded-box shadow w-52">
+  <ul class="menu w-52 rounded-box bg-base-300 p-0 shadow">
     <% @users.each do |user| %>
       <li class="p-2">
         <%= button_to(account_switch_path(Current.space!.identifier, user.id), {
@@ -11,7 +11,7 @@
             <%= user.space.name %>
           </div>
 
-          <div class="text-gray-400 text-sm">
+          <div class="text-sm text-gray-400">
             @<%= user.atname %>
           </div>
         <% end %>
@@ -19,7 +19,7 @@
     <% end %>
 
     <% if @users.present? %>
-      <li class="border-gray-900 border-t m-0"></li>
+      <li class="m-0 border-t border-gray-900"></li>
     <% end %>
 
     <li class="p-2">

@@ -4,7 +4,7 @@ linters:
   SpaceInHtmlTag:
     # 閉じタグを次の行で書きたいので無効にする
     enabled: false
-glob: '**/*.erb'
+glob: "**/*.erb"
 exclude:
-  - '**/vendor/**/*'
-  - '**/node_modules/**/*'
+  - "**/vendor/**/*"
+  - "**/node_modules/**/*"

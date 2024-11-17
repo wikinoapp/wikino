@@ -1,16 +1,16 @@
 <div
   aria-atomic="true"
-  class="duration-150 ease-in-out hidden me-auto ms-auto transition"
+  class="me-auto ms-auto hidden transition duration-150 ease-in-out"
   data-controller="flash-toast"
   data-flash-toast-type-value="<%= flash_toast_type %>"
   data-flash-toast-message-html-value="<%= flash[flash_toast_type] %>"
   id="flash-toast"
 >
   <div
-    class="alert bg-base-300 border-gray-300 flex justify-between p-2"
+    class="alert flex justify-between border-gray-300 bg-base-300 p-2"
     data-flash-toast-target="alert"
   >
-    <div class="flex items-center toast-body">
+    <div class="toast-body flex items-center">
       <span class="me-2">
         <span
           class="hidden"

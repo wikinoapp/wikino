@@ -3,7 +3,7 @@
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <h1 class="antialiased font-bold text-2xl">
+    <h1 class="text-2xl font-bold antialiased">
       <%= title %>
     </h1>
 
@@ -50,7 +50,7 @@
 
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
-              <label class="cursor-pointer flex gap-2 items-center">
+              <label class="flex cursor-pointer items-center gap-2">
                 <%= f.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
 
                 <span class="label-text">
@@ -64,7 +64,7 @@
             </div>
 
             <div class="flex flex-col gap-2">
-              <label class="cursor-pointer flex gap-2 items-center">
+              <label class="flex cursor-pointer items-center gap-2">
                 <%= f.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
 
                 <span class="label-text">

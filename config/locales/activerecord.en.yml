@@ -2,7 +2,7 @@ en:
   activerecord:
     attributes:
       page:
-        mutation_error: ''
+        mutation_error: ""
       topic:
         visibility:
           private: Private

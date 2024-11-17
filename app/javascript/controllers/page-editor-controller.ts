@@ -1,5 +1,5 @@
-import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
   defaultHighlightStyle,
   syntaxHighlighting,
@@ -7,9 +7,9 @@ import {
   bracketMatching,
   foldGutter,
   foldKeymap,
-} from '@codemirror/language';
-import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-import { EditorState } from '@codemirror/state';
+} from "@codemirror/language";
+import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { EditorState } from "@codemirror/state";
 import {
   keymap,
   highlightSpecialChars,
@@ -20,12 +20,12 @@ import {
   crosshairCursor,
   lineNumbers,
   highlightActiveLineGutter,
-} from '@codemirror/view';
-import { Controller } from '@hotwired/stimulus';
-import { EditorView, basicSetup } from 'codemirror';
+} from "@codemirror/view";
+import { Controller } from "@hotwired/stimulus";
+import { EditorView, basicSetup } from "codemirror";
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['codeMirror', 'textarea'];
+  static targets = ["codeMirror", "textarea"];
   static values = {
     autofocus: Boolean,
     body: String,
@@ -71,7 +71,7 @@ export default class extends Controller<HTMLDivElement> {
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             this.textareaTarget.value = update.state.doc.toString();
-            this.textareaTarget.dispatchEvent(new Event('input'));
+            this.textareaTarget.dispatchEvent(new Event("input"));
           }
         }),
       ],

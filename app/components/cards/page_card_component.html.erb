@@ -12,16 +12,16 @@
   <%= link_to page_path(Current.space!.identifier, page.number) do %>
     <div class="flex flex-col gap-1">
       <% if show_topic_name %>
-        <div class="flex gap-1 items-center">
+        <div class="flex items-center gap-1">
           <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-500") %>
 
-          <div class="text-gray-500 text-xs">
+          <div class="text-xs text-gray-500">
             <%= page.topic.name %>
           </div>
         </div>
       <% end %>
 
-      <div class="font-bold line-clamp-3 text-sm">
+      <div class="line-clamp-3 text-sm font-bold">
         <%= page.title %>
       </div>
     </div>

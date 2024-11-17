@@ -1,10 +1,10 @@
-import { Controller } from '@hotwired/stimulus';
+import { Controller } from "@hotwired/stimulus";
 
-const animationClasses = ['scale-90', 'opacity-0'];
-const hiddenClass = 'hidden';
+const animationClasses = ["scale-90", "opacity-0"];
+const hiddenClass = "hidden";
 
 export default class extends Controller {
-  static targets = ['alert', 'noticeIcon', 'alertIcon', 'message'];
+  static targets = ["alert", "noticeIcon", "alertIcon", "message"];
   static values = {
     type: String,
     messageHtml: String,
@@ -21,27 +21,27 @@ export default class extends Controller {
   type!: string;
 
   connect() {
-    this.type = this.typeValue || 'notice';
-    this.messageHtml = this.messageHtmlValue || '';
+    this.type = this.typeValue || "notice";
+    this.messageHtml = this.messageHtmlValue || "";
 
     if (this.type && this.messageHtml) {
       this.showFlashToast();
     }
 
-    document.addEventListener('flash-toast:show', ({ detail: { type, messageHtml } }: any) => {
-      this.type = type || 'notice';
-      this.messageHtml = messageHtml || '';
+    document.addEventListener("flash-toast:show", ({ detail: { type, messageHtml } }: any) => {
+      this.type = type || "notice";
+      this.messageHtml = messageHtml || "";
 
       this.showFlashToast();
     });
   }
 
   showFlashToast() {
-    this.showFlashIcon()
+    this.showFlashIcon();
     this.messageTarget.innerHTML = this.messageHtml;
     this.element.classList.remove(hiddenClass, ...animationClasses);
 
-    if (this.type === 'notice') {
+    if (this.type === "notice") {
       setTimeout(() => {
         this.hideFlashToast();
       }, 2000);
@@ -49,13 +49,12 @@ export default class extends Controller {
   }
 
   showFlashIcon() {
-    if (this.type === 'alert') {
+    if (this.type === "alert") {
       this.noticeIconTarget.classList.add(hiddenClass);
       this.alertIconTarget.classList.remove(hiddenClass);
     } else {
       this.noticeIconTarget.classList.remove(hiddenClass);
       this.alertIconTarget.classList.add(hiddenClass);
-
     }
   }
 

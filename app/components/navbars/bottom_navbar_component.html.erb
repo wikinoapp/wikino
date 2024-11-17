@@ -1,8 +1,8 @@
-<div class="bg-base-300 border border-gray-400 flex gap-4 items-center px-4 py-1 rounded-full sm:hidden w-fit">
+<div class="flex w-fit items-center gap-4 rounded-full border border-gray-400 bg-base-300 px-4 py-1 sm:hidden">
   <%= link_to space_path(Current.space!.identifier), class: "flex flex-col gap-1 items-center" do %>
     <%= render Wikino::UI::Icon.new(name: "house", size: "26px", class_name: "fill-base-content") %>
 
-    <div class="text-gray-500 text-xs">
+    <div class="text-xs text-gray-500">
       <%= t("nouns.home") %>
     </div>
   <% end %>

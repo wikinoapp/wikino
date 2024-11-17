@@ -28,7 +28,7 @@
 
           <div class="flex flex-col gap-4">
             <div>
-              <label class="cursor-pointer flex gap-2 items-center">
+              <label class="flex cursor-pointer items-center gap-2">
                 <%= f.select(
                   :topic_number,
                   options_from_collection_for_select(f.object.viewable_topics, :number, :name, f.object.topic_number),
@@ -81,7 +81,7 @@
           </div>
         <% end %>
 
-        <div class="flex gap-4 items-center">
+        <div class="flex items-center gap-4">
           <div>
             <%= f.button class: "btn btn-primary no-animation", type: :submit do %>
               <%= render Wikino::UI::Icon.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-content") %>

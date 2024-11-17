@@ -1,4 +1,4 @@
 ja:
   time:
     formats:
-      hm: '%H:%M'
+      hm: "%H:%M"

@@ -1,15 +1,15 @@
-import { Controller } from '@hotwired/stimulus';
-import { FormSubmission } from '@hotwired/turbo';
-import { useDebounce } from 'stimulus-use';
+import { Controller } from "@hotwired/stimulus";
+import { FormSubmission } from "@hotwired/turbo";
+import { useDebounce } from "stimulus-use";
 
 export default class extends Controller<HTMLFormElement> {
   static debounces = [
     {
-      name: 'saveAsDraft',
+      name: "saveAsDraft",
       wait: 500,
     },
   ];
-  static targets = ['draftSaveButton'];
+  static targets = ["draftSaveButton"];
 
   declare readonly draftSaveButtonTarget: HTMLInputElement;
 
