@@ -22,7 +22,7 @@ module Bootsnap
     # source://bootsnap//lib/bootsnap.rb#44
     def _instrument(event, path); end
 
-    # source://bootsnap//lib/bootsnap.rb#136
+    # source://bootsnap//lib/bootsnap.rb#137
     def absolute_path?(path); end
 
     # source://bootsnap//lib/bootsnap.rb#82
@@ -56,6 +56,16 @@ module Bootsnap
 
     # source://bootsnap//lib/bootsnap.rb#78
     def unload_cache!; end
+
+    private
+
+    # source://bootsnap//lib/bootsnap.rb#159
+    def bool_env(key, default: T.unsafe(nil)); end
+
+    # @return [Boolean]
+    #
+    # source://bootsnap//lib/bootsnap.rb#155
+    def enabled?(key); end
   end
 end
 
@@ -195,7 +205,6 @@ module Bootsnap::CompileCache::Native
   private
 
   def compile_option_crc32=(_arg0); end
-  def coverage_running?; end
   def fetch(_arg0, _arg1, _arg2, _arg3); end
   def precompile(_arg0, _arg1, _arg2); end
   def readonly=(_arg0); end
@@ -203,7 +212,6 @@ module Bootsnap::CompileCache::Native
 
   class << self
     def compile_option_crc32=(_arg0); end
-    def coverage_running?; end
     def fetch(_arg0, _arg1, _arg2, _arg3); end
     def precompile(_arg0, _arg1, _arg2); end
     def readonly=(_arg0); end
