@@ -49,17 +49,17 @@
       <% end %>
     </div>
 
-    <hr>
+    <hr class="border-gray-300">
 
     <div class="wikino-markdown">
       <%= @page.body_html.html_safe %>
     </div>
 
-    <div>
-      <%= render Footers::PageFooterComponent.new(
-        link_collection: @link_collection,
-        backlink_collection: @backlink_collection
-      ) %>
-    </div>
+    <hr class="border-gray-300">
+
+    <%= render Footers::PageFooterComponent.new(
+      link_collection: @link_collection,
+      backlink_collection: @backlink_collection
+    ) %>
   </div>
 <% end %>

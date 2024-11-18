@@ -25,8 +25,8 @@ class Markup
       convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
         context: {
           markdown: {
-            parse: {smart: true},
-            render: {hardbreaks: false}
+            parse: {smart: false},
+            render: {hardbreaks: true}
           }
         }
       ),
