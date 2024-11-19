@@ -29,11 +29,11 @@
   }
 
   .wikino-markdown h1 {
-    @apply mb-4 mt-8 border-b border-gray-300 pb-2 text-2xl font-semibold;
+    @apply mb-4 mt-8 text-2xl font-semibold;
   }
 
   .wikino-markdown h2 {
-    @apply mb-4 mt-8 border-b border-gray-300 pb-2 text-xl font-semibold;
+    @apply mb-4 mt-8 text-xl font-semibold;
   }
 
   .wikino-markdown h3 {
