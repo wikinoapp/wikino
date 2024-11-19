@@ -1,23 +1,12 @@
-<nav class="navbar px-4">
-  <div class="navbar-start">
+<nav class="navbar">
+  <div class="flex-1">
     <%= link_to root_path do %>
       <%= render Wikino::UI::Icon.new(name: "logo", size: "36px", class_name: "fill-primary") %>
     <% end %>
   </div>
 
-  <div class="navbar-center">
-    <% if signed_in? %>
-      <input
-        autocomplete="off"
-        class="input input-bordered"
-        placeholder="Search..."
-        type="text"
-      >
-    <% end %>
-  </div>
-
-  <div class="navbar-end">
-    <ul class="menu menu-horizontal gap-2 px-1">
+  <div class="flex-none">
+    <ul class="flex gap-2">
       <% if signed_in? %>
         <li>
           <%= button_to t("nouns.sign_out"), session_path(space_identifier: Current.space!.identifier), {

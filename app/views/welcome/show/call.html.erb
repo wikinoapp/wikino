@@ -3,8 +3,34 @@
 
 <%= render ::Layouts::LandingLayoutComponent.new do %>
   <%= render Containers::BasicContainerComponent.new do %>
-    <p>Wikinoにようこそ！</p>
-    <p>現在は開発者 (<a class="link link-primary" href="https://wikino.app/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。</p>
-    <p>誰でも使えるようにするため目下開発中です。</p>
+    <h1 class="font-bold mb-4">
+      Wikinoにようこそ！
+    </h1>
+
+    <p class="mb-4">
+      Wikinoは、Wikiを作成・編集・共有するためのサービスです。<br>
+      現在は開発者 (<a class="link link-primary" href="/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。
+      誰でも使えるようにするため現在開発中です。
+    </p>
+
+    <h2 class="font-bold mb-2">
+      Wikinoの特徴
+    </h2>
+
+    <ul class="list-disc mb-4 pl-4">
+      <li>Markdown記法でWikiのページを作成・編集できる</li>
+      <li>ページ間をリンクで繋げられる (2ホップリンク)</li>
+      <li>トピックごとに同名のタイトルのページが作成できる</li>
+    </ul>
+
+    <h2 class="font-bold mb-2">
+      更新情報
+    </h2>
+
+    <p class="mb-4">
+      Wikinoのスペースで公開しています。
+    </p>
+
+    <%= link_to "Wikinoのスペースを見る", "/s/wikino", class: "font-bold link link-primary" %>
   <% end %>
 <% end %>
