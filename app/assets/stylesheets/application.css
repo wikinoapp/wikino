@@ -8,36 +8,52 @@
     .wikino-markdown
     ============================================================================
   */
+  .wikino-markdown {
+    @apply leading-relaxed;
+  }
+
+  .wikino-markdown > :first-child {
+    @apply mt-0;
+  }
+
+  .wikino-markdown a {
+    @apply link link-primary;
+  }
+
   .wikino-markdown blockquote {
     @apply border-l-4 border-gray-300 pl-4 pr-4 text-base text-gray-600;
   }
 
   .wikino-markdown code {
-    @apply inline rounded bg-gray-200 px-2 py-1 font-mono text-sm;
+    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm;
   }
 
   .wikino-markdown h1 {
-    @apply mb-4 mt-6 border-b pb-2 text-4xl font-semibold leading-tight;
+    @apply mb-4 mt-8 border-b border-gray-300 pb-2 text-2xl font-semibold;
   }
 
   .wikino-markdown h2 {
-    @apply mb-4 mt-6 border-b pb-2 text-2xl font-semibold leading-tight;
+    @apply mb-4 mt-8 border-b border-gray-300 pb-2 text-xl font-semibold;
   }
 
   .wikino-markdown h3 {
-    @apply mb-4 mt-6 text-lg font-semibold leading-snug;
+    @apply mb-4 mt-8 text-lg font-semibold;
   }
 
   .wikino-markdown h4 {
-    @apply mb-4 mt-6 text-base font-semibold leading-none;
+    @apply mb-4 mt-8 text-base font-semibold;
   }
 
   .wikino-markdown h5 {
-    @apply mb-4 mt-6 text-sm font-semibold leading-tight;
+    @apply mb-4 mt-8 text-sm font-semibold;
   }
 
   .wikino-markdown h6 {
-    @apply mb-4 mt-6 text-sm font-semibold leading-tight text-gray-600;
+    @apply mb-4 mt-8 text-sm font-semibold;
+  }
+
+  .wikino-markdown hr {
+    @apply border-gray-300;
   }
 
   .wikino-markdown li {
@@ -46,6 +62,10 @@
 
   .wikino-markdown ol {
     @apply mb-4 list-decimal pl-8 text-base;
+  }
+
+  .wikino-markdown p {
+    @apply mb-4;
   }
 
   .wikino-markdown pre {
