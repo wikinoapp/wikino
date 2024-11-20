@@ -61,7 +61,7 @@ RSpec.describe Markup, type: :model do
           <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
         </li>
         <li>
-          <span class="gap-[1px] inline-flex">
+          <span class="inline-flex gap-[1px]">
             <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
             <span>/</span>
             <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
@@ -69,7 +69,7 @@ RSpec.describe Markup, type: :model do
         </li>
         <li>[[Page 2]]</li>
         <li>
-          <span class="gap-[1px] inline-flex">
+          <span class="inline-flex gap-[1px]">
             <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_2.number}">トピック2</a>
             <span>/</span>
             <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a>
@@ -84,7 +84,7 @@ RSpec.describe Markup, type: :model do
         <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
         のテスト</p>
       <p>文中にトピック付きのページリンクがある場合
-        <span class="gap-[1px] inline-flex">
+        <span class="inline-flex gap-[1px]">
           <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
           <span>/</span>
           <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
