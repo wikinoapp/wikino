@@ -1,6 +1,6 @@
 <turbo-frame id="joined_topics">
   <ul class="flex flex-col">
-    <% @joined_topics.each do |topic| %>
+    <% @topics.each do |topic| %>
       <li>
         <%= link_to topic_path(Current.space!.identifier, topic.number), {
           class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full",
