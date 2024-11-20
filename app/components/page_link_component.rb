@@ -17,11 +17,6 @@ class PageLinkComponent < ApplicationComponent
   private :page_location
 
   sig { returns(String) }
-  private def topic_path
-    "/s/#{current_space.identifier}/topics/#{page_location.topic.number}"
-  end
-
-  sig { returns(String) }
   private def page_path
     "/s/#{current_space.identifier}/pages/#{page_location.page.number}"
   end
