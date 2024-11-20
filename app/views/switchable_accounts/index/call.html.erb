@@ -2,11 +2,11 @@
   <ul class="menu w-52 rounded-box bg-base-300 p-0 shadow">
     <% @users.each do |user| %>
       <li class="p-2">
-        <%= button_to(account_switch_path(Current.space!.identifier, user.id), {
+        <%= button_to account_switch_path(Current.space!.identifier, user.id), {
           class: "text-left w-full",
-          data: {turbo_frame: "_top"},
+          data: {turbo: false},
           form_class: "px-2",
-        }) do %>
+        } do %>
           <div class="font-bold">
             <%= user.space.name %>
           </div>
