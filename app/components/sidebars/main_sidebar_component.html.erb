@@ -38,20 +38,20 @@
         </li>
       </ul>
 
-      <% if signed_in? %>
-        <div class="flex flex-col gap-2">
-          <div class="px-2 text-xs font-bold text-gray-400">
-            <%= t("nouns.topics") %>
-          </div>
+      <div class="flex flex-col gap-2">
+        <div class="px-2 text-xs font-bold text-gray-400">
+          <%= t("nouns.topics") %>
+        </div>
 
-          <div class="flex h-full flex-col">
-            <turbo-frame
-              data-turbo-permanent
-              id="joined_topics"
-              loading="lazy"
-              src="<%= joined_topic_list_path(Current.space!.identifier) %>"
-            ></turbo-frame>
+        <div class="flex h-full flex-col">
+          <turbo-frame
+            data-turbo-permanent
+            id="joined_topics"
+            loading="lazy"
+            src="<%= joined_topic_list_path(Current.space!.identifier) %>"
+          ></turbo-frame>
 
+          <% if signed_in? %>
             <%= link_to new_topic_path(Current.space!.identifier), {
               class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full"
             } do %>
@@ -59,9 +59,9 @@
 
               <%= t("nouns.new_topic") %>
             <% end %>
-          </div>
+          <% end %>
         </div>
-      <% end %>
+      </div>
 
       <% if signed_in? %>
         <hr class="border-gray-600">

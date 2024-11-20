@@ -47,7 +47,11 @@ RSpec.describe Markup, type: :model do
         "- [[トピック2/Page 2]]",
         "- [[存在しないページ]]",
         # `->` が含まれているとリンクにならないことがあったので追加 (リンクになるべき)
-        "- [[Notebook -> List]]"
+        "- [[Notebook -> List]]",
+        "\n",
+        "文中にページリンクがある場合[[Page 1]]のテスト",
+        "\n",
+        "文中にトピック付きのページリンクがある場合[[トピック1/Page 1]]のテスト"
       ].join("\n")
     )
     expected = <<~HTML
@@ -57,25 +61,34 @@ RSpec.describe Markup, type: :model do
           <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
         </li>
         <li>
-          <div class="flex">
+          <span class="inline-flex gap-[1px]">
             <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
             <span>/</span>
             <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
-          </div>
+          </span>
         </li>
         <li>[[Page 2]]</li>
         <li>
-          <div class="flex">
+          <span class="inline-flex gap-[1px]">
             <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_2.number}">トピック2</a>
             <span>/</span>
             <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a>
-          </div>
+          </span>
         </li>
         <li>[[存在しないページ]]</li>
         <li>
           <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a>
         </li>
       </ul>
+      <p>文中にページリンクがある場合
+        <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
+        のテスト</p>
+      <p>文中にトピック付きのページリンクがある場合
+        <span class="inline-flex gap-[1px]">
+          <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
+          <span>/</span>
+          <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
+        </span> のテスト</p>
     HTML
 
     expect(normalize_html(actual)).to eq(normalize_html(expected))

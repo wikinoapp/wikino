@@ -12,11 +12,15 @@ module JoinedTopics
 
     around_action :set_locale
     before_action :set_current_space
-    before_action :require_authentication
+    before_action :restore_session
 
     sig { returns(T.untyped) }
     def call
-      @joined_topics = T.let(Current.user!.topics, T.nilable(Topic::PrivateRelation))
+      @topics = if signed_in? && Current.space! == Current.user!.space
+        T.let(Current.user!.topics.kept, T.nilable(Topic::PrivateRelation))
+      else
+        T.let(Current.space!.topics.kept.visibility_public, T.nilable(Topic::PrivateRelation))
+      end
     end
   end
 end
