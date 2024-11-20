@@ -43,6 +43,8 @@ RSpec.describe Markup, type: :model do
         "- Test",
         "- [[Page 1]]",
         "- [[トピック1/Page 1]]",
+        # Page 2はトピック2に属しているのでリンクにならないはず
+        "- [[トピック1/Page 2]]",
         "- [[Page 2]]",
         "- [[トピック2/Page 2]]",
         "- [[存在しないページ]]",
@@ -57,38 +59,16 @@ RSpec.describe Markup, type: :model do
     expected = <<~HTML
       <ul>
         <li>Test</li>
-        <li>
-          <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
-        </li>
-        <li>
-          <span class="inline-flex gap-[1px]">
-            <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
-            <span>/</span>
-            <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
-          </span>
-        </li>
+        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+        <li>[[トピック1/Page 2]]</li>
         <li>[[Page 2]]</li>
-        <li>
-          <span class="inline-flex gap-[1px]">
-            <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_2.number}">トピック2</a>
-            <span>/</span>
-            <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a>
-          </span>
-        </li>
+        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></li>
         <li>[[存在しないページ]]</li>
-        <li>
-          <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a>
-        </li>
+        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a></li>
       </ul>
-      <p>文中にページリンクがある場合
-        <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
-        のテスト</p>
-      <p>文中にトピック付きのページリンクがある場合
-        <span class="inline-flex gap-[1px]">
-          <a class="link link-primary" href="/s/#{space.identifier}/topics/#{topic_1.number}">トピック1</a>
-          <span>/</span>
-          <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>
-        </span> のテスト</p>
+      <p>文中にページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
+      <p>文中にトピック付きのページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
     HTML
 
     expect(normalize_html(actual)).to eq(normalize_html(expected))
