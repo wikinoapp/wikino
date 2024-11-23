@@ -2,94 +2,96 @@
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::SimpleLayoutComponent.new do %>
-  <%= render Containers::BasicContainerComponent.new do %>
+  <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
-      <div class="mt-12">
-        <%= link_to root_path, class: "inline-block" do %>
-          <%= render Wikino::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
-        <% end %>
-      </div>
+      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "80px", class_name: "fill-black") %>
+      <% end %>
+    </div>
 
-      <h1 class="mt-8 text-3xl font-bold">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold antialiased">
         <%= title %>
       </h1>
     </div>
 
-    <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: account_list_path do |f| %>
-          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+      <%= form_with(
+        class: "flex flex-col gap-4",
+        model: @form,
+        url: account_list_path
+      ) do |f| %>
+        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :space_identifier, class: "form-control mt-4" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.account_form.space_identifier") %>
-              </span>
-            </div>
+        <%= f.label :space_identifier, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.account_form.space_identifier") %>
+            </span>
+          </div>
 
-            <%= f.text_field(:space_identifier,
-              class: "input input-bordered w-full",
-              required: true
-            ) %>
+          <%= f.text_field(:space_identifier,
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          ) %>
 
-            <div class="label">
-              <span class="label-text-alt">
-                <%= t("messages.accounts.space_identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
-              </span>
-            </div>
-          <% end %>
-
-          <%= f.label :email, class: "form-control mt-4" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.account_form.email") %>
-              </span>
-            </div>
-
-            <%= text_field_tag(:email, f.object.email, {
-              autocomplete: "off",
-              class: "!bg-gray-300 !border-gray-300 input input-bordered w-full",
-              disabled: true
-            }) %>
-
-            <div class="label">
-              <span class="label-text-alt">
-                <%= t("messages.accounts.email_hint_html") %>
-              </span>
-            </div>
-          <% end %>
-
-          <%= f.label :password, class: "form-control mt-4" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.account_form.password") %>
-              </span>
-            </div>
-
-            <%= f.password_field(:password,
-              autocomplete: "new-password",
-              class: "input input-bordered w-full",
-              required: true
-            ) %>
-
-            <div class="label">
-              <span class="label-text-alt">
-                <%= t("messages.accounts.password_hint_html") %>
-              </span>
-            </div>
-          <% end %>
-
-          <div class="mt-8 text-center">
-            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-              <%= t("verbs.sign_up") %>
-            <% end %>
+          <div class="label">
+            <span class="label-text-alt">
+              <%= t("messages.accounts.space_identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
+            </span>
           </div>
         <% end %>
 
-        <p class="mt-8 text-center text-sm">
-          <%= t("messages.accounts.terms_html") %>
-        </p>
+        <%= f.label :email, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.account_form.email") %>
+            </span>
+          </div>
+
+          <%= text_field_tag(:email, f.object.email, {
+            autocomplete: "off",
+            class: "!bg-gray-300 !border-gray-300 input input-bordered w-full",
+            disabled: true
+          }) %>
+
+          <div class="label">
+            <span class="label-text-alt">
+              <%= t("messages.accounts.email_hint_html") %>
+            </span>
+          </div>
+        <% end %>
+
+        <%= f.label :password, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.account_form.password") %>
+            </span>
+          </div>
+
+          <%= f.password_field(:password,
+            autocomplete: "new-password",
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          ) %>
+
+          <div class="label">
+            <span class="label-text-alt">
+              <%= t("messages.accounts.password_hint_html") %>
+            </span>
+          </div>
+        <% end %>
+
+        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+          <%= render Wikino::UI::Icon.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+
+          <%= t("verbs.sign_up") %>
+        <% end %>
       <% end %>
     <% end %>
-  <% end %>
+
+    <p class="text-center text-sm">
+      <%= t("messages.accounts.terms_html") %>
+    </p>
+  </div>
 <% end %>

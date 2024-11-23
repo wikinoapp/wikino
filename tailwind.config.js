@@ -1,6 +1,19 @@
 const colors = require("tailwindcss/colors");
 const daisyuiThemes = require("daisyui/src/theming/themes");
 
+const brand = {
+  50: "#fae5ff",
+  100: "#e9b5fc",
+  200: "#d383fa",
+  300: "#b753f9",
+  400: "#982af8",
+  500: "#741ae0",
+  600: "#4f13ae",
+  700: "#300b7c",
+  800: "#17044a",
+  900: "#05001a",
+};
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -40,6 +53,7 @@ module.exports = {
       fuchsia: colors.fuchsia,
       pink: colors.pink,
       rose: colors.rose,
+      brand,
     },
   },
   plugins: [require("daisyui")],
@@ -48,12 +62,14 @@ module.exports = {
       {
         light: {
           ...daisyuiThemes["light"],
-          "base-100": colors.fuchsia[50], // ページ全体の背景色
-          "base-200": "#0e0d25", // サイドバーの背景色
+          "base-100": brand[50], // ページ全体の背景色
+          "base-200": colors.slate[800], // サイドバーの背景色
           "base-300": colors.white, // カードの背景色
           "base-content": colors.slate[950], // テキストの色
-          "primary-content": colors.violet[50],
-          primary: colors.violet[600],
+          "primary-content": colors.slate[100],
+          primary: brand[500],
+          "secondary-content": colors.slate[100],
+          secondary: colors.slate[800],
         },
       },
     ],

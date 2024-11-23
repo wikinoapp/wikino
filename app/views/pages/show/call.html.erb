@@ -2,7 +2,7 @@
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
-  <div class="flex flex-col gap-4 p-4">
+  <div class="flex flex-col gap-6 px-4 py-6">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <h1 class="text-2xl font-bold antialiased">
@@ -11,14 +11,14 @@
 
         <div class="flex items-center gap-2">
           <%= link_to topic_path(@page.space.identifier, @page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
-            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-gray-500") %>
+            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-gray-600") %>
 
             <%= @page.topic.name %>
           <% end %>
 
           <% if @page.published? %>
             <div
-              class="text-sm text-gray-400"
+              class="text-sm text-gray-500"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.published_at.iso8601 %>"
             >
@@ -28,7 +28,7 @@
 
           <% if @page.modified? %>
             <div
-              class="text-sm text-gray-400"
+              class="text-sm text-gray-500"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.modified_at.iso8601 %>"
             >
@@ -40,7 +40,7 @@
 
       <% if policy(@page).update? %>
         <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
-          class: "btn btn-primary no-animation"
+          class: "btn btn-secondary no-animation rounded-full"
         } do %>
           <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
@@ -49,13 +49,13 @@
       <% end %>
     </div>
 
-    <hr class="border-gray-300">
-
-    <div class="wikino-markdown">
-      <%= @page.body_html.html_safe %>
-    </div>
-
-    <hr class="border-gray-300">
+    <% if @page.body_html.present? %>
+      <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+        <div class="wikino-markdown">
+          <%= @page.body_html.html_safe %>
+        </div>
+      <% end %>
+    <% end %>
 
     <%= render Footers::PageFooterComponent.new(
       link_collection: @link_collection,

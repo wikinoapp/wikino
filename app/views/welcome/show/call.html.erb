@@ -2,7 +2,7 @@
 <% set_meta_tags(title:, reverse: false) %>
 
 <%= render ::Layouts::LandingLayoutComponent.new do %>
-  <%= render Containers::BasicContainerComponent.new do %>
+  <div class="px-4">
     <h1 class="mb-4 font-bold">
       Wikinoにようこそ！
     </h1>
@@ -32,5 +32,5 @@
     </p>
 
     <%= link_to "Wikinoのスペースを見る", "/s/wikino", class: "font-bold link link-primary" %>
-  <% end %>
+  </div>
 <% end %>
