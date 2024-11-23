@@ -63,11 +63,13 @@ module.exports = {
         light: {
           ...daisyuiThemes["light"],
           "base-100": brand[50], // ページ全体の背景色
-          "base-200": "#0e0d25", // サイドバーの背景色
+          "base-200": colors.slate[800], // サイドバーの背景色
           "base-300": colors.white, // カードの背景色
           "base-content": colors.slate[950], // テキストの色
-          "primary-content": colors.white,
+          "primary-content": colors.slate[100],
           "primary": brand[500],
+          "secondary-content": colors.slate[100],
+          "secondary": colors.slate[800],
         },
       },
     ],

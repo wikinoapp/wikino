@@ -2,15 +2,15 @@
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::SimpleLayoutComponent.new do %>
-  <%= render Containers::BasicContainerComponent.new do %>
+  <div class="px-4 py-12 flex flex-col gap-8">
     <div class="text-center">
-      <div class="mt-12">
-        <%= link_to root_path, class: "inline-block" do %>
-          <%= render Wikino::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
-        <% end %>
-      </div>
+      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "80px", class_name: "fill-black") %>
+      <% end %>
+    </div>
 
-      <h1 class="mt-8 text-3xl font-bold">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold antialiased">
         <%= title %>
       </h1>
 
@@ -19,32 +19,31 @@
       </p>
     </div>
 
-    <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with(
-          method: :patch,
-          model: @form,
-          url: email_confirmation_path(after: params[:after])
-        ) do |f| %>
-          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+      <%= form_with(
+        class: "flex flex-col gap-4",
+        method: :patch,
+        model: @form,
+        url: email_confirmation_path(after: params[:after])
+      ) do |f| %>
+        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :confirmation_code, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.email_confirmation_form.confirmation_code") %>
-              </span>
-            </div>
-
-            <%= f.text_field :confirmation_code, autofocus: true, class: "input input-bordered w-full" %>
-          <% end %>
-
-          <div class="mt-8 text-center">
-            <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
-              <%= t("verbs.submit") %>
-            <% end %>
+        <%= f.label :confirmation_code, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.email_confirmation_form.confirmation_code") %>
+            </span>
           </div>
+
+          <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
+        <% end %>
+
+        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+          <%= render Wikino::UI::Icon.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+
+          <%= t("verbs.submit") %>
         <% end %>
       <% end %>
     <% end %>
-  <% end %>
+  </div>
 <% end %>

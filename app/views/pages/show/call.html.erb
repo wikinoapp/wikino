@@ -2,7 +2,7 @@
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainLayoutComponent.new do %>
-  <div class="flex flex-col gap-4 p-4">
+  <div class="px-4 py-6 flex flex-col gap-6">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <h1 class="text-2xl font-bold antialiased">
@@ -40,7 +40,7 @@
 
       <% if policy(@page).update? %>
         <%= link_to edit_page_path(Current.space!.identifier, @page.number), {
-          class: "btn btn-primary no-animation"
+          class: "btn btn-secondary no-animation rounded-full"
         } do %>
           <%= render Wikino::UI::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
@@ -49,13 +49,13 @@
       <% end %>
     </div>
 
-    <hr class="border-gray-400">
-
-    <div class="wikino-markdown">
-      <%= @page.body_html.html_safe %>
-    </div>
-
-    <hr class="border-gray-400">
+    <% if @page.body_html.present? %>
+      <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+        <div class="wikino-markdown">
+          <%= @page.body_html.html_safe %>
+        </div>
+      <% end %>
+    <% end %>
 
     <%= render Footers::PageFooterComponent.new(
       link_collection: @link_collection,

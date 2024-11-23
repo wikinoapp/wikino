@@ -2,15 +2,15 @@
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::SimpleLayoutComponent.new do %>
-  <%= render Containers::BasicContainerComponent.new do %>
+  <div class="px-4 py-12 flex flex-col gap-8">
     <div class="text-center">
-      <div class="mt-12">
-        <%= link_to root_path, class: "inline-block" do %>
-          <%= render Wikino::UI::Icon.new(name: "logo", size: "50px", class_name: "fill-base-content") %>
-        <% end %>
-      </div>
+      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+        <%= render Wikino::UI::Icon.new(name: "logo", size: "80px", class_name: "fill-black") %>
+      <% end %>
+    </div>
 
-      <h1 class="mt-8 text-3xl font-bold">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold antialiased">
         <%= title %>
       </h1>
 
@@ -21,67 +21,66 @@
       </p>
     </div>
 
-    <%= render Wikino::UI::Card.new(class_name: "mt-8") do %>
-      <%= render Wikino::UI::Card::Body.new do %>
-        <%= form_with model: @form, url: params[:skip_no_authentication].nil? ? session_list_path : session_list_path(skip_no_authentication: true) do |f| %>
-          <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+      <%= form_with(
+        class: "flex flex-col gap-4",
+        model: @form,
+        url: params[:skip_no_authentication].nil? ? session_list_path : session_list_path(skip_no_authentication: true)
+      ) do |f| %>
+        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :space_identifier, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.session_form.space_identifier") %>
-              </span>
-            </div>
-
-            <%= f.text_field(:space_identifier, {
-              autofocus: true,
-              class: "input input-bordered w-full",
-              required: true,
-              tabindex: 1
-            }) %>
-          <% end %>
-
-          <%= f.label :email, class: "form-control mt-4" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.session_form.email") %>
-              </span>
-            </div>
-
-            <%= f.email_field(:email, {
-              autocomplete: "username",
-              class: "input input-bordered w-full",
-              required: true,
-              tabindex: 2
-            }) %>
-          <% end %>
-
-          <%= f.label :password, class: "form-control mt-4" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.session_form.password") %>
-              </span>
-
-              <span class="label-text-alt">
-                <%# link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 5 %>
-              </span>
-            </div>
-
-            <%= f.password_field(:password, {
-              autocomplete: "current-password",
-              class: "input input-bordered w-full",
-              required: true,
-              tabindex: 3
-            }) %>
-          <% end %>
-
-          <div class="mt-8 text-center">
-            <%= f.button class: "btn btn-primary no-animation rounded-full", tabindex: 4, type: :submit do %>
-              <%= t("verbs.sign_in") %>
-            <% end %>
+        <%= f.label :space_identifier, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.session_form.space_identifier") %>
+            </span>
           </div>
+
+          <%= f.text_field(:space_identifier, {
+            autofocus: true,
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          }) %>
+        <% end %>
+
+        <%= f.label :email, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.session_form.email") %>
+            </span>
+          </div>
+
+          <%= f.email_field(:email, {
+            autocomplete: "username",
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          }) %>
+        <% end %>
+
+        <%= f.label :password, class: "form-control" do %>
+          <div class="label">
+            <span class="label-text">
+              <%= t("forms.attributes.session_form.password") %>
+            </span>
+
+            <span class="label-text-alt">
+              <%# link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 0 %>
+            </span>
+          </div>
+
+          <%= f.password_field(:password, {
+            autocomplete: "current-password",
+            class: "bg-base-300 input input-bordered w-full",
+            required: true
+          }) %>
+        <% end %>
+
+        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+          <%= render Wikino::UI::Icon.new(name: "sign-in", size: "18px", class_name: "fill-primary-content") %>
+
+          <%= t("verbs.sign_in") %>
         <% end %>
       <% end %>
     <% end %>
-  <% end %>
+  </div>
 <% end %>

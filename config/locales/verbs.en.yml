@@ -1,6 +1,7 @@
 en:
   verbs:
     add_account: Add account
+    create: Create
     edit: Edit
     more: More
     save: Save
