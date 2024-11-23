@@ -11,14 +11,14 @@
 
         <div class="flex items-center gap-2">
           <%= link_to topic_path(@page.space.identifier, @page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
-            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-gray-500") %>
+            <%= render Icons::TopicIconComponent.new(topic: @page.topic, size: "16px", class_name: "fill-gray-600") %>
 
             <%= @page.topic.name %>
           <% end %>
 
           <% if @page.published? %>
             <div
-              class="text-sm text-gray-400"
+              class="text-sm text-gray-500"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.published_at.iso8601 %>"
             >
@@ -28,7 +28,7 @@
 
           <% if @page.modified? %>
             <div
-              class="text-sm text-gray-400"
+              class="text-sm text-gray-500"
               data-controller="absolute-time"
               data-absolute-time-utc-time-value="<%= @page.modified_at.iso8601 %>"
             >
@@ -49,13 +49,13 @@
       <% end %>
     </div>
 
-    <hr class="border-gray-300">
+    <hr class="border-gray-400">
 
     <div class="wikino-markdown">
       <%= @page.body_html.html_safe %>
     </div>
 
-    <hr class="border-gray-300">
+    <hr class="border-gray-400">
 
     <%= render Footers::PageFooterComponent.new(
       link_collection: @link_collection,
