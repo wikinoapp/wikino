@@ -2,16 +2,16 @@ const colors = require("tailwindcss/colors");
 const daisyuiThemes = require("daisyui/src/theming/themes");
 
 const brand = {
-  50: '#fae5ff',
-  100: '#e9b5fc',
-  200: '#d383fa',
-  300: '#b753f9',
-  400: '#982af8',
-  500: '#741ae0',
-  600: '#4f13ae',
-  700: '#300b7c',
-  800: '#17044a',
-  900: '#05001a',
+  50: "#fae5ff",
+  100: "#e9b5fc",
+  200: "#d383fa",
+  300: "#b753f9",
+  400: "#982af8",
+  500: "#741ae0",
+  600: "#4f13ae",
+  700: "#300b7c",
+  800: "#17044a",
+  900: "#05001a",
 };
 
 /** @type {import('tailwindcss').Config} */
@@ -67,9 +67,9 @@ module.exports = {
           "base-300": colors.white, // カードの背景色
           "base-content": colors.slate[950], // テキストの色
           "primary-content": colors.slate[100],
-          "primary": brand[500],
+          primary: brand[500],
           "secondary-content": colors.slate[100],
-          "secondary": colors.slate[800],
+          secondary: colors.slate[800],
         },
       },
     ],
