@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+def system!(*args)
+  system(*args, exception: true)
+end
+
+puts "=== Prettierを実行中..."
+system!('git diff --name-only | grep -E "\.(erb|md|ts)$" | xargs yarn prettier --write')
+
+puts "\n=== ERB Lintを実行中..."
+system!('git diff --name-only | grep "\.erb$" | xargs bin/erb_lint')
+
+puts "\n=== Standardを実行中..."
+system!('git diff --name-only | grep "\.rb$" | xargs bin/standardrb')
+
+puts "\n=== Sorbetを実行中..."
+system!("bin/srb tc")
