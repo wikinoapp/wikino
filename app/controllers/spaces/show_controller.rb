@@ -28,7 +28,7 @@ module Spaces
 
     sig { returns(Page::PrivateAssociationRelation) }
     private def viewable_pages
-      pages = Current.space!.pages.published.joins(:topic)
+      pages = Current.space!.pages.active.joins(:topic)
 
       if signed_in? && Current.space! == Current.user!.space
         pages.merge(Current.user!.topics)

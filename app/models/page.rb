@@ -11,9 +11,11 @@ class Page < ApplicationRecord
   has_many :editorships, class_name: "PageEditorship", dependent: :restrict_with_exception
   has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
 
-  scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
+  scope :published, -> { where.not(published_at: nil) }
   scope :pinned, -> { where.not(pinned_at: nil) }
   scope :not_pinned, -> { where(pinned_at: nil) }
+  scope :not_trashed, -> { where(trashed_at: nil) }
+  scope :active, -> { not_trashed.published }
 
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
