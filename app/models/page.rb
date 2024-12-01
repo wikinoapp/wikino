@@ -45,7 +45,7 @@ class Page < ApplicationRecord
   end
 
   sig { returns(T::Boolean) }
-  def modified?
+  def modified_after_published?
     published? && modified_at > published_at
   end
 

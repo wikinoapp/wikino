@@ -26,7 +26,7 @@
             </div>
           <% end %>
 
-          <% if @page.modified? %>
+          <% if @page.modified_after_published? %>
             <div
               class="text-sm text-gray-500"
               data-controller="absolute-time"
