@@ -12,7 +12,7 @@ class Page < ApplicationRecord
   has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
 
   scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
-  scope :initial, -> { where(title: nil) }
+  scope :blanked, -> { where(title: nil) }
   scope :pinned, -> { where.not(pinned_at: nil) }
   scope :not_pinned, -> { where(pinned_at: nil) }
 
@@ -25,8 +25,8 @@ class Page < ApplicationRecord
   # end
 
   sig { params(topic: Topic).returns(Page) }
-  def self.create_as_initial!(topic:)
-    initial.where(topic:).first_or_create!(
+  def self.create_as_blanked!(topic:)
+    blanked.where(topic:).first_or_create!(
       space: topic.space,
       title: nil,
       body: "",
