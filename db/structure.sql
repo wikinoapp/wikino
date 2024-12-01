@@ -159,9 +159,9 @@ CREATE TABLE public.pages (
     body public.citext NOT NULL,
     body_html text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
-    modified_at timestamp(6) without time zone NOT NULL,
+    modified_at timestamp(6) without time zone,
     published_at timestamp(6) without time zone,
-    archived_at timestamp(6) without time zone,
+    trashed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     pinned_at timestamp without time zone
@@ -499,13 +499,6 @@ CREATE INDEX index_pages_on_space_id ON public.pages USING btree (space_id);
 
 
 --
--- Name: index_pages_on_space_id_and_archived_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_pages_on_space_id_and_archived_at ON public.pages USING btree (space_id, archived_at);
-
-
---
 -- Name: index_pages_on_space_id_and_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -538,6 +531,13 @@ CREATE INDEX index_pages_on_space_id_and_pinned_at ON public.pages USING btree (
 --
 
 CREATE INDEX index_pages_on_space_id_and_published_at ON public.pages USING btree (space_id, published_at);
+
+
+--
+-- Name: index_pages_on_space_id_and_trashed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_space_id_and_trashed_at ON public.pages USING btree (space_id, trashed_at);
 
 
 --
@@ -883,6 +883,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20241201145213'),
 ('20241104061506'),
 ('20240000000002'),
 ('20240000000001');
