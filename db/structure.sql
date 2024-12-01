@@ -159,7 +159,7 @@ CREATE TABLE public.pages (
     body public.citext NOT NULL,
     body_html text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
-    modified_at timestamp(6) without time zone,
+    modified_at timestamp(6) without time zone NOT NULL,
     published_at timestamp(6) without time zone,
     trashed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
