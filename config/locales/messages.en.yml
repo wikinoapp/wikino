@@ -40,6 +40,7 @@ en:
       are_you_sure_delete: "Are you sure you want to delete this page?"
       create_page_with_keyword: Create page with '__keyword__'
       delete_page: Delete Page
+      moved_to_trash: Page moved to trash.
       no_links: No Links
       page_deleted: Page was successfully deleted.
       page_duplicated_html: Page <a href="/pages/%{database_id}">%{title}</a> already exists.

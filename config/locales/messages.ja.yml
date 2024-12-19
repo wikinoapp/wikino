@@ -40,6 +40,7 @@ ja:
       are_you_sure_delete: "ページを削除しますか？"
       create_page_with_keyword: "「__keyword__」のページを作成する"
       delete_page: ページを削除
+      moved_to_trash: ページをゴミ箱に移動しました
       no_links: リンクはありません
       page_deleted: ページを削除しました
       page_duplicated_html: ページ「<a href="/pages/%{database_id}">%{title}</a>」はすでにあります。

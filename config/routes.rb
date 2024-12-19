@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/pages/:page_number/draft_page",      via: :patch,  as: :draft_page,                    to: "draft_pages/update#call",             page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/edit",            via: :get,    as: :edit_page,                     to: "pages/edit#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/links",           via: :post,   as: :page_link_list,                to: "links/index#call",                    page_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/trash",           via: :post,   as: :trashed_page,                  to: "trashed_pages/create#call",           page_number: /\d+/
   match "/s/:space_identifier/session",                            via: :delete, as: :session,                       to: "sessions/destroy#call"
   match "/s/:space_identifier/switchable_accounts",                via: :get,    as: :switchable_account_list,       to: "switchable_accounts/index#call"
   match "/s/:space_identifier/topics",                             via: :post,   as: :topic_list,                    to: "topics/create#call"
