@@ -37,7 +37,7 @@ en:
     spaces:
       new_space: New Space
     page:
-      are_you_sure_delete: "Are you sure you want to delete this page?"
+      are_you_sure_trash: Are you sure you want to move this page to trash?
       create_page_with_keyword: Create page with '__keyword__'
       delete_page: Delete Page
       moved_to_trash: Page moved to trash.

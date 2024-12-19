@@ -1,0 +1,22 @@
+<%= render DaisyUI::Dropdown.new do |dropdown| %>
+  <%= dropdown.with_button(class_name: "btn btn-ghost group h-[48px] no-animation p-0 rounded-full w-[48px]") do %>
+    <%= render Wikino::UI::Icon.new(name: "dots-three", size: "1.5rem", class_name: "fill-gray-900 group-hover:fill-slate-700") %>
+  <% end %>
+
+  <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>
+    <%= dropdown_menu.with_item do %>
+      <%= button_to trashed_page_path(Current.space!.identifier, page.number), {
+        class: "text-red-600 flex gap-2 items-center w-full",
+        form: {
+          data: {
+            turbo_confirm: t("messages.page.are_you_sure_trash")
+          }
+        }
+      } do %>
+        <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-red-600") %>
+
+        <%= t("verbs.move_to_trash") %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

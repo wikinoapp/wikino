@@ -37,7 +37,7 @@ ja:
     spaces:
       new_space: 新しいスペース
     page:
-      are_you_sure_delete: "ページを削除しますか？"
+      are_you_sure_trash: ページをゴミ箱に入れますか？
       create_page_with_keyword: "「__keyword__」のページを作成する"
       delete_page: ページを削除
       moved_to_trash: ページをゴミ箱に移動しました
