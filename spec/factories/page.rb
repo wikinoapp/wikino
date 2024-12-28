@@ -19,5 +19,9 @@ FactoryBot.define do
     trait :not_published do
       published_at { nil }
     end
+
+    trait :trashed do
+      trashed_at { Time.current }
+    end
   end
 end

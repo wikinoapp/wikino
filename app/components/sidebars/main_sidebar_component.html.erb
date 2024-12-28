@@ -26,7 +26,7 @@
         </div>
       <% end %>
 
-      <ul class="flex flex-col gap-4">
+      <ul class="flex flex-col">
         <li>
           <%= link_to space_path, {
             class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full"
@@ -34,6 +34,16 @@
             <%= render Wikino::UI::Icon.new(name: "house", size: "18px", class_name: "fill-gray-200") %>
 
             <%= t("nouns.home") %>
+          <% end %>
+        </li>
+
+        <li>
+          <%= link_to trash_path, {
+            class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full"
+          } do %>
+            <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-gray-200") %>
+
+            <%= t("nouns.trash") %>
           <% end %>
         </li>
       </ul>

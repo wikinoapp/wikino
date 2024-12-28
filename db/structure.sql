@@ -164,7 +164,8 @@ CREATE TABLE public.pages (
     trashed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    pinned_at timestamp without time zone
+    pinned_at timestamp without time zone,
+    discarded_at timestamp(6) without time zone
 );
 
 
@@ -482,6 +483,13 @@ CREATE INDEX index_page_revisions_on_page_id ON public.page_revisions USING btre
 --
 
 CREATE INDEX index_page_revisions_on_space_id ON public.page_revisions USING btree (space_id);
+
+
+--
+-- Name: index_pages_on_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_discarded_at ON public.pages USING btree (discarded_at);
 
 
 --
@@ -883,6 +891,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20241220175102'),
 ('20241201145213'),
 ('20241104061506'),
 ('20240000000002'),

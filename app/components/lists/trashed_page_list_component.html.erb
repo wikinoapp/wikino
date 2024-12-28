@@ -1,0 +1,54 @@
+<div
+  class="flex flex-col gap-2"
+  data-controller="bulk-action"
+>
+  <div class="flex gap-2 items-center">
+    <%= form_with(
+      data: { controller: "bulk-action-form" },
+      model: form,
+      url: root_path
+    ) do |f| %>
+      <%= f.button(
+        class: "btn btn-secondary btn-xs no-animation rounded-full",
+        formaction: root_path,
+        type: :button
+      ) do %>
+        <%= render Wikino::UI::Icon.new(
+          name: "arrow-counter-clockwise",
+          size: "18px",
+          class_name: "fill-secondary-content"
+        ) %>
+
+        <%= t("verbs.restore") %>
+      <% end %>
+    <% end %>
+
+    <%= f.button(
+      class: "btn btn-secondary btn-xs no-animation rounded-full text-error",
+      formaction: root_path,
+      type: :button
+    ) do %>
+      <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-error") %>
+
+      <%= t("verbs.delete") %>
+    <% end %>
+  </div>
+
+  <div>
+    <% pages.each do |page| %>
+      <div class="flex gap-4 items-center">
+        <div class="py-2">
+          <%= check_box_tag "page_ids[]", page.id, false, class: "checkbox", data: { action: "bulk-action#toggleCheck", bulk_action_payload_param: {page_id: page.id}.to_json } %>
+        </div>
+
+        <div>
+          <div class="text-xs text-gray-500 w-[70px]">
+            <%= page.topic.name %>
+          </div>
+
+          <%= link_to page.title, page_path(Current.space!.identifier, page.number), class: "link link-hover" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

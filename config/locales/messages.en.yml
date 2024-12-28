@@ -31,6 +31,11 @@ en:
       ago_published: "Published %{time} ago"
     topic:
       created: Topic created.
+    trash:
+      empty_state_message: Trash is empty.
+      show:
+        description_1: Pages in the trash are displayed here.
+        description_2: Pages older than 30 days are automatically deleted. They can be restored within that time.
     sign_out:
       callback:
         sign_out_success: Signed out

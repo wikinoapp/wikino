@@ -2,7 +2,11 @@
 # frozen_string_literal: true
 
 class Page < ApplicationRecord
+  include Discard::Model
   include ModelConcerns::Pageable
+
+  # ページをゴミ箱に移動してから削除されるまでの日数
+  DELETE_LIMIT_DAYS = 30
 
   acts_as_sequenced column: :number, scope: :space_id
 
@@ -15,7 +19,8 @@ class Page < ApplicationRecord
   scope :pinned, -> { where.not(pinned_at: nil) }
   scope :not_pinned, -> { where(pinned_at: nil) }
   scope :not_trashed, -> { where(trashed_at: nil) }
-  scope :active, -> { not_trashed.published }
+  scope :active, -> { kept.not_trashed.published }
+  scope :restorable, -> { where(trashed_at: DELETE_LIMIT_DAYS.days.ago..) }
 
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
@@ -44,6 +49,11 @@ class Page < ApplicationRecord
   sig { returns(T::Boolean) }
   def published?
     published_at.present?
+  end
+
+  sig { returns(T::Boolean) }
+  def trashed?
+    trashed_at.present?
   end
 
   sig { returns(T::Boolean) }

@@ -31,6 +31,11 @@ ja:
       ago_published: "%{time}前に公開"
     topic:
       created: トピックを作成しました
+    trash:
+      empty_state_message: ゴミ箱は空です
+      show:
+        description_1: ゴミ箱に入れたページを表示しています。
+        description_2: 30日以上経過したページは自動的に削除されます。それ以内であれば復元可能です。
     sign_out:
       callback:
         sign_out_success: ログアウトしました

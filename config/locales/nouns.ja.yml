@@ -11,10 +11,13 @@ ja:
     new_page: 新規ページ
     new_topic: 新規トピック
     next_page: 次のページ
-    topics: トピック
+    page_title: ページタイトル
     prev_page: 前のページ
     rss_feed: RSSフィード
     sign_in: ログイン
     sign_out: ログアウト
     sign_up: ユーザ登録
     system_default: 自動
+    topic: トピック
+    topics: トピック
+    trash: ゴミ箱

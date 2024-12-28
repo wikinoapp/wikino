@@ -10,6 +10,8 @@ ja:
       topics:
         new: 新規トピック
         show: "%{topic_name} | %{space_name}"
+      trash:
+        show: ゴミ箱
       pages:
         edit: ページの編集
         show: "%{page_title} | %{space_name}"

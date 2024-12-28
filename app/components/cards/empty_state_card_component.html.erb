@@ -1,0 +1,13 @@
+<div class="<%= class_names("card", class_name) %>">
+  <div class="card-body gap-4 items-center py-20 text-center">
+    <div class="rounded-full bg-brand-100 opacity-40 p-4">
+      <%= render Wikino::UI::Icon.new(name: icon_name, size: "50px", class_name: "fill-gray-800") %>
+    </div>
+
+    <h2 class="card-title">
+      <%= message %>
+    </h2>
+
+    <%= content %>
+  </div>
+</div>

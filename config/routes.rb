@@ -29,6 +29,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/topics/:topic_number",               via: :get,    as: :topic,                         to: "topics/show#call",                    topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/pages/new",     via: :get,    as: :new_page,                      to: "pages/new#call",                      topic_number: /\d+/
   match "/s/:space_identifier/topics/new",                         via: :get,    as: :new_topic,                     to: "topics/new#call"
+  match "/s/:space_identifier/trash",                              via: :get,    as: :trash,                         to: "trash/show#call"
   match "/s/:space_identifier/users/:user_id/account_switch",      via: :post,   as: :account_switch,                to: "account_switches/create#call"
   match "/sessions",                                               via: :post,   as: :session_list,                  to: "sessions/create#call"
   match "/sign_in",                                                via: :get,    as: :sign_in,                       to: "sign_in/show#call"
