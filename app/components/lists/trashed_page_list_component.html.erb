@@ -1,54 +1,55 @@
-<div
-  class="flex flex-col gap-2"
-  data-controller="bulk-action"
->
-  <div class="flex gap-2 items-center">
-    <%= form_with(
-      data: { controller: "bulk-action-form" },
-      model: form,
-      url: root_path
-    ) do |f| %>
-      <%= f.button(
-        class: "btn btn-secondary btn-xs no-animation rounded-full",
-        formaction: root_path,
-        type: :button
-      ) do %>
-        <%= render Wikino::UI::Icon.new(
-          name: "arrow-counter-clockwise",
-          size: "18px",
-          class_name: "fill-secondary-content"
-        ) %>
+<%= form_with(
+  data: { controller: "bulk-action" },
+  model: form,
+  url: false
+) do |f| %>
+  <div class="flex flex-col gap-4">
+    <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
 
-        <%= t("verbs.restore") %>
-      <% end %>
-    <% end %>
+    <div class="flex flex-col gap-2">
+      <div class="flex gap-2 items-center">
+        <%= f.button(
+          class: "btn btn-secondary btn-xs no-animation rounded-full",
+          formaction: bulk_restored_page_list_path,
+          type: :submit
+        ) do %>
+          <%= render Wikino::UI::Icon.new(
+            name: "arrow-counter-clockwise",
+            size: "18px",
+            class_name: "fill-secondary-content"
+          ) %>
 
-    <%= f.button(
-      class: "btn btn-secondary btn-xs no-animation rounded-full text-error",
-      formaction: root_path,
-      type: :button
-    ) do %>
-      <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-error") %>
+          <%= t("verbs.restore") %>
+        <% end %>
 
-      <%= t("verbs.delete") %>
-    <% end %>
-  </div>
+        <%= f.button(
+          class: "btn btn-secondary btn-xs no-animation rounded-full text-error",
+          formaction: root_path,
+          type: :button
+        ) do %>
+          <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-error") %>
 
-  <div>
-    <% pages.each do |page| %>
-      <div class="flex gap-4 items-center">
-        <div class="py-2">
-          <%= check_box_tag "page_ids[]", page.id, false, class: "checkbox", data: { action: "bulk-action#toggleCheck", bulk_action_payload_param: {page_id: page.id}.to_json } %>
-        </div>
-
-        <div>
-          <div class="text-xs text-gray-500 w-[70px]">
-            <%= page.topic.name %>
-          </div>
-
-          <%= link_to page.title, page_path(Current.space!.identifier, page.number), class: "link link-hover" %>
-        </div>
+          <%= t("verbs.delete") %>
+        <% end %>
       </div>
-    <% end %>
+
+      <div>
+        <% pages.each do |page| %>
+          <div class="flex gap-4 items-center">
+            <div class="py-2">
+              <%= check_box_tag "trashed_pages_form[page_ids][]", page.id, f.object.page_ids&.include?(page.id), class: "checkbox" %>
+            </div>
+
+            <div>
+              <div class="text-xs text-gray-500 w-[70px]">
+                <%= page.topic.name %>
+              </div>
+
+              <%= link_to page.title, page_path(Current.space!.identifier, page.number), class: "link link-hover" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
   </div>
-</div>
+<% end %>

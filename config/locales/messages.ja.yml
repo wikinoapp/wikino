@@ -33,6 +33,7 @@ ja:
       created: トピックを作成しました
     trash:
       empty_state_message: ゴミ箱は空です
+      restored: ページを復元しました
       show:
         description_1: ゴミ箱に入れたページを表示しています。
         description_2: 30日以上経過したページは自動的に削除されます。それ以内であれば復元可能です。

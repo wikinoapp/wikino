@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   match "/manifest",                                               via: :get,    as: :manifest,                      to: "manifests/show#call"
   match "/s/:space_identifier",                                    via: :get,    as: :space,                         to: "spaces/show#call"
   match "/s/:space_identifier/atom",                               via: :get,    as: :atom,                          to: "atom/show#call"
+  match "/s/:space_identifier/bulk_restored_pages",                via: :post,   as: :bulk_restored_page_list,       to: "bulk_restored_pages/create#call"
   match "/s/:space_identifier/joined_topics",                      via: :get,    as: :joined_topic_list,             to: "joined_topics/index#call"
   match "/s/:space_identifier/pages/:page_number",                 via: :get,    as: :page,                          to: "pages/show#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                 via: :patch,                                      to: "pages/update#call",                   page_number: /\d+/

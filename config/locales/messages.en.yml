@@ -33,6 +33,7 @@ en:
       created: Topic created.
     trash:
       empty_state_message: Trash is empty.
+      restored: Pages have been restored.
       show:
         description_1: Pages in the trash are displayed here.
         description_2: Pages older than 30 days are automatically deleted. They can be restored within that time.
