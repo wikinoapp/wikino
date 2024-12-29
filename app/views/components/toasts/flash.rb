@@ -4,7 +4,7 @@
 module Views
   module Components
     module Toasts
-      class Flash < Views::Components::Base
+      class Flash < VC::Base
         sig { params(flash: ActionDispatch::Flash::FlashHash).void }
         def initialize(flash:)
           @flash = flash

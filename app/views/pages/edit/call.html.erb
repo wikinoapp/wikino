@@ -88,7 +88,7 @@
         <div class="flex items-center gap-4">
           <div>
             <%= f.button class: "btn btn-secondary no-animation rounded-full", type: :submit do %>
-              <%= render Wikino::UI::Icon.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-content") %>
+              <%= render VC::Basic::Icon.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-content") %>
 
               <%= t("verbs.save") %>
             <% end %>

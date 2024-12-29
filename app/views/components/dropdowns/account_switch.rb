@@ -4,7 +4,7 @@
 module Views
   module Components
     module Dropdowns
-      class AccountSwitch < Views::Components::Base
+      class AccountSwitch < VC::Base
       end
     end
   end

@@ -3,18 +3,18 @@
 
 module Views
   module Components
-    module Icons
-      class Topic < VC::Base
-        sig { params(topic: ::Topic, size: String, class_name: String).void }
-        def initialize(topic:, size: "16px", class_name: "")
-          @topic = topic
+    module Basic
+      class Icon < VC::Base
+        sig { params(name: String, size: String, class_name: String).void }
+        def initialize(name:, size: "16px", class_name: "")
+          @name = name
           @size = size
           @class_name = class_name
         end
 
-        sig { returns(::Topic) }
-        attr_reader :topic
-        private :topic
+        sig { returns(String) }
+        attr_reader :name
+        private :name
 
         sig { returns(String) }
         attr_reader :size
@@ -25,8 +25,8 @@ module Views
         private :class_name
 
         sig { returns(String) }
-        private def icon_name
-          topic.visibility_public? ? "globe" : "lock"
+        private def icon_class_name
+          [class_name, "inline-block"].compact_blank.join(" ")
         end
       end
     end

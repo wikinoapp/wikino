@@ -16,7 +16,7 @@ module Trash
     def call
       render Views::Trash::Show.new(
         page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
-        form: Forms::TrashedPages.new
+        form: TrashedPagesForm.new
       )
     end
   end

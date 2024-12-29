@@ -6,7 +6,7 @@
   )
 ) do %>
   <% if page.pinned? %>
-    <%= render Wikino::UI::Icon.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-red-500") %>
+    <%= render VC::Basic::Icon.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-red-500") %>
   <% end %>
 
   <%= link_to page_path(Current.space!.identifier, page.number) do %>

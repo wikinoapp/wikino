@@ -4,7 +4,7 @@
 module Views
   module Components
     module Cards
-      class EmptyState < Views::Components::Base
+      class EmptyState < VC::Base
         sig { params(icon_name: String, message: String, class_name: String).void }
         def initialize(icon_name:, message:, class_name: "")
           @icon_name = icon_name

@@ -24,7 +24,7 @@
         </div>
 
         <div class="flex justify-center">
-          <%= render VC::Pagination.new(
+          <%= render VC::Basic::Pagination.new(
             pagination:,
             previous_path: trash_path(before: pagination.previous_cursor),
             next_path: trash_path(after: pagination.next_cursor)

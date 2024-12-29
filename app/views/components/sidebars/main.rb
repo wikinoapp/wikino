@@ -4,7 +4,7 @@
 module Views
   module Components
     module Sidebars
-      class Main < Views::Components::Base
+      class Main < VC::Base
         use_helpers :signed_in?
 
         sig { params(class_name: String).void }

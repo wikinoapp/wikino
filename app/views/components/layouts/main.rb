@@ -4,7 +4,7 @@
 module Views
   module Components
     module Layouts
-      class Main < Views::Components::Base
+      class Main < VC::Base
         use_helpers :signed_in?
       end
     end

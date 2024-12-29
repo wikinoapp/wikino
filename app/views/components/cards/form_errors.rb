@@ -4,7 +4,7 @@
 module Views
   module Components
     module Cards
-      class FormErrors < Views::Components::Base
+      class FormErrors < VC::Base
         sig { params(errors: ActiveModel::Errors, class_name: String).void }
         def initialize(errors:, class_name: "")
           @errors = errors

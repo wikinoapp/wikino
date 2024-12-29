@@ -4,7 +4,5 @@
 module Views
   class Base < ViewComponent::Base
     extend T::Sig
-
-    VC = Views::Components
   end
 end

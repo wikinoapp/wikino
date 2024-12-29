@@ -10,7 +10,7 @@
 
       <% unless signed_in? %>
         <%= link_to atom_path(Current.space!.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
-          <%= render Wikino::UI::Icon.new(name: "rss", size: "16px", class_name: "fill-primary") %>
+          <%= render VC::Basic::Icon.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 
           <%= t("nouns.rss_feed") %>
         <% end %>

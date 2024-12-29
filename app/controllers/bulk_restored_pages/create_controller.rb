@@ -7,7 +7,6 @@ module BulkRestoredPages
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
-    include ControllerConcerns::TrashedPagesSettable
 
     around_action :set_locale
     before_action :set_current_space
@@ -15,11 +14,14 @@ module BulkRestoredPages
 
     sig { returns(T.untyped) }
     def call
-      @form = TrashedPagesForm.new(form_params)
+      form = TrashedPagesForm.new(form_params)
 
-      if @form.invalid?
-        set_trashed_pages
-        return render("trash/show/call", status: :unprocessable_entity)
+      if form.invalid?
+        error_view = Views::Trash::Show.new(
+          page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
+          form:
+        )
+        return render(error_view, status: :unprocessable_entity)
       end
 
       flash[:notice] = t("messages.trash.restored")

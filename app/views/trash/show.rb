@@ -4,7 +4,7 @@
 module Views
   module Trash
     class Show < Views::Base
-      sig { params(page_connection: PageConnection, form: Forms::TrashedPages).void }
+      sig { params(page_connection: PageConnection, form: TrashedPagesForm).void }
       def initialize(page_connection:, form:)
         @page_connection = page_connection
         @form = form
@@ -14,7 +14,7 @@ module Views
       attr_reader :page_connection
       private :page_connection
 
-      sig { returns(Forms::TrashedPages) }
+      sig { returns(TrashedPagesForm) }
       attr_reader :form
       private :form
 

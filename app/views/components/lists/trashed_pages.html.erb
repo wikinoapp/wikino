@@ -4,7 +4,7 @@
   url: false
 ) do |f| %>
   <div class="flex flex-col gap-4">
-    <%= render Views::Components::Cards::FormErrors.new(errors: f.object.errors) %>
+    <%= render VC::Cards::FormErrors.new(errors: f.object.errors) %>
 
     <div class="flex flex-col gap-2">
       <div class="flex gap-2 items-center">
@@ -13,7 +13,7 @@
           formaction: bulk_restored_page_list_path,
           type: :submit
         ) do %>
-          <%= render Wikino::UI::Icon.new(
+          <%= render VC::Basic::Icon.new(
             name: "arrow-counter-clockwise",
             size: "18px",
             class_name: "fill-secondary-content"
@@ -27,7 +27,7 @@
           formaction: root_path,
           type: :button
         ) do %>
-          <%= render Wikino::UI::Icon.new(name: "trash", size: "18px", class_name: "fill-error") %>
+          <%= render VC::Basic::Icon.new(name: "trash", size: "18px", class_name: "fill-error") %>
 
           <%= t("verbs.delete") %>
         <% end %>

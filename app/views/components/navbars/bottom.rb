@@ -4,7 +4,7 @@
 module Views
   module Components
     module Navbars
-      class Bottom < Views::Components::Base
+      class Bottom < VC::Base
       end
     end
   end

@@ -16,14 +16,14 @@
           class="hidden"
           data-flash-toast-target="noticeIcon"
         >
-          <%= render Wikino::UI::Icon.new(name: "check-circle", size: "36px", class_name: "fill-success") %>
+          <%= render VC::Basic::Icon.new(name: "check-circle", size: "36px", class_name: "fill-success") %>
         </span>
 
         <span
           class="hidden"
           data-flash-toast-target="alertIcon"
         >
-          <%= render Wikino::UI::Icon.new(name: "warning", size: "36px", class_name: "fill-error") %>
+          <%= render VC::Basic::Icon.new(name: "warning", size: "36px", class_name: "fill-error") %>
         </span>
       </span>
 
@@ -38,7 +38,7 @@
       data-action="flash-toast#hideFlashToast"
       type="button"
     >
-      <%= render Wikino::UI::Icon.new(name: "x") %>
+      <%= render VC::Basic::Icon.new(name: "x") %>
     </button>
   </div>
 </div>

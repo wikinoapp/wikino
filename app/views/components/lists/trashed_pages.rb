@@ -4,14 +4,14 @@
 module Views
   module Components
     module Lists
-      class TrashedPages < Views::Components::Base
-        sig { params(form: Forms::TrashedPages, pages: T::Array[Page]).void }
+      class TrashedPages < VC::Base
+        sig { params(form: TrashedPagesForm, pages: T::Array[Page]).void }
         def initialize(form:, pages:)
           @form = form
           @pages = pages
         end
 
-        sig { returns(Forms::TrashedPages) }
+        sig { returns(TrashedPagesForm) }
         attr_reader :form
         private :form
 
