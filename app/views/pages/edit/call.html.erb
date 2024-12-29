@@ -1,7 +1,7 @@
 <% title = t("meta.title.pages.edit") %>
 <% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
 
-<%= render ::Layouts::MainLayoutComponent.new do %>
+<%= render VC::Layouts::Main.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <h1 class="text-2xl font-bold antialiased">
       <%= title %>
@@ -13,7 +13,7 @@
       </div>
     <% end %>
 
-    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
+    <%= render VC::Basic::Card.new(class_name: "bg-base-300 p-4") do %>
       <%= form_with(
         class: "flex flex-col gap-4",
         data: { controller: "page-editor-form" },

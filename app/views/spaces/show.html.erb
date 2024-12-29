@@ -1,7 +1,7 @@
 <% title = t("meta.title.spaces.show", space_name: Current.space!.name) %>
 <% set_meta_tags(title:) %>
 
-<%= render ::Layouts::MainLayoutComponent.new do %>
+<%= render VC::Layouts::Main.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold antialiased">
@@ -17,31 +17,31 @@
       <% end %>
     </div>
 
-    <% if @pinned_pages.present? || @pages.present? %>
+    <% if pinned_pages.present? || pages.present? %>
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-4">
-          <% if @pinned_pages.present? %>
+          <% if pinned_pages.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% @pinned_pages.each do |page| %>
-                <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+              <% pinned_pages.each do |page| %>
+                <%= render VC::Cards::Page.new(page:, class_name: "bg-base-300") %>
               <% end %>
             </div>
           <% end %>
 
-          <% if @pages.present? %>
+          <% if pages.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% @pages.each do |page| %>
-                <%= render Cards::PageCardComponent.new(page:, class_name: "bg-base-300") %>
+              <% pages.each do |page| %>
+                <%= render VC::Cards::Page.new(page:, class_name: "bg-base-300") %>
               <% end %>
             </div>
           <% end %>
         </div>
 
         <div class="flex justify-center">
-          <%= render PaginationComponent.new(
-            pagination: @pagination,
-            previous_path: space_path(Current.space!.identifier, before: @pagination.previous_cursor),
-            next_path: space_path(Current.space!.identifier, after: @pagination.next_cursor)
+          <%= render VC::Basic::Pagination.new(
+            pagination:,
+            previous_path: space_path(Current.space!.identifier, before: pagination.previous_cursor),
+            next_path: space_path(Current.space!.identifier, after: pagination.next_cursor)
           ) %>
         </div>
       </div>

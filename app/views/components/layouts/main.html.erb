@@ -5,17 +5,17 @@
 
       <% unless signed_in? %>
         <div class="mt-4">
-          <%= render Footers::PublicFooterComponent.new %>
+          <%= render VC::Footers::Public.new %>
         </div>
       <% end %>
     </div>
   </div>
 
   <%# サイドバー内のドロップダウンがメインコンテンツより下にならないようにするため order-first を使用している %>
-  <%= render Views::Components::Sidebars::Main.new(class_name: "order-first") %>
+  <%= render VC::Sidebars::Main.new(class_name: "order-first") %>
 </div>
 
 <div class="fixed bottom-0 left-1/2 z-50 flex translate-x-[-50%] flex-col gap-4 p-4">
-  <%= render Views::Components::Toasts::Flash.new(flash:) %>
-  <%= render Views::Components::Navbars::Bottom.new %>
+  <%= render VC::Toasts::Flash.new(flash:) %>
+  <%= render VC::Navbars::Bottom.new %>
 </div>

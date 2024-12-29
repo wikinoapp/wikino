@@ -1,4 +1,4 @@
-<%= render Wikino::UI::Card.new(
+<%= render VC::Basic::Card.new(
   class_name: class_names(
     class_name,
     "duration-200 ease-in-out grid min-h-[96px] hover:ring-1 hover:ring-primary px-4 py-2 transition",
@@ -13,7 +13,7 @@
     <div class="flex flex-col gap-1">
       <% if show_topic_name %>
         <div class="flex items-center gap-1">
-          <%= render Icons::TopicIconComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-500") %>
+          <%= render VC::Icons::Topic.new(topic: page.topic, size: "12px", class_name: "fill-gray-500") %>
 
           <div class="text-xs text-gray-500">
             <%= page.topic.name %>

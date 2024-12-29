@@ -1,7 +1,7 @@
 <% title = t("meta.title.topics.show", space_name: Current.space!.name, topic_name: @topic.name) %>
 <% set_meta_tags(title:) %>
 
-<%= render ::Layouts::MainLayoutComponent.new do %>
+<%= render VC::Layouts::Main.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
@@ -46,7 +46,7 @@
         </div>
 
         <div class="flex justify-center">
-          <%= render PaginationComponent.new(
+          <%= render VC::Basic::Pagination.new(
             pagination: @pagination,
             previous_path: topic_path(before: @pagination.previous_cursor),
             next_path: topic_path(after: @pagination.next_cursor)
