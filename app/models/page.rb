@@ -41,6 +41,21 @@ class Page < ApplicationRecord
     )
   end
 
+  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(PageConnection) }
+  def self.restorable_connection(before:, after:)
+    cursor_paginate_page = Current.space!.pages.preload(:topic).restorable.cursor_paginate(
+      before: before.presence,
+      after: after.presence,
+      limit: 100,
+      order: {trashed_at: :desc, id: :desc}
+    ).fetch
+
+    PageConnection.new(
+      pages: cursor_paginate_page.records,
+      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+    )
+  end
+
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?

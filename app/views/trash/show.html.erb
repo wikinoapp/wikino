@@ -1,0 +1,43 @@
+<% title = t("meta.title.trash.show", space_name: Current.space!.name) %>
+<% set_meta_tags(title:) %>
+
+<%= render VC::Layouts::Main.new do %>
+  <div class="flex flex-col gap-6 px-4 py-6">
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-2">
+        <h1 class="text-2xl font-bold antialiased">
+          <%= title %>
+        </h1>
+
+        <p class="text-sm text-gray-400">
+          <%= t("messages.trash.show.description_1") %>
+          <br>
+          <%= t("messages.trash.show.description_2") %>
+        </p>
+      </div>
+    </div>
+
+    <% if pages.present? %>
+      <div class="flex flex-col gap-6">
+        <div class="card bg-base-300 p-4">
+          <%= render VC::Lists::TrashedPages.new(form:, pages:) %>
+        </div>
+
+        <div class="flex justify-center">
+          <%= render VC::Pagination.new(
+            pagination:,
+            previous_path: trash_path(before: pagination.previous_cursor),
+            next_path: trash_path(after: pagination.next_cursor)
+          ) %>
+        </div>
+      </div>
+    <% else %>
+      <div class="card bg-base-300 p-4">
+        <%= render Components::Cards::EmptyState.new(
+          icon_name: "file",
+          message: t("messages.trash.empty_state_message")
+        ) %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

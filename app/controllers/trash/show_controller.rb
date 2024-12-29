@@ -7,16 +7,17 @@ module Trash
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::TrashedPagesSettable
 
     around_action :set_locale
     before_action :set_current_space
     before_action :require_authentication
-    before_action :set_trashed_pages
 
     sig { returns(T.untyped) }
     def call
-      @form = TrashedPagesForm.new
+      render Views::Trash::Show.new(
+        page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
+        form: Forms::TrashedPages.new
+      )
     end
   end
 end

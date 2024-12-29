@@ -6,7 +6,7 @@
       <% end %>
 
       <% if signed_in? %>
-        <%= render Dropdowns::AccountSwitchDropdownComponent.new %>
+        <%= render Views::Components::Dropdowns::AccountSwitch.new %>
       <% else %>
         <div class="text-sm font-bold text-gray-300">
           <%= Current.space!.identifier %>
