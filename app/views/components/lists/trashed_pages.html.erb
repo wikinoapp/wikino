@@ -1,5 +1,5 @@
 <%= form_with(
-  data: { controller: "bulk-action" },
+  data: { controller: "bulk-action-form" },
   model: form,
   url: false
 ) do |f| %>
@@ -10,6 +10,10 @@
       <div class="flex gap-2 items-center">
         <%= f.button(
           class: "btn btn-secondary btn-xs no-animation rounded-full",
+          data: {
+            action: "bulk-action-form#disableAllActionButtons",
+            bulk_action_form_target: "actionButton"
+          },
           formaction: bulk_restored_page_list_path,
           type: :submit
         ) do %>
@@ -24,6 +28,10 @@
 
         <%= f.button(
           class: "btn btn-secondary btn-xs no-animation rounded-full text-error",
+          data: {
+            action: "bulk-action-form#disableAllActionButtons",
+            bulk_action_form_target: "actionButton"
+          },
           formaction: root_path,
           type: :button
         ) do %>

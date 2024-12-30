@@ -1,23 +1,13 @@
 import { Controller } from "@hotwired/stimulus";
-import { FormSubmission } from "@hotwired/turbo";
-import { useDebounce } from "stimulus-use";
 
 export default class extends Controller<HTMLFormElement> {
-  static debounces = [
-    {
-      name: "saveAsDraft",
-      wait: 500,
-    },
-  ];
-  static targets = ["draftSaveButton"];
+  static targets = ["actionButton"];
 
-  declare readonly draftSaveButtonTarget: HTMLInputElement;
+  declare readonly actionButtonTargets: HTMLButtonElement[];
 
-  connect() {
-    useDebounce(this);
-  }
-
-  saveAsDraft() {
-    this.element.requestSubmit(this.draftSaveButtonTarget);
+  disableAllActionButtons(event) {
+    this.actionButtonTargets.filter((target) => event.target !== target).forEach((button) => {
+      button.disabled = true;
+    });
   }
 }

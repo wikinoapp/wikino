@@ -116,6 +116,12 @@ class User < ApplicationRecord
     topics.include?(topic)
   end
 
+  sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
+  def joined_all_topics?(topic_ids:)
+    joined_topic_ids = topics.pluck(:id)
+    topic_ids - joined_topic_ids == []
+  end
+
   sig { params(email_confirmation: EmailConfirmation).void }
   def run_after_email_confirmation_success!(email_confirmation:)
     return unless email_confirmation.succeeded?

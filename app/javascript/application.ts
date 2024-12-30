@@ -3,7 +3,6 @@ import "@hotwired/turbo";
 import { Application } from "@hotwired/stimulus";
 
 import AbsoluteTimeController from "./controllers/absolute-time-controller";
-import BulkActionController from "./controllers/bulk-action-controller";
 import BulkActionFormController from "./controllers/bulk-action-form-controller";
 import FlashToastController from "./controllers/flash-toast-controller";
 import PageEditorController from "./controllers/page-editor-controller";
@@ -20,7 +19,6 @@ application.debug = false;
 window.Stimulus = application;
 
 window.Stimulus.register("absolute-time", AbsoluteTimeController);
-window.Stimulus.register("bulk-action", BulkActionController);
 window.Stimulus.register("bulk-action-form", BulkActionFormController);
 window.Stimulus.register("flash-toast", FlashToastController);
 window.Stimulus.register("page-editor-form", PageEditorFormController);

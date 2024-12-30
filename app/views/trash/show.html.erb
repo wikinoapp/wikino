@@ -33,7 +33,7 @@
       </div>
     <% else %>
       <div class="card bg-base-300 p-4">
-        <%= render Components::Cards::EmptyState.new(
+        <%= render VC::Cards::EmptyState.new(
           icon_name: "file",
           message: t("messages.trash.empty_state_message")
         ) %>

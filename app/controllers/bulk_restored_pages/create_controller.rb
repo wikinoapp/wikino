@@ -15,14 +15,13 @@ module BulkRestoredPages
     sig { returns(T.untyped) }
     def call
       form = TrashedPagesForm.new(form_params)
+      form.user = Current.user!
 
       if form.invalid?
-        error_view = Views::Trash::Show.new(
-          page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
-          form:
-        )
-        return render(error_view, status: :unprocessable_entity)
+        return render_error_view(form:)
       end
+
+      BulkRestorePagesUseCase.new.call(page_ids: form.page_ids.not_nil!)
 
       flash[:notice] = t("messages.trash.restored")
       redirect_to trash_path(Current.space!.identifier)
@@ -31,6 +30,15 @@ module BulkRestoredPages
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:trashed_pages_form), ActionController::Parameters).permit(page_ids: [])
+    end
+
+    sig { params(form: TrashedPagesForm).returns(ActiveSupport::SafeBuffer) }
+    private def render_error_view(form:)
+      error_view = Views::Trash::Show.new(
+        page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
+        form:
+      )
+      render(error_view, status: :unprocessable_entity)
     end
   end
 end
