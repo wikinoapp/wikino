@@ -5,7 +5,7 @@
     </div>
 
     <% if link_collection.links.present? %>
-      <%= render LinkCollectionComponent.new(link_collection:) %>
+      <%= render VC::LinkCollection.new(link_collection:) %>
     <% else %>
       <%= t("messages._common.no_links") %>
     <% end %>
@@ -18,7 +18,7 @@
 
     <% if backlink_collection.backlinks.present? %>
       <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-        <%= render BacklinkCollectionComponent.new(backlink_collection:) %>
+        <%= render VC::BacklinkCollection.new(backlink_collection:) %>
       </div>
     <% else %>
       <%= t("messages._common.no_backlinks") %>

@@ -33,4 +33,9 @@ class Space < ApplicationRecord
       joined_at: current_time
     )
   end
+
+  sig { params(number: Integer).returns(Page) }
+  def find_pages_by_number!(number)
+    pages.kept.find_by!(number:)
+  end
 end
