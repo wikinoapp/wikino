@@ -6,7 +6,7 @@ module Views
     module Basic
       class Card < VC::Base
         renders_one :body, ->(class_name: "") do
-          VC::Card::Body.new(class_name:)
+          VC::Basic::Card::Body.new(class_name:)
         end
 
         sig { params(class_name: String).void }

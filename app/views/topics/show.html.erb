@@ -1,4 +1,4 @@
-<% title = t("meta.title.topics.show", space_name: Current.space!.name, topic_name: @topic.name) %>
+<% title = t("meta.title.topics.show", space_name: Current.space!.name, topic_name: topic.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render VC::Layouts::Main.new do %>
@@ -6,18 +6,18 @@
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <h1 class="text-2xl font-bold antialiased">
-          <%= @topic.name %>
+          <%= topic.name %>
         </h1>
 
-        <% if @topic.description.present? %>
+        <% if topic.description.present? %>
           <p class="text-sm text-gray-400">
-            <%= @topic.description %>
+            <%= topic.description %>
           </p>
         <% end %>
       </div>
 
-      <% if policy(@topic).create? %>
-        <%= link_to new_page_path(Current.space!.identifier, @topic.number), class: "btn btn-secondary no-animation rounded-full" do %>
+      <% if policy(topic).create? %>
+        <%= link_to new_page_path(Current.space!.identifier, topic.number), class: "btn btn-secondary no-animation rounded-full" do %>
           <%= render VC::Basic::Icon.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
           <%= t("nouns.new_page") %>
@@ -25,21 +25,21 @@
       <% end %>
     </div>
 
-    <% if @pinned_pages.present? || @pages.present? %>
+    <% if pinned_pages.present? || pages.present? %>
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-4">
-          <% if @pinned_pages.present? %>
+          <% if pinned_pages.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% @pinned_pages.each do |page| %>
-                <%= render Cards::PageCardComponent.new(page:, show_topic_name: false, class_name: "bg-base-300") %>
+              <% pinned_pages.each do |page| %>
+                <%= render VC::Cards::Page.new(page:, show_topic_name: false, class_name: "bg-base-300") %>
               <% end %>
             </div>
           <% end %>
 
-          <% if @pages.present? %>
+          <% if pages.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% @pages.each do |page| %>
-                <%= render Cards::PageCardComponent.new(page:, show_topic_name: false, class_name: "bg-base-300") %>
+              <% pages.each do |page| %>
+                <%= render VC::Cards::Page.new(page:, show_topic_name: false, class_name: "bg-base-300") %>
               <% end %>
             </div>
           <% end %>
@@ -47,9 +47,9 @@
 
         <div class="flex justify-center">
           <%= render VC::Basic::Pagination.new(
-            pagination: @pagination,
-            previous_path: topic_path(before: @pagination.previous_cursor),
-            next_path: topic_path(after: @pagination.next_cursor)
+            pagination:,
+            previous_path: topic_path(before: pagination.previous_cursor),
+            next_path: topic_path(after: pagination.next_cursor)
           ) %>
         </div>
       </div>
