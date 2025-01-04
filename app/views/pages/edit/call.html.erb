@@ -21,7 +21,7 @@
         method: :patch,
         url: page_path(Current.space!.identifier, @page.number)
       ) do |f| %>
-        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+        <%= render VC::Cards::FormErrors.new(errors: f.object.errors) %>
 
         <div>
           <div class="label">

@@ -13,7 +13,7 @@
         model: @form,
         url: topic_list_path(Current.space!.identifier)
       ) do |f| %>
-        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+        <%= render VC::Cards::FormErrors.new(errors: f.object.errors) %>
 
         <%= f.label :name, class: "form-control" do %>
           <div class="label">

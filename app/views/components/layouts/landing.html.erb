@@ -1,11 +1,11 @@
 <div class="flex min-h-[100svh] flex-col">
-  <%= render Navbars::TopNavbarComponent.new %>
+  <%= render VC::Navbars::Top.new %>
 
   <div class="mx-auto w-full max-w-screen-lg flex-1">
     <%= content %>
   </div>
 
   <div class="fixed bottom-0 left-1/2 z-50 flex translate-x-[-50%] flex-col gap-4 p-4">
-    <%= render FlashToastComponent.new(flash:) %>
+    <%= render VC::Toasts::Flash.new(flash:) %>
   </div>
 </div>

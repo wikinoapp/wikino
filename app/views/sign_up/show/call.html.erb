@@ -1,7 +1,7 @@
 <% title = t("meta.title.sign_up.show") %>
 <% set_meta_tags(title:) %>
 
-<%= render ::Layouts::SimpleLayoutComponent.new do %>
+<%= render VC::Layouts::Simple.new do %>
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
@@ -35,7 +35,7 @@
         model: @form,
         url: email_confirmation_path
       ) do |f| %>
-        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+        <%= render VC::Cards::FormErrors.new(errors: f.object.errors) %>
 
         <%= f.label :email, class: "form-control" do %>
           <div class="label">
