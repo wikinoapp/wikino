@@ -12,12 +12,17 @@ module Atom
 
     sig { returns(T.untyped) }
     def call
-      @pages = Current.space!.pages.active
+      pages = Current.space!.pages.active
         .joins(:topic).merge(Topic.visibility_public)
         .order(published_at: :desc, id: :desc)
         .limit(15)
 
-      render(formats: :atom)
+      render(
+        Views::Atom::Show.new(
+          props: Views::Atom::Show::Props.build(space: Current.space!, pages:)
+        ),
+        formats: :atom
+      )
     end
   end
 end
