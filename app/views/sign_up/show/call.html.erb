@@ -35,7 +35,7 @@
         model: @form,
         url: email_confirmation_path
       ) do |f| %>
-        <%= render Cards::FormErrors.new(errors: f.objectComponent.errors) %>
+        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
         <%= f.label :email, class: "form-control" do %>
           <div class="label">

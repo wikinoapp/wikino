@@ -1,6 +1,6 @@
 <%= render Basic::DropdownComponent.new do |dropdown| %>
   <%= dropdown.with_button(class_name: "btn btn-ghost group h-[48px] no-animation p-0 rounded-full w-[48px]") do %>
-    <%= render Basic::Icon.new(name: "dots-three", size: "1Component.5rem", class_name: "fill-gray-900 group-hover:fill-slate-700") %>
+    <%= render Basic::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-gray-900 group-hover:fill-slate-700") %>
   <% end %>
 
   <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>

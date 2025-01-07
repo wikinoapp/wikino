@@ -21,7 +21,7 @@
         model: @form,
         url: account_list_path
       ) do |f| %>
-        <%= render Cards::FormErrors.new(errors: f.objectComponent.errors) %>
+        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
         <%= f.label :space_identifier, class: "form-control" do %>
           <div class="label">

@@ -4,7 +4,7 @@
 module Basic
   module Dropdown
     class MenuComponent < ApplicationComponent
-      renders_many :items, VC::Basic::Dropdown::MenuItem
+      renders_many :items, Basic::Dropdown::MenuItemComponent
 
       sig { params(class_name: String).void }
       def initialize(class_name: "")

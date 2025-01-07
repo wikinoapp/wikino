@@ -8,7 +8,7 @@ module Basic
     end
 
     renders_one :menu, ->(class_name: "") do
-      VC::Basic::Dropdown::Menu.new(class_name:)
+      Basic::Dropdown::MenuComponent.new(class_name:)
     end
 
     sig { params(class_name: String).void }
