@@ -14,7 +14,7 @@ module Trash
 
     sig { returns(T.untyped) }
     def call
-      render Views::Trash::Show.new(
+      render Trash::ShowView.new(
         page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
         form: TrashedPagesForm.new
       )

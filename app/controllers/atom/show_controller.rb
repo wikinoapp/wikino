@@ -18,9 +18,7 @@ module Atom
         .limit(15)
 
       render(
-        Views::Atom::Show.new(
-          props: Views::Atom::Show::Props.build(space: Current.space!, pages:)
-        ),
+        Atom::ShowView.new(space: Current.space!, pages:),
         formats: :atom
       )
     end

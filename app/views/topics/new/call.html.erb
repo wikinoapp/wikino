@@ -1,19 +1,19 @@
 <% title = t("meta.title.topics.new") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render VC::Layouts::Main.new do %>
+<%= render Layouts::MainComponent.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <h1 class="text-2xl font-bold antialiased">
       <%= title %>
     </h1>
 
-    <%= render VC::Basic::Card.new(class_name: "bg-base-300 p-4") do %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300 p-4") do %>
       <%= form_with(
         class: "flex flex-col gap-4",
         model: @form,
         url: topic_list_path(Current.space!.identifier)
       ) do |f| %>
-        <%= render VC::Cards::FormErrors.new(errors: f.object.errors) %>
+        <%= render Cards::FormErrors.new(errors: f.objectComponent.errors) %>
 
         <%= f.label :name, class: "form-control" do %>
           <div class="label">
@@ -78,7 +78,7 @@
         </div>
 
         <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render VC::Basic::Icon.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
           <%= t("verbs.create") %>
         <% end %>

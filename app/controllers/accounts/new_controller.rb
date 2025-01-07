@@ -15,7 +15,7 @@ module Accounts
     def call
       form = AccountForm.new(email: @email_confirmation.not_nil!.email.not_nil!)
 
-      render Views::Accounts::New.new(form:)
+      render Accounts::NewView.new(form:)
     end
   end
 end

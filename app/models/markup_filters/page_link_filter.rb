@@ -42,7 +42,7 @@ module MarkupFilters
         if page_location
           replaced_text = text.gsub(
             /\[\[#{location_key.raw}\]\]/,
-            view_context.render(VC::PageLink.new(current_space: current_topic.space.not_nil!, page_location:))
+            view_context.render(PageLinkComponent.new(current_space: current_topic.space.not_nil!, page_location:))
           )
           text_chunk.replace(replaced_text, as: :html)
         end

@@ -30,7 +30,7 @@ module Topics
       pages = cursor_paginate_page.records
       pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
-      render Views::Topics::Show.new(
+      render Topics::ShowView.new(
         topic:,
         pinned_pages:,
         page_connection: PageConnection.new(pages:, pagination:)

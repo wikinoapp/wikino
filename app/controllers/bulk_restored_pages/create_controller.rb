@@ -34,7 +34,7 @@ module BulkRestoredPages
 
     sig { params(form: TrashedPagesForm).returns(ActiveSupport::SafeBuffer) }
     private def render_error_view(form:)
-      error_view = Views::Trash::Show.new(
+      error_view = Trash::ShowView.new(
         page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
         form:
       )

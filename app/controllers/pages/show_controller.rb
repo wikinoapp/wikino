@@ -23,7 +23,7 @@ module Pages
       link_collection = page.not_nil!.fetch_link_collection
       backlink_collection = page.not_nil!.fetch_backlink_collection
 
-      render Views::Pages::Show.new(page:, link_collection:, backlink_collection:)
+      render Pages::ShowView.new(page:, link_collection:, backlink_collection:)
     end
   end
 end

@@ -25,7 +25,7 @@ module Spaces
       pages = cursor_paginate_page.records
       pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
-      render Views::Spaces::Show.new(pinned_pages:, page_connection: PageConnection.new(pages:, pagination:))
+      render Spaces::ShowView.new(pinned_pages:, page_connection: PageConnection.new(pages:, pagination:))
     end
 
     sig { returns(Page::PrivateAssociationRelation) }

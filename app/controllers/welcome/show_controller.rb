@@ -15,7 +15,7 @@ module Welcome
         redirect_to(space_path(Current.user!.space.not_nil!.identifier))
       end
 
-      render Views::Welcome::Show.new
+      render Welcome::ShowView.new
     end
   end
 end
