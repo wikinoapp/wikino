@@ -14,14 +14,14 @@ class TrashedPagesForm < ApplicationForm
 
   sig { returns(Page::PrivateRelation) }
   private def pages
-    @pages ||= Page.where(id: page_ids)
+    Page.where(id: page_ids)
   end
 
   sig { void }
   private def restoring_ability
     return if user.nil?
 
-    unless user.joined_all_topics?(topic_ids: pages.pluck(:topic_id))
+    unless user.not_nil!.joined_all_topics?(topic_ids: pages.pluck(:topic_id))
       errors.add(:base, :not_joined_topic_exists)
     end
   end

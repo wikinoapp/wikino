@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  extend T::Sig
-
   include Discard::Model
 
   ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/

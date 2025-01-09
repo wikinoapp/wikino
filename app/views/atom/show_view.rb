@@ -17,10 +17,12 @@ module Atom
     attr_reader :pages
     private :pages
 
+    sig { returns(Integer) }
     def schema_date
       2025
     end
 
+    sig { params(page: Page).returns(String) }
     def entry_id(page:)
       "tag:Wikino,#{schema_date}:Page/#{page.id}"
     end

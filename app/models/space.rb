@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class Space < ApplicationRecord
-  extend T::Sig
-
   include Discard::Model
 
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
