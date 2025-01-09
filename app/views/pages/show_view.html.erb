@@ -38,7 +38,7 @@
         </div>
       </div>
 
-      <div class="flex gap-2 items-center">
+      <div class="flex items-center gap-2">
         <% if policy(page).update? %>
           <%= link_to edit_page_path(Current.space!.identifier, page.number), {
             class: "btn btn-secondary no-animation rounded-full"

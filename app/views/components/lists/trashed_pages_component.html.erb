@@ -7,7 +7,7 @@
     <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
     <div class="flex flex-col gap-2">
-      <div class="flex gap-2 items-center">
+      <div class="flex items-center gap-2">
         <%= f.button(
           class: "btn btn-secondary btn-xs no-animation rounded-full",
           data: {
@@ -43,13 +43,13 @@
 
       <div>
         <% pages.each do |page| %>
-          <div class="flex gap-4 items-center">
+          <div class="flex items-center gap-4">
             <div class="py-2">
               <%= check_box_tag "trashed_pages_form[page_ids][]", page.id, f.object.page_ids&.include?(page.id), class: "checkbox" %>
             </div>
 
             <div>
-              <div class="text-xs text-gray-500 w-[70px]">
+              <div class="w-[70px] text-xs text-gray-500">
                 <%= page.topic.name %>
               </div>
 
