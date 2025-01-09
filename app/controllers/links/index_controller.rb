@@ -7,19 +7,18 @@ module Links
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::PageSettable
 
     layout false
 
     around_action :set_locale
     before_action :set_current_space
     before_action :restore_session
-    before_action :set_page
 
     rescue_from Pundit::NotAuthorizedError, with: :render_404
 
     sig { returns(T.untyped) }
     def call
+      @page = Current.space!.find_pages_by_number!(params[:page_number]&.to_i)
       authorize(@page, :show?)
 
       draft_page = Current.user&.draft_pages&.find_by(page: @page)
