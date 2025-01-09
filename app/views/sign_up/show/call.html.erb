@@ -29,33 +29,35 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 p-4") do %>
-      <%= form_with(
-        class: "flex flex-col gap-4",
-        model: @form,
-        url: email_confirmation_path
-      ) do |f| %>
-        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= form_with(
+          class: "flex flex-col gap-4",
+          model: @form,
+          url: email_confirmation_path
+        ) do |f| %>
+          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-        <%= f.label :email, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.new_email_confirmation_form.email") %>
-            </span>
-          </div>
+          <%= f.label :email, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_email_confirmation_form.email") %>
+              </span>
+            </div>
 
-          <%= f.email_field(:email, {
-            autocomplete: "username",
-            autofocus: true,
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          }) %>
-        <% end %>
+            <%= f.email_field(:email, {
+              autocomplete: "username",
+              autofocus: true,
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
 
-        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("verbs.submit") %>
+            <%= t("verbs.submit") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

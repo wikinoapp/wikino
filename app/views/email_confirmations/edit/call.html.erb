@@ -19,29 +19,31 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 p-4") do %>
-      <%= form_with(
-        class: "flex flex-col gap-4",
-        method: :patch,
-        model: @form,
-        url: email_confirmation_path(after: params[:after])
-      ) do |f| %>
-        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= form_with(
+          class: "flex flex-col gap-4",
+          method: :patch,
+          model: @form,
+          url: email_confirmation_path(after: params[:after])
+        ) do |f| %>
+          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-        <%= f.label :confirmation_code, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.email_confirmation_form.confirmation_code") %>
-            </span>
-          </div>
+          <%= f.label :confirmation_code, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.email_confirmation_form.confirmation_code") %>
+              </span>
+            </div>
 
-          <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
-        <% end %>
+            <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
+          <% end %>
 
-        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("verbs.submit") %>
+            <%= t("verbs.submit") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

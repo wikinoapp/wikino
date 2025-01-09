@@ -15,77 +15,79 @@
       </h1>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 p-4") do %>
-      <%= form_with(
-        class: "flex flex-col gap-4",
-        model: @form,
-        url: account_list_path
-      ) do |f| %>
-        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= form_with(
+          class: "flex flex-col gap-4",
+          model: @form,
+          url: account_list_path
+        ) do |f| %>
+          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-        <%= f.label :space_identifier, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.account_form.space_identifier") %>
-            </span>
-          </div>
+          <%= f.label :space_identifier, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.account_form.space_identifier") %>
+              </span>
+            </div>
 
-          <%= f.text_field(:space_identifier,
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          ) %>
+            <%= f.text_field(:space_identifier,
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            ) %>
 
-          <div class="label">
-            <span class="label-text-alt">
-              <%= t("messages.accounts.space_identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
-            </span>
-          </div>
-        <% end %>
+            <div class="label">
+              <span class="label-text-alt">
+                <%= t("messages.accounts.space_identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
+              </span>
+            </div>
+          <% end %>
 
-        <%= f.label :email, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.account_form.email") %>
-            </span>
-          </div>
+          <%= f.label :email, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.account_form.email") %>
+              </span>
+            </div>
 
-          <%= text_field_tag(:email, f.object.email, {
-            autocomplete: "off",
-            class: "!bg-gray-300 !border-gray-300 input input-bordered w-full",
-            disabled: true
-          }) %>
+            <%= text_field_tag(:email, f.object.email, {
+              autocomplete: "off",
+              class: "!bg-gray-300 !border-gray-300 input input-bordered w-full",
+              disabled: true
+            }) %>
 
-          <div class="label">
-            <span class="label-text-alt">
-              <%= t("messages.accounts.email_hint_html") %>
-            </span>
-          </div>
-        <% end %>
+            <div class="label">
+              <span class="label-text-alt">
+                <%= t("messages.accounts.email_hint_html") %>
+              </span>
+            </div>
+          <% end %>
 
-        <%= f.label :password, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.account_form.password") %>
-            </span>
-          </div>
+          <%= f.label :password, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.account_form.password") %>
+              </span>
+            </div>
 
-          <%= f.password_field(:password,
-            autocomplete: "new-password",
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          ) %>
+            <%= f.password_field(:password,
+              autocomplete: "new-password",
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            ) %>
 
-          <div class="label">
-            <span class="label-text-alt">
-              <%= t("messages.accounts.password_hint_html") %>
-            </span>
-          </div>
-        <% end %>
+            <div class="label">
+              <span class="label-text-alt">
+                <%= t("messages.accounts.password_hint_html") %>
+              </span>
+            </div>
+          <% end %>
 
-        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("verbs.sign_up") %>
+            <%= t("verbs.sign_up") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

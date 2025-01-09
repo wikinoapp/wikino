@@ -21,64 +21,66 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 p-4") do %>
-      <%= form_with(
-        class: "flex flex-col gap-4",
-        model: @form,
-        url: params[:skip_no_authentication].nil? ? session_list_path : session_list_path(skip_no_authentication: true)
-      ) do |f| %>
-        <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= form_with(
+          class: "flex flex-col gap-4",
+          model: @form,
+          url: params[:skip_no_authentication].nil? ? session_list_path : session_list_path(skip_no_authentication: true)
+        ) do |f| %>
+          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-        <%= f.label :space_identifier, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.session_form.space_identifier") %>
-            </span>
-          </div>
+          <%= f.label :space_identifier, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.space_identifier") %>
+              </span>
+            </div>
 
-          <%= f.text_field(:space_identifier, {
-            autofocus: true,
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          }) %>
-        <% end %>
+            <%= f.text_field(:space_identifier, {
+              autofocus: true,
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
 
-        <%= f.label :email, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.session_form.email") %>
-            </span>
-          </div>
+          <%= f.label :email, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.email") %>
+              </span>
+            </div>
 
-          <%= f.email_field(:email, {
-            autocomplete: "username",
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          }) %>
-        <% end %>
+            <%= f.email_field(:email, {
+              autocomplete: "username",
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
 
-        <%= f.label :password, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.session_form.password") %>
-            </span>
+          <%= f.label :password, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.session_form.password") %>
+              </span>
 
-            <span class="label-text-alt">
-              <%# link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 0 %>
-            </span>
-          </div>
+              <span class="label-text-alt">
+                <%# link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 0 %>
+              </span>
+            </div>
 
-          <%= f.password_field(:password, {
-            autocomplete: "current-password",
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          }) %>
-        <% end %>
+            <%= f.password_field(:password, {
+              autocomplete: "current-password",
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
 
-        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render Basic::IconComponent.new(name: "sign-in", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+            <%= render Basic::IconComponent.new(name: "sign-in", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("verbs.sign_in") %>
+            <%= t("verbs.sign_in") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>
