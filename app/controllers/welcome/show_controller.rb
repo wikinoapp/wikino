@@ -12,7 +12,7 @@ module Welcome
     sig { returns(T.untyped) }
     def call
       if signed_in?
-        redirect_to(space_path(Current.user!.space.not_nil!.identifier))
+        return redirect_to(space_path(Current.user!.space.not_nil!.identifier))
       end
 
       render Welcome::ShowView.new

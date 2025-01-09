@@ -1,7 +1,7 @@
 <% title = t("meta.title.pages.edit") %>
 <% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
 
-<%= render Layouts::MainComponent.new do %>
+<%= render ::Layouts::MainComponent.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <h1 class="text-2xl font-bold antialiased">
       <%= title %>
@@ -109,7 +109,7 @@
     <% end %>
 
     <turbo-frame id="page-editor-footer">
-      <%= render Footers::PageFooterComponent.new(
+      <%= render Footers::PageComponent.new(
         link_collection: @link_collection,
         backlink_collection: @backlink_collection
       ) %>

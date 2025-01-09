@@ -19,7 +19,8 @@ module Atom
 
       render(
         Atom::ShowView.new(space: Current.space!, pages:),
-        formats: :atom
+        formats: :atom,
+        content_type: Mime::Type.lookup("application/atom+xml")
       )
     end
   end

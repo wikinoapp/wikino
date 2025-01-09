@@ -37,7 +37,8 @@ class Page < ApplicationRecord
       title: nil,
       body: "",
       body_html: "",
-      linked_page_ids: []
+      linked_page_ids: [],
+      modified_at: Time.current
     )
   end
 
