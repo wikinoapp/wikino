@@ -7,15 +7,14 @@ module Pages
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::PageSettable
 
     around_action :set_locale
     before_action :set_current_space
     before_action :require_authentication
-    before_action :set_page
 
     sig { returns(T.untyped) }
     def call
+      @page = Current.space!.find_pages_by_number!(params[:page_number]&.to_i)
       authorize(@page, :update?)
 
       @form = EditPageForm.new(form_params.merge(page: @page.not_nil!))

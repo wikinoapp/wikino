@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  extend T::Sig
-
   include Discard::Model
 
   ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
@@ -114,6 +112,12 @@ class User < ApplicationRecord
   sig { params(topic: Topic).returns(T::Boolean) }
   def joined_topic?(topic:)
     topics.include?(topic)
+  end
+
+  sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
+  def joined_all_topics?(topic_ids:)
+    joined_topic_ids = topics.pluck(:id)
+    topic_ids - joined_topic_ids == []
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }

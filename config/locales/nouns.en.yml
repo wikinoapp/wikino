@@ -11,10 +11,13 @@ en:
     new_page: New page
     new_topic: New topic
     next_page: Next
-    topics: Topics
+    page_title: Page title
     prev_page: Prev
     rss_feed: RSS feed
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up
     system_default: System default
+    topic: Topic
+    topics: Topics
+    trash: Trash

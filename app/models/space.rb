@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class Space < ApplicationRecord
-  extend T::Sig
-
   include Discard::Model
 
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
@@ -32,5 +30,10 @@ class Space < ApplicationRecord
       name: I18n.t("messages.spaces.new_space", locale: locale.serialize),
       joined_at: current_time
     )
+  end
+
+  sig { params(number: Integer).returns(Page) }
+  def find_pages_by_number!(number)
+    pages.kept.find_by!(number:)
   end
 end

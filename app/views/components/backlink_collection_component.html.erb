@@ -1,0 +1,11 @@
+<% backlinks.each do |backlink| %>
+  <%= render Cards::PageComponent.new(page: backlink.page, class_name: "bg-base-300") %>
+<% end %>
+
+<% if pagination.has_next %>
+  <turbo-frame id="backlink-collection">
+    <%= render Buttons::LinkPaginationComponent.new(
+      path: page_backlink_list_path(page.space.identifier, page.number, after: pagination.next_cursor)
+    ) %>
+  </turbo-frame>
+<% end %>

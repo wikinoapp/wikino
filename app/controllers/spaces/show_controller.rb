@@ -14,7 +14,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      @pinned_pages = viewable_pages.pinned.order(pinned_at: :desc, id: :desc)
+      pinned_pages = viewable_pages.pinned.order(pinned_at: :desc, id: :desc)
 
       cursor_paginate_page = viewable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
@@ -22,13 +22,15 @@ module Spaces
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      @pages = cursor_paginate_page.records
-      @pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
+      pages = cursor_paginate_page.records
+      pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
+
+      render Spaces::ShowView.new(pinned_pages:, page_connection: PageConnection.new(pages:, pagination:))
     end
 
     sig { returns(Page::PrivateAssociationRelation) }
     private def viewable_pages
-      pages = Current.space!.pages.published.joins(:topic)
+      pages = Current.space!.pages.active.joins(:topic)
 
       if signed_in? && Current.space! == Current.user!.space
         pages.merge(Current.user!.topics)

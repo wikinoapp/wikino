@@ -13,7 +13,7 @@ module Accounts
 
     sig { returns(T.untyped) }
     def call
-      @form = AccountForm.new(
+      form = AccountForm.new(
         form_params.merge(
           email: @email_confirmation.not_nil!.email.not_nil!,
           locale: current_locale.serialize,
@@ -21,17 +21,17 @@ module Accounts
         )
       )
 
-      if @form.invalid?
-        return render("accounts/new/call", status: :unprocessable_entity)
+      if form.invalid?
+        return render(Accounts::NewView.new(form:), status: :unprocessable_entity)
       end
 
       account_result = CreateAccountUseCase.new.call(
-        space_identifier: @form.space_identifier.not_nil!,
-        email: @form.email.not_nil!,
-        atname: @form.atname.not_nil!,
-        locale: UserLocale.deserialize(@form.locale),
-        password: @form.password.not_nil!,
-        time_zone: @form.time_zone.not_nil!
+        space_identifier: form.space_identifier.not_nil!,
+        email: form.email.not_nil!,
+        atname: form.atname.not_nil!,
+        locale: UserLocale.deserialize(form.locale),
+        password: form.password.not_nil!,
+        time_zone: form.time_zone.not_nil!
       )
 
       session_result = CreateSessionUseCase.new.call(

@@ -2,8 +2,11 @@ ja:
   verbs:
     add_account: アカウントを追加する
     create: 作成する
+    delete: 削除する
     edit: 編集する
     more: もっと見る
+    move_to_trash: ゴミ箱に入れる
+    restore: 復元する
     save: 保存する
     sign_in: ログインする
     sign_up: アカウントを作成する

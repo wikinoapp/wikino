@@ -1,0 +1,68 @@
+<% title = t("meta.title.pages.show", space_name: Current.space!.name, page_title: page.title) %>
+<% set_meta_tags(title:) %>
+
+<%= render ::Layouts::MainComponent.new do %>
+  <div class="flex flex-col gap-6 px-4 py-6">
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-2">
+        <h1 class="text-2xl font-bold antialiased">
+          <%= page.title %>
+        </h1>
+
+        <div class="flex items-center gap-2">
+          <%= link_to topic_path(page.space.identifier, page.topic.number), class: "flex gap-1 items-center link link-primary" do %>
+            <%= render Icons::TopicComponent.new(topic: page.topic, size: "16px", class_name: "fill-gray-600") %>
+
+            <%= page.topic.name %>
+          <% end %>
+
+          <% if page.published? %>
+            <div
+              class="text-sm text-gray-500"
+              data-controller="absolute-time"
+              data-absolute-time-utc-time-value="<%= page.published_at.iso8601 %>"
+            >
+              <%= t("messages.time.ago_published", time: time_ago_in_words(page.published_at)) %>
+            </div>
+          <% end %>
+
+          <% if page.modified_after_published? %>
+            <div
+              class="text-sm text-gray-500"
+              data-controller="absolute-time"
+              data-absolute-time-utc-time-value="<%= page.modified_at.iso8601 %>"
+            >
+              <%= t("messages.time.ago_modified", time: time_ago_in_words(page.modified_at)) %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <% if policy(page).update? %>
+          <%= link_to edit_page_path(Current.space!.identifier, page.number), {
+            class: "btn btn-secondary no-animation rounded-full"
+          } do %>
+            <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
+
+            <%= t("verbs.edit") %>
+          <% end %>
+        <% end %>
+
+        <%= render Dropdowns::PageActionsComponent.new(page:) %>
+      </div>
+    </div>
+
+    <% if page.body_html.present? %>
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <div class="wikino-markdown">
+            <%= page.body_html.html_safe %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
+  </div>
+<% end %>

@@ -40,7 +40,8 @@ module Wikino
     # ここから独自の設定
     # -----------------------------------------------------------------------------------------
 
-    require_dependency Rails.root.join("lib/wikino")
+    config.autoload_paths << "#{root}/app/views"
+    config.autoload_paths << "#{root}/app/views/components"
 
     config.active_record.schema_format = :sql
 

@@ -12,12 +12,16 @@ module Atom
 
     sig { returns(T.untyped) }
     def call
-      @pages = Current.space!.pages.published
+      pages = Current.space!.pages.active
         .joins(:topic).merge(Topic.visibility_public)
         .order(published_at: :desc, id: :desc)
         .limit(15)
 
-      render(formats: :atom)
+      render(
+        Atom::ShowView.new(space: Current.space!, pages:),
+        formats: :atom,
+        content_type: Mime::Type.lookup("application/atom+xml")
+      )
     end
   end
 end

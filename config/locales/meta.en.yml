@@ -10,6 +10,8 @@ en:
       topics:
         new: New topic
         show: "%{topic_name} | %{space_name}"
+      trash:
+        show: Trash
       pages:
         edit: Edit page
         show: "%{page_title} | %{space_name}"

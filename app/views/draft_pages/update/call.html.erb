@@ -8,7 +8,7 @@
 
 <turbo-stream action="update" target="page-editor-footer">
   <template>
-    <%= render Footers::PageFooterComponent.new(
+    <%= render Footers::PageComponent.new(
       link_collection: @link_collection,
       backlink_collection: @backlink_collection
     ) %>

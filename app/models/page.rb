@@ -2,7 +2,11 @@
 # frozen_string_literal: true
 
 class Page < ApplicationRecord
+  include Discard::Model
   include ModelConcerns::Pageable
+
+  # ページをゴミ箱に移動してから削除されるまでの日数
+  DELETE_LIMIT_DAYS = 30
 
   acts_as_sequenced column: :number, scope: :space_id
 
@@ -11,10 +15,12 @@ class Page < ApplicationRecord
   has_many :editorships, class_name: "PageEditorship", dependent: :restrict_with_exception
   has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
 
-  scope :published, -> { where.not(published_at: nil).where(archived_at: nil) }
-  scope :initial, -> { where(title: nil) }
+  scope :published, -> { where.not(published_at: nil) }
   scope :pinned, -> { where.not(pinned_at: nil) }
   scope :not_pinned, -> { where(pinned_at: nil) }
+  scope :not_trashed, -> { where(trashed_at: nil) }
+  scope :active, -> { kept.not_trashed.published }
+  scope :restorable, -> { where(trashed_at: DELETE_LIMIT_DAYS.days.ago..) }
 
   # validates :body, length: {maximum: 1_000_000}
   # validates :original, absence: true
@@ -25,14 +31,29 @@ class Page < ApplicationRecord
   # end
 
   sig { params(topic: Topic).returns(Page) }
-  def self.create_as_initial!(topic:)
-    initial.where(topic:).first_or_create!(
+  def self.create_as_blanked!(topic:)
+    topic.pages.create!(
       space: topic.space,
       title: nil,
       body: "",
       body_html: "",
       linked_page_ids: [],
-      modified_at: Time.zone.now
+      modified_at: Time.current
+    )
+  end
+
+  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(PageConnection) }
+  def self.restorable_connection(before:, after:)
+    cursor_paginate_page = Current.space!.pages.preload(:topic).restorable.cursor_paginate(
+      before: before.presence,
+      after: after.presence,
+      limit: 100,
+      order: {trashed_at: :desc, id: :desc}
+    ).fetch
+
+    PageConnection.new(
+      pages: cursor_paginate_page.records,
+      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
     )
   end
 
@@ -47,7 +68,12 @@ class Page < ApplicationRecord
   end
 
   sig { returns(T::Boolean) }
-  def modified?
+  def trashed?
+    trashed_at.present?
+  end
+
+  sig { returns(T::Boolean) }
+  def modified_after_published?
     published? && modified_at > published_at
   end
 

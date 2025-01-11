@@ -1,86 +1,88 @@
 <% title = t("meta.title.topics.new") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render ::Layouts::MainLayoutComponent.new do %>
+<%= render ::Layouts::MainComponent.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <h1 class="text-2xl font-bold antialiased">
       <%= title %>
     </h1>
 
-    <%= render Wikino::UI::Card.new(class_name: "bg-base-300 p-4") do %>
-      <%= form_with(
-        class: "flex flex-col gap-4",
-        model: @form,
-        url: topic_list_path(Current.space!.identifier)
-      ) do |f| %>
-        <%= render Cards::FormErrorsCardComponent.new(errors: f.object.errors) %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= form_with(
+          class: "flex flex-col gap-4",
+          model: @form,
+          url: topic_list_path(Current.space!.identifier)
+        ) do |f| %>
+          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-        <%= f.label :name, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.new_topic_form.name") %>
-            </span>
-          </div>
-
-          <%= f.text_field(:name, {
-            autofocus: true,
-            class: "bg-base-300 input input-bordered w-full",
-            required: true
-          }) %>
-        <% end %>
-
-        <%= f.label :description, class: "form-control" do %>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.new_topic_form.description") %>
-            </span>
-          </div>
-
-          <%= f.text_area(:description, class: "bg-base-300 input input-bordered w-full") %>
-        <% end %>
-
-        <div>
-          <div class="label">
-            <span class="label-text">
-              <%= t("forms.attributes.new_topic_form.visibility") %>
-            </span>
-          </div>
-
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <label class="flex cursor-pointer items-center gap-2">
-                <%= f.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
-
-                <span class="label-text">
-                  <%= t("activerecord.attributes.topic.visibility.public") %>
-                </span>
-              </label>
-
-              <div class="label-text-alt pl-[32px]">
-                <%= t("forms.attributes.new_topic_form.visibility_public_hint") %>
-              </div>
+          <%= f.label :name, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_topic_form.name") %>
+              </span>
             </div>
 
-            <div class="flex flex-col gap-2">
-              <label class="flex cursor-pointer items-center gap-2">
-                <%= f.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
+            <%= f.text_field(:name, {
+              autofocus: true,
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
+          <% end %>
 
-                <span class="label-text">
-                  <%= t("activerecord.attributes.topic.visibility.private") %>
-                </span>
-              </label>
+          <%= f.label :description, class: "form-control" do %>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_topic_form.description") %>
+              </span>
+            </div>
 
-              <div class="label-text-alt pl-[32px]">
-                <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
+            <%= f.text_area(:description, class: "bg-base-300 input input-bordered w-full") %>
+          <% end %>
+
+          <div>
+            <div class="label">
+              <span class="label-text">
+                <%= t("forms.attributes.new_topic_form.visibility") %>
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="flex cursor-pointer items-center gap-2">
+                  <%= f.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.topic.visibility.public") %>
+                  </span>
+                </label>
+
+                <div class="label-text-alt pl-[32px]">
+                  <%= t("forms.attributes.new_topic_form.visibility_public_hint") %>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <label class="flex cursor-pointer items-center gap-2">
+                  <%= f.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
+
+                  <span class="label-text">
+                    <%= t("activerecord.attributes.topic.visibility.private") %>
+                  </span>
+                </label>
+
+                <div class="label-text-alt pl-[32px]">
+                  <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
-          <%= render Wikino::UI::Icon.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("verbs.create") %>
+            <%= t("verbs.create") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

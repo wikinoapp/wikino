@@ -24,10 +24,10 @@ create_topic_use_case_result_2 = CreateTopicUseCase.new.call(
 )
 create_topic_use_case_result_2.topic
 
-create_initial_page_use_case_result_1 = CreateInitialPageUseCase.new.call(
+create_blanked_page_use_case_result_1 = CreateBlankedPageUseCase.new.call(
   topic: public_topic_1
 )
-page_1 = create_initial_page_use_case_result_1.page
+page_1 = create_blanked_page_use_case_result_1.page
 
 UpdatePageUseCase.new.call(
   page: page_1,

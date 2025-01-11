@@ -2,8 +2,11 @@ en:
   verbs:
     add_account: Add account
     create: Create
+    delete: Delete
     edit: Edit
     more: More
+    move_to_trash: Move to Trash
+    restore: Restore
     save: Save
     sign_in: Sign in
     sign_up: Create account

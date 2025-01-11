@@ -24,6 +24,8 @@ en:
         email: Email
         password: Password
         space_identifier: Space identifier
+      trashed_pages_form:
+        page_ids: Selected pages
     errors:
       models:
         account_form:
@@ -36,3 +38,5 @@ en:
               incorrect_or_expired: is incorrect or expired
         session_form:
           unauthenticated: Login failed. Space identifier, email, or password is incorrect
+        trashed_pages_form:
+          not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.

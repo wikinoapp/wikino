@@ -1,7 +1,0 @@
-<%= render Wikino::UI::Card.new(class_name:) do %>
-  <%= render Wikino::UI::Card::Body.new do %>
-    <%= link_to topic_path(Current.space!.identifier, topic.number) do %>
-      <%= topic.name %>
-    <% end %>
-  <% end %>
-<% end %>

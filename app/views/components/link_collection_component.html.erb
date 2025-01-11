@@ -1,0 +1,16 @@
+<div class="flex flex-col gap-2">
+  <% links.each do |link| %>
+    <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
+      <%= render Cards::PageComponent.new(page: link.page, class_name: "bg-base-300") %>
+      <%= render BacklinkCollectionComponent.new(backlink_collection: link.backlink_collection) %>
+    </div>
+  <% end %>
+
+  <% if pagination.has_next %>
+    <turbo-frame class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5" id="link-collection">
+      <%= render Buttons::LinkPaginationComponent.new(
+        path: page_link_list_path(page.space.identifier, page.number, after: pagination.next_cursor)
+      ) %>
+    </turbo-frame>
+  <% end %>
+</div>

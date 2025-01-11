@@ -1,0 +1,63 @@
+<%= form_with(
+  data: { controller: "bulk-action-form" },
+  model: form,
+  url: false
+) do |f| %>
+  <div class="flex flex-col gap-4">
+    <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2">
+        <%= f.button(
+          class: "btn btn-secondary btn-xs no-animation rounded-full",
+          data: {
+            action: "bulk-action-form#disableAllActionButtons",
+            bulk_action_form_target: "actionButton"
+          },
+          formaction: bulk_restored_page_list_path,
+          type: :submit
+        ) do %>
+          <%= render Basic::IconComponent.new(
+            name: "arrow-counter-clockwise",
+            size: "18px",
+            class_name: "fill-secondary-content"
+          ) %>
+
+          <%= t("verbs.restore") %>
+        <% end %>
+
+        <%= f.button(
+          class: "btn btn-secondary btn-xs no-animation rounded-full text-error",
+          data: {
+            action: "bulk-action-form#disableAllActionButtons",
+            bulk_action_form_target: "actionButton"
+          },
+          formaction: root_path,
+          type: :button
+        ) do %>
+          <%= render Basic::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
+
+          <%= t("verbs.delete") %>
+        <% end %>
+      </div>
+
+      <div>
+        <% pages.each do |page| %>
+          <div class="flex items-center gap-4">
+            <div class="py-2">
+              <%= check_box_tag "trashed_pages_form[page_ids][]", page.id, f.object.page_ids&.include?(page.id), class: "checkbox" %>
+            </div>
+
+            <div>
+              <div class="w-[70px] text-xs text-gray-500">
+                <%= page.topic.name %>
+              </div>
+
+              <%= link_to page.title, page_path(Current.space!.identifier, page.number), class: "link link-hover" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

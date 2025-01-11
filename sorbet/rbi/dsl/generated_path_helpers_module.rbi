@@ -19,6 +19,9 @@ module GeneratedPathHelpersModule
   def atom_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def bulk_restored_page_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -101,4 +104,10 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def topic_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def trash_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def trashed_page_path(*args); end
 end

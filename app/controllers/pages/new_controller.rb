@@ -19,7 +19,7 @@ module Pages
       topic = Current.space!.topics.kept.find_by!(number: params[:topic_number])
       authorize(topic, :show?)
 
-      result = CreateInitialPageUseCase.new.call(topic:)
+      result = CreateBlankedPageUseCase.new.call(topic:)
 
       redirect_to edit_page_path(Current.space!.identifier, result.page.number)
     end
