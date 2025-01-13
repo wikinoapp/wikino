@@ -11,6 +11,7 @@ en:
     new_page: New page
     new_topic: New topic
     next_page: Next
+    notifications: Notifications
     page_title: Page title
     prev_page: Prev
     rss_feed: RSS feed
@@ -21,3 +22,4 @@ en:
     topic: Topic
     topics: Topics
     trash: Trash
+    unreads: Unreads

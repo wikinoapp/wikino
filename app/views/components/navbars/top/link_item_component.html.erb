@@ -1,0 +1,9 @@
+<%= link_to path, {
+  class: class_names("text-gray-300 hover:text-gray-200", class_name)
+} do %>
+  <div class="flex items-center gap-2">
+    <%= render Basic::IconComponent.new(name: icon_name, size: "18px", class_name: "fill-gray-200") %>
+
+    <%= title %>
+  </div>
+<% end %>

@@ -1,0 +1,21 @@
+<header class="<%= class_names("bg-base-200 drop-shadow min-h-full navbar py-2", class_name) %>">
+  <div class="navbar-start">
+    <%= link_to root_path do %>
+      <%= render Basic::IconComponent.new(name: "logo", size: "2rem", class_name: "fill-white") %>
+    <% end %>
+  </div>
+
+  <div class="gap-6 navbar-center">
+    <%= render Navbars::Top::LinkItemComponent.new(path: root_path, title: t("nouns.home"), icon_name: "house") %>
+    <%= render Navbars::Top::LinkItemComponent.new(path: "#", title: t("nouns.unreads"), icon_name: "rows") %>
+    <%= render Navbars::Top::LinkItemComponent.new(path: "#", title: t("nouns.notifications"), icon_name: "bell") %>
+  </div>
+
+  <div class="gap-6 navbar-end">
+    <%= render Navbars::Top::SearchComponent.new %>
+
+    <%= link_to "#" do %>
+      <%= image_tag "https://placehold.co/300x300", class: "w-8 h-8 rounded-full" %>
+    <% end %>
+  </div>
+</header>

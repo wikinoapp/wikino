@@ -11,6 +11,7 @@ ja:
     new_page: 新規ページ
     new_topic: 新規トピック
     next_page: 次のページ
+    notifications: 通知
     page_title: ページタイトル
     prev_page: 前のページ
     rss_feed: RSSフィード
@@ -21,3 +22,4 @@ ja:
     topic: トピック
     topics: トピック
     trash: ゴミ箱
+    unreads: 未読

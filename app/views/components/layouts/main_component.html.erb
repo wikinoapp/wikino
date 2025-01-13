@@ -1,21 +1,20 @@
-<div class="flex">
-  <div class="flex min-h-[100svh] w-full flex-col overflow-y-auto pb-[100px] sm:max-lg:w-[calc(100%-56px)] lg:w-[calc(100%-240px)]">
-    <div class="mx-auto w-full max-w-screen-lg flex-1">
-      <%= content %>
-
-      <% unless signed_in? %>
-        <div class="mt-4">
-          <%= render Footers::PublicComponent.new %>
-        </div>
-      <% end %>
-    </div>
+<div <%= tag.attributes(class: class_name) %>>
+  <div class="hidden lg:block sticky top-0 z-global-header">
+    <%= render Navbars::TopComponent.new(current_user:) %>
   </div>
 
-  <%# サイドバー内のドロップダウンがメインコンテンツより下にならないようにするため order-first を使用している %>
-  <%= render Sidebars::MainComponent.new(class_name: "order-first") %>
-</div>
+  <div class="flex flex-col gap-4">
+    <div class="mx-auto w-full max-w-screen-lg">
+      <%= content %>
+    </div>
 
-<div class="fixed bottom-0 left-1/2 z-50 flex translate-x-[-50%] flex-col gap-4 p-4">
-  <%= render Toasts::FlashComponent.new(flash:) %>
-  <%= render Navbars::BottomComponent.new %>
+    <% unless signed_in? %>
+      <%= render Footers::PublicComponent.new %>
+    <% end %>
+  </div>
+
+  <div class="fixed bottom-0 left-1/2 z-50 flex translate-x-[-50%] flex-col gap-4 p-4">
+    <%= render Toasts::FlashComponent.new(flash:) %>
+    <%= render Navbars::BottomComponent.new %>
+  </div>
 </div>

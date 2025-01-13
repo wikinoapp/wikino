@@ -55,6 +55,9 @@ module.exports = {
       rose: colors.rose,
       brand,
     },
+    zIndex: {
+      "global-header": 100,
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {
