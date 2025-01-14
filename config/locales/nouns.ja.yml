@@ -4,6 +4,7 @@ ja:
     backlinks: バックリンク
     dark: ダーク
     home: ホーム
+    inbox: 受信トレイ
     info: Info
     light: ライト
     links: リンク
@@ -11,10 +12,10 @@ ja:
     new_page: 新規ページ
     new_topic: 新規トピック
     next_page: 次のページ
-    notifications: 通知
     page_title: ページタイトル
     prev_page: 前のページ
     rss_feed: RSSフィード
+    search_or_create: 検索または作成
     sign_in: ログイン
     sign_out: ログアウト
     sign_up: ユーザ登録
@@ -22,4 +23,3 @@ ja:
     topic: トピック
     topics: トピック
     trash: ゴミ箱
-    unreads: 未読

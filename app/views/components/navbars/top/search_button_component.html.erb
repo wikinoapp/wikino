@@ -1,0 +1,16 @@
+<%= render Buttons::SearchComponent.new do %>
+  <div class="input rounded-full border-gray-400 bg-transparent w-full text-gray-200 transition duration-200 ease-in-out focus:border-gray-200 h-auto py-1">
+    <div class="flex items-center gap-2">
+      <%= render Basic::IconComponent.new(name: "magnifying-glass", size: "16px", class_name: "fill-gray-400") %>
+
+      <span class="text-gray-400 text-sm">
+        <%= t("nouns.search_or_create") %>...
+      </span>
+
+      <span class="border border-gray-500 rounded ml-20 px-1 text-gray-400 text-sm">
+        ⌘k
+      </span>
+    </div>
+  </div>
+<% end %>
+

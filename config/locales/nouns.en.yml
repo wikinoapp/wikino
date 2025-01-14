@@ -4,6 +4,7 @@ en:
     backlinks: Backlinks
     dark: Dark
     home: Home
+    inbox: Inbox
     info: Info
     light: Light
     links: Links
@@ -11,10 +12,10 @@ en:
     new_page: New page
     new_topic: New topic
     next_page: Next
-    notifications: Notifications
     page_title: Page title
     prev_page: Prev
     rss_feed: RSS feed
+    search_or_create: Search or create
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up
@@ -22,4 +23,3 @@ en:
     topic: Topic
     topics: Topics
     trash: Trash
-    unreads: Unreads
