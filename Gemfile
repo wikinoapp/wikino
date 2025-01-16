@@ -27,9 +27,12 @@ gem "puma"
 gem "pundit"
 gem "rack-cors"
 gem "rails-i18n"
+gem "sentry-rails"
+gem "sentry-ruby"
 gem "sequenced"
 gem "sorbet-runtime"
 gem "sorbet-struct-comparable"
+gem "stackprof" # Sentryで使っている
 gem "strong_migrations"
 gem "view_component"
 
