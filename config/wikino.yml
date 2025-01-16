@@ -11,3 +11,4 @@ shared:
     - example
     - me
     - self
+  sentry_dsn: <%= ENV["WIKINO_SENTRY_DSN"] %>

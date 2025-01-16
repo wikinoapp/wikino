@@ -370,6 +370,12 @@ GEM
     selma (0.4.9-aarch64-linux)
     selma (0.4.9-arm64-darwin)
     selma (0.4.9-x86_64-linux)
+    sentry-rails (5.22.1)
+      railties (>= 5.0)
+      sentry-ruby (~> 5.22.1)
+    sentry-ruby (5.22.1)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     sequenced (4.0.0)
       activerecord (>= 3.0)
       activesupport (>= 3.0)
@@ -390,6 +396,7 @@ GEM
       prism (>= 0.28.0)
       sorbet-static-and-runtime (>= 0.5.10187)
       thor (>= 0.19.2)
+    stackprof (0.2.27)
     standard (1.39.2)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -485,10 +492,13 @@ DEPENDENCIES
   rubocop-rails
   rubocop-rspec
   ruby-lsp
+  sentry-rails
+  sentry-ruby
   sequenced
   sorbet
   sorbet-runtime
   sorbet-struct-comparable
+  stackprof
   standard
   standard-rails
   standard-sorbet
