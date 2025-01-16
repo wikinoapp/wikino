@@ -4,14 +4,20 @@ def system!(*args)
   system(*args, exception: true)
 end
 
-puts "=== Prettierを実行中..."
-system!('git diff --name-only | grep -E "\.(erb|md|ts)$" | xargs yarn prettier --write')
+puts "=== 型を更新中..."
+system!("bin/rails sorbet:update")
+
+puts "\n=== Prettierを実行中..."
+system!("yarn prettier . --write")
 
 puts "\n=== ERB Lintを実行中..."
-system!('git diff --name-only | grep "\.erb$" | xargs bin/erb_lint')
+system!("bin/erb_lint --lint-all")
 
 puts "\n=== Standardを実行中..."
-system!('git diff --name-only | grep "\.rb$" | xargs bin/standardrb')
+system!("bin/standardrb")
 
 puts "\n=== Sorbetを実行中..."
 system!("bin/srb tc")
+
+puts "\n=== RSpecを実行中..."
+system!("bin/rspec")
