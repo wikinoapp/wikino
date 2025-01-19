@@ -60,7 +60,7 @@ module.exports = {
     // https://tailwindcss.com/docs/customizing-colors
     colors,
     zIndex: {
-      "global-header": 100,
+      "navbar": 100,
     },
   },
   plugins: [require("daisyui")],
