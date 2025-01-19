@@ -1,12 +1,11 @@
 <header
-  class="<%= class_names(
-    "bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200 ease-in-out",
+  class="<%= class_names("bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200 ease-in-out",
     class_name
   ) %>"
   data-controller="stuck"
 >
-  <div class="navbar mx-auto w-full max-w-screen-lg min-h-[auto] px-4 py-0">
-    <div class="gap-8 navbar-start">
+  <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
+    <div class="navbar-start gap-8">
       <%= link_to root_path, {
         class: "bg-gray-600 hover:bg-primary rounded-full h-10 w-10 flex items-center justify-center transition duration-200 ease-in-out"
       } do %>

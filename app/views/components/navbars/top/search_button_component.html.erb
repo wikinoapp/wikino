@@ -1,5 +1,5 @@
 <%= render Buttons::SearchComponent.new do %>
-  <div class="input rounded-full border-gray-600 bg-transparent w-full text-gray-600 transition duration-100 ease-in-out hover:border-gray-950 h-auto py-2 group">
+  <div class="group input h-auto w-full rounded-full border-gray-600 bg-transparent py-2 text-gray-600 transition duration-100 ease-in-out hover:border-gray-950">
     <div class="flex items-center gap-2">
       <%= render Basic::IconComponent.new(
         name: "magnifying-glass",
@@ -7,11 +7,11 @@
         class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-100 ease-in-out"
       ) %>
 
-      <span class="text-gray-600 group-hover:text-gray-950 text-sm transition duration-100 ease-in-out">
+      <span class="text-sm text-gray-600 transition duration-100 ease-in-out group-hover:text-gray-950">
         <%= t("nouns.search_or_create") %>...
       </span>
 
-      <span class="border border-gray-600 group-hover:border-gray-950 rounded ml-20 px-1 text-sm transition duration-100 ease-in-out text-gray-600 group-hover:text-gray-950">
+      <span class="ml-20 rounded border border-gray-600 px-1 text-sm text-gray-600 transition duration-100 ease-in-out group-hover:border-gray-950 group-hover:text-gray-950">
         ⌘k
       </span>
     </div>
