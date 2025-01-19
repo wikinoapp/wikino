@@ -1,0 +1,12 @@
+<%= link_to root_path, {
+  class: class_names(
+    "bg-gray-600 hover:bg-primary rounded-lg h-10 w-10 flex items-center justify-center transition duration-200 ease-in-out",
+    class_name
+  )
+} do %>
+  <%= render Basic::IconComponent.new(
+    name: "logo",
+    size: "2rem",
+    class_name: "fill-primary-content transition duration-200 ease-in-out"
+  ) %>
+<% end %>

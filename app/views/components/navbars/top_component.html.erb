@@ -1,5 +1,37 @@
-<% if signed_in? %>
-  <%= render Navbars::Top::UserComponent.new(class_name:) %>
-<% else %>
-  <%= render Navbars::Top::VisitorComponent.new(class_name:) %>
-<% end %>
+<header
+  class="<%= class_names("bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200 ease-in-out",
+    class_name
+  ) %>"
+  data-controller="stuck"
+>
+  <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
+    <div class="navbar-start gap-8">
+      <%= render Links::BrandIconComponent.new%>
+
+      <% if signed_in? %>
+        <div class="flex gap-6">
+          <%= render Navbars::Top::LinkItemComponent.new(path: root_path, title: t("nouns.home"), icon_name: "house") %>
+          <%= render Navbars::Top::LinkItemComponent.new(path: "#", title: t("nouns.inbox"), icon_name: "tray") %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if signed_in? %>
+      <div class="navbar-center">
+        <%= render Navbars::Top::SearchButtonComponent.new %>
+      </div>
+    <% end %>
+
+    <div class="navbar-end">
+      <% if signed_in? %>
+        <div class="avatar">
+          <%= link_to "#", class: "w-10 rounded-full" do %>
+            <%= image_tag "https://shimba.co/img/shimbaco.jpg", class: "rounded-full" %>
+          <% end %>
+        </div>
+      <% else %>
+        <%= render Navbars::Top::LinkItemComponent.new(path: sign_in_path, title: t("nouns.sign_in"), icon_name: "sign-in") %>
+      <% end %>
+    </div>
+  </div>
+</header>

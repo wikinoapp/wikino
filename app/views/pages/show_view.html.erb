@@ -49,7 +49,9 @@
           <% end %>
         <% end %>
 
-        <%= render Dropdowns::PageActionsComponent.new(page:) %>
+        <% if signed_in? %>
+          <%= render Dropdowns::PageActionsComponent.new(page:) %>
+        <% end %>
       </div>
     </div>
 
