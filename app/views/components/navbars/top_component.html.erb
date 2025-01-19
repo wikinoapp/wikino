@@ -1,27 +1,37 @@
-<nav class="navbar">
-  <div class="flex-1">
-    <%= link_to root_path, class: "bg-brand-100 rounded-lg" do %>
-      <%= render Basic::IconComponent.new(name: "logo", size: "36px", class_name: "fill-black") %>
-    <% end %>
-  </div>
+<header
+  class="<%= class_names("bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200 ease-in-out",
+    class_name
+  ) %>"
+  data-controller="stuck"
+>
+  <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
+    <div class="navbar-start gap-8">
+      <%= render Links::BrandIconComponent.new %>
 
-  <div class="flex-none">
-    <ul class="flex gap-2">
       <% if signed_in? %>
-        <li>
-          <%= button_to t("nouns.sign_out"), session_path(space_identifier: Current.space!.identifier), {
-            method: :delete
-          } %>
-        </li>
-      <% else %>
-        <li>
-          <%= link_to t("nouns.sign_up"), sign_up_path, aria: {disabled: true}, class: "btn btn-disabled btn-ghost" %>
-        </li>
-
-        <li>
-          <%= link_to t("nouns.sign_in"), sign_in_path, class: "btn btn-ghost" %>
-        </li>
+        <div class="flex gap-6">
+          <%= render Navbars::Top::LinkItemComponent.new(path: root_path, title: t("nouns.home"), icon_name: "house") %>
+          <%= render Navbars::Top::LinkItemComponent.new(path: "#", title: t("nouns.inbox"), icon_name: "tray") %>
+        </div>
       <% end %>
-    </ul>
+    </div>
+
+    <% if signed_in? %>
+      <div class="navbar-center">
+        <%= render Navbars::Top::SearchButtonComponent.new %>
+      </div>
+    <% end %>
+
+    <div class="navbar-end">
+      <% if signed_in? %>
+        <div class="avatar">
+          <%= link_to "#", class: "w-10 rounded-full" do %>
+            <%= image_tag "https://shimba.co/img/shimbaco.jpg", class: "rounded-full" %>
+          <% end %>
+        </div>
+      <% else %>
+        <%= render Navbars::Top::LinkItemComponent.new(path: sign_in_path, title: t("nouns.sign_in"), icon_name: "sign-in") %>
+      <% end %>
+    </div>
   </div>
-</nav>
+</header>

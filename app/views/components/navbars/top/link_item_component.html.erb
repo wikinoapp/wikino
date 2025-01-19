@@ -1,0 +1,13 @@
+<%= link_to path, {
+  class: class_names("text-gray-600 hover:text-gray-950 text-sm transition duration-100 ease-in-out group", class_name)
+} do %>
+  <div class="flex items-center gap-2">
+    <%= render Basic::IconComponent.new(
+      name: icon_name,
+      size: "16px",
+      class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-100 ease-in-out"
+    ) %>
+
+    <%= title %>
+  </div>
+<% end %>

@@ -1,10 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Navbars
-  class TopComponent < ApplicationComponent
-    use_helpers :signed_in?
-
+module Links
+  class BrandIconComponent < ApplicationComponent
     sig { params(class_name: String).void }
     def initialize(class_name: "")
       @class_name = class_name

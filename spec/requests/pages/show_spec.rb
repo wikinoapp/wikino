@@ -8,9 +8,11 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     page = create(:page, space:, topic: public_topic, title: "公開されているページ")
 
     get "/s/#{space.identifier}/pages/#{page.number}"
+    page = Capybara.string(response.body)
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
+    expect(page).to have_no_content("ゴミ箱に入れる")
   end
 
   it "ログインしていない & 非公開トピックのページのとき、404を返すこと" do
