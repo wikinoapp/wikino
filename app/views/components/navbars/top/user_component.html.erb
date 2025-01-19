@@ -7,11 +7,13 @@
 >
   <div class="navbar mx-auto w-full max-w-screen-lg min-h-[auto] px-4 py-0">
     <div class="gap-8 navbar-start">
-      <%= link_to root_path do %>
+      <%= link_to root_path, {
+        class: "bg-gray-600 hover:bg-primary rounded-full h-10 w-10 flex items-center justify-center transition duration-200 ease-in-out"
+      } do %>
         <%= render Basic::IconComponent.new(
           name: "logo",
-          size: "2.5rem",
-          class_name: "fill-gray-600 hover:fill-gray-950 transition duration-200 ease-in-out"
+          size: "2rem",
+          class_name: "fill-primary-content transition duration-200 ease-in-out"
         ) %>
       <% end %>
 
