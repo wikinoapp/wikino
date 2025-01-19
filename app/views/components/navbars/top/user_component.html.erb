@@ -1,7 +1,14 @@
-<header class="<%= class_names("bg-base-200 drop-shadow min-h-full navbar py-2", class_name) %>">
+<header
+  class="<%= class_names("bg-base-200 data-[stuck]:drop-shadow-sm min-h-full navbar py-4 data-[stuck]:py-2 transition-all duration-200 ease-in-out", class_name) %>"
+  data-controller="stuck"
+>
   <div class="gap-12 navbar-start">
     <%= link_to root_path do %>
-      <%= render Basic::IconComponent.new(name: "logo", size: "2rem", class_name: "fill-white") %>
+      <%= render Basic::IconComponent.new(
+        name: "logo",
+        size: "2rem",
+        class_name: "fill-gray-600 hover:fill-gray-950 transition duration-200 ease-in-out"
+      ) %>
     <% end %>
 
     <div class="flex gap-6">
@@ -15,8 +22,10 @@
   </div>
 
   <div class="navbar-end">
-    <%= link_to "#" do %>
-      <%= image_tag "https://placehold.co/300x300", class: "w-8 h-8 rounded-full" %>
-    <% end %>
+    <div class="avatar">
+      <%= link_to "#", class: "ring-gray-600 hover:ring-gray-950 ring-offset-base-100 w-8 rounded-full ring-1 ring-offset-2 transition duration-100 ease-in-out" do %>
+        <%= image_tag "https://shimba.co/img/shimbaco.jpg", class: "rounded-full" %>
+      <% end %>
+    </div>
   </div>
 </header>

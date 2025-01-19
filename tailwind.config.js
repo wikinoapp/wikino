@@ -1,4 +1,4 @@
-const colors = require("tailwindcss/colors");
+const tailwindColors = require("tailwindcss/colors");
 const daisyuiThemes = require("daisyui/src/theming/themes");
 
 const brand = {
@@ -13,6 +13,35 @@ const brand = {
   800: "#17044a",
   900: "#05001a",
 };
+
+const colors = {
+  inherit: tailwindColors.inherit,
+  current: tailwindColors.current,
+  transparent: tailwindColors.transparent,
+  black: tailwindColors.black,
+  white: tailwindColors.white,
+  gray: tailwindColors.stone, // 統一感を出すため、灰色はStoneだけを使う
+  red: tailwindColors.red,
+  orange: tailwindColors.orange,
+  amber: tailwindColors.amber,
+  yellow: tailwindColors.yellow,
+  lime: tailwindColors.lime,
+  green: tailwindColors.green,
+  emerald: tailwindColors.emerald,
+  teal: tailwindColors.teal,
+  cyan: tailwindColors.cyan,
+  sky: tailwindColors.sky,
+  blue: tailwindColors.blue,
+  indigo: tailwindColors.indigo,
+  violet: tailwindColors.violet,
+  purple: tailwindColors.purple,
+  fuchsia: tailwindColors.fuchsia,
+  pink: tailwindColors.pink,
+  rose: tailwindColors.rose,
+  brand,
+};
+
+const pageBgColor = "#e6dfdd";
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -29,32 +58,7 @@ module.exports = {
   ],
   theme: {
     // https://tailwindcss.com/docs/customizing-colors
-    colors: {
-      inherit: colors.inherit,
-      current: colors.current,
-      transparent: colors.transparent,
-      black: colors.black,
-      white: colors.white,
-      gray: colors.slate, // 統一感を出すため、灰色はSlateだけを使う
-      red: colors.red,
-      orange: colors.orange,
-      amber: colors.amber,
-      yellow: colors.yellow,
-      lime: colors.lime,
-      green: colors.green,
-      emerald: colors.emerald,
-      teal: colors.teal,
-      cyan: colors.cyan,
-      sky: colors.sky,
-      blue: colors.blue,
-      indigo: colors.indigo,
-      violet: colors.violet,
-      purple: colors.purple,
-      fuchsia: colors.fuchsia,
-      pink: colors.pink,
-      rose: colors.rose,
-      brand,
-    },
+    colors,
     zIndex: {
       "global-header": 100,
     },
@@ -65,14 +69,14 @@ module.exports = {
       {
         light: {
           ...daisyuiThemes["light"],
-          "base-100": brand[50], // ページ全体の背景色
-          "base-200": colors.slate[800], // サイドバーの背景色
-          "base-300": colors.white, // カードの背景色
-          "base-content": colors.slate[950], // テキストの色
-          "primary-content": colors.slate[100],
-          primary: brand[500],
-          "secondary-content": colors.slate[100],
-          secondary: colors.slate[800],
+          "base-100": pageBgColor, // ページ全体の背景色
+          "base-200": pageBgColor, // ナビゲーションバーの背景色
+          "base-300": colors.gray[100], // カードの背景色
+          "base-content": colors.gray[950], // テキストの色
+          "primary-content": colors.gray[100],
+          primary: colors.gray[950],
+          "secondary-content": colors.gray[950],
+          secondary: pageBgColor,
         },
       },
     ],

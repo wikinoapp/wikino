@@ -3,7 +3,7 @@
 
 module Navbars
   module Top
-    class GuestComponent < ApplicationComponent
+    class VisitorComponent < ApplicationComponent
       sig { params(class_name: String).void }
       def initialize(class_name: "")
         @class_name = class_name
