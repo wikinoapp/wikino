@@ -39,7 +39,7 @@
             <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
           <% end %>
 
-          <%= f.button class: "btn btn-secondary no-animation rounded-full w-fit", type: :submit do %>
+          <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
             <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
             <%= t("verbs.submit") %>
