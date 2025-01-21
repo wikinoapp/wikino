@@ -179,17 +179,15 @@ CREATE TABLE public.schema_migrations (
 
 
 --
--- Name: sessions; Type: TABLE; Schema: public; Owner: -
+-- Name: space_memberships; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.sessions (
+CREATE TABLE public.space_memberships (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    token character varying NOT NULL,
-    ip_address character varying NOT NULL,
-    user_agent character varying NOT NULL,
-    signed_in_at timestamp(6) without time zone NOT NULL,
+    member_id uuid NOT NULL,
+    role integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -256,15 +254,30 @@ CREATE TABLE public.user_passwords (
 
 
 --
+-- Name: user_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_sessions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    token character varying NOT NULL,
+    ip_address character varying NOT NULL,
+    user_agent character varying NOT NULL,
+    signed_in_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
     email character varying NOT NULL,
     atname public.citext NOT NULL,
-    role integer NOT NULL,
     name character varying NOT NULL,
     description character varying NOT NULL,
     locale integer NOT NULL,
@@ -333,11 +346,19 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: user_sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sessions
+ALTER TABLE ONLY public.user_sessions
     ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: space_memberships space_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.space_memberships
+    ADD CONSTRAINT space_memberships_pkey PRIMARY KEY (id);
 
 
 --
@@ -563,24 +584,24 @@ CREATE UNIQUE INDEX index_pages_on_topic_id_and_title ON public.pages USING btre
 
 
 --
--- Name: index_sessions_on_space_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_space_memberships_on_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_sessions_on_space_id ON public.sessions USING btree (space_id);
-
-
---
--- Name: index_sessions_on_token; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_sessions_on_token ON public.sessions USING btree (token);
+CREATE INDEX index_space_memberships_on_member_id ON public.space_memberships USING btree (member_id);
 
 
 --
--- Name: index_sessions_on_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_space_memberships_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_sessions_on_user_id ON public.sessions USING btree (user_id);
+CREATE INDEX index_space_memberships_on_space_id ON public.space_memberships USING btree (space_id);
+
+
+--
+-- Name: index_space_memberships_on_space_id_and_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_space_memberships_on_space_id_and_member_id ON public.space_memberships USING btree (space_id, member_id);
 
 
 --
@@ -682,38 +703,31 @@ CREATE UNIQUE INDEX index_user_passwords_on_user_id ON public.user_passwords USI
 
 
 --
+-- Name: index_user_sessions_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_sessions_on_space_id ON public.user_sessions USING btree (space_id);
+
+
+--
+-- Name: index_user_sessions_on_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_user_sessions_on_token ON public.user_sessions USING btree (token);
+
+
+--
+-- Name: index_user_sessions_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_sessions_on_user_id ON public.user_sessions USING btree (user_id);
+
+
+--
 -- Name: index_users_on_discarded_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_at);
-
-
---
--- Name: index_users_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_users_on_space_id ON public.users USING btree (space_id);
-
-
---
--- Name: index_users_on_space_id_and_atname; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_users_on_space_id_and_atname ON public.users USING btree (space_id, atname);
-
-
---
--- Name: index_users_on_space_id_and_discarded_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_users_on_space_id_and_discarded_at ON public.users USING btree (space_id, discarded_at);
-
-
---
--- Name: index_users_on_space_id_and_email; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_users_on_space_id_and_email ON public.users USING btree (space_id, email);
 
 
 --
@@ -725,10 +739,10 @@ ALTER TABLE ONLY public.user_passwords
 
 
 --
--- Name: sessions fk_rails_0f63041bba; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: user_sessions fk_rails_0f63041bba; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sessions
+ALTER TABLE ONLY public.user_sessions
     ADD CONSTRAINT fk_rails_0f63041bba FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
@@ -746,6 +760,14 @@ ALTER TABLE ONLY public.topic_memberships
 
 ALTER TABLE ONLY public.page_editorships
     ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (editor_id) REFERENCES public.users(id);
+
+
+--
+-- Name: space_memberships fk_rails_25a7edb70f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.space_memberships
+    ADD CONSTRAINT fk_rails_25a7edb70f FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -789,10 +811,10 @@ ALTER TABLE ONLY public.page_revisions
 
 
 --
--- Name: sessions fk_rails_758836b4f0; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: user_sessions fk_rails_758836b4f0; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sessions
+ALTER TABLE ONLY public.user_sessions
     ADD CONSTRAINT fk_rails_758836b4f0 FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
@@ -829,14 +851,6 @@ ALTER TABLE ONLY public.draft_pages
 
 
 --
--- Name: users fk_rails_96e4c019e9; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT fk_rails_96e4c019e9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
-
-
---
 -- Name: topics fk_rails_9b3ff1bd6e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -858,6 +872,14 @@ ALTER TABLE ONLY public.draft_pages
 
 ALTER TABLE ONLY public.draft_pages
     ADD CONSTRAINT fk_rails_b87bfd2937 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+
+--
+-- Name: space_memberships fk_rails_c154e0b922; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.space_memberships
+    ADD CONSTRAINT fk_rails_c154e0b922 FOREIGN KEY (member_id) REFERENCES public.users(id);
 
 
 --
@@ -891,6 +913,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250119163728'),
 ('20241220175102'),
 ('20241201145213'),
 ('20241104061506'),
