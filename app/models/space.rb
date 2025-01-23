@@ -15,7 +15,11 @@ class Space < ApplicationRecord
     Plan::Large.serialize => 2
   }, prefix: true
 
+  has_many :draft_pages, dependent: :restrict_with_exception
+  has_many :topic_memberships, dependent: :restrict_with_exception
   has_many :topics, dependent: :restrict_with_exception
+  has_many :page_editorships, dependent: :restrict_with_exception
+  has_many :page_revisions, dependent: :restrict_with_exception
   has_many :pages, dependent: :restrict_with_exception
   has_many :users, dependent: :restrict_with_exception
 

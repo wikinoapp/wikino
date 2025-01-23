@@ -20,7 +20,8 @@ class User < ApplicationRecord
   has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :topics, through: :topic_memberships
   has_many :sessions, dependent: :restrict_with_exception
-  has_many :space_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
+  has_many :space_members, dependent: :restrict_with_exception
+  has_many :spaces, through: :space_members
   has_one :user_password, dependent: :restrict_with_exception
 
   delegate :identifier, :name, to: :space, prefix: :space

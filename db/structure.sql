@@ -274,6 +274,7 @@ CREATE TABLE public.user_sessions (
 
 CREATE TABLE public.users (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
     email character varying NOT NULL,
     atname public.citext NOT NULL,
     name character varying NOT NULL,
@@ -708,6 +709,34 @@ CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_
 
 
 --
+-- Name: index_users_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_space_id ON public.users USING btree (space_id);
+
+
+--
+-- Name: index_users_on_space_id_and_atname; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_space_id_and_atname ON public.users USING btree (space_id, atname);
+
+
+--
+-- Name: index_users_on_space_id_and_discarded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_space_id_and_discarded_at ON public.users USING btree (space_id, discarded_at);
+
+
+--
+-- Name: index_users_on_space_id_and_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_space_id_and_email ON public.users USING btree (space_id, email);
+
+
+--
 -- Name: topic_memberships fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -777,6 +806,14 @@ ALTER TABLE ONLY public.pages
 
 ALTER TABLE ONLY public.draft_pages
     ADD CONSTRAINT fk_rails_8e68719216 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
+-- Name: users fk_rails_96e4c019e9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT fk_rails_96e4c019e9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --

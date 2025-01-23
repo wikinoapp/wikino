@@ -6,7 +6,6 @@ class UpdateUserAndSpaceRelationship < ActiveRecord::Migration[7.1]
 
   def change
     StrongMigrations.disable_check(:remove_column)
-    remove_column :users, :space_id, :uuid
     remove_column :users, :role, :integer
 
     create_table :space_members, id: false do |t|
