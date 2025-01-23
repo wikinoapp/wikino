@@ -26,7 +26,6 @@ module Accounts
       end
 
       account_result = CreateAccountUseCase.new.call(
-        space_identifier: form.space_identifier.not_nil!,
         email: form.email.not_nil!,
         atname: form.atname.not_nil!,
         locale: UserLocale.deserialize(form.locale),
@@ -49,7 +48,7 @@ module Accounts
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:account_form), ActionController::Parameters)
-        .permit(:space_identifier, :password)
+        .permit(:atname, :password)
     end
   end
 end

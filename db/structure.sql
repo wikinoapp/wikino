@@ -274,7 +274,7 @@ CREATE TABLE public.user_sessions (
 
 CREATE TABLE public.users (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
+    space_id uuid,
     email character varying NOT NULL,
     atname public.citext NOT NULL,
     name character varying NOT NULL,

@@ -5,7 +5,7 @@ class User < ApplicationRecord
   include Discard::Model
 
   ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
-  ATNAME_MIN_LENGTH = 2
+  ATNAME_MIN_LENGTH = 1
   ATNAME_MAX_LENGTH = 20
 
   enum :locale, {
@@ -40,14 +40,13 @@ class User < ApplicationRecord
     user = create!(
       email:,
       atname:,
-      role: UserRole::Owner.serialize,
       name: "",
       description: "",
       locale: locale.serialize,
       time_zone:,
       joined_at: current_time
     )
-    user.create_user_password!(space: user.space, password:)
+    user.create_user_password!(password:)
 
     user
   end

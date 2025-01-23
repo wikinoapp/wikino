@@ -2,6 +2,7 @@ ja:
   forms:
     attributes:
       account_form:
+        atname: アットネーム
         email: メールアドレス
         password: パスワード
         space_identifier: 識別子

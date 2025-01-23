@@ -2,6 +2,7 @@ en:
   forms:
     attributes:
       account_form:
+        atname: Atname
         email: Email
         password: Password
         space_identifier: Identifier

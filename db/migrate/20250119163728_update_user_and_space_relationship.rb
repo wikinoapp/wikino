@@ -8,6 +8,8 @@ class UpdateUserAndSpaceRelationship < ActiveRecord::Migration[7.1]
     StrongMigrations.disable_check(:remove_column)
     remove_column :users, :role, :integer
 
+    change_column_null :users, :space_id, true
+
     create_table :space_members, id: false do |t|
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, foreign_key: true, null: false, type: :uuid
