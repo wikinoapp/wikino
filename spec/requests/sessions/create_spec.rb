@@ -22,26 +22,6 @@ RSpec.describe "POST /sessions", type: :request do
     expect(UserSession.count).to eq(1)
   end
 
-  it "ログインしている & `skip_no_authentication` が付与されているときはログインできること" do
-    user = create(:user, :with_password)
-    sign_in(user:)
-
-    # ログインしているのでセッションは1つ
-    expect(UserSession.count).to eq(1)
-
-    post("/user_sessions?skip_no_authentication=true", params: {
-      user_session_form: {
-        email: user.email,
-        password: "passw0rd"
-      }
-    })
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/")
-
-    # もう一度ログインし直すのでセッションは2つになるはず
-    expect(UserSession.count).to eq(2)
-  end
-
   it "ログインしていないときはログインできること" do
     # ログインしていないのでセッションはまだ無い
     expect(UserSession.count).to eq(0)

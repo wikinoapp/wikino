@@ -45,8 +45,6 @@ module ControllerConcerns
 
     sig(:final) { returns(T.untyped) }
     def require_no_authentication
-      return if params[:skip_no_authentication].present?
-
       restore_user_session
 
       if signed_in?
@@ -68,13 +66,6 @@ module ControllerConcerns
     sig(:final) { returns(T.nilable(String)) }
     private def user_session_token
       cookies.signed[UserSession::TOKENS_COOKIE_KEY]
-    end
-
-    sig(:final) { returns(T::Array[String]) }
-    private def cookie_user_ids
-      return [] unless session_tokens
-
-      UserSession.where(token: session_tokens.not_nil!.values).pluck(:user_id)
     end
 
     sig(:final) { returns(T::Boolean) }

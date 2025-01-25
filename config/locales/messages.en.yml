@@ -5,7 +5,6 @@ en:
       no_links: No Links
       unexpected_error: Sorry, something went wrong. Please try again.
     accounts:
-      account_switched_successfully: Account switched successfully.
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>
         Only alphanumeric characters and underscores can be used.<br>

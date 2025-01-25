@@ -15,9 +15,7 @@
       </h1>
 
       <p class="mt-4 hidden">
-        <%= t("messages.sign_in.dont_have_an_account_html",
-          sign_up_path: params[:skip_no_authentication].nil? ? sign_up_path : sign_up_path(skip_no_authentication: true)
-        ) %>
+        <%= t("messages.sign_in.dont_have_an_account_html", sign_up_path:) %>
       </p>
     </div>
 
@@ -26,7 +24,7 @@
         <%= form_with(
           class: "flex flex-col gap-4",
           model: @form,
-          url: params[:skip_no_authentication].nil? ? user_session_list_path : user_session_list_path(skip_no_authentication: true)
+          url: user_session_list_path
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
