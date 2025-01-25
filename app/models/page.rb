@@ -81,11 +81,7 @@ class Page < ApplicationRecord
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
 
-    if Current.user
-      pages
-    else
-      pages.joins(:topic).merge(Topic.visibility_public)
-    end
+    pages.joins(:topic).merge(Current.viewer.viewable_topics)
   end
 
   sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }

@@ -3,8 +3,6 @@
 
 module Layouts
   class MainComponent < ApplicationComponent
-    use_helpers :signed_in?
-
     sig { params(class_name: String).void }
     def initialize(class_name: "")
       @class_name = class_name

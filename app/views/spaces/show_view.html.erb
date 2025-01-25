@@ -8,7 +8,7 @@
         <%= t("nouns.home") %>
       </h1>
 
-      <% unless signed_in? %>
+      <% unless Current.viewer.signed_in? %>
         <%= link_to atom_path(Current.space!.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
           <%= render Basic::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 

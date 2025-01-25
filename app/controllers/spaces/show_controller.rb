@@ -32,7 +32,7 @@ module Spaces
     private def viewable_pages
       pages = Current.space!.pages.active.joins(:topic)
 
-      if signed_in? && Current.space! == Current.user!.space
+      if Current.viewer.signed_in? && Current.space! == Current.user!.space
         pages.merge(Current.user!.topics)
       else
         pages.merge(Topic.visibility_public)

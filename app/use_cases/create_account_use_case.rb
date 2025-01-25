@@ -10,7 +10,7 @@ class CreateAccountUseCase < ApplicationUseCase
     params(
       email: String,
       atname: String,
-      locale: UserLocale,
+      locale: ViewerLocale,
       password: String,
       time_zone: String
     ).returns(Result)

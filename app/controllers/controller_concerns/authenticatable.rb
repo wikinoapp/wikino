@@ -6,13 +6,9 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    included do
-      helper_method :signed_in?
-    end
-
     sig(:final) { params(user_session: UserSession).returns(T::Boolean) }
     def sign_in(user_session)
-      Current.user = user_session.user
+      Current.viewer = user_session.user
       store_user_session_token(token: user_session.token)
 
       true
@@ -33,11 +29,6 @@ module ControllerConcerns
       true
     end
 
-    sig(:final) { returns(T::Boolean) }
-    def signed_in?
-      Current.user.present?
-    end
-
     sig(:final) { void }
     def require_authentication
       restore_user_session || request_authentication
@@ -47,7 +38,7 @@ module ControllerConcerns
     def require_no_authentication
       restore_user_session
 
-      if signed_in?
+      if Current.viewer.signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
         redirect_to root_path
       end
@@ -70,14 +61,12 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     private def restore_user_session
-      return false unless user_session_token
-
-      user_session = UserSession.find_by(token: user_session_token)
-      return false unless user_session
-
-      sign_in(user_session)
-
-      true
+      if user_session_token && (user_session = UserSession.find_by(token: user_session_token))
+        sign_in(user_session)
+      else
+        Current.viewer = Visitor.new
+        true
+      end
     end
 
     sig(:final) { void }

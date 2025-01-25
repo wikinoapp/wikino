@@ -16,7 +16,7 @@ module JoinedTopics
 
     sig { returns(T.untyped) }
     def call
-      @topics = if signed_in? && Current.space! == Current.user!.space
+      @topics = if Current.viewer.signed_in? && Current.space! == Current.user!.space
         T.let(Current.user!.topics.kept, T.nilable(Topic::PrivateRelation))
       else
         T.let(Current.space!.topics.kept.visibility_public, T.nilable(Topic::PrivateRelation))

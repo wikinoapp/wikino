@@ -8,7 +8,7 @@
       <%= content %>
     </div>
 
-    <% unless signed_in? %>
+    <% unless Current.viewer.signed_in? %>
       <%= render Footers::PublicComponent.new %>
     <% end %>
   </div>

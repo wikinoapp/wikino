@@ -6,7 +6,7 @@ class CreateEmailConfirmationUseCase < ApplicationUseCase
     const :email_confirmation, EmailConfirmation
   end
 
-  sig { params(email: String, event: EmailConfirmationEvent, locale: UserLocale).returns(Result) }
+  sig { params(email: String, event: EmailConfirmationEvent, locale: ViewerLocale).returns(Result) }
   def call(email:, event:, locale:)
     current_time = Time.current
     email_confirmation = EmailConfirmation.new(

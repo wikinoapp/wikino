@@ -3,8 +3,6 @@
 
 module Spaces
   class ShowView < ApplicationView
-    use_helpers :signed_in?
-
     sig { params(pinned_pages: Page::PrivateAssociationRelation, page_connection: PageConnection).void }
     def initialize(pinned_pages:, page_connection:)
       @pinned_pages = pinned_pages

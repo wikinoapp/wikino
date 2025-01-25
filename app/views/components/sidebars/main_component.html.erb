@@ -5,7 +5,7 @@
         <%= render Basic::IconComponent.new(name: "logo", size: "36px", class_name: "fill-white") %>
       <% end %>
 
-      <% if signed_in? %>
+      <% if Current.viewer.signed_in? %>
         <%= render Dropdowns::AccountSwitchComponent.new %>
       <% else %>
         <div class="text-sm font-bold text-gray-300">
@@ -15,7 +15,7 @@
     </div>
 
     <div class="flex flex-col gap-4 overflow-y-auto">
-      <% if signed_in? %>
+      <% if Current.viewer.signed_in? %>
         <div class="px-2">
           <input
             autocomplete="off"
@@ -61,7 +61,7 @@
             src="<%= joined_topic_list_path(Current.space!.identifier) %>"
           ></turbo-frame>
 
-          <% if signed_in? %>
+          <% if Current.viewer.signed_in? %>
             <%= link_to new_topic_path(Current.space!.identifier), {
               class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full"
             } do %>
@@ -73,12 +73,12 @@
         </div>
       </div>
 
-      <% if signed_in? %>
+      <% if Current.viewer.signed_in? %>
         <hr class="border-gray-600">
       <% end %>
 
       <ul class="flex flex-col gap-4">
-        <% if signed_in? %>
+        <% if Current.viewer.signed_in? %>
           <li>
             <%= button_to session_path(space_identifier: Current.space!.identifier), {
               class: "text-gray-300 flex gap-2 hover:bg-gray-800 hover:rounded hover:text-gray-200 items-center p-2 w-full",

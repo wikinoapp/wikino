@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UserLocale < T::Enum
+class ViewerLocale < T::Enum
   enums do
     En = new
     Ja = new

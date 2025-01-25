@@ -4,13 +4,15 @@
 class User < ApplicationRecord
   include Discard::Model
 
+  include ModelConcerns::Viewable
+
   ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
   ATNAME_MIN_LENGTH = 1
   ATNAME_MAX_LENGTH = 20
 
   enum :locale, {
-    UserLocale::En.serialize => 0,
-    UserLocale::Ja.serialize => 1
+    ViewerLocale::En.serialize => 0,
+    ViewerLocale::Ja.serialize => 1
   }, prefix: true
 
   belongs_to :space, optional: true
@@ -31,7 +33,7 @@ class User < ApplicationRecord
       email: String,
       atname: String,
       password: String,
-      locale: UserLocale,
+      locale: ViewerLocale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(User)
@@ -51,9 +53,14 @@ class User < ApplicationRecord
     user
   end
 
-  sig { returns(UserLocale) }
-  def deserialized_locale
-    UserLocale.deserialize(locale)
+  sig { override.returns(T::Boolean) }
+  def signed_in?
+    true
+  end
+
+  sig { override.returns(ViewerLocale) }
+  def locale
+    ViewerLocale.deserialize(read_attribute(:locale))
   end
 
   sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }
@@ -61,14 +68,12 @@ class User < ApplicationRecord
     page.new_record? ? pages : pages.where.not(id: page.id)
   end
 
-  sig { returns(Topic::PrivateAssociationRelation) }
+  sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
-    space
-      .not_nil!
-      .topics
+    Topic
       .left_joins(:memberships)
       .merge(
-        space.not_nil!.topics.public_or_private.or(
+        Topic.visibility_public.or(
           TopicMembership.where(member: self)
         )
       )
@@ -89,6 +94,12 @@ class User < ApplicationRecord
     space.not_nil!.pages.joins(:editorships).merge(
       page_editorships.order(PageEditorship.arel_table[:last_page_modified_at].desc)
     )
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_view_page?(page:)
+    page.topic.not_nil!.visibility_public? ||
+      space_members.where(space: page.space).active.exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }

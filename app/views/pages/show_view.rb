@@ -3,7 +3,7 @@
 
 module Pages
   class ShowView < ApplicationView
-    use_helpers :policy, :signed_in?
+    use_helpers :policy
 
     sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
     def initialize(page:, link_collection:, backlink_collection:)

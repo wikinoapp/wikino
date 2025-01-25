@@ -3,14 +3,6 @@
 
 class PagePolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
-  def show?
-    return true if user.nil? && T.cast(record, Page).topic.not_nil!.visibility_public?
-    return false if user.nil?
-
-    user.not_nil!.role_owner?
-  end
-
-  sig { returns(T::Boolean) }
   def create?
     user&.role_owner? == true ||
       user&.joined_topic?(topic: T.cast(record, Page).topic.not_nil!) == true
