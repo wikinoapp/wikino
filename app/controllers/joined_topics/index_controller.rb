@@ -12,7 +12,7 @@ module JoinedTopics
 
     around_action :set_locale
     before_action :set_current_space
-    before_action :restore_session
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call

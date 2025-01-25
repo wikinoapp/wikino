@@ -13,7 +13,7 @@
 class Current < ActiveSupport::CurrentAttributes
   extend T::Sig
 
-  attribute :space, :user
+  attribute :user
 
   resets do
     Time.zone = nil
@@ -28,10 +28,5 @@ class Current < ActiveSupport::CurrentAttributes
   T::Sig::WithoutRuntime.sig { returns(User) }
   def user!
     user.not_nil!
-  end
-
-  T::Sig::WithoutRuntime.sig { returns(Space) }
-  def space!
-    space.not_nil!
   end
 end

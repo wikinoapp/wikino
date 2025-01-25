@@ -7,21 +7,19 @@ RSpec.describe "POST /sessions", type: :request do
     sign_in(user:)
 
     # ログインしているのでセッションは1つ
-    expect(Session.count).to eq(1)
+    expect(UserSession.count).to eq(1)
 
-    post("/sessions", params: {
-      session_form: {
-        space_identifier: user.space.identifier,
+    post("/user_sessions", params: {
+      user_session_form: {
         email: user.email,
         password: "passw0rd"
       }
     })
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/")
 
     # ログインしているのでセッションは増えないはず
-    expect(Session.count).to eq(1)
+    expect(UserSession.count).to eq(1)
   end
 
   it "ログインしている & `skip_no_authentication` が付与されているときはログインできること" do
@@ -29,53 +27,48 @@ RSpec.describe "POST /sessions", type: :request do
     sign_in(user:)
 
     # ログインしているのでセッションは1つ
-    expect(Session.count).to eq(1)
+    expect(UserSession.count).to eq(1)
 
-    post("/sessions?skip_no_authentication=true", params: {
-      session_form: {
-        space_identifier: user.space.identifier,
+    post("/user_sessions?skip_no_authentication=true", params: {
+      user_session_form: {
         email: user.email,
         password: "passw0rd"
       }
     })
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/")
 
     # もう一度ログインし直すのでセッションは2つになるはず
-    expect(Session.count).to eq(2)
+    expect(UserSession.count).to eq(2)
   end
 
   it "ログインしていないときはログインできること" do
     # ログインしていないのでセッションはまだ無い
-    expect(Session.count).to eq(0)
+    expect(UserSession.count).to eq(0)
 
     user = create(:user, :with_password)
 
-    post("/sessions", params: {
-      session_form: {
-        space_identifier: user.space.identifier,
+    post("/user_sessions", params: {
+      user_session_form: {
         email: user.email,
         password: "passw0rd"
       }
     })
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/")
 
     # ログインしたのでセッションが1つ生まれるはず
-    expect(Session.count).to eq(1)
+    expect(UserSession.count).to eq(1)
   end
 
   it "入力値が間違っているときはログインできないこと" do
     # ログインしていないのでセッションはまだ無い
-    expect(Session.count).to eq(0)
+    expect(UserSession.count).to eq(0)
 
     user = create(:user, :with_password)
 
-    post("/sessions", params: {
-      session_form: {
-        space_identifier: user.space.identifier,
+    post("/user_sessions", params: {
+      user_session_form: {
         email: user.email,
         password: "password" # パスワードを間違えている
       }
@@ -84,6 +77,6 @@ RSpec.describe "POST /sessions", type: :request do
     expect(response.body).to include("ログインに失敗しました")
 
     # ログインに失敗したのでセッションは作られていないはず
-    expect(Session.count).to eq(0)
+    expect(UserSession.count).to eq(0)
   end
 end

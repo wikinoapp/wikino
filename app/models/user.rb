@@ -13,15 +13,15 @@ class User < ApplicationRecord
     UserLocale::Ja.serialize => 1
   }, prefix: true
 
-  belongs_to :space
+  belongs_to :space, optional: true
   has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :pages, through: :page_editorships
   has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :topics, through: :topic_memberships
-  has_many :sessions, dependent: :restrict_with_exception
   has_many :space_members, dependent: :restrict_with_exception
   has_many :spaces, through: :space_members
+  has_many :user_sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
   delegate :identifier, :name, to: :space, prefix: :space

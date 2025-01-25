@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateSessionUseCase < ApplicationUseCase
+class CreateUserSessionUseCase < ApplicationUseCase
   class Result < T::Struct
-    const :session, Session
+    const :user_session, UserSession
   end
 
   sig do
@@ -14,10 +14,10 @@ class CreateSessionUseCase < ApplicationUseCase
     ).returns(Result)
   end
   def call(user:, ip_address:, user_agent:)
-    session = ActiveRecord::Base.transaction do
-      user.sessions.start!(space: user.space, ip_address:, user_agent:)
+    user_session = ActiveRecord::Base.transaction do
+      user.user_sessions.start!(ip_address:, user_agent:)
     end
 
-    Result.new(session:)
+    Result.new(user_session:)
   end
 end

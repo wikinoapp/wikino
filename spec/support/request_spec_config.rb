@@ -5,14 +5,17 @@ module RequestHelpers
   extend T::Sig
 
   def sign_in(user:, password: "passw0rd")
-    space_identifier = user.space.identifier
-    email = user.email
     post(
-      session_list_path(skip_no_authentication: true),
-      params: {session_form: {space_identifier:, email:, password:}}
+      user_session_list_path(skip_no_authentication: true),
+      params: {
+        user_session_form: {
+          email: user.email,
+          password:
+        }
+      }
     )
 
-    expect(cookies[Session::TOKENS_COOKIE_KEY]).to be_present
+    expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
   end
 end
 

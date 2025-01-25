@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 class DestroySessionUseCase < ApplicationUseCase
-  sig { params(session_token: String).void }
-  def call(session_token:)
-    Session.find_by(token: session_token)&.destroy!
+  sig { params(user_session_token: String).void }
+  def call(user_session_token:)
+    UserSession.find_by(token: user_session_token)&.destroy!
 
     nil
   end

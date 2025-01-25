@@ -33,13 +33,13 @@ module Accounts
         time_zone: form.time_zone.not_nil!
       )
 
-      session_result = CreateSessionUseCase.new.call(
+      user_session_result = CreateUserSessionUseCase.new.call(
         user: account_result.user,
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       )
 
-      sign_in(session_result.session)
+      sign_in(user_session_result.user_session)
 
       flash[:notice] = t("messages.accounts.signed_up_successfully")
       redirect_to after_authentication_url

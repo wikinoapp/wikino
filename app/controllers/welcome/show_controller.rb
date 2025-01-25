@@ -7,7 +7,7 @@ module Welcome
     include ControllerConcerns::Localizable
 
     around_action :set_locale
-    before_action :restore_session
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call

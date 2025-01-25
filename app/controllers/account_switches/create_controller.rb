@@ -16,7 +16,7 @@ module AccountSwitches
       params[:user_id].in?(cookie_user_ids) || raise(ActionController::RoutingError, "Not Found")
 
       user = User.kept.find(params[:user_id])
-      result = CreateSessionUseCase.new.call(
+      result = CreateUserSessionUseCase.new.call(
         user:,
         ip_address: original_remote_ip,
         user_agent: request.user_agent

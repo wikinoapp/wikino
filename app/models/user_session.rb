@@ -1,25 +1,22 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Session < ApplicationRecord
-  TOKENS_COOKIE_KEY = :session_tokens
+class UserSession < ApplicationRecord
+  TOKENS_COOKIE_KEY = :user_session_tokens
 
   has_secure_token
 
-  belongs_to :space
   belongs_to :user
 
   sig do
     params(
-      space: Space,
       ip_address: T.nilable(String),
       user_agent: T.nilable(String),
       signed_in_at: T.any(ActiveSupport::TimeWithZone, Time)
-    ).returns(Session)
+    ).returns(UserSession)
   end
-  def self.start!(space:, ip_address:, user_agent:, signed_in_at: Time.current)
+  def self.start!(ip_address:, user_agent:, signed_in_at: Time.current)
     create!(
-      space:,
       ip_address: ip_address || "",
       user_agent: user_agent || "",
       signed_in_at:

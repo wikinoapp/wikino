@@ -8,6 +8,5 @@ class UserPassword < ApplicationRecord
 
   has_secure_password
 
-  belongs_to :space
   belongs_to :user
 end
