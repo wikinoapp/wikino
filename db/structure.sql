@@ -188,6 +188,7 @@ CREATE TABLE public.space_members (
     user_id uuid NOT NULL,
     role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
+    active boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );

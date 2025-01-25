@@ -16,6 +16,7 @@ class UpdateUserAndSpaceRelationship < ActiveRecord::Migration[7.1]
       t.references :user, foreign_key: true, null: false, type: :uuid
       t.integer :role, null: false
       t.timestamp :joined_at, null: false
+      t.boolean :active, null: false, default: true
       t.timestamps
 
       t.index %i[space_id user_id], unique: true
