@@ -4,6 +4,7 @@
 class AccountForm < ApplicationForm
   include FormConcerns::PasswordValidatable
 
+  attribute :atname, :string
   attribute :email, :string
   attribute :locale, :string
   attribute :password, :string
@@ -18,11 +19,19 @@ class AccountForm < ApplicationForm
   validates :locale, presence: true
   validates :time_zone, presence: true
   validate :atname_uniqueness
+  validate :email_uniqueness
 
   sig { void }
   private def atname_uniqueness
-    if Profile.exists?(atname:)
+    if User.exists?(atname:)
       errors.add(:atname, :uniqueness)
+    end
+  end
+
+  sig { void }
+  private def email_uniqueness
+    if User.exists?(email:)
+      errors.add(:email, :uniqueness)
     end
   end
 end

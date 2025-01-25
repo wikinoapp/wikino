@@ -9,8 +9,7 @@ RSpec.describe "GET /accounts/new", type: :request do
     get "/accounts/new"
 
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/")
   end
 
   it "メールアドレスの確認に成功しているとき、アカウント作成ページが表示されること" do
