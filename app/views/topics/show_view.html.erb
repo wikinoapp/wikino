@@ -1,4 +1,4 @@
-<% title = t("meta.title.topics.show", space_name: Current.space!.name, topic_name: topic.name) %>
+<% title = t("meta.title.topics.show", space_name: space.name, topic_name: topic.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainComponent.new do %>
@@ -16,8 +16,8 @@
         <% end %>
       </div>
 
-      <% if policy(topic).create? %>
-        <%= link_to new_page_path(Current.space!.identifier, topic.number), class: "btn btn-primary no-animation rounded-full" do %>
+      <% if Current.viewer!.can_create_page?(topic:) %>
+        <%= link_to new_page_path(space.identifier, topic.number), class: "btn btn-primary no-animation rounded-full" do %>
           <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
           <%= t("nouns.new_page") %>

@@ -16,8 +16,20 @@ module ModelConcerns
     def can_view_page?(page:)
     end
 
+    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    def can_view_topic?(topic:)
+    end
+
     sig { abstract.params(space: Space).returns(T::Boolean) }
     def can_view_trash?(space:)
+    end
+
+    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    def can_create_topic?(topic:)
+    end
+
+    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    def can_create_page?(topic:)
     end
 
     sig { abstract.params(page: Page).returns(T::Boolean) }
@@ -34,6 +46,10 @@ module ModelConcerns
 
     sig { abstract.returns(Topic::PrivateRelation) }
     def viewable_topics
+    end
+
+    sig { abstract.params(space: Space, number: T.untyped).returns(Topic) }
+    def find_topic_by_number!(space:, number:)
     end
   end
 end

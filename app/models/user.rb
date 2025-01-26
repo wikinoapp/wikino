@@ -74,11 +74,7 @@ class User < ApplicationRecord
   def viewable_topics
     Topic
       .left_joins(:memberships)
-      .merge(
-        Topic.visibility_public.or(
-          TopicMembership.where(member: self)
-        )
-      )
+      .merge(Topic.visibility_public.or(Topic.where(space: active_spaces)))
       .distinct
   end
 
@@ -104,7 +100,7 @@ class User < ApplicationRecord
       space_members.where(space: page.space).active.exists?
   end
 
-  sig { params(topic: Topic).returns(T::Boolean) }
+  sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_view_topic?(topic:)
     viewable_topics.where(id: topic.id).exists?
   end
@@ -112,6 +108,16 @@ class User < ApplicationRecord
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_view_trash?(space:)
     active_spaces.where(id: space.id).exists?
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_create_topic?(topic:)
+    active_spaces.where(id: topic.space_id).exists?
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_create_page?(topic:)
+    active_spaces.where(id: topic.space_id).exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }
@@ -185,5 +191,10 @@ class User < ApplicationRecord
     page_editorships.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
 
     page
+  end
+
+  sig { override.params(space: Space, number: T.untyped).returns(Topic) }
+  def find_topic_by_number!(space:, number:)
+    viewable_topics.find_by!(space:, number:)
   end
 end

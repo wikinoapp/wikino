@@ -3,21 +3,20 @@
 
 module Topics
   class ShowController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :restore_user_session
 
     rescue_from Pundit::NotAuthorizedError, with: :render_404
 
     sig { returns(T.untyped) }
     def call
-      topic = Current.space!.topics.kept.find_by!(number: params[:topic_number])
-      authorize(topic, :show?)
+      space = find_space_by_identifier!
+      topic = Current.viewer!.find_topic_by_number!(space:, number: params[:topic_number])
 
       pinned_pages = topic.pages.active.pinned.order(pinned_at: :desc, id: :desc)
 

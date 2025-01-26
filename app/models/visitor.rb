@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+# ログインしていない人を表すモデル
 class Visitor
   extend T::Sig
 
@@ -27,8 +28,23 @@ class Visitor
     page.topic.not_nil!.visibility_public?
   end
 
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_view_topic?(topic:)
+    topic.visibility_public?
+  end
+
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_view_trash?(space:)
+    false
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_create_topic?(topic:)
+    false
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_create_page?(topic:)
     false
   end
 
@@ -40,5 +56,10 @@ class Visitor
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
     Topic.visibility_public
+  end
+
+  sig { override.params(space: Space, number: T.untyped).returns(Topic) }
+  def find_topic_by_number!(space:, number:)
+    Topic.visibility_public.find_by!(space:, number:)
   end
 end
