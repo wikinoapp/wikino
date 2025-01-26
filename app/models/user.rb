@@ -109,6 +109,11 @@ class User < ApplicationRecord
     viewable_topics.where(id: topic.id).exists?
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_view_trash?(space:)
+    active_spaces.where(id: space.id).exists?
+  end
+
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     topics.where(id: topic.id).exists?

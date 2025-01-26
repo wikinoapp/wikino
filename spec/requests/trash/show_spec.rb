@@ -11,22 +11,23 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "別のスペースに参加しているとき、403を返すこと" do
     space = create(:space, :small)
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    user = create(:user, :with_password)
+    create(:space_member, :owner, space: other_space, user:)
 
     sign_in(user:)
 
     get "/s/#{space.identifier}/trash"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(403)
   end
 
   it "ログインしているとき、ゴミ箱ページが表示されること" do
     space = create(:space, :small)
-    user = create(:user, :with_password, space:)
+    user = create(:user, :with_password)
+    create(:space_member, :owner, space:, user:)
     topic = create(:topic, space:)
     create(:page, :trashed, space:, topic:, title: "削除されたページ")
 

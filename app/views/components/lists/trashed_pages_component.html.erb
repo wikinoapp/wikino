@@ -53,7 +53,7 @@
                 <%= page.topic.name %>
               </div>
 
-              <%= link_to page.title, page_path(Current.space!.identifier, page.number), class: "link link-hover" %>
+              <%= link_to page.title, page_path(page.space.not_nil!.identifier, page.number), class: "link link-hover" %>
             </div>
           </div>
         <% end %>

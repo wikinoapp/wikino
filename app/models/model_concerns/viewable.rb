@@ -16,6 +16,10 @@ module ModelConcerns
     def can_view_page?(page:)
     end
 
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_view_trash?(space:)
+    end
+
     sig { abstract.params(page: Page).returns(T::Boolean) }
     def can_trash_page?(page:)
     end

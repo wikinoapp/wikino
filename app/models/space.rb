@@ -41,4 +41,19 @@ class Space < ApplicationRecord
   def find_page_by_number!(number)
     pages.kept.find_by!(number:)
   end
+
+  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(PageConnection) }
+  def restorable_page_connection(before:, after:)
+    cursor_paginate_page = pages.preload(:topic).restorable.cursor_paginate(
+      before: before.presence,
+      after: after.presence,
+      limit: 100,
+      order: {trashed_at: :desc, id: :desc}
+    ).fetch
+
+    PageConnection.new(
+      pages: cursor_paginate_page.records,
+      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+    )
+  end
 end
