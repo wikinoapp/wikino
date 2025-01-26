@@ -4,6 +4,10 @@
 class ApplicationController < ActionController::Base
   extend T::Sig
 
+  private def render_403
+    render(status: 403, plain: "403 Forbidden")
+  end
+
   private def render_404
     render(
       file: Rails.public_path.join("404.html"),

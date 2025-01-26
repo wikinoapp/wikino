@@ -5,7 +5,7 @@ FactoryBot.define do
   factory :topic_membership do
     space
     topic
-    member { association :user }
+    member { association :space_member }
     role { TopicMemberRole::Admin.serialize }
     joined_at { Time.current }
 

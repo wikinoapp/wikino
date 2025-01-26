@@ -27,6 +27,11 @@ class Visitor
     page.topic.not_nil!.visibility_public?
   end
 
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_trash_page?(page:)
+    false
+  end
+
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
     Topic.visibility_public

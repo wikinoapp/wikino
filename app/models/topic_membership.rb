@@ -4,7 +4,7 @@
 class TopicMembership < ApplicationRecord
   belongs_to :space
   belongs_to :topic
-  belongs_to :member, class_name: "User"
+  belongs_to :member, class_name: "SpaceMember"
 
   enum :role, {
     TopicMemberRole::Admin.serialize => 0,

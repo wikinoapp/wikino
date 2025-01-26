@@ -14,7 +14,7 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      @page = Current.space!.find_pages_by_number!(params[:page_number]&.to_i)
+      @page = Current.space!.find_page_by_number!(params[:page_number]&.to_i)
       authorize(@page, :edit?)
 
       @draft_page = Current.user!.draft_pages.find_by(page: @page)

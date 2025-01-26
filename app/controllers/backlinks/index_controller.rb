@@ -16,7 +16,7 @@ module Backlinks
 
     sig { returns(T.untyped) }
     def call
-      page = @space.find_pages_by_number!(params[:page_number]&.to_i)
+      page = @space.find_page_by_number!(params[:page_number]&.to_i)
 
       unless Current.viewer.can_view_page?(page:)
         render_404

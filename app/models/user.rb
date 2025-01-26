@@ -22,7 +22,9 @@ class User < ApplicationRecord
   has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
   has_many :topics, through: :topic_memberships
   has_many :space_members, dependent: :restrict_with_exception
+  has_many :active_space_members, -> { active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
   has_many :spaces, through: :space_members
+  has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
   has_many :user_sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
@@ -115,6 +117,11 @@ class User < ApplicationRecord
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
     topic_memberships.find_by(topic:)&.role_admin? == true
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_trash_page?(page:)
+    active_spaces.where(id: page.space_id).exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }
