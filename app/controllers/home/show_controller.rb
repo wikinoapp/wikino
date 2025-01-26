@@ -1,21 +1,17 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Welcome
+module Home
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
 
     around_action :set_locale
-    before_action :restore_user_session
+    before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      if Current.viewer.signed_in?
-        return redirect_to(home_path)
-      end
-
-      render Welcome::ShowView.new
+      render Home::ShowView.new
     end
   end
 end

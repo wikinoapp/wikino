@@ -7,6 +7,8 @@ en:
         new: Create an account
       email_confirmations:
         edit: Verification
+      home:
+        show: Home
       topics:
         new: New topic
         show: "%{topic_name} | %{space_name}"

@@ -16,15 +16,10 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     def sign_out
-      return true unless session_tokens
+      return true unless user_session_token
 
-      space_identifier = Current.space!.identifier
-      session_token = session_tokens.not_nil![space_identifier]
-
-      DestroySessionUseCase.new.call(session_token:) if session_token
-
-      tokens = session_tokens.not_nil!.except(space_identifier)
-      store_session_tokens_to_cookie(token_str: hash_to_string(tokens))
+      DestroySessionUseCase.new.call(session_token: user_session_token)
+      cookies.delete(UserSession::TOKENS_COOKIE_KEY)
 
       true
     end
@@ -65,7 +60,7 @@ module ControllerConcerns
         sign_in(user_session)
       else
         Current.viewer = Visitor.new
-        true
+        false
       end
     end
 
