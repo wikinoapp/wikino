@@ -3,20 +3,20 @@
 
 module Backlinks
   class IndexController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     layout false
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
-      page = @space.find_page_by_number!(params[:page_number]&.to_i)
+      space = find_space_by_identifier!
+      page = space.find_page_by_number!(params[:page_number]&.to_i)
 
       unless Current.viewer.can_view_page?(page:)
         render_404
