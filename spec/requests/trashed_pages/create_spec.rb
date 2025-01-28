@@ -12,7 +12,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースに参加しているとき、403を返すこと" do
+  it "スペースに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     page = create(:page, space:)
 
@@ -24,7 +24,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
 
     post "/s/#{space.identifier}/pages/#{page.number}/trash"
 
-    expect(response.status).to eq(403)
+    expect(response.status).to eq(404)
   end
 
   it "指定したページが存在しないとき、エラーメッセージを表示すること" do

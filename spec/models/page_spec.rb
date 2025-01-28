@@ -4,6 +4,7 @@
 RSpec.describe Page, type: :model do
   describe "#fetch_link_collection" do
     it "ページにリンクが含まれているときリンクの構造体を返すこと" do
+      user = create(:user)
       space = create(:space)
       page_a = create(:page, space:, modified_at: Time.zone.parse("2024-01-01"))
       page_b = create(:page, space:, modified_at: Time.zone.parse("2024-01-02"))
@@ -11,6 +12,7 @@ RSpec.describe Page, type: :model do
       page_d = create(:page, space:, linked_page_ids: [page_c.id], modified_at: Time.zone.parse("2024-01-04"))
       target_page = create(:page, space:, linked_page_ids: [page_a.id, page_c.id])
 
+      Current.viewer = user
       link_collection = target_page.fetch_link_collection
 
       expect(link_collection.links.size).to eq(2)

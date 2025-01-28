@@ -66,7 +66,7 @@ class Page < ApplicationRecord
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
 
-    pages.joins(:topic).merge(Current.viewer.viewable_topics)
+    pages.joins(:topic).merge(Current.viewer!.viewable_topics)
   end
 
   sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }

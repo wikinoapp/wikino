@@ -17,7 +17,7 @@ module ModelConcerns
     def linked_pages
       pages = space.not_nil!.pages.where(id: linked_page_ids)
 
-      if Current.user
+      if Current.viewer
         pages
       else
         pages.joins(:topic).merge(Topic.visibility_public)

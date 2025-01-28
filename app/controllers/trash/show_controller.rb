@@ -16,7 +16,7 @@ module Trash
       space = find_space_by_identifier!
 
       unless Current.viewer!.can_view_trash?(space:)
-        return render_403
+        return render_404
       end
 
       render Trash::ShowView.new(

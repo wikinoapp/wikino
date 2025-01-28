@@ -19,10 +19,12 @@ class User < ApplicationRecord
   has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :pages, through: :page_editorships
-  has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
-  has_many :topics, through: :topic_memberships
   has_many :space_members, dependent: :restrict_with_exception
   has_many :active_space_members, -> { active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
+  has_many :topic_memberships, through: :space_members, source: :topic_memberships
+  has_many :topics, through: :topic_memberships
+  has_many :active_topic_memberships, class_name: "TopicMembership", through: :active_space_members, source: :topic_memberships
+  has_many :active_topics, through: :active_topic_memberships, source: :topic
   has_many :spaces, through: :space_members
   has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
   has_many :user_sessions, dependent: :restrict_with_exception
@@ -80,8 +82,8 @@ class User < ApplicationRecord
 
   sig { returns(Topic::PrivateAssociationRelation) }
   def last_page_modified_topics
-    topics.merge(
-      topic_memberships
+    active_topics.merge(
+      active_topic_memberships
         .order(TopicMembership.arel_table[:last_page_modified_at].desc.nulls_last)
         .order(TopicMembership.arel_table[:joined_at].desc)
     )

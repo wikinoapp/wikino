@@ -19,10 +19,10 @@ class Current < ActiveSupport::CurrentAttributes
     Time.zone = nil
   end
 
-  T::Sig::WithoutRuntime.sig { params(viewable: ModelConcerns::Viewable).void }
+  T::Sig::WithoutRuntime.sig { params(viewable: T.nilable(ModelConcerns::Viewable)).void }
   def viewer=(viewable)
     super
-    Time.zone = viewable.time_zone
+    Time.zone = viewable&.time_zone
   end
 
   T::Sig::WithoutRuntime.sig { returns(ModelConcerns::Viewable) }

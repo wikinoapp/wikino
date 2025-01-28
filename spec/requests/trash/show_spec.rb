@@ -11,7 +11,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースに参加しているとき、403を返すこと" do
+  it "スペースに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     other_space = create(:space)
     user = create(:user, :with_password)
@@ -21,10 +21,10 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
 
     get "/s/#{space.identifier}/trash"
 
-    expect(response.status).to eq(403)
+    expect(response.status).to eq(404)
   end
 
-  it "ログインしているとき、ゴミ箱ページが表示されること" do
+  it "スペースに参加しているとき、ゴミ箱ページが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password)
     create(:space_member, :owner, space:, user:)

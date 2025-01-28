@@ -17,7 +17,7 @@ module TrashedPages
       page = space.find_page_by_number!(params[:page_number]&.to_i).not_nil!
 
       unless Current.viewer!.can_trash_page?(page:)
-        return render_403
+        return render_404
       end
 
       MovePageToTrashUseCase.new.call(page:)
