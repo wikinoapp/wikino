@@ -3,31 +3,37 @@
 
 module DraftPages
   class UpdateController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      @page = Current.space!.find_page_by_number!(params[:page_number]&.to_i)
-      authorize(@page, :update?)
+      space = find_space_by_identifier!
+      page = space.find_page_by_number!(params[:page_number]&.to_i)
+
+      unless Current.viewer!.can_update_draft_page?(page:)
+        return render_404
+      end
 
       result = UpdateDraftPageUseCase.new.call(
-        page: @page.not_nil!,
+        page:,
         topic_number: form_params[:topic_number],
         title: form_params[:title],
         body: form_params[:body]
       )
-      @draft_page = result.draft_page
-      @link_collection = @draft_page.fetch_link_collection
-      @backlink_collection = @draft_page.page.not_nil!.fetch_backlink_collection
+      draft_page = result.draft_page
+      link_collection = draft_page.fetch_link_collection
+      backlink_collection = draft_page.page.not_nil!.fetch_backlink_collection
 
-      render(content_type: "text/vnd.turbo-stream.html", layout: false)
+      render(DraftPages::UpdateView.new(draft_page:, link_collection:, backlink_collection:), {
+        content_type: "text/vnd.turbo-stream.html",
+        layout: false
+      })
     end
 
     sig { returns(ActionController::Parameters) }

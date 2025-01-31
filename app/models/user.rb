@@ -132,6 +132,11 @@ class User < ApplicationRecord
     topics.where(id: topic.id).exists?
   end
 
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_draft_page?(page:)
+    active_topics.where(id: page.topic_id).exists?
+  end
+
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
     topic_memberships.find_by(topic:)&.role_admin? == true
@@ -167,7 +172,7 @@ class User < ApplicationRecord
   sig { params(page: Page).returns(DraftPage) }
   def find_or_create_draft_page!(page:)
     draft_pages.create_with(
-      space:,
+      space: page.space,
       topic: page.topic,
       title: page.title,
       body: page.body,
