@@ -32,6 +32,10 @@ module ModelConcerns
     def can_create_page?(topic:)
     end
 
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_create_bulk_restored_pages?(space:)
+    end
+
     sig { abstract.params(page: Page).returns(T::Boolean) }
     def can_trash_page?(page:)
     end

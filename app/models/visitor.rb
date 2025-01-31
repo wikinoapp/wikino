@@ -48,6 +48,11 @@ class Visitor
     false
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_create_bulk_restored_pages?(space:)
+    false
+  end
+
   sig { override.params(page: Page).returns(T::Boolean) }
   def can_trash_page?(page:)
     false

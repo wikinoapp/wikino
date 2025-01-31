@@ -15,8 +15,12 @@ module BulkRestoredPages
     def call
       space = find_space_by_identifier!
 
+      unless Current.viewer!.can_create_bulk_restored_pages?(space:)
+        return render_404
+      end
+
       form = TrashedPagesForm.new(form_params)
-      form.user = Current.user!
+      form.user = T.let(Current.viewer!, User)
 
       if form.invalid?
         return render_error_view(space:, form:)
@@ -36,6 +40,7 @@ module BulkRestoredPages
     sig { params(space: Space, form: TrashedPagesForm).returns(ActiveSupport::SafeBuffer) }
     private def render_error_view(space:, form:)
       error_view = Trash::ShowView.new(
+        space:,
         page_connection: space.restorable_page_connection(before: params[:before], after: params[:after]),
         form:
       )

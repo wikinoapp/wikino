@@ -122,6 +122,11 @@ class User < ApplicationRecord
     active_spaces.where(id: topic.space_id).exists?
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_create_bulk_restored_pages?(space:)
+    active_spaces.where(id: space.id).exists?
+  end
+
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     topics.where(id: topic.id).exists?

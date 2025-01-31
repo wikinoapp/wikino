@@ -11,23 +11,24 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "別のスペースに参加しているとき、404を返すこと" do
     space = create(:space, :small)
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    user = create(:user, :with_password)
+    create(:space_member, space: other_space, user:)
 
     sign_in(user:)
 
     post "/s/#{space.identifier}/bulk_restored_pages"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(404)
   end
 
   it "選択したページに問題があるとき、エラーメッセージを表示すること" do
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
-    topic = create(:topic, space:)
+    user = create(:user, :with_password)
+    create(:space_member, space:, user:)
+    topic = create(:topic, space:) # このトピックに参加していない
     page = create(:page, :trashed, space:, topic:)
 
     sign_in(user:)
@@ -44,10 +45,11 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
 
   it "選択したページに問題がないとき、ページを復元できること" do
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
+    user = create(:user, :with_password)
+    space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, :trashed, space:, topic:)
-    create(:topic_membership, space:, topic:, member: user)
+    create(:topic_membership, space:, topic:, member: space_member)
 
     sign_in(user:)
 
