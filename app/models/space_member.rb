@@ -43,4 +43,9 @@ class SpaceMember < ApplicationRecord
   def viewable_pages
     space.pages.active
   end
+
+  sig { override.returns(T::Boolean) }
+  def can_create_topic?
+    true
+  end
 end

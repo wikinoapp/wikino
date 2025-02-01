@@ -3,31 +3,41 @@
 
 module Topics
   class CreateController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::Authorizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      @form = NewTopicForm.new(form_params)
+      space = find_space_by_identifier!
+      space_viewer = Current.viewer!.space_viewer!(space:)
 
-      if @form.invalid?
-        return render("topics/new/call", status: :unprocessable_entity)
+      unless space_viewer.can_create_topic?
+        return render_404
+      end
+
+      form = NewTopicForm.new(form_params)
+
+      if form.invalid?
+        return render(
+          Topics::NewView.new(space:, form:),
+          status: :unprocessable_entity
+        )
       end
 
       result = CreateTopicUseCase.new.call(
-        name: @form.name.not_nil!,
-        description: @form.description.not_nil!,
-        visibility: @form.visibility.not_nil!
+        space_member: T.let(space_viewer, SpaceMember),
+        name: form.name.not_nil!,
+        description: form.description.not_nil!,
+        visibility: form.visibility.not_nil!
       )
 
       flash[:notice] = t("messages.topic.created")
-      redirect_to topic_path(Current.space!.identifier, result.topic.number)
+      redirect_to topic_path(space.identifier, result.topic.number)
     end
 
     sig { returns(ActionController::Parameters) }

@@ -134,11 +134,6 @@ class User < ApplicationRecord
   end
 
   sig { override.params(topic: Topic).returns(T::Boolean) }
-  def can_create_topic?(topic:)
-    active_spaces.where(id: topic.space_id).exists?
-  end
-
-  sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_create_page?(topic:)
     active_topics.where(id: topic.id).exists?
   end

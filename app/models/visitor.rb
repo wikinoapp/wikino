@@ -49,11 +49,6 @@ class Visitor
   end
 
   sig { override.params(topic: Topic).returns(T::Boolean) }
-  def can_create_topic?(topic:)
-    false
-  end
-
-  sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_create_page?(topic:)
     false
   end

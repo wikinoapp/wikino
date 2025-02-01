@@ -11,22 +11,23 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "別のスペースに参加しているとき、404を返すこと" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, user:, space: other_space)
 
     sign_in(user:)
 
     post "/s/#{space.identifier}/topics"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(404)
   end
 
-  it "入力値が不正なとき、エラーメッセージを表示すること" do
+  it "スペースに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
-    user = create(:user, :with_password, space:)
+    create(:space_member, user:, space:)
 
     sign_in(user:)
 
@@ -47,9 +48,10 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(Topic.count).to eq(0)
   end
 
-  it "オーナーとしてログインしているとき、トピックが作成できること" do
+  it "スペースに参加している & 入力値が正常なとき、トピックが作成できること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
+    create(:space_member, user:, space:)
 
     sign_in(user:)
 

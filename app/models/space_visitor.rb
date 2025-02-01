@@ -24,4 +24,9 @@ class SpaceVisitor
   def topics
     space.topics.visibility_public
   end
+
+  sig { override.returns(T::Boolean) }
+  def can_create_topic?
+    false
+  end
 end

@@ -33,10 +33,6 @@ module ModelConcerns
     end
 
     sig { abstract.params(topic: Topic).returns(T::Boolean) }
-    def can_create_topic?(topic:)
-    end
-
-    sig { abstract.params(topic: Topic).returns(T::Boolean) }
     def can_create_page?(topic:)
     end
 

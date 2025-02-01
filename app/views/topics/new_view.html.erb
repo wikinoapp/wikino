@@ -11,8 +11,8 @@
       <%= card.with_body(class_name: "p-4") do %>
         <%= form_with(
           class: "flex flex-col gap-4",
-          model: @form,
-          url: topic_list_path(Current.space!.identifier)
+          model: form,
+          url: topic_list_path(space.identifier)
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 

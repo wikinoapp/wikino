@@ -15,5 +15,9 @@ module ModelConcerns
     sig { abstract.returns(Topic::PrivateRelation) }
     def topics
     end
+
+    sig { abstract.returns(T::Boolean) }
+    def can_create_topic?
+    end
   end
 end
