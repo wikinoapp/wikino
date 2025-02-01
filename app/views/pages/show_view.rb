@@ -23,5 +23,15 @@ module Pages
     sig { returns(BacklinkCollection) }
     attr_reader :backlink_collection
     private :backlink_collection
+
+    sig { returns(Space) }
+    def space
+      page.space
+    end
+
+    sig { returns(Topic) }
+    def topic
+      page.topic
+    end
   end
 end
