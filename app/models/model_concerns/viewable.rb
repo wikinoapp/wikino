@@ -53,7 +53,7 @@ module ModelConcerns
     end
 
     sig { abstract.returns(ViewerLocale) }
-    def locale
+    def viewer_locale
     end
 
     sig { abstract.returns(Topic::PrivateRelation) }

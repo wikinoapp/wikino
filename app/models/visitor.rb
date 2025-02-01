@@ -7,7 +7,8 @@ class Visitor
 
   include ModelConcerns::Viewable
 
-  def initialize(time_zone: "Asia/Tokyo", locale: ViewerLocale::Ja)
+  sig { params(time_zone: String, locale: String).void }
+  def initialize(time_zone: "Asia/Tokyo", locale: "ja")
     @time_zone = time_zone
     @locale = locale
   end
@@ -15,8 +16,13 @@ class Visitor
   sig { override.returns(String) }
   attr_reader :time_zone
 
-  sig { override.returns(ViewerLocale) }
+  sig { returns(String) }
   attr_reader :locale
+
+  sig { override.returns(ViewerLocale) }
+  def viewer_locale
+    ViewerLocale.deserialize(locale)
+  end
 
   sig { override.returns(T::Boolean) }
   def signed_in?

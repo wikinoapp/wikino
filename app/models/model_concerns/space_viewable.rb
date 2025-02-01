@@ -8,11 +8,11 @@ module ModelConcerns
 
     interface!
 
-    sig { abstract.returns(Page::PrivateRelation) }
+    sig { abstract.returns(Page::PrivateAssociationRelation) }
     def viewable_pages
     end
 
-    sig { abstract.returns(Topic::PrivateRelation) }
+    sig { abstract.returns(Topic::PrivateAssociationRelation) }
     def topics
     end
 

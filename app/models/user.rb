@@ -19,7 +19,7 @@ class User < ApplicationRecord
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :pages, through: :page_editorships
   has_many :space_members, dependent: :restrict_with_exception
-  has_many :active_space_members, -> { active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
+  has_many :active_space_members, -> { SpaceMember.active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
   has_many :active_draft_pages, through: :active_space_members, source: :draft_pages
   has_many :topic_memberships, through: :space_members, source: :topic_memberships
   has_many :topics, through: :topic_memberships
@@ -84,8 +84,8 @@ class User < ApplicationRecord
   end
 
   sig { override.returns(ViewerLocale) }
-  def locale
-    ViewerLocale.deserialize(read_attribute(:locale))
+  def viewer_locale
+    ViewerLocale.deserialize(locale)
   end
 
   sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }

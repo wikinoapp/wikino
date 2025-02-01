@@ -22,7 +22,7 @@ module TrashedPages
       MovePageToTrashUseCase.new.call(page:)
 
       flash[:notice] = t("messages.page.moved_to_trash")
-      redirect_to topic_path(space.identifier, page.topic.number)
+      redirect_to topic_path(space.identifier, page.topic.not_nil!.number)
     end
   end
 end

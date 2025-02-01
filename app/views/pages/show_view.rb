@@ -26,12 +26,12 @@ module Pages
 
     sig { returns(Space) }
     def space
-      page.space
+      page.space.not_nil!
     end
 
     sig { returns(Topic) }
     def topic
-      page.topic
+      page.topic.not_nil!
     end
   end
 end

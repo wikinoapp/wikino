@@ -61,7 +61,7 @@ class SpaceMember < ApplicationRecord
     )
   end
 
-  sig { override.returns(Page::PrivateRelation) }
+  sig { override.returns(Page::PrivateAssociationRelation) }
   def viewable_pages
     space.not_nil!.pages.active
   end
