@@ -6,7 +6,7 @@ module RequestHelpers
 
   def sign_in(user:, password: "passw0rd")
     post(
-      user_session_list_path,
+      user_session_path,
       params: {
         user_session_form: {
           email: user.email,
