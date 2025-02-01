@@ -1,5 +1,5 @@
 <% title = t("meta.title.pages.edit") %>
-<% set_meta_tags(title: "#{title} | #{Current.space!.name}") %>
+<% set_meta_tags(title: "#{title} | #{space.name}") %>
 
 <%= render ::Layouts::MainComponent.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
@@ -7,7 +7,7 @@
       <%= title %>
     </h1>
 
-    <% if @draft_page.present? %>
+    <% if draft_page.present? %>
       <div class="alert alert-warning" role="alert">
         現在下書きを表示しています
       </div>
@@ -18,9 +18,9 @@
         <%= form_with(
           class: "flex flex-col gap-4",
           data: { controller: "page-editor-form" },
-          model: @form,
+          model: form,
           method: :patch,
-          url: page_path(Current.space!.identifier, @page.number)
+          url: page_path(space.identifier, page.number)
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
@@ -97,7 +97,7 @@
               <input
                 class="hidden"
                 data-page-editor-form-target="draftSaveButton"
-                formaction="<%= draft_page_path(Current.space!.identifier, @page.number) %>"
+                formaction="<%= draft_page_path(space.identifier, page.number) %>"
                 type="submit"
               >
             </div>
@@ -109,10 +109,7 @@
     <% end %>
 
     <turbo-frame id="page-editor-footer">
-      <%= render Footers::PageComponent.new(
-        link_collection: @link_collection,
-        backlink_collection: @backlink_collection
-      ) %>
+      <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
     </turbo-frame>
   </div>
 <% end %>

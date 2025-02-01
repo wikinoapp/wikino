@@ -153,6 +153,11 @@ class User < ApplicationRecord
     active_topics.where(id: page.topic_id).exists?
   end
 
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_page?(page:)
+    active_topics.where(id: page.topic_id).exists?
+  end
+
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
     topic_memberships.find_by(topic:)&.role_admin? == true

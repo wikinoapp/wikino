@@ -64,6 +64,11 @@ class Visitor
   end
 
   sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_page?(page:)
+    false
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
   def can_trash_page?(page:)
     false
   end
