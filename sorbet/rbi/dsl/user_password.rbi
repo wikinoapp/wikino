@@ -417,17 +417,8 @@ class UserPassword
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
-    def build_space(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def build_user(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
-    def create_space(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
-    def create_space!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def create_user(*args, &blk); end
@@ -435,29 +426,11 @@ class UserPassword
     sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
     def create_user!(*args, &blk); end
 
-    sig { returns(T.nilable(::Space)) }
-    def reload_space; end
-
     sig { returns(T.nilable(::User)) }
     def reload_user; end
 
     sig { void }
-    def reset_space; end
-
-    sig { void }
     def reset_user; end
-
-    sig { returns(T.nilable(::Space)) }
-    def space; end
-
-    sig { params(value: T.nilable(::Space)).void }
-    def space=(value); end
-
-    sig { returns(T::Boolean) }
-    def space_changed?; end
-
-    sig { returns(T::Boolean) }
-    def space_previously_changed?; end
 
     sig { returns(T.nilable(::User)) }
     def user; end
@@ -855,9 +828,6 @@ class UserPassword
     def restore_password_digest!; end
 
     sig { void }
-    def restore_space_id!; end
-
-    sig { void }
     def restore_updated_at!; end
 
     sig { void }
@@ -887,12 +857,6 @@ class UserPassword
     sig { returns(T::Boolean) }
     def saved_change_to_password_digest?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_space_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_space_id?; end
-
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
 
@@ -904,51 +868,6 @@ class UserPassword
 
     sig { returns(T::Boolean) }
     def saved_change_to_user_id?; end
-
-    sig { returns(::String) }
-    def space_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def space_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def space_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def space_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def space_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def space_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def space_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_was; end
-
-    sig { void }
-    def space_id_will_change!; end
 
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
@@ -1051,9 +970,6 @@ class UserPassword
 
     sig { returns(T::Boolean) }
     def will_save_change_to_password_digest?; end
-
-    sig { returns(T::Boolean) }
-    def will_save_change_to_space_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_updated_at?; end

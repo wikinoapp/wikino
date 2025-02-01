@@ -402,7 +402,7 @@ class TopicMembership
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def build_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
@@ -411,10 +411,10 @@ class TopicMembership
     sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
     def build_topic(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def create_member(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def create_member!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
@@ -429,10 +429,10 @@ class TopicMembership
     sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
     def create_topic!(*args, &blk); end
 
-    sig { returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::SpaceMember)) }
     def member; end
 
-    sig { params(value: T.nilable(::User)).void }
+    sig { params(value: T.nilable(::SpaceMember)).void }
     def member=(value); end
 
     sig { returns(T::Boolean) }
@@ -441,7 +441,7 @@ class TopicMembership
     sig { returns(T::Boolean) }
     def member_previously_changed?; end
 
-    sig { returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::SpaceMember)) }
     def reload_member; end
 
     sig { returns(T.nilable(::Space)) }

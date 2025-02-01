@@ -10,35 +10,20 @@ class Current
 
   class << self
     sig { returns(T.untyped) }
-    def space; end
+    def viewer; end
 
     sig { returns(T.untyped) }
-    def space!; end
+    def viewer!; end
 
     sig { params(value: T.untyped).returns(T.untyped) }
-    def space=(value); end
-
-    sig { returns(T.untyped) }
-    def user; end
-
-    sig { returns(T.untyped) }
-    def user!; end
-
-    sig { params(value: T.untyped).returns(T.untyped) }
-    def user=(value); end
+    def viewer=(value); end
   end
 
   module GeneratedAttributeMethods
     sig { returns(T.untyped) }
-    def space; end
+    def viewer; end
 
-    sig { params(value: T.untyped).returns(T.untyped) }
-    def space=(value); end
-
-    sig { returns(T.untyped) }
-    def user; end
-
-    sig { params(user: T.untyped).returns(T.untyped) }
-    def user=(user); end
+    sig { params(viewable: T.untyped).returns(T.untyped) }
+    def viewer=(viewable); end
   end
 end

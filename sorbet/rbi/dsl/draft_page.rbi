@@ -379,7 +379,7 @@ class DraftPage
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def build_editor(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Page) }
@@ -391,10 +391,10 @@ class DraftPage
     sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
     def build_topic(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def create_editor(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::User) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
     def create_editor!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Page) }
@@ -415,10 +415,10 @@ class DraftPage
     sig { params(args: T.untyped, blk: T.untyped).returns(::Topic) }
     def create_topic!(*args, &blk); end
 
-    sig { returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::SpaceMember)) }
     def editor; end
 
-    sig { params(value: T.nilable(::User)).void }
+    sig { params(value: T.nilable(::SpaceMember)).void }
     def editor=(value); end
 
     sig { returns(T::Boolean) }
@@ -439,7 +439,7 @@ class DraftPage
     sig { returns(T::Boolean) }
     def page_previously_changed?; end
 
-    sig { returns(T.nilable(::User)) }
+    sig { returns(T.nilable(::SpaceMember)) }
     def reload_editor; end
 
     sig { returns(T.nilable(::Page)) }

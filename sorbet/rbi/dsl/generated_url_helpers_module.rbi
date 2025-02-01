@@ -13,9 +13,6 @@ module GeneratedUrlHelpersModule
   def account_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def account_switch_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def atom_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -34,7 +31,7 @@ module GeneratedUrlHelpersModule
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def joined_topic_list_url(*args); end
+  def home_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_url(*args); end
@@ -82,12 +79,6 @@ module GeneratedUrlHelpersModule
   def root_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def session_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def session_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def sign_in_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -95,9 +86,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def switchable_account_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_url(*args); end
@@ -110,4 +98,7 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trashed_page_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_session_url(*args); end
 end

@@ -24,9 +24,6 @@ class Topics::NewController
 
     sig { returns(T.nilable(::User)) }
     def pundit_user; end
-
-    sig { returns(T::Boolean) }
-    def signed_in?; end
   end
 
   class HelperProxy < ::ActionView::Base
