@@ -29,4 +29,9 @@ class SpaceVisitor
   def can_create_topic?
     false
   end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_draft_page?(page:)
+    false
+  end
 end

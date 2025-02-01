@@ -41,10 +41,6 @@ module ModelConcerns
     end
 
     sig { abstract.params(page: Page).returns(T::Boolean) }
-    def can_update_draft_page?(page:)
-    end
-
-    sig { abstract.params(page: Page).returns(T::Boolean) }
     def can_update_page?(page:)
     end
 

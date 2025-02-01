@@ -46,8 +46,8 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
   end
 
   it "ページのトピックに参加しているとき、下書きページが更新できること" do
-    space = create(:space, :small)
     user = create(:user, :with_password)
+    space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, :published, space:, topic:)

@@ -32,11 +32,33 @@ class SpaceMember < ApplicationRecord
     page
   end
 
+  sig { params(page: Page).returns(DraftPage) }
+  def find_or_create_draft_page!(page:)
+    draft_pages.create_with(
+      space: page.space,
+      topic: page.topic,
+      title: page.title,
+      body: page.body,
+      body_html: page.body_html,
+      linked_page_ids: page.linked_page_ids,
+      modified_at: Time.zone.now
+    ).find_or_create_by!(page:)
+  rescue ActiveRecord::RecordNotUnique
+    retry
+  end
+
   sig { params(page: Page).void }
   def destroy_draft_page!(page:)
     draft_pages.where(page:).destroy_all
 
     nil
+  end
+
+  sig { returns(Page::PrivateAssociationRelation) }
+  def last_modified_pages
+    space.not_nil!.pages.joins(:editorships).merge(
+      page_editorships.order(PageEditorship.arel_table[:last_page_modified_at].desc)
+    )
   end
 
   sig { override.returns(Page::PrivateRelation) }
@@ -47,5 +69,10 @@ class SpaceMember < ApplicationRecord
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     true
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_draft_page?(page:)
+    topics.where(id: page.topic_id).exists?
   end
 end

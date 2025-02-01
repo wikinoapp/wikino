@@ -40,27 +40,4 @@ RSpec.describe User, type: :model do
       ).to eq(%w[トピックC トピックB トピックD トピックA])
     end
   end
-
-  describe "#last_modified_pages" do
-    context "ページが存在するとき" do
-      let!(:space) { create(:space) }
-      let!(:user_a) { create(:user, space:) }
-      let!(:user_b) { create(:user, space:) }
-      let!(:topic) { create(:topic, space:) }
-      let!(:page_a) { create(:page, space:, topic:, title: "ページA") }
-      let!(:page_b) { create(:page, space:, topic:, title: "ページB") }
-      let!(:page_c) { create(:page, space:, topic:, title: "ページC") }
-
-      before do
-        create(:page_editorship, space:, page: page_a, editor: user_a, last_page_modified_at: Time.zone.parse("2024-08-18 0:00:00"))
-        create(:page_editorship, space:, page: page_b, editor: user_b, last_page_modified_at: Time.zone.parse("2024-08-18 1:00:00"))
-        create(:page_editorship, space:, page: page_c, editor: user_b, last_page_modified_at: Time.zone.parse("2024-08-18 2:00:00"))
-        create(:page_editorship, space:, page: page_c, editor: user_a, last_page_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
-      end
-
-      it "最後に編集したページから取得できること" do
-        expect(user_a.last_modified_pages.pluck(:title)).to eq(%w[ページC ページA])
-      end
-    end
-  end
 end

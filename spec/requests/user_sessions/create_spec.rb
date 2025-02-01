@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe "POST /sessions", type: :request do
+RSpec.describe "POST /user_session", type: :request do
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
     user = create(:user, :with_password)
     sign_in(user:)
@@ -9,14 +9,14 @@ RSpec.describe "POST /sessions", type: :request do
     # ログインしているのでセッションは1つ
     expect(UserSession.count).to eq(1)
 
-    post("/user_sessions", params: {
+    post("/user_session", params: {
       user_session_form: {
         email: user.email,
         password: "passw0rd"
       }
     })
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/")
+    expect(response).to redirect_to("/home")
 
     # ログインしているのでセッションは増えないはず
     expect(UserSession.count).to eq(1)
@@ -28,14 +28,14 @@ RSpec.describe "POST /sessions", type: :request do
 
     user = create(:user, :with_password)
 
-    post("/user_sessions", params: {
+    post("/user_session", params: {
       user_session_form: {
         email: user.email,
         password: "passw0rd"
       }
     })
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/")
+    expect(response).to redirect_to("/home")
 
     # ログインしたのでセッションが1つ生まれるはず
     expect(UserSession.count).to eq(1)
@@ -47,7 +47,7 @@ RSpec.describe "POST /sessions", type: :request do
 
     user = create(:user, :with_password)
 
-    post("/user_sessions", params: {
+    post("/user_session", params: {
       user_session_form: {
         email: user.email,
         password: "password" # パスワードを間違えている

@@ -29,31 +29,31 @@ RSpec.describe Page, type: :model do
   end
 
   describe "#link!" do
-    context "ページにリンクが含まれているとき" do
-      let!(:space) { create(:space) }
-      let!(:user) { create(:user, space:) }
-      let!(:topic_a) { create(:topic, space:, name: "トピックA") }
-      let!(:topic_b) { create(:topic, space:, name: "トピックB") }
-      let!(:page_a) { create(:page, space:, topic: topic_a, title: "Page A") }
+    it "ページにリンクが含まれているとき、リンクを作成すること" do
+      user = create(:user)
+      space = create(:space)
+      space_member = create(:space_member, user:, space:)
 
-      it "リンクを作成すること" do
-        expect(Page.count).to eq(1)
+      topic_a = create(:topic, space:, name: "トピックA")
+      topic_b = create(:topic, space:, name: "トピックB")
+      page_a = create(:page, space:, topic: topic_a, title: "Page A")
 
-        page_a.body = <<~BODY
-          [[Page B]]
-          [[トピックB/Page C]]
-          [[存在しないトピック/Page D]]
-        BODY
-        page_a.link!(editor: user)
+      expect(Page.count).to eq(1)
 
-        expect(Page.count).to eq(3)
-        page_b = space.pages.find_by(topic: topic_a, title: "Page B")
-        expect(page_b).to be_present
-        page_c = space.pages.find_by(topic: topic_b, title: "Page C")
-        expect(page_c).to be_present
+      page_a.body = <<~BODY
+        [[Page B]]
+        [[トピックB/Page C]]
+        [[存在しないトピック/Page D]]
+      BODY
+      page_a.link!(editor: space_member)
 
-        expect(page_a.linked_page_ids).to eq([page_b.id, page_c.id])
-      end
+      expect(Page.count).to eq(3)
+      page_b = space.pages.find_by(topic: topic_a, title: "Page B")
+      expect(page_b).to be_present
+      page_c = space.pages.find_by(topic: topic_b, title: "Page C")
+      expect(page_c).to be_present
+
+      expect(page_a.linked_page_ids).to eq([page_b.id, page_c.id])
     end
   end
 end

@@ -16,7 +16,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     })
 
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/")
+    expect(response).to redirect_to("/home")
 
     # EmailConfirmationのレコードを作る前にリダイレクトされるので0件のままのはず
     expect(EmailConfirmation.count).to eq(0)

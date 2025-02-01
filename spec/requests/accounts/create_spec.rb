@@ -29,7 +29,7 @@ RSpec.describe "POST /accounts", type: :request do
     })
 
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/")
+    expect(response).to redirect_to("/home")
 
     # 新しいアカウントは作成されていないのでユーザーは1件のまま
     expect(User.count).to eq(1)
@@ -96,6 +96,6 @@ RSpec.describe "POST /accounts", type: :request do
     # アカウントの作成に成功したのでユーザーが1件になる
     expect(User.count).to eq(1)
 
-    expect(response).to redirect_to("/")
+    expect(response).to redirect_to("/home")
   end
 end

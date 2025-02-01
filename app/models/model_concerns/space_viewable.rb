@@ -19,5 +19,9 @@ module ModelConcerns
     sig { abstract.returns(T::Boolean) }
     def can_create_topic?
     end
+
+    sig { abstract.params(page: Page).returns(T::Boolean) }
+    def can_update_draft_page?(page:)
+    end
   end
 end

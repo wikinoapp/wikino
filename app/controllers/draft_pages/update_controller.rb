@@ -14,13 +14,15 @@ module DraftPages
     sig { returns(T.untyped) }
     def call
       space = find_space_by_identifier!
+      space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
-      unless Current.viewer!.can_update_draft_page?(page:)
+      unless space_viewer.can_update_draft_page?(page:)
         return render_404
       end
 
       result = UpdateDraftPageUseCase.new.call(
+        space_member: T.let(space_viewer, SpaceMember),
         page:,
         topic_number: form_params[:topic_number],
         title: form_params[:title],
