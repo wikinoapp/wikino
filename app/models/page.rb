@@ -89,7 +89,7 @@ class Page < ApplicationRecord
     )
   end
 
-  sig { params(editor: User).void }
+  sig { params(editor: SpaceMember).void }
   def add_editor!(editor:)
     editorships.where(space:, editor:).first_or_create!(
       last_page_modified_at: modified_at
