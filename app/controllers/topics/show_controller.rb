@@ -4,14 +4,11 @@
 module Topics
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
     include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :restore_user_session
-
-    rescue_from Pundit::NotAuthorizedError, with: :render_404
 
     sig { returns(T.untyped) }
     def call

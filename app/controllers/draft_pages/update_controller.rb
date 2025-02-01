@@ -4,7 +4,6 @@
 module DraftPages
   class UpdateController < ApplicationController
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
     include ControllerConcerns::SpaceFindable
 

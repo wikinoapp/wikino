@@ -4,7 +4,6 @@
 module Trash
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
     include ControllerConcerns::SpaceFindable
 

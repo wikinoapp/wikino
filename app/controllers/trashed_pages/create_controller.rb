@@ -5,7 +5,6 @@ module TrashedPages
   class CreateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
