@@ -35,13 +35,13 @@ module ControllerConcerns
 
       if Current.viewer.signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
-        redirect_to root_path
+        redirect_to home_path
       end
     end
 
     sig(:final) { returns(String) }
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
+      session.delete(:return_to_after_authenticating) || home_url
     end
 
     sig(:final) { returns(T.nilable(String)) }

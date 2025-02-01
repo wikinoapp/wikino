@@ -10,8 +10,7 @@ RSpec.describe "GET /sign_in", type: :request do
     get "/sign_in"
 
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/home")
   end
 
   it "ログインしていないとき、ログインページが表示されること" do
