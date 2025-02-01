@@ -68,7 +68,7 @@ module ModelConcerns
       LinkCollection.new(page: original_page, links:, pagination:)
     end
 
-    sig { params(editor: User).void }
+    sig { params(editor: SpaceMember).void }
     def link!(editor:)
       location_keys = PageLocationKey.scan_text(text: body, current_topic: topic)
       topics = space.not_nil!.topics.where(name: location_keys.map(&:topic_name).uniq)

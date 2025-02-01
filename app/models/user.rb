@@ -194,27 +194,6 @@ class User < ApplicationRecord
     retry
   end
 
-  sig { params(page: Page).void }
-  def destroy_draft_page!(page:)
-    draft_pages.where(page:).destroy_all
-
-    nil
-  end
-
-  sig { params(topic: Topic, title: String).returns(Page) }
-  def create_linked_page!(topic:, title:)
-    page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
-      space:,
-      body: "",
-      body_html: "",
-      linked_page_ids: [],
-      modified_at: Time.zone.now
-    )
-    page_editorships.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
-
-    page
-  end
-
   sig { override.params(space: Space, number: T.untyped).returns(Topic) }
   def find_topic_by_number!(space:, number:)
     viewable_topics.find_by!(space:, number:)

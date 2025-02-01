@@ -98,7 +98,7 @@ class Page < ApplicationRecord
     nil
   end
 
-  sig { params(editor: User, body: String, body_html: String).returns(PageRevision) }
+  sig { params(editor: SpaceMember, body: String, body_html: String).returns(PageRevision) }
   def create_revision!(editor:, body:, body_html:)
     revisions.create!(space:, editor:, body:, body_html:)
   end

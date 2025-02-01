@@ -7,19 +7,19 @@ module Pages
       params(
         space: Space,
         page: Page,
-        draft_page: T.nilable(DraftPage),
         form: EditPageForm,
         link_collection: LinkCollection,
-        backlink_collection: BacklinkCollection
+        backlink_collection: BacklinkCollection,
+        draft_page: T.nilable(DraftPage)
       ).void
     end
-    def initialize(space:, page:, draft_page:, form:, link_collection:, backlink_collection:)
+    def initialize(space:, page:, form:, link_collection:, backlink_collection:, draft_page: nil)
       @space = space
       @page = page
-      @draft_page = draft_page
       @form = form
       @link_collection = link_collection
       @backlink_collection = backlink_collection
+      @draft_page = draft_page
     end
 
     sig { returns(Space) }
@@ -29,10 +29,6 @@ module Pages
     sig { returns(Page) }
     attr_reader :page
     private :page
-
-    sig { returns(T.nilable(DraftPage)) }
-    attr_reader :draft_page
-    private :draft_page
 
     sig { returns(EditPageForm) }
     attr_reader :form
@@ -45,5 +41,9 @@ module Pages
     sig { returns(BacklinkCollection) }
     attr_reader :backlink_collection
     private :backlink_collection
+
+    sig { returns(T.nilable(DraftPage)) }
+    attr_reader :draft_page
+    private :draft_page
   end
 end
