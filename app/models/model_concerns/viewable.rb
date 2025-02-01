@@ -12,6 +12,10 @@ module ModelConcerns
     def signed_in?
     end
 
+    sig { abstract.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+    def space_viewer!(space:)
+    end
+
     sig { abstract.params(space: Space).returns(T::Boolean) }
     def joined_space?(space:)
     end

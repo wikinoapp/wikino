@@ -23,6 +23,11 @@ class Visitor
     false
   end
 
+  sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+  def space_viewer!(space:)
+    SpaceVisitor.new(space:)
+  end
+
   sig { override.params(space: Space).returns(T::Boolean) }
   def joined_space?(space:)
     false

@@ -3,11 +3,16 @@
 
 module Spaces
   class ShowView < ApplicationView
-    sig { params(pinned_pages: Page::PrivateAssociationRelation, page_connection: PageConnection).void }
-    def initialize(pinned_pages:, page_connection:)
+    sig { params(space: Space, pinned_pages: Page::PrivateAssociationRelation, page_connection: PageConnection).void }
+    def initialize(space:, pinned_pages:, page_connection:)
+      @space = space
       @pinned_pages = pinned_pages
       @page_connection = page_connection
     end
+
+    sig { returns(Space) }
+    attr_reader :space
+    private :space
 
     sig { returns(Page::PrivateAssociationRelation) }
     attr_reader :pinned_pages

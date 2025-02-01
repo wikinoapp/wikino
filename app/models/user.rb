@@ -62,6 +62,11 @@ class User < ApplicationRecord
     true
   end
 
+  sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+  def space_viewer!(space:)
+    active_space_members.find_by(space:).presence || SpaceVisitor.new(space:)
+  end
+
   sig { override.params(space: Space).returns(T::Boolean) }
   def joined_space?(space:)
     active_spaces.where(id: space.id).exists?

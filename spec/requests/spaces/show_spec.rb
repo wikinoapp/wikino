@@ -16,7 +16,9 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.body).not_to include("公開されていないページ")
   end
 
-  it "別のスペースにログインしているとき、公開トピックのページが表示されること" do
+  it "別のスペースに参加しているとき、公開トピックのページが表示されること" do
+    user = create(:user, :with_password)
+
     space = create(:space, :small)
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
@@ -24,7 +26,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, space: other_space, user:)
 
     sign_in(user:)
 
@@ -35,17 +37,21 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.body).not_to include("公開されていないページ")
   end
 
-  it "同じスペースにログインしているとき、自分が参加している公開/非公開トピックのページが表示されること" do
+  it "スペースに参加しているとき、自分が参加している公開/非公開トピックのページが表示されること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
-    user = create(:user, :with_password, space:)
+    space_member = create(:space_member, space:, user:)
+
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
-    not_joined_topic = create(:topic, space:)
-    create(:topic_membership, space:, topic: public_topic, member: user)
-    create(:topic_membership, space:, topic: private_topic, member: user)
+    not_joined_public_topic = create(:topic, :public, space:)
+    not_joined_private_topic = create(:topic, :private, space:)
+    create(:topic_membership, space:, topic: public_topic, member: space_member)
+    create(:topic_membership, space:, topic: private_topic, member: space_member)
     create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
     create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
-    create(:page, :published, space:, topic: not_joined_topic, title: "参加していないトピックのページ")
+    create(:page, :published, space:, topic: not_joined_public_topic, title: "参加していない公開トピックのページ")
+    create(:page, :published, space:, topic: not_joined_private_topic, title: "参加していない非公開トピックのページ")
 
     sign_in(user:)
 
@@ -54,6 +60,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
     expect(response.body).to include("公開されていないページ")
-    expect(response.body).not_to include("参加していないトピックのページ")
+    expect(response.body).not_to include("参加していない公開トピックのページ")
+    expect(response.body).not_to include("参加していない非公開トピックのページ")
   end
 end

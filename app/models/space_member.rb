@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class SpaceMember < ApplicationRecord
+  include ModelConcerns::SpaceViewable
+
   enum :role, {
     SpaceMemberRole::Owner.serialize => 0
   }, prefix: true
@@ -9,6 +11,7 @@ class SpaceMember < ApplicationRecord
   belongs_to :space
   belongs_to :user
   has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
+  has_many :topics, through: :topic_memberships
   has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
 
@@ -34,5 +37,10 @@ class SpaceMember < ApplicationRecord
     draft_pages.where(page:).destroy_all
 
     nil
+  end
+
+  sig { override.returns(Page::PrivateRelation) }
+  def viewable_pages
+    space.pages.active
   end
 end
