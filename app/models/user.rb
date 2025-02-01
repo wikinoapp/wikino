@@ -16,11 +16,11 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space, optional: true
-  has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :pages, through: :page_editorships
   has_many :space_members, dependent: :restrict_with_exception
   has_many :active_space_members, -> { active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
+  has_many :active_draft_pages, through: :active_space_members, source: :draft_pages
   has_many :topic_memberships, through: :space_members, source: :topic_memberships
   has_many :topics, through: :topic_memberships
   has_many :active_topic_memberships, class_name: "TopicMembership", through: :active_space_members, source: :topic_memberships
@@ -60,6 +60,22 @@ class User < ApplicationRecord
   sig { override.returns(T::Boolean) }
   def signed_in?
     true
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def joined_space?(space:)
+    active_spaces.where(id: space.id).exists?
+  end
+
+  sig { params(topic: Topic).returns(T::Boolean) }
+  def joined_topic?(topic:)
+    topics.include?(topic)
+  end
+
+  sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
+  def joined_all_topics?(topic_ids:)
+    joined_topic_ids = topics.pluck(:id)
+    topic_ids - joined_topic_ids == []
   end
 
   sig { override.returns(ViewerLocale) }
@@ -145,17 +161,6 @@ class User < ApplicationRecord
   sig { override.params(page: Page).returns(T::Boolean) }
   def can_trash_page?(page:)
     active_spaces.where(id: page.space_id).exists?
-  end
-
-  sig { params(topic: Topic).returns(T::Boolean) }
-  def joined_topic?(topic:)
-    topics.include?(topic)
-  end
-
-  sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
-  def joined_all_topics?(topic_ids:)
-    joined_topic_ids = topics.pluck(:id)
-    topic_ids - joined_topic_ids == []
   end
 
   sig { params(email_confirmation: EmailConfirmation).void }

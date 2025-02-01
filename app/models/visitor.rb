@@ -23,6 +23,11 @@ class Visitor
     false
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def joined_space?(space:)
+    false
+  end
+
   sig { override.params(page: Page).returns(T::Boolean) }
   def can_view_page?(page:)
     page.topic.not_nil!.visibility_public?
@@ -66,6 +71,11 @@ class Visitor
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
     Topic.visibility_public
+  end
+
+  sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+  def active_draft_pages
+    DraftPage.none
   end
 
   sig { override.params(space: Space, number: T.untyped).returns(Topic) }

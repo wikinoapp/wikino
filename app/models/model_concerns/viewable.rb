@@ -12,6 +12,10 @@ module ModelConcerns
     def signed_in?
     end
 
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def joined_space?(space:)
+    end
+
     sig { abstract.params(page: Page).returns(T::Boolean) }
     def can_view_page?(page:)
     end
@@ -54,6 +58,10 @@ module ModelConcerns
 
     sig { abstract.returns(Topic::PrivateRelation) }
     def viewable_topics
+    end
+
+    sig { abstract.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+    def active_draft_pages
     end
 
     sig { abstract.params(space: Space, number: T.untyped).returns(Topic) }
