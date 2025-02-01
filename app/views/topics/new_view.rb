@@ -3,6 +3,7 @@
 
 module Topics
   class NewView < ApplicationView
+    sig { params(space: Space, form: NewTopicForm).void }
     def initialize(space:, form:)
       @space = space
       @form = form

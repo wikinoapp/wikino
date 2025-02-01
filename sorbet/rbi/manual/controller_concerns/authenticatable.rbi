@@ -14,6 +14,9 @@ module ControllerConcerns
     def flash
     end
 
+    def home_path
+    end
+
     def redirect_to(*args)
     end
 

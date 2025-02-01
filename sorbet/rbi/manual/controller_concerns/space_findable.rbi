@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module ControllerConcerns
-  module SpaceSettable
+  module SpaceFindable
     include ActionController::StrongParameters
   end
 end

@@ -20,7 +20,7 @@ class SpaceVisitor
     space.pages.active.joins(:topic).merge(Topic.visibility_public)
   end
 
-  sig { override.returns(Topic::PrivateRelation) }
+  sig { override.returns(Topic::PrivateAssociationRelation) }
   def topics
     space.topics.visibility_public
   end
