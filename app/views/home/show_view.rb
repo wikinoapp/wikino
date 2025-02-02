@@ -3,5 +3,13 @@
 
 module Home
   class ShowView < ApplicationView
+    sig { params(active_spaces: Space::PrivateRelation).void }
+    def initialize(active_spaces:)
+      @active_spaces = active_spaces
+    end
+
+    sig { returns(Space::PrivateRelation) }
+    attr_reader :active_spaces
+    private :active_spaces
   end
 end
