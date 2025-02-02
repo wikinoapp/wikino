@@ -3,9 +3,19 @@
 
 module Spaces
   class ShowView < ApplicationView
-    sig { params(space: Space, pinned_pages: Page::PrivateAssociationRelation, page_connection: PageConnection).void }
-    def initialize(space:, pinned_pages:, page_connection:)
+    sig do
+      params(
+        space: Space,
+        space_viewer: ModelConcerns::SpaceViewable,
+        first_joined_topic: T.nilable(Topic),
+        pinned_pages: Page::PrivateAssociationRelation,
+        page_connection: PageConnection
+      ).void
+    end
+    def initialize(space:, space_viewer:, first_joined_topic:, pinned_pages:, page_connection:)
       @space = space
+      @space_viewer = space_viewer
+      @first_joined_topic = first_joined_topic
       @pinned_pages = pinned_pages
       @page_connection = page_connection
     end
@@ -13,6 +23,14 @@ module Spaces
     sig { returns(Space) }
     attr_reader :space
     private :space
+
+    sig { returns(ModelConcerns::SpaceViewable) }
+    attr_reader :space_viewer
+    private :space_viewer
+
+    sig { returns(T.nilable(Topic)) }
+    attr_reader :first_joined_topic
+    private :first_joined_topic
 
     sig { returns(Page::PrivateAssociationRelation) }
     attr_reader :pinned_pages

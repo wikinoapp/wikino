@@ -66,6 +66,16 @@ class SpaceMember < ApplicationRecord
     space.not_nil!.pages.active
   end
 
+  sig { override.params(number: T.untyped).returns(Topic) }
+  def find_topic_by_number!(number:)
+    topics.find_by!(number:)
+  end
+
+  sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+  def can_create_page?(topic:)
+    topic.present? && topics.where(id: topic.id).exists?
+  end
+
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     true

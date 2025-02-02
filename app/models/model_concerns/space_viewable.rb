@@ -16,6 +16,14 @@ module ModelConcerns
     def topics
     end
 
+    sig { abstract.params(number: T.untyped).returns(Topic) }
+    def find_topic_by_number!(number:)
+    end
+
+    sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+    def can_create_page?(topic:)
+    end
+
     sig { abstract.returns(T::Boolean) }
     def can_create_topic?
     end

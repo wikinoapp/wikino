@@ -13,9 +13,10 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space = find_space_by_identifier!
+      space_viewer = Current.viewer!.space_viewer!(space:)
       topic = space.topics.kept.find_by!(number: params[:topic_number])
 
-      unless Current.viewer!.can_create_page?(topic:)
+      unless space_viewer.can_create_page?(topic:)
         return render_404
       end
 

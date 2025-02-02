@@ -25,6 +25,16 @@ class SpaceVisitor
     space.topics.visibility_public
   end
 
+  sig { override.params(number: T.untyped).returns(Topic) }
+  def find_topic_by_number!(number:)
+    topics.find_by!(number:)
+  end
+
+  sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+  def can_create_page?(topic:)
+    false
+  end
+
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     false

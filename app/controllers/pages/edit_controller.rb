@@ -13,6 +13,7 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space = find_space_by_identifier!
+      space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
       unless Current.viewer!.can_update_page?(page:)
@@ -23,6 +24,7 @@ module Pages
       pageable = draft_page.presence || page
 
       form = EditPageForm.new(
+        space_member: T.let(space_viewer, SpaceMember),
         topic_number: pageable.topic.number,
         title: pageable.title,
         body: pageable.body
