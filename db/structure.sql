@@ -222,8 +222,8 @@ CREATE TABLE public.topic_memberships (
     role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
     last_page_modified_at timestamp(6) without time zone,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -239,8 +239,8 @@ CREATE TABLE public.topics (
     description character varying NOT NULL,
     visibility integer NOT NULL,
     discarded_at timestamp without time zone,
-    created_at timestamp(6) without time zone,
-    updated_at timestamp(6) without time zone
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -879,6 +879,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250202165519'),
 ('20250202165124'),
 ('20250202063341'),
 ('20250119163728'),
