@@ -9,15 +9,15 @@ module ModelConcerns
     interface!
 
     sig { abstract.returns(Page::PrivateAssociationRelation) }
-    def viewable_pages
+    def showable_pages
+    end
+
+    sig { abstract.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+    def joined_topics
     end
 
     sig { abstract.returns(Topic::PrivateAssociationRelation) }
-    def topics
-    end
-
-    sig { abstract.params(number: T.untyped).returns(Topic) }
-    def find_topic_by_number!(number:)
+    def showable_topics
     end
 
     sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }

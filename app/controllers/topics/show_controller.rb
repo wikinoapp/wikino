@@ -14,7 +14,7 @@ module Topics
     def call
       space = find_space_by_identifier!
       space_viewer = Current.viewer!.space_viewer!(space:)
-      topic = space_viewer.find_topic_by_number!(number: params[:topic_number])
+      topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
 
       pinned_pages = topic.pages.active.pinned.order(pinned_at: :desc, id: :desc)
 

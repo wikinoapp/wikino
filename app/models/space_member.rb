@@ -62,13 +62,18 @@ class SpaceMember < ApplicationRecord
   end
 
   sig { override.returns(Page::PrivateAssociationRelation) }
-  def viewable_pages
+  def showable_pages
     space.not_nil!.pages.active
   end
 
-  sig { override.params(number: T.untyped).returns(Topic) }
-  def find_topic_by_number!(number:)
-    topics.find_by!(number:)
+  sig { override.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+  def joined_topics
+    topics.kept
+  end
+
+  sig { override.returns(Topic::PrivateAssociationRelation) }
+  def showable_topics
+    space.not_nil!.topics.kept
   end
 
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }

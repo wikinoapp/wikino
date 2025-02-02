@@ -14,12 +14,10 @@ module Spaces
     def call
       space = find_space_by_identifier!
       space_viewer = Current.viewer!.space_viewer!(space:)
-      joined_topics = space_viewer.topics
-      first_joined_topic = joined_topics.first
-      joined_topic_pages = space_viewer.viewable_pages.joins(:topic).merge(joined_topics)
-      pinned_pages = joined_topic_pages.pinned.order(pinned_at: :desc, id: :desc)
+      pages = space_viewer.showable_pages
+      pinned_pages = pages.pinned.order(pinned_at: :desc, id: :desc)
 
-      cursor_paginate_page = joined_topic_pages.not_pinned.cursor_paginate(
+      cursor_paginate_page = pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,
@@ -29,9 +27,7 @@ module Spaces
       pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
       render Spaces::ShowView.new(
-        space:,
         space_viewer:,
-        first_joined_topic:,
         pinned_pages:,
         page_connection: PageConnection.new(pages:, pagination:)
       )

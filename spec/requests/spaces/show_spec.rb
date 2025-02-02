@@ -37,7 +37,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.body).not_to include("公開されていないページ")
   end
 
-  it "スペースに参加しているとき、自分が参加している公開/非公開トピックのページが表示されること" do
+  it "スペースに参加しているとき、公開/非公開トピックのページが表示されること" do
     user = create(:user, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
@@ -60,7 +60,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
     expect(response.body).to include("公開されていないページ")
-    expect(response.body).not_to include("参加していない公開トピックのページ")
-    expect(response.body).not_to include("参加していない非公開トピックのページ")
+    expect(response.body).to include("参加していない公開トピックのページ")
+    expect(response.body).to include("参加していない非公開トピックのページ")
   end
 end

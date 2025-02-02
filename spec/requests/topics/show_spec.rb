@@ -52,7 +52,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.status).to eq(404)
   end
 
-  it "ログインしている & 参加している公開トピックのとき、ページが表示されること" do
+  it "スペースに参加している & 参加している公開トピックのとき、ページが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password)
     space_member = create(:space_member, :owner, space:, user:)
@@ -67,7 +67,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.body).to include("公開されているトピック")
   end
 
-  it "ログインしている & 参加している非公開トピックのとき、ページが表示されること" do
+  it "スペースに参加している & 参加している非公開トピックのとき、ページが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password)
     space_member = create(:space_member, :owner, space:, user:)
@@ -82,7 +82,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.body).to include("公開されていないトピック")
   end
 
-  it "ログインしている & 参加していない公開トピックのとき、ページが表示されること" do
+  it "スペースに参加している & 参加していない公開トピックのとき、ページが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password)
     create(:space_member, :owner, space:, user:)
@@ -96,7 +96,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.body).to include("公開されているトピック")
   end
 
-  it "ログインしている & 参加していない非公開トピックのとき、ページが表示されること" do
+  it "スペースに参加している & 参加していない非公開トピックのとき、ページが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password)
     create(:space_member, :owner, space:, user:)

@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-# ログインしていない人を表すモデル
+# スペースに参加していない人を表すモデル
 class SpaceVisitor
   extend T::Sig
 
@@ -16,18 +16,18 @@ class SpaceVisitor
   attr_reader :space
 
   sig { override.returns(Page::PrivateAssociationRelation) }
-  def viewable_pages
+  def showable_pages
     space.pages.active.joins(:topic).merge(Topic.visibility_public)
   end
 
-  sig { override.returns(Topic::PrivateAssociationRelation) }
-  def topics
-    space.topics.visibility_public
+  sig { override.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+  def joined_topics
+    Topic.none
   end
 
-  sig { override.params(number: T.untyped).returns(Topic) }
-  def find_topic_by_number!(number:)
-    topics.find_by!(number:)
+  sig { override.returns(Topic::PrivateAssociationRelation) }
+  def showable_topics
+    space.topics.kept.visibility_public
   end
 
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
