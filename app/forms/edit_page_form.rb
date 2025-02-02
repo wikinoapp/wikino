@@ -22,7 +22,7 @@ class EditPageForm < ApplicationForm
     selectable_topics.find_by(number: topic_number)
   end
 
-  sig { returns(Topic::PrivateRelation) }
+  sig { returns(Topic::PrivateCollectionProxy) }
   def selectable_topics
     space_member.not_nil!.topics
   end
