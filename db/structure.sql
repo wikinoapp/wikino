@@ -87,7 +87,7 @@ CREATE TABLE public.draft_pages (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     page_id uuid NOT NULL,
-    editor_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
     topic_id uuid NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
@@ -116,14 +116,14 @@ CREATE TABLE public.email_confirmations (
 
 
 --
--- Name: page_editorships; Type: TABLE; Schema: public; Owner: -
+-- Name: page_editors; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.page_editorships (
+CREATE TABLE public.page_editors (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     page_id uuid NOT NULL,
-    editor_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
     last_page_modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -137,7 +137,7 @@ CREATE TABLE public.page_editorships (
 CREATE TABLE public.page_revisions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    editor_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
     page_id uuid NOT NULL,
     body public.citext NOT NULL,
     body_html text NOT NULL,
@@ -211,14 +211,14 @@ CREATE TABLE public.spaces (
 
 
 --
--- Name: topic_memberships; Type: TABLE; Schema: public; Owner: -
+-- Name: topic_members; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.topic_memberships (
+CREATE TABLE public.topic_members (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     topic_id uuid NOT NULL,
-    member_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
     role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
     last_page_modified_at timestamp(6) without time zone,
@@ -317,10 +317,10 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
--- Name: page_editorships page_editorships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editors page_editorships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.page_editorships
+ALTER TABLE ONLY public.page_editors
     ADD CONSTRAINT page_editorships_pkey PRIMARY KEY (id);
 
 
@@ -373,10 +373,10 @@ ALTER TABLE ONLY public.spaces
 
 
 --
--- Name: topic_memberships topic_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: topic_members topic_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.topic_memberships
+ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT topic_memberships_pkey PRIMARY KEY (id);
 
 
@@ -405,20 +405,6 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: index_draft_pages_on_editor_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_draft_pages_on_editor_id ON public.draft_pages USING btree (editor_id);
-
-
---
--- Name: index_draft_pages_on_editor_id_and_page_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_draft_pages_on_editor_id_and_page_id ON public.draft_pages USING btree (editor_id, page_id);
-
-
---
 -- Name: index_draft_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -437,6 +423,20 @@ CREATE INDEX index_draft_pages_on_page_id ON public.draft_pages USING btree (pag
 --
 
 CREATE INDEX index_draft_pages_on_space_id ON public.draft_pages USING btree (space_id);
+
+
+--
+-- Name: index_draft_pages_on_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_pages_on_space_member_id ON public.draft_pages USING btree (space_member_id);
+
+
+--
+-- Name: index_draft_pages_on_space_member_id_and_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_draft_pages_on_space_member_id_and_page_id ON public.draft_pages USING btree (space_member_id, page_id);
 
 
 --
@@ -461,38 +461,31 @@ CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmatio
 
 
 --
--- Name: index_page_editorships_on_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editors_on_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_page_editorships_on_editor_id ON public.page_editorships USING btree (editor_id);
-
-
---
--- Name: index_page_editorships_on_page_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_page_editorships_on_page_id ON public.page_editorships USING btree (page_id);
+CREATE INDEX index_page_editors_on_page_id ON public.page_editors USING btree (page_id);
 
 
 --
--- Name: index_page_editorships_on_page_id_and_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editors_on_page_id_and_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_page_editorships_on_page_id_and_editor_id ON public.page_editorships USING btree (page_id, editor_id);
-
-
---
--- Name: index_page_editorships_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_page_editorships_on_space_id ON public.page_editorships USING btree (space_id);
+CREATE UNIQUE INDEX index_page_editors_on_page_id_and_space_member_id ON public.page_editors USING btree (page_id, space_member_id);
 
 
 --
--- Name: index_page_revisions_on_editor_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_page_editors_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_page_revisions_on_editor_id ON public.page_revisions USING btree (editor_id);
+CREATE INDEX index_page_editors_on_space_id ON public.page_editors USING btree (space_id);
+
+
+--
+-- Name: index_page_editors_on_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_page_editors_on_space_member_id ON public.page_editors USING btree (space_member_id);
 
 
 --
@@ -507,6 +500,13 @@ CREATE INDEX index_page_revisions_on_page_id ON public.page_revisions USING btre
 --
 
 CREATE INDEX index_page_revisions_on_space_id ON public.page_revisions USING btree (space_id);
+
+
+--
+-- Name: index_page_revisions_on_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_page_revisions_on_space_member_id ON public.page_revisions USING btree (space_member_id);
 
 
 --
@@ -622,31 +622,31 @@ CREATE UNIQUE INDEX index_spaces_on_identifier ON public.spaces USING btree (ide
 
 
 --
--- Name: index_topic_memberships_on_member_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_topic_members_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_topic_memberships_on_member_id ON public.topic_memberships USING btree (member_id);
-
-
---
--- Name: index_topic_memberships_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_topic_memberships_on_space_id ON public.topic_memberships USING btree (space_id);
+CREATE INDEX index_topic_members_on_space_id ON public.topic_members USING btree (space_id);
 
 
 --
--- Name: index_topic_memberships_on_topic_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_topic_members_on_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_topic_memberships_on_topic_id ON public.topic_memberships USING btree (topic_id);
+CREATE INDEX index_topic_members_on_space_member_id ON public.topic_members USING btree (space_member_id);
 
 
 --
--- Name: index_topic_memberships_on_topic_id_and_member_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_topic_members_on_topic_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_topic_memberships_on_topic_id_and_member_id ON public.topic_memberships USING btree (topic_id, member_id);
+CREATE INDEX index_topic_members_on_topic_id ON public.topic_members USING btree (topic_id);
+
+
+--
+-- Name: index_topic_members_on_topic_id_and_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_topic_members_on_topic_id_and_space_member_id ON public.topic_members USING btree (topic_id, space_member_id);
 
 
 --
@@ -713,19 +713,19 @@ CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_
 
 
 --
--- Name: topic_memberships fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: topic_members fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.topic_memberships
+ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_0f8ef246f7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
--- Name: page_editorships fk_rails_2088082077; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editors fk_rails_2088082077; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.page_editorships
-    ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
+ALTER TABLE ONLY public.page_editors
+    ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -737,18 +737,18 @@ ALTER TABLE ONLY public.space_members
 
 
 --
--- Name: page_editorships fk_rails_3b3700fcdf; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editors fk_rails_3b3700fcdf; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.page_editorships
+ALTER TABLE ONLY public.page_editors
     ADD CONSTRAINT fk_rails_3b3700fcdf FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
--- Name: topic_memberships fk_rails_50149efe6b; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: topic_members fk_rails_50149efe6b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.topic_memberships
+ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_50149efe6b FOREIGN KEY (topic_id) REFERENCES public.topics(id);
 
 
@@ -773,7 +773,7 @@ ALTER TABLE ONLY public.page_revisions
 --
 
 ALTER TABLE ONLY public.page_revisions
-    ADD CONSTRAINT fk_rails_74648de0a3 FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT fk_rails_74648de0a3 FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -793,11 +793,11 @@ ALTER TABLE ONLY public.pages
 
 
 --
--- Name: topic_memberships fk_rails_80fd6512fa; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: topic_members fk_rails_80fd6512fa; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.topic_memberships
-    ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (member_id) REFERENCES public.space_members(id);
+ALTER TABLE ONLY public.topic_members
+    ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -805,7 +805,7 @@ ALTER TABLE ONLY public.topic_memberships
 --
 
 ALTER TABLE ONLY public.draft_pages
-    ADD CONSTRAINT fk_rails_8d9bc1217e FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT fk_rails_8d9bc1217e FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -865,10 +865,10 @@ ALTER TABLE ONLY public.page_revisions
 
 
 --
--- Name: page_editorships fk_rails_fc18bdf1dd; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: page_editors fk_rails_fc18bdf1dd; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.page_editorships
+ALTER TABLE ONLY public.page_editors
     ADD CONSTRAINT fk_rails_fc18bdf1dd FOREIGN KEY (page_id) REFERENCES public.pages(id);
 
 
@@ -879,6 +879,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250204164034'),
 ('20250202165519'),
 ('20250202165124'),
 ('20250202063341'),
