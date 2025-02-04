@@ -384,9 +384,6 @@ class PageRevision
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
-    def build_editor(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::Page) }
     def build_page(*args, &blk); end
 
@@ -394,10 +391,7 @@ class PageRevision
     def build_space(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
-    def create_editor(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
-    def create_editor!(*args, &blk); end
+    def build_space_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Page) }
     def create_page(*args, &blk); end
@@ -411,17 +405,11 @@ class PageRevision
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def create_space!(*args, &blk); end
 
-    sig { returns(T.nilable(::SpaceMember)) }
-    def editor; end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
+    def create_space_member(*args, &blk); end
 
-    sig { params(value: T.nilable(::SpaceMember)).void }
-    def editor=(value); end
-
-    sig { returns(T::Boolean) }
-    def editor_changed?; end
-
-    sig { returns(T::Boolean) }
-    def editor_previously_changed?; end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMember) }
+    def create_space_member!(*args, &blk); end
 
     sig { returns(T.nilable(::Page)) }
     def page; end
@@ -435,23 +423,23 @@ class PageRevision
     sig { returns(T::Boolean) }
     def page_previously_changed?; end
 
-    sig { returns(T.nilable(::SpaceMember)) }
-    def reload_editor; end
-
     sig { returns(T.nilable(::Page)) }
     def reload_page; end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
 
-    sig { void }
-    def reset_editor; end
+    sig { returns(T.nilable(::SpaceMember)) }
+    def reload_space_member; end
 
     sig { void }
     def reset_page; end
 
     sig { void }
     def reset_space; end
+
+    sig { void }
+    def reset_space_member; end
 
     sig { returns(T.nilable(::Space)) }
     def space; end
@@ -461,6 +449,18 @@ class PageRevision
 
     sig { returns(T::Boolean) }
     def space_changed?; end
+
+    sig { returns(T.nilable(::SpaceMember)) }
+    def space_member; end
+
+    sig { params(value: T.nilable(::SpaceMember)).void }
+    def space_member=(value); end
+
+    sig { returns(T::Boolean) }
+    def space_member_changed?; end
+
+    sig { returns(T::Boolean) }
+    def space_member_previously_changed?; end
 
     sig { returns(T::Boolean) }
     def space_previously_changed?; end
@@ -792,51 +792,6 @@ class PageRevision
     def created_at_will_change!; end
 
     sig { returns(::String) }
-    def editor_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def editor_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def editor_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def editor_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def editor_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def editor_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def editor_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def editor_id_change_to_be_saved; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def editor_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def editor_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def editor_id_previous_change; end
-
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
-    def editor_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def editor_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def editor_id_was; end
-
-    sig { void }
-    def editor_id_will_change!; end
-
-    sig { returns(::String) }
     def id; end
 
     sig { params(value: ::String).returns(::String) }
@@ -981,9 +936,6 @@ class PageRevision
     def restore_created_at!; end
 
     sig { void }
-    def restore_editor_id!; end
-
-    sig { void }
     def restore_id!; end
 
     sig { void }
@@ -994,6 +946,9 @@ class PageRevision
 
     sig { void }
     def restore_space_id!; end
+
+    sig { void }
+    def restore_space_member_id!; end
 
     sig { void }
     def restore_updated_at!; end
@@ -1015,12 +970,6 @@ class PageRevision
 
     sig { returns(T::Boolean) }
     def saved_change_to_created_at?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_editor_id; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_editor_id?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_id; end
@@ -1045,6 +994,12 @@ class PageRevision
 
     sig { returns(T::Boolean) }
     def saved_change_to_space_id?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_space_member_id; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_space_member_id?; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
@@ -1096,6 +1051,51 @@ class PageRevision
 
     sig { void }
     def space_id_will_change!; end
+
+    sig { returns(::String) }
+    def space_member_id; end
+
+    sig { params(value: ::String).returns(::String) }
+    def space_member_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def space_member_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def space_member_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def space_member_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def space_member_id_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_member_id_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_member_id_change_to_be_saved; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_member_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def space_member_id_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def space_member_id_previous_change; end
+
+    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    def space_member_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def space_member_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def space_member_id_was; end
+
+    sig { void }
+    def space_member_id_will_change!; end
 
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
@@ -1152,9 +1152,6 @@ class PageRevision
     def will_save_change_to_created_at?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_editor_id?; end
-
-    sig { returns(T::Boolean) }
     def will_save_change_to_id?; end
 
     sig { returns(T::Boolean) }
@@ -1165,6 +1162,9 @@ class PageRevision
 
     sig { returns(T::Boolean) }
     def will_save_change_to_space_id?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_space_member_id?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_updated_at?; end

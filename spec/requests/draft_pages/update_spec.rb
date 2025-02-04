@@ -51,7 +51,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, :published, space:, topic:)
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     sign_in(user:)
 

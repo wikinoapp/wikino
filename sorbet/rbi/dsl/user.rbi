@@ -396,20 +396,20 @@ class User
     def active_topic_ids=(ids); end
 
     sig { returns(T::Array[T.untyped]) }
-    def active_topic_membership_ids; end
+    def active_topic_member_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def active_topic_membership_ids=(ids); end
+    def active_topic_member_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topic_memberships, through: :active_space_members`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topic_members, through: :active_space_members`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::TopicMembership::PrivateCollectionProxy) }
-    def active_topic_memberships; end
+    sig { returns(::TopicMember::PrivateCollectionProxy) }
+    def active_topic_members; end
 
-    sig { params(value: T::Enumerable[::TopicMembership]).void }
-    def active_topic_memberships=(value); end
+    sig { params(value: T::Enumerable[::TopicMember]).void }
+    def active_topic_members=(value); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topics, through: :active_topic_memberships`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topics, through: :active_topic_members`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
     sig { returns(::Topic::PrivateCollectionProxy) }
     def active_topics; end
@@ -434,34 +434,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserPassword) }
     def create_user_password!(*args, &blk); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def page_editorship_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def page_editorship_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :page_editorships`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::PageEditorship::PrivateCollectionProxy) }
-    def page_editorships; end
-
-    sig { params(value: T::Enumerable[::PageEditorship]).void }
-    def page_editorships=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def page_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def page_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :pages, through: :page_editorships`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::Page::PrivateCollectionProxy) }
-    def pages; end
-
-    sig { params(value: T::Enumerable[::Page]).void }
-    def pages=(value); end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
@@ -522,20 +494,20 @@ class User
     def topic_ids=(ids); end
 
     sig { returns(T::Array[T.untyped]) }
-    def topic_membership_ids; end
+    def topic_member_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def topic_membership_ids=(ids); end
+    def topic_member_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topic_memberships, through: :space_members`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topic_members, through: :space_members`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::TopicMembership::PrivateCollectionProxy) }
-    def topic_memberships; end
+    sig { returns(::TopicMember::PrivateCollectionProxy) }
+    def topic_members; end
 
-    sig { params(value: T::Enumerable[::TopicMembership]).void }
-    def topic_memberships=(value); end
+    sig { params(value: T::Enumerable[::TopicMember]).void }
+    def topic_members=(value); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topics, through: :topic_memberships`.
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topics, through: :topic_members`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
     sig { returns(::Topic::PrivateCollectionProxy) }
     def topics; end

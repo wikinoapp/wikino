@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-class PageEditorship < ApplicationRecord
+class PageEditor < ApplicationRecord
   belongs_to :space
   belongs_to :page
-  belongs_to :editor, class_name: "SpaceMember"
+  belongs_to :space_member
 end

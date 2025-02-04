@@ -58,7 +58,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, space:)
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     page = create(:page, space:, topic:, title: "A Page")
 
@@ -87,7 +87,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, space:)
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     page = create(:page, space:, topic:, title: "A Page")
 

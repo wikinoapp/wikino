@@ -5,7 +5,7 @@ FactoryBot.define do
   factory :draft_page do
     space
     page
-    editor { association :space_member }
+    space_member
     topic
     sequence(:title) { |n| "Page #{n}" }
     sequence(:body) { |n| "Body #{n}" }

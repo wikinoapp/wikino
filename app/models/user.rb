@@ -16,15 +16,13 @@ class User < ApplicationRecord
   }, prefix: true
 
   belongs_to :space, optional: true
-  has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :pages, through: :page_editorships
   has_many :space_members, dependent: :restrict_with_exception
   has_many :active_space_members, -> { SpaceMember.active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
   has_many :active_draft_pages, through: :active_space_members, source: :draft_pages
-  has_many :topic_memberships, through: :space_members, source: :topic_memberships
-  has_many :topics, through: :topic_memberships
-  has_many :active_topic_memberships, class_name: "TopicMembership", through: :active_space_members, source: :topic_memberships
-  has_many :active_topics, through: :active_topic_memberships, source: :topic
+  has_many :topic_members, through: :space_members, source: :topic_members
+  has_many :topics, through: :topic_members
+  has_many :active_topic_members, class_name: "TopicMember", through: :active_space_members, source: :topic_members
+  has_many :active_topics, through: :active_topic_members, source: :topic
   has_many :spaces, through: :space_members
   has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
   has_many :user_sessions, dependent: :restrict_with_exception
@@ -88,15 +86,10 @@ class User < ApplicationRecord
     ViewerLocale.deserialize(locale)
   end
 
-  sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }
-  def pages_except(page)
-    page.new_record? ? pages : pages.where.not(id: page.id)
-  end
-
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
     Topic
-      .left_joins(:memberships)
+      .left_joins(:members)
       .merge(Topic.visibility_public.or(Topic.where(space: active_spaces)))
       .distinct
   end
@@ -104,9 +97,9 @@ class User < ApplicationRecord
   sig { returns(Topic::PrivateAssociationRelation) }
   def last_page_modified_topics
     active_topics.merge(
-      active_topic_memberships
-        .order(TopicMembership.arel_table[:last_page_modified_at].desc.nulls_last)
-        .order(TopicMembership.arel_table[:joined_at].desc)
+      active_topic_members
+        .order(TopicMember.arel_table[:last_page_modified_at].desc.nulls_last)
+        .order(TopicMember.arel_table[:joined_at].desc)
     )
   end
 
@@ -143,7 +136,7 @@ class User < ApplicationRecord
 
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
-    topic_memberships.find_by(topic:)&.role_admin? == true
+    topic_members.find_by(topic:)&.role_admin? == true
   end
 
   sig { override.params(page: Page).returns(T::Boolean) }

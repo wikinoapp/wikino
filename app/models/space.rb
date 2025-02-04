@@ -16,9 +16,9 @@ class Space < ApplicationRecord
   }, prefix: true
 
   has_many :draft_pages, dependent: :restrict_with_exception
-  has_many :topic_memberships, dependent: :restrict_with_exception
+  has_many :topic_members, dependent: :restrict_with_exception
   has_many :topics, dependent: :restrict_with_exception
-  has_many :page_editorships, dependent: :restrict_with_exception
+  has_many :page_editors, dependent: :restrict_with_exception
   has_many :page_revisions, dependent: :restrict_with_exception
   has_many :pages, dependent: :restrict_with_exception
   has_many :space_members, dependent: :restrict_with_exception
