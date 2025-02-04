@@ -12,7 +12,7 @@ class Page < ApplicationRecord
 
   belongs_to :topic
   belongs_to :space
-  has_many :editorships, class_name: "PageEditorship", dependent: :restrict_with_exception
+  has_many :editors, class_name: "PageEditor", dependent: :restrict_with_exception
   has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
 
   scope :published, -> { where.not(published_at: nil) }
@@ -21,14 +21,6 @@ class Page < ApplicationRecord
   scope :not_trashed, -> { where(trashed_at: nil) }
   scope :active, -> { kept.not_trashed.published }
   scope :restorable, -> { where(trashed_at: DELETE_LIMIT_DAYS.days.ago..) }
-
-  # validates :body, length: {maximum: 1_000_000}
-  # validates :original, absence: true
-
-  # sig { returns(T.nilable(Page)) }
-  # def original
-  #   user&.pages_except(self)&.find_by(title:)
-  # end
 
   sig { params(topic: Topic).returns(Page) }
   def self.create_as_blanked!(topic:)
@@ -91,7 +83,7 @@ class Page < ApplicationRecord
 
   sig { params(editor: SpaceMember).void }
   def add_editor!(editor:)
-    editorships.where(space:, editor:).first_or_create!(
+    editors.where(space:, space_member: editor).first_or_create!(
       last_page_modified_at: modified_at
     )
 
@@ -100,6 +92,6 @@ class Page < ApplicationRecord
 
   sig { params(editor: SpaceMember, body: String, body_html: String).returns(PageRevision) }
   def create_revision!(editor:, body:, body_html:)
-    revisions.create!(space:, editor:, body:, body_html:)
+    revisions.create!(space:, space_member: editor, body:, body_html:)
   end
 end

@@ -10,10 +10,10 @@ class SpaceMember < ApplicationRecord
 
   belongs_to :space
   belongs_to :user
-  has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
-  has_many :topics, through: :topic_memberships
-  has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
-  has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  has_many :topic_members, dependent: :restrict_with_exception, inverse_of: :space_member
+  has_many :topics, through: :topic_members
+  has_many :draft_pages, dependent: :restrict_with_exception, inverse_of: :space_member
+  has_many :page_editors, dependent: :restrict_with_exception, inverse_of: :space_member
 
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
@@ -27,7 +27,7 @@ class SpaceMember < ApplicationRecord
       linked_page_ids: [],
       modified_at: Time.zone.now
     )
-    page_editorships.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
+    page_editors.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
 
     page
   end
@@ -56,8 +56,8 @@ class SpaceMember < ApplicationRecord
 
   sig { returns(Page::PrivateAssociationRelation) }
   def last_modified_pages
-    space.not_nil!.pages.joins(:editorships).merge(
-      page_editorships.order(PageEditorship.arel_table[:last_page_modified_at].desc)
+    space.not_nil!.pages.joins(:editors).merge(
+      page_editors.order(PageEditor.arel_table[:last_page_modified_at].desc)
     )
   end
 

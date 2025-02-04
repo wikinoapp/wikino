@@ -424,18 +424,18 @@ class SpaceMember
     def draft_pages=(value); end
 
     sig { returns(T::Array[T.untyped]) }
-    def page_editorship_ids; end
+    def page_editor_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def page_editorship_ids=(ids); end
+    def page_editor_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :page_editorships`.
+    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :page_editors`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::PageEditorship::PrivateCollectionProxy) }
-    def page_editorships; end
+    sig { returns(::PageEditor::PrivateCollectionProxy) }
+    def page_editors; end
 
-    sig { params(value: T::Enumerable[::PageEditorship]).void }
-    def page_editorships=(value); end
+    sig { params(value: T::Enumerable[::PageEditor]).void }
+    def page_editors=(value); end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end
@@ -468,20 +468,20 @@ class SpaceMember
     def topic_ids=(ids); end
 
     sig { returns(T::Array[T.untyped]) }
-    def topic_membership_ids; end
+    def topic_member_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def topic_membership_ids=(ids); end
+    def topic_member_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :topic_memberships`.
+    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :topic_members`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::TopicMembership::PrivateCollectionProxy) }
-    def topic_memberships; end
+    sig { returns(::TopicMember::PrivateCollectionProxy) }
+    def topic_members; end
 
-    sig { params(value: T::Enumerable[::TopicMembership]).void }
-    def topic_memberships=(value); end
+    sig { params(value: T::Enumerable[::TopicMember]).void }
+    def topic_members=(value); end
 
-    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :topics, through: :topic_memberships`.
+    # This method is created by ActiveRecord on the `SpaceMember` class because it declared `has_many :topics, through: :topic_members`.
     # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
     sig { returns(::Topic::PrivateCollectionProxy) }
     def topics; end

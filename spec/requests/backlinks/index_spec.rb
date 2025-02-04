@@ -79,8 +79,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     private_topic = create(:topic, :private, space:)
     not_joined_topic = create(:topic, space:)
 
-    create(:topic_membership, space:, topic: public_topic, member: space_member)
-    create(:topic_membership, space:, topic: private_topic, member: space_member)
+    create(:topic_member, space:, topic: public_topic, space_member:)
+    create(:topic_member, space:, topic: private_topic, space_member:)
 
     page = create(:page, space:)
     create(:page, :published, space:, topic: public_topic, title: "公開されているページ", linked_page_ids: [page.id])

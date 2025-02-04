@@ -348,18 +348,18 @@ class Page
     def create_topic!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def editorship_ids; end
+    def editor_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def editorship_ids=(ids); end
+    def editor_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `Page` class because it declared `has_many :editorships`.
+    # This method is created by ActiveRecord on the `Page` class because it declared `has_many :editors`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::PageEditorship::PrivateCollectionProxy) }
-    def editorships; end
+    sig { returns(::PageEditor::PrivateCollectionProxy) }
+    def editors; end
 
-    sig { params(value: T::Enumerable[::PageEditorship]).void }
-    def editorships=(value); end
+    sig { params(value: T::Enumerable[::PageEditor]).void }
+    def editors=(value); end
 
     sig { returns(T.nilable(::Space)) }
     def reload_space; end

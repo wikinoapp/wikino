@@ -57,7 +57,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     user = create(:user, :with_password)
     space_member = create(:space_member, :owner, space:, user:)
     topic = create(:topic, :public, space:, name: "公開されているトピック")
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     sign_in(user:)
 
@@ -72,7 +72,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     user = create(:user, :with_password)
     space_member = create(:space_member, :owner, space:, user:)
     topic = create(:topic, :private, space:, name: "公開されていないトピック")
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     sign_in(user:)
 

@@ -1,10 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class TopicMembership < ApplicationRecord
+class TopicMember < ApplicationRecord
   belongs_to :space
   belongs_to :topic
-  belongs_to :member, class_name: "SpaceMember"
+  belongs_to :space_member
 
   enum :role, {
     TopicMemberRole::Admin.serialize => 0,

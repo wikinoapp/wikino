@@ -15,10 +15,10 @@ RSpec.describe SpaceMember, type: :model do
       page_b = create(:page, space:, topic:, title: "ページB")
       page_c = create(:page, space:, topic:, title: "ページC")
 
-      create(:page_editorship, space:, page: page_a, editor: space_member_a, last_page_modified_at: Time.zone.parse("2024-08-18 0:00:00"))
-      create(:page_editorship, space:, page: page_b, editor: space_member_b, last_page_modified_at: Time.zone.parse("2024-08-18 1:00:00"))
-      create(:page_editorship, space:, page: page_c, editor: space_member_b, last_page_modified_at: Time.zone.parse("2024-08-18 2:00:00"))
-      create(:page_editorship, space:, page: page_c, editor: space_member_a, last_page_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
+      create(:page_editor, space:, page: page_a, space_member: space_member_a, last_page_modified_at: Time.zone.parse("2024-08-18 0:00:00"))
+      create(:page_editor, space:, page: page_b, space_member: space_member_b, last_page_modified_at: Time.zone.parse("2024-08-18 1:00:00"))
+      create(:page_editor, space:, page: page_c, space_member: space_member_b, last_page_modified_at: Time.zone.parse("2024-08-18 2:00:00"))
+      create(:page_editor, space:, page: page_c, space_member: space_member_a, last_page_modified_at: Time.zone.parse("2024-08-18 3:00:00"))
 
       expect(space_member_a.last_modified_pages.pluck(:title)).to eq(%w[ページC ページA])
     end

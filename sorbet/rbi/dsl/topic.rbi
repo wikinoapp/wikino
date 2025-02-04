@@ -357,18 +357,18 @@ class Topic
     def create_space!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def membership_ids; end
+    def member_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def membership_ids=(ids); end
+    def member_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `Topic` class because it declared `has_many :memberships`.
+    # This method is created by ActiveRecord on the `Topic` class because it declared `has_many :members`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::TopicMembership::PrivateCollectionProxy) }
-    def memberships; end
+    sig { returns(::TopicMember::PrivateCollectionProxy) }
+    def members; end
 
-    sig { params(value: T::Enumerable[::TopicMembership]).void }
-    def memberships=(value); end
+    sig { params(value: T::Enumerable[::TopicMember]).void }
+    def members=(value); end
 
     sig { returns(T::Array[T.untyped]) }
     def page_ids; end
@@ -620,6 +620,51 @@ class Topic
   end
 
   module GeneratedAttributeMethods
+    sig { returns(::ActiveSupport::TimeWithZone) }
+    def created_at; end
+
+    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
+    def created_at=(value); end
+
+    sig { returns(T::Boolean) }
+    def created_at?; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def created_at_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def created_at_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def created_at_came_from_user?; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def created_at_change; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def created_at_change_to_be_saved; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def created_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def created_at_in_database; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def created_at_previous_change; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def created_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def created_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def created_at_was; end
+
+    sig { void }
+    def created_at_will_change!; end
+
     sig { returns(::String) }
     def description; end
 
@@ -901,6 +946,9 @@ class Topic
     def number_will_change!; end
 
     sig { void }
+    def restore_created_at!; end
+
+    sig { void }
     def restore_description!; end
 
     sig { void }
@@ -922,7 +970,16 @@ class Topic
     def restore_space_id!; end
 
     sig { void }
+    def restore_updated_at!; end
+
+    sig { void }
     def restore_visibility!; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def saved_change_to_created_at; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_created_at?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_description; end
@@ -965,6 +1022,12 @@ class Topic
 
     sig { returns(T::Boolean) }
     def saved_change_to_space_id?; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def saved_change_to_updated_at; end
+
+    sig { returns(T::Boolean) }
+    def saved_change_to_updated_at?; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_visibility; end
@@ -1016,6 +1079,51 @@ class Topic
 
     sig { void }
     def space_id_will_change!; end
+
+    sig { returns(::ActiveSupport::TimeWithZone) }
+    def updated_at; end
+
+    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
+    def updated_at=(value); end
+
+    sig { returns(T::Boolean) }
+    def updated_at?; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def updated_at_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def updated_at_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def updated_at_came_from_user?; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def updated_at_change; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def updated_at_change_to_be_saved; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def updated_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def updated_at_in_database; end
+
+    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
+    def updated_at_previous_change; end
+
+    sig { params(from: ::ActiveSupport::TimeWithZone, to: ::ActiveSupport::TimeWithZone).returns(T::Boolean) }
+    def updated_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def updated_at_previously_was; end
+
+    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
+    def updated_at_was; end
+
+    sig { void }
+    def updated_at_will_change!; end
 
     sig { returns(::String) }
     def visibility; end
@@ -1073,6 +1181,9 @@ class Topic
     def visibility_will_change!; end
 
     sig { returns(T::Boolean) }
+    def will_save_change_to_created_at?; end
+
+    sig { returns(T::Boolean) }
     def will_save_change_to_description?; end
 
     sig { returns(T::Boolean) }
@@ -1092,6 +1203,9 @@ class Topic
 
     sig { returns(T::Boolean) }
     def will_save_change_to_space_id?; end
+
+    sig { returns(T::Boolean) }
+    def will_save_change_to_updated_at?; end
 
     sig { returns(T::Boolean) }
     def will_save_change_to_visibility?; end

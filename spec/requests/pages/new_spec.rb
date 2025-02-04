@@ -45,7 +45,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
     topic = create(:topic, :public, space:)
-    create(:topic_membership, space:, topic:, member: space_member)
+    create(:topic_member, space:, topic:, space_member:)
 
     sign_in(user:)
 

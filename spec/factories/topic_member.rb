@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :topic_membership do
+  factory :topic_member do
     space
     topic
-    member { association :space_member }
+    space_member
     role { TopicMemberRole::Admin.serialize }
     joined_at { Time.current }
 

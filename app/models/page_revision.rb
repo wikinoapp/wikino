@@ -3,6 +3,6 @@
 
 class PageRevision < ApplicationRecord
   belongs_to :space
-  belongs_to :editor, class_name: "SpaceMember"
+  belongs_to :space_member
   belongs_to :page
 end
