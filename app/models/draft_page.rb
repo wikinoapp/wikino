@@ -7,5 +7,5 @@ class DraftPage < ApplicationRecord
   belongs_to :space
   belongs_to :topic
   belongs_to :page
-  belongs_to :editor, class_name: "User"
+  belongs_to :editor, class_name: "SpaceMember"
 end

@@ -12,24 +12,25 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "スペースに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     page = create(:page, space:)
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    user = create(:user, :with_password)
+    create(:space_member, :owner, space: other_space, user:)
 
     sign_in(user:)
 
     post "/s/#{space.identifier}/pages/#{page.number}/trash"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(404)
   end
 
   it "指定したページが存在しないとき、エラーメッセージを表示すること" do
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
+    user = create(:user, :with_password)
+    create(:space_member, :owner, space:, user:)
 
     sign_in(user:)
 
@@ -40,10 +41,11 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
 
   it "オーナーとしてログインしているとき、ゴミ箱に移動できること" do
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
+    user = create(:user, :with_password)
+    space_member = create(:space_member, :owner, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, space:, topic:)
-    create(:topic_membership, space:, topic:, member: user)
+    create(:topic_membership, space:, topic:, member: space_member)
 
     sign_in(user:)
 

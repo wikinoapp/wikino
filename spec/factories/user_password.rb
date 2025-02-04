@@ -3,7 +3,6 @@
 
 FactoryBot.define do
   factory :user_password do
-    space
     user
     password { "passw0rd" }
   end

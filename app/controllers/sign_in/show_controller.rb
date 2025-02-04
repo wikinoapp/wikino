@@ -11,7 +11,7 @@ module SignIn
 
     sig { returns(T.untyped) }
     def call
-      @form = SessionForm.new
+      @form = UserSessionForm.new
     end
   end
 end

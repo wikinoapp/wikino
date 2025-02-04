@@ -3,30 +3,33 @@
 
 module Links
   class IndexController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     layout false
 
     around_action :set_locale
-    before_action :set_current_space
-    before_action :restore_session
-
-    rescue_from Pundit::NotAuthorizedError, with: :render_404
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
-      @page = Current.space!.find_pages_by_number!(params[:page_number]&.to_i)
-      authorize(@page, :show?)
+      space = find_space_by_identifier!
+      page = space.find_page_by_number!(params[:page_number]&.to_i)
 
-      draft_page = Current.user&.draft_pages&.find_by(page: @page)
-      pageable = draft_page.presence || @page
+      unless Current.viewer!.can_view_page?(page:)
+        return render_404
+      end
 
-      @link_collection = pageable.fetch_link_collection(after: params[:after])
+      draft_page = Current.viewer!.active_draft_pages.find_by(page:)
+      pageable = draft_page.presence || page
 
-      render(content_type: "text/vnd.turbo-stream.html", layout: false)
+      link_collection = pageable.fetch_link_collection(after: params[:after])
+
+      render(Links::IndexView.new(link_collection:), {
+        content_type: "text/vnd.turbo-stream.html",
+        layout: false
+      })
     end
   end
 end

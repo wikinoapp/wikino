@@ -3,25 +3,25 @@
 
 module Pages
   class NewController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      authorize(Page.new, :new?)
+      space = find_space_by_identifier!
+      topic = space.topics.kept.find_by!(number: params[:topic_number])
 
-      topic = Current.space!.topics.kept.find_by!(number: params[:topic_number])
-      authorize(topic, :show?)
+      unless Current.viewer!.can_create_page?(topic:)
+        return render_404
+      end
 
       result = CreateBlankedPageUseCase.new.call(topic:)
 
-      redirect_to edit_page_path(Current.space!.identifier, result.page.number)
+      redirect_to edit_page_path(space.identifier, result.page.number)
     end
   end
 end

@@ -10,8 +10,7 @@ RSpec.describe "GET /", type: :request do
     get "/"
 
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/home")
   end
 
   it "ログインしていないとき、ランディングページが表示されること" do

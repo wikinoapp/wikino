@@ -3,20 +3,21 @@
 
 module Spaces
   class ShowController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::Authorizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
-    before_action :restore_session
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
-      pinned_pages = viewable_pages.pinned.order(pinned_at: :desc, id: :desc)
+      space = find_space_by_identifier!
+      space_viewer = Current.viewer!.space_viewer!(space:)
+      joined_topic_pages = space_viewer.viewable_pages.joins(:topic).merge(space_viewer.topics)
+      pinned_pages = joined_topic_pages.pinned.order(pinned_at: :desc, id: :desc)
 
-      cursor_paginate_page = viewable_pages.not_pinned.cursor_paginate(
+      cursor_paginate_page = joined_topic_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,
@@ -25,18 +26,7 @@ module Spaces
       pages = cursor_paginate_page.records
       pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
-      render Spaces::ShowView.new(pinned_pages:, page_connection: PageConnection.new(pages:, pagination:))
-    end
-
-    sig { returns(Page::PrivateAssociationRelation) }
-    private def viewable_pages
-      pages = Current.space!.pages.active.joins(:topic)
-
-      if signed_in? && Current.space! == Current.user!.space
-        pages.merge(Current.user!.topics)
-      else
-        pages.merge(Topic.visibility_public)
-      end
+      render Spaces::ShowView.new(space:, pinned_pages:, page_connection: PageConnection.new(pages:, pagination:))
     end
   end
 end

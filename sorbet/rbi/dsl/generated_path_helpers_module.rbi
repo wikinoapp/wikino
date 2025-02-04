@@ -13,9 +13,6 @@ module GeneratedPathHelpersModule
   def account_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def account_switch_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def atom_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -34,7 +31,7 @@ module GeneratedPathHelpersModule
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def joined_topic_list_path(*args); end
+  def home_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def letter_opener_web_path(*args); end
@@ -82,12 +79,6 @@ module GeneratedPathHelpersModule
   def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def session_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def session_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -95,9 +86,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def switchable_account_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_path(*args); end
@@ -110,4 +98,7 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trashed_page_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_session_path(*args); end
 end

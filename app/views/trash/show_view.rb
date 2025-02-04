@@ -3,11 +3,16 @@
 
 module Trash
   class ShowView < ApplicationView
-    sig { params(page_connection: PageConnection, form: TrashedPagesForm).void }
-    def initialize(page_connection:, form:)
+    sig { params(space: Space, page_connection: PageConnection, form: TrashedPagesForm).void }
+    def initialize(space:, page_connection:, form:)
+      @space = space
       @page_connection = page_connection
       @form = form
     end
+
+    sig { returns(Space) }
+    attr_reader :space
+    private :space
 
     sig { returns(PageConnection) }
     attr_reader :page_connection

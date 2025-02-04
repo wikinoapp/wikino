@@ -23,9 +23,7 @@
       </p>
 
       <p class="mt-4 hidden">
-        <%= t("messages.sign_up.already_have_an_account_html",
-          sign_in_path: params[:skip_no_authentication].nil? ? sign_in_path : sign_in_path(skip_no_authentication: true)
-        ) %>
+        <%= t("messages.sign_up.already_have_an_account_html", sign_in_path:) %>
       </p>
     </div>
 

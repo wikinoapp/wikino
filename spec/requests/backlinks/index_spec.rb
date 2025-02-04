@@ -40,8 +40,9 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     create(:page, :published, space:, topic: public_topic, title: "公開されているページ", linked_page_ids: [page.id])
     create(:page, :published, space:, topic: private_topic, title: "公開されていないページ", linked_page_ids: [page.id])
 
+    user = create(:user, :with_password)
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, space: other_space, user:)
 
     sign_in(user:)
 
@@ -69,15 +70,16 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
   end
 
   it "ログインしているとき、ページのバックリンクが表示されること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
-    user = create(:user, :with_password, space:)
+    space_member = create(:space_member, space:, user:)
 
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
     not_joined_topic = create(:topic, space:)
 
-    create(:topic_membership, space:, topic: public_topic, member: user)
-    create(:topic_membership, space:, topic: private_topic, member: user)
+    create(:topic_membership, space:, topic: public_topic, member: space_member)
+    create(:topic_membership, space:, topic: private_topic, member: space_member)
 
     page = create(:page, space:)
     create(:page, :published, space:, topic: public_topic, title: "公開されているページ", linked_page_ids: [page.id])

@@ -18,13 +18,14 @@ class UpdatePageUseCase < ApplicationUseCase
       modified_at: now
     }
     page.published_at = now if page.published_at.nil?
+    space_member = Current.viewer!.active_space_members.find_by!(space_id: page.space_id)
 
     updated_page = ActiveRecord::Base.transaction do
       page.save!
-      page.add_editor!(editor: Current.user!)
-      page.create_revision!(editor: Current.user!, body:, body_html: body)
-      page.link!(editor: Current.user!)
-      Current.user!.destroy_draft_page!(page:)
+      page.add_editor!(editor: space_member)
+      page.create_revision!(editor: space_member, body:, body_html: body)
+      page.link!(editor: space_member)
+      space_member.destroy_draft_page!(page:)
 
       page
     end

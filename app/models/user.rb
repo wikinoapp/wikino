@@ -4,26 +4,30 @@
 class User < ApplicationRecord
   include Discard::Model
 
+  include ModelConcerns::Viewable
+
   ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
-  ATNAME_MIN_LENGTH = 2
+  ATNAME_MIN_LENGTH = 1
   ATNAME_MAX_LENGTH = 20
 
-  enum :role, {
-    UserRole::Owner.serialize => 0
-  }, prefix: true
-
   enum :locale, {
-    UserLocale::En.serialize => 0,
-    UserLocale::Ja.serialize => 1
+    ViewerLocale::En.serialize => 0,
+    ViewerLocale::Ja.serialize => 1
   }, prefix: true
 
-  belongs_to :space
-  has_many :draft_pages, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
+  belongs_to :space, optional: true
   has_many :page_editorships, dependent: :restrict_with_exception, foreign_key: :editor_id, inverse_of: :editor
   has_many :pages, through: :page_editorships
-  has_many :topic_memberships, dependent: :restrict_with_exception, foreign_key: :member_id, inverse_of: :member
+  has_many :space_members, dependent: :restrict_with_exception
+  has_many :active_space_members, -> { SpaceMember.active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
+  has_many :active_draft_pages, through: :active_space_members, source: :draft_pages
+  has_many :topic_memberships, through: :space_members, source: :topic_memberships
   has_many :topics, through: :topic_memberships
-  has_many :sessions, dependent: :restrict_with_exception
+  has_many :active_topic_memberships, class_name: "TopicMembership", through: :active_space_members, source: :topic_memberships
+  has_many :active_topics, through: :active_topic_memberships, source: :topic
+  has_many :spaces, through: :space_members
+  has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
+  has_many :user_sessions, dependent: :restrict_with_exception
   has_one :user_password, dependent: :restrict_with_exception
 
   delegate :identifier, :name, to: :space, prefix: :space
@@ -33,7 +37,7 @@ class User < ApplicationRecord
       email: String,
       atname: String,
       password: String,
-      locale: UserLocale,
+      locale: ViewerLocale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(User)
@@ -42,71 +46,30 @@ class User < ApplicationRecord
     user = create!(
       email:,
       atname:,
-      role: UserRole::Owner.serialize,
       name: "",
       description: "",
       locale: locale.serialize,
       time_zone:,
       joined_at: current_time
     )
-    user.create_user_password!(space: user.space, password:)
+    user.create_user_password!(password:)
 
     user
   end
 
-  sig { returns(UserLocale) }
-  def deserialized_locale
-    UserLocale.deserialize(locale)
+  sig { override.returns(T::Boolean) }
+  def signed_in?
+    true
   end
 
-  sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }
-  def pages_except(page)
-    page.new_record? ? pages : pages.where.not(id: page.id)
+  sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+  def space_viewer!(space:)
+    active_space_members.find_by(space:).presence || SpaceVisitor.new(space:)
   end
 
-  sig { returns(Topic::PrivateAssociationRelation) }
-  def viewable_topics
-    space
-      .not_nil!
-      .topics
-      .left_joins(:memberships)
-      .merge(
-        space.not_nil!.topics.public_or_private.or(
-          TopicMembership.where(member: self)
-        )
-      )
-      .distinct
-  end
-
-  sig { returns(Topic::PrivateAssociationRelation) }
-  def last_page_modified_topics
-    topics.merge(
-      topic_memberships
-        .order(TopicMembership.arel_table[:last_page_modified_at].desc.nulls_last)
-        .order(TopicMembership.arel_table[:joined_at].desc)
-    )
-  end
-
-  sig { returns(Page::PrivateAssociationRelation) }
-  def last_modified_pages
-    space.not_nil!.pages.joins(:editorships).merge(
-      page_editorships.order(PageEditorship.arel_table[:last_page_modified_at].desc)
-    )
-  end
-
-  sig { params(topic: Topic).returns(T::Boolean) }
-  def can_view_topic?(topic:)
-    viewable_topics.where(id: topic.id).exists?
-  end
-
-  sig { params(topic: Topic).returns(T::Boolean) }
-  def can_update_topic?(topic:)
-    topics.where(id: topic.id).exists?
-  end
-
-  sig { params(topic: Topic).returns(T::Boolean) }
-  def can_destroy_topic?(topic:)
-    topic_memberships.find_by(topic:)&.role_admin? == true
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def joined_space?(space:)
+    active_spaces.where(id: space.id).exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }
@@ -120,6 +83,79 @@ class User < ApplicationRecord
     topic_ids - joined_topic_ids == []
   end
 
+  sig { override.returns(ViewerLocale) }
+  def viewer_locale
+    ViewerLocale.deserialize(locale)
+  end
+
+  sig { params(page: Page).returns(T.any(Page::PrivateCollectionProxy, Page::PrivateAssociationRelation)) }
+  def pages_except(page)
+    page.new_record? ? pages : pages.where.not(id: page.id)
+  end
+
+  sig { override.returns(Topic::PrivateRelation) }
+  def viewable_topics
+    Topic
+      .left_joins(:memberships)
+      .merge(Topic.visibility_public.or(Topic.where(space: active_spaces)))
+      .distinct
+  end
+
+  sig { returns(Topic::PrivateAssociationRelation) }
+  def last_page_modified_topics
+    active_topics.merge(
+      active_topic_memberships
+        .order(TopicMembership.arel_table[:last_page_modified_at].desc.nulls_last)
+        .order(TopicMembership.arel_table[:joined_at].desc)
+    )
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_view_page?(page:)
+    page.topic.not_nil!.visibility_public? ||
+      space_members.where(space: page.space).active.exists?
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_view_topic?(topic:)
+    viewable_topics.where(id: topic.id).exists?
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_view_trash?(space:)
+    active_spaces.where(id: space.id).exists?
+  end
+
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_create_page?(topic:)
+    active_topics.where(id: topic.id).exists?
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_create_bulk_restored_pages?(space:)
+    active_spaces.where(id: space.id).exists?
+  end
+
+  sig { params(topic: Topic).returns(T::Boolean) }
+  def can_update_topic?(topic:)
+    topics.where(id: topic.id).exists?
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_page?(page:)
+    active_topics.where(id: page.topic_id).exists?
+  end
+
+  sig { params(topic: Topic).returns(T::Boolean) }
+  def can_destroy_topic?(topic:)
+    topic_memberships.find_by(topic:)&.role_admin? == true
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_trash_page?(page:)
+    active_spaces.where(id: page.space_id).exists?
+  end
+
   sig { params(email_confirmation: EmailConfirmation).void }
   def run_after_email_confirmation_success!(email_confirmation:)
     return unless email_confirmation.succeeded?
@@ -131,39 +167,8 @@ class User < ApplicationRecord
     nil
   end
 
-  sig { params(page: Page).returns(DraftPage) }
-  def find_or_create_draft_page!(page:)
-    draft_pages.create_with(
-      space:,
-      topic: page.topic,
-      title: page.title,
-      body: page.body,
-      body_html: page.body_html,
-      linked_page_ids: page.linked_page_ids,
-      modified_at: Time.zone.now
-    ).find_or_create_by!(page:)
-  rescue ActiveRecord::RecordNotUnique
-    retry
-  end
-
-  sig { params(page: Page).void }
-  def destroy_draft_page!(page:)
-    draft_pages.where(page:).destroy_all
-
-    nil
-  end
-
-  sig { params(topic: Topic, title: String).returns(Page) }
-  def create_linked_page!(topic:, title:)
-    page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
-      space:,
-      body: "",
-      body_html: "",
-      linked_page_ids: [],
-      modified_at: Time.zone.now
-    )
-    page_editorships.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
-
-    page
+  sig { override.params(space: Space, number: T.untyped).returns(Topic) }
+  def find_topic_by_number!(space:, number:)
+    viewable_topics.find_by!(space:, number:)
   end
 end

@@ -354,10 +354,52 @@ class Space
 
   module GeneratedAssociationMethods
     sig { returns(T::Array[T.untyped]) }
+    def draft_page_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def draft_page_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :draft_pages`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::DraftPage::PrivateCollectionProxy) }
+    def draft_pages; end
+
+    sig { params(value: T::Enumerable[::DraftPage]).void }
+    def draft_pages=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def page_editorship_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def page_editorship_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :page_editorships`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::PageEditorship::PrivateCollectionProxy) }
+    def page_editorships; end
+
+    sig { params(value: T::Enumerable[::PageEditorship]).void }
+    def page_editorships=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def page_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
     def page_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def page_revision_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def page_revision_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :page_revisions`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::PageRevision::PrivateCollectionProxy) }
+    def page_revisions; end
+
+    sig { params(value: T::Enumerable[::PageRevision]).void }
+    def page_revisions=(value); end
 
     # This method is created by ActiveRecord on the `Space` class because it declared `has_many :pages`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
@@ -368,10 +410,38 @@ class Space
     def pages=(value); end
 
     sig { returns(T::Array[T.untyped]) }
+    def space_member_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def space_member_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :space_members`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::SpaceMember::PrivateCollectionProxy) }
+    def space_members; end
+
+    sig { params(value: T::Enumerable[::SpaceMember]).void }
+    def space_members=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def topic_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
     def topic_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def topic_membership_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def topic_membership_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `Space` class because it declared `has_many :topic_memberships`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::TopicMembership::PrivateCollectionProxy) }
+    def topic_memberships; end
+
+    sig { params(value: T::Enumerable[::TopicMembership]).void }
+    def topic_memberships=(value); end
 
     # This method is created by ActiveRecord on the `Space` class because it declared `has_many :topics`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)

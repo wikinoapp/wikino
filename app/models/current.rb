@@ -13,25 +13,20 @@
 class Current < ActiveSupport::CurrentAttributes
   extend T::Sig
 
-  attribute :space, :user
+  attribute :viewer
 
   resets do
     Time.zone = nil
   end
 
-  T::Sig::WithoutRuntime.sig { params(user: T.nilable(User)).void }
-  def user=(user)
+  T::Sig::WithoutRuntime.sig { params(viewable: T.nilable(ModelConcerns::Viewable)).void }
+  def viewer=(viewable)
     super
-    Time.zone = user&.time_zone
+    Time.zone = viewable&.time_zone
   end
 
-  T::Sig::WithoutRuntime.sig { returns(User) }
-  def user!
-    user.not_nil!
-  end
-
-  T::Sig::WithoutRuntime.sig { returns(Space) }
-  def space!
-    space.not_nil!
+  T::Sig::WithoutRuntime.sig { returns(ModelConcerns::Viewable) }
+  def viewer!
+    viewer.not_nil!
   end
 end

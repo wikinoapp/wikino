@@ -3,7 +3,7 @@
 
 module Pages
   class ShowView < ApplicationView
-    use_helpers :policy, :signed_in?
+    use_helpers :policy
 
     sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
     def initialize(page:, link_collection:, backlink_collection:)
@@ -23,5 +23,15 @@ module Pages
     sig { returns(BacklinkCollection) }
     attr_reader :backlink_collection
     private :backlink_collection
+
+    sig { returns(Space) }
+    def space
+      page.space.not_nil!
+    end
+
+    sig { returns(Topic) }
+    def topic
+      page.topic.not_nil!
+    end
   end
 end

@@ -12,41 +12,42 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "別のスペースに参加しているとき、404ページが表示されること" do
     space = create(:space, :small)
     page = create(:page, space:)
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    user = create(:user, :with_password)
+    create(:space_member, space: other_space, user:)
 
     sign_in(user:)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(404)
   end
 
-  it "オーナーとしてログインしている & ページのトピックに参加していないとき、編集ページが表示されること" do
+  it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
+    create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, space:, topic:, title: "ページタイトル")
-    user = create(:user, :owner, :with_password, space:)
 
     sign_in(user:)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
-    expect(response.status).to eq(200)
-    expect(response.body).to include("ページタイトル")
+    expect(response.status).to eq(404)
   end
 
-  it "オーナーとしてログインしている & ページのトピックに参加しているとき、編集ページが表示されること" do
+  it "スペースに参加している & ページのトピックに参加しているとき、編集ページが表示されること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
+    space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, space:, topic:, title: "ページタイトル")
-    user = create(:user, :owner, :with_password, space:)
-    create(:topic_membership, space:, topic:, member: user)
+    create(:topic_membership, space:, topic:, member: space_member)
 
     sign_in(user:)
 

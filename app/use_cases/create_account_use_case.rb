@@ -8,21 +8,18 @@ class CreateAccountUseCase < ApplicationUseCase
 
   sig do
     params(
-      space_identifier: String,
       email: String,
       atname: String,
-      locale: UserLocale,
+      locale: ViewerLocale,
       password: String,
       time_zone: String
     ).returns(Result)
   end
-  def call(space_identifier:, email:, atname:, locale:, password:, time_zone:)
-    current_time = Time.zone.now
+  def call(email:, atname:, locale:, password:, time_zone:)
+    current_time = Time.current
 
     user = ActiveRecord::Base.transaction do
-      space = Space.create_initial_space!(identifier: space_identifier, current_time:, locale:)
-
-      space.users.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
+      User.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
     end
 
     Result.new(user:)

@@ -12,24 +12,25 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "別のスペースにログインしているとき、ログインページにリダイレクトすること" do
+  it "別のスペースに参加しているとき、404を返すこと" do
     space = create(:space, :small)
     draft_page = create(:draft_page, space:)
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    user = create(:user, :with_password)
+    create(:space_member, space: other_space, user:)
 
     sign_in(user:)
 
     patch "/s/#{space.identifier}/pages/#{draft_page.page.number}/draft_page"
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/sign_in")
+    expect(response.status).to eq(404)
   end
 
-  it "オーナーとしてログインしている & ページのトピックに参加していないとき、下書きページが更新できること" do
+  it "ページのトピックに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     page = create(:page, :published, space:)
-    user = create(:user, :owner, :with_password, space:)
+    user = create(:user, :with_password)
+    create(:space_member, space:, user:)
 
     sign_in(user:)
 
@@ -41,16 +42,16 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
       }
     })
 
-    expect(response.status).to eq(200)
-    expect(response.body).to include("下書き保存")
+    expect(response.status).to eq(404)
   end
 
-  it "オーナーとしてログインしている & ページのトピックに参加しているとき、下書きページが更新できること" do
+  it "ページのトピックに参加しているとき、下書きページが更新できること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
-    user = create(:user, :owner, :with_password, space:)
+    space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
-    page = create(:page, :published, space:)
-    create(:topic_membership, space:, topic:, member: user)
+    page = create(:page, :published, space:, topic:)
+    create(:topic_membership, space:, topic:, member: space_member)
 
     sign_in(user:)
 

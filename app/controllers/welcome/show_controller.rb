@@ -7,12 +7,12 @@ module Welcome
     include ControllerConcerns::Localizable
 
     around_action :set_locale
-    before_action :restore_session
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
-      if signed_in?
-        return redirect_to(space_path(Current.user!.space.not_nil!.identifier))
+      if Current.viewer.signed_in?
+        return redirect_to(home_path)
       end
 
       render Welcome::ShowView.new

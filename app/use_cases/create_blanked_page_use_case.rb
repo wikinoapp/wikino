@@ -8,9 +8,11 @@ class CreateBlankedPageUseCase < ApplicationUseCase
 
   sig { params(topic: Topic).returns(Result) }
   def call(topic:)
+    space_member = Current.viewer!.active_space_members.find_by!(space_id: topic.space_id)
+
     page = ActiveRecord::Base.transaction do
       new_page = Page.create_as_blanked!(topic:)
-      new_page.add_editor!(editor: Current.user!)
+      new_page.add_editor!(editor: space_member)
       new_page
     end
 

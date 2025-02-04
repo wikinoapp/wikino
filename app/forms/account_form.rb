@@ -4,32 +4,34 @@
 class AccountForm < ApplicationForm
   include FormConcerns::PasswordValidatable
 
-  attribute :space_identifier, :string
+  attribute :atname, :string
   attribute :email, :string
   attribute :locale, :string
   attribute :password, :string
   attribute :time_zone, :string
 
-  validates :space_identifier,
-    exclusion: {in: Space::RESERVED_IDENTIFIERS},
-    format: {with: Space::IDENTIFIER_FORMAT},
-    length: {minimum: Space::IDENTIFIER_MIN_LENGTH, maximum: Space::IDENTIFIER_MAX_LENGTH},
-    presence: true
+  validates :atname,
+    format: {with: User::ATNAME_FORMAT},
+    length: {in: User::ATNAME_MIN_LENGTH..User::ATNAME_MAX_LENGTH},
+    presence: true,
+    unreserved_atname: true
   validates :email, email: true, presence: true
-  validates :atname, presence: true
   validates :locale, presence: true
   validates :time_zone, presence: true
-  validate :space_identifier_uniqueness
+  validate :atname_uniqueness
+  validate :email_uniqueness
 
-  sig { returns(String) }
-  def atname
-    @atname ||= T.let(SecureRandom.alphanumeric(6), T.nilable(String))
+  sig { void }
+  private def atname_uniqueness
+    if User.exists?(atname:)
+      errors.add(:atname, :uniqueness)
+    end
   end
 
   sig { void }
-  private def space_identifier_uniqueness
-    if Space.find_by(identifier: space_identifier)
-      errors.add(:space_identifier, :uniqueness)
+  private def email_uniqueness
+    if User.exists?(email:)
+      errors.add(:email, :uniqueness)
     end
   end
 end

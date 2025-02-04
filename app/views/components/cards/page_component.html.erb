@@ -6,7 +6,7 @@
   )
 ) do |card| %>
   <%= card.with_body(class_name: "p-0") do %>
-    <%= link_to page_path(Current.space!.identifier, page.number), class: "h-full px-4 py-2 w-full" do %>
+    <%= link_to page_path(page.space.identifier, page.number), class: "h-full px-4 py-2 w-full" do %>
       <% if page.pinned? %>
         <%= render Basic::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-red-500") %>
       <% end %>

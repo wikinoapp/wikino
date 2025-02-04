@@ -3,23 +3,26 @@
 
 module TrashedPages
   class CreateController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::Authorizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      @page = Current.space!.find_pages_by_number!(params[:page_number]&.to_i)
+      space = find_space_by_identifier!
+      page = space.find_page_by_number!(params[:page_number]&.to_i).not_nil!
 
-      MovePageToTrashUseCase.new.call(page: @page.not_nil!)
+      unless Current.viewer!.can_trash_page?(page:)
+        return render_404
+      end
+
+      MovePageToTrashUseCase.new.call(page:)
 
       flash[:notice] = t("messages.page.moved_to_trash")
-      redirect_to topic_path(Current.space!.identifier, @page.topic.number)
+      redirect_to topic_path(space.identifier, page.topic.not_nil!.number)
     end
   end
 end

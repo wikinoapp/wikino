@@ -16,12 +16,12 @@ class EditPageForm < ApplicationForm
 
   sig { returns(T.nilable(Topic)) }
   def topic
-    Current.user!.viewable_topics&.find_by(number: topic_number)
+    viewable_topics.find_by(number: topic_number)
   end
 
   sig { returns(Topic::PrivateRelation) }
   def viewable_topics
-    Current.user!.viewable_topics
+    Current.viewer!.viewable_topics
   end
 
   sig { returns(T::Boolean) }

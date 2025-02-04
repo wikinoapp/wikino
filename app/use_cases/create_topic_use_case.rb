@@ -6,11 +6,11 @@ class CreateTopicUseCase < ApplicationUseCase
     const :topic, Topic
   end
 
-  sig { params(name: String, description: String, visibility: String).returns(Result) }
-  def call(name:, description:, visibility:)
+  sig { params(space_member: SpaceMember, name: String, description: String, visibility: String).returns(Result) }
+  def call(space_member:, name:, description:, visibility:)
     topic = ActiveRecord::Base.transaction do
-      new_topic = Current.user!.space.not_nil!.topics.create!(name:, description:, visibility:)
-      new_topic.add_member!(member: Current.user!, role: TopicMemberRole::Admin)
+      new_topic = space_member.space.not_nil!.topics.where(name:).first_or_create!(description:, visibility:)
+      new_topic.add_member!(member: space_member, role: TopicMemberRole::Admin)
       new_topic
     end
 

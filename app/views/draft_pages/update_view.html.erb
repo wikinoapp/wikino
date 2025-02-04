@@ -1,0 +1,13 @@
+<turbo-stream action="update" target="page-editor-draft-saved-time">
+  <template>
+    <div class="text-xs">
+      <%= t("messages.draft_saved_time_html", time: l(draft_page.modified_at, format: :hm)) %>
+    </div>
+  </template>
+</turbo-stream>
+
+<turbo-stream action="update" target="page-editor-footer">
+  <template>
+    <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
+  </template>
+</turbo-stream>

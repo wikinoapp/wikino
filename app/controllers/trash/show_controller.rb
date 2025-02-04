@@ -3,19 +3,24 @@
 
 module Trash
   class ShowController < ApplicationController
-    include ControllerConcerns::SpaceSettable
     include ControllerConcerns::Authenticatable
-    include ControllerConcerns::Authorizable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
-    before_action :set_current_space
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
+      space = find_space_by_identifier!
+
+      unless Current.viewer!.can_view_trash?(space:)
+        return render_404
+      end
+
       render Trash::ShowView.new(
-        page_connection: Page.restorable_connection(before: params[:before], after: params[:after]),
+        space:,
+        page_connection: space.restorable_page_connection(before: params[:before], after: params[:after]),
         form: TrashedPagesForm.new
       )
     end

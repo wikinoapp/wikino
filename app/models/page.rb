@@ -42,21 +42,6 @@ class Page < ApplicationRecord
     )
   end
 
-  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(PageConnection) }
-  def self.restorable_connection(before:, after:)
-    cursor_paginate_page = Current.space!.pages.preload(:topic).restorable.cursor_paginate(
-      before: before.presence,
-      after: after.presence,
-      limit: 100,
-      order: {trashed_at: :desc, id: :desc}
-    ).fetch
-
-    PageConnection.new(
-      pages: cursor_paginate_page.records,
-      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
-    )
-  end
-
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?
@@ -81,11 +66,7 @@ class Page < ApplicationRecord
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
 
-    if Current.user
-      pages
-    else
-      pages.joins(:topic).merge(Topic.visibility_public)
-    end
+    pages.joins(:topic).merge(Current.viewer!.viewable_topics)
   end
 
   sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }
@@ -108,7 +89,7 @@ class Page < ApplicationRecord
     )
   end
 
-  sig { params(editor: User).void }
+  sig { params(editor: SpaceMember).void }
   def add_editor!(editor:)
     editorships.where(space:, editor:).first_or_create!(
       last_page_modified_at: modified_at
@@ -117,7 +98,7 @@ class Page < ApplicationRecord
     nil
   end
 
-  sig { params(editor: User, body: String, body_html: String).returns(PageRevision) }
+  sig { params(editor: SpaceMember, body: String, body_html: String).returns(PageRevision) }
   def create_revision!(editor:, body:, body_html:)
     revisions.create!(space:, editor:, body:, body_html:)
   end

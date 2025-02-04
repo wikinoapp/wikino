@@ -1,0 +1,12 @@
+<% title = t("meta.title.home.show") %>
+<% set_meta_tags(title:, reverse: false) %>
+
+<%= render ::Layouts::MainComponent.new do %>
+  <div class="flex flex-col gap-6 px-4 py-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold antialiased">
+        <%= t("nouns.home") %>
+      </h1>
+    </div>
+  </div>
+<% end %>

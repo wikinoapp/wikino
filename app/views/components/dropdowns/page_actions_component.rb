@@ -11,5 +11,10 @@ module Dropdowns
     sig { returns(Page) }
     attr_reader :page
     private :page
+
+    sig { returns(Space) }
+    def space
+      page.space.not_nil!
+    end
   end
 end

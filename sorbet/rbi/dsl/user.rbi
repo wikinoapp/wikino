@@ -23,9 +23,6 @@ class User
 
     sig { params(attributes: T.untyped, block: T.nilable(T.proc.params(object: ::User).void)).returns(::User) }
     def new(attributes = nil, &block); end
-
-    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
-    def roles; end
   end
 
   module CommonRelationMethods
@@ -347,15 +344,79 @@ class User
 
     sig { returns(T::Boolean) }
     def locale_ja?; end
-
-    sig { void }
-    def role_owner!; end
-
-    sig { returns(T::Boolean) }
-    def role_owner?; end
   end
 
   module GeneratedAssociationMethods
+    sig { returns(T::Array[T.untyped]) }
+    def active_draft_page_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def active_draft_page_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_draft_pages, through: :active_space_members`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::DraftPage::PrivateCollectionProxy) }
+    def active_draft_pages; end
+
+    sig { params(value: T::Enumerable[::DraftPage]).void }
+    def active_draft_pages=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def active_space_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def active_space_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def active_space_member_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def active_space_member_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_space_members`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::SpaceMember::PrivateCollectionProxy) }
+    def active_space_members; end
+
+    sig { params(value: T::Enumerable[::SpaceMember]).void }
+    def active_space_members=(value); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_spaces, through: :active_space_members`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::Space::PrivateCollectionProxy) }
+    def active_spaces; end
+
+    sig { params(value: T::Enumerable[::Space]).void }
+    def active_spaces=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def active_topic_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def active_topic_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def active_topic_membership_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def active_topic_membership_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topic_memberships, through: :active_space_members`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::TopicMembership::PrivateCollectionProxy) }
+    def active_topic_memberships; end
+
+    sig { params(value: T::Enumerable[::TopicMembership]).void }
+    def active_topic_memberships=(value); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topics, through: :active_topic_memberships`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::Topic::PrivateCollectionProxy) }
+    def active_topics; end
+
+    sig { params(value: T::Enumerable[::Topic]).void }
+    def active_topics=(value); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end
 
@@ -373,20 +434,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserPassword) }
     def create_user_password!(*args, &blk); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def draft_page_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def draft_page_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :draft_pages`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::DraftPage::PrivateCollectionProxy) }
-    def draft_pages; end
-
-    sig { params(value: T::Enumerable[::DraftPage]).void }
-    def draft_pages=(value); end
 
     sig { returns(T::Array[T.untyped]) }
     def page_editorship_ids; end
@@ -428,20 +475,6 @@ class User
     sig { void }
     def reset_user_password; end
 
-    sig { returns(T::Array[T.untyped]) }
-    def session_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def session_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :sessions`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::Session::PrivateCollectionProxy) }
-    def sessions; end
-
-    sig { params(value: T::Enumerable[::Session]).void }
-    def sessions=(value); end
-
     sig { returns(T.nilable(::Space)) }
     def space; end
 
@@ -451,8 +484,36 @@ class User
     sig { returns(T::Boolean) }
     def space_changed?; end
 
+    sig { returns(T::Array[T.untyped]) }
+    def space_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def space_ids=(ids); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def space_member_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def space_member_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :space_members`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::SpaceMember::PrivateCollectionProxy) }
+    def space_members; end
+
+    sig { params(value: T::Enumerable[::SpaceMember]).void }
+    def space_members=(value); end
+
     sig { returns(T::Boolean) }
     def space_previously_changed?; end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :spaces, through: :space_members`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
+    sig { returns(::Space::PrivateCollectionProxy) }
+    def spaces; end
+
+    sig { params(value: T::Enumerable[::Space]).void }
+    def spaces=(value); end
 
     sig { returns(T::Array[T.untyped]) }
     def topic_ids; end
@@ -466,8 +527,8 @@ class User
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
     def topic_membership_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topic_memberships`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :topic_memberships, through: :space_members`.
+    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
     sig { returns(::TopicMembership::PrivateCollectionProxy) }
     def topic_memberships; end
 
@@ -487,6 +548,20 @@ class User
 
     sig { params(value: T.nilable(::UserPassword)).void }
     def user_password=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
+    def user_session_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def user_session_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `User` class because it declared `has_many :user_sessions`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::UserSession::PrivateCollectionProxy) }
+    def user_sessions; end
+
+    sig { params(value: T::Enumerable[::UserSession]).void }
+    def user_sessions=(value); end
   end
 
   module GeneratedAssociationRelationMethods
@@ -612,9 +687,6 @@ class User
     def not_locale_ja(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def not_role_owner(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -655,9 +727,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def role_owner(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def select(*args, &blk); end
@@ -1210,9 +1279,6 @@ class User
     def restore_name!; end
 
     sig { void }
-    def restore_role!; end
-
-    sig { void }
     def restore_space_id!; end
 
     sig { void }
@@ -1220,61 +1286,6 @@ class User
 
     sig { void }
     def restore_updated_at!; end
-
-    sig { returns(::String) }
-    def role; end
-
-    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
-    def role=(value); end
-
-    sig { returns(T::Boolean) }
-    def role?; end
-
-    sig { returns(T.nilable(::String)) }
-    def role_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def role_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def role_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def role_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def role_change_to_be_saved; end
-
-    sig do
-      params(
-        from: T.any(::String, ::Symbol, ::Integer),
-        to: T.any(::String, ::Symbol, ::Integer)
-      ).returns(T::Boolean)
-    end
-    def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def role_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def role_previous_change; end
-
-    sig do
-      params(
-        from: T.any(::String, ::Symbol, ::Integer),
-        to: T.any(::String, ::Symbol, ::Integer)
-      ).returns(T::Boolean)
-    end
-    def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def role_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def role_was; end
-
-    sig { void }
-    def role_will_change!; end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_atname; end
@@ -1336,13 +1347,7 @@ class User
     sig { returns(T::Boolean) }
     def saved_change_to_name?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_role; end
-
-    sig { returns(T::Boolean) }
-    def saved_change_to_role?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def saved_change_to_space_id; end
 
     sig { returns(T::Boolean) }
@@ -1360,10 +1365,10 @@ class User
     sig { returns(T::Boolean) }
     def saved_change_to_updated_at?; end
 
-    sig { returns(::String) }
+    sig { returns(T.nilable(::String)) }
     def space_id; end
 
-    sig { params(value: ::String).returns(::String) }
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
     def space_id=(value); end
 
     sig { returns(T::Boolean) }
@@ -1378,22 +1383,22 @@ class User
     sig { returns(T::Boolean) }
     def space_id_came_from_user?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def space_id_change; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def space_id_change_to_be_saved; end
 
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    sig { params(from: T.nilable(::String), to: T.nilable(::String)).returns(T::Boolean) }
     def space_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
     def space_id_in_database; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def space_id_previous_change; end
 
-    sig { params(from: ::String, to: ::String).returns(T::Boolean) }
+    sig { params(from: T.nilable(::String), to: T.nilable(::String)).returns(T::Boolean) }
     def space_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
@@ -1526,9 +1531,6 @@ class User
     def will_save_change_to_name?; end
 
     sig { returns(T::Boolean) }
-    def will_save_change_to_role?; end
-
-    sig { returns(T::Boolean) }
     def will_save_change_to_space_id?; end
 
     sig { returns(T::Boolean) }
@@ -1627,9 +1629,6 @@ class User
     def not_locale_ja(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def not_role_owner(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1670,9 +1669,6 @@ class User
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def role_owner(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def select(*args, &blk); end

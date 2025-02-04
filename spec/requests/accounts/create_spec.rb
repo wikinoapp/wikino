@@ -19,20 +19,20 @@ RSpec.describe "POST /accounts", type: :request do
     user = create(:user, :with_password)
     sign_in(user:)
 
-    expect(Space.count).to eq(1)
+    expect(User.count).to eq(1)
 
     post("/accounts", params: {
       account_form: {
+        atname: "test",
         password: "passw0rd"
       }
     })
 
     expect(response.status).to eq(302)
-    space = user.space
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/home")
 
-    # 新しいアカウントは作成されていないのでスペースは1件のまま
-    expect(Space.count).to eq(1)
+    # 新しいアカウントは作成されていないのでユーザーは1件のまま
+    expect(User.count).to eq(1)
   end
 
   it "メールアドレスの確認に成功していないとき、トップページにリダイレクトすること" do
@@ -44,6 +44,7 @@ RSpec.describe "POST /accounts", type: :request do
 
     post("/accounts", params: {
       account_form: {
+        atname: "test",
         password: "passw0rd"
       }
     })
@@ -64,6 +65,7 @@ RSpec.describe "POST /accounts", type: :request do
 
     post("/accounts", params: {
       account_form: {
+        atname: "test",
         password: "1234" # 短すぎるパスワード
       }
     })
@@ -80,21 +82,20 @@ RSpec.describe "POST /accounts", type: :request do
     # メールアドレスの確認が成功したことにする
     email_confirmation.success!
 
-    expect(Space.count).to eq(0)
+    expect(User.count).to eq(0)
 
     post("/accounts", params: {
       account_form: {
-        space_identifier: "example",
+        atname: "test",
         password: "passw0rd"
       }
     })
 
     expect(response.status).to eq(302)
 
-    # アカウントの作成に成功したのでスペースが1件になる
-    expect(Space.count).to eq(1)
-    space = Space.first
+    # アカウントの作成に成功したのでユーザーが1件になる
+    expect(User.count).to eq(1)
 
-    expect(response).to redirect_to("/s/#{space.identifier}")
+    expect(response).to redirect_to("/home")
   end
 end

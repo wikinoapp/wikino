@@ -24,6 +24,7 @@ module Topics
     attr_reader :page_connection
     private :page_connection
 
+    delegate :space, to: :topic
     delegate :pages, :pagination, to: :page_connection
   end
 end

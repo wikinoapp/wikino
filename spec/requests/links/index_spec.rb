@@ -68,16 +68,17 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     expect(response.status).to eq(404)
   end
 
-  it "ログインしているとき、ページのリンクが表示されること" do
+  it "スペースに参加しているとき、ページのリンクが表示されること" do
     space = create(:space, :small)
     user = create(:user, :with_password, space:)
+    space_member = create(:space_member, space:, user:)
 
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
     not_joined_topic = create(:topic, space:)
 
-    create(:topic_membership, space:, topic: public_topic, member: user)
-    create(:topic_membership, space:, topic: private_topic, member: user)
+    create(:topic_membership, space:, topic: public_topic, member: space_member)
+    create(:topic_membership, space:, topic: private_topic, member: space_member)
 
     page_1 = create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
     page_2 = create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")

@@ -7,6 +7,12 @@
 
 class AccountForm
   sig { returns(T.nilable(::String)) }
+  def atname; end
+
+  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+  def atname=(value); end
+
+  sig { returns(T.nilable(::String)) }
   def email; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
@@ -23,12 +29,6 @@ class AccountForm
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
   def password=(value); end
-
-  sig { returns(T.nilable(::String)) }
-  def space_identifier; end
-
-  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-  def space_identifier=(value); end
 
   sig { returns(T.nilable(::String)) }
   def time_zone; end
