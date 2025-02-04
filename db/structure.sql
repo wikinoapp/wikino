@@ -275,7 +275,6 @@ CREATE TABLE public.user_sessions (
 
 CREATE TABLE public.users (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid,
     email character varying NOT NULL,
     atname public.citext NOT NULL,
     name character varying NOT NULL,
@@ -710,39 +709,19 @@ CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_
 
 
 --
--- Name: index_users_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_users_on_space_id ON public.users USING btree (space_id);
-
-
---
--- Name: index_users_on_space_id_and_atname; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_users_on_space_id_and_atname ON public.users USING btree (space_id, atname);
-
-
---
--- Name: index_users_on_space_id_and_discarded_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_users_on_space_id_and_discarded_at ON public.users USING btree (space_id, discarded_at);
-
-
---
--- Name: index_users_on_space_id_and_email; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_users_on_space_id_and_email ON public.users USING btree (space_id, email);
-
-
---
 -- Name: topic_memberships fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.topic_memberships
     ADD CONSTRAINT fk_rails_0f8ef246f7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: page_editorships fk_rails_2088082077; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_editorships
+    ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
 
 
 --
@@ -786,6 +765,14 @@ ALTER TABLE ONLY public.page_revisions
 
 
 --
+-- Name: page_revisions fk_rails_74648de0a3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_74648de0a3 FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
+
+
+--
 -- Name: user_sessions fk_rails_758836b4f0; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -802,19 +789,27 @@ ALTER TABLE ONLY public.pages
 
 
 --
+-- Name: topic_memberships fk_rails_80fd6512fa; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.topic_memberships
+    ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (member_id) REFERENCES public.space_members(id);
+
+
+--
+-- Name: draft_pages fk_rails_8d9bc1217e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_8d9bc1217e FOREIGN KEY (editor_id) REFERENCES public.space_members(id);
+
+
+--
 -- Name: draft_pages fk_rails_8e68719216; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.draft_pages
     ADD CONSTRAINT fk_rails_8e68719216 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
-
-
---
--- Name: users fk_rails_96e4c019e9; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT fk_rails_96e4c019e9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -880,6 +875,7 @@ ALTER TABLE ONLY public.page_editorships
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250202063341'),
 ('20250119163728'),
 ('20241220175102'),
 ('20241201145213'),

@@ -36,7 +36,7 @@
                 <label class="flex cursor-pointer items-center gap-2">
                   <%= f.select(
                     :topic_number,
-                    options_from_collection_for_select(f.object.viewable_topics, :number, :name, f.object.topic_number),
+                    options_from_collection_for_select(f.object.selectable_topics, :number, :name, f.object.topic_number),
                     {},
                     {
                       class: "bg-base-300 select select-bordered",

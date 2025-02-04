@@ -30,7 +30,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     expect(response.status).to eq(404)
   end
 
-  it "別のスペースにログインしている & 公開トピックのページのとき、ページのリンクが表示されること" do
+  it "別のスペースに参加している & 公開トピックのページのとき、ページのリンクが表示されること" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
 
     public_topic = create(:topic, :public, space:)
@@ -41,7 +42,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     page = create(:page, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, user:, space: other_space)
 
     sign_in(user:)
 
@@ -53,13 +54,14 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     expect(response.body).not_to include("公開されていないページ")
   end
 
-  it "別のスペースにログインしている & 非公開トピックのページのとき、404を返すこと" do
+  it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, user:, space: other_space)
 
     sign_in(user:)
 
@@ -70,7 +72,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
 
   it "スペースに参加しているとき、ページのリンクが表示されること" do
     space = create(:space, :small)
-    user = create(:user, :with_password, space:)
+    user = create(:user, :with_password)
     space_member = create(:space_member, space:, user:)
 
     public_topic = create(:topic, :public, space:)

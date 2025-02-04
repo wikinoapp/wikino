@@ -62,8 +62,23 @@ class SpaceMember < ApplicationRecord
   end
 
   sig { override.returns(Page::PrivateAssociationRelation) }
-  def viewable_pages
+  def showable_pages
     space.not_nil!.pages.active
+  end
+
+  sig { override.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+  def joined_topics
+    topics.kept
+  end
+
+  sig { override.returns(Topic::PrivateAssociationRelation) }
+  def showable_topics
+    space.not_nil!.topics.kept
+  end
+
+  sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+  def can_create_page?(topic:)
+    topic.present? && topics.where(id: topic.id).exists?
   end
 
   sig { override.returns(T::Boolean) }

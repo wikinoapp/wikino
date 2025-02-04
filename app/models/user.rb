@@ -126,11 +126,6 @@ class User < ApplicationRecord
     active_spaces.where(id: space.id).exists?
   end
 
-  sig { override.params(topic: Topic).returns(T::Boolean) }
-  def can_create_page?(topic:)
-    active_topics.where(id: topic.id).exists?
-  end
-
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active_spaces.where(id: space.id).exists?
@@ -165,10 +160,5 @@ class User < ApplicationRecord
     end
 
     nil
-  end
-
-  sig { override.params(space: Space, number: T.untyped).returns(Topic) }
-  def find_topic_by_number!(space:, number:)
-    viewable_topics.find_by!(space:, number:)
   end
 end

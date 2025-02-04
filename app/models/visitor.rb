@@ -54,11 +54,6 @@ class Visitor
     false
   end
 
-  sig { override.params(topic: Topic).returns(T::Boolean) }
-  def can_create_page?(topic:)
-    false
-  end
-
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     false
@@ -82,10 +77,5 @@ class Visitor
   sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
   def active_draft_pages
     DraftPage.none
-  end
-
-  sig { override.params(space: Space, number: T.untyped).returns(Topic) }
-  def find_topic_by_number!(space:, number:)
-    Topic.visibility_public.find_by!(space:, number:)
   end
 end

@@ -13,7 +13,8 @@ module Topics
     sig { returns(T.untyped) }
     def call
       space = find_space_by_identifier!
-      topic = Current.viewer!.find_topic_by_number!(space:, number: params[:topic_number])
+      space_viewer = Current.viewer!.space_viewer!(space:)
+      topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
 
       pinned_pages = topic.pages.active.pinned.order(pinned_at: :desc, id: :desc)
 
@@ -28,6 +29,7 @@ module Topics
 
       render Topics::ShowView.new(
         topic:,
+        space_viewer:,
         pinned_pages:,
         page_connection: PageConnection.new(pages:, pagination:)
       )

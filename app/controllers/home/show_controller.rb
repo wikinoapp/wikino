@@ -11,7 +11,9 @@ module Home
 
     sig { returns(T.untyped) }
     def call
-      render Home::ShowView.new
+      active_spaces = T.let(Current.viewer!, User).active_spaces
+
+      render Home::ShowView.new(active_spaces:)
     end
   end
 end

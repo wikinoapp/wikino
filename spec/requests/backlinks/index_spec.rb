@@ -54,13 +54,14 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     expect(response.body).not_to include("公開されていないページ")
   end
 
-  it "別のスペースにログインしている & 非公開トピックのページのとき、404を返すこと" do
+  it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
+    user = create(:user, :with_password)
     space = create(:space, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
     other_space = create(:space)
-    user = create(:user, :with_password, space: other_space)
+    create(:space_member, user:, space: other_space)
 
     sign_in(user:)
 
@@ -69,7 +70,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     expect(response.status).to eq(404)
   end
 
-  it "ログインしているとき、ページのバックリンクが表示されること" do
+  it "スペースに参加しているとき、ページのバックリンクが表示されること" do
     user = create(:user, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)

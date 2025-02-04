@@ -28,20 +28,6 @@
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :space_identifier, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form.space_identifier") %>
-              </span>
-            </div>
-
-            <%= f.text_field(:space_identifier, {
-              autofocus: true,
-              class: "bg-base-300 input input-bordered w-full",
-              required: true
-            }) %>
-          <% end %>
-
           <%= f.label :email, class: "form-control" do %>
             <div class="label">
               <span class="label-text">

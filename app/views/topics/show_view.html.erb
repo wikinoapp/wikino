@@ -16,7 +16,7 @@
         <% end %>
       </div>
 
-      <% if Current.viewer!.can_create_page?(topic:) %>
+      <% if space_viewer.can_create_page?(topic:) %>
         <%= link_to new_page_path(space.identifier, topic.number), class: "btn btn-primary no-animation rounded-full" do %>
           <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 

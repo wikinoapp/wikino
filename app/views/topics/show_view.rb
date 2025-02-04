@@ -5,9 +5,17 @@ module Topics
   class ShowView < ApplicationView
     use_helpers :policy
 
-    sig { params(topic: Topic, pinned_pages: Page::PrivateRelation, page_connection: PageConnection).void }
-    def initialize(topic:, pinned_pages:, page_connection:)
+    sig do
+      params(
+        topic: Topic,
+        space_viewer: ModelConcerns::SpaceViewable,
+        pinned_pages: Page::PrivateRelation,
+        page_connection: PageConnection
+      ).void
+    end
+    def initialize(topic:, space_viewer:, pinned_pages:, page_connection:)
       @topic = topic
+      @space_viewer = space_viewer
       @pinned_pages = pinned_pages
       @page_connection = page_connection
     end
@@ -15,6 +23,10 @@ module Topics
     sig { returns(Topic) }
     attr_reader :topic
     private :topic
+
+    sig { returns(ModelConcerns::SpaceViewable) }
+    attr_reader :space_viewer
+    private :space_viewer
 
     sig { returns(Page::PrivateRelation) }
     attr_reader :pinned_pages

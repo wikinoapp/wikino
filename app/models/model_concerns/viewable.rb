@@ -32,10 +32,6 @@ module ModelConcerns
     def can_view_trash?(space:)
     end
 
-    sig { abstract.params(topic: Topic).returns(T::Boolean) }
-    def can_create_page?(topic:)
-    end
-
     sig { abstract.params(space: Space).returns(T::Boolean) }
     def can_create_bulk_restored_pages?(space:)
     end
@@ -62,10 +58,6 @@ module ModelConcerns
 
     sig { abstract.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
     def active_draft_pages
-    end
-
-    sig { abstract.params(space: Space, number: T.untyped).returns(Topic) }
-    def find_topic_by_number!(space:, number:)
     end
   end
 end
