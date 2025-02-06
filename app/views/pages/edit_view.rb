@@ -3,6 +3,8 @@
 
 module Pages
   class EditView < ApplicationView
+    use_helpers :set_meta_tags
+
     sig do
       params(
         space: Space,

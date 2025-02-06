@@ -3,7 +3,7 @@
 
 module Pages
   class ShowView < ApplicationView
-    use_helpers :policy
+    use_helpers :set_meta_tags
 
     sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
     def initialize(page:, link_collection:, backlink_collection:)

@@ -3,6 +3,8 @@
 
 module Spaces
   class ShowView < ApplicationView
+    use_helpers :set_meta_tags
+
     sig do
       params(
         space_viewer: ModelConcerns::SpaceViewable,

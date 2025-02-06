@@ -3,7 +3,7 @@
 
 module Topics
   class ShowView < ApplicationView
-    use_helpers :policy
+    use_helpers :set_meta_tags
 
     sig do
       params(
