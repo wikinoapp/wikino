@@ -3,6 +3,8 @@
 
 module Topics
   class NewView < ApplicationView
+    use_helpers :set_meta_tags
+
     sig { params(space: Space, form: NewTopicForm).void }
     def initialize(space:, form:)
       @space = space

@@ -3,5 +3,6 @@
 
 module Spaces
   class NewView < ApplicationView
+    use_helpers :set_meta_tags
   end
 end

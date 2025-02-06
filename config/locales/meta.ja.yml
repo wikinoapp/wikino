@@ -22,6 +22,6 @@ ja:
       sign_up:
         show: アカウント作成
       spaces:
-        show: "ホーム | %{space_name}"
+        show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ
