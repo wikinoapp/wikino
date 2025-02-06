@@ -6,6 +6,11 @@ RSpec.describe Markup, type: :model do
     html.gsub(/\s+/, " ").strip
   end
 
+  def test_render_html(current_topic:, text:, expected:)
+    actual = Markup.new(current_topic:).render_html(text:)
+    expect(normalize_html(actual)).to eq(normalize_html(expected))
+  end
+
   it "渡したテキストが空文字列のとき: 空文字列を返すこと" do
     topic = create(:topic)
     actual = Markup.new(current_topic: topic).render_html(text: "")
@@ -31,7 +36,7 @@ RSpec.describe Markup, type: :model do
     expect(normalize_html(actual)).to eq(normalize_html(expected))
   end
 
-  it "MarkupFilters::PageLinkFilter: リンク記法がリンクに置き換わること" do
+  it "MarkupFilters::PageLinkFilter: リンク記法がリンクに置き換わること" do # standard:disable RSpec/NoExpectationExample
     space = create(:space)
     topic_1 = create(:topic, space:, name: "トピック1")
     topic_2 = create(:topic, space:, name: "トピック2")
@@ -39,112 +44,122 @@ RSpec.describe Markup, type: :model do
     page_2 = create(:page, space:, topic: topic_2, title: "Page 2")
     page_3 = create(:page, space:, topic: topic_1, title: "Notebook -> List")
 
-    text = <<~HTML
-      - Test
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li>Test</li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - Test
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li>Test</li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[Page 1]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[Page 1]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[トピック1/Page 1]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[トピック1/Page 1]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[トピック1/Page 2]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    # Page 2はトピック2に属しているのでリンクにならないはず
-    expected = <<~HTML
-      <ul>
-        <li>[[トピック1/Page 2]]</li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[トピック1/Page 2]]
+      TEXT
+      # Page 2はトピック2に属しているのでリンクにならないはず
+      expected: <<~HTML
+        <ul>
+          <li>[[トピック1/Page 2]]</li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[Page 2]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li>[[Page 2]]</li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[Page 2]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li>[[Page 2]]</li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[トピック2/Page 2]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[トピック2/Page 2]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      - [[存在しないページ]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li>[[存在しないページ]]</li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[存在しないページ]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li>[[存在しないページ]]</li>
+        </ul>
+      HTML
+    )
 
     # `->` が含まれているとリンクにならないことがあったので追加 (リンクになるべき)
-    text = <<~HTML
-      - [[Notebook -> List]]
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <ul>
-        <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a></li>
-      </ul>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        - [[Notebook -> List]]
+      TEXT
+      expected: <<~HTML
+        <ul>
+          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a></li>
+        </ul>
+      HTML
+    )
 
-    text = <<~HTML
-      文中にページリンクがある場合[[Page 1]]のテスト
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <p>文中にページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        文中にページリンクがある場合[[Page 1]]のテスト
+      TEXT
+      expected: <<~HTML
+        <p>文中にページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
+      HTML
+    )
 
-    text = <<~HTML
-      文中にトピック付きのページリンクがある場合[[トピック1/Page 1]]のテスト
-    HTML
-    actual = Markup.new(current_topic: topic_1).render_html(text:)
-    expected = <<~HTML
-      <p>文中にトピック付きのページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
-    HTML
-    expect(normalize_html(actual)).to eq(normalize_html(expected))
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        文中にトピック付きのページリンクがある場合[[トピック1/Page 1]]のテスト
+      TEXT
+      expected: <<~HTML
+        <p>文中にトピック付きのページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
+      HTML
+    )
   end
 end
