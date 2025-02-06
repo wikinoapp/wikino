@@ -40,11 +40,11 @@ module MarkupFilters
         page_location = page_locations.find { |page_location| page_location.key == location_key }
 
         if page_location
-          replaced_text = text.gsub(
+          text.gsub!(
             /\[\[#{location_key.raw}\]\]/,
             view_context.render(PageLinkComponent.new(current_space: current_topic.space.not_nil!, page_location:))
           )
-          text_chunk.replace(replaced_text, as: :html)
+          text_chunk.replace(text, as: :html)
         end
       end
     end

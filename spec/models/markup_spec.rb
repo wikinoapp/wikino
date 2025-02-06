@@ -161,5 +161,15 @@ RSpec.describe Markup, type: :model do
         <p>文中にトピック付きのページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
       HTML
     )
+
+    test_render_html(
+      current_topic: topic_1,
+      text: <<~TEXT,
+        同じ行に2つのページリンクがある場合: [[Page 1]] [[トピック2/Page 2]]
+      TEXT
+      expected: <<~HTML
+        <p>同じ行に2つのページリンクがある場合: <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a> <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></p>
+      HTML
+    )
   end
 end
