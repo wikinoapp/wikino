@@ -41,7 +41,7 @@ module MarkupFilters
 
         if page_location
           text.gsub!(
-            /\[\[#{location_key.raw}\]\]/,
+            /\[\[#{Regexp.escape(location_key.raw)}\]\]/,
             view_context.render(PageLinkComponent.new(current_space: current_topic.space.not_nil!, page_location:))
           )
           text_chunk.replace(text, as: :html)

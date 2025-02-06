@@ -43,6 +43,7 @@ RSpec.describe Markup, type: :model do
     page_1 = create(:page, space:, topic: topic_1, title: "Page 1")
     page_2 = create(:page, space:, topic: topic_2, title: "Page 2")
     page_3 = create(:page, space:, topic: topic_1, title: "Notebook -> List")
+    page_4 = create(:page, space:, topic: topic_1, title: "日記 (2025)")
 
     test_render_html(
       current_topic: topic_1,
@@ -169,6 +170,17 @@ RSpec.describe Markup, type: :model do
       TEXT
       expected: <<~HTML
         <p>同じ行に2つのページリンクがある場合: <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a> <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></p>
+      HTML
+    )
+
+    test_render_html(
+      current_topic: topic_1,
+      # 正規表現において特別な意味を持つ文字がリンク記法内に含まれているとき
+      text: <<~TEXT,
+        [[日記 (2025)]]
+      TEXT
+      expected: <<~HTML
+        <p><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_4.number}">日記 (2025)</a></p>
       HTML
     )
   end
