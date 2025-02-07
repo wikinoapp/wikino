@@ -22,6 +22,7 @@ ja:
       sign_up:
         show: アカウント作成
       spaces:
+        new: 新規スペース
         show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ
