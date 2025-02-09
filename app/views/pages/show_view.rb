@@ -7,10 +7,15 @@ module Pages
 
     sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
     def initialize(page:, link_collection:, backlink_collection:)
+      @current_page_name = PageName::PageDetail
       @page = page
       @link_collection = link_collection
       @backlink_collection = backlink_collection
     end
+
+    sig { returns(PageName) }
+    attr_reader :current_page_name
+    private :current_page_name
 
     sig { returns(Page) }
     attr_reader :page

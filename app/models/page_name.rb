@@ -5,6 +5,7 @@ class PageName < T::Enum
   enums do
     Home = new
     Inbox = new
+    PageDetail = new
     SignIn = new
     SpaceDetail = new
     Welcome = new
