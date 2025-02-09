@@ -8,6 +8,7 @@ class PageName < T::Enum
     PageDetail = new
     SignIn = new
     SpaceDetail = new
+    TopicDetail = new
     Welcome = new
   end
 end

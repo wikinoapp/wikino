@@ -15,6 +15,6 @@
 
   <div class="z-50 fixed bottom-0 left-1/2 flex translate-x-[-50%] flex-col gap-4 p-4">
     <%= render Toasts::FlashComponent.new(flash:) %>
-    <%= render Navbars::BottomComponent.new %>
+    <%= render Navbars::BottomComponent.new(current_page_name:) %>
   </div>
 </div>
