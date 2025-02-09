@@ -21,5 +21,10 @@ module Basic
     sig { returns(String) }
     attr_reader :next_path
     private :next_path
+
+    sig { returns(T::Boolean) }
+    def render?
+      pagination.has_previous || pagination.has_next
+    end
   end
 end
