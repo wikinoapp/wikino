@@ -1,5 +1,5 @@
 <% backlinks.each do |backlink| %>
-  <%= render Cards::PageComponent.new(page: backlink.page, class_name: "bg-base-300") %>
+  <%= render Cards::PageComponent.new(page: backlink.page) %>
 <% end %>
 
 <% if pagination.has_next %>
