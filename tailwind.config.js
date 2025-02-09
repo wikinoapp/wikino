@@ -2,16 +2,17 @@ const tailwindColors = require("tailwindcss/colors");
 const daisyuiThemes = require("daisyui/src/theming/themes");
 
 const brand = {
-  50: "#fae5ff",
-  100: "#e9b5fc",
-  200: "#d383fa",
-  300: "#b753f9",
-  400: "#982af8",
-  500: "#741ae0",
-  600: "#4f13ae",
-  700: "#300b7c",
-  800: "#17044a",
-  900: "#05001a",
+  "50": "#f9f7f7",
+  "100": "#f2efee",
+  "200": "#e6dfdd",
+  "300": "#d7cdca",
+  "400": "#bfafaa",
+  "500": "#a7928c",
+  "600": "#8f7973",
+  "700": "#77645e",
+  "800": "#645450",
+  "900": "#564a46",
+  "950": "#2c2523",
 };
 
 const colors = {
@@ -41,8 +42,6 @@ const colors = {
   brand,
 };
 
-const pageBgColor = "#e6dfdd";
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -69,14 +68,14 @@ module.exports = {
       {
         light: {
           ...daisyuiThemes["light"],
-          "base-100": pageBgColor, // ページ全体の背景色
-          "base-200": pageBgColor, // ナビゲーションバーの背景色
+          "base-100": colors.brand[100], // ページ全体の背景色
+          "base-200": colors.brand[100], // ナビゲーションバーの背景色
           "base-300": colors.gray[100], // カードの背景色
           "base-content": colors.gray[950], // テキストの色
           "primary-content": colors.gray[100],
           primary: colors.gray[950],
           "secondary-content": colors.gray[950],
-          secondary: pageBgColor,
+          secondary: colors.brand[100],
         },
       },
     ],

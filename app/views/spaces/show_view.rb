@@ -16,6 +16,7 @@ module Spaces
       @space_viewer = space_viewer
       @pinned_pages = pinned_pages
       @page_connection = page_connection
+      @current_page_name = PageName::SpaceDetail
     end
 
     sig { returns(ModelConcerns::SpaceViewable) }
@@ -29,6 +30,10 @@ module Spaces
     sig { returns(PageConnection) }
     attr_reader :page_connection
     private :page_connection
+
+    sig { returns(PageName) }
+    attr_reader :current_page_name
+    private :current_page_name
 
     delegate :pages, :pagination, to: :page_connection
     delegate :space, to: :space_viewer

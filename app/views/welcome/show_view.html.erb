@@ -1,7 +1,7 @@
 <% title = t("meta.title.welcome.show") %>
 <% set_meta_tags(title:, reverse: false) %>
 
-<%= render ::Layouts::LandingComponent.new do %>
+<%= render ::Layouts::LandingComponent.new(current_page_name:) do %>
   <div class="px-4">
     <h1 class="mb-4 font-bold">
       Wikinoにようこそ！

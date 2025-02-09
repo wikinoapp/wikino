@@ -6,12 +6,12 @@
 >
   <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
     <div class="navbar-start gap-8">
-      <%= render Links::BrandIconComponent.new %>
+      <%= render Links::BrandIconComponent.new(current_page_name:) %>
 
       <% if Current.viewer.signed_in? %>
         <div class="flex gap-6">
-          <%= render Navbars::Top::LinkItemComponent.new(path: root_path, title: t("nouns.home"), icon_name: "house") %>
-          <%= render Navbars::Top::LinkItemComponent.new(path: "#", title: t("nouns.inbox"), icon_name: "tray") %>
+          <%= render Navbars::Top::LinkItemComponent.new(current_page_name:, page_name: PageName::Home) %>
+          <%= render Navbars::Top::LinkItemComponent.new(current_page_name:, page_name: PageName::Inbox) %>
         </div>
       <% end %>
     </div>
@@ -30,7 +30,7 @@
           <% end %>
         </div>
       <% else %>
-        <%= render Navbars::Top::LinkItemComponent.new(path: sign_in_path, title: t("nouns.sign_in"), icon_name: "sign-in") %>
+        <%= render Navbars::Top::LinkItemComponent.new(current_page_name:, page_name: PageName::SignIn) %>
       <% end %>
     </div>
   </div>
