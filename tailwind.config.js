@@ -2,17 +2,17 @@ const tailwindColors = require("tailwindcss/colors");
 const daisyuiThemes = require("daisyui/src/theming/themes");
 
 const brand = {
-  "50": "#f9f7f7",
-  "100": "#f2efee",
-  "200": "#e6dfdd",
-  "300": "#d7cdca",
-  "400": "#bfafaa",
-  "500": "#a7928c",
-  "600": "#8f7973",
-  "700": "#77645e",
-  "800": "#645450",
-  "900": "#564a46",
-  "950": "#2c2523",
+  50: "#f9f7f7",
+  100: "#f2efee",
+  200: "#e6dfdd",
+  300: "#d7cdca",
+  400: "#bfafaa",
+  500: "#a7928c",
+  600: "#8f7973",
+  700: "#77645e",
+  800: "#645450",
+  900: "#564a46",
+  950: "#2c2523",
 };
 
 const colors = {

@@ -14,16 +14,11 @@ module Topics
       ).void
     end
     def initialize(topic:, space_viewer:, pinned_pages:, page_connection:)
-      @current_page_name = PageName::TopicDetail
       @topic = topic
       @space_viewer = space_viewer
       @pinned_pages = pinned_pages
       @page_connection = page_connection
     end
-
-    sig { returns(PageName) }
-    attr_reader :current_page_name
-    private :current_page_name
 
     sig { returns(Topic) }
     attr_reader :topic
@@ -43,5 +38,10 @@ module Topics
 
     delegate :space, to: :topic
     delegate :pages, :pagination, to: :page_connection
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::TopicDetail
+    end
   end
 end

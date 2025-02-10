@@ -8,7 +8,6 @@ module Home
     sig { params(active_spaces: Space::PrivateCollectionProxy).void }
     def initialize(active_spaces:)
       @active_spaces = active_spaces
-      @current_page_name = PageName::Home
     end
 
     sig { returns(Space::PrivateCollectionProxy) }
@@ -16,7 +15,8 @@ module Home
     private :active_spaces
 
     sig { returns(PageName) }
-    attr_reader :current_page_name
-    private :current_page_name
+    private def current_page_name
+      PageName::Home
+    end
   end
 end
