@@ -6,9 +6,14 @@ class PageName < T::Enum
     Home = new
     Inbox = new
     PageDetail = new
+    PageEdit = new
     SignIn = new
     SpaceDetail = new
+    SpaceNew = new
     TopicDetail = new
+    TopicEdit = new
+    TopicNew = new
+    Trash = new
     Welcome = new
   end
 end

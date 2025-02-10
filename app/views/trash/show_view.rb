@@ -8,6 +8,7 @@ module Trash
       @space = space
       @page_connection = page_connection
       @form = form
+      @current_page_name = PageName::Trash
     end
 
     sig { returns(Space) }
@@ -21,6 +22,10 @@ module Trash
     sig { returns(TrashedPagesForm) }
     attr_reader :form
     private :form
+
+    sig { returns(PageName) }
+    attr_reader :current_page_name
+    private :current_page_name
 
     delegate :pages, :pagination, to: :page_connection
   end

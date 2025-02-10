@@ -22,6 +22,7 @@ module Pages
       @link_collection = link_collection
       @backlink_collection = backlink_collection
       @draft_page = draft_page
+      @current_page_name = PageName::PageEdit
     end
 
     sig { returns(Space) }
@@ -47,5 +48,9 @@ module Pages
     sig { returns(T.nilable(DraftPage)) }
     attr_reader :draft_page
     private :draft_page
+
+    sig { returns(PageName) }
+    attr_reader :current_page_name
+    private :current_page_name
   end
 end

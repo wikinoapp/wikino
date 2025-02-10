@@ -9,6 +9,7 @@ module Topics
     def initialize(space:, form:)
       @space = space
       @form = form
+      @current_page_name = PageName::TopicNew
     end
 
     sig { returns(Space) }
@@ -18,5 +19,9 @@ module Topics
     sig { returns(NewTopicForm) }
     attr_reader :form
     private :form
+
+    sig { returns(PageName) }
+    attr_reader :current_page_name
+    private :current_page_name
   end
 end
