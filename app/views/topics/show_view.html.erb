@@ -45,14 +45,20 @@
           <% end %>
         </div>
 
-        <div class="flex justify-center">
-          <%= render Basic::PaginationComponent.new(
-            pagination:,
-            previous_path: topic_path(before: pagination.previous_cursor),
-            next_path: topic_path(after: pagination.next_cursor)
-          ) %>
-        </div>
+        <% if pagination.has_previous || pagination.has_next %>
+          <div class="flex justify-center">
+            <%= render Basic::PaginationComponent.new(
+              pagination:,
+              previous_path: topic_path(before: pagination.previous_cursor),
+              next_path: topic_path(after: pagination.next_cursor)
+            ) %>
+          </div>
+        <% end %>
       </div>
     <% end %>
+
+    <div class="mt-10">
+      <%= render Footers::PublicComponent.new %>
+    </div>
   </div>
 <% end %>

@@ -66,5 +66,9 @@
     <% end %>
 
     <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
+
+    <div class="mt-10">
+      <%= render Footers::PublicComponent.new %>
+    </div>
   </div>
 <% end %>
