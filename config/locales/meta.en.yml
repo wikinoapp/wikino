@@ -23,6 +23,8 @@ en:
         show: Sign up
       spaces:
         new: New space
+        settings:
+          show: "General | %{space_name}"
         show: "%{space_name}"
       welcome:
         show: Find through links.

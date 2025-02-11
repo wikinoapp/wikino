@@ -8,14 +8,6 @@
         <%= space.name %>
       </h1>
 
-      <% unless Current.viewer!.signed_in? %>
-        <%= link_to atom_path(space.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
-          <%= render Basic::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
-
-          <%= t("nouns.rss_feed") %>
-        <% end %>
-      <% end %>
-
       <% if space_viewer.can_create_page?(topic: first_joined_topic) %>
         <%= link_to new_page_path(space.identifier, first_joined_topic.not_nil!.number), class: "btn btn-primary no-animation rounded-full" do %>
           <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
@@ -23,6 +15,8 @@
           <%= t("nouns.new_page") %>
         <% end %>
       <% end %>
+
+      <%= render Dropdowns::SpaceOptionsComponent.new(space:) %>
     </div>
 
     <% if pinned_pages.present? || pages.present? %>

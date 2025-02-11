@@ -13,6 +13,7 @@ class PageName < T::Enum
     SignUp = new
     SpaceDetail = new
     SpaceNew = new
+    SpaceSettings = new
     TopicDetail = new
     TopicEdit = new
     TopicNew = new
