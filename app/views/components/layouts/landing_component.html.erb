@@ -1,5 +1,5 @@
 <div class="flex min-h-[100svh] flex-col">
-  <%= render Navbars::TopComponent.new %>
+  <%= render Navbars::TopComponent.new(current_page_name:) %>
 
   <div class="mx-auto w-full max-w-screen-lg flex-1">
     <%= content %>

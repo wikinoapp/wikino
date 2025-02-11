@@ -47,5 +47,10 @@ module Pages
     sig { returns(T.nilable(DraftPage)) }
     attr_reader :draft_page
     private :draft_page
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::PageEdit
+    end
   end
 end

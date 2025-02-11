@@ -23,5 +23,10 @@ module Trash
     private :form
 
     delegate :pages, :pagination, to: :page_connection
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::Trash
+    end
   end
 end

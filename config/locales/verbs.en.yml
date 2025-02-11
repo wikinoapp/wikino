@@ -1,6 +1,7 @@
 en:
   verbs:
     add_account: Add account
+    back_to_home: Back to Home
     create: Create
     delete: Delete
     edit: Edit

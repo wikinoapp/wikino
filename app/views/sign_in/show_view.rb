@@ -1,22 +1,22 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Accounts
-  class NewView < ApplicationView
+module SignIn
+  class ShowView < ApplicationView
     use_helpers :set_meta_tags
 
-    sig { params(form: AccountForm).void }
+    sig { params(form: UserSessionForm).void }
     def initialize(form:)
       @form = form
     end
 
-    sig { returns(AccountForm) }
+    sig { returns(UserSessionForm) }
     attr_reader :form
     private :form
 
     sig { returns(PageName) }
     private def current_page_name
-      PageName::AccountNew
+      PageName::SignIn
     end
   end
 end

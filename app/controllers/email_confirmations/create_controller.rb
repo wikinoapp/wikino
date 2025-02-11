@@ -11,14 +11,14 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      @form = NewEmailConfirmationForm.new(form_params)
+      form = NewEmailConfirmationForm.new(form_params)
 
-      if @form.invalid?
-        return render("sign_up/show/call", status: :unprocessable_entity)
+      if form.invalid?
+        return render(SignUp::ShowView.new(form:), status: :unprocessable_entity)
       end
 
       result = CreateEmailConfirmationUseCase.new.call(
-        email: @form.email.not_nil!,
+        email: form.email.not_nil!,
         event: EmailConfirmationEvent::SignUp,
         locale: current_locale
       )

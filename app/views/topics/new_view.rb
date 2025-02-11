@@ -18,5 +18,10 @@ module Topics
     sig { returns(NewTopicForm) }
     attr_reader :form
     private :form
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::TopicNew
+    end
   end
 end

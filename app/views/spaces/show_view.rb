@@ -37,5 +37,10 @@ module Spaces
     private def first_joined_topic
       space_viewer.joined_topics.first
     end
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::SpaceDetail
+    end
   end
 end

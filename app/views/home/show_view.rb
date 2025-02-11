@@ -13,5 +13,10 @@ module Home
     sig { returns(Space::PrivateCollectionProxy) }
     attr_reader :active_spaces
     private :active_spaces
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::Home
+    end
   end
 end

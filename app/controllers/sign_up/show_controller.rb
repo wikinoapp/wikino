@@ -11,7 +11,9 @@ module SignUp
 
     sig { returns(T.untyped) }
     def call
-      @form = NewEmailConfirmationForm.new
+      form = NewEmailConfirmationForm.new
+
+      render SignUp::ShowView.new(form:)
     end
   end
 end

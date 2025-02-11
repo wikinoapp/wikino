@@ -11,14 +11,14 @@ module Sessions
 
     sig { returns(T.untyped) }
     def call
-      @form = UserSessionForm.new(form_params)
+      form = UserSessionForm.new(form_params)
 
-      if @form.invalid?
-        return render("sign_in/show/call", status: :unprocessable_entity)
+      if form.invalid?
+        return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
       end
 
       result = CreateUserSessionUseCase.new.call(
-        user: @form.user.not_nil!,
+        user: form.user.not_nil!,
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       )

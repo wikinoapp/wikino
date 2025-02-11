@@ -33,5 +33,10 @@ module Pages
     def topic
       page.topic.not_nil!
     end
+
+    sig { returns(PageName) }
+    private def current_page_name
+      PageName::PageDetail
+    end
   end
 end

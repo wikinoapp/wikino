@@ -16,5 +16,20 @@ module Footers
     sig { returns(::BacklinkCollection) }
     attr_reader :backlink_collection
     private :backlink_collection
+
+    sig { returns(T::Boolean) }
+    def render?
+      show_links? || show_backlinks?
+    end
+
+    sig { returns(T::Boolean) }
+    private def show_links?
+      link_collection.links.present?
+    end
+
+    sig { returns(T::Boolean) }
+    private def show_backlinks?
+      backlink_collection.backlinks.present?
+    end
   end
 end
