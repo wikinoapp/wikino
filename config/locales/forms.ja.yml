@@ -5,7 +5,6 @@ ja:
         atname: アットネーム
         email: メールアドレス
         password: パスワード
-        space_identifier: 識別子
       edit_page_form:
         topic_number: トピック
         title: タイトル
@@ -14,6 +13,9 @@ ja:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
         email: メールアドレス
+      new_space_form:
+        identifier: 識別子
+        name: 名前
       new_topic_form:
         description: 説明
         identifier: 識別子

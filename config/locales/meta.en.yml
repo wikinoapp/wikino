@@ -22,6 +22,7 @@ en:
       sign_up:
         show: Sign up
       spaces:
+        new: New space
         show: "%{space_name}"
       welcome:
         show: Find through links.

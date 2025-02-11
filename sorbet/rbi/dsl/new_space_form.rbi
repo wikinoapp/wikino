@@ -11,4 +11,10 @@ class NewSpaceForm
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
   def identifier=(value); end
+
+  sig { returns(T.nilable(::String)) }
+  def name; end
+
+  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+  def name=(value); end
 end

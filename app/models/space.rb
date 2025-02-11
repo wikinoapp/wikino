@@ -56,4 +56,9 @@ class Space < ApplicationRecord
       pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
     )
   end
+
+  sig { params(user: User, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
+  def add_member!(user:, role:, joined_at:)
+    space_members.create!(user:, role: role.serialize, joined_at:)
+  end
 end

@@ -16,6 +16,8 @@
         <% @active_spaces.each do |space| %>
           <%= link_to space.name, space_path(space.identifier), class: "link" %>
         <% end %>
+
+        <%= link_to t("nouns.new_space"), new_space_path, class: "link" %>
       </div>
     </div>
   </div>

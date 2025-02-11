@@ -14,9 +14,6 @@ ja:
         8文字以上入力してください。
       signed_in_successfully: ログインしました
       signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
-      space_identifier_hint_html: |-
-        この識別子はスペースのURLに使用されます。あとから変更もできます。<br>
-        %{min_length}文字以上で半角英数字とハイフンのみ使用可能です。
       terms_html: |-
         <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と
@@ -43,6 +40,10 @@ ja:
       callback:
         sign_out_success: ログアウトしました
     spaces:
+      created: スペースを作成しました
+      identifier_hint_html: |-
+        この識別子はスペースのURLに使用されます。あとから変更もできます。<br>
+        %{min_length}文字以上で半角英数字とハイフンのみ使用可能です。
       new_space: 新しいスペース
     page:
       are_you_sure_trash: ページをゴミ箱に入れますか？
