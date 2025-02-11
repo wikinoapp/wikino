@@ -5,7 +5,6 @@ en:
         atname: Atname
         email: Email
         password: Password
-        space_identifier: Identifier
       edit_page_form:
         topic_number: Topic
         title: Title
@@ -14,6 +13,9 @@ en:
         confirmation_code: Confirmation code
       new_email_confirmation_form:
         email: Email
+      new_space_form:
+        identifier: Identifier
+        name: Name
       new_topic_form:
         description: Description
         identifier: Identifier

@@ -46,6 +46,9 @@ module GeneratedUrlHelpersModule
   def new_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def new_space_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_topic_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -83,6 +86,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end

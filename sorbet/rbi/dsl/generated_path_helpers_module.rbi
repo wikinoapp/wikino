@@ -46,6 +46,9 @@ module GeneratedPathHelpersModule
   def new_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def new_space_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_topic_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -83,6 +86,9 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_path(*args); end
