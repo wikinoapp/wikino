@@ -3,9 +3,18 @@
 
 module Layouts
   class MainComponent < ApplicationComponent
-    sig { params(current_page_name: PageName, class_name: String).void }
-    def initialize(current_page_name:, class_name: "")
+    class ContentScreen < T::Enum
+      enums do
+        Small = new("sm")
+        Medium = new("md")
+        Large = new("lg")
+      end
+    end
+
+    sig { params(current_page_name: PageName, content_screen: ContentScreen, class_name: String).void }
+    def initialize(current_page_name:, content_screen: ContentScreen::Large, class_name: "")
       @current_page_name = current_page_name
+      @content_screen = content_screen
       @class_name = class_name
     end
 
@@ -13,8 +22,26 @@ module Layouts
     attr_reader :current_page_name
     private :current_page_name
 
+    sig { returns(ContentScreen) }
+    attr_reader :content_screen
+    private :content_screen
+
     sig { returns(String) }
     attr_reader :class_name
     private :class_name
+
+    sig { returns(String) }
+    def content_screen_class_name
+      case content_screen
+      when ContentScreen::Small
+        "max-w-screen-sm"
+      when ContentScreen::Medium
+        "max-w-screen-md"
+      when ContentScreen::Large
+        "max-w-screen-lg"
+      else
+        T.absurd(content_screen)
+      end
+    end
   end
 end

@@ -18,6 +18,8 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/atom",                               via: :get,    as: :atom,                          to: "atom/show#call"
   match "/s/:space_identifier/bulk_restored_pages",                via: :post,   as: :bulk_restored_page_list,       to: "bulk_restored_pages/create#call"
   match "/s/:space_identifier/settings",                           via: :get,    as: :space_settings,                to: "spaces/settings/show#call"
+  match "/s/:space_identifier/settings/general",                   via: :get,    as: :space_settings_general,        to: "spaces/settings/general/show#call"
+  match "/s/:space_identifier/settings/general",                   via: :post,                                       to: "spaces/settings/general/update#call"
   match "/s/:space_identifier/pages/:page_number",                 via: :get,    as: :page,                          to: "pages/show#call",                     page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                 via: :patch,                                      to: "pages/update#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/backlinks",       via: :post,   as: :page_backlink_list,            to: "backlinks/index#call",                page_number: /\d+/

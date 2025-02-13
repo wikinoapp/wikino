@@ -24,7 +24,8 @@ ja:
       spaces:
         new: 新規スペース
         settings:
-          show: "基本情報 | %{space_name}"
+          general:
+            show: "基本情報 | %{space_name}"
         show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ
