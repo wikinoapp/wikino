@@ -21,7 +21,7 @@ class EditSpaceForm < ApplicationForm
   private def identifier_uniqueness
     return if space.nil?
 
-    if Space.where.not(id: space.id).exists?(identifier:)
+    if Space.where.not(id: space.not_nil!.id).exists?(identifier:)
       errors.add(:identifier, :uniqueness)
     end
   end

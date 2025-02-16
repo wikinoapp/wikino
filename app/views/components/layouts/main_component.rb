@@ -32,7 +32,9 @@ module Layouts
 
     sig { returns(String) }
     def content_screen_class_name
-      case content_screen
+      cs = content_screen
+
+      case cs
       when ContentScreen::Small
         "max-w-screen-sm"
       when ContentScreen::Medium
@@ -40,7 +42,7 @@ module Layouts
       when ContentScreen::Large
         "max-w-screen-lg"
       else
-        T.absurd(content_screen)
+        T.absurd(cs)
       end
     end
   end

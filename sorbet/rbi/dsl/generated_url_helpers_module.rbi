@@ -91,6 +91,12 @@ module GeneratedUrlHelpersModule
   def space_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def space_settings_general_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
