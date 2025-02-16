@@ -2,9 +2,13 @@
 # frozen_string_literal: true
 
 class EditSpaceForm < ApplicationForm
+  sig { returns(T.nilable(Space)) }
+  attr_accessor :space
+
   attribute :identifier, :string
   attribute :name, :string
 
+  validates :space, presence: true
   validates :identifier,
     exclusion: {in: Space::RESERVED_IDENTIFIERS},
     format: {with: Space::IDENTIFIER_FORMAT},
@@ -15,7 +19,9 @@ class EditSpaceForm < ApplicationForm
 
   sig { void }
   private def identifier_uniqueness
-    if Space.exists?(identifier:)
+    return if space.nil?
+
+    if Space.where.not(id: space.id).exists?(identifier:)
       errors.add(:identifier, :uniqueness)
     end
   end
