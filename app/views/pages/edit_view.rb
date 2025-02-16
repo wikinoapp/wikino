@@ -22,6 +22,7 @@ module Pages
       @draft_page = draft_page
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.pages.edit")
       helpers.set_meta_tags(title: "#{title} | #{space.name}", **default_meta_tags)

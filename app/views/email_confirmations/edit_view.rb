@@ -8,6 +8,7 @@ module EmailConfirmations
       @form = form
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.email_confirmations.edit")
       helpers.set_meta_tags(title:, **default_meta_tags)

@@ -9,6 +9,7 @@ module Topics
       @form = form
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.topics.new")
       helpers.set_meta_tags(title:, **default_meta_tags)

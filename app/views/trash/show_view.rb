@@ -10,6 +10,7 @@ module Trash
       @form = form
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.trash.show", space_name: space.name)
       helpers.set_meta_tags(title:, **default_meta_tags)

@@ -8,6 +8,7 @@ module Home
       @active_spaces = active_spaces
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.home.show")
       helpers.set_meta_tags(title:, **default_meta_tags)

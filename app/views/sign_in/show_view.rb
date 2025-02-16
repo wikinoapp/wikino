@@ -8,6 +8,7 @@ module SignIn
       @form = form
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.sign_in.show")
       helpers.set_meta_tags(title:, **default_meta_tags)

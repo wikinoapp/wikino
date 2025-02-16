@@ -14,7 +14,6 @@ class ApplicationController
 
   module HelperMethods
     include ::ActionController::Base::HelperMethods
-    include ::ApplicationHelper
     include ::PreviewHelper
   end
 

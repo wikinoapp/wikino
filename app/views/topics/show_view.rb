@@ -18,6 +18,7 @@ module Topics
       @page_connection = page_connection
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.topics.show", space_name: space.name, topic_name: topic.name)
       helpers.set_meta_tags(title:, **default_meta_tags)

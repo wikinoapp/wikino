@@ -10,6 +10,7 @@ module Pages
       @backlink_collection = backlink_collection
     end
 
+    sig { override.void }
     def before_render
       title = I18n.t("meta.title.pages.show", space_name: space.name, page_title: page.title)
       helpers.set_meta_tags(title:, **default_meta_tags)

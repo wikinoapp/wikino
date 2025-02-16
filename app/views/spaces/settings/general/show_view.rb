@@ -11,6 +11,7 @@ module Spaces
           @form = form
         end
 
+        sig { override.void }
         def before_render
           title = I18n.t("meta.title.spaces.settings.general.show", space_name: space_entity.name)
           helpers.set_meta_tags(title:, **default_meta_tags)
