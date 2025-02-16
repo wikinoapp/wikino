@@ -29,7 +29,7 @@ module Spaces
             )
           end
 
-          UpdateSpaceUseCase.new.call(form:)
+          UpdateSpaceUseCase.new.call(space:, form:)
 
           flash[:notice] = t("messages.spaces.updated")
           redirect_to space_settings_general_path(space.identifier)

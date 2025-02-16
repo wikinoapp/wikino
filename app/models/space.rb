@@ -4,6 +4,8 @@
 class Space < ApplicationRecord
   include Discard::Model
 
+  include FormConcerns::ISpace
+
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
   IDENTIFIER_MIN_LENGTH = 2
   IDENTIFIER_MAX_LENGTH = 20
@@ -40,6 +42,11 @@ class Space < ApplicationRecord
   sig { params(identifier: String).returns(Space) }
   def self.find_by_identifier!(identifier)
     kept.find_by!(identifier:)
+  end
+
+  sig { override.params(identifier: String).returns(T::Boolean) }
+  def identifier_uniqueness?(identifier)
+    Space.where.not(id:).exists?(identifier:)
   end
 
   sig { params(viewer: ModelConcerns::Viewable).returns(SpaceEntity) }
