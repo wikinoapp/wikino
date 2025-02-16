@@ -1,4 +1,4 @@
-<% title = t("meta.title.spaces.settings.general.show", space_name: space.name) %>
+<% title = t("meta.title.spaces.settings.general.show", space_name: space_entity.name) %>
 <% set_meta_tags(title:) %>
 
 <%= render ::Layouts::MainComponent.new(
@@ -9,9 +9,9 @@
     <%= render Basic::CardComponent.new(class_name: "bg-brand-200 rounded-full") do |card| %>
       <%= card.with_body(class_name: "px-6 py-1 leading-none") do %>
         <div class="flex gap-2">
-          <%= link_to space.name, space_path(space.identifier), class: "link text-sm" %>
+          <%= link_to space_entity.name, space_path(space_entity.identifier), class: "link text-sm" %>
           <span>></span>
-          <%= link_to t("nouns.settings"), space_settings_path(space.identifier), class: "link text-sm" %>
+          <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier), class: "link text-sm" %>
         </div>
       <% end %>
     <% end %>
@@ -29,7 +29,7 @@
         <%= form_with(
           class: "flex flex-col gap-4",
           model: form,
-          url: space_settings_general_path(space.identifier)
+          url: space_settings_general_path(space_entity.identifier)
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 

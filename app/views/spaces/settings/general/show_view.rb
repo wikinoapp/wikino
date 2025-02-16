@@ -7,15 +7,15 @@ module Spaces
       class ShowView < ApplicationView
         use_helpers :set_meta_tags
 
-        sig { params(space: Space, form: EditSpaceForm).void }
-        def initialize(space:, form:)
-          @space = space
+        sig { params(space_entity: SpaceEntity, form: EditSpaceForm).void }
+        def initialize(space_entity:, form:)
+          @space_entity = space_entity
           @form = form
         end
 
-        sig { returns(Space) }
-        attr_reader :space
-        private :space
+        sig { returns(SpaceEntity) }
+        attr_reader :space_entity
+        private :space_entity
 
         sig { returns(EditSpaceForm) }
         attr_reader :form

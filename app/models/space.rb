@@ -37,6 +37,25 @@ class Space < ApplicationRecord
     )
   end
 
+  sig { params(identifier: String).returns(Space) }
+  def self.find_by_identifier!(identifier)
+    kept.find_by!(identifier:)
+  end
+
+  sig { params(viewer: ModelConcerns::Viewable).returns(SpaceEntity) }
+  def to_entity(viewer:)
+    space_viewer = viewer.space_viewer!(space: self)
+
+    SpaceEntity.new(
+      database_id: id,
+      identifier:,
+      name:,
+      plan: Plan.deserialize(plan),
+      joined_at:,
+      viewer_can_update: space_viewer.can_update_space?(space: self)
+    )
+  end
+
   sig { params(number: Integer).returns(Page) }
   def find_page_by_number!(number)
     pages.kept.find_by!(number:)

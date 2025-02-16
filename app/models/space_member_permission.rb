@@ -6,5 +6,6 @@ class SpaceMemberPermission < T::Enum
     CreateTopic = new("create:topic")
     CreatePage = new("create:page")
     CreateDraftPage = new("create:draft_page")
+    UpdateSpace = new("update:space")
   end
 end
