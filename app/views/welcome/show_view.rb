@@ -3,7 +3,11 @@
 
 module Welcome
   class ShowView < ApplicationView
-    use_helpers :set_meta_tags
+    sig { override.void }
+    def before_render
+      title = I18n.t("meta.title.welcome.show")
+      helpers.set_meta_tags(title:, **default_meta_tags, reverse: false)
+    end
 
     sig { returns(PageName) }
     private def current_page_name

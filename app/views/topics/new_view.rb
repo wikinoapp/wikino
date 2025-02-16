@@ -3,12 +3,16 @@
 
 module Topics
   class NewView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig { params(space: Space, form: NewTopicForm).void }
     def initialize(space:, form:)
       @space = space
       @form = form
+    end
+
+    sig { override.void }
+    def before_render
+      title = I18n.t("meta.title.topics.new")
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(Space) }

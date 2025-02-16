@@ -3,8 +3,6 @@
 
 module Spaces
   class ShowView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig do
       params(
         space_viewer: ModelConcerns::SpaceViewable,
@@ -16,6 +14,12 @@ module Spaces
       @space_viewer = space_viewer
       @pinned_pages = pinned_pages
       @page_connection = page_connection
+    end
+
+    sig { override.void }
+    def before_render
+      title = I18n.t("meta.title.spaces.show", space_name: space.name)
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(ModelConcerns::SpaceViewable) }

@@ -41,7 +41,6 @@ module Wikino
     # -----------------------------------------------------------------------------------------
 
     config.autoload_paths << "#{root}/app/views"
-    config.autoload_paths << "#{root}/app/views/components"
 
     config.active_record.schema_format = :sql
 

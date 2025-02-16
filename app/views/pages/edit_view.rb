@@ -3,8 +3,6 @@
 
 module Pages
   class EditView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig do
       params(
         space: Space,
@@ -22,6 +20,12 @@ module Pages
       @link_collection = link_collection
       @backlink_collection = backlink_collection
       @draft_page = draft_page
+    end
+
+    sig { override.void }
+    def before_render
+      title = I18n.t("meta.title.pages.edit")
+      helpers.set_meta_tags(title: "#{title} | #{space.name}", **default_meta_tags)
     end
 
     sig { returns(Space) }

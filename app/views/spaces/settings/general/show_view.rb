@@ -5,12 +5,16 @@ module Spaces
   module Settings
     module General
       class ShowView < ApplicationView
-        use_helpers :set_meta_tags
-
         sig { params(space_entity: SpaceEntity, form: EditSpaceForm).void }
         def initialize(space_entity:, form:)
           @space_entity = space_entity
           @form = form
+        end
+
+        sig { override.void }
+        def before_render
+          title = I18n.t("meta.title.spaces.settings.general.show", space_name: space_entity.name)
+          helpers.set_meta_tags(title:, **default_meta_tags)
         end
 
         sig { returns(SpaceEntity) }

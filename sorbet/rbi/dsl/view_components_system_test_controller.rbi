@@ -14,7 +14,6 @@ class ViewComponentsSystemTestController
 
   module HelperMethods
     include ::ActionController::Base::HelperMethods
-    include ::ApplicationHelper
     include ::PreviewHelper
   end
 
