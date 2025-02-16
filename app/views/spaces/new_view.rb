@@ -10,7 +10,6 @@ module Spaces
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.spaces.new")
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
@@ -21,6 +20,11 @@ module Spaces
     sig { returns(PageName) }
     private def current_page_name
       PageName::SpaceNew
+    end
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.spaces.new")
     end
   end
 end
