@@ -1,9 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class SpaceEntity
-  extend T::Sig
-
+class SpaceEntity < ApplicationEntity
   sig { returns(T::Wikino::DatabaseId) }
   attr_reader :database_id
 
