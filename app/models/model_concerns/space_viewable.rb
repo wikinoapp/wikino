@@ -20,6 +20,10 @@ module ModelConcerns
     def showable_topics
     end
 
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_update_space?(space:)
+    end
+
     sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }
     def can_create_page?(topic:)
     end

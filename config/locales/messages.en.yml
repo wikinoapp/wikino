@@ -46,6 +46,7 @@ en:
         It must be at least %{min_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
       new_space: New Space
+      updated: Space updated.
     page:
       are_you_sure_trash: Are you sure you want to move this page to trash?
       create_page_with_keyword: Create page with '__keyword__'

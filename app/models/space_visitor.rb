@@ -30,6 +30,11 @@ class SpaceVisitor
     space.topics.kept.visibility_public
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_update_space?(space:)
+    false
+  end
+
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
   def can_create_page?(topic:)
     false

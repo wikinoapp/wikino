@@ -3,6 +3,7 @@ ja:
     actions: アクション
     backlinks: バックリンク
     dark: ダーク
+    general: 基本情報
     home: ホーム
     inbox: 受信トレイ
     info: Info
@@ -18,6 +19,7 @@ ja:
     prev_page: 前のページ
     rss_feed: RSSフィード
     search_or_create: 検索または作成
+    settings: 設定
     sign_in: ログイン
     sign_out: ログアウト
     sign_up: ユーザ登録

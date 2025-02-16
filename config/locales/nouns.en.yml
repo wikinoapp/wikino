@@ -3,6 +3,7 @@ en:
     actions: Actions
     backlinks: Backlinks
     dark: Dark
+    general: General
     home: Home
     inbox: Inbox
     info: Info
@@ -18,6 +19,7 @@ en:
     prev_page: Prev
     rss_feed: RSS feed
     search_or_create: Search or create
+    settings: Settings
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up

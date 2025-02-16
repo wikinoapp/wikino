@@ -4,6 +4,8 @@
 class Space < ApplicationRecord
   include Discard::Model
 
+  include FormConcerns::ISpace
+
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
   IDENTIFIER_MIN_LENGTH = 2
   IDENTIFIER_MAX_LENGTH = 20
@@ -34,6 +36,30 @@ class Space < ApplicationRecord
       plan: Plan::Small.serialize,
       name: I18n.t("messages.spaces.new_space", locale: locale.serialize),
       joined_at: current_time
+    )
+  end
+
+  sig { params(identifier: String).returns(Space) }
+  def self.find_by_identifier!(identifier)
+    kept.find_by!(identifier:)
+  end
+
+  sig { override.params(identifier: String).returns(T::Boolean) }
+  def identifier_uniqueness?(identifier)
+    Space.where.not(id:).exists?(identifier:)
+  end
+
+  sig { params(viewer: ModelConcerns::Viewable).returns(SpaceEntity) }
+  def to_entity(viewer:)
+    space_viewer = viewer.space_viewer!(space: self)
+
+    SpaceEntity.new(
+      database_id: id,
+      identifier:,
+      name:,
+      plan: Plan.deserialize(plan),
+      joined_at:,
+      viewer_can_update: space_viewer.can_update_space?(space: self)
     )
   end
 

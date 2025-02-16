@@ -23,6 +23,9 @@ ja:
         show: アカウント作成
       spaces:
         new: 新規スペース
+        settings:
+          general:
+            show: "基本情報 | %{space_name}"
         show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ

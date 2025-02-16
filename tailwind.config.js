@@ -45,11 +45,10 @@ const colors = {
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./app/components/**/*.erb",
-    "./app/components/**/*.rb",
     "./app/helpers/**/*.rb",
     "./app/javascript/**/*.ts",
     "./app/views/**/*.erb",
+    "./app/views/**/*.rb",
     "./config/locales/*.yml",
     "./lib/wikino/ui/**/*.erb",
     "./lib/wikino/ui/**/*.rb",

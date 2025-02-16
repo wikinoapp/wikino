@@ -54,6 +54,16 @@ class SpaceMember < ApplicationRecord
     nil
   end
 
+  sig { returns(SpaceMemberRole) }
+  def deserialized_role
+    SpaceMemberRole.deserialize(role)
+  end
+
+  sig { returns(T::Array[SpaceMemberPermission]) }
+  def permissions
+    deserialized_role.permissions
+  end
+
   sig { returns(Page::PrivateAssociationRelation) }
   def last_modified_pages
     space.not_nil!.pages.joins(:editors).merge(
@@ -74,6 +84,11 @@ class SpaceMember < ApplicationRecord
   sig { override.returns(Topic::PrivateAssociationRelation) }
   def showable_topics
     space.not_nil!.topics.kept
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_update_space?(space:)
+    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }

@@ -9,6 +9,9 @@ en:
         topic_number: Topic
         title: Title
         body: Body
+      edit_space_form:
+        identifier: Identifier
+        name: Name
       email_confirmation_form:
         confirmation_code: Confirmation code
       new_email_confirmation_form:
@@ -34,6 +37,8 @@ en:
           uniqueness: has already been taken
         edit_page_form:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
+        edit_space_form:
+          uniqueness: has already been taken
         email_confirmation_form:
           attributes:
             confirmation_code:

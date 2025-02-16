@@ -9,6 +9,9 @@ ja:
         topic_number: トピック
         title: タイトル
         body: 本文
+      edit_space_form:
+        identifier: 識別子
+        name: 名前
       email_confirmation_form:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
@@ -34,6 +37,8 @@ ja:
           uniqueness: は既に存在しています
         edit_page_form:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
+        edit_space_form:
+          uniqueness: は既に存在しています
         email_confirmation_form:
           attributes:
             confirmation_code:
