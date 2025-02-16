@@ -26,6 +26,7 @@ en:
         settings:
           general:
             show: "General | %{space_name}"
+          show: "Settings | %{space_name}"
         show: "%{space_name}"
       welcome:
         show: Find through links.
