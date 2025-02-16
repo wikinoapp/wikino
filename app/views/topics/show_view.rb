@@ -3,8 +3,6 @@
 
 module Topics
   class ShowView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig do
       params(
         topic: Topic,
@@ -18,6 +16,11 @@ module Topics
       @space_viewer = space_viewer
       @pinned_pages = pinned_pages
       @page_connection = page_connection
+    end
+
+    def before_render
+      title = I18n.t("meta.title.topics.show", space_name: space.name, topic_name: topic.name)
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(Topic) }

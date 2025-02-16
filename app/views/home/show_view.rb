@@ -3,11 +3,14 @@
 
 module Home
   class ShowView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig { params(active_spaces: Space::PrivateCollectionProxy).void }
     def initialize(active_spaces:)
       @active_spaces = active_spaces
+    end
+
+    def before_render
+      title = I18n.t("meta.title.home.show")
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(Space::PrivateCollectionProxy) }

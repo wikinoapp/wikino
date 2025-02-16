@@ -3,13 +3,16 @@
 
 module Pages
   class ShowView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
     def initialize(page:, link_collection:, backlink_collection:)
       @page = page
       @link_collection = link_collection
       @backlink_collection = backlink_collection
+    end
+
+    def before_render
+      title = I18n.t("meta.title.pages.show", space_name: space.name, page_title: page.title)
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(Page) }

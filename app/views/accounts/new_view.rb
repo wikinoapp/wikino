@@ -3,11 +3,14 @@
 
 module Accounts
   class NewView < ApplicationView
-    use_helpers :set_meta_tags
-
     sig { params(form: AccountForm).void }
     def initialize(form:)
       @form = form
+    end
+
+    def before_render
+      title = I18n.t("meta.title.accounts.new")
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(AccountForm) }
