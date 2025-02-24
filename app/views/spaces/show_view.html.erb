@@ -38,12 +38,12 @@
           <% end %>
         </div>
 
-        <% if pagination.has_previous || pagination.has_next %>
+        <% if pagination_entity.has_previous? || pagination_entity.has_next? %>
           <div class="flex justify-center">
             <%= render Basic::PaginationComponent.new(
-              pagination:,
-              previous_path: space_path(space_entity.identifier, before: pagination.previous_cursor),
-              next_path: space_path(space_entity.identifier, after: pagination.next_cursor)
+              pagination_entity:,
+              previous_path: space_path(space_entity.identifier, before: pagination_entity.previous_cursor),
+              next_path: space_path(space_entity.identifier, after: pagination_entity.next_cursor)
             ) %>
           </div>
         <% end %>

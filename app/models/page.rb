@@ -91,9 +91,9 @@ class Page < ApplicationRecord
       before: T.nilable(String),
       after: T.nilable(String),
       limit: Integer
-    ).returns(BacklinkCollection)
+    ).returns(BacklinkListEntity)
   end
-  def fetch_backlink_collection(space_viewer:, before: nil, after: nil, limit: 15)
+  def fetch_backlink_list_entity(space_viewer:, before: nil, after: nil, limit: 15)
     cursor_paginate_page = backlinked_pages.cursor_paginate(
       after:,
       before:,
@@ -101,14 +101,13 @@ class Page < ApplicationRecord
       order: {modified_at: :desc, id: :desc}
     ).fetch
 
-    backlinks = cursor_paginate_page.records.map do |page|
-      Backlink.new(page_entity: page.to_entity(space_viewer:))
+    backlink_entities = cursor_paginate_page.records.map do |page|
+      BacklinkEntity.new(page_entity: page.to_entity(space_viewer:))
     end
 
-    BacklinkCollection.new(
-      page_entity: original_page.to_entity(space_viewer:),
-      backlinks:,
-      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+    BacklinkListEntity.new(
+      backlink_entities:,
+      pagination_entity: PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
     )
   end
 

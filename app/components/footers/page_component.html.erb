@@ -5,7 +5,7 @@
         <%= t("nouns.links") %>
       </div>
 
-      <%= render LinkCollectionComponent.new(link_collection:) %>
+      <%= render LinkListComponent.new(page_entity:, link_list_entity:) %>
     </div>
   <% end %>
 
@@ -16,7 +16,7 @@
       </div>
 
       <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-        <%= render BacklinkCollectionComponent.new(backlink_collection:) %>
+        <%= render BacklinkListComponent.new(page_entity:, backlink_list_entity:) %>
       </div>
     </div>
   <% end %>

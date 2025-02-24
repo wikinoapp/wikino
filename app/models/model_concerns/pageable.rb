@@ -31,9 +31,9 @@ module ModelConcerns
         after: T.nilable(String),
         link_limit: Integer,
         backlink_limit: Integer
-      ).returns(LinkCollection)
+      ).returns(LinkListEntity)
     end
-    def fetch_link_collection(space_viewer:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
+    def fetch_link_list_entity(space_viewer:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
       cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
@@ -43,36 +43,13 @@ module ModelConcerns
         order: {modified_at: :desc, id: :desc}
       ).fetch
       pages = cursor_paginate_page.records
-      pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
-      links = pages.map do |page|
-        added_page_ids << page.id
+      link_entities = fetch_link_entities(space_viewer:, pages:, added_page_ids:, backlink_limit:)
+      pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
-        cursor_paginate_page = page.backlinked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
-          after:,
-          before:,
-          limit: backlink_limit,
-          order: {modified_at: :desc, id: :desc}
-        ).fetch
-        backlinked_pages = cursor_paginate_page.records
-        backlink_collection = BacklinkCollection.new(
-          page_entity: page.to_entity(space_viewer:),
-          backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page_entity: backlinked_page.to_entity(space_viewer:)) },
-          pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
-        )
-
-        added_page_ids.concat(backlinked_pages.pluck(:id))
-
-        Link.new(
-          page_entity: page.to_entity(space_viewer:),
-          backlink_collection:
-        )
-      end
-
-      LinkCollection.new(
-        page_entity: original_page.to_entity(space_viewer:),
-        links:,
-        pagination:
+      LinkListEntity.new(
+        link_entities:,
+        pagination_entity:
       )
     end
 
@@ -92,6 +69,35 @@ module ModelConcerns
       update!(linked_page_ids: linked_pages.pluck(:id))
 
       nil
+    end
+
+    private def fetch_link_entities(space_viewer:, pages:, added_page_ids:, backlink_limit:)
+      pages.map do |page|
+        added_page_ids << page.id
+
+        cursor_paginate_page = page.backlinked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
+          after: nil,
+          before: nil,
+          limit: backlink_limit,
+          order: {modified_at: :desc, id: :desc}
+        ).fetch
+        backlinked_pages = cursor_paginate_page.records
+        added_page_ids.concat(backlinked_pages.pluck(:id))
+
+        backlink_entities = backlinked_pages.map do |backlinked_page|
+          BacklinkEntity.new(page_entity: backlinked_page.to_entity(space_viewer:))
+        end
+
+        backlink_list_entity = BacklinkListEntity.new(
+          backlink_entities:,
+          pagination_entity: PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
+        )
+
+        LinkEntity.new(
+          page_entity: page.to_entity(space_viewer:),
+          backlink_list_entity:
+        )
+      end
     end
   end
 end

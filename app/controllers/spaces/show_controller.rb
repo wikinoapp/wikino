@@ -23,7 +23,7 @@ module Spaces
         order: {modified_at: :desc, id: :desc}
       ).fetch
       page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
-      pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
+      pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
       space_entity = space.to_entity(space_viewer:)
       first_topic_entity = space_viewer.joined_topics.first&.to_entity(space_viewer:)
@@ -33,7 +33,7 @@ module Spaces
         space_entity:,
         first_topic_entity:,
         pinned_page_entities:,
-        page_connection: PageConnection.new(page_entities:, pagination:)
+        page_list_entity: PageListEntity.new(page_entities:, pagination_entity:)
       )
     end
   end

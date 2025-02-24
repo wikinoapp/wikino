@@ -3,12 +3,19 @@
 
 module Pages
   class ShowView < ApplicationView
-    sig { params(signed_in: T::Boolean, page_entity: PageEntity, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
-    def initialize(signed_in:, page_entity:, link_collection:, backlink_collection:)
+    sig do
+      params(
+        signed_in: T::Boolean,
+        page_entity: PageEntity,
+        link_list_entity: LinkListEntity,
+        backlink_list_entity: BacklinkListEntity
+      ).void
+    end
+    def initialize(signed_in:, page_entity:, link_list_entity:, backlink_list_entity:)
       @signed_in = signed_in
       @page_entity = page_entity
-      @link_collection = link_collection
-      @backlink_collection = backlink_collection
+      @link_list_entity = link_list_entity
+      @backlink_list_entity = backlink_list_entity
     end
 
     sig { override.void }
@@ -26,13 +33,13 @@ module Pages
     attr_reader :page_entity
     private :page_entity
 
-    sig { returns(LinkCollection) }
-    attr_reader :link_collection
-    private :link_collection
+    sig { returns(LinkListEntity) }
+    attr_reader :link_list_entity
+    private :link_list_entity
 
-    sig { returns(BacklinkCollection) }
-    attr_reader :backlink_collection
-    private :backlink_collection
+    sig { returns(BacklinkListEntity) }
+    attr_reader :backlink_list_entity
+    private :backlink_list_entity
 
     delegate :space_entity, :topic_entity, to: :page_entity
 

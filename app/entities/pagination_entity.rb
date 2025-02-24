@@ -1,17 +1,17 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Pagination
-  extend T::Sig
-
+class PaginationEntity < ApplicationEntity
   sig { returns(T.nilable(String)) }
   attr_reader :next_cursor
 
   sig { returns(T::Boolean) }
   attr_reader :has_next
+  alias_method :has_next?, :has_next
 
   sig { returns(T::Boolean) }
   attr_reader :has_previous
+  alias_method :has_previous?, :has_previous
 
   sig { returns(T.nilable(String)) }
   attr_reader :previous_cursor

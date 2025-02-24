@@ -23,7 +23,9 @@ class Topic < ApplicationRecord
       database_id: id,
       number:,
       name:,
+      description:,
       visibility: TopicVisibility.deserialize(visibility),
+      space_entity: space.to_entity(space_viewer:),
       viewer_can_create_page: space_viewer.can_create_page?(topic: self)
     )
   end

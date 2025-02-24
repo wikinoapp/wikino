@@ -20,14 +20,14 @@ module Pages
         return render_404
       end
 
-      link_collection = page.not_nil!.fetch_link_collection(space_viewer:)
-      backlink_collection = page.not_nil!.fetch_backlink_collection(space_viewer:)
+      link_list_entity = page.not_nil!.fetch_link_list_entity(space_viewer:)
+      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
 
       render Pages::ShowView.new(
         signed_in: Current.viewer!.signed_in?,
         page_entity: page.to_entity(space_viewer:),
-        link_collection:,
-        backlink_collection:
+        link_list_entity:,
+        backlink_list_entity:
       )
     end
   end

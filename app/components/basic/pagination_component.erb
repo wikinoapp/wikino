@@ -1,5 +1,5 @@
 <div class="grid grid-cols-2 join w-80">
-  <% if pagination.has_previous %>
+  <% if pagination_entity.has_previous? %>
     <%= link_to t("messages.pagination.prev_html"), previous_path, class: "border-gray-400 btn btn-outline btn-sm join-item no-animation rounded-l-full" %>
   <% else %>
     <a class="!border-gray-300 btn btn-outline btn-sm !bg-transparent join-item no-animation rounded-l-full" disabled="disabled">
@@ -7,7 +7,7 @@
     </a>
   <% end %>
 
-  <% if pagination.has_next %>
+  <% if pagination_entity.has_next? %>
     <%= link_to t("messages.pagination.next_html"), next_path, class: "border-gray-400 btn btn-outline btn-sm join-item no-animation rounded-r-full" %>
   <% else %>
     <a class="!border-gray-300 btn btn-outline btn-sm !bg-transparent join-item no-animation rounded-r-full" disabled="disabled">

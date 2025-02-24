@@ -8,14 +8,14 @@ module Spaces
         space_entity: SpaceEntity,
         first_topic_entity: T.nilable(TopicEntity),
         pinned_page_entities: T::Array[PageEntity],
-        page_connection: PageConnection
+        page_list_entity: PageListEntity
       ).void
     end
-    def initialize(space_entity:, first_topic_entity:, pinned_page_entities:, page_connection:)
+    def initialize(space_entity:, first_topic_entity:, pinned_page_entities:, page_list_entity:)
       @space_entity = space_entity
       @first_topic_entity = first_topic_entity
       @pinned_page_entities = pinned_page_entities
-      @page_connection = page_connection
+      @page_list_entity = page_list_entity
     end
 
     sig { override.void }
@@ -36,11 +36,11 @@ module Spaces
     attr_reader :pinned_page_entities
     private :pinned_page_entities
 
-    sig { returns(PageConnection) }
-    attr_reader :page_connection
-    private :page_connection
+    sig { returns(PageListEntity) }
+    attr_reader :page_list_entity
+    private :page_list_entity
 
-    delegate :page_entities, :pagination, to: :page_connection
+    delegate :page_entities, :pagination_entity, to: :page_list_entity
 
     sig { returns(PageName) }
     private def current_page_name
