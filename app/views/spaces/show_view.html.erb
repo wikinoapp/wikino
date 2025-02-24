@@ -5,15 +5,17 @@
         <%= space_entity.name %>
       </h1>
 
-      <% if first_topic_entity&.viewer_can_create_page? %>
-        <%= link_to new_page_path(space_entity.identifier, first_topic_entity.number), class: "btn btn-primary no-animation rounded-full" do %>
-          <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
+      <div class="flex gap-2">
+        <% if first_topic_entity&.viewer_can_create_page? %>
+          <%= link_to new_page_path(space_entity.identifier, first_topic_entity.number), class: "btn btn-primary no-animation rounded-full" do %>
+            <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
-          <%= t("nouns.new_page") %>
+            <%= t("nouns.new_page") %>
+          <% end %>
         <% end %>
-      <% end %>
 
-      <%= render Dropdowns::SpaceOptionsComponent.new(space_entity:) %>
+        <%= render Dropdowns::SpaceOptionsComponent.new(space_entity:) %>
+      </div>
     </div>
 
     <% if pinned_page_entities.present? || page_entities.present? %>

@@ -1,11 +1,11 @@
-<%= render Basic::DropdownComponent.new do |dropdown| %>
-  <%= dropdown.with_button(class_name: "btn btn-sm btn-circle btn-outline btn-primary no-animation group") do %>
+<%= render Basic::DropdownComponent.new(class_name: "dropdown-bottom dropdown-end") do |dropdown| %>
+  <%= dropdown.with_button(class_name: "btn btn-circle btn-outline btn-primary no-animation group") do %>
     <%= render Basic::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-content") %>
   <% end %>
 
   <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>
     <%= dropdown_menu.with_item do %>
-      <%= link_to atom_path(space_entity.identifier), class: "flex gap-1 items-center link link-primary", target: "_blank" do %>
+      <%= link_to atom_path(space_entity.identifier), class: "flex gap-2 items-center", target: "_blank" do %>
         <%= render Basic::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 
         <%= t("nouns.rss_feed") %>
@@ -13,7 +13,7 @@
     <% end %>
 
     <%= dropdown_menu.with_item do %>
-      <%= link_to space_settings_path(space_entity.identifier), class: "flex gap-2 items-center w-full" do %>
+      <%= link_to space_settings_path(space_entity.identifier), class: "flex gap-2 items-center" do %>
         <%= render Basic::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
         <%= t("nouns.settings") %>
