@@ -3,13 +3,9 @@
   content_screen: Layouts::MainComponent::ContentScreen::Medium
 ) do %>
   <div class="flex items-center justify-center">
-    <%= render Basic::CardComponent.new(class_name: "bg-brand-200 rounded-full") do |card| %>
-      <%= card.with_body(class_name: "px-6 py-1 leading-none") do %>
-        <div class="flex gap-2">
-          <%= link_to space_entity.name, space_path(space_entity.identifier), class: "link text-sm" %>
-          <span>></span>
-          <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier), class: "link text-sm" %>
-        </div>
+    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
+      <%= breadcrumbs.with_item do %>
+        <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
       <% end %>
     <% end %>
   </div>

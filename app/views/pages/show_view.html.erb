@@ -1,4 +1,8 @@
 <%= render ::Layouts::MainComponent.new(current_page_name:) do %>
+  <div class="flex items-center justify-center">
+    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+  </div>
+
   <div class="flex flex-col gap-6 p-4">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">

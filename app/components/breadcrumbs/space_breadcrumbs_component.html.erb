@@ -1,0 +1,11 @@
+<div class="breadcrumbs bg-brand-200 rounded-full text-sm px-6 py-1">
+  <ul>
+    <li>
+      <%= link_to space_entity.name, space_path(space_entity.identifier) %>
+    </li>
+
+    <% items.each do |item| %>
+      <%= item %>
+    <% end %>
+  </ul>
+</div>
