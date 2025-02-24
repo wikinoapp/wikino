@@ -5,42 +5,42 @@ module Spaces
   class ShowView < ApplicationView
     sig do
       params(
-        space_viewer: ModelConcerns::SpaceViewable,
-        pinned_pages: Page::PrivateAssociationRelation,
+        space_entity: SpaceEntity,
+        first_topic_entity: T.nilable(TopicEntity),
+        pinned_page_entities: T::Array[PageEntity],
         page_connection: PageConnection
       ).void
     end
-    def initialize(space_viewer:, pinned_pages:, page_connection:)
-      @space_viewer = space_viewer
-      @pinned_pages = pinned_pages
+    def initialize(space_entity:, first_topic_entity:, pinned_page_entities:, page_connection:)
+      @space_entity = space_entity
+      @first_topic_entity = first_topic_entity
+      @pinned_page_entities = pinned_page_entities
       @page_connection = page_connection
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.spaces.show", space_name: space.name)
+      title = I18n.t("meta.title.spaces.show", space_name: space_entity.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(ModelConcerns::SpaceViewable) }
-    attr_reader :space_viewer
-    private :space_viewer
+    sig { returns(SpaceEntity) }
+    attr_reader :space_entity
+    private :space_entity
 
-    sig { returns(Page::PrivateAssociationRelation) }
-    attr_reader :pinned_pages
-    private :pinned_pages
+    sig { returns(T.nilable(TopicEntity)) }
+    attr_reader :first_topic_entity
+    private :first_topic_entity
+
+    sig { returns(T::Array[PageEntity]) }
+    attr_reader :pinned_page_entities
+    private :pinned_page_entities
 
     sig { returns(PageConnection) }
     attr_reader :page_connection
     private :page_connection
 
-    delegate :pages, :pagination, to: :page_connection
-    delegate :space, to: :space_viewer
-
-    sig { returns(T.nilable(Topic)) }
-    private def first_joined_topic
-      space_viewer.joined_topics.first
-    end
+    delegate :page_entities, :pagination, to: :page_connection
 
     sig { returns(PageName) }
     private def current_page_name

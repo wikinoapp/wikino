@@ -14,7 +14,8 @@ module Spaces
         sig { returns(T.untyped) }
         def call
           space = Space.find_by_identifier!(params[:space_identifier])
-          space_entity = space.to_entity(viewer: Current.viewer!)
+          space_viewer = Current.viewer!.space_viewer!(space:)
+          space_entity = space.to_entity(space_viewer:)
 
           unless space_entity.viewer_can_update?
             return render_404

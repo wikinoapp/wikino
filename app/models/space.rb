@@ -49,10 +49,8 @@ class Space < ApplicationRecord
     Space.where.not(id:).exists?(identifier:)
   end
 
-  sig { params(viewer: ModelConcerns::Viewable).returns(SpaceEntity) }
-  def to_entity(viewer:)
-    space_viewer = viewer.space_viewer!(space: self)
-
+  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
+  def to_entity(space_viewer:)
     SpaceEntity.new(
       database_id: id,
       identifier:,

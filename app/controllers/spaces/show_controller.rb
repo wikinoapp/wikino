@@ -12,24 +12,28 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
-      pages = space_viewer.showable_pages
-      pinned_pages = pages.pinned.order(pinned_at: :desc, id: :desc)
+      showable_pages = space_viewer.showable_pages.preload(:topic)
 
-      cursor_paginate_page = pages.not_pinned.cursor_paginate(
+      cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      pages = cursor_paginate_page.records
+      page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
       pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
 
+      space_entity = space.to_entity(space_viewer:)
+      first_topic_entity = space_viewer.joined_topics.first&.to_entity(space_viewer:)
+      pinned_page_entities = Page.to_entities(space_viewer:, pages: showable_pages.pinned.order(pinned_at: :desc, id: :desc))
+
       render Spaces::ShowView.new(
-        space_viewer:,
-        pinned_pages:,
-        page_connection: PageConnection.new(pages:, pagination:)
+        space_entity:,
+        first_topic_entity:,
+        pinned_page_entities:,
+        page_connection: PageConnection.new(page_entities:, pagination:)
       )
     end
   end

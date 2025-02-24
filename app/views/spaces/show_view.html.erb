@@ -2,35 +2,35 @@
   <div class="flex flex-col gap-6 px-4 py-6">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold antialiased">
-        <%= space.name %>
+        <%= space_entity.name %>
       </h1>
 
-      <% if space_viewer.can_create_page?(topic: first_joined_topic) %>
-        <%= link_to new_page_path(space.identifier, first_joined_topic.not_nil!.number), class: "btn btn-primary no-animation rounded-full" do %>
+      <% if first_topic_entity&.viewer_can_create_page? %>
+        <%= link_to new_page_path(space_entity.identifier, first_topic_entity.number), class: "btn btn-primary no-animation rounded-full" do %>
           <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
           <%= t("nouns.new_page") %>
         <% end %>
       <% end %>
 
-      <%= render Dropdowns::SpaceOptionsComponent.new(space:) %>
+      <%= render Dropdowns::SpaceOptionsComponent.new(space_entity:) %>
     </div>
 
-    <% if pinned_pages.present? || pages.present? %>
+    <% if pinned_page_entities.present? || page_entities.present? %>
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-4">
-          <% if pinned_pages.present? %>
+          <% if pinned_page_entities.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% pinned_pages.each do |page| %>
-                <%= render Cards::PageComponent.new(page:) %>
+              <% pinned_page_entities.each do |page_entity| %>
+                <%= render Cards::PageComponent.new(page_entity:) %>
               <% end %>
             </div>
           <% end %>
 
-          <% if pages.present? %>
+          <% if page_entities.present? %>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% pages.each do |page| %>
-                <%= render Cards::PageComponent.new(page:) %>
+              <% page_entities.each do |page_entity| %>
+                <%= render Cards::PageComponent.new(page_entity:) %>
               <% end %>
             </div>
           <% end %>
@@ -40,8 +40,8 @@
           <div class="flex justify-center">
             <%= render Basic::PaginationComponent.new(
               pagination:,
-              previous_path: space_path(space.identifier, before: pagination.previous_cursor),
-              next_path: space_path(space.identifier, after: pagination.next_cursor)
+              previous_path: space_path(space_entity.identifier, before: pagination.previous_cursor),
+              next_path: space_path(space_entity.identifier, after: pagination.next_cursor)
             ) %>
           </div>
         <% end %>
