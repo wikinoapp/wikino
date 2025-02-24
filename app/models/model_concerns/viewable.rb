@@ -20,10 +20,6 @@ module ModelConcerns
     def joined_space?(space:)
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
-    def can_view_page?(page:)
-    end
-
     sig { abstract.params(topic: Topic).returns(T::Boolean) }
     def can_view_topic?(topic:)
     end
@@ -34,10 +30,6 @@ module ModelConcerns
 
     sig { abstract.params(space: Space).returns(T::Boolean) }
     def can_create_bulk_restored_pages?(space:)
-    end
-
-    sig { abstract.params(page: Page).returns(T::Boolean) }
-    def can_update_page?(page:)
     end
 
     sig { abstract.params(page: Page).returns(T::Boolean) }

@@ -26,13 +26,14 @@ module ModelConcerns
 
     sig do
       params(
+        space_viewer: ModelConcerns::SpaceViewable,
         before: T.nilable(String),
         after: T.nilable(String),
         link_limit: Integer,
         backlink_limit: Integer
       ).returns(LinkCollection)
     end
-    def fetch_link_collection(before: nil, after: nil, link_limit: 15, backlink_limit: 14)
+    def fetch_link_collection(space_viewer:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
       cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
@@ -55,17 +56,24 @@ module ModelConcerns
         ).fetch
         backlinked_pages = cursor_paginate_page.records
         backlink_collection = BacklinkCollection.new(
-          page:,
-          backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page: backlinked_page) },
+          page_entity: page.to_entity(space_viewer:),
+          backlinks: backlinked_pages.map { |backlinked_page| Backlink.new(page_entity: backlinked_page.to_entity(space_viewer:)) },
           pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
         )
 
         added_page_ids.concat(backlinked_pages.pluck(:id))
 
-        Link.new(page:, backlink_collection:)
+        Link.new(
+          page_entity: page.to_entity(space_viewer:),
+          backlink_collection:
+        )
       end
 
-      LinkCollection.new(page: original_page, links:, pagination:)
+      LinkCollection.new(
+        page_entity: original_page.to_entity(space_viewer:),
+        links:,
+        pagination:
+      )
     end
 
     sig { params(editor: SpaceMember).void }

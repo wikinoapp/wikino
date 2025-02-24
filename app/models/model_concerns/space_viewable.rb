@@ -28,6 +28,14 @@ module ModelConcerns
     def can_create_page?(topic:)
     end
 
+    sig { abstract.params(page: Page).returns(T::Boolean) }
+    def can_view_page?(page:)
+    end
+
+    sig { abstract.params(page: Page).returns(T::Boolean) }
+    def can_update_page?(page:)
+    end
+
     sig { abstract.returns(T::Boolean) }
     def can_create_topic?
     end

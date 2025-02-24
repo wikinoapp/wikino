@@ -20,7 +20,7 @@ class PageEntity < ApplicationEntity
   sig { returns(ActiveSupport::TimeWithZone) }
   attr_reader :modified_at
 
-  sig { returns(ActiveSupport::TimeWithZone) }
+  sig { returns(T.nilable(ActiveSupport::TimeWithZone)) }
   attr_reader :published_at
 
   sig { returns(T.nilable(ActiveSupport::TimeWithZone)) }
@@ -32,6 +32,10 @@ class PageEntity < ApplicationEntity
   sig { returns(TopicEntity) }
   attr_reader :topic_entity
 
+  sig { returns(T::Boolean) }
+  attr_reader :viewer_can_update
+  alias_method :viewer_can_update?, :viewer_can_update
+
   sig do
     params(
       database_id: T::Wikino::DatabaseId,
@@ -39,11 +43,12 @@ class PageEntity < ApplicationEntity
       title: String,
       body: String,
       body_html: String,
-      pinned_at: T.nilable(ActiveSupport::TimeWithZone),
       modified_at: ActiveSupport::TimeWithZone,
-      published_at: ActiveSupport::TimeWithZone,
+      published_at: T.nilable(ActiveSupport::TimeWithZone),
+      pinned_at: T.nilable(ActiveSupport::TimeWithZone),
       space_entity: SpaceEntity,
-      topic_entity: TopicEntity
+      topic_entity: TopicEntity,
+      viewer_can_update: T::Boolean
     ).void
   end
   def initialize(
@@ -52,26 +57,38 @@ class PageEntity < ApplicationEntity
     title:,
     body:,
     body_html:,
-    pinned_at:,
     modified_at:,
     published_at:,
+    pinned_at:,
     space_entity:,
-    topic_entity:
+    topic_entity:,
+    viewer_can_update:
   )
     @database_id = database_id
     @number = number
     @title = title
     @body = body
     @body_html = body_html
-    @pinned_at = pinned_at
     @modified_at = modified_at
     @published_at = published_at
+    @pinned_at = pinned_at
     @space_entity = space_entity
     @topic_entity = topic_entity
+    @viewer_can_update = viewer_can_update
+  end
+
+  sig { returns(T::Boolean) }
+  def published?
+    published_at.present?
   end
 
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?
+  end
+
+  sig { returns(T::Boolean) }
+  def modified_after_published?
+    published? && modified_at > published_at
   end
 end

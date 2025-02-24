@@ -39,11 +39,6 @@ class Visitor
     false
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_view_page?(page:)
-    page.topic.not_nil!.visibility_public?
-  end
-
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_view_topic?(topic:)
     topic.visibility_public?
@@ -56,11 +51,6 @@ class Visitor
 
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
-    false
-  end
-
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_update_page?(page:)
     false
   end
 

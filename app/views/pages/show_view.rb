@@ -3,22 +3,28 @@
 
 module Pages
   class ShowView < ApplicationView
-    sig { params(page: Page, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
-    def initialize(page:, link_collection:, backlink_collection:)
-      @page = page
+    sig { params(signed_in: T::Boolean, page_entity: PageEntity, link_collection: LinkCollection, backlink_collection: BacklinkCollection).void }
+    def initialize(signed_in:, page_entity:, link_collection:, backlink_collection:)
+      @signed_in = signed_in
+      @page_entity = page_entity
       @link_collection = link_collection
       @backlink_collection = backlink_collection
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.pages.show", space_name: space.name, page_title: page.title)
+      title = I18n.t("meta.title.pages.show", space_name: space_entity.name, page_title: page_entity.title)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(Page) }
-    attr_reader :page
-    private :page
+    sig { returns(T::Boolean) }
+    attr_reader :signed_in
+    private :signed_in
+    alias_method :signed_in?, :signed_in
+
+    sig { returns(PageEntity) }
+    attr_reader :page_entity
+    private :page_entity
 
     sig { returns(LinkCollection) }
     attr_reader :link_collection
@@ -28,15 +34,7 @@ module Pages
     attr_reader :backlink_collection
     private :backlink_collection
 
-    sig { returns(Space) }
-    def space
-      page.space.not_nil!
-    end
-
-    sig { returns(Topic) }
-    def topic
-      page.topic.not_nil!
-    end
+    delegate :space_entity, :topic_entity, to: :page_entity
 
     sig { returns(PageName) }
     private def current_page_name

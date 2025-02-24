@@ -103,12 +103,6 @@ class User < ApplicationRecord
     )
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_view_page?(page:)
-    page.topic.not_nil!.visibility_public? ||
-      space_members.where(space: page.space).active.exists?
-  end
-
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_view_topic?(topic:)
     viewable_topics.where(id: topic.id).exists?
@@ -127,11 +121,6 @@ class User < ApplicationRecord
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     topics.where(id: topic.id).exists?
-  end
-
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_update_page?(page:)
-    active_topics.where(id: page.topic_id).exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }

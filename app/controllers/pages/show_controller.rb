@@ -12,17 +12,23 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
+      space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
-      unless Current.viewer!.can_view_page?(page:)
+      unless space_viewer.can_view_page?(page:)
         return render_404
       end
 
-      link_collection = page.not_nil!.fetch_link_collection
-      backlink_collection = page.not_nil!.fetch_backlink_collection
+      link_collection = page.not_nil!.fetch_link_collection(space_viewer:)
+      backlink_collection = page.not_nil!.fetch_backlink_collection(space_viewer:)
 
-      render Pages::ShowView.new(page:, link_collection:, backlink_collection:)
+      render Pages::ShowView.new(
+        signed_in: Current.viewer!.signed_in?,
+        page_entity: page.to_entity(space_viewer:),
+        link_collection:,
+        backlink_collection:
+      )
     end
   end
 end

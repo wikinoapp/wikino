@@ -3,18 +3,15 @@
 
 module Dropdowns
   class PageActionsComponent < ApplicationComponent
-    sig { params(page: Page).void }
-    def initialize(page:)
-      @page = page
+    sig { params(page_entity: PageEntity).void }
+    def initialize(page_entity:)
+      @page_entity = page_entity
     end
 
-    sig { returns(Page) }
-    attr_reader :page
-    private :page
+    sig { returns(PageEntity) }
+    attr_reader :page_entity
+    private :page_entity
 
-    sig { returns(Space) }
-    def space
-      page.space.not_nil!
-    end
+    delegate :space_entity, to: :page_entity
   end
 end

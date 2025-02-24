@@ -96,6 +96,16 @@ class SpaceMember < ApplicationRecord
     topic.present? && topics.where(id: topic.id).exists?
   end
 
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_view_page?(page:)
+    active? && space_id == page.space_id
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_page?(page:)
+    active? && joined_topics.where(id: page.topic_id).exists?
+  end
+
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     true
