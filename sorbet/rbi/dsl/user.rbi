@@ -348,20 +348,6 @@ class User
 
   module GeneratedAssociationMethods
     sig { returns(T::Array[T.untyped]) }
-    def active_draft_page_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def active_draft_page_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_draft_pages, through: :active_space_members`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::DraftPage::PrivateCollectionProxy) }
-    def active_draft_pages; end
-
-    sig { params(value: T::Enumerable[::DraftPage]).void }
-    def active_draft_pages=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
     def active_space_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
@@ -388,34 +374,6 @@ class User
 
     sig { params(value: T::Enumerable[::Space]).void }
     def active_spaces=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def active_topic_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def active_topic_ids=(ids); end
-
-    sig { returns(T::Array[T.untyped]) }
-    def active_topic_member_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def active_topic_member_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topic_members, through: :active_space_members`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::TopicMember::PrivateCollectionProxy) }
-    def active_topic_members; end
-
-    sig { params(value: T::Enumerable[::TopicMember]).void }
-    def active_topic_members=(value); end
-
-    # This method is created by ActiveRecord on the `User` class because it declared `has_many :active_topics, through: :active_topic_members`.
-    # 🔗 [Rails guide for `has_many_through` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-through-association)
-    sig { returns(::Topic::PrivateCollectionProxy) }
-    def active_topics; end
-
-    sig { params(value: T::Enumerable[::Topic]).void }
-    def active_topics=(value); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::Space) }
     def build_space(*args, &blk); end

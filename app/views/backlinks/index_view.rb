@@ -3,13 +3,18 @@
 
 module Backlinks
   class IndexView < ApplicationView
-    sig { params(backlink_collection: BacklinkCollection).void }
-    def initialize(backlink_collection:)
-      @backlink_collection = backlink_collection
+    sig { params(page_entity: PageEntity, backlink_list_entity: BacklinkListEntity).void }
+    def initialize(page_entity:, backlink_list_entity:)
+      @page_entity = page_entity
+      @backlink_list_entity = backlink_list_entity
     end
 
-    sig { returns(BacklinkCollection) }
-    attr_reader :backlink_collection
-    private :backlink_collection
+    sig { returns(PageEntity) }
+    attr_reader :page_entity
+    private :page_entity
+
+    sig { returns(BacklinkListEntity) }
+    attr_reader :backlink_list_entity
+    private :backlink_list_entity
   end
 end

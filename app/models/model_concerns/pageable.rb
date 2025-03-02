@@ -71,6 +71,14 @@ module ModelConcerns
       nil
     end
 
+    sig do
+      params(
+        space_viewer: ModelConcerns::SpaceViewable,
+        pages: Page::PrivateAssociationRelation,
+        added_page_ids: T::Array[T::Wikino::DatabaseId],
+        backlink_limit: Integer
+      ).returns(T::Array[LinkEntity])
+    end
     private def fetch_link_entities(space_viewer:, pages:, added_page_ids:, backlink_limit:)
       pages.map do |page|
         added_page_ids << page.id

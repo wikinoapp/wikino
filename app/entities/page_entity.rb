@@ -8,7 +8,7 @@ class PageEntity < ApplicationEntity
   sig { returns(Integer) }
   attr_reader :number
 
-  sig { returns(String) }
+  sig { returns(T.nilable(String)) }
   attr_reader :title
 
   sig { returns(String) }
@@ -40,7 +40,7 @@ class PageEntity < ApplicationEntity
     params(
       database_id: T::Wikino::DatabaseId,
       number: Integer,
-      title: String,
+      title: T.nilable(String),
       body: String,
       body_html: String,
       modified_at: ActiveSupport::TimeWithZone,

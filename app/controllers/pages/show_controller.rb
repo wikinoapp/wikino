@@ -5,7 +5,6 @@ module Pages
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :restore_user_session

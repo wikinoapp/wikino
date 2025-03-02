@@ -96,9 +96,19 @@ class SpaceMember < ApplicationRecord
     topic.present? && topics.where(id: topic.id).exists?
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_create_bulk_restored_pages?(space:)
+    active? && space_id == space.id
+  end
+
   sig { override.params(page: Page).returns(T::Boolean) }
   def can_view_page?(page:)
     active? && space_id == page.space_id
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_view_trash?(space:)
+    active? && space_id == space.id
   end
 
   sig { override.params(page: Page).returns(T::Boolean) }

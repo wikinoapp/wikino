@@ -4,7 +4,7 @@
       <%= title %>
     </h1>
 
-    <% if draft_page.present? %>
+    <% if draft_page_entity.present? %>
       <div class="alert alert-warning" role="alert">
         現在下書きを表示しています
       </div>
@@ -17,7 +17,7 @@
           data: { controller: "page-editor-form" },
           model: form,
           method: :patch,
-          url: page_path(space.identifier, page.number)
+          url: page_path(space_entity.identifier, page_entity.number)
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
@@ -94,7 +94,7 @@
               <input
                 class="hidden"
                 data-page-editor-form-target="draftSaveButton"
-                formaction="<%= draft_page_path(space.identifier, page.number) %>"
+                formaction="<%= draft_page_path(space_entity.identifier, page_entity.number) %>"
                 type="submit"
               >
             </div>
@@ -106,7 +106,7 @@
     <% end %>
 
     <turbo-frame id="page-editor-footer">
-      <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
+      <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
     </turbo-frame>
   </div>
 <% end %>

@@ -57,8 +57,8 @@ class Page < ApplicationRecord
       modified_at:,
       published_at:,
       pinned_at:,
-      space_entity: space.to_entity(space_viewer:),
-      topic_entity: topic.to_entity(space_viewer:),
+      space_entity: space.not_nil!.to_entity(space_viewer:),
+      topic_entity: topic.not_nil!.to_entity(space_viewer:),
       viewer_can_update: space_viewer.can_update_page?(page: self)
     )
   end

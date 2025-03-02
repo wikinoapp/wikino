@@ -5,16 +5,16 @@ module BulkRestoredPages
   class CreateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
+      space_viewer = Current.viewer!.space_viewer!(space:)
 
-      unless Current.viewer!.can_create_bulk_restored_pages?(space:)
+      unless space_viewer.can_create_bulk_restored_pages?(space:)
         return render_404
       end
 
@@ -22,7 +22,18 @@ module BulkRestoredPages
       form.user = T.let(Current.viewer!, User)
 
       if form.invalid?
-        return render_error_view(space:, form:)
+        render(
+          Trash::ShowView.new(
+            space_entity: space.to_entity(space_viewer:),
+            page_list_entity: space.restorable_page_list_entity(
+              space_viewer:,
+              before: params[:before],
+              after: params[:after]
+            ),
+            form:
+          ),
+          status: :unprocessable_entity
+        )
       end
 
       BulkRestorePagesUseCase.new.call(page_ids: form.page_ids.not_nil!)
@@ -34,16 +45,6 @@ module BulkRestoredPages
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:trashed_pages_form), ActionController::Parameters).permit(page_ids: [])
-    end
-
-    sig { params(space: Space, form: TrashedPagesForm).returns(ActiveSupport::SafeBuffer) }
-    private def render_error_view(space:, form:)
-      error_view = Trash::ShowView.new(
-        space:,
-        page_connection: space.restorable_page_connection(before: params[:before], after: params[:after]),
-        form:
-      )
-      render(error_view, status: :unprocessable_entity)
     end
   end
 end

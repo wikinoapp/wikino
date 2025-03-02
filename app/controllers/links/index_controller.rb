@@ -5,7 +5,6 @@ module Links
   class IndexController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     layout false
 
@@ -14,19 +13,20 @@ module Links
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
+      space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
-      unless Current.viewer!.can_view_page?(page:)
+      unless space_viewer.can_view_page?(page:)
         return render_404
       end
 
       draft_page = Current.viewer!.active_draft_pages.find_by(page:)
       pageable = draft_page.presence || page
 
-      link_collection = pageable.fetch_link_collection(after: params[:after])
+      link_list_entity = pageable.fetch_link_list_entity(space_viewer:, after: params[:after])
 
-      render(Links::IndexView.new(link_collection:), {
+      render(Links::IndexView.new(link_list_entity:), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false
       })

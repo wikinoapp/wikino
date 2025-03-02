@@ -66,19 +66,24 @@ class Space < ApplicationRecord
     pages.kept.find_by!(number:)
   end
 
-  sig { params(before: T.nilable(String), after: T.nilable(String)).returns(PageConnection) }
-  def restorable_page_connection(before:, after:)
+  sig do
+    params(
+      space_viewer: ModelConcerns::SpaceViewable,
+      before: T.nilable(String),
+      after: T.nilable(String)
+    ).returns(PageListEntity)
+  end
+  def restorable_page_list_entity(space_viewer:, before:, after:)
     cursor_paginate_page = pages.preload(:topic).restorable.cursor_paginate(
       before: before.presence,
       after: after.presence,
       limit: 100,
       order: {trashed_at: :desc, id: :desc}
     ).fetch
+    page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
+    pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
-    PageConnection.new(
-      pages: cursor_paginate_page.records,
-      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
-    )
+    PageListEntity.new(page_entities:, pagination_entity:)
   end
 
   sig { params(user: User, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
