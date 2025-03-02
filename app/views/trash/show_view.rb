@@ -3,7 +3,13 @@
 
 module Trash
   class ShowView < ApplicationView
-    sig { params(space_entity: SpaceEntity, page_list_entity: PageListEntity, form: TrashedPagesForm).void }
+    sig do
+      params(
+        space_entity: SpaceEntity,
+        page_list_entity: PageListEntity,
+        form: TrashedPagesForm
+      ).void
+    end
     def initialize(space_entity:, page_list_entity:, form:)
       @space_entity = space_entity
       @page_list_entity = page_list_entity

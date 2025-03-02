@@ -2,29 +2,37 @@
 # frozen_string_literal: true
 
 RSpec.describe Page, type: :model do
-  describe "#fetch_link_collection" do
+  describe "#fetch_link_list_entity" do
     it "ページにリンクが含まれているときリンクの構造体を返すこと" do
       user = create(:user)
       space = create(:space)
-      page_a = create(:page, space:, modified_at: Time.zone.parse("2024-01-01"))
-      page_b = create(:page, space:, modified_at: Time.zone.parse("2024-01-02"))
-      page_c = create(:page, space:, linked_page_ids: [page_b.id], modified_at: Time.zone.parse("2024-01-03"))
-      page_d = create(:page, space:, linked_page_ids: [page_c.id], modified_at: Time.zone.parse("2024-01-04"))
-      target_page = create(:page, space:, linked_page_ids: [page_a.id, page_c.id])
+      space.reload
+      topic = create(:topic, space:)
+      space_member = create(:space_member, user:, space:)
+      page_a = create(:page, space:, topic:, modified_at: Time.zone.parse("2024-01-01"))
+      page_b = create(:page, space:, topic:, modified_at: Time.zone.parse("2024-01-02"))
+      page_c = create(:page, space:, topic:,
+        linked_page_ids: [page_b.id],
+        modified_at: Time.zone.parse("2024-01-03"))
+      page_d = create(:page, space:, topic:,
+        linked_page_ids: [page_c.id],
+        modified_at: Time.zone.parse("2024-01-04"))
+      target_page = create(:page, space:, topic:, linked_page_ids: [page_a.id, page_c.id])
 
       Current.viewer = user
-      link_collection = target_page.fetch_link_collection
 
-      expect(link_collection.links.size).to eq(2)
+      link_list_entity = target_page.fetch_link_list_entity(space_viewer: space_member)
+      expect(link_list_entity.link_entities.size).to eq(2)
 
-      link_a = link_collection.links[0]
-      expect(link_a.page).to eq(page_c)
-      expect(link_a.backlink_collection.backlinks.size).to eq(1)
-      expect(link_a.backlink_collection.backlinks[0]).to eql(Backlink.new(page: page_d))
+      link_entity_a = link_list_entity.link_entities[0]
+      expect(link_entity_a.backlink_list_entity.backlink_entities.size).to eq(1)
+      expect(link_entity_a.backlink_list_entity.backlink_entities[0]).to eq(
+        BacklinkEntity.new(page_entity: page_d.to_entity(space_viewer: space_member))
+      )
 
-      link_b = link_collection.links[1]
-      expect(link_b.page).to eq(page_a)
-      expect(link_b.backlink_collection.backlinks.size).to eq(0)
+      link_entity_b = link_list_entity.link_entities[1]
+      expect(link_entity_b.page_entity.page).to eq(page_a)
+      expect(link_entity_b.backlink_list_entity.backlink_entities.size).to eq(0)
     end
   end
 

@@ -15,6 +15,11 @@ class SpaceVisitor
   sig { returns(Space) }
   attr_reader :space
 
+  sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+  def draft_pages
+    DraftPage.none
+  end
+
   sig { override.returns(Page::PrivateAssociationRelation) }
   def showable_pages
     space.pages.active.joins(:topic).merge(Topic.visibility_public)

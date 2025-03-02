@@ -74,7 +74,7 @@ module ModelConcerns
     sig do
       params(
         space_viewer: ModelConcerns::SpaceViewable,
-        pages: Page::PrivateAssociationRelation,
+        pages: T::Array[Page],
         added_page_ids: T::Array[T::Wikino::DatabaseId],
         backlink_limit: Integer
       ).returns(T::Array[LinkEntity])

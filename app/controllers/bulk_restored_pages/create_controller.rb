@@ -22,7 +22,7 @@ module BulkRestoredPages
       form.user = T.let(Current.viewer!, User)
 
       if form.invalid?
-        render(
+        return render(
           Trash::ShowView.new(
             space_entity: space.to_entity(space_viewer:),
             page_list_entity: space.restorable_page_list_entity(
