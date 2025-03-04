@@ -8,6 +8,10 @@ module ModelConcerns
 
     interface!
 
+    sig { abstract.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+    def draft_pages
+    end
+
     sig { abstract.returns(Page::PrivateAssociationRelation) }
     def showable_pages
     end
@@ -26,6 +30,22 @@ module ModelConcerns
 
     sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }
     def can_create_page?(topic:)
+    end
+
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_create_bulk_restored_pages?(space:)
+    end
+
+    sig { abstract.params(page: Page).returns(T::Boolean) }
+    def can_view_page?(page:)
+    end
+
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_view_trash?(space:)
+    end
+
+    sig { abstract.params(page: Page).returns(T::Boolean) }
+    def can_update_page?(page:)
     end
 
     sig { abstract.returns(T::Boolean) }

@@ -5,14 +5,13 @@ module Pages
   class NewController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
       topic = space.topics.kept.find_by!(number: params[:topic_number])
 

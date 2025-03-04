@@ -39,29 +39,9 @@ class Visitor
     false
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_view_page?(page:)
-    page.topic.not_nil!.visibility_public?
-  end
-
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_view_topic?(topic:)
     topic.visibility_public?
-  end
-
-  sig { override.params(space: Space).returns(T::Boolean) }
-  def can_view_trash?(space:)
-    false
-  end
-
-  sig { override.params(space: Space).returns(T::Boolean) }
-  def can_create_bulk_restored_pages?(space:)
-    false
-  end
-
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_update_page?(page:)
-    false
   end
 
   sig { override.params(page: Page).returns(T::Boolean) }
@@ -72,10 +52,5 @@ class Visitor
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
     Topic.visibility_public
-  end
-
-  sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
-  def active_draft_pages
-    DraftPage.none
   end
 end

@@ -3,13 +3,13 @@
 
 module Dropdowns
   class SpaceOptionsComponent < ApplicationComponent
-    sig { params(space: Space).void }
-    def initialize(space:)
-      @space = space
+    sig { params(space_entity: SpaceEntity).void }
+    def initialize(space_entity:)
+      @space_entity = space_entity
     end
 
-    sig { returns(Space) }
-    attr_reader :space
-    private :space
+    sig { returns(SpaceEntity) }
+    attr_reader :space_entity
+    private :space_entity
   end
 end

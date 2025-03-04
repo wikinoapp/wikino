@@ -20,24 +20,8 @@ module ModelConcerns
     def joined_space?(space:)
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
-    def can_view_page?(page:)
-    end
-
     sig { abstract.params(topic: Topic).returns(T::Boolean) }
     def can_view_topic?(topic:)
-    end
-
-    sig { abstract.params(space: Space).returns(T::Boolean) }
-    def can_view_trash?(space:)
-    end
-
-    sig { abstract.params(space: Space).returns(T::Boolean) }
-    def can_create_bulk_restored_pages?(space:)
-    end
-
-    sig { abstract.params(page: Page).returns(T::Boolean) }
-    def can_update_page?(page:)
     end
 
     sig { abstract.params(page: Page).returns(T::Boolean) }
@@ -54,10 +38,6 @@ module ModelConcerns
 
     sig { abstract.returns(Topic::PrivateRelation) }
     def viewable_topics
-    end
-
-    sig { abstract.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
-    def active_draft_pages
     end
   end
 end

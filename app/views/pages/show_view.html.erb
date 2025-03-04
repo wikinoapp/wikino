@@ -1,43 +1,47 @@
 <%= render ::Layouts::MainComponent.new(current_page_name:) do %>
+  <div class="flex items-center justify-center">
+    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+  </div>
+
   <div class="flex flex-col gap-6 p-4">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <h1 class="text-2xl font-bold antialiased">
-          <%= page.title %>
+          <%= page_entity.title %>
         </h1>
 
         <div class="flex items-center gap-2">
-          <%= link_to topic_path(space.identifier, topic.number), class: "flex gap-1 items-center link link-primary" do %>
-            <%= render Icons::TopicComponent.new(topic:, size: "16px", class_name: "fill-gray-600") %>
+          <%= link_to topic_path(space_entity.identifier, topic_entity.number), class: "flex gap-1 items-center link link-primary" do %>
+            <%= render Icons::TopicComponent.new(topic_entity:, size: "16px", class_name: "fill-gray-600") %>
 
-            <%= topic.name %>
+            <%= topic_entity.name %>
           <% end %>
 
-          <% if page.published? %>
+          <% if page_entity.published? %>
             <div
               class="text-sm text-gray-500"
               data-controller="absolute-time"
-              data-absolute-time-utc-time-value="<%= page.published_at.iso8601 %>"
+              data-absolute-time-utc-time-value="<%= page_entity.published_at.iso8601 %>"
             >
-              <%= t("messages.time.ago_published", time: time_ago_in_words(page.published_at)) %>
+              <%= t("messages.time.ago_published", time: time_ago_in_words(page_entity.published_at)) %>
             </div>
           <% end %>
 
-          <% if page.modified_after_published? %>
+          <% if page_entity.modified_after_published? %>
             <div
               class="text-sm text-gray-500"
               data-controller="absolute-time"
-              data-absolute-time-utc-time-value="<%= page.modified_at.iso8601 %>"
+              data-absolute-time-utc-time-value="<%= page_entity.modified_at.iso8601 %>"
             >
-              <%= t("messages.time.ago_modified", time: time_ago_in_words(page.modified_at)) %>
+              <%= t("messages.time.ago_modified", time: time_ago_in_words(page_entity.modified_at)) %>
             </div>
           <% end %>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <% if Current.viewer!.can_update_page?(page:) %>
-          <%= link_to edit_page_path(space.identifier, page.number), {
+        <% if page_entity.viewer_can_update? %>
+          <%= link_to edit_page_path(space_entity.identifier, page_entity.number), {
             class: "btn btn-primary no-animation rounded-full"
           } do %>
             <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
@@ -46,23 +50,23 @@
           <% end %>
         <% end %>
 
-        <% if Current.viewer!.signed_in? %>
-          <%= render Dropdowns::PageActionsComponent.new(page:) %>
+        <% if signed_in? %>
+          <%= render Dropdowns::PageActionsComponent.new(page_entity:) %>
         <% end %>
       </div>
     </div>
 
-    <% if page.body_html.present? %>
+    <% if page_entity.body_html.present? %>
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <div class="wikino-markdown">
-            <%= page.body_html.html_safe %>
+            <%= page_entity.body_html.html_safe %>
           </div>
         <% end %>
       <% end %>
     <% end %>
 
-    <%= render Footers::PageComponent.new(link_collection:, backlink_collection:) %>
+    <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
 
     <div class="mt-10">
       <%= render Footers::PublicComponent.new %>

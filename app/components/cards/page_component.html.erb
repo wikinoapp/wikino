@@ -2,28 +2,28 @@
   class_name: class_names(
     class_name,
     "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px] hover:ring-1 hover:ring-primary transition",
-    "relative": page.pinned?
+    "relative": page_entity.pinned?
   )
 ) do |card| %>
   <%= card.with_body(class_name: "p-0") do %>
-    <%= link_to page_path(page.space.identifier, page.number), class: "h-full px-4 py-2 w-full" do %>
-      <% if page.pinned? %>
+    <%= link_to page_path(space_entity.identifier, page_entity.number), class: "h-full px-4 py-2 w-full" do %>
+      <% if page_entity.pinned? %>
         <%= render Basic::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-amber-800") %>
       <% end %>
 
       <div class="flex flex-col gap-1">
-        <% if show_topic_name %>
+        <% if show_topic_name? %>
           <div class="flex items-center gap-1">
-            <%= render Icons::TopicComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-500") %>
+            <%= render Icons::TopicComponent.new(topic_entity: topic_entity, size: "12px", class_name: "fill-gray-500") %>
 
             <div class="text-xs text-gray-500">
-              <%= page.topic.name %>
+              <%= topic_entity.name %>
             </div>
           </div>
         <% end %>
 
         <div class="line-clamp-3 text-sm font-bold">
-          <%= page.title %>
+          <%= page_entity.title %>
         </div>
       </div>
     <% end %>

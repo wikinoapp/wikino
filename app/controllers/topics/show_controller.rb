@@ -24,14 +24,13 @@ module Topics
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      pages = cursor_paginate_page.records
-      pagination = Pagination.from_cursor_paginate(cursor_paginate_page:)
+      page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
+      pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
       render Topics::ShowView.new(
-        topic:,
-        space_viewer:,
-        pinned_pages:,
-        page_connection: PageConnection.new(pages:, pagination:)
+        topic_entity: topic.to_entity(space_viewer:),
+        pinned_page_entities: pinned_pages.map { _1.to_entity(space_viewer:) },
+        page_list_entity: PageListEntity.new(page_entities:, pagination_entity:)
       )
     end
   end

@@ -18,11 +18,8 @@ class User < ApplicationRecord
   belongs_to :space, optional: true
   has_many :space_members, dependent: :restrict_with_exception
   has_many :active_space_members, -> { SpaceMember.active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
-  has_many :active_draft_pages, through: :active_space_members, source: :draft_pages
   has_many :topic_members, through: :space_members, source: :topic_members
   has_many :topics, through: :topic_members
-  has_many :active_topic_members, class_name: "TopicMember", through: :active_space_members, source: :topic_members
-  has_many :active_topics, through: :active_topic_members, source: :topic
   has_many :spaces, through: :space_members
   has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
   has_many :user_sessions, dependent: :restrict_with_exception
@@ -94,44 +91,14 @@ class User < ApplicationRecord
       .distinct
   end
 
-  sig { returns(Topic::PrivateAssociationRelation) }
-  def last_page_modified_topics
-    active_topics.merge(
-      active_topic_members
-        .order(TopicMember.arel_table[:last_page_modified_at].desc.nulls_last)
-        .order(TopicMember.arel_table[:joined_at].desc)
-    )
-  end
-
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_view_page?(page:)
-    page.topic.not_nil!.visibility_public? ||
-      space_members.where(space: page.space).active.exists?
-  end
-
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_view_topic?(topic:)
     viewable_topics.where(id: topic.id).exists?
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
-  def can_view_trash?(space:)
-    active_spaces.where(id: space.id).exists?
-  end
-
-  sig { override.params(space: Space).returns(T::Boolean) }
-  def can_create_bulk_restored_pages?(space:)
-    active_spaces.where(id: space.id).exists?
-  end
-
   sig { params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     topics.where(id: topic.id).exists?
-  end
-
-  sig { override.params(page: Page).returns(T::Boolean) }
-  def can_update_page?(page:)
-    active_topics.where(id: page.topic_id).exists?
   end
 
   sig { params(topic: Topic).returns(T::Boolean) }

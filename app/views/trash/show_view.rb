@@ -3,32 +3,38 @@
 
 module Trash
   class ShowView < ApplicationView
-    sig { params(space: Space, page_connection: PageConnection, form: TrashedPagesForm).void }
-    def initialize(space:, page_connection:, form:)
-      @space = space
-      @page_connection = page_connection
+    sig do
+      params(
+        space_entity: SpaceEntity,
+        page_list_entity: PageListEntity,
+        form: TrashedPagesForm
+      ).void
+    end
+    def initialize(space_entity:, page_list_entity:, form:)
+      @space_entity = space_entity
+      @page_list_entity = page_list_entity
       @form = form
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.trash.show", space_name: space.name)
+      title = I18n.t("meta.title.trash.show", space_name: space_entity.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(Space) }
-    attr_reader :space
-    private :space
+    sig { returns(SpaceEntity) }
+    attr_reader :space_entity
+    private :space_entity
 
-    sig { returns(PageConnection) }
-    attr_reader :page_connection
-    private :page_connection
+    sig { returns(PageListEntity) }
+    attr_reader :page_list_entity
+    private :page_list_entity
 
     sig { returns(TrashedPagesForm) }
     attr_reader :form
     private :form
 
-    delegate :pages, :pagination, to: :page_connection
+    delegate :page_entities, :pagination_entity, to: :page_list_entity
 
     sig { returns(PageName) }
     private def current_page_name

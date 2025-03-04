@@ -15,6 +15,11 @@ class SpaceVisitor
   sig { returns(Space) }
   attr_reader :space
 
+  sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+  def draft_pages
+    DraftPage.none
+  end
+
   sig { override.returns(Page::PrivateAssociationRelation) }
   def showable_pages
     space.pages.active.joins(:topic).merge(Topic.visibility_public)
@@ -37,6 +42,26 @@ class SpaceVisitor
 
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
   def can_create_page?(topic:)
+    false
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_create_bulk_restored_pages?(space:)
+    false
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_view_page?(page:)
+    page.topic.not_nil!.visibility_public?
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_view_trash?(space:)
+    false
+  end
+
+  sig { override.params(page: Page).returns(T::Boolean) }
+  def can_update_page?(page:)
     false
   end
 

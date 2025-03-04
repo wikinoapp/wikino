@@ -12,15 +12,23 @@
         <div class="flex gap-6">
           <%= render Navbars::Top::LinkItemComponent.new(current_page_name:, page_name: PageName::Home) %>
           <%= render Navbars::Top::LinkItemComponent.new(current_page_name:, page_name: PageName::Inbox) %>
+
+          <%= render Buttons::SearchComponent.new(
+            class_name: "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group"
+          ) do %>
+            <div class="flex items-center gap-2">
+              <%= render Basic::IconComponent.new(
+                name: "magnifying-glass",
+                size: "16px",
+                class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
+              ) %>
+
+              <%= t("nouns.search") %>
+            </div>
+          <% end %>
         </div>
       <% end %>
     </div>
-
-    <% if Current.viewer.signed_in? %>
-      <div class="navbar-center">
-        <%= render Navbars::Top::SearchButtonComponent.new %>
-      </div>
-    <% end %>
 
     <div class="navbar-end">
       <% if Current.viewer.signed_in? %>

@@ -5,43 +5,37 @@ module Topics
   class ShowView < ApplicationView
     sig do
       params(
-        topic: Topic,
-        space_viewer: ModelConcerns::SpaceViewable,
-        pinned_pages: Page::PrivateRelation,
-        page_connection: PageConnection
+        topic_entity: TopicEntity,
+        pinned_page_entities: T::Array[PageEntity],
+        page_list_entity: PageListEntity
       ).void
     end
-    def initialize(topic:, space_viewer:, pinned_pages:, page_connection:)
-      @topic = topic
-      @space_viewer = space_viewer
-      @pinned_pages = pinned_pages
-      @page_connection = page_connection
+    def initialize(topic_entity:, pinned_page_entities:, page_list_entity:)
+      @topic_entity = topic_entity
+      @pinned_page_entities = pinned_page_entities
+      @page_list_entity = page_list_entity
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.topics.show", space_name: space.name, topic_name: topic.name)
+      title = I18n.t("meta.title.topics.show", space_name: space_entity.name, topic_name: topic_entity.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(Topic) }
-    attr_reader :topic
-    private :topic
+    sig { returns(TopicEntity) }
+    attr_reader :topic_entity
+    private :topic_entity
 
-    sig { returns(ModelConcerns::SpaceViewable) }
-    attr_reader :space_viewer
-    private :space_viewer
+    sig { returns(T::Array[PageEntity]) }
+    attr_reader :pinned_page_entities
+    private :pinned_page_entities
 
-    sig { returns(Page::PrivateRelation) }
-    attr_reader :pinned_pages
-    private :pinned_pages
+    sig { returns(PageListEntity) }
+    attr_reader :page_list_entity
+    private :page_list_entity
 
-    sig { returns(PageConnection) }
-    attr_reader :page_connection
-    private :page_connection
-
-    delegate :space, to: :topic
-    delegate :pages, :pagination, to: :page_connection
+    delegate :space_entity, to: :topic_entity
+    delegate :page_entities, :pagination_entity, to: :page_list_entity
 
     sig { returns(PageName) }
     private def current_page_name

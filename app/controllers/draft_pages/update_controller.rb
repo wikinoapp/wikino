@@ -27,11 +27,15 @@ module DraftPages
         title: form_params[:title],
         body: form_params[:body]
       )
-      draft_page = result.draft_page
-      link_collection = draft_page.fetch_link_collection
-      backlink_collection = draft_page.page.not_nil!.fetch_backlink_collection
+      draft_page_entity = result.draft_page.to_entity(space_viewer:)
+      link_list_entity = page.not_nil!.fetch_link_list_entity(space_viewer:)
+      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
 
-      render(DraftPages::UpdateView.new(draft_page:, link_collection:, backlink_collection:), {
+      render(DraftPages::UpdateView.new(
+        draft_page_entity:,
+        link_list_entity:,
+        backlink_list_entity:
+      ), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false
       })

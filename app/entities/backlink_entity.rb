@@ -1,8 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Backlink < T::Struct
+class BacklinkEntity < T::Struct
+  extend T::Sig
+
   include T::Struct::ActsAsComparable
 
-  const :page, Page
+  const :page_entity, PageEntity
 end

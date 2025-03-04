@@ -26,6 +26,7 @@ ja:
         settings:
           general:
             show: "基本情報 | %{space_name}"
+          show: "設定 | %{space_name}"
         show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ

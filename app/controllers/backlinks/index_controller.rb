@@ -5,7 +5,6 @@ module Backlinks
   class IndexController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     layout false
 
@@ -14,17 +13,23 @@ module Backlinks
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
+      space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
-      unless Current.viewer.can_view_page?(page:)
-        render_404
-        return
+      unless space_viewer.can_view_page?(page:)
+        return render_404
       end
 
-      backlink_collection = page.not_nil!.fetch_backlink_collection(after: params[:after])
+      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(
+        space_viewer:,
+        after: params[:after]
+      )
 
-      render(Backlinks::IndexView.new(backlink_collection:), {
+      render(Backlinks::IndexView.new(
+        page_entity: page.to_entity(space_viewer:),
+        backlink_list_entity:
+      ), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false
       })

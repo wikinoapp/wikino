@@ -5,18 +5,17 @@ module Pages
   class UpdateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
+      space = Space.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i).not_nil!
 
-      unless Current.viewer!.can_update_page?(page:)
+      unless space_viewer.can_update_page?(page:)
         return render_404
       end
 
@@ -28,11 +27,17 @@ module Pages
       )
 
       if form.invalid?
-        link_collection = page.fetch_link_collection
-        backlink_collection = page.fetch_backlink_collection
+        link_list_entity = page.fetch_link_list_entity(space_viewer:)
+        backlink_list_entity = page.fetch_backlink_list_entity(space_viewer:)
 
         return render(
-          Pages::EditView.new(space:, page:, form:, link_collection:, backlink_collection:),
+          Pages::EditView.new(
+            space_entity: space.to_entity(space_viewer:),
+            page_entity: page.to_entity(space_viewer:),
+            form:,
+            link_list_entity:,
+            backlink_list_entity:
+          ),
           status: :unprocessable_entity
         )
       end

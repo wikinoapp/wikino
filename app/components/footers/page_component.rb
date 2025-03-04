@@ -3,19 +3,24 @@
 
 module Footers
   class PageComponent < ApplicationComponent
-    sig { params(link_collection: ::LinkCollection, backlink_collection: ::BacklinkCollection).void }
-    def initialize(link_collection:, backlink_collection:)
-      @link_collection = link_collection
-      @backlink_collection = backlink_collection
+    sig { params(page_entity: PageEntity, link_list_entity: LinkListEntity, backlink_list_entity: BacklinkListEntity).void }
+    def initialize(page_entity:, link_list_entity:, backlink_list_entity:)
+      @page_entity = page_entity
+      @link_list_entity = link_list_entity
+      @backlink_list_entity = backlink_list_entity
     end
 
-    sig { returns(::LinkCollection) }
-    attr_reader :link_collection
-    private :link_collection
+    sig { returns(PageEntity) }
+    attr_reader :page_entity
+    private :page_entity
 
-    sig { returns(::BacklinkCollection) }
-    attr_reader :backlink_collection
-    private :backlink_collection
+    sig { returns(LinkListEntity) }
+    attr_reader :link_list_entity
+    private :link_list_entity
+
+    sig { returns(BacklinkListEntity) }
+    attr_reader :backlink_list_entity
+    private :backlink_list_entity
 
     sig { returns(T::Boolean) }
     def render?
@@ -24,12 +29,12 @@ module Footers
 
     sig { returns(T::Boolean) }
     private def show_links?
-      link_collection.links.present?
+      link_list_entity.link_entities.present?
     end
 
     sig { returns(T::Boolean) }
     private def show_backlinks?
-      backlink_collection.backlinks.present?
+      backlink_list_entity.backlink_entities.present?
     end
   end
 end

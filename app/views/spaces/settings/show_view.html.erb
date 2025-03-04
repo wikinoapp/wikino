@@ -1,0 +1,22 @@
+<%= render ::Layouts::MainComponent.new(
+  current_page_name:,
+  content_screen: Layouts::MainComponent::ContentScreen::Medium
+) do %>
+  <div class="flex items-center justify-center">
+    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+  </div>
+
+  <div class="flex flex-col gap-6 px-4 py-6">
+    <div class="flex items-center justify-center">
+      <h1 class="text-2xl font-bold antialiased">
+        <%= t("nouns.settings") %>
+      </h1>
+    </div>
+
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <%= link_to t("nouns.general"), space_settings_general_path(space_entity.identifier), class: "link" %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

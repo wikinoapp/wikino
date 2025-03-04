@@ -22,6 +22,18 @@ class Page < ApplicationRecord
   scope :active, -> { kept.not_trashed.published }
   scope :restorable, -> { where(trashed_at: DELETE_LIMIT_DAYS.days.ago..) }
 
+  sig do
+    params(
+      space_viewer: ModelConcerns::SpaceViewable,
+      pages: T.any(Page::PrivateAssociationRelation, T::Array[Page])
+    ).returns(T::Array[PageEntity])
+  end
+  def self.to_entities(space_viewer:, pages:)
+    pages.map do |page|
+      page.to_entity(space_viewer:)
+    end
+  end
+
   sig { params(topic: Topic).returns(Page) }
   def self.create_as_blanked!(topic:)
     topic.pages.create!(
@@ -31,6 +43,23 @@ class Page < ApplicationRecord
       body_html: "",
       linked_page_ids: [],
       modified_at: Time.current
+    )
+  end
+
+  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(PageEntity) }
+  def to_entity(space_viewer:)
+    PageEntity.new(
+      database_id: id,
+      number:,
+      title:,
+      body:,
+      body_html:,
+      modified_at:,
+      published_at:,
+      pinned_at:,
+      space_entity: space.not_nil!.to_entity(space_viewer:),
+      topic_entity: topic.not_nil!.to_entity(space_viewer:),
+      viewer_can_update: space_viewer.can_update_page?(page: self)
     )
   end
 
@@ -49,11 +78,6 @@ class Page < ApplicationRecord
     trashed_at.present?
   end
 
-  sig { returns(T::Boolean) }
-  def modified_after_published?
-    published? && modified_at > published_at
-  end
-
   T::Sig::WithoutRuntime.sig { returns(T.any(Page::PrivateAssociationRelationWhereChain, Page::PrivateAssociationRelation)) }
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
@@ -61,8 +85,15 @@ class Page < ApplicationRecord
     pages.joins(:topic).merge(Current.viewer!.viewable_topics)
   end
 
-  sig { params(before: T.nilable(String), after: T.nilable(String), limit: Integer).returns(BacklinkCollection) }
-  def fetch_backlink_collection(before: nil, after: nil, limit: 15)
+  sig do
+    params(
+      space_viewer: ModelConcerns::SpaceViewable,
+      before: T.nilable(String),
+      after: T.nilable(String),
+      limit: Integer
+    ).returns(BacklinkListEntity)
+  end
+  def fetch_backlink_list_entity(space_viewer:, before: nil, after: nil, limit: 15)
     cursor_paginate_page = backlinked_pages.cursor_paginate(
       after:,
       before:,
@@ -70,14 +101,13 @@ class Page < ApplicationRecord
       order: {modified_at: :desc, id: :desc}
     ).fetch
 
-    backlinks = cursor_paginate_page.records.map do |page|
-      Backlink.new(page:)
+    backlink_entities = cursor_paginate_page.records.map do |page|
+      BacklinkEntity.new(page_entity: page.to_entity(space_viewer:))
     end
 
-    BacklinkCollection.new(
-      page: original_page,
-      backlinks:,
-      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+    BacklinkListEntity.new(
+      backlink_entities:,
+      pagination_entity: PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
     )
   end
 
