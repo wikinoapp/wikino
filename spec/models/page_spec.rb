@@ -31,7 +31,7 @@ RSpec.describe Page, type: :model do
       )
 
       link_entity_b = link_list_entity.link_entities[1]
-      expect(link_entity_b.page_entity.page).to eq(page_a)
+      expect(link_entity_b.page_entity).to eq(page_a.to_entity(space_viewer: space_member))
       expect(link_entity_b.backlink_list_entity.backlink_entities.size).to eq(0)
     end
   end
