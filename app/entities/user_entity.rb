@@ -1,31 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UserEntity < ApplicationEntity
-  sig { returns(T::Wikino::DatabaseId) }
-  attr_reader :database_id
+class UserEntity < T::Struct
+  extend T::Sig
 
-  sig { returns(String) }
-  attr_reader :atname
+  include T::Struct::ActsAsComparable
 
-  sig { returns(String) }
-  attr_reader :name
-
-  sig { returns(String) }
-  attr_reader :description
-
-  sig do
-    params(
-      database_id: T::Wikino::DatabaseId,
-      atname: String,
-      name: String,
-      description: String
-    ).void
-  end
-  def initialize(database_id:, atname:, name:, description:)
-    @database_id = database_id
-    @atname = atname
-    @name = name
-    @description = description
-  end
+  const :database_id, T::Wikino::DatabaseId
+  const :atname, String
+  const :name, String
+  const :description, String
 end

@@ -1,35 +1,18 @@
 # typed: strict
 # frozen_string_literal: true
 
-class PaginationEntity < ApplicationEntity
-  sig { returns(T.nilable(String)) }
-  attr_reader :next_cursor
+class PaginationEntity < T::Struct
+  extend T::Sig
 
-  sig { returns(T::Boolean) }
-  attr_reader :has_next
+  include T::Struct::ActsAsComparable
+
+  const :next_cursor, T.nilable(String)
+  const :has_next, T::Boolean
+  const :previous_cursor, T.nilable(String)
+  const :has_previous, T::Boolean
+
   alias_method :has_next?, :has_next
-
-  sig { returns(T::Boolean) }
-  attr_reader :has_previous
   alias_method :has_previous?, :has_previous
-
-  sig { returns(T.nilable(String)) }
-  attr_reader :previous_cursor
-
-  sig do
-    params(
-      next_cursor: T.nilable(String),
-      has_next: T::Boolean,
-      has_previous: T::Boolean,
-      previous_cursor: T.nilable(String)
-    ).void
-  end
-  def initialize(next_cursor:, has_next:, has_previous:, previous_cursor:)
-    @next_cursor = next_cursor
-    @has_next = has_next
-    @has_previous = has_previous
-    @previous_cursor = previous_cursor
-  end
 
   sig { params(cursor_paginate_page: ActiveRecordCursorPaginate::Page).returns(T.attached_class) }
   def self.from_cursor_paginate(cursor_paginate_page:)

@@ -1,12 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class BacklinkEntity < ApplicationEntity
-  sig { returns(PageEntity) }
-  attr_reader :page_entity
+class BacklinkEntity < T::Struct
+  extend T::Sig
 
-  sig { params(page_entity: PageEntity).void }
-  def initialize(page_entity:)
-    @page_entity = page_entity
-  end
+  include T::Struct::ActsAsComparable
+
+  const :page_entity, PageEntity
 end
