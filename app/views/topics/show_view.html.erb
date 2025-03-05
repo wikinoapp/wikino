@@ -1,4 +1,7 @@
-<%= render ::Layouts::MainComponent.new(current_page_name:) do %>
+<%= render ::Layouts::MainComponent.new(
+  current_page_name:,
+  content_screen: Layouts::MainComponent::ContentScreen::Large
+) do %>
   <div class="flex items-center justify-center">
     <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
   </div>

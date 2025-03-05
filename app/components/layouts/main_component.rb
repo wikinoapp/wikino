@@ -7,12 +7,13 @@ module Layouts
       enums do
         Small = new("sm")
         Medium = new("md")
+        MediumLarge = new("md_lg")
         Large = new("lg")
       end
     end
 
     sig { params(current_page_name: PageName, content_screen: ContentScreen, class_name: String).void }
-    def initialize(current_page_name:, content_screen: ContentScreen::Large, class_name: "")
+    def initialize(current_page_name:, content_screen: ContentScreen::MediumLarge, class_name: "")
       @current_page_name = current_page_name
       @content_screen = content_screen
       @class_name = class_name
@@ -39,6 +40,8 @@ module Layouts
         "max-w-screen-sm"
       when ContentScreen::Medium
         "max-w-screen-md"
+      when ContentScreen::MediumLarge
+        "max-w-4xl"
       when ContentScreen::Large
         "max-w-screen-lg"
       else
