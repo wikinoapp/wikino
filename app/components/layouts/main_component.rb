@@ -12,12 +12,28 @@ module Layouts
       end
     end
 
-    sig { params(current_page_name: PageName, content_screen: ContentScreen, class_name: String).void }
-    def initialize(current_page_name:, content_screen: ContentScreen::MediumLarge, class_name: "")
+    renders_one :breadcrumbs
+    renders_one :main_content
+
+    sig do
+      params(
+        signed_in: T::Boolean,
+        current_page_name: PageName,
+        content_screen: ContentScreen,
+        class_name: String
+      ).void
+    end
+    def initialize(signed_in:, current_page_name:, content_screen: ContentScreen::MediumLarge, class_name: "")
+      @signed_in = signed_in
       @current_page_name = current_page_name
       @content_screen = content_screen
       @class_name = class_name
     end
+
+    sig { returns(T::Boolean) }
+    attr_reader :signed_in
+    private :signed_in
+    alias_method :signed_in?, :signed_in
 
     sig { returns(PageName) }
     attr_reader :current_page_name
