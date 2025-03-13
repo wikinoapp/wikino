@@ -21,7 +21,10 @@ module Topics
 
       form = NewTopicForm.new
 
-      render Topics::NewView.new(space:, form:)
+      render Topics::NewView.new(
+        space_entity: space.to_entity(space_viewer:),
+        form:
+      )
     end
   end
 end

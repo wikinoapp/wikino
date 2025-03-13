@@ -1,6 +1,7 @@
-<%= render ::Layouts::MainComponent.new(
-  current_page_name:,
-  content_screen: Layouts::MainComponent::ContentScreen::Large
+<%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) %>
+
+<%= render Containers::MainComponent.new(
+  content_screen: Containers::MainComponent::ContentScreen::Large
 ) do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <div class="flex items-center justify-between">
@@ -52,9 +53,8 @@
         <% end %>
       </div>
     <% end %>
-
-    <div class="mt-10">
-      <%= render Footers::PublicComponent.new %>
-    </div>
   </div>
 <% end %>
+
+<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
+<%= render FixedBottomComponent.new(current_page_name:) %>

@@ -10,7 +10,7 @@ en:
       home:
         show: Home
       topics:
-        new: New topic
+        new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
       trash:
         show: Trash

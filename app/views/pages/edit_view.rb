@@ -24,7 +24,6 @@ module Pages
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.pages.edit")
       helpers.set_meta_tags(title: "#{title} | #{space_entity.name}", **default_meta_tags)
     end
 
@@ -51,6 +50,11 @@ module Pages
     sig { returns(T.nilable(DraftPageEntity)) }
     attr_reader :draft_page_entity
     private :draft_page_entity
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.pages.edit")
+    end
 
     sig { returns(PageName) }
     private def current_page_name
