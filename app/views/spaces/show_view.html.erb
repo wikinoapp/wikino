@@ -3,7 +3,7 @@
 <%= render Containers::MainComponent.new(
   content_screen: Containers::MainComponent::ContentScreen::Large
 ) do %>
-  <div class="flex flex-col gap-6 px-4 py-6">
+  <div class="flex flex-col gap-6 p-4">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold antialiased">
         <%= space_entity.name %>
@@ -56,5 +56,5 @@
   </div>
 <% end %>
 
-<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
+<%= render Footers::GlobalComponent.new(signed_in:) %>
 <%= render FixedBottomComponent.new(current_page_name:) %>

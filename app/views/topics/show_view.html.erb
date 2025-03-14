@@ -7,7 +7,7 @@
 <%= render Containers::MainComponent.new(
   content_screen: Containers::MainComponent::ContentScreen::Large
 ) do %>
-  <div class="flex flex-col gap-6 px-4 py-6">
+  <div class="flex flex-col gap-6 p-4">
     <%= render Topics::ShowView::HeaderComponent.new(topic_entity:) %>
 
     <% if pinned_page_entities.present? || page_entities.present? %>
@@ -44,5 +44,5 @@
   </div>
 <% end %>
 
-<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
+<%= render Footers::GlobalComponent.new(signed_in:) %>
 <%= render FixedBottomComponent.new(current_page_name:) %>

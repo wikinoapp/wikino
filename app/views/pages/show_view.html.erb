@@ -9,18 +9,14 @@
     <%= render Pages::ShowView::HeaderComponent.new(signed_in:, page_entity:) %>
 
     <% if page_entity.body_html.present? %>
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <div class="wikino-markdown">
-            <%= page_entity.body_html.html_safe %>
-          </div>
-        <% end %>
-      <% end %>
+      <div class="wikino-markdown">
+        <%= page_entity.body_html.html_safe %>
+      </div>
     <% end %>
 
     <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
   </div>
 <% end %>
 
-<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
+<%= render Footers::GlobalComponent.new(signed_in:) %>
 <%= render FixedBottomComponent.new(current_page_name:) %>
