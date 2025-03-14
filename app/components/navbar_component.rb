@@ -22,10 +22,12 @@ class NavbarComponent < ApplicationComponent
   attr_reader :class_name
   private :class_name
 
+  sig { returns(String) }
   private def home_icon_name
     (current_page_name == PageName::Home) ? "house-fill" : "house-regular"
   end
 
+  sig { returns(String) }
   private def inbox_icon_name
     (current_page_name == PageName::Inbox) ? "tray-fill" : "tray-regular"
   end

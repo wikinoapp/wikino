@@ -23,7 +23,10 @@ module Topics
 
       if form.invalid?
         return render(
-          Topics::NewView.new(space:, form:),
+          Topics::NewView.new(
+            space_entity: space.to_entity(space_viewer:),
+            form:
+          ),
           status: :unprocessable_entity
         )
       end

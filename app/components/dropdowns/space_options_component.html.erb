@@ -12,11 +12,13 @@
       <% end %>
     <% end %>
 
-    <%= dropdown_menu.with_item do %>
-      <%= link_to space_settings_path(space_entity.identifier), class: "flex gap-2 items-center" do %>
-        <%= render Basic::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
+    <% if signed_in? %>
+      <%= dropdown_menu.with_item do %>
+        <%= link_to space_settings_path(space_entity.identifier), class: "flex gap-2 items-center" do %>
+          <%= render Basic::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
-        <%= t("nouns.settings") %>
+          <%= t("nouns.settings") %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>

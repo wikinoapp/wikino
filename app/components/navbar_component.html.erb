@@ -52,5 +52,18 @@
       <% end %>
     </div>
   <% else %>
+    <%= link_to sign_in_path, {
+      class: class_names(
+        "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group",
+        class_name
+      ),
+      title: t("nouns.sign_in")
+    } do %>
+      <%= render Basic::IconComponent.new(
+        name: "sign-in-regular",
+        size: "2rem",
+        class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
+      ) %>
+    <% end %>
   <% end %>
 </div>
