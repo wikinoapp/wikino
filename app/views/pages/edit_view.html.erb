@@ -1,4 +1,10 @@
-<%= render ::Layouts::MainComponent.new(current_page_name:) do %>
+<%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
+  <%= header.with_breadcrumbs do %>
+    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+  <% end %>
+<% end %>
+
+<%= render Containers::MainComponent.new do %>
   <div class="flex flex-col gap-6 px-4 py-6">
     <h1 class="text-2xl font-bold antialiased">
       <%= title %>

@@ -10,7 +10,7 @@ ja:
       home:
         show: ホーム
       topics:
-        new: 新規トピック
+        new: "新規トピック | %{space_name}"
         show: "%{topic_name} | %{space_name}"
       trash:
         show: ゴミ箱

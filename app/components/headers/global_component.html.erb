@@ -1,0 +1,21 @@
+<header class="sticky top-0 z-navbar hidden lg:block">
+  <div
+    class="<%= class_names("
+      bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200
+      ease-in-out
+    ") %>"
+    data-controller="stuck"
+  >
+    <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
+      <div class="navbar-start gap-4">
+        <%= render Links::BrandIconComponent.new(current_page_name:) %>
+
+        <%= breadcrumbs %>
+      </div>
+
+      <div class="navbar-end">
+        <%= render NavbarComponent.new(signed_in:, current_page_name:) %>
+      </div>
+    </div>
+  </div>
+</header>

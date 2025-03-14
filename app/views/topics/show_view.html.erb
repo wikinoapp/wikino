@@ -1,30 +1,14 @@
-<%= render ::Layouts::MainComponent.new(current_page_name:) do %>
-  <div class="flex items-center justify-center">
+<%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
+  <%= header.with_breadcrumbs do %>
     <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
-  </div>
+  <% end %>
+<% end %>
 
+<%= render Containers::MainComponent.new(
+  content_screen: Containers::MainComponent::ContentScreen::Large
+) do %>
   <div class="flex flex-col gap-6 px-4 py-6">
-    <div class="flex items-center justify-between">
-      <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold antialiased">
-          <%= topic_entity.name %>
-        </h1>
-
-        <% if topic_entity.description.present? %>
-          <p class="text-sm text-gray-500">
-            <%= topic_entity.description %>
-          </p>
-        <% end %>
-      </div>
-
-      <% if topic_entity.viewer_can_create_page? %>
-        <%= link_to new_page_path(space_entity.identifier, topic_entity.number), class: "btn btn-primary no-animation rounded-full" do %>
-          <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
-
-          <%= t("nouns.new_page") %>
-        <% end %>
-      <% end %>
-    </div>
+    <%= render Topics::ShowView::HeaderComponent.new(topic_entity:) %>
 
     <% if pinned_page_entities.present? || page_entities.present? %>
       <div class="flex flex-col gap-6">
@@ -57,9 +41,8 @@
         <% end %>
       </div>
     <% end %>
-
-    <div class="mt-10">
-      <%= render Footers::PublicComponent.new %>
-    </div>
   </div>
 <% end %>
+
+<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
+<%= render FixedBottomComponent.new(current_page_name:) %>
