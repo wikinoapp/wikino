@@ -14,7 +14,6 @@ class ContainerComponent < ApplicationComponent
     enums do
       Small = new("sm")
       Medium = new("md")
-      Large = new("lg")
     end
   end
 
@@ -46,8 +45,6 @@ class ContainerComponent < ApplicationComponent
       "max-w-2xl" # 672px
     when ContentScreen::Medium
       "max-w-4xl" # 896px
-    when ContentScreen::Large
-      "max-w-5xl" # 1024px
     else
       T.absurd(cs)
     end
