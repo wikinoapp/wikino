@@ -21,7 +21,7 @@ module Topics
     sig { override.void }
     def before_render
       title = I18n.t("meta.title.topics.show", space_name: space_entity.name, topic_name: topic_entity.name)
-      helpers.set_meta_tags(title:, **default_meta_tags)
+      helpers.set_meta_tags(title:, **default_meta_tags(site: false))
     end
 
     sig { returns(T::Boolean) }

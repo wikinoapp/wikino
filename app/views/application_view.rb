@@ -4,16 +4,14 @@
 class ApplicationView < ViewComponent::Base
   extend T::Sig
 
-  sig { returns(T::Hash[Symbol, T.untyped]) }
-  def default_meta_tags
-    {
+  sig { params(site: T::Boolean).returns(T::Hash[Symbol, T.untyped]) }
+  def default_meta_tags(site: true)
+    attrs = {
       reverse: true,
-      site: "Wikino",
-      separator: " |",
       description: I18n.t("meta.description.default"),
       canonical: "#{request.protocol}#{request.host_with_port}#{request.path}",
       og: {
-        title: meta_tags.full_title(site: "Wikino", separator: " |", reverse: true),
+        title: :full_title,
         type: "website",
         url: request.url,
         description: I18n.t("meta.description.default"),
@@ -22,5 +20,12 @@ class ApplicationView < ViewComponent::Base
         locale: (I18n.locale == :ja) ? "ja_JP" : "en_US"
       }
     }
+
+    if site
+      attrs[:site] = "Wikino"
+      attrs[:separator] = " |"
+    end
+
+    attrs
   end
 end
