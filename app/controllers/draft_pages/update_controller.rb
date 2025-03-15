@@ -28,7 +28,7 @@ module DraftPages
         body: form_params[:body]
       )
       draft_page_entity = result.draft_page.to_entity(space_viewer:)
-      link_list_entity = page.not_nil!.fetch_link_list_entity(space_viewer:)
+      link_list_entity = result.draft_page.not_nil!.fetch_link_list_entity(space_viewer:)
       backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
 
       render(DraftPages::UpdateView.new(
