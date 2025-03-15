@@ -1,0 +1,11 @@
+<div class="flex flex-col gap-4">
+  <%= header %>
+
+  <%= main %>
+
+  <% if footer? %>
+    <%= footer %>
+  <% end %>
+</div>
+
+<%= render FixedBottomComponent.new(current_page_name:) %>

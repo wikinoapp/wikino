@@ -1,27 +1,35 @@
-<%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) %>
+  <% end %>
 
-<%= render Containers::MainComponent.new(
-  content_screen: Containers::MainComponent::ContentScreen::Large
-) do %>
-  <div class="flex flex-col gap-6 p-4">
-    <h1 class="text-2xl font-bold antialiased">
-      <%= t("nouns.home") %>
-    </h1>
+  <%= layout.with_main do %>
+    <%= render ContainerComponent.new(
+      as: ContainerComponent::As::Main,
+      content_screen: ContainerComponent::ContentScreen::Large,
+      class_name: "flex flex-col gap-6 px-4"
+    ) do %>
+      <h1 class="text-2xl font-bold antialiased">
+        <%= t("nouns.home") %>
+      </h1>
 
-    <div class="flex flex-col gap-4">
-      <h2 class="font-bold antialiased">
-        <%= t("nouns.joined_spaces") %>
-      </h2>
+      <div class="flex flex-col gap-4">
+        <h2 class="font-bold antialiased">
+          <%= t("nouns.joined_spaces") %>
+        </h2>
 
-      <div class="flex flex-col gap-2">
-        <% @active_spaces.each do |space| %>
-          <%= link_to space.name, space_path(space.identifier), class: "link" %>
-        <% end %>
+        <div class="flex flex-col gap-2">
+          <% @active_spaces.each do |space| %>
+            <%= link_to space.name, space_path(space.identifier), class: "link" %>
+          <% end %>
 
-        <%= link_to t("nouns.new_space"), new_space_path, class: "link" %>
+          <%= link_to t("nouns.new_space"), new_space_path, class: "link" %>
+        </div>
       </div>
-    </div>
-  </div>
-<% end %>
+    <% end %>
+  <% end %>
 
-<%= render FixedBottomComponent.new(current_page_name:) %>
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>
