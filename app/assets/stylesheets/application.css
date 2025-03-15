@@ -17,7 +17,7 @@
   }
 
   .wikino-markdown a {
-    @apply link link-primary;
+    @apply link text-blue-600 hover:text-blue-950;
   }
 
   .wikino-markdown blockquote {
