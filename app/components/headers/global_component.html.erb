@@ -1,8 +1,9 @@
-<header class="sticky top-0 z-navbar hidden md:block">
+<header class="static md:sticky top-0 z-navbar">
+  <%# Desktop header %>
   <div
     class="<%= class_names("
       bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-6 transition-all duration-200
-      ease-in-out
+      ease-in-out hidden md:block
     ") %>"
     data-controller="stuck"
   >
@@ -17,5 +18,10 @@
         <%= render NavbarComponent.new(signed_in:, current_page_name:) %>
       </div>
     </div>
+  </div>
+
+  <%# Mobile header %>
+  <div class="block md:hidden pt-4 px-4">
+    <%= breadcrumbs %>
   </div>
 </header>
