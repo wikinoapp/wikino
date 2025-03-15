@@ -8,7 +8,7 @@
     data-controller="stuck"
   >
     <div class="navbar mx-auto min-h-[auto] w-full max-w-screen-lg px-4 py-0">
-      <div class="md:navbar-start gap-4">
+      <div class="gap-4 md:navbar-start">
         <%= render Links::BrandIconComponent.new(current_page_name:) %>
 
         <%= breadcrumbs %>
@@ -22,7 +22,7 @@
 
   <%# モバイルサイズ %>
   <% if breadcrumbs? %>
-    <div class="flex md:hidden items-center gap-4 px-4 pt-4">
+    <div class="flex items-center gap-4 px-4 pt-4 md:hidden">
       <%= breadcrumbs %>
     </div>
   <% end %>

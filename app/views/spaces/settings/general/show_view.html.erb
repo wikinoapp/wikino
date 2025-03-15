@@ -1,71 +1,79 @@
-<%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
-  <%= header.with_breadcrumbs do %>
-    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
-      <%= breadcrumbs.with_item do %>
-        <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
-      <% end %>
-    <% end %>
-  <% end %>
-<% end %>
-
-<%= render Containers::MainComponent.new(
-  content_screen: Containers::MainComponent::ContentScreen::Small
-) do %>
-  <div class="flex flex-col gap-6 p-4">
-    <h1 class="text-2xl font-bold antialiased">
-      <%= t("nouns.general") %>
-    </h1>
-
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
-        <%= form_with(
-          class: "flex flex-col gap-4",
-          model: form,
-          url: space_settings_general_path(space_entity.identifier),
-          method: :patch
-        ) do |f| %>
-          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
-
-          <%= f.label :identifier, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_space_form.identifier") %>
-              </span>
-            </div>
-
-            <%= f.text_field(:identifier,
-              autofocus: true,
-              class: "bg-base-300 input input-bordered w-full",
-              required: true
-            ) %>
-
-            <div class="label">
-              <span class="label-text-alt">
-                <%= t("messages.spaces.identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
-              </span>
-            </div>
-          <% end %>
-
-          <%= f.label :name, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.new_space_form.name") %>
-              </span>
-            </div>
-
-            <%= f.text_field(:name,
-              class: "bg-base-300 input input-bordered w-full",
-              required: true
-            ) %>
-          <% end %>
-
-          <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
-
-            <%= t("verbs.save") %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
+          <%= breadcrumbs.with_item do %>
+            <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
           <% end %>
         <% end %>
       <% end %>
     <% end %>
-  </div>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <h1 class="text-2xl font-bold antialiased">
+        <%= t("nouns.general") %>
+      </h1>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <%= form_with(
+            class: "flex flex-col gap-4",
+            model: form,
+            url: space_settings_general_path(space_entity.identifier),
+            method: :patch
+          ) do |f| %>
+            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+            <%= f.label :identifier, class: "form-control" do %>
+              <div class="label">
+                <span class="label-text">
+                  <%= t("forms.attributes.new_space_form.identifier") %>
+                </span>
+              </div>
+
+              <%= f.text_field(:identifier,
+                autofocus: true,
+                class: "bg-base-300 input input-bordered w-full",
+                required: true
+              ) %>
+
+              <div class="label">
+                <span class="label-text-alt">
+                  <%= t("messages.spaces.identifier_hint_html", min_length: Space::IDENTIFIER_MIN_LENGTH) %>
+                </span>
+              </div>
+            <% end %>
+
+            <%= f.label :name, class: "form-control" do %>
+              <div class="label">
+                <span class="label-text">
+                  <%= t("forms.attributes.new_space_form.name") %>
+                </span>
+              </div>
+
+              <%= f.text_field(:name,
+                class: "bg-base-300 input input-bordered w-full",
+                required: true
+              ) %>
+            <% end %>
+
+            <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+              <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+
+              <%= t("verbs.save") %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
 <% end %>
