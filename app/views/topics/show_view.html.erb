@@ -9,7 +9,6 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Large
     ) do %>
       <%= render Topics::ShowView::HeaderComponent.new(topic_entity:) %>
 
@@ -17,7 +16,7 @@
         <div class="flex flex-col gap-6">
           <div class="flex flex-col gap-4">
             <% if pinned_page_entities.present? %>
-              <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
+              <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <% pinned_page_entities.each do |page_entity| %>
                   <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
                 <% end %>
@@ -25,7 +24,7 @@
             <% end %>
 
             <% if page_entities.present? %>
-              <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
+              <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <% page_entities.each do |page_entity| %>
                   <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
                 <% end %>
