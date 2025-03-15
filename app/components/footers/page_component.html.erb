@@ -1,19 +1,19 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-6">
   <% if show_links? %>
-    <div class="flex flex-col gap-2">
-      <div class="text-lg font-bold antialiased">
+    <div class="flex flex-col gap-4">
+      <h2 class="text-xl font-bold antialiased">
         <%= t("nouns.links") %>
-      </div>
+      </h2>
 
       <%= render LinkListComponent.new(page_entity:, link_list_entity:) %>
     </div>
   <% end %>
 
   <% if show_backlinks? %>
-    <div class="flex flex-col gap-2">
-      <div class="text-lg font-bold antialiased">
+    <div class="flex flex-col gap-4">
+      <h2 class="text-xl font-bold antialiased">
         <%= t("nouns.backlinks") %>
-      </div>
+      </h2>
 
       <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
         <%= render BacklinkListComponent.new(page_entity:, backlink_list_entity:) %>

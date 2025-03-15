@@ -1,48 +1,56 @@
-<%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
-  <%= header.with_breadcrumbs do %>
-    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+      <% end %>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= render Containers::MainComponent.new(
-  content_screen: Containers::MainComponent::ContentScreen::Large
-) do %>
-  <div class="flex flex-col gap-6 px-4 py-6">
-    <div class="flex items-center justify-between">
-      <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold antialiased">
-          <%= t("nouns.trash") %>
-        </h1>
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Large
+    ) do %>
+      <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-2">
+          <h1 class="text-2xl font-bold antialiased">
+            <%= t("nouns.trash") %>
+          </h1>
 
-        <p class="text-sm text-gray-500">
-          <%= t("messages.trash.show.description_1") %>
-          <br>
-          <%= t("messages.trash.show.description_2") %>
-        </p>
-      </div>
-    </div>
-
-    <% if page_entities.present? %>
-      <div class="flex flex-col gap-6">
-        <div class="card bg-base-300 p-4">
-          <%= render Lists::TrashedPagesComponent.new(form:, page_entities:) %>
+          <p class="text-sm text-gray-500">
+            <%= t("messages.trash.show.description_1") %>
+            <br>
+            <%= t("messages.trash.show.description_2") %>
+          </p>
         </div>
+      </div>
 
-        <div class="flex justify-center">
-          <%= render Basic::PaginationComponent.new(
-            pagination_entity:,
-            previous_path: trash_path(before: pagination_entity.previous_cursor),
-            next_path: trash_path(after: pagination_entity.next_cursor)
+      <% if page_entities.present? %>
+        <div class="flex flex-col gap-6">
+          <div class="card bg-base-300 p-4">
+            <%= render Lists::TrashedPagesComponent.new(form:, page_entities:) %>
+          </div>
+
+          <div class="flex justify-center">
+            <%= render Basic::PaginationComponent.new(
+              pagination_entity:,
+              previous_path: trash_path(before: pagination_entity.previous_cursor),
+              next_path: trash_path(after: pagination_entity.next_cursor)
+            ) %>
+          </div>
+        </div>
+      <% else %>
+        <div class="card bg-base-300 p-4">
+          <%= render Cards::EmptyStateComponent.new(
+            icon_name: "file",
+            message: t("messages.trash.empty_state_message")
           ) %>
         </div>
-      </div>
-    <% else %>
-      <div class="card bg-base-300 p-4">
-        <%= render Cards::EmptyStateComponent.new(
-          icon_name: "file",
-          message: t("messages.trash.empty_state_message")
-        ) %>
-      </div>
+      <% end %>
     <% end %>
-  </div>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
 <% end %>

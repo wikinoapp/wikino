@@ -1,26 +1,32 @@
-<%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
-  <%= header.with_breadcrumbs do %>
-    <%= render Pages::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <%= render Pages::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
+      <% end %>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= render Containers::MainComponent.new do %>
-  <div class="flex flex-col gap-6 p-4">
-    <%= render Pages::ShowView::HeaderComponent.new(signed_in:, page_entity:) %>
+  <%= layout.with_main do %>
+    <%= render ContainerComponent.new(
+      as: ContainerComponent::As::Main,
+      class_name: "flex flex-col gap-6 px-4"
+    ) do %>
+      <article class="flex flex-col gap-6">
+        <%= render Pages::ShowView::HeaderComponent.new(signed_in:, page_entity:) %>
 
-    <% if page_entity.body_html.present? %>
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <% if page_entity.body_html.present? %>
           <div class="wikino-markdown">
             <%= page_entity.body_html.html_safe %>
           </div>
         <% end %>
-      <% end %>
+      </article>
+
+      <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
     <% end %>
+  <% end %>
 
-    <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
-  </div>
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in:) %>
+  <% end %>
 <% end %>
-
-<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
-<%= render FixedBottomComponent.new(current_page_name:) %>

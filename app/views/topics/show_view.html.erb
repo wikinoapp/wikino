@@ -1,48 +1,53 @@
-<%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
-  <%= header.with_breadcrumbs do %>
-    <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+      <% end %>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= render Containers::MainComponent.new(
-  content_screen: Containers::MainComponent::ContentScreen::Large
-) do %>
-  <div class="flex flex-col gap-6 px-4 py-6">
-    <%= render Topics::ShowView::HeaderComponent.new(topic_entity:) %>
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Large
+    ) do %>
+      <%= render Topics::ShowView::HeaderComponent.new(topic_entity:) %>
 
-    <% if pinned_page_entities.present? || page_entities.present? %>
-      <div class="flex flex-col gap-6">
-        <div class="flex flex-col gap-4">
-          <% if pinned_page_entities.present? %>
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% pinned_page_entities.each do |page_entity| %>
-                <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
-              <% end %>
-            </div>
-          <% end %>
+      <% if pinned_page_entities.present? || page_entities.present? %>
+        <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-4">
+            <% if pinned_page_entities.present? %>
+              <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
+                <% pinned_page_entities.each do |page_entity| %>
+                  <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
+                <% end %>
+              </div>
+            <% end %>
 
-          <% if page_entities.present? %>
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-              <% page_entities.each do |page_entity| %>
-                <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
-              <% end %>
+            <% if page_entities.present? %>
+              <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
+                <% page_entities.each do |page_entity| %>
+                  <%= render Cards::PageComponent.new(page_entity:, show_topic_name: false) %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <% if pagination_entity.has_previous? || pagination_entity.has_next? %>
+            <div class="flex justify-center">
+              <%= render Basic::PaginationComponent.new(
+                pagination_entity:,
+                previous_path: topic_path(before: pagination_entity.previous_cursor),
+                next_path: topic_path(after: pagination_entity.next_cursor)
+              ) %>
             </div>
           <% end %>
         </div>
-
-        <% if pagination_entity.has_previous? || pagination_entity.has_next? %>
-          <div class="flex justify-center">
-            <%= render Basic::PaginationComponent.new(
-              pagination_entity:,
-              previous_path: topic_path(before: pagination_entity.previous_cursor),
-              next_path: topic_path(after: pagination_entity.next_cursor)
-            ) %>
-          </div>
-        <% end %>
-      </div>
+      <% end %>
     <% end %>
-  </div>
-<% end %>
+  <% end %>
 
-<%= render Footers::PublicComponent.new(signed_in:, class_name: "mt-10") %>
-<%= render FixedBottomComponent.new(current_page_name:) %>
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in:) %>
+  <% end %>
+<% end %>

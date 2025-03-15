@@ -1,47 +1,49 @@
-<%= render Headers::GlobalComponent.new(signed_in: false, current_page_name:) %>
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(signed_in: false, current_page_name:) %>
+  <% end %>
 
-<%= render Containers::MainComponent.new do %>
-  <div class="flex flex-col gap-10 px-4 py-6">
-    <div class="flex flex-col gap-2">
-      <h1 class="font-bold">
-        Wikinoにようこそ！
-      </h1>
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new do %>
+      <div class="flex flex-col gap-2">
+        <h1 class="font-bold">
+          Wikinoにようこそ！
+        </h1>
 
-      <p>
-        Wikinoは、Wikiを作成・編集・共有するためのサービスです。<br>
-        現在は開発者 (<a class="link link-primary" href="/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。
-        誰でも使えるようにするため現在開発中です。
-      </p>
-    </div>
+        <p>
+          Wikinoは、Wikiを作成・編集・共有するためのサービスです。<br>
+          現在は開発者 (<a class="link link-primary" href="/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。
+          誰でも使えるようにするため開発中です。
+        </p>
+      </div>
 
-    <div class="flex flex-col gap-2">
-      <h2 class="font-bold">
-        Wikinoの特徴
-      </h2>
+      <div class="flex flex-col gap-2">
+        <h2 class="font-bold">
+          Wikinoの特徴
+        </h2>
 
-      <ul class="list-disc pl-4">
-        <li>Markdown記法でWikiのページを作成・編集できる</li>
-        <li>ページ間をリンクで繋げられる (2ホップリンク)</li>
-        <li>トピックごとに同名のタイトルのページが作成できる</li>
-      </ul>
-    </div>
+        <ul class="list-disc pl-4">
+          <li>Markdown記法でWikiのページを作成・編集できる</li>
+          <li>ページ間をリンクで繋げられる (2ホップリンク)</li>
+          <li>トピックごとに同名のタイトルのページが作成できる</li>
+        </ul>
+      </div>
 
-    <div class="flex flex-col gap-2">
-      <h2 class="font-bold">
-        更新情報
-      </h2>
+      <div class="flex flex-col gap-2">
+        <h2 class="font-bold">
+          更新情報
+        </h2>
 
-      <p>
-        Wikinoのスペースで公開しています。
-      </p>
+        <p>
+          Wikinoのスペースで公開しています。
+        </p>
 
-      <%= link_to "/s/wikino", class: "link link-primary" do %>
-        <%= render Basic::IconComponent.new(name: "arrow-right-regular", size: "18px", class_name: "fill-primary") %>
+        <%= link_to "/s/wikino", class: "link link-primary" do %>
+          <%= render Basic::IconComponent.new(name: "arrow-right-regular", size: "18px", class_name: "fill-primary") %>
 
-        Wikinoのスペースを見る
-      <% end %>
-    </div>
-  </div>
+          Wikinoのスペースを見る
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
 <% end %>
-
-<%= render FixedBottomComponent.new(current_page_name:) %>

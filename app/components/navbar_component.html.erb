@@ -1,5 +1,5 @@
 <div
-  class="<%= class_names("bg-base-300 flex gap-6 items-center px-4 py-1 rounded-full w-fit border border-brand-200",
+  class="<%= class_names("flex gap-6 items-center",
     class_name
   ) %>"
 >
@@ -47,7 +47,7 @@
     <% end %>
 
     <div class="avatar">
-      <%= link_to "#", class: "w-8" do %>
+      <%= link_to "#", class: "w-8 rounded-full" do %>
         <%= image_tag "https://shimba.co/img/shimbaco.jpg", class: "rounded-full" %>
       <% end %>
     </div>
