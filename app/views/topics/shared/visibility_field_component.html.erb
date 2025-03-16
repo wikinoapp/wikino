@@ -1,0 +1,39 @@
+<div>
+  <div class="label">
+    <span class="label-text">
+      <%= t("forms.attributes.new_topic_form.visibility") %>
+    </span>
+  </div>
+
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+      <label class="flex cursor-pointer items-center gap-2">
+        <%= form_builder.radio_button :visibility, TopicVisibility::Public.serialize, class: "radio" %>
+
+        <span class="label-text flex items-center gap-1">
+          <%= render Basic::IconComponent.new(name: "globe", size: "16px") %>
+          <%= t("activerecord.attributes.topic.visibility.public") %>
+        </span>
+      </label>
+
+      <div class="label-text-alt pl-[32px]">
+        <%= t("forms.attributes.new_topic_form.visibility_public_hint") %>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="flex cursor-pointer items-center gap-2">
+        <%= form_builder.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
+
+        <span class="label-text flex items-center gap-1">
+          <%= render Basic::IconComponent.new(name: "lock", size: "16px") %>
+          <%= t("activerecord.attributes.topic.visibility.private") %>
+        </span>
+      </label>
+
+      <div class="label-text-alt pl-[32px]">
+        <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
+      </div>
+    </div>
+  </div>
+</div>

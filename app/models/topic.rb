@@ -26,7 +26,8 @@ class Topic < ApplicationRecord
       description:,
       visibility: TopicVisibility.deserialize(visibility),
       space_entity: space.not_nil!.to_entity(space_viewer:),
-      viewer_can_create_page: space_viewer.can_create_page?(topic: self)
+      viewer_can_create_page: space_viewer.can_create_page?(topic: self),
+      viewer_can_update: space_viewer.can_update_topic?(topic: self)
     )
   end
 

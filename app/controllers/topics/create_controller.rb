@@ -19,7 +19,7 @@ module Topics
         return render_404
       end
 
-      form = NewTopicForm.new(form_params)
+      form = NewTopicForm.new(form_params.merge(space:))
 
       if form.invalid?
         return render(

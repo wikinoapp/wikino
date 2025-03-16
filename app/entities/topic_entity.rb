@@ -13,8 +13,10 @@ class TopicEntity < T::Struct
   const :visibility, TopicVisibility
   const :space_entity, SpaceEntity
   const :viewer_can_create_page, T::Boolean
+  const :viewer_can_update, T::Boolean
 
   alias_method :viewer_can_create_page?, :viewer_can_create_page
+  alias_method :viewer_can_update?, :viewer_can_update
 
   sig { returns(T::Boolean) }
   def visibility_public?

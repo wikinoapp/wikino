@@ -49,6 +49,11 @@ class Space < ApplicationRecord
     Space.where.not(id:).exists?(identifier:)
   end
 
+  sig { params(name: String).returns(T::Boolean) }
+  def topic_name_uniqueness?(name)
+    topics.where.not(id:).exists?(name:)
+  end
+
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
   def to_entity(space_viewer:)
     SpaceEntity.new(

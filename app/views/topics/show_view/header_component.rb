@@ -4,10 +4,16 @@
 module Topics
   class ShowView
     class HeaderComponent < ApplicationComponent
-      sig { params(topic_entity: TopicEntity).void }
-      def initialize(topic_entity:)
+      sig { params(signed_in: T::Boolean, topic_entity: TopicEntity).void }
+      def initialize(signed_in:, topic_entity:)
+        @signed_in = signed_in
         @topic_entity = topic_entity
       end
+
+      sig { returns(T::Boolean) }
+      attr_reader :signed_in
+      private :signed_in
+      alias_method :signed_in?, :signed_in
 
       sig { returns(TopicEntity) }
       attr_reader :topic_entity

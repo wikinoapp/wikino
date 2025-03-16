@@ -16,7 +16,8 @@ class SpaceMemberRole < T::Enum
         SpaceMemberPermission::CreateTopic,
         SpaceMemberPermission::CreatePage,
         SpaceMemberPermission::CreateDraftPage,
-        SpaceMemberPermission::UpdateSpace
+        SpaceMemberPermission::UpdateSpace,
+        SpaceMemberPermission::UpdateTopic
       ]
     else
       T.absurd(self)

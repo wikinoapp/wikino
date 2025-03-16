@@ -91,6 +91,11 @@ class SpaceMember < ApplicationRecord
     space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
+  sig { override.params(topic: Topic).returns(T::Boolean) }
+  def can_update_topic?(topic:)
+    space.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
+  end
+
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
   def can_create_page?(topic:)
     topic.present? && topics.where(id: topic.id).exists?

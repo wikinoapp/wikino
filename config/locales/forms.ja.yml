@@ -12,6 +12,10 @@ ja:
       edit_space_form:
         identifier: 識別子
         name: 名前
+      edit_topic_form:
+        description: 説明
+        name: 名前
+        visibility: 公開設定
       email_confirmation_form:
         confirmation_code: 確認用コード
       new_email_confirmation_form:
@@ -43,6 +47,8 @@ ja:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
+        new_topic_form:
+          uniqueness: は既に存在しています
         trashed_pages_form:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         user_session_form:
