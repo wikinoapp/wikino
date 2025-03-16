@@ -93,7 +93,7 @@ class SpaceMember < ApplicationRecord
 
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
-    space.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
+    space.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
   end
 
   sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
