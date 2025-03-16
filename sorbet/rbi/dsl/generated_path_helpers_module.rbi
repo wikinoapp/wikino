@@ -106,6 +106,12 @@ module GeneratedPathHelpersModule
   def topic_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def topic_settings_general_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def topic_settings_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def trash_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

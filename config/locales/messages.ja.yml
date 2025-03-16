@@ -28,8 +28,9 @@ ja:
     time:
       ago_modified: "%{time}前に編集"
       ago_published: "%{time}前に公開"
-    topic:
+    topics:
       created: トピックを作成しました
+      updated: トピックを更新しました
     trash:
       empty_state_message: ゴミ箱は空です
       restored: ページを復元しました

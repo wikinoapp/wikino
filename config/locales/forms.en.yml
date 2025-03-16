@@ -12,6 +12,10 @@ en:
       edit_space_form:
         identifier: Identifier
         name: Name
+      edit_topic_form:
+        description: Description
+        name: Name
+        visibility: Visibility
       email_confirmation_form:
         confirmation_code: Confirmation code
       new_email_confirmation_form:
@@ -39,10 +43,14 @@ en:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
         edit_space_form:
           uniqueness: has already been taken
+        edit_topic_form:
+          uniqueness: has already been taken
         email_confirmation_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: is incorrect or expired
+        new_topic_form:
+          uniqueness: has already been taken
         trashed_pages_form:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
         user_session_form:

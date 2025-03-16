@@ -2,7 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+        <%= render Topics::Settings::General::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
       <% end %>
     <% end %>
   <% end %>
@@ -12,15 +12,16 @@
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
       <h1 class="text-2xl font-bold antialiased">
-        <%= t("nouns.new_topic") %>
+        <%= t("nouns.general") %>
       </h1>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= form_with(
             class: "flex flex-col gap-4",
             model: form,
-            url: topic_list_path(space_entity.identifier)
+            url: topic_settings_general_path(space_entity.identifier, topic_entity.number),
+            method: :patch
           ) do |f| %>
             <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
@@ -31,7 +32,7 @@
             <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
               <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-              <%= t("verbs.create") %>
+              <%= t("verbs.save") %>
             <% end %>
           <% end %>
         <% end %>

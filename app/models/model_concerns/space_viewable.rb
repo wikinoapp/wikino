@@ -28,6 +28,10 @@ module ModelConcerns
     def can_update_space?(space:)
     end
 
+    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    def can_update_topic?(topic:)
+    end
+
     sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }
     def can_create_page?(topic:)
     end

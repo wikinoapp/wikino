@@ -12,6 +12,10 @@ en:
       topics:
         new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
+        settings:
+          general:
+            show: "General | %{topic_name} | %{space_name}"
+          show: "Settings | %{topic_name} | %{space_name}"
       trash:
         show: Trash
       pages:

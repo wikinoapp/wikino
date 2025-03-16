@@ -19,7 +19,7 @@ module Topics
         return render_404
       end
 
-      form = NewTopicForm.new(form_params)
+      form = NewTopicForm.new(form_params.merge(space:))
 
       if form.invalid?
         return render(
@@ -38,7 +38,7 @@ module Topics
         visibility: form.visibility.not_nil!
       )
 
-      flash[:notice] = t("messages.topic.created")
+      flash[:notice] = t("messages.topics.created")
       redirect_to topic_path(space.identifier, result.topic.number)
     end
 

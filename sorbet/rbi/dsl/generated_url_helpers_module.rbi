@@ -103,6 +103,12 @@ module GeneratedUrlHelpersModule
   def topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def topic_settings_general_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def topic_settings_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def topic_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

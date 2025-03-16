@@ -18,6 +18,8 @@ class PageName < T::Enum
     TopicDetail = new
     TopicEdit = new
     TopicNew = new
+    TopicSettings = new
+    TopicSettingsGeneral = new
     Trash = new
     Welcome = new
   end

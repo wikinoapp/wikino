@@ -28,8 +28,9 @@ en:
     time:
       ago_modified: "Modified %{time} ago"
       ago_published: "Published %{time} ago"
-    topic:
+    topics:
       created: Topic created.
+      updated: Topic updated.
     trash:
       empty_state_message: Trash is empty.
       restored: Pages have been restored.
