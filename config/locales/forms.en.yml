@@ -43,6 +43,8 @@ en:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
         edit_space_form:
           uniqueness: has already been taken
+        edit_topic_form:
+          uniqueness: has already been taken
         email_confirmation_form:
           attributes:
             confirmation_code:

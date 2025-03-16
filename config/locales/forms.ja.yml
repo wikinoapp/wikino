@@ -43,6 +43,8 @@ ja:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
         edit_space_form:
           uniqueness: は既に存在しています
+        edit_topic_form:
+          uniqueness: は既に存在しています
         email_confirmation_form:
           attributes:
             confirmation_code:
