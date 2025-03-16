@@ -9,6 +9,7 @@ class NewTopicForm < ApplicationForm
   attribute :description, :string, default: ""
   attribute :visibility, :string
 
+  validates :name, presence: true
   validates :visibility, presence: true
   validate :name_uniqueness
 

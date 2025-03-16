@@ -50,7 +50,7 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
 
     patch("/s/#{space.identifier}/topics/#{topic.number}/settings/general", params: {
       edit_topic_form: {
-        name: "",
+        name: "", # トピック名が空
         description: "Updated Description",
         visibility: "public"
       }
