@@ -24,6 +24,7 @@ module Topics
       if form.invalid?
         return render(
           Topics::NewView.new(
+            current_user_entity: Current.viewer!.user_entity,
             space_entity: space.to_entity(space_viewer:),
             form:
           ),

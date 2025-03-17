@@ -1,6 +1,6 @@
 <%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) %>
+    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) %>
   <% end %>
 
   <%= layout.with_main do %>
@@ -19,7 +19,7 @@
             <% end %>
           <% end %>
 
-          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in:, space_entity:) %>
+          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space_entity:) %>
         </div>
       </div>
 
@@ -58,6 +58,6 @@
   <% end %>
 
   <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in:) %>
+    <%= render Footers::GlobalComponent.new(signed_in: signed_in?) %>
   <% end %>
 <% end %>

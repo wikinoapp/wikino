@@ -26,7 +26,11 @@ module Topics
 
           if form.invalid?
             return render(
-              Topics::Settings::General::ShowView.new(topic_entity:, form:),
+              Topics::Settings::General::ShowView.new(
+                current_user_entity: Current.viewer!.user_entity,
+                topic_entity:,
+                form:
+              ),
               status: :unprocessable_entity
             )
           end

@@ -1,0 +1,48 @@
+<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user_entity:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render ContainerComponent.new(
+      as: ContainerComponent::As::Main,
+      class_name: "flex flex-col gap-6 px-4"
+    ) do %>
+      <div class="flex flex-col gap-4">
+        <h1 class="antialiased">
+          <span class="block text-2xl font-bold">
+            <%= user_entity.name %>
+          </span>
+
+          <span class="block text-lg text-gray-700">
+            @<%= user_entity.atname %>
+          </span>
+        </h1>
+
+        <% if user_entity.description.present? %>
+          <div>
+            <%= user_entity.description %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <h2 class="font-bold antialiased">
+          <%= t("nouns.joined_spaces") %>
+        </h2>
+
+        <ul class="list-inside list-disc">
+          <% joined_space_entities.each do |joined_space_entity| %>
+            <li>
+              <%= link_to joined_space_entity.name, space_path(joined_space_entity.identifier), class: "link" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: signed_in?) %>
+  <% end %>
+<% end %>

@@ -11,6 +11,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
 -- Name: citext; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -692,10 +706,24 @@ CREATE INDEX index_user_sessions_on_user_id ON public.user_sessions USING btree 
 
 
 --
+-- Name: index_users_on_atname; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_atname ON public.users USING btree (atname);
+
+
+--
 -- Name: index_users_on_discarded_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_at);
+
+
+--
+-- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
@@ -865,6 +893,7 @@ ALTER TABLE ONLY public.page_editors
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250317095826'),
 ('20250204164034'),
 ('20250202165519'),
 ('20250202165124'),

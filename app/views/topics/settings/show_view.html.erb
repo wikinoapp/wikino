@@ -1,6 +1,6 @@
 <%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(signed_in: true, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
         <%= render Topics::Settings::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
       <% end %>

@@ -29,6 +29,11 @@ class Visitor
     false
   end
 
+  sig { override.returns(T.nilable(UserEntity)) }
+  def user_entity
+    nil
+  end
+
   sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
   def space_viewer!(space:)
     SpaceVisitor.new(space:)

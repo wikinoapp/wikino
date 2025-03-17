@@ -13,7 +13,10 @@ module Spaces
     def call
       form = NewSpaceForm.new
 
-      render Spaces::NewView.new(form:)
+      render Spaces::NewView.new(
+        current_user_entity: Current.viewer!.user_entity,
+        form:
+      )
     end
   end
 end

@@ -1,6 +1,6 @@
 <%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(signed_in:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
         <%= render Pages::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
       <% end %>
@@ -13,7 +13,7 @@
       class_name: "flex flex-col gap-6 px-4"
     ) do %>
       <article class="flex flex-col gap-6">
-        <%= render Pages::ShowView::HeaderComponent.new(signed_in:, page_entity:) %>
+        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page_entity:) %>
 
         <% if page_entity.body_html.present? %>
           <div class="wikino-markdown">
@@ -27,6 +27,6 @@
   <% end %>
 
   <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in:) %>
+    <%= render Footers::GlobalComponent.new(signed_in: signed_in?) %>
   <% end %>
 <% end %>

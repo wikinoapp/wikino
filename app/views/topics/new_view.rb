@@ -3,8 +3,15 @@
 
 module Topics
   class NewView < ApplicationView
-    sig { params(space_entity: SpaceEntity, form: NewTopicForm).void }
-    def initialize(space_entity:, form:)
+    sig do
+      params(
+        current_user_entity: UserEntity,
+        space_entity: SpaceEntity,
+        form: NewTopicForm
+      ).void
+    end
+    def initialize(current_user_entity:, space_entity:, form:)
+      @current_user_entity = current_user_entity
       @space_entity = space_entity
       @form = form
     end
@@ -14,6 +21,10 @@ module Topics
       title = I18n.t("meta.title.topics.new", space_name: space_entity.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
+
+    sig { returns(UserEntity) }
+    attr_reader :current_user_entity
+    private :current_user_entity
 
     sig { returns(SpaceEntity) }
     attr_reader :space_entity

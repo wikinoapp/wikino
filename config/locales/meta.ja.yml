@@ -21,6 +21,8 @@ ja:
       pages:
         edit: ページの編集
         show: "%{page_title} | %{space_name}"
+      profiles:
+        show: "%{name} (@%{atname})"
       sign_in:
         show: ログイン
       sign_up:

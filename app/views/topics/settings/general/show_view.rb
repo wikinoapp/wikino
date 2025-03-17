@@ -5,8 +5,15 @@ module Topics
   module Settings
     module General
       class ShowView < ApplicationView
-        sig { params(topic_entity: TopicEntity, form: EditTopicForm).void }
-        def initialize(topic_entity:, form:)
+        sig do
+          params(
+            current_user_entity: UserEntity,
+            topic_entity: TopicEntity,
+            form: EditTopicForm
+          ).void
+        end
+        def initialize(current_user_entity:, topic_entity:, form:)
+          @current_user_entity = current_user_entity
           @topic_entity = topic_entity
           @form = form
         end
@@ -18,6 +25,10 @@ module Topics
             space_name: space_entity.name)
           helpers.set_meta_tags(title:, **default_meta_tags(site: false))
         end
+
+        sig { returns(UserEntity) }
+        attr_reader :current_user_entity
+        private :current_user_entity
 
         sig { returns(TopicEntity) }
         attr_reader :topic_entity

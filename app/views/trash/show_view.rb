@@ -5,12 +5,14 @@ module Trash
   class ShowView < ApplicationView
     sig do
       params(
+        current_user_entity: UserEntity,
         space_entity: SpaceEntity,
         page_list_entity: PageListEntity,
         form: TrashedPagesForm
       ).void
     end
-    def initialize(space_entity:, page_list_entity:, form:)
+    def initialize(current_user_entity:, space_entity:, page_list_entity:, form:)
+      @current_user_entity = current_user_entity
       @space_entity = space_entity
       @page_list_entity = page_list_entity
       @form = form
@@ -21,6 +23,10 @@ module Trash
       title = I18n.t("meta.title.trash.show", space_name: space_entity.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
+
+    sig { returns(UserEntity) }
+    attr_reader :current_user_entity
+    private :current_user_entity
 
     sig { returns(SpaceEntity) }
     attr_reader :space_entity

@@ -28,7 +28,11 @@ module Topics
             visibility: topic_entity.visibility.serialize
           )
 
-          render Topics::Settings::General::ShowView.new(topic_entity:, form:)
+          render Topics::Settings::General::ShowView.new(
+            current_user_entity: Current.viewer!.user_entity,
+            topic_entity:,
+            form:
+          )
         end
       end
     end
