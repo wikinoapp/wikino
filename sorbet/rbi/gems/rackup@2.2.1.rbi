@@ -61,25 +61,6 @@ module Rackup::Handler
   end
 end
 
-# source://rackup//lib/rackup/handler/cgi.rb#8
-class Rackup::Handler::CGI
-  include ::Rack
-
-  class << self
-    # source://rackup//lib/rackup/handler/cgi.rb#11
-    def run(app, **options); end
-
-    # source://rackup//lib/rackup/handler/cgi.rb#51
-    def send_body(body); end
-
-    # source://rackup//lib/rackup/handler/cgi.rb#40
-    def send_headers(status, headers); end
-
-    # source://rackup//lib/rackup/handler/cgi.rb#16
-    def serve(app); end
-  end
-end
-
 # source://rackup//lib/rackup/handler.rb#59
 Rackup::Handler::RACKUP_HANDLER = T.let(T.unsafe(nil), String)
 
