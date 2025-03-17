@@ -44,7 +44,7 @@ en:
       created: Space created.
       identifier_hint_html: |-
         This identifier is used in the URL of the space.<br>
-        It must be at least %{min_length} characters long and can only contain alphanumeric characters and hyphens.
+        It must be at most %{max_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
       new_space: New Space
       updated: Space updated.
