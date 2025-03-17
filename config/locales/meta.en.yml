@@ -21,6 +21,8 @@ en:
       pages:
         edit: Edit page
         show: "%{page_title} | %{space_name}"
+      profiles:
+        show: "%{name} (@%{atname})"
       sign_in:
         show: Sign in
       sign_up:

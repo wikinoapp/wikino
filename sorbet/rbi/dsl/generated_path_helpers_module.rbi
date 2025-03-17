@@ -67,6 +67,9 @@ module GeneratedPathHelpersModule
   def preview_view_components_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def profile_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def rails_info_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

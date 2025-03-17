@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   end
 
   # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
+  match "/@:atname",                                                       via: :get,    as: :profile,                       to: "profiles/show#call"
   match "/accounts",                                                       via: :post,   as: :account_list,                  to: "accounts/create#call"
   match "/accounts/new",                                                   via: :get,    as: :new_account,                   to: "accounts/new#call"
   match "/email_confirmation",                                             via: :patch,  as: :email_confirmation,            to: "email_confirmations/update#call"
