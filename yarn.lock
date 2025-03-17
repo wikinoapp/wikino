@@ -290,10 +290,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@ttskch/prettier-plugin-tailwindcss-anywhere@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@ttskch/prettier-plugin-tailwindcss-anywhere/-/prettier-plugin-tailwindcss-anywhere-0.0.7.tgz#e24e09b6abd264c3e9c7fe88df0f2ed2871075cf"
-  integrity sha512-8pMnrSEE3wrfn15LqE7L2n72fM6YjzjlfSR1QrOGavAqAUydl/7MFk0Oxky/GzNVmAUdAAOuxdBN7PHau7t8iQ==
+"@ttskch/prettier-plugin-tailwindcss-anywhere@^0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@ttskch/prettier-plugin-tailwindcss-anywhere/-/prettier-plugin-tailwindcss-anywhere-0.0.9.tgz#937174abbc719f5ac0c9062db492cd8771b3f581"
+  integrity sha512-ur9djZgCvhrUWsPH7Sk0ySXFHdTHfJsSYNeHvvUh/Eib63EO5ITfD6H0vtg0ai2evtFhPYwgoJAnnMXLx4pEXA==
   dependencies:
     tslib "~2.7"
 
