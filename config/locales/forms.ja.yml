@@ -38,6 +38,7 @@ ja:
     errors:
       models:
         account_form:
+          reserved: は使用できません
           uniqueness: は既に存在しています
         edit_page_form:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>

@@ -38,6 +38,7 @@ en:
     errors:
       models:
         account_form:
+          reserved: cannot be used
           uniqueness: has already been taken
         edit_page_form:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
