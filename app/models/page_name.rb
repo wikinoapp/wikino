@@ -9,6 +9,7 @@ class PageName < T::Enum
     Inbox = new
     PageDetail = new
     PageEdit = new
+    Profile = new
     SignIn = new
     SignUp = new
     SpaceDetail = new

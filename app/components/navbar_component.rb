@@ -31,4 +31,9 @@ class NavbarComponent < ApplicationComponent
   private def inbox_icon_name
     (current_page_name == PageName::Inbox) ? "tray-fill" : "tray-regular"
   end
+
+  sig { returns(String) }
+  private def profile_icon_name
+    (current_page_name == PageName::Profile) ? "user-circle-fill" : "user-circle-regular"
+  end
 end
