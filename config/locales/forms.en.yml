@@ -36,21 +36,16 @@ en:
         email: Email
         password: Password
     errors:
+      messages:
+        reserved: cannot be used
+        uniqueness: has already been taken
       models:
-        account_form:
-          uniqueness: has already been taken
         edit_page_form:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
-        edit_space_form:
-          uniqueness: has already been taken
-        edit_topic_form:
-          uniqueness: has already been taken
         email_confirmation_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: is incorrect or expired
-        new_topic_form:
-          uniqueness: has already been taken
         trashed_pages_form:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
         user_session_form:

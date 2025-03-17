@@ -2,6 +2,10 @@
 # frozen_string_literal: true
 
 class NewTopicForm < ApplicationForm
+  include FormConcerns::TopicNameValidatable
+  include FormConcerns::TopicDescriptionValidatable
+  include FormConcerns::TopicVisibilityValidatable
+
   sig { returns(T.nilable(Space)) }
   attr_accessor :space
 
@@ -9,8 +13,7 @@ class NewTopicForm < ApplicationForm
   attribute :description, :string, default: ""
   attribute :visibility, :string
 
-  validates :name, presence: true
-  validates :visibility, presence: true
+  validates :space, presence: true
   validate :name_uniqueness
 
   sig { void }

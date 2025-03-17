@@ -2,6 +2,9 @@
 # frozen_string_literal: true
 
 class EditSpaceForm < ApplicationForm
+  include FormConcerns::SpaceIdentifierValidatable
+  include FormConcerns::SpaceNameValidatable
+
   sig { returns(T.nilable(FormConcerns::ISpace)) }
   attr_accessor :space
 
@@ -9,12 +12,6 @@ class EditSpaceForm < ApplicationForm
   attribute :name, :string
 
   validates :space, presence: true
-  validates :identifier,
-    exclusion: {in: Space::RESERVED_IDENTIFIERS},
-    format: {with: Space::IDENTIFIER_FORMAT},
-    length: {minimum: Space::IDENTIFIER_MIN_LENGTH, maximum: Space::IDENTIFIER_MAX_LENGTH},
-    presence: true
-  validates :name, presence: true
   validate :identifier_uniqueness
 
   sig { void }

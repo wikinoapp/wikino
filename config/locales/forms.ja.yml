@@ -36,21 +36,16 @@ ja:
         email: メールアドレス
         password: パスワード
     errors:
+      messages:
+        reserved: は使用できません
+        uniqueness: は既に存在しています
       models:
-        account_form:
-          uniqueness: は既に存在しています
         edit_page_form:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
-        edit_space_form:
-          uniqueness: は既に存在しています
-        edit_topic_form:
-          uniqueness: は既に存在しています
         email_confirmation_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
-        new_topic_form:
-          uniqueness: は既に存在しています
         trashed_pages_form:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         user_session_form:
