@@ -4,6 +4,11 @@
 class Topic < ApplicationRecord
   include Discard::Model
 
+  # この数値に特に強い理由は無い
+  NAME_MAX_LENGTH = 30
+  # この数値に特に強い理由は無い
+  DESCRIPTION_MAX_LENGTH = 150
+
   acts_as_sequenced column: :number, scope: :space_id
 
   enum :visibility, {
