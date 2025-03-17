@@ -503,7 +503,7 @@ class ActiveSupport::BroadcastLogger
   def <<(message); end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#116
-  def add(*args, &block); end
+  def add(*_arg0, **_arg1, &_arg2); end
 
   # Add logger(s) to the broadcast.
   #
@@ -522,7 +522,7 @@ class ActiveSupport::BroadcastLogger
   def close; end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#121
-  def debug(*args, &block); end
+  def debug(*_arg0, **_arg1, &_arg2); end
 
   # Sets the log level to Logger::DEBUG for the whole broadcast.
   #
@@ -538,7 +538,7 @@ class ActiveSupport::BroadcastLogger
   def debug?; end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#133
-  def error(*args, &block); end
+  def error(*_arg0, **_arg1, &_arg2); end
 
   # Sets the log level to Logger::ERROR for the whole broadcast.
   #
@@ -554,7 +554,7 @@ class ActiveSupport::BroadcastLogger
   def error?; end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#137
-  def fatal(*args, &block); end
+  def fatal(*_arg0, **_arg1, &_arg2); end
 
   # Sets the log level to Logger::FATAL for the whole broadcast.
   #
@@ -578,7 +578,7 @@ class ActiveSupport::BroadcastLogger
   def formatter=(formatter); end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#125
-  def info(*args, &block); end
+  def info(*_arg0, **_arg1, &_arg2); end
 
   # Sets the log level to Logger::INFO for the whole broadcast.
   #
@@ -603,7 +603,7 @@ class ActiveSupport::BroadcastLogger
   def local_level=(level); end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#116
-  def log(*args, &block); end
+  def log(*_arg0, **_arg1, &_arg2); end
 
   # Returns the value of attribute progname.
   #
@@ -638,10 +638,10 @@ class ActiveSupport::BroadcastLogger
   def stop_broadcasting_to(logger); end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#141
-  def unknown(*args, &block); end
+  def unknown(*_arg0, **_arg1, &_arg2); end
 
   # source://activesupport//lib/active_support/broadcast_logger.rb#129
-  def warn(*args, &block); end
+  def warn(*_arg0, **_arg1, &_arg2); end
 
   # Sets the log level to Logger::WARN for the whole broadcast.
   #
@@ -5838,6 +5838,108 @@ ActiveSupport::ErrorReporter::DEFAULT_SOURCE = T.let(T.unsafe(nil), String)
 # source://activesupport//lib/active_support/error_reporter.rb#27
 ActiveSupport::ErrorReporter::SEVERITIES = T.let(T.unsafe(nil), Array)
 
+# Allows you to "listen" to changes in a file system.
+# The evented file updater does not hit disk when checking for updates.
+# Instead, it uses platform-specific file system events to trigger a change
+# in state.
+#
+# The file checker takes an array of files to watch or a hash specifying directories
+# and file extensions to watch. It also takes a block that is called when
+# EventedFileUpdateChecker#execute is run or when EventedFileUpdateChecker#execute_if_updated
+# is run and there have been changes to the file system.
+#
+# Example:
+#
+#     checker = ActiveSupport::EventedFileUpdateChecker.new(["/tmp/foo"]) { puts "changed" }
+#     checker.updated?
+#     # => false
+#     checker.execute_if_updated
+#     # => nil
+#
+#     FileUtils.touch("/tmp/foo")
+#
+#     checker.updated?
+#     # => true
+#     checker.execute_if_updated
+#     # => "changed"
+#
+# source://activesupport//lib/active_support/evented_file_update_checker.rb#37
+class ActiveSupport::EventedFileUpdateChecker
+  # @return [EventedFileUpdateChecker] a new instance of EventedFileUpdateChecker
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#38
+  def initialize(files, dirs = T.unsafe(nil), &block); end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#61
+  def execute; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#66
+  def execute_if_updated; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#48
+  def inspect; end
+
+  # @return [Boolean]
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#52
+  def updated?; end
+end
+
+# source://activesupport//lib/active_support/evented_file_update_checker.rb#74
+class ActiveSupport::EventedFileUpdateChecker::Core
+  # @return [Core] a new instance of Core
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#77
+  def initialize(files, dirs); end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#144
+  def changed(modified, added, removed); end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#178
+  def common_path(paths); end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#172
+  def directories_to_watch; end
+
+  # Returns the value of attribute files.
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#75
+  def files; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#100
+  def finalizer; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#138
+  def normalize_dirs!; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#129
+  def restart; end
+
+  # @return [Boolean]
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#134
+  def restart?; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#113
+  def start; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#125
+  def stop; end
+
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#107
+  def thread_safely; end
+
+  # Returns the value of attribute updated.
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#75
+  def updated; end
+
+  # @return [Boolean]
+  #
+  # source://activesupport//lib/active_support/evented_file_update_checker.rb#150
+  def watching?(file); end
+end
+
 # source://activesupport//lib/active_support/execution_context.rb#4
 module ActiveSupport::ExecutionContext
   class << self
@@ -9627,10 +9729,10 @@ class ActiveSupport::Notifications::Fanout
   # source://activesupport//lib/active_support/notifications/fanout.rb#314
   def listening?(name); end
 
-  # source://mutex_m/0.2.0/lib/mutex_m.rb#91
+  # source://mutex_m/0.3.0/lib/mutex_m.rb#96
   def lock; end
 
-  # source://mutex_m/0.2.0/lib/mutex_m.rb#81
+  # source://mutex_m/0.3.0/lib/mutex_m.rb#86
   def locked?; end
 
   # source://activesupport//lib/active_support/notifications/fanout.rb#293
@@ -9645,13 +9747,13 @@ class ActiveSupport::Notifications::Fanout
   # source://activesupport//lib/active_support/notifications/fanout.rb#68
   def subscribe(pattern = T.unsafe(nil), callable = T.unsafe(nil), monotonic: T.unsafe(nil), &block); end
 
-  # source://mutex_m/0.2.0/lib/mutex_m.rb#76
+  # source://mutex_m/0.3.0/lib/mutex_m.rb#81
   def synchronize(&block); end
 
-  # source://mutex_m/0.2.0/lib/mutex_m.rb#86
+  # source://mutex_m/0.3.0/lib/mutex_m.rb#91
   def try_lock; end
 
-  # source://mutex_m/0.2.0/lib/mutex_m.rb#96
+  # source://mutex_m/0.3.0/lib/mutex_m.rb#101
   def unlock; end
 
   # source://activesupport//lib/active_support/notifications/fanout.rb#85
@@ -12145,43 +12247,43 @@ class ActiveSupport::TestCase < ::Minitest::Test
   # source://activesupport//lib/active_support/callbacks.rb#963
   def _teardown_callbacks; end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#731
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#731
   def assert_no_match(matcher, obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#660
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#660
   def assert_not_empty(obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#671
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#671
   def assert_not_equal(exp, act, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#683
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#683
   def assert_not_in_delta(exp, act, delta = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#695
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#695
   def assert_not_in_epsilon(a, b, epsilon = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#702
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#702
   def assert_not_includes(collection, obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#713
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#713
   def assert_not_instance_of(cls, obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#723
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#723
   def assert_not_kind_of(cls, obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#741
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#741
   def assert_not_nil(obj, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#776
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#776
   def assert_not_operator(o1, op, o2 = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#799
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#799
   def assert_not_predicate(o1, op, msg = T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#808
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#808
   def assert_not_respond_to(obj, meth, msg = T.unsafe(nil), include_all: T.unsafe(nil)); end
 
-  # source://minitest/5.25.1/lib/minitest/assertions.rb#817
+  # source://minitest/5.25.5/lib/minitest/assertions.rb#817
   def assert_not_same(exp, act, msg = T.unsafe(nil)); end
 
   # source://activesupport//lib/active_support/testing/file_fixtures.rb#20
@@ -12193,7 +12295,7 @@ class ActiveSupport::TestCase < ::Minitest::Test
   # source://activesupport//lib/active_support/test_case.rb#298
   def inspect; end
 
-  # source://minitest/5.25.1/lib/minitest.rb#375
+  # source://minitest/5.25.5/lib/minitest.rb#376
   def method_name; end
 
   class << self
@@ -16913,9 +17015,9 @@ end
 # source://activesupport//lib/active_support/core_ext/enumerable.rb#21
 class Enumerable::SoleItemExpectedError < ::StandardError; end
 
-# source://activesupport//lib/active_support/core_ext/object/json.rb#248
+# source://activesupport//lib/active_support/core_ext/object/json.rb#250
 class Exception
-  # source://activesupport//lib/active_support/core_ext/object/json.rb#249
+  # source://activesupport//lib/active_support/core_ext/object/json.rb#251
   def as_json(options = T.unsafe(nil)); end
 end
 
@@ -17445,46 +17547,46 @@ HashWithIndifferentAccess = ActiveSupport::HashWithIndifferentAccess
 # source://activesupport//lib/active_support/i18n_railtie.rb#8
 module I18n
   class << self
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#64
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#64
     def cache_key_digest; end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#68
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#68
     def cache_key_digest=(key_digest); end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#56
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#56
     def cache_namespace; end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#60
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#60
     def cache_namespace=(namespace); end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#48
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#48
     def cache_store; end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#52
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#52
     def cache_store=(store); end
 
-    # source://i18n/1.14.6/lib/i18n/backend/fallbacks.rb#17
+    # source://i18n/1.14.7/lib/i18n/backend/fallbacks.rb#17
     def fallbacks; end
 
-    # source://i18n/1.14.6/lib/i18n/backend/fallbacks.rb#23
+    # source://i18n/1.14.7/lib/i18n/backend/fallbacks.rb#23
     def fallbacks=(fallbacks); end
 
-    # source://i18n/1.14.6/lib/i18n/interpolate/ruby.rb#23
+    # source://i18n/1.14.7/lib/i18n/interpolate/ruby.rb#23
     def interpolate(string, values); end
 
-    # source://i18n/1.14.6/lib/i18n/interpolate/ruby.rb#29
+    # source://i18n/1.14.7/lib/i18n/interpolate/ruby.rb#29
     def interpolate_hash(string, values); end
 
-    # source://i18n/1.14.6/lib/i18n.rb#38
+    # source://i18n/1.14.7/lib/i18n.rb#38
     def new_double_nested_cache; end
 
-    # source://i18n/1.14.6/lib/i18n/backend/cache.rb#72
+    # source://i18n/1.14.7/lib/i18n/backend/cache.rb#72
     def perform_caching?; end
 
-    # source://i18n/1.14.6/lib/i18n.rb#46
+    # source://i18n/1.14.7/lib/i18n.rb#46
     def reserve_key(key); end
 
-    # source://i18n/1.14.6/lib/i18n.rb#51
+    # source://i18n/1.14.7/lib/i18n.rb#51
     def reserved_keys_pattern; end
   end
 end
@@ -17636,9 +17738,9 @@ IO::READABLE = T.let(T.unsafe(nil), Integer)
 class IO::TimeoutError < ::IOError; end
 IO::WRITABLE = T.let(T.unsafe(nil), Integer)
 
-# source://activesupport//lib/active_support/core_ext/object/json.rb#236
+# source://activesupport//lib/active_support/core_ext/object/json.rb#237
 class IPAddr
-  # source://activesupport//lib/active_support/core_ext/object/json.rb#237
+  # source://activesupport//lib/active_support/core_ext/object/json.rb#238
   def as_json(options = T.unsafe(nil)); end
 end
 
@@ -19532,9 +19634,9 @@ module Process
   end
 end
 
-# source://activesupport//lib/active_support/core_ext/object/json.rb#242
+# source://activesupport//lib/active_support/core_ext/object/json.rb#244
 class Process::Status
-  # source://activesupport//lib/active_support/core_ext/object/json.rb#243
+  # source://activesupport//lib/active_support/core_ext/object/json.rb#245
   def as_json(options = T.unsafe(nil)); end
 end
 
