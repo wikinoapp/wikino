@@ -10,7 +10,7 @@ class EditSpaceForm < ApplicationForm
 
   validates :space, presence: true
   validates :identifier,
-    exclusion: {in: Space::RESERVED_IDENTIFIERS},
+    exclusion: {in: Space::IDENTIFIER_RESERVED_WORDS},
     format: {with: Space::IDENTIFIER_FORMAT},
     length: {minimum: Space::IDENTIFIER_MIN_LENGTH, maximum: Space::IDENTIFIER_MAX_LENGTH},
     presence: true

@@ -7,9 +7,11 @@ class Space < ApplicationRecord
   include FormConcerns::ISpace
 
   IDENTIFIER_FORMAT = /\A[A-Za-z0-9-]+\z/
-  IDENTIFIER_MIN_LENGTH = 2
+  # この数値に特に強い理由は無い
   IDENTIFIER_MAX_LENGTH = 20
-  RESERVED_IDENTIFIERS = %w[www].freeze
+  IDENTIFIER_RESERVED_WORDS = %w[www].freeze
+  # この数値に特に強い理由は無い
+  NAME_MAX_LENGTH = 30
 
   enum :plan, {
     Plan::Free.serialize => 0,

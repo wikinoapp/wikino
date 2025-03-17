@@ -6,11 +6,13 @@ class NewSpaceForm < ApplicationForm
   attribute :name, :string
 
   validates :identifier,
-    exclusion: {in: Space::RESERVED_IDENTIFIERS},
+    exclusion: {in: Space::IDENTIFIER_RESERVED_WORDS, message: :reserved},
     format: {with: Space::IDENTIFIER_FORMAT},
-    length: {minimum: Space::IDENTIFIER_MIN_LENGTH, maximum: Space::IDENTIFIER_MAX_LENGTH},
+    length: {maximum: Space::IDENTIFIER_MAX_LENGTH},
     presence: true
-  validates :name, presence: true
+  validates :name,
+    length: {maximum: Space::NAME_MAX_LENGTH},
+    presence: true
   validate :identifier_uniqueness
 
   sig { void }
