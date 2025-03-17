@@ -7,7 +7,7 @@ class EmailConfirmation < ApplicationRecord
 
   enum :event, {
     EmailConfirmationEvent::SignUp.serialize => 0,
-    EmailConfirmationEvent::EmailUpdate.serialize => 0
+    EmailConfirmationEvent::EmailUpdate.serialize => 1
   }, prefix: true
 
   scope :active, -> { where(succeeded_at: nil).where("started_at > ?", EXPIRES_IN.ago) }
