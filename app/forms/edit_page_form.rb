@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class EditPageForm < ApplicationForm
+  include ActiveModel::Validations::Callbacks
+
   sig { returns(T.nilable(SpaceMember)) }
   attr_accessor :space_member
 
@@ -12,9 +14,12 @@ class EditPageForm < ApplicationForm
   attribute :title, :string
   attribute :body, :string, default: ""
 
+  before_validation :convert_nil_to_empty_string
+
+  validates :space_member, presence: true
+  validates :page, presence: true
   validates :topic, presence: true
-  validates :title, presence: true
-  validates :body, presence: true, allow_blank: true
+  validates :title, length: {maximum: Page::TITLE_MAX_LENGTH}, presence: true
   validate :title_uniqueness
 
   sig { returns(T.nilable(Topic)) }
@@ -22,8 +27,10 @@ class EditPageForm < ApplicationForm
     selectable_topics.find_by(number: topic_number)
   end
 
-  sig { returns(Topic::PrivateCollectionProxy) }
+  sig { returns(T.any(Topic::PrivateRelation, Topic::PrivateCollectionProxy)) }
   def selectable_topics
+    return Topic.none if space_member.nil?
+
     space_member.not_nil!.topics
   end
 
@@ -35,6 +42,11 @@ class EditPageForm < ApplicationForm
   sig { returns(T::Boolean) }
   def autofocus_body?
     !autofocus_title?
+  end
+
+  sig { void }
+  private def convert_nil_to_empty_string
+    self.body = "" if body.nil?
   end
 
   sig { void }
