@@ -3,9 +3,10 @@
 
 module Home
   class ShowView < ApplicationView
-    sig { params(active_spaces: Space::PrivateCollectionProxy).void }
-    def initialize(active_spaces:)
+    sig { params(active_spaces: Space::PrivateCollectionProxy, current_user_entity: UserEntity).void }
+    def initialize(active_spaces:, current_user_entity:)
       @active_spaces = active_spaces
+      @current_user_entity = current_user_entity
     end
 
     sig { override.void }
@@ -17,6 +18,10 @@ module Home
     sig { returns(Space::PrivateCollectionProxy) }
     attr_reader :active_spaces
     private :active_spaces
+
+    sig { returns(UserEntity) }
+    attr_reader :current_user_entity
+    private :current_user_entity
 
     sig { returns(PageName) }
     private def current_page_name

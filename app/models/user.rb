@@ -52,9 +52,24 @@ class User < ApplicationRecord
     user
   end
 
+  sig { returns(UserEntity) }
+  def to_entity
+    UserEntity.new(
+      database_id: id,
+      atname:,
+      name:,
+      description:
+    )
+  end
+
   sig { override.returns(T::Boolean) }
   def signed_in?
     true
+  end
+
+  sig { override.returns(T.nilable(UserEntity)) }
+  def user_entity
+    to_entity
   end
 
   sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }

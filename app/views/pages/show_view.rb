@@ -5,14 +5,14 @@ module Pages
   class ShowView < ApplicationView
     sig do
       params(
-        signed_in: T::Boolean,
+        current_user_entity: T.nilable(UserEntity),
         page_entity: PageEntity,
         link_list_entity: LinkListEntity,
         backlink_list_entity: BacklinkListEntity
       ).void
     end
-    def initialize(signed_in:, page_entity:, link_list_entity:, backlink_list_entity:)
-      @signed_in = signed_in
+    def initialize(current_user_entity:, page_entity:, link_list_entity:, backlink_list_entity:)
+      @current_user_entity = current_user_entity
       @page_entity = page_entity
       @link_list_entity = link_list_entity
       @backlink_list_entity = backlink_list_entity
@@ -24,10 +24,9 @@ module Pages
       helpers.set_meta_tags(title:, **default_meta_tags(site: false))
     end
 
-    sig { returns(T::Boolean) }
-    attr_reader :signed_in
-    private :signed_in
-    alias_method :signed_in?, :signed_in
+    sig { returns(T.nilable(UserEntity)) }
+    attr_reader :current_user_entity
+    private :current_user_entity
 
     sig { returns(PageEntity) }
     attr_reader :page_entity
@@ -42,6 +41,11 @@ module Pages
     private :backlink_list_entity
 
     delegate :space_entity, :topic_entity, to: :page_entity
+
+    sig { returns(T::Boolean) }
+    private def signed_in?
+      !current_user_entity.nil?
+    end
 
     sig { returns(PageName) }
     private def current_page_name

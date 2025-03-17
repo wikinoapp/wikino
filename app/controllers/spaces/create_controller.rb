@@ -14,7 +14,13 @@ module Spaces
       form = NewSpaceForm.new(form_params)
 
       if form.invalid?
-        return render(Spaces::NewView.new(form:), status: :unprocessable_entity)
+        return render(
+          Spaces::NewView.new(
+            current_user_entity: Current.viewer!.user_entity,
+            form:
+          ),
+          status: :unprocessable_entity
+        )
       end
 
       result = CreateSpaceUseCase.new.call(

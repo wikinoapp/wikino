@@ -5,15 +5,15 @@ module Spaces
   class ShowView < ApplicationView
     sig do
       params(
-        signed_in: T::Boolean,
+        current_user_entity: T.nilable(UserEntity),
         space_entity: SpaceEntity,
         first_topic_entity: T.nilable(TopicEntity),
         pinned_page_entities: T::Array[PageEntity],
         page_list_entity: PageListEntity
       ).void
     end
-    def initialize(signed_in:, space_entity:, first_topic_entity:, pinned_page_entities:, page_list_entity:)
-      @signed_in = signed_in
+    def initialize(current_user_entity:, space_entity:, first_topic_entity:, pinned_page_entities:, page_list_entity:)
+      @current_user_entity = current_user_entity
       @space_entity = space_entity
       @first_topic_entity = first_topic_entity
       @pinned_page_entities = pinned_page_entities
@@ -26,10 +26,9 @@ module Spaces
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(T::Boolean) }
-    attr_reader :signed_in
-    private :signed_in
-    alias_method :signed_in?, :signed_in
+    sig { returns(T.nilable(UserEntity)) }
+    attr_reader :current_user_entity
+    private :current_user_entity
 
     sig { returns(SpaceEntity) }
     attr_reader :space_entity
@@ -48,6 +47,11 @@ module Spaces
     private :page_list_entity
 
     delegate :page_entities, :pagination_entity, to: :page_list_entity
+
+    sig { returns(T::Boolean) }
+    private def signed_in?
+      !current_user_entity.nil?
+    end
 
     sig { returns(PageName) }
     private def current_page_name

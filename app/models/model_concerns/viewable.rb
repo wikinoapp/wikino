@@ -12,6 +12,10 @@ module ModelConcerns
     def signed_in?
     end
 
+    sig { abstract.returns(T.nilable(UserEntity)) }
+    def user_entity
+    end
+
     sig { abstract.params(space: Space).returns(ModelConcerns::SpaceViewable) }
     def space_viewer!(space:)
     end

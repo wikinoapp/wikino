@@ -1,6 +1,6 @@
 <%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(signed_in: false, current_page_name:) %>
+    <%= render Headers::GlobalComponent.new(current_user_entity: nil, current_page_name:) %>
   <% end %>
 
   <%= layout.with_main do %>

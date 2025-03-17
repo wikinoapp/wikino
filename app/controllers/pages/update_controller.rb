@@ -32,6 +32,7 @@ module Pages
 
         return render(
           Pages::EditView.new(
+            current_user_entity: Current.viewer!.user_entity,
             space_entity: space.to_entity(space_viewer:),
             page_entity: page.to_entity(space_viewer:),
             form:,

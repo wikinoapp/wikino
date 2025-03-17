@@ -21,7 +21,10 @@ module Topics
           return render_404
         end
 
-        render Topics::Settings::ShowView.new(topic_entity:)
+        render Topics::Settings::ShowView.new(
+          current_user_entity: Current.viewer!.user_entity,
+          topic_entity:
+        )
       end
     end
   end

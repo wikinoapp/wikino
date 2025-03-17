@@ -20,7 +20,10 @@ module Spaces
           return render_404
         end
 
-        render Spaces::Settings::ShowView.new(space_entity:)
+        render Spaces::Settings::ShowView.new(
+          current_user_entity: Current.viewer!.user_entity,
+          space_entity:
+        )
       end
     end
   end

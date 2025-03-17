@@ -39,7 +39,8 @@ module Pages
         draft_page_entity: draft_page&.to_entity(space_viewer:),
         form:,
         link_list_entity:,
-        backlink_list_entity:
+        backlink_list_entity:,
+        current_user_entity: Current.viewer!.user_entity
       )
     end
   end

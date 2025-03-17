@@ -26,7 +26,11 @@ module Spaces
             name: space_entity.name
           )
 
-          render Spaces::Settings::General::ShowView.new(space_entity:, form:)
+          render Spaces::Settings::General::ShowView.new(
+            current_user_entity: Current.viewer!.user_entity,
+            space_entity:,
+            form:
+          )
         end
       end
     end
