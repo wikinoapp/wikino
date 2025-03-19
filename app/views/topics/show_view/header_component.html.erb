@@ -13,7 +13,9 @@
 
   <div class="flex gap-2">
     <% if topic_entity.viewer_can_create_page? %>
-      <%= link_to new_page_path(space_entity.identifier, topic_entity.number), class: "btn btn-primary no-animation rounded-full" do %>
+      <%= link_to new_page_path(space_entity.identifier, topic_entity.number), {
+        class: "btn btn-sm btn-primary no-animation rounded-full"
+      } do %>
         <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
 
         <%= t("nouns.new_page") %>
