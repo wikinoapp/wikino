@@ -1,10 +1,10 @@
 <div class="flex flex-col gap-4">
-  <div class="flex flex-wrap-reverse md:flex-nowrap items-center justify-between gap-4">
-    <h1 class="text-2xl font-bold antialiased flex-auto">
+  <div class="flex flex-wrap-reverse items-center justify-between gap-4 md:flex-nowrap">
+    <h1 class="flex-auto text-2xl font-bold antialiased">
       <%= page_entity.title %>
     </h1>
 
-    <div class="flex items-center gap-2 justify-end w-full md:w-auto flex-none">
+    <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
       <% if page_entity.viewer_can_update? %>
         <%= link_to edit_page_path(space_entity.identifier, page_entity.number), {
           class: "btn btn-sm btn-primary no-animation rounded-full"
