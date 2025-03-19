@@ -44,7 +44,7 @@ class ContainerComponent < ApplicationComponent
     when ContentScreen::Small
       "max-w-2xl" # 672px
     when ContentScreen::Medium
-      "max-w-4xl" # 896px
+      "max-w-3xl" # 768px
     else
       T.absurd(cs)
     end
