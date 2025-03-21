@@ -10,6 +10,7 @@ class PageName < T::Enum
     PageDetail = new
     PageEdit = new
     Profile = new
+    SettingsProfile = new
     SignIn = new
     SignUp = new
     SpaceDetail = new

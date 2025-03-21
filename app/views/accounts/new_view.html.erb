@@ -55,7 +55,7 @@
 
             <div class="label">
               <span class="label-text-alt">
-                <%= t("messages.accounts.atname_hint_html") %>
+                <%= t("messages.accounts.atname_hint_html", max_length: User::ATNAME_MAX_LENGTH) %>
               </span>
             </div>
           <% end %>

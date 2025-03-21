@@ -9,6 +9,10 @@ ja:
         topic_number: トピック
         title: タイトル
         body: 本文
+      edit_profile_form:
+        atname: アットネーム
+        description: 説明
+        name: 名前
       edit_space_form:
         identifier: 識別子
         name: 名前

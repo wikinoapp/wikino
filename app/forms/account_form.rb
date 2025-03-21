@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 class AccountForm < ApplicationForm
+  include FormConcerns::UserAtnameValidatable
   include FormConcerns::PasswordValidatable
 
   attribute :atname, :string
@@ -10,11 +11,6 @@ class AccountForm < ApplicationForm
   attribute :password, :string
   attribute :time_zone, :string
 
-  validates :atname,
-    format: {with: User::ATNAME_FORMAT},
-    length: {in: User::ATNAME_MIN_LENGTH..User::ATNAME_MAX_LENGTH},
-    presence: true,
-    unreserved_atname: true
   validates :email, email: true, presence: true
   validates :locale, inclusion: {in: User.locales.keys}, presence: true
   validates :time_zone,

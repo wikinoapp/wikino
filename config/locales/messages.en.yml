@@ -25,6 +25,15 @@ en:
     email_confirmations:
       confirmation_mail_sent: Confirmation mail has been sent.
       enter_code: Enter the confirmation code in the email.
+    profiles:
+      atname_hint_html: |-
+        This identifier is used in the URL of the profile.<br>
+        Only alphanumeric characters and underscores can be used.
+      description_hint: |-
+        %{max_length} characters or less.
+      name_hint: |-
+        %{max_length} characters or less.
+      updated: Profile updated.
     time:
       ago_modified: "Modified %{time} ago"
       ago_published: "Published %{time} ago"
