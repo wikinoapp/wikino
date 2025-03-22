@@ -20,7 +20,7 @@ module EmailConfirmations
         return render(EmailConfirmations::EditView.new(form:), status: :unprocessable_entity)
       end
 
-      result = ConfirmEmailUseCase.new.call(email_confirmation: form.email_confirmation!)
+      result = ConfirmEmailService.new.call(email_confirmation: form.email_confirmation!)
 
       flash_message(result.email_confirmation)
       redirect_to success_path(result.email_confirmation)

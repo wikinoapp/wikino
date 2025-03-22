@@ -26,7 +26,7 @@ module Settings
           )
         end
 
-        UpdateProfileUseCase.new.call(form:)
+        UpdateProfileService.new.call(form:)
 
         flash[:notice] = t("messages.profiles.updated")
         redirect_to settings_profile_path

@@ -23,7 +23,7 @@ module Spaces
         )
       end
 
-      result = CreateSpaceUseCase.new.call(
+      result = CreateSpaceService.new.call(
         user: T.let(Current.viewer!, User),
         identifier: form.identifier.not_nil!,
         name: form.name.not_nil!

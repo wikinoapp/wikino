@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateEmailConfirmationUseCase < ApplicationUseCase
+class CreateEmailConfirmationService < ApplicationService
   class Result < T::Struct
     const :email_confirmation, EmailConfirmation
   end

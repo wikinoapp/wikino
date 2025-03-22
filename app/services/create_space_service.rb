@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateSpaceUseCase < ApplicationUseCase
+class CreateSpaceService < ApplicationService
   class Result < T::Struct
     const :space, Space
   end

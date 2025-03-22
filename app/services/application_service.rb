@@ -1,6 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-class ApplicationUseCase
+class ApplicationService
   extend T::Sig
 end

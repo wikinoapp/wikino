@@ -19,7 +19,7 @@ module TrashedPages
         return render_404
       end
 
-      MovePageToTrashUseCase.new.call(page:)
+      MovePageToTrashService.new.call(page:)
 
       flash[:notice] = t("messages.page.moved_to_trash")
       redirect_to topic_path(space.identifier, page.topic.not_nil!.number)

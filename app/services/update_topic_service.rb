@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UpdateTopicUseCase < ApplicationUseCase
+class UpdateTopicService < ApplicationService
   class Result < T::Struct
     const :topic, Topic
   end

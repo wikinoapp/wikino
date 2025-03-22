@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateAccountUseCase < ApplicationUseCase
+class CreateAccountService < ApplicationService
   class Result < T::Struct
     const :user, User
   end
