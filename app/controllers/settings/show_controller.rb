@@ -1,8 +1,8 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-module Sessions
-  class DestroyController < ApplicationController
+module Settings
+  class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
 
@@ -11,9 +11,9 @@ module Sessions
 
     sig { returns(T.untyped) }
     def call
-      sign_out
-
-      redirect_to root_path
+      render Settings::ShowView.new(
+        current_user_entity: Current.viewer!.user_entity
+      )
     end
   end
 end

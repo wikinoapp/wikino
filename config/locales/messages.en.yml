@@ -46,9 +46,6 @@ en:
       show:
         description_1: Pages in the trash are displayed here.
         description_2: Pages older than 30 days are automatically deleted. They can be restored within that time.
-    sign_out:
-      callback:
-        sign_out_success: Signed out
     spaces:
       created: Space created.
       identifier_hint_html: |-
@@ -83,3 +80,6 @@ en:
       description_html: |-
         Enter your email address.<br>
         We will send you an email to create an account.
+    user_sessions:
+      are_you_sure_sign_out: Are you sure you want to sign out?
+      signed_out_successfully: Signed out successfully.

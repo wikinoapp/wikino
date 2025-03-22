@@ -24,8 +24,9 @@ ja:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        show: 設定
         profiles:
-          show: "プロフィール設定"
+          show: プロフィール設定
       sign_in:
         show: ログイン
       sign_up:
