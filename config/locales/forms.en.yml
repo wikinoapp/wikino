@@ -9,6 +9,10 @@ en:
         topic_number: Topic
         title: Title
         body: Body
+      edit_profile_form:
+        atname: Atname
+        description: Description
+        name: Name
       edit_space_form:
         identifier: Identifier
         name: Name

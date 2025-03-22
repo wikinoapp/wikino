@@ -3,6 +3,7 @@ ja:
     actions: アクション
     backlinks: バックリンク
     dark: ダーク
+    edit_profile: プロフィール編集
     general: 基本情報
     home: ホーム
     inbox: 受信トレイ
@@ -15,6 +16,7 @@ ja:
     new_space: 新規スペース
     new_topic: 新規トピック
     next_page: 次のページ
+    optional: 任意
     page_title: ページタイトル
     prev_page: 前のページ
     profile: プロフィール

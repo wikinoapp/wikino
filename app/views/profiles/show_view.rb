@@ -39,6 +39,11 @@ module Profiles
       !current_user_entity.nil?
     end
 
+    sig { returns(T::Boolean) }
+    private def can_edit_profile?
+      signed_in? && current_user_entity.not_nil!.database_id == user_entity.database_id
+    end
+
     sig { returns(PageName) }
     private def current_page_name
       PageName::Profile

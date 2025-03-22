@@ -23,6 +23,9 @@ ja:
         show: "%{page_title} | %{space_name}"
       profiles:
         show: "%{name} (@%{atname})"
+      settings:
+        profiles:
+          show: "プロフィール設定"
       sign_in:
         show: ログイン
       sign_up:

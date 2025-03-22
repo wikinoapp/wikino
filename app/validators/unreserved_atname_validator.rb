@@ -4,7 +4,13 @@
 class UnreservedAtnameValidator < ActiveModel::EachValidator
   extend T::Sig
 
-  sig { params(record: T.any(AccountForm, User), attribute: Symbol, atname: T.nilable(String)).void }
+  sig do
+    params(
+      record: FormConcerns::UserAtnameValidatable,
+      attribute: Symbol,
+      atname: T.nilable(String)
+    ).void
+  end
   def validate_each(record, attribute, atname)
     return if atname.blank?
 

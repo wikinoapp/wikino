@@ -23,6 +23,9 @@ en:
         show: "%{page_title} | %{space_name}"
       profiles:
         show: "%{name} (@%{atname})"
+      settings:
+        profiles:
+          show: "Profile settings"
       sign_in:
         show: Sign in
       sign_up:

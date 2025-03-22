@@ -85,6 +85,9 @@ module GeneratedPathHelpersModule
   def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_profile_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

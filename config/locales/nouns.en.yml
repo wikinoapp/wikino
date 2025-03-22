@@ -3,6 +3,7 @@ en:
     actions: Actions
     backlinks: Backlinks
     dark: Dark
+    edit_profile: Edit profile
     general: General
     home: Home
     inbox: Inbox
@@ -15,6 +16,7 @@ en:
     new_space: New space
     new_topic: New topic
     next_page: Next
+    optional: Optional
     page_title: Page title
     prev_page: Prev
     profile: Profile
