@@ -822,6 +822,9 @@ end
 # source://webrick//lib/webrick/httpauth/authenticator.rb#114
 WEBrick::HTTPAuth::ProxyAuthenticator::AuthException = WEBrick::HTTPStatus::ProxyAuthenticationRequired
 
+# source://webrick//lib/webrick/httpauth/authenticator.rb#113
+WEBrick::HTTPAuth::ProxyAuthenticator::ResponseInfoField = T.let(T.unsafe(nil), String)
+
 # Basic authentication for proxy servers.  See BasicAuth for details.
 #
 # source://webrick//lib/webrick/httpauth/basicauth.rb#112
