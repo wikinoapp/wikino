@@ -13,6 +13,7 @@ module UserSessions
     def call
       sign_out
 
+      flash[:notice] = t("messages.user_sessions.signed_out_successfully")
       redirect_to root_path
     end
   end

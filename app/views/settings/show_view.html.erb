@@ -14,6 +14,16 @@
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= link_to(t("nouns.edit_profile"), settings_profile_path, class: "link") %>
+
+          <div class="text-center">
+            <%= button_to(t("nouns.sign_out"), user_session_path,
+              class: "link",
+              method: :delete,
+              data: {
+                turbo_confirm: t("messages.user_sessions.are_you_sure_sign_out")
+              }
+            ) %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

@@ -46,9 +46,6 @@ ja:
       show:
         description_1: ゴミ箱に入れたページを表示しています。
         description_2: 30日以上経過したページは自動的に削除されます。それ以内であれば復元可能です。
-    sign_out:
-      callback:
-        sign_out_success: ログアウトしました
     spaces:
       created: スペースを作成しました
       identifier_hint_html: |-
@@ -82,3 +79,6 @@ ja:
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します
+    user_sessions:
+      are_you_sure_sign_out: ログアウトしますか？
+      signed_out_successfully: ログアウトしました
