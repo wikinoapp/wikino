@@ -24,6 +24,7 @@ en:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        show: Settings
         profiles:
           show: "Profile settings"
       sign_in:

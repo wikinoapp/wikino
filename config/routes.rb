@@ -36,6 +36,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/topics/:topic_number/settings/general",      via: :patch,                                      to: "topics/settings/general/update#call",     topic_number: /\d+/
   match "/s/:space_identifier/topics/new",                                 via: :get,    as: :new_topic,                     to: "topics/new#call"
   match "/s/:space_identifier/trash",                                      via: :get,    as: :trash,                         to: "trash/show#call"
+  match "/settings",                                                       via: :get,    as: :settings,                      to: "settings/show#call"
   match "/settings/profile",                                               via: :get,    as: :settings_profile,              to: "settings/profiles/show#call"
   match "/settings/profile",                                               via: :patch,                                      to: "settings/profiles/update#call"
   match "/sign_in",                                                        via: :get,    as: :sign_in,                       to: "sign_in/show#call"
