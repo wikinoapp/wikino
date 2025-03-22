@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-module Sessions
+module UserSessions
   class DestroyController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable

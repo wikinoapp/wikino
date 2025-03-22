@@ -43,8 +43,8 @@ Rails.application.routes.draw do
   match "/sign_up",                                                        via: :get,    as: :sign_up,                       to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                    to: "spaces/create#call"
   match "/spaces/new",                                                     via: :get,    as: :new_space,                     to: "spaces/new#call"
-  match "/user_session",                                                   via: :delete, as: :user_session,                  to: "sessions/destroy#call"
-  match "/user_session",                                                   via: :post,                                       to: "sessions/create#call"
+  match "/user_session",                                                   via: :delete, as: :user_session,                  to: "user_sessions/destroy#call"
+  match "/user_session",                                                   via: :post,                                       to: "user_sessions/create#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 
   root "welcome/show#call"
