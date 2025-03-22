@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateUserSessionUseCase < ApplicationUseCase
+class CreateUserSessionService < ApplicationService
   class Result < T::Struct
     const :user_session, UserSession
   end

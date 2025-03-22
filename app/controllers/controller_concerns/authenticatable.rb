@@ -18,7 +18,7 @@ module ControllerConcerns
     def sign_out
       return true unless user_session_token
 
-      DestroySessionUseCase.new.call(user_session_token: user_session_token.not_nil!)
+      DestroySessionService.new.call(user_session_token: user_session_token.not_nil!)
       cookies.delete(UserSession::TOKENS_COOKIE_KEY)
 
       true

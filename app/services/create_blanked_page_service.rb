@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class CreateBlankedPageUseCase < ApplicationUseCase
+class CreateBlankedPageService < ApplicationService
   class Result < T::Struct
     const :page, Page
   end

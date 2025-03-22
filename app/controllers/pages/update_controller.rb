@@ -43,7 +43,7 @@ module Pages
         )
       end
 
-      result = UpdatePageUseCase.new.call(
+      result = UpdatePageService.new.call(
         page:,
         topic: form.topic.not_nil!,
         title: form.title.not_nil!,

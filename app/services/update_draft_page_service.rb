@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UpdateDraftPageUseCase < ApplicationUseCase
+class UpdateDraftPageService < ApplicationService
   class Result < T::Struct
     const :draft_page, DraftPage
   end

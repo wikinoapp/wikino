@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UpdateProfileUseCase < ApplicationUseCase
+class UpdateProfileService < ApplicationService
   class Result < T::Struct
     const :user, User
   end

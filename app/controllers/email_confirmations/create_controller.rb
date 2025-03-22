@@ -17,7 +17,7 @@ module EmailConfirmations
         return render(SignUp::ShowView.new(form:), status: :unprocessable_entity)
       end
 
-      result = CreateEmailConfirmationUseCase.new.call(
+      result = CreateEmailConfirmationService.new.call(
         email: form.email.not_nil!,
         event: EmailConfirmationEvent::SignUp,
         locale: current_locale

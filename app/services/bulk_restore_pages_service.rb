@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class BulkRestorePagesUseCase < ApplicationUseCase
+class BulkRestorePagesService < ApplicationService
   class Result < T::Struct
     const :pages, Page::PrivateRelation
   end

@@ -20,7 +20,7 @@ module DraftPages
         return render_404
       end
 
-      result = UpdateDraftPageUseCase.new.call(
+      result = UpdateDraftPageService.new.call(
         space_member: T.let(space_viewer, SpaceMember),
         page:,
         topic_number: form_params[:topic_number],

@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class MovePageToTrashUseCase < ApplicationUseCase
+class MovePageToTrashService < ApplicationService
   class Result < T::Struct
     const :page, Page
   end

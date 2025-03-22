@@ -25,7 +25,7 @@ module Accounts
         return render(Accounts::NewView.new(form:), status: :unprocessable_entity)
       end
 
-      account_result = CreateAccountUseCase.new.call(
+      account_result = CreateAccountService.new.call(
         email: form.email.not_nil!,
         atname: form.atname.not_nil!,
         locale: ViewerLocale.deserialize(form.locale),
@@ -33,7 +33,7 @@ module Accounts
         time_zone: form.time_zone.not_nil!
       )
 
-      user_session_result = CreateUserSessionUseCase.new.call(
+      user_session_result = CreateUserSessionService.new.call(
         user: account_result.user,
         ip_address: original_remote_ip,
         user_agent: request.user_agent

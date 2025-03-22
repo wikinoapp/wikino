@@ -35,7 +35,7 @@ module Topics
             )
           end
 
-          UpdateTopicUseCase.new.call(form:)
+          UpdateTopicService.new.call(form:)
 
           flash[:notice] = t("messages.topics.updated")
           redirect_to topic_settings_general_path(space.identifier, topic.number)

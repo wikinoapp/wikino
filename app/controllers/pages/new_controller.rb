@@ -19,7 +19,7 @@ module Pages
         return render_404
       end
 
-      result = CreateBlankedPageUseCase.new.call(topic:)
+      result = CreateBlankedPageService.new.call(topic:)
 
       redirect_to edit_page_path(space.identifier, result.page.number)
     end

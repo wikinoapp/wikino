@@ -32,7 +32,7 @@ module Topics
         )
       end
 
-      result = CreateTopicUseCase.new.call(
+      result = CreateTopicService.new.call(
         space_member: T.let(space_viewer, SpaceMember),
         name: form.name.not_nil!,
         description: form.description.not_nil!,
