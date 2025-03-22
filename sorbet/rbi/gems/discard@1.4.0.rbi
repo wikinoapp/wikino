@@ -65,7 +65,7 @@ module Discard::Model
   # source://discard//lib/discard/model.rb#140
   def undiscard; end
 
-  # Discard the record in the database
+  # Undiscard the record in the database
   #
   # There's a series of callbacks associated with #undiscard!. If the
   # <tt>before_undiscard</tt> callback throws +:abort+ the action is cancelled
@@ -93,6 +93,12 @@ module Discard::Model
   #
   # source://discard//lib/discard/model.rb#165
   def _raise_record_not_undiscarded; end
+
+  # source://discard//lib/discard/model.rb#169
+  def discarded_fail_message; end
+
+  # source://discard//lib/discard/model.rb#175
+  def undiscarded_fail_message; end
 
   module GeneratedClassMethods
     def discard_column; end
