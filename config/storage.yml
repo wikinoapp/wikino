@@ -1,0 +1,11 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+s3:
+  service: S3
+  endpoint: "<%= ENV["WIKINO_ACTIVE_STORAGE_ENDPOINT"] %>"
+  access_key_id: "<%= ENV["WIKINO_ACTIVE_STORAGE_ACCESS_KEY_ID"] %>"
+  secret_access_key: "<%= ENV["WIKINO_ACTIVE_STORAGE_SECRET_ACCESS_KEY"] %>"
+  bucket: "<%= ENV["WIKINO_ACTIVE_STORAGE_BUCKET"] %>"
+  region: "<%= ENV["WIKINO_ACTIVE_STORAGE_REGION"] %>"

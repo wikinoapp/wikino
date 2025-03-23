@@ -80,6 +80,8 @@ Rails.application.configure do
   config.action_mailer.default_url_options = {host: ENV.fetch("WIKINO_HOST"), port: ENV.fetch("WIKINO_PORT")}
   config.action_mailer.delivery_method = :letter_opener_web
 
+  config.active_storage.service = :s3
+
   config.after_initialize do
     Bullet.enable = true
     Bullet.bullet_logger = true

@@ -96,5 +96,7 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :resend
 
+  config.active_storage.service = :s3
+
   config.lograge.enabled = true
 end
