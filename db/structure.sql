@@ -158,6 +158,36 @@ CREATE TABLE public.email_confirmations (
 
 
 --
+-- Name: export_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.export_logs (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    export_id uuid NOT NULL,
+    logged_at timestamp(6) without time zone NOT NULL,
+    message character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: exports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.exports (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    started_by_id uuid NOT NULL,
+    started_at timestamp(6) without time zone NOT NULL,
+    finished_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: page_editors; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -383,6 +413,22 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
+-- Name: export_logs export_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_logs
+    ADD CONSTRAINT export_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: exports exports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT exports_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: page_editors page_editorships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -552,6 +598,34 @@ CREATE UNIQUE INDEX index_email_confirmations_on_code ON public.email_confirmati
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
+
+
+--
+-- Name: index_export_logs_on_export_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_logs_on_export_id ON public.export_logs USING btree (export_id);
+
+
+--
+-- Name: index_export_logs_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_logs_on_space_id ON public.export_logs USING btree (space_id);
+
+
+--
+-- Name: index_exports_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_space_id ON public.exports USING btree (space_id);
+
+
+--
+-- Name: index_exports_on_started_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_started_by_id ON public.exports USING btree (started_by_id);
 
 
 --
@@ -821,11 +895,35 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
+-- Name: export_logs fk_rails_08485de603; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_logs
+    ADD CONSTRAINT fk_rails_08485de603 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: export_logs fk_rails_0af1c5808c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_logs
+    ADD CONSTRAINT fk_rails_0af1c5808c FOREIGN KEY (export_id) REFERENCES public.exports(id);
+
+
+--
 -- Name: topic_members fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_0f8ef246f7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: exports fk_rails_1597b6e1c2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_1597b6e1c2 FOREIGN KEY (started_by_id) REFERENCES public.space_members(id);
 
 
 --
@@ -898,6 +996,14 @@ ALTER TABLE ONLY public.user_sessions
 
 ALTER TABLE ONLY public.pages
     ADD CONSTRAINT fk_rails_793c81c055 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
+-- Name: exports fk_rails_7fa4a1a0c0; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -1003,6 +1109,7 @@ ALTER TABLE ONLY public.page_editors
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250323084054'),
 ('20250323083136'),
 ('20250317095826'),
 ('20250204164034'),
