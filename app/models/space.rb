@@ -60,7 +60,8 @@ class Space < ApplicationRecord
       name:,
       plan: Plan.deserialize(plan),
       joined_at:,
-      viewer_can_update: space_viewer.can_update_space?(space: self)
+      viewer_can_update: space_viewer.can_update_space?(space: self),
+      viewer_can_export: space_viewer.can_export_space?(space: self)
     )
   end
 

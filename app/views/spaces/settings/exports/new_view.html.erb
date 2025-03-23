@@ -2,7 +2,11 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
+          <%= breadcrumbs.with_item do %>
+            <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
@@ -12,13 +16,11 @@
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
       <h1 class="text-2xl font-bold antialiased">
-        <%= t("nouns.settings") %>
+        <%= t("nouns.export") %>
       </h1>
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <%= link_to t("nouns.general"), space_settings_general_path(space_entity.identifier), class: "link" %>
-          <%= link_to t("nouns.export"), space_settings_new_exports_path(space_entity.identifier), class: "link" %>
         <% end %>
       <% end %>
     <% end %>

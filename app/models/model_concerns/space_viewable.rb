@@ -28,6 +28,10 @@ module ModelConcerns
     def can_update_space?(space:)
     end
 
+    sig { abstract.params(space: Space).returns(T::Boolean) }
+    def can_export_space?(space:)
+    end
+
     sig { abstract.params(topic: Topic).returns(T::Boolean) }
     def can_update_topic?(topic:)
     end

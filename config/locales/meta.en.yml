@@ -34,6 +34,8 @@ en:
       spaces:
         new: New space
         settings:
+          exports:
+            new: "Export | %{space_name}"
           general:
             show: "General | %{space_name}"
           show: "Settings | %{space_name}"
