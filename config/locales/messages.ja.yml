@@ -25,6 +25,9 @@ ja:
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください
+    exports:
+      start: エクスポートを開始する
+      started: エクスポートを開始しました
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>

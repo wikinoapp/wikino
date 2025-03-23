@@ -25,6 +25,9 @@ en:
     email_confirmations:
       confirmation_mail_sent: Confirmation mail has been sent.
       enter_code: Enter the confirmation code in the email.
+    exports:
+      start: Start export
+      started: Export started.
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>
