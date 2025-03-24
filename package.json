@@ -17,7 +17,7 @@
     "stimulus-use": "^0.52.2"
   },
   "devDependencies": {
-    "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.0.7",
+    "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.1.0",
     "daisyui": "^4.12.13",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
