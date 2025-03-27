@@ -30,6 +30,7 @@ gem "rails-i18n"
 gem "sentry-rails"
 gem "sentry-ruby"
 gem "sequenced"
+gem "solid_queue"
 gem "sorbet-runtime"
 gem "sorbet-struct-comparable"
 gem "stackprof" # Sentryで使っている
