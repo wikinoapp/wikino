@@ -13,6 +13,8 @@ class ExportService < ApplicationService
       started_at: Time.current
     )
 
+    GenerateExportFilesJob.perform_later(export_id: export.id)
+
     Result.new(export:)
   end
 end
