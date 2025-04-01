@@ -12,7 +12,7 @@ development:
 
   queue:
     <<: *default
-    url: <%= ENV.fetch("DATABASE_QUEUE_URL") %>
+    url: <%= ENV["DATABASE_QUEUE_URL"] %>
     migrations_paths: db/queue_migrate
 
 test:
@@ -27,5 +27,5 @@ production:
 
   queue:
     <<: *default
-    url: <%= ENV.fetch("DATABASE_QUEUE_URL") %>
+    url: <%= ENV["DATABASE_QUEUE_URL"] %>
     migrations_paths: db/queue_migrate
