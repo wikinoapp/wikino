@@ -23,7 +23,8 @@ module Spaces
 
           result = ExportService.new.call(
             space:,
-            started_by: space_viewer
+            started_by: space_viewer,
+            locale: current_locale
           )
 
           flash[:notice] = t("messages.exports.started")

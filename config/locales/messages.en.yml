@@ -28,6 +28,10 @@ en:
     exports:
       start: Start export
       started: Export started.
+    export_logs:
+      started: Export started.
+      already_finished: Export has already finished.
+      finished: Export finished.
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>

@@ -4,10 +4,10 @@
 class GenerateExportFilesJob < ApplicationJob
   queue_as :default
 
-  sig { params(export_id: T::Wikino::DatabaseId).void }
-  def perform(export_id:)
+  sig { params(export_id: T::Wikino::DatabaseId, locale: String).void }
+  def perform(export_id:, locale:)
     export = Export.find(export_id)
 
-    puts "!!! Generating export files for space #{export.space_id}"
+    GenerateExportFilesService.new.call(export:, locale:)
   end
 end

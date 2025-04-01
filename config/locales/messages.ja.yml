@@ -28,6 +28,10 @@ ja:
     exports:
       start: エクスポートを開始する
       started: エクスポートを開始しました
+    export_logs:
+      started: エクスポートを開始しました
+      already_finished: エクスポートはすでに完了しています
+      finished: エクスポートを完了しました
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>
