@@ -9,15 +9,23 @@ class ExportService < ApplicationService
   sig do
     params(
       space: Space,
-      started_by: SpaceMember,
+      queued_by: SpaceMember,
       locale: ViewerLocale
     ).returns(Result)
   end
-  def call(space:, started_by:, locale:)
-    export = space.exports.create!(
-      started_by:,
-      started_at: Time.current
-    )
+  def call(space:, queued_by:, locale:)
+    export = ActiveRecord::Base.transaction do
+      e = space.exports.create!(
+        queued_by:
+      )
+
+      e.statuses.create!(
+        kind: ExportStatusKind::Queued.serialize,
+        changed_at: Time.current
+      )
+
+      e
+    end
 
     GenerateExportFilesJob.perform_later(
       export_id: export.id,

@@ -165,8 +165,23 @@ CREATE TABLE public.export_logs (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     export_id uuid NOT NULL,
-    logged_at timestamp(6) without time zone NOT NULL,
     message character varying NOT NULL,
+    logged_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.export_statuses (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    export_id uuid NOT NULL,
+    kind integer NOT NULL,
+    changed_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -179,9 +194,7 @@ CREATE TABLE public.export_logs (
 CREATE TABLE public.exports (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
-    started_by_id uuid NOT NULL,
-    started_at timestamp(6) without time zone NOT NULL,
-    finished_at timestamp(6) without time zone,
+    queued_by_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -421,6 +434,14 @@ ALTER TABLE ONLY public.export_logs
 
 
 --
+-- Name: export_statuses export_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT export_statuses_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: exports exports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -615,17 +636,31 @@ CREATE INDEX index_export_logs_on_space_id ON public.export_logs USING btree (sp
 
 
 --
+-- Name: index_export_statuses_on_export_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_statuses_on_export_id ON public.export_statuses USING btree (export_id);
+
+
+--
+-- Name: index_export_statuses_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_statuses_on_space_id ON public.export_statuses USING btree (space_id);
+
+
+--
+-- Name: index_exports_on_queued_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_queued_by_id ON public.exports USING btree (queued_by_id);
+
+
+--
 -- Name: index_exports_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_exports_on_space_id ON public.exports USING btree (space_id);
-
-
---
--- Name: index_exports_on_started_by_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_exports_on_started_by_id ON public.exports USING btree (started_by_id);
 
 
 --
@@ -919,14 +954,6 @@ ALTER TABLE ONLY public.topic_members
 
 
 --
--- Name: exports fk_rails_1597b6e1c2; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_1597b6e1c2 FOREIGN KEY (started_by_id) REFERENCES public.space_members(id);
-
-
---
 -- Name: page_editors fk_rails_2088082077; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -972,6 +999,14 @@ ALTER TABLE ONLY public.pages
 
 ALTER TABLE ONLY public.page_revisions
     ADD CONSTRAINT fk_rails_6eb3eeb6b7 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+
+--
+-- Name: exports fk_rails_703ee3dae6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id);
 
 
 --
@@ -1055,6 +1090,14 @@ ALTER TABLE ONLY public.space_members
 
 
 --
+-- Name: export_statuses fk_rails_a8d9f2050b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
+
+
+--
 -- Name: draft_pages fk_rails_a989662ed2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1084,6 +1127,14 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: export_statuses fk_rails_cab71249f9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --

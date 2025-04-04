@@ -9,7 +9,13 @@ class GenerateExportFilesService < ApplicationService
   sig { params(export: Export, locale: String).returns(Result) }
   def call(export:, locale:)
     I18n.with_locale(locale) do
-      export.add_log!(message: fetch_message(:started))
+      ActiveRecord::Base.transaction do
+        export.statuses.create!(
+          kind: ExportStatusKind::Started.serialize,
+          changed_at: Time.current
+        )
+        export.add_log!(message: fetch_message(:started))
+      end
 
       if export.finished?
         export.add_log!(message: fetch_message(:already_finished))

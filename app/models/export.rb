@@ -5,7 +5,7 @@ class Export < ApplicationRecord
   has_one_attached :file
 
   belongs_to :space
-  belongs_to :started_by, class_name: "SpaceMember"
+  belongs_to :queued_by, class_name: "SpaceMember"
   has_many :logs, class_name: "ExportLog", dependent: :restrict_with_exception
 
   sig { returns(T::Boolean) }
@@ -17,9 +17,7 @@ class Export < ApplicationRecord
   def to_entity(space_viewer:)
     ExportEntity.new(
       database_id: id,
-      started_by_entity: started_by.not_nil!.to_entity(space_viewer:),
-      started_at:,
-      finished_at:,
+      queued_by_entity: queued_by.not_nil!.to_entity(space_viewer:),
       space_entity: space.not_nil!.to_entity(space_viewer:)
     )
   end

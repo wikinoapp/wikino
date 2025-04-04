@@ -23,7 +23,7 @@ module Spaces
 
           result = ExportService.new.call(
             space:,
-            started_by: space_viewer,
+            queued_by: space_viewer,
             locale: current_locale
           )
 
