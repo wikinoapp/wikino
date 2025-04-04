@@ -9,6 +9,7 @@ class CreateExports < ActiveRecord::Migration[7.1]
       t.references :started_by, foreign_key: {to_table: :space_members}, null: false, type: :uuid
       t.datetime :started_at, null: false
       t.datetime :finished_at
+      # t.datetime :failed_at
       t.timestamps
     end
 

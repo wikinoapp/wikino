@@ -29,9 +29,10 @@ ja:
       start: エクスポートを開始する
       started: エクスポートを開始しました
     export_logs:
-      started: エクスポートを開始しました
       already_finished: エクスポートはすでに完了しています
       finished: エクスポートを完了しました
+      started: エクスポートを開始しました
+      target_pages_count: "%{count}件のページがエクスポートされます"
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>

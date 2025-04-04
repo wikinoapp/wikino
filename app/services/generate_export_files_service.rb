@@ -9,19 +9,27 @@ class GenerateExportFilesService < ApplicationService
   sig { params(export: Export, locale: String).returns(Result) }
   def call(export:, locale:)
     I18n.with_locale(locale) do
-      export.add_log!(message_key: :started, logged_at: Time.current)
+      export.add_log!(message: fetch_message(:started))
 
       if export.finished?
-        export.add_log!(message_key: :already_finished, logged_at: Time.current)
+        export.add_log!(message: fetch_message(:already_finished))
         return Result.new(export:)
       end
 
+      target_pages = export.target_pages
+      export.add_log!(message: fetch_message(:target_pages_count, count: target_pages.count))
+
       ActiveRecord::Base.transaction do
-        export.add_log!(message_key: :finished, logged_at: Time.current)
+        export.add_log!(message: fetch_message(:finished))
         export.update!(finished_at: Time.current)
       end
 
       Result.new(export:)
     end
+  end
+
+  sig { params(key: Symbol, args: T.untyped).returns(String) }
+  private def fetch_message(key, **args)
+    I18n.t("messages.export_logs.#{key}", **args)
   end
 end

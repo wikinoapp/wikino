@@ -24,12 +24,12 @@ class Export < ApplicationRecord
     )
   end
 
-  sig { params(message_key: Symbol, logged_at: ActiveSupport::TimeWithZone).void }
-  def add_log!(message_key:, logged_at:)
-    logs.create!(
-      space:,
-      message: I18n.t("messages.export_logs.#{message_key}"),
-      logged_at:
-    )
+  def target_pages
+    space.pages.active
+  end
+
+  sig { params(message: String, logged_at: ActiveSupport::TimeWithZone).void }
+  def add_log!(message:, logged_at: Time.current)
+    logs.create!(space:, message:, logged_at:)
   end
 end
