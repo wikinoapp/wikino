@@ -2,21 +2,17 @@
 # frozen_string_literal: true
 
 class GenerateExportFilesService < ApplicationService
-  class Result < T::Struct
-    const :export, Export
-  end
-
-  sig { params(export: Export, locale: String).returns(Result) }
+  sig { params(export: Export, locale: String).void }
   def call(export:, locale:)
     I18n.with_locale(locale) do
       if export.failed?
         export.add_log!(message: fetch_message(:already_finished_as_failed))
-        return Result.new(export:)
+        return
       end
 
       if export.succeeded?
         export.add_log!(message: fetch_message(:already_finished_as_succeeded))
-        return Result.new(export:)
+        return
       end
 
       ActiveRecord::Base.transaction do
@@ -39,8 +35,6 @@ class GenerateExportFilesService < ApplicationService
     end
 
     Sentry.capture_exception(exception)
-  ensure
-    Result.new(export:)
   end
 
   sig { params(key: Symbol, args: T.untyped).returns(String) }
