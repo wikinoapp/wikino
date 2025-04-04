@@ -62,7 +62,8 @@ class User < ApplicationRecord
       database_id: id,
       atname:,
       name:,
-      description:
+      description:,
+      time_zone:
     )
   end
 

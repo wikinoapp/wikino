@@ -21,6 +21,11 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
+          <turbo-frame
+            id="export-logs"
+            src="<%= space_settings_export_log_list_path(space_entity.identifier, export_entity.database_id) %>"
+          >
+          </turbo-frame>
         <% end %>
       <% end %>
     <% end %>

@@ -8,12 +8,14 @@ module Spaces
         sig do
           params(
             current_user_entity: UserEntity,
-            space_entity: SpaceEntity
+            space_entity: SpaceEntity,
+            export_entity: ExportEntity
           ).void
         end
-        def initialize(current_user_entity:, space_entity:)
+        def initialize(current_user_entity:, space_entity:, export_entity:)
           @current_user_entity = current_user_entity
           @space_entity = space_entity
+          @export_entity = export_entity
         end
 
         sig { override.void }
@@ -29,6 +31,10 @@ module Spaces
         sig { returns(SpaceEntity) }
         attr_reader :space_entity
         private :space_entity
+
+        sig { returns(ExportEntity) }
+        attr_reader :export_entity
+        private :export_entity
 
         sig { returns(PageName) }
         private def current_page_name

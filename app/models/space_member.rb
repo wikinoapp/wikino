@@ -54,6 +54,15 @@ class SpaceMember < ApplicationRecord
     nil
   end
 
+  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceMemberEntity) }
+  def to_entity(space_viewer:)
+    SpaceMemberEntity.new(
+      database_id: id,
+      space_entity: space.not_nil!.to_entity(space_viewer:),
+      user_entity: user.not_nil!.to_entity
+    )
+  end
+
   sig { returns(SpaceMemberRole) }
   def deserialized_role
     SpaceMemberRole.deserialize(role)
