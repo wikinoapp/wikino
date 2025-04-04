@@ -18,12 +18,7 @@ class ExportService < ApplicationService
       e = space.exports.create!(
         queued_by:
       )
-
-      e.statuses.create!(
-        kind: ExportStatusKind::Queued.serialize,
-        changed_at: Time.current
-      )
-
+      e.change_status!(kind: ExportStatusKind::Queued)
       e
     end
 

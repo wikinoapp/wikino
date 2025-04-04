@@ -29,9 +29,10 @@ en:
       start: Start export
       started: Export started.
     export_logs:
-      already_finished: Export has already finished.
-      finished: Export finished.
+      already_finished_as_failed: Export has already finished as failed.
+      already_finished_as_succeeded: Export has already finished as succeeded.
       started: Export started.
+      succeeded: Export succeeded.
       target_pages_count: "%{count} pages will be exported."
     profiles:
       atname_hint_html: |-

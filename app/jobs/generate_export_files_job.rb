@@ -9,5 +9,7 @@ class GenerateExportFilesJob < ApplicationJob
     export = Export.find(export_id)
 
     GenerateExportFilesService.new.call(export:, locale:)
+
+    nil
   end
 end

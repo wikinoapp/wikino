@@ -9,29 +9,38 @@ class GenerateExportFilesService < ApplicationService
   sig { params(export: Export, locale: String).returns(Result) }
   def call(export:, locale:)
     I18n.with_locale(locale) do
-      ActiveRecord::Base.transaction do
-        export.statuses.create!(
-          kind: ExportStatusKind::Started.serialize,
-          changed_at: Time.current
-        )
-        export.add_log!(message: fetch_message(:started))
+      if export.failed?
+        export.add_log!(message: fetch_message(:already_finished_as_failed))
+        return Result.new(export:)
       end
 
-      if export.finished?
-        export.add_log!(message: fetch_message(:already_finished))
+      if export.succeeded?
+        export.add_log!(message: fetch_message(:already_finished_as_succeeded))
         return Result.new(export:)
+      end
+
+      ActiveRecord::Base.transaction do
+        export.change_status!(kind: ExportStatusKind::Started)
+        export.add_log!(message: fetch_message(:started))
       end
 
       target_pages = export.target_pages
       export.add_log!(message: fetch_message(:target_pages_count, count: target_pages.count))
 
       ActiveRecord::Base.transaction do
-        export.add_log!(message: fetch_message(:finished))
-        export.update!(finished_at: Time.current)
+        export.change_status!(kind: ExportStatusKind::Succeeded)
+        export.add_log!(message: fetch_message(:succeeded))
       end
-
-      Result.new(export:)
     end
+  rescue => exception
+    ActiveRecord::Base.transaction do
+      export.change_status!(kind: ExportStatusKind::Failed)
+      export.add_log!(message: fetch_message(:failed))
+    end
+
+    Sentry.capture_exception(exception)
+  ensure
+    Result.new(export:)
   end
 
   sig { params(key: Symbol, args: T.untyped).returns(String) }

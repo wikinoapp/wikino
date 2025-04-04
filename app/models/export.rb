@@ -6,11 +6,23 @@ class Export < ApplicationRecord
 
   belongs_to :space
   belongs_to :queued_by, class_name: "SpaceMember"
+  has_many :statuses, class_name: "ExportStatus", dependent: :restrict_with_exception
   has_many :logs, class_name: "ExportLog", dependent: :restrict_with_exception
+  has_one :latest_status, -> { order(changed_at: :desc) }, class_name: "ExportStatus", inverse_of: false
+
+  sig { returns(ExportStatusKind) }
+  def latest_status_kind
+    ExportStatusKind.deserialize(latest_status.not_nil!.kind)
+  end
 
   sig { returns(T::Boolean) }
-  def finished?
-    finished_at.present?
+  def failed?
+    latest_status_kind == ExportStatusKind::Failed
+  end
+
+  sig { returns(T::Boolean) }
+  def succeeded?
+    latest_status_kind == ExportStatusKind::Succeeded
   end
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportEntity) }
@@ -24,6 +36,15 @@ class Export < ApplicationRecord
 
   def target_pages
     space.pages.active
+  end
+
+  sig { params(kind: ExportStatusKind).void }
+  def change_status!(kind:)
+    statuses.create!(
+      space:,
+      kind: kind.serialize,
+      changed_at: Time.current
+    )
   end
 
   sig { params(message: String, logged_at: ActiveSupport::TimeWithZone).void }
