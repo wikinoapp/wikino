@@ -31,11 +31,15 @@ ja:
     export_logs:
       already_finished_as_failed: このエクスポートは失敗して処理を終了しています。
       already_finished_as_succeeded: このエクスポートは成功して処理を終了しています。
-      exported_page: "エクスポート完了 (%{progress}件)"
       failed: エクスポートに失敗しました
+      output_to_file: "ファイルへの出力に成功 (%{progress}件)"
       started: エクスポートを開始しました
       succeeded: エクスポートに成功しました
       target_pages_count: "%{total_count}件のページがエクスポートされます"
+      uploaded_zip_file: 圧縮ファイルのアップロードに成功しました
+      uploading_zip_file: 圧縮ファイルのアップロードを開始しました
+      zipped_files: 出力したファイルの圧縮に成功しました
+      zipping_files: 出力したファイルの圧縮を開始しました
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>

@@ -398,6 +398,7 @@ GEM
       rbs (>= 3, < 4)
       sorbet-runtime (>= 0.5.10782)
     ruby-progressbar (1.13.0)
+    rubyzip (2.4.1)
     securerandom (0.4.1)
     selma (0.4.9-aarch64-linux)
     selma (0.4.9-arm64-darwin)
@@ -532,6 +533,7 @@ DEPENDENCIES
   rubocop-rails
   rubocop-rspec
   ruby-lsp
+  rubyzip
   sentry-rails
   sentry-ruby
   sequenced

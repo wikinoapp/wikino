@@ -31,11 +31,15 @@ en:
     export_logs:
       already_finished_as_failed: Export has already finished as failed.
       already_finished_as_succeeded: Export has already finished as succeeded.
-      exported_page: "Exported page. (%{progress} pages)"
       failed: Export failed.
+      output_to_file: File output succeeded (%{progress} pages)
       started: Export started.
       succeeded: Export succeeded.
       target_pages_count: "%{total_count} pages will be exported."
+      uploaded_zip_file: File upload succeeded.
+      uploading_zip_file: Start uploading file.
+      zipped_files: File zipping succeeded.
+      zipping_files: Start zipping files.
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>
