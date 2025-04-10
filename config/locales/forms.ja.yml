@@ -41,6 +41,8 @@ ja:
         password: パスワード
     errors:
       messages:
+        cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
+        contains_invalid_characters_html: "には次の文字を含めることができません: <code>/ \\ : * ? \" < > |</code>"
         reserved: は使用できません
         uniqueness: は既に存在しています
       models:

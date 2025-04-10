@@ -31,9 +31,11 @@ en:
     export_logs:
       already_finished_as_failed: Export has already finished as failed.
       already_finished_as_succeeded: Export has already finished as succeeded.
+      exported_page: "Exported page. (%{progress} pages)"
+      failed: Export failed.
       started: Export started.
       succeeded: Export succeeded.
-      target_pages_count: "%{count} pages will be exported."
+      target_pages_count: "%{total_count} pages will be exported."
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>

@@ -31,9 +31,11 @@ ja:
     export_logs:
       already_finished_as_failed: このエクスポートは失敗して処理を終了しています。
       already_finished_as_succeeded: このエクスポートは成功して処理を終了しています。
+      exported_page: "エクスポート完了 (%{progress}件)"
+      failed: エクスポートに失敗しました
       started: エクスポートを開始しました
       succeeded: エクスポートに成功しました
-      target_pages_count: "%{count}件のページがエクスポートされます"
+      target_pages_count: "%{total_count}件のページがエクスポートされます"
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>
