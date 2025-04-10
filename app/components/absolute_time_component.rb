@@ -10,7 +10,7 @@ class AbsoluteTimeComponent < ApplicationComponent
 
   sig { returns(String) }
   def call
-    time.in_time_zone(viewable.time_zone).to_fs(:ymdhm)
+    time.in_time_zone(viewable.time_zone).to_fs(:ymdhm).html_safe
   end
 
   sig { returns(UserEntity) }
