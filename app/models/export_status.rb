@@ -16,7 +16,7 @@ class ExportStatus < ApplicationRecord
   def to_entity(space_viewer:)
     ExportStatusEntity.new(
       database_id: id,
-      kind:,
+      kind: ExportStatusKind.deserialize(kind),
       changed_at:,
       space_entity: space.not_nil!.to_entity(space_viewer:),
       export_entity: export.to_entity(space_viewer:)

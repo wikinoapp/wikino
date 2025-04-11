@@ -1,5 +1,11 @@
 <turbo-frame id="export-logs">
-  <div class="flex flex-col gap-4">
+  <div
+    class="flex flex-col gap-4"
+    <% if needs_status_watch? %>
+      data-controller="export-status-watcher"
+      data-export-status-watcher-status-value="<%= export_status_entity.kind.serialize %>"
+    <% end %>
+  >
     <% export_log_entities.each do |export_log_entity| %>
       <div class="flex items-center gap-4">
         <div class="text-sm text-gray-500">
