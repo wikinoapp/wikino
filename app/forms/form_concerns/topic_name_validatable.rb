@@ -6,7 +6,10 @@ module FormConcerns
     extend ActiveSupport::Concern
 
     included do
-      validates :name, length: {maximum: Topic::NAME_MAX_LENGTH}, presence: true
+      validates :name,
+        filename_safe: true,
+        length: {maximum: Topic::NAME_MAX_LENGTH},
+        presence: true
     end
   end
 end

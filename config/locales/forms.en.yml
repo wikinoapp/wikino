@@ -41,6 +41,8 @@ en:
         password: Password
     errors:
       messages:
+        cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
+        contains_invalid_characters_html: cannot contain the following characters <code>/\:*?"<>|"</code>
         reserved: cannot be used
         uniqueness: has already been taken
       models:

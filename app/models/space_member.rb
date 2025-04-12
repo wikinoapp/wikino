@@ -15,6 +15,8 @@ class SpaceMember < ApplicationRecord
   has_many :draft_pages, dependent: :restrict_with_exception, inverse_of: :space_member
   has_many :page_editors, dependent: :restrict_with_exception, inverse_of: :space_member
 
+  delegate :locale, :time_zone, to: :user, prefix: true
+
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 
@@ -54,6 +56,15 @@ class SpaceMember < ApplicationRecord
     nil
   end
 
+  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceMemberEntity) }
+  def to_entity(space_viewer:)
+    SpaceMemberEntity.new(
+      database_id: id,
+      space_entity: space.not_nil!.to_entity(space_viewer:),
+      user_entity: user.not_nil!.to_entity
+    )
+  end
+
   sig { returns(SpaceMemberRole) }
   def deserialized_role
     SpaceMemberRole.deserialize(role)
@@ -89,6 +100,11 @@ class SpaceMember < ApplicationRecord
   sig { override.params(space: Space).returns(T::Boolean) }
   def can_update_space?(space:)
     space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
+  end
+
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_export_space?(space:)
+    space.id == space_id && permissions.include?(SpaceMemberPermission::ExportSpace)
   end
 
   sig { override.params(topic: Topic).returns(T::Boolean) }

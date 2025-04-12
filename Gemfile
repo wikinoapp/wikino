@@ -9,6 +9,7 @@ gem "rails", "~> 7.1.0"
 
 gem "activerecord_cursor_paginate"
 gem "addressable"
+gem "aws-sdk-s3", require: false # Active Storageで使っている
 gem "bcrypt" # `has_secure_password` で使っている
 gem "bootsnap", require: false
 gem "by_star"
@@ -26,9 +27,11 @@ gem "propshaft"
 gem "puma"
 gem "rack-cors"
 gem "rails-i18n"
+gem "rubyzip"
 gem "sentry-rails"
 gem "sentry-ruby"
 gem "sequenced"
+gem "solid_queue"
 gem "sorbet-runtime"
 gem "sorbet-struct-comparable"
 gem "stackprof" # Sentryで使っている

@@ -21,6 +21,7 @@ class Space < ApplicationRecord
   }, prefix: true
 
   has_many :draft_pages, dependent: :restrict_with_exception
+  has_many :exports, dependent: :restrict_with_exception
   has_many :topic_members, dependent: :restrict_with_exception
   has_many :topics, dependent: :restrict_with_exception
   has_many :page_editors, dependent: :restrict_with_exception
@@ -60,7 +61,8 @@ class Space < ApplicationRecord
       name:,
       plan: Plan.deserialize(plan),
       joined_at:,
-      viewer_can_update: space_viewer.can_update_space?(space: self)
+      viewer_can_update: space_viewer.can_update_space?(space: self),
+      viewer_can_export: space_viewer.can_export_space?(space: self)
     )
   end
 

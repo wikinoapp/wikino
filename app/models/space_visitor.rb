@@ -40,6 +40,11 @@ class SpaceVisitor
     false
   end
 
+  sig { override.params(space: Space).returns(T::Boolean) }
+  def can_export_space?(space:)
+    false
+  end
+
   sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     false

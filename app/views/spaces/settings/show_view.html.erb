@@ -18,6 +18,7 @@
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= link_to t("nouns.general"), space_settings_general_path(space_entity.identifier), class: "link" %>
+          <%= link_to t("nouns.export"), space_settings_new_exports_path(space_entity.identifier), class: "link" %>
         <% end %>
       <% end %>
     <% end %>

@@ -5,6 +5,7 @@ def system!(*args)
 end
 
 [
+  "bin/rails zeitwerk:check",
   "bin/rails sorbet:update",
   "yarn prettier . --write",
   "bin/erb_lint --lint-all",

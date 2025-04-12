@@ -12,6 +12,8 @@ class SpaceEntity < T::Struct
   const :plan, Plan
   const :joined_at, ActiveSupport::TimeWithZone
   const :viewer_can_update, T::Boolean
+  const :viewer_can_export, T::Boolean
 
   alias_method :viewer_can_update?, :viewer_can_update
+  alias_method :viewer_can_export?, :viewer_can_export
 end

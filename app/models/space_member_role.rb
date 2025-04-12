@@ -16,6 +16,7 @@ class SpaceMemberRole < T::Enum
         SpaceMemberPermission::CreateTopic,
         SpaceMemberPermission::CreatePage,
         SpaceMemberPermission::CreateDraftPage,
+        SpaceMemberPermission::ExportSpace,
         SpaceMemberPermission::UpdateSpace,
         SpaceMemberPermission::UpdateTopic
       ]

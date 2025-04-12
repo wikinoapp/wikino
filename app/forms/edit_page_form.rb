@@ -4,6 +4,8 @@
 class EditPageForm < ApplicationForm
   include ActiveModel::Validations::Callbacks
 
+  include FormConcerns::PageTitleValidatable
+
   sig { returns(T.nilable(SpaceMember)) }
   attr_accessor :space_member
 
@@ -19,7 +21,6 @@ class EditPageForm < ApplicationForm
   validates :space_member, presence: true
   validates :page, presence: true
   validates :topic, presence: true
-  validates :title, length: {maximum: Page::TITLE_MAX_LENGTH}, presence: true
   validate :title_uniqueness
 
   sig { returns(T.nilable(Topic)) }

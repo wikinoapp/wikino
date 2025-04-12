@@ -68,6 +68,48 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: active_storage_attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_attachments (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    name character varying NOT NULL,
+    record_type character varying NOT NULL,
+    record_id uuid NOT NULL,
+    blob_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_blobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_blobs (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    key character varying NOT NULL,
+    filename character varying NOT NULL,
+    content_type character varying,
+    metadata text,
+    service_name character varying NOT NULL,
+    byte_size bigint NOT NULL,
+    checksum character varying,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_variant_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_variant_records (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    blob_id uuid NOT NULL,
+    variation_digest character varying NOT NULL
+);
+
+
+--
 -- Name: ar_internal_metadata; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -110,6 +152,34 @@ CREATE TABLE public.email_confirmations (
     code character varying NOT NULL,
     started_at timestamp without time zone NOT NULL,
     succeeded_at timestamp without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.export_statuses (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    export_id uuid NOT NULL,
+    kind integer NOT NULL,
+    changed_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: exports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.exports (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    queued_by_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -293,6 +363,30 @@ CREATE TABLE public.users (
 
 
 --
+-- Name: active_storage_attachments active_storage_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT active_storage_attachments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_blobs active_storage_blobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_blobs
+    ADD CONSTRAINT active_storage_blobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_variant_records active_storage_variant_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: ar_internal_metadata ar_internal_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -314,6 +408,22 @@ ALTER TABLE ONLY public.draft_pages
 
 ALTER TABLE ONLY public.email_confirmations
     ADD CONSTRAINT email_confirmations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: export_statuses export_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT export_statuses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: exports exports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT exports_pkey PRIMARY KEY (id);
 
 
 --
@@ -405,6 +515,34 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_active_storage_attachments_on_blob_id ON public.active_storage_attachments USING btree (blob_id);
+
+
+--
+-- Name: index_active_storage_attachments_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_attachments_uniqueness ON public.active_storage_attachments USING btree (record_type, record_id, name, blob_id);
+
+
+--
+-- Name: index_active_storage_blobs_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_blobs USING btree (key);
+
+
+--
+-- Name: index_active_storage_variant_records_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
 -- Name: index_draft_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -458,6 +596,34 @@ CREATE UNIQUE INDEX index_email_confirmations_on_code ON public.email_confirmati
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
+
+
+--
+-- Name: index_export_statuses_on_export_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_statuses_on_export_id ON public.export_statuses USING btree (export_id);
+
+
+--
+-- Name: index_export_statuses_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_export_statuses_on_space_id ON public.export_statuses USING btree (space_id);
+
+
+--
+-- Name: index_exports_on_queued_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_queued_by_id ON public.exports USING btree (queued_by_id);
+
+
+--
+-- Name: index_exports_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_space_id ON public.exports USING btree (space_id);
 
 
 --
@@ -783,6 +949,14 @@ ALTER TABLE ONLY public.page_revisions
 
 
 --
+-- Name: exports fk_rails_703ee3dae6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id);
+
+
+--
 -- Name: page_revisions fk_rails_74648de0a3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -804,6 +978,14 @@ ALTER TABLE ONLY public.user_sessions
 
 ALTER TABLE ONLY public.pages
     ADD CONSTRAINT fk_rails_793c81c055 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
+-- Name: exports fk_rails_7fa4a1a0c0; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -831,6 +1013,14 @@ ALTER TABLE ONLY public.draft_pages
 
 
 --
+-- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
 -- Name: topics fk_rails_9b3ff1bd6e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -844,6 +1034,14 @@ ALTER TABLE ONLY public.topics
 
 ALTER TABLE ONLY public.space_members
     ADD CONSTRAINT fk_rails_a7900d8de9 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: export_statuses fk_rails_a8d9f2050b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
 
 
 --
@@ -863,11 +1061,27 @@ ALTER TABLE ONLY public.draft_pages
 
 
 --
+-- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
 -- Name: user_passwords fk_rails_c7888e4144; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: export_statuses fk_rails_cab71249f9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -893,6 +1107,8 @@ ALTER TABLE ONLY public.page_editors
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250323084054'),
+('20250323083136'),
 ('20250317095826'),
 ('20250204164034'),
 ('20250202165519'),

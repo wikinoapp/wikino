@@ -1,0 +1,8 @@
+Your export data is ready.<br>
+<br>
+<%= link_to(t("verbs.download"), space_settings_download_export_url(@space.identifier, @export.id)) %><br>
+<br>
+The download URL is valid for one day after the email is sent.<br>
+<br>
+Wikino<br>
+<%= link_to ENV.fetch("WIKINO_URL"), ENV.fetch("WIKINO_URL") %>

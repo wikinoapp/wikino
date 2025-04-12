@@ -10,4 +10,5 @@ class UserEntity < T::Struct
   const :atname, String
   const :name, String
   const :description, String
+  const :time_zone, String
 end
