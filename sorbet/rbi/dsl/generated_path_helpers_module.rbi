@@ -103,7 +103,19 @@ module GeneratedPathHelpersModule
   def space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def space_settings_download_export_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_export_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_export_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def space_settings_general_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_new_exports_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_path(*args); end
