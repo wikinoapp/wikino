@@ -19,7 +19,7 @@ class ExportStatus < ApplicationRecord
       kind: ExportStatusKind.deserialize(kind),
       changed_at:,
       space_entity: space.not_nil!.to_entity(space_viewer:),
-      export_entity: export.to_entity(space_viewer:)
+      export_entity: export.not_nil!.to_entity(space_viewer:)
     )
   end
 end

@@ -35,10 +35,12 @@ class Export < ApplicationRecord
     )
   end
 
+  sig { returns(Page::PrivateAssociationRelation) }
   def target_pages
-    space.pages.active
+    space.not_nil!.pages.active
   end
 
+  sig { returns(String) }
   def presigned_url
     signer = Aws::S3::Presigner.new(client: ActiveStorage::Blob.service.client.client)
 
@@ -62,7 +64,7 @@ class Export < ApplicationRecord
 
   sig { void }
   def send_succeeded_mail!
-    ExportMailer.succeeded(export_id: id, locale: queued_by.user_locale).deliver_later
+    ExportMailer.succeeded(export_id: id, locale: queued_by.not_nil!.user_locale).deliver_later
 
     nil
   end

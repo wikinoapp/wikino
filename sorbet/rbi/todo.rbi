@@ -4,7 +4,4 @@
 
 # typed: false
 
-module ::Zip; end
-module ActiveStorage::Attached::One; end
-module GenerateExportFilesService::Zip::File; end
-module GenerateExportFilesService::Zip::File::CREATE; end
+module Zip::File::CREATE; end

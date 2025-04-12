@@ -22,7 +22,7 @@
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <% if export_status_entity.processing? %>
-            <div class="flex flex-col gap-2 place-items-center">
+            <div class="flex flex-col place-items-center gap-2">
               <%= render Basic::IconComponent.new(
                 name: "package-regular",
                 size: "42px",
@@ -34,8 +34,8 @@
               </div>
             </div>
           <% elsif export_status_entity.succeeded? %>
-            <div class="flex flex-col gap-6 place-items-center">
-              <div class="flex flex-col gap-2 place-items-center">
+            <div class="flex flex-col place-items-center gap-6">
+              <div class="flex flex-col place-items-center gap-2">
                 <%= render Basic::IconComponent.new(
                   name: "check-circle",
                   size: "42px",
@@ -53,8 +53,8 @@
               ), {
                 class: "btn btn-primary no-animation rounded-full w-fit",
                 target: "_blank",
-                rel: "noopener noreferrer",
-              } do%>
+                rel: "noopener noreferrer"
+              } do %>
                 <%= render Basic::IconComponent.new(
                   name: "download-simple-regular",
                   size: "18px",

@@ -9,7 +9,7 @@ class ExportMailer < ApplicationMailer
 
     I18n.with_locale(locale) do
       mail(
-        to: @export.queued_by.user.email,
+        to: @export.queued_by.not_nil!.user.not_nil!.email,
         subject: default_i18n_subject
       )
     end

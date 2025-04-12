@@ -21,10 +21,10 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <%= button_to t("messages.exports.start"), space_settings_export_list_path(space_entity.identifier),
+          <%= button_to t("messages.exports.start"), space_settings_export_list_path(space_entity.identifier), {
             method: :post,
             class: "btn btn-primary no-animation rounded-full"
-          %>
+          } %>
         <% end %>
       <% end %>
     <% end %>

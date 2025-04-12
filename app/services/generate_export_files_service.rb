@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "zip"
+
 class GenerateExportFilesService < ApplicationService
   sig { params(export: Export).void }
   def call(export:)
@@ -34,7 +36,7 @@ class GenerateExportFilesService < ApplicationService
     topics = {}
 
     target_pages.find_each.with_index do |page, index|
-      topic = page.topic
+      topic = page.topic.not_nil!
 
       unless topics[topic.id]
         topic_dir = File.join(export_base_dir, topic.name)
