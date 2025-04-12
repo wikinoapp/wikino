@@ -60,8 +60,10 @@ class Export < ApplicationRecord
     )
   end
 
-  sig { params(message: String, logged_at: ActiveSupport::TimeWithZone).void }
-  def add_log!(message:, logged_at: Time.current)
-    logs.create!(space:, message:, logged_at:)
+  sig { void }
+  def send_succeeded_mail!
+    ExportMailer.succeeded(export_id: id, locale: queued_by.user_locale).deliver_later
+
+    nil
   end
 end

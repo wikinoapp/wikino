@@ -27,6 +27,7 @@ en:
       enter_code: Enter the confirmation code in the email.
     exports:
       start: Start export
+      started: Export has started.
       started_html: |-
         Export has started.<br>
         You will be notified by email when it is complete.

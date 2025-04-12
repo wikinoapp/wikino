@@ -4,3 +4,6 @@ en:
       subject: Sign in to Wikino
     sign_up_event:
       subject: Finish creating your account on Wikino
+  export_mailer:
+    succeeded:
+      subject: "[Wikino] Your export data is ready"

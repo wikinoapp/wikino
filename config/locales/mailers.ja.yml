@@ -4,3 +4,6 @@ ja:
       subject: Wikinoにログイン
     sign_up_event:
       subject: Wikinoのアカウント作成用リンク
+  export_mailer:
+    succeeded:
+      subject: "[Wikino] エクスポートデータの用意ができました"

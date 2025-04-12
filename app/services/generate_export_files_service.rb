@@ -8,21 +8,20 @@ class GenerateExportFilesService < ApplicationService
       return
     end
 
-    export.change_status!(kind: ExportStatusKind::Started)
+    begin
+      export.change_status!(kind: ExportStatusKind::Started)
 
-    output_path = output_to_files!(export:)
-    zip_path = make_zip_file!(export:, output_path:)
-    upload_zip_file!(export:, zip_path:)
+      output_path = output_to_files!(export:)
+      zip_path = make_zip_file!(export:, output_path:)
+      upload_zip_file!(export:, zip_path:)
 
-    export.change_status!(kind: ExportStatusKind::Succeeded)
-  rescue => exception
-    export.change_status!(kind: ExportStatusKind::Failed)
-
-    if Rails.env.development?
+      export.change_status!(kind: ExportStatusKind::Succeeded)
+    rescue => exception
+      export.change_status!(kind: ExportStatusKind::Failed)
       raise exception
     end
 
-    Sentry.capture_exception(exception)
+    export.send_succeeded_mail!
   end
 
   sig { params(export: Export).returns(String) }

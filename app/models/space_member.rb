@@ -15,6 +15,8 @@ class SpaceMember < ApplicationRecord
   has_many :draft_pages, dependent: :restrict_with_exception, inverse_of: :space_member
   has_many :page_editors, dependent: :restrict_with_exception, inverse_of: :space_member
 
+  delegate :locale, :time_zone, to: :user, prefix: true
+
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 

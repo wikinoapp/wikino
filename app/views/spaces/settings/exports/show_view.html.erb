@@ -47,7 +47,10 @@
                 </div>
               </div>
 
-              <%= link_to space_settings_download_export_path, {
+              <%= link_to space_settings_download_export_path(
+                space_entity.identifier,
+                export_entity.database_id
+              ), {
                 class: "btn btn-primary no-animation rounded-full w-fit",
                 target: "_blank",
                 rel: "noopener noreferrer",
