@@ -24,6 +24,10 @@ module Spaces
 
             export = space.exports.find(params[:export_id])
 
+            unless export.active?
+              return render_404
+            end
+
             redirect_to(export.presigned_url, allow_other_host: true)
           end
         end

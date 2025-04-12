@@ -26,6 +26,11 @@ class Export < ApplicationRecord
     latest_status_kind == ExportStatusKind::Succeeded
   end
 
+  sig { returns(T::Boolean) }
+  def active?
+    succeeded? && latest_status.not_nil!.changed_at > 1.day.ago
+  end
+
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportEntity) }
   def to_entity(space_viewer:)
     ExportEntity.new(
