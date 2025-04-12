@@ -26,6 +26,9 @@ ja:
       confirmation_mail_sent: 確認用のメールを送信しました
       enter_code: メールに記載されている確認用コードを入力してください
     exports:
+      description_html: |-
+        スペース内に投稿されたページをエクスポートします。
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/35" target="_blank">詳しくはこちら</a>
       start: エクスポートを開始する
       started: エクスポートを開始しました
       started_html: |-
