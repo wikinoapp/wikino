@@ -4,8 +4,8 @@
 module Spaces
   module Settings
     module Exports
-      module Logs
-        class IndexController < ApplicationController
+      module Downloads
+        class ShowController < ApplicationController
           include ControllerConcerns::Authenticatable
           include ControllerConcerns::Localizable
 
@@ -23,14 +23,8 @@ module Spaces
             end
 
             export = space.exports.find(params[:export_id])
-            export_logs = export.logs.preload(:space).order(logged_at: :desc)
 
-            render Spaces::Settings::Exports::Logs::IndexView.new(
-              current_user_entity: Current.viewer!.user_entity,
-              space_entity:,
-              export_status_entity: export.latest_status.not_nil!.to_entity(space_viewer:),
-              export_log_entities: export_logs.map { |log| log.to_entity(space_viewer:) }
-            )
+            redirect_to(export.presigned_url, allow_other_host: true)
           end
         end
       end

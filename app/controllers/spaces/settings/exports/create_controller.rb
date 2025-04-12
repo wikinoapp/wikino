@@ -21,11 +21,7 @@ module Spaces
             return render_404
           end
 
-          result = ExportService.new.call(
-            space:,
-            queued_by: space_viewer,
-            locale: current_locale
-          )
+          result = ExportService.new.call(space:, queued_by: space_viewer)
 
           flash[:notice] = t("messages.exports.started")
           redirect_to space_settings_export_path(space.identifier, result.export.id)

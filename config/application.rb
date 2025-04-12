@@ -45,6 +45,8 @@ module Wikino
 
     config.active_record.schema_format = :sql
 
+    config.active_storage.draw_routes = false
+
     config.i18n.available_locales = %i[en ja]
 
     config.wikino = config_for(:wikino)

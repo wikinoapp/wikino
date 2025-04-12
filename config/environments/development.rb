@@ -80,7 +80,7 @@ Rails.application.configure do
   config.action_mailer.default_url_options = {host: ENV.fetch("WIKINO_HOST"), port: ENV.fetch("WIKINO_PORT")}
   config.action_mailer.delivery_method = :letter_opener_web
 
-  config.active_storage.service = :s3
+  config.active_storage.service = :cloudflare_r2
 
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = {database: {writing: :queue}}

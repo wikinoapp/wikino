@@ -96,7 +96,7 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :resend
 
-  config.active_storage.service = :s3
+  config.active_storage.service = :cloudflare_r2
 
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = {database: {writing: :queue}}

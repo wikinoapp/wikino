@@ -158,21 +158,6 @@ CREATE TABLE public.email_confirmations (
 
 
 --
--- Name: export_logs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.export_logs (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    export_id uuid NOT NULL,
-    message character varying NOT NULL,
-    logged_at timestamp(6) without time zone NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -426,14 +411,6 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
--- Name: export_logs export_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_logs
-    ADD CONSTRAINT export_logs_pkey PRIMARY KEY (id);
-
-
---
 -- Name: export_statuses export_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -619,20 +596,6 @@ CREATE UNIQUE INDEX index_email_confirmations_on_code ON public.email_confirmati
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
-
-
---
--- Name: index_export_logs_on_export_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_logs_on_export_id ON public.export_logs USING btree (export_id);
-
-
---
--- Name: index_export_logs_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_logs_on_space_id ON public.export_logs USING btree (space_id);
 
 
 --
@@ -927,22 +890,6 @@ CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_
 --
 
 CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
-
-
---
--- Name: export_logs fk_rails_08485de603; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_logs
-    ADD CONSTRAINT fk_rails_08485de603 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
-
-
---
--- Name: export_logs fk_rails_0af1c5808c; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_logs
-    ADD CONSTRAINT fk_rails_0af1c5808c FOREIGN KEY (export_id) REFERENCES public.exports(id);
 
 
 --

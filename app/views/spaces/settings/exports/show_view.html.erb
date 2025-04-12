@@ -21,16 +21,47 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <turbo-frame
-            data-controller="export-logs-reloader"
-            data-export-logs-reloader-status-value="<%= export_status_entity.kind.serialize %>"
-            id="export-logs"
-            src="<%= space_settings_export_log_list_path(
-              space_entity.identifier,
-              export_entity.database_id
-            ) %>"
-          >
-          </turbo-frame>
+          <% if export_status_entity.processing? %>
+            <div class="flex flex-col gap-2 place-items-center">
+              <%= render Basic::IconComponent.new(
+                name: "package-regular",
+                size: "42px",
+                class_name: "fill-amber-600 animate-bounce"
+              ) %>
+
+              <div class="text-center">
+                <%= t("messages.exports.started_html") %>
+              </div>
+            </div>
+          <% elsif export_status_entity.succeeded? %>
+            <div class="flex flex-col gap-6 place-items-center">
+              <div class="flex flex-col gap-2 place-items-center">
+                <%= render Basic::IconComponent.new(
+                  name: "check-circle",
+                  size: "42px",
+                  class_name: "fill-success"
+                ) %>
+
+                <div class="text-center">
+                  <%= t("messages.exports.succeeded_html") %>
+                </div>
+              </div>
+
+              <%= link_to space_settings_download_export_path, {
+                class: "btn btn-primary no-animation rounded-full w-fit",
+                target: "_blank",
+                rel: "noopener noreferrer",
+              } do%>
+                <%= render Basic::IconComponent.new(
+                  name: "download-simple-regular",
+                  size: "18px",
+                  class_name: "fill-primary-content"
+                ) %>
+
+                <%= t("verbs.download") %>
+              <% end %>
+            </div>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

@@ -27,19 +27,10 @@ en:
       enter_code: Enter the confirmation code in the email.
     exports:
       start: Start export
-      started: Export started.
-    export_logs:
-      already_finished_as_failed: Export has already finished as failed.
-      already_finished_as_succeeded: Export has already finished as succeeded.
-      failed: Export failed.
-      output_to_file: File output succeeded (%{progress} pages)
-      started: Export started.
-      succeeded: Export succeeded.
-      target_pages_count: "%{total_count} pages will be exported."
-      uploaded_zip_file: File upload succeeded.
-      uploading_zip_file: Start uploading file.
-      zipped_files: File zipping succeeded.
-      zipping_files: Start zipping files.
+      started_html: |-
+        Export has started.<br>
+        You will be notified by email when it is complete.
+      succeeded_html: Export completed.
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>

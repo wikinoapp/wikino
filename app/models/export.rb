@@ -2,12 +2,13 @@
 # frozen_string_literal: true
 
 class Export < ApplicationRecord
+  PRESIGNED_URL_EXPIRATION = 86400 # 24時間
+
   has_one_attached :file
 
   belongs_to :space
   belongs_to :queued_by, class_name: "SpaceMember"
   has_many :statuses, class_name: "ExportStatus", dependent: :restrict_with_exception
-  has_many :logs, class_name: "ExportLog", dependent: :restrict_with_exception
   has_one :latest_status, -> { order(changed_at: :desc) }, class_name: "ExportStatus", inverse_of: false
 
   sig { returns(ExportStatusKind) }
@@ -36,6 +37,18 @@ class Export < ApplicationRecord
 
   def target_pages
     space.pages.active
+  end
+
+  def presigned_url
+    signer = Aws::S3::Presigner.new(client: ActiveStorage::Blob.service.client.client)
+
+    # アップロード用Presigned URLの生成
+    signer.presigned_url(
+      :get_object,
+      bucket: ActiveStorage::Blob.service.bucket.name,
+      key: file.key,
+      expires_in: PRESIGNED_URL_EXPIRATION
+    )
   end
 
   sig { params(kind: ExportStatusKind).void }
