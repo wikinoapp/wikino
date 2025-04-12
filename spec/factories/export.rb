@@ -4,7 +4,6 @@
 FactoryBot.define do
   factory :export do
     space
-    started_by factory: :space_member
-    started_at { Time.current }
+    queued_by factory: :space_member
   end
 end

@@ -43,6 +43,7 @@ RSpec.describe "GET /s/:space_identifier/settings/exports/:export_id", type: :re
     space = create(:space)
     create(:space_member, user:, space:)
     export = create(:export, space:)
+    create(:export_status, space:, export:)
 
     sign_in(user:)
 
