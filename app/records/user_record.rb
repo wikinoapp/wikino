@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class User < ApplicationRecord
+class UserRecord < ApplicationRecord
   include Discard::Model
 
   include ModelConcerns::Viewable
@@ -13,6 +13,8 @@ class User < ApplicationRecord
   NAME_MAX_LENGTH = 30
   # 説明の最大文字数 (値に強い理由は無い)
   DESCRIPTION_MAX_LENGTH = 150
+
+  self.table_name = "users"
 
   enum :locale, {
     ViewerLocale::En.serialize => 0,

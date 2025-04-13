@@ -1,8 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class SpaceMember < ApplicationRecord
+class SpaceMemberRecord < ApplicationRecord
   include ModelConcerns::SpaceViewable
+
+  self.table_name = "space_members"
 
   enum :role, {
     SpaceMemberRole::Owner.serialize => 0

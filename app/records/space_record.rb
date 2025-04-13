@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Space < ApplicationRecord
+class SpaceRecord < ApplicationRecord
   include Discard::Model
 
   include FormConcerns::ISpace
@@ -13,6 +13,8 @@ class Space < ApplicationRecord
   IDENTIFIER_RESERVED_WORDS = %w[www].freeze
   # 名前の最大文字数 (値に強い理由は無い)
   NAME_MAX_LENGTH = 30
+
+  self.table_name = "spaces"
 
   enum :plan, {
     Plan::Free.serialize => 0,

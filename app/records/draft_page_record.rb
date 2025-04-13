@@ -4,6 +4,8 @@
 class DraftPage < ApplicationRecord
   include ModelConcerns::Pageable
 
+  self.table_name = "draft_pages"
+
   belongs_to :space
   belongs_to :topic
   belongs_to :page

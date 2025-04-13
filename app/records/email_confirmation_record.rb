@@ -1,9 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
-class EmailConfirmation < ApplicationRecord
+class EmailConfirmationRecord < ApplicationRecord
   CODE_LENGTH = T.let(6, Integer)
   EXPIRES_IN = T.let(15.minutes, ActiveSupport::Duration)
+
+  self.table_name = "email_confirmations"
 
   enum :event, {
     EmailConfirmationEvent::SignUp.serialize => 0,

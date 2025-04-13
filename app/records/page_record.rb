@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Page < ApplicationRecord
+class PageRecord < ApplicationRecord
   include Discard::Model
   include ModelConcerns::Pageable
 
@@ -9,6 +9,8 @@ class Page < ApplicationRecord
   DELETE_LIMIT_DAYS = 30
   # タイトルの最大文字数 (値に強い理由は無い)
   TITLE_MAX_LENGTH = 200
+
+  self.table_name = "pages"
 
   acts_as_sequenced column: :number, scope: :space_id
 
