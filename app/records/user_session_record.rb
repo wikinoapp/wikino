@@ -2,13 +2,18 @@
 # frozen_string_literal: true
 
 class UserSessionRecord < ApplicationRecord
-  TOKENS_COOKIE_KEY = :user_session_tokens
-
   self.table_name = "user_sessions"
 
   has_secure_token
 
-  belongs_to :user
+  belongs_to :user, class_name: "UserRecord"
+
+  def to_model
+    UserSession.new(
+      user: user.to_model,
+      token:
+    )
+  end
 
   sig do
     params(

@@ -4,21 +4,11 @@
 class UserRecord < ApplicationRecord
   include Discard::Model
 
-  include ModelConcerns::Viewable
-
-  ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
-  # アットネームの最大文字数 (値に強い理由は無い)
-  ATNAME_MAX_LENGTH = 20
-  # 名前の最大文字数 (値に強い理由は無い)
-  NAME_MAX_LENGTH = 30
-  # 説明の最大文字数 (値に強い理由は無い)
-  DESCRIPTION_MAX_LENGTH = 150
-
   self.table_name = "users"
 
   enum :locale, {
-    ViewerLocale::En.serialize => 0,
-    ViewerLocale::Ja.serialize => 1
+    Locale::En.serialize => 0,
+    Locale::Ja.serialize => 1
   }, prefix: true
 
   belongs_to :space, optional: true
@@ -58,20 +48,16 @@ class UserRecord < ApplicationRecord
     user
   end
 
-  sig { returns(UserEntity) }
-  def to_entity
-    UserEntity.new(
+  sig { returns(User) }
+  def to_model
+    User.new(
       database_id: id,
       atname:,
       name:,
       description:,
+      serialized_locale: locale,
       time_zone:
     )
-  end
-
-  sig { override.returns(T::Boolean) }
-  def signed_in?
-    true
   end
 
   sig { override.returns(T.nilable(UserEntity)) }
@@ -98,11 +84,6 @@ class UserRecord < ApplicationRecord
   def joined_all_topics?(topic_ids:)
     joined_topic_ids = topics.pluck(:id)
     topic_ids - joined_topic_ids == []
-  end
-
-  sig { override.returns(ViewerLocale) }
-  def viewer_locale
-    ViewerLocale.deserialize(locale)
   end
 
   sig { override.returns(Topic::PrivateRelation) }

@@ -1,8 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-class ApplicationModel
+class ApplicationRepository
   extend T::Sig
-
-  include ActiveModel::Model
 end

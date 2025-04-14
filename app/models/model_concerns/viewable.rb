@@ -33,15 +33,20 @@ module ModelConcerns
     end
 
     sig { abstract.returns(String) }
-    def time_zone
+    def serialized_locale
     end
 
-    sig { abstract.returns(ViewerLocale) }
-    def viewer_locale
+    sig { abstract.returns(String) }
+    def time_zone
     end
 
     sig { abstract.returns(Topic::PrivateRelation) }
     def viewable_topics
+    end
+
+    sig { returns(Locale) }
+    def locale
+      Locale.deserialize(serialized_locale)
     end
   end
 end

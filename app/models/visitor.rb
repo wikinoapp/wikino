@@ -2,26 +2,20 @@
 # frozen_string_literal: true
 
 # ログインしていない人を表すモデル
-class Visitor
-  extend T::Sig
-
+class Visitor < ApplicationModel
   include ModelConcerns::Viewable
 
-  sig { params(time_zone: String, locale: String).void }
-  def initialize(time_zone: "Asia/Tokyo", locale: "ja")
-    @time_zone = time_zone
-    @locale = locale
-  end
+  sig { override.returns(String) }
+  attr_accessor :serialized_locale
 
   sig { override.returns(String) }
-  attr_reader :time_zone
+  attr_accessor :time_zone
 
-  sig { returns(String) }
-  attr_reader :locale
-
-  sig { override.returns(ViewerLocale) }
-  def viewer_locale
-    ViewerLocale.deserialize(locale)
+  sig { params(attributes: T::Hash[Symbol, T.untyped]).void }
+  def initialize(attributes = {})
+    attributes[:time_zone] = attributes[:time_zone].presence || "Asia/Tokyo"
+    attributes[:serialized_locale] = attributes[:serialized_locale].presence || "ja"
+    super
   end
 
   sig { override.returns(T::Boolean) }

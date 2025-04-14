@@ -56,8 +56,8 @@ class SpaceRecord < ApplicationRecord
   end
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
-  def to_entity(space_viewer:)
-    SpaceEntity.new(
+  def to_model(space_viewer:)
+    Space.new(
       database_id: id,
       identifier:,
       name:,
