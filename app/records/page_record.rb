@@ -14,10 +14,18 @@ class PageRecord < ApplicationRecord
 
   acts_as_sequenced column: :number, scope: :space_id
 
-  belongs_to :topic
-  belongs_to :space
-  has_many :editors, class_name: "PageEditor", dependent: :restrict_with_exception
-  has_many :revisions, class_name: "PageRevision", dependent: :restrict_with_exception
+  belongs_to :topic_record, foreign_key: :topic_id
+  belongs_to :space_record, foreign_key: :space_id
+  has_many :editor_records,
+    class_name: "PageEditorRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :page_id,
+    inverse_of: :page_record
+  has_many :revision_records,
+    class_name: "PageRevisionRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :page_id,
+    inverse_of: :page_record
 
   scope :published, -> { where.not(published_at: nil) }
   scope :pinned, -> { where.not(pinned_at: nil) }

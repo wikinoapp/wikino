@@ -10,12 +10,23 @@ class SpaceMemberRecord < ApplicationRecord
     SpaceMemberRole::Owner.serialize => 0
   }, prefix: true
 
-  belongs_to :space
-  belongs_to :user
-  has_many :topic_members, dependent: :restrict_with_exception, inverse_of: :space_member
-  has_many :topics, through: :topic_members
-  has_many :draft_pages, dependent: :restrict_with_exception, inverse_of: :space_member
-  has_many :page_editors, dependent: :restrict_with_exception, inverse_of: :space_member
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :user_record, foreign_key: :user_id
+  has_many :topic_member_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_member_id,
+    inverse_of: :space_member_record
+  has_many :topic_records,
+    foreign_key: :topic_id,
+    through: :topic_member_records
+  has_many :draft_page_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_member_id,
+    inverse_of: :space_member_record
+  has_many :page_editor_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_member_id,
+    inverse_of: :space_member_record
 
   delegate :locale, :time_zone, to: :user, prefix: true
 

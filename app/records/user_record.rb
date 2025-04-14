@@ -21,17 +21,25 @@ class UserRecord < ApplicationRecord
     ViewerLocale::Ja.serialize => 1
   }, prefix: true
 
-  belongs_to :space, optional: true
-  has_many :space_members, dependent: :restrict_with_exception
-  has_many :active_space_members, -> { SpaceMember.active }, class_name: "SpaceMember", dependent: :restrict_with_exception, inverse_of: :user
-  has_many :topic_members, through: :space_members, source: :topic_members
-  has_many :topics, through: :topic_members
-  has_many :spaces, through: :space_members
-  has_many :active_spaces, class_name: "Space", through: :active_space_members, source: :space
-  has_many :user_sessions, dependent: :restrict_with_exception
-  has_one :user_password, dependent: :restrict_with_exception
-
-  delegate :identifier, :name, to: :space, prefix: :space
+  has_many :space_member_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :user_id,
+    inverse_of: :user_record
+  has_many :active_space_member_records,
+    -> { SpaceMember.active },
+    class_name: "SpaceMemberRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :user_id,
+    inverse_of: :user_record
+  has_many :topic_member_records, through: :space_member_records, source: :topic_member_records
+  has_many :topic_records, through: :topic_member_records
+  has_many :space_records, through: :space_member_records
+  has_many :active_space_records,
+    class_name: "SpaceRecord",
+    through: :active_space_member_records,
+    source: :space_record
+  has_many :user_session_records, dependent: :restrict_with_exception, foreign_key: :user_id
+  has_one :user_password_record, dependent: :restrict_with_exception, foreign_key: :user_id
 
   sig do
     params(

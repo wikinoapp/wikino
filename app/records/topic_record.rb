@@ -18,9 +18,9 @@ class TopicRecord < ApplicationRecord
     TopicVisibility::Private.serialize => 1
   }, prefix: true
 
-  belongs_to :space
-  has_many :members, class_name: "TopicMember", dependent: :restrict_with_exception
-  has_many :pages, dependent: :restrict_with_exception
+  belongs_to :space_record, foreign_key: :space_id
+  has_many :member_records, class_name: "TopicMemberRecord", foreign_key: :topic_id, dependent: :restrict_with_exception
+  has_many :page_records, dependent: :restrict_with_exception, foreign_key: :topic_id, inverse_of: :topic_record
 
   scope :public_or_private, -> { where(visibility: [TopicVisibility::Public.serialize, TopicVisibility::Private.serialize]) }
 

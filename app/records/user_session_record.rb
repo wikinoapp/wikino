@@ -8,7 +8,7 @@ class UserSessionRecord < ApplicationRecord
 
   has_secure_token
 
-  belongs_to :user
+  belongs_to :user_record, foreign_key: :user_id
 
   sig do
     params(

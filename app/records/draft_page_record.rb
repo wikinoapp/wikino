@@ -2,14 +2,14 @@
 # frozen_string_literal: true
 
 class DraftPageRecord < ApplicationRecord
-  include ModelConcerns::Pageable
+  include RecordConcerns::Pageable
 
   self.table_name = "draft_pages"
 
-  belongs_to :space
-  belongs_to :topic
-  belongs_to :page
-  belongs_to :space_member
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :topic_record, foreign_key: :topic_id
+  belongs_to :page_record, foreign_key: :page_id
+  belongs_to :space_member_record, foreign_key: :space_member_id
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(DraftPageEntity) }
   def to_entity(space_viewer:)

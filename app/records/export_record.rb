@@ -8,10 +8,18 @@ class ExportRecord < ApplicationRecord
 
   has_one_attached :file
 
-  belongs_to :space
-  belongs_to :queued_by, class_name: "SpaceMember"
-  has_many :statuses, class_name: "ExportStatus", dependent: :restrict_with_exception
-  has_one :latest_status, -> { order(changed_at: :desc) }, class_name: "ExportStatus", inverse_of: false
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :queued_by_record, class_name: "SpaceMemberRecord", foreign_key: :queued_by_id
+  has_many :status_records,
+    class_name: "ExportStatusRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :export_id,
+    inverse_of: :export_record
+  has_one :latest_status_record,
+    -> { order(changed_at: :desc) },
+    class_name: "ExportStatusRecord",
+    foreign_key: :export_id,
+    inverse_of: false
 
   sig { returns(ExportStatusKind) }
   def latest_status_kind

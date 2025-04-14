@@ -22,15 +22,38 @@ class SpaceRecord < ApplicationRecord
     Plan::Large.serialize => 2
   }, prefix: true
 
-  has_many :draft_pages, dependent: :restrict_with_exception
-  has_many :exports, dependent: :restrict_with_exception
-  has_many :topic_members, dependent: :restrict_with_exception
-  has_many :topics, dependent: :restrict_with_exception
-  has_many :page_editors, dependent: :restrict_with_exception
-  has_many :page_revisions, dependent: :restrict_with_exception
-  has_many :pages, dependent: :restrict_with_exception
-  has_many :space_members, dependent: :restrict_with_exception
-  has_many :users, dependent: :restrict_with_exception
+  has_many :draft_page_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :export_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :topic_member_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :topic_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :page_editor_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :page_revision_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :page_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
+  has_many :space_member_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
 
   sig do
     params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: ViewerLocale)

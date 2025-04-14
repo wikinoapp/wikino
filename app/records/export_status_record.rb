@@ -11,8 +11,8 @@ class ExportStatusRecord < ApplicationRecord
     ExportStatusKind::Failed.serialize => 3
   }, prefix: true
 
-  belongs_to :space
-  belongs_to :export
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :export_record, foreign_key: :export_id
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportStatusEntity) }
   def to_entity(space_viewer:)
