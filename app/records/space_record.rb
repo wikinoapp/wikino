@@ -102,7 +102,7 @@ class SpaceRecord < ApplicationRecord
       limit: 100,
       order: {trashed_at: :desc, id: :desc}
     ).fetch
-    page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
+    page_entities = PageRecord.to_entities(space_viewer:, pages: cursor_paginate_page.records)
     pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
     PageListEntity.new(page_entities:, pagination_entity:)

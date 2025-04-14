@@ -33,7 +33,7 @@ module EmailConfirmations
       ).permit(:confirmation_code)
     end
 
-    sig { params(email_confirmation: EmailConfirmation).void }
+    sig { params(email_confirmation: EmailConfirmationRecord).void }
     private def flash_message(email_confirmation)
       if email_confirmation.event_email_update?
         flash[:notice] = t("messages.email_confirmations.email_updated")
@@ -42,7 +42,7 @@ module EmailConfirmations
       nil
     end
 
-    sig { params(email_confirmation: EmailConfirmation).returns(String) }
+    sig { params(email_confirmation: EmailConfirmationRecord).returns(String) }
     private def success_path(email_confirmation)
       if email_confirmation.event_sign_up?
         new_account_path

@@ -4,20 +4,11 @@
 
 # typed: false
 
-module ::EmailConfirmation; end
-module ::Export; end
 module ::SpaceMember; end
-module ConfirmEmailService::EmailConfirmation; end
-module ControllerConcerns::EmailConfirmationFindable::EmailConfirmation; end
-module CreateEmailConfirmationService::EmailConfirmation; end
+module ActiveRecordCursorPaginate::PageRecord; end
 module CreateTopicService::SpaceMember; end
 module EditPageForm::SpaceMember; end
-module EmailConfirmationForm::EmailConfirmation; end
-module EmailConfirmationMailer::EmailConfirmation; end
-module EmailConfirmations::UpdateController::EmailConfirmation; end
-module ExportMailer::Export; end
 module ExportService::SpaceMember; end
-module GenerateExportFilesJob::Export; end
 module GenerateExportFilesService::Export; end
 module Page::PrivateAssociationRelationWhereChain; end
 module PageRecord::DELETE_LIMIT_DAYS; end
@@ -25,12 +16,12 @@ module PageRecord::PageRevision; end
 module PageRecord::SpaceMember; end
 module RecordConcerns::Pageable::SpaceMember; end
 module Space::PrivateCollectionProxy; end
+module SpaceMemberPermission::UpdateSpaceRecord; end
 module SpaceMemberPermission::UpdateTopicRecord; end
 module SpaceMemberRecord::PageEditor; end
 module Topic::PrivateAssociationRelation; end
 module Topic::PrivateCollectionProxy; end
 module Topic::PrivateRelation; end
 module TopicRecord::SpaceMember; end
-module UserRecord::EmailConfirmation; end
 module UserSession::TOKENS_COOKIE_KEY; end
 module Zip::File::CREATE; end

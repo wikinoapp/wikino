@@ -8,7 +8,7 @@ class BulkRestorePagesService < ApplicationService
 
   sig { params(page_ids: T::Array[T::Wikino::DatabaseId]).returns(Result) }
   def call(page_ids:)
-    pages = Page.where(id: page_ids)
+    pages = PageRecord.where(id: page_ids)
 
     pages.update_all(
       trashed_at: nil,

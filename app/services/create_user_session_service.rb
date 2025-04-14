@@ -15,7 +15,7 @@ class CreateUserSessionService < ApplicationService
   end
   def call(user:, ip_address:, user_agent:)
     user_session = ActiveRecord::Base.transaction do
-      user.user_sessions.start!(ip_address:, user_agent:)
+      user.user_session_records.start!(ip_address:, user_agent:)
     end
 
     Result.new(user_session:)

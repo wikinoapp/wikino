@@ -11,7 +11,7 @@ class CreateBlankedPageService < ApplicationService
     space_member = Current.viewer!.active_space_members.find_by!(space_id: topic.space_id)
 
     page = ActiveRecord::Base.transaction do
-      new_page = Page.create_as_blanked!(topic:)
+      new_page = PageRecord.create_as_blanked!(topic:)
       new_page.add_editor!(editor: space_member)
       new_page
     end

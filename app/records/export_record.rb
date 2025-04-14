@@ -45,7 +45,7 @@ class ExportRecord < ApplicationRecord
   def to_entity(space_viewer:)
     ExportEntity.new(
       database_id: id,
-      queued_by_entity: queued_by.not_nil!.to_entity(space_viewer:),
+      queued_by_entity: queued_by_record.not_nil!.to_entity(space_viewer:),
       space_entity: space.not_nil!.to_entity(space_viewer:)
     )
   end
@@ -79,7 +79,7 @@ class ExportRecord < ApplicationRecord
 
   sig { void }
   def send_succeeded_mail!
-    ExportMailer.succeeded(export_id: id, locale: queued_by.not_nil!.user_locale).deliver_later
+    ExportMailer.succeeded(export_id: id, locale: queued_by_record.not_nil!.user_locale).deliver_later
 
     nil
   end

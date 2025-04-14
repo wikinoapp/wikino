@@ -3,16 +3,16 @@
 
 RSpec.describe "POST /accounts", type: :request do
   def setup_email_confirmation
-    expect(EmailConfirmation.count).to eq(0)
+    expect(EmailConfirmationRecord.count).to eq(0)
     # 確認用コードを生成する
     post("/email_confirmation", params: {
       new_email_confirmation_form: {
         email: "test@example.com"
       }
     })
-    expect(EmailConfirmation.count).to eq(1)
+    expect(EmailConfirmationRecord.count).to eq(1)
 
-    EmailConfirmation.first
+    EmailConfirmationRecord.first
   end
 
   it "ログインしているとき、ホーム画面にリダイレクトすること" do

@@ -13,7 +13,7 @@ RSpec.describe "GET /accounts/new", type: :request do
   end
 
   it "メールアドレスの確認に成功しているとき、アカウント作成ページが表示されること" do
-    expect(EmailConfirmation.count).to eq(0)
+    expect(EmailConfirmationRecord.count).to eq(0)
 
     # 確認用コードを生成する
     post("/email_confirmation", params: {
@@ -22,8 +22,8 @@ RSpec.describe "GET /accounts/new", type: :request do
       }
     })
 
-    expect(EmailConfirmation.count).to eq(1)
-    email_confirmation = EmailConfirmation.first
+    expect(EmailConfirmationRecord.count).to eq(1)
+    email_confirmation = EmailConfirmationRecord.first
     # メールアドレスの確認が成功したことにする
     email_confirmation.success!
 

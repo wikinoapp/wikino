@@ -133,7 +133,7 @@ class UserRecord < ApplicationRecord
     active_spaces.where(id: page.space_id).exists?
   end
 
-  sig { params(email_confirmation: EmailConfirmation).void }
+  sig { params(email_confirmation: EmailConfirmationRecord).void }
   def run_after_email_confirmation_success!(email_confirmation:)
     return unless email_confirmation.succeeded?
 

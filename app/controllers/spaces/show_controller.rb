@@ -22,12 +22,12 @@ module Spaces
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
+      page_entities = PageRecord.to_entities(space_viewer:, pages: cursor_paginate_page.records)
       pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
       space_entity = space.to_entity(space_viewer:)
       first_topic_entity = space_viewer.joined_topics.first&.to_entity(space_viewer:)
-      pinned_page_entities = Page.to_entities(space_viewer:, pages: showable_pages.pinned.order(pinned_at: :desc, id: :desc))
+      pinned_page_entities = PageRecord.to_entities(space_viewer:, pages: showable_pages.pinned.order(pinned_at: :desc, id: :desc))
 
       render Spaces::ShowView.new(
         current_user_entity: Current.viewer!.user_entity,

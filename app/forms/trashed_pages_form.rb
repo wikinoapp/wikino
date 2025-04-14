@@ -14,7 +14,7 @@ class TrashedPagesForm < ApplicationForm
 
   sig { returns(PageRecord::PrivateRelation) }
   private def pages
-    Page.where(id: page_ids)
+    PageRecord.where(id: page_ids)
   end
 
   sig { void }

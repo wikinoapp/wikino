@@ -46,7 +46,7 @@ RSpec.describe Page, type: :model do
       topic_b = create(:topic, space:, name: "トピックB")
       page_a = create(:page, space:, topic: topic_a, title: "Page A")
 
-      expect(Page.count).to eq(1)
+      expect(PageRecord.count).to eq(1)
 
       page_a.body = <<~BODY
         [[Page B]]
@@ -55,7 +55,7 @@ RSpec.describe Page, type: :model do
       BODY
       page_a.link!(editor: space_member)
 
-      expect(Page.count).to eq(3)
+      expect(PageRecord.count).to eq(3)
       page_b = space.pages.find_by(topic: topic_a, title: "Page B")
       expect(page_b).to be_present
       page_c = space.pages.find_by(topic: topic_b, title: "Page C")

@@ -6,7 +6,7 @@ class ConfirmEmailService < ApplicationService
     const :email_confirmation, EmailConfirmationRecord
   end
 
-  sig { params(email_confirmation: EmailConfirmation).returns(Result) }
+  sig { params(email_confirmation: EmailConfirmationRecord).returns(Result) }
   def call(email_confirmation:)
     ActiveRecord::Base.transaction do
       email_confirmation.success!
