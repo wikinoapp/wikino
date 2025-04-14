@@ -49,7 +49,7 @@ class SpaceRecord < ApplicationRecord
 
   sig do
     params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: ViewerLocale)
-      .returns(Space)
+      .returns(SpaceRecord)
   end
   def self.create_initial_space!(identifier:, current_time:, locale:)
     create!(
@@ -60,7 +60,7 @@ class SpaceRecord < ApplicationRecord
     )
   end
 
-  sig { params(identifier: String).returns(Space) }
+  sig { params(identifier: String).returns(SpaceRecord) }
   def self.find_by_identifier!(identifier)
     kept.find_by!(identifier:)
   end
@@ -83,7 +83,7 @@ class SpaceRecord < ApplicationRecord
     )
   end
 
-  sig { params(number: Integer).returns(Page) }
+  sig { params(number: Integer).returns(PageRecord) }
   def find_page_by_number!(number)
     pages.kept.find_by!(number:)
   end

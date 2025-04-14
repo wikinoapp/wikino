@@ -33,7 +33,7 @@ RSpec.describe "POST /s/:space_identifier/settings/exports", type: :request do
 
     sign_in(user:)
 
-    expect(Export.count).to eq(0)
+    expect(ExportRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/settings/exports")
 

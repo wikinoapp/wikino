@@ -19,7 +19,7 @@ RSpec.describe "POST /accounts", type: :request do
     user = create(:user, :with_password)
     sign_in(user:)
 
-    expect(User.count).to eq(1)
+    expect(UserRecord.count).to eq(1)
 
     post("/accounts", params: {
       account_form: {
@@ -32,7 +32,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(response).to redirect_to("/home")
 
     # 新しいアカウントは作成されていないのでユーザーは1件のまま
-    expect(User.count).to eq(1)
+    expect(UserRecord.count).to eq(1)
   end
 
   it "メールアドレスの確認に成功していないとき、トップページにリダイレクトすること" do
@@ -82,7 +82,7 @@ RSpec.describe "POST /accounts", type: :request do
     # メールアドレスの確認が成功したことにする
     email_confirmation.success!
 
-    expect(User.count).to eq(0)
+    expect(UserRecord.count).to eq(0)
 
     post("/accounts", params: {
       account_form: {
@@ -94,7 +94,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(response.status).to eq(302)
 
     # アカウントの作成に成功したのでユーザーが1件になる
-    expect(User.count).to eq(1)
+    expect(UserRecord.count).to eq(1)
 
     expect(response).to redirect_to("/home")
   end

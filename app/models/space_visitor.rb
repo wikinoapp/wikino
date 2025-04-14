@@ -7,12 +7,12 @@ class SpaceVisitor
 
   include ModelConcerns::SpaceViewable
 
-  sig { params(space: Space).void }
+  sig { params(space: SpaceRecord).void }
   def initialize(space:)
     @space = space
   end
 
-  sig { returns(Space) }
+  sig { returns(SpaceRecord) }
   attr_reader :space
 
   sig { override.returns(T.any(DraftPageRecord::PrivateAssociationRelation, DraftPageRecord::PrivateRelation)) }

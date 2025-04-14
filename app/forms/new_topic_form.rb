@@ -6,7 +6,7 @@ class NewTopicForm < ApplicationForm
   include FormConcerns::TopicDescriptionValidatable
   include FormConcerns::TopicVisibilityValidatable
 
-  sig { returns(T.nilable(Space)) }
+  sig { returns(T.nilable(SpaceRecord)) }
   attr_accessor :space
 
   attribute :name, :string

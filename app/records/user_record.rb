@@ -79,14 +79,14 @@ class UserRecord < ApplicationRecord
     to_entity
   end
 
-  sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+  sig { override.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
   def space_viewer!(space:)
     active_space_members.find_by(space:).presence || SpaceVisitor.new(space:)
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def joined_space?(space:)
-    active_spaces.where(id: space.id).exists?
+    active_space_records.where(id: space.id).exists?
   end
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }
@@ -128,7 +128,7 @@ class UserRecord < ApplicationRecord
     topic_members.find_by(topic:)&.role_admin? == true
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
+  sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page:)
     active_spaces.where(id: page.space_id).exists?
   end

@@ -12,7 +12,7 @@ module Home
     sig { returns(T.untyped) }
     def call
       current_user = T.let(Current.viewer!, UserRecord)
-      active_spaces = current_user.active_spaces
+      active_spaces = current_user.active_space_records
 
       render Home::ShowView.new(
         active_spaces:,

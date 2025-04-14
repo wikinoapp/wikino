@@ -16,7 +16,7 @@ class EditTopicForm < ApplicationForm
   validates :topic, presence: true
   validate :name_uniqueness
 
-  sig { returns(T.nilable(Space)) }
+  sig { returns(T.nilable(SpaceRecord)) }
   def space
     topic&.space
   end

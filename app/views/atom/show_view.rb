@@ -9,7 +9,7 @@ module Atom
       @pages = pages
     end
 
-    sig { returns(Space) }
+    sig { returns(SpaceRecord) }
     attr_reader :space
     private :space
 
@@ -22,7 +22,7 @@ module Atom
       2025
     end
 
-    sig { params(page: Page).returns(String) }
+    sig { params(page: PageRecord).returns(String) }
     def entry_id(page:)
       "tag:Wikino,#{schema_date}:Page/#{page.id}"
     end

@@ -14,7 +14,7 @@ RSpec.describe "DELETE /user_session", type: :request do
     sign_in(user:)
 
     # ログインしているのでセッションは1つ
-    expect(UserSession.count).to eq(1)
+    expect(UserSessionRecord.count).to eq(1)
 
     delete("/user_session")
 
@@ -22,6 +22,6 @@ RSpec.describe "DELETE /user_session", type: :request do
     expect(response).to redirect_to("/")
 
     # ログアウトしたのでセッションは削除されているはず
-    expect(UserSession.count).to eq(0)
+    expect(UserSessionRecord.count).to eq(0)
   end
 end

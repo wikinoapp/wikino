@@ -3,7 +3,7 @@
 
 class UpdateProfileService < ApplicationService
   class Result < T::Struct
-    const :user, User
+    const :user, UserRecord
   end
 
   sig { params(form: EditProfileForm).returns(Result) }

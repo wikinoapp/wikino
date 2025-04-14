@@ -14,7 +14,7 @@ class PaginationEntity < T::Struct
   alias_method :has_next?, :has_next
   alias_method :has_previous?, :has_previous
 
-  sig { params(cursor_paginate_page: ActiveRecordCursorPaginate::Page).returns(T.attached_class) }
+  sig { params(cursor_paginate_page: ActiveRecordCursorPaginate::PageRecord).returns(T.attached_class) }
   def self.from_cursor_paginate(cursor_paginate_page:)
     new(
       next_cursor: cursor_paginate_page.has_next? ? cursor_paginate_page.next_cursor : nil,

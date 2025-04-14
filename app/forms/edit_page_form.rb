@@ -9,7 +9,7 @@ class EditPageForm < ApplicationForm
   sig { returns(T.nilable(SpaceMember)) }
   attr_accessor :space_member
 
-  sig { returns(T.nilable(Page)) }
+  sig { returns(T.nilable(PageRecord)) }
   attr_accessor :page
 
   attribute :topic_number, :integer

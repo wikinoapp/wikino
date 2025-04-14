@@ -34,12 +34,12 @@ class Visitor
     nil
   end
 
-  sig { override.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+  sig { override.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
   def space_viewer!(space:)
     SpaceVisitor.new(space:)
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def joined_space?(space:)
     false
   end
@@ -49,7 +49,7 @@ class Visitor
     topic.visibility_public?
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
+  sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page:)
     false
   end

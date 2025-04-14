@@ -56,7 +56,7 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     private def restore_user_session
-      if user_session_token && (user_session = UserSession.find_by(token: user_session_token))
+      if user_session_token && (user_session = UserSessionRecord.find_by(token: user_session_token))
         sign_in(user_session)
       else
         Current.viewer = Visitor.new

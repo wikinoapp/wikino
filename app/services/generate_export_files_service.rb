@@ -4,7 +4,7 @@
 require "zip"
 
 class GenerateExportFilesService < ApplicationService
-  sig { params(export: Export).void }
+  sig { params(export: ExportRecord).void }
   def call(export:)
     if export.failed? || export.succeeded?
       return
@@ -26,7 +26,7 @@ class GenerateExportFilesService < ApplicationService
     export.send_succeeded_mail!
   end
 
-  sig { params(export: Export).returns(String) }
+  sig { params(export: ExportRecord).returns(String) }
   private def output_to_files!(export:)
     target_pages = export.target_pages.preload(:topic)
 

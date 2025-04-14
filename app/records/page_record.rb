@@ -42,7 +42,7 @@ class PageRecord < ApplicationRecord
     end
   end
 
-  sig { params(topic: TopicRecord).returns(Page) }
+  sig { params(topic: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic:)
     topic.pages.create!(
       space: topic.space,

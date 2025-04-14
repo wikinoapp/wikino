@@ -3,10 +3,10 @@
 
 class MovePageToTrashService < ApplicationService
   class Result < T::Struct
-    const :page, Page
+    const :page, PageRecord
   end
 
-  sig { params(page: Page).returns(Result) }
+  sig { params(page: PageRecord).returns(Result) }
   def call(page:)
     page.touch(:trashed_at)
 

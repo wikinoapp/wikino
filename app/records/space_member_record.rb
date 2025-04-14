@@ -33,7 +33,7 @@ class SpaceMemberRecord < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 
-  sig { params(topic: Topic, title: String).returns(Page) }
+  sig { params(topic: Topic, title: String).returns(PageRecord) }
   def create_linked_page!(topic:, title:)
     page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
       space:,
@@ -110,12 +110,12 @@ class SpaceMemberRecord < ApplicationRecord
     space.not_nil!.topics.kept
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space:)
-    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
+    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpaceRecord)
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space:)
     space.id == space_id && permissions.include?(SpaceMemberPermission::ExportSpace)
   end
@@ -130,22 +130,22 @@ class SpaceMemberRecord < ApplicationRecord
     topic.present? && topics.where(id: topic.id).exists?
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
+  sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_view_page?(page:)
     active? && space_id == page.space_id
   end
 
-  sig { override.params(space: Space).returns(T::Boolean) }
+  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_view_trash?(space:)
     active? && space_id == space.id
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
+  sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_update_page?(page:)
     active? && joined_topics.where(id: page.topic_id).exists?
   end
@@ -155,7 +155,7 @@ class SpaceMemberRecord < ApplicationRecord
     true
   end
 
-  sig { override.params(page: Page).returns(T::Boolean) }
+  sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page:)
     topics.where(id: page.topic_id).exists?
   end

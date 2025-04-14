@@ -16,11 +16,11 @@ module ModelConcerns
     def user_entity
     end
 
-    sig { abstract.params(space: Space).returns(ModelConcerns::SpaceViewable) }
+    sig { abstract.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
     def space_viewer!(space:)
     end
 
-    sig { abstract.params(space: Space).returns(T::Boolean) }
+    sig { abstract.params(space: SpaceRecord).returns(T::Boolean) }
     def joined_space?(space:)
     end
 
@@ -28,7 +28,7 @@ module ModelConcerns
     def can_view_topic?(topic:)
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
+    sig { abstract.params(page: PageRecord).returns(T::Boolean) }
     def can_trash_page?(page:)
     end
 
