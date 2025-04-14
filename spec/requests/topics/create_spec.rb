@@ -31,7 +31,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
 
     sign_in(user:)
 
-    expect(Topic.count).to eq(0)
+    expect(TopicRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
       new_topic_form: {
@@ -45,7 +45,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(response.body).to include("名前を入力してください")
 
     # バリデーションエラーになったのでトピックは作成されていないはず
-    expect(Topic.count).to eq(0)
+    expect(TopicRecord.count).to eq(0)
   end
 
   it "スペースに参加している & 入力値が正常なとき、トピックが作成できること" do
@@ -55,7 +55,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
 
     sign_in(user:)
 
-    expect(Topic.count).to eq(0)
+    expect(TopicRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
       new_topic_form: {
@@ -67,8 +67,8 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
 
     expect(response.status).to eq(302)
 
-    expect(Topic.count).to eq(1)
-    topic = Topic.first
+    expect(TopicRecord.count).to eq(1)
+    topic = TopicRecord.first
     expect(response).to redirect_to("/s/#{space.identifier}/topics/#{topic.number}")
   end
 end

@@ -3,7 +3,7 @@
 
 class UpdateTopicService < ApplicationService
   class Result < T::Struct
-    const :topic, Topic
+    const :topic, TopicRecord
   end
 
   sig { params(form: EditTopicForm).returns(Result) }

@@ -3,7 +3,7 @@
 
 class CreateUserSessionService < ApplicationService
   class Result < T::Struct
-    const :user_session, UserSession
+    const :user_session, UserSessionRecord
   end
 
   sig do

@@ -6,14 +6,6 @@ class UserRecord < ApplicationRecord
 
   include ModelConcerns::Viewable
 
-  ATNAME_FORMAT = /\A[A-Za-z0-9_]+\z/
-  # アットネームの最大文字数 (値に強い理由は無い)
-  ATNAME_MAX_LENGTH = 20
-  # 名前の最大文字数 (値に強い理由は無い)
-  NAME_MAX_LENGTH = 30
-  # 説明の最大文字数 (値に強い理由は無い)
-  DESCRIPTION_MAX_LENGTH = 150
-
   self.table_name = "users"
 
   enum :locale, {
@@ -26,7 +18,7 @@ class UserRecord < ApplicationRecord
     foreign_key: :user_id,
     inverse_of: :user_record
   has_many :active_space_member_records,
-    -> { SpaceMember.active },
+    -> { SpaceMemberRecord.active },
     class_name: "SpaceMemberRecord",
     dependent: :restrict_with_exception,
     foreign_key: :user_id,
@@ -49,7 +41,7 @@ class UserRecord < ApplicationRecord
       locale: ViewerLocale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
-    ).returns(User)
+    ).returns(UserRecord)
   end
   def self.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
     user = create!(
@@ -97,7 +89,7 @@ class UserRecord < ApplicationRecord
     active_spaces.where(id: space.id).exists?
   end
 
-  sig { params(topic: Topic).returns(T::Boolean) }
+  sig { params(topic: TopicRecord).returns(T::Boolean) }
   def joined_topic?(topic:)
     topics.include?(topic)
   end
@@ -117,21 +109,21 @@ class UserRecord < ApplicationRecord
   def viewable_topics
     Topic
       .left_joins(:members)
-      .merge(Topic.visibility_public.or(Topic.where(space: active_spaces)))
+      .merge(TopicRecord.visibility_public.or(TopicRecord.where(space: active_spaces)))
       .distinct
   end
 
-  sig { override.params(topic: Topic).returns(T::Boolean) }
+  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
   def can_view_topic?(topic:)
     viewable_topics.where(id: topic.id).exists?
   end
 
-  sig { params(topic: Topic).returns(T::Boolean) }
+  sig { params(topic: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic:)
     topics.where(id: topic.id).exists?
   end
 
-  sig { params(topic: Topic).returns(T::Boolean) }
+  sig { params(topic: TopicRecord).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
     topic_members.find_by(topic:)&.role_admin? == true
   end

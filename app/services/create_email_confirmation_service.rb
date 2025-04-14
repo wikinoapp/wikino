@@ -3,7 +3,7 @@
 
 class CreateEmailConfirmationService < ApplicationService
   class Result < T::Struct
-    const :email_confirmation, EmailConfirmation
+    const :email_confirmation, EmailConfirmationRecord
   end
 
   sig { params(email: String, event: EmailConfirmationEvent, locale: ViewerLocale).returns(Result) }

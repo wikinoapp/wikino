@@ -9,9 +9,9 @@ class UserSessionForm < ApplicationForm
   validates :password, presence: true
   validate :authentication
 
-  sig { returns(T.nilable(User)) }
+  sig { returns(T.nilable(UserRecord)) }
   def user
-    @user ||= T.let(User.kept.find_by(email:), T.nilable(User))
+    @user ||= T.let(UserRecord.kept.find_by(email:), T.nilable(UserRecord))
   end
 
   sig { void }

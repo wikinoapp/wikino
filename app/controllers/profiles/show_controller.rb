@@ -11,7 +11,7 @@ module Profiles
 
     sig { returns(T.untyped) }
     def call
-      user = User.kept.find_by!(atname: params[:atname])
+      user = UserRecord.kept.find_by!(atname: params[:atname])
       joined_space_entities = user.active_spaces.map do |space|
         space.to_entity(space_viewer: Current.viewer!.space_viewer!(space:))
       end

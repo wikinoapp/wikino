@@ -3,7 +3,7 @@
 
 class ExportService < ApplicationService
   class Result < T::Struct
-    const :export, Export
+    const :export, ExportRecord
   end
 
   sig do

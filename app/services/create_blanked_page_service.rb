@@ -6,7 +6,7 @@ class CreateBlankedPageService < ApplicationService
     const :page, Page
   end
 
-  sig { params(topic: Topic).returns(Result) }
+  sig { params(topic: TopicRecord).returns(Result) }
   def call(topic:)
     space_member = Current.viewer!.active_space_members.find_by!(space_id: topic.space_id)
 

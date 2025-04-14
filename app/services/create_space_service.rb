@@ -11,7 +11,7 @@ class CreateSpaceService < ApplicationService
     current_time = T.let(Time.current, ActiveSupport::TimeWithZone)
 
     space = ActiveRecord::Base.transaction do
-      new_space = Space.where(identifier:).first_or_create!(name:, plan: Plan::Free.serialize, joined_at: current_time)
+      new_space = SpaceRecord.where(identifier:).first_or_create!(name:, plan: Plan::Free.serialize, joined_at: current_time)
       new_space.add_member!(user:, role: SpaceMemberRole::Owner, joined_at: current_time)
       new_space
     end

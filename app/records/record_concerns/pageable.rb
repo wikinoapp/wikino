@@ -8,19 +8,19 @@ module RecordConcerns
     extend ActiveSupport::Concern
     extend T::Sig
 
-    sig { returns(Page) }
+    sig { returns(PageRecord) }
     def original_page
-      (instance_of?(DraftPage) ? T.bind(self, DraftPage).page : T.bind(self, Page)).not_nil!
+      (instance_of?(DraftPageRecord) ? T.bind(self, DraftPageRecord).page : T.bind(self, PageRecord)).not_nil!
     end
 
-    T::Sig::WithoutRuntime.sig { returns(Page::PrivateRelation) }
+    T::Sig::WithoutRuntime.sig { returns(PageRecord::PrivateRelation) }
     def linked_pages
       pages = space.not_nil!.pages.where(id: linked_page_ids)
 
       if Current.viewer!.joined_space?(space:)
         pages
       else
-        pages.joins(:topic).merge(Topic.visibility_public)
+        pages.joins(:topic).merge(TopicRecord.visibility_public)
       end
     end
 

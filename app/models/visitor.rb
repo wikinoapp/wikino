@@ -44,7 +44,7 @@ class Visitor
     false
   end
 
-  sig { override.params(topic: Topic).returns(T::Boolean) }
+  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
   def can_view_topic?(topic:)
     topic.visibility_public?
   end
@@ -56,6 +56,6 @@ class Visitor
 
   sig { override.returns(Topic::PrivateRelation) }
   def viewable_topics
-    Topic.visibility_public
+    TopicRecord.visibility_public
   end
 end

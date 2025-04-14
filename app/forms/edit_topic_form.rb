@@ -6,7 +6,7 @@ class EditTopicForm < ApplicationForm
   include FormConcerns::TopicDescriptionValidatable
   include FormConcerns::TopicVisibilityValidatable
 
-  sig { returns(T.nilable(Topic)) }
+  sig { returns(T.nilable(TopicRecord)) }
   attr_accessor :topic
 
   attribute :name, :string

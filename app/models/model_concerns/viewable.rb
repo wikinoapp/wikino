@@ -24,7 +24,7 @@ module ModelConcerns
     def joined_space?(space:)
     end
 
-    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    sig { abstract.params(topic: TopicRecord).returns(T::Boolean) }
     def can_view_topic?(topic:)
     end
 

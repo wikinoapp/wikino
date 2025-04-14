@@ -11,7 +11,7 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      space = Space.find_by_identifier!(params[:space_identifier])
+      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
@@ -19,7 +19,7 @@ module Pages
         return render_404
       end
 
-      space_member = T.let(space_viewer, SpaceMember)
+      space_member = T.let(space_viewer, SpaceMemberRecord)
       draft_page = space_member.draft_pages.find_by(page:)
       pageable = draft_page.presence || page
 

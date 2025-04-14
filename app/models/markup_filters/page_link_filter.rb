@@ -9,7 +9,7 @@ module MarkupFilters
     sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
       super
-      @current_topic = T.let(context[:current_topic], Topic)
+      @current_topic = T.let(context[:current_topic], TopicRecord)
       @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
     end
 
@@ -49,7 +49,7 @@ module MarkupFilters
       end
     end
 
-    sig { returns(Topic) }
+    sig { returns(TopicRecord) }
     attr_reader :current_topic
     private :current_topic
 

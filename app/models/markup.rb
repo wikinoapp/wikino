@@ -8,7 +8,7 @@ require "html_pipeline/convert_filter/markdown_filter"
 class Markup
   extend T::Sig
 
-  sig { params(current_topic: Topic).void }
+  sig { params(current_topic: TopicRecord).void }
   def initialize(current_topic:)
     @current_topic = current_topic
   end
@@ -45,7 +45,7 @@ class Markup
     result[:output].to_s
   end
 
-  sig { returns(Topic) }
+  sig { returns(TopicRecord) }
   attr_reader :current_topic
   private :current_topic
 

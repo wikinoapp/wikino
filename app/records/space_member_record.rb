@@ -47,7 +47,7 @@ class SpaceMemberRecord < ApplicationRecord
     page
   end
 
-  sig { params(page: Page).returns(DraftPage) }
+  sig { params(page: PageRecord).returns(DraftPageRecord) }
   def find_or_create_draft_page!(page:)
     draft_pages.create_with(
       space: page.space,
@@ -62,7 +62,7 @@ class SpaceMemberRecord < ApplicationRecord
     retry
   end
 
-  sig { params(page: Page).void }
+  sig { params(page: PageRecord).void }
   def destroy_draft_page!(page:)
     draft_pages.where(page:).destroy_all
 
@@ -120,12 +120,12 @@ class SpaceMemberRecord < ApplicationRecord
     space.id == space_id && permissions.include?(SpaceMemberPermission::ExportSpace)
   end
 
-  sig { override.params(topic: Topic).returns(T::Boolean) }
+  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic:)
-    space.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
+    space.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopicRecord)
   end
 
-  sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+  sig { override.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
   def can_create_page?(topic:)
     topic.present? && topics.where(id: topic.id).exists?
   end

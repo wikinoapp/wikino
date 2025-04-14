@@ -3,7 +3,7 @@
 
 class ConfirmEmailService < ApplicationService
   class Result < T::Struct
-    const :email_confirmation, EmailConfirmation
+    const :email_confirmation, EmailConfirmationRecord
   end
 
   sig { params(email_confirmation: EmailConfirmation).returns(Result) }
@@ -11,7 +11,7 @@ class ConfirmEmailService < ApplicationService
     ActiveRecord::Base.transaction do
       email_confirmation.success!
 
-      current_user = T.let(Current.viewer, T.nilable(User))
+      current_user = T.let(Current.viewer, T.nilable(UserRecord))
       current_user&.run_after_email_confirmation_success!(email_confirmation:)
     end
 

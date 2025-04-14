@@ -6,7 +6,7 @@ class EditProfileForm < ApplicationForm
 
   include FormConcerns::UserAtnameValidatable
 
-  sig { returns(T.nilable(User)) }
+  sig { returns(T.nilable(UserRecord)) }
   attr_accessor :user
 
   attribute :atname, :string
@@ -30,7 +30,7 @@ class EditProfileForm < ApplicationForm
     return if user.nil?
     return if atname.nil?
 
-    if User.where.not(id: user.not_nil!.id).exists?(atname:)
+    if UserRecord.where.not(id: user.not_nil!.id).exists?(atname:)
       errors.add(:atname, :uniqueness)
     end
   end

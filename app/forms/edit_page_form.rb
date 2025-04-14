@@ -23,14 +23,14 @@ class EditPageForm < ApplicationForm
   validates :topic, presence: true
   validate :title_uniqueness
 
-  sig { returns(T.nilable(Topic)) }
+  sig { returns(T.nilable(TopicRecord)) }
   def topic
     selectable_topics.find_by(number: topic_number)
   end
 
   sig { returns(T.any(Topic::PrivateRelation, Topic::PrivateCollectionProxy)) }
   def selectable_topics
-    return Topic.none if space_member.nil?
+    return TopicRecord.none if space_member.nil?
 
     space_member.not_nil!.topics
   end

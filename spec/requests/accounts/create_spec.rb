@@ -40,7 +40,7 @@ RSpec.describe "POST /accounts", type: :request do
     # メールアドレスの確認に成功していない状態
     expect(email_confirmation.succeeded?).to be(false)
 
-    expect(Space.count).to eq(0)
+    expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
       account_form: {
@@ -53,7 +53,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(response).to redirect_to("/")
 
     # 新しいアカウントは作成されていないのでスペースは0件のまま
-    expect(Space.count).to eq(0)
+    expect(SpaceRecord.count).to eq(0)
   end
 
   it "フォームの入力値に誤りがあるとき、エラーメッセージを表示すること" do
@@ -61,7 +61,7 @@ RSpec.describe "POST /accounts", type: :request do
     # メールアドレスの確認が成功したことにする
     email_confirmation.success!
 
-    expect(Space.count).to eq(0)
+    expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
       account_form: {
@@ -74,7 +74,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(response.body).to include("パスワードは8文字以上で入力してください")
 
     # エラーにより新しいアカウントは作成されていないのでスペースは0件のまま
-    expect(Space.count).to eq(0)
+    expect(SpaceRecord.count).to eq(0)
   end
 
   it "入力値が正しいとき、アカウントを作成してホーム画面にリダイレクトすること" do

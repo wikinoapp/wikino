@@ -33,7 +33,7 @@ module Topics
       end
 
       result = CreateTopicService.new.call(
-        space_member: T.let(space_viewer, SpaceMember),
+        space_member: T.let(space_viewer, SpaceMemberRecord),
         name: form.name.not_nil!,
         description: form.description.not_nil!,
         visibility: form.visibility.not_nil!

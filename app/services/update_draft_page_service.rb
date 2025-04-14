@@ -3,13 +3,13 @@
 
 class UpdateDraftPageService < ApplicationService
   class Result < T::Struct
-    const :draft_page, DraftPage
+    const :draft_page, DraftPageRecord
   end
 
   sig do
     params(
-      space_member: SpaceMember,
-      page: Page,
+      space_member: SpaceMemberRecord,
+      page: PageRecord,
       topic_number: T.nilable(String),
       title: T.nilable(String),
       body: T.nilable(String)

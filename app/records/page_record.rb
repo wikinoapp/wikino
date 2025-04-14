@@ -3,12 +3,8 @@
 
 class PageRecord < ApplicationRecord
   include Discard::Model
-  include ModelConcerns::Pageable
 
-  # ページをゴミ箱に移動してから削除されるまでの日数
-  DELETE_LIMIT_DAYS = 30
-  # タイトルの最大文字数 (値に強い理由は無い)
-  TITLE_MAX_LENGTH = 200
+  include RecordConcerns::Pageable
 
   self.table_name = "pages"
 
@@ -46,7 +42,7 @@ class PageRecord < ApplicationRecord
     end
   end
 
-  sig { params(topic: Topic).returns(Page) }
+  sig { params(topic: TopicRecord).returns(Page) }
   def self.create_as_blanked!(topic:)
     topic.pages.create!(
       space: topic.space,

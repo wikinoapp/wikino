@@ -3,7 +3,7 @@
 
 class BulkRestorePagesService < ApplicationService
   class Result < T::Struct
-    const :pages, Page::PrivateRelation
+    const :pages, PageRecord::PrivateRelation
   end
 
   sig { params(page_ids: T::Array[T::Wikino::DatabaseId]).returns(Result) }
