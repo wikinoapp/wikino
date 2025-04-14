@@ -6,7 +6,7 @@ class UpdateSpaceService < ApplicationService
     const :space, Space
   end
 
-  sig { params(space: Space, form: EditSpaceForm).returns(Result) }
+  sig { params(space: SpaceRecord, form: EditSpaceForm).returns(Result) }
   def call(space:, form:)
     space.attributes = {
       identifier: form.identifier.not_nil!,

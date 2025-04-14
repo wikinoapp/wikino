@@ -3,7 +3,7 @@
 
 module Atom
   class ShowView < ApplicationView
-    sig { params(space: Space, pages: Page::PrivateAssociationRelation).void }
+    sig { params(space: SpaceRecord, pages: PageRecord::PrivateAssociationRelation).void }
     def initialize(space:, pages:)
       @space = space
       @pages = pages
@@ -13,7 +13,7 @@ module Atom
     attr_reader :space
     private :space
 
-    sig { returns(Page::PrivateAssociationRelation) }
+    sig { returns(PageRecord::PrivateAssociationRelation) }
     attr_reader :pages
     private :pages
 

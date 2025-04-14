@@ -37,8 +37,8 @@ RSpec.describe "POST /s/:space_identifier/settings/exports", type: :request do
 
     post("/s/#{space.identifier}/settings/exports")
 
-    expect(space.exports.count).to eq(1)
-    export = space.exports.first
+    expect(space.export_records.count).to eq(1)
+    export = space.export_records.first
 
     expect(response.status).to eq(302)
     expect(response).to redirect_to("/s/#{space.identifier}/settings/exports/#{export.id}")

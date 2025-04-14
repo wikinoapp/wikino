@@ -33,7 +33,7 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       space_viewer: ModelConcerns::SpaceViewable,
-      pages: T.any(Page::PrivateAssociationRelation, T::Array[Page])
+      pages: T.any(PageRecord::PrivateAssociationRelation, T::Array[Page])
     ).returns(T::Array[PageEntity])
   end
   def self.to_entities(space_viewer:, pages:)
@@ -86,7 +86,7 @@ class PageRecord < ApplicationRecord
     trashed_at.present?
   end
 
-  T::Sig::WithoutRuntime.sig { returns(T.any(Page::PrivateAssociationRelationWhereChain, Page::PrivateAssociationRelation)) }
+  T::Sig::WithoutRuntime.sig { returns(T.any(PageRecord::PrivateAssociationRelationWhereChain, PageRecord::PrivateAssociationRelation)) }
   def backlinked_pages
     pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
 

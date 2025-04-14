@@ -50,7 +50,7 @@ class ExportRecord < ApplicationRecord
     )
   end
 
-  sig { returns(Page::PrivateAssociationRelation) }
+  sig { returns(PageRecord::PrivateAssociationRelation) }
   def target_pages
     space.not_nil!.pages.active
   end

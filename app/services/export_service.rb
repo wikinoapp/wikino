@@ -7,11 +7,11 @@ class ExportService < ApplicationService
   end
 
   sig do
-    params(space: Space, queued_by: SpaceMember).returns(Result)
+    params(space: SpaceRecord, queued_by: SpaceMember).returns(Result)
   end
   def call(space:, queued_by:)
     export = ActiveRecord::Base.transaction do
-      e = space.exports.create!(
+      e = space.export_records.create!(
         queued_by:
       )
       e.change_status!(kind: ExportStatusKind::Queued)

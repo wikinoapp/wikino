@@ -108,7 +108,7 @@ class SpaceRecord < ApplicationRecord
     PageListEntity.new(page_entities:, pagination_entity:)
   end
 
-  sig { params(user: User, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
+  sig { params(user: UserRecord, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
   def add_member!(user:, role:, joined_at:)
     space_members.create!(user:, role: role.serialize, joined_at:)
   end

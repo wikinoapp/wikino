@@ -5,7 +5,7 @@ class ExportMailer < ApplicationMailer
   sig { params(export_id: T::Wikino::DatabaseId, locale: String).void }
   def succeeded(export_id:, locale:)
     @export = ExportRecord.find(export_id)
-    @space = @export.space
+    @space = @export.space_record
 
     I18n.with_locale(locale) do
       mail(

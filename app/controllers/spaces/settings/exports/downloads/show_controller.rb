@@ -22,7 +22,7 @@ module Spaces
               return render_404
             end
 
-            export = space.exports.find(params[:export_id])
+            export = space.export_records.find(params[:export_id])
 
             unless export.active?
               return render_404

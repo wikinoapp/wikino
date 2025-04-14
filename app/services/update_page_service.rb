@@ -3,10 +3,10 @@
 
 class UpdatePageService < ApplicationService
   class Result < T::Struct
-    const :page, Page
+    const :page, PageRecord
   end
 
-  sig { params(page: Page, topic: Topic, title: String, body: String).returns(Result) }
+  sig { params(page: PageRecord, topic: TopicRecord, title: String, body: String).returns(Result) }
   def call(page:, topic:, title:, body:)
     now = Time.zone.now
 

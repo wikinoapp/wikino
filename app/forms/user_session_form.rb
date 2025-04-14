@@ -16,7 +16,7 @@ class UserSessionForm < ApplicationForm
 
   sig { void }
   private def authentication
-    unless user&.user_password&.authenticate(password)
+    unless user&.user_password_record&.authenticate(password)
       errors.add(:base, :unauthenticated)
     end
   end

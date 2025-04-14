@@ -33,7 +33,7 @@ class SpaceMemberRecord < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 
-  sig { params(topic: Topic, title: String).returns(PageRecord) }
+  sig { params(topic: TopicRecord, title: String).returns(PageRecord) }
   def create_linked_page!(topic:, title:)
     page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
       space:,
@@ -88,14 +88,14 @@ class SpaceMemberRecord < ApplicationRecord
     deserialized_role.permissions
   end
 
-  sig { returns(Page::PrivateAssociationRelation) }
+  sig { returns(PageRecord::PrivateAssociationRelation) }
   def last_modified_pages
     space.not_nil!.pages.joins(:editors).merge(
       page_editors.order(PageEditor.arel_table[:last_page_modified_at].desc)
     )
   end
 
-  sig { override.returns(Page::PrivateAssociationRelation) }
+  sig { override.returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages
     space.not_nil!.pages.active
   end

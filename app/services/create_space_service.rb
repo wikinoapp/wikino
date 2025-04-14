@@ -6,7 +6,7 @@ class CreateSpaceService < ApplicationService
     const :space, Space
   end
 
-  sig { params(user: User, identifier: String, name: String).returns(Result) }
+  sig { params(user: UserRecord, identifier: String, name: String).returns(Result) }
   def call(user:, identifier:, name:)
     current_time = T.let(Time.current, ActiveSupport::TimeWithZone)
 

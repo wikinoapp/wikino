@@ -8,7 +8,7 @@ class CreateUserSessionService < ApplicationService
 
   sig do
     params(
-      user: User,
+      user: UserRecord,
       ip_address: T.nilable(String),
       user_agent: T.nilable(String)
     ).returns(Result)

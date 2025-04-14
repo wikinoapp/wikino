@@ -21,7 +21,7 @@ module Spaces
             return render_404
           end
 
-          export = space.exports.find(params[:export_id])
+          export = space.export_records.find(params[:export_id])
 
           render Spaces::Settings::Exports::ShowView.new(
             current_user_entity: Current.viewer!.user_entity,
