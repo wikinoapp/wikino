@@ -1,7 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-class TopicMember < ApplicationRecord
+class TopicMemberRecord < ApplicationRecord
+  self.table_name = "topic_members"
+
   belongs_to :space
   belongs_to :topic
   belongs_to :space_member

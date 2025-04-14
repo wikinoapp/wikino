@@ -1,8 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class DraftPage < ApplicationRecord
+class DraftPageRecord < ApplicationRecord
   include ModelConcerns::Pageable
+
+  self.table_name = "draft_pages"
 
   belongs_to :space
   belongs_to :topic

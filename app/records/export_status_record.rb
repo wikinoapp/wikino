@@ -1,7 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-class ExportStatus < ApplicationRecord
+class ExportStatusRecord < ApplicationRecord
+  self.table_name = "export_statuses"
+
   enum :kind, {
     ExportStatusKind::Queued.serialize => 0,
     ExportStatusKind::Started.serialize => 1,

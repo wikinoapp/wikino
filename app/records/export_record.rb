@@ -1,8 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class Export < ApplicationRecord
+class ExportRecord < ApplicationRecord
   PRESIGNED_URL_EXPIRATION = 86400 # 24時間
+
+  self.table_name = "exports"
 
   has_one_attached :file
 

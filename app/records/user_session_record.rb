@@ -1,8 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-class UserSession < ApplicationRecord
+class UserSessionRecord < ApplicationRecord
   TOKENS_COOKIE_KEY = :user_session_tokens
+
+  self.table_name = "user_sessions"
 
   has_secure_token
 
