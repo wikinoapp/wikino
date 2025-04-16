@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :user do
+  factory :user_record do
     sequence(:email) { |n| "test_#{n}@example.com" }
     sequence(:atname) { |n| "atname_#{n}" }
     sequence(:name) { |n| "Name #{n}" }

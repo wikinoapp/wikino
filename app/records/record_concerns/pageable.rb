@@ -15,12 +15,12 @@ module RecordConcerns
 
     T::Sig::WithoutRuntime.sig { returns(PageRecord::PrivateRelation) }
     def linked_pages
-      pages = space.not_nil!.pages.where(id: linked_page_ids)
+      pages = space_record.not_nil!.page_records.where(id: linked_page_ids)
 
-      if Current.viewer!.joined_space?(space:)
+      if Current.viewer!.joined_space?(space: space_record)
         pages
       else
-        pages.joins(:topic).merge(TopicRecord.visibility_public)
+        pages.joins(:topic_record).merge(TopicRecord.visibility_public)
       end
     end
 
@@ -36,7 +36,7 @@ module RecordConcerns
     def fetch_link_list_entity(space_viewer:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [id]
 
-      cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
+      cursor_paginate_page = linked_pages.where.not(id: added_page_ids).preload(:topic_record).cursor_paginate(
         after:,
         before:,
         limit: link_limit,
@@ -83,12 +83,14 @@ module RecordConcerns
       pages.map do |page|
         added_page_ids << page.id
 
-        cursor_paginate_page = page.backlinked_pages.where.not(id: added_page_ids).preload(:topic).cursor_paginate(
-          after: nil,
-          before: nil,
-          limit: backlink_limit,
-          order: {modified_at: :desc, id: :desc}
-        ).fetch
+        cursor_paginate_page = page.backlinked_pages
+          .where.not(id: added_page_ids)
+          .preload(:topic_record).cursor_paginate(
+            after: nil,
+            before: nil,
+            limit: backlink_limit,
+            order: {modified_at: :desc, id: :desc}
+          ).fetch
         backlinked_pages = cursor_paginate_page.records
         added_page_ids.concat(backlinked_pages.pluck(:id))
 

@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe SpaceMember, type: :model do
+RSpec.describe SpaceMemberRecord, type: :record do
   describe "#last_modified_pages" do
     it "ページが存在するとき、最後に編集したページから取得できること" do
       user_a = create(:user)

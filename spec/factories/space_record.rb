@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :space do
+  factory :space_record do
     sequence(:identifier) { |n| "identifier#{n}" }
     sequence(:name) { |n| "Space #{n}" }
     plan { Plan::Small.serialize }

@@ -100,9 +100,9 @@ class SpaceMemberRecord < ApplicationRecord
     space.not_nil!.pages.active
   end
 
-  sig { override.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+  sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topics
-    topics.kept
+    topic_records.kept
   end
 
   sig { override.returns(Topic::PrivateAssociationRelation) }
@@ -112,7 +112,7 @@ class SpaceMemberRecord < ApplicationRecord
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space:)
-    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpaceRecord)
+    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
@@ -122,12 +122,12 @@ class SpaceMemberRecord < ApplicationRecord
 
   sig { override.params(topic: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic:)
-    space.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopicRecord)
+    space_record.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
   end
 
   sig { override.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
   def can_create_page?(topic:)
-    topic.present? && topics.where(id: topic.id).exists?
+    topic.present? && topic_records.where(id: topic.id).exists?
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }

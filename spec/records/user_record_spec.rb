@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe UserRecord, type: :model do
+RSpec.describe UserRecord, type: :record do
   describe "#viewable_topics" do
     it "トピックが存在するとき、閲覧可能なトピックを返すこと" do
       user = create(:user)

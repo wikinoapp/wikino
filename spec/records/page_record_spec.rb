@@ -1,37 +1,55 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Page, type: :model do
+RSpec.describe PageRecord, type: :record do
   describe "#fetch_link_list_entity" do
     it "ページにリンクが含まれているときリンクの構造体を返すこと" do
-      user = create(:user)
-      space = create(:space)
-      space.reload
-      topic = create(:topic, space:)
-      space_member = create(:space_member, user:, space:)
-      page_a = create(:page, space:, topic:, modified_at: Time.zone.parse("2024-01-01"))
-      page_b = create(:page, space:, topic:, modified_at: Time.zone.parse("2024-01-02"))
-      page_c = create(:page, space:, topic:,
-        linked_page_ids: [page_b.id],
-        modified_at: Time.zone.parse("2024-01-03"))
-      page_d = create(:page, space:, topic:,
-        linked_page_ids: [page_c.id],
-        modified_at: Time.zone.parse("2024-01-04"))
-      target_page = create(:page, space:, topic:, linked_page_ids: [page_a.id, page_c.id])
+      user_record = create(:user_record)
+      space_record = create(:space_record)
+      space_record.reload
+      topic_record = create(:topic_record, space_record:)
+      space_member_record = create(:space_member_record, user_record:, space_record:)
+      page_record_a = create(:page_record,
+        space_record:,
+        topic_record:,
+        modified_at: Time.zone.parse("2024-01-01")
+      )
+      page_record_b = create(:page_record,
+        space_record:,
+        topic_record:,
+        modified_at: Time.zone.parse("2024-01-02")
+      )
+      page_record_c = create(:page_record,
+        space_record:,
+        topic_record:,
+        linked_page_ids: [page_record_b.id],
+        modified_at: Time.zone.parse("2024-01-03")
+      )
+      page_record_d = create(:page_record,
+        space_record:,
+        topic_record:,
+        linked_page_ids: [page_record_c.id],
+        modified_at: Time.zone.parse("2024-01-04")
+      )
+      target_page_record = create(:page_record,
+        space_record:,
+        topic_record:,
+        linked_page_ids: [page_record_a.id, page_record_c.id]
+      )
 
-      Current.viewer = user
+      Current.viewer = user_record
 
-      link_list_entity = target_page.fetch_link_list_entity(space_viewer: space_member)
+      link_list_entity = target_page_record.fetch_link_list_entity(space_viewer: space_member_record)
       expect(link_list_entity.link_entities.size).to eq(2)
 
       link_entity_a = link_list_entity.link_entities[0]
       expect(link_entity_a.backlink_list_entity.backlink_entities.size).to eq(1)
       expect(link_entity_a.backlink_list_entity.backlink_entities[0]).to eq(
-        BacklinkEntity.new(page_entity: page_d.to_entity(space_viewer: space_member))
+        BacklinkEntity.new(page_entity: page_record_d.to_entity(space_viewer: space_member_record))
       )
 
       link_entity_b = link_list_entity.link_entities[1]
-      expect(link_entity_b.page_entity).to eq(page_a.to_entity(space_viewer: space_member))
+      expect(link_entity_b.page_entity).to eq(page_record_a.to_entity(space_viewer: space_member_record))
       expect(link_entity_b.backlink_list_entity.backlink_entities.size).to eq(0)
     end
   end

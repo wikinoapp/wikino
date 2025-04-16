@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :page do
-    space
-    topic
+  factory :page_record do
+    space_record
+    topic_record
     sequence(:number) { |n| n }
     sequence(:title) { |n| "Page #{n}" }
     sequence(:body) { |n| "Body #{n}" }

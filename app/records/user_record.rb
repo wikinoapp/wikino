@@ -105,11 +105,11 @@ class UserRecord < ApplicationRecord
     ViewerLocale.deserialize(locale)
   end
 
-  sig { override.returns(Topic::PrivateRelation) }
+  sig { override.returns(TopicRecord::PrivateRelation) }
   def viewable_topics
-    Topic
-      .left_joins(:members)
-      .merge(TopicRecord.visibility_public.or(TopicRecord.where(space: active_spaces)))
+    TopicRecord
+      .left_joins(:member_records)
+      .merge(TopicRecord.visibility_public.or(TopicRecord.where(space_record: active_space_records)))
       .distinct
   end
 

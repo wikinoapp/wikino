@@ -65,8 +65,8 @@ class PageRecord < ApplicationRecord
       modified_at:,
       published_at:,
       pinned_at:,
-      space_entity: space.not_nil!.to_entity(space_viewer:),
-      topic_entity: topic.not_nil!.to_entity(space_viewer:),
+      space_entity: space_record.not_nil!.to_entity(space_viewer:),
+      topic_entity: topic_record.not_nil!.to_entity(space_viewer:),
       viewer_can_update: space_viewer.can_update_page?(page: self)
     )
   end
@@ -88,9 +88,9 @@ class PageRecord < ApplicationRecord
 
   T::Sig::WithoutRuntime.sig { returns(T.any(PageRecord::PrivateAssociationRelationWhereChain, PageRecord::PrivateAssociationRelation)) }
   def backlinked_pages
-    pages = space.not_nil!.pages.where("'#{id}' = ANY (linked_page_ids)")
+    pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
 
-    pages.joins(:topic).merge(Current.viewer!.viewable_topics)
+    pages.joins(:topic_record).merge(Current.viewer!.viewable_topics)
   end
 
   sig do

@@ -4,18 +4,15 @@
 
 # typed: false
 
-module ::SpaceMember; end
 module ActiveRecordCursorPaginate::PageRecord; end
 module CreateTopicService::SpaceMember; end
 module EditPageForm::SpaceMember; end
 module ExportService::SpaceMember; end
 module GenerateExportFilesService::Export; end
-module Page::PrivateAssociationRelationWhereChain; end
 module PageRecord::DELETE_LIMIT_DAYS; end
 module PageRecord::PageRevision; end
 module PageRecord::SpaceMember; end
 module RecordConcerns::Pageable::SpaceMember; end
-module Space::PrivateCollectionProxy; end
 module SpaceMemberPermission::UpdateSpaceRecord; end
 module SpaceMemberPermission::UpdateTopicRecord; end
 module SpaceMemberRecord::PageEditor; end

@@ -40,7 +40,7 @@ module ModelConcerns
     def viewer_locale
     end
 
-    sig { abstract.returns(Topic::PrivateRelation) }
+    sig { abstract.returns(TopicRecord::PrivateRelation) }
     def viewable_topics
     end
   end
