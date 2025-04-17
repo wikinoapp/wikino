@@ -6,7 +6,7 @@ class EditPageForm < ApplicationForm
 
   include FormConcerns::PageTitleValidatable
 
-  sig { returns(T.nilable(SpaceMember)) }
+  sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_accessor :space_member
 
   sig { returns(T.nilable(PageRecord)) }
@@ -28,7 +28,7 @@ class EditPageForm < ApplicationForm
     selectable_topics.find_by(number: topic_number)
   end
 
-  sig { returns(T.any(Topic::PrivateRelation, Topic::PrivateCollectionProxy)) }
+  sig { returns(T.any(TopicRecord::PrivateRelation, TopicRecord::PrivateCollectionProxy)) }
   def selectable_topics
     return TopicRecord.none if space_member.nil?
 

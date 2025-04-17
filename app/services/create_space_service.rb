@@ -3,7 +3,7 @@
 
 class CreateSpaceService < ApplicationService
   class Result < T::Struct
-    const :space, Space
+    const :space, SpaceRecord
   end
 
   sig { params(user: UserRecord, identifier: String, name: String).returns(Result) }

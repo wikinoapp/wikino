@@ -3,7 +3,7 @@
 
 class CreateAccountService < ApplicationService
   class Result < T::Struct
-    const :user, User
+    const :user, UserRecord
   end
 
   sig do

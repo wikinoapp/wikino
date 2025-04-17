@@ -3,10 +3,10 @@
 
 class CreateTopicService < ApplicationService
   class Result < T::Struct
-    const :topic, Topic
+    const :topic, TopicRecord
   end
 
-  sig { params(space_member: SpaceMember, name: String, description: String, visibility: String).returns(Result) }
+  sig { params(space_member: SpaceMemberRecord, name: String, description: String, visibility: String).returns(Result) }
   def call(space_member:, name:, description:, visibility:)
     topic = ActiveRecord::Base.transaction do
       new_topic = space_member.space.not_nil!.topics.where(name:).first_or_create!(description:, visibility:)

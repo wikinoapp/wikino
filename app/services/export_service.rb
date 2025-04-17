@@ -7,7 +7,7 @@ class ExportService < ApplicationService
   end
 
   sig do
-    params(space: SpaceRecord, queued_by: SpaceMember).returns(Result)
+    params(space: SpaceRecord, queued_by: SpaceMemberRecord).returns(Result)
   end
   def call(space:, queued_by:)
     export = ActiveRecord::Base.transaction do
