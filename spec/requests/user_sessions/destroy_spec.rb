@@ -10,8 +10,8 @@ RSpec.describe "DELETE /user_session", type: :request do
   end
 
   it "ログインしているとき、ログアウトできること" do
-    user = create(:user, :with_password)
-    sign_in(user:)
+    user = create(:user_record, :with_password)
+    sign_in(user_record: user)
 
     # ログインしているのでセッションは1つ
     expect(UserSessionRecord.count).to eq(1)

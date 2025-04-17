@@ -3,8 +3,8 @@
 
 RSpec.describe "POST /user_session", type: :request do
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
-    user = create(:user, :with_password)
-    sign_in(user:)
+    user = create(:user_record, :with_password)
+    sign_in(user_record: user)
 
     # ログインしているのでセッションは1つ
     expect(UserSessionRecord.count).to eq(1)
@@ -26,7 +26,7 @@ RSpec.describe "POST /user_session", type: :request do
     # ログインしていないのでセッションはまだ無い
     expect(UserSessionRecord.count).to eq(0)
 
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
     post("/user_session", params: {
       user_session_form: {
@@ -45,7 +45,7 @@ RSpec.describe "POST /user_session", type: :request do
     # ログインしていないのでセッションはまだ無い
     expect(UserSessionRecord.count).to eq(0)
 
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
     post("/user_session", params: {
       user_session_form: {

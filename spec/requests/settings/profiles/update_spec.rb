@@ -10,12 +10,12 @@ RSpec.describe "PATCH /settings/profile", type: :request do
   end
 
   it "ログインしている & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user, :with_password, name: "Before Name", description: "Before Description")
+    user_record = create(:user_record, :with_password, name: "Before Name", description: "Before Description")
 
-    sign_in(user:)
+    sign_in(user_record:)
 
-    expect(user.name).to eq("Before Name")
-    expect(user.description).to eq("Before Description")
+    expect(user_record.name).to eq("Before Name")
+    expect(user_record.description).to eq("Before Description")
 
     patch("/settings/profile", params: {
       edit_profile_form: {
@@ -29,17 +29,17 @@ RSpec.describe "PATCH /settings/profile", type: :request do
     expect(response.body).to include("アットネームを入力してください")
 
     # バリデーションエラーになったのでプロフィールは更新されていないはず
-    expect(user.reload.name).to eq("Before Name")
-    expect(user.description).to eq("Before Description")
+    expect(user_record.reload.name).to eq("Before Name")
+    expect(user_record.description).to eq("Before Description")
   end
 
   it "ログインしている & 入力値が正しいとき、プロフィールが更新できること" do
-    user = create(:user, :with_password, atname: "before_atname", name: "Before Name", description: "Before Description")
+    user_record = create(:user_record, :with_password, atname: "before_atname", name: "Before Name", description: "Before Description")
 
-    sign_in(user:)
+    sign_in(user_record:)
 
-    expect(user.name).to eq("Before Name")
-    expect(user.description).to eq("Before Description")
+    expect(user_record.name).to eq("Before Name")
+    expect(user_record.description).to eq("Before Description")
 
     patch("/settings/profile", params: {
       edit_profile_form: {
@@ -52,8 +52,8 @@ RSpec.describe "PATCH /settings/profile", type: :request do
     expect(response.status).to eq(302)
     expect(response).to redirect_to("/settings/profile")
 
-    expect(user.reload.atname).to eq("updated_atname")
-    expect(user.name).to eq("Updated Name")
-    expect(user.description).to eq("Updated Description")
+    expect(user_record.reload.atname).to eq("updated_atname")
+    expect(user_record.name).to eq("Updated Name")
+    expect(user_record.description).to eq("Updated Description")
   end
 end
