@@ -18,7 +18,7 @@ class Markup
     return "" if text.empty?
 
     location_keys = PageLocationKey.scan_text(text:, current_topic:)
-    page_locations = PageLocation.build_with_keys(current_space: current_topic.space.not_nil!, keys: location_keys)
+    page_locations = PageLocation.build_with_keys(current_space: current_topic.space_record.not_nil!, keys: location_keys)
 
     pipeline = HTMLPipeline.new(
       text_filters: [],

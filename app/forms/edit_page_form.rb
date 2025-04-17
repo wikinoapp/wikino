@@ -32,7 +32,7 @@ class EditPageForm < ApplicationForm
   def selectable_topics
     return TopicRecord.none if space_member.nil?
 
-    space_member.not_nil!.topics
+    space_member.not_nil!.topic_records
   end
 
   sig { returns(T::Boolean) }
@@ -54,10 +54,10 @@ class EditPageForm < ApplicationForm
   private def title_uniqueness
     return if topic.nil?
 
-    other_page = topic.not_nil!.pages.where.not(id: page.not_nil!.id).find_by(title:)
+    other_page = topic.not_nil!.page_records.where.not(id: page.not_nil!.id).find_by(title:)
 
     if other_page
-      edit_page_path = "/s/#{topic.not_nil!.space.not_nil!.identifier}/pages/#{other_page.number}/edit"
+      edit_page_path = "/s/#{topic.not_nil!.space_record.not_nil!.identifier}/pages/#{other_page.number}/edit"
       errors.add(:title, I18n.t("forms.errors.models.edit_page_form.uniqueness_html", edit_page_path:))
     end
   end

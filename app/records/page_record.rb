@@ -12,7 +12,7 @@ class PageRecord < ApplicationRecord
 
   belongs_to :topic_record, foreign_key: :topic_id
   belongs_to :space_record, foreign_key: :space_id
-  has_many :editor_records,
+  has_many :page_editor_records,
     class_name: "PageEditorRecord",
     dependent: :restrict_with_exception,
     foreign_key: :page_id,
@@ -44,8 +44,8 @@ class PageRecord < ApplicationRecord
 
   sig { params(topic: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic:)
-    topic.pages.create!(
-      space: topic.space,
+    topic.page_records.create!(
+      space_record: topic.space_record,
       title: nil,
       body: "",
       body_html: "",

@@ -53,16 +53,16 @@ module RecordConcerns
       )
     end
 
-    sig { params(editor: SpaceMember).void }
+    sig { params(editor: SpaceMemberRecord).void }
     def link!(editor:)
-      location_keys = PageLocationKey.scan_text(text: body, current_topic: topic)
-      topics = space.not_nil!.topics.where(name: location_keys.map(&:topic_name).uniq)
+      location_keys = PageLocationKey.scan_text(text: body, current_topic: topic_record)
+      topics = space_record.not_nil!.topic_records.where(name: location_keys.map(&:topic_name).uniq)
 
       linked_pages = location_keys.each_with_object([]) do |location_key, ary|
         page_topic = topics.find { |topic| topic.name == location_key.topic_name }
 
         if page_topic
-          ary << editor.create_linked_page!(topic: page_topic, title: location_key.page_title)
+          ary << editor.create_linked_page!(topic_record: page_topic, title: location_key.page_title)
         end
       end
 
@@ -74,7 +74,7 @@ module RecordConcerns
     sig do
       params(
         space_viewer: ModelConcerns::SpaceViewable,
-        pages: T::Array[Page],
+        pages: T::Array[PageRecord],
         added_page_ids: T::Array[T::Wikino::DatabaseId],
         backlink_limit: Integer
       ).returns(T::Array[LinkEntity])

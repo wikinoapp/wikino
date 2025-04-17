@@ -28,43 +28,43 @@ class SpaceMemberRecord < ApplicationRecord
     foreign_key: :space_member_id,
     inverse_of: :space_member_record
 
-  delegate :locale, :time_zone, to: :user, prefix: true
+  delegate :locale, :time_zone, to: :user_record, prefix: true
 
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 
-  sig { params(topic: TopicRecord, title: String).returns(PageRecord) }
-  def create_linked_page!(topic:, title:)
-    page = space.not_nil!.pages.where(topic:, title:).first_or_create!(
-      space:,
+  sig { params(topic_record: TopicRecord, title: String).returns(PageRecord) }
+  def create_linked_page!(topic_record:, title:)
+    page = space_record.not_nil!.page_records.where(topic_record:, title:).first_or_create!(
+      space_record:,
       body: "",
       body_html: "",
       linked_page_ids: [],
       modified_at: Time.zone.now
     )
-    page_editors.where(page:).first_or_create!(space:, last_page_modified_at: page.modified_at)
+    page_editor_records.where(page_record: page).first_or_create!(space_record:, last_page_modified_at: page.modified_at)
 
     page
   end
 
   sig { params(page: PageRecord).returns(DraftPageRecord) }
   def find_or_create_draft_page!(page:)
-    draft_pages.create_with(
-      space: page.space,
-      topic: page.topic,
+    draft_page_records.create_with(
+      space_record: page.space_record,
+      topic_record: page.topic_record,
       title: page.title,
       body: page.body,
       body_html: page.body_html,
       linked_page_ids: page.linked_page_ids,
       modified_at: Time.zone.now
-    ).find_or_create_by!(page:)
+    ).find_or_create_by!(page_record: page)
   rescue ActiveRecord::RecordNotUnique
     retry
   end
 
   sig { params(page: PageRecord).void }
   def destroy_draft_page!(page:)
-    draft_pages.where(page:).destroy_all
+    draft_page_records.where(page_record: page).destroy_all
 
     nil
   end
@@ -73,8 +73,8 @@ class SpaceMemberRecord < ApplicationRecord
   def to_entity(space_viewer:)
     SpaceMemberEntity.new(
       database_id: id,
-      space_entity: space.not_nil!.to_entity(space_viewer:),
-      user_entity: user.not_nil!.to_entity
+      space_entity: space_record.not_nil!.to_entity(space_viewer:),
+      user_entity: user_record.not_nil!.to_entity
     )
   end
 
@@ -90,14 +90,14 @@ class SpaceMemberRecord < ApplicationRecord
 
   sig { returns(PageRecord::PrivateAssociationRelation) }
   def last_modified_pages
-    space.not_nil!.pages.joins(:editors).merge(
-      page_editors.order(PageEditor.arel_table[:last_page_modified_at].desc)
+    space_record.not_nil!.page_records.joins(:page_editor_records).merge(
+      page_editor_records.order(PageEditorRecord.arel_table[:last_page_modified_at].desc)
     )
   end
 
   sig { override.returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages
-    space.not_nil!.pages.active
+    space_record.not_nil!.page_records.active
   end
 
   sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
@@ -105,9 +105,9 @@ class SpaceMemberRecord < ApplicationRecord
     topic_records.kept
   end
 
-  sig { override.returns(Topic::PrivateAssociationRelation) }
+  sig { override.returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics
-    space.not_nil!.topics.kept
+    space_record.not_nil!.topic_records.kept
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }

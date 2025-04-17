@@ -56,13 +56,13 @@ RSpec.describe PageRecord, type: :record do
 
   describe "#link!" do
     it "ページにリンクが含まれているとき、リンクを作成すること" do
-      user = create(:user)
-      space = create(:space)
-      space_member = create(:space_member, user:, space:)
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
 
-      topic_a = create(:topic, space:, name: "トピックA")
-      topic_b = create(:topic, space:, name: "トピックB")
-      page_a = create(:page, space:, topic: topic_a, title: "Page A")
+      topic_a = create(:topic_record, space_record: space, name: "トピックA")
+      topic_b = create(:topic_record, space_record: space, name: "トピックB")
+      page_a = create(:page_record, space_record: space, topic_record: topic_a, title: "Page A")
 
       expect(PageRecord.count).to eq(1)
 
@@ -74,9 +74,9 @@ RSpec.describe PageRecord, type: :record do
       page_a.link!(editor: space_member)
 
       expect(PageRecord.count).to eq(3)
-      page_b = space.pages.find_by(topic: topic_a, title: "Page B")
+      page_b = space.page_records.find_by(topic_record: topic_a, title: "Page B")
       expect(page_b).to be_present
-      page_c = space.pages.find_by(topic: topic_b, title: "Page C")
+      page_c = space.page_records.find_by(topic_record: topic_b, title: "Page C")
       expect(page_c).to be_present
 
       expect(page_a.linked_page_ids).to eq([page_b.id, page_c.id])

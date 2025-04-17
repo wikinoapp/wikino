@@ -4,7 +4,7 @@
 RSpec.describe PageLocationKey, type: :model do
   describe ".scan_text" do
     context "テキスト内にリンク記法が書かれているとき" do
-      let!(:current_topic) { create(:topic) }
+      let!(:current_topic) { create(:topic_record) }
 
       it "キーのリストを返すこと" do
         [
