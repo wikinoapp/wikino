@@ -14,7 +14,7 @@ module Spaces
     def call
       space = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
-      showable_pages = space_viewer.showable_pages.preload(:topic)
+      showable_pages = space_viewer.showable_pages.preload(:topic_record)
 
       cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,

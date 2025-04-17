@@ -22,7 +22,7 @@ class SpaceVisitor
 
   sig { override.returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages
-    space.pages.active.joins(:topic).merge(TopicRecord.visibility_public)
+    space.page_records.active.joins(:topic_record).merge(TopicRecord.visibility_public)
   end
 
   sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
@@ -32,7 +32,7 @@ class SpaceVisitor
 
   sig { override.returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics
-    space.topics.kept.visibility_public
+    space.topic_records.kept.visibility_public
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
@@ -62,7 +62,7 @@ class SpaceVisitor
 
   sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_view_page?(page:)
-    page.topic.not_nil!.visibility_public?
+    page.topic_record.not_nil!.visibility_public?
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }

@@ -81,7 +81,7 @@ class UserRecord < ApplicationRecord
 
   sig { override.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
   def space_viewer!(space:)
-    active_space_members.find_by(space:).presence || SpaceVisitor.new(space:)
+    active_space_member_records.find_by(space_record: space).presence || SpaceVisitor.new(space:)
   end
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
