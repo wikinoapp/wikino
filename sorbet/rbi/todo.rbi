@@ -4,21 +4,10 @@
 
 # typed: false
 
-module ActiveRecordCursorPaginate::PageRecord; end
-module CreateTopicService::SpaceMember; end
-module EditPageForm::SpaceMember; end
-module ExportService::SpaceMember; end
 module GenerateExportFilesService::Export; end
 module PageRecord::DELETE_LIMIT_DAYS; end
 module PageRecord::PageRevision; end
 module PageRecord::SpaceMember; end
-module RecordConcerns::Pageable::SpaceMember; end
-module SpaceMemberPermission::UpdateSpaceRecord; end
-module SpaceMemberPermission::UpdateTopicRecord; end
-module SpaceMemberRecord::PageEditor; end
-module Topic::PrivateAssociationRelation; end
-module Topic::PrivateCollectionProxy; end
 module Topic::PrivateRelation; end
 module TopicRecord::SpaceMember; end
-module UserSession::TOKENS_COOKIE_KEY; end
 module Zip::File::CREATE; end

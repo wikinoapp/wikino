@@ -398,18 +398,18 @@ class PageRecord
     def create_topic_record!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def editor_record_ids; end
+    def page_editor_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def editor_record_ids=(ids); end
+    def page_editor_record_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `PageRecord` class because it declared `has_many :editor_records`.
+    # This method is created by ActiveRecord on the `PageRecord` class because it declared `has_many :page_editor_records`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
     sig { returns(::PageEditorRecord::PrivateCollectionProxy) }
-    def editor_records; end
+    def page_editor_records; end
 
     sig { params(value: T::Enumerable[::PageEditorRecord]).void }
-    def editor_records=(value); end
+    def page_editor_records=(value); end
 
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end

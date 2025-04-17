@@ -49,13 +49,13 @@ WikinoはWikiアプリです。ユーザーはスペースと呼ばれる場所�
 
 ## コマンドリファレンス
 
-- `docker compose exec app bin/rspec`               # テストを実行する
+- `docker compose exec app bin/rspec` # テストを実行する
 - `docker compose exec app bin/rails sorbet:update` # 型を更新する
 - `docker compose exec app yarn prettier . --write` # Prettierで整形する
 - `docker compose exec app bin/erb_lint --lint-all` # ERB Lintを実行する
-- `docker compose exec app bin/standardrb`          # Standardを実行する
-- `docker compose exec app bin/srb tc`              # 型チェックをする
-- `docker compose exec app bin/check`               # 各種チェックをまとめて行う
+- `docker compose exec app bin/standardrb` # Standardを実行する
+- `docker compose exec app bin/srb tc` # 型チェックをする
+- `docker compose exec app bin/check` # 各種チェックをまとめて行う
 
 ## コーディング規約
 

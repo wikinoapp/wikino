@@ -3,7 +3,7 @@
 
 class UpdateSpaceService < ApplicationService
   class Result < T::Struct
-    const :space, Space
+    const :space, SpaceRecord
   end
 
   sig { params(space: SpaceRecord, form: EditSpaceForm).returns(Result) }

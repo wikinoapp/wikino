@@ -9,29 +9,34 @@ RSpec.describe PageRecord, type: :record do
       space_record.reload
       topic_record = create(:topic_record, space_record:)
       space_member_record = create(:space_member_record, user_record:, space_record:)
-      page_record_a = create(:page_record,
+      page_record_a = create(
+        :page_record,
         space_record:,
         topic_record:,
         modified_at: Time.zone.parse("2024-01-01")
       )
-      page_record_b = create(:page_record,
+      page_record_b = create(
+        :page_record,
         space_record:,
         topic_record:,
         modified_at: Time.zone.parse("2024-01-02")
       )
-      page_record_c = create(:page_record,
+      page_record_c = create(
+        :page_record,
         space_record:,
         topic_record:,
         linked_page_ids: [page_record_b.id],
         modified_at: Time.zone.parse("2024-01-03")
       )
-      page_record_d = create(:page_record,
+      page_record_d = create(
+        :page_record,
         space_record:,
         topic_record:,
         linked_page_ids: [page_record_c.id],
         modified_at: Time.zone.parse("2024-01-04")
       )
-      target_page_record = create(:page_record,
+      target_page_record = create(
+        :page_record,
         space_record:,
         topic_record:,
         linked_page_ids: [page_record_a.id, page_record_c.id]
