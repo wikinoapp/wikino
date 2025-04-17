@@ -38,7 +38,7 @@ RSpec.describe AccountForm, type: :form do
   end
 
   it "アットネームがすでに使われているとき、エラーになること" do
-    create(:user, atname: "a")
+    create(:user_record, atname: "a")
     form = AccountForm.new(atname: "a")
 
     expect(form).not_to be_valid
@@ -91,7 +91,7 @@ RSpec.describe AccountForm, type: :form do
   end
 
   it "メールアドレスがすでに使われているとき、エラーになること" do
-    create(:user, email: "test@example.com")
+    create(:user_record, email: "test@example.com")
     form = AccountForm.new(email: "test@example.com")
 
     expect(form).not_to be_valid
