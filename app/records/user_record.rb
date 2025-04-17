@@ -53,7 +53,7 @@ class UserRecord < ApplicationRecord
       time_zone:,
       joined_at: current_time
     )
-    user.create_user_password!(password:)
+    user.create_user_password_record!(password:)
 
     user
   end

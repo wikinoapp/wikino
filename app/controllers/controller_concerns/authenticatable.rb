@@ -6,9 +6,9 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    sig(:final) { params(user_session: UserSession).returns(T::Boolean) }
+    sig(:final) { params(user_session: UserSessionRecord).returns(T::Boolean) }
     def sign_in(user_session)
-      Current.viewer = user_session.user
+      Current.viewer = user_session.user_record
       store_user_session_token(token: user_session.token)
 
       true

@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class UserSessionRecord < ApplicationRecord
-  TOKENS_COOKIE_KEY = :user_session_tokens
-
   self.table_name = "user_sessions"
 
   has_secure_token
@@ -15,7 +13,7 @@ class UserSessionRecord < ApplicationRecord
       ip_address: T.nilable(String),
       user_agent: T.nilable(String),
       signed_in_at: T.any(ActiveSupport::TimeWithZone, Time)
-    ).returns(UserSession)
+    ).returns(UserSessionRecord)
   end
   def self.start!(ip_address:, user_agent:, signed_in_at: Time.current)
     create!(

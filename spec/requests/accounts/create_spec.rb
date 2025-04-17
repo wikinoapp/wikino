@@ -16,8 +16,8 @@ RSpec.describe "POST /accounts", type: :request do
   end
 
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
-    user = create(:user, :with_password)
-    sign_in(user:)
+    user = create(:user_record, :with_password)
+    sign_in(user_record: user)
 
     expect(UserRecord.count).to eq(1)
 

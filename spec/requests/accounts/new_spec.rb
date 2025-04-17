@@ -3,8 +3,8 @@
 
 RSpec.describe "GET /accounts/new", type: :request do
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
-    user = create(:user, :with_password)
-    sign_in(user:)
+    user = create(:user_record, :with_password)
+    sign_in(user_record: user)
 
     get "/accounts/new"
 

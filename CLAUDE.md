@@ -96,6 +96,8 @@ end
 | Repository      | ビジネスロジックのカプセル化       | `Job`, `Mailer`, `Model`, `Record` |
 | View            | 表示処理                           | `Component`, `Model`               |
 
+- `Model` を定義するときは `ApplicationModel` を継承するようにしてください
+
 ### CSS
 
 - Tailwind CSSを使用して書いてください

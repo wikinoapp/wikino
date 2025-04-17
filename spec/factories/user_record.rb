@@ -13,7 +13,7 @@ FactoryBot.define do
 
     trait :with_password do
       after(:create) do |user|
-        create(:user_password, user:)
+        create(:user_password_record, user_record: user)
       end
     end
   end
