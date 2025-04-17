@@ -10,9 +10,9 @@ RSpec.describe "POST /spaces", type: :request do
   end
 
   it "入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(SpaceRecord.count).to eq(0)
 
@@ -31,9 +31,9 @@ RSpec.describe "POST /spaces", type: :request do
   end
 
   it "入力値が正常なとき、スペースが作成できること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(SpaceRecord.count).to eq(0)
 
