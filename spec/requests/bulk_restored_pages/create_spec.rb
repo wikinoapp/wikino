@@ -3,7 +3,7 @@
 
 RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
 
     post "/s/#{space.identifier}/bulk_restored_pages"
 
@@ -12,10 +12,10 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
   end
 
   it "別のスペースに参加しているとき、404を返すこと" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     other_space = create(:space_record)
     user = create(:user_record, :with_password)
-    create(:space_member, space: other_space, user:)
+    create(:space_member, space_record: other_space, user:)
 
     sign_in(user_record: user)
 
@@ -25,11 +25,11 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
   end
 
   it "選択したページに問題があるとき、エラーメッセージを表示すること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     user = create(:user_record, :with_password)
-    create(:space_member, space:, user:)
-    topic = create(:topic, space:) # このトピックに参加していない
-    page = create(:page, :trashed, space:, topic:)
+    create(:space_member, space_record: space, user:)
+    topic = create(:topic, space_record: space) # このトピックに参加していない
+    page = create(:page, :trashed, space_record: space, topic:)
 
     sign_in(user_record: user)
 
@@ -44,12 +44,12 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
   end
 
   it "選択したページに問題がないとき、ページを復元できること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     user = create(:user_record, :with_password)
-    space_member = create(:space_member, space:, user:)
-    topic = create(:topic, space:)
-    page = create(:page, :trashed, space:, topic:)
-    create(:topic_member_record, space:, topic:, space_member:)
+    space_member = create(:space_member, space_record: space, user:)
+    topic = create(:topic, space_record: space)
+    page = create(:page, :trashed, space_record: space, topic:)
+    create(:topic_member_record, space_record: space, topic:, space_member:)
 
     sign_in(user_record: user)
 
