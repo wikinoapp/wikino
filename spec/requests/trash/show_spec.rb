@@ -14,7 +14,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
   it "スペースに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     other_space = create(:space)
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     create(:space_member, :owner, space: other_space, user:)
 
     sign_in(user:)
@@ -26,7 +26,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
 
   it "スペースに参加しているとき、ゴミ箱ページが表示されること" do
     space = create(:space, :small)
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     create(:space_member, :owner, space:, user:)
     topic = create(:topic, space:)
     create(:page, :trashed, space:, topic:, title: "削除されたページ")

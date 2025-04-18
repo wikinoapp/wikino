@@ -6,7 +6,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     # 何もしていないのでEmailConfirmationは0件のはず
     expect(EmailConfirmationRecord.count).to eq(0)
 
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     sign_in(user:)
 
     post("/email_confirmation", params: {
