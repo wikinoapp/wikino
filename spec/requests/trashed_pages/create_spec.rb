@@ -3,8 +3,8 @@
 
 RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
-    page = create(:page, space:)
+    space = create(:space_record, :small)
+    page = create(:page_record, space:)
 
     post "/s/#{space.identifier}/pages/#{page.number}/trash"
 
@@ -13,8 +13,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
   end
 
   it "スペースに参加していないとき、404を返すこと" do
-    space = create(:space, :small)
-    page = create(:page, space:)
+    space = create(:space_record, :small)
+    page = create(:page_record, space:)
 
     other_space = create(:space_record)
     user = create(:user_record, :with_password)
@@ -28,7 +28,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
   end
 
   it "指定したページが存在しないとき、エラーメッセージを表示すること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space:, user:)
 
@@ -40,11 +40,11 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
   end
 
   it "オーナーとしてログインしているとき、ゴミ箱に移動できること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     user = create(:user_record, :with_password)
     space_member = create(:space_member, :owner, space:, user:)
-    topic = create(:topic, space:)
-    page = create(:page, space:, topic:)
+    topic = create(:topic_record, space:)
+    page = create(:page_record, space:, topic:)
     create(:topic_member_record, space:, topic:, space_member:)
 
     sign_in(user_record: user)

@@ -4,7 +4,7 @@
 RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   it "ログインしていない & 公開トピックのページのとき、ページが表示されること" do
     space = create(:space_record, :small)
-    public_topic = create(:topic, :public, space:)
+    public_topic = create(:topic_record, :public, space_record: space)
     page = create(:page_record, space:, topic: public_topic, title: "公開されているページ")
 
     get "/s/#{space.identifier}/pages/#{page.number}"
