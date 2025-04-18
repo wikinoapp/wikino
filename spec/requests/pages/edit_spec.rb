@@ -20,7 +20,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
     user = create(:user_record, :with_password)
     create(:space_member_record, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
@@ -34,7 +34,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
     topic = create(:topic_record, space:)
     page = create(:page_record, space:, topic:, title: "ページタイトル")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
@@ -49,7 +49,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
     page = create(:page_record, space:, topic:, title: "ページタイトル")
     create(:topic_member_record, space:, topic:, space_member:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 

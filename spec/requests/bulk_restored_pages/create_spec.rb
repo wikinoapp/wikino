@@ -17,7 +17,7 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     user = create(:user_record, :with_password)
     create(:space_member, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/bulk_restored_pages"
 
@@ -31,7 +31,7 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     topic = create(:topic, space:) # このトピックに参加していない
     page = create(:page, :trashed, space:, topic:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post("/s/#{space.identifier}/bulk_restored_pages", params: {
       trashed_pages_form: {
@@ -51,7 +51,7 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     page = create(:page, :trashed, space:, topic:)
     create(:topic_member_record, space:, topic:, space_member:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(page.trashed?).to be(true)
 

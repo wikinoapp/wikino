@@ -35,7 +35,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     other_space = create(:space_record)
     create(:space_member_record, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -53,7 +53,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     other_space = create(:space_record)
     create(:space_member_record, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -69,7 +69,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     create(:topic_member_record, space:, topic:, space_member:)
     page = create(:page_record, space:, topic:, title: "公開されているページ")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -86,7 +86,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     create(:topic_member_record, space:, topic:, space_member:)
     page = create(:page_record, space:, topic:, title: "公開されていないページ")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -102,7 +102,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     topic = create(:topic, :public, space:)
     page = create(:page_record, space:, topic:, title: "公開されているページ")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -118,7 +118,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     topic = create(:topic, :private, space:)
     page = create(:page_record, space:, topic:, title: "公開されていないページ")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}"
 

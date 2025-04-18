@@ -7,7 +7,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
 
     user = create(:user_record, :with_password)
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post("/email_confirmation", params: {
       new_email_confirmation_form: {

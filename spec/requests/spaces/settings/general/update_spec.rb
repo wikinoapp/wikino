@@ -19,7 +19,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
     other_space = create(:space_record)
     create(:space_member, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch "/s/#{space.identifier}/settings/general"
 
@@ -31,7 +31,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
     space = create(:space, :small, identifier: "space-identifier")
     create(:space_member, space:, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(space.identifier).to eq("space-identifier")
 
@@ -54,7 +54,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
     space = create(:space, :small, identifier: "space-identifier")
     create(:space_member, space:, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(space.identifier).to eq("space-identifier")
 

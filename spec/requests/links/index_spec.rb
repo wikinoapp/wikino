@@ -44,7 +44,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     other_space = create(:space_record)
     create(:space_member_record, user:, space: other_space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
 
@@ -63,7 +63,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     other_space = create(:space_record)
     create(:space_member_record, user:, space: other_space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
 
@@ -87,7 +87,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     page_3 = create(:page_record, :published, space:, topic: not_joined_topic, title: "参加していないトピックのページ")
     page = create(:page_record, space:, linked_page_ids: [page_1.id, page_2.id, page_3.id])
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
 

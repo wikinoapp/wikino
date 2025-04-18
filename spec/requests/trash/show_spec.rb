@@ -17,7 +17,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/trash"
 
@@ -31,7 +31,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     topic = create(:topic, space:)
     create(:page, :trashed, space:, topic:, title: "削除されたページ")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/trash"
 

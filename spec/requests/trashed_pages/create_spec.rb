@@ -20,7 +20,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/pages/#{page.number}/trash"
 
@@ -32,7 +32,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space:, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/pages/0/trash"
 
@@ -47,7 +47,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     page = create(:page, space:, topic:)
     create(:topic_member_record, space:, topic:, space_member:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(page.trashed?).to be(false)
 

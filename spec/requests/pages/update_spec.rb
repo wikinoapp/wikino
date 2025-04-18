@@ -21,7 +21,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     other_space = create(:space_record)
     create(:space_member_record, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -36,7 +36,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     topic = create(:topic_record, space:)
     page = create(:page_record, space:, topic:, title: "A Page")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
       edit_page_form: {
@@ -62,7 +62,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
     page = create(:page_record, space:, topic:, title: "A Page")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(page.title).to eq("A Page")
 
@@ -91,7 +91,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
     page = create(:page_record, space:, topic:, title: "A Page")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
       edit_page_form: {

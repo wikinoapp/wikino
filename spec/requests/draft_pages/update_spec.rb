@@ -19,7 +19,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     user = create(:user_record, :with_password)
     create(:space_member, space: other_space, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch "/s/#{space.identifier}/pages/#{draft_page.page.number}/draft_page"
 
@@ -32,7 +32,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     user = create(:user_record, :with_password)
     create(:space_member, space:, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
       edit_page_form: {
@@ -53,7 +53,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     page = create(:page_record, :published, space:, topic:)
     create(:topic_member_record, space:, topic:, space_member:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
       edit_page_form: {

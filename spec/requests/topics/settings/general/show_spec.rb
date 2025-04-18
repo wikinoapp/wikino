@@ -17,7 +17,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
     space = create(:space_record)
     topic = create(:topic_record, space:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -31,7 +31,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
     other_space = create(:space_record)
     create(:space_member, user:, space: other_space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -44,7 +44,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
     topic = create(:topic_record, space:)
     create(:space_member, space:, user:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -59,7 +59,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
     space_member = create(:space_member, space:, user:)
     create(:topic_member_record, space:, topic:, space_member:)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 

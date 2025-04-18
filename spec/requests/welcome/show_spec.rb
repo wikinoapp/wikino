@@ -5,7 +5,7 @@ RSpec.describe "GET /", type: :request do
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
     user = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/"
 
