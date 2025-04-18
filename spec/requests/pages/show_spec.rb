@@ -3,7 +3,7 @@
 
 RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   it "ログインしていない & 公開トピックのページのとき、ページが表示されること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     public_topic = create(:topic, :public, space:)
     page = create(:page, space:, topic: public_topic, title: "公開されているページ")
 
@@ -16,7 +16,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "ログインしていない & 非公開トピックのページのとき、404を返すこと" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
@@ -28,11 +28,11 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   it "別のスペースに参加している & 公開トピックのページのとき、ページが表示されること" do
     user = create(:user_record, :with_password)
 
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     public_topic = create(:topic, :public, space:)
     page = create(:page, space:, topic: public_topic, title: "公開されているページ")
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, space: other_space, user:)
 
     sign_in(user:)
@@ -46,11 +46,11 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
     user = create(:user_record, :with_password)
 
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, space: other_space, user:)
 
     sign_in(user:)
@@ -62,7 +62,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
 
   it "スペースに参加している & 参加している公開トピックのページのとき、ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, :public, space:)
@@ -79,7 +79,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
 
   it "スペースに参加している & 参加している非公開トピックのページのとき、ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, :private, space:)
@@ -96,7 +96,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
 
   it "スペースに参加している & 参加していない公開トピックのページのとき、ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     create(:space_member, space:, user:)
 
     topic = create(:topic, :public, space:)
@@ -112,7 +112,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
 
   it "スペースに参加している & 参加していない非公開トピックのページのとき、ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     create(:space_member, space:, user:)
 
     topic = create(:topic, :private, space:)

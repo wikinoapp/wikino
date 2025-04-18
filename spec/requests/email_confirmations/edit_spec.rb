@@ -10,7 +10,7 @@ RSpec.describe "GET /email_confirmation/edit", type: :request do
   end
 
   it "EmailConfirmationのIDがセッションに格納されているとき、確認用コードの入力ページが表示されること" do
-    email_confirmation = create(:email_confirmation)
+    email_confirmation = create(:email_confirmation_record)
 
     # EmailConfirmationのIDをセッションに格納する
     post("/email_confirmation", params: {

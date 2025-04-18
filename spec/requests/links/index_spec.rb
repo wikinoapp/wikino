@@ -3,7 +3,7 @@
 
 RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :request do
   it "ログインしていない & 公開トピックのページのとき、ページのリンクが表示されること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
 
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
@@ -21,7 +21,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   end
 
   it "ログインしていない & 非公開トピックのページのとき、404を返すこと" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
@@ -32,7 +32,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
 
   it "別のスペースに参加している & 公開トピックのページのとき、ページのリンクが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
 
     public_topic = create(:topic, :public, space:)
     private_topic = create(:topic, :private, space:)
@@ -41,7 +41,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     page_2 = create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
     page = create(:page, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, user:, space: other_space)
 
     sign_in(user:)
@@ -56,11 +56,11 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
 
   it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     private_topic = create(:topic, :private, space:)
     page = create(:page, space:, topic: private_topic)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, user:, space: other_space)
 
     sign_in(user:)
@@ -71,7 +71,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   end
 
   it "スペースに参加しているとき、ページのリンクが表示されること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     user = create(:user_record, :with_password)
     space_member = create(:space_member, space:, user:)
 

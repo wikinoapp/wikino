@@ -16,7 +16,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/trash", type: :requ
     space = create(:space, :small)
     page = create(:page, space:)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space: other_space, user:)
 

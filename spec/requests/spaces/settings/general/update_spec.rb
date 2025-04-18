@@ -16,7 +16,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
 
     space = create(:space, :small)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, space: other_space, user:)
 
     sign_in(user:)

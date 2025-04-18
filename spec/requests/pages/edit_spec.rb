@@ -3,7 +3,7 @@
 
 RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     page = create(:page, space:)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
@@ -13,10 +13,10 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
   end
 
   it "別のスペースに参加しているとき、404ページが表示されること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     page = create(:page, space:)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     user = create(:user_record, :with_password)
     create(:space_member, space: other_space, user:)
 
@@ -29,7 +29,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, space:, topic:, title: "ページタイトル")
@@ -43,7 +43,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
 
   it "スペースに参加している & ページのトピックに参加しているとき、編集ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
     page = create(:page, space:, topic:, title: "ページタイトル")

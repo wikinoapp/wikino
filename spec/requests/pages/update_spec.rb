@@ -3,7 +3,7 @@
 
 RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     page = create(:page, space:)
 
     patch "/s/#{space.identifier}/pages/#{page.number}"
@@ -15,10 +15,10 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   it "別のスペースに参加しているとき、404ページが表示されること" do
     user = create(:user_record, :with_password)
 
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     page = create(:page, space:)
 
-    other_space = create(:space)
+    other_space = create(:space_record)
     create(:space_member, space: other_space, user:)
 
     sign_in(user:)
@@ -30,7 +30,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     create(:space_member, space:, user:)
 
     topic = create(:topic, space:)
@@ -54,7 +54,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, space:)
@@ -83,7 +83,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が正しいとき、ページが更新できること" do
     user = create(:user_record, :with_password)
-    space = create(:space, :small)
+    space = create(:space_record, :small)
     space_member = create(:space_member, space:, user:)
 
     topic = create(:topic, space:)

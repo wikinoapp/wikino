@@ -15,7 +15,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
   it "別のスペースに参加しているとき、404を返すこと" do
     space = create(:space, :small)
     draft_page = create(:draft_page, space:)
-    other_space = create(:space)
+    other_space = create(:space_record)
     user = create(:user_record, :with_password)
     create(:space_member, space: other_space, user:)
 

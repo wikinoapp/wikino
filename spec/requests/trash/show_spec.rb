@@ -13,7 +13,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
 
   it "スペースに参加していないとき、404を返すこと" do
     space = create(:space, :small)
-    other_space = create(:space)
+    other_space = create(:space_record)
     user = create(:user_record, :with_password)
     create(:space_member, :owner, space: other_space, user:)
 
