@@ -5,12 +5,12 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   it "ログインしていない & 公開トピックのページのとき、ページのリンクが表示されること" do
     space = create(:space_record, :small)
 
-    public_topic = create(:topic, :public, space:)
-    private_topic = create(:topic, :private, space:)
+    public_topic = create(:topic_record, :public, space:)
+    private_topic = create(:topic_record, :private, space:)
 
-    page_1 = create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
-    page_2 = create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
-    page = create(:page, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
+    page_1 = create(:page_record, :published, space:, topic: public_topic, title: "公開されているページ")
+    page_2 = create(:page_record, :published, space:, topic: private_topic, title: "公開されていないページ")
+    page = create(:page_record, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
 
@@ -22,8 +22,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
 
   it "ログインしていない & 非公開トピックのページのとき、404を返すこと" do
     space = create(:space_record, :small)
-    private_topic = create(:topic, :private, space:)
-    page = create(:page, space:, topic: private_topic)
+    private_topic = create(:topic_record, :private, space:)
+    page = create(:page_record, space:, topic: private_topic)
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
 
@@ -34,15 +34,15 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
 
-    public_topic = create(:topic, :public, space:)
-    private_topic = create(:topic, :private, space:)
+    public_topic = create(:topic_record, :public, space:)
+    private_topic = create(:topic_record, :private, space:)
 
-    page_1 = create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
-    page_2 = create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
-    page = create(:page, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
+    page_1 = create(:page_record, :published, space:, topic: public_topic, title: "公開されているページ")
+    page_2 = create(:page_record, :published, space:, topic: private_topic, title: "公開されていないページ")
+    page = create(:page_record, space:, topic: public_topic, linked_page_ids: [page_1.id, page_2.id])
 
     other_space = create(:space_record)
-    create(:space_member, user:, space: other_space)
+    create(:space_member_record, user:, space: other_space)
 
     sign_in(user:)
 
@@ -57,11 +57,11 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
-    private_topic = create(:topic, :private, space:)
-    page = create(:page, space:, topic: private_topic)
+    private_topic = create(:topic_record, :private, space:)
+    page = create(:page_record, space:, topic: private_topic)
 
     other_space = create(:space_record)
-    create(:space_member, user:, space: other_space)
+    create(:space_member_record, user:, space: other_space)
 
     sign_in(user:)
 
@@ -75,17 +75,17 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     user = create(:user_record, :with_password)
     space_member = create(:space_member, space:, user:)
 
-    public_topic = create(:topic, :public, space:)
-    private_topic = create(:topic, :private, space:)
-    not_joined_topic = create(:topic, space:)
+    public_topic = create(:topic_record, :public, space:)
+    private_topic = create(:topic_record, :private, space:)
+    not_joined_topic = create(:topic_record, space:)
 
-    create(:topic_member, space:, topic: public_topic, space_member:)
-    create(:topic_member, space:, topic: private_topic, space_member:)
+    create(:topic_member_record, space:, topic: public_topic, space_member:)
+    create(:topic_member_record, space:, topic: private_topic, space_member:)
 
-    page_1 = create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
-    page_2 = create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
-    page_3 = create(:page, :published, space:, topic: not_joined_topic, title: "参加していないトピックのページ")
-    page = create(:page, space:, linked_page_ids: [page_1.id, page_2.id, page_3.id])
+    page_1 = create(:page_record, :published, space:, topic: public_topic, title: "公開されているページ")
+    page_2 = create(:page_record, :published, space:, topic: private_topic, title: "公開されていないページ")
+    page_3 = create(:page_record, :published, space:, topic: not_joined_topic, title: "参加していないトピックのページ")
+    page = create(:page_record, space:, linked_page_ids: [page_1.id, page_2.id, page_3.id])
 
     sign_in(user:)
 

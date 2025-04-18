@@ -28,7 +28,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
 
   it "ページのトピックに参加していないとき、404を返すこと" do
     space = create(:space, :small)
-    page = create(:page, :published, space:)
+    page = create(:page_record, :published, space:)
     user = create(:user_record, :with_password)
     create(:space_member, space:, user:)
 
@@ -49,9 +49,9 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
-    topic = create(:topic, space:)
-    page = create(:page, :published, space:, topic:)
-    create(:topic_member, space:, topic:, space_member:)
+    topic = create(:topic_record, space:)
+    page = create(:page_record, :published, space:, topic:)
+    create(:topic_member_record, space:, topic:, space_member:)
 
     sign_in(user:)
 

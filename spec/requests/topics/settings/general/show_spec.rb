@@ -4,7 +4,7 @@
 RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general", type: :request do
   it "ログインしていないとき、ログインページが表示されること" do
     space = create(:space_record)
-    topic = create(:topic, space:)
+    topic = create(:topic_record, space:)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -15,7 +15,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加していないとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic, space:)
+    topic = create(:topic_record, space:)
 
     sign_in(user:)
 
@@ -27,7 +27,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & 別のスペースに参加しているとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic, space:)
+    topic = create(:topic_record, space:)
     other_space = create(:space_record)
     create(:space_member, user:, space: other_space)
 
@@ -41,7 +41,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加している & トピックに参加していないとき、トピックの設定ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic, space:)
+    topic = create(:topic_record, space:)
     create(:space_member, space:, user:)
 
     sign_in(user:)
@@ -55,9 +55,9 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加している & トピックに参加しているとき、トピックの設定ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic, space:)
+    topic = create(:topic_record, space:)
     space_member = create(:space_member, space:, user:)
-    create(:topic_member, space:, topic:, space_member:)
+    create(:topic_member_record, space:, topic:, space_member:)
 
     sign_in(user:)
 
