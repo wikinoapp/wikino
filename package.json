@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.0.7",
-    "daisyui": "^4.12.13",
+    "daisyui": "^5.0.27",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.17"
