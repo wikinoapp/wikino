@@ -23,7 +23,7 @@ class ExportRecord < ApplicationRecord
 
   sig { returns(ExportStatusKind) }
   def latest_status_kind
-    ExportStatusKind.deserialize(latest_status.not_nil!.kind)
+    ExportStatusKind.deserialize(latest_status_record.not_nil!.kind)
   end
 
   sig { returns(T::Boolean) }
@@ -38,7 +38,7 @@ class ExportRecord < ApplicationRecord
 
   sig { returns(T::Boolean) }
   def active?
-    succeeded? && latest_status.not_nil!.changed_at > 1.day.ago
+    succeeded? && latest_status_record.not_nil!.changed_at > 1.day.ago
   end
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportEntity) }
@@ -52,7 +52,7 @@ class ExportRecord < ApplicationRecord
 
   sig { returns(PageRecord::PrivateAssociationRelation) }
   def target_pages
-    space.not_nil!.page_records.active
+    space_record.not_nil!.page_records.active
   end
 
   sig { returns(String) }

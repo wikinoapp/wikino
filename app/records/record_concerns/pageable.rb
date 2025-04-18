@@ -10,7 +10,7 @@ module RecordConcerns
 
     sig { returns(PageRecord) }
     def original_page
-      (instance_of?(DraftPageRecord) ? T.bind(self, DraftPageRecord).page : T.bind(self, PageRecord)).not_nil!
+      (instance_of?(DraftPageRecord) ? T.bind(self, DraftPageRecord).page_record : T.bind(self, PageRecord)).not_nil!
     end
 
     T::Sig::WithoutRuntime.sig { returns(PageRecord::PrivateRelation) }

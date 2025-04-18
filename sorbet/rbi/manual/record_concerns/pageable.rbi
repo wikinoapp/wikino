@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module ModelConcerns
+module RecordConcerns
   module Pageable
     def backlinked_pages
     end
@@ -18,10 +18,10 @@ module ModelConcerns
     def linked_pages
     end
 
-    def space
+    def space_record
     end
 
-    def topic
+    def topic_record
     end
 
     def update!(*args)

@@ -1,7 +1,7 @@
 # typed: strong
 # frozen_string_literal: true
 
-class User
+class UserRecord
   class PrivateCollectionProxy
     def create_initial_user!(*args)
     end
