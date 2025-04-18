@@ -13,7 +13,7 @@ module Pages
     def call
       space = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
-      topic = space.topics.kept.find_by!(number: params[:topic_number])
+      topic = space.topic_records.kept.find_by!(number: params[:topic_number])
 
       unless space_viewer.can_create_page?(topic:)
         return render_404

@@ -56,7 +56,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
     expect(response.status).to eq(302)
 
     expect(PageRecord.count).to eq(1)
-    page = topic.pages.first
+    page = topic.page_records.first
 
     expect(response).to redirect_to("/s/#{space.identifier}/pages/#{page.number}/edit")
   end

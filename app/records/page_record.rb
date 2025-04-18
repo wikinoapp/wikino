@@ -119,17 +119,17 @@ class PageRecord < ApplicationRecord
     )
   end
 
-  sig { params(editor: SpaceMember).void }
+  sig { params(editor: SpaceMemberRecord).void }
   def add_editor!(editor:)
-    editors.where(space:, space_member: editor).first_or_create!(
+    page_editor_records.where(space_record:, space_member_record: editor).first_or_create!(
       last_page_modified_at: modified_at
     )
 
     nil
   end
 
-  sig { params(editor: SpaceMember, body: String, body_html: String).returns(PageRevision) }
+  sig { params(editor: SpaceMemberRecord, body: String, body_html: String).returns(PageRevision) }
   def create_revision!(editor:, body:, body_html:)
-    revisions.create!(space:, space_member: editor, body:, body_html:)
+    revision_records.create!(space_record:, space_member_record: editor, body:, body_html:)
   end
 end
