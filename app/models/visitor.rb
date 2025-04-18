@@ -54,7 +54,7 @@ class Visitor
     false
   end
 
-  sig { override.returns(Topic::PrivateRelation) }
+  sig { override.returns(TopicRecord::PrivateRelation) }
   def viewable_topics
     TopicRecord.visibility_public
   end
