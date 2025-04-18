@@ -16,7 +16,7 @@ class DraftPageRecord < ApplicationRecord
     DraftPageEntity.new(
       database_id: id,
       modified_at:,
-      page_entity: page.not_nil!.to_entity(space_viewer:)
+      page_entity: page_record.not_nil!.to_entity(space_viewer:)
     )
   end
 end

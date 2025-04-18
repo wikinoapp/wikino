@@ -18,11 +18,11 @@ class UpdateDraftPageService < ApplicationService
   def call(space_member:, page:, topic_number:, title:, body:)
     updated_draft_page = ActiveRecord::Base.transaction do
       draft_page = space_member.find_or_create_draft_page!(page:)
-      topic = space_member.topics.find_by(number: topic_number).presence || page.topic
+      topic = space_member.topic_records.find_by(number: topic_number).presence || page.topic_record
       new_body = body.presence || ""
 
       draft_page.attributes = {
-        topic:,
+        topic_record: topic,
         title:,
         body: new_body,
         body_html: Markup.new(current_topic: topic.not_nil!).render_html(text: new_body),

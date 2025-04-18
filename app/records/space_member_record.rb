@@ -157,6 +157,6 @@ class SpaceMemberRecord < ApplicationRecord
 
   sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page:)
-    topics.where(id: page.topic_id).exists?
+    topic_records.where(id: page.topic_id).exists?
   end
 end

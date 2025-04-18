@@ -6,7 +6,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     space = create(:space_record, :small)
     draft_page = create(:draft_page_record, space_record: space)
 
-    patch "/s/#{space.identifier}/pages/#{draft_page.page.number}/draft_page"
+    patch "/s/#{space.identifier}/pages/#{draft_page.page_record.number}/draft_page"
 
     expect(response.status).to eq(302)
     expect(response).to redirect_to("/sign_in")
@@ -21,7 +21,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
 
     sign_in(user_record: user)
 
-    patch "/s/#{space.identifier}/pages/#{draft_page.page.number}/draft_page"
+    patch "/s/#{space.identifier}/pages/#{draft_page.page_record.number}/draft_page"
 
     expect(response.status).to eq(404)
   end
