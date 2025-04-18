@@ -13,7 +13,7 @@ module Topics
 
         sig { returns(T.untyped) }
         def call
-          space = Space.find_by_identifier!(params[:space_identifier])
+          space = SpaceRecord.find_by_identifier!(params[:space_identifier])
           space_viewer = Current.viewer!.space_viewer!(space:)
           topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
           topic_entity = topic.to_entity(space_viewer:)
@@ -22,7 +22,7 @@ module Topics
             return render_404
           end
 
-          form = EditTopicForm.new(form_params.merge(topic:))
+          form = EditTopicForm.new(form_params.merge(topic_record: topic))
 
           if form.invalid?
             return render(

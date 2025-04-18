@@ -3,7 +3,7 @@
 
 RSpec.describe "GET /s/:space_identifier/topics/new", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
 
     get "/s/#{space.identifier}/topics/new"
 
@@ -12,13 +12,13 @@ RSpec.describe "GET /s/:space_identifier/topics/new", type: :request do
   end
 
   it "別のスペースに参加しているとき、404を返すこと" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
 
-    other_space = create(:space)
-    create(:space_member, user:, space: other_space)
+    other_space = create(:space_record)
+    create(:space_member_record, user_record: user, space_record: other_space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/new"
 
@@ -26,11 +26,11 @@ RSpec.describe "GET /s/:space_identifier/topics/new", type: :request do
   end
 
   it "スペースに参加しているとき、トピック作成ページが表示されること" do
-    space = create(:space, :small)
-    user = create(:user, :with_password)
-    create(:space_member, user:, space:)
+    space = create(:space_record, :small)
+    user = create(:user_record, :with_password)
+    create(:space_member_record, user_record: user, space_record: space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/new"
 

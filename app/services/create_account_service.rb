@@ -3,7 +3,7 @@
 
 class CreateAccountService < ApplicationService
   class Result < T::Struct
-    const :user, User
+    const :user, UserRecord
   end
 
   sig do
@@ -19,7 +19,7 @@ class CreateAccountService < ApplicationService
     current_time = Time.current
 
     user = ActiveRecord::Base.transaction do
-      User.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
+      UserRecord.create_initial_user!(email:, atname:, password:, locale:, time_zone:, current_time:)
     end
 
     Result.new(user:)

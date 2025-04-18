@@ -3,12 +3,12 @@
 
 module Dropdowns
   class TrashActionsComponent < ApplicationComponent
-    sig { params(page: Page).void }
+    sig { params(page: PageRecord).void }
     def initialize(page:)
       @page = page
     end
 
-    sig { returns(Page) }
+    sig { returns(PageRecord) }
     attr_reader :page
     private :page
   end

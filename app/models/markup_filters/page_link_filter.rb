@@ -9,7 +9,7 @@ module MarkupFilters
     sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
       super
-      @current_topic = T.let(context[:current_topic], Topic)
+      @current_topic = T.let(context[:current_topic], TopicRecord)
       @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
     end
 
@@ -42,14 +42,14 @@ module MarkupFilters
         if page_location
           text.gsub!(
             /\[\[#{Regexp.escape(location_key.raw)}\]\]/,
-            view_context.render(PageLinkComponent.new(current_space: current_topic.space.not_nil!, page_location:))
+            view_context.render(PageLinkComponent.new(current_space: current_topic.space_record.not_nil!, page_location:))
           )
           text_chunk.replace(text, as: :html)
         end
       end
     end
 
-    sig { returns(Topic) }
+    sig { returns(TopicRecord) }
     attr_reader :current_topic
     private :current_topic
 

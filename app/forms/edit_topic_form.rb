@@ -6,27 +6,27 @@ class EditTopicForm < ApplicationForm
   include FormConcerns::TopicDescriptionValidatable
   include FormConcerns::TopicVisibilityValidatable
 
-  sig { returns(T.nilable(Topic)) }
-  attr_accessor :topic
+  sig { returns(T.nilable(TopicRecord)) }
+  attr_accessor :topic_record
 
   attribute :name, :string
   attribute :description, :string, default: ""
   attribute :visibility, :string
 
-  validates :topic, presence: true
+  validates :topic_record, presence: true
   validate :name_uniqueness
 
-  sig { returns(T.nilable(Space)) }
-  def space
-    topic&.space
+  sig { returns(T.nilable(SpaceRecord)) }
+  def space_record
+    topic_record&.space_record
   end
 
   sig { void }
   private def name_uniqueness
-    return if topic.nil?
+    return if topic_record.nil?
     return if name.nil?
 
-    if space.not_nil!.topics.where.not(id: topic.not_nil!.id).exists?(name:)
+    if space_record.not_nil!.topic_records.where.not(id: topic_record.not_nil!.id).exists?(name:)
       errors.add(:name, :uniqueness)
     end
   end

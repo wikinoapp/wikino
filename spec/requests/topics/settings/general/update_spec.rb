@@ -3,8 +3,8 @@
 
 RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
-    topic = create(:topic, space:)
+    space = create(:space_record, :small)
+    topic = create(:topic_record, space_record: space)
 
     patch "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -13,11 +13,11 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
   end
 
   it "ログインしている & スペースに参加していないとき、404を返すこと" do
-    user = create(:user, :with_password)
-    space = create(:space)
-    topic = create(:topic, space:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record)
+    topic = create(:topic_record, space_record: space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -25,13 +25,13 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
   end
 
   it "ログインしている & 別のスペースに参加しているとき、404ページが表示されること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    topic = create(:topic, space:)
-    other_space = create(:space)
-    create(:space_member, space: other_space, user:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    topic = create(:topic_record, space_record: space)
+    other_space = create(:space_record)
+    create(:space_member_record, space_record: other_space, user_record: user)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     patch "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -39,12 +39,12 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
   end
 
   it "ログインしている & スペースに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user, :with_password)
-    space = create(:space)
-    topic = create(:topic, space:, name: "Before Name")
-    create(:space_member, space:, user:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record)
+    topic = create(:topic_record, space_record: space, name: "Before Name")
+    create(:space_member_record, space_record: space, user_record: user)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(topic.name).to eq("Before Name")
 
@@ -64,12 +64,12 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
   end
 
   it "ログインしている & スペースに参加している & 入力値が正しいとき、トピックが更新できること" do
-    user = create(:user, :with_password)
-    space = create(:space)
-    topic = create(:topic, space:, name: "Before Name", description: "Before Description")
-    create(:space_member, space:, user:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record)
+    topic = create(:topic_record, space_record: space, name: "Before Name", description: "Before Description")
+    create(:space_member_record, space_record: space, user_record: user)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(topic.name).to eq("Before Name")
     expect(topic.description).to eq("Before Description")

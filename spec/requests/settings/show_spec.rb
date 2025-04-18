@@ -3,9 +3,9 @@
 
 RSpec.describe "GET /settings", type: :request do
   it "ログインしているとき、設定ページが表示されること" do
-    user = create(:user, :with_password)
+    user_record = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record:)
 
     get "/settings"
 

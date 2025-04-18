@@ -3,9 +3,9 @@
 
 RSpec.describe "GET /home", type: :request do
   it "ログインしているとき、ホーム画面が表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/home"
 
