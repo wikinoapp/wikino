@@ -46,7 +46,7 @@ class ExportRecord < ApplicationRecord
     ExportEntity.new(
       database_id: id,
       queued_by_entity: queued_by_record.not_nil!.to_entity(space_viewer:),
-      space_entity: space.not_nil!.to_entity(space_viewer:)
+      space_entity: space_record.not_nil!.to_entity(space_viewer:)
     )
   end
 

@@ -110,6 +110,6 @@ class SpaceRecord < ApplicationRecord
 
   sig { params(user: UserRecord, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
   def add_member!(user:, role:, joined_at:)
-    space_member_records.create!(user:, role: role.serialize, joined_at:)
+    space_member_records.create!(user_record: user, role: role.serialize, joined_at:)
   end
 end

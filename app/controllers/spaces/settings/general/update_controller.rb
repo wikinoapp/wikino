@@ -21,7 +21,7 @@ module Spaces
             return render_404
           end
 
-          form = EditSpaceForm.new(form_params.merge(space:))
+          form = EditSpaceForm.new(form_params.merge(space_record: space))
 
           if form.invalid?
             return render(
