@@ -85,7 +85,7 @@ class SpaceRecord < ApplicationRecord
 
   sig { params(number: Integer).returns(PageRecord) }
   def find_page_by_number!(number)
-    pages.kept.find_by!(number:)
+    page_records.kept.find_by!(number:)
   end
 
   sig do
@@ -96,7 +96,7 @@ class SpaceRecord < ApplicationRecord
     ).returns(PageListEntity)
   end
   def restorable_page_list_entity(space_viewer:, before:, after:)
-    cursor_paginate_page = pages.preload(:topic).restorable.cursor_paginate(
+    cursor_paginate_page = page_records.preload(:topic).restorable.cursor_paginate(
       before: before.presence,
       after: after.presence,
       limit: 100,
@@ -110,6 +110,6 @@ class SpaceRecord < ApplicationRecord
 
   sig { params(user: UserRecord, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
   def add_member!(user:, role:, joined_at:)
-    space_members.create!(user:, role: role.serialize, joined_at:)
+    space_member_records.create!(user:, role: role.serialize, joined_at:)
   end
 end

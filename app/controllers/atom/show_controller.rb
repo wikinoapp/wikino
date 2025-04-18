@@ -12,7 +12,7 @@ module Atom
     sig { returns(T.untyped) }
     def call
       space = find_space_by_identifier!
-      pages = space.pages.active
+      pages = space.page_records.active
         .joins(:topic).merge(TopicRecord.visibility_public)
         .order(published_at: :desc, id: :desc)
         .limit(15)
