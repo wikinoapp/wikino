@@ -1,8 +1,7 @@
 # Wikino開発ガイド
 
-## プロジェクトの概要
-
-WikinoはWikiアプリです。ユーザーはスペースと呼ばれる場所にページを作成することができ、ページ間をリンクで繋げることができます。
+WikinoはWikiアプリです。
+ユーザーはスペースと呼ばれる場所にページを作成することができ、ページ間をリンクで繋げることができます。
 
 ## 技術スタック
 
@@ -18,25 +17,24 @@ WikinoはWikiアプリです。ユーザーはスペースと呼ばれる場所�
 
 ## リポジトリの構造
 
-基本的にRailsとデフォルトのディレクトリ構成となっていますが、一部独自のディレクトリがあります。
+基本的にRailsプロジェクトのディレクトリ構成となっていますが、一部独自のディレクトリがあります。
 
 - `app/assets`
-  - 画像やCSSのファイルが格納されている
-  - CSSは[Tailwind CSS](https://v3.tailwindcss.com/)を使用している
+  - 画像やCSSのファイルが格納されています
 - `app/components`
-  - [ViewComponent](https://viewcomponent.org/) を使用したコンポーネント
+  - [ViewComponent](https://viewcomponent.org) を使用したコンポーネントが定義されています
 - `app/controllers`
   - Railsのコントローラー
-  - 1つのアクションごとに1つのコントローラーを定義している
+  - 1つのアクションごとに1つのコントローラーを定義しています
 - `app/javascript`
-  - フロントエンドJavaScriptの実装が格納されている
-  - [Hotwire](https://hotwired.dev/)で実装されている
+  - フロントエンドJavaScriptの実装が格納されています
+  - [Hotwire](https://hotwired.dev)で実装されています
 - `app/jobs`
   - Active Job
 - `app/mailers`
   - Action Mailer
 - `app/models`
-  - `ActiveModel::Model` をincludeしたクラスが定義されている
+  - `ActiveModel::Model` をincludeしたクラスが定義されています
 - `app/records`
   - `ActiveRecord::Base` を継承したクラスが定義されている
   - データベースのテーブルと1:1の関係となる
@@ -80,6 +78,34 @@ if cond?
 end
 ```
 
+- ハッシュのキーと変数名が同じ場合は、省略記法を使用してください
+
+```rb
+# NG
+def method(user:)
+  User.create(user: user)
+end
+
+# OK
+def method(user:)
+  User.create(user:)
+end
+```
+
+- 新たにファイルを作成するときはマジックコメントを書いてください
+  - Sorbetで使用する `typed: xxx` はなるべく `strict` を指定します
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+# ...
+```
+
+### Rails
+
+#### 依存関係
+
 - 主要なクラスの依存関係から外れないように書いてください
   - Railsなど外部のライブラリが提供するクラスなどはどのクラスからでも呼び出して大丈夫です
 
@@ -96,7 +122,17 @@ end
 | Repository      | ビジネスロジックのカプセル化       | `Job`, `Mailer`, `Model`, `Record` |
 | View            | 表示処理                           | `Component`, `Model`               |
 
+#### Model
+
 - `Model` を定義するときは `ApplicationModel` を継承するようにしてください
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+class User < ApplicationModel
+end
+```
 
 ### CSS
 
