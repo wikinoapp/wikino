@@ -4,10 +4,4 @@
 
 # typed: false
 
-module GenerateExportFilesService::Export; end
-module PageRecord::DELETE_LIMIT_DAYS; end
-module PageRecord::PageRevision; end
-module PageRecord::SpaceMember; end
-module Topic::PrivateRelation; end
-module TopicRecord::SpaceMember; end
 module Zip::File::CREATE; end

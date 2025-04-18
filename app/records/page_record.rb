@@ -33,7 +33,7 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       space_viewer: ModelConcerns::SpaceViewable,
-      pages: T.any(PageRecord::PrivateAssociationRelation, T::Array[Page])
+      pages: T.any(PageRecord::PrivateAssociationRelation, T::Array[PageRecord])
     ).returns(T::Array[PageEntity])
   end
   def self.to_entities(space_viewer:, pages:)

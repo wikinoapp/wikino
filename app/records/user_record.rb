@@ -91,7 +91,7 @@ class UserRecord < ApplicationRecord
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }
   def joined_topic?(topic:)
-    topics.include?(topic)
+    topic_records.include?(topic)
   end
 
   sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
@@ -120,12 +120,12 @@ class UserRecord < ApplicationRecord
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic:)
-    topics.where(id: topic.id).exists?
+    topic_records.where(id: topic.id).exists?
   end
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }
   def can_destroy_topic?(topic:)
-    topic_members.find_by(topic:)&.role_admin? == true
+    topic_member_records.find_by(topic_record: topic)&.role_admin? == true
   end
 
   sig { override.params(page: PageRecord).returns(T::Boolean) }
