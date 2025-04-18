@@ -28,7 +28,7 @@ class PageRecord < ApplicationRecord
   scope :not_pinned, -> { where(pinned_at: nil) }
   scope :not_trashed, -> { where(trashed_at: nil) }
   scope :active, -> { kept.not_trashed.published }
-  scope :restorable, -> { where(trashed_at: DELETE_LIMIT_DAYS.days.ago..) }
+  scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
 
   sig do
     params(

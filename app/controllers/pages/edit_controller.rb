@@ -20,7 +20,7 @@ module Pages
       end
 
       space_member = T.let(space_viewer, SpaceMemberRecord)
-      draft_page = space_member.draft_pages.find_by(page:)
+      draft_page = space_member.draft_page_records.find_by(page:)
       pageable = draft_page.presence || page
 
       form = EditPageForm.new(
