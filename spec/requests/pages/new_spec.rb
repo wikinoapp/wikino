@@ -3,8 +3,8 @@
 
 RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
-    topic = create(:topic, :public, space:)
+    space = create(:space_record, :small)
+    topic = create(:topic_record, :public, space_record: space)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/pages/new"
 
@@ -13,14 +13,14 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
   end
 
   it "別のスペースに参加しているとき、404ページが表示されること" do
-    space = create(:space, :small)
-    topic = create(:topic, :public, space:)
+    space = create(:space_record, :small)
+    topic = create(:topic_record, :public, space_record: space)
 
-    other_space = create(:space)
-    user = create(:user, :with_password)
-    create(:space_member, space: other_space, user:)
+    other_space = create(:space_record)
+    user = create(:user_record, :with_password)
+    create(:space_member_record, space_record: other_space, user_record: user)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/pages/new"
 
@@ -28,12 +28,12 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
   end
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    create(:space_member, space:, user:)
-    topic = create(:topic, :public, space:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    create(:space_member_record, space_record: space, user_record: user)
+    topic = create(:topic_record, :public, space_record: space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/pages/new"
 
@@ -41,13 +41,13 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
   end
 
   it "スペースに参加している & ページのトピックに参加しているとき、ページを作成してから編集ページにリダイレクトすること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    space_member = create(:space_member, space:, user:)
-    topic = create(:topic, :public, space:)
-    create(:topic_member, space:, topic:, space_member:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    space_member = create(:space_member_record, space_record: space, user_record: user)
+    topic = create(:topic_record, :public, space_record: space)
+    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(PageRecord.count).to eq(0)
 

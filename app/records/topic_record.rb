@@ -33,9 +33,9 @@ class TopicRecord < ApplicationRecord
     )
   end
 
-  sig { params(member: SpaceMember, role: TopicMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
+  sig { params(member: SpaceMemberRecord, role: TopicMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
   def add_member!(member:, role:, joined_at: Time.zone.now)
-    members.create!(space: member.space, space_member: member, role: role.serialize, joined_at:)
+    member_records.create!(space_record: member.space_record, space_member_record: member, role: role.serialize, joined_at:)
 
     nil
   end

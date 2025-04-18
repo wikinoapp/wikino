@@ -3,7 +3,7 @@
 
 RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
+    space = create(:space_record, :small)
 
     post "/s/#{space.identifier}/topics"
 
@@ -12,12 +12,12 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   end
 
   it "別のスペースに参加しているとき、404を返すこと" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    other_space = create(:space)
-    create(:space_member, user:, space: other_space)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    other_space = create(:space_record)
+    create(:space_member_record, user_record: user, space_record: other_space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     post "/s/#{space.identifier}/topics"
 
@@ -25,11 +25,11 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   end
 
   it "スペースに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    create(:space_member, user:, space:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    create(:space_member_record, user_record: user, space_record: space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(TopicRecord.count).to eq(0)
 
@@ -49,11 +49,11 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   end
 
   it "スペースに参加している & 入力値が正常なとき、トピックが作成できること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    create(:space_member, user:, space:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    create(:space_member_record, user_record: user, space_record: space)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     expect(TopicRecord.count).to eq(0)
 
