@@ -8,7 +8,7 @@ class UpdateTopicService < ApplicationService
 
   sig { params(form: EditTopicForm).returns(Result) }
   def call(form:)
-    topic = form.topic.not_nil!
+    topic = form.topic_record.not_nil!
     topic.attributes = {
       name: form.name.not_nil!,
       description: form.description.not_nil!,

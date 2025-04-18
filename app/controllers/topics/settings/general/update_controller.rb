@@ -22,7 +22,7 @@ module Topics
             return render_404
           end
 
-          form = EditTopicForm.new(form_params.merge(topic:))
+          form = EditTopicForm.new(form_params.merge(topic_record: topic))
 
           if form.invalid?
             return render(
