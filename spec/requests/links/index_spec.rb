@@ -5,8 +5,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   it "ログインしていない & 公開トピックのページのとき、ページのリンクが表示されること" do
     space = create(:space_record, :small)
 
-    public_topic = create(:topic_record, :public, space:)
-    private_topic = create(:topic_record, :private, space:)
+    public_topic = create(:topic_record, :public, space_record: space)
+    private_topic = create(:topic_record, :private, space_record: space)
 
     page_1 = create(:page_record, :published, space:, topic: public_topic, title: "公開されているページ")
     page_2 = create(:page_record, :published, space:, topic: private_topic, title: "公開されていないページ")
@@ -22,7 +22,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
 
   it "ログインしていない & 非公開トピックのページのとき、404を返すこと" do
     space = create(:space_record, :small)
-    private_topic = create(:topic_record, :private, space:)
+    private_topic = create(:topic_record, :private, space_record: space)
     page = create(:page_record, space:, topic: private_topic)
 
     post "/s/#{space.identifier}/pages/#{page.number}/links"
@@ -34,8 +34,8 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
 
-    public_topic = create(:topic_record, :public, space:)
-    private_topic = create(:topic_record, :private, space:)
+    public_topic = create(:topic_record, :public, space_record: space)
+    private_topic = create(:topic_record, :private, space_record: space)
 
     page_1 = create(:page_record, :published, space:, topic: public_topic, title: "公開されているページ")
     page_2 = create(:page_record, :published, space:, topic: private_topic, title: "公開されていないページ")
@@ -57,7 +57,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
   it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
-    private_topic = create(:topic_record, :private, space:)
+    private_topic = create(:topic_record, :private, space_record: space)
     page = create(:page_record, space:, topic: private_topic)
 
     other_space = create(:space_record)
@@ -75,9 +75,9 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :requ
     user = create(:user_record, :with_password)
     space_member = create(:space_member, space:, user:)
 
-    public_topic = create(:topic_record, :public, space:)
-    private_topic = create(:topic_record, :private, space:)
-    not_joined_topic = create(:topic_record, space:)
+    public_topic = create(:topic_record, :public, space_record: space)
+    private_topic = create(:topic_record, :private, space_record: space)
+    not_joined_topic = create(:topic_record, space_record: space)
 
     create(:topic_member_record, space:, topic: public_topic, space_member:)
     create(:topic_member_record, space:, topic: private_topic, space_member:)
