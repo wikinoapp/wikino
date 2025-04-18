@@ -4,7 +4,7 @@
 RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general", type: :request do
   it "ログインしていないとき、ログインページが表示されること" do
     space = create(:space_record)
-    topic = create(:topic_record, space:)
+    topic = create(:topic_record, space_record: space)
 
     get "/s/#{space.identifier}/topics/#{topic.number}/settings/general"
 
@@ -15,7 +15,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加していないとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic_record, space:)
+    topic = create(:topic_record, space_record: space)
 
     sign_in(user_record: user)
 
@@ -27,9 +27,9 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & 別のスペースに参加しているとき、404を返すこと" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic_record, space:)
+    topic = create(:topic_record, space_record: space)
     other_space = create(:space_record)
-    create(:space_member, user:, space: other_space)
+    create(:space_member_record, user_record: user, space_record: other_space)
 
     sign_in(user_record: user)
 
@@ -41,8 +41,8 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加している & トピックに参加していないとき、トピックの設定ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic_record, space:)
-    create(:space_member, space:, user:)
+    topic = create(:topic_record, space_record: space)
+    create(:space_member_record, space_record: space, user_record: user)
 
     sign_in(user_record: user)
 
@@ -55,9 +55,9 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings/general",
   it "ログインしている & スペースに参加している & トピックに参加しているとき、トピックの設定ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    topic = create(:topic_record, space:)
-    space_member = create(:space_member, space:, user:)
-    create(:topic_member_record, space:, topic:, space_member:)
+    topic = create(:topic_record, space_record: space)
+    space_member = create(:space_member_record, space_record: space, user_record: user)
+    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
 
     sign_in(user_record: user)
 

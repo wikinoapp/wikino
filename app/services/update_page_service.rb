@@ -11,7 +11,7 @@ class UpdatePageService < ApplicationService
     now = Time.zone.now
 
     page.attributes = {
-      topic:,
+      topic_record: topic,
       title:,
       body:,
       body_html: Markup.new(current_topic: topic).render_html(text: body),
