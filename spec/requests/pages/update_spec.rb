@@ -13,7 +13,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "別のスペースに参加しているとき、404ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
     space = create(:space, :small)
     page = create(:page, space:)
@@ -29,7 +29,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     create(:space_member, space:, user:)
 
@@ -53,7 +53,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
 
@@ -82,7 +82,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が正しいとき、ページが更新できること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
 

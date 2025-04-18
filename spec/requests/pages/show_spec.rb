@@ -26,7 +26,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "別のスペースに参加している & 公開トピックのページのとき、ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
     space = create(:space, :small)
     public_topic = create(:topic, :public, space:)
@@ -44,7 +44,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "別のスペースに参加している & 非公開トピックのページのとき、404を返すこと" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
     space = create(:space, :small)
     private_topic = create(:topic, :private, space:)
@@ -61,7 +61,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "スペースに参加している & 参加している公開トピックのページのとき、ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
 
@@ -78,7 +78,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "スペースに参加している & 参加している非公開トピックのページのとき、ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
 
@@ -95,7 +95,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "スペースに参加している & 参加していない公開トピックのページのとき、ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     create(:space_member, space:, user:)
 
@@ -111,7 +111,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
   end
 
   it "スペースに参加している & 参加していない非公開トピックのページのとき、ページが表示されること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     create(:space_member, space:, user:)
 

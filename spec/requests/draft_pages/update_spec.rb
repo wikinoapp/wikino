@@ -16,7 +16,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     space = create(:space, :small)
     draft_page = create(:draft_page, space:)
     other_space = create(:space)
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     create(:space_member, space: other_space, user:)
 
     sign_in(user:)
@@ -29,7 +29,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
   it "ページのトピックに参加していないとき、404を返すこと" do
     space = create(:space, :small)
     page = create(:page, :published, space:)
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     create(:space_member, space:, user:)
 
     sign_in(user:)
@@ -46,7 +46,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
   end
 
   it "ページのトピックに参加しているとき、下書きページが更新できること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
     space = create(:space, :small)
     space_member = create(:space_member, space:, user:)
     topic = create(:topic, space:)
