@@ -12,7 +12,7 @@ class ExportService < ApplicationService
   def call(space:, queued_by:)
     export = ActiveRecord::Base.transaction do
       e = space.export_records.create!(
-        queued_by:
+        queued_by_record:
       )
       e.change_status!(kind: ExportStatusKind::Queued)
       e
