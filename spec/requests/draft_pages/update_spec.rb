@@ -4,7 +4,7 @@
 RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
     space = create(:space_record, :small)
-    draft_page = create(:draft_page, space_record: space)
+    draft_page = create(:draft_page_record, space_record: space)
 
     patch "/s/#{space.identifier}/pages/#{draft_page.page.number}/draft_page"
 
@@ -14,7 +14,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
 
   it "別のスペースに参加しているとき、404を返すこと" do
     space = create(:space_record, :small)
-    draft_page = create(:draft_page, space_record: space)
+    draft_page = create(:draft_page_record, space_record: space)
     other_space = create(:space_record)
     user = create(:user_record, :with_password)
     create(:space_member_record, space_record: other_space, user_record: user)
@@ -36,7 +36,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
       edit_page_form: {
-        topic_number: page.topic.number,
+        topic_number: page.topic_record.number,
         title: "Updated Title",
         body: "Updated Body"
       }
@@ -57,7 +57,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
       edit_page_form: {
-        topic_number: page.topic.number,
+        topic_number: page.topic_record.number,
         title: "Updated Title",
         body: "Updated Body"
       }
