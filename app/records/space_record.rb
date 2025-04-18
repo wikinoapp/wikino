@@ -96,7 +96,7 @@ class SpaceRecord < ApplicationRecord
     ).returns(PageListEntity)
   end
   def restorable_page_list_entity(space_viewer:, before:, after:)
-    cursor_paginate_page = page_records.preload(:topic).restorable.cursor_paginate(
+    cursor_paginate_page = page_records.preload(:topic_record).restorable.cursor_paginate(
       before: before.presence,
       after: after.presence,
       limit: 100,

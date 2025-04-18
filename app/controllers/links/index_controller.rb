@@ -21,7 +21,7 @@ module Links
         return render_404
       end
 
-      draft_page = space_viewer.draft_pages.find_by(page:)
+      draft_page = space_viewer.draft_page_records.find_by(page_record: page)
       pageable = draft_page.presence || page
 
       link_list_entity = pageable.fetch_link_list_entity(space_viewer:, after: params[:after])

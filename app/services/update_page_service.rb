@@ -18,7 +18,7 @@ class UpdatePageService < ApplicationService
       modified_at: now
     }
     page.published_at = now if page.published_at.nil?
-    space_member = Current.viewer!.active_space_members.find_by!(space_id: page.space_id)
+    space_member = Current.viewer!.active_space_member_records.find_by!(space_id: page.space_id)
 
     updated_page = ActiveRecord::Base.transaction do
       page.save!

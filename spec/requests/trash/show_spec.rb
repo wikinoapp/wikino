@@ -29,7 +29,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     user = create(:user_record, :with_password)
     create(:space_member_record, :owner, space_record: space, user_record: user)
     topic = create(:topic_record, space_record: space)
-    create(:page_record, :trashed, topic_record: topic, title: "削除されたページ")
+    create(:page_record, :trashed, space_record: space, topic_record: topic, title: "削除されたページ")
 
     sign_in(user_record: user)
 

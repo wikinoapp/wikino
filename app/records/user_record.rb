@@ -96,7 +96,7 @@ class UserRecord < ApplicationRecord
 
   sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
   def joined_all_topics?(topic_ids:)
-    joined_topic_ids = topics.pluck(:id)
+    joined_topic_ids = topic_records.pluck(:id)
     topic_ids - joined_topic_ids == []
   end
 
@@ -130,7 +130,7 @@ class UserRecord < ApplicationRecord
 
   sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page:)
-    active_spaces.where(id: page.space_id).exists?
+    active_space_records.where(id: page.space_id).exists?
   end
 
   sig { params(email_confirmation: EmailConfirmationRecord).void }

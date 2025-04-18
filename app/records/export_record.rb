@@ -70,8 +70,8 @@ class ExportRecord < ApplicationRecord
 
   sig { params(kind: ExportStatusKind).void }
   def change_status!(kind:)
-    statuses.create!(
-      space:,
+    status_records.create!(
+      space_record:,
       kind: kind.serialize,
       changed_at: Time.current
     )

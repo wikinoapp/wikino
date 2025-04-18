@@ -9,7 +9,7 @@ module ModelConcerns
     interface!
 
     sig { abstract.returns(T.any(DraftPageRecord::PrivateAssociationRelation, DraftPageRecord::PrivateRelation)) }
-    def draft_pages
+    def draft_page_records
     end
 
     sig { abstract.returns(PageRecord::PrivateAssociationRelation) }

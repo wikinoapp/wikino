@@ -27,7 +27,7 @@ module Spaces
             current_user_entity: Current.viewer!.user_entity,
             space_entity:,
             export_entity: export.to_entity(space_viewer:),
-            export_status_entity: export.latest_status.not_nil!.to_entity(space_viewer:)
+            export_status_entity: export.latest_status_record.not_nil!.to_entity(space_viewer:)
           )
         end
       end

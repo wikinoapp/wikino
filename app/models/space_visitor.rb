@@ -16,7 +16,7 @@ class SpaceVisitor
   attr_reader :space
 
   sig { override.returns(T.any(DraftPageRecord::PrivateAssociationRelation, DraftPageRecord::PrivateRelation)) }
-  def draft_pages
+  def draft_page_records
     DraftPageRecord.none
   end
 
