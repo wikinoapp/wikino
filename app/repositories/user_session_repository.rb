@@ -26,7 +26,8 @@ class UserSessionRepository < ApplicationRepository
     end
 
     unless user_record.user_password_record&.authenticate(user_session.password)
-      user_session.errors.add(:base, :unauthenticated)
+      user_session.errors.add(:password, :unauthenticated)
+      binding.irb
       return user_session
     end
 
@@ -41,7 +42,7 @@ class UserSessionRepository < ApplicationRepository
   sig { params(user_session_record: UserSessionRecord).returns(UserSession) }
   def build_model(user_session_record:)
     UserSession.new(
-      user: UserRepository.new.build_model(user_record: user_session_record.user_record),
+      user: UserRepository.new.build_model(user_record: user_session_record.user_record.not_nil!),
       token: user_session_record.token,
       ip_address: user_session_record.ip_address,
       user_agent: user_session_record.user_agent,

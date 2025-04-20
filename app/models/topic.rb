@@ -1,4 +1,4 @@
-# typed: strict
+# typed: true
 # frozen_string_literal: true
 
 class Topic < ApplicationModel
@@ -6,4 +6,7 @@ class Topic < ApplicationModel
   NAME_MAX_LENGTH = 30
   # 説明の最大文字数 (値に強い理由は無い)
   DESCRIPTION_MAX_LENGTH = 150
+
+  sig { returns(T::Wikino::DatabaseId) }
+  attr_accessor :database_id
 end

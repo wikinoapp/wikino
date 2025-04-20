@@ -67,22 +67,22 @@ class UserRecord < ApplicationRecord
     )
   end
 
-  sig { override.returns(T::Boolean) }
+  sig { returns(T::Boolean) }
   def signed_in?
     true
   end
 
-  sig { override.returns(T.nilable(UserEntity)) }
+  sig { returns(T.nilable(UserEntity)) }
   def user_entity
     to_entity
   end
 
-  sig { override.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
+  sig { params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
   def space_viewer!(space:)
     active_space_member_records.find_by(space_record: space).presence || SpaceVisitor.new(space:)
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { params(space: SpaceRecord).returns(T::Boolean) }
   def joined_space?(space:)
     active_space_records.where(id: space.id).exists?
   end
@@ -98,12 +98,12 @@ class UserRecord < ApplicationRecord
     topic_ids - joined_topic_ids == []
   end
 
-  sig { override.returns(Locale) }
+  sig { returns(Locale) }
   def viewer_locale
     Locale.deserialize(locale)
   end
 
-  sig { override.returns(TopicRecord::PrivateRelation) }
+  sig { returns(TopicRecord::PrivateRelation) }
   def viewable_topics
     TopicRecord
       .left_joins(:member_records)

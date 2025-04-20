@@ -11,8 +11,9 @@ module ModelConcerns
     sig { overridable.returns(String) }
     attr_accessor :time_zone
 
-    sig { abstract.returns(T::Boolean) }
+    sig { overridable.returns(T::Boolean) }
     def signed_in?
+      false
     end
 
     sig { overridable.returns(Locale) }
