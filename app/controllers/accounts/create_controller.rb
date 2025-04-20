@@ -28,7 +28,7 @@ module Accounts
       account_result = CreateAccountService.new.call(
         email: form.email.not_nil!,
         atname: form.atname.not_nil!,
-        locale: ViewerLocale.deserialize(form.locale),
+        locale: Locale.deserialize(form.locale),
         password: form.password.not_nil!,
         time_zone: form.time_zone.not_nil!
       )

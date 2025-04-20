@@ -7,7 +7,7 @@ FactoryBot.define do
     sequence(:atname) { |n| "atname_#{n}" }
     sequence(:name) { |n| "Name #{n}" }
     sequence(:description) { |n| "Description #{n}" }
-    locale { ViewerLocale::Ja.serialize }
+    locale { Locale::Ja.serialize }
     time_zone { "Asia/Tokyo" }
     joined_at { Time.current }
 

@@ -4,13 +4,11 @@
 class UserRecord < ApplicationRecord
   include Discard::Model
 
-  include ModelConcerns::Viewable
-
   self.table_name = "users"
 
   enum :locale, {
-    ViewerLocale::En.serialize => 0,
-    ViewerLocale::Ja.serialize => 1
+    Locale::En.serialize => 0,
+    Locale::Ja.serialize => 1
   }, prefix: true
 
   has_many :space_member_records,
@@ -38,7 +36,7 @@ class UserRecord < ApplicationRecord
       email: String,
       atname: String,
       password: String,
-      locale: ViewerLocale,
+      locale: Locale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(UserRecord)
@@ -100,9 +98,9 @@ class UserRecord < ApplicationRecord
     topic_ids - joined_topic_ids == []
   end
 
-  sig { override.returns(ViewerLocale) }
+  sig { override.returns(Locale) }
   def viewer_locale
-    ViewerLocale.deserialize(locale)
+    Locale.deserialize(locale)
   end
 
   sig { override.returns(TopicRecord::PrivateRelation) }
@@ -113,24 +111,19 @@ class UserRecord < ApplicationRecord
       .distinct
   end
 
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
-  def can_view_topic?(topic:)
-    viewable_topics.where(id: topic.id).exists?
+  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:)
+    topic_records.where(id: topic_record.id).exists?
   end
 
-  sig { params(topic: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic:)
-    topic_records.where(id: topic.id).exists?
+  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_destroy_topic?(topic_record:)
+    topic_member_records.find_by(topic_record:)&.role_admin? == true
   end
 
-  sig { params(topic: TopicRecord).returns(T::Boolean) }
-  def can_destroy_topic?(topic:)
-    topic_member_records.find_by(topic_record: topic)&.role_admin? == true
-  end
-
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page:)
-    active_space_records.where(id: page.space_id).exists?
+  sig { params(page_record: PageRecord).returns(T::Boolean) }
+  def can_trash_page?(page_record:)
+    active_space_records.where(id: page_record.space_id).exists?
   end
 
   sig { params(email_confirmation: EmailConfirmationRecord).void }

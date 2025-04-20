@@ -48,7 +48,7 @@ class SpaceRecord < ApplicationRecord
     inverse_of: :space_record
 
   sig do
-    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: ViewerLocale)
+    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: Locale)
       .returns(SpaceRecord)
   end
   def self.create_initial_space!(identifier:, current_time:, locale:)
@@ -68,6 +68,17 @@ class SpaceRecord < ApplicationRecord
   sig { override.params(identifier: String).returns(T::Boolean) }
   def identifier_uniqueness?(identifier)
     SpaceRecord.where.not(id:).exists?(identifier:)
+  end
+
+  sig { returns(Space) }
+  def to_model
+    Space.new(
+      database_id: id,
+      identifier:,
+      name:,
+      plan: Plan.deserialize(plan),
+      joined_at:
+    )
   end
 
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }

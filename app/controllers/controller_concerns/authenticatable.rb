@@ -6,9 +6,9 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    sig(:final) { params(user_session: UserSessionRecord).returns(T::Boolean) }
+    sig(:final) { params(user_session: UserSession).returns(T::Boolean) }
     def sign_in(user_session)
-      Current.viewer = user_session.user_record
+      Current.viewer = user_session.user
       store_user_session_token(token: user_session.token)
 
       true
@@ -56,7 +56,9 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     private def restore_user_session
-      if user_session_token && (user_session = UserSessionRecord.find_by(token: user_session_token))
+      user_session = UserSessionRepository.new.find_by_token(user_session_token)
+
+      if user_session
         sign_in(user_session)
       else
         Current.viewer = Visitor.new
