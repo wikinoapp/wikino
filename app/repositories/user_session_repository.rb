@@ -25,7 +25,7 @@ class UserSessionRepository < ApplicationRepository
       return user_session
     end
 
-    user_session_record = user_record.user_session_records.start!(
+    user_session_record = user_record.not_nil!.user_session_records.start!(
       ip_address: user_session.ip_address,
       user_agent: user_session.user_agent
     )
