@@ -70,17 +70,6 @@ class SpaceRecord < ApplicationRecord
     SpaceRecord.where.not(id:).exists?(identifier:)
   end
 
-  sig { returns(Space) }
-  def to_model
-    Space.new(
-      database_id: id,
-      identifier:,
-      name:,
-      plan: Plan.deserialize(plan),
-      joined_at:
-    )
-  end
-
   sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
   def to_entity(space_viewer:)
     SpaceEntity.new(
