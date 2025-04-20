@@ -54,5 +54,3 @@ en:
               incorrect_or_expired: is incorrect or expired
         trashed_pages_form:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
-        user_session_form:
-          unauthenticated: Login failed. Email or password are incorrect

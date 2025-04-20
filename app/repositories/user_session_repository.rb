@@ -14,20 +14,14 @@ class UserSessionRepository < ApplicationRepository
 
   sig { params(user_session: UserSession).returns(UserSession) }
   def create(user_session:)
-    if user_session.invalid?(:authentication)
+    if user_session.invalid?(:create)
       return user_session
     end
 
     user_record = UserRecord.kept.find_by(email: user_session.email)
 
-    if user_record.nil?
-      user_session.errors.add(:base, :unauthenticated)
-      return user_session
-    end
-
-    unless user_record.user_password_record&.authenticate(user_session.password)
-      user_session.errors.add(:password, :unauthenticated)
-      binding.irb
+    unless user_record&.user_password_record&.authenticate(user_session.password)
+      user_session.add_record_error(:password, :unauthenticated)
       return user_session
     end
 

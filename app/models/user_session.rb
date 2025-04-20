@@ -32,11 +32,17 @@ class UserSession < ApplicationModel
     @user_agent ||= "unknown"
   end
 
-  validates :email, email: true, presence: true, on: :authentication
-  validates :password, presence: true, on: :authentication
-  validates :user, presence: true, on: :read
-  validates :token, presence: true, on: :read
   validates :ip_address, presence: true
   validates :user_agent, presence: true
-  validates :signed_in_at, presence: true, on: :read
+
+  with_options(on: :create) do
+    validates :email, email: true, presence: true
+    validates :password, presence: true
+  end
+
+  with_options(on: :read) do
+    validates :user, presence: true
+    validates :token, presence: true
+    validates :signed_in_at, presence: true
+  end
 end
