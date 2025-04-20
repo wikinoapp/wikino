@@ -21,7 +21,7 @@ module DraftPages
       end
 
       result = UpdateDraftPageService.new.call(
-        space_member: T.let(space_viewer, SpaceMemberRecord),
+        space_member: T.let(space_viewer, SpaceMember),
         page:,
         topic_number: form_params[:topic_number],
         title: form_params[:title],

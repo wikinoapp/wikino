@@ -24,36 +24,36 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "名前がすでに使われているとき、エラーになること" do
-    space = create(:space_record)
-    create(:topic_record, space_record: space, name: "すでにあるトピック")
-    topic = create(:topic_record, space_record: space)
-    form = EditTopicForm.new(topic_record: topic, name: "すでにあるトピック")
+    space = create(:space)
+    create(:topic, space:, name: "すでにあるトピック")
+    topic = create(:topic, space:)
+    form = EditTopicForm.new(topic:, name: "すでにあるトピック")
 
     expect(form).not_to be_valid
     expect(form.errors.full_messages).to include("Name has already been taken")
   end
 
   it "名前が30文字のとき、エラーにならないこと" do
-    topic = create(:topic_record)
-    form = EditTopicForm.new(topic_record: topic, name: "a" * 30, description: "test", visibility: "public")
+    topic = create(:topic)
+    form = EditTopicForm.new(topic:, name: "a" * 30, description: "test", visibility: "public")
 
     expect(form).to be_valid
   end
 
   it "名前が別のスペースで使われているとき、エラーにならないこと" do
-    space_1 = create(:space_record)
-    space_2 = create(:space_record)
-    space_1_topic = create(:topic_record, space_record: space_1)
-    create(:topic_record, space_record: space_2, name: "トピック")
-    form = EditTopicForm.new(topic_record: space_1_topic, name: "トピック", description: "test", visibility: "public")
+    space_1 = create(:space)
+    space_2 = create(:space)
+    space_1_topic = create(:topic, space: space_1)
+    create(:topic, space: space_2, name: "トピック")
+    form = EditTopicForm.new(topic: space_1_topic, name: "トピック", description: "test", visibility: "public")
 
     expect(form).to be_valid
   end
 
   it "説明文が151文字のとき、エラーになること" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "a" * 151,
       visibility: "public"
@@ -64,9 +64,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "説明文が150文字のとき、エラーにならないこと" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "a" * 150,
       visibility: "public"
@@ -76,9 +76,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "説明文が空文字列のとき、エラーにならないこと" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "",
       visibility: "public"
@@ -88,9 +88,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "説明文が `nil` のとき、空文字列に変換され、エラーにならないこと" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: nil,
       visibility: "public"
@@ -101,9 +101,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "公開設定の値が不正のとき、エラーになること" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "test",
       visibility: "invalid_visibility"
@@ -114,9 +114,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "公開設定が指定されていないとき、エラーになること" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "test"
     )
@@ -126,9 +126,9 @@ RSpec.describe EditTopicForm, type: :form do
   end
 
   it "公開設定が指定されているとき、エラーにならないこと" do
-    topic = create(:topic_record)
+    topic = create(:topic)
     form = EditTopicForm.new(
-      topic_record: topic,
+      topic:,
       name: "テストトピック",
       description: "test",
       visibility: "public"

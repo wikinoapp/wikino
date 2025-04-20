@@ -3,8 +3,8 @@
 
 RSpec.describe "GET /s/:space_identifier/settings/exports/:export_id", type: :request do
   it "ログインしていないとき、ログインページが表示されること" do
-    space = create(:space_record)
-    export = create(:export_record, space_record: space)
+    space = create(:space)
+    export = create(:export, space:)
 
     get "/s/#{space.identifier}/settings/exports/#{export.id}"
 
@@ -13,11 +13,11 @@ RSpec.describe "GET /s/:space_identifier/settings/exports/:export_id", type: :re
   end
 
   it "ログインしている & スペースに参加していないとき、404を返すこと" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
-    export = create(:export_record, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space)
+    export = create(:export, space:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/exports/#{export.id}"
 
@@ -25,13 +25,13 @@ RSpec.describe "GET /s/:space_identifier/settings/exports/:export_id", type: :re
   end
 
   it "ログインしている & 別のスペースに参加しているとき、404を返すこと" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
-    other_space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: other_space)
-    export = create(:export_record, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space)
+    other_space = create(:space)
+    create(:space_member, user:, space: other_space)
+    export = create(:export, space:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/exports/#{export.id}"
 
@@ -39,13 +39,13 @@ RSpec.describe "GET /s/:space_identifier/settings/exports/:export_id", type: :re
   end
 
   it "ログインしている & スペースに参加しているとき、エクスポート画面が表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: space)
-    export = create(:export_record, space_record: space)
-    create(:export_status_record, space_record: space, export_record: export)
+    user = create(:user, :with_password)
+    space = create(:space)
+    create(:space_member, user:, space:)
+    export = create(:export, space:)
+    create(:export_status, space:, export:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/exports/#{export.id}"
 

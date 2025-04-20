@@ -6,7 +6,7 @@ class GenerateExportFilesJob < ApplicationJob
 
   sig { params(export_id: T::Wikino::DatabaseId).void }
   def perform(export_id:)
-    export = ExportRecord.find(export_id)
+    export = Export.find(export_id)
 
     GenerateExportFilesService.new.call(export:)
 

@@ -4,7 +4,7 @@
 RSpec.describe MovePageToTrashService, type: :use_case do
   describe "#call" do
     it "ページをゴミ箱に移動できること" do
-      page = create(:page_record)
+      page = create(:page)
       updated_at = page.updated_at
 
       expect(page.trashed_at).to be_nil

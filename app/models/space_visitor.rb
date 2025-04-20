@@ -7,70 +7,70 @@ class SpaceVisitor
 
   include ModelConcerns::SpaceViewable
 
-  sig { params(space: SpaceRecord).void }
+  sig { params(space: Space).void }
   def initialize(space:)
     @space = space
   end
 
-  sig { returns(SpaceRecord) }
+  sig { returns(Space) }
   attr_reader :space
 
-  sig { override.returns(T.any(DraftPageRecord::PrivateAssociationRelation, DraftPageRecord::PrivateRelation)) }
-  def draft_page_records
-    DraftPageRecord.none
+  sig { override.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
+  def draft_pages
+    DraftPage.none
   end
 
-  sig { override.returns(PageRecord::PrivateAssociationRelation) }
+  sig { override.returns(Page::PrivateAssociationRelation) }
   def showable_pages
-    space.page_records.active.joins(:topic_record).merge(TopicRecord.visibility_public)
+    space.pages.active.joins(:topic).merge(Topic.visibility_public)
   end
 
-  sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
+  sig { override.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
   def joined_topics
-    TopicRecord.none
+    Topic.none
   end
 
-  sig { override.returns(TopicRecord::PrivateAssociationRelation) }
+  sig { override.returns(Topic::PrivateAssociationRelation) }
   def showable_topics
-    space.topic_records.kept.visibility_public
+    space.topics.kept.visibility_public
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { override.params(space: Space).returns(T::Boolean) }
   def can_update_space?(space:)
     false
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { override.params(space: Space).returns(T::Boolean) }
   def can_export_space?(space:)
     false
   end
 
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
+  sig { override.params(topic: Topic).returns(T::Boolean) }
   def can_update_topic?(topic:)
     false
   end
 
-  sig { override.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
+  sig { override.params(topic: T.nilable(Topic)).returns(T::Boolean) }
   def can_create_page?(topic:)
     false
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { override.params(space: Space).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     false
   end
 
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
+  sig { override.params(page: Page).returns(T::Boolean) }
   def can_view_page?(page:)
-    page.topic_record.not_nil!.visibility_public?
+    page.topic.not_nil!.visibility_public?
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { override.params(space: Space).returns(T::Boolean) }
   def can_view_trash?(space:)
     false
   end
 
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
+  sig { override.params(page: Page).returns(T::Boolean) }
   def can_update_page?(page:)
     false
   end
@@ -80,7 +80,7 @@ class SpaceVisitor
     false
   end
 
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
+  sig { override.params(page: Page).returns(T::Boolean) }
   def can_update_draft_page?(page:)
     false
   end

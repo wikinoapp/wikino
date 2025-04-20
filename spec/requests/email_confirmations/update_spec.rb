@@ -32,7 +32,7 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
   end
 
   it "アカウント作成のメールアドレスの確認に成功したとき、アカウント作成ページにリダイレクトすること" do
-    expect(EmailConfirmationRecord.count).to eq(0)
+    expect(EmailConfirmation.count).to eq(0)
 
     # 確認用コードを生成する
     post("/email_confirmation", params: {
@@ -41,8 +41,8 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
       }
     })
 
-    expect(EmailConfirmationRecord.count).to eq(1)
-    email_confirmation = EmailConfirmationRecord.first
+    expect(EmailConfirmation.count).to eq(1)
+    email_confirmation = EmailConfirmation.first
 
     # 確認用コードの検証が済んでいないのでまだ成功していない
     expect(email_confirmation.succeeded?).to be(false)

@@ -38,7 +38,7 @@ RSpec.describe NewSpaceForm, type: :form do
   end
 
   it "識別子がすでに使われているとき、エラーになること" do
-    create(:space_record, identifier: "a")
+    create(:space, identifier: "a")
     form = NewSpaceForm.new(identifier: "a")
 
     expect(form).not_to be_valid

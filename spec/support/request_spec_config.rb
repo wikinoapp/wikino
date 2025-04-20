@@ -4,12 +4,12 @@
 module RequestHelpers
   extend T::Sig
 
-  def sign_in(user_record:, password: "passw0rd")
+  def sign_in(user:, password: "passw0rd")
     post(
       user_session_path,
       params: {
         user_session_form: {
-          email: user_record.email,
+          email: user.email,
           password:
         }
       }

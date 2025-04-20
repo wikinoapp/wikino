@@ -3,11 +3,11 @@
 
 RSpec.describe "GET /s/:space_identifier/atom", type: :request do
   it "ログインしていないとき、公開トピックのページ情報がAtomフィードに表示されること" do
-    space = create(:space_record, :small)
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
+    space = create(:space, :small)
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
     get "/s/#{space.identifier}/atom"
 
@@ -18,17 +18,17 @@ RSpec.describe "GET /s/:space_identifier/atom", type: :request do
   end
 
   it "別のスペースに参加しているとき、公開トピックのページ情報がAtomフィードに表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
-    other_space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: other_space)
+    other_space = create(:space)
+    create(:space_member, user:, space: other_space)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/atom"
 
@@ -39,16 +39,16 @@ RSpec.describe "GET /s/:space_identifier/atom", type: :request do
   end
 
   it "スペースに参加しているとき、公開トピックのページ情報がAtomフィードに表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    create(:space_member_record, user_record: user, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    create(:space_member, user:, space:)
 
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/atom"
 

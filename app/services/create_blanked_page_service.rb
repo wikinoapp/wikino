@@ -3,15 +3,15 @@
 
 class CreateBlankedPageService < ApplicationService
   class Result < T::Struct
-    const :page, PageRecord
+    const :page, Page
   end
 
-  sig { params(topic: TopicRecord).returns(Result) }
+  sig { params(topic: Topic).returns(Result) }
   def call(topic:)
-    space_member = Current.viewer!.active_space_member_records.find_by!(space_id: topic.space_id)
+    space_member = Current.viewer!.active_space_members.find_by!(space_id: topic.space_id)
 
     page = ActiveRecord::Base.transaction do
-      new_page = PageRecord.create_as_blanked!(topic:)
+      new_page = Page.create_as_blanked!(topic:)
       new_page.add_editor!(editor: space_member)
       new_page
     end

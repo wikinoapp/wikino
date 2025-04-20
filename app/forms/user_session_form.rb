@@ -9,14 +9,14 @@ class UserSessionForm < ApplicationForm
   validates :password, presence: true
   validate :authentication
 
-  sig { returns(T.nilable(UserRecord)) }
+  sig { returns(T.nilable(User)) }
   def user
-    @user ||= T.let(UserRecord.kept.find_by(email:), T.nilable(UserRecord))
+    @user ||= T.let(User.kept.find_by(email:), T.nilable(User))
   end
 
   sig { void }
   private def authentication
-    unless user&.user_password_record&.authenticate(password)
+    unless user&.user_password&.authenticate(password)
       errors.add(:base, :unauthenticated)
     end
   end

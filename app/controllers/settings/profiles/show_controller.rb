@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        current_user = T.let(Current.viewer!, UserRecord)
+        current_user = T.let(Current.viewer!, User)
         form = EditProfileForm.new(
           atname: current_user.atname,
           name: current_user.name,

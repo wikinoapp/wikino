@@ -12,7 +12,7 @@ class NewSpaceForm < ApplicationForm
 
   sig { void }
   private def identifier_uniqueness
-    if SpaceRecord.exists?(identifier:)
+    if Space.exists?(identifier:)
       errors.add(:identifier, :uniqueness)
     end
   end

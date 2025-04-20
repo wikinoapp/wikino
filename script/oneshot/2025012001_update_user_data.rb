@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-UserRecord.find_each do |user|
+User.find_each do |user|
   space = user.space
 
   ActiveRecord::Base.transaction do

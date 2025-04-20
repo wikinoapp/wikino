@@ -13,7 +13,7 @@ module Spaces
 
         sig { returns(T.untyped) }
         def call
-          space = SpaceRecord.find_by_identifier!(params[:space_identifier])
+          space = Space.find_by_identifier!(params[:space_identifier])
           space_viewer = Current.viewer!.space_viewer!(space:)
           space_entity = space.to_entity(space_viewer:)
 
@@ -21,7 +21,7 @@ module Spaces
             return render_404
           end
 
-          form = EditSpaceForm.new(form_params.merge(space_record: space))
+          form = EditSpaceForm.new(form_params.merge(space:))
 
           if form.invalid?
             return render(

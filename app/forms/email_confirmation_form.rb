@@ -7,14 +7,14 @@ class EmailConfirmationForm < ApplicationForm
 
   validate :valid_confirmation_code
 
-  sig { returns(EmailConfirmationRecord) }
+  sig { returns(EmailConfirmation) }
   def email_confirmation!
-    EmailConfirmationRecord.find(email_confirmation_id.not_nil!)
+    EmailConfirmation.find(email_confirmation_id.not_nil!)
   end
 
-  sig { returns(T.nilable(EmailConfirmationRecord)) }
+  sig { returns(T.nilable(EmailConfirmation)) }
   private def active_email_confirmation
-    @active_email_confirmation ||= T.let(EmailConfirmationRecord.active.find_by(id: email_confirmation_id), T.nilable(EmailConfirmationRecord))
+    @active_email_confirmation ||= T.let(EmailConfirmation.active.find_by(id: email_confirmation_id), T.nilable(EmailConfirmation))
   end
 
   sig { void }

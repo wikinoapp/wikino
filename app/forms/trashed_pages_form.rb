@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class TrashedPagesForm < ApplicationForm
-  sig { returns(T.nilable(UserRecord)) }
+  sig { returns(T.nilable(User)) }
   attr_accessor :user
 
   sig { returns(T.nilable(T::Array[T::Wikino::DatabaseId])) }
@@ -12,9 +12,9 @@ class TrashedPagesForm < ApplicationForm
   validates :page_ids, presence: true
   validate :restoring_ability
 
-  sig { returns(PageRecord::PrivateRelation) }
+  sig { returns(Page::PrivateRelation) }
   private def pages
-    PageRecord.where(id: page_ids)
+    Page.where(id: page_ids)
   end
 
   sig { void }

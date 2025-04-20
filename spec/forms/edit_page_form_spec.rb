@@ -52,12 +52,12 @@ RSpec.describe EditPageForm, type: :form do
   end
 
   it "タイトルが重複しているとき、エラーになること" do
-    space = create(:space_record)
-    topic = create(:topic_record, space_record: space)
-    space_member = create(:space_member_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
-    other_page = create(:page_record, topic_record: topic, title: "a")
-    page = create(:page_record, space_record: space, topic_record: topic)
+    space = create(:space)
+    topic = create(:topic, space:)
+    space_member = create(:space_member, space:)
+    create(:topic_member, space:, topic:, space_member:)
+    other_page = create(:page, topic:, title: "a")
+    page = create(:page, space:, topic:)
     form = EditPageForm.new(
       title: "a",
       space_member:,
@@ -81,8 +81,8 @@ RSpec.describe EditPageForm, type: :form do
   end
 
   it "タイトルが別トピックのページと重複しているとき、エラーにならないこと" do
-    other_topic = create(:topic_record)
-    create(:page_record, topic_record: other_topic, title: "a")
+    other_topic = create(:topic)
+    create(:page, topic: other_topic, title: "a")
     form = EditPageForm.new(
       title: "a",
       **valid_attributes.except(:title)
@@ -111,11 +111,11 @@ RSpec.describe EditPageForm, type: :form do
   end
 
   private def valid_attributes
-    space = create(:space_record)
-    topic = create(:topic_record, space_record: space)
-    space_member = create(:space_member_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
-    page = create(:page_record, space_record: space, topic_record: topic)
+    space = create(:space)
+    topic = create(:topic, space:)
+    space_member = create(:space_member, space:)
+    create(:topic_member, space:, topic:, space_member:)
+    page = create(:page, space:, topic:)
 
     {
       space_member:,

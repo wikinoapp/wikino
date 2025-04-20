@@ -9,7 +9,7 @@ RSpec.describe "GET /@:atname", type: :request do
   end
 
   it "ログインしていないとき、ページが表示されること" do
-    user = create(:user_record)
+    user = create(:user)
 
     get "/@#{user.atname}"
 
@@ -18,9 +18,9 @@ RSpec.describe "GET /@:atname", type: :request do
   end
 
   it "ログインしている & 自分のプロフィールのとき、ページが表示されること" do
-    user = create(:user_record, :with_password)
+    user = create(:user, :with_password)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/@#{user.atname}"
 
@@ -29,10 +29,10 @@ RSpec.describe "GET /@:atname", type: :request do
   end
 
   it "ログインしている & 他人のプロフィールのとき、ページが表示されること" do
-    user = create(:user_record, :with_password)
-    other_user = create(:user_record)
+    user = create(:user, :with_password)
+    other_user = create(:user)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/@#{other_user.atname}"
 

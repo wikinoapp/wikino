@@ -3,11 +3,11 @@
 
 RSpec.describe "GET /s/:space_identifier", type: :request do
   it "ログインしていないとき、公開トピックのページが表示されること" do
-    space = create(:space_record, :small)
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
+    space = create(:space, :small)
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
     get "/s/#{space.identifier}"
 
@@ -17,18 +17,18 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
   end
 
   it "別のスペースに参加しているとき、公開トピックのページが表示されること" do
-    user = create(:user_record, :with_password)
+    user = create(:user, :with_password)
 
-    space = create(:space_record, :small)
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
+    space = create(:space, :small)
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
 
-    other_space = create(:space_record)
-    create(:space_member_record, space_record: other_space, user_record: user)
+    other_space = create(:space)
+    create(:space_member, space: other_space, user:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}"
 
@@ -38,22 +38,22 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
   end
 
   it "スペースに参加しているとき、公開/非公開トピックのページが表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    space_member = create(:space_member_record, space_record: space, user_record: user)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    space_member = create(:space_member, space:, user:)
 
-    public_topic = create(:topic_record, :public, space_record: space)
-    private_topic = create(:topic_record, :private, space_record: space)
-    not_joined_public_topic = create(:topic_record, :public, space_record: space)
-    not_joined_private_topic = create(:topic_record, :private, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: public_topic, space_member_record: space_member)
-    create(:topic_member_record, space_record: space, topic_record: private_topic, space_member_record: space_member)
-    create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ")
-    create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ")
-    create(:page_record, :published, space_record: space, topic_record: not_joined_public_topic, title: "参加していない公開トピックのページ")
-    create(:page_record, :published, space_record: space, topic_record: not_joined_private_topic, title: "参加していない非公開トピックのページ")
+    public_topic = create(:topic, :public, space:)
+    private_topic = create(:topic, :private, space:)
+    not_joined_public_topic = create(:topic, :public, space:)
+    not_joined_private_topic = create(:topic, :private, space:)
+    create(:topic_member, space:, topic: public_topic, space_member:)
+    create(:topic_member, space:, topic: private_topic, space_member:)
+    create(:page, :published, space:, topic: public_topic, title: "公開されているページ")
+    create(:page, :published, space:, topic: private_topic, title: "公開されていないページ")
+    create(:page, :published, space:, topic: not_joined_public_topic, title: "参加していない公開トピックのページ")
+    create(:page, :published, space:, topic: not_joined_private_topic, title: "参加していない非公開トピックのページ")
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}"
 

@@ -4,7 +4,7 @@
 class EmailConfirmationMailer < ApplicationMailer
   sig { params(email_confirmation_id: T::Wikino::DatabaseId, locale: String).void }
   def email_confirmation(email_confirmation_id:, locale:)
-    email_confirmation = EmailConfirmationRecord.active.find(email_confirmation_id)
+    email_confirmation = EmailConfirmation.active.find(email_confirmation_id)
 
     @email = email_confirmation.email
     @code = email_confirmation.code
