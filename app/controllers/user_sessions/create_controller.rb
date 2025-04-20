@@ -11,16 +11,16 @@ module UserSessions
 
     sig { returns(T.untyped) }
     def call
-      form = UserSessionForm.new(form_params.merge(
+      user_session = UserSession.new(form_params.merge(
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       ))
 
-      if form.invalid?
-        return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
-      end
+      user_session = UserSessionRepository.new.create(user_session:)
 
-      user_session = UserSessionRepository.new.create(form:)
+      if user_session.invalid?
+        return render(SignIn::ShowView.new(user_session:), status: :unprocessable_entity)
+      end
 
       sign_in(user_session)
 

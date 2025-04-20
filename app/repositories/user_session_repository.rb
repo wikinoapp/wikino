@@ -12,9 +12,13 @@ class UserSessionRepository < ApplicationRepository
     build_model(user_session_record:)
   end
 
-  sig { params(form: UserSessionForm).returns(UserSession) }
-  def create!(form:)
-    user_record = UserRecord.kept.find_by!(email: form.email)
+  sig { params(user_session: UserSession).returns(UserSession) }
+  def create(user_session:)
+    if user_session.invalid?(:authentication)
+      return user_session
+    end
+
+    user_record = UserRecord.kept.find_by(email: user_session.email)
 
     if user_record.nil?
       user_session.errors.add(:base, :unauthenticated)
