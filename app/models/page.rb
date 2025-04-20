@@ -6,4 +6,9 @@ class Page < ApplicationModel
   DELETE_LIMIT_DAYS = 30
   # タイトルの最大文字数 (値に強い理由は無い)
   TITLE_MAX_LENGTH = 200
+
+  sig { returns(T::Wikino::DatabaseId) }
+  attr_accessor :database_id
+
+  validates :database_id, presence: true
 end

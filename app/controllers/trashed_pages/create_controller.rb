@@ -12,17 +12,21 @@ module TrashedPages
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
-      page = space.find_page_by_number!(params[:page_number]&.to_i).not_nil!
+      space_record = find_space_by_identifier!
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i).not_nil!
+      page_policy = Page::PolicyRepository.new.build(
+        user: Current.viewer!,
+        page: PageRepository.new.build_model(page_record:)
+      )
 
-      unless Current.viewer!.can_trash_page?(page:)
+      unless page_policy.can_trash?
         return render_404
       end
 
-      MovePageToTrashService.new.call(page:)
+      MovePageToTrashService.new.call(page: page_record)
 
       flash[:notice] = t("messages.page.moved_to_trash")
-      redirect_to topic_path(space.identifier, page.topic_record.not_nil!.number)
+      redirect_to topic_path(space_record.identifier, page_record.topic_record.not_nil!.number)
     end
   end
 end
