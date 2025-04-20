@@ -5,21 +5,21 @@ class EditSpaceForm < ApplicationForm
   include FormConcerns::SpaceIdentifierValidatable
   include FormConcerns::SpaceNameValidatable
 
-  sig { returns(T.nilable(SpaceRecord)) }
-  attr_accessor :space_record
+  sig { returns(T.nilable(FormConcerns::ISpace)) }
+  attr_accessor :space
 
   attribute :identifier, :string
   attribute :name, :string
 
-  validates :space_record, presence: true
+  validates :space, presence: true
   validate :identifier_uniqueness
 
   sig { void }
   private def identifier_uniqueness
-    return if space_record.nil?
+    return if space.nil?
     return if identifier.nil?
 
-    if space_record.not_nil!.identifier_uniqueness?(identifier.not_nil!)
+    if space.not_nil!.identifier_uniqueness?(identifier.not_nil!)
       errors.add(:identifier, :uniqueness)
     end
   end

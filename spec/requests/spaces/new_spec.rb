@@ -3,9 +3,9 @@
 
 RSpec.describe "GET /spaces/new", type: :request do
   it "ログインしているとき、スペース作成画面が表示されること" do
-    user = create(:user_record, :with_password)
+    user = create(:user, :with_password)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/spaces/new"
     page = Capybara.string(response.body)

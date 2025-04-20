@@ -6,7 +6,7 @@ RSpec.describe EditSpaceForm, type: :form do
     form = EditSpaceForm.new
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Space record can't be blank")
+    expect(form.errors.full_messages).to include("Space can't be blank")
   end
 
   it "識別子が空文字列のとき、エラーになること" do
@@ -45,9 +45,9 @@ RSpec.describe EditSpaceForm, type: :form do
   end
 
   it "識別子がすでに使われているとき、エラーになること" do
-    create(:space_record, identifier: "a")
-    space = create(:space_record)
-    form = EditSpaceForm.new(space_record: space, identifier: "a")
+    create(:space, identifier: "a")
+    space = create(:space)
+    form = EditSpaceForm.new(space:, identifier: "a")
 
     expect(form).not_to be_valid
     expect(form.errors.full_messages).to include("Identifier has already been taken")

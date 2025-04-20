@@ -12,7 +12,7 @@ class PageLocationKey < T::Struct
   const :topic_name, String
   const :page_title, String
 
-  sig { params(text: String, current_topic: TopicRecord).returns(T::Array[PageLocationKey]) }
+  sig { params(text: String, current_topic: Topic).returns(T::Array[PageLocationKey]) }
   def self.scan_text(text:, current_topic:)
     location_keys = text.scan(%r{\[\[(.*?)\]\]}).flatten.map(&:strip)
 

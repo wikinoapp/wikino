@@ -14,7 +14,7 @@ module Spaces
 
           sig { returns(T.untyped) }
           def call
-            space = SpaceRecord.find_by_identifier!(params[:space_identifier])
+            space = Space.find_by_identifier!(params[:space_identifier])
             space_viewer = Current.viewer!.space_viewer!(space:)
             space_entity = space.to_entity(space_viewer:)
 
@@ -22,7 +22,7 @@ module Spaces
               return render_404
             end
 
-            export = space.export_records.find(params[:export_id])
+            export = space.exports.find(params[:export_id])
 
             unless export.active?
               return render_404

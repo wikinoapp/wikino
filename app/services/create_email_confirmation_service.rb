@@ -3,16 +3,16 @@
 
 class CreateEmailConfirmationService < ApplicationService
   class Result < T::Struct
-    const :email_confirmation, EmailConfirmationRecord
+    const :email_confirmation, EmailConfirmation
   end
 
   sig { params(email: String, event: EmailConfirmationEvent, locale: ViewerLocale).returns(Result) }
   def call(email:, event:, locale:)
     current_time = Time.current
-    email_confirmation = EmailConfirmationRecord.new(
+    email_confirmation = EmailConfirmation.new(
       email:,
       event: event.serialize,
-      code: EmailConfirmationRecord.generate_code,
+      code: EmailConfirmation.generate_code,
       started_at: current_time
     )
 

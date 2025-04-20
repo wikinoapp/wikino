@@ -3,7 +3,7 @@
 
 RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space_record, :small)
+    space = create(:space, :small)
 
     post "/s/#{space.identifier}/topics"
 
@@ -12,12 +12,12 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   end
 
   it "別のスペースに参加しているとき、404を返すこと" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    other_space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: other_space)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    other_space = create(:space)
+    create(:space_member, user:, space: other_space)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     post "/s/#{space.identifier}/topics"
 
@@ -25,13 +25,13 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
   end
 
   it "スペースに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    create(:space_member_record, user_record: user, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    create(:space_member, user:, space:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
-    expect(TopicRecord.count).to eq(0)
+    expect(Topic.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
       new_topic_form: {
@@ -45,17 +45,17 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(response.body).to include("名前を入力してください")
 
     # バリデーションエラーになったのでトピックは作成されていないはず
-    expect(TopicRecord.count).to eq(0)
+    expect(Topic.count).to eq(0)
   end
 
   it "スペースに参加している & 入力値が正常なとき、トピックが作成できること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    create(:space_member_record, user_record: user, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    create(:space_member, user:, space:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
-    expect(TopicRecord.count).to eq(0)
+    expect(Topic.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
       new_topic_form: {
@@ -67,8 +67,8 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
 
     expect(response.status).to eq(302)
 
-    expect(TopicRecord.count).to eq(1)
-    topic = TopicRecord.first
+    expect(Topic.count).to eq(1)
+    topic = Topic.first
     expect(response).to redirect_to("/s/#{space.identifier}/topics/#{topic.number}")
   end
 end

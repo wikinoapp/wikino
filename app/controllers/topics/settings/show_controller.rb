@@ -12,7 +12,7 @@ module Topics
 
       sig { returns(T.untyped) }
       def call
-        space = SpaceRecord.find_by_identifier!(params[:space_identifier])
+        space = Space.find_by_identifier!(params[:space_identifier])
         space_viewer = Current.viewer!.space_viewer!(space:)
         topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
         topic_entity = topic.to_entity(space_viewer:)

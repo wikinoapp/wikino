@@ -3,7 +3,7 @@
 
 RSpec.describe "GET /s/:space_identifier/settings/general", type: :request do
   it "ログインしていないとき、ログインページが表示されること" do
-    space = create(:space_record)
+    space = create(:space)
 
     get "/s/#{space.identifier}/settings/general"
 
@@ -12,10 +12,10 @@ RSpec.describe "GET /s/:space_identifier/settings/general", type: :request do
   end
 
   it "ログインしている & スペースに参加していないとき、404を返すこと" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
+    user = create(:user, :with_password)
+    space = create(:space)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/general"
 
@@ -23,12 +23,12 @@ RSpec.describe "GET /s/:space_identifier/settings/general", type: :request do
   end
 
   it "ログインしている & 別のスペースに参加しているとき、404を返すこと" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
-    other_space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: other_space)
+    user = create(:user, :with_password)
+    space = create(:space)
+    other_space = create(:space)
+    create(:space_member, user:, space: other_space)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/general"
 
@@ -36,11 +36,11 @@ RSpec.describe "GET /s/:space_identifier/settings/general", type: :request do
   end
 
   it "ログインしている & スペースに参加しているとき、スペースの設定ページが表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: space)
+    user = create(:user, :with_password)
+    space = create(:space)
+    create(:space_member, user:, space:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     get "/s/#{space.identifier}/settings/general"
 

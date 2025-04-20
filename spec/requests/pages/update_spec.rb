@@ -3,8 +3,8 @@
 
 RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space_record, :small)
-    page = create(:page_record, space_record: space)
+    space = create(:space, :small)
+    page = create(:page, space:)
 
     patch "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -13,15 +13,15 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "別のスペースに参加しているとき、404ページが表示されること" do
-    user = create(:user_record, :with_password)
+    user = create(:user, :with_password)
 
-    space = create(:space_record, :small)
-    page = create(:page_record, space_record: space)
+    space = create(:space, :small)
+    page = create(:page, space:)
 
-    other_space = create(:space_record)
-    create(:space_member_record, space_record: other_space, user_record: user)
+    other_space = create(:space)
+    create(:space_member, space: other_space, user:)
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     patch "/s/#{space.identifier}/pages/#{page.number}"
 
@@ -29,14 +29,14 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    create(:space_member_record, space_record: space, user_record: user)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    create(:space_member, space:, user:)
 
-    topic = create(:topic_record, space_record: space)
-    page = create(:page_record, space_record: space, topic_record: topic, title: "A Page")
+    topic = create(:topic, space:)
+    page = create(:page, space:, topic:, title: "A Page")
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
       edit_page_form: {
@@ -53,16 +53,16 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が不正なとき、エラーメッセージを表示すること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    space_member = create(:space_member_record, space_record: space, user_record: user)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    space_member = create(:space_member, space:, user:)
 
-    topic = create(:topic_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
+    topic = create(:topic, space:)
+    create(:topic_member, space:, topic:, space_member:)
 
-    page = create(:page_record, space_record: space, topic_record: topic, title: "A Page")
+    page = create(:page, space:, topic:, title: "A Page")
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     expect(page.title).to eq("A Page")
 
@@ -82,16 +82,16 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
   end
 
   it "スペースに参加している & ページのトピックに参加している & 入力値が正しいとき、ページが更新できること" do
-    user = create(:user_record, :with_password)
-    space = create(:space_record, :small)
-    space_member = create(:space_member_record, space_record: space, user_record: user)
+    user = create(:user, :with_password)
+    space = create(:space, :small)
+    space_member = create(:space_member, space:, user:)
 
-    topic = create(:topic_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
+    topic = create(:topic, space:)
+    create(:topic_member, space:, topic:, space_member:)
 
-    page = create(:page_record, space_record: space, topic_record: topic, title: "A Page")
+    page = create(:page, space:, topic:, title: "A Page")
 
-    sign_in(user_record: user)
+    sign_in(user:)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
       edit_page_form: {

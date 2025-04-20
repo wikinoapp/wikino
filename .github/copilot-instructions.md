@@ -26,6 +26,10 @@ WikinoはWikiアプリです。
 - `app/controllers`
   - Railsのコントローラー
   - 1つのアクションごとに1つのコントローラーを定義しています
+- `app/entities`
+  - `View` で使われる 不変のクラス
+- `app/forms`
+  - フォームオブジェクト
 - `app/javascript`
   - フロントエンドJavaScriptの実装が格納されています
   - [Hotwire](https://hotwired.dev)で実装されています
@@ -34,12 +38,9 @@ WikinoはWikiアプリです。
 - `app/mailers`
   - Action Mailer
 - `app/models`
-  - `ActiveModel::Model` をincludeしたクラスが定義されています
-- `app/records`
-  - `ActiveRecord::Base` を継承したクラスが定義されている
-  - データベースのテーブルと1:1の関係となる
-- `app/repositories`
-  - Recordを介してデータを取得したり保存し、Modelを返す
+  - Railsのモデル
+- `app/services`
+  - サービスクラス
 - `app/validators`
   - カスタムバリデーション
 - `app/views`
@@ -110,30 +111,18 @@ end
 - 主要なクラスの依存関係から外れないように書いてください
   - Railsなど外部のライブラリが提供するクラスなどはどのクラスからでも呼び出して大丈夫です
 
-| クラス          | 説明                               | 依存先                             |
-| --------------- | ---------------------------------- | ---------------------------------- |
-| Component       | 再利用可能なUI要素                 | `Component`, `Model`               |
-| Controller      | HTTPリクエスト処理と応答の調整     | `Model`, `Repository`, `View`      |
-| Job             | ジョブの定義                       | `Model`, `Repository`              |
-| Mailer          | メール送信                         | `Model`, `View`                    |
-| Model           | データ構造とドメインロジックを表現 | `Model`, `ModelValidator`          |
-| ModelValidator  | Modelのカスタムバリデーション      | -                                  |
-| Record          | DBのテーブルから取得・保存する     | `Model`, `Record`                  |
-| RecordValidator | Recordのカスタムバリデーション     | `Record`                           |
-| Repository      | ビジネスロジックのカプセル化       | `Job`, `Mailer`, `Model`, `Record` |
-| View            | 表示処理                           | `Component`, `Model`               |
-
-#### Model
-
-- `Model` を定義するときは `ApplicationModel` を継承するようにしてください
-
-```rb
-# typed: strict
-# frozen_string_literal: true
-
-class User < ApplicationModel
-end
-```
+| クラス     | 説明                           | 依存先                             |
+| ---------- | ------------------------------ | ---------------------------------- |
+| Component  | 再利用可能なUI要素             | `Component`, `Entity`              |
+| Controller | HTTPリクエスト処理と応答の調整 | `Form`, `Model`, `Service`, `View` |
+| Entity     | データ構造                     | `Entity`                           |
+| Form       | 入力値の検証                   | `Model`, `Validator`               |
+| Job        | ジョブの定義                   | `Model`, `Service`                 |
+| Mailer     | メール送信                     | `Model`, `View`                    |
+| Model      | ドメインロジックを表現         | `Entity`, `Model`                  |
+| Service    | DBのトランザクションを管理     | `Form`, `Job`, `Model`             |
+| Validator  | カスタムバリデーション         | `Model`                            |
+| View       | 表示処理                       | `Component`, `Model`               |
 
 ### RSpec
 
