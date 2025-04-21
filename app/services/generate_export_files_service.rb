@@ -4,7 +4,7 @@
 require "zip"
 
 class GenerateExportFilesService < ApplicationService
-  sig { params(export: Export).void }
+  sig { params(export: ExportRecord).void }
   def call(export:)
     if export.failed? || export.succeeded?
       return
@@ -26,9 +26,9 @@ class GenerateExportFilesService < ApplicationService
     export.send_succeeded_mail!
   end
 
-  sig { params(export: Export).returns(String) }
+  sig { params(export: ExportRecord).returns(String) }
   private def output_to_files!(export:)
-    target_pages = export.target_pages.preload(:topic)
+    target_pages = export.target_pages.preload(:topic_record)
 
     export_base_dir = Rails.root.join("tmp", "export_#{export.id}")
     FileUtils.mkdir_p(export_base_dir)
@@ -36,7 +36,7 @@ class GenerateExportFilesService < ApplicationService
     topics = {}
 
     target_pages.find_each.with_index do |page, index|
-      topic = page.topic.not_nil!
+      topic = page.topic_record.not_nil!
 
       unless topics[topic.id]
         topic_dir = File.join(export_base_dir, topic.name)
@@ -53,7 +53,7 @@ class GenerateExportFilesService < ApplicationService
     export_base_dir.to_s
   end
 
-  sig { params(export: Export, output_path: String).returns(String) }
+  sig { params(export: ExportRecord, output_path: String).returns(String) }
   private def make_zip_file!(export:, output_path:)
     zip_file_path = "#{output_path}.zip"
 
@@ -72,7 +72,7 @@ class GenerateExportFilesService < ApplicationService
     zip_file_path
   end
 
-  sig { params(export: Export, zip_path: String).void }
+  sig { params(export: ExportRecord, zip_path: String).void }
   private def upload_zip_file!(export:, zip_path:)
     file = File.open(zip_path)
 

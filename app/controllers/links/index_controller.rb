@@ -13,7 +13,7 @@ module Links
 
     sig { returns(T.untyped) }
     def call
-      space = Space.find_by_identifier!(params[:space_identifier])
+      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
       page = space.find_page_by_number!(params[:page_number]&.to_i)
 
@@ -21,7 +21,7 @@ module Links
         return render_404
       end
 
-      draft_page = space_viewer.draft_pages.find_by(page:)
+      draft_page = space_viewer.draft_page_records.find_by(page_record: page)
       pageable = draft_page.presence || page
 
       link_list_entity = pageable.fetch_link_list_entity(space_viewer:, after: params[:after])

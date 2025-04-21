@@ -16,15 +16,15 @@ module Topics
       space_viewer = Current.viewer!.space_viewer!(space:)
       topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
 
-      pinned_pages = topic.pages.active.pinned.order(pinned_at: :desc, id: :desc)
+      pinned_pages = topic.page_records.active.pinned.order(pinned_at: :desc, id: :desc)
 
-      cursor_paginate_page = topic.not_nil!.pages.active.not_pinned.cursor_paginate(
+      cursor_paginate_page = topic.not_nil!.page_records.active.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      page_entities = Page.to_entities(space_viewer:, pages: cursor_paginate_page.records)
+      page_entities = PageRecord.to_entities(space_viewer:, pages: cursor_paginate_page.records)
       pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
       render Topics::ShowView.new(

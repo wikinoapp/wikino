@@ -12,14 +12,14 @@ RSpec.describe Markup, type: :model do
   end
 
   it "渡したテキストが空文字列のとき: 空文字列を返すこと" do
-    topic = create(:topic)
+    topic = create(:topic_record)
     actual = Markup.new(current_topic: topic).render_html(text: "")
 
     expect(actual).to eq("")
   end
 
   it "タスクリスト記法: チェックボックスが生成されること" do
-    topic = create(:topic)
+    topic = create(:topic_record)
     actual = Markup.new(current_topic: topic).render_html(
       text: [
         "- [ ] 未完了",
@@ -37,13 +37,13 @@ RSpec.describe Markup, type: :model do
   end
 
   it "MarkupFilters::PageLinkFilter: リンク記法がリンクに置き換わること" do # standard:disable RSpec/NoExpectationExample
-    space = create(:space)
-    topic_1 = create(:topic, space:, name: "トピック1")
-    topic_2 = create(:topic, space:, name: "トピック2")
-    page_1 = create(:page, space:, topic: topic_1, title: "Page 1")
-    page_2 = create(:page, space:, topic: topic_2, title: "Page 2")
-    page_3 = create(:page, space:, topic: topic_1, title: "Notebook -> List")
-    page_4 = create(:page, space:, topic: topic_1, title: "日記 (2025)")
+    space = create(:space_record)
+    topic_1 = create(:topic_record, space_record: space, name: "トピック1")
+    topic_2 = create(:topic_record, space_record: space, name: "トピック2")
+    page_1 = create(:page_record, space_record: space, topic_record: topic_1, title: "Page 1")
+    page_2 = create(:page_record, space_record: space, topic_record: topic_2, title: "Page 2")
+    page_3 = create(:page_record, space_record: space, topic_record: topic_1, title: "Notebook -> List")
+    page_4 = create(:page_record, space_record: space, topic_record: topic_1, title: "日記 (2025)")
 
     test_render_html(
       current_topic: topic_1,

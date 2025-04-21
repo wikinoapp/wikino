@@ -3,9 +3,9 @@
 
 RSpec.describe "GET /sign_in", type: :request do
   it "ログインしているとき、ホーム画面にリダイレクトすること" do
-    user = create(:user, :with_password)
+    user = create(:user_record, :with_password)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/sign_in"
 

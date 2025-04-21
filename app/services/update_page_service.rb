@@ -3,22 +3,22 @@
 
 class UpdatePageService < ApplicationService
   class Result < T::Struct
-    const :page, Page
+    const :page, PageRecord
   end
 
-  sig { params(page: Page, topic: Topic, title: String, body: String).returns(Result) }
+  sig { params(page: PageRecord, topic: TopicRecord, title: String, body: String).returns(Result) }
   def call(page:, topic:, title:, body:)
     now = Time.zone.now
 
     page.attributes = {
-      topic:,
+      topic_record: topic,
       title:,
       body:,
       body_html: Markup.new(current_topic: topic).render_html(text: body),
       modified_at: now
     }
     page.published_at = now if page.published_at.nil?
-    space_member = Current.viewer!.active_space_members.find_by!(space_id: page.space_id)
+    space_member = Current.viewer!.active_space_member_records.find_by!(space_id: page.space_id)
 
     updated_page = ActiveRecord::Base.transaction do
       page.save!

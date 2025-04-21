@@ -3,17 +3,17 @@
 
 module Atom
   class ShowView < ApplicationView
-    sig { params(space: Space, pages: Page::PrivateAssociationRelation).void }
+    sig { params(space: SpaceRecord, pages: PageRecord::PrivateAssociationRelation).void }
     def initialize(space:, pages:)
       @space = space
       @pages = pages
     end
 
-    sig { returns(Space) }
+    sig { returns(SpaceRecord) }
     attr_reader :space
     private :space
 
-    sig { returns(Page::PrivateAssociationRelation) }
+    sig { returns(PageRecord::PrivateAssociationRelation) }
     attr_reader :pages
     private :pages
 
@@ -22,7 +22,7 @@ module Atom
       2025
     end
 
-    sig { params(page: Page).returns(String) }
+    sig { params(page: PageRecord).returns(String) }
     def entry_id(page:)
       "tag:Wikino,#{schema_date}:Page/#{page.id}"
     end

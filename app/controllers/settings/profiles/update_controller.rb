@@ -12,9 +12,9 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        current_user = T.let(Current.viewer!, User)
+        current_user = T.let(Current.viewer!, UserRecord)
 
-        form = EditProfileForm.new(form_params.merge(user: current_user))
+        form = EditProfileForm.new(form_params.merge(user_record: current_user))
 
         if form.invalid?
           return render(

@@ -24,7 +24,7 @@ module Spaces
       end
 
       result = CreateSpaceService.new.call(
-        user: T.let(Current.viewer!, User),
+        user: T.let(Current.viewer!, UserRecord),
         identifier: form.identifier.not_nil!,
         name: form.name.not_nil!
       )
