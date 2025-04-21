@@ -1,0 +1,15 @@
+<%= render Basic::CardComponent.new(
+  class_name: class_names(
+    class_name,
+    "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px] hover:ring-1
+    hover:ring-primary transition"
+  )
+) do |card| %>
+  <%= card.with_body(class_name: "p-0") do %>
+    <%= link_to space_path(space_entity.identifier), class: "h-full px-4 py-2 w-full" do %>
+      <div class="line-clamp-3 text-sm font-bold">
+        <%= space_entity.name %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

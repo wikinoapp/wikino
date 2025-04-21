@@ -13,16 +13,28 @@
       </h1>
 
       <div class="flex flex-col gap-4">
-        <h2 class="font-bold antialiased">
-          <%= t("nouns.joined_spaces") %>
-        </h2>
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold antialiased">
+            <%= t("nouns.joined_spaces") %>
+          </h2>
 
-        <div class="flex flex-col gap-2">
-          <% @active_spaces.each do |space| %>
-            <%= link_to space.name, space_path(space.identifier), class: "link" %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <% active_space_entities.each do |space_entity| %>
+            <%= render Cards::SpaceComponent.new(space_entity:) %>
           <% end %>
 
-          <%= link_to t("nouns.new_space"), new_space_path, class: "link" %>
+          <%= render Basic::CardComponent.new(
+            class_name: class_names(
+              "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px]
+              hover:ring-1 hover:ring-primary transition"
+            )
+          ) do |card| %>
+            <%= card.with_body(class_name: "p-0") do %>
+              <%= link_to t("nouns.new_space"), new_space_path, class: "h-full px-4 py-2 w-full" %>
+            <% end %>
+          <% end %>
         </div>
       </div>
     <% end %>
