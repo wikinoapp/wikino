@@ -12,7 +12,7 @@ module Settings
     sig { returns(T.untyped) }
     def call
       render Settings::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity
+        current_user: current_user!
       )
     end
   end
