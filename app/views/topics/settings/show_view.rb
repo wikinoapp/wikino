@@ -6,12 +6,12 @@ module Topics
     class ShowView < ApplicationView
       sig do
         params(
-          current_user_entity: UserEntity,
+          current_user: User,
           topic_entity: TopicEntity
         ).void
       end
-      def initialize(current_user_entity:, topic_entity:)
-        @current_user_entity = current_user_entity
+      def initialize(current_user:, topic_entity:)
+        @current_user = current_user
         @topic_entity = topic_entity
       end
 
@@ -21,9 +21,9 @@ module Topics
         helpers.set_meta_tags(title:, **default_meta_tags(site: false))
       end
 
-      sig { returns(UserEntity) }
-      attr_reader :current_user_entity
-      private :current_user_entity
+      sig { returns(User) }
+      attr_reader :current_user
+      private :current_user
 
       sig { returns(TopicEntity) }
       attr_reader :topic_entity

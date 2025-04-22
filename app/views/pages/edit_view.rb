@@ -5,7 +5,7 @@ module Pages
   class EditView < ApplicationView
     sig do
       params(
-        current_user_entity: UserEntity,
+        current_user: User,
         space_entity: SpaceEntity,
         page_entity: PageEntity,
         form: EditPageForm,
@@ -15,7 +15,7 @@ module Pages
       ).void
     end
     def initialize(
-      current_user_entity:,
+      current_user:,
       space_entity:,
       page_entity:,
       form:,
@@ -28,7 +28,7 @@ module Pages
       @form = form
       @link_list_entity = link_list_entity
       @backlink_list_entity = backlink_list_entity
-      @current_user_entity = current_user_entity
+      @current_user = current_user
       @draft_page_entity = draft_page_entity
     end
 
@@ -37,9 +37,9 @@ module Pages
       helpers.set_meta_tags(title: "#{title} | #{space_entity.name}", **default_meta_tags)
     end
 
-    sig { returns(UserEntity) }
-    attr_reader :current_user_entity
-    private :current_user_entity
+    sig { returns(User) }
+    attr_reader :current_user
+    private :current_user
 
     sig { returns(SpaceEntity) }
     attr_reader :space_entity

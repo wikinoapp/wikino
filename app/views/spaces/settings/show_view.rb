@@ -6,12 +6,12 @@ module Spaces
     class ShowView < ApplicationView
       sig do
         params(
-          current_user_entity: UserEntity,
+          current_user: User,
           space_entity: SpaceEntity
         ).void
       end
-      def initialize(current_user_entity:, space_entity:)
-        @current_user_entity = current_user_entity
+      def initialize(current_user:, space_entity:)
+        @current_user = current_user
         @space_entity = space_entity
       end
 
@@ -21,9 +21,9 @@ module Spaces
         helpers.set_meta_tags(title:, **default_meta_tags)
       end
 
-      sig { returns(UserEntity) }
-      attr_reader :current_user_entity
-      private :current_user_entity
+      sig { returns(User) }
+      attr_reader :current_user
+      private :current_user
 
       sig { returns(SpaceEntity) }
       attr_reader :space_entity
