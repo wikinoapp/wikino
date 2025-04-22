@@ -28,7 +28,7 @@ module Topics
       pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
 
       render Topics::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
+        current_user: current_user!,
         topic_entity: topic.to_entity(space_viewer:),
         pinned_page_entities: pinned_pages.map { _1.to_entity(space_viewer:) },
         page_list_entity: PageListEntity.new(page_entities:, pagination_entity:)

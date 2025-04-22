@@ -27,7 +27,7 @@ module Spaces
           )
 
           render Spaces::Settings::General::ShowView.new(
-            current_user_entity: Current.viewer!.user_entity,
+            current_user: current_user!,
             space_entity:,
             form:
           )

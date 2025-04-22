@@ -40,7 +40,7 @@ module Pages
         form:,
         link_list_entity:,
         backlink_list_entity:,
-        current_user_entity: Current.viewer!.user_entity
+        current_user: current_user!
       )
     end
   end

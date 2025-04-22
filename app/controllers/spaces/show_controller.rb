@@ -30,7 +30,7 @@ module Spaces
       pinned_page_entities = PageRecord.to_entities(space_viewer:, pages: showable_pages.pinned.order(pinned_at: :desc, id: :desc))
 
       render Spaces::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
+        current_user: current_user!,
         space_entity:,
         first_topic_entity:,
         pinned_page_entities:,

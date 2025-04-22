@@ -23,7 +23,7 @@ module Pages
       backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
 
       render Pages::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
+        current_user: current_user!,
         page_entity: page.to_entity(space_viewer:),
         link_list_entity:,
         backlink_list_entity:

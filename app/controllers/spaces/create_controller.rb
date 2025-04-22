@@ -16,7 +16,7 @@ module Spaces
       if form.invalid?
         return render(
           Spaces::NewView.new(
-            current_user_entity: Current.viewer!.user_entity,
+            current_user: current_user!,
             form:
           ),
           status: :unprocessable_entity

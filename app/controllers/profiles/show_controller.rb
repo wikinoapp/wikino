@@ -17,7 +17,7 @@ module Profiles
       end
 
       render Profiles::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
+        current_user: current_user!,
         user_entity: user.to_entity,
         joined_space_entities:
       )

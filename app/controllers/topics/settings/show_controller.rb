@@ -22,7 +22,7 @@ module Topics
         end
 
         render Topics::Settings::ShowView.new(
-          current_user_entity: Current.viewer!.user_entity,
+          current_user: current_user!,
           topic_entity:
         )
       end

@@ -22,7 +22,7 @@ module Spaces
           end
 
           render Spaces::Settings::Exports::NewView.new(
-            current_user_entity: Current.viewer!.user_entity,
+            current_user: current_user!,
             space_entity:
           )
         end

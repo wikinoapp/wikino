@@ -24,7 +24,7 @@ module Spaces
           export = space.export_records.find(params[:export_id])
 
           render Spaces::Settings::Exports::ShowView.new(
-            current_user_entity: Current.viewer!.user_entity,
+            current_user: current_user!,
             space_entity:,
             export_entity: export.to_entity(space_viewer:),
             export_status_entity: export.latest_status_record.not_nil!.to_entity(space_viewer:)
