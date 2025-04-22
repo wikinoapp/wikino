@@ -31,7 +31,7 @@
     <% end %>
 
     <%= render Navbar::ItemLinkComponent.new(
-      path: profile_path(current_user_entity.not_nil!.atname),
+      path: profile_path(current_user.not_nil!.atname),
       icon_name: profile_icon_name,
       title: t("nouns.profile")
     ) %>

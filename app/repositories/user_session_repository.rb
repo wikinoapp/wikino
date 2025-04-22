@@ -2,16 +2,6 @@
 # frozen_string_literal: true
 
 class UserSessionRepository < ApplicationRepository
-  sig { params(token: T.nilable(String)).returns(T.nilable(UserSession)) }
-  def find_by_token(token)
-    return unless token
-
-    user_session_record = UserSessionRecord.find_by(token:)
-    return unless user_session_record
-
-    build_model(user_session_record:)
-  end
-
   sig { params(user_session: UserSession).returns(UserSession) }
   def create(user_session:)
     if user_session.invalid?(:create)

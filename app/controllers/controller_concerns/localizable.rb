@@ -30,7 +30,7 @@ module ControllerConcerns
 
     sig(:final) { returns(Locale) }
     private def current_locale
-      instant_locale.presence || Current.viewer&.locale.presence || preferred_locale
+      instant_locale.presence || current_user&.locale.presence || preferred_locale
     end
   end
 end

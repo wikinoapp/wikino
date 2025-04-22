@@ -6,10 +6,10 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    sig(:final) { params(user_session: UserSession).returns(T::Boolean) }
-    def sign_in(user_session)
-      Current.viewer = user_session.user
-      store_user_session_token(token: user_session.token)
+    sig(:final) { params(user_session_record: UserSessionRecord).returns(T::Boolean) }
+    def sign_in(user_session_record)
+      @current_user_record = T.let(user_session_record.user_record, UserRecord)
+      store_user_session_token(token: user_session_record.token)
 
       true
     end
@@ -49,6 +49,30 @@ module ControllerConcerns
       request.env["HTTP_CF_CONNECTING_IP"] || request.remote_ip
     end
 
+    sig(:final) { returns(T.nilable(UserRecord)) }
+    def current_user_record
+      @current_user_record
+    end
+
+    sig(:final) { returns(UserRecord) }
+    def current_user_record!
+      current_user_record.not_nil!
+    end
+
+    sig(:final) { returns(T.nilable(User)) }
+    def current_user
+      @current_user ||= begin
+        return if current_user_record.nil?
+
+        UserRepository.new.to_model(user_record: current_user_record!)
+      end
+    end
+
+    sig(:final) { returns(User) }
+    def current_user!
+      @current_user ||= UserRepository.new.to_model(user_record: current_user_record!)
+    end
+
     sig(:final) { returns(T.nilable(String)) }
     private def user_session_token
       cookies.signed[UserSession::TOKENS_COOKIE_KEY]
@@ -56,14 +80,13 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     private def restore_user_session
-      user_session = UserSessionRepository.new.find_by_token(user_session_token)
+      user_session_record = UserSessionRecord.find_by(token: user_session_token)
 
-      if user_session
-        sign_in(user_session)
-      else
-        Current.viewer = Visitor.new
-        false
+      if user_session_record
+        return sign_in(user_session_record)
       end
+
+      false
     end
 
     sig(:final) { void }
