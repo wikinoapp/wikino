@@ -20,26 +20,30 @@ WikinoはWikiアプリです。
 基本的にRailsプロジェクトのディレクトリ構成となっていますが、一部独自のディレクトリがあります。
 
 - `app/assets`
-  - 画像やCSSのファイルが格納されています
+  - 画像やCSSのファイルが格納されている
 - `app/components`
-  - [ViewComponent](https://viewcomponent.org) を使用したコンポーネントが定義されています
+  - [ViewComponent](https://viewcomponent.org) を使用したコンポーネントが定義されている
 - `app/controllers`
   - Railsのコントローラー
-  - 1つのアクションごとに1つのコントローラーを定義しています
+  - 1つのアクションごとに1つのコントローラーが定義されている
+- `app/forms`
+  - フォームオブジェクトが定義されている
 - `app/javascript`
-  - フロントエンドJavaScriptの実装が格納されています
-  - [Hotwire](https://hotwired.dev)で実装されています
+  - フロントエンドJavaScriptの実装が格納されている
+  - [Hotwire](https://hotwired.dev)で実装されている
 - `app/jobs`
   - Active Job
 - `app/mailers`
   - Action Mailer
 - `app/models`
-  - `ActiveModel::Model` をincludeしたクラスが定義されています
+  - POROや構造体などが定義されている
 - `app/records`
   - `ActiveRecord::Base` を継承したクラスが定義されている
   - データベースのテーブルと1:1の関係となる
 - `app/repositories`
-  - Recordを介してデータを取得したり保存し、Modelを返す
+  - RecordをModelに変換するクラスが定義されている
+- `app/services`
+  - サービスクラス
 - `app/validators`
   - カスタムバリデーション
 - `app/views`
@@ -110,28 +114,35 @@ end
 - 主要なクラスの依存関係から外れないように書いてください
   - Railsなど外部のライブラリが提供するクラスなどはどのクラスからでも呼び出して大丈夫です
 
-| クラス          | 説明                               | 依存先                             |
-| --------------- | ---------------------------------- | ---------------------------------- |
-| Component       | 再利用可能なUI要素                 | `Component`, `Model`               |
-| Controller      | HTTPリクエスト処理と応答の調整     | `Model`, `Repository`, `View`      |
-| Job             | ジョブの定義                       | `Model`, `Repository`              |
-| Mailer          | メール送信                         | `Model`, `View`                    |
-| Model           | データ構造とドメインロジックを表現 | `Model`, `ModelValidator`          |
-| ModelValidator  | Modelのカスタムバリデーション      | -                                  |
-| Record          | DBのテーブルから取得・保存する     | `Model`, `Record`                  |
-| RecordValidator | Recordのカスタムバリデーション     | `Record`                           |
-| Repository      | ビジネスロジックのカプセル化       | `Job`, `Mailer`, `Model`, `Record` |
-| View            | 表示処理                           | `Component`, `Model`               |
+| クラス          | 説明                               | 依存先                                                        |
+| --------------- | ---------------------------------- | ------------------------------------------------------------- |
+| Component       | 再利用可能なUI要素                 | `Component`, `Form`, `Model`                                  |
+| Controller      | HTTPリクエスト処理と応答の調整     | `Form`, `Model`, `Record`,<br>`Repository`, `Service`, `View` |
+| Form            | フォームオブジェクト               | `Record`, `Validator`                                         |
+| Job             | ジョブの定義                       | `Service`                                                     |
+| Mailer          | メール送信                         | `Model`, `Record`, `Repository`, `View`                       |
+| Model           | データ構造とドメインロジックを表現 | `Model`                                                       |
+| Record          | DBのテーブルから取得・保存する     | `Record`                                                      |
+| Repository      | ModelとRecordの変換                | `Model`, `Record`                                             |
+| Service         | ビジネスロジックのカプセル化       | `Record`                                                      |
+| Validator       | カスタムバリデーション             | `Record`                                                      |
+| View            | 表示処理                           | `Component`, `Form`, `Model`               |
 
 #### Model
 
-- `Model` を定義するときは `ApplicationModel` を継承するようにしてください
+- `Model` では `T::Struct` や `T::Enum` を継承したクラスや、PORO (Plain Old Ruby Object) を定義します
 
 ```rb
 # typed: strict
 # frozen_string_literal: true
 
-class User < ApplicationModel
+class User < T::Struct
+  extend T::Sig
+
+  include T::Struct::ActsAsComparable
+
+  const :database_id, T::Wikino::DatabaseId
+  # ...
 end
 ```
 
