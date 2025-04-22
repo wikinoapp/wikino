@@ -11,8 +11,8 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_viewer = Current.viewer!.space_viewer!(space:)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      current_space_member = current_user!.current_space_member(space_record:)
       page = space.find_page_by_number!(params[:page_number]&.to_i).not_nil!
 
       unless space_viewer.can_update_page?(page:)

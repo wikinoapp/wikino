@@ -77,9 +77,9 @@ class UserRecord < ApplicationRecord
     to_entity
   end
 
-  sig { params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
-  def space_viewer!(space:)
-    active_space_member_records.find_by(space_record: space).presence || SpaceVisitor.new(space:)
+  sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
+  def current_space_member(space:)
+    active_space_member_records.find_by(space_record:)
   end
 
   sig { params(space: SpaceRecord).returns(T::Boolean) }

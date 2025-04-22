@@ -12,8 +12,8 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_viewer = Current.viewer!.space_viewer!(space:)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      current_space_member = current_user!.current_space_member(space_record:)
       showable_pages = space_viewer.showable_pages.preload(:topic_record)
 
       cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(

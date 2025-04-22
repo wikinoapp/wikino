@@ -12,8 +12,8 @@ module Topics
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
-      space_viewer = Current.viewer!.space_viewer!(space:)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      current_space_member = current_user!.current_space_member(space_record:)
 
       unless space_viewer.can_create_topic?
         return render_404

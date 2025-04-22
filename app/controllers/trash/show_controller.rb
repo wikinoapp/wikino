@@ -12,7 +12,7 @@ module Trash
     sig { returns(T.untyped) }
     def call
       space = SpaceRepository.new.find_by_identifier!(params[:space_identifier])
-      space_viewer = Current.viewer!.space_viewer!(space:)
+      current_space_member = current_user!.current_space_member(space_record:)
 
       unless space_viewer.can_view_trash?(space:)
         return render_404

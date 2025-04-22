@@ -12,7 +12,7 @@ module TrashedPages
 
     sig { returns(T.untyped) }
     def call
-      space_record = find_space_by_identifier!
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i).not_nil!
       page_policy = Page::PolicyRepository.new.build(
         user: Current.viewer!,
