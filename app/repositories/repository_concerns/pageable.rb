@@ -7,6 +7,7 @@ module RepositoryConcerns
 
     sig do
       params(
+        user_record: UserRecord,
         pageable_record: RecordConcerns::Pageable,
         before: T.nilable(String),
         after: T.nilable(String),
@@ -14,10 +15,10 @@ module RepositoryConcerns
         backlink_limit: Integer
       ).returns(LinkList)
     end
-    def link_list(pageable_record:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
+    def link_list(user_record:, pageable_record:, before: nil, after: nil, link_limit: 15, backlink_limit: 14)
       added_page_ids = [pageable_record.id]
 
-      cursor_paginate_page = pageable_record.linked_pages
+      cursor_paginate_page = pageable_record.linked_pages(user_record:)
         .where.not(id: added_page_ids).preload(:topic_record)
         .cursor_paginate(
           after:,

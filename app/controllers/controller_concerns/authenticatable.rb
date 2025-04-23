@@ -33,7 +33,7 @@ module ControllerConcerns
     def require_no_authentication
       restore_user_session
 
-      if Current.viewer.signed_in?
+      if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
         redirect_to home_path
       end
@@ -57,6 +57,11 @@ module ControllerConcerns
     sig(:final) { returns(UserRecord) }
     def current_user_record!
       current_user_record.not_nil!
+    end
+
+    sig(:final) { returns(T::Boolean) }
+    def signed_in?
+      !current_user_record.nil?
     end
 
     sig(:final) { returns(T.nilable(User)) }

@@ -15,21 +15,22 @@ class PageRepository < ApplicationRepository
       modified_at: page_record.modified_at,
       published_at: page_record.published_at,
       pinned_at: page_record.pinned_at,
-      space: SpaceRepository.new.to_model(page_record.space_record.not_nil!),
-      topic: TopicRepository.new.to_model(page_record.topic_record.not_nil!)
+      space: SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!),
+      topic: TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
     )
   end
 
   sig do
     params(
+      user_record: UserRecord,
       page_record: PageRecord,
       before: T.nilable(String),
       after: T.nilable(String),
       limit: Integer
     ).returns(BacklinkList)
   end
-  def backlink_list(page_record:, before: nil, after: nil, limit: 15)
-    cursor_paginate_page = page_record.backlinked_page_records
+  def backlink_list(user_record:, page_record:, before: nil, after: nil, limit: 15)
+    cursor_paginate_page = page_record.backlinked_page_records(user_record:)
       .cursor_paginate(
         after:,
         before:,

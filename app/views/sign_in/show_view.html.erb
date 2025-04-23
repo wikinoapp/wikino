@@ -20,7 +20,7 @@
       <%= card.with_body(class_name: "p-4") do %>
         <%= form_with(
           class: "flex flex-col gap-4",
-          model: user_session,
+          model: form,
           url: user_session_path
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>

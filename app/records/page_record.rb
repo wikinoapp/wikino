@@ -69,11 +69,21 @@ class PageRecord < ApplicationRecord
     trashed_at.present?
   end
 
-  T::Sig::WithoutRuntime.sig { returns(T.any(PageRecord::PrivateAssociationRelationWhereChain, PageRecord::PrivateAssociationRelation)) }
-  def backlinked_page_records
+  sig do
+    params(
+      user_record: T.nilable(UserRecord)
+    ).returns(
+      T.any(
+        PageRecord::PrivateAssociationRelationWhereChain,
+        PageRecord::PrivateAssociationRelation
+      )
+    )
+  end
+  def backlinked_page_records(user_record:)
     pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
+    topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
 
-    pages.joins(:topic_record).merge(Current.viewer!.viewable_topics)
+    pages.joins(:topic_record).merge(topic_records)
   end
 
   sig { params(editor: SpaceMemberRecord).void }

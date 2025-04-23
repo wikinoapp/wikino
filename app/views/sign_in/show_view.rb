@@ -3,9 +3,9 @@
 
 module SignIn
   class ShowView < ApplicationView
-    sig { params(user_session: UserSession).void }
-    def initialize(user_session:)
-      @user_session = user_session
+    sig { params(form: UserSessionForm).void }
+    def initialize(form:)
+      @form = form
     end
 
     sig { override.void }
@@ -14,9 +14,9 @@ module SignIn
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(UserSession) }
-    attr_reader :user_session
-    private :user_session
+    sig { returns(UserSessionForm) }
+    attr_reader :form
+    private :form
 
     sig { returns(PageName) }
     private def current_page_name

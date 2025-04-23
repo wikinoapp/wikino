@@ -12,7 +12,7 @@ module DraftPages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user!.space_member_record(space_record:)
+      space_member_record = current_user_record!.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
       page_policy = PagePolicy.new(space_member_record:, page_record:)
 
@@ -30,8 +30,14 @@ module DraftPages
 
       draft_page_record = result.draft_page_record
       draft_page = DraftPageRepository.new.to_model(draft_page_record:)
-      link_list = DraftPageRepository.new.link_list(pageable_record: draft_page_record)
-      backlink_list = PageRepository.new.backlink_list(page_record:)
+      link_list = DraftPageRepository.new.link_list(
+        user_record: current_user_record!,
+        pageable_record: draft_page_record
+      )
+      backlink_list = PageRepository.new.backlink_list(
+        user_record: current_user_record!,
+        page_record:
+      )
 
       render(DraftPages::UpdateView.new(
         draft_page:,

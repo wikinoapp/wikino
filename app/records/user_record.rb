@@ -78,13 +78,13 @@ class UserRecord < ApplicationRecord
   end
 
   sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
-  def space_member_record(space:)
+  def space_member_record(space_record:)
     active_space_member_records.find_by(space_record:)
   end
 
-  sig { params(space: SpaceRecord).returns(T::Boolean) }
-  def joined_space?(space:)
-    active_space_records.where(id: space.id).exists?
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def joined_space?(space_record:)
+    active_space_records.where(id: space_record.id).exists?
   end
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }

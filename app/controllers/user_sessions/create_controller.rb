@@ -11,18 +11,19 @@ module UserSessions
 
     sig { returns(T.untyped) }
     def call
-      user_session = UserSession.new(form_params.merge(
-        ip_address: original_remote_ip,
-        user_agent: request.user_agent
-      ))
+      form = UserSessionForm.new(form_params)
 
-      user_session = UserSessionRepository.new.create(user_session:)
-
-      if user_session.invalid?
-        return render(SignIn::ShowView.new(user_session:), status: :unprocessable_entity)
+      if form.invalid?
+        return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
       end
 
-      sign_in(user_session)
+      result = CreateUserSessionService.new.call(
+        user_record: form.user_record.not_nil!,
+        ip_address: original_remote_ip,
+        user_agent: request.user_agent
+      )
+
+      sign_in(result.user_session_record)
 
       flash[:notice] = t("messages.accounts.signed_in_successfully")
       redirect_to after_authentication_url

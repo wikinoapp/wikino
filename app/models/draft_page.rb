@@ -8,4 +8,6 @@ class DraftPage < T::Struct
 
   const :database_id, T::Wikino::DatabaseId
   const :modified_at, ActiveSupport::TimeWithZone
+  const :space, Space
+  const :page, Page
 end

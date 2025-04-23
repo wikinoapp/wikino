@@ -1,48 +1,18 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-class UserSession < ApplicationModel
+class UserSession < T::Struct
+  extend T::Sig
+
+  include T::Struct::ActsAsComparable
+
   TOKENS_COOKIE_KEY = :user_session_tokens
+  DEFAULT_IP_ADDRESS = "unknown"
+  DEFAULT_USER_AGENT = "unknown"
 
-  sig { returns(String) }
-  attr_accessor :email
-
-  sig { returns(String) }
-  attr_accessor :password
-
-  sig { returns(User) }
-  attr_accessor :user
-
-  sig { returns(String) }
-  attr_accessor :token
-
-  sig { returns(String) }
-  attr_accessor :ip_address
-
-  sig { returns(String) }
-  attr_accessor :user_agent
-
-  sig { returns(ActiveSupport::TimeWithZone) }
-  attr_accessor :signed_in_at
-
-  sig { params(attributes: T.untyped).void }
-  def initialize(attributes = {})
-    super
-    @ip_address ||= "unknown"
-    @user_agent ||= "unknown"
-  end
-
-  validates :ip_address, presence: true
-  validates :user_agent, presence: true
-
-  with_options(on: :create) do
-    validates :email, email: true, presence: true
-    validates :password, presence: true
-  end
-
-  with_options(on: :read) do
-    validates :user, presence: true
-    validates :token, presence: true
-    validates :signed_in_at, presence: true
-  end
+  const :user, User
+  const :token, String
+  const :ip_address, String
+  const :user_agent, String
+  const :signed_in_at, ActiveSupport::TimeWithZone
 end

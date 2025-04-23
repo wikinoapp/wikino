@@ -15,7 +15,7 @@ module TrashedPages
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i).not_nil!
       page_policy = Page::PolicyRepository.new.build(
         user: Current.viewer!,
-        page: PageRepository.new.build_model(page_record:)
+        page: PageRepository.new.to_model(page_record:)
       )
 
       unless page_policy.can_trash?

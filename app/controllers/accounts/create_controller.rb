@@ -34,7 +34,7 @@ module Accounts
       )
 
       user_session_result = CreateUserSessionService.new.call(
-        user: account_result.user,
+        user_record: account_result.user,
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       )
