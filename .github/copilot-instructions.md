@@ -37,6 +37,8 @@ WikinoはWikiアプリです。
   - Action Mailer
 - `app/models`
   - POROや構造体などが定義されている
+- `app/policies`
+  - 認可ルールが書かれたクラスが定義されている
 - `app/records`
   - `ActiveRecord::Base` を継承したクラスが定義されている
   - データベースのテーブルと1:1の関係となる
@@ -122,9 +124,10 @@ end
 | Job             | ジョブの定義                       | `Service`                                                     |
 | Mailer          | メール送信                         | `Model`, `Record`, `Repository`, `View`                       |
 | Model           | データ構造とドメインロジックを表現 | `Model`                                                       |
+| Policy          | 認可ルール                         | `Record`                                                      |
 | Record          | DBのテーブルから取得・保存する     | `Record`                                                      |
 | Repository      | ModelとRecordの変換                | `Model`, `Record`                                             |
-| Service         | ビジネスロジックのカプセル化       | `Record`                                                      |
+| Service         | ビジネスロジックのカプセル化       | `Job`, `Mailer`, `Record`                                     |
 | Validator       | カスタムバリデーション             | `Record`                                                      |
 | View            | 表示処理                           | `Component`, `Form`, `Model`               |
 
