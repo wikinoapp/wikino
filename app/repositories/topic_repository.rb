@@ -6,6 +6,10 @@ class TopicRepository < ApplicationRepository
   def to_model(topic_record:)
     Topic.new(
       database_id: topic_record.id,
+      number: topic_record.number,
+      name: topic_record.name,
+      description: topic_record.description,
+      visibility: TopicVisibility.deserialize(topic_record.visibility),
       space: SpaceRepository.new.to_model(space_record: topic_record.space_record)
     )
   end

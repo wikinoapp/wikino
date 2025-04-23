@@ -12,5 +12,14 @@ class Topic < T::Struct
   DESCRIPTION_MAX_LENGTH = 150
 
   const :database_id, T::Wikino::DatabaseId
+  const :number, Integer
+  const :name, String
+  const :description, String
+  const :visibility, TopicVisibility
   const :space, Space
+
+  sig { returns(T::Boolean) }
+  def visibility_public?
+    visibility == TopicVisibility::Public
+  end
 end
