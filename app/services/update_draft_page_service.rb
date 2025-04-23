@@ -3,22 +3,22 @@
 
 class UpdateDraftPageService < ApplicationService
   class Result < T::Struct
-    const :draft_page, DraftPageRecord
+    const :draft_page_record, DraftPageRecord
   end
 
   sig do
     params(
-      space_member: SpaceMemberRecord,
-      page: PageRecord,
+      space_member_record: SpaceMemberRecord,
+      page_record: PageRecord,
       topic_number: T.nilable(String),
       title: T.nilable(String),
       body: T.nilable(String)
     ).returns(Result)
   end
-  def call(space_member:, page:, topic_number:, title:, body:)
+  def call(space_member_record:, page_record:, topic_number:, title:, body:)
     updated_draft_page = ActiveRecord::Base.transaction do
-      draft_page = space_member.find_or_create_draft_page!(page:)
-      topic = space_member.topic_records.find_by(number: topic_number).presence || page.topic_record
+      draft_page = space_member_record.find_or_create_draft_page!(page: page_record)
+      topic = space_member_record.topic_records.find_by(number: topic_number).presence || page_record.topic_record
       new_body = body.presence || ""
 
       draft_page.attributes = {
@@ -30,11 +30,11 @@ class UpdateDraftPageService < ApplicationService
       }
       draft_page.save!
 
-      draft_page.link!(editor: space_member)
+      draft_page.link!(editor: space_member_record)
 
       draft_page
     end
 
-    Result.new(draft_page: updated_draft_page)
+    Result.new(draft_page_record: updated_draft_page)
   end
 end

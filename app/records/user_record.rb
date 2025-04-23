@@ -78,7 +78,7 @@ class UserRecord < ApplicationRecord
   end
 
   sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
-  def current_space_member(space:)
+  def space_member_record(space:)
     active_space_member_records.find_by(space_record:)
   end
 

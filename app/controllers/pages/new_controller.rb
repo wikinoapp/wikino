@@ -12,7 +12,7 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      current_space_member = current_user!.current_space_member(space_record:)
+      space_member_record = current_user!.space_member_record(space_record:)
       topic = space.topic_records.kept.find_by!(number: params[:topic_number])
 
       unless space_viewer.can_create_page?(topic:)

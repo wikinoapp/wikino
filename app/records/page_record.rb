@@ -54,23 +54,6 @@ class PageRecord < ApplicationRecord
     )
   end
 
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(PageEntity) }
-  def to_entity(space_viewer:)
-    PageEntity.new(
-      database_id: id,
-      number:,
-      title:,
-      body:,
-      body_html:,
-      modified_at:,
-      published_at:,
-      pinned_at:,
-      space_entity: space_record.not_nil!.to_entity(space_viewer:),
-      topic_entity: topic_record.not_nil!.to_entity(space_viewer:),
-      viewer_can_update: space_viewer.can_update_page?(page: self)
-    )
-  end
-
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?
@@ -87,36 +70,10 @@ class PageRecord < ApplicationRecord
   end
 
   T::Sig::WithoutRuntime.sig { returns(T.any(PageRecord::PrivateAssociationRelationWhereChain, PageRecord::PrivateAssociationRelation)) }
-  def backlinked_pages
+  def backlinked_page_records
     pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
 
     pages.joins(:topic_record).merge(Current.viewer!.viewable_topics)
-  end
-
-  sig do
-    params(
-      space_viewer: ModelConcerns::SpaceViewable,
-      before: T.nilable(String),
-      after: T.nilable(String),
-      limit: Integer
-    ).returns(BacklinkListEntity)
-  end
-  def fetch_backlink_list_entity(space_viewer:, before: nil, after: nil, limit: 15)
-    cursor_paginate_page = backlinked_pages.cursor_paginate(
-      after:,
-      before:,
-      limit:,
-      order: {modified_at: :desc, id: :desc}
-    ).fetch
-
-    backlink_entities = cursor_paginate_page.records.map do |page|
-      BacklinkEntity.new(page_entity: page.to_entity(space_viewer:))
-    end
-
-    BacklinkListEntity.new(
-      backlink_entities:,
-      pagination_entity: PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
-    )
   end
 
   sig { params(editor: SpaceMemberRecord).void }

@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-class PaginationEntity < T::Struct
+class Pagination < T::Struct
   extend T::Sig
 
   include T::Struct::ActsAsComparable

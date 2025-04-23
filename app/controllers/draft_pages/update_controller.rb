@@ -12,28 +12,31 @@ module DraftPages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      current_space_member = current_user!.current_space_member(space_record:)
-      page = space.find_page_by_number!(params[:page_number]&.to_i)
+      space_member_record = current_user!.space_member_record(space_record:)
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      page_policy = PagePolicy.new(space_member_record:, page_record:)
 
-      unless space_viewer.can_update_draft_page?(page:)
+      unless page_policy.update_draft?
         return render_404
       end
 
       result = UpdateDraftPageService.new.call(
-        space_member: T.let(space_viewer, SpaceMemberRecord),
-        page:,
+        space_member_record:,
+        page_record:,
         topic_number: form_params[:topic_number],
         title: form_params[:title],
         body: form_params[:body]
       )
-      draft_page_entity = result.draft_page.to_entity(space_viewer:)
-      link_list_entity = result.draft_page.not_nil!.fetch_link_list_entity(space_viewer:)
-      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
+
+      draft_page_record = result.draft_page_record
+      draft_page = DraftPageRepository.new.to_model(draft_page_record:)
+      link_list = DraftPageRepository.new.link_list(pageable_record: draft_page_record)
+      backlink_list = PageRepository.new.backlink_list(page_record:)
 
       render(DraftPages::UpdateView.new(
-        draft_page_entity:,
-        link_list_entity:,
-        backlink_list_entity:
+        draft_page:,
+        link_list:,
+        backlink_list:
       ), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false

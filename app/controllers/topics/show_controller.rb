@@ -12,7 +12,7 @@ module Topics
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      current_space_member = current_user!.current_space_member(space_record:)
+      space_member_record = current_user!.space_member_record(space_record:)
       topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
 
       pinned_pages = topic.page_records.active.pinned.order(pinned_at: :desc, id: :desc)

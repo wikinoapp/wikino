@@ -3,7 +3,7 @@
 
 module RecordConcerns
   module Pageable
-    def backlinked_pages
+    def backlinked_page_records
     end
 
     def body

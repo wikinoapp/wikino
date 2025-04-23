@@ -5,7 +5,7 @@ module DraftPages
   class UpdateView < ApplicationView
     sig do
       params(
-        draft_page_entity: DraftPageEntity,
+        draft_page: DraftPage,
         link_list_entity: LinkListEntity,
         backlink_list_entity: BacklinkListEntity
       ).void
