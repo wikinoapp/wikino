@@ -2,20 +2,20 @@
 # frozen_string_literal: true
 
 class BacklinkListComponent < ApplicationComponent
-  sig { params(page_entity: PageEntity, backlink_list_entity: BacklinkListEntity).void }
-  def initialize(page_entity:, backlink_list_entity:)
-    @page_entity = T.let(page_entity, PageEntity)
-    @backlink_list_entity = T.let(backlink_list_entity, BacklinkListEntity)
+  sig { params(page: Page, backlink_list: BacklinkList).void }
+  def initialize(page:, backlink_list:)
+    @page = page
+    @backlink_list = backlink_list
   end
 
-  sig { returns(PageEntity) }
-  attr_reader :page_entity
-  private :page_entity
+  sig { returns(Page) }
+  attr_reader :page
+  private :page
 
-  sig { returns(BacklinkListEntity) }
-  attr_reader :backlink_list_entity
-  private :backlink_list_entity
+  sig { returns(BacklinkList) }
+  attr_reader :backlink_list
+  private :backlink_list
 
-  delegate :space_entity, to: :page_entity
-  delegate :backlink_entities, :pagination_entity, to: :backlink_list_entity
+  delegate :space, to: :page
+  delegate :backlinks, :pagination, to: :backlink_list
 end

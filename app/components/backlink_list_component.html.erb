@@ -1,11 +1,11 @@
-<% backlink_entities.each do |backlink_entity| %>
-  <%= render Cards::PageComponent.new(page_entity: backlink_entity.page_entity) %>
+<% backlinks.each do |backlink| %>
+  <%= render Cards::PageComponent.new(page: backlink.page) %>
 <% end %>
 
-<% if pagination_entity.has_next? %>
+<% if pagination.has_next? %>
   <turbo-frame id="backlink-list">
     <%= render Buttons::LinkPaginationComponent.new(
-      path: page_backlink_list_path(space_entity.identifier, page_entity.number, after: pagination_entity.next_cursor)
+      path: page_backlink_list_path(space.identifier, page.number, after: pagination.next_cursor)
     ) %>
   </turbo-frame>
 <% end %>

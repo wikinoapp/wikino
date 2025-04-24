@@ -14,22 +14,21 @@ module Backlinks
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user!.space_member_record(space_record:)
-      page = space.find_page_by_number!(params[:page_number]&.to_i)
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      page_policy = PagePolicy.new(user_record: current_user_record, page_record:)
 
-      unless space_viewer.can_view_page?(page:)
+      unless page_policy.show?
         return render_404
       end
 
-      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(
-        space_viewer:,
+      backlink_list = PageRepository.new.backlink_list(
+        user_record: current_user_record,
+        page_record:,
         after: params[:after]
       )
+      page = PageRepository.new.to_model(page_record:)
 
-      render(Backlinks::IndexView.new(
-        page_entity: page.to_entity(space_viewer:),
-        backlink_list_entity:
-      ), {
+      render(Backlinks::IndexView.new(page:, backlink_list:), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false
       })

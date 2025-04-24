@@ -6,12 +6,7 @@
 
 module ::BacklinkEntity; end
 module ::Current; end
-module ::TopicEntity; end
 module AbsoluteTimeComponent::UserEntity; end
-module BacklinkListComponent::BacklinkListEntity; end
-module BacklinkListComponent::PageEntity; end
-module Backlinks::IndexView::BacklinkListEntity; end
-module Backlinks::IndexView::PageEntity; end
 module Basic::PaginationComponent::PaginationEntity; end
 module Breadcrumbs::SpaceBreadcrumbsComponent::SpaceEntity; end
 module BulkRestoredPages::CreateController::Current; end
@@ -22,7 +17,6 @@ module Dropdowns::SpaceOptionsComponent::SpaceEntity; end
 module Dropdowns::TopicOptionsComponent::TopicEntity; end
 module ExportRecord::ExportEntity; end
 module ExportStatusRecord::ExportStatusEntity; end
-module Icons::TopicComponent::TopicEntity; end
 module Links::IndexView::LinkListEntity; end
 module Links::IndexView::PageEntity; end
 module Lists::TrashedPagesComponent::PageEntity; end

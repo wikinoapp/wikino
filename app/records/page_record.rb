@@ -54,6 +54,16 @@ class PageRecord < ApplicationRecord
     )
   end
 
+  sig { returns(SpaceRecord) }
+  def space_record!
+    space_record.not_nil!
+  end
+
+  sig { returns(TopicRecord) }
+  def topic_record!
+    topic_record.not_nil!
+  end
+
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?

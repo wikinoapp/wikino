@@ -22,7 +22,7 @@ class PageRepository < ApplicationRepository
 
   sig do
     params(
-      user_record: UserRecord,
+      user_record: T.nilable(UserRecord),
       page_record: PageRecord,
       before: T.nilable(String),
       after: T.nilable(String),
