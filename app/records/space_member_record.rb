@@ -135,11 +135,6 @@ class SpaceMemberRecord < ApplicationRecord
     active? && space_id == space.id
   end
 
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_view_page?(page:)
-    active? && space_id == page.space_id
-  end
-
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_view_trash?(space:)
     active? && space_id == space.id
