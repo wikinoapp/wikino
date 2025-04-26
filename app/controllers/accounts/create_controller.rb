@@ -39,10 +39,7 @@ module Accounts
         user_agent: request.user_agent
       )
 
-      user_session = UserSessionRepository.new.to_model(
-        user_session_record: user_session_result.user_session_record
-      )
-      sign_in(user_session)
+      sign_in(user_session_result.user_session_record)
 
       flash[:notice] = t("messages.accounts.signed_up_successfully")
       redirect_to after_authentication_url
