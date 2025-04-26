@@ -14,23 +14,23 @@ module Spaces
         sig { returns(T.untyped) }
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_member_record = current_user!.space_member_record(space_record:)
-          space_entity = space.to_entity(space_viewer:)
+          space_member_record = current_user_record!.space_member_record(space_record:)
+          space_member_policy = SpaceMemberPolicy.new(
+            user_record: current_user_record!,
+            space_member_record:
+          )
 
-          unless space_entity.viewer_can_update?
+          unless space_member_policy.can_update_space?(space_record:)
             return render_404
           end
 
+          space = SpaceRepository.new.to_model(space_record:)
           form = EditSpaceForm.new(
-            identifier: space_entity.identifier,
-            name: space_entity.name
+            identifier: space_record.identifier,
+            name: space_record.name
           )
 
-          render Spaces::Settings::General::ShowView.new(
-            current_user: current_user!,
-            space_entity:,
-            form:
-          )
+          render Spaces::Settings::General::ShowView.new(current_user:, space:, form:)
         end
       end
     end

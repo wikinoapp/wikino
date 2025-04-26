@@ -22,6 +22,14 @@ class SpaceMemberPolicy < ApplicationPolicy
   end
 
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.space_id == space_record.id &&
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
+  end
+
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
     return false if space_member_record.nil?
 
