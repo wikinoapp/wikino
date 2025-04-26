@@ -9,7 +9,7 @@ module PolicyConcerns
 
     sig do
       params(
-        record: SpaceBasedRecord,
+        record: T.nilable(SpaceBasedRecord),
         user_record: T.nilable(UserRecord),
         space_member_record: T.nilable(SpaceMemberRecord)
       ).void
@@ -28,7 +28,7 @@ module PolicyConcerns
       end
     end
 
-    sig { returns(SpaceBasedRecord) }
+    sig { returns(T.nilable(SpaceBasedRecord)) }
     attr_reader :record
     private :record
 
@@ -40,13 +40,13 @@ module PolicyConcerns
     attr_reader :space_member_record
     private :space_member_record
 
-    sig { returns(String) }
+    sig { returns(T.nilable(String)) }
     private def space_id
       case record
       when SpaceRecord
         record.id
       else
-        record.space_id
+        record&.space_id
       end
     end
 

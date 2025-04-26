@@ -115,11 +115,6 @@ class SpaceMemberRecord < ApplicationRecord
     space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_export_space?(space:)
-    space.id == space_id && permissions.include?(SpaceMemberPermission::ExportSpace)
-  end
-
   sig { override.params(topic: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic:)
     space_record.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)

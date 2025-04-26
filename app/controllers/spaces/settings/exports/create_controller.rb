@@ -14,17 +14,20 @@ module Spaces
         sig { returns(T.untyped) }
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_member_record = current_user!.space_member_record(space_record:)
-          space_entity = space.to_entity(space_viewer:)
+          space_member_record = current_user_record!.space_member_record(space_record:)
+          space_member_policy = SpaceMemberPolicy.new(
+            user_record: current_user_record!,
+            space_member_record:
+          )
 
-          unless space_entity.viewer_can_export?
+          unless space_member_policy.can_export_space?(space_record:)
             return render_404
           end
 
-          result = ExportService.new.call(space:, queued_by: space_viewer)
+          result = ExportService.new.call(space_record:, queued_by_record: space_member_record)
 
           flash[:notice] = t("messages.exports.started")
-          redirect_to space_settings_export_path(space.identifier, result.export.id)
+          redirect_to space_settings_export_path(space_record.identifier, result.export_record.id)
         end
       end
     end
