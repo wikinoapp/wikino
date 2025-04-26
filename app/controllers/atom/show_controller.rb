@@ -11,10 +11,15 @@ module Atom
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      pages = space_record.page_records.active
+      page_records = space_record.page_records.active
         .joins(:topic_record).merge(TopicRecord.visibility_public)
         .order(published_at: :desc, id: :desc)
         .limit(15)
+
+      space = SpaceRepository.new.to_model(space_record:)
+      pages = page_records.map do |page_record|
+        PageRepository.new.to_model(page_record:)
+      end
 
       render(
         Atom::ShowView.new(space:, pages:),
