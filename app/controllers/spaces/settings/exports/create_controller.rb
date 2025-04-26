@@ -24,7 +24,10 @@ module Spaces
             return render_404
           end
 
-          result = ExportService.new.call(space_record:, queued_by_record: space_member_record)
+          result = ExportService.new.call(
+            space_record:,
+            queued_by_record: space_member_record.not_nil!
+          )
 
           flash[:notice] = t("messages.exports.started")
           redirect_to space_settings_export_path(space_record.identifier, result.export_record.id)

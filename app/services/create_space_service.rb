@@ -3,19 +3,23 @@
 
 class CreateSpaceService < ApplicationService
   class Result < T::Struct
-    const :space, SpaceRecord
+    const :space_record, SpaceRecord
   end
 
-  sig { params(user: UserRecord, identifier: String, name: String).returns(Result) }
-  def call(user:, identifier:, name:)
+  sig { params(user_record: UserRecord, identifier: String, name: String).returns(Result) }
+  def call(user_record:, identifier:, name:)
     current_time = T.let(Time.current, ActiveSupport::TimeWithZone)
 
-    space = ActiveRecord::Base.transaction do
-      new_space = SpaceRecord.where(identifier:).first_or_create!(name:, plan: Plan::Free.serialize, joined_at: current_time)
-      new_space.add_member!(user:, role: SpaceMemberRole::Owner, joined_at: current_time)
-      new_space
+    space_record = ActiveRecord::Base.transaction do
+      new_space_record = SpaceRecord.where(identifier:).first_or_create!(
+        name:,
+        plan: Plan::Free.serialize,
+        joined_at: current_time
+      )
+      new_space_record.add_member!(user_record:, role: SpaceMemberRole::Owner, joined_at: current_time)
+      new_space_record
     end
 
-    Result.new(space:)
+    Result.new(space_record:)
   end
 end

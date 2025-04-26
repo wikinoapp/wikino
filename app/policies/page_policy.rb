@@ -5,15 +5,6 @@ class PagePolicy < ApplicationPolicy
   include PolicyConcerns::SpaceContext
 
   sig { returns(T::Boolean) }
-  def can_show?
-    if same_space_member?
-      return space_member_record!.active?
-    end
-
-    page_record.topic_record!.visibility_public?
-  end
-
-  sig { returns(T::Boolean) }
   def can_update?
     if same_space_member?
       return space_member_record!.active? &&
@@ -21,13 +12,6 @@ class PagePolicy < ApplicationPolicy
     end
 
     false
-  end
-
-  sig { returns(T::Boolean) }
-  def can_update_draft?
-    return false unless same_space_member?
-
-    space_member_record!.topic_records.where(id: page_record.topic_id).exists?
   end
 
   sig { returns(PageRecord) }

@@ -100,12 +100,12 @@ class UserRecord < ApplicationRecord
     topic_member_records.find_by(topic_record:)&.role_admin? == true
   end
 
-  sig { params(email_confirmation: EmailConfirmationRecord).void }
-  def run_after_email_confirmation_success!(email_confirmation:)
-    return unless email_confirmation.succeeded?
+  sig { params(email_confirmation_record: EmailConfirmationRecord).void }
+  def run_after_email_confirmation_success!(email_confirmation_record:)
+    return unless email_confirmation_record.succeeded?
 
-    if email_confirmation.deserialized_event == EmailConfirmationEvent::EmailUpdate
-      update!(email: email_confirmation.email)
+    if email_confirmation_record.deserialized_event == EmailConfirmationEvent::EmailUpdate
+      update!(email: email_confirmation_record.email)
     end
 
     nil

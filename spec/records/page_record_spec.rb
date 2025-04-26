@@ -42,8 +42,6 @@ RSpec.describe PageRecord, type: :record do
         linked_page_ids: [page_record_a.id, page_record_c.id]
       )
 
-      Current.viewer = user_record
-
       link_list_entity = target_page_record.fetch_link_list_entity(space_viewer: space_member_record)
       expect(link_list_entity.link_entities.size).to eq(2)
 

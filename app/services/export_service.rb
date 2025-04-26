@@ -16,7 +16,7 @@ class ExportService < ApplicationService
       export_record
     end
 
-    GenerateExportFilesJob.perform_later(export_id: created_export_record.id)
+    GenerateExportFilesJob.perform_later(export_record_id: created_export_record.id)
 
     Result.new(export_record: created_export_record)
   end

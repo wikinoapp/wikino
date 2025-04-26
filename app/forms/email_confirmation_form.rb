@@ -8,7 +8,7 @@ class EmailConfirmationForm < ApplicationForm
   validate :valid_confirmation_code
 
   sig { returns(EmailConfirmationRecord) }
-  def email_confirmation!
+  def email_confirmation_record!
     EmailConfirmationRecord.find(email_confirmation_id.not_nil!)
   end
 

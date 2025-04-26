@@ -8,7 +8,7 @@ module ControllerConcerns
 
     sig(:final) { params(user_session_record: UserSessionRecord).returns(T::Boolean) }
     def sign_in(user_session_record)
-      @current_user_record = T.let(user_session_record.user_record, UserRecord)
+      @current_user_record = T.let(user_session_record.user_record, T.nilable(UserRecord))
       store_user_session_token(token: user_session_record.token)
 
       true
@@ -66,16 +66,14 @@ module ControllerConcerns
 
     sig(:final) { returns(T.nilable(User)) }
     def current_user
-      @current_user ||= begin
-        return if current_user_record.nil?
+      return if current_user_record.nil?
 
-        UserRepository.new.to_model(user_record: current_user_record!)
-      end
+      current_user!
     end
 
     sig(:final) { returns(User) }
     def current_user!
-      @current_user ||= UserRepository.new.to_model(user_record: current_user_record!)
+      UserRepository.new.to_model(user_record: current_user_record!)
     end
 
     sig(:final) { returns(T.nilable(String)) }

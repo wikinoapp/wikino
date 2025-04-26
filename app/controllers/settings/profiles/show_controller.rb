@@ -12,15 +12,14 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        current_user = T.let(Current.viewer!, UserRecord)
         form = EditProfileForm.new(
-          atname: current_user.atname,
-          name: current_user.name,
-          description: current_user.description
+          atname: current_user!.atname,
+          name: current_user!.name,
+          description: current_user!.description
         )
 
         render Settings::Profiles::ShowView.new(
-          current_user_entity: current_user.to_entity,
+          current_user: current_user!,
           form:
         )
       end

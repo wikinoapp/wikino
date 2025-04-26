@@ -11,7 +11,7 @@ module Welcome
 
     sig { returns(T.untyped) }
     def call
-      if Current.viewer.signed_in?
+      if signed_in?
         return redirect_to(home_path)
       end
 

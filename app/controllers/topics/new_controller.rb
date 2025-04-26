@@ -25,7 +25,7 @@ module Topics
       space = SpaceRepository.new.to_model(space_record:)
       form = NewTopicForm.new
 
-      render Topics::NewView.new(current_user:, space:, form:)
+      render Topics::NewView.new(current_user: current_user!, space:, form:)
     end
   end
 end
