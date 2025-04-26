@@ -1,8 +1,8 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Pages::ShowView::BreadcrumbsComponent.new(topic_entity:) %>
+        <%= render Pages::ShowView::BreadcrumbsComponent.new(topic:) %>
       <% end %>
     <% end %>
   <% end %>
@@ -13,16 +13,16 @@
       class_name: "flex flex-col gap-6 px-4"
     ) do %>
       <article class="flex flex-col gap-6">
-        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page_entity:) %>
+        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
-        <% if page_entity.body_html.present? %>
+        <% if page.body_html.present? %>
           <div class="wikino-markdown">
-            <%= page_entity.body_html.html_safe %>
+            <%= page.body_html.html_safe %>
           </div>
         <% end %>
       </article>
 
-      <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
+      <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
     <% end %>
   <% end %>
 

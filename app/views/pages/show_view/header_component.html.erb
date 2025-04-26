@@ -1,12 +1,12 @@
 <div class="flex flex-col gap-4">
   <div class="flex flex-wrap-reverse items-center justify-between gap-4 md:flex-nowrap">
     <h1 class="flex-auto text-2xl font-bold antialiased">
-      <%= page_entity.title %>
+      <%= page.title %>
     </h1>
 
     <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
-      <% if page_entity.viewer_can_update? %>
-        <%= link_to edit_page_path(space_entity.identifier, page_entity.number), {
+      <% if page.viewer_can_update? %>
+        <%= link_to edit_page_path(space.identifier, page.number), {
           class: "btn btn-sm btn-primary no-animation rounded-full"
         } do %>
           <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
@@ -16,30 +16,30 @@
       <% end %>
 
       <% if signed_in? %>
-        <%= render Dropdowns::PageActionsComponent.new(page_entity:) %>
+        <%= render Dropdowns::PageActionsComponent.new(page:) %>
       <% end %>
     </div>
   </div>
 
   <% if false %>
   <div class="flex items-center gap-2">
-    <% if page_entity.published? %>
+    <% if page.published? %>
       <div
         class="text-sm text-gray-500"
         data-controller="absolute-time"
-        data-absolute-time-utc-time-value="<%= page_entity.published_at.iso8601 %>"
+        data-absolute-time-utc-time-value="<%= page.published_at.iso8601 %>"
       >
-        <%= t("messages.time.ago_published", time: time_ago_in_words(page_entity.published_at)) %>
+        <%= t("messages.time.ago_published", time: time_ago_in_words(page.published_at)) %>
       </div>
     <% end %>
 
-    <% if page_entity.modified_after_published? %>
+    <% if page.modified_after_published? %>
       <div
         class="text-sm text-gray-500"
         data-controller="absolute-time"
-        data-absolute-time-utc-time-value="<%= page_entity.modified_at.iso8601 %>"
+        data-absolute-time-utc-time-value="<%= page.modified_at.iso8601 %>"
       >
-        <%= t("messages.time.ago_modified", time: time_ago_in_words(page_entity.modified_at)) %>
+        <%= t("messages.time.ago_modified", time: time_ago_in_words(page.modified_at)) %>
       </div>
     <% end %>
   </div>
