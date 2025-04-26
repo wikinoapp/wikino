@@ -12,21 +12,33 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user!.space_member_record(space_record:)
-      page = space.find_page_by_number!(params[:page_number]&.to_i)
+      space_member_record = current_user_record&.space_member_record(space_record:)
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      policy = PagePolicy.new(
+        record: page_record,
+        user_record: current_user_record,
+        space_member_record:
+      )
 
-      unless space_viewer.can_view_page?(page:)
+      unless policy.show?
         return render_404
       end
 
-      link_list_entity = page.not_nil!.fetch_link_list_entity(space_viewer:)
-      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
+      page = PageRepository.new.to_model(page_record:)
+      link_list = LinkListRepository.new.to_model(
+        user_record: current_user_record,
+        pageable_record: page_record
+      )
+      backlink_list = BacklinkListRepository.new.to_model(
+        user_record: current_user_record,
+        page_record:
+      )
 
       render Pages::ShowView.new(
         current_user: current_user!,
-        page_entity: page.to_entity(space_viewer:),
-        link_list_entity:,
-        backlink_list_entity:
+        page:,
+        link_list:,
+        backlink_list:
       )
     end
   end
