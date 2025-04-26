@@ -28,11 +28,11 @@ module Spaces
           space = SpaceRepository.new.to_model(space_record:)
           export = ExportRepository.new.to_model(export_record:)
           export_status = ExportStatusRepository.new.to_model(
-            export_status_record: export_record.latest_status_record
+            export_status_record: export_record.latest_status_record.not_nil!
           )
 
           render Spaces::Settings::Exports::ShowView.new(
-            current_user:,
+            current_user: current_user!,
             space:,
             export:,
             export_status:

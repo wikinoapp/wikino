@@ -59,6 +59,14 @@ class SpaceMemberPolicy < ApplicationPolicy
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.joined_topics.where(id: page_record.topic_id).exists?
+  end
+
+  sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
     if space_member_record.nil?
       return page_record.topic_record!.visibility_public?
@@ -74,6 +82,13 @@ class SpaceMemberPolicy < ApplicationPolicy
 
     space_member_record!.active? &&
       space_member_record!.space_id == page_record.space_id
+  end
+
+  sig { returns(T::Boolean) }
+  def can_create_bulk_restore_pages?
+    return false if space_member_record.nil?
+
+    space_member_record!.active?
   end
 
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }

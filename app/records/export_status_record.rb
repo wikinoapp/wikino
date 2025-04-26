@@ -13,15 +13,4 @@ class ExportStatusRecord < ApplicationRecord
 
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :export_record, foreign_key: :export_id
-
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportStatusEntity) }
-  def to_entity(space_viewer:)
-    ExportStatusEntity.new(
-      database_id: id,
-      kind: ExportStatusKind.deserialize(kind),
-      changed_at:,
-      space_entity: space_record.not_nil!.to_entity(space_viewer:),
-      export_entity: export_record.not_nil!.to_entity(space_viewer:)
-    )
-  end
 end

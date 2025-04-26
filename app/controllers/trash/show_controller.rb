@@ -30,7 +30,12 @@ module Trash
       )
       form = TrashedPagesForm.new
 
-      render Trash::ShowView.new(current_user:, space:, page_list:, form:)
+      render Trash::ShowView.new(
+        current_user: current_user!,
+        space:,
+        page_list:,
+        form:
+      )
     end
   end
 end

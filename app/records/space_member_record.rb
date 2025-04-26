@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class SpaceMemberRecord < ApplicationRecord
-  include ModelConcerns::SpaceViewable
-
   self.table_name = "space_members"
 
   enum :role, {
@@ -67,15 +65,6 @@ class SpaceMemberRecord < ApplicationRecord
     draft_page_records.where(page_record:).destroy_all
 
     nil
-  end
-
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceMemberEntity) }
-  def to_entity(space_viewer:)
-    SpaceMemberEntity.new(
-      database_id: id,
-      space_entity: space_record.not_nil!.to_entity(space_viewer:),
-      user_entity: user_record.not_nil!.to_entity
-    )
   end
 
   sig { returns(SpaceMemberRole) }

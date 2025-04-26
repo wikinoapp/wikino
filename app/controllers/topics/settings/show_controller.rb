@@ -28,7 +28,10 @@ module Topics
 
         topic = TopicRepository.new.to_model(topic_record:)
 
-        render Topics::Settings::ShowView.new(current_user:, topic:)
+        render Topics::Settings::ShowView.new(
+          current_user: current_user!,
+          topic:
+        )
       end
     end
   end

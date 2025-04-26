@@ -15,9 +15,6 @@ module RecordConcerns
     def linked_page_ids
     end
 
-    def linked_pages(**args)
-    end
-
     def space_record
     end
 

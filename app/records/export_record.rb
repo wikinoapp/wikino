@@ -41,15 +41,6 @@ class ExportRecord < ApplicationRecord
     succeeded? && latest_status_record.not_nil!.changed_at > 1.day.ago
   end
 
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(ExportEntity) }
-  def to_entity(space_viewer:)
-    ExportEntity.new(
-      database_id: id,
-      queued_by_entity: queued_by_record.not_nil!.to_entity(space_viewer:),
-      space_entity: space_record.not_nil!.to_entity(space_viewer:)
-    )
-  end
-
   sig { returns(PageRecord::PrivateAssociationRelation) }
   def target_pages
     space_record.not_nil!.page_records.active

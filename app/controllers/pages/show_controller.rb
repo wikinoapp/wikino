@@ -14,13 +14,12 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
-      page_policy = PagePolicy.new(
-        record: page_record,
-        user_record: current_user_record,
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
         space_member_record:
       )
 
-      unless page_policy.can_show?
+      unless space_member_policy.can_show_page?(page_record:)
         return render_404
       end
 

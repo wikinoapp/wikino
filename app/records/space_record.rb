@@ -70,19 +70,6 @@ class SpaceRecord < ApplicationRecord
     SpaceRecord.where.not(id:).exists?(identifier:)
   end
 
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
-  def to_entity(space_viewer:)
-    SpaceEntity.new(
-      database_id: id,
-      identifier:,
-      name:,
-      plan: Plan.deserialize(plan),
-      joined_at:,
-      viewer_can_update: space_viewer.can_update_space?(space: self),
-      viewer_can_export: space_viewer.can_export_space?(space: self)
-    )
-  end
-
   sig { params(number: Integer).returns(PageRecord) }
   def find_page_by_number!(number)
     page_records.kept.find_by!(number:)

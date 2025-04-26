@@ -13,9 +13,12 @@ module BulkRestoredPages
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
-      policy = BulkRestoredPagePolicy.new(record: space_record, space_member_record:)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless policy.create?
+      unless space_member_policy.can_create_bulk_restore_pages?
         return render_404
       end
 

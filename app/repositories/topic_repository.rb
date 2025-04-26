@@ -18,7 +18,7 @@ class TopicRepository < ApplicationRepository
       visibility: TopicVisibility.deserialize(topic_record.visibility),
       can_update:,
       can_create_page:,
-      space: SpaceRepository.new.to_model(space_record: topic_record.space_record)
+      space: SpaceRepository.new.to_model(space_record: topic_record.space_record.not_nil!)
     )
   end
 end

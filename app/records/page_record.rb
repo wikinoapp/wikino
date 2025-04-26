@@ -30,18 +30,6 @@ class PageRecord < ApplicationRecord
   scope :active, -> { kept.not_trashed.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
 
-  sig do
-    params(
-      space_viewer: ModelConcerns::SpaceViewable,
-      pages: T.any(PageRecord::PrivateAssociationRelation, T::Array[PageRecord])
-    ).returns(T::Array[PageEntity])
-  end
-  def self.to_entities(space_viewer:, pages:)
-    pages.map do |page|
-      page.to_entity(space_viewer:)
-    end
-  end
-
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic_record:)
     topic_record.page_records.create!(

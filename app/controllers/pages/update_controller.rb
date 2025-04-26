@@ -14,13 +14,12 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i).not_nil!
-      page_policy = PagePolicy.new(
-        record: page_record,
+      space_member_policy = SpaceMemberPolicy.new(
         user_record: current_user_record!,
         space_member_record:
       )
 
-      unless page_policy.can_update?
+      unless space_member_policy.can_update_page?(page_record:)
         return render_404
       end
 
@@ -39,7 +38,14 @@ module Pages
         )
 
         return render(
-          Pages::EditView.new(current_user:, space:, page:, form:, link_list:, backlink_list:), {
+          Pages::EditView.new(
+            current_user: current_user!,
+            space:,
+            page:,
+            form:,
+            link_list:,
+            backlink_list:
+          ), {
             status: :unprocessable_entity
           }
         )

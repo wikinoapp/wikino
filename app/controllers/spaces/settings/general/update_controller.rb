@@ -29,7 +29,11 @@ module Spaces
           if form.invalid?
             space = SpaceRepository.new.to_model(space_record:)
 
-            return render(Spaces::Settings::General::ShowView.new(current_user:, space:, form:), {
+            return render(Spaces::Settings::General::ShowView.new(
+              current_user: current_user!,
+              space:,
+              form:
+            ), {
               status: :unprocessable_entity
             })
           end

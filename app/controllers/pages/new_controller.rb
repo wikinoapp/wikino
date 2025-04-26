@@ -14,9 +14,12 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
       topic_record = space_record.topic_records.kept.find_by!(number: params[:topic_number])
-      topic_policy = TopicPolicy.new(record: topic_record, space_member_record:)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless topic_policy.create_page?
+      unless space_member_policy.can_create_page?(topic_record:)
         return render_404
       end
 

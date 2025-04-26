@@ -5,20 +5,10 @@
 # typed: false
 
 module ::BacklinkEntity; end
-module ::Current; end
-module ConfirmEmailService::Current; end
 module ExportRecord::ExportEntity; end
 module ExportStatusRecord::ExportStatusEntity; end
 module PageRecord::PageEntity; end
-module Profiles::ShowController::Current; end
-module Profiles::ShowView::SpaceEntity; end
-module Profiles::ShowView::UserEntity; end
-module Settings::Profiles::ShowController::Current; end
-module Settings::Profiles::UpdateController::Current; end
 module SpaceMemberRecord::SpaceMemberEntity; end
 module SpaceRecord::SpaceEntity; end
-module Spaces::CreateController::Current; end
 module TopicRecord::TopicEntity; end
-module UserRecord::UserEntity; end
-module Welcome::ShowController::Current; end
 module Zip::File::CREATE; end

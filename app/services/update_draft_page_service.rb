@@ -30,7 +30,7 @@ class UpdateDraftPageService < ApplicationService
       }
       draft_page.save!
 
-      draft_page.link!(editor: space_member_record)
+      draft_page.link!(editor_record: space_member_record)
 
       draft_page
     end
