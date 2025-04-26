@@ -8,7 +8,7 @@ RSpec.describe PageRecord, type: :record do
       space_record = create(:space_record)
       space_record.reload
       topic_record = create(:topic_record, space_record:)
-      space_member_record = create(:space_member_record, user_record:, space_record:)
+      create(:space_member_record, user_record:, space_record:)
       page_record_a = create(
         :page_record,
         space_record:,

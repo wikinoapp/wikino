@@ -4,5 +4,4 @@
 
 # typed: false
 
-module ::BacklinkEntity; end
 module Zip::File::CREATE; end
