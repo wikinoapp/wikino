@@ -4,20 +4,15 @@
 module Topics
   module Settings
     class ShowView < ApplicationView
-      sig do
-        params(
-          current_user: User,
-          topic_entity: TopicEntity
-        ).void
-      end
-      def initialize(current_user:, topic_entity:)
+      sig { params(current_user: User, topic: Topic).void }
+      def initialize(current_user:, topic:)
         @current_user = current_user
-        @topic_entity = topic_entity
+        @topic = topic
       end
 
       sig { override.void }
       def before_render
-        title = I18n.t("meta.title.topics.settings.show", topic_name: topic_entity.name, space_name: space_entity.name)
+        title = I18n.t("meta.title.topics.settings.show", topic_name: topic.name, space_name: space.name)
         helpers.set_meta_tags(title:, **default_meta_tags(site: false))
       end
 
@@ -25,11 +20,11 @@ module Topics
       attr_reader :current_user
       private :current_user
 
-      sig { returns(TopicEntity) }
-      attr_reader :topic_entity
-      private :topic_entity
+      sig { returns(Topic) }
+      attr_reader :topic
+      private :topic
 
-      delegate :space_entity, to: :topic_entity
+      delegate :space, to: :topic
 
       sig { returns(PageName) }
       private def current_page_name
