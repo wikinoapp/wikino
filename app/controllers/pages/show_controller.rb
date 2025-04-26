@@ -24,7 +24,10 @@ module Pages
         return render_404
       end
 
-      page = PageRepository.new.to_model(page_record:, page_policy:)
+      page = PageRepository.new.to_model(
+        page_record:,
+        can_update: page_policy.can_update?
+      )
       link_list = LinkListRepository.new.to_model(
         user_record: current_user_record,
         pageable_record: page_record

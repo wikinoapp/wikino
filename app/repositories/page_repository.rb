@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 class PageRepository < ApplicationRepository
-  sig { params(page_record: PageRecord, page_policy: PagePolicy).returns(Page) }
-  def to_model(page_record:, page_policy:)
+  sig { params(page_record: PageRecord, can_update: T.nilable(T::Boolean)).returns(Page) }
+  def to_model(page_record:, can_update:)
     Page.new(
       database_id: page_record.id,
       number: page_record.number,
@@ -15,7 +15,7 @@ class PageRepository < ApplicationRepository
       pinned_at: page_record.pinned_at,
       space: SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!),
       topic: TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!),
-      can_update: page_policy.can_update?
+      can_update:
     )
   end
 
