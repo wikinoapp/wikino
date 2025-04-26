@@ -6,7 +6,7 @@ module FormConcerns
     extend ActiveSupport::Concern
 
     included do
-      validates :visibility, inclusion: {in: Topic.visibilities.keys}, presence: true
+      validates :visibility, inclusion: {in: TopicVisibility.values.map(&:serialize)}, presence: true
     end
   end
 end

@@ -3,8 +3,8 @@
 
 RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
-    space = create(:space, :small)
-    page = create(:page, space:)
+    space = create(:space_record, :small)
+    page = create(:page_record, space_record: space)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
@@ -13,14 +13,14 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
   end
 
   it "別のスペースに参加しているとき、404ページが表示されること" do
-    space = create(:space, :small)
-    page = create(:page, space:)
+    space = create(:space_record, :small)
+    page = create(:page_record, space_record: space)
 
-    other_space = create(:space)
-    user = create(:user, :with_password)
-    create(:space_member, space: other_space, user:)
+    other_space = create(:space_record)
+    user = create(:user_record, :with_password)
+    create(:space_member_record, space_record: other_space, user_record: user)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
@@ -28,13 +28,13 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
   end
 
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    create(:space_member, space:, user:)
-    topic = create(:topic, space:)
-    page = create(:page, space:, topic:, title: "ページタイトル")
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    create(:space_member_record, space_record: space, user_record: user)
+    topic = create(:topic_record, space_record: space)
+    page = create(:page_record, space_record: space, topic_record: topic, title: "ページタイトル")
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 
@@ -42,14 +42,14 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
   end
 
   it "スペースに参加している & ページのトピックに参加しているとき、編集ページが表示されること" do
-    user = create(:user, :with_password)
-    space = create(:space, :small)
-    space_member = create(:space_member, space:, user:)
-    topic = create(:topic, space:)
-    page = create(:page, space:, topic:, title: "ページタイトル")
-    create(:topic_member, space:, topic:, space_member:)
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    space_member = create(:space_member_record, space_record: space, user_record: user)
+    topic = create(:topic_record, space_record: space)
+    page = create(:page_record, space_record: space, topic_record: topic, title: "ページタイトル")
+    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
 
-    sign_in(user:)
+    sign_in(user_record: user)
 
     get "/s/#{space.identifier}/pages/#{page.number}/edit"
 

@@ -11,7 +11,7 @@ module Trash
 
     sig { returns(T.untyped) }
     def call
-      space = Space.find_by_identifier!(params[:space_identifier])
+      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_viewer = Current.viewer!.space_viewer!(space:)
 
       unless space_viewer.can_view_trash?(space:)

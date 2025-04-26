@@ -3,12 +3,12 @@
 
 class UpdateProfileService < ApplicationService
   class Result < T::Struct
-    const :user, User
+    const :user, UserRecord
   end
 
   sig { params(form: EditProfileForm).returns(Result) }
   def call(form:)
-    user = form.user.not_nil!
+    user = form.user_record.not_nil!
     user.attributes = {
       atname: form.atname.not_nil!,
       name: form.name.not_nil!,

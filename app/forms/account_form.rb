@@ -12,7 +12,7 @@ class AccountForm < ApplicationForm
   attribute :time_zone, :string
 
   validates :email, email: true, presence: true
-  validates :locale, inclusion: {in: User.locales.keys}, presence: true
+  validates :locale, inclusion: {in: ViewerLocale.values.map(&:serialize)}, presence: true
   validates :time_zone,
     format: {with: %r{\A[A-Za-z]+/[A-Za-z_]+\z}},
     presence: true
@@ -23,7 +23,7 @@ class AccountForm < ApplicationForm
   private def atname_uniqueness
     return if atname.nil?
 
-    if User.exists?(atname:)
+    if UserRecord.exists?(atname:)
       errors.add(:atname, :uniqueness)
     end
   end
@@ -32,7 +32,7 @@ class AccountForm < ApplicationForm
   private def email_uniqueness
     return if email.nil?
 
-    if User.exists?(email:)
+    if UserRecord.exists?(email:)
       errors.add(:email, :uniqueness)
     end
   end

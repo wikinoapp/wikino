@@ -4,12 +4,12 @@
 class ExportMailer < ApplicationMailer
   sig { params(export_id: T::Wikino::DatabaseId, locale: String).void }
   def succeeded(export_id:, locale:)
-    @export = Export.find(export_id)
-    @space = @export.space
+    @export = ExportRecord.find(export_id)
+    @space = @export.space_record
 
     I18n.with_locale(locale) do
       mail(
-        to: @export.queued_by.not_nil!.user.not_nil!.email,
+        to: @export.queued_by_record.not_nil!.user_record.not_nil!.email,
         subject: default_i18n_subject
       )
     end

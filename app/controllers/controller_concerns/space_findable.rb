@@ -6,9 +6,9 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    sig(:final) { returns(Space) }
+    sig(:final) { returns(SpaceRecord) }
     def find_space_by_identifier!
-      Space.kept.find_by!(identifier: params[:space_identifier])
+      SpaceRecord.kept.find_by!(identifier: params[:space_identifier])
     end
   end
 end

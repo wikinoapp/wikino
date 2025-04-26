@@ -8,51 +8,51 @@ module ModelConcerns
 
     interface!
 
-    sig { abstract.returns(T.any(DraftPage::PrivateAssociationRelation, DraftPage::PrivateRelation)) }
-    def draft_pages
+    sig { abstract.returns(T.any(DraftPageRecord::PrivateAssociationRelation, DraftPageRecord::PrivateRelation)) }
+    def draft_page_records
     end
 
-    sig { abstract.returns(Page::PrivateAssociationRelation) }
+    sig { abstract.returns(PageRecord::PrivateAssociationRelation) }
     def showable_pages
     end
 
-    sig { abstract.returns(T.any(Topic::PrivateAssociationRelation, Topic::PrivateRelation)) }
+    sig { abstract.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
     def joined_topics
     end
 
-    sig { abstract.returns(Topic::PrivateAssociationRelation) }
+    sig { abstract.returns(TopicRecord::PrivateAssociationRelation) }
     def showable_topics
     end
 
-    sig { abstract.params(space: Space).returns(T::Boolean) }
+    sig { abstract.params(space: SpaceRecord).returns(T::Boolean) }
     def can_update_space?(space:)
     end
 
-    sig { abstract.params(space: Space).returns(T::Boolean) }
+    sig { abstract.params(space: SpaceRecord).returns(T::Boolean) }
     def can_export_space?(space:)
     end
 
-    sig { abstract.params(topic: Topic).returns(T::Boolean) }
+    sig { abstract.params(topic: TopicRecord).returns(T::Boolean) }
     def can_update_topic?(topic:)
     end
 
-    sig { abstract.params(topic: T.nilable(Topic)).returns(T::Boolean) }
+    sig { abstract.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
     def can_create_page?(topic:)
     end
 
-    sig { abstract.params(space: Space).returns(T::Boolean) }
+    sig { abstract.params(space: SpaceRecord).returns(T::Boolean) }
     def can_create_bulk_restored_pages?(space:)
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
+    sig { abstract.params(page: PageRecord).returns(T::Boolean) }
     def can_view_page?(page:)
     end
 
-    sig { abstract.params(space: Space).returns(T::Boolean) }
+    sig { abstract.params(space: SpaceRecord).returns(T::Boolean) }
     def can_view_trash?(space:)
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
+    sig { abstract.params(page: PageRecord).returns(T::Boolean) }
     def can_update_page?(page:)
     end
 
@@ -60,7 +60,7 @@ module ModelConcerns
     def can_create_topic?
     end
 
-    sig { abstract.params(page: Page).returns(T::Boolean) }
+    sig { abstract.params(page: PageRecord).returns(T::Boolean) }
     def can_update_draft_page?(page:)
     end
   end

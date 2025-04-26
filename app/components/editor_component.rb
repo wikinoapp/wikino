@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class EditorComponent < ApplicationComponent
-  sig { params(id: String, page: Page).void }
+  sig { params(id: String, page: PageRecord).void }
   def initialize(id:, page:)
     @id = id
     @page = page
@@ -13,6 +13,6 @@ class EditorComponent < ApplicationComponent
   sig { returns(String) }
   attr_reader :id
 
-  sig { returns(Page) }
+  sig { returns(PageRecord) }
   attr_reader :page
 end

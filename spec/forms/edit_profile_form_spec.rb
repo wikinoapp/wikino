@@ -38,10 +38,10 @@ RSpec.describe EditProfileForm, type: :form do
   end
 
   it "アットネームがすでに使われているとき、エラーになること" do
-    create(:user, atname: "already_used_atname")
-    user = create(:user)
+    create(:user_record, atname: "already_used_atname")
+    user = create(:user_record)
 
-    form = EditProfileForm.new(user:, atname: "already_used_atname")
+    form = EditProfileForm.new(user_record: user, atname: "already_used_atname")
 
     expect(form).not_to be_valid
     expect(form.errors.full_messages).to include("Atname has already been taken")
@@ -136,10 +136,10 @@ RSpec.describe EditProfileForm, type: :form do
   end
 
   private def valid_attributes
-    user = create(:user)
+    user_record = create(:user_record)
 
     {
-      user:,
+      user_record:,
       atname: "a",
       name: "a",
       description: "a"

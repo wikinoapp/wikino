@@ -8,7 +8,7 @@ require "html_pipeline/convert_filter/markdown_filter"
 class Markup
   extend T::Sig
 
-  sig { params(current_topic: Topic).void }
+  sig { params(current_topic: TopicRecord).void }
   def initialize(current_topic:)
     @current_topic = current_topic
   end
@@ -18,7 +18,7 @@ class Markup
     return "" if text.empty?
 
     location_keys = PageLocationKey.scan_text(text:, current_topic:)
-    page_locations = PageLocation.build_with_keys(current_space: current_topic.space.not_nil!, keys: location_keys)
+    page_locations = PageLocation.build_with_keys(current_space: current_topic.space_record.not_nil!, keys: location_keys)
 
     pipeline = HTMLPipeline.new(
       text_filters: [],
@@ -45,7 +45,7 @@ class Markup
     result[:output].to_s
   end
 
-  sig { returns(Topic) }
+  sig { returns(TopicRecord) }
   attr_reader :current_topic
   private :current_topic
 

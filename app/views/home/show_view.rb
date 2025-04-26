@@ -3,7 +3,7 @@
 
 module Home
   class ShowView < ApplicationView
-    sig { params(active_spaces: Space::PrivateCollectionProxy, current_user_entity: UserEntity).void }
+    sig { params(active_spaces: SpaceRecord::PrivateCollectionProxy, current_user_entity: UserEntity).void }
     def initialize(active_spaces:, current_user_entity:)
       @active_spaces = active_spaces
       @current_user_entity = current_user_entity
@@ -15,7 +15,7 @@ module Home
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(Space::PrivateCollectionProxy) }
+    sig { returns(SpaceRecord::PrivateCollectionProxy) }
     attr_reader :active_spaces
     private :active_spaces
 
