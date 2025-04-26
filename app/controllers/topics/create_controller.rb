@@ -12,34 +12,35 @@ module Topics
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user!.space_member_record(space_record:)
+      space_member_record = current_user_record!.space_member_record(space_record:)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless space_viewer.can_create_topic?
+      unless space_member_policy.can_create_topic?
         return render_404
       end
 
-      form = NewTopicForm.new(form_params.merge(space_record: space))
+      form = NewTopicForm.new(form_params.merge(space_record:))
 
       if form.invalid?
-        return render(
-          Topics::NewView.new(
-            current_user: current_user!,
-            space_entity: space.to_entity(space_viewer:),
-            form:
-          ),
+        space = SpaceRepository.new.to_model(space_record:)
+
+        return render(Topics::NewView.new(current_user:, space:, form:), {
           status: :unprocessable_entity
-        )
+        })
       end
 
       result = CreateTopicService.new.call(
-        space_member: T.let(space_viewer, SpaceMemberRecord),
+        space_member_record: space_member_record.not_nil!,
         name: form.name.not_nil!,
         description: form.description.not_nil!,
         visibility: form.visibility.not_nil!
       )
 
       flash[:notice] = t("messages.topics.created")
-      redirect_to topic_path(space.identifier, result.topic.number)
+      redirect_to topic_path(space_record.identifier, result.topic_record.number)
     end
 
     sig { returns(ActionController::Parameters) }

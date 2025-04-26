@@ -119,9 +119,4 @@ class SpaceMemberRecord < ApplicationRecord
   def can_view_trash?(space:)
     active? && space_id == space.id
   end
-
-  sig { override.returns(T::Boolean) }
-  def can_create_topic?
-    true
-  end
 end

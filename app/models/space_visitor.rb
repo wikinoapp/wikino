@@ -70,11 +70,6 @@ class SpaceVisitor
     false
   end
 
-  sig { override.returns(T::Boolean) }
-  def can_create_topic?
-    false
-  end
-
   sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page:)
     false

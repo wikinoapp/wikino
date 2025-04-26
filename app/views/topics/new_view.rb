@@ -6,19 +6,19 @@ module Topics
     sig do
       params(
         current_user: User,
-        space_entity: SpaceEntity,
+        space: Space,
         form: NewTopicForm
       ).void
     end
-    def initialize(current_user:, space_entity:, form:)
+    def initialize(current_user:, space:, form:)
       @current_user = current_user
-      @space_entity = space_entity
+      @space = space
       @form = form
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.topics.new", space_name: space_entity.name)
+      title = I18n.t("meta.title.topics.new", space_name: space.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
@@ -26,9 +26,9 @@ module Topics
     attr_reader :current_user
     private :current_user
 
-    sig { returns(SpaceEntity) }
-    attr_reader :space_entity
-    private :space_entity
+    sig { returns(Space) }
+    attr_reader :space
+    private :space
 
     sig { returns(NewTopicForm) }
     attr_reader :form

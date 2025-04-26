@@ -29,6 +29,11 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
+  sig { returns(T::Boolean) }
+  def can_create_topic?
+    !space_member_record.nil?
+  end
+
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
     return false if space_member_record.nil?
