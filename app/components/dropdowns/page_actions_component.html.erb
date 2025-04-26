@@ -5,7 +5,7 @@
 
   <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>
     <%= dropdown_menu.with_item do %>
-      <%= button_to trashed_page_path(space_entity.identifier, page_entity.number), {
+      <%= button_to trashed_page_path(space.identifier, page.number), {
         class: "text-red-600 flex gap-2 items-center w-full",
         form: {
           data: {

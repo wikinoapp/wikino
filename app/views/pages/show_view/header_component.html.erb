@@ -5,7 +5,7 @@
     </h1>
 
     <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
-      <% if page.viewer_can_update? %>
+      <% if page.can_update? %>
         <%= link_to edit_page_path(space.identifier, page.number), {
           class: "btn btn-sm btn-primary no-animation rounded-full"
         } do %>

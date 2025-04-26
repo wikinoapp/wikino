@@ -11,23 +11,19 @@ module PolicyConcerns
       params(
         record: SpaceBasedRecord,
         user_record: T.nilable(UserRecord),
-        space_record: T.nilable(SpaceRecord),
         space_member_record: T.nilable(SpaceMemberRecord)
       ).void
     end
-    def initialize(record:, user_record: nil, space_record: nil, space_member_record: nil)
+    def initialize(record:, user_record: nil, space_member_record: nil)
       @record = record
       @user_record = user_record
-      @space_record = space_record
-      @space_member_record = space_member_record || find_space_member_record
+      @space_member_record = space_member_record
 
       if mismatched_relations?
         raise ArgumentError, [
           "Mismatched relations.",
           "user_record.id: #{user_record&.id.inspect}",
-          "space_record.id: #{space_record&.id.inspect}",
-          "space_member_record.user_id: #{space_member_record&.user_id.inspect}",
-          "space_member_record.space_id: #{space_member_record&.space_id.inspect}"
+          "space_member_record.user_id: #{space_member_record&.user_id.inspect}"
         ].join(" ")
       end
     end
@@ -39,10 +35,6 @@ module PolicyConcerns
     sig { returns(T.nilable(UserRecord)) }
     attr_reader :user_record
     private :user_record
-
-    sig { returns(T.nilable(SpaceRecord)) }
-    attr_reader :space_record
-    private :space_record
 
     sig { returns(T.nilable(SpaceMemberRecord)) }
     attr_reader :space_member_record
@@ -56,11 +48,6 @@ module PolicyConcerns
       else
         record.space_id
       end
-    end
-
-    sig { returns(T.nilable(SpaceMemberRecord)) }
-    private def find_space_member_record
-      user_record&.active_space_member_records&.find_by(space_record:)
     end
 
     sig { returns(T::Boolean) }
@@ -77,8 +64,6 @@ module PolicyConcerns
     private def mismatched_relations?
       if !user_record.nil? && !space_member_record.nil?
         user_record.not_nil!.id != space_member_record.not_nil!.user_id
-      elsif !space_record.nil? && !space_member_record.nil?
-        space_record.not_nil!.id != space_member_record.not_nil!.space_id
       else
         false
       end

@@ -5,7 +5,7 @@ class PagePolicy < ApplicationPolicy
   include PolicyConcerns::SpaceContext
 
   sig { returns(T::Boolean) }
-  def show?
+  def can_show?
     if same_space_member?
       return space_member_record!.active?
     end
@@ -14,7 +14,7 @@ class PagePolicy < ApplicationPolicy
   end
 
   sig { returns(T::Boolean) }
-  def update?
+  def can_update?
     if same_space_member?
       return space_member_record!.active? &&
           space_member_record!.joined_topics.where(id: page_record.topic_id).exists?
@@ -24,7 +24,7 @@ class PagePolicy < ApplicationPolicy
   end
 
   sig { returns(T::Boolean) }
-  def update_draft?
+  def can_update_draft?
     return false unless same_space_member?
 
     space_member_record!.topic_records.where(id: page_record.topic_id).exists?

@@ -14,17 +14,17 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
-      policy = PagePolicy.new(
+      page_policy = PagePolicy.new(
         record: page_record,
         user_record: current_user_record,
         space_member_record:
       )
 
-      unless policy.show?
+      unless page_policy.can_show?
         return render_404
       end
 
-      page = PageRepository.new.to_model(page_record:)
+      page = PageRepository.new.to_model(page_record:, page_policy:)
       link_list = LinkListRepository.new.to_model(
         user_record: current_user_record,
         pageable_record: page_record
@@ -35,7 +35,7 @@ module Pages
       )
 
       render Pages::ShowView.new(
-        current_user: current_user!,
+        current_user:,
         page:,
         link_list:,
         backlink_list:

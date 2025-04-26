@@ -19,6 +19,7 @@ class Page < T::Struct
   const :modified_at, ActiveSupport::TimeWithZone
   const :published_at, T.nilable(ActiveSupport::TimeWithZone)
   const :pinned_at, T.nilable(ActiveSupport::TimeWithZone)
+  const :can_update, T.nilable(T::Boolean)
   const :space, Space
   const :topic, Topic
 
@@ -35,5 +36,10 @@ class Page < T::Struct
   sig { returns(T::Boolean) }
   def modified_after_published?
     published? && modified_at > published_at
+  end
+
+  sig { returns(T::Boolean) }
+  def can_update?
+    can_update.not_nil!
   end
 end
