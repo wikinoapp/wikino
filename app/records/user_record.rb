@@ -116,11 +116,6 @@ class UserRecord < ApplicationRecord
     topic_member_records.find_by(topic_record:)&.role_admin? == true
   end
 
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page_record:)
-    active_space_records.where(id: page_record.space_id).exists?
-  end
-
   sig { params(email_confirmation: EmailConfirmationRecord).void }
   def run_after_email_confirmation_success!(email_confirmation:)
     return unless email_confirmation.succeeded?

@@ -9,13 +9,13 @@ class GenerateExportFilesJob
   class << self
     sig do
       params(
-        export_id: ::String,
+        export_record_id: ::String,
         block: T.nilable(T.proc.params(job: GenerateExportFilesJob).void)
       ).returns(T.any(GenerateExportFilesJob, FalseClass))
     end
-    def perform_later(export_id:, &block); end
+    def perform_later(export_record_id:, &block); end
 
-    sig { params(export_id: ::String).void }
-    def perform_now(export_id:); end
+    sig { params(export_record_id: ::String).void }
+    def perform_now(export_record_id:); end
   end
 end

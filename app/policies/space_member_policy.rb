@@ -49,6 +49,14 @@ class SpaceMemberPolicy < ApplicationPolicy
     space_member_record!.topic_records.where(id: topic_record.id).exists?
   end
 
+  sig { params(page_record: PageRecord).returns(T::Boolean) }
+  def can_trash_page?(page_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == page_record.space_id
+  end
+
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
     return false if space_member_record.nil?
