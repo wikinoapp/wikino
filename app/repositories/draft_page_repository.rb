@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class DraftPageRepository < ApplicationRepository
-  include RepositoryConcerns::Pageable
-
   sig { params(draft_page_record: DraftPageRecord).returns(DraftPage) }
   def to_model(draft_page_record:)
     DraftPage.new(

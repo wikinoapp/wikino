@@ -7,9 +7,6 @@
 module ::BacklinkEntity; end
 module ::Current; end
 module AbsoluteTimeComponent::UserEntity; end
-module Basic::PaginationComponent::PaginationEntity; end
-module Breadcrumbs::SpaceBreadcrumbsComponent::SpaceEntity; end
-module BulkRestoredPages::CreateController::Current; end
 module ConfirmEmailService::Current; end
 module CreateBlankedPageService::Current; end
 module Dropdowns::PageActionsComponent::PageEntity; end
@@ -19,7 +16,6 @@ module ExportRecord::ExportEntity; end
 module ExportStatusRecord::ExportStatusEntity; end
 module Links::IndexView::LinkListEntity; end
 module Links::IndexView::PageEntity; end
-module Lists::TrashedPagesComponent::PageEntity; end
 module PageRecord::PageEntity; end
 module Pages::EditView::BacklinkListEntity; end
 module Pages::EditView::DraftPageEntity; end
@@ -38,8 +34,6 @@ module Profiles::ShowView::UserEntity; end
 module Settings::Profiles::ShowController::Current; end
 module Settings::Profiles::UpdateController::Current; end
 module SpaceMemberRecord::SpaceMemberEntity; end
-module SpaceRecord::PageListEntity; end
-module SpaceRecord::PaginationEntity; end
 module SpaceRecord::SpaceEntity; end
 module Spaces::CreateController::Current; end
 module Spaces::Settings::Exports::NewView::SpaceEntity; end
@@ -68,8 +62,6 @@ module Topics::ShowView::PageEntity; end
 module Topics::ShowView::PageListEntity; end
 module Topics::ShowView::TopicEntity; end
 module Topics::ShowView::UserEntity; end
-module Trash::ShowView::PageListEntity; end
-module Trash::ShowView::SpaceEntity; end
 module TrashedPages::CreateController::Current; end
 module UpdatePageService::Current; end
 module UserRecord::UserEntity; end

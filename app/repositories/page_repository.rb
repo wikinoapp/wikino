@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class PageRepository < ApplicationRepository
-  include RepositoryConcerns::Pageable
-
   sig { params(page_record: PageRecord).returns(Page) }
   def to_model(page_record:)
     Page.new(
@@ -54,7 +52,7 @@ class PageRepository < ApplicationRepository
 
     BacklinkList.new(
       backlinks:,
-      pagination: Pagination.from_cursor_paginate(cursor_paginate_page:)
+      pagination: PaginationRepository.new.to_model(cursor_paginate_page:)
     )
   end
 end
