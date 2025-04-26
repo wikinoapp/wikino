@@ -1,3 +1,8 @@
+---
+description:
+globs:
+alwaysApply: false
+---
 # Wikino開発ガイド
 
 WikinoはWikiアプリです。
