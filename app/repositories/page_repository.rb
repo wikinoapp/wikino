@@ -3,7 +3,7 @@
 
 class PageRepository < ApplicationRepository
   sig { params(page_record: PageRecord, can_update: T.nilable(T::Boolean)).returns(Page) }
-  def to_model(page_record:, can_update:)
+  def to_model(page_record:, can_update: nil)
     Page.new(
       database_id: page_record.id,
       number: page_record.number,

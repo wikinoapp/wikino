@@ -62,9 +62,9 @@ class SpaceMemberRecord < ApplicationRecord
     retry
   end
 
-  sig { params(page: PageRecord).void }
-  def destroy_draft_page!(page:)
-    draft_page_records.where(page_record: page).destroy_all
+  sig { params(page_record: PageRecord).void }
+  def destroy_draft_page!(page_record:)
+    draft_page_records.where(page_record:).destroy_all
 
     nil
   end

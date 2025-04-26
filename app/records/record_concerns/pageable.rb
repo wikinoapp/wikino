@@ -24,8 +24,8 @@ module RecordConcerns
       end
     end
 
-    sig { params(editor: SpaceMemberRecord).void }
-    def link!(editor:)
+    sig { params(editor_record: SpaceMemberRecord).void }
+    def link!(editor_record:)
       location_keys = PageLocationKey.scan_text(text: body, current_topic: topic_record)
       topics = space_record.not_nil!.topic_records.where(name: location_keys.map(&:topic_name).uniq)
 
@@ -33,7 +33,7 @@ module RecordConcerns
         page_topic = topics.find { |topic| topic.name == location_key.topic_name }
 
         if page_topic
-          ary << editor.create_linked_page!(topic_record: page_topic, title: location_key.page_title)
+          ary << editor_record.create_linked_page!(topic_record: page_topic, title: location_key.page_title)
         end
       end
 
