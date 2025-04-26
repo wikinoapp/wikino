@@ -42,10 +42,10 @@ class PageRecord < ApplicationRecord
     end
   end
 
-  sig { params(topic: TopicRecord).returns(PageRecord) }
-  def self.create_as_blanked!(topic:)
-    topic.page_records.create!(
-      space_record: topic.space_record,
+  sig { params(topic_record: TopicRecord).returns(PageRecord) }
+  def self.create_as_blanked!(topic_record:)
+    topic_record.page_records.create!(
+      space_record: topic_record.space_record,
       title: nil,
       body: "",
       body_html: "",
@@ -96,9 +96,9 @@ class PageRecord < ApplicationRecord
     pages.joins(:topic_record).merge(topic_records)
   end
 
-  sig { params(editor: SpaceMemberRecord).void }
-  def add_editor!(editor:)
-    page_editor_records.where(space_record:, space_member_record: editor).first_or_create!(
+  sig { params(editor_record: SpaceMemberRecord).void }
+  def add_editor!(editor_record:)
+    page_editor_records.where(space_record:, space_member_record: editor_record).first_or_create!(
       last_page_modified_at: modified_at
     )
 

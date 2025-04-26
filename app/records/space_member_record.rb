@@ -125,11 +125,6 @@ class SpaceMemberRecord < ApplicationRecord
     space_record.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
   end
 
-  sig { override.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
-  def can_create_page?(topic:)
-    topic.present? && topic_records.where(id: topic.id).exists?
-  end
-
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
