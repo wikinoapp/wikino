@@ -50,11 +50,6 @@ class SpaceVisitor
     page.topic_record.not_nil!.visibility_public?
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_view_trash?(space:)
-    false
-  end
-
   sig { override.params(page: PageRecord).returns(T::Boolean) }
   def can_update_page?(page:)
     false

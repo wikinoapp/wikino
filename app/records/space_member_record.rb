@@ -104,9 +104,4 @@ class SpaceMemberRecord < ApplicationRecord
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
   end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_view_trash?(space:)
-    active? && space_id == space.id
-  end
 end
