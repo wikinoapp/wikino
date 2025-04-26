@@ -5,43 +5,43 @@ module Profiles
   class ShowView < ApplicationView
     sig do
       params(
-        current_user_entity: T.nilable(UserEntity),
-        user_entity: UserEntity,
-        joined_space_entities: T::Array[SpaceEntity]
+        current_user: T.nilable(User),
+        user: User,
+        joined_spaces: T::Array[Space]
       ).void
     end
-    def initialize(current_user_entity:, user_entity:, joined_space_entities:)
-      @current_user_entity = current_user_entity
-      @user_entity = user_entity
-      @joined_space_entities = joined_space_entities
+    def initialize(current_user:, user:, joined_spaces:)
+      @current_user = current_user
+      @user = user
+      @joined_spaces = joined_spaces
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.profiles.show", name: user_entity.name, atname: user_entity.atname)
+      title = I18n.t("meta.title.profiles.show", name: user.name, atname: user.atname)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(T.nilable(UserEntity)) }
-    attr_reader :current_user_entity
-    private :current_user_entity
+    sig { returns(T.nilable(User)) }
+    attr_reader :current_user
+    private :current_user
 
-    sig { returns(UserEntity) }
-    attr_reader :user_entity
-    private :user_entity
+    sig { returns(User) }
+    attr_reader :user
+    private :user
 
-    sig { returns(T::Array[SpaceEntity]) }
-    attr_reader :joined_space_entities
-    private :joined_space_entities
+    sig { returns(T::Array[Space]) }
+    attr_reader :joined_spaces
+    private :joined_spaces
 
     sig { returns(T::Boolean) }
     private def signed_in?
-      !current_user_entity.nil?
+      !current_user.nil?
     end
 
     sig { returns(T::Boolean) }
     private def can_edit_profile?
-      signed_in? && current_user_entity.not_nil!.database_id == user_entity.database_id
+      signed_in? && current_user.not_nil!.database_id == user.database_id
     end
 
     sig { returns(PageName) }

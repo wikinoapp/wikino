@@ -56,25 +56,9 @@ class UserRecord < ApplicationRecord
     user
   end
 
-  sig { returns(UserEntity) }
-  def to_entity
-    UserEntity.new(
-      database_id: id,
-      atname:,
-      name:,
-      description:,
-      time_zone:
-    )
-  end
-
   sig { returns(T::Boolean) }
   def signed_in?
     true
-  end
-
-  sig { returns(T.nilable(UserEntity)) }
-  def user_entity
-    to_entity
   end
 
   sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
