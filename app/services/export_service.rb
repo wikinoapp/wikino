@@ -3,23 +3,21 @@
 
 class ExportService < ApplicationService
   class Result < T::Struct
-    const :export, ExportRecord
+    const :export_record, ExportRecord
   end
 
   sig do
-    params(space: SpaceRecord, queued_by: SpaceMemberRecord).returns(Result)
+    params(space_record: SpaceRecord, queued_by_record: SpaceMemberRecord).returns(Result)
   end
-  def call(space:, queued_by:)
-    export = ActiveRecord::Base.transaction do
-      e = space.export_records.create!(
-        queued_by_record: queued_by
-      )
-      e.change_status!(kind: ExportStatusKind::Queued)
-      e
+  def call(space_record:, queued_by_record:)
+    created_export_record = ActiveRecord::Base.transaction do
+      export_record = space_record.export_records.create!(queued_by_record:)
+      export_record.change_status!(kind: ExportStatusKind::Queued)
+      export_record
     end
 
-    GenerateExportFilesJob.perform_later(export_id: export.id)
+    GenerateExportFilesJob.perform_later(export_record_id: created_export_record.id)
 
-    Result.new(export:)
+    Result.new(export_record: created_export_record)
   end
 end

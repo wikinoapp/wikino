@@ -41,7 +41,7 @@ class EmailConfirmationRecord < ApplicationRecord
     nil
   end
 
-  sig { params(locale: ViewerLocale).void }
+  sig { params(locale: Locale).void }
   def send_mail!(locale:)
     EmailConfirmationMailer.email_confirmation(email_confirmation_id: id.not_nil!, locale: locale.serialize).deliver_later
 

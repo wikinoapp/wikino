@@ -16,7 +16,7 @@ module Spaces
       if form.invalid?
         return render(
           Spaces::NewView.new(
-            current_user_entity: Current.viewer!.user_entity,
+            current_user: current_user!,
             form:
           ),
           status: :unprocessable_entity
@@ -24,13 +24,13 @@ module Spaces
       end
 
       result = CreateSpaceService.new.call(
-        user: T.let(Current.viewer!, UserRecord),
+        user_record: current_user_record!,
         identifier: form.identifier.not_nil!,
         name: form.name.not_nil!
       )
 
       flash[:notice] = t("messages.spaces.created")
-      redirect_to space_path(result.space.identifier)
+      redirect_to space_path(result.space_record.identifier)
     end
 
     sig { returns(ActionController::Parameters) }

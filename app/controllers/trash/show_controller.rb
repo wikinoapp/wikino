@@ -11,24 +11,30 @@ module Trash
 
     sig { returns(T.untyped) }
     def call
-      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_viewer = Current.viewer!.space_viewer!(space:)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      space_member_record = current_user_record!.space_member_record(space_record:)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless space_viewer.can_view_trash?(space:)
+      unless space_member_policy.can_show_trash?(space_record:)
         return render_404
       end
 
-      page_list_entity = space.restorable_page_list_entity(
-        space_viewer:,
+      space = SpaceRepository.new.to_model(space_record:)
+      page_list = PageListRepository.new.restorable(
+        space_record:,
         before: params[:before],
         after: params[:after]
       )
+      form = TrashedPagesForm.new
 
       render Trash::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
-        space_entity: space.to_entity(space_viewer:),
-        page_list_entity:,
-        form: TrashedPagesForm.new
+        current_user: current_user!,
+        space:,
+        page_list:,
+        form:
       )
     end
   end

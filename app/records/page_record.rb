@@ -30,22 +30,10 @@ class PageRecord < ApplicationRecord
   scope :active, -> { kept.not_trashed.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
 
-  sig do
-    params(
-      space_viewer: ModelConcerns::SpaceViewable,
-      pages: T.any(PageRecord::PrivateAssociationRelation, T::Array[PageRecord])
-    ).returns(T::Array[PageEntity])
-  end
-  def self.to_entities(space_viewer:, pages:)
-    pages.map do |page|
-      page.to_entity(space_viewer:)
-    end
-  end
-
-  sig { params(topic: TopicRecord).returns(PageRecord) }
-  def self.create_as_blanked!(topic:)
-    topic.page_records.create!(
-      space_record: topic.space_record,
+  sig { params(topic_record: TopicRecord).returns(PageRecord) }
+  def self.create_as_blanked!(topic_record:)
+    topic_record.page_records.create!(
+      space_record: topic_record.space_record,
       title: nil,
       body: "",
       body_html: "",
@@ -54,21 +42,14 @@ class PageRecord < ApplicationRecord
     )
   end
 
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(PageEntity) }
-  def to_entity(space_viewer:)
-    PageEntity.new(
-      database_id: id,
-      number:,
-      title:,
-      body:,
-      body_html:,
-      modified_at:,
-      published_at:,
-      pinned_at:,
-      space_entity: space_record.not_nil!.to_entity(space_viewer:),
-      topic_entity: topic_record.not_nil!.to_entity(space_viewer:),
-      viewer_can_update: space_viewer.can_update_page?(page: self)
-    )
+  sig { returns(SpaceRecord) }
+  def space_record!
+    space_record.not_nil!
+  end
+
+  sig { returns(TopicRecord) }
+  def topic_record!
+    topic_record.not_nil!
   end
 
   sig { returns(T::Boolean) }
@@ -86,50 +67,40 @@ class PageRecord < ApplicationRecord
     trashed_at.present?
   end
 
-  T::Sig::WithoutRuntime.sig { returns(T.any(PageRecord::PrivateAssociationRelationWhereChain, PageRecord::PrivateAssociationRelation)) }
-  def backlinked_pages
-    pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
-
-    pages.joins(:topic_record).merge(Current.viewer!.viewable_topics)
-  end
-
   sig do
     params(
-      space_viewer: ModelConcerns::SpaceViewable,
-      before: T.nilable(String),
-      after: T.nilable(String),
-      limit: Integer
-    ).returns(BacklinkListEntity)
-  end
-  def fetch_backlink_list_entity(space_viewer:, before: nil, after: nil, limit: 15)
-    cursor_paginate_page = backlinked_pages.cursor_paginate(
-      after:,
-      before:,
-      limit:,
-      order: {modified_at: :desc, id: :desc}
-    ).fetch
-
-    backlink_entities = cursor_paginate_page.records.map do |page|
-      BacklinkEntity.new(page_entity: page.to_entity(space_viewer:))
-    end
-
-    BacklinkListEntity.new(
-      backlink_entities:,
-      pagination_entity: PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
+      user_record: T.nilable(UserRecord)
+    ).returns(
+      T.any(
+        PageRecord::PrivateAssociationRelationWhereChain,
+        PageRecord::PrivateAssociationRelation
+      )
     )
   end
+  def backlinked_page_records(user_record:)
+    pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
+    topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
 
-  sig { params(editor: SpaceMemberRecord).void }
-  def add_editor!(editor:)
-    page_editor_records.where(space_record:, space_member_record: editor).first_or_create!(
+    pages.joins(:topic_record).merge(topic_records)
+  end
+
+  sig { params(editor_record: SpaceMemberRecord).void }
+  def add_editor!(editor_record:)
+    page_editor_records.where(space_record:, space_member_record: editor_record).first_or_create!(
       last_page_modified_at: modified_at
     )
 
     nil
   end
 
-  sig { params(editor: SpaceMemberRecord, body: String, body_html: String).returns(PageRevisionRecord) }
-  def create_revision!(editor:, body:, body_html:)
-    revision_records.create!(space_record:, space_member_record: editor, body:, body_html:)
+  sig do
+    params(
+      editor_record: SpaceMemberRecord,
+      body: String,
+      body_html: String
+    ).returns(PageRevisionRecord)
+  end
+  def create_revision!(editor_record:, body:, body_html:)
+    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:)
   end
 end

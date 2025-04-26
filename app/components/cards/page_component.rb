@@ -3,16 +3,16 @@
 
 module Cards
   class PageComponent < ApplicationComponent
-    sig { params(page_entity: ::PageEntity, show_topic_name: T::Boolean, class_name: String).void }
-    def initialize(page_entity:, show_topic_name: true, class_name: "")
-      @page_entity = page_entity
+    sig { params(page: Page, show_topic_name: T::Boolean, class_name: String).void }
+    def initialize(page:, show_topic_name: true, class_name: "")
+      @page = page
       @show_topic_name = show_topic_name
       @class_name = class_name
     end
 
-    sig { returns(PageEntity) }
-    attr_reader :page_entity
-    private :page_entity
+    sig { returns(Page) }
+    attr_reader :page
+    private :page
 
     sig { returns(T::Boolean) }
     attr_reader :show_topic_name
@@ -23,6 +23,6 @@ module Cards
     attr_reader :class_name
     private :class_name
 
-    delegate :space_entity, :topic_entity, to: :page_entity
+    delegate :space, :topic, to: :page
   end
 end

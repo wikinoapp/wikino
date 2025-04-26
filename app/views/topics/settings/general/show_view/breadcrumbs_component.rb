@@ -6,16 +6,16 @@ module Topics
     module General
       class ShowView
         class BreadcrumbsComponent < ApplicationComponent
-          sig { params(topic_entity: TopicEntity).void }
-          def initialize(topic_entity:)
-            @topic_entity = topic_entity
+          sig { params(topic: Topic).void }
+          def initialize(topic:)
+            @topic = topic
           end
 
-          sig { returns(TopicEntity) }
-          attr_reader :topic_entity
-          private :topic_entity
+          sig { returns(Topic) }
+          attr_reader :topic
+          private :topic
 
-          delegate :space_entity, to: :topic_entity
+          delegate :space, to: :topic
         end
       end
     end

@@ -5,27 +5,29 @@ module DraftPages
   class UpdateView < ApplicationView
     sig do
       params(
-        draft_page_entity: DraftPageEntity,
-        link_list_entity: LinkListEntity,
-        backlink_list_entity: BacklinkListEntity
+        draft_page: DraftPage,
+        link_list: LinkList,
+        backlink_list: BacklinkList
       ).void
     end
-    def initialize(draft_page_entity:, link_list_entity:, backlink_list_entity:)
-      @draft_page_entity = draft_page_entity
-      @link_list_entity = link_list_entity
-      @backlink_list_entity = backlink_list_entity
+    def initialize(draft_page:, link_list:, backlink_list:)
+      @draft_page = draft_page
+      @link_list = link_list
+      @backlink_list = backlink_list
     end
 
-    sig { returns(DraftPageEntity) }
-    attr_reader :draft_page_entity
-    private :draft_page_entity
+    sig { returns(DraftPage) }
+    attr_reader :draft_page
+    private :draft_page
 
-    sig { returns(LinkListEntity) }
-    attr_reader :link_list_entity
-    private :link_list_entity
+    sig { returns(LinkList) }
+    attr_reader :link_list
+    private :link_list
 
-    sig { returns(BacklinkListEntity) }
-    attr_reader :backlink_list_entity
-    private :backlink_list_entity
+    sig { returns(BacklinkList) }
+    attr_reader :backlink_list
+    private :backlink_list
+
+    delegate :page, to: :draft_page
   end
 end

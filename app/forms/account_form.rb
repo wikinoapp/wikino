@@ -12,7 +12,7 @@ class AccountForm < ApplicationForm
   attribute :time_zone, :string
 
   validates :email, email: true, presence: true
-  validates :locale, inclusion: {in: ViewerLocale.values.map(&:serialize)}, presence: true
+  validates :locale, inclusion: {in: Locale.values.map(&:serialize)}, presence: true
   validates :time_zone,
     format: {with: %r{\A[A-Za-z]+/[A-Za-z_]+\z}},
     presence: true

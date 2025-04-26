@@ -12,21 +12,24 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        current_user = T.let(Current.viewer!, UserRecord)
-
-        form = EditProfileForm.new(form_params.merge(user_record: current_user))
+        form = EditProfileForm.new(form_params.merge(user_record: current_user_record!))
 
         if form.invalid?
           return render(
             Settings::Profiles::ShowView.new(
-              current_user_entity: current_user.to_entity,
+              current_user: current_user!,
               form:
             ),
             status: :unprocessable_entity
           )
         end
 
-        UpdateProfileService.new.call(form:)
+        UpdateProfileService.new.call(
+          user_record: current_user_record!,
+          atname: form.atname.not_nil!,
+          name: form.name.not_nil!,
+          description: form.description.not_nil!
+        )
 
         flash[:notice] = t("messages.profiles.updated")
         redirect_to settings_profile_path

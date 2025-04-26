@@ -1,6 +1,6 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_page_name:, current_user_entity:) %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) %>
   <% end %>
 
   <%= layout.with_main do %>
@@ -12,17 +12,17 @@
         <div class="flex flex-col gap-4">
           <h1 class="antialiased">
             <span class="block text-2xl font-bold">
-              <%= user_entity.name %>
+              <%= user.name %>
             </span>
 
             <span class="block text-lg text-gray-700">
-              @<%= user_entity.atname %>
+              @<%= user.atname %>
             </span>
           </h1>
 
-          <% if user_entity.description.present? %>
+          <% if user.description.present? %>
             <div>
-              <%= user_entity.description %>
+              <%= user.description %>
             </div>
           <% end %>
         </div>
@@ -48,9 +48,9 @@
         </h2>
 
         <ul class="list-inside list-disc">
-          <% joined_space_entities.each do |joined_space_entity| %>
+          <% joined_spaces.each do |joined_space| %>
             <li>
-              <%= link_to joined_space_entity.name, space_path(joined_space_entity.identifier), class: "link" %>
+              <%= link_to joined_space.name, space_path(joined_space.identifier), class: "link" %>
             </li>
           <% end %>
         </ul>

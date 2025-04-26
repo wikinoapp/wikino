@@ -5,17 +5,21 @@ module Atom
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
-      pages = space.page_records.active
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      page_records = space_record.page_records.active
         .joins(:topic_record).merge(TopicRecord.visibility_public)
         .order(published_at: :desc, id: :desc)
         .limit(15)
+
+      space = SpaceRepository.new.to_model(space_record:)
+      pages = page_records.map do |page_record|
+        PageRepository.new.to_model(page_record:)
+      end
 
       render(
         Atom::ShowView.new(space:, pages:),

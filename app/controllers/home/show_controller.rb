@@ -11,12 +11,12 @@ module Home
 
     sig { returns(T.untyped) }
     def call
-      current_user = T.let(Current.viewer!, UserRecord)
-      active_spaces = current_user.active_space_records
+      active_space_records = current_user_record!.active_space_records
+      active_spaces = SpaceRepository.new.to_models(space_records: active_space_records)
 
       render Home::ShowView.new(
         active_spaces:,
-        current_user_entity: current_user.to_entity
+        current_user: current_user!
       )
     end
   end

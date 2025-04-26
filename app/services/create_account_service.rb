@@ -10,7 +10,7 @@ class CreateAccountService < ApplicationService
     params(
       email: String,
       atname: String,
-      locale: ViewerLocale,
+      locale: Locale,
       password: String,
       time_zone: String
     ).returns(Result)

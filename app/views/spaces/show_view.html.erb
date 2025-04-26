@@ -1,18 +1,18 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold antialiased">
-          <%= space_entity.name %>
+          <%= space.name %>
         </h1>
 
         <div class="flex gap-2">
-          <% if first_topic_entity&.viewer_can_create_page? %>
-            <%= link_to new_page_path(space_entity.identifier, first_topic_entity.number), {
+          <% if first_topic&.can_create_page? %>
+            <%= link_to new_page_path(space.identifier, first_topic.number), {
               class: "btn btn-sm btn-primary no-animation rounded-full"
             } do %>
               <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
@@ -21,36 +21,36 @@
             <% end %>
           <% end %>
 
-          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space_entity:) %>
+          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
         </div>
       </div>
 
-      <% if pinned_page_entities.present? || page_entities.present? %>
+      <% if pinned_pages.present? || pages.present? %>
         <div class="flex flex-col gap-6">
           <div class="flex flex-col gap-4">
-            <% if pinned_page_entities.present? %>
+            <% if pinned_pages.present? %>
               <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-                <% pinned_page_entities.each do |page_entity| %>
-                  <%= render Cards::PageComponent.new(page_entity:) %>
+                <% pinned_pages.each do |page| %>
+                  <%= render Cards::PageComponent.new(page:) %>
                 <% end %>
               </div>
             <% end %>
 
-            <% if page_entities.present? %>
+            <% if pages.present? %>
               <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-                <% page_entities.each do |page_entity| %>
-                  <%= render Cards::PageComponent.new(page_entity:) %>
+                <% pages.each do |page| %>
+                  <%= render Cards::PageComponent.new(page:) %>
                 <% end %>
               </div>
             <% end %>
           </div>
 
-          <% if pagination_entity.has_previous? || pagination_entity.has_next? %>
+          <% if pagination.has_previous? || pagination.has_next? %>
             <div class="flex justify-center">
               <%= render Basic::PaginationComponent.new(
-                pagination_entity:,
-                previous_path: space_path(space_entity.identifier, before: pagination_entity.previous_cursor),
-                next_path: space_path(space_entity.identifier, after: pagination_entity.next_cursor)
+                pagination:,
+                previous_path: space_path(space.identifier, before: pagination.previous_cursor),
+                next_path: space_path(space.identifier, after: pagination.next_cursor)
               ) %>
             </div>
           <% end %>

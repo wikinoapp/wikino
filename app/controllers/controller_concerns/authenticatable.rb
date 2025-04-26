@@ -6,10 +6,10 @@ module ControllerConcerns
     extend T::Sig
     extend ActiveSupport::Concern
 
-    sig(:final) { params(user_session: UserSessionRecord).returns(T::Boolean) }
-    def sign_in(user_session)
-      Current.viewer = user_session.user_record
-      store_user_session_token(token: user_session.token)
+    sig(:final) { params(user_session_record: UserSessionRecord).returns(T::Boolean) }
+    def sign_in(user_session_record)
+      @current_user_record = T.let(user_session_record.user_record, T.nilable(UserRecord))
+      store_user_session_token(token: user_session_record.token)
 
       true
     end
@@ -33,7 +33,7 @@ module ControllerConcerns
     def require_no_authentication
       restore_user_session
 
-      if Current.viewer.signed_in?
+      if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
         redirect_to home_path
       end
@@ -49,6 +49,33 @@ module ControllerConcerns
       request.env["HTTP_CF_CONNECTING_IP"] || request.remote_ip
     end
 
+    sig(:final) { returns(T.nilable(UserRecord)) }
+    def current_user_record
+      @current_user_record
+    end
+
+    sig(:final) { returns(UserRecord) }
+    def current_user_record!
+      current_user_record.not_nil!
+    end
+
+    sig(:final) { returns(T::Boolean) }
+    def signed_in?
+      !current_user_record.nil?
+    end
+
+    sig(:final) { returns(T.nilable(User)) }
+    def current_user
+      return if current_user_record.nil?
+
+      current_user!
+    end
+
+    sig(:final) { returns(User) }
+    def current_user!
+      UserRepository.new.to_model(user_record: current_user_record!)
+    end
+
     sig(:final) { returns(T.nilable(String)) }
     private def user_session_token
       cookies.signed[UserSession::TOKENS_COOKIE_KEY]
@@ -56,12 +83,13 @@ module ControllerConcerns
 
     sig(:final) { returns(T::Boolean) }
     private def restore_user_session
-      if user_session_token && (user_session = UserSessionRecord.find_by(token: user_session_token))
-        sign_in(user_session)
-      else
-        Current.viewer = Visitor.new
-        false
+      user_session_record = UserSessionRecord.find_by(token: user_session_token)
+
+      if user_session_record
+        return sign_in(user_session_record)
       end
+
+      false
     end
 
     sig(:final) { void }

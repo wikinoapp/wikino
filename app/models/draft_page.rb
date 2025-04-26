@@ -1,12 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
-class ExportEntity < T::Struct
+class DraftPage < T::Struct
   extend T::Sig
 
   include T::Struct::ActsAsComparable
 
   const :database_id, T::Wikino::DatabaseId
-  const :queued_by_entity, SpaceMemberEntity
-  const :space_entity, SpaceEntity
+  const :modified_at, ActiveSupport::TimeWithZone
+  const :space, Space
+  const :page, Page
 end

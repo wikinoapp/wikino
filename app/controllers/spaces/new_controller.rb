@@ -14,7 +14,7 @@ module Spaces
       form = NewSpaceForm.new
 
       render Spaces::NewView.new(
-        current_user_entity: Current.viewer!.user_entity,
+        current_user: current_user!,
         form:
       )
     end

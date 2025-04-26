@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class SpaceMemberRecord < ApplicationRecord
-  include ModelConcerns::SpaceViewable
-
   self.table_name = "space_members"
 
   enum :role, {
@@ -62,20 +60,11 @@ class SpaceMemberRecord < ApplicationRecord
     retry
   end
 
-  sig { params(page: PageRecord).void }
-  def destroy_draft_page!(page:)
-    draft_page_records.where(page_record: page).destroy_all
+  sig { params(page_record: PageRecord).void }
+  def destroy_draft_page!(page_record:)
+    draft_page_records.where(page_record:).destroy_all
 
     nil
-  end
-
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceMemberEntity) }
-  def to_entity(space_viewer:)
-    SpaceMemberEntity.new(
-      database_id: id,
-      space_entity: space_record.not_nil!.to_entity(space_viewer:),
-      user_entity: user_record.not_nil!.to_entity
-    )
   end
 
   sig { returns(SpaceMemberRole) }
@@ -95,68 +84,13 @@ class SpaceMemberRecord < ApplicationRecord
     )
   end
 
-  sig { override.returns(PageRecord::PrivateAssociationRelation) }
-  def showable_pages
-    space_record.not_nil!.page_records.active
-  end
-
-  sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
+  sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topics
     topic_records.kept
   end
 
-  sig { override.returns(TopicRecord::PrivateAssociationRelation) }
-  def showable_topics
-    space_record.not_nil!.topic_records.kept
-  end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_update_space?(space:)
-    space.id == space_id && permissions.include?(SpaceMemberPermission::UpdateSpace)
-  end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_export_space?(space:)
-    space.id == space_id && permissions.include?(SpaceMemberPermission::ExportSpace)
-  end
-
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic:)
-    space_record.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
-  end
-
-  sig { override.params(topic: T.nilable(TopicRecord)).returns(T::Boolean) }
-  def can_create_page?(topic:)
-    topic.present? && topic_records.where(id: topic.id).exists?
-  end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
-  end
-
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_view_page?(page:)
-    active? && space_id == page.space_id
-  end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def can_view_trash?(space:)
-    active? && space_id == space.id
-  end
-
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_update_page?(page:)
-    active? && joined_topics.where(id: page.topic_id).exists?
-  end
-
-  sig { override.returns(T::Boolean) }
-  def can_create_topic?
-    true
-  end
-
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_update_draft_page?(page:)
-    topic_records.where(id: page.topic_id).exists?
   end
 end

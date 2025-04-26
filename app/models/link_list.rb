@@ -1,10 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
-class BacklinkEntity < T::Struct
+class LinkList < T::Struct
   extend T::Sig
 
   include T::Struct::ActsAsComparable
 
-  const :page_entity, PageEntity
+  const :links, T::Array[Link]
+  const :pagination, Pagination
 end

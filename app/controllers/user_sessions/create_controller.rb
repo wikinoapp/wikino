@@ -18,12 +18,12 @@ module UserSessions
       end
 
       result = CreateUserSessionService.new.call(
-        user: form.user.not_nil!,
+        user_record: form.user_record.not_nil!,
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       )
 
-      sign_in(result.user_session)
+      sign_in(result.user_session_record)
 
       flash[:notice] = t("messages.accounts.signed_in_successfully")
       redirect_to after_authentication_url
@@ -32,7 +32,6 @@ module UserSessions
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:user_session_form), ActionController::Parameters).permit(
-        :space_identifier,
         :email,
         :password
       )

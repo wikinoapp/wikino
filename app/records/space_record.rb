@@ -48,7 +48,7 @@ class SpaceRecord < ApplicationRecord
     inverse_of: :space_record
 
   sig do
-    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: ViewerLocale)
+    params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: Locale)
       .returns(SpaceRecord)
   end
   def self.create_initial_space!(identifier:, current_time:, locale:)
@@ -70,19 +70,6 @@ class SpaceRecord < ApplicationRecord
     SpaceRecord.where.not(id:).exists?(identifier:)
   end
 
-  sig { params(space_viewer: ModelConcerns::SpaceViewable).returns(SpaceEntity) }
-  def to_entity(space_viewer:)
-    SpaceEntity.new(
-      database_id: id,
-      identifier:,
-      name:,
-      plan: Plan.deserialize(plan),
-      joined_at:,
-      viewer_can_update: space_viewer.can_update_space?(space: self),
-      viewer_can_export: space_viewer.can_export_space?(space: self)
-    )
-  end
-
   sig { params(number: Integer).returns(PageRecord) }
   def find_page_by_number!(number)
     page_records.kept.find_by!(number:)
@@ -90,26 +77,12 @@ class SpaceRecord < ApplicationRecord
 
   sig do
     params(
-      space_viewer: ModelConcerns::SpaceViewable,
-      before: T.nilable(String),
-      after: T.nilable(String)
-    ).returns(PageListEntity)
+      user_record: UserRecord,
+      role: SpaceMemberRole,
+      joined_at: ActiveSupport::TimeWithZone
+    ).void
   end
-  def restorable_page_list_entity(space_viewer:, before:, after:)
-    cursor_paginate_page = page_records.preload(:topic_record).restorable.cursor_paginate(
-      before: before.presence,
-      after: after.presence,
-      limit: 100,
-      order: {trashed_at: :desc, id: :desc}
-    ).fetch
-    page_entities = PageRecord.to_entities(space_viewer:, pages: cursor_paginate_page.records)
-    pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
-
-    PageListEntity.new(page_entities:, pagination_entity:)
-  end
-
-  sig { params(user: UserRecord, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
-  def add_member!(user:, role:, joined_at:)
-    space_member_records.create!(user_record: user, role: role.serialize, joined_at:)
+  def add_member!(user_record:, role:, joined_at:)
+    space_member_records.create!(user_record:, role: role.serialize, joined_at:)
   end
 end

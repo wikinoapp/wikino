@@ -5,4 +5,6 @@ class ApplicationModel
   extend T::Sig
 
   include ActiveModel::Model
+
+  include ModelConcerns::RecordError
 end

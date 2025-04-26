@@ -22,4 +22,11 @@ class UserSessionRecord < ApplicationRecord
       signed_in_at:
     )
   end
+
+  # sig { void }
+  # private def authentication
+  #   unless user&.user_password_record&.authenticate(password)
+  #     errors.add(:base, :unauthenticated)
+  #   end
+  # end
 end

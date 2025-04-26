@@ -5,47 +5,47 @@ module Topics
   class ShowView < ApplicationView
     sig do
       params(
-        current_user_entity: T.nilable(UserEntity),
-        topic_entity: TopicEntity,
-        pinned_page_entities: T::Array[PageEntity],
-        page_list_entity: PageListEntity
+        current_user: T.nilable(User),
+        topic: Topic,
+        pinned_pages: T::Array[Page],
+        page_list: PageList
       ).void
     end
-    def initialize(current_user_entity:, topic_entity:, pinned_page_entities:, page_list_entity:)
-      @current_user_entity = current_user_entity
-      @topic_entity = topic_entity
-      @pinned_page_entities = pinned_page_entities
-      @page_list_entity = page_list_entity
+    def initialize(current_user:, topic:, pinned_pages:, page_list:)
+      @current_user = current_user
+      @topic = topic
+      @pinned_pages = pinned_pages
+      @page_list = page_list
     end
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.topics.show", space_name: space_entity.name, topic_name: topic_entity.name)
+      title = I18n.t("meta.title.topics.show", space_name: space.name, topic_name: topic.name)
       helpers.set_meta_tags(title:, **default_meta_tags(site: false))
     end
 
-    sig { returns(T.nilable(UserEntity)) }
-    attr_reader :current_user_entity
-    private :current_user_entity
+    sig { returns(T.nilable(User)) }
+    attr_reader :current_user
+    private :current_user
 
-    sig { returns(TopicEntity) }
-    attr_reader :topic_entity
-    private :topic_entity
+    sig { returns(Topic) }
+    attr_reader :topic
+    private :topic
 
-    sig { returns(T::Array[PageEntity]) }
-    attr_reader :pinned_page_entities
-    private :pinned_page_entities
+    sig { returns(T::Array[Page]) }
+    attr_reader :pinned_pages
+    private :pinned_pages
 
-    sig { returns(PageListEntity) }
-    attr_reader :page_list_entity
-    private :page_list_entity
+    sig { returns(PageList) }
+    attr_reader :page_list
+    private :page_list
 
-    delegate :space_entity, to: :topic_entity
-    delegate :page_entities, :pagination_entity, to: :page_list_entity
+    delegate :space, to: :topic
+    delegate :pages, :pagination, to: :page_list
 
     sig { returns(T::Boolean) }
     private def signed_in?
-      !current_user_entity.nil?
+      !current_user.nil?
     end
 
     sig { returns(PageName) }

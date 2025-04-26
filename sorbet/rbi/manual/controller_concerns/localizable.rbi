@@ -8,7 +8,7 @@ module ControllerConcerns
     def http_accept_language
     end
 
-    def viewer
+    def current_user
     end
   end
 end

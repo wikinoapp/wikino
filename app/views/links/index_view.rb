@@ -3,23 +3,18 @@
 
 module Links
   class IndexView < ApplicationView
-    sig do
-      params(
-        page_entity: PageEntity,
-        link_list_entity: LinkListEntity
-      ).void
-    end
-    def initialize(page_entity:, link_list_entity:)
-      @page_entity = page_entity
-      @link_list_entity = link_list_entity
+    sig { params(page: Page, link_list: LinkList).void }
+    def initialize(page:, link_list:)
+      @page = page
+      @link_list = link_list
     end
 
-    sig { returns(PageEntity) }
-    attr_reader :page_entity
-    private :page_entity
+    sig { returns(Page) }
+    attr_reader :page
+    private :page
 
-    sig { returns(LinkListEntity) }
-    attr_reader :link_list_entity
-    private :link_list_entity
+    sig { returns(LinkList) }
+    attr_reader :link_list
+    private :link_list
   end
 end

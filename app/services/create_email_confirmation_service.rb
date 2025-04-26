@@ -6,7 +6,7 @@ class CreateEmailConfirmationService < ApplicationService
     const :email_confirmation, EmailConfirmationRecord
   end
 
-  sig { params(email: String, event: EmailConfirmationEvent, locale: ViewerLocale).returns(Result) }
+  sig { params(email: String, event: EmailConfirmationEvent, locale: Locale).returns(Result) }
   def call(email:, event:, locale:)
     current_time = Time.current
     email_confirmation = EmailConfirmationRecord.new(

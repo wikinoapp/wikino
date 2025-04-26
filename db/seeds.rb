@@ -3,7 +3,7 @@
 # create_account_use_case_result = CreateAccountService.new.call(
 #   email: "user_1@example.com",
 #   atname: "user_1",
-#   locale: ViewerLocale::Ja,
+#   locale: Locale::Ja,
 #   password: "password",
 #   time_zone: "Asia/Tokyo"
 # )

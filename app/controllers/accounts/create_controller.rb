@@ -28,18 +28,18 @@ module Accounts
       account_result = CreateAccountService.new.call(
         email: form.email.not_nil!,
         atname: form.atname.not_nil!,
-        locale: ViewerLocale.deserialize(form.locale),
+        locale: Locale.deserialize(form.locale),
         password: form.password.not_nil!,
         time_zone: form.time_zone.not_nil!
       )
 
       user_session_result = CreateUserSessionService.new.call(
-        user: account_result.user,
+        user_record: account_result.user,
         ip_address: original_remote_ip,
         user_agent: request.user_agent
       )
 
-      sign_in(user_session_result.user_session)
+      sign_in(user_session_result.user_session_record)
 
       flash[:notice] = t("messages.accounts.signed_up_successfully")
       redirect_to after_authentication_url

@@ -3,10 +3,11 @@
 
 RSpec.describe Spaces::NewView, type: :view do
   it "スペース作成画面が表示されること" do
-    Current.viewer = create(:user_record)
+    user_record = create(:user_record)
+    current_user = UserRepository.new.to_model(user_record:)
 
     render_inline(Spaces::NewView.new(
-      current_user_entity: Current.viewer.user_entity,
+      current_user:,
       form: NewSpaceForm.new
     ))
 

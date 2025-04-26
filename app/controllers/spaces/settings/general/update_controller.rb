@@ -13,31 +13,39 @@ module Spaces
 
         sig { returns(T.untyped) }
         def call
-          space = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_viewer = Current.viewer!.space_viewer!(space:)
-          space_entity = space.to_entity(space_viewer:)
+          space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+          space_member_record = current_user_record!.space_member_record(space_record:)
+          space_member_policy = SpaceMemberPolicy.new(
+            user_record: current_user_record!,
+            space_member_record:
+          )
 
-          unless space_entity.viewer_can_update?
+          unless space_member_policy.can_update_space?(space_record:)
             return render_404
           end
 
-          form = EditSpaceForm.new(form_params.merge(space_record: space))
+          form = EditSpaceForm.new(form_params.merge(space_record:))
 
           if form.invalid?
-            return render(
-              Spaces::Settings::General::ShowView.new(
-                current_user_entity: Current.viewer!.user_entity,
-                space_entity:,
-                form:
-              ),
+            space = SpaceRepository.new.to_model(space_record:)
+
+            return render(Spaces::Settings::General::ShowView.new(
+              current_user: current_user!,
+              space:,
+              form:
+            ), {
               status: :unprocessable_entity
-            )
+            })
           end
 
-          UpdateSpaceService.new.call(space:, form:)
+          UpdateSpaceService.new.call(
+            space_record:,
+            identifier: form.identifier.not_nil!,
+            name: form.name.not_nil!
+          )
 
           flash[:notice] = t("messages.spaces.updated")
-          redirect_to space_settings_general_path(space.identifier)
+          redirect_to space_settings_general_path(space_record.identifier)
         end
 
         sig { returns(ActionController::Parameters) }

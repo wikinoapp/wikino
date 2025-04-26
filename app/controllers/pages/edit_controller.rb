@@ -11,37 +11,51 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      space = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_viewer = Current.viewer!.space_viewer!(space:)
-      page = space.find_page_by_number!(params[:page_number]&.to_i)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      space_member_record = current_user_record!.space_member_record(space_record:)
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless space_viewer.can_update_page?(page:)
+      unless space_member_policy.can_update_page?(page_record:)
         return render_404
       end
 
-      space_member = T.let(space_viewer, SpaceMemberRecord)
-      draft_page = space_member.draft_page_records.find_by(page_record: page)
-      pageable = draft_page.presence || page
+      draft_page_record = space_member_record.not_nil!.draft_page_records.find_by(page_record:)
+      pageable_record = draft_page_record.presence || page_record
+
+      space = SpaceRepository.new.to_model(space_record:)
+      page = PageRepository.new.to_model(page_record:)
 
       form = EditPageForm.new(
-        space_member:,
-        topic_number: pageable.topic_record.not_nil!.number,
-        title: pageable.title,
-        body: pageable.body
+        space_member_record:,
+        topic_number: pageable_record.topic_record.not_nil!.number,
+        title: pageable_record.title,
+        body: pageable_record.body
       )
 
-      link_list_entity = pageable.not_nil!.fetch_link_list_entity(space_viewer:)
-      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
+      link_list = LinkListRepository.new.to_model(user_record: current_user_record, pageable_record:)
+      backlink_list = BacklinkListRepository.new.to_model(user_record: current_user_record, page_record:)
+      current_user = UserRepository.new.to_model(user_record: current_user_record!)
 
       render Pages::EditView.new(
-        space_entity: space.to_entity(space_viewer:),
-        page_entity: page.to_entity(space_viewer:),
-        draft_page_entity: draft_page&.to_entity(space_viewer:),
+        space:,
+        page:,
+        draft_page: draft_page(draft_page_record:),
         form:,
-        link_list_entity:,
-        backlink_list_entity:,
-        current_user_entity: Current.viewer!.user_entity
+        link_list:,
+        backlink_list:,
+        current_user:
       )
+    end
+
+    sig { params(draft_page_record: T.nilable(DraftPageRecord)).returns(T.nilable(DraftPage)) }
+    private def draft_page(draft_page_record:)
+      return if draft_page_record.nil?
+
+      DraftPageRepository.new.to_model(draft_page_record: draft_page_record.not_nil!)
     end
   end
 end

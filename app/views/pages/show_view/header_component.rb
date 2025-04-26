@@ -4,10 +4,10 @@
 module Pages
   class ShowView
     class HeaderComponent < ApplicationComponent
-      sig { params(signed_in: T::Boolean, page_entity: PageEntity).void }
-      def initialize(signed_in:, page_entity:)
+      sig { params(signed_in: T::Boolean, page: Page).void }
+      def initialize(signed_in:, page:)
         @signed_in = signed_in
-        @page_entity = page_entity
+        @page = page
       end
 
       sig { returns(T::Boolean) }
@@ -15,11 +15,11 @@ module Pages
       private :signed_in
       alias_method :signed_in?, :signed_in
 
-      sig { returns(PageEntity) }
-      attr_reader :page_entity
-      private :page_entity
+      sig { returns(Page) }
+      attr_reader :page
+      private :page
 
-      delegate :space_entity, to: :page_entity
+      delegate :space, to: :page
     end
   end
 end

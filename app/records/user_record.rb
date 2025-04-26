@@ -4,13 +4,11 @@
 class UserRecord < ApplicationRecord
   include Discard::Model
 
-  include ModelConcerns::Viewable
-
   self.table_name = "users"
 
   enum :locale, {
-    ViewerLocale::En.serialize => 0,
-    ViewerLocale::Ja.serialize => 1
+    Locale::En.serialize => 0,
+    Locale::Ja.serialize => 1
   }, prefix: true
 
   has_many :space_member_records,
@@ -38,7 +36,7 @@ class UserRecord < ApplicationRecord
       email: String,
       atname: String,
       password: String,
-      locale: ViewerLocale,
+      locale: Locale,
       time_zone: String,
       current_time: ActiveSupport::TimeWithZone
     ).returns(UserRecord)
@@ -58,35 +56,19 @@ class UserRecord < ApplicationRecord
     user
   end
 
-  sig { returns(UserEntity) }
-  def to_entity
-    UserEntity.new(
-      database_id: id,
-      atname:,
-      name:,
-      description:,
-      time_zone:
-    )
-  end
-
-  sig { override.returns(T::Boolean) }
+  sig { returns(T::Boolean) }
   def signed_in?
     true
   end
 
-  sig { override.returns(T.nilable(UserEntity)) }
-  def user_entity
-    to_entity
+  sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
+  def space_member_record(space_record:)
+    active_space_member_records.find_by(space_record:)
   end
 
-  sig { override.params(space: SpaceRecord).returns(ModelConcerns::SpaceViewable) }
-  def space_viewer!(space:)
-    active_space_member_records.find_by(space_record: space).presence || SpaceVisitor.new(space:)
-  end
-
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
-  def joined_space?(space:)
-    active_space_records.where(id: space.id).exists?
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def joined_space?(space_record:)
+    active_space_records.where(id: space_record.id).exists?
   end
 
   sig { params(topic: TopicRecord).returns(T::Boolean) }
@@ -100,12 +82,12 @@ class UserRecord < ApplicationRecord
     topic_ids - joined_topic_ids == []
   end
 
-  sig { override.returns(ViewerLocale) }
+  sig { returns(Locale) }
   def viewer_locale
-    ViewerLocale.deserialize(locale)
+    Locale.deserialize(locale)
   end
 
-  sig { override.returns(TopicRecord::PrivateRelation) }
+  sig { returns(TopicRecord::PrivateRelation) }
   def viewable_topics
     TopicRecord
       .left_joins(:member_records)
@@ -113,32 +95,17 @@ class UserRecord < ApplicationRecord
       .distinct
   end
 
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
-  def can_view_topic?(topic:)
-    viewable_topics.where(id: topic.id).exists?
+  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_destroy_topic?(topic_record:)
+    topic_member_records.find_by(topic_record:)&.role_admin? == true
   end
 
-  sig { params(topic: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic:)
-    topic_records.where(id: topic.id).exists?
-  end
+  sig { params(email_confirmation_record: EmailConfirmationRecord).void }
+  def run_after_email_confirmation_success!(email_confirmation_record:)
+    return unless email_confirmation_record.succeeded?
 
-  sig { params(topic: TopicRecord).returns(T::Boolean) }
-  def can_destroy_topic?(topic:)
-    topic_member_records.find_by(topic_record: topic)&.role_admin? == true
-  end
-
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page:)
-    active_space_records.where(id: page.space_id).exists?
-  end
-
-  sig { params(email_confirmation: EmailConfirmationRecord).void }
-  def run_after_email_confirmation_success!(email_confirmation:)
-    return unless email_confirmation.succeeded?
-
-    if email_confirmation.deserialized_event == EmailConfirmationEvent::EmailUpdate
-      update!(email: email_confirmation.email)
+    if email_confirmation_record.deserialized_event == EmailConfirmationEvent::EmailUpdate
+      update!(email: email_confirmation_record.email)
     end
 
     nil

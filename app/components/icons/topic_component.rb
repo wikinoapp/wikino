@@ -3,16 +3,16 @@
 
 module Icons
   class TopicComponent < ApplicationComponent
-    sig { params(topic_entity: TopicEntity, size: String, class_name: String).void }
-    def initialize(topic_entity:, size: "16px", class_name: "")
-      @topic_entity = topic_entity
+    sig { params(topic: Topic, size: String, class_name: String).void }
+    def initialize(topic:, size: "16px", class_name: "")
+      @topic = topic
       @size = size
       @class_name = class_name
     end
 
-    sig { returns(::TopicEntity) }
-    attr_reader :topic_entity
-    private :topic_entity
+    sig { returns(::Topic) }
+    attr_reader :topic
+    private :topic
 
     sig { returns(String) }
     attr_reader :size
@@ -24,7 +24,7 @@ module Icons
 
     sig { returns(String) }
     private def icon_name
-      topic_entity.visibility_public? ? "globe" : "lock"
+      topic.visibility_public? ? "globe" : "lock"
     end
   end
 end

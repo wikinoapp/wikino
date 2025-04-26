@@ -1,8 +1,8 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_page_name:, current_user_entity:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) %>
       <% end %>
     <% end %>
   <% end %>
@@ -16,7 +16,7 @@
         <%= title %>
       </h1>
 
-      <% if draft_page_entity.present? %>
+      <% if draft_page.present? %>
         <div class="alert alert-warning" role="alert">
           現在下書きを表示しています
         </div>
@@ -29,7 +29,7 @@
             data: { controller: "page-editor-form" },
             model: form,
             method: :patch,
-            url: page_path(space_entity.identifier, page_entity.number)
+            url: page_path(space.identifier, page.number)
           ) do |f| %>
             <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
@@ -106,7 +106,7 @@
                 <input
                   class="hidden"
                   data-page-editor-form-target="draftSaveButton"
-                  formaction="<%= draft_page_path(space_entity.identifier, page_entity.number) %>"
+                  formaction="<%= draft_page_path(space.identifier, page.number) %>"
                   type="submit"
                 >
               </div>
@@ -118,7 +118,7 @@
       <% end %>
 
       <turbo-frame id="page-editor-footer">
-        <%= render Footers::PageComponent.new(page_entity:, link_list_entity:, backlink_list_entity:) %>
+        <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
       </turbo-frame>
     <% end %>
   <% end %>

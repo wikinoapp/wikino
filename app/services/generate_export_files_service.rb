@@ -4,33 +4,33 @@
 require "zip"
 
 class GenerateExportFilesService < ApplicationService
-  sig { params(export: ExportRecord).void }
-  def call(export:)
-    if export.failed? || export.succeeded?
+  sig { params(export_record: ExportRecord).void }
+  def call(export_record:)
+    if export_record.failed? || export_record.succeeded?
       return
     end
 
     begin
-      export.change_status!(kind: ExportStatusKind::Started)
+      export_record.change_status!(kind: ExportStatusKind::Started)
 
-      output_path = output_to_files!(export:)
-      zip_path = make_zip_file!(export:, output_path:)
-      upload_zip_file!(export:, zip_path:)
+      output_path = output_to_files!(export_record:)
+      zip_path = make_zip_file!(export_record:, output_path:)
+      upload_zip_file!(export_record:, zip_path:)
 
-      export.change_status!(kind: ExportStatusKind::Succeeded)
+      export_record.change_status!(kind: ExportStatusKind::Succeeded)
     rescue => exception
-      export.change_status!(kind: ExportStatusKind::Failed)
+      export_record.change_status!(kind: ExportStatusKind::Failed)
       raise exception
     end
 
-    export.send_succeeded_mail!
+    export_record.send_succeeded_mail!
   end
 
-  sig { params(export: ExportRecord).returns(String) }
-  private def output_to_files!(export:)
-    target_pages = export.target_pages.preload(:topic_record)
+  sig { params(export_record: ExportRecord).returns(String) }
+  private def output_to_files!(export_record:)
+    target_pages = export_record.target_pages.preload(:topic_record)
 
-    export_base_dir = Rails.root.join("tmp", "export_#{export.id}")
+    export_base_dir = Rails.root.join("tmp", "export_#{export_record.id}")
     FileUtils.mkdir_p(export_base_dir)
 
     topics = {}
@@ -53,8 +53,8 @@ class GenerateExportFilesService < ApplicationService
     export_base_dir.to_s
   end
 
-  sig { params(export: ExportRecord, output_path: String).returns(String) }
-  private def make_zip_file!(export:, output_path:)
+  sig { params(export_record: ExportRecord, output_path: String).returns(String) }
+  private def make_zip_file!(export_record:, output_path:)
     zip_file_path = "#{output_path}.zip"
 
     if File.exist?(zip_file_path)
@@ -72,11 +72,11 @@ class GenerateExportFilesService < ApplicationService
     zip_file_path
   end
 
-  sig { params(export: ExportRecord, zip_path: String).void }
-  private def upload_zip_file!(export:, zip_path:)
+  sig { params(export_record: ExportRecord, zip_path: String).void }
+  private def upload_zip_file!(export_record:, zip_path:)
     file = File.open(zip_path)
 
-    export.file.attach(
+    export_record.file.attach(
       io: file,
       filename: File.basename(zip_path),
       content_type: "application/zip"

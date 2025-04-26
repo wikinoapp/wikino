@@ -5,36 +5,47 @@ module DraftPages
   class UpdateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
-    include ControllerConcerns::SpaceFindable
 
     around_action :set_locale
     before_action :require_authentication
 
     sig { returns(T.untyped) }
     def call
-      space = find_space_by_identifier!
-      space_viewer = Current.viewer!.space_viewer!(space:)
-      page = space.find_page_by_number!(params[:page_number]&.to_i)
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      space_member_record = current_user_record!.space_member_record(space_record:)
+      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      unless space_viewer.can_update_draft_page?(page:)
+      unless space_member_policy.can_update_draft_page?(page_record:)
         return render_404
       end
 
       result = UpdateDraftPageService.new.call(
-        space_member: T.let(space_viewer, SpaceMemberRecord),
-        page:,
+        space_member_record: space_member_record.not_nil!,
+        page_record:,
         topic_number: form_params[:topic_number],
         title: form_params[:title],
         body: form_params[:body]
       )
-      draft_page_entity = result.draft_page.to_entity(space_viewer:)
-      link_list_entity = result.draft_page.not_nil!.fetch_link_list_entity(space_viewer:)
-      backlink_list_entity = page.not_nil!.fetch_backlink_list_entity(space_viewer:)
+
+      draft_page_record = result.draft_page_record
+      draft_page = DraftPageRepository.new.to_model(draft_page_record:)
+      link_list = LinkListRepository.new.to_model(
+        user_record: current_user_record!,
+        pageable_record: draft_page_record
+      )
+      backlink_list = BacklinkListRepository.new.to_model(
+        user_record: current_user_record!,
+        page_record:
+      )
 
       render(DraftPages::UpdateView.new(
-        draft_page_entity:,
-        link_list_entity:,
-        backlink_list_entity:
+        draft_page:,
+        link_list:,
+        backlink_list:
       ), {
         content_type: "text/vnd.turbo-stream.html",
         layout: false

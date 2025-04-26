@@ -3,20 +3,21 @@
 
 class UpdateTopicService < ApplicationService
   class Result < T::Struct
-    const :topic, TopicRecord
+    const :topic_record, TopicRecord
   end
 
-  sig { params(form: EditTopicForm).returns(Result) }
-  def call(form:)
-    topic = form.topic_record.not_nil!
-    topic.attributes = {
-      name: form.name.not_nil!,
-      description: form.description.not_nil!,
-      visibility: form.visibility.not_nil!
-    }
+  sig do
+    params(
+      topic_record: TopicRecord,
+      name: String,
+      description: String,
+      visibility: String
+    ).returns(Result)
+  end
+  def call(topic_record:, name:, description:, visibility:)
+    topic_record.attributes = {name:, description:, visibility:}
+    topic_record.save!
 
-    topic.save!
-
-    Result.new(topic:)
+    Result.new(topic_record:)
   end
 end

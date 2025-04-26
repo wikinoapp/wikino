@@ -11,16 +11,13 @@ module Profiles
 
     sig { returns(T.untyped) }
     def call
-      user = UserRecord.kept.find_by!(atname: params[:atname])
-      joined_space_entities = user.active_space_records.map do |space|
-        space.to_entity(space_viewer: Current.viewer!.space_viewer!(space:))
+      user_record = UserRecord.kept.find_by!(atname: params[:atname])
+      joined_spaces = user_record.active_space_records.map do |space_record|
+        SpaceRepository.new.to_model(space_record:)
       end
+      user = UserRepository.new.to_model(user_record:)
 
-      render Profiles::ShowView.new(
-        current_user_entity: Current.viewer!.user_entity,
-        user_entity: user.to_entity,
-        joined_space_entities:
-      )
+      render Profiles::ShowView.new(current_user:, user:, joined_spaces:)
     end
   end
 end
