@@ -21,8 +21,14 @@ module PolicyConcerns
       @space_record = space_record
       @space_member_record = space_member_record || find_space_member_record
 
-      unless valid_argument?
-        raise ArgumentError, "user_record and space_record must be the same as space_member_record"
+      if mismatched_relations?
+        raise ArgumentError, [
+          "Mismatched relations.",
+          "user_record.id: #{user_record&.id.inspect}",
+          "space_record.id: #{space_record&.id.inspect}",
+          "space_member_record.user_id: #{space_member_record&.user_id.inspect}",
+          "space_member_record.space_id: #{space_member_record&.space_id.inspect}"
+        ].join(" ")
       end
     end
 
@@ -68,9 +74,14 @@ module PolicyConcerns
     end
 
     sig { returns(T::Boolean) }
-    private def valid_argument?
-      user_record&.id == space_member_record&.user_id &&
-        space_record&.id == space_member_record&.space_id
+    private def mismatched_relations?
+      if !user_record.nil? && !space_member_record.nil?
+        user_record.not_nil!.id != space_member_record.not_nil!.user_id
+      elsif !space_record.nil? && !space_member_record.nil?
+        space_record.not_nil!.id != space_member_record.not_nil!.space_id
+      else
+        false
+      end
     end
   end
 end

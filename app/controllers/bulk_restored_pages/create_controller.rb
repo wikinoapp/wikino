@@ -13,7 +13,7 @@ module BulkRestoredPages
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
-      policy = BulkRestoredPagePolicy.new(space_record:, space_member_record:)
+      policy = BulkRestoredPagePolicy.new(record: space_record, space_member_record:)
 
       unless policy.create?
         return render_404
@@ -22,25 +22,23 @@ module BulkRestoredPages
       form = TrashedPagesForm.new(form_params.merge(user_record: current_user_record!))
 
       if form.invalid?
-        return render(
-          Trash::ShowView.new(
-            current_user: UserRepository.new.to_model(user_record: current_user_record!),
-            space: SpaceRepository.new.to_model(space_record:),
-            page_list: space.restorable_page_list_entity(
-              space_viewer:,
-              before: params[:before],
-              after: params[:after]
-            ),
-            form:
-          ),
-          status: :unprocessable_entity
+        current_user = UserRepository.new.to_model(user_record: current_user_record!)
+        space = SpaceRepository.new.to_model(space_record:)
+        page_list = PageListRepository.new.restorable(
+          space_record:,
+          before: params[:before],
+          after: params[:after]
         )
+
+        return render(Trash::ShowView.new(current_user:, space:, page_list:, form:), {
+          status: :unprocessable_entity
+        })
       end
 
       BulkRestorePagesService.new.call(page_ids: form.page_ids.not_nil!)
 
       flash[:notice] = t("messages.trash.restored")
-      redirect_to trash_path(space.identifier)
+      redirect_to trash_path(space_record.identifier)
     end
 
     sig { returns(ActionController::Parameters) }

@@ -40,7 +40,7 @@ module Trash
     attr_reader :form
     private :form
 
-    delegate :page_entities, :pagination, to: :page_list
+    delegate :pages, :pagination, to: :page_list
 
     sig { returns(PageName) }
     private def current_page_name

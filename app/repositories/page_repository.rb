@@ -21,6 +21,14 @@ class PageRepository < ApplicationRepository
   end
 
   sig do
+    params(page_records: T.any(T::Array[PageRecord], PageRecord::PrivateCollectionProxy))
+      .returns(T::Array[Page])
+  end
+  def to_models(page_records:)
+    page_records.map { to_model(page_record: _1) }
+  end
+
+  sig do
     params(
       user_record: T.nilable(UserRecord),
       page_record: PageRecord,

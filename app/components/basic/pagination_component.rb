@@ -3,16 +3,16 @@
 
 module Basic
   class PaginationComponent < ApplicationComponent
-    sig { params(pagination_entity: PaginationEntity, previous_path: String, next_path: String).void }
-    def initialize(pagination_entity:, previous_path:, next_path:)
-      @pagination_entity = T.let(pagination_entity, PaginationEntity)
-      @previous_path = T.let(previous_path, String)
-      @next_path = T.let(next_path, String)
+    sig { params(pagination: Pagination, previous_path: String, next_path: String).void }
+    def initialize(pagination:, previous_path:, next_path:)
+      @pagination = pagination
+      @previous_path = previous_path
+      @next_path = next_path
     end
 
-    sig { returns(PaginationEntity) }
-    attr_reader :pagination_entity
-    private :pagination_entity
+    sig { returns(Pagination) }
+    attr_reader :pagination
+    private :pagination
 
     sig { returns(String) }
     attr_reader :previous_path

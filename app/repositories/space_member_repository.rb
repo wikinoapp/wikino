@@ -2,18 +2,15 @@
 # frozen_string_literal: true
 
 class SpaceMemberRepository < ApplicationRepository
-  def find(user:, space:)
-  end
+  sig { params(space_member_record: SpaceMemberRecord).returns(SpaceMember) }
+  def to_model(space_member_record:)
+    space = SpaceRepository.new.to_model(space_record: space_member_record.space_record!)
+    user = UserRepository.new.to_model(user_record: space_member_record.user_record!)
 
-  sig { params(user_record: UserRecord).returns(User) }
-  def build_model(user_record:)
-    User.new(
-      database_id: user_record.id,
-      atname: user_record.atname,
-      name: user_record.name,
-      description: user_record.description,
-      serialized_locale: user_record.locale,
-      time_zone: user_record.time_zone
+    SpaceMember.new(
+      database_id: space_member_record.id,
+      space:,
+      user:
     )
   end
 end

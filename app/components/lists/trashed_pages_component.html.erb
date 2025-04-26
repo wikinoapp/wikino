@@ -42,25 +42,25 @@
       </div>
 
       <div>
-        <% page_entities.each do |page_entity| %>
+        <% pages.each do |page| %>
           <div class="flex items-center gap-4">
             <div class="py-2">
               <%= check_box_tag(
                 "trashed_pages_form[page_ids][]",
-                page_entity.database_id,
-                f.object.page_ids&.include?(page_entity.database_id),
+                page.database_id,
+                f.object.page_ids&.include?(page.database_id),
                 class: "checkbox"
               ) %>
             </div>
 
             <div>
               <div class="w-[70px] text-xs text-gray-500">
-                <%= page_entity.topic_entity.name %>
+                <%= page.topic.name %>
               </div>
 
               <%= link_to(
-                page_entity.title,
-                page_path(page_entity.space_entity.identifier, page_entity.number),
+                page.title,
+                page_path(page.space.identifier, page.number),
                 class: "link link-hover"
               ) %>
             </div>
