@@ -1,10 +1,10 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) do |breadcrumbs| %>
           <%= breadcrumbs.with_item do %>
-            <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
+            <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
           <% end %>
         <% end %>
       <% end %>
@@ -27,7 +27,7 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <%= button_to t("messages.exports.start"), space_settings_export_list_path(space_entity.identifier), {
+          <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
             method: :post,
             class: "btn btn-primary no-animation rounded-full"
           } %>

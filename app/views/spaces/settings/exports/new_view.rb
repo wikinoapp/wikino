@@ -8,17 +8,17 @@ module Spaces
         sig do
           params(
             current_user: User,
-            space_entity: SpaceEntity
+            space: Space
           ).void
         end
-        def initialize(current_user:, space_entity:)
+        def initialize(current_user:, space:)
           @current_user = current_user
-          @space_entity = space_entity
+          @space = space
         end
 
         sig { override.void }
         def before_render
-          title = I18n.t("meta.title.spaces.settings.exports.new", space_name: space_entity.name)
+          title = I18n.t("meta.title.spaces.settings.exports.new", space_name: space.name)
           helpers.set_meta_tags(title:, **default_meta_tags(site: false))
         end
 
@@ -26,9 +26,9 @@ module Spaces
         attr_reader :current_user
         private :current_user
 
-        sig { returns(SpaceEntity) }
-        attr_reader :space_entity
-        private :space_entity
+        sig { returns(Space) }
+        attr_reader :space
+        private :space
 
         sig { returns(PageName) }
         private def current_page_name
