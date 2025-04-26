@@ -14,6 +14,16 @@ class PagePolicy < ApplicationPolicy
   end
 
   sig { returns(T::Boolean) }
+  def update?
+    if same_space_member?
+      return space_member_record!.active? &&
+          space_member_record!.joined_topics.where(id: page_record.topic_id).exists?
+    end
+
+    false
+  end
+
+  sig { returns(T::Boolean) }
   def update_draft?
     return false unless same_space_member?
 

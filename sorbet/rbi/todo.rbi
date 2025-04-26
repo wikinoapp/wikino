@@ -14,8 +14,6 @@ module Dropdowns::SpaceOptionsComponent::SpaceEntity; end
 module Dropdowns::TopicOptionsComponent::TopicEntity; end
 module ExportRecord::ExportEntity; end
 module ExportStatusRecord::ExportStatusEntity; end
-module Links::IndexView::LinkListEntity; end
-module Links::IndexView::PageEntity; end
 module PageRecord::PageEntity; end
 module Pages::EditView::BacklinkListEntity; end
 module Pages::EditView::DraftPageEntity; end

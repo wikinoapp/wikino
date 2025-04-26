@@ -140,11 +140,6 @@ class SpaceMemberRecord < ApplicationRecord
     active? && space_id == space.id
   end
 
-  sig { override.params(page: PageRecord).returns(T::Boolean) }
-  def can_update_page?(page:)
-    active? && joined_topics.where(id: page.topic_id).exists?
-  end
-
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     true
