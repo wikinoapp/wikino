@@ -84,12 +84,12 @@ class SpaceMemberRecord < ApplicationRecord
     )
   end
 
-  sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
+  sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topics
     topic_records.kept
   end
 
-  sig { override.params(space: SpaceRecord).returns(T::Boolean) }
+  sig { params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
   end

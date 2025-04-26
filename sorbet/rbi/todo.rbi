@@ -5,10 +5,4 @@
 # typed: false
 
 module ::BacklinkEntity; end
-module ExportRecord::ExportEntity; end
-module ExportStatusRecord::ExportStatusEntity; end
-module PageRecord::PageEntity; end
-module SpaceMemberRecord::SpaceMemberEntity; end
-module SpaceRecord::SpaceEntity; end
-module TopicRecord::TopicEntity; end
 module Zip::File::CREATE; end

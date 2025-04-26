@@ -39,7 +39,7 @@ module Accounts
         user_agent: request.user_agent
       )
 
-      user_session = UserSessionRepository.new.build_model(
+      user_session = UserSessionRepository.new.to_model(
         user_session_record: user_session_result.user_session_record
       )
       sign_in(user_session)
