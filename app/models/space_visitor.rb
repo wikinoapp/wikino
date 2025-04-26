@@ -20,11 +20,6 @@ class SpaceVisitor
     DraftPageRecord.none
   end
 
-  sig { override.returns(PageRecord::PrivateAssociationRelation) }
-  def showable_pages
-    space.page_records.active.joins(:topic_record).merge(TopicRecord.visibility_public)
-  end
-
   sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topics
     TopicRecord.none

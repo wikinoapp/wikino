@@ -29,12 +29,35 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
   end
 
+  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_create_page?(topic_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.topic_records.where(id: topic_record.id).exists?
+  end
+
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
     return false if space_member_record.nil?
 
     space_member_record!.space_id == space_record.id &&
       space_member_record!.permissions.include?(SpaceMemberPermission::ExportSpace)
+  end
+
+  sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
+  def showable_pages(space_record:)
+    if space_member_record
+      return space_member_record!.space_record.not_nil!.page_records.active
+    end
+
+    space_record.page_records.active.joins(:topic_record).merge(TopicRecord.visibility_public)
+  end
+
+  sig { returns(T.nilable(TopicRecord)) }
+  def first_topic_record
+    return if space_member_record.nil?
+
+    space_member_record!.joined_topics.first
   end
 
   sig { returns(T.nilable(UserRecord)) }

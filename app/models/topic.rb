@@ -16,10 +16,16 @@ class Topic < T::Struct
   const :name, String
   const :description, String
   const :visibility, TopicVisibility
+  const :can_create_page, T.nilable(T::Boolean)
   const :space, Space
 
   sig { returns(T::Boolean) }
   def visibility_public?
     visibility == TopicVisibility::Public
+  end
+
+  sig { returns(T::Boolean) }
+  def can_create_page?
+    can_create_page.not_nil!
   end
 end

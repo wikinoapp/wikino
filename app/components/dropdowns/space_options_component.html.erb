@@ -5,7 +5,7 @@
 
   <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>
     <%= dropdown_menu.with_item do %>
-      <%= link_to atom_path(space_entity.identifier), class: "flex gap-2 items-center", target: "_blank" do %>
+      <%= link_to atom_path(space.identifier), class: "flex gap-2 items-center", target: "_blank" do %>
         <%= render Basic::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 
         <%= t("nouns.rss_feed") %>
@@ -14,7 +14,7 @@
 
     <% if signed_in? %>
       <%= dropdown_menu.with_item do %>
-        <%= link_to new_topic_path(space_entity.identifier), class: "flex gap-2 items-center" do %>
+        <%= link_to new_topic_path(space.identifier), class: "flex gap-2 items-center" do %>
           <%= render Basic::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary") %>
 
           <%= t("nouns.new_topic") %>
@@ -22,7 +22,7 @@
       <% end %>
 
       <%= dropdown_menu.with_item do %>
-        <%= link_to space_settings_path(space_entity.identifier), class: "flex gap-2 items-center" do %>
+        <%= link_to space_settings_path(space.identifier), class: "flex gap-2 items-center" do %>
           <%= render Basic::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
           <%= t("nouns.settings") %>

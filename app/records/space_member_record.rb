@@ -95,11 +95,6 @@ class SpaceMemberRecord < ApplicationRecord
     )
   end
 
-  sig { override.returns(PageRecord::PrivateAssociationRelation) }
-  def showable_pages
-    space_record.not_nil!.page_records.active
-  end
-
   sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topics
     topic_records.kept

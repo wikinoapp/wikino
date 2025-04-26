@@ -12,8 +12,12 @@ module Spaces
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user!.space_member_record(space_record:)
-      showable_pages = space_viewer.showable_pages.preload(:topic_record)
+      space_member_record = current_user_record&.space_member_record(space_record:)
+      space_member_policy = SpaceMemberPolicy.new(
+        user_record: current_user_record,
+        space_member_record:
+      )
+      showable_pages = space_member_policy.showable_pages(space_record:).preload(:topic_record)
 
       cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
@@ -21,19 +25,29 @@ module Spaces
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      page_entities = PageRecord.to_entities(space_viewer:, pages: cursor_paginate_page.records)
-      pagination_entity = PaginationEntity.from_cursor_paginate(cursor_paginate_page:)
+      pages = PageRepository.new.to_models(page_records: cursor_paginate_page.records)
+      pagination = PaginationRepository.new.to_model(cursor_paginate_page:)
+      page_list = PageList.new(pages:, pagination:)
 
-      space_entity = space.to_entity(space_viewer:)
-      first_topic_entity = space_viewer.joined_topics.first&.to_entity(space_viewer:)
-      pinned_page_entities = PageRecord.to_entities(space_viewer:, pages: showable_pages.pinned.order(pinned_at: :desc, id: :desc))
+      space = SpaceRepository.new.to_model(space_record:)
+
+      first_topic_record = space_member_policy.first_topic_record
+      first_topic = if first_topic_record
+        TopicRepository.new.to_model(
+          topic_record: first_topic_record,
+          can_create_page: space_member_policy.can_create_page?(topic_record: first_topic_record)
+        )
+      end
+
+      pinned_page_records = showable_pages.pinned.order(pinned_at: :desc, id: :desc)
+      pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records)
 
       render Spaces::ShowView.new(
-        current_user: current_user!,
-        space_entity:,
-        first_topic_entity:,
-        pinned_page_entities:,
-        page_list_entity: PageListEntity.new(page_entities:, pagination_entity:)
+        current_user:,
+        space:,
+        first_topic:,
+        pinned_pages:,
+        page_list:
       )
     end
   end
