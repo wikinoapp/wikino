@@ -8,21 +8,21 @@ module Spaces
         sig do
           params(
             current_user: User,
-            space_entity: SpaceEntity,
-            export_entity: ExportEntity,
-            export_status_entity: ExportStatusEntity
+            space: Space,
+            export: Export,
+            export_status: ExportStatus
           ).void
         end
-        def initialize(current_user:, space_entity:, export_entity:, export_status_entity:)
+        def initialize(current_user:, space:, export:, export_status:)
           @current_user = current_user
-          @space_entity = space_entity
-          @export_entity = export_entity
-          @export_status_entity = export_status_entity
+          @space = space
+          @export = export
+          @export_status = export_status
         end
 
         sig { override.void }
         def before_render
-          title = I18n.t("meta.title.spaces.settings.exports.show", space_name: space_entity.name)
+          title = I18n.t("meta.title.spaces.settings.exports.show", space_name: space.name)
           helpers.set_meta_tags(title:, **default_meta_tags(site: false))
         end
 
@@ -30,17 +30,17 @@ module Spaces
         attr_reader :current_user
         private :current_user
 
-        sig { returns(SpaceEntity) }
-        attr_reader :space_entity
-        private :space_entity
+        sig { returns(Space) }
+        attr_reader :space
+        private :space
 
-        sig { returns(ExportEntity) }
-        attr_reader :export_entity
-        private :export_entity
+        sig { returns(Export) }
+        attr_reader :export
+        private :export
 
-        sig { returns(ExportStatusEntity) }
-        attr_reader :export_status_entity
-        private :export_status_entity
+        sig { returns(ExportStatus) }
+        attr_reader :export_status
+        private :export_status
 
         sig { returns(PageName) }
         private def current_page_name

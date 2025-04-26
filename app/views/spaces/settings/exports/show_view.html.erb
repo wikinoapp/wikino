@@ -1,10 +1,10 @@
-<%= render Layouts::BasicComponent.new(current_page_name:) do |layout| %>
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user_entity:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space_entity:) do |breadcrumbs| %>
+        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) do |breadcrumbs| %>
           <%= breadcrumbs.with_item do %>
-            <%= link_to t("nouns.settings"), space_settings_path(space_entity.identifier) %>
+            <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
           <% end %>
         <% end %>
       <% end %>
@@ -27,7 +27,7 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <% if export_status_entity.processing? %>
+          <% if export_status.processing? %>
             <div class="flex flex-col place-items-center gap-2">
               <%= render Basic::IconComponent.new(
                 name: "package-regular",
@@ -39,7 +39,7 @@
                 <%= t("messages.exports.started_html") %>
               </div>
             </div>
-          <% elsif export_status_entity.succeeded? %>
+          <% elsif export_status.succeeded? %>
             <div class="flex flex-col place-items-center gap-6">
               <div class="flex flex-col place-items-center gap-2">
                 <%= render Basic::IconComponent.new(
@@ -54,8 +54,8 @@
               </div>
 
               <%= link_to space_settings_download_export_path(
-                space_entity.identifier,
-                export_entity.database_id
+                space.identifier,
+                export.database_id
               ), {
                 class: "btn btn-primary no-animation rounded-full w-fit",
                 target: "_blank",
