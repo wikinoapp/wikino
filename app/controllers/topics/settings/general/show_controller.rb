@@ -14,25 +14,27 @@ module Topics
         sig { returns(T.untyped) }
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_member_record = current_user!.space_member_record(space_record:)
-          topic = space_viewer.showable_topics.find_by!(number: params[:topic_number])
-          topic_entity = topic.to_entity(space_viewer:)
+          space_member_record = current_user_record!.space_member_record(space_record:)
+          space_member_policy = SpaceMemberPolicy.new(
+            user_record: current_user_record!,
+            space_member_record:
+          )
+          topic_record = space_member_policy.showable_topics(space_record:).find_by!(
+            number: params[:topic_number]
+          )
 
-          unless topic_entity.viewer_can_update?
+          unless space_member_policy.can_update_topic?(topic_record:)
             return render_404
           end
 
           form = EditTopicForm.new(
-            name: topic_entity.name,
-            description: topic_entity.description,
-            visibility: topic_entity.visibility.serialize
+            name: topic_record.name,
+            description: topic_record.description,
+            visibility: topic_record.visibility
           )
+          topic = TopicRepository.new.to_model(topic_record:)
 
-          render Topics::Settings::General::ShowView.new(
-            current_user: current_user!,
-            topic_entity:,
-            form:
-          )
+          render Topics::Settings::General::ShowView.new(current_user:, topic:, form:)
         end
       end
     end

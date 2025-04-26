@@ -112,11 +112,6 @@ class UserRecord < ApplicationRecord
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic_record:)
-    topic_records.where(id: topic_record.id).exists?
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_destroy_topic?(topic_record:)
     topic_member_records.find_by(topic_record:)&.role_admin? == true
   end

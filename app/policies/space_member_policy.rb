@@ -35,6 +35,14 @@ class SpaceMemberPolicy < ApplicationPolicy
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.space_id == topic_record.space_id &&
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateTopic)
+  end
+
+  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
     return false if space_member_record.nil?
 
@@ -47,6 +55,15 @@ class SpaceMemberPolicy < ApplicationPolicy
 
     space_member_record!.space_id == space_record.id &&
       space_member_record!.permissions.include?(SpaceMemberPermission::ExportSpace)
+  end
+
+  sig { params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
+  def showable_topics(space_record:)
+    if space_member_record
+      return space_member_record!.space_record.not_nil!.topic_records.kept
+    end
+
+    space_record.topic_records.kept.visibility_public
   end
 
   sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }

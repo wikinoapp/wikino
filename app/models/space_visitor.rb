@@ -25,11 +25,6 @@ class SpaceVisitor
     TopicRecord.none
   end
 
-  sig { override.returns(TopicRecord::PrivateAssociationRelation) }
-  def showable_topics
-    space.topic_records.kept.visibility_public
-  end
-
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space:)
     false
@@ -37,11 +32,6 @@ class SpaceVisitor
 
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space:)
-    false
-  end
-
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic:)
     false
   end
 

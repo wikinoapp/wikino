@@ -100,16 +100,6 @@ class SpaceMemberRecord < ApplicationRecord
     topic_records.kept
   end
 
-  sig { override.returns(TopicRecord::PrivateAssociationRelation) }
-  def showable_topics
-    space_record.not_nil!.topic_records.kept
-  end
-
-  sig { override.params(topic: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic:)
-    space_record.not_nil!.id == topic.space_id && permissions.include?(SpaceMemberPermission::UpdateTopic)
-  end
-
   sig { override.params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id
