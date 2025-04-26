@@ -21,7 +21,6 @@ module EmailConfirmations
       end
 
       result = ConfirmEmailService.new.call(
-        user_record: current_user_record!,
         email_confirmation_record: form.email_confirmation_record!
       )
 

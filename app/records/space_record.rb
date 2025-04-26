@@ -75,8 +75,14 @@ class SpaceRecord < ApplicationRecord
     page_records.kept.find_by!(number:)
   end
 
-  sig { params(user: UserRecord, role: SpaceMemberRole, joined_at: ActiveSupport::TimeWithZone).returns(T.untyped) }
-  def add_member!(user:, role:, joined_at:)
-    space_member_records.create!(user_record: user, role: role.serialize, joined_at:)
+  sig do
+    params(
+      user_record: UserRecord,
+      role: SpaceMemberRole,
+      joined_at: ActiveSupport::TimeWithZone
+    ).void
+  end
+  def add_member!(user_record:, role:, joined_at:)
+    space_member_records.create!(user_record:, role: role.serialize, joined_at:)
   end
 end

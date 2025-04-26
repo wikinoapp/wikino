@@ -54,3 +54,5 @@ ja:
               incorrect_or_expired: が間違っているか古くなっています
         trashed_pages_form:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
+        user_session_form:
+          unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています

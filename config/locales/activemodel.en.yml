@@ -1,6 +1,0 @@
-en:
-  activemodel:
-    errors:
-      models:
-        user_session:
-          unauthenticated: Login failed. Email or password are incorrect

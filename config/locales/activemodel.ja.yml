@@ -1,6 +1,0 @@
-ja:
-  activemodel:
-    errors:
-      models:
-        user_session:
-          unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています

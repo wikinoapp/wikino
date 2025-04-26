@@ -15,7 +15,7 @@ module Pages
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
       space_member_policy = SpaceMemberPolicy.new(
-        user_record: current_user_record!,
+        user_record: current_user_record,
         space_member_record:
       )
 

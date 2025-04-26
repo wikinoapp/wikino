@@ -6,12 +6,12 @@ class ConfirmEmailService < ApplicationService
     const :email_confirmation_record, EmailConfirmationRecord
   end
 
-  sig { params(user_record: UserRecord, email_confirmation_record: EmailConfirmationRecord).returns(Result) }
-  def call(user_record:, email_confirmation_record:)
+  sig { params(email_confirmation_record: EmailConfirmationRecord, user_record: T.nilable(UserRecord)).returns(Result) }
+  def call(email_confirmation_record:, user_record: nil)
     ActiveRecord::Base.transaction do
       email_confirmation_record.success!
 
-      user_record.run_after_email_confirmation_success!(email_confirmation_record:)
+      user_record&.run_after_email_confirmation_success!(email_confirmation_record:)
     end
 
     Result.new(email_confirmation_record:)

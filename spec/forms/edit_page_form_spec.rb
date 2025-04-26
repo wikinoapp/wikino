@@ -6,14 +6,14 @@ RSpec.describe EditPageForm, type: :form do
     form = EditPageForm.new
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Space member can't be blank")
+    expect(form.errors.full_messages).to include("Space member record can't be blank")
   end
 
   it "Page が指定されていないとき、エラーになること" do
     form = EditPageForm.new
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Page can't be blank")
+    expect(form.errors.full_messages).to include("Page record can't be blank")
   end
 
   it "トピック番号が `nil` のとき、エラーになること" do
@@ -54,14 +54,14 @@ RSpec.describe EditPageForm, type: :form do
   it "タイトルが重複しているとき、エラーになること" do
     space = create(:space_record)
     topic = create(:topic_record, space_record: space)
-    space_member = create(:space_member_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
+    space_member_record = create(:space_member_record, space_record: space)
+    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record:)
     other_page = create(:page_record, topic_record: topic, title: "a")
-    page = create(:page_record, space_record: space, topic_record: topic)
+    page_record = create(:page_record, space_record: space, topic_record: topic)
     form = EditPageForm.new(
       title: "a",
-      space_member:,
-      page:,
+      space_member_record:,
+      page_record:,
       topic_number: topic.number
     )
 
@@ -113,13 +113,13 @@ RSpec.describe EditPageForm, type: :form do
   private def valid_attributes
     space = create(:space_record)
     topic = create(:topic_record, space_record: space)
-    space_member = create(:space_member_record, space_record: space)
-    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record: space_member)
-    page = create(:page_record, space_record: space, topic_record: topic)
+    space_member_record = create(:space_member_record, space_record: space)
+    create(:topic_member_record, space_record: space, topic_record: topic, space_member_record:)
+    page_record = create(:page_record, space_record: space, topic_record: topic)
 
     {
-      space_member:,
-      page:,
+      space_member_record:,
+      page_record:,
       topic_number: topic.number,
       title: "a",
       body: "a"
