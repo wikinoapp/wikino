@@ -3,17 +3,14 @@
 
 class UpdateSpaceService < ApplicationService
   class Result < T::Struct
-    const :space, SpaceRecord
+    const :space_record, SpaceRecord
   end
 
-  sig { params(space: SpaceRecord, form: EditSpaceForm).returns(Result) }
-  def call(space:, form:)
-    space.attributes = {
-      identifier: form.identifier.not_nil!,
-      name: form.name.not_nil!
-    }
-    space.save!
+  sig { params(space_record: SpaceRecord, identifier: String, name: String).returns(Result) }
+  def call(space_record:, identifier:, name:)
+    space_record.attributes = {identifier:, name:}
+    space_record.save!
 
-    Result.new(space:)
+    Result.new(space_record:)
   end
 end
