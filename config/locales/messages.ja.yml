@@ -15,9 +15,9 @@ ja:
       signed_in_successfully: ログインしました
       signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
       terms_html: |-
-        <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
+        <a class="link" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と
-        <a class="link link-secondary" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
+        <a class="link" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
         に同意のうえでアカウントを作成してください。
     authentication:
       already_signed_in: すでにログインしています
