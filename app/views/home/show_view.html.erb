@@ -17,13 +17,55 @@
           <%= t("nouns.joined_spaces") %>
         </h2>
 
-        <div class="flex flex-col gap-2">
-          <% @active_spaces.each do |space| %>
-            <%= link_to space.name, space_path(space.identifier), class: "link" %>
-          <% end %>
+        <% if active_spaces.present? %>
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <% active_spaces.each do |space| %>
+              <%= render Cards::SpaceComponent.new(space:) %>
+            <% end %>
 
-          <%= link_to t("nouns.new_space"), new_space_path, class: "link" %>
-        </div>
+            <%= render Basic::CardComponent.new(
+              class_name: class_names(
+                "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px]
+                hover:ring-1 hover:ring-primary transition"
+              )
+            ) do |card| %>
+              <%= card.with_body(class_name: "p-0") do %>
+                <%= link_to new_space_path, {
+                  class: "h-full px-4 py-2 w-full text-sm flex flex-col items-center justify-center gap-2"
+                } do %>
+                  <%= render Basic::IconComponent.new(
+                    name: "plus",
+                    size: "24px",
+                    class_name: "fill-secondary-content"
+                  ) %>
+
+                  <%= t("nouns.new_space") %>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <%= render Cards::EmptyStateComponent.new(
+            icon_name: "file",
+            message: t("messages.home.no_joined_spaces_html")
+          ) do %>
+            <div>
+              <%= t("messages.home.new_space_description_html") %>
+            </div>
+
+            <%= link_to new_space_path, {
+              class: "btn btn-primary btn-sm no-animation rounded-full"
+            } do %>
+              <%= render Basic::IconComponent.new(
+                name: "plus",
+                size: "18px",
+                class_name: "fill-primary-content"
+              ) %>
+
+              <%= t("nouns.new_space") %>
+            <% end %>
+          <% end %>
+        <% end %>
       </div>
     <% end %>
   <% end %>

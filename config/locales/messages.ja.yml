@@ -35,6 +35,11 @@ ja:
         エクスポートを開始しました。<br>
         完了したらメールでお知らせします。
       succeeded_html: エクスポートが完了しました。
+    home:
+      new_space_description_html: |-
+        ページはスペースの中で作成することができます。<br>
+        まずはスペースを作成しましょう。
+      no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>

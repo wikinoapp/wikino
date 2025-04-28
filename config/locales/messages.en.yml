@@ -35,6 +35,11 @@ en:
         Export has started.<br>
         You will be notified by email when it is complete.
       succeeded_html: Export completed.
+    home:
+      new_space_description_html: |-
+        Pages can be created in spaces.<br>
+        First, create a space.
+      no_joined_spaces_html: No joined spaces.
     profiles:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>
