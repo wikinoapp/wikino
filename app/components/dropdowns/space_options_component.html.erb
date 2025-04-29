@@ -22,6 +22,14 @@
       <% end %>
 
       <%= dropdown_menu.with_item do %>
+        <%= link_to trash_path(space.identifier), class: "flex gap-2 items-center" do %>
+          <%= render Basic::IconComponent.new(name: "trash", size: "18px", class_name: "fill-primary") %>
+
+          <%= t("nouns.trash") %>
+        <% end %>
+      <% end %>
+
+      <%= dropdown_menu.with_item do %>
         <%= link_to space_settings_path(space.identifier), class: "flex gap-2 items-center" do %>
           <%= render Basic::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 

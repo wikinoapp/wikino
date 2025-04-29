@@ -64,7 +64,7 @@ RSpec.describe Markup, type: :model do
       TEXT
       expected: <<~HTML
         <ul>
-          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+          <li><a href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
         </ul>
       HTML
     )
@@ -76,7 +76,7 @@ RSpec.describe Markup, type: :model do
       TEXT
       expected: <<~HTML
         <ul>
-          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
+          <li><a href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a></li>
         </ul>
       HTML
     )
@@ -113,7 +113,7 @@ RSpec.describe Markup, type: :model do
       TEXT
       expected: <<~HTML
         <ul>
-          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></li>
+          <li><a href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></li>
         </ul>
       HTML
     )
@@ -138,7 +138,7 @@ RSpec.describe Markup, type: :model do
       TEXT
       expected: <<~HTML
         <ul>
-          <li><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a></li>
+          <li><a href="/s/#{space.identifier}/pages/#{page_3.number}">Notebook -&gt; List</a></li>
         </ul>
       HTML
     )
@@ -149,7 +149,7 @@ RSpec.describe Markup, type: :model do
         文中にページリンクがある場合[[Page 1]]のテスト
       TEXT
       expected: <<~HTML
-        <p>文中にページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
+        <p>文中にページリンクがある場合<a href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
       HTML
     )
 
@@ -159,7 +159,7 @@ RSpec.describe Markup, type: :model do
         文中にトピック付きのページリンクがある場合[[トピック1/Page 1]]のテスト
       TEXT
       expected: <<~HTML
-        <p>文中にトピック付きのページリンクがある場合<a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
+        <p>文中にトピック付きのページリンクがある場合<a href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a>のテスト</p>
       HTML
     )
 
@@ -169,7 +169,7 @@ RSpec.describe Markup, type: :model do
         同じ行に2つのページリンクがある場合: [[Page 1]] [[トピック2/Page 2]]
       TEXT
       expected: <<~HTML
-        <p>同じ行に2つのページリンクがある場合: <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a> <a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></p>
+        <p>同じ行に2つのページリンクがある場合: <a href="/s/#{space.identifier}/pages/#{page_1.number}">Page 1</a> <a href="/s/#{space.identifier}/pages/#{page_2.number}">Page 2</a></p>
       HTML
     )
 
@@ -180,7 +180,7 @@ RSpec.describe Markup, type: :model do
         [[日記 (2025)]]
       TEXT
       expected: <<~HTML
-        <p><a class="link link-primary" href="/s/#{space.identifier}/pages/#{page_4.number}">日記 (2025)</a></p>
+        <p><a href="/s/#{space.identifier}/pages/#{page_4.number}">日記 (2025)</a></p>
       HTML
     )
   end

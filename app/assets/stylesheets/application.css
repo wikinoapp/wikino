@@ -9,7 +9,7 @@
     ============================================================================
   */
   .wikino-markdown {
-    @apply leading-relaxed;
+    @apply leading-8;
   }
 
   .wikino-markdown > :first-child {
@@ -17,51 +17,61 @@
   }
 
   .wikino-markdown a {
-    @apply link text-blue-600 hover:text-blue-950;
+    @apply text-blue-600;
+    /* 下線の調整 */
+    @apply underline decoration-blue-800/[.6] decoration-1 underline-offset-[0.25rem] hover:decoration-2;
   }
 
   .wikino-markdown blockquote {
-    @apply border-l-4 border-gray-300 pl-4 pr-4 text-base text-gray-600;
+    @apply border-l-4 border-gray-300 pl-4 pr-4 text-base/8 text-gray-600;
   }
 
   .wikino-markdown code {
-    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm;
+    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm/8;
   }
 
   .wikino-markdown h1 {
-    @apply mb-4 mt-8 text-2xl font-bold antialiased;
+    @apply mb-4 mt-8 text-2xl/8 font-bold antialiased;
   }
 
   .wikino-markdown h2 {
-    @apply mb-4 mt-8 text-xl font-bold antialiased;
+    @apply mb-4 mt-8 text-xl/8 font-bold antialiased;
   }
 
   .wikino-markdown h3 {
-    @apply mb-4 mt-8 text-lg font-bold antialiased;
+    @apply mb-4 mt-8 text-lg/8 font-bold antialiased;
   }
 
   .wikino-markdown h4 {
-    @apply mb-4 mt-8 text-base font-bold antialiased;
+    @apply mb-4 mt-8 text-base/8 font-bold antialiased;
   }
 
   .wikino-markdown h5 {
-    @apply mb-4 mt-8 text-sm font-bold antialiased;
+    @apply mb-4 mt-8 text-sm/8 font-bold antialiased;
   }
 
   .wikino-markdown h6 {
-    @apply mb-4 mt-8 text-sm font-bold antialiased;
+    @apply mb-4 mt-8 text-sm/8 font-bold antialiased;
   }
 
   .wikino-markdown hr {
     @apply border-gray-300;
   }
 
+  .wikino-markdown img {
+    @apply mx-auto;
+  }
+
   .wikino-markdown li {
-    @apply mt-2;
+    @apply mt-1;
+  }
+
+  .wikino-markdown li p {
+    @apply mb-0;
   }
 
   .wikino-markdown ol {
-    @apply mb-4 list-decimal pl-6 text-base;
+    @apply mb-4 list-decimal pl-6 text-base/8;
   }
 
   .wikino-markdown p {
@@ -77,7 +87,7 @@
   }
 
   .wikino-markdown ul {
-    @apply mb-4 list-disc pl-6 text-base;
+    @apply mb-4 list-disc pl-6 text-base/8;
   }
 }
 
@@ -87,7 +97,7 @@
   ============================================================================
 */
 .cm-editor {
-  @apply textarea textarea-bordered bg-base-300 px-2 text-base;
+  @apply textarea textarea-bordered bg-base-300 px-2 text-base/8;
 }
 
 .cm-editor.cm-focused {

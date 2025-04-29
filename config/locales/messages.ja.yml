@@ -15,9 +15,9 @@ ja:
       signed_in_successfully: ログインしました
       signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
       terms_html: |-
-        <a class="link link-secondary" href="/terms" rel="nofollow" target="_blank">利用規約</a>
+        <a class="link" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と
-        <a class="link link-secondary" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
+        <a class="link" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
         に同意のうえでアカウントを作成してください。
     authentication:
       already_signed_in: すでにログインしています
@@ -35,6 +35,11 @@ ja:
         エクスポートを開始しました。<br>
         完了したらメールでお知らせします。
       succeeded_html: エクスポートが完了しました。
+    home:
+      new_space_description_html: |-
+        ページはスペースの中で作成することができます。<br>
+        まずはスペースを作成しましょう。
+      no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>
