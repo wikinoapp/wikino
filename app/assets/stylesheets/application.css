@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer components {
-
   /*
     ============================================================================
     .wikino-markdown
@@ -13,14 +12,14 @@
     @apply leading-8;
   }
 
-  .wikino-markdown> :first-child {
+  .wikino-markdown > :first-child {
     @apply mt-0;
   }
 
   .wikino-markdown a {
     @apply text-blue-600;
     /* 下線の調整 */
-    @apply underline underline-offset-[0.25rem] decoration-1 decoration-blue-800/[.6] hover:decoration-2;
+    @apply underline decoration-blue-800/[.6] decoration-1 underline-offset-[0.25rem] hover:decoration-2;
   }
 
   .wikino-markdown blockquote {
