@@ -10,6 +10,7 @@
       title: t("nouns.home")
     ) %>
 
+    <% if false %>
     <%= render Navbar::ItemLinkComponent.new(
       path: "#",
       icon_name: inbox_icon_name,
@@ -28,6 +29,7 @@
         size: "2rem",
         class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
       ) %>
+    <% end %>
     <% end %>
 
     <%= render Navbar::ItemLinkComponent.new(
