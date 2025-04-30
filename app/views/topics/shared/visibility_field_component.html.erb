@@ -23,16 +23,26 @@
 
     <div class="flex flex-col gap-2">
       <label class="flex cursor-pointer items-center gap-2">
-        <%= form_builder.radio_button :visibility, TopicVisibility::Private.serialize, class: "radio" %>
+        <%= form_builder.radio_button :visibility, TopicVisibility::Private.serialize, {
+          class: "radio",
+          disabled: true
+        } %>
 
-        <span class="label-text flex items-center gap-1">
-          <%= render Basic::IconComponent.new(name: "lock", size: "16px") %>
+        <span class="label-text flex items-center gap-1 text-gray-400 line-through">
+          <%= render Basic::IconComponent.new(name: "lock", size: "16px", class_name: "fill-gray-400") %>
+
           <%= t("activerecord.attributes.topic.visibility.private") %>
         </span>
       </label>
 
       <div class="label-text-alt pl-[32px]">
-        <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
+        <p>
+          <%= t("forms.attributes.new_topic_form.visibility_private_hint") %>
+        </p>
+
+        <p class="text-red-600">
+          <%= t("forms.attributes.new_topic_form.visibility_private_hint_2_html") %>
+        </p>
       </div>
     </div>
   </div>

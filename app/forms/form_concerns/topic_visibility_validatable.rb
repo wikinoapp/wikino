@@ -6,7 +6,12 @@ module FormConcerns
     extend ActiveSupport::Concern
 
     included do
-      validates :visibility, inclusion: {in: TopicVisibility.values.map(&:serialize)}, presence: true
+      validates :visibility,
+        inclusion: {
+          # TODO: 非公開トピックの作成を有料プランでのみ利用可能にする
+          in: TopicVisibility.values.map(&:serialize) - [TopicVisibility::Private.serialize]
+        },
+        presence: true
     end
   end
 end
