@@ -48,6 +48,30 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(TopicRecord.count).to eq(0)
   end
 
+  it "スペースに参加している & 非公開トピックを作成しようとしたとき、エラーメッセージを表示すること" do
+    user = create(:user_record, :with_password)
+    space = create(:space_record, :small)
+    create(:space_member_record, user_record: user, space_record: space)
+
+    sign_in(user_record: user)
+
+    expect(TopicRecord.count).to eq(0)
+
+    post("/s/#{space.identifier}/topics", params: {
+      new_topic_form: {
+        name: "テストトピック",
+        description: "テストトピックです",
+        visibility: "private"
+      }
+    })
+
+    expect(response.status).to eq(422)
+    expect(response.body).to include("公開設定は一覧にありません")
+
+    # バリデーションエラーになったのでトピックは作成されていないはず
+    expect(TopicRecord.count).to eq(0)
+  end
+
   it "スペースに参加している & 入力値が正常なとき、トピックが作成できること" do
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
