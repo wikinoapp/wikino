@@ -2,6 +2,25 @@
 # frozen_string_literal: true
 
 RSpec.describe "POST /s/:space_identifier/pages/:page_number/links", type: :request do
+  it "トピックが削除されているとき、そのトピックに投稿されたページは表示されないこと" do
+    space_record = create(:space_record)
+    topic_record = create(:topic_record, :public, space_record:)
+    linked_page_record = create(:page_record, :published, space_record:, topic_record:, title: "テストページ")
+    page_record = create(:page_record, space_record:, topic_record:, linked_page_ids: [linked_page_record.id])
+
+    post "/s/#{space_record.identifier}/pages/#{page_record.number}/links"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("テストページ")
+
+    DestroyTopicService.new.call(topic_record:)
+
+    post "/s/#{space_record.identifier}/pages/#{page_record.number}/links"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("テストページ")
+  end
+
   it "ログインしていない & 公開トピックのページのとき、ページのリンクが表示されること" do
     space = create(:space_record, :small)
 

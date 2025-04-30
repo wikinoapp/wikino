@@ -24,6 +24,28 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     expect(response.status).to eq(404)
   end
 
+  it "トピックが削除されているとき、そのトピックに紐付くページは表示されないこと" do
+    space_record = create(:space_record)
+    user_record = create(:user_record, :with_password)
+    create(:space_member_record, :owner, space_record:, user_record:)
+    topic_record = create(:topic_record, space_record:)
+    create(:page_record, :trashed, space_record:, topic_record:, title: "削除されたページ")
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}/trash"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("削除されたページ")
+
+    DestroyTopicService.new.call(topic_record:)
+
+    get "/s/#{space_record.identifier}/trash"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("削除されたページ")
+  end
+
   it "スペースに参加しているとき、ゴミ箱ページが表示されること" do
     space = create(:space_record, :small)
     user = create(:user_record, :with_password)

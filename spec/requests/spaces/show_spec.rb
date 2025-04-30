@@ -2,6 +2,24 @@
 # frozen_string_literal: true
 
 RSpec.describe "GET /s/:space_identifier", type: :request do
+  it "トピックが削除されているとき、そのトピックに投稿されたページは表示されないこと" do
+    space_record = create(:space_record)
+    topic_record = create(:topic_record, :public, space_record:)
+    create(:page_record, :published, space_record:, topic_record:, title: "テストページ")
+
+    get "/s/#{space_record.identifier}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("テストページ")
+
+    DestroyTopicService.new.call(topic_record:)
+
+    get "/s/#{space_record.identifier}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("テストページ")
+  end
+
   it "ログインしていないとき、公開トピックのページが表示されること" do
     space = create(:space_record, :small)
     public_topic = create(:topic_record, :public, space_record: space)
