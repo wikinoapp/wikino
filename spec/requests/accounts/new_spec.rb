@@ -17,7 +17,7 @@ RSpec.describe "GET /accounts/new", type: :request do
 
     # 確認用コードを生成する
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: "test@example.com"
       }
     })

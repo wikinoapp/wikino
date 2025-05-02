@@ -10,7 +10,7 @@ RSpec.describe "POST /user_session", type: :request do
     expect(UserSessionRecord.count).to eq(1)
 
     post("/user_session", params: {
-      user_session_form: {
+      user_session_form_creation: {
         email: user.email,
         password: "passw0rd"
       }
@@ -29,7 +29,7 @@ RSpec.describe "POST /user_session", type: :request do
     user = create(:user_record, :with_password)
 
     post("/user_session", params: {
-      user_session_form: {
+      user_session_form_creation: {
         email: user.email,
         password: "passw0rd"
       }
@@ -48,7 +48,7 @@ RSpec.describe "POST /user_session", type: :request do
     user = create(:user_record, :with_password)
 
     post("/user_session", params: {
-      user_session_form: {
+      user_session_form_creation: {
         email: user.email,
         password: "password" # パスワードを間違えている
       }

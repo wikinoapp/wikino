@@ -12,7 +12,7 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm.new(
+      form = EmailConfirmationForm::Check.new(
         form_params.merge(email_confirmation_id: session[:email_confirmation_id])
       )
 
@@ -31,7 +31,7 @@ module EmailConfirmations
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(
-        params.require(:email_confirmation_form), ActionController::Parameters
+        params.require(:email_confirmation_form_check), ActionController::Parameters
       ).permit(:confirmation_code)
     end
 

@@ -63,7 +63,7 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
     expect(topic_record.name).to eq("Before Name")
 
     patch("/s/#{space_record.identifier}/topics/#{topic_record.number}/settings/general", params: {
-      edit_topic_form: {
+      topic_form_edit: {
         name: "", # トピック名が空
         description: "Updated Description",
         visibility: "public"
@@ -90,7 +90,7 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
     expect(topic_record.description).to eq("Before Description")
 
     patch("/s/#{space_record.identifier}/topics/#{topic_record.number}/settings/general", params: {
-      edit_topic_form: {
+      topic_form_edit: {
         name: "Updated Name",
         description: "Updated Description",
         visibility: "public"

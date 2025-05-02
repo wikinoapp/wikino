@@ -13,7 +13,7 @@ module Accounts
 
     sig { returns(T.untyped) }
     def call
-      form = AccountForm.new(
+      form = AccountForm::Creation.new(
         form_params.merge(
           email: @email_confirmation.not_nil!.email.not_nil!,
           locale: current_locale.serialize,
@@ -47,7 +47,7 @@ module Accounts
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:account_form), ActionController::Parameters)
+      T.cast(params.require(:account_form_creation), ActionController::Parameters)
         .permit(:atname, :password)
     end
   end

@@ -6,7 +6,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
     # 確認用コードを生成する
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: "test@example.com"
       }
     })
@@ -22,7 +22,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(UserRecord.count).to eq(1)
 
     post("/accounts", params: {
-      account_form: {
+      account_form_creation_creation: {
         atname: "test",
         password: "passw0rd"
       }
@@ -43,7 +43,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form: {
+      account_form_creation: {
         atname: "test",
         password: "passw0rd"
       }
@@ -64,7 +64,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form: {
+      account_form_creation: {
         atname: "test",
         password: "1234" # 短すぎるパスワード
       }
@@ -85,7 +85,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(UserRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form: {
+      account_form_creation: {
         atname: "test",
         password: "passw0rd"
       }

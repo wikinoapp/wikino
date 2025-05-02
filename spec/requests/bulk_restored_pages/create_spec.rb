@@ -34,7 +34,7 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     sign_in(user_record: user)
 
     post("/s/#{space.identifier}/bulk_restored_pages", params: {
-      trashed_pages_form: {
+      page_form_bulk_restoring: {
         page_ids: [page.id]
       }
     })
@@ -56,7 +56,7 @@ RSpec.describe "POST /s/:space_identifier/bulk_restored_pages", type: :request d
     expect(page.trashed?).to be(true)
 
     post("/s/#{space.identifier}/bulk_restored_pages", params: {
-      trashed_pages_form: {
+      page_form_bulk_restoring: {
         page_ids: [page.id]
       }
     })

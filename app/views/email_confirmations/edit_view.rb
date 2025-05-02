@@ -3,7 +3,7 @@
 
 module EmailConfirmations
   class EditView < ApplicationView
-    sig { params(form: EmailConfirmationForm).void }
+    sig { params(form: EmailConfirmationForm::Check).void }
     def initialize(form:)
       @form = form
     end
@@ -14,7 +14,7 @@ module EmailConfirmations
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(EmailConfirmationForm) }
+    sig { returns(EmailConfirmationForm::Check) }
     attr_reader :form
     private :form
 

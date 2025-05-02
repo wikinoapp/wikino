@@ -29,7 +29,7 @@ module Pages
       space = SpaceRepository.new.to_model(space_record:)
       page = PageRepository.new.to_model(page_record:)
 
-      form = EditPageForm.new(
+      form = PageForm::Edit.new(
         space_member_record:,
         topic_number: pageable_record.topic_record.not_nil!.number,
         title: pageable_record.title,

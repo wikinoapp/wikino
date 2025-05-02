@@ -39,7 +39,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
-      edit_page_form: {
+      page_form_edit: {
         topic_number: topic.number,
         title: "Updated Title",
         body: "Updated Body"
@@ -67,7 +67,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     expect(page.title).to eq("A Page")
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
-      edit_page_form: {
+      page_form_edit: {
         topic_number: topic.number,
         title: "", # タイトルが空
         body: "Updated Body"
@@ -94,7 +94,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}", params: {
-      edit_page_form: {
+      page_form_edit: {
         topic_number: topic.number,
         title: "Updated Title",
         body: "Updated Body"

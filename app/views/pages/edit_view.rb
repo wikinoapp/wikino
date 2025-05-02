@@ -8,7 +8,7 @@ module Pages
         current_user: User,
         space: Space,
         page: Page,
-        form: EditPageForm,
+        form: PageForm::Edit,
         link_list: LinkList,
         backlink_list: BacklinkList,
         draft_page: T.nilable(DraftPage)
@@ -49,7 +49,7 @@ module Pages
     attr_reader :page
     private :page
 
-    sig { returns(EditPageForm) }
+    sig { returns(PageForm::Edit) }
     attr_reader :form
     private :form
 

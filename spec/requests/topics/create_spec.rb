@@ -34,7 +34,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(TopicRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
-      new_topic_form: {
+      topic_form_creation: {
         name: "", # トピック名が空
         description: "Topic Description",
         visibility: "public"
@@ -58,7 +58,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(TopicRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
-      new_topic_form: {
+      topic_form_creation: {
         name: "テストトピック",
         description: "テストトピックです",
         visibility: "private"
@@ -82,7 +82,7 @@ RSpec.describe "POST /s/:space_identifier/topics", type: :request do
     expect(TopicRecord.count).to eq(0)
 
     post("/s/#{space.identifier}/topics", params: {
-      new_topic_form: {
+      topic_form_creation: {
         name: "テストトピック",
         description: "テストトピックです",
         visibility: "public"

@@ -24,7 +24,7 @@ module Spaces
             return render_404
           end
 
-          form = EditSpaceForm.new(form_params.merge(space_record:))
+          form = SpaceForm::Edit.new(form_params.merge(space_record:))
 
           if form.invalid?
             space = SpaceRepository.new.to_model(space_record:)
@@ -50,7 +50,7 @@ module Spaces
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:edit_space_form), ActionController::Parameters).permit(
+          T.cast(params.require(:space_form_edit), ActionController::Parameters).permit(
             :identifier,
             :name
           )

@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = EditProfileForm.new(form_params.merge(user_record: current_user_record!))
+        form = ProfileForm::Edit.new(form_params.merge(user_record: current_user_record!))
 
         if form.invalid?
           return render(
@@ -37,7 +37,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:edit_profile_form).permit(
+        params.require(:profile_form_edit).permit(
           :atname,
           :name,
           :description

@@ -9,7 +9,7 @@ module Spaces
           params(
             current_user: User,
             space: Space,
-            form: EditSpaceForm
+            form: SpaceForm::Edit
           ).void
         end
         def initialize(current_user:, space:, form:)
@@ -32,7 +32,7 @@ module Spaces
         attr_reader :space
         private :space
 
-        sig { returns(EditSpaceForm) }
+        sig { returns(SpaceForm::Edit) }
         attr_reader :form
         private :form
 

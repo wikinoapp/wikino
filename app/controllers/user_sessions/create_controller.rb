@@ -11,7 +11,7 @@ module UserSessions
 
     sig { returns(T.untyped) }
     def call
-      form = UserSessionForm.new(form_params)
+      form = UserSessionForm::Creation.new(form_params)
 
       if form.invalid?
         return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
@@ -31,7 +31,7 @@ module UserSessions
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:user_session_form), ActionController::Parameters).permit(
+      T.cast(params.require(:user_session_form_creation), ActionController::Parameters).permit(
         :email,
         :password
       )

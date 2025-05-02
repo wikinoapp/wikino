@@ -22,7 +22,7 @@ module BulkRestoredPages
         return render_404
       end
 
-      form = TrashedPagesForm.new(form_params.merge(user_record: current_user_record!))
+      form = PageForm::BulkRestoring.new(form_params.merge(user_record: current_user_record!))
 
       if form.invalid?
         current_user = UserRepository.new.to_model(user_record: current_user_record!)
@@ -46,7 +46,7 @@ module BulkRestoredPages
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:trashed_pages_form), ActionController::Parameters).permit(page_ids: [])
+      T.cast(params.require(:page_form_bulk_restoring), ActionController::Parameters).permit(page_ids: [])
     end
   end
 end

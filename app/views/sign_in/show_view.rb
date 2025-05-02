@@ -3,7 +3,7 @@
 
 module SignIn
   class ShowView < ApplicationView
-    sig { params(form: UserSessionForm).void }
+    sig { params(form: UserSessionForm::Creation).void }
     def initialize(form:)
       @form = form
     end
@@ -14,7 +14,7 @@ module SignIn
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(UserSessionForm) }
+    sig { returns(UserSessionForm::Creation) }
     attr_reader :form
     private :form
 

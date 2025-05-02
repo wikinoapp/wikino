@@ -23,7 +23,7 @@ module Pages
         return render_404
       end
 
-      form = EditPageForm.new(form_params.merge(page_record:, space_member_record:))
+      form = PageForm::Edit.new(form_params.merge(page_record:, space_member_record:))
 
       if form.invalid?
         space = SpaceRepository.new.to_model(space_record:)
@@ -65,7 +65,7 @@ module Pages
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:edit_page_form), ActionController::Parameters).permit(
+      T.cast(params.require(:page_form_edit), ActionController::Parameters).permit(
         :topic_number,
         :title,
         :body

@@ -18,7 +18,7 @@ RSpec.describe "PATCH /settings/profile", type: :request do
     expect(user_record.description).to eq("Before Description")
 
     patch("/settings/profile", params: {
-      edit_profile_form: {
+      profile_form_edit: {
         atname: "", # アットネームが空
         name: "Updated Name",
         description: "Updated Description"
@@ -42,7 +42,7 @@ RSpec.describe "PATCH /settings/profile", type: :request do
     expect(user_record.description).to eq("Before Description")
 
     patch("/settings/profile", params: {
-      edit_profile_form: {
+      profile_form_edit: {
         atname: "updated_atname",
         name: "Updated Name",
         description: "Updated Description"

@@ -11,7 +11,7 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      form = NewEmailConfirmationForm.new(form_params)
+      form = EmailConfirmationForm::Creation.new(form_params)
 
       if form.invalid?
         return render(SignUp::ShowView.new(form:), status: :unprocessable_entity)
@@ -30,7 +30,7 @@ module EmailConfirmations
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:new_email_confirmation_form), ActionController::Parameters).permit(:email)
+      T.cast(params.require(:email_confirmation_form_creation), ActionController::Parameters).permit(:email)
     end
   end
 end

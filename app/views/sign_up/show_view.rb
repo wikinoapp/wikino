@@ -3,7 +3,7 @@
 
 module SignUp
   class ShowView < ApplicationView
-    sig { params(form: NewEmailConfirmationForm).void }
+    sig { params(form: EmailConfirmationForm::Creation).void }
     def initialize(form:)
       @form = form
     end
@@ -14,7 +14,7 @@ module SignUp
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(NewEmailConfirmationForm) }
+    sig { returns(EmailConfirmationForm::Creation) }
     attr_reader :form
     private :form
 

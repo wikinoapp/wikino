@@ -14,7 +14,7 @@ RSpec.describe "GET /email_confirmation/edit", type: :request do
 
     # EmailConfirmationのIDをセッションに格納する
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: email_confirmation.email
       }
     })
