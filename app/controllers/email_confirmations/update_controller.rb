@@ -12,7 +12,7 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm.new(
+      form = EmailConfirmationForm::Check.new(
         form_params.merge(email_confirmation_id: session[:email_confirmation_id])
       )
 

@@ -7,7 +7,7 @@ module Settings
       sig do
         params(
           current_user: User,
-          form: EditProfileForm
+          form: ProfileForm::Edit
         ).void
       end
       def initialize(current_user:, form:)
@@ -25,7 +25,7 @@ module Settings
       attr_reader :current_user
       private :current_user
 
-      sig { returns(EditProfileForm) }
+      sig { returns(ProfileForm::Edit) }
       attr_reader :form
       private :form
 

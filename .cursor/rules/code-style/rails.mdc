@@ -25,6 +25,25 @@ alwaysApply: false
 | Validator  | カスタムバリデーション             | `Record`                                                      |
 | View       | 表示処理                           | `Component`, `Form`, `Model`                                  |
 
+## Form
+
+- 共通で使うバリデーションは `form_concerns` 配下にモジュールとして定義してください
+
+### 命名規則
+
+- クラス名は `(リソース名)Form::(名詞)` とします
+  - 例: `SpaceForm::Creation`
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+module SpaceForm
+  class Creation < ApplicationForm
+  end
+end
+```
+
 ## Model
 
 - `Model` では `T::Struct` や `T::Enum` を継承したクラスや、PORO (Plain Old Ruby Object) を定義します
@@ -42,7 +61,6 @@ class User < T::Struct
   # ...
 end
 ```
-
 ## Service
 
 ### 命名規則
@@ -65,3 +83,4 @@ module PageService
   end
 end
 ```
+

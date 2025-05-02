@@ -27,7 +27,7 @@ module Topics
             return render_404
           end
 
-          form = TopicDestroyConfirmationForm.new(form_params.merge(topic_record:))
+          form = TopicForm::DestroyConfirmation.new(form_params.merge(topic_record:))
 
           if form.invalid?
             topic = TopicRepository.new.to_model(topic_record:)

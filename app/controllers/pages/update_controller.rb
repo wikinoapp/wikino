@@ -23,7 +23,7 @@ module Pages
         return render_404
       end
 
-      form = EditPageForm.new(form_params.merge(page_record:, space_member_record:))
+      form = PageForm::Edit.new(form_params.merge(page_record:, space_member_record:))
 
       if form.invalid?
         space = SpaceRepository.new.to_model(space_record:)

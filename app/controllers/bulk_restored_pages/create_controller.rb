@@ -22,7 +22,7 @@ module BulkRestoredPages
         return render_404
       end
 
-      form = TrashedPagesForm.new(form_params.merge(user_record: current_user_record!))
+      form = PageForm::BulkRestoring.new(form_params.merge(user_record: current_user_record!))
 
       if form.invalid?
         current_user = UserRepository.new.to_model(user_record: current_user_record!)

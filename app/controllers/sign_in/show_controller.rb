@@ -11,7 +11,7 @@ module SignIn
 
     sig { returns(T.untyped) }
     def call
-      form = UserSessionForm.new
+      form = UserSessionForm::Creation.new
 
       render SignIn::ShowView.new(form:)
     end

@@ -27,7 +27,7 @@ module Topics
             return render_404
           end
 
-          form = EditTopicForm.new(form_params.merge(topic_record:))
+          form = TopicForm::Edit.new(form_params.merge(topic_record:))
 
           if form.invalid?
             topic = TopicRepository.new.to_model(topic_record:)

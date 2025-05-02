@@ -11,7 +11,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      form = NewSpaceForm.new(form_params)
+      form = SpaceForm::Creation.new(form_params)
 
       if form.invalid?
         return render(

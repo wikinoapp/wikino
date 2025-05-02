@@ -24,7 +24,7 @@ module Spaces
             return render_404
           end
 
-          form = SpaceDestroyConfirmationForm.new(form_params.merge(space_record:))
+          form = SpaceForm::DestroyConfirmation.new(form_params.merge(space_record:))
 
           if form.invalid?
             space = SpaceRepository.new.to_model(space_record:)

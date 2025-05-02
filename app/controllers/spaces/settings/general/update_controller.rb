@@ -24,7 +24,7 @@ module Spaces
             return render_404
           end
 
-          form = EditSpaceForm.new(form_params.merge(space_record:))
+          form = SpaceForm::Edit.new(form_params.merge(space_record:))
 
           if form.invalid?
             space = SpaceRepository.new.to_model(space_record:)

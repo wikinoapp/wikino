@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = EditProfileForm.new(
+        form = ProfileForm::Edit.new(
           atname: current_user!.atname,
           name: current_user!.name,
           description: current_user!.description

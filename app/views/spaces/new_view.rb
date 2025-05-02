@@ -6,7 +6,7 @@ module Spaces
     sig do
       params(
         current_user: User,
-        form: NewSpaceForm
+        form: SpaceForm::Creation
       ).void
     end
     def initialize(current_user:, form:)
@@ -23,7 +23,7 @@ module Spaces
     attr_reader :current_user
     private :current_user
 
-    sig { returns(NewSpaceForm) }
+    sig { returns(SpaceForm::Creation) }
     attr_reader :form
     private :form
 

@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = EditProfileForm.new(form_params.merge(user_record: current_user_record!))
+        form = ProfileForm::Edit.new(form_params.merge(user_record: current_user_record!))
 
         if form.invalid?
           return render(

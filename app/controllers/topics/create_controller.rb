@@ -22,7 +22,7 @@ module Topics
         return render_404
       end
 
-      form = NewTopicForm.new(form_params.merge(space_record:))
+      form = TopicForm::Creation.new(form_params.merge(space_record:))
 
       if form.invalid?
         space = SpaceRepository.new.to_model(space_record:)

@@ -3,13 +3,13 @@
 
 module Lists
   class TrashedPagesComponent < ApplicationComponent
-    sig { params(form: TrashedPagesForm, pages: T::Array[Page]).void }
+    sig { params(form: PageForm::BulkRestoring, pages: T::Array[Page]).void }
     def initialize(form:, pages:)
       @form = form
       @pages = pages
     end
 
-    sig { returns(TrashedPagesForm) }
+    sig { returns(PageForm::BulkRestoring) }
     attr_reader :form
     private :form
 
