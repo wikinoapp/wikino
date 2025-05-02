@@ -3,7 +3,7 @@
 
 class SpaceDestroyConfirmationForm < ApplicationForm
   sig { returns(T.nilable(SpaceRecord)) }
-  attr_reader :space_record
+  attr_accessor :space_record
 
   attribute :space_name, :string
 

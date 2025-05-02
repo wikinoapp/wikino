@@ -28,6 +28,7 @@ en:
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up
+    space_deletion: Delete this space
     system_default: System default
     topic: Topic
     topic_deletion: Delete this topic
