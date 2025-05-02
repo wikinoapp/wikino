@@ -100,6 +100,9 @@ module GeneratedUrlHelpersModule
   def space_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def space_settings_deletion_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def space_settings_download_export_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -110,6 +113,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_general_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_new_deletion_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_new_exports_url(*args); end
