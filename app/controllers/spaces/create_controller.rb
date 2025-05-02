@@ -23,7 +23,7 @@ module Spaces
         )
       end
 
-      result = CreateSpaceService.new.call(
+      result = SpaceService::Create.new.call(
         user_record: current_user_record!,
         identifier: form.identifier.not_nil!,
         name: form.name.not_nil!

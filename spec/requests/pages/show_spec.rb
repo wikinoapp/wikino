@@ -76,7 +76,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     expect(response.status).to eq(200)
     expect(response.body).to include("テストページ")
 
-    SoftDestroyTopicService.new.call(topic_record:)
+    TopicService::SoftDestroy.new.call(topic_record:)
 
     get "/s/#{space_record.identifier}/pages/#{page_record.number}"
 

@@ -13,7 +13,7 @@ module Api
         #   def call
         #     page = T.must(current_user).pages.find(params[:page_id])
         #     form = PageUpdatingForm.new(user: current_user, page:, body: page_params[:body])
-        #     result = UpdatePageService.new(form:).call
+        #     result = PageService::Update.new(form:).call
         #
         #     if result.errors.any?
         #       return render(

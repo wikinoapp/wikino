@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe MovePageToTrashService, type: :use_case do
+RSpec.describe PageService::Trash, type: :use_case do
   describe "#call" do
     it "ページをゴミ箱に移動できること" do
       page_record = create(:page_record)
@@ -9,7 +9,7 @@ RSpec.describe MovePageToTrashService, type: :use_case do
 
       expect(page_record.trashed_at).to be_nil
 
-      result = MovePageToTrashService.new.call(page_record:)
+      result = PageService::Trash.new.call(page_record:)
 
       expect(result.page_record).to eq(page_record)
       expect(result.page_record.trashed_at).to be_present

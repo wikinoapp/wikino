@@ -17,7 +17,7 @@ module UserSessions
         return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
       end
 
-      result = CreateUserSessionService.new.call(
+      result = UserSessionService::Create.new.call(
         user_record: form.user_record.not_nil!,
         ip_address: original_remote_ip,
         user_agent: request.user_agent

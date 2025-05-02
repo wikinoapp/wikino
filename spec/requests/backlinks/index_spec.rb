@@ -21,7 +21,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     expect(response.status).to eq(200)
     expect(response.body).to include("テストページ")
 
-    SoftDestroyTopicService.new.call(topic_record: topic_record_2)
+    TopicService::SoftDestroy.new.call(topic_record: topic_record_2)
 
     post "/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
 

@@ -23,7 +23,7 @@ module DraftPages
         return render_404
       end
 
-      result = UpdateDraftPageService.new.call(
+      result = DraftPageService::Update.new.call(
         space_member_record: space_member_record.not_nil!,
         page_record:,
         topic_number: form_params[:topic_number],
