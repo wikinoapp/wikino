@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module PagesService
+module PageService
   class BulkRestore < ApplicationService
     class Result < T::Struct
       const :pages, PageRecord::PrivateRelation
