@@ -25,6 +25,7 @@ class UserRecord < ApplicationRecord
   has_many :topic_records, through: :topic_member_records
   has_many :space_records, through: :space_member_records
   has_many :active_space_records,
+    -> { SpaceRecord.visible },
     class_name: "SpaceRecord",
     through: :active_space_member_records,
     source: :space_record

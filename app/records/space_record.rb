@@ -47,6 +47,8 @@ class SpaceRecord < ApplicationRecord
     foreign_key: :space_id,
     inverse_of: :space_record
 
+  scope :visible, -> { kept }
+
   sig do
     params(identifier: String, current_time: ActiveSupport::TimeWithZone, locale: Locale)
       .returns(SpaceRecord)

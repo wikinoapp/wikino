@@ -1,0 +1,40 @@
+# typed: true
+# frozen_string_literal: true
+
+module Spaces
+  module Settings
+    module Deletions
+      class NewView < ApplicationView
+        sig { params(current_user: User, space: Space, form: SpaceDestroyConfirmationForm).void }
+        def initialize(current_user:, space:, form:)
+          @current_user = current_user
+          @space = space
+          @form = form
+        end
+
+        sig { override.void }
+        def before_render
+          title = I18n.t("meta.title.spaces.settings.deletions.new", space_name: space.name)
+          helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+        end
+
+        sig { returns(User) }
+        attr_reader :current_user
+        private :current_user
+
+        sig { returns(Space) }
+        attr_reader :space
+        private :space
+
+        sig { returns(SpaceDestroyConfirmationForm) }
+        attr_reader :form
+        private :form
+
+        sig { returns(PageName) }
+        private def current_page_name
+          PageName::SpaceSettingsDeletion
+        end
+      end
+    end
+  end
+end

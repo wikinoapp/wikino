@@ -63,11 +63,24 @@ en:
       updated: Profile updated.
     spaces:
       created: Space created.
+      deleted: Space deleted.
       identifier_hint_html: |-
         This identifier is used in the URL of the space.<br>
         It must be at most %{max_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
       new_space: New Space
+      settings:
+        deletions:
+          new:
+            description_html: |-
+              Delete space?<br>
+              Please confirm the following before deleting.
+            warning_1: Deleting a space will delete all topics and pages in it.
+            warning_2: Deleted spaces and topics and pages in them cannot be restored.
+            form_description_html: |-
+              To delete a space, please enter the space name
+              (<span class="font-bold">%{space_name}</span>)
+              below.
       updated: Space updated.
     sign_in:
       dont_have_an_account_html: |-

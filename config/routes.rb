@@ -30,6 +30,8 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/settings/exports/:export_id",                via: :get,    as: :space_settings_export,          to: "spaces/settings/exports/show#call",           export_id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   match "/s/:space_identifier/settings/exports/:export_id/download",       via: :get,    as: :space_settings_download_export, to: "spaces/settings/exports/downloads/show#call", export_id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   match "/s/:space_identifier/settings/exports/new",                       via: :get,    as: :space_settings_new_exports,     to: "spaces/settings/exports/new#call"
+  match "/s/:space_identifier/settings/deletion",                          via: :post,   as: :space_settings_deletion,        to: "spaces/settings/deletions/create#call"
+  match "/s/:space_identifier/settings/deletion/new",                      via: :get,    as: :space_settings_new_deletion,    to: "spaces/settings/deletions/new#call"
   match "/s/:space_identifier/settings/general",                           via: :get,    as: :space_settings_general,         to: "spaces/settings/general/show#call"
   match "/s/:space_identifier/settings/general",                           via: :patch,                                       to: "spaces/settings/general/update#call"
   match "/s/:space_identifier/topics",                                     via: :post,   as: :topic_list,                     to: "topics/create#call"
