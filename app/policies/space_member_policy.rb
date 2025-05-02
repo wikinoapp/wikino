@@ -39,7 +39,8 @@ class SpaceMemberPolicy < ApplicationPolicy
     return false if space_member_record.nil?
 
     space_member_record!.space_id == topic_record.space_id &&
-      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateTopic)
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateTopic) &&
+      space_member_record!.topic_records.where(id: topic_record.id).exists?
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
