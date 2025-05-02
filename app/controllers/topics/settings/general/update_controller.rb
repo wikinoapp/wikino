@@ -54,7 +54,7 @@ module Topics
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:edit_topic_form), ActionController::Parameters).permit(
+          T.cast(params.require(:topic_form_edit), ActionController::Parameters).permit(
             :name,
             :description,
             :visibility

@@ -32,7 +32,7 @@ RSpec.describe "POST /s/:space_identifier/settings/deletion", type: :request do
     sign_in(user_record:)
 
     post "/s/#{space_record.identifier}/settings/deletion", params: {
-      space_destroy_confirmation_form: {
+      space_form_destroy_confirmation: {
         space_name: "異なるスペース名"
       }
     }
@@ -49,7 +49,7 @@ RSpec.describe "POST /s/:space_identifier/settings/deletion", type: :request do
     sign_in(user_record:)
 
     post "/s/#{space_record.identifier}/settings/deletion", params: {
-      space_destroy_confirmation_form: {
+      space_form_destroy_confirmation: {
         space_name: "テストスペース"
       }
     }

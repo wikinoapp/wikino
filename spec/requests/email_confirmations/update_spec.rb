@@ -4,7 +4,7 @@
 RSpec.describe "PATCH /email_confirmation", type: :request do
   it "EmailConfirmationのIDがセッションに格納されていないとき、トップページにリダイレクトすること" do
     patch("/email_confirmation", params: {
-      email_confirmation_form_check_check_check_check: {
+      email_confirmation_form_check: {
         confirmation_code: "123456"
       }
     })
@@ -22,7 +22,7 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
     })
 
     patch("/email_confirmation", params: {
-      email_confirmation_form: {
+      email_confirmation_form_check: {
         confirmation_code: "wrong_code" # 間違った確認用コード
       }
     })
@@ -48,7 +48,7 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
     expect(email_confirmation.succeeded?).to be(false)
 
     patch("/email_confirmation", params: {
-      email_confirmation_form: {
+      email_confirmation_form_check: {
         confirmation_code: email_confirmation.code
       }
     })

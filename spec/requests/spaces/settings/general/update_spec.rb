@@ -36,7 +36,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
     expect(space.identifier).to eq("space-identifier")
 
     patch("/s/#{space.identifier}/settings/general", params: {
-      edit_space_form: {
+      space_form_edit: {
         identifier: "",
         name: ""
       }
@@ -59,7 +59,7 @@ RSpec.describe "PATCH /s/:space_identifier/settings/general", type: :request do
     expect(space.identifier).to eq("space-identifier")
 
     patch("/s/#{space.identifier}/settings/general", params: {
-      edit_space_form: {
+      space_form_edit: {
         identifier: "updated-identifier",
         name: "Updated Name"
       }

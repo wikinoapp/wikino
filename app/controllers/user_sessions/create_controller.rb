@@ -31,7 +31,7 @@ module UserSessions
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:user_session_form), ActionController::Parameters).permit(
+      T.cast(params.require(:user_session_form_creation), ActionController::Parameters).permit(
         :email,
         :password
       )
