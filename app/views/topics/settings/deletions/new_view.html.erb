@@ -41,8 +41,7 @@
             <%= form_with(
               class: "flex flex-col gap-4",
               model: form,
-              url: topic_settings_general_path(space.identifier, topic.number),
-              method: :patch
+              url: topic_settings_deletion_path(space.identifier, topic.number)
             ) do |f| %>
               <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 

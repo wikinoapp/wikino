@@ -88,6 +88,7 @@ en:
       ago_published: "Published %{time} ago"
     topics:
       created: Topic created.
+      deleted: Topic deleted.
       settings:
         deletions:
           new:

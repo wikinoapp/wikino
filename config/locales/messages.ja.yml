@@ -87,6 +87,7 @@ ja:
       ago_published: "%{time}前に公開"
     topics:
       created: トピックを作成しました
+      deleted: トピックを削除しました
       settings:
         deletions:
           new:
