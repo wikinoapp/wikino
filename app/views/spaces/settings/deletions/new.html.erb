@@ -1,0 +1,25 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-6"><%= @view.title %></h1>
+
+  <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-semibold text-red-800 mb-4"><%= @view.warning_title %></h2>
+    <p class="text-red-700 mb-4">
+      <%= @view.warning_message %>
+    </p>
+    <p class="text-red-700">
+      <%= @view.confirmation_message %>
+    </p>
+  </div>
+
+  <%= form_with url: space_settings_deletion_path(@view.space), method: :post, class: "space-y-4" do |f| %>
+    <div>
+      <%= f.label :space_name, @view.space_name_label, class: "block text-sm font-medium text-gray-700" %>
+      <%= f.text_field :space_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+    </div>
+
+    <div class="flex justify-end space-x-4">
+      <%= link_to @view.cancel_button_text, space_settings_path(@view.space), class: "px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" %>
+      <%= f.submit @view.delete_button_text, class: "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2", data: { confirm: "本当に削除しますか？この操作は取り消せません。" } %>
+    </div>
+  <% end %>
+</div>
