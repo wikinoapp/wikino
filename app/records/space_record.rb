@@ -72,7 +72,7 @@ class SpaceRecord < ApplicationRecord
 
   sig { params(number: Integer).returns(PageRecord) }
   def find_page_by_number!(number)
-    page_records.kept.find_by!(number:)
+    page_records.visible.find_by!(number:)
   end
 
   sig do

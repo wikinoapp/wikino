@@ -2,6 +2,33 @@
 # frozen_string_literal: true
 
 RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :request do
+  it "トピックが削除されているとき、そのトピックに投稿されたページは表示されないこと" do
+    space_record = create(:space_record)
+    topic_record_1 = create(:topic_record, :public, space_record:)
+    topic_record_2 = create(:topic_record, :public, space_record:)
+    page_record = create(:page_record, space_record:, topic_record: topic_record_1)
+    create(
+      :page_record,
+      :published,
+      space_record:,
+      topic_record: topic_record_2,
+      title: "テストページ",
+      linked_page_ids: [page_record.id]
+    )
+
+    post "/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("テストページ")
+
+    SoftDestroyTopicService.new.call(topic_record: topic_record_2)
+
+    post "/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("テストページ")
+  end
+
   it "ログインしていない & 公開トピックのページのとき、ページのバックリンクが表示されること" do
     space = create(:space_record, :small)
 

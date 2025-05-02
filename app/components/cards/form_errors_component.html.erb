@@ -5,7 +5,7 @@
     </div>
 
     <ul class="list-inside list-disc">
-      <% @errors.full_messages.each do |message| %>
+      <% errors.full_messages.each do |message| %>
         <li>
           <%= message.html_safe %>
         </li>

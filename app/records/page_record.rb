@@ -27,7 +27,10 @@ class PageRecord < ApplicationRecord
   scope :pinned, -> { where.not(pinned_at: nil) }
   scope :not_pinned, -> { where(pinned_at: nil) }
   scope :not_trashed, -> { where(trashed_at: nil) }
-  scope :active, -> { kept.not_trashed.published }
+  scope :topics_kept, -> { joins(:topic_record).merge(TopicRecord.kept) }
+  scope :topics_visibility_public, -> { joins(:topic_record).merge(TopicRecord.visibility_public) }
+  scope :visible, -> { kept.not_trashed.topics_kept }
+  scope :active, -> { visible.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
 
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
@@ -81,7 +84,7 @@ class PageRecord < ApplicationRecord
     pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
     topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
 
-    pages.joins(:topic_record).merge(topic_records)
+    pages.joins(:topic_record).merge(topic_records.kept)
   end
 
   sig { params(editor_record: SpaceMemberRecord).void }

@@ -24,6 +24,7 @@ class PageName < T::Enum
     TopicEdit = new
     TopicNew = new
     TopicSettings = new
+    TopicSettingsDeletion = new
     TopicSettingsGeneral = new
     Trash = new
     Welcome = new

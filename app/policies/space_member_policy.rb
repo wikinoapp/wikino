@@ -39,7 +39,8 @@ class SpaceMemberPolicy < ApplicationPolicy
     return false if space_member_record.nil?
 
     space_member_record!.space_id == topic_record.space_id &&
-      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateTopic)
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateTopic) &&
+      space_member_record!.topic_records.where(id: topic_record.id).exists?
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
@@ -122,7 +123,7 @@ class SpaceMemberPolicy < ApplicationPolicy
       return space_member_record!.space_record.not_nil!.page_records.active
     end
 
-    space_record.page_records.active.joins(:topic_record).merge(TopicRecord.visibility_public)
+    space_record.page_records.active.topics_visibility_public
   end
 
   sig { returns(T.nilable(TopicRecord)) }

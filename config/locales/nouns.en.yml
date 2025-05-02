@@ -30,5 +30,6 @@ en:
     sign_up: Sign up
     system_default: System default
     topic: Topic
+    topic_deletion: Delete this topic
     topics: Topics
     trash: Trash
