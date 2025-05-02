@@ -22,6 +22,12 @@
             topic_settings_general_path(space.identifier, topic.number),
             class: "link"
           ) %>
+
+          <%= link_to(
+            t("nouns.topic_deletion"),
+            topic_settings_new_deletion_path(space.identifier, topic.number),
+            class: "link"
+          ) %>
         <% end %>
       <% end %>
     <% end %>

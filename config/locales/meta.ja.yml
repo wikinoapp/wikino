@@ -13,6 +13,8 @@ ja:
         new: "新規トピック | %{space_name}"
         show: "%{topic_name} | %{space_name}"
         settings:
+          deletions:
+            new: "トピックの削除 | %{topic_name} | %{space_name}"
           general:
             show: "基本情報 | %{topic_name} | %{space_name}"
           show: "設定 | %{topic_name} | %{space_name}"

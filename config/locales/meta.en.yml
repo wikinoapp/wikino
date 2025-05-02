@@ -13,6 +13,8 @@ en:
         new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
         settings:
+          deletions:
+            new: "Delete topic | %{topic_name} | %{space_name}"
           general:
             show: "General | %{topic_name} | %{space_name}"
           show: "Settings | %{topic_name} | %{space_name}"

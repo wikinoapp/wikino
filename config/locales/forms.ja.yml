@@ -37,6 +37,8 @@ ja:
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">詳しくはこちら</a>
         visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます。
         visibility: 公開設定
+      topic_destroy_confirmation_form:
+        topic_name: トピック名
       trashed_pages_form:
         page_ids: 選択したページ
       user_session_form:
