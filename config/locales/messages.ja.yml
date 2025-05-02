@@ -63,10 +63,23 @@ ja:
       updated: プロフィールを更新しました
     spaces:
       created: スペースを作成しました
+      deleted: スペースを削除しました
       identifier_hint_html: |-
         この識別子はスペースのURLに使用されます。あとから変更もできます。<br>
         %{max_length}文字以内で半角英数字とハイフンのみ使用できます。
       new_space: 新しいスペース
+      settings:
+        deletions:
+          new:
+            description_html: |-
+              スペースを削除しますか？<br>
+              削除する前に以下の内容をご確認ください。
+            warning_1: スペースを削除すると、そのスペースに含まれるトピックやページもすべて削除されます
+            warning_2: 削除されたスペースやそのスペースに含まれるトピックやページの復元はできません
+            form_description_html: |-
+              スペースを削除する場合は、スペース名
+              (<span class="font-bold">%{space_name}</span>)
+              を入力してください。
       updated: スペースを更新しました
     sign_in:
       dont_have_an_account_html: |-

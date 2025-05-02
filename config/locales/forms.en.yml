@@ -37,6 +37,8 @@ en:
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">Learn more</a>
         visibility_public_hint: Pages posted in public topics are visible on the internet.
         visibility: Visibility
+      space_destroy_confirmation_form:
+        space_name: Space name
       topic_destroy_confirmation_form:
         topic_name: Topic name
       trashed_pages_form:
@@ -57,6 +59,8 @@ en:
           attributes:
             confirmation_code:
               incorrect_or_expired: is incorrect or expired
+        space_destroy_confirmation_form:
+          incorrect: is incorrect
         topic_destroy_confirmation_form:
           incorrect: is incorrect
         trashed_pages_form:
