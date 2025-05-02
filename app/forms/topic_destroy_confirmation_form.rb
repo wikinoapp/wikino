@@ -14,7 +14,7 @@ class TopicDestroyConfirmationForm < ApplicationForm
   sig { void }
   private def topic_name_correct
     return if topic_record.nil?
-    return if topic_record.name == topic_name
+    return if topic_record.not_nil!.name == topic_name
 
     errors.add(:topic_name, :incorrect)
   end
