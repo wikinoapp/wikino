@@ -81,10 +81,10 @@ class PageRecord < ApplicationRecord
     )
   end
   def backlinked_page_records(user_record:)
-    pages = space_record.not_nil!.page_records.where("'#{id}' = ANY (linked_page_ids)")
+    pages = space_record.not_nil!.page_records.visible.where("'#{id}' = ANY (linked_page_ids)")
     topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
 
-    pages.joins(:topic_record).merge(topic_records.kept)
+    pages.joins(:topic_record).merge(topic_records)
   end
 
   sig { params(editor_record: SpaceMemberRecord).void }

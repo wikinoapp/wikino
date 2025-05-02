@@ -149,6 +149,72 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     expect(response.body).to include("公開されていないページ")
   end
 
+  it "スペースに参加している & ゴミ箱にあるページにリンクしているとき、そのリンクは表示されないこと" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record, :small)
+    create(:space_member_record, space_record:, user_record:)
+
+    linked_page_record = create(:page_record, :trashed, {
+      space_record:,
+      title: "リンクされているページ"
+    })
+    page_record = create(:page_record, {
+      space_record:,
+      title: "リンクしているページ",
+      linked_page_ids: [linked_page_record.id]
+    })
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}/pages/#{page_record.number}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("リンクされているページ")
+  end
+
+  it "スペースに参加している & 他のページをリンクしているページのとき、そのリンクが表示されること" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record, :small)
+    create(:space_member_record, space_record:, user_record:)
+
+    linked_page_record = create(:page_record, {
+      space_record:,
+      title: "リンクされているページ"
+    })
+    page_record = create(:page_record, {
+      space_record:,
+      title: "リンクしているページ",
+      linked_page_ids: [linked_page_record.id]
+    })
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}/pages/#{page_record.number}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("リンクされているページ")
+  end
+
+  it "スペースに参加している & ゴミ箱にあるページにリンクされているとき、そのバックリンクは表示されないこと" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record, :small)
+    create(:space_member_record, space_record:, user_record:)
+
+    page_record = create(:page_record, space_record:, title: "リンクされているページ")
+    create(:page_record, :trashed, {
+      space_record:,
+      title: "リンクしているページ",
+      linked_page_ids: [page_record.id]
+    })
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}/pages/#{page_record.number}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("リンクしているページ")
+  end
+
   it "スペースに参加している & 他のページにリンクされているページのとき、バックリンクが表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small)

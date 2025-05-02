@@ -20,6 +20,17 @@ RSpec.describe "GET /s/:space_identifier/atom", type: :request do
     expect(response.body).not_to include("テストページ")
   end
 
+  it "ページがゴミ箱にあるとき、そのページはAtomフィードに表示されないこと" do
+    space_record = create(:space_record)
+    topic_record = create(:topic_record, :public, space_record:)
+    create(:page_record, :published, :trashed, space_record:, topic_record:, title: "テストページ")
+
+    get "/s/#{space_record.identifier}/atom"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("テストページ")
+  end
+
   it "ログインしていないとき、公開トピックのページ情報がAtomフィードに表示されること" do
     space = create(:space_record, :small)
     public_topic = create(:topic_record, :public, space_record: space)
