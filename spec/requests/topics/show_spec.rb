@@ -42,6 +42,17 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.status).to eq(404)
   end
 
+  it "ページがゴミ箱にあるとき、そのページは表示されないこと" do
+    space_record = create(:space_record)
+    topic_record = create(:topic_record, :public, space_record:)
+    create(:page_record, :published, :trashed, space_record:, topic_record:, title: "テストページ")
+
+    get "/s/#{space_record.identifier}/topics/#{topic_record.number}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include("テストページ")
+  end
+
   it "ログインしていない & 公開トピックのとき、ページが表示されること" do
     space = create(:space_record, :small)
     topic = create(:topic_record, :public, space_record: space, name: "公開されているトピック")
