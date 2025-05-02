@@ -1,33 +1,33 @@
 en:
   forms:
     attributes:
-      account_form:
+      account_form/creation:
         atname: Atname
         email: Email
         password: Password
-      edit_page_form:
+      email_confirmation_form/check:
+        confirmation_code: Confirmation code
+      email_confirmation_form/creation:
+        email: Email
+      page_form/bulk_restoring:
+        page_ids: Selected pages
+      page_form/edit:
         topic_number: Topic
         title: Title
         body: Body
-      edit_profile_form:
+      profile_form/edit:
         atname: Atname
         description: Description
         name: Name
-      edit_space_form:
+      space_form/creation:
         identifier: Identifier
         name: Name
-      edit_topic_form:
-        description: Description
-        name: Name
-        visibility: Visibility
-      email_confirmation_form:
-        confirmation_code: Confirmation code
-      new_email_confirmation_form:
-        email: Email
-      new_space_form:
+      space_form/destroy_confirmation:
+        space_name: Space name
+      space_form/edit:
         identifier: Identifier
         name: Name
-      new_topic_form:
+      topic_form/creation:
         description: Description
         identifier: Identifier
         name: Name
@@ -37,13 +37,13 @@ en:
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">Learn more</a>
         visibility_public_hint: Pages posted in public topics are visible on the internet.
         visibility: Visibility
-      space_destroy_confirmation_form:
-        space_name: Space name
-      topic_destroy_confirmation_form:
+      topic_form/destroy_confirmation:
         topic_name: Topic name
-      trashed_pages_form:
-        page_ids: Selected pages
-      user_session_form:
+      topic_form/edit:
+        description: Description
+        name: Name
+        visibility: Visibility
+      user_session_form/creation:
         email: Email
         password: Password
     errors:
@@ -53,17 +53,17 @@ en:
         reserved: cannot be used
         uniqueness: has already been taken
       models:
-        edit_page_form:
-          uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
-        email_confirmation_form:
+        email_confirmation_form/check:
           attributes:
             confirmation_code:
               incorrect_or_expired: is incorrect or expired
-        space_destroy_confirmation_form:
-          incorrect: is incorrect
-        topic_destroy_confirmation_form:
-          incorrect: is incorrect
-        trashed_pages_form:
+        page_form/bulk_restoring:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
-        user_session_form:
+        page_form/edit:
+          uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
+        space_form/destroy_confirmation:
+          incorrect: is incorrect
+        topic_form/destroy_confirmation:
+          incorrect: is incorrect
+        user_session_form/creation:
           unauthenticated: Login failed. Email or password are incorrect

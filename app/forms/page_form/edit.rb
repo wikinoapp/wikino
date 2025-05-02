@@ -59,7 +59,7 @@ module PageForm
 
       if other_page
         edit_page_path = "/s/#{topic.not_nil!.space_record.not_nil!.identifier}/pages/#{other_page.number}/edit"
-        errors.add(:title, I18n.t("forms.errors.models.edit_page_form.uniqueness_html", edit_page_path:))
+        errors.add(:title, I18n.t("forms.errors.models.page_form/edit.uniqueness_html", edit_page_path:))
       end
     end
   end

@@ -1,33 +1,33 @@
 ja:
   forms:
     attributes:
-      account_form:
+      account_form/creation:
         atname: アットネーム
         email: メールアドレス
         password: パスワード
-      edit_page_form:
+      email_confirmation_form/check:
+        confirmation_code: 確認用コード
+      email_confirmation_form/creation:
+        email: メールアドレス
+      page_form/bulk_restoring:
+        page_ids: 選択したページ
+      page_form/edit:
         topic_number: トピック
         title: タイトル
         body: 本文
-      edit_profile_form:
+      profile_form/edit:
         atname: アットネーム
         description: 説明
         name: 名前
-      edit_space_form:
+      space_form/creation:
         identifier: 識別子
         name: 名前
-      edit_topic_form:
-        description: 説明
-        name: 名前
-        visibility: 公開設定
-      email_confirmation_form:
-        confirmation_code: 確認用コード
-      new_email_confirmation_form:
-        email: メールアドレス
-      new_space_form:
+      space_form/destroy_confirmation:
+        space_name: スペース名
+      space_form/edit:
         identifier: 識別子
         name: 名前
-      new_topic_form:
+      topic_form/creation:
         description: 説明
         identifier: 識別子
         name: 名前
@@ -37,13 +37,13 @@ ja:
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">詳しくはこちら</a>
         visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます。
         visibility: 公開設定
-      space_destroy_confirmation_form:
-        space_name: スペース名
-      topic_destroy_confirmation_form:
+      topic_form/destroy_confirmation:
         topic_name: トピック名
-      trashed_pages_form:
-        page_ids: 選択したページ
-      user_session_form:
+      topic_form/edit:
+        description: 説明
+        name: 名前
+        visibility: 公開設定
+      user_session_form/creation:
         email: メールアドレス
         password: パスワード
     errors:
@@ -53,17 +53,17 @@ ja:
         reserved: は使用できません
         uniqueness: は既に存在しています
       models:
-        edit_page_form:
-          uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
-        email_confirmation_form:
+        email_confirmation_form/check:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
-        space_destroy_confirmation_form:
-          incorrect: が間違っています
-        topic_destroy_confirmation_form:
-          incorrect: が間違っています
-        trashed_pages_form:
+        page_form/bulk_restoring:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
-        user_session_form:
+        page_form/edit:
+          uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
+        space_form/destroy_confirmation:
+          incorrect: が間違っています
+        topic_form/destroy_confirmation:
+          incorrect: が間違っています
+        user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
