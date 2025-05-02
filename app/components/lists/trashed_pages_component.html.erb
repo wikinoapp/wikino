@@ -46,7 +46,7 @@
           <div class="flex items-center gap-4">
             <div class="py-2">
               <%= check_box_tag(
-                "trashed_pages_form[page_ids][]",
+                "page_form_bulk_restoring[page_ids][]",
                 page.database_id,
                 f.object.page_ids&.include?(page.database_id),
                 class: "checkbox"

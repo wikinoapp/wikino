@@ -46,7 +46,7 @@ module BulkRestoredPages
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:trashed_pages_form), ActionController::Parameters).permit(page_ids: [])
+      T.cast(params.require(:page_form_bulk_restoring), ActionController::Parameters).permit(page_ids: [])
     end
   end
 end

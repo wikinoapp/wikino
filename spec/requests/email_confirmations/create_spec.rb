@@ -10,7 +10,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     sign_in(user_record: user)
 
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: "hello@example.com"
       }
     })
@@ -27,7 +27,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
 
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: "helloexample.com" # メールアドレスが間違っている (@がない)
       }
     })
@@ -44,7 +44,7 @@ RSpec.describe "POST /email_confirmation", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
 
     post("/email_confirmation", params: {
-      new_email_confirmation_form: {
+      email_confirmation_form_creation: {
         email: "hello@example.com"
       }
     })

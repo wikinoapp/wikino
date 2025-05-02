@@ -35,7 +35,7 @@ module Spaces
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:new_space_form), ActionController::Parameters).permit(
+      T.cast(params.require(:space_form_creation), ActionController::Parameters).permit(
         :identifier,
         :name
       )

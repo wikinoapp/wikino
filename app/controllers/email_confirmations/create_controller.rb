@@ -30,7 +30,7 @@ module EmailConfirmations
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:new_email_confirmation_form), ActionController::Parameters).permit(:email)
+      T.cast(params.require(:email_confirmation_form_creation), ActionController::Parameters).permit(:email)
     end
   end
 end
