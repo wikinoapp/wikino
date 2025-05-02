@@ -42,3 +42,26 @@ class User < T::Struct
   # ...
 end
 ```
+
+## Service
+
+### 命名規則
+
+- クラス名は `(リソース名)Service::(動詞)` とします
+  - 例: `PageService::Update`
+
+- メソッド名は `#call` とします
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+module PageService
+  class Update
+    sig { void }
+    def call
+      # ...
+    end
+  end
+end
+```

@@ -6,6 +6,6 @@ class DestroyTopicJob < ApplicationJob
 
   sig { params(topic_record_id: T::Wikino::DatabaseId).void }
   def perform(topic_record_id:)
-    DestroyTopicService.new.call(topic_record_id:)
+    TopicService::Destroy.new.call(topic_record_id:)
   end
 end

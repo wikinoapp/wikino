@@ -35,7 +35,7 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number", type: :request d
     expect(response.status).to eq(200)
     expect(response.body).to include("テストトピック")
 
-    SoftDestroyTopicService.new.call(topic_record:)
+    TopicService::SoftDestroy.new.call(topic_record:)
 
     get "/s/#{space_record.identifier}/topics/#{topic_record.number}"
 

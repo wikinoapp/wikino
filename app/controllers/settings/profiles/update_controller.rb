@@ -24,7 +24,7 @@ module Settings
           )
         end
 
-        UpdateProfileService.new.call(
+        ProfileService::Update.new.call(
           user_record: current_user_record!,
           atname: form.atname.not_nil!,
           name: form.name.not_nil!,

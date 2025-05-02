@@ -38,7 +38,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     expect(response.status).to eq(200)
     expect(response.body).to include("削除されたページ")
 
-    SoftDestroyTopicService.new.call(topic_record:)
+    TopicService::SoftDestroy.new.call(topic_record:)
 
     get "/s/#{space_record.identifier}/trash"
 

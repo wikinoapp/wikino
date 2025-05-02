@@ -51,7 +51,7 @@ module Pages
         )
       end
 
-      UpdatePageService.new.call(
+      PageService::Update.new.call(
         space_member_record: space_member_record.not_nil!,
         page_record:,
         topic_record: form.topic.not_nil!,
