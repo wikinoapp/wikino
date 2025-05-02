@@ -2,7 +2,7 @@
   <% links.each do |link| %>
     <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
       <%= render Cards::PageComponent.new(page: link.page) %>
-      <%= render BacklinkListComponent.new(page:, backlink_list: link.backlink_list) %>
+      <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list) %>
     </div>
   <% end %>
 
