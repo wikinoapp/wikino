@@ -1,0 +1,43 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# コーディング規約 (Ruby)
+
+- 文字列はダブルクオートで書いてください
+- 後置ifは使わないでください
+
+```rb
+# NG
+puts "Hello" if cond?
+
+# OK
+if cond?
+  puts "Hello"
+end
+```
+
+- ハッシュのキーと変数名が同じ場合は、省略記法を使用してください
+
+```rb
+# NG
+def method(user:)
+  User.create(user: user)
+end
+
+# OK
+def method(user:)
+  User.create(user:)
+end
+```
+
+- 新たにファイルを作成するときはマジックコメントを書いてください
+  - Sorbetで使用する `typed: xxx` はなるべく `strict` を指定します
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+# ...
+```

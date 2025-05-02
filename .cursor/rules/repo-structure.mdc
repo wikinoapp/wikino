@@ -1,0 +1,40 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# リポジトリの構造
+
+基本的にRailsプロジェクトのディレクトリ構成となっていますが、一部独自のディレクトリがあります。
+
+- `app/assets`
+  - 画像やCSSのファイルが格納されている
+- `app/components`
+  - [ViewComponent](mdc:https:/viewcomponent.org) を使用したコンポーネントが定義されている
+- `app/controllers`
+  - Railsのコントローラー
+  - 1つのアクションごとに1つのコントローラーが定義されている
+- `app/forms`
+  - フォームオブジェクトが定義されている
+- `app/javascript`
+  - フロントエンドJavaScriptの実装が格納されている
+  - [Hotwire](mdc:https:/hotwired.dev)で実装されている
+- `app/jobs`
+  - Active Job
+- `app/mailers`
+  - Action Mailer
+- `app/models`
+  - POROや構造体などが定義されている
+- `app/policies`
+  - 認可ルールが書かれたクラスが定義されている
+- `app/records`
+  - `ActiveRecord::Base` を継承したクラスが定義されている
+  - データベースのテーブルと1:1の関係となる
+- `app/repositories`
+  - RecordをModelに変換するクラスが定義されている
+- `app/services`
+  - サービスクラス
+- `app/validators`
+  - カスタムバリデーション
+- `app/views`
+  - ViewComponentを使用したビュー
