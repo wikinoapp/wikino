@@ -29,8 +29,9 @@ class PageRecord < ApplicationRecord
   scope :not_trashed, -> { where(trashed_at: nil) }
   scope :topics_kept, -> { joins(:topic_record).merge(TopicRecord.kept) }
   scope :topics_visibility_public, -> { joins(:topic_record).merge(TopicRecord.visibility_public) }
-  scope :visible, -> { kept.not_trashed.topics_kept }
-  scope :active, -> { visible.published }
+  scope :visible, -> { kept.topics_kept }
+  scope :available, -> { visible.not_trashed }
+  scope :active, -> { available.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
 
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
@@ -81,7 +82,7 @@ class PageRecord < ApplicationRecord
     )
   end
   def backlinked_page_records(user_record:)
-    pages = space_record.not_nil!.page_records.visible.where("'#{id}' = ANY (linked_page_ids)")
+    pages = space_record.not_nil!.page_records.available.where("'#{id}' = ANY (linked_page_ids)")
     topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
 
     pages.joins(:topic_record).merge(topic_records)

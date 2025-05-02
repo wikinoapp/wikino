@@ -15,7 +15,7 @@ module RecordConcerns
 
     sig { params(user_record: T.nilable(UserRecord)).returns(PageRecord::PrivateRelation) }
     def linked_pages(user_record:)
-      page_records = space_record.not_nil!.page_records.visible.where(id: linked_page_ids)
+      page_records = space_record.not_nil!.page_records.available.where(id: linked_page_ids)
 
       if user_record&.joined_space?(space_record:)
         page_records
