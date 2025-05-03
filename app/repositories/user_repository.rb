@@ -6,6 +6,7 @@ class UserRepository < ApplicationRepository
   def to_model(user_record:)
     User.new(
       database_id: user_record.id,
+      email: user_record.email,
       atname: user_record.atname,
       name: user_record.name,
       description: user_record.description,

@@ -1,9 +1,7 @@
 en:
   email_confirmation_mailer:
-    sign_in_event:
-      subject: Sign in to Wikino
-    sign_up_event:
-      subject: Finish creating your account on Wikino
+    email_confirmation:
+      subject: "[Wikino] Confirm your email address"
   export_mailer:
     succeeded:
       subject: "[Wikino] Your export data is ready"

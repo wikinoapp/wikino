@@ -9,6 +9,8 @@ ja:
         confirmation_code: 確認用コード
       email_confirmation_form/creation:
         email: メールアドレス
+      email_form/edit:
+        new_email: 新しいメールアドレス
       page_form/bulk_restoring:
         page_ids: 選択したページ
       page_form/edit:

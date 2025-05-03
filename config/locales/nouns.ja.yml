@@ -2,6 +2,8 @@ ja:
   nouns:
     actions: アクション
     backlinks: バックリンク
+    change_email: メールアドレスの変更
+    current_email: 現在のメールアドレス
     dark: ダーク
     edit_profile: プロフィール編集
     export: エクスポート
