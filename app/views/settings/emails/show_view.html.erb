@@ -1,0 +1,68 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <%= render Settings::Emails::ShowView::BreadcrumbsComponent.new %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <h1 class="text-2xl font-bold antialiased">
+        <%= t("nouns.change_email") %>
+      </h1>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <%= form_with(
+            class: "flex flex-col gap-4",
+            model: form,
+            url: settings_email_path,
+            method: :patch
+          ) do |f| %>
+            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text">
+                  <%= t("nouns.current_email") %>
+                </span>
+              </div>
+
+              <span>
+                <%= current_user.email %>
+              </span>
+            </label>
+
+            <%= f.label :new_email, class: "form-control" do %>
+              <div class="label">
+                <span class="label-text">
+                  <%= t("forms.attributes.email_form/edit.new_email") %>
+                </span>
+              </div>
+
+              <%= f.text_field(:new_email,
+                autofocus: true,
+                class: "bg-base-300 input input-bordered w-full",
+                required: true
+              ) %>
+            <% end %>
+
+            <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+              <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+
+              <%= t("verbs.submit") %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

@@ -24,6 +24,7 @@ en:
     draft_saved_time_html: 'Draft saved: <span class="font-bold">%{time}</span>'
     email_confirmations:
       confirmation_mail_sent: Confirmation mail has been sent.
+      email_updated: Email address updated.
       enter_code: Enter the confirmation code in the email.
     exports:
       description_html: |-

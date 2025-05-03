@@ -15,6 +15,7 @@ class User < T::Struct
   DESCRIPTION_MAX_LENGTH = 150
 
   const :database_id, T::Wikino::DatabaseId
+  const :email, String
   const :atname, String
   const :name, String
   const :description, String

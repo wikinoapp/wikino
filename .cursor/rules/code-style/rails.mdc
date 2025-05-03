@@ -25,6 +25,23 @@ alwaysApply: false
 | Validator  | カスタムバリデーション             | `Record`                                                      |
 | View       | 表示処理                           | `Component`, `Form`, `Model`                                  |
 
+## Controller
+
+- コントローラー1つにつき1つのアクションを定義します
+
+```rb
+# typed: true
+# frozen_string_literal: true
+
+module Pages
+  class ShowController < ApplicationController
+    sig { returns(T.untyped) }
+    def call
+    end
+  end
+end
+```
+
 ## Form
 
 - 共通で使うバリデーションは `form_concerns` 配下にモジュールとして定義してください
@@ -61,6 +78,7 @@ class User < T::Struct
   # ...
 end
 ```
+
 ## Service
 
 ### 命名規則
@@ -84,3 +102,24 @@ module PageService
 end
 ```
 
+## View
+
+- コントローラーのアクションごとに定義します
+
+```rb
+# typed: strict
+# frozen_string_literal: true
+
+module Pages
+  class ShowView < ApplicationView
+    sig { params(page: Page).void }
+    def initialize(page:)
+      @page = page
+    end
+
+    sig { returns(Page) }
+    attr_reader :page
+    private :page
+  end
+end
+```

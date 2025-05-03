@@ -1,9 +1,7 @@
 ja:
   email_confirmation_mailer:
-    sign_in_event:
-      subject: Wikinoにログイン
-    sign_up_event:
-      subject: Wikinoのアカウント作成用リンク
+    email_confirmation:
+      subject: "[Wikino] メールアドレスの確認"
   export_mailer:
     succeeded:
       subject: "[Wikino] エクスポートデータの用意ができました"

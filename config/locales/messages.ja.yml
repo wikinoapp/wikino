@@ -24,6 +24,7 @@ ja:
     draft_saved_time_html: '下書き保存: <span class="font-bold">%{time}</span>'
     email_confirmations:
       confirmation_mail_sent: 確認用のメールを送信しました
+      email_updated: メールアドレスを変更しました
       enter_code: メールに記載されている確認用コードを入力してください
     exports:
       description_html: |-

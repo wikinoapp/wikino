@@ -11,6 +11,7 @@ class PageName < T::Enum
     PageEdit = new
     Profile = new
     Settings = new
+    SettingsEmail = new
     SettingsProfile = new
     SignIn = new
     SignUp = new

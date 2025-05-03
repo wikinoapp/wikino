@@ -1,0 +1,33 @@
+# typed: strict
+# frozen_string_literal: true
+
+module Settings
+  module Emails
+    class ShowView < ApplicationView
+      sig { params(current_user: User, form: EmailForm::Edit).void }
+      def initialize(current_user:, form:)
+        @current_user = current_user
+        @form = form
+      end
+
+      sig { override.void }
+      def before_render
+        title = I18n.t("meta.title.settings.emails.show")
+        helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+      end
+
+      sig { returns(User) }
+      attr_reader :current_user
+      private :current_user
+
+      sig { returns(EmailForm::Edit) }
+      attr_reader :form
+      private :form
+
+      sig { returns(PageName) }
+      private def current_page_name
+        PageName::SettingsEmail
+      end
+    end
+  end
+end

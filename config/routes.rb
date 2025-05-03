@@ -47,6 +47,8 @@ Rails.application.routes.draw do
   match "/settings",                                                       via: :get,    as: :settings,                       to: "settings/show#call"
   match "/settings/profile",                                               via: :get,    as: :settings_profile,               to: "settings/profiles/show#call"
   match "/settings/profile",                                               via: :patch,                                       to: "settings/profiles/update#call"
+  match "/settings/email",                                                 via: :get,    as: :settings_email,                 to: "settings/emails/show#call"
+  match "/settings/email",                                                 via: :patch,                                       to: "settings/emails/update#call"
   match "/sign_in",                                                        via: :get,    as: :sign_in,                        to: "sign_in/show#call"
   match "/sign_up",                                                        via: :get,    as: :sign_up,                        to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                     to: "spaces/create#call"

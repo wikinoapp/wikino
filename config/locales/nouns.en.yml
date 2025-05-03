@@ -2,6 +2,8 @@ en:
   nouns:
     actions: Actions
     backlinks: Backlinks
+    change_email: Change email
+    current_email: Current email
     dark: Dark
     edit_profile: Edit profile
     export: Export

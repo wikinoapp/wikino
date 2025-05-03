@@ -26,6 +26,8 @@ ja:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        emails:
+          show: メールアドレスの変更
         show: 設定
         profiles:
           show: プロフィール設定

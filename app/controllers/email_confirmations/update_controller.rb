@@ -9,6 +9,7 @@ module EmailConfirmations
 
     around_action :set_locale
     before_action :require_email_confirmation_id
+    before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
@@ -21,7 +22,8 @@ module EmailConfirmations
       end
 
       result = EmailService::Confirm.new.call(
-        email_confirmation_record: form.email_confirmation_record!
+        email_confirmation_record: form.email_confirmation_record!,
+        user_record: current_user_record
       )
 
       flash_message(result.email_confirmation_record)
@@ -48,6 +50,8 @@ module EmailConfirmations
     private def success_path(email_confirmation)
       if email_confirmation.event_sign_up?
         new_account_path
+      elsif email_confirmation.event_email_update?
+        settings_email_path
       else
         root_path
       end

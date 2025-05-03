@@ -26,6 +26,8 @@ en:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        emails:
+          show: "Change email"
         show: Settings
         profiles:
           show: "Profile settings"

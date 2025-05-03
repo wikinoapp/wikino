@@ -9,6 +9,8 @@ en:
         confirmation_code: Confirmation code
       email_confirmation_form/creation:
         email: Email
+      email_form/edit:
+        new_email: New email
       page_form/bulk_restoring:
         page_ids: Selected pages
       page_form/edit:
