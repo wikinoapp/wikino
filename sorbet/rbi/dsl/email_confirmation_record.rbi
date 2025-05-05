@@ -431,6 +431,12 @@ class EmailConfirmationRecord
     def event_email_update?; end
 
     sig { void }
+    def event_password_reset!; end
+
+    sig { returns(T::Boolean) }
+    def event_password_reset?; end
+
+    sig { void }
     def event_sign_up!; end
 
     sig { returns(T::Boolean) }
@@ -461,6 +467,9 @@ class EmailConfirmationRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def event_email_update(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def event_password_reset(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def event_sign_up(*args, &blk); end
@@ -552,6 +561,9 @@ class EmailConfirmationRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def not_event_email_update(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_event_password_reset(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def not_event_sign_up(*args, &blk); end
@@ -1205,6 +1217,9 @@ class EmailConfirmationRecord
     def event_email_update(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def event_password_reset(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def event_sign_up(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1260,6 +1275,9 @@ class EmailConfirmationRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def not_event_email_update(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_event_password_reset(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def not_event_sign_up(*args, &blk); end

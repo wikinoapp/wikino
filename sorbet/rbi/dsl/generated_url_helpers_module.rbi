@@ -28,6 +28,9 @@ module GeneratedUrlHelpersModule
   def edit_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def edit_password_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -59,6 +62,12 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def page_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def password_reset_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def password_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
