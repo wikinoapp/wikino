@@ -17,6 +17,18 @@ module RequestHelpers
 
     expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
   end
+
+  def set_session(session_attrs = {})
+    post(
+      test_session_path,
+      params: {session_attrs:}
+    )
+    expect(response).to have_http_status(:created)
+
+    session_attrs.each_key do |key|
+      expect(session[key]).to be_present
+    end
+  end
 end
 
 RSpec.configure do |config|
