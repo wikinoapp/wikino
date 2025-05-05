@@ -25,6 +25,8 @@ ja:
         show: "%{page_title} | %{space_name}"
       password_resets:
         new: パスワードを忘れた？
+      passwords:
+        edit: パスワードの変更
       profiles:
         show: "%{name} (@%{atname})"
       settings:

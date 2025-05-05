@@ -56,6 +56,9 @@ ja:
     password_resets:
       enter_your_email_html: パスワードをリセットするためのメールを送信します<br>アカウント作成に使用したメールアドレスを入力してください
       reset_successfully_html: パスワードをリセットしました<br>新しいパスワードでログインしてください
+    passwords:
+      enter_new_password: 新しいパスワードを入力してください
+      reset_successfully_html: パスワードをリセットしました<br>新しいパスワードでログインしてください
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます。<br>

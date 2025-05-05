@@ -17,6 +17,8 @@ en:
         topic_number: Topic
         title: Title
         body: Body
+      password_reset_form/creation:
+        password: New password
       profile_form/edit:
         atname: Atname
         description: Description
