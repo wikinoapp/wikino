@@ -10,13 +10,17 @@ module SignIn
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.sign_in.show")
-      helpers.set_meta_tags(title:, **default_meta_tags)
+      helpers.set_meta_tags(title: current_page_title, **default_meta_tags)
     end
 
     sig { returns(UserSessionForm::Creation) }
     attr_reader :form
     private :form
+
+    sig { returns(String) }
+    private def current_page_title
+      t("meta.title.sign_in.show")
+    end
 
     sig { returns(PageName) }
     private def current_page_name
