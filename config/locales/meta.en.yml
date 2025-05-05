@@ -23,6 +23,10 @@ en:
       pages:
         edit: Edit page
         show: "%{page_title} | %{space_name}"
+      password_resets:
+        new: Forgot your password?
+      passwords:
+        edit: Change password
       profiles:
         show: "%{name} (@%{atname})"
       settings:

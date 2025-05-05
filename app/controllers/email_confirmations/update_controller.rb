@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module EmailConfirmations
@@ -48,12 +48,13 @@ module EmailConfirmations
 
     sig { params(email_confirmation: EmailConfirmationRecord).returns(String) }
     private def success_path(email_confirmation)
-      if email_confirmation.event_sign_up?
+      case email_confirmation.deserialized_event
+      when EmailConfirmationEvent::SignUp
         new_account_path
-      elsif email_confirmation.event_email_update?
+      when EmailConfirmationEvent::EmailUpdate
         settings_email_path
-      else
-        root_path
+      when EmailConfirmationEvent::PasswordReset
+        edit_password_path
       end
     end
   end

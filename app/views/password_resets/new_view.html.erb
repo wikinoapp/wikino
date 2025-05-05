@@ -8,32 +8,35 @@
 
     <div class="text-center">
       <h1 class="text-2xl font-bold antialiased">
-        <%= t("meta.title.email_confirmations.edit") %>
+        <%= t("meta.title.password_resets.new") %>
       </h1>
 
       <p class="mt-4">
-        <%= t("messages.email_confirmations.enter_code") %>
+        <%= t("messages.password_resets.enter_your_email_html") %>
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
       <%= card.with_body(class_name: "p-4") do %>
         <%= form_with(
           class: "flex flex-col gap-4",
-          method: :patch,
-          model: @form,
-          url: email_confirmation_path(after: params[:after])
+          model: form,
+          url: password_reset_path
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :confirmation_code, class: "form-control" do %>
+          <%= f.label :email, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.email_confirmation_form/check.confirmation_code") %>
+                <%= t("forms.attributes.email_confirmation_form/creation.email") %>
               </span>
             </div>
 
-            <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
+            <%= f.email_field(:email, {
+              autocomplete: "username",
+              class: "bg-base-300 input input-bordered w-full",
+              required: true
+            }) %>
           <% end %>
 
           <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
@@ -44,5 +47,13 @@
         <% end %>
       <% end %>
     <% end %>
+
+    <div class="text-center">
+      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
+        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-content") %>
+
+        <%= t("verbs.back_to_home") %>
+      <% end %>
+    </div>
   </div>
 <% end %>

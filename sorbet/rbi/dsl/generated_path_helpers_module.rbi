@@ -28,6 +28,9 @@ module GeneratedPathHelpersModule
   def edit_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def edit_password_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -59,6 +62,12 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def page_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def password_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def password_reset_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end

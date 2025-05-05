@@ -17,6 +17,8 @@ ja:
         topic_number: トピック
         title: タイトル
         body: 本文
+      password_reset_form/creation:
+        password: 新しいパスワード
       profile_form/edit:
         atname: アットネーム
         description: 説明
