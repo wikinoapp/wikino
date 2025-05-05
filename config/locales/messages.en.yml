@@ -50,6 +50,9 @@ en:
       page_deleted: Page was successfully deleted.
       page_duplicated_html: Page <a href="/pages/%{database_id}">%{title}</a> already exists.
       saved: Page saved.
+    password_resets:
+      enter_your_email_html: Enter your email address to send a password reset email.
+      reset_successfully_html: Password reset successfully.<br>Please sign in with the new password.
     pagination:
       next_html: "Next&nbsp;&rsaquo;"
       prev_html: "&lsaquo;&nbsp;Prev"

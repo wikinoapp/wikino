@@ -15,6 +15,8 @@ Rails.application.routes.draw do
   match "/email_confirmation/edit",                                        via: :get,    as: :edit_email_confirmation,        to: "email_confirmations/edit#call"
   match "/home",                                                           via: :get,    as: :home,                           to: "home/show#call"
   match "/manifest",                                                       via: :get,    as: :manifest,                       to: "manifests/show#call"
+  match "/password_reset",                                                 via: :get,    as: :password_reset,                 to: "password_resets/new#call"
+  match "/password_reset",                                                 via: :post,                                        to: "password_resets/create#call"
   match "/s/:space_identifier",                                            via: :get,    as: :space,                          to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                           to: "atom/show#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,        to: "bulk_restored_pages/create#call"

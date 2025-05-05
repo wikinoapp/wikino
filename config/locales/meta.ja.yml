@@ -23,6 +23,8 @@ ja:
       pages:
         edit: ページの編集
         show: "%{page_title} | %{space_name}"
+      password_resets:
+        new: パスワードを忘れた？
       profiles:
         show: "%{name} (@%{atname})"
       settings:

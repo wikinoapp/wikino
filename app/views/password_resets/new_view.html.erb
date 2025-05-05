@@ -8,11 +8,11 @@
 
     <div class="text-center">
       <h1 class="text-2xl font-bold antialiased">
-        <%= title %>
+        <%= t("meta.title.password_resets.new") %>
       </h1>
 
-      <p class="mt-4 hidden">
-        <%= t("messages.sign_in.dont_have_an_account_html", sign_up_path:) %>
+      <p class="mt-4">
+        <%= t("messages.password_resets.enter_your_email_html") %>
       </p>
     </div>
 
@@ -28,7 +28,7 @@
           <%= f.label :email, class: "form-control" do %>
             <div class="label">
               <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.email") %>
+                <%= t("forms.attributes.email_confirmation_form/creation.email") %>
               </span>
             </div>
 
@@ -39,28 +39,10 @@
             }) %>
           <% end %>
 
-          <%= f.label :password, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.password") %>
-              </span>
-
-              <span class="label-text-alt">
-                <%= link_to t("meta.title.password_resets.new"), password_reset_path, class: "link", tabindex: 0 %>
-              </span>
-            </div>
-
-            <%= f.password_field(:password, {
-              autocomplete: "current-password",
-              class: "bg-base-300 input input-bordered w-full",
-              required: true
-            }) %>
-          <% end %>
-
           <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-            <%= render Basic::IconComponent.new(name: "sign-in-regular", size: "18px", class_name: "fill-primary-content") %>
+            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-            <%= t("verbs.sign_in") %>
+            <%= t("verbs.submit") %>
           <% end %>
         <% end %>
       <% end %>
