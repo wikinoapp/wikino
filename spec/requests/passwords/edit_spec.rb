@@ -13,6 +13,13 @@ RSpec.describe "GET /password/edit", type: :request do
     expect(response).to redirect_to("/home")
   end
 
+  it "メールアドレスの確認が完了していないとき、トップページにリダイレクトすること" do
+    get "/password/edit"
+
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/")
+  end
+
   it "メールアドレスの確認が完了しているとき、パスワード設定画面が表示されること" do
     email_confirmation = create(:email_confirmation_record, :succeeded, {
       email: "test@example.com",
