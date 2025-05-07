@@ -7,6 +7,7 @@ en:
         password: Password
       account_form/destroy_confirmation:
         user_atname: Atname
+        user_record: Account
       email_confirmation_form/check:
         confirmation_code: Confirmation code
       email_confirmation_form/creation:
@@ -60,6 +61,8 @@ en:
         reserved: cannot be used
         uniqueness: has already been taken
       models:
+        account_form/destroy_confirmation:
+          has_active_spaces: cannot be deleted because it has an active space
         email_confirmation_form/check:
           attributes:
             confirmation_code:

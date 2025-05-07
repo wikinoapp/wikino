@@ -7,6 +7,7 @@ ja:
         password: パスワード
       account_form/destroy_confirmation:
         user_atname: アットネーム
+        user_record: アカウント
       email_confirmation_form/check:
         confirmation_code: 確認用コード
       email_confirmation_form/creation:
@@ -60,6 +61,8 @@ ja:
         reserved: は使用できません
         uniqueness: は既に存在しています
       models:
+        account_form/destroy_confirmation:
+          has_active_spaces: にスペースが紐付いているため削除できません
         email_confirmation_form/check:
           attributes:
             confirmation_code:
