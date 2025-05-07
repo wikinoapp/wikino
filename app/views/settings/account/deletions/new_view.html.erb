@@ -83,7 +83,7 @@
                 <%= t("messages.settings.account.deletions.cannot_destroy_account_description_html") %>
               </p>
 
-              <ul class="list-disc list-inside">
+              <ul class="list-inside list-disc">
                 <% active_spaces.each do |space| %>
                   <li>
                     <%= link_to space.name, space_path(space.identifier), class: "link link-primary" %>

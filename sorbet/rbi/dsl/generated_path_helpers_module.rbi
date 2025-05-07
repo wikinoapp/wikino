@@ -94,6 +94,12 @@ module GeneratedPathHelpersModule
   def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_account_deletion_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_account_new_deletion_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_email_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
