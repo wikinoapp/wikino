@@ -5,6 +5,9 @@ ja:
         atname: アットネーム
         email: メールアドレス
         password: パスワード
+      account_form/destroy_confirmation:
+        user_atname: アットネーム
+        user_record: アカウント
       email_confirmation_form/check:
         confirmation_code: 確認用コード
       email_confirmation_form/creation:
@@ -54,9 +57,12 @@ ja:
       messages:
         cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
         contains_invalid_characters_html: "には次の文字を含めることができません: <code>/ \\ : * ? \" < > |</code>"
+        incorrect: が間違っています
         reserved: は使用できません
         uniqueness: は既に存在しています
       models:
+        account_form/destroy_confirmation:
+          has_active_spaces: にスペースが紐付いているため削除できません
         email_confirmation_form/check:
           attributes:
             confirmation_code:
@@ -65,9 +71,5 @@ ja:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         page_form/edit:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
-        space_form/destroy_confirmation:
-          incorrect: が間違っています
-        topic_form/destroy_confirmation:
-          incorrect: が間違っています
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています

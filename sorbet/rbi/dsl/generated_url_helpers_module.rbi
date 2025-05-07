@@ -94,6 +94,12 @@ module GeneratedUrlHelpersModule
   def root_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_account_deletion_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_account_new_deletion_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_email_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

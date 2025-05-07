@@ -30,6 +30,9 @@ en:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        account:
+          deletions:
+            new: "Delete account"
         emails:
           show: "Change email"
         show: Settings

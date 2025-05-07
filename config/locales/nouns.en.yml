@@ -1,5 +1,6 @@
 en:
   nouns:
+    account_deletion: Delete account
     actions: Actions
     backlinks: Backlinks
     change_email: Change email

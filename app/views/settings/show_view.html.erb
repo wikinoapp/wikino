@@ -15,6 +15,7 @@
         <%= card.with_body(class_name: "p-4") do %>
           <%= link_to(t("nouns.edit_profile"), settings_profile_path, class: "link") %>
           <%= link_to(t("nouns.change_email"), settings_email_path, class: "link") %>
+          <%= link_to(t("nouns.account_deletion"), settings_account_new_deletion_path, class: "link") %>
 
           <div class="text-center">
             <%= button_to(t("nouns.sign_out"), user_session_path,

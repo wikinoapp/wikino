@@ -68,6 +68,20 @@ en:
       name_hint: |-
         %{max_length} characters or less.
       updated: Profile updated.
+    settings:
+      account:
+        deletions:
+          cannot_destroy_account: This account does not meet the deletion requirements.
+          cannot_destroy_account_description_html: |-
+            To delete this account, you must not be a member of any spaces.<br>
+            Please delete the following spaces first.
+          deleted: Account deleted.
+          form_description_html: |-
+            To delete this account, please enter your atname
+            (<span class="font-bold">%{user_atname}</span>)
+            below.
+          warning_1: Deleted account information cannot be restored.
+          warning_2: The atname will be available to other users.
     spaces:
       created: Space created.
       deleted: Space deleted.

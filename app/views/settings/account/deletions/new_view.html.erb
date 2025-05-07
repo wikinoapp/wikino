@@ -1,0 +1,103 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <div class="breadcrumbs py-1 text-sm">
+          <ul>
+            <li>
+              <%= link_to t("nouns.settings"), settings_path %>
+            </li>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <h1 class="text-2xl font-bold antialiased">
+        <%= current_page_title %>
+      </h1>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <% if can_destroy_account? %>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-4">
+                <p>
+                  <%= t("messages.settings.account.deletions.description_html") %>
+                </p>
+
+                <ul class="list-inside list-disc">
+                  <li>
+                    <%= t("messages.settings.account.deletions.warning_1") %>
+                  </li>
+
+                  <li>
+                    <%= t("messages.settings.account.deletions.warning_2") %>
+                  </li>
+                </ul>
+
+                <p>
+                  <%= t("messages.settings.account.deletions.form_description_html", user_atname: current_user.atname) %>
+                </p>
+              </div>
+
+              <%= form_with(
+                class: "flex flex-col gap-4",
+                model: form,
+                url: settings_account_deletion_path
+              ) do |f| %>
+                <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+                <label class="form-control">
+                  <div class="label">
+                    <span class="label-text">
+                      <%= t("forms.attributes.account_form/destroy_confirmation.user_atname") %>
+                    </span>
+                  </div>
+
+                  <%= f.text_field(:user_atname, {
+                    class: "bg-base-300 input input-bordered w-full",
+                    required: true
+                  }) %>
+                </label>
+
+                <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+                  <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+
+                  <%= t("verbs.delete") %>
+                <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <%= render Basic::IconComponent.new(name: "warning", size: "18px", class_name: "fill-amber-700") %>
+                <%= t("messages.settings.account.deletions.cannot_destroy_account") %>
+              </div>
+
+              <p>
+                <%= t("messages.settings.account.deletions.cannot_destroy_account_description_html") %>
+              </p>
+
+              <ul class="list-inside list-disc">
+                <% active_spaces.each do |space| %>
+                  <li>
+                    <%= link_to space.name, space_path(space.identifier), class: "link link-primary" %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

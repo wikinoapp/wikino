@@ -5,6 +5,9 @@ en:
         atname: Atname
         email: Email
         password: Password
+      account_form/destroy_confirmation:
+        user_atname: Atname
+        user_record: Account
       email_confirmation_form/check:
         confirmation_code: Confirmation code
       email_confirmation_form/creation:
@@ -54,9 +57,12 @@ en:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
         contains_invalid_characters_html: cannot contain the following characters <code>/\:*?"<>|"</code>
+        incorrect: is incorrect
         reserved: cannot be used
         uniqueness: has already been taken
       models:
+        account_form/destroy_confirmation:
+          has_active_spaces: cannot be deleted because it has an active space
         email_confirmation_form/check:
           attributes:
             confirmation_code:
@@ -65,9 +71,5 @@ en:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
         page_form/edit:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
-        space_form/destroy_confirmation:
-          incorrect: is incorrect
-        topic_form/destroy_confirmation:
-          incorrect: is incorrect
         user_session_form/creation:
           unauthenticated: Login failed. Email or password are incorrect
