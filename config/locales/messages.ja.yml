@@ -75,6 +75,7 @@ ja:
           cannot_destroy_account_description_html: |-
             アカウントを削除するには、スペースに参加していない必要があります。<br>
             参加している以下のスペースを削除してからアカウントを削除してください。
+          deleted: アカウントを削除しました
           description_html: |-
             アカウントを削除しますか？<br>
             削除する前に以下の内容をご確認ください。

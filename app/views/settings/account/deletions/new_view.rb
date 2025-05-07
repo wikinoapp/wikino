@@ -5,8 +5,6 @@ module Settings
   module Account
     module Deletions
       class NewView < ApplicationView
-        extend T::Sig
-
         sig do
           params(
             current_user: User,
