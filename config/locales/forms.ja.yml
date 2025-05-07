@@ -5,6 +5,8 @@ ja:
         atname: アットネーム
         email: メールアドレス
         password: パスワード
+      account_form/destroy_confirmation:
+        user_atname: アットネーム
       email_confirmation_form/check:
         confirmation_code: 確認用コード
       email_confirmation_form/creation:

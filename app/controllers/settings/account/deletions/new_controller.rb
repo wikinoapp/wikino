@@ -13,8 +13,13 @@ module Settings
 
         sig { returns(T.untyped) }
         def call
+          form = AccountForm::DestroyConfirmation.new
+          active_space_records = current_user_record!.active_space_records.order(:identifier)
+
           render Settings::Account::Deletions::NewView.new(
-            current_user: current_user!
+            current_user: current_user!,
+            form:,
+            active_spaces: SpaceRepository.new.to_models(space_records: active_space_records)
           )
         end
       end

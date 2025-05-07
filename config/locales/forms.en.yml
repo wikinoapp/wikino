@@ -5,6 +5,8 @@ en:
         atname: Atname
         email: Email
         password: Password
+      account_form/destroy_confirmation:
+        user_atname: Atname
       email_confirmation_form/check:
         confirmation_code: Confirmation code
       email_confirmation_form/creation:

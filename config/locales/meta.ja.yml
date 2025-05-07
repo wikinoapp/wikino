@@ -30,6 +30,9 @@ ja:
       profiles:
         show: "%{name} (@%{atname})"
       settings:
+        account:
+          deletions:
+            new: アカウントの削除
         emails:
           show: メールアドレスの変更
         show: 設定

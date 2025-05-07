@@ -13,7 +13,14 @@ class SpaceRepository < ApplicationRepository
     )
   end
 
-  sig { params(space_records: SpaceRecord::PrivateCollectionProxy).returns(T::Array[Space]) }
+  sig do
+    params(
+      space_records: T.any(
+        SpaceRecord::PrivateCollectionProxy,
+        SpaceRecord::PrivateAssociationRelation
+      )
+    ).returns(T::Array[Space])
+  end
   def to_models(space_records:)
     space_records.map { to_model(space_record: _1) }
   end

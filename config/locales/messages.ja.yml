@@ -68,6 +68,22 @@ ja:
       name_hint: |-
         %{max_length}文字まで入力できます。
       updated: プロフィールを更新しました
+    settings:
+      account:
+        deletions:
+          cannot_destroy_account: このアカウントは削除要件を満たしていません
+          cannot_destroy_account_description_html: |-
+            アカウントを削除するには、スペースに参加していない必要があります。<br>
+            参加している以下のスペースを削除してからアカウントを削除してください。
+          description_html: |-
+            アカウントを削除しますか？<br>
+            削除する前に以下の内容をご確認ください。
+          form_description_html: |-
+            アカウントを削除する場合は、アットネーム
+            (<span class="font-bold">%{user_atname}</span>)
+            を入力してください。
+          warning_1: 削除されたアカウント情報の復元はできません
+          warning_2: アットネームは他のユーザーが使用できるようになります
     spaces:
       created: スペースを作成しました
       deleted: スペースを削除しました
