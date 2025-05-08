@@ -1,9 +1,0 @@
----
-description:
-globs:
-alwaysApply: false
----
-# Wikinoについて
-
-WikinoはWikiアプリです。
-ユーザーはスペースと呼ばれる場所にページを作成することができ、ページ間をリンクで繋げることができます。
