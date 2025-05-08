@@ -38,7 +38,7 @@ ja:
       succeeded_html: エクスポートが完了しました。
     home:
       new_space_description_html: |-
-        ページはスペースの中で作成することができます。<br>
+        ページはスペース内のトピックに作成することができます。<br>
         まずはスペースを作成しましょう。
       no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
     page:
@@ -92,6 +92,11 @@ ja:
         この識別子はスペースのURLに使用されます。あとから変更もできます。<br>
         %{max_length}文字以内で半角英数字とハイフンのみ使用できます。
       new_space: 新しいスペース
+      no_pages: ページはありません
+      no_topics: トピックはありません
+      new_topic_description_html: |-
+        トピックはページを分類するためのものです。<br>
+        トピックを作成してページを追加できるようにしましょう。
       settings:
         deletions:
           new:

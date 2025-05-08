@@ -55,6 +55,48 @@
             </div>
           <% end %>
         </div>
+      <% elsif first_topic.nil? %>
+        <%= render Cards::EmptyStateComponent.new(
+          icon_name: "file",
+          message: t("messages.spaces.no_topics")
+        ) do %>
+          <div>
+            <%= t("messages.spaces.new_topic_description_html") %>
+          </div>
+
+          <%= link_to new_topic_path(space.identifier), {
+            class: "btn btn-primary btn-sm no-animation rounded-full"
+          } do %>
+            <%= render Basic::IconComponent.new(
+              name: "plus",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
+
+            <%= t("nouns.new_topic") %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <%= render Cards::EmptyStateComponent.new(
+          icon_name: "file",
+          message: t("messages.spaces.no_pages")
+        ) do %>
+          <div>
+            <%= t("messages.spaces.new_page_description_html") %>
+          </div>
+
+          <%= link_to new_space_path, {
+            class: "btn btn-primary btn-sm no-animation rounded-full"
+          } do %>
+            <%= render Basic::IconComponent.new(
+              name: "plus",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
+
+            <%= t("nouns.new_space") %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
