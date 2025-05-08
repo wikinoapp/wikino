@@ -12,7 +12,11 @@
               <%= link_to new_page_path(space.identifier, first_topic.number), {
                 class: "btn btn-sm btn-primary no-animation rounded-full"
               } do %>
-                <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
+                <%= render Basic::IconComponent.new(
+                  name: "pencil-simple-line",
+                  size: "18px",
+                  class_name: "fill-primary-content"
+                ) %>
 
                 <%= t("nouns.new_page") %>
               <% end %>
@@ -80,19 +84,19 @@
           message: t("messages.spaces.no_pages")
         ) do %>
           <div>
-            <%= t("messages.spaces.new_page_description_html") %>
+            <%= t("messages.spaces.new_page_description") %>
           </div>
 
-          <%= link_to new_space_path, {
+          <%= link_to new_page_path(space.identifier, first_topic.number), {
             class: "btn btn-primary btn-sm no-animation rounded-full"
           } do %>
             <%= render Basic::IconComponent.new(
-              name: "plus",
+              name: "pencil-simple-line",
               size: "18px",
               class_name: "fill-primary-content"
             ) %>
 
-            <%= t("nouns.new_space") %>
+            <%= t("nouns.new_page") %>
           <% end %>
         <% end %>
       <% end %>

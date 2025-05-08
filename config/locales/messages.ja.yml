@@ -94,6 +94,7 @@ ja:
       new_space: 新しいスペース
       no_pages: ページはありません
       no_topics: トピックはありません
+      new_page_description: 最初の1ページ目を作成しましょう。
       new_topic_description_html: |-
         トピックはページを分類するためのものです。<br>
         トピックを作成してページを追加できるようにしましょう。
