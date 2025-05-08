@@ -17,8 +17,7 @@ module Settings
 
       sig { override.void }
       def before_render
-        title = I18n.t("meta.title.settings.profiles.show")
-        helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+        helpers.set_meta_tags(title:, **default_meta_tags)
       end
 
       sig { returns(User) }
@@ -28,6 +27,11 @@ module Settings
       sig { returns(ProfileForm::Edit) }
       attr_reader :form
       private :form
+
+      sig { returns(String) }
+      private def title
+        I18n.t("meta.title.settings.profiles.show")
+      end
 
       sig { returns(PageName) }
       private def current_page_name

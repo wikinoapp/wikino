@@ -14,8 +14,7 @@ module Spaces
 
         sig { override.void }
         def before_render
-          title = I18n.t("meta.title.spaces.settings.deletions.new", space_name: space.name)
-          helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+          helpers.set_meta_tags(title:, **default_meta_tags)
         end
 
         sig { returns(User) }
@@ -29,6 +28,11 @@ module Spaces
         sig { returns(SpaceForm::DestroyConfirmation) }
         attr_reader :form
         private :form
+
+        sig { returns(String) }
+        private def title
+          I18n.t("meta.title.spaces.settings.deletions.new", space_name: space.name)
+        end
 
         sig { returns(PageName) }
         private def current_page_name

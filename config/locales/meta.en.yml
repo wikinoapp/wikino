@@ -45,6 +45,8 @@ en:
       spaces:
         new: New space
         settings:
+          deletions:
+            new: "Delete space | %{space_name}"
           exports:
             new: "Export | %{space_name}"
             show: "Export | %{space_name}"

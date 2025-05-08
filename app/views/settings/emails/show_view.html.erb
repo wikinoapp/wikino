@@ -11,7 +11,7 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title: t("nouns.change_email")) %>
+      <%= render Headers::MainTitleComponent.new(title:) %>
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>

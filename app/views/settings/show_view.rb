@@ -14,13 +14,17 @@ module Settings
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.settings.show")
-      helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+      helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(User) }
     attr_reader :current_user
     private :current_user
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.settings.show")
+    end
 
     sig { returns(PageName) }
     private def current_page_name
