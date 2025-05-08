@@ -1,0 +1,23 @@
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-wrap-reverse items-center justify-between gap-4 md:flex-nowrap">
+      <h1 class="flex-auto text-3xl font-bold antialiased">
+        <%= title %>
+      </h1>
+
+      <% if actions? %>
+        <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
+          <%= actions %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if subtitle? %>
+      <div class="text-sm text-gray-600">
+        <%= subtitle %>
+      </div>
+    <% end %>
+  </div>
+
+  <hr class="border-gray-300">
+</div>

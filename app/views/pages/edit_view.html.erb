@@ -12,9 +12,7 @@
       as: ContainerComponent::As::Main,
       class_name: "flex flex-col gap-6 px-4"
     ) do %>
-      <h1 class="text-2xl font-bold antialiased">
-        <%= title %>
-      </h1>
+      <%= render Headers::MainTitleComponent.new(title:) %>
 
       <% if draft_page.present? %>
         <div class="alert alert-warning" role="alert">

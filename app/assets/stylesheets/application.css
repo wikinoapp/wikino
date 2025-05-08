@@ -31,23 +31,23 @@
   }
 
   .wikino-markdown h1 {
-    @apply mb-4 mt-8 text-2xl/8 font-bold antialiased;
+    @apply mb-4 mt-8 text-3xl/8 font-bold antialiased;
   }
 
   .wikino-markdown h2 {
-    @apply mb-4 mt-8 text-xl/8 font-bold antialiased;
+    @apply mb-4 mt-8 text-2xl/8 font-bold antialiased;
   }
 
   .wikino-markdown h3 {
-    @apply mb-4 mt-8 text-lg/8 font-bold antialiased;
+    @apply mb-4 mt-8 text-xl/8 font-bold antialiased;
   }
 
   .wikino-markdown h4 {
-    @apply mb-4 mt-8 text-base/8 font-bold antialiased;
+    @apply mb-4 mt-8 text-lg/8 font-bold antialiased;
   }
 
   .wikino-markdown h5 {
-    @apply mb-4 mt-8 text-sm/8 font-bold antialiased;
+    @apply mb-4 mt-8 text-base/8 font-bold antialiased;
   }
 
   .wikino-markdown h6 {

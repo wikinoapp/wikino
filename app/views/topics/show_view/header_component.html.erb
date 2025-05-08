@@ -1,17 +1,11 @@
-<div class="flex items-center justify-between">
-  <div class="flex flex-col gap-2">
-    <h1 class="text-2xl font-bold antialiased">
-      <%= topic.name %>
-    </h1>
-
-    <% if topic.description.present? %>
-      <p class="text-sm text-gray-500">
-        <%= topic.description %>
-      </p>
+<%= render Headers::MainTitleComponent.new(title: topic.name) do |main_title| %>
+  <% if topic.description.present? %>
+    <%= main_title.with_subtitle do %>
+      <%= topic.description %>
     <% end %>
-  </div>
+  <% end %>
 
-  <div class="flex gap-2">
+  <%= main_title.with_actions do %>
     <% if topic.can_create_page? %>
       <%= link_to new_page_path(space.identifier, topic.number), {
         class: "btn btn-sm btn-primary no-animation rounded-full"
@@ -23,5 +17,5 @@
     <% end %>
 
     <%= render Dropdowns::TopicOptionsComponent.new(signed_in:, topic:) %>
-  </div>
-</div>
+  <% end %>
+<% end %>

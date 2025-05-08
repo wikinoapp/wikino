@@ -15,15 +15,11 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold antialiased">
-          <%= t("nouns.export") %>
-        </h1>
-
-        <div class="text-sm text-gray-600">
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.export")) do |main_title| %>
+        <%= main_title.with_subtitle do %>
           <%= t("messages.exports.description_html") %>
-        </div>
-      </div>
+        <% end %>
+      <% end %>
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>

@@ -1,10 +1,6 @@
 <div class="flex flex-col gap-4">
-  <div class="flex flex-wrap-reverse items-center justify-between gap-4 md:flex-nowrap">
-    <h1 class="flex-auto text-2xl font-bold antialiased">
-      <%= page.title %>
-    </h1>
-
-    <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
+  <%= render Headers::MainTitleComponent.new(title: page.title) do |main_title| %>
+    <%= main_title.with_actions do %>
       <% if page.can_update? %>
         <%= link_to edit_page_path(space.identifier, page.number), {
           class: "btn btn-sm btn-primary no-animation rounded-full"
@@ -18,8 +14,8 @@
       <% if signed_in? %>
         <%= render Dropdowns::PageActionsComponent.new(page:) %>
       <% end %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <% if false %>
   <div class="flex items-center gap-2">
