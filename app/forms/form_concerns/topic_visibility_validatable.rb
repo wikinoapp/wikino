@@ -8,8 +8,7 @@ module FormConcerns
     included do
       validates :visibility,
         inclusion: {
-          # TODO: 非公開トピックの作成を有料プランでのみ利用可能にする
-          in: TopicVisibility.values.map(&:serialize) - [TopicVisibility::Private.serialize]
+          in: TopicVisibility.values.map(&:serialize)
         },
         presence: true
     end

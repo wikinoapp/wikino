@@ -40,7 +40,7 @@ en:
         name: Name
         visibility_private_hint: Pages posted in private topics are visible only in this space.
         visibility_private_hint_2_html: |-
-          Private topics are currently available only in the paid plan.
+          Private topics are currently available for free, but if a paid plan is introduced in the future, it will be a paid plan only feature.
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">Learn more</a>
         visibility_public_hint: Pages posted in public topics are visible on the internet.
         visibility: Visibility

@@ -40,7 +40,7 @@ ja:
         name: 名前
         visibility_private_hint: 非公開トピックに投稿されたページはこのスペースのメンバーのみに公開されます。
         visibility_private_hint_2_html: |-
-          非公開トピックは今後提供予定の有料プランでのみ利用可能です。
+          非公開トピックは現在無料で利用できますが、今後有料プランが導入された場合は有料プランのみの機能となります。
           <a href="https://wikino.app/s/wikino/pages/38" class="link link-primary" target="_blank">詳しくはこちら</a>
         visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます。
         visibility: 公開設定

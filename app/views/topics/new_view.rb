@@ -18,7 +18,6 @@ module Topics
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.topics.new", space_name: space.name)
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
@@ -33,6 +32,11 @@ module Topics
     sig { returns(TopicForm::Creation) }
     attr_reader :form
     private :form
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.topics.new", space_name: space.name)
+    end
 
     sig { returns(PageName) }
     private def current_page_name
