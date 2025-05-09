@@ -2,7 +2,6 @@ en:
   messages:
     _common:
       no_backlinks: No Backlinks
-      no_links: No Links
       unexpected_error: Sorry, something went wrong. Please try again.
     accounts:
       atname_hint_html: |-
@@ -41,14 +40,9 @@ en:
         Pages can be created in spaces.<br>
         First, create a space.
       no_joined_spaces_html: No joined spaces.
-    page:
+    pages:
       are_you_sure_trash: Are you sure you want to move this page to trash?
-      create_page_with_keyword: Create page with '__keyword__'
-      delete_page: Delete Page
       moved_to_trash: Page moved to trash.
-      no_links: No Links
-      page_deleted: Page was successfully deleted.
-      page_duplicated_html: Page <a href="/pages/%{database_id}">%{title}</a> already exists.
       saved: Page saved.
     password_resets:
       enter_your_email_html: Enter your email address to send a password reset email.
