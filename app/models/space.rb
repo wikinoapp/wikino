@@ -19,4 +19,10 @@ class Space < T::Struct
   const :name, String
   const :plan, Plan
   const :joined_at, ActiveSupport::TimeWithZone
+  const :can_create_topic, T.nilable(T::Boolean)
+
+  sig { returns(T::Boolean) }
+  def can_create_topic?
+    can_create_topic.not_nil!
+  end
 end

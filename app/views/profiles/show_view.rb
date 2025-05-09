@@ -44,6 +44,16 @@ module Profiles
       signed_in? && current_user.not_nil!.database_id == user.database_id
     end
 
+    sig { returns(String) }
+    private def title
+      user.name.presence || "@#{user.atname}"
+    end
+
+    sig { returns(String) }
+    private def subtitle
+      user.name.present? ? "@#{user.atname}" : ""
+    end
+
     sig { returns(PageName) }
     private def current_page_name
       PageName::Profile

@@ -29,14 +29,14 @@ module Spaces
       pagination = PaginationRepository.new.to_model(cursor_paginate_page:)
       page_list = PageList.new(pages:, pagination:)
 
-      space = SpaceRepository.new.to_model(space_record:)
+      space = SpaceRepository.new.to_model(
+        space_record:,
+        can_create_topic: space_member_policy.can_create_topic?
+      )
 
-      first_topic_record = space_member_policy.first_topic_record
-      first_topic = if first_topic_record
-        TopicRepository.new.to_model(
-          topic_record: first_topic_record,
-          can_create_page: space_member_policy.can_create_page?(topic_record: first_topic_record)
-        )
+      first_joined_topic_record = space_member_policy.joined_topic_records.order(:id).first
+      first_joined_topic = if first_joined_topic_record
+        TopicRepository.new.to_model(topic_record: first_joined_topic_record)
       end
 
       pinned_page_records = showable_pages.pinned.order(pinned_at: :desc, id: :desc)
@@ -44,8 +44,9 @@ module Spaces
 
       render Spaces::ShowView.new(
         current_user:,
+        joined_space: space_member_record.present?,
         space:,
-        first_topic:,
+        first_joined_topic:,
         pinned_pages:,
         page_list:
       )

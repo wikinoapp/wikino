@@ -85,7 +85,7 @@ class SpaceMemberRecord < ApplicationRecord
   end
 
   sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
-  def joined_topics
+  def joined_topic_records
     topic_records.kept
   end
 

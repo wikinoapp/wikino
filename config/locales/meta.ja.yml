@@ -37,7 +37,7 @@ ja:
           show: メールアドレスの変更
         show: 設定
         profiles:
-          show: プロフィール設定
+          show: プロフィールの編集
       sign_in:
         show: ログイン
       sign_up:
@@ -45,6 +45,8 @@ ja:
       spaces:
         new: 新規スペース
         settings:
+          deletions:
+            new: "スペースの削除 | %{space_name}"
           exports:
             new: "エクスポート | %{space_name}"
             show: "エクスポート | %{space_name}"

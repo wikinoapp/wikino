@@ -90,6 +90,12 @@ en:
         It must be at most %{max_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
       new_space: New Space
+      no_pages: No pages.
+      no_topics: No topics.
+      new_page_description: Create your first page.
+      new_topic_description_html: |-
+        Topics are used to classify pages.<br>
+        Create a topic to add pages.
       settings:
         deletions:
           new:

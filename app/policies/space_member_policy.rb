@@ -64,7 +64,7 @@ class SpaceMemberPolicy < ApplicationPolicy
     return false if space_member_record.nil?
 
     space_member_record!.active? &&
-      space_member_record!.joined_topics.where(id: page_record.topic_id).exists?
+      space_member_record!.joined_topic_records.where(id: page_record.topic_id).exists?
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
@@ -117,6 +117,11 @@ class SpaceMemberPolicy < ApplicationPolicy
     space_record.topic_records.kept.visibility_public
   end
 
+  sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
+  def joined_topic_records
+    space_member_record&.joined_topic_records.presence || TopicRecord.none
+  end
+
   sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
     if space_member_record
@@ -124,13 +129,6 @@ class SpaceMemberPolicy < ApplicationPolicy
     end
 
     space_record.page_records.active.topics_visibility_public
-  end
-
-  sig { returns(T.nilable(TopicRecord)) }
-  def first_topic_record
-    return if space_member_record.nil?
-
-    space_member_record!.joined_topics.first
   end
 
   sig { returns(T.nilable(UserRecord)) }

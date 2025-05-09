@@ -6,16 +6,18 @@ module Spaces
     sig do
       params(
         current_user: T.nilable(User),
+        joined_space: T::Boolean,
         space: Space,
-        first_topic: T.nilable(Topic),
+        first_joined_topic: T.nilable(Topic),
         pinned_pages: T::Array[Page],
         page_list: PageList
       ).void
     end
-    def initialize(current_user:, space:, first_topic:, pinned_pages:, page_list:)
+    def initialize(current_user:, joined_space:, space:, first_joined_topic:, pinned_pages:, page_list:)
       @current_user = current_user
+      @joined_space = joined_space
       @space = space
-      @first_topic = first_topic
+      @first_joined_topic = first_joined_topic
       @pinned_pages = pinned_pages
       @page_list = page_list
     end
@@ -30,13 +32,18 @@ module Spaces
     attr_reader :current_user
     private :current_user
 
+    sig { returns(T::Boolean) }
+    attr_reader :joined_space
+    private :joined_space
+    alias_method :joined_space?, :joined_space
+
     sig { returns(Space) }
     attr_reader :space
     private :space
 
     sig { returns(T.nilable(Topic)) }
-    attr_reader :first_topic
-    private :first_topic
+    attr_reader :first_joined_topic
+    private :first_joined_topic
 
     sig { returns(T::Array[Page]) }
     attr_reader :pinned_pages

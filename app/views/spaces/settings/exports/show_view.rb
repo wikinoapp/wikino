@@ -22,8 +22,7 @@ module Spaces
 
         sig { override.void }
         def before_render
-          title = I18n.t("meta.title.spaces.settings.exports.show", space_name: space.name)
-          helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+          helpers.set_meta_tags(title:, **default_meta_tags)
         end
 
         sig { returns(User) }
@@ -41,6 +40,11 @@ module Spaces
         sig { returns(ExportStatus) }
         attr_reader :export_status
         private :export_status
+
+        sig { returns(String) }
+        private def title
+          I18n.t("meta.title.spaces.settings.exports.show", space_name: space.name)
+        end
 
         sig { returns(PageName) }
         private def current_page_name

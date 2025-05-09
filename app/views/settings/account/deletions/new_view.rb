@@ -20,7 +20,7 @@ module Settings
 
         sig { override.void }
         def before_render
-          helpers.set_meta_tags(title: current_page_title, **default_meta_tags(site: false))
+          helpers.set_meta_tags(title:, **default_meta_tags)
         end
 
         sig { returns(User) }
@@ -41,7 +41,7 @@ module Settings
         end
 
         sig { returns(String) }
-        private def current_page_title
+        private def title
           I18n.t("meta.title.settings.account.deletions.new")
         end
 

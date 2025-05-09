@@ -12,8 +12,7 @@ module Settings
 
       sig { override.void }
       def before_render
-        title = I18n.t("meta.title.settings.emails.show")
-        helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+        helpers.set_meta_tags(title:, **default_meta_tags)
       end
 
       sig { returns(User) }
@@ -23,6 +22,11 @@ module Settings
       sig { returns(EmailForm::Edit) }
       attr_reader :form
       private :form
+
+      sig { returns(String) }
+      private def title
+        I18n.t("meta.title.settings.emails.show")
+      end
 
       sig { returns(PageName) }
       private def current_page_name

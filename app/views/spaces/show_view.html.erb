@@ -5,25 +5,27 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold antialiased">
-          <%= space.name %>
-        </h1>
+      <%= render Headers::MainTitleComponent.new(title: space.name) do |main_title| %>
+        <%= main_title.with_actions do %>
+          <div class="flex gap-2">
+            <% if first_joined_topic %>
+              <%= link_to new_page_path(space.identifier, first_joined_topic.number), {
+                class: "btn btn-sm btn-primary no-animation rounded-full"
+              } do %>
+                <%= render Basic::IconComponent.new(
+                  name: "pencil-simple-line",
+                  size: "18px",
+                  class_name: "fill-primary-content"
+                ) %>
 
-        <div class="flex gap-2">
-          <% if first_topic&.can_create_page? %>
-            <%= link_to new_page_path(space.identifier, first_topic.number), {
-              class: "btn btn-sm btn-primary no-animation rounded-full"
-            } do %>
-              <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
-
-              <%= t("nouns.new_page") %>
+                <%= t("nouns.new_page") %>
+              <% end %>
             <% end %>
-          <% end %>
 
-          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
-        </div>
-      </div>
+            <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
+          </div>
+        <% end %>
+      <% end %>
 
       <% if pinned_pages.present? || pages.present? %>
         <div class="flex flex-col gap-6">
@@ -55,6 +57,52 @@
             </div>
           <% end %>
         </div>
+      <% elsif joined_space? && first_joined_topic.nil? %>
+        <%= render Cards::EmptyStateComponent.new(
+          icon_name: "file",
+          message: t("messages.spaces.no_topics")
+        ) do %>
+          <% if space.can_create_topic? %>
+            <div>
+              <%= t("messages.spaces.new_topic_description_html") %>
+            </div>
+
+            <%= link_to new_topic_path(space.identifier), {
+              class: "btn btn-primary btn-sm no-animation rounded-full"
+            } do %>
+              <%= render Basic::IconComponent.new(
+                name: "plus",
+                size: "18px",
+                class_name: "fill-primary-content"
+              ) %>
+
+              <%= t("nouns.new_topic") %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <%= render Cards::EmptyStateComponent.new(
+          icon_name: "file",
+          message: t("messages.spaces.no_pages")
+        ) do %>
+          <% if first_joined_topic.present? %>
+            <div>
+              <%= t("messages.spaces.new_page_description") %>
+            </div>
+
+            <%= link_to new_page_path(space.identifier, first_joined_topic.number), {
+              class: "btn btn-primary btn-sm no-animation rounded-full"
+            } do %>
+              <%= render Basic::IconComponent.new(
+                name: "pencil-simple-line",
+                size: "18px",
+                class_name: "fill-primary-content"
+              ) %>
+
+              <%= t("nouns.new_page") %>
+            <% end %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
