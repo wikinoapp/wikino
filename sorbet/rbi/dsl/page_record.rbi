@@ -398,6 +398,20 @@ class PageRecord
     def create_topic_record!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
+    def draft_page_record_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def draft_page_record_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `PageRecord` class because it declared `has_many :draft_page_records`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::DraftPageRecord::PrivateCollectionProxy) }
+    def draft_page_records; end
+
+    sig { params(value: T::Enumerable[::DraftPageRecord]).void }
+    def draft_page_records=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def page_editor_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }

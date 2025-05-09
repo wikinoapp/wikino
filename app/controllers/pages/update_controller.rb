@@ -59,7 +59,7 @@ module Pages
         body: form.body.not_nil!
       )
 
-      flash[:notice] = t("messages.page.saved")
+      flash[:notice] = t("messages.pages.saved")
       redirect_to page_path(space_record.identifier, page_record.number)
     end
 

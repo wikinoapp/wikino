@@ -25,7 +25,7 @@ module TrashedPages
 
       PageService::Trash.new.call(page_record:)
 
-      flash[:notice] = t("messages.page.moved_to_trash")
+      flash[:notice] = t("messages.pages.moved_to_trash")
       redirect_to topic_path(space_record.identifier, page_record.topic_record.not_nil!.number)
     end
   end

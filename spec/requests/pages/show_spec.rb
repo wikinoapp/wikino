@@ -165,6 +165,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
 
     expect(response.status).to eq(200)
     expect(response.body).to include("ゴミ箱にあるページ")
+    expect(response.body).to include("このページはゴミ箱に入れられています")
   end
 
   it "スペースに参加している & ゴミ箱にあるページにリンクしているとき、そのリンクは表示されないこと" do

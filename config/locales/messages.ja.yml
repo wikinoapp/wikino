@@ -2,7 +2,6 @@ ja:
   messages:
     _common:
       no_backlinks: バックリンクはありません
-      no_links: リンクはありません
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします。
     accounts:
       atname_hint_html: |-
@@ -41,15 +40,12 @@ ja:
         ページはスペース内のトピックに作成することができます。<br>
         まずはスペースを作成しましょう。
       no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
-    page:
+    pages:
       are_you_sure_trash: ページをゴミ箱に入れますか？
-      create_page_with_keyword: "「__keyword__」のページを作成する"
-      delete_page: ページを削除
+      current_page_is_draft: 現在下書きを表示しています
       moved_to_trash: ページをゴミ箱に移動しました
-      no_links: リンクはありません
-      page_deleted: ページを削除しました
-      page_duplicated_html: ページ「<a href="/pages/%{database_id}">%{title}</a>」はすでにあります。
       saved: ページを保存しました
+      trashed_page: このページはゴミ箱に入れられています。
     pagination:
       next_html: "次へ&nbsp;&rsaquo;"
       prev_html: "&lsaquo;&nbsp;前へ"

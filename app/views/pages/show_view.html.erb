@@ -13,6 +13,13 @@
       class_name: "flex flex-col gap-6 px-4"
     ) do %>
       <article class="flex flex-col gap-6">
+        <% if page.trashed? %>
+          <div class="alert alert-error gap-2" role="alert">
+            <%= t("messages.pages.trashed_page") %>
+            <%= link_to t("verbs.view_trash"), trash_path(space.identifier), class: "link" %>
+          </div>
+        <% end %>
+
         <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>

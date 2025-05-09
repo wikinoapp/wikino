@@ -7,12 +7,7 @@ module TopicService
     def call(topic_record_id:)
       topic_record = TopicRecord.find(topic_record_id)
 
-      topic_record.page_records.find_each do |page_record|
-        page_record.page_editor_records.destroy_all
-        page_record.revision_records.destroy_all
-      end
-
-      topic_record.page_records.destroy_all
+      topic_record.page_records.destroy_all_with_related_records!
       topic_record.member_records.destroy_all
 
       topic_record.destroy!
