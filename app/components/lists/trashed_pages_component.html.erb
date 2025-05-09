@@ -20,7 +20,7 @@
           <%= render Basic::IconComponent.new(
             name: "arrow-counter-clockwise",
             size: "18px",
-            class_name: "fill-secondary-content"
+            class_name: "fill-primary-content"
           ) %>
 
           <%= t("verbs.restore") %>
@@ -54,8 +54,12 @@
             </div>
 
             <div>
-              <div class="w-[70px] text-xs text-gray-500">
-                <%= page.topic.name %>
+              <div class="flex items-center gap-1">
+                <%= render Icons::TopicComponent.new(topic: page.topic, size: "12px", class_name: "fill-gray-500") %>
+
+                <span class="text-xs text-gray-500">
+                  <%= page.topic.name %>
+                </span>
               </div>
 
               <%= link_to(
