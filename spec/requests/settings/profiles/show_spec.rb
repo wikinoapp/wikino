@@ -17,6 +17,6 @@ RSpec.describe "GET /settings/profile", type: :request do
     get "/settings/profile"
 
     expect(response.status).to eq(200)
-    expect(response.body).to include("プロフィール編集")
+    expect(response.body).to include("プロフィールの編集")
   end
 end
