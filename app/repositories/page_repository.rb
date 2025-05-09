@@ -13,6 +13,7 @@ class PageRepository < ApplicationRepository
       modified_at: page_record.modified_at,
       published_at: page_record.published_at,
       pinned_at: page_record.pinned_at,
+      trashed_at: page_record.trashed_at,
       can_update:,
       space: SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!),
       topic: TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)

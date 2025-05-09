@@ -19,6 +19,7 @@ class Page < T::Struct
   const :modified_at, ActiveSupport::TimeWithZone
   const :published_at, T.nilable(ActiveSupport::TimeWithZone)
   const :pinned_at, T.nilable(ActiveSupport::TimeWithZone)
+  const :trashed_at, T.nilable(ActiveSupport::TimeWithZone)
   const :can_update, T.nilable(T::Boolean)
   const :space, Space
   const :topic, Topic
@@ -31,6 +32,11 @@ class Page < T::Struct
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?
+  end
+
+  sig { returns(T::Boolean) }
+  def trashed?
+    trashed_at.present?
   end
 
   sig { returns(T::Boolean) }

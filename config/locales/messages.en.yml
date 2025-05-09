@@ -45,6 +45,7 @@ en:
       current_page_is_draft: You are currently viewing a draft.
       moved_to_trash: Page moved to trash.
       saved: Page saved.
+      trashed_page: This page is in the trash.
     password_resets:
       enter_your_email_html: Enter your email address to send a password reset email.
       reset_successfully_html: Password reset successfully.<br>Please sign in with the new password.
