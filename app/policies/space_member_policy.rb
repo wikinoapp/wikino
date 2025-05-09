@@ -119,11 +119,7 @@ class SpaceMemberPolicy < ApplicationPolicy
 
   sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topic_records
-    if space_member_record
-      return space_member_record!.topic_records.kept
-    end
-
-    TopicRecord.none
+    space_member_record&.joined_topic_records.presence || TopicRecord.none
   end
 
   sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
