@@ -26,18 +26,20 @@
           <%= t("verbs.restore") %>
         <% end %>
 
+        <% if false %>
         <%= f.button(
           class: "btn btn-primary btn-xs no-animation rounded-full text-error",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
           },
-          formaction: root_path,
-          type: :button
+          formaction: "#",
+          type: :submit
         ) do %>
           <%= render Basic::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
 
           <%= t("verbs.delete") %>
+        <% end %>
         <% end %>
       </div>
 
