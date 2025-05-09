@@ -2,14 +2,15 @@
 # frozen_string_literal: true
 
 class SpaceRepository < ApplicationRepository
-  sig { params(space_record: SpaceRecord).returns(Space) }
-  def to_model(space_record:)
+  sig { params(space_record: SpaceRecord, can_create_topic: T.nilable(T::Boolean)).returns(Space) }
+  def to_model(space_record:, can_create_topic: nil)
     Space.new(
       database_id: space_record.id,
       identifier: space_record.identifier,
       name: space_record.name,
       plan: Plan.deserialize(space_record.plan),
-      joined_at: space_record.joined_at
+      joined_at: space_record.joined_at,
+      can_create_topic:
     )
   end
 
