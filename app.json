@@ -3,5 +3,12 @@
     "dokku": {
       "postdeploy": "bin/rails db:migrate"
     }
-  }
+  },
+
+  "cron": [
+    {
+      "command": "bin/rails page:bulk_destroy_trashed",
+      "schedule": "0 5 * * *"
+    }
+  ]
 }

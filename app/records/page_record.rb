@@ -12,6 +12,10 @@ class PageRecord < ApplicationRecord
 
   belongs_to :topic_record, foreign_key: :topic_id
   belongs_to :space_record, foreign_key: :space_id
+  has_many :draft_page_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :page_id,
+    inverse_of: :page_record
   has_many :page_editor_records,
     class_name: "PageEditorRecord",
     dependent: :restrict_with_exception,
@@ -44,6 +48,19 @@ class PageRecord < ApplicationRecord
       linked_page_ids: [],
       modified_at: Time.current
     )
+  end
+
+  sig { void }
+  def self.destroy_all_with_related_records!
+    find_each do |page_record|
+      page_record.draft_page_records.delete_all(:delete_all)
+      page_record.page_editor_records.delete_all(:delete_all)
+      page_record.revision_records.delete_all(:delete_all)
+    end
+
+    delete_all
+
+    nil
   end
 
   sig { returns(SpaceRecord) }
