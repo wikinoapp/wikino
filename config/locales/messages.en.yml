@@ -42,6 +42,7 @@ en:
       no_joined_spaces_html: No joined spaces.
     pages:
       are_you_sure_trash: Are you sure you want to move this page to trash?
+      current_page_is_draft: You are currently viewing a draft.
       moved_to_trash: Page moved to trash.
       saved: Page saved.
     password_resets:

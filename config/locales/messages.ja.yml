@@ -42,6 +42,7 @@ ja:
       no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
     pages:
       are_you_sure_trash: ページをゴミ箱に入れますか？
+      current_page_is_draft: 現在下書きを表示しています
       moved_to_trash: ページをゴミ箱に移動しました
       saved: ページを保存しました
     pagination:
