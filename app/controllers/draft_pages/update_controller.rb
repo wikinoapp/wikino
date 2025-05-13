@@ -43,6 +43,7 @@ module DraftPages
       )
 
       render(DraftPages::UpdateView.new(
+        current_user: current_user!,
         draft_page:,
         link_list:,
         backlink_list:
