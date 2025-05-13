@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 class PageRecord
-  class PrivateRelation
+  class PrivateAssociationRelationWhereChain
     include ActiveRecordCursorPaginate::Extension
 
-    def destroy_all_with_related_records!
+    def where(*args)
     end
   end
 end
