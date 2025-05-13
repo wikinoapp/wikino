@@ -8,12 +8,12 @@
 # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/version.rb#3
 module ActiveRecordCursorPaginate
   class << self
-    # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#24
+    # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#27
     def config; end
 
     # @yield [config]
     #
-    # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#20
+    # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#23
     def configure; end
   end
 end
@@ -58,14 +58,14 @@ class ActiveRecordCursorPaginate::Cursor
   # @return [Cursor] a new instance of Cursor
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#49
-  def initialize(columns:, values:); end
+  def initialize(columns:, values:, nullable_columns: T.unsafe(nil)); end
 
   # Returns the value of attribute columns.
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#47
   def columns; end
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#57
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#62
   def encode; end
 
   # Returns the value of attribute values.
@@ -75,10 +75,10 @@ class ActiveRecordCursorPaginate::Cursor
 
   class << self
     # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#15
-    def decode(cursor_string:, columns:); end
+    def decode(cursor_string:, columns:, nullable_columns: T.unsafe(nil)); end
 
     # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#10
-    def from_record(record, columns:); end
+    def from_record(record, columns:, nullable_columns: T.unsafe(nil)); end
 
     private
 
@@ -89,10 +89,10 @@ end
 
 # something random
 #
-# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#69
+# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/cursor.rb#74
 ActiveRecordCursorPaginate::Cursor::TIMESTAMP_PREFIX = T.let(T.unsafe(nil), String)
 
-# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#13
+# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#16
 class ActiveRecordCursorPaginate::Error < ::StandardError; end
 
 # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/extension.rb#4
@@ -106,7 +106,7 @@ module ActiveRecordCursorPaginate::Extension
   # @see ActiveRecordCursorPaginate::Paginator#initialize
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/extension.rb#13
-  def cursor_paginate(after: T.unsafe(nil), before: T.unsafe(nil), limit: T.unsafe(nil), order: T.unsafe(nil), append_primary_key: T.unsafe(nil)); end
+  def cursor_paginate(**options); end
 
   # Convenient method to use on ActiveRecord::Relation to get a paginator.
   #
@@ -117,13 +117,13 @@ module ActiveRecordCursorPaginate::Extension
   # @see ActiveRecordCursorPaginate::Paginator#initialize
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/extension.rb#13
-  def cursor_pagination(after: T.unsafe(nil), before: T.unsafe(nil), limit: T.unsafe(nil), order: T.unsafe(nil), append_primary_key: T.unsafe(nil)); end
+  def cursor_pagination(**options); end
 end
 
 # Error that gets raised if a cursor given as `before` or `after` cannot be
 # properly parsed.
 #
-# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#17
+# source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate.rb#20
 class ActiveRecordCursorPaginate::InvalidCursorError < ::ActiveRecordCursorPaginate::Error; end
 
 # Represents a batch of records retrieved via a single iteration of
@@ -134,20 +134,20 @@ class ActiveRecordCursorPaginate::Page
   # @return [Page] a new instance of Page
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#13
-  def initialize(records, order_columns:, has_previous: T.unsafe(nil), has_next: T.unsafe(nil)); end
+  def initialize(records, order_columns:, has_previous: T.unsafe(nil), has_next: T.unsafe(nil), nullable_columns: T.unsafe(nil)); end
 
   # Number of records in this page.
   #
   # @return [Integer]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#23
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#24
   def count; end
 
   # Returns the cursor, which can be used to retrieve the next page.
   #
   # @return [String]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#37
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#38
   def cursor; end
 
   # Returns cursor for a specific record.
@@ -155,61 +155,61 @@ class ActiveRecordCursorPaginate::Page
   # @param record [ActiveRecord::Base]
   # @return [String]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#68
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#69
   def cursor_for(record); end
 
   # Returns cursors for all the records on this page.
   #
   # @return [Array<String>]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#75
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#76
   def cursors; end
 
   # Whether this page is empty.
   #
   # @return [Boolean]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#30
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#31
   def empty?; end
 
   # Whether this page has a next page.
   #
   # @return [Boolean]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#59
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#60
   def has_next?; end
 
   # Whether this page has a previous page.
   #
   # @return [Boolean]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#52
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#53
   def has_previous?; end
 
   # Returns the cursor, which can be used to retrieve the next page.
   #
   # @return [String]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#37
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#38
   def next_cursor; end
 
   # Returns the cursor, which can be used to retrieve the previous page.
   #
   # @return [String]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#45
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#46
   def previous_cursor; end
 
   # Records this page contains.
   #
-  # @return [ActiveRecord::Base]
+  # @return [Array<ActiveRecord::Base>]
   #
   # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#11
   def records; end
 
   private
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#80
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/page.rb#81
   def cursor_for_record(record); end
 end
 
@@ -249,56 +249,152 @@ class ActiveRecordCursorPaginate::Paginator
   #   should be implicitly appended to the list of sorting columns. It may be useful
   #   to disable it for the table with a UUID primary key or when the sorting is done by a
   #   combination of columns that are already unique.
+  # @param nullable_columns [Symbol, String, nil, Array] Columns which are nullable.
+  #   By default, all columns are considered as non-nullable, if not in this list.
+  #   It is not recommended to use this feature, because the complexity of produced SQL
+  #   queries can have a very negative impact on the database performance. It is better
+  #   to paginate using only non-nullable columns.
+  # @param forward_pagination [Boolean] Whether this is a forward or backward pagination.
+  #   Optional, defaults to `true` if `:before` is not provided, `false` otherwise.
+  #   Useful when paginating backward from the end of the collection.
   # @raise [ArgumentError] If any parameter is not valid
   # @return [Paginator] a new instance of Paginator
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#43
-  def initialize(relation, before: T.unsafe(nil), after: T.unsafe(nil), limit: T.unsafe(nil), order: T.unsafe(nil), append_primary_key: T.unsafe(nil)); end
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#55
+  def initialize(relation, before: T.unsafe(nil), after: T.unsafe(nil), limit: T.unsafe(nil), order: T.unsafe(nil), append_primary_key: T.unsafe(nil), nullable_columns: T.unsafe(nil), forward_pagination: T.unsafe(nil)); end
+
+  # Returns the value of attribute after.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def after; end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#92
+  def after=(value); end
+
+  # Returns the value of attribute append_primary_key.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def append_primary_key; end
+
+  # Returns the value of attribute before.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def before; end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#81
+  def before=(value); end
 
   # Get the paginated result.
   #
   # @note Calling this method advances the paginator.
   # @return [ActiveRecordCursorPaginate::Page]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#72
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#137
   def fetch; end
 
+  # Returns the value of attribute forward_pagination.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#23
+  def forward_pagination; end
+
+  # Sets the attribute forward_pagination
+  #
+  # @param value the value to set the attribute forward_pagination to.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#23
+  def forward_pagination=(_arg0); end
+
+  # Returns the value of attribute limit.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def limit; end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#103
+  def limit=(value); end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#117
+  def nullable_columns=(value); end
+
+  # Returns the value of attribute order.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def order; end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#110
+  def order=(value); end
+
   # Get the paginated result.
   #
   # @note Calling this method advances the paginator.
   # @return [ActiveRecordCursorPaginate::Page]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#72
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#137
   def page; end
 
   # Returns an enumerator that can be used to iterate over the whole relation.
   #
   # @return [Enumerator]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#131
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#172
   def pages; end
+
+  # Returns the value of attribute relation.
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#22
+  def relation; end
+
+  # Total number of records to iterate by this paginator.
+  #
+  # @return [Integer]
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#186
+  def total_count; end
 
   private
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#216
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#325
   def advance_by_page(page); end
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#171
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#261
   def apply_cursor(relation, cursor); end
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#190
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#299
   def arel_column(column); end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#219
+  def build_cursor_relation(cursor); end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#253
+  def cursor_column_names; end
 
   # @raise [ArgumentError]
   #
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#143
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#191
   def normalize_order(order); end
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#200
+  # @return [Boolean]
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#345
+  def nullable_column?(column); end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#247
+  def nullable_cursor_column_names; end
+
+  # @return [Boolean]
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#334
+  def nulls_at_end?(direction); end
+
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#309
   def pagination_direction(direction); end
 
-  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#208
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#317
   def pagination_operator(direction); end
+
+  # @return [Boolean]
+  #
+  # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/paginator.rb#338
+  def small_nulls?; end
 end
 
 # source://activerecord_cursor_paginate//lib/activerecord_cursor_paginate/version.rb#4
