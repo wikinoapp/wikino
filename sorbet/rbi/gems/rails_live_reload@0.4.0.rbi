@@ -239,20 +239,25 @@ class RailsLiveReload::Middleware::Base
 
   # @return [Boolean]
   #
-  # source://rails_live_reload//lib/rails_live_reload/middleware/base.rb#59
+  # source://rails_live_reload//lib/rails_live_reload/middleware/base.rb#60
   def html?(headers); end
 
   # source://rails_live_reload//lib/rails_live_reload/middleware/base.rb#31
-  def inject_rails_live_reload(status, headers, body); end
+  def inject_rails_live_reload(request, status, headers, body); end
 
-  # source://rails_live_reload//lib/rails_live_reload/middleware/base.rb#43
-  def make_new_response(body); end
+  # source://rails_live_reload//lib/rails_live_reload/middleware/base.rb#44
+  def make_new_response(body, nonce); end
 end
 
 # source://rails_live_reload//lib/rails_live_reload/engine.rb#2
 class RailsLiveReload::Railtie < ::Rails::Engine
+  # @return [Boolean]
+  #
+  # source://rails_live_reload//lib/rails_live_reload/engine.rb#3
+  def enabled?; end
+
   class << self
-    # source://activesupport/7.1.4.1/lib/active_support/callbacks.rb#70
+    # source://activesupport/7.1.5.1/lib/active_support/callbacks.rb#70
     def __callbacks; end
   end
 end
