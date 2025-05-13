@@ -14,7 +14,7 @@
     "@hotwired/turbo": "^8.0.13",
     "codemirror": "^6.0.1",
     "esbuild": "^0.25.4",
-    "stimulus-use": "^0.52.2"
+    "stimulus-use": "^0.52.3"
   },
   "devDependencies": {
     "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.1.1",
