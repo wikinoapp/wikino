@@ -253,67 +253,63 @@ end
 class Dotenv::Parser
   # @return [Parser] a new instance of Parser
   #
-  # source://dotenv//lib/dotenv/parser.rb#40
+  # source://dotenv//lib/dotenv/parser.rb#46
   def initialize(string, overwrite: T.unsafe(nil)); end
 
-  # source://dotenv//lib/dotenv/parser.rb#46
+  # source://dotenv//lib/dotenv/parser.rb#53
   def call; end
 
   private
 
-  # source://dotenv//lib/dotenv/parser.rb#82
-  def expand_newlines(value); end
-
-  # source://dotenv//lib/dotenv/parser.rb#62
-  def parse_line(line); end
-
-  # source://dotenv//lib/dotenv/parser.rb#70
-  def parse_value(value); end
-
-  # source://dotenv//lib/dotenv/parser.rb#104
-  def perform_substitutions(value, maybe_quote); end
-
-  # source://dotenv//lib/dotenv/parser.rb#78
-  def unescape_characters(value); end
-
-  # source://dotenv//lib/dotenv/parser.rb#94
-  def unescape_value(value, maybe_quote); end
-
+  # Determine if a variable is already defined and should not be overwritten.
+  #
   # @return [Boolean]
   #
-  # source://dotenv//lib/dotenv/parser.rb#90
-  def variable_not_set?(line); end
+  # source://dotenv//lib/dotenv/parser.rb#76
+  def existing?(key); end
+
+  # source://dotenv//lib/dotenv/parser.rb#101
+  def expand_newlines(value); end
+
+  # source://dotenv//lib/dotenv/parser.rb#80
+  def parse_value(value); end
+
+  # source://dotenv//lib/dotenv/parser.rb#97
+  def unescape_characters(value); end
 
   class << self
-    # source://dotenv//lib/dotenv/parser.rb#35
+    # source://dotenv//lib/dotenv/parser.rb#41
     def call(*_arg0, **_arg1, &_arg2); end
 
     # Returns the value of attribute substitutions.
     #
-    # source://dotenv//lib/dotenv/parser.rb#33
+    # source://dotenv//lib/dotenv/parser.rb#39
     def substitutions; end
   end
 end
 
-# source://dotenv//lib/dotenv/parser.rb#14
+# source://dotenv//lib/dotenv/parser.rb#16
 Dotenv::Parser::LINE = T.let(T.unsafe(nil), Regexp)
+
+# source://dotenv//lib/dotenv/parser.rb#36
+Dotenv::Parser::QUOTED_STRING = T.let(T.unsafe(nil), Regexp)
 
 # Rails integration for using Dotenv to load ENV variables from a file
 #
-# source://dotenv//lib/dotenv/rails.rb#25
+# source://dotenv//lib/dotenv/rails.rb#22
 class Dotenv::Rails < ::Rails::Railtie
   # @return [Rails] a new instance of Rails
   #
-  # source://dotenv//lib/dotenv/rails.rb#28
+  # source://dotenv//lib/dotenv/rails.rb#25
   def initialize; end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def autorestore(*_arg0, **_arg1, &_arg2); end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def autorestore=(arg); end
 
-  # source://dotenv//lib/dotenv/rails.rb#86
+  # source://dotenv//lib/dotenv/rails.rb#83
   def deprecator; end
 
   # The current environment that the app is running in.
@@ -323,13 +319,13 @@ class Dotenv::Rails < ::Rails::Railtie
   #
   # See https://github.com/bkeepers/dotenv/issues/219
   #
-  # source://dotenv//lib/dotenv/rails.rb#76
+  # source://dotenv//lib/dotenv/rails.rb#73
   def env; end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def files(*_arg0, **_arg1, &_arg2); end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def files=(arg); end
 
   # Public: Load dotenv
@@ -337,46 +333,46 @@ class Dotenv::Rails < ::Rails::Railtie
   # This will get called during the `before_configuration` callback, but you
   # can manually call `Dotenv::Rails.load` if you needed it sooner.
   #
-  # source://dotenv//lib/dotenv/rails.rb#48
+  # source://dotenv//lib/dotenv/rails.rb#45
   def load; end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def logger(*_arg0, **_arg1, &_arg2); end
 
   # Set a new logger and replay logs
   #
-  # source://dotenv//lib/dotenv/rails.rb#65
+  # source://dotenv//lib/dotenv/rails.rb#62
   def logger=(new_logger); end
 
-  # source://dotenv//lib/dotenv/rails.rb#52
+  # source://dotenv//lib/dotenv/rails.rb#49
   def overload; end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def overwrite(*_arg0, **_arg1, &_arg2); end
 
-  # source://dotenv//lib/dotenv/rails.rb#26
+  # source://dotenv//lib/dotenv/rails.rb#23
   def overwrite=(arg); end
 
   # Internal: `Rails.root` is nil in Rails 4.1 before the application is
   # initialized, so this falls back to the `RAILS_ROOT` environment variable,
   # or the current working directory.
   #
-  # source://dotenv//lib/dotenv/rails.rb#60
+  # source://dotenv//lib/dotenv/rails.rb#57
   def root; end
 
   class << self
     # Rails uses `#method_missing` to delegate all class methods to the
     # instance, which means `Kernel#load` gets called here. We don't want that.
     #
-    # source://dotenv//lib/dotenv/rails.rb#92
+    # source://dotenv//lib/dotenv/rails.rb#89
     def load; end
   end
 end
 
-# source://dotenv//lib/dotenv/rails.rb#84
+# source://dotenv//lib/dotenv/rails.rb#81
 Dotenv::Rails::TEST_RAKE_TASKS = T.let(T.unsafe(nil), Regexp)
 
-# source://dotenv//lib/dotenv/rails.rb#113
+# source://dotenv//lib/dotenv/rails.rb#110
 Dotenv::Railtie = Dotenv::Rails
 
 # A logger that can be used before the apps real logger is initialized.
@@ -415,7 +411,7 @@ module Dotenv::Substitutions; end
 module Dotenv::Substitutions::Command
   class << self
     # source://dotenv//lib/dotenv/substitutions/command.rb#23
-    def call(value, _env, overwrite: T.unsafe(nil)); end
+    def call(value, _env); end
   end
 end
 
@@ -428,12 +424,7 @@ end
 module Dotenv::Substitutions::Variable
   class << self
     # source://dotenv//lib/dotenv/substitutions/variable.rb#21
-    def call(value, env, overwrite: T.unsafe(nil)); end
-
-    private
-
-    # source://dotenv//lib/dotenv/substitutions/variable.rb#31
-    def substitute(match, variable, env); end
+    def call(value, env); end
   end
 end
 
