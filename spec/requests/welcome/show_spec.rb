@@ -17,6 +17,6 @@ RSpec.describe "GET /", type: :request do
     get "/"
 
     expect(response.status).to eq(200)
-    expect(response.body).to include("Wikinoにようこそ！")
+    expect(response.body).to include("リンクで見つかるWikiアプリ")
   end
 end
