@@ -30,18 +30,18 @@
 
         <div class="flex flex-col gap-10">
           <h2 class="text-2xl/8 font-bold antialiased leading-snug text-center">
-            特徴
+            <%= t("messages.welcome.features_title") %>
           </h2>
 
           <div class="flex flex-col gap-6">
             <div class="flex gap-4">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
-                  Markdownで書ける
+                  <%= t("messages.welcome.markdown_feature_title") %>
                 </h3>
 
                 <p>
-                  リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
+                  <%= t("messages.welcome.markdown_feature_description") %>
                 </p>
               </div>
 
@@ -54,15 +54,15 @@
             <div class="flex gap-4">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
-                  リンクで見つかる
+                  <%= t("messages.welcome.links_feature_title") %>
                 </h3>
 
                 <p>
-                  ページをリンクで繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
+                  <%= t("messages.welcome.links_feature_description_1") %>
                 </p>
 
                 <p>
-                  リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
+                  <%= t("messages.welcome.links_feature_description_2") %>
                 </p>
               </div>
 
@@ -75,15 +75,15 @@
             <div class="flex gap-4">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
-                  オープンソース
+                  <%= t("messages.welcome.opensource_feature_title") %>
                 </h3>
 
                 <p>
-                  WikinoのソースコードはGitHubで公開されています。
+                  <%= t("messages.welcome.opensource_feature_description_1") %>
                 </p>
 
                 <p>
-                  内部構造を確認したり、(頑張れば) セルフホストも可能です。
+                  <%= t("messages.welcome.opensource_feature_description_2") %>
                 </p>
               </div>
 
@@ -97,7 +97,7 @@
 
         <div class="flex flex-col gap-6 my-10">
           <div class="text-3xl/8 font-bold antialiased text-center">
-            Wikinoを始めよう
+            <%= t("messages.welcome.start_cta") %>
           </div>
 
           <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
@@ -114,25 +114,25 @@
         <footer class="footer justify-around">
           <nav>
             <h6 class="footer-title">
-              Resources
+              <%= t("messages.welcome.footer_resources") %>
             </h6>
 
             <%= link_to "https://wikino.app/s/wikino", class: "link link-hover" do %>
-              ヘルプページ
+              <%= t("messages.welcome.footer_help_page") %>
             <% end %>
 
             <%= link_to "https://wikino.app/s/wikino/pages/29", class: "link link-hover" do %>
-              リリースノート
+              <%= t("messages.welcome.footer_release_notes") %>
             <% end %>
 
             <%= link_to "https://wikino.app/s/wikino/pages/3", class: "link link-hover" do %>
-              開発者について
+              <%= t("messages.welcome.footer_about_developer") %>
             <% end %>
           </nav>
 
           <nav>
             <h6 class="footer-title">
-              Community
+              <%= t("messages.welcome.footer_community") %>
             </h6>
 
             <%= link_to "Discord", "https://discord.gg/8qMetv8fUn", {
@@ -166,11 +166,11 @@
             </h6>
 
             <%= link_to "/terms", class: "link link-hover" do %>
-              利用規約
+              <%= t("messages.welcome.footer_terms") %>
             <% end %>
 
             <%= link_to "/privacy", class: "link link-hover" do %>
-              プライバシーポリシー
+              <%= t("messages.welcome.footer_privacy") %>
             <% end %>
           </nav>
         </footer>
