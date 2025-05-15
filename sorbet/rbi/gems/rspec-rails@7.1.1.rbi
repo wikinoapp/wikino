@@ -10,79 +10,79 @@
 # source://rspec-rails//lib/rspec/rails/feature_check.rb#1
 module RSpec
   class << self
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#70
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#70
     def clear_examples; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#85
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#85
     def configuration; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#49
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#49
     def configuration=(_arg0); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#97
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#97
     def configure; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#194
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#194
     def const_missing(name); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def context(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#122
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#122
     def current_example; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#128
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#128
     def current_example=(example); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#154
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#154
     def current_scope; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#134
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#134
     def current_scope=(scope); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def describe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def example_group(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def fcontext(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def fdescribe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def feature(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def ffeature(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#58
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#58
     def reset; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.3/lib/rspec/core/shared_example_group.rb#110
     def shared_context(name, *args, &block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.3/lib/rspec/core/shared_example_group.rb#110
     def shared_examples(name, *args, &block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/shared_example_group.rb#110
+    # source://rspec-core/3.13.3/lib/rspec/core/shared_example_group.rb#110
     def shared_examples_for(name, *args, &block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#160
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#160
     def world; end
 
-    # source://rspec-core/3.13.1/lib/rspec/core.rb#49
+    # source://rspec-core/3.13.3/lib/rspec/core.rb#49
     def world=(_arg0); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def xcontext(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def xdescribe(*args, &example_group_block); end
 
-    # source://rspec-core/3.13.1/lib/rspec/core/dsl.rb#42
+    # source://rspec-core/3.13.3/lib/rspec/core/dsl.rb#42
     def xfeature(*args, &example_group_block); end
   end
 end
@@ -674,20 +674,20 @@ class RSpec::Rails::FixtureFileUploadSupport::RailsFixtureFileWrapper
   include ::ActionDispatch::TestProcess
   include ::ActiveSupport::Testing::FileFixtures
 
-  # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
+  # source://activesupport/7.1.5.1/lib/active_support/testing/file_fixtures.rb#20
   def file_fixture_path; end
 
-  # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
+  # source://activesupport/7.1.5.1/lib/active_support/testing/file_fixtures.rb#20
   def file_fixture_path?; end
 
   class << self
-    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.5.1/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path; end
 
-    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.5.1/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path=(value); end
 
-    # source://activesupport/7.1.3.4/lib/active_support/testing/file_fixtures.rb#20
+    # source://activesupport/7.1.5.1/lib/active_support/testing/file_fixtures.rb#20
     def file_fixture_path?; end
 
     # source://rspec-rails//lib/rspec/rails/fixture_file_upload_support.rb#34
@@ -1263,7 +1263,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#250
   def enqueue_email(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1312,7 +1312,7 @@ module RSpec::Rails::Matchers
   #   expect(from).to include "_#{to}"
   #   }
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#394
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#403
   def enqueue_job(job = T.unsafe(nil)); end
 
   # Passes if an email has been enqueued inside block.
@@ -1361,7 +1361,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#250
   def enqueue_mail(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued. May chain at_least, at_most or exactly to specify a number of times.
@@ -1394,7 +1394,7 @@ module RSpec::Rails::Matchers
   #   HelloJob.set(queue: "low").perform_later(42)
   #   expect(HelloJob).to have_been_enqueued.with(42).on_queue("low").at(:no_wait)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#429
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#438
   def have_been_enqueued; end
 
   # Passes if a job has been performed. May chain at_least, at_most or exactly to specify a number of times.
@@ -1425,7 +1425,7 @@ module RSpec::Rails::Matchers
   #   HelloJob.set(wait_until: Date.tomorrow.noon, queue: "low").perform_later(42)
   #   expect(HelloJob).to have_been_performed.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#502
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#511
   def have_been_performed; end
 
   # Passes if an email has been enqueued inside block.
@@ -1474,7 +1474,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#250
   def have_enqueued_email(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if a job has been enqueued inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1523,7 +1523,7 @@ module RSpec::Rails::Matchers
   #   expect(from).to include "_#{to}"
   #   }
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#394
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#403
   def have_enqueued_job(job = T.unsafe(nil)); end
 
   # Passes if an email has been enqueued inside block.
@@ -1572,7 +1572,7 @@ module RSpec::Rails::Matchers
   #   MyMailer.welcome(user).deliver_later(queue: :urgent_mail)
   #   }.to have_enqueued_mail(MyMailer, :welcome).on_queue(:urgent_mail)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#249
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#250
   def have_enqueued_mail(mailer_class = T.unsafe(nil), mail_method_name = T.unsafe(nil)); end
 
   # Passes if `response` has a matching HTTP status code.
@@ -1640,7 +1640,7 @@ module RSpec::Rails::Matchers
   #   }
   #   }.to have_performed_job.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#469
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#478
   def have_performed_job(job = T.unsafe(nil)); end
 
   # Passes if a job has been performed inside block. May chain at_least, at_most or exactly to specify a number of times.
@@ -1679,7 +1679,7 @@ module RSpec::Rails::Matchers
   #   }
   #   }.to have_performed_job.with(42).on_queue("low").at(Date.tomorrow.noon)
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#469
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#478
   def perform_job(job = T.unsafe(nil)); end
 
   # Check email sending with specific parameters.
@@ -1700,7 +1700,7 @@ module RSpec::Rails::Matchers
   # @private
   # @raise [StandardError]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#510
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#519
   def check_active_job_adapter; end
 end
 
@@ -1867,7 +1867,7 @@ class RSpec::Rails::Matchers::ActiveJob::Base < ::RSpec::Rails::Matchers::BaseMa
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#213
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#222
   def at_match?(job); end
 
   # @api private
@@ -1887,17 +1887,17 @@ class RSpec::Rails::Matchers::ActiveJob::Base < ::RSpec::Rails::Matchers::BaseMa
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#192
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#201
   def check_args_signature_mismatch(job_class, job_method, args); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#222
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#231
   def check_for_inprecise_value(scheduled_at); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#260
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#269
   def deserialize_arguments(job); end
 
   # @api private
@@ -1920,143 +1920,149 @@ class RSpec::Rails::Matchers::ActiveJob::Base < ::RSpec::Rails::Matchers::BaseMa
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#207
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#216
   def priority_match?(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#266
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#275
   def queue_adapter; end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#201
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#210
   def queue_match?(job); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#253
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#262
   def serialize_and_deserialize_arguments(args); end
 
   # @api private
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#243
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#252
   def set_expected_number(relativity, count); end
+
+  # @api private
+  # @return [Boolean]
+  #
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#194
+  def skip_signature_verification?; end
 end
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#300
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#309
 class RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#309
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#318
   def does_not_match?(proc); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#304
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#313
   def matches?(job); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#301
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#310
 RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#302
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#311
 RSpec::Rails::Matchers::ActiveJob::HaveBeenEnqueued::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#338
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#347
 class RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#342
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#351
   def matches?(job); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#339
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#348
 RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#340
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#349
 RSpec::Rails::Matchers::ActiveJob::HaveBeenPerformed::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#273
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#282
 class RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [HaveEnqueuedJob] a new instance of HaveEnqueuedJob
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#277
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#286
   def initialize(job); end
 
   # @api private
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#292
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#301
   def does_not_match?(proc); end
 
   # @api private
   # @raise [ArgumentError]
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#282
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#291
   def matches?(proc); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#274
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#283
 RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#275
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#284
 RSpec::Rails::Matchers::ActiveJob::HaveEnqueuedJob::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 # @private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#317
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#326
 class RSpec::Rails::Matchers::ActiveJob::HavePerformedJob < ::RSpec::Rails::Matchers::ActiveJob::Base
   # @api private
   # @return [HavePerformedJob] a new instance of HavePerformedJob
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#321
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#330
   def initialize(job); end
 
   # @api private
   # @raise [ArgumentError]
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#326
+  # source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#335
   def matches?(proc); end
 end
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#318
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#327
 RSpec::Rails::Matchers::ActiveJob::HavePerformedJob::FAILURE_MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # @api private
 #
-# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#319
+# source://rspec-rails//lib/rspec/rails/matchers/active_job.rb#328
 RSpec::Rails::Matchers::ActiveJob::HavePerformedJob::MESSAGE_EXPECTATION_ACTION = T.let(T.unsafe(nil), String)
 
 # Base class to build matchers. Should not be instantiated directly.
@@ -2412,7 +2418,7 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#79
   def arguments_match?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#110
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#111
   def base_mailer_args; end
 
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#57
@@ -2420,13 +2426,13 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
 
   # @raise [StandardError]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#118
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#119
   def check_active_job_adapter; end
 
   # Ruby 3.1 changed how params were serialized on Rails 6.1
   # so we override the active job implementation and customize it here.
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#156
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#157
   def deserialize_arguments(job); end
 
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#94
@@ -2435,20 +2441,20 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#67
   def expected_count_message; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#178
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#179
   def extract_args_without_parameterized_params(job); end
 
   # @return [Boolean]
   #
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#75
-  def job_match?(job); end
+  def job_matches?(job); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#191
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#192
   def legacy_mail?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#140
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#141
   def mail_job_message(job); end
 
   # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#71
@@ -2456,21 +2462,21 @@ class RSpec::Rails::Matchers::HaveEnqueuedMail < ::RSpec::Rails::Matchers::Activ
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#195
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#196
   def parameterized_mail?(job); end
 
   # @return [Boolean]
   #
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#199
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#200
   def unified_mail?(job); end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#124
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#125
   def unmatching_mail_jobs; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#130
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#131
   def unmatching_mail_jobs_message; end
 
-  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#114
+  # source://rspec-rails//lib/rspec/rails/matchers/have_enqueued_mail.rb#115
   def yield_mail_args(block); end
 end
 
