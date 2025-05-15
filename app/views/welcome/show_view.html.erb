@@ -5,7 +5,7 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
-      <div class="flex flex-col gap-16 pb-16">
+      <div class="flex flex-col gap-10 sm:gap-16 pb-16">
         <div class="flex flex-col gap-6 text-center">
           <div class="flex flex-col gap-2">
             <h1 class="text-4xl/8 font-bold antialiased leading-snug">
@@ -28,13 +28,13 @@
           <% end %>
         </div>
 
-        <div class="flex flex-col gap-10">
+        <div class="flex flex-col gap-6 sm:gap-10">
           <h2 class="text-2xl/8 font-bold antialiased leading-snug text-center">
             <%= t("messages.welcome.features_title") %>
           </h2>
 
-          <div class="flex flex-col gap-6">
-            <div class="flex gap-4">
+          <div class="flex flex-col gap-8">
+            <div class="flex gap-4 flex-wrap-reverse sm:flex-nowrap">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
                   <%= t("messages.welcome.markdown_feature_title") %>
@@ -46,12 +46,12 @@
               </div>
 
               <%= image_tag "welcome/image_1.png", {
-                class: "w-1/2 rounded-lg border border-gray-300",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
 
-            <div class="flex gap-4">
+            <div class="flex gap-4 flex-wrap-reverse sm:flex-nowrap">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
                   <%= t("messages.welcome.links_feature_title") %>
@@ -67,12 +67,12 @@
               </div>
 
               <%= image_tag "welcome/image_2.png", {
-                class: "w-1/2 rounded-lg border border-gray-300",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
 
-            <div class="flex gap-4">
+            <div class="flex gap-4 flex-wrap-reverse sm:flex-nowrap">
               <div class="flex flex-col gap-4">
                 <h3 class="text-lg/8 font-bold antialiased leading-snug">
                   <%= t("messages.welcome.opensource_feature_title") %>
@@ -88,14 +88,14 @@
               </div>
 
               <%= image_tag "welcome/image_3.png", {
-                class: "w-1/2 rounded-lg border border-gray-300",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
           </div>
         </div>
 
-        <div class="flex flex-col gap-6 my-10">
+        <div class="flex flex-col gap-6 my-6 sm:my-10">
           <div class="text-3xl/8 font-bold antialiased text-center">
             <%= t("messages.welcome.start_cta") %>
           </div>
@@ -111,7 +111,7 @@
           <% end %>
         </div>
 
-        <footer class="footer justify-around">
+        <footer class="footer justify-around grid-cols-2 sm:grid-cols-3">
           <nav>
             <h6 class="footer-title">
               <%= t("messages.welcome.footer_resources") %>
