@@ -5,28 +5,37 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
-      <div class="flex flex-col gap-2">
-        <h1 class="font-bold">
-          Wikinoにようこそ！
-        </h1>
+      <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-2 text-center mb-10">
+          <h1 class="text-4xl/8 font-bold antialiased leading-snug">
+            <%= t("messages.welcome.hero_title_html") %>
+          </h1>
 
-        <p>
-          Wikinoは、Wikiを作成・編集・共有するためのサービスです。<br>
-          現在は開発者 (<a class="link link-primary" href="/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。
-          誰でも使えるようにするため開発中です。
-        </p>
-      </div>
+          <p class="text-lg/8 text-gray-600 antialiased">
+            <%= t("messages.welcome.hero_description_html") %>
+          </p>
+        </div>
 
-      <div class="flex flex-col gap-2">
-        <h2 class="font-bold">
-          Wikinoの特徴
-        </h2>
+        <div class="flex flex-col gap-6">
+          <h2 class="text-2xl/8 font-bold antialiased leading-snug text-center">
+            特徴
+          </h2>
 
-        <ul class="list-disc pl-4">
-          <li>Markdown記法でWikiのページを作成・編集できる</li>
-          <li>ページ間をリンクで繋げられる (2ホップリンク)</li>
-          <li>トピックごとに同名のタイトルのページが作成できる</li>
-        </ul>
+          <div class="flex justify-between gap-2">
+            <div class="flex flex-col gap-4">
+              <h3 class="text-lg/8 font-bold antialiased leading-snug">
+                Markdownで書ける
+              </h3>
+
+              <p>
+                リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
+              </p>
+            </div>
+
+            <%= image_tag "welcome/image_1.png", class: "w-1/2 rounded-lg" %>
+          </div>
+
+        </div>
       </div>
 
       <div class="flex flex-col gap-2">

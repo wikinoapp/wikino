@@ -149,3 +149,6 @@ ja:
     user_sessions:
       are_you_sure_sign_out: ログアウトしますか？
       signed_out_successfully: ログアウトしました
+    welcome:
+      hero_title_html: Markdownで書き、<br>リンクで見つかるWikiアプリ
+      hero_description_html: Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです。
