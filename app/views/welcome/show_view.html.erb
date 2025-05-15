@@ -5,53 +5,175 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
-      <div class="flex flex-col gap-6">
-        <div class="flex flex-col gap-2 text-center mb-10">
-          <h1 class="text-4xl/8 font-bold antialiased leading-snug">
-            <%= t("messages.welcome.hero_title_html") %>
-          </h1>
+      <div class="flex flex-col gap-16 pb-16">
+        <div class="flex flex-col gap-6 text-center">
+          <div class="flex flex-col gap-2">
+            <h1 class="text-4xl/8 font-bold antialiased leading-snug">
+              <%= t("messages.welcome.hero_title_html") %>
+            </h1>
 
-          <p class="text-lg/8 text-gray-600 antialiased">
-            <%= t("messages.welcome.hero_description_html") %>
-          </p>
+            <p class="text-lg/8 text-gray-600 antialiased">
+              <%= t("messages.welcome.hero_description_html") %>
+            </p>
+          </div>
+
+          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
+            <%= render Basic::IconComponent.new(
+              name: "paper-plane-tilt",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
+
+            <%= t("nouns.sign_up") %>
+          <% end %>
         </div>
 
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-10">
           <h2 class="text-2xl/8 font-bold antialiased leading-snug text-center">
             特徴
           </h2>
 
-          <div class="flex justify-between gap-2">
-            <div class="flex flex-col gap-4">
-              <h3 class="text-lg/8 font-bold antialiased leading-snug">
-                Markdownで書ける
-              </h3>
+          <div class="flex flex-col gap-6">
+            <div class="flex gap-4">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold antialiased leading-snug">
+                  Markdownで書ける
+                </h3>
 
-              <p>
-                リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
-              </p>
+                <p>
+                  リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_1.png", {
+                class: "w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
             </div>
 
-            <%= image_tag "welcome/image_1.png", class: "w-1/2 rounded-lg" %>
+            <div class="flex gap-4">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold antialiased leading-snug">
+                  リンクで見つかる
+                </h3>
+
+                <p>
+                  ページをリンクで繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
+                </p>
+
+                <p>
+                  リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_2.png", {
+                class: "w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+
+            <div class="flex gap-4">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold antialiased leading-snug">
+                  オープンソース
+                </h3>
+
+                <p>
+                  WikinoのソースコードはGitHubで公開されています。
+                </p>
+
+                <p>
+                  内部構造を確認したり、(頑張れば) セルフホストも可能です。
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_3.png", {
+                class: "w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6 my-10">
+          <div class="text-3xl/8 font-bold antialiased text-center">
+            Wikinoを始めよう
           </div>
 
+          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
+            <%= render Basic::IconComponent.new(
+              name: "paper-plane-tilt",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
+
+            <%= t("nouns.sign_up") %>
+          <% end %>
         </div>
-      </div>
 
-      <div class="flex flex-col gap-2">
-        <h2 class="font-bold">
-          更新情報
-        </h2>
+        <footer class="footer justify-around">
+          <nav>
+            <h6 class="footer-title">
+              Resources
+            </h6>
 
-        <p>
-          Wikinoのスペースで公開しています。
-        </p>
+            <%= link_to "https://wikino.app/s/wikino", class: "link link-hover" do %>
+              ヘルプページ
+            <% end %>
 
-        <%= link_to "/s/wikino", class: "link link-primary" do %>
-          <%= render Basic::IconComponent.new(name: "arrow-right-regular", size: "18px", class_name: "fill-primary") %>
+            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "link link-hover" do %>
+              リリースノート
+            <% end %>
 
-          Wikinoのスペースを見る
-        <% end %>
+            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "link link-hover" do %>
+              開発者について
+            <% end %>
+          </nav>
+
+          <nav>
+            <h6 class="footer-title">
+              Community
+            </h6>
+
+            <%= link_to "Discord", "https://discord.gg/8qMetv8fUn", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "Bluesky", "https://bsky.app/profile/wikino.app", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "Mewst", "https://mewst.com/@wikino", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "GitHub", "https://github.com/wikinoapp/wikino", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+          </nav>
+
+          <nav>
+            <h6 class="footer-title">
+              Legal
+            </h6>
+
+            <%= link_to "/terms", class: "link link-hover" do %>
+              利用規約
+            <% end %>
+
+            <%= link_to "/privacy", class: "link link-hover" do %>
+              プライバシーポリシー
+            <% end %>
+          </nav>
+        </footer>
       </div>
     <% end %>
   <% end %>
