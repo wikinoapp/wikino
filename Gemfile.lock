@@ -388,9 +388,8 @@ GEM
       rack (>= 1.1)
       rubocop (>= 1.52.0, < 2.0)
       rubocop-ast (>= 1.31.1, < 2.0)
-    rubocop-rspec (3.6.0)
-      lint_roller (~> 1.1)
-      rubocop (~> 1.72, >= 1.72.1)
+    rubocop-rspec (3.4.0)
+      rubocop (~> 1.61)
     rubocop-sorbet (0.7.8)
       rubocop (>= 0.90.0)
     ruby-lsp (0.19.1)
@@ -534,7 +533,7 @@ DEPENDENCIES
   rspec-rails
   rubocop-factory_bot
   rubocop-rails
-  rubocop-rspec
+  rubocop-rspec (~> 3.4.0)
   ruby-lsp
   rubyzip
   sentry-rails
