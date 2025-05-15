@@ -150,22 +150,22 @@ ja:
       are_you_sure_sign_out: ログアウトしますか？
       signed_out_successfully: ログアウトしました
     welcome:
-      hero_title_html: Markdownで書き、<br>リンクで見つかるWikiアプリ
-      hero_description_html: Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです。
       features_title: 特徴
-      markdown_feature_title: Markdownで書ける
-      markdown_feature_description: リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
-      links_feature_title: リンクで見つかる
-      links_feature_description_1: ページをリンクで繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
-      links_feature_description_2: リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
-      opensource_feature_title: オープンソース
-      opensource_feature_description_1: WikinoのソースコードはGitHubで公開されています。
-      opensource_feature_description_2: 内部構造を確認したり、(頑張れば) セルフホストも可能です。
-      start_cta: Wikinoを始めよう
-      footer_resources: Resources
-      footer_help_page: ヘルプページ
-      footer_release_notes: リリースノート
       footer_about_developer: 開発者について
       footer_community: Community
-      footer_terms: 利用規約
+      footer_help_page: ヘルプページ
       footer_privacy: プライバシーポリシー
+      footer_release_notes: リリースノート
+      footer_resources: Resources
+      footer_terms: 利用規約
+      hero_description_html: Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです。
+      hero_title_html: Markdownで書き、<br>リンクで見つかるWikiアプリ
+      links_feature_description_1: ページをリンクで繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
+      links_feature_description_2: リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
+      links_feature_title: リンクで見つかる
+      markdown_feature_description: リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
+      markdown_feature_title: Markdownで書ける
+      opensource_feature_description_1: WikinoのソースコードはGitHubで公開されています。
+      opensource_feature_description_2: 内部構造を確認したり、(頑張れば) セルフホストも可能です。
+      opensource_feature_title: オープンソース
+      start_cta: Wikinoを始めよう

@@ -147,3 +147,23 @@ en:
     user_sessions:
       are_you_sure_sign_out: Are you sure you want to sign out?
       signed_out_successfully: Signed out successfully.
+    welcome:
+      features_title: Features
+      footer_about_developer: About the Developer
+      footer_community: Community
+      footer_help_page: Help Page
+      footer_privacy: Privacy Policy
+      footer_release_notes: Release Notes
+      footer_resources: Resources
+      footer_terms: Terms of Service
+      hero_description_html: Wikino is a web service where you can create and share wikis.
+      hero_title_html: A Wiki app where you write in Markdown<br>and discover through links
+      links_feature_description_1: By linking pages together, you can navigate to linked pages and other pages that link to them.
+      links_feature_description_2: Following linked pages helps you discover related content.
+      links_feature_title: Discover through links
+      markdown_feature_description: Write documents in Markdown format with a clean, plain text editor.
+      markdown_feature_title: Write in Markdown
+      opensource_feature_description_1: Wikino's source code is publicly available on GitHub.
+      opensource_feature_description_2: You can examine the internal structure and (with some effort) self-host it.
+      opensource_feature_title: Open Source
+      start_cta: Get Started with Wikino
