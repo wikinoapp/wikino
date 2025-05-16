@@ -160,7 +160,7 @@ ja:
       footer_terms: 利用規約
       hero_description_html: Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです。
       hero_title_html: Markdownで書き、<br>リンクで見つかるWikiアプリ
-      links_feature_description_1: ページをリンクで繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
+      links_feature_description_1: ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
       links_feature_description_2: リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
       links_feature_title: リンクで見つかる
       markdown_feature_description: リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
@@ -169,3 +169,5 @@ ja:
       opensource_feature_description_2: 内部構造を確認したり、(頑張れば) セルフホストも可能です。
       opensource_feature_title: オープンソース
       start_cta: Wikinoを始めよう
+      wikilink_feature_description_1: 独自で用意したリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます。
+      wikilink_feature_title: リンク記法でページを作成し、繋げる

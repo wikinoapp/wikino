@@ -46,6 +46,25 @@
               </div>
 
               <%= image_tag "welcome/image_1.png", {
+                alt: "",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+
+            <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+                  <%= t("messages.welcome.wikilink_feature_title") %>
+                </h3>
+
+                <p>
+                  <%= t("messages.welcome.wikilink_feature_description_1") %>
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_4.png", {
+                alt: "",
                 class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
@@ -67,6 +86,7 @@
               </div>
 
               <%= image_tag "welcome/image_2.png", {
+                alt: "",
                 class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
@@ -88,6 +108,7 @@
               </div>
 
               <%= image_tag "welcome/image_3.png", {
+                alt: "",
                 class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
