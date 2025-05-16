@@ -1,7 +1,0 @@
-ja:
-  page_titles:
-    page: "%{page_title}"
-    forgot_password: パスワード忘れた？
-    reset_password: パスワードリセット
-    sign_in: ログイン
-    sign_up: ユーザー登録

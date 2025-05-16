@@ -1,7 +1,0 @@
-en:
-  page_titles:
-    page: "%{page_title}"
-    forgot_password: Forgot password?
-    reset_password: Reset password
-    sign_in: Sign in
-    sign_up: Sign up
