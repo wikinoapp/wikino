@@ -13,7 +13,7 @@ en:
       password_hint_html: |-
         Please enter 8 or more characters.
       signed_in_successfully: Signed in successfully.
-      signed_up_successfully: Account created successfully. Welcome!
+      signed_up_successfully_html: Account created successfully. Welcome!
       terms_html: |-
         Please create an account after agreeing to the
         <a class="link" href="/terms" rel="nofollow" target="_blank">Terms of Service</a>
