@@ -167,3 +167,5 @@ en:
       opensource_feature_description_2: You can examine the internal structure and (with some effort) self-host it.
       opensource_feature_title: Open Source
       start_cta: Get Started with Wikino
+      wikilink_feature_description_1: Create and link pages using a wikilink syntax.
+      wikilink_feature_title: Create and link pages using a wikilink syntax.
