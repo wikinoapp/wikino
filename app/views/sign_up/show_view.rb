@@ -10,13 +10,17 @@ module SignUp
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.sign_up.show")
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(EmailConfirmationForm::Creation) }
     attr_reader :form
     private :form
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.sign_up.show")
+    end
 
     sig { returns(PageName) }
     private def current_page_name

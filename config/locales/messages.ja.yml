@@ -117,7 +117,7 @@ ja:
       welcome_back: おかえりなさい！
     sign_up:
       already_have_an_account_html: |-
-        登録済みですか？ <a class="link link-primary" href="%{sign_in_path}">ログイン</a>
+        アカウント持ってますか？ <a class="link link-primary" href="%{sign_in_path}">ログイン</a>
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します
