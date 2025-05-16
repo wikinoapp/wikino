@@ -5,276 +5,279 @@
 # Please instead update this file by running `bin/tapioca gem bullet`.
 
 
-# source://bullet//lib/bullet/dependency.rb#3
+# source://bullet//lib/bullet/ext/object.rb#3
 module Bullet
   extend ::Bullet::Dependency
 
   class << self
     # Returns the value of attribute add_footer.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def add_footer; end
 
     # Sets the attribute add_footer
     #
     # @param value the value to set the attribute add_footer to.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def add_footer=(_arg0); end
 
-    # source://bullet//lib/bullet.rb#111
+    # source://bullet//lib/bullet.rb#112
     def add_safelist(options); end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def airbrake=(arg); end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def alert=(arg); end
 
     # Returns the value of attribute always_append_html_body.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def always_append_html_body; end
 
     # Sets the attribute always_append_html_body
     #
     # @param value the value to set the attribute always_append_html_body to.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def always_append_html_body=(_arg0); end
 
     # Rails.root might be nil if `railties` is a dependency on a project that does not use Rails
     #
-    # source://bullet//lib/bullet.rb#87
+    # source://bullet//lib/bullet.rb#88
     def app_root; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def appsignal=(arg); end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def bugsnag=(arg); end
 
-    # source://bullet//lib/bullet.rb#136
+    # source://bullet//lib/bullet.rb#137
     def bullet_logger=(active); end
 
-    # source://bullet//lib/bullet.rb#132
+    # source://bullet//lib/bullet.rb#133
     def clear_safelist; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def console=(arg); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#252
+    # source://bullet//lib/bullet.rb#258
     def console_enabled?; end
 
     # Sets the attribute counter_cache_enable
     #
     # @param value the value to set the attribute counter_cache_enable to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def counter_cache_enable=(_arg0); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#99
+    # source://bullet//lib/bullet.rb#100
     def counter_cache_enable?; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def customized_logger=(arg); end
 
-    # source://bullet//lib/bullet.rb#146
+    # source://bullet//lib/bullet.rb#147
     def debug(title, message); end
 
-    # source://bullet//lib/bullet.rb#117
+    # source://bullet//lib/bullet.rb#118
     def delete_safelist(options); end
 
-    # source://bullet//lib/bullet.rb#65
+    # source://bullet//lib/bullet.rb#66
     def enable=(enable); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#80
+    # source://bullet//lib/bullet.rb#81
     def enable?; end
 
-    # source://bullet//lib/bullet.rb#65
+    # source://bullet//lib/bullet.rb#66
     def enabled=(enable); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#80
+    # source://bullet//lib/bullet.rb#81
     def enabled?; end
 
-    # source://bullet//lib/bullet.rb#166
+    # source://bullet//lib/bullet.rb#172
     def end_request; end
 
-    # source://bullet//lib/bullet.rb#210
+    # source://bullet//lib/bullet.rb#216
     def footer_info; end
 
-    # source://bullet//lib/bullet.rb#196
+    # source://bullet//lib/bullet.rb#202
     def gather_inline_notifications; end
 
-    # source://bullet//lib/bullet.rb#124
+    # source://bullet//lib/bullet.rb#125
     def get_safelist_associations(type, class_name); end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def honeybadger=(arg); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#256
+    # source://bullet//lib/bullet.rb#262
     def inject_into_page?; end
 
     # Sets the attribute n_plus_one_query_enable
     #
     # @param value the value to set the attribute n_plus_one_query_enable to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def n_plus_one_query_enable=(_arg0); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#91
+    # source://bullet//lib/bullet.rb#92
     def n_plus_one_query_enable?; end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#189
+    # source://bullet//lib/bullet.rb#195
     def notification?; end
 
-    # source://bullet//lib/bullet.rb#185
+    # source://bullet//lib/bullet.rb#191
     def notification_collector; end
+
+    # source://bullet//lib/bullet.rb#54
+    def opentelemetry=(arg); end
 
     # Returns the value of attribute orm_patches_applied.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def orm_patches_applied; end
 
     # Sets the attribute orm_patches_applied
     #
     # @param value the value to set the attribute orm_patches_applied to.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def orm_patches_applied=(_arg0); end
 
-    # source://bullet//lib/bullet.rb#202
+    # source://bullet//lib/bullet.rb#208
     def perform_out_of_channel_notifications(env = T.unsafe(nil)); end
 
-    # source://bullet//lib/bullet.rb#232
+    # source://bullet//lib/bullet.rb#238
     def profile; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def rails_logger=(arg); end
 
-    # source://bullet//lib/bullet.rb#55
+    # source://bullet//lib/bullet.rb#56
     def raise=(should_raise); end
 
-    # source://bullet//lib/bullet.rb#128
+    # source://bullet//lib/bullet.rb#129
     def reset_safelist; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def rollbar=(arg); end
 
     # Returns the value of attribute safelist.
     #
-    # source://bullet//lib/bullet.rb#42
+    # source://bullet//lib/bullet.rb#43
     def safelist; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def sentry=(arg); end
 
     # Sets the attribute skip_html_injection
     #
     # @param value the value to set the attribute skip_html_injection to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def skip_html_injection=(_arg0); end
 
     # Returns the value of attribute skip_http_headers.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def skip_http_headers; end
 
     # Sets the attribute skip_http_headers
     #
     # @param value the value to set the attribute skip_http_headers to.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def skip_http_headers=(_arg0); end
 
     # Returns the value of attribute skip_user_in_notification.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def skip_user_in_notification; end
 
     # Sets the attribute skip_user_in_notification
     #
     # @param value the value to set the attribute skip_user_in_notification to.
     #
-    # source://bullet//lib/bullet.rb#43
+    # source://bullet//lib/bullet.rb#44
     def skip_user_in_notification=(_arg0); end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def slack=(arg); end
 
-    # source://bullet//lib/bullet.rb#107
+    # source://bullet//lib/bullet.rb#108
     def stacktrace_excludes; end
 
     # Sets the attribute stacktrace_excludes
     #
     # @param value the value to set the attribute stacktrace_excludes to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def stacktrace_excludes=(_arg0); end
 
-    # source://bullet//lib/bullet.rb#103
+    # source://bullet//lib/bullet.rb#104
     def stacktrace_includes; end
 
     # Sets the attribute stacktrace_includes
     #
     # @param value the value to set the attribute stacktrace_includes to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def stacktrace_includes=(_arg0); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#181
+    # source://bullet//lib/bullet.rb#187
     def start?; end
 
-    # source://bullet//lib/bullet.rb#150
+    # source://bullet//lib/bullet.rb#151
     def start_request; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def terminal_notifier=(arg); end
 
-    # source://bullet//lib/bullet.rb#216
+    # source://bullet//lib/bullet.rb#222
     def text_notifications; end
 
     # Sets the attribute unused_eager_loading_enable
     #
     # @param value the value to set the attribute unused_eager_loading_enable to.
     #
-    # source://bullet//lib/bullet.rb#36
+    # source://bullet//lib/bullet.rb#37
     def unused_eager_loading_enable=(_arg0); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet.rb#95
+    # source://bullet//lib/bullet.rb#96
     def unused_eager_loading_enable?; end
 
-    # source://bullet//lib/bullet.rb#224
+    # source://bullet//lib/bullet.rb#230
     def warnings; end
 
-    # source://bullet//lib/bullet.rb#53
+    # source://bullet//lib/bullet.rb#54
     def xmpp=(arg); end
 
     private
 
-    # source://bullet//lib/bullet.rb#273
+    # source://bullet//lib/bullet.rb#279
     def build_request_uri(env); end
 
-    # source://bullet//lib/bullet.rb#264
+    # source://bullet//lib/bullet.rb#270
     def for_each_active_notifier_with_notification; end
   end
 end
@@ -289,93 +292,103 @@ module Bullet::ActiveJob
   end
 end
 
-# source://bullet//lib/bullet/active_record70.rb#13
+# source://bullet//lib/bullet/active_record71.rb#14
 module Bullet::ActiveRecord
   class << self
-    # source://bullet//lib/bullet/active_record70.rb#14
+    # source://bullet//lib/bullet/active_record71.rb#15
     def enable; end
   end
 end
 
-# source://bullet//lib/bullet.rb#24
+# source://bullet//lib/bullet.rb#25
 class Bullet::BulletRailtie < ::Rails::Railtie; end
 
 # source://bullet//lib/bullet/dependency.rb#4
 module Bullet::Dependency
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#79
+  # source://bullet//lib/bullet/dependency.rb#87
   def active_record40?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#83
+  # source://bullet//lib/bullet/dependency.rb#91
   def active_record41?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#87
+  # source://bullet//lib/bullet/dependency.rb#95
   def active_record42?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#63
+  # source://bullet//lib/bullet/dependency.rb#67
   def active_record4?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#91
+  # source://bullet//lib/bullet/dependency.rb#99
   def active_record50?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#95
+  # source://bullet//lib/bullet/dependency.rb#103
   def active_record51?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#99
+  # source://bullet//lib/bullet/dependency.rb#107
   def active_record52?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#67
+  # source://bullet//lib/bullet/dependency.rb#71
   def active_record5?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#103
+  # source://bullet//lib/bullet/dependency.rb#111
   def active_record60?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#107
+  # source://bullet//lib/bullet/dependency.rb#115
   def active_record61?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#71
+  # source://bullet//lib/bullet/dependency.rb#75
   def active_record6?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#111
+  # source://bullet//lib/bullet/dependency.rb#119
   def active_record70?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#115
+  # source://bullet//lib/bullet/dependency.rb#123
   def active_record71?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#119
+  # source://bullet//lib/bullet/dependency.rb#127
   def active_record72?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#75
+  # source://bullet//lib/bullet/dependency.rb#79
   def active_record7?; end
+
+  # @return [Boolean]
+  #
+  # source://bullet//lib/bullet/dependency.rb#131
+  def active_record80?; end
+
+  # @return [Boolean]
+  #
+  # source://bullet//lib/bullet/dependency.rb#83
+  def active_record8?; end
 
   # @return [Boolean]
   #
@@ -387,48 +400,53 @@ module Bullet::Dependency
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#123
+  # source://bullet//lib/bullet/dependency.rb#135
   def mongoid4x?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#127
+  # source://bullet//lib/bullet/dependency.rb#139
   def mongoid5x?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#131
+  # source://bullet//lib/bullet/dependency.rb#143
   def mongoid6x?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#135
+  # source://bullet//lib/bullet/dependency.rb#147
   def mongoid7x?; end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/dependency.rb#139
+  # source://bullet//lib/bullet/dependency.rb#151
   def mongoid8x?; end
+
+  # @return [Boolean]
+  #
+  # source://bullet//lib/bullet/dependency.rb#155
+  def mongoid9x?; end
 
   # @return [Boolean]
   #
   # source://bullet//lib/bullet/dependency.rb#5
   def mongoid?; end
 
-  # source://bullet//lib/bullet/dependency.rb#44
+  # source://bullet//lib/bullet/dependency.rb#46
   def mongoid_version; end
 end
 
 # source://bullet//lib/bullet/detector.rb#4
 module Bullet::Detector; end
 
-# source://bullet//lib/bullet/detector/association.rb#5
+# source://bullet//lib/bullet/detector/association.rb#7
 class Bullet::Detector::Association < ::Bullet::Detector::Base
   class << self
-    # source://bullet//lib/bullet/detector/association.rb#20
+    # source://bullet//lib/bullet/detector/association.rb#22
     def add_call_object_associations(object, associations); end
 
-    # source://bullet//lib/bullet/detector/association.rb#7
+    # source://bullet//lib/bullet/detector/association.rb#9
     def add_object_associations(object, associations); end
 
     # impossible_objects keep the class to objects relationships
@@ -437,14 +455,14 @@ class Bullet::Detector::Association < ::Bullet::Detector::Base
     # if find collection returns only one object, then the object is impossible object,
     # impossible_objects are used to avoid treating 1+1 query to N+1 query.
     #
-    # source://bullet//lib/bullet/detector/association.rb#45
+    # source://bullet//lib/bullet/detector/association.rb#47
     def impossible_objects; end
 
     # possible_objects keep the class to object relationships
     # that the objects may cause N+1 query.
     # e.g. { Post => ["Post:1", "Post:2"] }
     #
-    # source://bullet//lib/bullet/detector/association.rb#36
+    # source://bullet//lib/bullet/detector/association.rb#38
     def possible_objects; end
 
     private
@@ -454,27 +472,27 @@ class Bullet::Detector::Association < ::Bullet::Detector::Base
     # e.g. { "Post:1" => [:comments] }
     # they are used to detect unused preload associations.
     #
-    # source://bullet//lib/bullet/detector/association.rb#64
+    # source://bullet//lib/bullet/detector/association.rb#66
     def call_object_associations; end
 
-    # cal_stacks keeps stacktraces where querie-objects were called from.
+    # call_stacks keeps stacktraces where querie-objects were called from.
     # e.g. { 'Object:111' => [SomeProject/app/controllers/...] }
     #
-    # source://bullet//lib/bullet/detector/association.rb#84
+    # source://bullet//lib/bullet/detector/association.rb#86
     def call_stacks; end
 
     # eager_loadings keep the object relationships
     # that the associations are preloaded by find :include.
     # e.g. { ["Post:1", "Post:2"] => [:comments, :user] }
     #
-    # source://bullet//lib/bullet/detector/association.rb#78
+    # source://bullet//lib/bullet/detector/association.rb#80
     def eager_loadings; end
 
     # inversed_objects keeps object relationships
     # that association is inversed.
     # e.g. { "Comment:1" => ["post"] }
     #
-    # source://bullet//lib/bullet/detector/association.rb#71
+    # source://bullet//lib/bullet/detector/association.rb#73
     def inversed_objects; end
 
     # object_associations keep the object relationships
@@ -483,7 +501,7 @@ class Bullet::Detector::Association < ::Bullet::Detector::Base
     # the object_associations keep all associations that may be or may no be
     # unpreload associations or unused preload associations.
     #
-    # source://bullet//lib/bullet/detector/association.rb#56
+    # source://bullet//lib/bullet/detector/association.rb#58
     def object_associations; end
   end
 end
@@ -491,56 +509,56 @@ end
 # source://bullet//lib/bullet/detector/base.rb#5
 class Bullet::Detector::Base; end
 
-# source://bullet//lib/bullet/detector/counter_cache.rb#5
+# source://bullet//lib/bullet/detector/counter_cache.rb#7
 class Bullet::Detector::CounterCache < ::Bullet::Detector::Base
   class << self
-    # source://bullet//lib/bullet/detector/counter_cache.rb#7
+    # source://bullet//lib/bullet/detector/counter_cache.rb#9
     def add_counter_cache(object, associations); end
 
-    # source://bullet//lib/bullet/detector/counter_cache.rb#33
+    # source://bullet//lib/bullet/detector/counter_cache.rb#35
     def add_impossible_object(object); end
 
-    # source://bullet//lib/bullet/detector/counter_cache.rb#19
+    # source://bullet//lib/bullet/detector/counter_cache.rb#21
     def add_possible_objects(object_or_objects); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet/detector/counter_cache.rb#42
+    # source://bullet//lib/bullet/detector/counter_cache.rb#44
     def conditions_met?(object, _associations); end
 
-    # source://bullet//lib/bullet/detector/counter_cache.rb#50
+    # source://bullet//lib/bullet/detector/counter_cache.rb#52
     def impossible_objects; end
 
-    # source://bullet//lib/bullet/detector/counter_cache.rb#46
+    # source://bullet//lib/bullet/detector/counter_cache.rb#48
     def possible_objects; end
 
     private
 
-    # source://bullet//lib/bullet/detector/counter_cache.rb#56
+    # source://bullet//lib/bullet/detector/counter_cache.rb#58
     def create_notification(klazz, associations); end
   end
 end
 
-# source://bullet//lib/bullet/detector/n_plus_one_query.rb#5
+# source://bullet//lib/bullet/detector/n_plus_one_query.rb#7
 class Bullet::Detector::NPlusOneQuery < ::Bullet::Detector::Association
   extend ::Bullet::Dependency
   extend ::Bullet::StackTraceFilter
 
   class << self
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#55
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#58
     def add_impossible_object(object); end
 
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#64
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#67
     def add_inversed_object(object, association); end
 
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#32
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#34
     def add_possible_objects(object_or_objects); end
 
     # check if object => associations already exists in object_associations.
     #
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#90
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#103
     def association?(object, associations); end
 
     # executed when object.associations is called.
@@ -548,40 +566,43 @@ class Bullet::Detector::NPlusOneQuery < ::Bullet::Detector::Association
     # then, it checks if this associations call is unpreload.
     #   if it is, keeps this unpreload associations and caller.
     #
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#14
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#16
     def call_association(object, associations); end
 
     # decide whether the object.associations is unpreloaded or not.
     #
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#77
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#90
     def conditions_met?(object, associations); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#85
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#98
     def impossible?(object); end
 
     # @return [Boolean]
     #
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#81
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#94
     def possible?(object); end
+
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#79
+    def update_inversed_object(object); end
 
     private
 
-    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#105
+    # source://bullet//lib/bullet/detector/n_plus_one_query.rb#118
     def create_notification(callers, klazz, associations); end
   end
 end
 
-# source://bullet//lib/bullet/detector/unused_eager_loading.rb#5
+# source://bullet//lib/bullet/detector/unused_eager_loading.rb#8
 class Bullet::Detector::UnusedEagerLoading < ::Bullet::Detector::Association
   extend ::Bullet::Dependency
   extend ::Bullet::StackTraceFilter
 
   class << self
-    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#27
+    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#30
     def add_eager_loadings(objects, associations); end
 
     # check if there are unused preload associations.
@@ -589,21 +610,30 @@ class Bullet::Detector::UnusedEagerLoading < ::Bullet::Detector::Association
     #   get call_object_association from associations of call_object_associations whose object is in related_objects
     #   if association not in call_object_association, then the object => association - call_object_association is unused preload associations
     #
-    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#14
+    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#17
     def check_unused_preload_associations; end
 
     private
 
-    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#79
+    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#82
     def call_associations(bullet_key, associations); end
 
-    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#67
+    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#70
     def create_notification(callers, klazz, associations); end
 
-    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#90
+    # source://bullet//lib/bullet/detector/unused_eager_loading.rb#93
     def diff_object_associations(bullet_key, associations); end
   end
 end
+
+# source://bullet//lib/bullet/ext/object.rb#4
+module Bullet::Ext; end
+
+# source://bullet//lib/bullet/ext/object.rb#5
+module Bullet::Ext::Object; end
+
+# source://bullet//lib/bullet/ext/string.rb#5
+module Bullet::Ext::String; end
 
 # source://bullet//lib/bullet/notification.rb#4
 module Bullet::Notification; end
@@ -782,76 +812,82 @@ class Bullet::NotificationCollector
   def reset; end
 end
 
-# source://bullet//lib/bullet/rack.rb#4
+# source://bullet//lib/bullet/rack.rb#8
 class Bullet::Rack
   include ::Bullet::Dependency
 
   # @return [Rack] a new instance of Rack
   #
-  # source://bullet//lib/bullet/rack.rb#9
+  # source://bullet//lib/bullet/rack.rb#13
   def initialize(app); end
 
-  # source://bullet//lib/bullet/rack.rb#57
+  # source://bullet//lib/bullet/rack.rb#62
   def append_to_html_body(response_body, content); end
 
-  # source://bullet//lib/bullet/rack.rb#13
+  # source://bullet//lib/bullet/rack.rb#17
   def call(env); end
 
   # fix issue if response's body is a Proc
   #
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/rack.rb#48
+  # source://bullet//lib/bullet/rack.rb#53
   def empty?(response); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/rack.rb#80
+  # source://bullet//lib/bullet/rack.rb#117
   def file?(headers); end
 
-  # source://bullet//lib/bullet/rack.rb#68
-  def footer_note; end
+  # source://bullet//lib/bullet/rack.rb#73
+  def footer_note(nonce = T.unsafe(nil)); end
+
+  # Make footer styles work with ContentSecurityPolicy style-src as self
+  #
+  # source://bullet//lib/bullet/rack.rb#78
+  def footer_style(nonce = T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/rack.rb#88
+  # source://bullet//lib/bullet/rack.rb#125
   def html_request?(headers, response); end
 
-  # source://bullet//lib/bullet/rack.rb#92
+  # source://bullet//lib/bullet/rack.rb#129
   def response_body(response); end
 
-  # source://bullet//lib/bullet/rack.rb#72
+  # source://bullet//lib/bullet/rack.rb#91
   def set_header(headers, header_name, header_array); end
+
+  # Simple query string parser
+  #
+  # source://bullet//lib/bullet/rack.rb#108
+  def simple_parse_query_string(query_string); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/rack.rb#84
+  # source://bullet//lib/bullet/rack.rb#99
+  def skip_html_injection?(request); end
+
+  # @return [Boolean]
+  #
+  # source://bullet//lib/bullet/rack.rb#121
   def sse?(headers); end
 
   private
 
-  # source://bullet//lib/bullet/rack.rb#102
-  def details_attributes; end
+  # source://bullet//lib/bullet/rack.rb#139
+  def footer_console_message(nonce = T.unsafe(nil)); end
 
-  # source://bullet//lib/bullet/rack.rb#121
-  def footer_console_message; end
-
-  # source://bullet//lib/bullet/rack.rb#115
-  def footer_content_attributes; end
-
-  # source://bullet//lib/bullet/rack.rb#109
-  def summary_attributes; end
-
-  # source://bullet//lib/bullet/rack.rb#138
+  # source://bullet//lib/bullet/rack.rb#165
   def with_security_policy_nonce(headers); end
 
   # Make footer work for XHR requests by appending data to the footer
   #
-  # source://bullet//lib/bullet/rack.rb#128
+  # source://bullet//lib/bullet/rack.rb#155
   def xhr_script(nonce = T.unsafe(nil)); end
 end
 
-# source://bullet//lib/bullet/rack.rb#7
+# source://bullet//lib/bullet/rack.rb#11
 Bullet::Rack::NONCE_MATCHER = T.let(T.unsafe(nil), Regexp)
 
 # source://bullet//lib/bullet/registry.rb#4
@@ -890,6 +926,11 @@ class Bullet::Registry::Base
   # source://bullet//lib/bullet/registry/base.rb#37
   def include?(key, value); end
 
+  # @return [Boolean]
+  #
+  # source://bullet//lib/bullet/registry/base.rb#41
+  def key?(key); end
+
   # Returns the value of attribute registry.
   #
   # source://bullet//lib/bullet/registry/base.rb#6
@@ -907,76 +948,48 @@ class Bullet::Registry::CallStack < ::Bullet::Registry::Base
   def add(key); end
 end
 
-# source://bullet//lib/bullet/registry/object.rb#5
+# source://bullet//lib/bullet/registry/object.rb#8
 class Bullet::Registry::Object < ::Bullet::Registry::Base
-  # source://bullet//lib/bullet/registry/object.rb#6
+  # source://bullet//lib/bullet/registry/object.rb#9
   def add(bullet_key); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/registry/object.rb#10
+  # source://bullet//lib/bullet/registry/object.rb#13
   def include?(bullet_key); end
 end
 
-# source://bullet//lib/bullet/active_record70.rb#4
+# source://bullet//lib/bullet/active_record71.rb#4
 module Bullet::SaveWithBulletSupport
-  # source://bullet//lib/bullet/active_record70.rb#5
+  # source://bullet//lib/bullet/active_record71.rb#5
   def _create_record(*_arg0); end
 end
 
-# source://bullet//lib/bullet/stack_trace_filter.rb#6
+# source://bullet//lib/bullet/stack_trace_filter.rb#8
 module Bullet::StackTraceFilter
   # @param bullet_key [String] - use this to get stored call stack from call_stacks object.
   #
-  # source://bullet//lib/bullet/stack_trace_filter.rb#11
+  # source://bullet//lib/bullet/stack_trace_filter.rb#12
   def caller_in_project(bullet_key = T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/stack_trace_filter.rb#23
+  # source://bullet//lib/bullet/stack_trace_filter.rb#24
   def excluded_stacktrace_path?; end
 
   private
 
-  # source://bullet//lib/bullet/stack_trace_filter.rb#54
+  # source://bullet//lib/bullet/stack_trace_filter.rb#55
   def location_as_path(location); end
 
   # @return [Boolean]
   #
-  # source://bullet//lib/bullet/stack_trace_filter.rb#31
+  # source://bullet//lib/bullet/stack_trace_filter.rb#32
   def pattern_matches?(location, pattern); end
 
-  # source://bullet//lib/bullet/stack_trace_filter.rb#60
+  # source://bullet//lib/bullet/stack_trace_filter.rb#61
   def select_caller_locations(bullet_key = T.unsafe(nil)); end
 end
 
-# source://bullet//lib/bullet/stack_trace_filter.rb#8
-Bullet::StackTraceFilter::IS_RUBY_19 = T.let(T.unsafe(nil), FalseClass)
-
-# source://bullet//lib/bullet/stack_trace_filter.rb#7
+# source://bullet//lib/bullet/stack_trace_filter.rb#9
 Bullet::StackTraceFilter::VENDOR_PATH = T.let(T.unsafe(nil), String)
-
-# source://bullet//lib/bullet/ext/object.rb#3
-class Object < ::BasicObject
-  include ::Kernel
-  include ::PP::ObjectMixin
-
-  # source://bullet//lib/bullet/ext/object.rb#4
-  def bullet_key; end
-
-  # source://bullet//lib/bullet/ext/object.rb#8
-  def bullet_primary_key_value; end
-
-  private
-
-  # source://bullet//lib/bullet/ext/object.rb#24
-  def bullet_join_potential_composite_primary_key(primary_keys); end
-end
-
-# source://bullet//lib/bullet/ext/string.rb#3
-class String
-  include ::Comparable
-
-  # source://bullet//lib/bullet/ext/string.rb#4
-  def bullet_class_name; end
-end
