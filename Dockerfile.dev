@@ -1,4 +1,4 @@
-FROM ruby:3.3.4-slim-bookworm
+FROM ruby:3.4.4-slim-bookworm
 
 RUN \
   apt update && \
@@ -9,7 +9,9 @@ RUN \
   git \
   lsb-release \
   # PostgreSQLやNode.jsのインストールに必要
-  gnupg
+  gnupg \
+  # psych gemのインストールに必要
+  libyaml-dev
 
 # PostgreSQLのセットアップ
 RUN \

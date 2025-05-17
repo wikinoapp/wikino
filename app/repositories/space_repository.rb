@@ -23,6 +23,6 @@ class SpaceRepository < ApplicationRepository
     ).returns(T::Array[Space])
   end
   def to_models(space_records:)
-    space_records.map { to_model(space_record: _1) }
+    space_records.map { to_model(space_record: it) }
   end
 end
