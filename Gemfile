@@ -13,7 +13,7 @@ gem "aws-sdk-s3", require: false # Active Storageで使っている
 gem "bcrypt" # `has_secure_password` で使っている
 gem "bootsnap", require: false
 gem "by_star"
-gem "commonmarker"
+gem "commonmarker" # `html-pipeline` で使っている
 gem "cssbundling-rails"
 gem "discard"
 gem "email_validator"
