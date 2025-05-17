@@ -504,6 +504,9 @@ class DraftPageRecord
     def annotate(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def arel_columns(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def create_with(*args, &blk); end
 
     sig { params(value: T::Boolean).returns(PrivateAssociationRelation) }
@@ -538,40 +541,6 @@ class DraftPageRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def includes(*args, &blk); end
-
-    sig do
-      params(
-        attributes: Hash,
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass)),
-        unique_by: T.nilable(T.any(T::Array[Symbol], Symbol))
-      ).returns(ActiveRecord::Result)
-    end
-    def insert(attributes, returning: nil, unique_by: nil); end
-
-    sig do
-      params(
-        attributes: Hash,
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass))
-      ).returns(ActiveRecord::Result)
-    end
-    def insert!(attributes, returning: nil); end
-
-    sig do
-      params(
-        attributes: T::Array[Hash],
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass)),
-        unique_by: T.nilable(T.any(T::Array[Symbol], Symbol))
-      ).returns(ActiveRecord::Result)
-    end
-    def insert_all(attributes, returning: nil, unique_by: nil); end
-
-    sig do
-      params(
-        attributes: T::Array[Hash],
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass))
-      ).returns(ActiveRecord::Result)
-    end
-    def insert_all!(attributes, returning: nil); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def invert_where(*args, &blk); end
@@ -659,30 +628,15 @@ class DraftPageRecord
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def unscope(*args, &blk); end
 
-    sig do
-      params(
-        attributes: Hash,
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass)),
-        unique_by: T.nilable(T.any(T::Array[Symbol], Symbol))
-      ).returns(ActiveRecord::Result)
-    end
-    def upsert(attributes, returning: nil, unique_by: nil); end
-
-    sig do
-      params(
-        attributes: T::Array[Hash],
-        returning: T.nilable(T.any(T::Array[Symbol], FalseClass)),
-        unique_by: T.nilable(T.any(T::Array[Symbol], Symbol))
-      ).returns(ActiveRecord::Result)
-    end
-    def upsert_all(attributes, returning: nil, unique_by: nil); end
-
     sig { returns(PrivateAssociationRelationWhereChain) }
     sig { params(args: T.untyped).returns(PrivateAssociationRelation) }
     def where(*args); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def with(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def with_recursive(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def without(*args, &blk); end
@@ -1442,6 +1396,9 @@ class DraftPageRecord
     def annotate(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def arel_columns(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def create_with(*args, &blk); end
 
     sig { params(value: T::Boolean).returns(PrivateRelation) }
@@ -1571,6 +1528,9 @@ class DraftPageRecord
     def with(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def with_recursive(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def without(*args, &blk); end
   end
 
@@ -1667,20 +1627,6 @@ class DraftPageRecord
       ).returns(PrivateCollectionProxy)
     end
     def concat(*records); end
-
-    sig do
-      params(
-        records: T.any(::DraftPageRecord, Integer, String, T::Enumerable[T.any(::DraftPageRecord, Integer, String, T::Enumerable[::DraftPageRecord])])
-      ).returns(T::Array[::DraftPageRecord])
-    end
-    def delete(*records); end
-
-    sig do
-      params(
-        records: T.any(::DraftPageRecord, Integer, String, T::Enumerable[T.any(::DraftPageRecord, Integer, String, T::Enumerable[::DraftPageRecord])])
-      ).returns(T::Array[::DraftPageRecord])
-    end
-    def destroy(*records); end
 
     sig { returns(T::Array[::DraftPageRecord]) }
     def load_target; end
