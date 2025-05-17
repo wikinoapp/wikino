@@ -4,8 +4,6 @@
 class SpaceRecord < ApplicationRecord
   include Discard::Model
 
-  include FormConcerns::ISpace
-
   self.table_name = "spaces"
 
   enum :plan, {
@@ -67,7 +65,7 @@ class SpaceRecord < ApplicationRecord
     kept.find_by!(identifier:)
   end
 
-  sig { override.params(identifier: String).returns(T::Boolean) }
+  sig { params(identifier: String).returns(T::Boolean) }
   def identifier_uniqueness?(identifier)
     SpaceRecord.where.not(id:).exists?(identifier:)
   end
