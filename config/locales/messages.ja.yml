@@ -12,7 +12,7 @@ ja:
       password_hint_html: |-
         8文字以上入力してください。
       signed_in_successfully: ログインしました
-      signed_up_successfully: アカウントを作成しました。Wikinoにようこそ！
+      signed_up_successfully_html: "アカウントを作成しました。<br class='block sm:hidden'>Wikinoにようこそ！"
       terms_html: |-
         <a class="link" href="/terms" rel="nofollow" target="_blank">利用規約</a>
         と
@@ -117,7 +117,7 @@ ja:
       welcome_back: おかえりなさい！
     sign_up:
       already_have_an_account_html: |-
-        登録済みですか？ <a class="link link-primary" href="%{sign_in_path}">ログイン</a>
+        アカウント持ってますか？ <a class="link link-primary" href="%{sign_in_path}">ログイン</a>
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します
@@ -149,3 +149,25 @@ ja:
     user_sessions:
       are_you_sure_sign_out: ログアウトしますか？
       signed_out_successfully: ログアウトしました
+    welcome:
+      features_title: 特徴
+      footer_about_developer: 開発者について
+      footer_community: Community
+      footer_help_page: ヘルプページ
+      footer_privacy: プライバシーポリシー
+      footer_release_notes: リリースノート
+      footer_resources: Resources
+      footer_terms: 利用規約
+      hero_description_html: Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです。
+      hero_title_html: Markdownで書き、<br>リンクで見つかるWikiアプリ
+      links_feature_description_1: ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移できるようになります。
+      links_feature_description_2: リンクされたページを辿っていくことにより、そのページに関連するページを見つけることができます。
+      links_feature_title: リンクで見つかる
+      markdown_feature_description: リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。
+      markdown_feature_title: Markdownで書ける
+      opensource_feature_description_1: WikinoのソースコードはGitHubで公開されています。
+      opensource_feature_description_2: 内部構造を確認したり、(頑張れば) セルフホストも可能です。
+      opensource_feature_title: オープンソース
+      start_cta: Wikinoを始めよう
+      wikilink_feature_description_1: 独自で用意したリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます。
+      wikilink_feature_title: リンク記法でページを作成し、繋げる

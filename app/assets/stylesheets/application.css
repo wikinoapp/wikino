@@ -8,10 +8,6 @@
     .wikino-markdown
     ============================================================================
   */
-  .wikino-markdown {
-    @apply leading-8;
-  }
-
   .wikino-markdown > :first-child {
     @apply mt-0;
   }
@@ -27,7 +23,7 @@
   }
 
   .wikino-markdown code {
-    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm/8;
+    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm/normal;
   }
 
   .wikino-markdown h1 {
@@ -71,11 +67,11 @@
   }
 
   .wikino-markdown ol {
-    @apply mb-4 list-decimal pl-6 text-base/8;
+    @apply mb-4 list-decimal pl-6 text-base/normal;
   }
 
   .wikino-markdown p {
-    @apply mb-4;
+    @apply mb-4 leading-8;
   }
 
   .wikino-markdown pre {
@@ -87,7 +83,7 @@
   }
 
   .wikino-markdown ul {
-    @apply mb-4 list-disc pl-6 text-base/8;
+    @apply mb-4 list-disc pl-6 text-base/normal;
   }
 }
 
@@ -97,7 +93,7 @@
   ============================================================================
 */
 .cm-editor {
-  @apply textarea textarea-bordered bg-base-300 px-2 text-base/8;
+  @apply textarea textarea-bordered bg-base-300 px-2 text-base;
 }
 
 .cm-editor.cm-focused {

@@ -41,7 +41,7 @@ module Accounts
 
       sign_in(user_session_result.user_session_record)
 
-      flash[:notice] = t("messages.accounts.signed_up_successfully")
+      flash[:notice] = t("messages.accounts.signed_up_successfully_html")
       redirect_to after_authentication_url
     end
 

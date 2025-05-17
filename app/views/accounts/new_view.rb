@@ -10,13 +10,17 @@ module Accounts
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.accounts.new")
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
     sig { returns(AccountForm::Creation) }
     attr_reader :form
     private :form
+
+    sig { returns(String) }
+    private def title
+      I18n.t("meta.title.accounts.new")
+    end
 
     sig { returns(PageName) }
     private def current_page_name

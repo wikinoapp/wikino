@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   match "/password_reset",                                                 via: :post,                                        to: "password_resets/create#call"
   match "/password",                                                       via: :patch,  as: :password,                       to: "passwords/update#call"
   match "/password/edit",                                                  via: :get,    as: :edit_password,                  to: "passwords/edit#call"
+  match "/privacy",                                                        via: :get,    as: :privacy,                        to: redirect("https://wikino.app/s/wikino/pages/42")
   match "/s/:space_identifier",                                            via: :get,    as: :space,                          to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                           to: "atom/show#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,        to: "bulk_restored_pages/create#call"
@@ -60,6 +61,7 @@ Rails.application.routes.draw do
   match "/sign_up",                                                        via: :get,    as: :sign_up,                        to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                     to: "spaces/create#call"
   match "/spaces/new",                                                     via: :get,    as: :new_space,                      to: "spaces/new#call"
+  match "/terms",                                                          via: :get,    as: :terms,                          to: redirect("https://wikino.app/s/wikino/pages/41")
   match "/user_session",                                                   via: :delete, as: :user_session,                   to: "user_sessions/destroy#call"
   match "/user_session",                                                   via: :post,                                        to: "user_sessions/create#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute

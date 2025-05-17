@@ -76,6 +76,9 @@ module GeneratedUrlHelpersModule
   def preview_view_components_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def privacy_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def profile_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -143,6 +146,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def terms_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_list_url(*args); end

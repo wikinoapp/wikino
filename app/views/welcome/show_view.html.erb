@@ -5,44 +5,196 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new do %>
-      <div class="flex flex-col gap-2">
-        <h1 class="font-bold">
-          Wikinoにようこそ！
-        </h1>
+      <div class="flex flex-col gap-10 pb-16 sm:gap-16">
+        <div class="flex flex-col gap-6 text-center">
+          <div class="flex flex-col gap-2">
+            <h1 class="text-4xl/8 font-bold leading-snug antialiased">
+              <%= t("messages.welcome.hero_title_html") %>
+            </h1>
 
-        <p>
-          Wikinoは、Wikiを作成・編集・共有するためのサービスです。<br>
-          現在は開発者 (<a class="link link-primary" href="/s/shimbaco" target="_blank">@shimbaco</a>) しか使えません。
-          誰でも使えるようにするため開発中です。
-        </p>
-      </div>
+            <p class="text-lg/8 text-gray-600 antialiased">
+              <%= t("messages.welcome.hero_description_html") %>
+            </p>
+          </div>
 
-      <div class="flex flex-col gap-2">
-        <h2 class="font-bold">
-          Wikinoの特徴
-        </h2>
+          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
+            <%= render Basic::IconComponent.new(
+              name: "paper-plane-tilt",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
 
-        <ul class="list-disc pl-4">
-          <li>Markdown記法でWikiのページを作成・編集できる</li>
-          <li>ページ間をリンクで繋げられる (2ホップリンク)</li>
-          <li>トピックごとに同名のタイトルのページが作成できる</li>
-        </ul>
-      </div>
+            <%= t("nouns.sign_up") %>
+          <% end %>
+        </div>
 
-      <div class="flex flex-col gap-2">
-        <h2 class="font-bold">
-          更新情報
-        </h2>
+        <div class="flex flex-col gap-6 sm:gap-10">
+          <h2 class="text-center text-2xl/8 font-bold leading-snug antialiased">
+            <%= t("messages.welcome.features_title") %>
+          </h2>
 
-        <p>
-          Wikinoのスペースで公開しています。
-        </p>
+          <div class="flex flex-col gap-8">
+            <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+                  <%= t("messages.welcome.markdown_feature_title") %>
+                </h3>
 
-        <%= link_to "/s/wikino", class: "link link-primary" do %>
-          <%= render Basic::IconComponent.new(name: "arrow-right-regular", size: "18px", class_name: "fill-primary") %>
+                <p>
+                  <%= t("messages.welcome.markdown_feature_description") %>
+                </p>
+              </div>
 
-          Wikinoのスペースを見る
-        <% end %>
+              <%= image_tag "welcome/image_1.png", {
+                alt: "",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+
+            <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+                  <%= t("messages.welcome.wikilink_feature_title") %>
+                </h3>
+
+                <p>
+                  <%= t("messages.welcome.wikilink_feature_description_1") %>
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_4.png", {
+                alt: "",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+
+            <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+                  <%= t("messages.welcome.links_feature_title") %>
+                </h3>
+
+                <p>
+                  <%= t("messages.welcome.links_feature_description_1") %>
+                </p>
+
+                <p>
+                  <%= t("messages.welcome.links_feature_description_2") %>
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_2.png", {
+                alt: "",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+
+            <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+              <div class="flex flex-col gap-4">
+                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+                  <%= t("messages.welcome.opensource_feature_title") %>
+                </h3>
+
+                <p>
+                  <%= t("messages.welcome.opensource_feature_description_1") %>
+                </p>
+
+                <p>
+                  <%= t("messages.welcome.opensource_feature_description_2") %>
+                </p>
+              </div>
+
+              <%= image_tag "welcome/image_3.png", {
+                alt: "",
+                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                loading: "lazy"
+              } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="my-6 flex flex-col gap-6 sm:my-10">
+          <div class="text-center text-3xl/8 font-bold antialiased">
+            <%= t("messages.welcome.start_cta") %>
+          </div>
+
+          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
+            <%= render Basic::IconComponent.new(
+              name: "paper-plane-tilt",
+              size: "18px",
+              class_name: "fill-primary-content"
+            ) %>
+
+            <%= t("nouns.sign_up") %>
+          <% end %>
+        </div>
+
+        <footer class="footer grid-cols-2 justify-around sm:grid-cols-3">
+          <nav>
+            <h6 class="footer-title">
+              <%= t("messages.welcome.footer_resources") %>
+            </h6>
+
+            <%= link_to "https://wikino.app/s/wikino", class: "link link-hover" do %>
+              <%= t("messages.welcome.footer_help_page") %>
+            <% end %>
+
+            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "link link-hover" do %>
+              <%= t("messages.welcome.footer_release_notes") %>
+            <% end %>
+
+            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "link link-hover" do %>
+              <%= t("messages.welcome.footer_about_developer") %>
+            <% end %>
+          </nav>
+
+          <nav>
+            <h6 class="footer-title">
+              <%= t("messages.welcome.footer_community") %>
+            </h6>
+
+            <%= link_to "Discord", "https://discord.gg/8qMetv8fUn", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "Bluesky", "https://bsky.app/profile/wikino.app", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "Mewst", "https://mewst.com/@wikino", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+
+            <%= link_to "GitHub", "https://github.com/wikinoapp/wikino", {
+              class: "link link-hover",
+              target: "_blank",
+              rel: "nofollow"
+            } %>
+          </nav>
+
+          <nav>
+            <h6 class="footer-title">
+              Legal
+            </h6>
+
+            <%= link_to terms_path, class: "link link-hover" do %>
+              <%= t("messages.welcome.footer_terms") %>
+            <% end %>
+
+            <%= link_to privacy_path, class: "link link-hover" do %>
+              <%= t("messages.welcome.footer_privacy") %>
+            <% end %>
+          </nav>
+        </footer>
       </div>
     <% end %>
   <% end %>
