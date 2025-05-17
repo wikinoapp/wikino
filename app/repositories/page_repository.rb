@@ -30,6 +30,6 @@ class PageRepository < ApplicationRepository
     ).returns(T::Array[Page])
   end
   def to_models(page_records:)
-    page_records.map { to_model(page_record: _1) }
+    page_records.map { to_model(page_record: it) }
   end
 end
