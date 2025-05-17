@@ -43,6 +43,9 @@ module GeneratedUrlHelpersModule
   def manifest_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def mission_control_jobs_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_account_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
