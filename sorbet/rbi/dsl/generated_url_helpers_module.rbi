@@ -43,9 +43,6 @@ module GeneratedUrlHelpersModule
   def manifest_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def mission_control_jobs_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def new_account_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -176,15 +173,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trashed_page_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def turbo_recede_historical_location_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def turbo_refresh_historical_location_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def turbo_resume_historical_location_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def user_session_url(*args); end

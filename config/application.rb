@@ -50,9 +50,6 @@ module Wikino
 
     config.i18n.available_locales = %i[en ja]
 
-    config.mission_control.jobs.base_controller_class = "MissionControl::ApplicationController"
-    config.mission_control.jobs.http_basic_auth_enabled = false
-
     config.wikino = config_for(:wikino)
   end
 end

@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  mount MissionControl::Jobs::Engine, at: "/jobs"
-
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
