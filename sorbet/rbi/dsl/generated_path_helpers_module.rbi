@@ -43,6 +43,9 @@ module GeneratedPathHelpersModule
   def manifest_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def mission_control_jobs_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_account_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -173,6 +176,15 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trashed_page_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def turbo_recede_historical_location_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def turbo_refresh_historical_location_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def turbo_resume_historical_location_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def user_session_path(*args); end

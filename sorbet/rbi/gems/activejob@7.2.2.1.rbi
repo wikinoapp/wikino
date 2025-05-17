@@ -236,6 +236,18 @@ class ActiveJob::Base
   # source://activejob//lib/active_job/exceptions.rb#12
   def after_discard_procs?; end
 
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def blocked_by; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def blocked_by=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def blocked_until; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def blocked_until=(_arg0); end
+
   # source://solid_queue/1.1.4/lib/active_job/concurrency_controls.rb#14
   def concurrency_duration; end
 
@@ -254,11 +266,50 @@ class ActiveJob::Base
   # source://solid_queue/1.1.4/lib/active_job/concurrency_controls.rb#13
   def concurrency_limit?; end
 
+  # source://activesupport/7.2.2.1/lib/active_support/core_ext/module/attribute_accessors_per_thread.rb#74
+  def current_queue_adapter; end
+
+  # source://activesupport/7.2.2.1/lib/active_support/core_ext/module/attribute_accessors_per_thread.rb#116
+  def current_queue_adapter=(obj); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+  def default_page_size; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+  def default_page_size=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+  def default_page_size?; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/failed.rb#5
+  def failed_at; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/failed.rb#5
+  def failed_at=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def finished_at; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def finished_at=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/failed.rb#5
+  def last_execution_error; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/failed.rb#5
+  def last_execution_error=(_arg0); end
+
   # source://activejob//lib/active_job/logging.rb#15
   def logger; end
 
   # source://activejob//lib/active_job/logging.rb#15
   def logger=(val); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def position; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def position=(_arg0); end
 
   # source://activejob//lib/active_job/queue_adapter.rb#27
   def queue_adapter(&_arg0); end
@@ -272,6 +323,12 @@ class ActiveJob::Base
   # source://activejob//lib/active_job/queue_name.rb#57
   def queue_name_prefix?; end
 
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def raw_data; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def raw_data=(_arg0); end
+
   # source://activesupport/7.2.2.1/lib/active_support/rescuable.rb#15
   def rescue_handlers; end
 
@@ -280,6 +337,27 @@ class ActiveJob::Base
 
   # source://activesupport/7.2.2.1/lib/active_support/rescuable.rb#15
   def rescue_handlers?; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#8
+  def serialized_arguments; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def started_at; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def started_at=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def status; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def status=(_arg0); end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def worker_id; end
+
+  # source://mission_control-jobs/1.0.2/lib/active_job/executing.rb#7
+  def worker_id=(_arg0); end
 
   class << self
     # source://activesupport/7.2.2.1/lib/active_support/callbacks.rb#70
@@ -365,6 +443,21 @@ class ActiveJob::Base
 
     # source://solid_queue/1.1.4/lib/active_job/concurrency_controls.rb#13
     def concurrency_limit?; end
+
+    # source://activesupport/7.2.2.1/lib/active_support/core_ext/module/attribute_accessors_per_thread.rb#49
+    def current_queue_adapter; end
+
+    # source://activesupport/7.2.2.1/lib/active_support/core_ext/module/attribute_accessors_per_thread.rb#108
+    def current_queue_adapter=(obj); end
+
+    # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+    def default_page_size; end
+
+    # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+    def default_page_size=(value); end
+
+    # source://mission_control-jobs/1.0.2/lib/active_job/querying.rb#7
+    def default_page_size?; end
 
     # source://activejob//lib/active_job/enqueuing.rb#54
     def enqueue_after_transaction_commit; end

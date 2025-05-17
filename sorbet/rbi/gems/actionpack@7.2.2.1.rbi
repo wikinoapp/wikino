@@ -719,6 +719,9 @@ module AbstractController::Collector
   def ttf(*_arg0, **_arg1, &_arg2); end
 
   # source://actionpack//lib/abstract_controller/collector.rb#12
+  def turbo_stream(*_arg0, **_arg1, &_arg2); end
+
+  # source://actionpack//lib/abstract_controller/collector.rb#12
   def url_encoded_form(*_arg0, **_arg1, &_arg2); end
 
   # source://actionpack//lib/abstract_controller/collector.rb#12
@@ -6938,6 +6941,9 @@ module ActionController::Renderers
   # source://actionpack//lib/action_controller/metal/renderers.rb#156
   def _render_with_renderer_json(json, options); end
 
+  # source://turbo-rails/2.0.13/lib/turbo/engine.rb#107
+  def _render_with_renderer_turbo_stream(turbo_streams_html, options); end
+
   # source://actionpack//lib/action_controller/metal/renderers.rb#176
   def _render_with_renderer_xml(xml, options); end
 
@@ -12540,6 +12546,7 @@ module ActionDispatch::IntegrationTest::Behavior
   include ::ActionDispatch::Routing::UrlFor
   include ::ActionDispatch::IntegrationTest::UrlOptions
   include ::ActionDispatch::Assertions::RoutingAssertions::WithIntegrationRouting
+  include ::Turbo::TestAssertions::IntegrationTestAssertions
 
   mixes_in_class_methods ::ActionDispatch::IntegrationTest::Behavior::ClassMethods
   mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::WithIntegrationRouting::ClassMethods
@@ -20145,6 +20152,7 @@ class ActionDispatch::SystemTestCase < ::ActiveSupport::TestCase
   include ::Capybara::Minitest::Assertions
   include ::ActionDispatch::SystemTesting::TestHelpers::SetupAndTeardown
   include ::ActionDispatch::SystemTesting::TestHelpers::ScreenshotHelper
+  include ::Turbo::SystemTestHelper
 
   # @return [SystemTestCase] a new instance of SystemTestCase
   #
