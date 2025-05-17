@@ -35,6 +35,6 @@ plugin :tmp_restart
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
-if ::Rails.env.development?
+if ENV["WIKINO_SOLID_QUEUE_IN_PUMA"]
   plugin :solid_queue
 end
