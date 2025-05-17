@@ -175,5 +175,14 @@ module GeneratedUrlHelpersModule
   def trashed_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def turbo_recede_historical_location_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def turbo_refresh_historical_location_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def turbo_resume_historical_location_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def user_session_url(*args); end
 end
