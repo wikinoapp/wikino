@@ -37,6 +37,7 @@ class PageRecord < ApplicationRecord
   scope :available, -> { visible.not_trashed }
   scope :active, -> { available.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
+  scope :filter_by_title, ->(q:) { where("title ILIKE :q", q: "%#{q}%") }
 
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic_record:)

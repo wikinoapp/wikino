@@ -64,6 +64,9 @@ module GeneratedUrlHelpersModule
   def page_link_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def page_location_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

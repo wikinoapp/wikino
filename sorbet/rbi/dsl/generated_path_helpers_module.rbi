@@ -64,6 +64,9 @@ module GeneratedPathHelpersModule
   def page_link_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def page_location_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
