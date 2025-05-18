@@ -30,7 +30,7 @@ module Spaces
             name: space_record.name
           )
 
-          render Spaces::Settings::General::ShowView.new(
+          render_component Spaces::Settings::General::ShowView.new(
             current_user: current_user!,
             space:,
             form:

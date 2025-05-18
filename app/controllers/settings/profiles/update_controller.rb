@@ -15,7 +15,7 @@ module Settings
         form = ProfileForm::Edit.new(form_params.merge(user_record: current_user_record!))
 
         if form.invalid?
-          return render(
+          return render_component(
             Settings::Profiles::ShowView.new(
               current_user: current_user!,
               form:

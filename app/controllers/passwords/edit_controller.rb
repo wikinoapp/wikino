@@ -15,7 +15,7 @@ module Passwords
     def call
       form = PasswordResetForm::Creation.new
 
-      render Passwords::EditView.new(form:)
+      render_component Passwords::EditView.new(form:)
     end
   end
 end

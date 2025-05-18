@@ -25,7 +25,7 @@ module Spaces
 
         space = SpaceRepository.new.to_model(space_record:)
 
-        render Spaces::Settings::ShowView.new(current_user: current_user!, space:)
+        render_component Spaces::Settings::ShowView.new(current_user: current_user!, space:)
       end
     end
   end

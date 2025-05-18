@@ -18,7 +18,7 @@ module Settings
           )
 
           if form.invalid?
-            return render(
+            return render_component(
               Settings::Account::Deletions::NewView.new(
                 current_user: current_user!,
                 form:,

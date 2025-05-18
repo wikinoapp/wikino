@@ -13,7 +13,7 @@ module Spaces
     def call
       form = SpaceForm::Creation.new
 
-      render Spaces::NewView.new(
+      render_component Spaces::NewView.new(
         current_user: current_user!,
         form:
       )

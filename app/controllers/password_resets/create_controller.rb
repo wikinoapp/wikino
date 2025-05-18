@@ -14,7 +14,7 @@ module PasswordResets
       form = EmailConfirmationForm::Creation.new(form_params)
 
       if form.invalid?
-        return render(
+        return render_component(
           PasswordResets::NewView.new(form:),
           status: :unprocessable_entity
         )

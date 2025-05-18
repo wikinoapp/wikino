@@ -32,10 +32,11 @@ module Backlinks
       )
       page = PageRepository.new.to_model(page_record:)
 
-      render(Backlinks::IndexView.new(page:, backlink_list:), {
+      render_component(
+        Backlinks::IndexView.new(page:, backlink_list:),
         content_type: "text/vnd.turbo-stream.html",
         layout: false
-      })
+      )
     end
   end
 end

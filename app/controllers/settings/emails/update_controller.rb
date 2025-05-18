@@ -15,7 +15,7 @@ module Settings
         form = EmailForm::Edit.new(form_params)
 
         if form.invalid?
-          return render(
+          return render_component(
             Settings::Emails::ShowView.new(
               current_user: current_user!,
               form:

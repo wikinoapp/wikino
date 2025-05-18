@@ -31,7 +31,7 @@ module Spaces
             export_status_record: export_record.latest_status_record.not_nil!
           )
 
-          render Spaces::Settings::Exports::ShowView.new(
+          render_component Spaces::Settings::Exports::ShowView.new(
             current_user: current_user!,
             space:,
             export:,

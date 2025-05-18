@@ -35,10 +35,11 @@ module Links
         after: params[:after]
       )
 
-      render(Links::IndexView.new(page:, link_list:), {
+      render_component(
+        Links::IndexView.new(page:, link_list:),
         content_type: "text/vnd.turbo-stream.html",
         layout: false
-      })
+      )
     end
   end
 end

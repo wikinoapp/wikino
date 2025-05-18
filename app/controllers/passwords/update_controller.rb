@@ -16,7 +16,7 @@ module Passwords
       form = PasswordResetForm::Creation.new(form_params)
 
       if form.invalid?
-        return render(
+        return render_component(
           Passwords::EditView.new(form:),
           status: :unprocessable_entity
         )

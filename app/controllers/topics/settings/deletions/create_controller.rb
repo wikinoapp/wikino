@@ -32,7 +32,7 @@ module Topics
           if form.invalid?
             topic = TopicRepository.new.to_model(topic_record:)
 
-            return render(
+            return render_component(
               Topics::Settings::Deletions::NewView.new(
                 current_user: current_user!,
                 topic:,

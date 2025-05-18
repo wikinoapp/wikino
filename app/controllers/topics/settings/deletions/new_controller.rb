@@ -30,7 +30,7 @@ module Topics
           topic = TopicRepository.new.to_model(topic_record:)
           form = TopicForm::DestroyConfirmation.new(topic_record:)
 
-          render Topics::Settings::Deletions::NewView.new(
+          render_component Topics::Settings::Deletions::NewView.new(
             current_user: current_user!,
             topic:,
             form:

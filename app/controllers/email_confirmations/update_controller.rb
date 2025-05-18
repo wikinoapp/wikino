@@ -18,7 +18,7 @@ module EmailConfirmations
       )
 
       if form.invalid?
-        return render(EmailConfirmations::EditView.new(form:), status: :unprocessable_entity)
+        return render_component(EmailConfirmations::EditView.new(form:), status: :unprocessable_entity)
       end
 
       result = EmailService::Confirm.new.call(

@@ -37,7 +37,7 @@ module Pages
           page_record:
         )
 
-        return render(
+        return render_component(
           Pages::EditView.new(
             current_user: current_user!,
             space:,
@@ -45,9 +45,8 @@ module Pages
             form:,
             link_list:,
             backlink_list:
-          ), {
-            status: :unprocessable_entity
-          }
+          ),
+          status: :unprocessable_entity
         )
       end
 

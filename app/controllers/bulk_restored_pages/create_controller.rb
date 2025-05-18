@@ -33,9 +33,10 @@ module BulkRestoredPages
           after: params[:after]
         )
 
-        return render(Trash::ShowView.new(current_user:, space:, page_list:, form:), {
+        return render_component(
+          Trash::ShowView.new(current_user:, space:, page_list:, form:),
           status: :unprocessable_entity
-        })
+        )
       end
 
       PageService::BulkRestore.new.call(page_ids: form.page_ids.not_nil!)

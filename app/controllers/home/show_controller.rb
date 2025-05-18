@@ -14,7 +14,7 @@ module Home
       active_space_records = current_user_record!.active_space_records
       active_spaces = SpaceRepository.new.to_models(space_records: active_space_records)
 
-      render Home::ShowView.new(
+      render_component Home::ShowView.new(
         active_spaces:,
         current_user: current_user!
       )

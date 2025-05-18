@@ -14,7 +14,7 @@ module Settings
       def call
         form = EmailForm::Edit.new
 
-        render Settings::Emails::ShowView.new(
+        render_component Settings::Emails::ShowView.new(
           current_user: current_user!,
           form:
         )

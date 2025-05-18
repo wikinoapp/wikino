@@ -14,7 +14,7 @@ module UserSessions
       form = UserSessionForm::Creation.new(form_params)
 
       if form.invalid?
-        return render(SignIn::ShowView.new(form:), status: :unprocessable_entity)
+        return render_component(SignIn::ShowView.new(form:), status: :unprocessable_entity)
       end
 
       result = UserSessionService::Create.new.call(
