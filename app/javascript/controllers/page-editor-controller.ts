@@ -14,15 +14,13 @@ import {
   keymap,
   highlightSpecialChars,
   drawSelection,
-  highlightActiveLine,
   dropCursor,
   rectangularSelection,
   crosshairCursor,
   lineNumbers,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 import { Controller } from "@hotwired/stimulus";
-import { EditorView, basicSetup } from "codemirror";
+import { EditorView } from "codemirror";
 
 export default class extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
