@@ -11,7 +11,10 @@ module SpaceService
         TopicService::Destroy.new.call(topic_record_id: topic_record.id)
       end
 
-      space_record.export_records.destroy_all
+      space_record.export_records.find_each do |export_record|
+        ExportService::Destroy.new.call(export_record_id: export_record.id)
+      end
+
       space_record.space_member_records.destroy_all
 
       space_record.destroy!
