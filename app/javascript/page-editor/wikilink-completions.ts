@@ -1,24 +1,39 @@
-const completions = [
-  { label: "[[panic", displayLabel: "panic" },
-  { label: "park", type: "constant" },
-  { label: "password" },
-];
+export async function wikilinkCompletions(spaceIdentifier: string) {
+  return async (context) => {
+    let before = context.matchBefore(/\[\[.*/);
 
-export function wikilinkCompletions(context) {
-  let before = context.matchBefore(/\[\[.*/);
-  console.log("!!! before:", before);
-  console.log("!!! context.explicit:", context.explicit);
+    if (!context.explicit && !before) {
+      return null;
+    }
 
-  if (!context.explicit && !before) {
-    return null;
+    const from = before ? before.from : context.pos;
+    const completions = await buildCompletions(spaceIdentifier, before);
+
+    return {
+      from,
+      options: completions,
+    };
+  };
+}
+
+async function fetchPageLocations(spaceIdentifier: string, keyword: string) {
+  return fetch(`/s/${spaceIdentifier}/page_locations?q=${keyword}`)
+    .then((response) => response.json())
+    .then((data) => data.page_locations);
+}
+
+async function buildCompletions(spaceIdentifier: string, before: any) {
+  if (!before) {
+    return [];
   }
 
-  const from = before ? before.from : context.pos;
-  console.log("!!! from:", from);
+  // [[foo/bar の [[foo/ を取り除き bar を取得する
+  const keyword = before.text.replace(/^\[\[/, "").replace(/.*\//, "");
 
-  return {
-    from,
-    options: completions,
-    validFor: /^\[\[.*/,
-  };
+  const pageLocations = await fetchPageLocations(spaceIdentifier, keyword);
+
+  return pageLocations.map((pageLocation) => ({
+    label: `[[${pageLocation.key}`,
+    displayLabel: pageLocation.key,
+  }));
 }
