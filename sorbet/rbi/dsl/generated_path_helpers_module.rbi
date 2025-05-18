@@ -85,6 +85,9 @@ module GeneratedPathHelpersModule
   def profile_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def rails_info_notes_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def rails_info_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
