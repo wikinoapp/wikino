@@ -24,7 +24,7 @@ module SpaceService
         raise exception
       end
 
-      export_record.send_succeeded_mail!
+      send_succeeded_mail!(export_record:)
     end
 
     sig { params(export_record: ExportRecord).returns(String) }
@@ -84,6 +84,14 @@ module SpaceService
       )
 
       file.close
+    end
+
+    sig { params(export_record: ExportRecord).void }
+    private def send_succeeded_mail!(export_record:)
+      ExportMailer.succeeded(
+        export_id: export_record.id,
+        locale: export_record.queued_by_record.not_nil!.user_record_locale
+      ).deliver_later
     end
   end
 end

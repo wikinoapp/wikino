@@ -67,11 +67,4 @@ class ExportRecord < ApplicationRecord
       changed_at: Time.current
     )
   end
-
-  sig { void }
-  def send_succeeded_mail!
-    ExportMailer.succeeded(export_id: id, locale: queued_by_record.not_nil!.user_locale).deliver_later
-
-    nil
-  end
 end
