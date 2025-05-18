@@ -7,21 +7,6 @@ class PageLocation < T::Struct
   include T::Struct::ActsAsComparable
 
   const :key, PageLocationKey
-  const :topic, TopicRecord
-  const :page, PageRecord
-
-  sig { params(current_space: SpaceRecord, keys: T::Array[PageLocationKey]).returns(T::Array[PageLocation]) }
-  def self.build_with_keys(current_space:, keys:)
-    topics = current_space.topic_records.where(name: keys.map(&:topic_name).uniq)
-    pages = current_space.page_records.where(title: keys.map(&:page_title).uniq)
-
-    keys.each_with_object([]) do |key, ary|
-      topic = topics.find { |topic| topic.name == key.topic_name }
-      page = pages.find { |page| page.topic_id == topic&.id && page.title == key.page_title }
-
-      if topic && page
-        ary << new(key:, topic:, page:)
-      end
-    end
-  end
+  const :topic, Topic
+  const :page, Page
 end
