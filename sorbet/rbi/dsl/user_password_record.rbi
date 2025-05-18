@@ -42,6 +42,9 @@ class UserPasswordRecord
   def password_confirmation=(password_confirmation); end
 
   sig { returns(T.untyped) }
+  def password_reset_token; end
+
+  sig { returns(T.untyped) }
   def password_salt; end
 
   private
