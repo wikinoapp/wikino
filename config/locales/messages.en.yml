@@ -148,6 +148,8 @@ en:
       are_you_sure_sign_out: Are you sure you want to sign out?
       signed_out_successfully: Signed out successfully.
     welcome:
+      announcement: "🚀 2025-05-17 - Wikino beta released"
+      announcement_link_text: Read more
       features_title: Features
       footer_about_developer: About the Developer
       footer_community: Community
