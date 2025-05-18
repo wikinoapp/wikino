@@ -22,6 +22,8 @@ import {
 import { Controller } from "@hotwired/stimulus";
 import { EditorView } from "codemirror";
 
+import { wikilinkCompletions } from "../page-editor/wikilink-completions";
+
 export default class extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
   static values = {
@@ -54,7 +56,7 @@ export default class extends Controller<HTMLDivElement> {
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         bracketMatching(),
         closeBrackets(),
-        autocompletion(),
+        autocompletion({ override: [wikilinkCompletions] }),
         rectangularSelection(),
         crosshairCursor(),
         highlightSelectionMatches(),
