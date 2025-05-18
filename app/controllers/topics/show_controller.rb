@@ -39,7 +39,7 @@ module Topics
         can_create_page: space_member_policy.can_create_page?(topic_record:)
       )
 
-      render Topics::ShowView.new(current_user:, topic:, pinned_pages:, page_list:)
+      render_component Topics::ShowView.new(current_user:, topic:, pinned_pages:, page_list:)
     end
   end
 end

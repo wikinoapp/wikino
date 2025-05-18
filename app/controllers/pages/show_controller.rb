@@ -36,7 +36,7 @@ module Pages
         page_record:
       )
 
-      render Pages::ShowView.new(
+      render_component Pages::ShowView.new(
         current_user:,
         page:,
         link_list:,

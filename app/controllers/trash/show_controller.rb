@@ -30,7 +30,7 @@ module Trash
       )
       form = PageForm::BulkRestoring.new
 
-      render Trash::ShowView.new(
+      render_component Trash::ShowView.new(
         current_user: current_user!,
         space:,
         page_list:,

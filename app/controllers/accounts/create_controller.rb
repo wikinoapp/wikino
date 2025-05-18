@@ -22,7 +22,7 @@ module Accounts
       )
 
       if form.invalid?
-        return render(Accounts::NewView.new(form:), status: :unprocessable_entity)
+        return render_component(Accounts::NewView.new(form:), status: :unprocessable_entity)
       end
 
       account_result = AccountService::Create.new.call(

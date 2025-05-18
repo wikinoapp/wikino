@@ -14,7 +14,7 @@ module EmailConfirmations
     def call
       form = EmailConfirmationForm::Check.new
 
-      render EmailConfirmations::EditView.new(form:)
+      render_component EmailConfirmations::EditView.new(form:)
     end
   end
 end

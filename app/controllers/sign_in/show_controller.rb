@@ -13,7 +13,7 @@ module SignIn
     def call
       form = UserSessionForm::Creation.new
 
-      render SignIn::ShowView.new(form:)
+      render_component SignIn::ShowView.new(form:)
     end
   end
 end

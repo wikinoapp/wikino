@@ -34,7 +34,7 @@ module Topics
           )
           topic = TopicRepository.new.to_model(topic_record:)
 
-          render Topics::Settings::General::ShowView.new(
+          render_component Topics::Settings::General::ShowView.new(
             current_user: current_user!,
             topic:,
             form:

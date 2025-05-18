@@ -42,7 +42,7 @@ module Spaces
       pinned_page_records = showable_pages.pinned.order(pinned_at: :desc, id: :desc)
       pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records)
 
-      render Spaces::ShowView.new(
+      render_component Spaces::ShowView.new(
         current_user:,
         joined_space: space_member_record.present?,
         space:,

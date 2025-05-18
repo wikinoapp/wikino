@@ -13,7 +13,7 @@ module PasswordResets
     def call
       form = EmailConfirmationForm::Creation.new
 
-      render PasswordResets::NewView.new(form:)
+      render_component PasswordResets::NewView.new(form:)
     end
   end
 end

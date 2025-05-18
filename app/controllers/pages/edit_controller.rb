@@ -40,7 +40,7 @@ module Pages
       backlink_list = BacklinkListRepository.new.to_model(user_record: current_user_record, page_record:)
       current_user = UserRepository.new.to_model(user_record: current_user_record!)
 
-      render Pages::EditView.new(
+      render_component Pages::EditView.new(
         space:,
         page:,
         draft_page: draft_page(draft_page_record:),

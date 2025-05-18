@@ -14,7 +14,7 @@ module Spaces
       form = SpaceForm::Creation.new(form_params)
 
       if form.invalid?
-        return render(
+        return render_component(
           Spaces::NewView.new(
             current_user: current_user!,
             form:

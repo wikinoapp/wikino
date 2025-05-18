@@ -42,15 +42,16 @@ module DraftPages
         page_record:
       )
 
-      render(DraftPages::UpdateView.new(
-        current_user: current_user!,
-        draft_page:,
-        link_list:,
-        backlink_list:
-      ), {
+      render_component(
+        DraftPages::UpdateView.new(
+          current_user: current_user!,
+          draft_page:,
+          link_list:,
+          backlink_list:
+        ),
         content_type: "text/vnd.turbo-stream.html",
         layout: false
-      })
+      )
     end
 
     sig { returns(ActionController::Parameters) }

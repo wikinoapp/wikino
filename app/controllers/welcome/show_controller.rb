@@ -15,7 +15,7 @@ module Welcome
         return redirect_to(home_path)
       end
 
-      render Welcome::ShowView.new
+      render_component Welcome::ShowView.new
     end
   end
 end

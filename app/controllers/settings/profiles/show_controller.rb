@@ -18,7 +18,7 @@ module Settings
           description: current_user!.description
         )
 
-        render Settings::Profiles::ShowView.new(
+        render_component Settings::Profiles::ShowView.new(
           current_user: current_user!,
           form:
         )

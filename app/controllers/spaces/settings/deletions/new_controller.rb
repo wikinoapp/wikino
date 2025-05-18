@@ -27,7 +27,7 @@ module Spaces
           space = SpaceRepository.new.to_model(space_record:)
           form = SpaceForm::DestroyConfirmation.new(space_record:)
 
-          render Spaces::Settings::Deletions::NewView.new(
+          render_component Spaces::Settings::Deletions::NewView.new(
             current_user: current_user!,
             space:,
             form:

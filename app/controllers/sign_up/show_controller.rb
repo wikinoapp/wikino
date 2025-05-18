@@ -13,7 +13,7 @@ module SignUp
     def call
       form = EmailConfirmationForm::Creation.new
 
-      render SignUp::ShowView.new(form:)
+      render_component SignUp::ShowView.new(form:)
     end
   end
 end

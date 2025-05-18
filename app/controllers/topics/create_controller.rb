@@ -27,13 +27,14 @@ module Topics
       if form.invalid?
         space = SpaceRepository.new.to_model(space_record:)
 
-        return render(Topics::NewView.new(
-          current_user: current_user!,
-          space:,
-          form:
-        ), {
+        return render_component(
+          Topics::NewView.new(
+            current_user: current_user!,
+            space:,
+            form:
+          ),
           status: :unprocessable_entity
-        })
+        )
       end
 
       result = TopicService::Create.new.call(

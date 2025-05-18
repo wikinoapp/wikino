@@ -11,7 +11,7 @@ module Settings
 
     sig { returns(T.untyped) }
     def call
-      render Settings::ShowView.new(
+      render_component Settings::ShowView.new(
         current_user: current_user!
       )
     end

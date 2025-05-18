@@ -17,7 +17,7 @@ module Profiles
       end
       user = UserRepository.new.to_model(user_record:)
 
-      render Profiles::ShowView.new(current_user:, user:, joined_spaces:)
+      render_component Profiles::ShowView.new(current_user:, user:, joined_spaces:)
     end
   end
 end

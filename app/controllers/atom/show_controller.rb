@@ -20,7 +20,7 @@ module Atom
         PageRepository.new.to_model(page_record:)
       end
 
-      render(
+      render_component(
         Atom::ShowView.new(space:, pages:),
         formats: :atom,
         content_type: Mime::Type.lookup("application/atom+xml")
