@@ -150,6 +150,8 @@ ja:
       are_you_sure_sign_out: ログアウトしますか？
       signed_out_successfully: ログアウトしました
     welcome:
+      announcement: "🚀 2025年5月17日 ベータ版をリリースしました"
+      announcement_link_text: 詳細はこちら
       features_title: 特徴
       footer_about_developer: 開発者について
       footer_community: Community
