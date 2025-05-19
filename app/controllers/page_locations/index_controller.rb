@@ -19,6 +19,11 @@ module PageLocations
         user_record: current_user_record,
         space_member_record:
       )
+
+      unless space_member_policy.joined_space?
+        return render_404
+      end
+
       page_records = space_member_policy
         .showable_pages(space_record:)
         .filter_by_title(q: params[:q])

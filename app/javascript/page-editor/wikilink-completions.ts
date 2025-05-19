@@ -12,6 +12,9 @@ export async function wikilinkCompletions(spaceIdentifier: string) {
     return {
       from,
       options: completions,
+      // `foo bar` というタイトルのページがある状態で、
+      // `[[bar foo` と入力したとき補完候補に出るようにするためにフィルタを無効化している
+      filter: false,
     };
   };
 }
