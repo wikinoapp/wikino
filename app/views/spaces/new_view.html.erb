@@ -7,7 +7,11 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title:) %>
+      <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.spaces.new_hint_html") %>
+        <% end %>
+      <% end %>
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>

@@ -85,6 +85,13 @@ en:
         This identifier is used in the URL of the space.<br>
         It must be at most %{max_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
+      new_hint_html: |-
+        For more information about spaces, please see
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/16" target="_blank">this page</a>.
+        <br>
+        If you are unsure what kind of space to create,
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/50" target="_blank">Best Practices</a>
+        may be helpful.
       new_space: New Space
       no_pages: No pages.
       no_topics: No topics.
