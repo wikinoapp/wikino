@@ -11,7 +11,11 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title: t("nouns.new_topic")) %>
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.new_topic")) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.topics.new_hint_html") %>
+        <% end %>
+      <% end %>
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
