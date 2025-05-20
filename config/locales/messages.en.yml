@@ -132,6 +132,13 @@ en:
     topics:
       created: Topic created.
       deleted: Topic deleted.
+      new_hint_html: |-
+        For more information about topics, please see
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/11" target="_blank">this page</a>.
+        <br>
+        If you are unsure what kind of topic to create,
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/52" target="_blank">Best Practices</a>
+        may be helpful.
       settings:
         deletions:
           new:

@@ -134,6 +134,13 @@ ja:
     topics:
       created: トピックを作成しました
       deleted: トピックを削除しました
+      new_hint_html: |-
+        トピックについては
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/11" target="_blank">こちら</a>
+        をご覧下さい<br>
+        どんなトピックを作ると良いかわからないときは
+        <a class="link link-primary" href="https://wikino.app/s/wikino/pages/52" target="_blank">ベストプラクティス</a>
+        が参考になるかもしれません
       settings:
         deletions:
           new:
