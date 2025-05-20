@@ -5,6 +5,7 @@ services:
       dockerfile: ./Dockerfile.dev
     depends_on:
       - postgresql
+      - chrome
     environment:
       BINDING: 0.0.0.0
     ports:
@@ -23,6 +24,9 @@ services:
       - postgresql17_data:/var/lib/postgresql/data:delegated
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
+
+  chrome:
+    image: selenium/standalone-chromium:136.0.7103.113
 
 volumes:
   app_gems_data:
