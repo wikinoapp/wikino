@@ -101,7 +101,7 @@ module ControllerConcerns
 
     sig(:final) { params(token: String).void }
     private def store_user_session_token(token:)
-      domain = Rails.env.test? ? `hostname`.strip.downcase : ".#{Wikino.config.host}"
+      domain = (Rails.env.test? && !ENV["CI"]) ? `hostname`.strip.downcase : ".#{Wikino.config.host}"
 
       cookies.signed.permanent[UserSession::TOKENS_COOKIE_KEY] = {
         value: token,
