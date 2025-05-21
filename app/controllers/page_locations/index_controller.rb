@@ -33,7 +33,7 @@ module PageLocations
       render json: {
         page_locations: page_records.map { |page_record|
           {
-            key: "#{page_record.topic_record.name}/#{page_record.title}"
+            key: "#{page_record.topic_record.not_nil!.name}/#{page_record.title}"
           }
         }
       }
