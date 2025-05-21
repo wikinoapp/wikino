@@ -3,6 +3,7 @@
 
 module ControllerConcerns
   module Authenticatable
+    include Kernel
     include ActionController::StrongParameters
 
     def self.helper_method(*args)
