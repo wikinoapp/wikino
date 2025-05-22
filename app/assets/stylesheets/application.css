@@ -51,7 +51,7 @@
   }
 
   .wikino-markdown hr {
-    @apply border-gray-300;
+    @apply my-6 border-gray-300;
   }
 
   .wikino-markdown img {
@@ -80,6 +80,22 @@
 
   .wikino-markdown pre code {
     @apply block overflow-visible rounded-none bg-transparent p-0;
+  }
+
+  .wikino-markdown table {
+    @apply mb-4 border border-gray-500;
+  }
+
+  .wikino-markdown table td {
+    @apply border border-gray-500 px-2 py-1;
+  }
+
+  .wikino-markdown table th {
+    @apply border border-gray-500 px-2 py-1;
+  }
+
+  .wikino-markdown table tr {
+    @apply even:bg-gray-200;
   }
 
   .wikino-markdown ul {
