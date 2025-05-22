@@ -131,9 +131,6 @@ GEM
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
     csv (3.3.4)
-    cuprite (0.15.1)
-      capybara (~> 3.0)
-      ferrum (~> 0.15.0)
     date (3.4.1)
     diff-lcs (1.6.2)
     discard (1.4.0)
@@ -160,11 +157,6 @@ GEM
     factory_bot_rails (6.4.4)
       factory_bot (~> 6.5)
       railties (>= 5.0.0)
-    ferrum (0.15)
-      addressable (~> 2.5)
-      concurrent-ruby (~> 1.1)
-      webrick (~> 1.7)
-      websocket-driver (~> 0.7)
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-x86_64-linux-gnu)
     fugit (1.11.1)
@@ -279,7 +271,7 @@ GEM
     psych (5.2.6)
       date
       stringio
-    public_suffix (6.0.1)
+    public_suffix (6.0.2)
     puma (6.6.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
@@ -409,6 +401,12 @@ GEM
     ruby-progressbar (1.13.0)
     rubyzip (2.4.1)
     securerandom (0.4.1)
+    selenium-webdriver (4.32.0)
+      base64 (~> 0.2)
+      logger (~> 1.4)
+      rexml (~> 3.2, >= 3.2.5)
+      rubyzip (>= 1.2.2, < 3.0)
+      websocket (~> 1.0)
     selma (0.4.12-aarch64-linux)
     selma (0.4.12-x86_64-linux)
     sentry-rails (5.24.0)
@@ -497,7 +495,7 @@ GEM
       activesupport (>= 5.2.0, < 8.1)
       concurrent-ruby (~> 1.0)
       method_source (~> 1.0)
-    webrick (1.9.1)
+    websocket (1.2.11)
     websocket-driver (0.7.7)
       base64
       websocket-extensions (>= 0.1.0)
@@ -525,7 +523,6 @@ DEPENDENCIES
   capybara
   commonmarker
   cssbundling-rails
-  cuprite
   discard
   dotenv-rails
   email_validator
@@ -553,6 +550,7 @@ DEPENDENCIES
   rubocop-rspec (~> 3.4.0)
   ruby-lsp
   rubyzip
+  selenium-webdriver
   sentry-rails
   sentry-ruby
   sequenced

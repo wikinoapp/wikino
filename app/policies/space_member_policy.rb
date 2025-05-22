@@ -21,6 +21,11 @@ class SpaceMemberPolicy < ApplicationPolicy
     end
   end
 
+  sig { returns(T::Boolean) }
+  def joined_space?
+    !space_member_record.nil?
+  end
+
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
     return false if space_member_record.nil?
@@ -31,7 +36,7 @@ class SpaceMemberPolicy < ApplicationPolicy
 
   sig { returns(T::Boolean) }
   def can_create_topic?
-    !space_member_record.nil?
+    joined_space?
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
