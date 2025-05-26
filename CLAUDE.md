@@ -54,6 +54,8 @@ WikinoはWikiアプリです。
 ### Ruby
 
 - 文字列はダブルクオートで書いてください
+- 最終行に改行を入れてください
+  - RuboCopの `Layout/TrailingEmptyLines` に対応してください
 - 後置ifは使わないでください
 
 ```rb
@@ -229,6 +231,17 @@ end
 RSpec.describe "GET /", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトすること" do
   end
+end
+```
+
+### マイグレーション
+
+- idの生成には `generate_ulid()` 関数を使用してください
+
+```rb
+create_table :examples, id: false do |t|
+  t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+  # ...
 end
 ```
 
