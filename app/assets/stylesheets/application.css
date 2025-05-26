@@ -8,6 +8,10 @@
     .wikino-markdown
     ============================================================================
   */
+  .wikino-markdown {
+    @apply break-words;
+  }
+
   .wikino-markdown > :first-child {
     @apply mt-0;
   }
