@@ -14,25 +14,27 @@ import {
   keymap,
   highlightSpecialChars,
   drawSelection,
-  highlightActiveLine,
   dropCursor,
   rectangularSelection,
   crosshairCursor,
   lineNumbers,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 import { Controller } from "@hotwired/stimulus";
-import { EditorView, basicSetup } from "codemirror";
+import { EditorView } from "codemirror";
+
+import { wikilinkCompletions } from "../page-editor/wikilink-completions";
 
 export default class extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
   static values = {
-    autofocus: Boolean,
+    spaceIdentifier: String,
     body: String,
+    autofocus: Boolean,
   };
 
   declare readonly autofocusValue: boolean;
   declare readonly bodyValue: string;
+  declare readonly spaceIdentifierValue: string;
   declare readonly codeMirrorTarget: HTMLDivElement;
   declare readonly textareaTarget: HTMLTextAreaElement;
   editorView: EditorView;
@@ -41,7 +43,7 @@ export default class extends Controller<HTMLDivElement> {
     this.initializeEditor();
   }
 
-  initializeEditor() {
+  async initializeEditor() {
     const state = EditorState.create({
       doc: this.bodyValue,
       extensions: [
@@ -56,7 +58,7 @@ export default class extends Controller<HTMLDivElement> {
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         bracketMatching(),
         closeBrackets(),
-        autocompletion(),
+        autocompletion({ override: [await wikilinkCompletions(this.spaceIdentifierValue)] }),
         rectangularSelection(),
         crosshairCursor(),
         highlightSelectionMatches(),

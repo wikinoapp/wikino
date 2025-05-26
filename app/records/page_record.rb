@@ -37,6 +37,12 @@ class PageRecord < ApplicationRecord
   scope :available, -> { visible.not_trashed }
   scope :active, -> { available.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
+  scope :filter_by_title, ->(q:) {
+    words = q&.split.presence || []
+    conditions = words.map.with_index { |_, i| "(title ILIKE :word#{i})" }.join(" AND ")
+    parameters = words.map.with_index { |word, i| {"word#{i}": "%#{word}%"} }.reduce({}, :merge)
+    where(conditions, parameters)
+  }
 
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic_record:)

@@ -4285,7 +4285,7 @@ class REXML::Parsers::BaseParser
   # source://rexml//lib/rexml/parsers/baseparser.rb#645
   def record_entity_expansion(delta = T.unsafe(nil)); end
 
-  # source://rexml//lib/rexml/parsers/baseparser.rb#773
+  # source://rexml//lib/rexml/parsers/baseparser.rb#777
   def scan_quote; end
 end
 

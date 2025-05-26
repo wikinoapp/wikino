@@ -93,6 +93,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres@localhost:5432/wikino_test
       RAILS_ENV: test
+      CI: true
     services:
       postgresql:
         image: postgres:17.0
