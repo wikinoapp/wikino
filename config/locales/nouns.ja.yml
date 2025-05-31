@@ -42,3 +42,4 @@ ja:
     disable_two_factor_auth: 二要素認証を無効にする
     recovery_codes: リカバリーコード
     regenerate_recovery_codes: リカバリーコードを再生成
+    two_factor_verification: 二要素認証の確認

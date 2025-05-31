@@ -42,3 +42,4 @@ en:
     disable_two_factor_auth: Disable two-factor authentication
     recovery_codes: Recovery codes
     regenerate_recovery_codes: Regenerate recovery codes
+    two_factor_verification: Two-factor verification

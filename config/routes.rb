@@ -73,6 +73,8 @@ Rails.application.routes.draw do
   match "/terms",                                                          via: :get,    as: :terms,                          to: redirect("https://wikino.app/s/wikino/pages/41")
   match "/user_session",                                                   via: :delete, as: :user_session,                   to: "user_sessions/destroy#call"
   match "/user_session",                                                   via: :post,                                        to: "user_sessions/create#call"
+  match "/user_session/two_factor_auth/new",                               via: :get,    as: :user_sessions_two_factor_auth_new, to: "user_sessions/two_factor_auths/new#call"
+  match "/user_session/two_factor_auth",                                   via: :post,   as: :user_sessions_two_factor_auth_list, to: "user_sessions/two_factor_auths/create#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 
   root "welcome/show#call"

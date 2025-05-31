@@ -209,4 +209,10 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def user_session_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_sessions_two_factor_auth_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_sessions_two_factor_auth_new_url(*args); end
 end

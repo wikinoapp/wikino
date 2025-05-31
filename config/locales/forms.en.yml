@@ -60,6 +60,8 @@ en:
       user_session_form/creation:
         email: Email
         password: Password
+      user_session_form/two_factor_verification:
+        code: Code
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot

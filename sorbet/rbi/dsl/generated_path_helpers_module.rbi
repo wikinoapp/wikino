@@ -209,4 +209,10 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def user_session_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_sessions_two_factor_auth_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_sessions_two_factor_auth_new_path(*args); end
 end

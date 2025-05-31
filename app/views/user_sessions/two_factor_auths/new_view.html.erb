@@ -1,0 +1,54 @@
+<%= render Layouts::SimpleComponent.new(current_page_name:) do |layout| %>
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Basic::CardComponent.new(
+        class_name: "bg-base-300 border border-brand-200"
+      ) do |card| %>
+        <%= card.with_body(class_name: "p-8") do %>
+          <h1 class="text-2xl font-bold mb-6"><%= t("nouns.two_factor_verification") %></h1>
+          
+          <p class="mb-6"><%= t("messages.two_factor_auth.enter_code") %></p>
+
+          <%= form_with model: form, url: user_sessions_two_factor_auth_list_path do |f| %>
+            <div class="mb-4">
+              <%= f.label :code, t("activemodel.attributes.user_session_form/two_factor_verification.code"), class: "label" %>
+              <%= f.text_field :code, 
+                  class: "input input-bordered w-full text-center text-2xl tracking-wider", 
+                  maxlength: 8,
+                  placeholder: "000000",
+                  autocomplete: "one-time-code",
+                  autofocus: true %>
+              <% if form.errors[:code].any? %>
+                <p class="text-error text-sm mt-1"><%= form.errors[:code].first %></p>
+              <% end %>
+              <p class="text-sm text-gray-600 mt-2"><%= t("messages.two_factor_auth.code_hint") %></p>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <%= link_to t("verbs.cancel"), sign_in_path, class: "btn btn-ghost" %>
+              <%= f.submit t("verbs.verify"), class: "btn btn-primary" %>
+            </div>
+          <% end %>
+
+          <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600">
+              <%= t("messages.two_factor_auth.lost_device") %>
+              <%= link_to t("messages.two_factor_auth.use_recovery_code"), "#", 
+                  class: "link link-primary",
+                  onclick: "document.getElementById('recovery-code-hint').classList.toggle('hidden'); return false;" %>
+            </p>
+            <p id="recovery-code-hint" class="text-sm text-gray-600 mt-2 hidden">
+              <%= t("messages.two_factor_auth.recovery_code_hint") %>
+            </p>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: false) %>
+  <% end %>
+<% end %>
