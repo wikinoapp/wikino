@@ -161,6 +161,19 @@ ja:
       invalid_code: 認証コードが無効です
       manual_entry: "または手動でこのコードを入力："
       recovery_codes_regenerated: リカバリーコードを再生成しました
+      setup_required: 二要素認証の設定が必要です
+      setup_description: 二要素認証でアカウントを保護しましょう
+      enabled_at: "%{time}に有効化"
+      disable_confirmation: 二要素認証を無効にしてもよろしいですか？
+      status:
+        enabled: 二要素認証は有効です
+        disabled: 二要素認証は無効です
+      recovery_codes_description: これらのリカバリーコードは、認証アプリにアクセスできなくなった場合にアカウントにアクセスするために使用できます。各コードは一度しか使用できません。
+      save_recovery_codes: これらのリカバリーコードを安全な場所に保存してください。再度表示することはできません。
+      no_recovery_codes: リカバリーコードがありません。
+      regenerate_warning: リカバリーコードを再生成すると、既存のすべてのコードが無効になります。
+      regenerate_confirmation: リカバリーコードを再生成してもよろしいですか？既存のすべてのコードが無効になります。
+      not_enabled: 二要素認証が有効になっていません。
       setup_instructions:
         title: 二要素認証の設定方法
         step1: スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします

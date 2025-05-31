@@ -19,3 +19,7 @@ en:
     enable_two_factor_auth: Enable two-factor authentication
     disable_two_factor_auth: Disable two-factor authentication
     regenerate_recovery_codes: Regenerate recovery codes
+    view_recovery_codes: View recovery codes
+    print_recovery_codes: Print recovery codes
+    download_recovery_codes: Download recovery codes
+    back: Back

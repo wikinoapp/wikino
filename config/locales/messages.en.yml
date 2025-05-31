@@ -159,6 +159,19 @@ en:
       invalid_code: Invalid authentication code.
       manual_entry: "Or enter this code manually:"
       recovery_codes_regenerated: Recovery codes have been regenerated.
+      setup_required: Two-factor authentication setup is required.
+      setup_description: Secure your account with two-factor authentication.
+      enabled_at: "Enabled on %{time}"
+      disable_confirmation: Are you sure you want to disable two-factor authentication?
+      status:
+        enabled: Two-factor authentication is enabled
+        disabled: Two-factor authentication is not enabled
+      recovery_codes_description: These recovery codes can be used to access your account if you lose access to your authenticator app. Each code can only be used once.
+      save_recovery_codes: Please save these recovery codes in a safe place. You won't be able to see them again.
+      no_recovery_codes: No recovery codes available.
+      regenerate_warning: Regenerating recovery codes will invalidate all existing codes.
+      regenerate_confirmation: Are you sure you want to regenerate recovery codes? All existing codes will be invalidated.
+      not_enabled: Two-factor authentication is not enabled.
       setup_instructions:
         title: How to set up two-factor authentication
         step1: Install an authenticator app (Google Authenticator, Authy, etc.) on your smartphone.

@@ -15,21 +15,52 @@
             <p><%= t("messages.two_factor_auth.recovery_codes_description") %></p>
           </div>
 
-          <% if user_two_factor_auth.recovery_codes.any? %>
+          <% codes_to_show = recovery_codes || user_two_factor_auth.recovery_codes %>
+          <% if codes_to_show.any? %>
             <div class="mb-6 p-4 bg-base-100 rounded">
               <h3 class="font-semibold mb-2"><%= t("nouns.recovery_codes") %></h3>
               <div class="grid grid-cols-2 gap-2">
-                <% user_two_factor_auth.recovery_codes.each do |code| %>
+                <% codes_to_show.each do |code| %>
                   <code class="text-sm"><%= code %></code>
                 <% end %>
               </div>
             </div>
 
+            <% if show_download %>
+              <div class="alert alert-info mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span><%= t("messages.two_factor_auth.save_recovery_codes") %></span>
+              </div>
+            <% end %>
+
             <div class="mb-6">
               <button class="btn btn-sm" onclick="window.print()">
                 <%= t("verbs.print_recovery_codes") %>
               </button>
+              <button class="btn btn-sm" onclick="downloadRecoveryCodes()">
+                <%= t("verbs.download_recovery_codes") %>
+              </button>
             </div>
+            
+            <script>
+              function downloadRecoveryCodes() {
+                const codes = <%= codes_to_show.to_json %>;
+                const content = 'Wikino Recovery Codes\n' +
+                               'Account: <%= current_user.email %>\n' +
+                               'Generated: <%= l(Time.current, format: :long) %>\n\n' +
+                               codes.join('\n') +
+                               '\n\nKeep these codes in a safe place. Each code can only be used once.';
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'wikino-recovery-codes.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+              }
+            </script>
           <% else %>
             <p class="text-warning mb-6"><%= t("messages.two_factor_auth.no_recovery_codes") %></p>
           <% end %>

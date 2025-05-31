@@ -38,6 +38,9 @@ en:
         show: Settings
         profiles:
           show: "Profile settings"
+        two_factor_auth:
+          show: "Two-factor authentication"
+          recovery_codes: "Recovery codes"
       sign_in:
         show: Sign in
       sign_up:

@@ -39,3 +39,6 @@ ja:
     trash: ゴミ箱
     two_factor_auth: 二要素認証
     two_factor_auth_settings: 二要素認証の設定
+    disable_two_factor_auth: 二要素認証を無効にする
+    recovery_codes: リカバリーコード
+    regenerate_recovery_codes: リカバリーコードを再生成

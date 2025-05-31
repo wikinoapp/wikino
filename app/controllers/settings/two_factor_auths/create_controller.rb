@@ -35,8 +35,10 @@ module Settings
         )
 
         if result.success
+          # Store recovery codes in session temporarily to show them once
+          session[:recovery_codes] = result.recovery_codes
           flash[:notice] = t("messages.two_factor_auth.enabled_successfully")
-          redirect_to settings_two_factor_auth_path
+          redirect_to settings_two_factor_auth_recovery_codes_path
         else
           flash.now[:alert] = result.error_message
           setup_result = TwoFactorAuthService::Setup.new.call(user: current_user!)
