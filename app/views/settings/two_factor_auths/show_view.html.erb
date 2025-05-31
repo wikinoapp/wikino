@@ -1,0 +1,50 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title:) %>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <% if user_two_factor_auth&.enabled %>
+            <p class="text-success mb-4"><%= t("messages.two_factor_auth.status.enabled") %></p>
+            <p class="mb-4"><%= t("messages.two_factor_auth.enabled_at", time: l(user_two_factor_auth.enabled_at, format: :long)) %></p>
+            
+            <div class="mb-4">
+              <%= link_to t("verbs.view_recovery_codes"), settings_two_factor_auth_recovery_codes_path, class: "btn btn-primary" %>
+            </div>
+
+            <hr class="my-4">
+
+            <h3 class="text-lg font-semibold mb-2"><%= t("nouns.disable_two_factor_auth") %></h3>
+            <%= form_with model: destruction_form, url: settings_two_factor_auth_path, method: :delete do |form| %>
+              <div class="mb-4">
+                <%= form.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
+                <%= form.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
+                <% if destruction_form.errors[:password].any? %>
+                  <p class="text-error text-sm mt-1"><%= destruction_form.errors[:password].first %></p>
+                <% end %>
+              </div>
+
+              <%= form.submit t("verbs.disable_two_factor_auth"), class: "btn btn-error", data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") } %>
+            <% end %>
+          <% else %>
+            <p class="mb-4"><%= t("messages.two_factor_auth.status.disabled") %></p>
+            <p class="mb-4"><%= t("messages.two_factor_auth.setup_description") %></p>
+            
+            <%= link_to t("verbs.enable_two_factor_auth"), settings_two_factor_auth_new_path, class: "btn btn-primary" %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

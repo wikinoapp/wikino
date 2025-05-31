@@ -1,0 +1,64 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title:) %>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <div class="prose max-w-none mb-6">
+            <p><%= t("messages.two_factor_auth.recovery_codes_description") %></p>
+          </div>
+
+          <% if user_two_factor_auth.recovery_codes.any? %>
+            <div class="mb-6 p-4 bg-base-100 rounded">
+              <h3 class="font-semibold mb-2"><%= t("nouns.recovery_codes") %></h3>
+              <div class="grid grid-cols-2 gap-2">
+                <% user_two_factor_auth.recovery_codes.each do |code| %>
+                  <code class="text-sm"><%= code %></code>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <button class="btn btn-sm" onclick="window.print()">
+                <%= t("verbs.print_recovery_codes") %>
+              </button>
+            </div>
+          <% else %>
+            <p class="text-warning mb-6"><%= t("messages.two_factor_auth.no_recovery_codes") %></p>
+          <% end %>
+
+          <hr class="my-4">
+
+          <h3 class="text-lg font-semibold mb-2"><%= t("nouns.regenerate_recovery_codes") %></h3>
+          <p class="text-sm text-gray-600 mb-4"><%= t("messages.two_factor_auth.regenerate_warning") %></p>
+
+          <%= form_with model: regeneration_form, url: settings_two_factor_auth_recovery_codes_list_path do |form| %>
+            <div class="mb-4">
+              <%= form.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
+              <%= form.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
+              <% if regeneration_form.errors[:password].any? %>
+                <p class="text-error text-sm mt-1"><%= regeneration_form.errors[:password].first %></p>
+              <% end %>
+            </div>
+
+            <div class="flex justify-between">
+              <%= link_to t("verbs.back"), settings_two_factor_auth_path, class: "btn btn-ghost" %>
+              <%= form.submit t("verbs.regenerate_recovery_codes"), class: "btn btn-warning", data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") } %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

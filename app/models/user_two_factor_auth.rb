@@ -10,7 +10,7 @@ class UserTwoFactorAuth < T::Struct
 
   const :database_id, T::Wikino::DatabaseId
   const :user_id, T::Wikino::DatabaseId
-  const :secret, String
+  const :secret, String, sensitivity: []
   const :enabled, T::Boolean
   const :enabled_at, T.nilable(ActiveSupport::TimeWithZone)
   const :recovery_codes, T::Array[String]

@@ -121,6 +121,21 @@ module GeneratedPathHelpersModule
   def settings_profile_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_new_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_codes_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_codes_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

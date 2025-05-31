@@ -1,0 +1,64 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title:) %>
+
+      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <div class="prose max-w-none mb-6">
+            <h3><%= t("messages.two_factor_auth.setup_instructions.title") %></h3>
+            <ol>
+              <li><%= t("messages.two_factor_auth.setup_instructions.step1") %></li>
+              <li><%= t("messages.two_factor_auth.setup_instructions.step2") %></li>
+              <li><%= t("messages.two_factor_auth.setup_instructions.step3") %></li>
+            </ol>
+          </div>
+
+          <div class="mb-6 text-center">
+            <% if setup_result.qr_code %>
+              <div class="inline-block p-4 bg-white rounded">
+                <%= raw setup_result.qr_code %>
+              </div>
+            <% else %>
+              <p class="text-sm text-gray-600 mb-2"><%= t("messages.two_factor_auth.manual_entry") %></p>
+              <code class="text-sm"><%= setup_result.secret %></code>
+            <% end %>
+          </div>
+
+          <%= form_with model: form, url: settings_two_factor_auth_list_path do |f| %>
+            <div class="mb-4">
+              <%= f.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
+              <%= f.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
+              <% if form.errors[:password].any? %>
+                <p class="text-error text-sm mt-1"><%= form.errors[:password].first %></p>
+              <% end %>
+            </div>
+
+            <div class="mb-4">
+              <%= f.label :totp_code, t("activemodel.attributes.two_factor_auth_form/creation.totp_code"), class: "label" %>
+              <%= f.text_field :totp_code, class: "input input-bordered w-full", maxlength: 6, placeholder: "000000", autocomplete: "off" %>
+              <% if form.errors[:totp_code].any? %>
+                <p class="text-error text-sm mt-1"><%= form.errors[:totp_code].first %></p>
+              <% end %>
+            </div>
+
+            <div class="flex justify-between">
+              <%= link_to t("verbs.cancel"), settings_two_factor_auth_path, class: "btn btn-ghost" %>
+              <%= f.submit t("verbs.enable_two_factor_auth"), class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>
