@@ -15,3 +15,7 @@ ja:
     submit: 送信する
     update: 更新する
     view_trash: ゴミ箱を見る
+    cancel: キャンセル
+    enable_two_factor_auth: 二要素認証を有効にする
+    disable_two_factor_auth: 二要素認証を無効にする
+    regenerate_recovery_codes: リカバリーコードを再生成する

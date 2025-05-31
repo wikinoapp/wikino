@@ -1,30 +1,76 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "rotp"
+require "rqrcode"
+
 module TwoFactorAuthService
   class Setup < ApplicationService
     sig { params(user: User).returns(SetupResult) }
     def call(user:)
-      # This is a placeholder implementation
-      # In a real implementation, this would:
-      # 1. Generate a new TOTP secret
-      # 2. Create or update the user_two_factor_auth record
-      # 3. Generate a QR code
-      # 4. Return the result with provisioning URI and QR code
-
+      # Generate a new TOTP secret
+      secret = ROTP::Base32.random
+      
+      # Create TOTP instance
+      totp = ROTP::TOTP.new(secret, issuer: "Wikino")
+      
+      # Generate provisioning URI
+      provisioning_uri = totp.provisioning_uri(user.email)
+      
+      # Generate QR code as SVG
+      qr_code = generate_qr_code_svg(provisioning_uri)
+      
+      # Find or create UserTwoFactorAuth record
+      auth_record = UserTwoFactorAuthRecord.find_or_initialize_by(user_id: user.database_id)
+      
+      # Update the record with new secret (but don't enable it yet)
+      auth_record.update!(
+        secret: secret,
+        enabled: false,
+        recovery_codes: []
+      )
+      
       SetupResult.new(
         success: true,
-        secret: "PLACEHOLDER_SECRET",
-        provisioning_uri: "otpauth://totp/Wikino:#{user.email}?secret=PLACEHOLDER_SECRET&issuer=Wikino",
+        secret: secret,
+        provisioning_uri: provisioning_uri,
+        qr_code: qr_code
+      )
+    rescue => e
+      Rails.logger.error("Failed to setup 2FA for user #{user.database_id}: #{e.message}")
+      SetupResult.new(
+        success: false,
+        secret: "",
+        provisioning_uri: "",
         qr_code: nil
       )
     end
 
     class SetupResult < T::Struct
       const :success, T::Boolean
-      const :secret, String
+      const :secret, String, sensitivity: []
       const :provisioning_uri, String
       const :qr_code, T.nilable(String)
+    end
+    
+    private
+    
+    sig { params(data: String).returns(String) }
+    def generate_qr_code_svg(data)
+      qrcode = RQRCode::QRCode.new(data)
+      
+      # Generate SVG with reasonable size
+      qrcode.as_svg(
+        offset: 0,
+        color: "000",
+        shape_rendering: "crispEdges",
+        module_size: 4,
+        standalone: true,
+        svg_attributes: {
+          width: 200,
+          height: 200
+        }
+      )
     end
   end
 end

@@ -50,6 +50,13 @@ ja:
         description: 説明
         name: 名前
         visibility: 公開設定
+      two_factor_auth_form/creation:
+        password: パスワード
+        totp_code: 認証コード
+      two_factor_auth_form/destruction:
+        password: パスワード
+      two_factor_auth_form/recovery_code_regeneration:
+        password: パスワード
       user_session_form/creation:
         email: メールアドレス
         password: パスワード

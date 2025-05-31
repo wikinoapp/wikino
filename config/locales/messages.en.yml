@@ -152,6 +152,18 @@ en:
               (<span class="font-bold">%{topic_name}</span>)
               below.
       updated: Topic updated.
+    two_factor_auth:
+      already_enabled: Two-factor authentication is already enabled.
+      enabled_successfully: Two-factor authentication has been enabled.
+      disabled_successfully: Two-factor authentication has been disabled.
+      invalid_code: Invalid authentication code.
+      manual_entry: "Or enter this code manually:"
+      recovery_codes_regenerated: Recovery codes have been regenerated.
+      setup_instructions:
+        title: How to set up two-factor authentication
+        step1: Install an authenticator app (Google Authenticator, Authy, etc.) on your smartphone.
+        step2: Scan the QR code below with the app.
+        step3: Enter the 6-digit code displayed in the app and your password below.
     trash:
       empty_state_message: Trash is empty.
       restored: Pages have been restored.

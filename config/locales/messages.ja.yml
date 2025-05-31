@@ -154,6 +154,18 @@ ja:
               (<span class="font-bold">%{topic_name}</span>)
               を入力してください。
       updated: トピックを更新しました
+    two_factor_auth:
+      already_enabled: 二要素認証はすでに有効になっています
+      enabled_successfully: 二要素認証を有効にしました
+      disabled_successfully: 二要素認証を無効にしました
+      invalid_code: 認証コードが無効です
+      manual_entry: "または手動でこのコードを入力："
+      recovery_codes_regenerated: リカバリーコードを再生成しました
+      setup_instructions:
+        title: 二要素認証の設定方法
+        step1: スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします
+        step2: アプリで下のQRコードをスキャンします
+        step3: アプリに表示される6桁のコードとパスワードを下に入力します
     trash:
       empty_state_message: ゴミ箱は空です
       restored: ページを復元しました

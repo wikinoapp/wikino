@@ -50,6 +50,13 @@ en:
         description: Description
         name: Name
         visibility: Visibility
+      two_factor_auth_form/creation:
+        password: Password
+        totp_code: Authentication code
+      two_factor_auth_form/destruction:
+        password: Password
+      two_factor_auth_form/recovery_code_regeneration:
+        password: Password
       user_session_form/creation:
         email: Email
         password: Password

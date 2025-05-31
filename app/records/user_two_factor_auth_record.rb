@@ -6,7 +6,7 @@ class UserTwoFactorAuthRecord < ApplicationRecord
 
   belongs_to :user_record, foreign_key: :user_id
 
-  sig { returns(T::Boolean) }
+  sig { params(code: String).returns(T::Boolean) }
   def recovery_code_valid?(code)
     return false unless recovery_codes.include?(code)
 
