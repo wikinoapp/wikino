@@ -35,6 +35,8 @@ module Settings
           )
 
           if result.success
+            # 新しいリカバリーコードをセッションに保存して表示
+            session[:recovery_codes] = result.recovery_codes
             flash[:notice] = t("messages.two_factor_auth.recovery_codes_regenerated")
             redirect_to settings_two_factor_auth_recovery_codes_path
           else
