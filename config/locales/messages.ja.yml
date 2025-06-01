@@ -155,6 +155,11 @@ ja:
               を入力してください。
       updated: トピックを更新しました
     two_factor_auth:
+      show:
+        description_html: |-
+          使い方はヘルプページの
+          <a class="link link-primary" href="https://wikino.app/s/wikino/pages/55" target="_blank">二要素認証を設定する</a>
+          をご覧ください
       already_enabled: 二要素認証はすでに有効になっています
       enabled_successfully: 二要素認証を有効にしました
       disabled_successfully: 二要素認証を無効にしました
@@ -162,7 +167,6 @@ ja:
       manual_entry: "または手動でこのコードを入力："
       recovery_codes_regenerated: リカバリーコードを再生成しました
       setup_required: 二要素認証の設定が必要です
-      setup_description: 二要素認証でアカウントを保護しましょう
       enabled_at: "%{time}に有効化"
       disable_confirmation: 二要素認証を無効にしてもよろしいですか？
       status:

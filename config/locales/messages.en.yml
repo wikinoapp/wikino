@@ -153,6 +153,10 @@ en:
               below.
       updated: Topic updated.
     two_factor_auth:
+      show:
+        description_html: |-
+          For more information, please see
+          <a class="link link-primary" href="https://wikino.app/s/wikino/pages/55" target="_blank">this page</a>.
       already_enabled: Two-factor authentication is already enabled.
       enabled_successfully: Two-factor authentication has been enabled.
       disabled_successfully: Two-factor authentication has been disabled.
@@ -160,7 +164,6 @@ en:
       manual_entry: "Or enter this code manually:"
       recovery_codes_regenerated: Recovery codes have been regenerated.
       setup_required: Two-factor authentication setup is required.
-      setup_description: Secure your account with two-factor authentication.
       enabled_at: "Enabled on %{time}"
       disable_confirmation: Are you sure you want to disable two-factor authentication?
       status:

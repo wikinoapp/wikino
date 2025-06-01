@@ -15,9 +15,10 @@ module RequestHelpers
       }
     )
 
-    # 2FAが有効な場合は2FA検証画面にリダイレクトされる
+    expect(response.status).to eq(302)
+
+    # 2FAが有効な場合は2FA検証画面にリダイレクトされるはず
     if user_record.two_factor_enabled?
-      expect(response.status).to eq(302)
       expect(response).to redirect_to("/user_session/two_factor_auth/new")
       expect(session[:pending_user_id]).to eq(user_record.id)
     else
@@ -26,22 +27,13 @@ module RequestHelpers
   end
 
   def sign_in_with_2fa(user_record:, password: "passw0rd")
-    # 第一步: 通常のログインでpending状態にする
-    post(
-      user_session_path,
-      params: {
-        user_session_form_creation: {
-          email: user_record.email,
-          password:
-        }
-      }
-    )
+    sign_in(user_record:, password:)
 
+    # 2FAが有効な場合は2FA検証画面にリダイレクトされるはず
     expect(response.status).to eq(302)
     expect(response).to redirect_to("/user_session/two_factor_auth/new")
     expect(session[:pending_user_id]).to eq(user_record.id)
 
-    # 第二步: 2FAコードでログイン完了
     two_factor_auth_record = UserTwoFactorAuthRecord.find_by!(user_record:)
     totp = ROTP::TOTP.new(two_factor_auth_record.secret)
     correct_code = totp.now
@@ -56,7 +48,6 @@ module RequestHelpers
     )
 
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/home")
     expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
   end
 

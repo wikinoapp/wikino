@@ -12,11 +12,15 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(user_record: current_user_record!)
+        user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(
+          user_record: current_user_record!
+        )
+        form = TwoFactorAuthForm::Destruction.new
 
         render_component Settings::TwoFactorAuths::ShowView.new(
           current_user: current_user!,
-          user_two_factor_auth:
+          user_two_factor_auth:,
+          form:
         )
       end
     end

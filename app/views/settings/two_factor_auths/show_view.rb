@@ -4,11 +4,17 @@
 module Settings
   module TwoFactorAuths
     class ShowView < ApplicationView
-      sig { params(current_user: User, user_two_factor_auth: T.nilable(UserTwoFactorAuth), destruction_form: T.nilable(TwoFactorAuthForm::Destruction)).void }
-      def initialize(current_user:, user_two_factor_auth:, destruction_form: nil)
+      sig do
+        params(
+          current_user: User,
+          user_two_factor_auth: T.nilable(UserTwoFactorAuth),
+          form: TwoFactorAuthForm::Destruction
+        ).void
+      end
+      def initialize(current_user:, user_two_factor_auth:, form:)
         @current_user = current_user
         @user_two_factor_auth = user_two_factor_auth
-        @destruction_form = T.let(destruction_form || TwoFactorAuthForm::Destruction.new, TwoFactorAuthForm::Destruction)
+        @form = form
       end
 
       sig { returns(User) }
@@ -20,17 +26,17 @@ module Settings
       private :user_two_factor_auth
 
       sig { returns(TwoFactorAuthForm::Destruction) }
-      attr_reader :destruction_form
-      private :destruction_form
+      attr_reader :form
+      private :form
 
       sig { returns(String) }
       private def title
         t("meta.title.settings.two_factor_auth.show")
       end
 
-      sig { returns(Symbol) }
+      sig { returns(PageName) }
       private def current_page_name
-        :settings
+        PageName::SettingsTwoFactorAuthDetail
       end
     end
   end
