@@ -23,7 +23,7 @@ module UserSessions
       if user_record.two_factor_enabled?
         # ユーザーIDをセッションに保存して2FA検証画面へ
         session[:pending_user_id] = user_record.id
-        redirect_to user_sessions_new_two_factor_auth_path
+        redirect_to user_session_new_two_factor_auth_path
         return
       end
 

@@ -11,7 +11,7 @@
 
           <p class="mb-6"><%= t("messages.two_factor_auth.enter_code") %></p>
 
-          <%= form_with model: form, url: user_sessions_two_factor_auth_list_path do |f| %>
+          <%= form_with model: form, url: user_session_two_factor_auth_path do |f| %>
             <div class="mb-4">
               <%= f.label :code, t("activemodel.attributes.user_session_form/two_factor_verification.code"), class: "label" %>
               <%= f.text_field :code,
