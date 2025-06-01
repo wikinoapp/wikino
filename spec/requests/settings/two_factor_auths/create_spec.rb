@@ -55,23 +55,20 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     }
 
     expect(response.status).to eq(422)
-    expect(response.body).to include("認証コードが正しくありません")
+    expect(response.body).to include("二要素認証が設定されていません")
   end
 
   it "正しいパスワードとTOTPコードのとき、2FAが有効化されること" do
     user_record = create(:user_record, :with_password)
+    user_two_factor_auth_record = create(:user_two_factor_auth_record, {
+      user_record:,
+      enabled: false
+    })
 
     sign_in(user_record:)
 
-    # まずセットアップを実行してシークレットを生成
-    get "/settings/two_factor_auth/new"
-
-    # セッションからシークレットを取得
-    secret = session[:two_factor_setup_secret]
-    expect(secret).not_to be_nil
-
     # 正しいTOTPコードを生成
-    totp = ROTP::TOTP.new(secret)
+    totp = ROTP::TOTP.new(user_two_factor_auth_record.secret)
     correct_code = totp.now
 
     post "/settings/two_factor_auth", params: {
@@ -85,10 +82,9 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     expect(response).to redirect_to("/settings/two_factor_auth/recovery_codes")
 
     # 2FAが有効化されていることを確認
-    two_factor_auth_record = UserTwoFactorAuthRecord.find_by(user_record:)
-    expect(two_factor_auth_record).not_to be_nil
-    expect(two_factor_auth_record.enabled).to be true
-    expect(two_factor_auth_record.enabled_at).not_to be_nil
-    expect(two_factor_auth_record.recovery_codes.size).to eq(10)
+    user_two_factor_auth_record.reload
+    expect(user_two_factor_auth_record.enabled).to be true
+    expect(user_two_factor_auth_record.enabled_at).not_to be_nil
+    expect(user_two_factor_auth_record.recovery_codes.size).to eq(10)
   end
 end
