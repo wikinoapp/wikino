@@ -16,6 +16,8 @@ class PageName < T::Enum
     SettingsEmail = new
     SettingsProfile = new
     SettingsTwoFactorAuthDetail = new
+    SettingsTwoFactorAuthNew = new
+    SettingsTwoFactorAuthRecoveryCodes = new
     SignIn = new
     SignUp = new
     SpaceDetail = new

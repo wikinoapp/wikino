@@ -39,9 +39,9 @@ module Settings
           t("meta.title.settings.two_factor_auth.recovery_codes")
         end
 
-        sig { returns(Symbol) }
+        sig { returns(PageName) }
         private def current_page_name
-          :settings
+          PageName::SettingsTwoFactorAuthRecoveryCodes
         end
       end
     end

@@ -46,9 +46,9 @@ module Settings
         t("meta.title.settings.two_factor_auth.new")
       end
 
-      sig { returns(Symbol) }
+      sig { returns(PageName) }
       private def current_page_name
-        :settings
+        PageName::SettingsTwoFactorAuthNew
       end
     end
   end
