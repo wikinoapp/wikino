@@ -58,10 +58,8 @@ module Settings
         end
       end
 
-      private
-
       sig { returns(ActionController::Parameters) }
-      def form_params
+      private def form_params
         params.require(:two_factor_auth_form_creation).permit(
           :password,
           :totp_code
@@ -69,8 +67,10 @@ module Settings
       end
 
       sig { void }
-      def ensure_two_factor_auth_not_enabled
-        user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(user_record: current_user_record!)
+      private def ensure_two_factor_auth_not_enabled
+        user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(
+          user_record: current_user_record!
+        )
 
         if user_two_factor_auth&.enabled
           flash[:alert] = t("messages.two_factor_auth.already_enabled")
