@@ -22,7 +22,7 @@ module Settings
             Settings::TwoFactorAuths::ShowView.new(
               current_user: current_user!,
               user_two_factor_auth:,
-              destruction_form: form
+              form: form
             ),
             status: :unprocessable_entity
           )
@@ -44,7 +44,7 @@ module Settings
             Settings::TwoFactorAuths::ShowView.new(
               current_user: current_user!,
               user_two_factor_auth:,
-              destruction_form: form
+              form: form
             ),
             status: :unprocessable_entity
           )

@@ -21,13 +21,13 @@
           </div>
 
           <div class="mb-6 text-center">
-            <% if setup_result.qr_code %>
+            <% if qr_code %>
               <div class="inline-block rounded bg-white p-4">
-                <%= raw setup_result.qr_code %>
+                <%= raw qr_code %>
               </div>
             <% else %>
               <p class="mb-2 text-sm text-gray-600"><%= t("messages.two_factor_auth.manual_entry") %></p>
-              <code class="text-sm"><%= setup_result.secret %></code>
+              <code class="text-sm"><%= secret %></code>
             <% end %>
           </div>
 

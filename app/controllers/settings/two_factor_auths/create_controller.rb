@@ -21,7 +21,9 @@ module Settings
           return render_component(
             Settings::TwoFactorAuths::NewView.new(
               current_user: current_user!,
-              setup_result:,
+              secret: setup_result.secret,
+              provisioning_uri: setup_result.provisioning_uri,
+              qr_code: setup_result.qr_code,
               form:
             ),
             status: :unprocessable_entity
@@ -46,7 +48,9 @@ module Settings
           render_component(
             Settings::TwoFactorAuths::NewView.new(
               current_user: current_user!,
-              setup_result:,
+              secret: setup_result.secret,
+              provisioning_uri: setup_result.provisioning_uri,
+              qr_code: setup_result.qr_code,
               form:
             ),
             status: :unprocessable_entity

@@ -17,15 +17,15 @@ module Settings
 
         render_component Settings::TwoFactorAuths::NewView.new(
           current_user: current_user!,
-          setup_result: result,
+          secret: result.secret,
+          provisioning_uri: result.provisioning_uri,
+          qr_code: result.qr_code,
           form: TwoFactorAuthForm::Creation.new
         )
       end
 
-      private
-
       sig { void }
-      def ensure_two_factor_auth_not_enabled
+      private def ensure_two_factor_auth_not_enabled
         user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(user_record: current_user_record!)
 
         if user_two_factor_auth&.enabled

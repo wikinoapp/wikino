@@ -53,10 +53,8 @@ module TwoFactorAuthService
       const :qr_code, T.nilable(String)
     end
 
-    private
-
     sig { params(data: String).returns(String) }
-    def generate_qr_code_svg(data)
+    private def generate_qr_code_svg(data)
       qrcode = RQRCode::QRCode.new(data)
 
       # Generate SVG with reasonable size

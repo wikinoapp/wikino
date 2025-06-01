@@ -4,10 +4,20 @@
 module Settings
   module TwoFactorAuths
     class NewView < ApplicationView
-      sig { params(current_user: User, setup_result: TwoFactorAuthService::Setup::SetupResult, form: TwoFactorAuthForm::Creation).void }
-      def initialize(current_user:, setup_result:, form:)
+      sig do
+        params(
+          current_user: User,
+          secret: String,
+          provisioning_uri: String,
+          qr_code: T.nilable(String),
+          form: TwoFactorAuthForm::Creation
+        ).void
+      end
+      def initialize(current_user:, secret:, provisioning_uri:, qr_code:, form:)
         @current_user = current_user
-        @setup_result = setup_result
+        @secret = secret
+        @provisioning_uri = provisioning_uri
+        @qr_code = qr_code
         @form = form
       end
 
@@ -15,9 +25,17 @@ module Settings
       attr_reader :current_user
       private :current_user
 
-      sig { returns(TwoFactorAuthService::Setup::SetupResult) }
-      attr_reader :setup_result
-      private :setup_result
+      sig { returns(String) }
+      attr_reader :secret
+      private :secret
+
+      sig { returns(String) }
+      attr_reader :provisioning_uri
+      private :provisioning_uri
+
+      sig { returns(T.nilable(String)) }
+      attr_reader :qr_code
+      private :qr_code
 
       sig { returns(TwoFactorAuthForm::Creation) }
       attr_reader :form
