@@ -25,16 +25,16 @@ module TwoFactorAuthService
 
       # 新しいシークレットでレコードを更新 (まだ有効化はしない)
       auth_record.update!(
-        secret: secret,
+        secret:,
         enabled: false,
         recovery_codes: []
       )
 
       SetupResult.new(
         success: true,
-        secret: secret,
-        provisioning_uri: provisioning_uri,
-        qr_code: qr_code
+        secret:,
+        provisioning_uri:,
+        qr_code:
       )
     rescue => e
       Rails.logger.error("Failed to setup 2FA for user #{user.database_id}: #{e.message}")
