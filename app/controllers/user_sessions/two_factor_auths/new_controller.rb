@@ -4,6 +4,7 @@
 module UserSessions
   module TwoFactorAuths
     class NewController < ApplicationController
+      include ControllerConcerns::Authenticatable
       include ControllerConcerns::Localizable
 
       around_action :set_locale

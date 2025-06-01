@@ -17,9 +17,9 @@ module UserSessions
         t("meta.title.user_sessions.two_factor_auth")
       end
 
-      sig { returns(Symbol) }
+      sig { returns(PageName) }
       def current_page_name
-        :sign_in
+        PageName::SignIn
       end
     end
   end

@@ -15,6 +15,48 @@ module RequestHelpers
       }
     )
 
+    # 2FAが有効な場合は2FA検証画面にリダイレクトされる
+    if user_record.two_factor_enabled?
+      expect(response.status).to eq(302)
+      expect(response).to redirect_to("/user_session/two_factor_auth/new")
+      expect(session[:pending_user_id]).to eq(user_record.id)
+    else
+      expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
+    end
+  end
+
+  def sign_in_with_2fa(user_record:, password: "passw0rd")
+    # 第一步: 通常のログインでpending状態にする
+    post(
+      user_session_path,
+      params: {
+        user_session_form_creation: {
+          email: user_record.email,
+          password:
+        }
+      }
+    )
+
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/user_session/two_factor_auth/new")
+    expect(session[:pending_user_id]).to eq(user_record.id)
+
+    # 第二步: 2FAコードでログイン完了
+    two_factor_auth_record = UserTwoFactorAuthRecord.find_by!(user_record:)
+    totp = ROTP::TOTP.new(two_factor_auth_record.secret)
+    correct_code = totp.now
+
+    post(
+      user_sessions_two_factor_auth_list_path,
+      params: {
+        user_session_form_two_factor_verification: {
+          code: correct_code
+        }
+      }
+    )
+
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/home")
     expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
   end
 
