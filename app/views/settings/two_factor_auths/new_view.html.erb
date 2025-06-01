@@ -11,7 +11,7 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <div class="prose max-w-none mb-6">
+          <div class="prose mb-6 max-w-none">
             <h3><%= t("messages.two_factor_auth.setup_instructions.title") %></h3>
             <ol>
               <li><%= t("messages.two_factor_auth.setup_instructions.step1") %></li>
@@ -22,11 +22,11 @@
 
           <div class="mb-6 text-center">
             <% if setup_result.qr_code %>
-              <div class="inline-block p-4 bg-white rounded">
+              <div class="inline-block rounded bg-white p-4">
                 <%= raw setup_result.qr_code %>
               </div>
             <% else %>
-              <p class="text-sm text-gray-600 mb-2"><%= t("messages.two_factor_auth.manual_entry") %></p>
+              <p class="mb-2 text-sm text-gray-600"><%= t("messages.two_factor_auth.manual_entry") %></p>
               <code class="text-sm"><%= setup_result.secret %></code>
             <% end %>
           </div>
@@ -36,7 +36,7 @@
               <%= f.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
               <%= f.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
               <% if form.errors[:password].any? %>
-                <p class="text-error text-sm mt-1"><%= form.errors[:password].first %></p>
+                <p class="mt-1 text-sm text-error"><%= form.errors[:password].first %></p>
               <% end %>
             </div>
 
@@ -44,7 +44,7 @@
               <%= f.label :totp_code, t("activemodel.attributes.two_factor_auth_form/creation.totp_code"), class: "label" %>
               <%= f.text_field :totp_code, class: "input input-bordered w-full", maxlength: 6, placeholder: "000000", autocomplete: "off" %>
               <% if form.errors[:totp_code].any? %>
-                <p class="text-error text-sm mt-1"><%= form.errors[:totp_code].first %></p>
+                <p class="mt-1 text-sm text-error"><%= form.errors[:totp_code].first %></p>
               <% end %>
             </div>
 

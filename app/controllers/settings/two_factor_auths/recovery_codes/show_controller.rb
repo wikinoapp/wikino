@@ -15,7 +15,7 @@ module Settings
         sig { returns(T.untyped) }
         def call
           user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(user_record: current_user_record!)
-          
+
           # Check if we have recovery codes in session (just enabled 2FA)
           recovery_codes = session.delete(:recovery_codes)
           show_download = recovery_codes.present?
@@ -43,4 +43,3 @@ module Settings
     end
   end
 end
-

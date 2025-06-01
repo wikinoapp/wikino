@@ -25,4 +25,3 @@ module TwoFactorAuthForm
     validates :totp_code, presence: true, length: {is: 6}, format: {with: /\A\d{6}\z/}
   end
 end
-

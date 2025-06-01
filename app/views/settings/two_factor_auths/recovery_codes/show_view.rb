@@ -19,10 +19,10 @@ module Settings
 
         sig { returns(UserTwoFactorAuth) }
         attr_reader :user_two_factor_auth
-        
+
         sig { returns(T.nilable(T::Array[String])) }
         attr_reader :recovery_codes
-        
+
         sig { returns(T::Boolean) }
         attr_reader :show_download
 
@@ -42,4 +42,3 @@ module Settings
     end
   end
 end
-

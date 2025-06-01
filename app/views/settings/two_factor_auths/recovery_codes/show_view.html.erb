@@ -11,14 +11,14 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <div class="prose max-w-none mb-6">
+          <div class="prose mb-6 max-w-none">
             <p><%= t("messages.two_factor_auth.recovery_codes_description") %></p>
           </div>
 
           <% codes_to_show = recovery_codes || user_two_factor_auth.recovery_codes %>
           <% if codes_to_show.any? %>
-            <div class="mb-6 p-4 bg-base-100 rounded">
-              <h3 class="font-semibold mb-2"><%= t("nouns.recovery_codes") %></h3>
+            <div class="mb-6 rounded bg-base-100 p-4">
+              <h3 class="mb-2 font-semibold"><%= t("nouns.recovery_codes") %></h3>
               <div class="grid grid-cols-2 gap-2">
                 <% codes_to_show.each do |code| %>
                   <code class="text-sm"><%= code %></code>
@@ -28,7 +28,7 @@
 
             <% if show_download %>
               <div class="alert alert-info mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-6 w-6 shrink-0 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span><%= t("messages.two_factor_auth.save_recovery_codes") %></span>
               </div>
             <% end %>
@@ -41,7 +41,7 @@
                 <%= t("verbs.download_recovery_codes") %>
               </button>
             </div>
-            
+
             <script>
               function downloadRecoveryCodes() {
                 const codes = <%= codes_to_show.to_json %>;
@@ -62,20 +62,20 @@
               }
             </script>
           <% else %>
-            <p class="text-warning mb-6"><%= t("messages.two_factor_auth.no_recovery_codes") %></p>
+            <p class="mb-6 text-warning"><%= t("messages.two_factor_auth.no_recovery_codes") %></p>
           <% end %>
 
           <hr class="my-4">
 
-          <h3 class="text-lg font-semibold mb-2"><%= t("nouns.regenerate_recovery_codes") %></h3>
-          <p class="text-sm text-gray-600 mb-4"><%= t("messages.two_factor_auth.regenerate_warning") %></p>
+          <h3 class="mb-2 text-lg font-semibold"><%= t("nouns.regenerate_recovery_codes") %></h3>
+          <p class="mb-4 text-sm text-gray-600"><%= t("messages.two_factor_auth.regenerate_warning") %></p>
 
           <%= form_with model: regeneration_form, url: settings_two_factor_auth_recovery_codes_list_path do |form| %>
             <div class="mb-4">
               <%= form.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
               <%= form.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
               <% if regeneration_form.errors[:password].any? %>
-                <p class="text-error text-sm mt-1"><%= regeneration_form.errors[:password].first %></p>
+                <p class="mt-1 text-sm text-error"><%= regeneration_form.errors[:password].first %></p>
               <% end %>
             </div>
 

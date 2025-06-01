@@ -79,4 +79,3 @@ module TwoFactorAuthService
     end
   end
 end
-

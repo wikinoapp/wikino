@@ -20,7 +20,7 @@ module UserSessions
 
       sig { void }
       def require_pending_two_factor_auth
-        unless session[:pending_user_id].present?
+        if session[:pending_user_id].blank?
           redirect_to sign_in_path
         end
       end

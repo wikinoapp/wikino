@@ -20,4 +20,3 @@ module TwoFactorAuthForm
     validates :password, presence: true
   end
 end
-

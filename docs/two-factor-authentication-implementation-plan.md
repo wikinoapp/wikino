@@ -9,12 +9,14 @@ Wikinoアプリケーションに二要素認証（2FA）機能を追加し、�
 ### 主要コンポーネント
 
 1. **認証フロー**
+
    - `UserSessionsController` - ログイン処理
    - `UserSessionForm::Creation` - ログインフォームバリデーション
    - `UserSessionService::Create` - セッション作成ロジック
    - `ControllerConcerns::Authenticatable` - 認証関連の共通処理
 
 2. **データモデル**
+
    - `users` テーブル - ユーザー基本情報
    - `user_passwords` テーブル - パスワードハッシュ管理
    - `user_sessions` テーブル - セッション管理
@@ -48,10 +50,12 @@ CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON user_two_factor_au
 ### 2. 新規モデル・レコードクラス
 
 #### `UserTwoFactorAuthRecord` (app/records/)
+
 - Activeレコードクラス
 - TOTPシークレットとリカバリーコードの管理
 
 #### `UserTwoFactorAuth` (app/models/)
+
 - ビジネスロジックを含むモデル
 - TOTPコードの検証メソッド
 
@@ -60,15 +64,18 @@ CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON user_two_factor_au
 #### 3.1 2FA設定機能
 
 **新規コントローラー:**
+
 - `Settings::TwoFactorAuths::NewController` - 2FA設定開始
 - `Settings::TwoFactorAuths::CreateController` - 2FA有効化
 - `Settings::TwoFactorAuths::DestroyController` - 2FA無効化
 
 **新規フォーム:**
+
 - `TwoFactorAuthForm::Creation` - QRコード表示と確認コード入力
 - `TwoFactorAuthForm::Destruction` - 2FA無効化時のパスワード確認
 
 **新規サービス:**
+
 - `TwoFactorAuthService::Setup` - シークレット生成とQRコード作成
 - `TwoFactorAuthService::Enable` - 2FA有効化とリカバリーコード生成
 - `TwoFactorAuthService::Disable` - 2FA無効化
@@ -76,29 +83,35 @@ CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON user_two_factor_au
 #### 3.2 ログイン時の2FA検証
 
 **既存コントローラーの拡張:**
+
 - `UserSessions::CreateController` - 2FAが有効な場合の処理追加
 
 **新規コントローラー:**
+
 - `UserSessions::TwoFactorAuths::NewController` - 2FAコード入力画面
 - `UserSessions::TwoFactorAuths::CreateController` - 2FAコード検証
 
 **新規フォーム:**
+
 - `UserSessionForm::TwoFactorVerification` - 2FAコード検証
 
 #### 3.3 リカバリーコード管理
 
 **新規コントローラー:**
+
 - `Settings::TwoFactorAuths::RecoveryCodes::ShowController` - リカバリーコード表示
 - `Settings::TwoFactorAuths::RecoveryCodes::CreateController` - リカバリーコード再生成
 
 ### 4. UI/UX設計
 
 #### 4.1 設定画面
+
 - アカウント設定内に「二要素認証」セクション追加
 - QRコード表示とセットアップ手順の説明
 - リカバリーコードの表示とダウンロード機能
 
 #### 4.2 ログインフロー
+
 1. メールアドレスとパスワード入力
 2. 2FAが有効な場合、認証コード入力画面へ遷移
 3. 6桁のTOTPコードまたはリカバリーコード入力
@@ -107,14 +120,17 @@ CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON user_two_factor_au
 ### 5. セキュリティ考慮事項
 
 1. **シークレット管理**
+
    - TOTPシークレットは暗号化して保存
    - Rails.application.credentialsを使用
 
 2. **レート制限**
+
    - 2FA認証試行回数の制限（5回失敗で一時的にロック）
    - IPアドレスベースの制限
 
 3. **セッション管理**
+
    - 2FA検証前の一時セッション管理
    - 検証成功後に本セッションへ昇格
 

@@ -72,4 +72,3 @@ module Settings
     end
   end
 end
-

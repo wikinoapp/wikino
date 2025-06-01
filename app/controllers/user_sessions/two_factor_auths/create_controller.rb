@@ -13,7 +13,7 @@ module UserSessions
       sig { returns(T.untyped) }
       def call
         form = UserSessionForm::TwoFactorVerification.new(form_params)
-        
+
         # ペンディング中のユーザーを取得
         user_record = UserRecord.find_by(id: session[:pending_user_id])
         unless user_record
@@ -41,7 +41,7 @@ module UserSessions
 
         # ペンディングセッションをクリア
         session.delete(:pending_user_id)
-        
+
         # ログイン完了
         sign_in(result.user_session_record)
 
@@ -60,7 +60,7 @@ module UserSessions
 
       sig { void }
       def require_pending_two_factor_auth
-        unless session[:pending_user_id].present?
+        if session[:pending_user_id].blank?
           redirect_to sign_in_path
         end
       end

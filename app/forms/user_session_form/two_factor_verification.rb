@@ -4,17 +4,17 @@
 module UserSessionForm
   class TwoFactorVerification < ApplicationForm
     attribute :code, :string
-    
+
     sig { params(user_record: T.nilable(UserRecord)).returns(T.nilable(UserRecord)) }
     attr_writer :user_record
-    
+
     sig { returns(T.nilable(UserRecord)) }
     def user_record
       @user_record = T.let(@user_record, T.nilable(UserRecord))
     end
 
-    validates :code, presence: true, length: { is: 6 }, if: :totp_code?
-    validates :code, presence: true, length: { is: 8 }, if: :recovery_code?
+    validates :code, presence: true, length: {is: 6}, if: :totp_code?
+    validates :code, presence: true, length: {is: 8}, if: :recovery_code?
     validate :verify_code
 
     sig { returns(T::Boolean) }
