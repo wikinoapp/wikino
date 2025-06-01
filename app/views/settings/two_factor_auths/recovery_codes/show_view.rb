@@ -35,12 +35,12 @@ module Settings
         private :regeneration_form
 
         sig { returns(String) }
-        def title
+        private def title
           t("meta.title.settings.two_factor_auth.recovery_codes")
         end
 
         sig { returns(Symbol) }
-        def current_page_name
+        private def current_page_name
           :settings
         end
       end

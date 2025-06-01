@@ -24,12 +24,12 @@ module Settings
       private :destruction_form
 
       sig { returns(String) }
-      def title
+      private def title
         t("meta.title.settings.two_factor_auth.show")
       end
 
       sig { returns(Symbol) }
-      def current_page_name
+      private def current_page_name
         :settings
       end
     end

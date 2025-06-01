@@ -14,12 +14,12 @@ module UserSessions
       private :form
 
       sig { returns(String) }
-      def title
+      private def title
         t("meta.title.user_sessions.two_factor_auth")
       end
 
       sig { returns(PageName) }
-      def current_page_name
+      private def current_page_name
         PageName::SignIn
       end
     end
