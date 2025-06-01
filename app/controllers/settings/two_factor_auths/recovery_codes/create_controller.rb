@@ -14,7 +14,7 @@ module Settings
 
         sig { returns(T.untyped) }
         def call
-          form = TwoFactorAuthForm::RecoveryCodeRegeneration.new(form_params.to_h)
+          form = TwoFactorAuthForm::RecoveryCodeRegeneration.new(form_params)
 
           if form.invalid?
             user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(user_record: current_user_record!)

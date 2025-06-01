@@ -13,7 +13,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = TwoFactorAuthForm::Creation.new(form_params.to_h)
+        form = TwoFactorAuthForm::Creation.new(form_params)
 
         if form.invalid?
           setup_result = TwoFactorAuthService::Setup.new.call(user: current_user!)

@@ -6,39 +6,9 @@
 
 
 class TwoFactorAuthForm::Destruction
-  sig { params(unencrypted_password: T.untyped).returns(T.any(TwoFactorAuthForm::Destruction, FalseClass)) }
-  def authenticate(unencrypted_password); end
-
-  sig { params(unencrypted_password: T.untyped).returns(T.any(TwoFactorAuthForm::Destruction, FalseClass)) }
-  def authenticate_password(unencrypted_password); end
-
   sig { returns(T.nilable(::String)) }
   def password; end
 
-  sig { params(_arg0: T.untyped).returns(T.untyped) }
-  def password=(_arg0); end
-
-  sig { returns(T.untyped) }
-  def password_challenge; end
-
-  sig { params(_arg0: T.untyped).returns(T.untyped) }
-  def password_challenge=(_arg0); end
-
-  sig { returns(T.untyped) }
-  def password_confirmation; end
-
-  sig { returns(T.untyped) }
-  def password_confirmation; end
-
-  sig { params(_arg0: T.untyped).returns(T.untyped) }
-  def password_confirmation=(_arg0); end
-
-  sig { params(password_confirmation: T.untyped).returns(T.untyped) }
-  def password_confirmation=(password_confirmation); end
-
-  sig { returns(T.untyped) }
-  def password_reset_token; end
-
-  sig { returns(T.untyped) }
-  def password_salt; end
+  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+  def password=(value); end
 end
