@@ -164,7 +164,7 @@ ja:
       enabled_successfully: 二要素認証を有効にしました
       disabled_successfully: 二要素認証を無効にしました
       invalid_code: 認証コードが無効です
-      manual_entry: "または手動でこのコードを入力："
+      manual_entry: QRコードが使えない場合は、以下のコードを手動で入力してください
       recovery_codes_regenerated: リカバリーコードを再生成しました
       setup_required: 二要素認証の設定が必要です
       enabled_at: "%{time}に有効化"
@@ -179,10 +179,9 @@ ja:
       regenerate_confirmation: リカバリーコードを再生成してもよろしいですか？既存のすべてのコードが無効になります。
       not_enabled: 二要素認証が有効になっていません。
       setup_instructions:
-        title: 二要素認証の設定方法
-        step1: スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします
-        step2: アプリで下のQRコードをスキャンします
-        step3: アプリに表示される6桁のコードとパスワードを下に入力します
+        step1: 1. スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします
+        step2: 2. 認証アプリで下のQRコードをスキャンします
+        step3: 3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します
       enter_code: アプリに表示される認証コードを入力してください
       code_hint: 6桁のコードまたは8文字のリカバリーコードを入力
       lost_device: 認証デバイスをお持ちでない場合
