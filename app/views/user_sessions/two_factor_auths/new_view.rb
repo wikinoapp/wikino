@@ -11,6 +11,7 @@ module UserSessions
 
       sig { returns(UserSessionForm::TwoFactorVerification) }
       attr_reader :form
+      private :form
 
       sig { returns(String) }
       def title

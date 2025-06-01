@@ -13,12 +13,15 @@ module Settings
 
       sig { returns(User) }
       attr_reader :current_user
+      private :current_user
 
       sig { returns(TwoFactorAuthService::Setup::SetupResult) }
       attr_reader :setup_result
+      private :setup_result
 
       sig { returns(TwoFactorAuthForm::Creation) }
       attr_reader :form
+      private :form
 
       sig { returns(String) }
       def title

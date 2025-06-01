@@ -13,12 +13,15 @@ module Settings
 
       sig { returns(User) }
       attr_reader :current_user
+      private :current_user
 
       sig { returns(T.nilable(UserTwoFactorAuth)) }
       attr_reader :user_two_factor_auth
+      private :user_two_factor_auth
 
       sig { returns(TwoFactorAuthForm::Destruction) }
       attr_reader :destruction_form
+      private :destruction_form
 
       sig { returns(String) }
       def title

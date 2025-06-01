@@ -16,18 +16,23 @@ module Settings
 
         sig { returns(User) }
         attr_reader :current_user
+        private :current_user
 
         sig { returns(UserTwoFactorAuth) }
         attr_reader :user_two_factor_auth
+        private :user_two_factor_auth
 
         sig { returns(T.nilable(T::Array[String])) }
         attr_reader :recovery_codes
+        private :recovery_codes
 
         sig { returns(T::Boolean) }
         attr_reader :show_download
+        private :show_download
 
         sig { returns(TwoFactorAuthForm::RecoveryCodeRegeneration) }
         attr_reader :regeneration_form
+        private :regeneration_form
 
         sig { returns(String) }
         def title
