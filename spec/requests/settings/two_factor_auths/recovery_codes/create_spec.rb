@@ -64,7 +64,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     two_factor_auth_record.reload
     expect(two_factor_auth_record.recovery_codes).not_to eq(old_recovery_codes)
     expect(two_factor_auth_record.recovery_codes.size).to eq(10)
-    
+
     # 新しいリカバリーコードがセッションに設定されていることを確認はコントローラー側で実行されるためスキップ
   end
 end

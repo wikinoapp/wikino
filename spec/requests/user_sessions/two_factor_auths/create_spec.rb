@@ -49,7 +49,7 @@ RSpec.describe "POST /user_session/two_factor_auth", type: :request do
 
     # セッションが作成されていることを確認
     expect(UserSessionRecord.count).to eq(1)
-    
+
     # pending_user_idがクリアされていることを確認
     expect(session[:pending_user_id]).to be_nil
   end
@@ -73,7 +73,7 @@ RSpec.describe "POST /user_session/two_factor_auth", type: :request do
 
     # セッションが作成されていることを確認
     expect(UserSessionRecord.count).to eq(1)
-    
+
     # 使用されたリカバリーコードが削除されていることを確認
     two_factor_auth_record.reload
     expect(two_factor_auth_record.recovery_codes).not_to include("code1234")

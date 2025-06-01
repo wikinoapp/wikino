@@ -29,7 +29,7 @@ RSpec.describe "GET /settings/two_factor_auth/recovery_codes", type: :request do
 
     expect(response.status).to eq(200)
     expect(response.body).to include("リカバリーコード")
-    
+
     # リカバリーコードが表示されることを確認
     two_factor_auth_record.recovery_codes.each do |code|
       expect(response.body).to include(code)
