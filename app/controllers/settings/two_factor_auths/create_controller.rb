@@ -13,7 +13,9 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = TwoFactorAuthForm::Creation.new(form_params)
+        form = TwoFactorAuthForm::Creation.new(
+          form_params.merge(user_record: current_user_record!)
+        )
 
         if form.invalid?
           setup_result = TwoFactorAuthService::Setup.new.call(user: current_user!)

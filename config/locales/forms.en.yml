@@ -80,5 +80,7 @@ en:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
         page_form/edit:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
+        two_factor_auth_form/creation:
+          unauthenticated: Password is incorrect
         user_session_form/creation:
           unauthenticated: Login failed. Email or password are incorrect

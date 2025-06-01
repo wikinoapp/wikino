@@ -80,5 +80,7 @@ ja:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         page_form/edit:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
+        two_factor_auth_form/creation:
+          unauthenticated: パスワードが間違っています
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
