@@ -33,31 +33,15 @@ module Settings
         end
 
         result = TwoFactorAuthService::Enable.new.call(
-          user: current_user!,
+          user_record: form.user_record.not_nil!,
           password: form.password.not_nil!,
           totp_code: form.totp_code.not_nil!
         )
 
-        if result.success
-          # Store recovery codes in session temporarily to show them once
-          session[:recovery_codes] = result.recovery_codes
-          flash[:notice] = t("messages.two_factor_auth.enabled_successfully")
-          redirect_to settings_two_factor_auth_recovery_codes_path
-        else
-          flash.now[:alert] = result.error_message
-          setup_result = TwoFactorAuthService::Setup.new.call(user: current_user!)
+        session[:recovery_codes] = result.recovery_codes
+        flash[:notice] = t("messages.two_factor_auth.enabled_successfully")
 
-          render_component(
-            Settings::TwoFactorAuths::NewView.new(
-              current_user: current_user!,
-              secret: setup_result.secret,
-              provisioning_uri: setup_result.provisioning_uri,
-              qr_code: setup_result.qr_code,
-              form:
-            ),
-            status: :unprocessable_entity
-          )
-        end
+        redirect_to settings_two_factor_auth_recovery_codes_path
       end
 
       sig { returns(ActionController::Parameters) }
