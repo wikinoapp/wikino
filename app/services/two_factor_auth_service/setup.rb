@@ -8,22 +8,22 @@ module TwoFactorAuthService
   class Setup < ApplicationService
     sig { params(user: User).returns(SetupResult) }
     def call(user:)
-      # Generate a new TOTP secret
+      # 新しいTOTPシークレットを生成
       secret = ROTP::Base32.random
 
-      # Create TOTP instance
+      # TOTPインスタンスを作成
       totp = ROTP::TOTP.new(secret, issuer: "Wikino")
 
-      # Generate provisioning URI
+      # プロビジョニングURIを生成
       provisioning_uri = totp.provisioning_uri(user.email)
 
-      # Generate QR code as SVG
+      # QRコードをSVG形式で生成
       qr_code = generate_qr_code_svg(provisioning_uri)
 
-      # Find or create UserTwoFactorAuth record
+      # UserTwoFactorAuthレコードを検索または作成
       auth_record = UserTwoFactorAuthRecord.find_or_initialize_by(user_id: user.database_id)
 
-      # Update the record with new secret (but don't enable it yet)
+      # 新しいシークレットでレコードを更新 (まだ有効化はしない)
       auth_record.update!(
         secret: secret,
         enabled: false,
@@ -57,7 +57,7 @@ module TwoFactorAuthService
     private def generate_qr_code_svg(data)
       qrcode = RQRCode::QRCode.new(data)
 
-      # Generate SVG with reasonable size
+      # 適切なサイズでSVGを生成
       qrcode.as_svg(
         offset: 0,
         color: "000",
