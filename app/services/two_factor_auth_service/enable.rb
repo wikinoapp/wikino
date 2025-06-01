@@ -7,7 +7,7 @@ module TwoFactorAuthService
   class Enable < ApplicationService
     sig { params(user: User, password: String, totp_code: String).returns(EnableResult) }
     def call(user:, password:, totp_code:)
-      # Step 1: Verify the user's password
+      # ステップ1: ユーザーのパスワードを検証する
       user_record = UserRecord.find(user.database_id)
       unless user_record.user_password_record&.authenticate(password)
         return EnableResult.new(
@@ -17,7 +17,7 @@ module TwoFactorAuthService
         )
       end
 
-      # Step 2: Find the user's 2FA record
+      # ステップ2: ユーザーの2FAレコードを検索する
       auth_record = UserTwoFactorAuthRecord.find_by(user_id: user.database_id)
       unless auth_record
         return EnableResult.new(
@@ -27,7 +27,7 @@ module TwoFactorAuthService
         )
       end
 
-      # Step 3: Verify the TOTP code
+      # ステップ3: TOTPコードを検証する
       two_factor_auth = UserTwoFactorAuthRepository.new.to_model(user_two_factor_auth_record: auth_record)
       unless two_factor_auth.verify_code(totp_code)
         return EnableResult.new(
@@ -37,10 +37,10 @@ module TwoFactorAuthService
         )
       end
 
-      # Step 4: Generate recovery codes
+      # ステップ4: リカバリーコードを生成する
       recovery_codes = generate_recovery_codes
 
-      # Step 5: Enable 2FA and save recovery codes
+      # ステップ5: 2FAを有効化し、リカバリーコードを保存する
       auth_record.update!(
         enabled: true,
         enabled_at: Time.current,
@@ -71,9 +71,9 @@ module TwoFactorAuthService
 
     sig { returns(T::Array[String]) }
     def generate_recovery_codes
-      # Generate 10 recovery codes
+      # 10個のリカバリーコードを生成する
       10.times.map do
-        # Generate a random 8-character alphanumeric code
+        # ランダムな8文字の英数字コードを生成する
         SecureRandom.alphanumeric(8).downcase
       end
     end
