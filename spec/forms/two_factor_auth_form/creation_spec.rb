@@ -1,6 +1,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require "rotp"
+
 RSpec.describe TwoFactorAuthForm::Creation, type: :form do
   it "パスワードが空文字列のとき、エラーになること" do
     user_record = create(:user_record)
@@ -67,7 +69,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("パスワードが間違っています")
+    expect(form.errors.full_messages).to include("Password is incorrect")
   end
 
   it "TOTPコードが空文字列のとき、エラーになること" do
@@ -84,7 +86,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Totp code can't be blank")
+    expect(form.errors.full_messages).to include("Authentication code can't be blank")
   end
 
   it "TOTPコードが `nil` のとき、エラーになること" do
@@ -101,7 +103,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Totp code can't be blank")
+    expect(form.errors.full_messages).to include("Authentication code can't be blank")
   end
 
   it "TOTPコードが5文字のとき、エラーになること" do
@@ -118,7 +120,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Totp code is the wrong length (should be 6 characters)")
+    expect(form.errors.full_messages).to include("Authentication code is the wrong length (should be 6 characters)")
   end
 
   it "TOTPコードが7文字のとき、エラーになること" do
@@ -135,7 +137,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Totp code is the wrong length (should be 6 characters)")
+    expect(form.errors.full_messages).to include("Authentication code is the wrong length (should be 6 characters)")
   end
 
   it "TOTPコードに数字以外が含まれているとき、エラーになること" do
@@ -152,7 +154,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Totp code is invalid")
+    expect(form.errors.full_messages).to include("Authentication code is invalid")
   end
 
   it "user_recordがnilのとき、エラーにならないこと（他のバリデーションは実行される）" do
@@ -171,45 +173,46 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record_without_2fa
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("二要素認証が設定されていません")
+    expect(form.errors.full_messages).to include("Two-factor authentication is not set up")
   end
 
   it "TOTPコードが間違っているとき、エラーになること" do
     user_record = create(:user_record)
     user_password_record = create(:user_password_record, user_id: user_record.id, password: "password123")
+    # 固定のsecretを使用してテストする
+    secret = "JBSWY3DPEHPK3PXP"
     user_two_factor_auth_record = create(:user_two_factor_auth_record,
       user_id: user_record.id,
-      secret: "JBSWY3DPEHPK3PXP",
+      secret: secret,
       enabled: false)
     user_record.update!(user_password_record:)
     user_record.update!(user_two_factor_auth_record:)
 
-    # UserTwoFactorAuthRepositoryのモックを作成
-    allow_any_instance_of(UserTwoFactorAuthRepository).to receive(:to_model)
-      .and_return(double(verify_code: false))
-
-    form = TwoFactorAuthForm::Creation.new(password: "password123", totp_code: "123456")
+    # 間違ったTOTPコードを使用
+    form = TwoFactorAuthForm::Creation.new(password: "password123", totp_code: "000000")
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("認証コードが間違っています")
+    expect(form.errors.full_messages).to include("Authentication code is incorrect")
   end
 
   it "正しいパスワードとTOTPコードのとき、エラーにならないこと" do
     user_record = create(:user_record)
     user_password_record = create(:user_password_record, user_id: user_record.id, password: "password123")
+    # 固定のsecretを使用してテストする
+    secret = "JBSWY3DPEHPK3PXP"
     user_two_factor_auth_record = create(:user_two_factor_auth_record,
       user_id: user_record.id,
-      secret: "JBSWY3DPEHPK3PXP",
+      secret: secret,
       enabled: false)
     user_record.update!(user_password_record:)
     user_record.update!(user_two_factor_auth_record:)
 
-    # UserTwoFactorAuthRepositoryのモックを作成
-    allow_any_instance_of(UserTwoFactorAuthRepository).to receive(:to_model)
-      .and_return(double(verify_code: true))
+    # 正しいTOTPコードを生成
+    totp = ROTP::TOTP.new(secret)
+    valid_code = totp.now
 
-    form = TwoFactorAuthForm::Creation.new(password: "password123", totp_code: "123456")
+    form = TwoFactorAuthForm::Creation.new(password: "password123", totp_code: valid_code)
     form.user_record = user_record
 
     expect(form).to be_valid

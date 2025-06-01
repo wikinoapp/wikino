@@ -36,6 +36,7 @@ module TwoFactorAuthForm
 
     sig { void }
     private def verify_totp_code
+      return if totp_code.nil?
       return if user_record.nil?
       return if user_record.user_two_factor_auth_record.nil?
 

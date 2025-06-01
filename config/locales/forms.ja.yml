@@ -81,6 +81,8 @@ ja:
         page_form/edit:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
         two_factor_auth_form/creation:
+          invalid_totp_code: 認証コードが間違っています
           unauthenticated: パスワードが間違っています
+          user_two_factor_auth_record_not_found: 二要素認証が設定されていません
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
