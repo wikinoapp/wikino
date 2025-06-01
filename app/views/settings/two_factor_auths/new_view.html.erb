@@ -58,7 +58,7 @@
               <%= form_with(
                 class: "flex flex-col gap-4",
                 model: form,
-                url: settings_two_factor_auth_list_path
+                url: settings_two_factor_auth_path
               ) do |f| %>
                 <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 

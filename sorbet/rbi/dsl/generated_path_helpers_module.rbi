@@ -115,22 +115,19 @@ module GeneratedPathHelpersModule
   def settings_email_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_new_two_factor_auth_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def settings_profile_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_new_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def settings_two_factor_auth_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_recovery_codes_list_path(*args); end
+  def settings_two_factor_auth_recovery_code_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def settings_two_factor_auth_recovery_codes_path(*args); end
@@ -208,11 +205,11 @@ module GeneratedPathHelpersModule
   def turbo_resume_historical_location_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def user_session_new_two_factor_auth_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def user_session_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def user_sessions_two_factor_auth_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_sessions_two_factor_auth_new_path(*args); end
+  def user_session_two_factor_auth_path(*args); end
 end

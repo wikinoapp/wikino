@@ -115,16 +115,13 @@ module GeneratedUrlHelpersModule
   def settings_email_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_new_two_factor_auth_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_profile_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_new_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def settings_two_factor_auth_recovery_codes_list_url(*args); end
+  def settings_two_factor_auth_recovery_code_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def settings_two_factor_auth_recovery_codes_url(*args); end
@@ -208,11 +205,11 @@ module GeneratedUrlHelpersModule
   def turbo_resume_historical_location_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def user_session_new_two_factor_auth_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def user_session_two_factor_auth_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def user_session_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_sessions_two_factor_auth_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_sessions_two_factor_auth_new_url(*args); end
 end

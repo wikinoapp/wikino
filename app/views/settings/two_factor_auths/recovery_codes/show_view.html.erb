@@ -70,7 +70,7 @@
           <h3 class="mb-2 text-lg font-semibold"><%= t("nouns.regenerate_recovery_codes") %></h3>
           <p class="mb-4 text-sm text-gray-600"><%= t("messages.two_factor_auth.regenerate_warning") %></p>
 
-          <%= form_with model: regeneration_form, url: settings_two_factor_auth_recovery_codes_list_path do |form| %>
+          <%= form_with model: regeneration_form, url: settings_two_factor_auth_recovery_code_list_path do |form| %>
             <div class="mb-4">
               <%= form.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
               <%= form.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
