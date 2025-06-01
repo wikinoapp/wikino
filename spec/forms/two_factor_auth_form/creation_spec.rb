@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 RSpec.describe TwoFactorAuthForm::Creation, type: :form do
-
   it "パスワードが空文字列のとき、エラーになること" do
     user_record = create(:user_record)
     user_password_record = create(:user_password_record, user_id: user_record.id, password: "password123")
@@ -68,7 +67,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors[:base]).to include("unauthenticated")
+    expect(form.errors.full_messages).to include("パスワードが間違っています")
   end
 
   it "TOTPコードが空文字列のとき、エラーになること" do
@@ -172,7 +171,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record_without_2fa
 
     expect(form).not_to be_valid
-    expect(form.errors[:base]).to include("user_two_factor_auth_record_not_found")
+    expect(form.errors.full_messages).to include("二要素認証が設定されていません")
   end
 
   it "TOTPコードが間違っているとき、エラーになること" do
@@ -193,7 +192,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors[:base]).to include("invalid_totp_code")
+    expect(form.errors.full_messages).to include("認証コードが間違っています")
   end
 
   it "正しいパスワードとTOTPコードのとき、エラーにならないこと" do
