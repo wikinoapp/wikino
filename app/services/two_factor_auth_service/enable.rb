@@ -5,11 +5,7 @@ require "securerandom"
 
 module TwoFactorAuthService
   class Enable < ApplicationService
-    class Result < T::Struct
-      const :recovery_codes, T::Array[String]
-    end
-
-    sig { params(user_record: UserRecord, password: String, totp_code: String).returns(Result) }
+    sig { params(user_record: UserRecord, password: String, totp_code: String).void }
     def call(user_record:, password:, totp_code:)
       auth_record = user_record.user_two_factor_auth_record.not_nil!
       recovery_codes = generate_recovery_codes
@@ -21,9 +17,7 @@ module TwoFactorAuthService
         recovery_codes:
       )
 
-      Result.new(
-        recovery_codes:
-      )
+      nil
     end
 
     sig { returns(T::Array[String]) }

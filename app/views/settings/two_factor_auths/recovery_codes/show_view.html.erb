@@ -1,6 +1,16 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <div class="breadcrumbs py-1 text-sm">
+          <ul>
+            <li>
+              <%= link_to t("nouns.settings"), settings_path %>
+            </li>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
   <%= layout.with_main do %>
@@ -9,81 +19,83 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render Basic::CardComponent.new(
+        class_name: "bg-base-300 border border-brand-200"
+      ) do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <div class="prose mb-6 max-w-none">
-            <p><%= t("messages.two_factor_auth.recovery_codes_description") %></p>
-          </div>
+          <div class="flex flex-col gap-4">
+            <p>
+              <%= t("messages.two_factor_auth.recovery_codes_description_html") %>
+            </p>
 
-          <% codes_to_show = recovery_codes || user_two_factor_auth.recovery_codes %>
-          <% if codes_to_show.any? %>
-            <div class="mb-6 rounded bg-base-100 p-4">
-              <h3 class="mb-2 font-semibold"><%= t("nouns.recovery_codes") %></h3>
+            <div class="rounded bg-base-100 p-4">
+              <h3 class="mb-4 font-semibold">
+                <%= t("nouns.recovery_codes") %>
+              </h3>
+
               <div class="grid grid-cols-2 gap-2">
-                <% codes_to_show.each do |code| %>
-                  <code class="text-sm"><%= code %></code>
+                <% user_two_factor_auth.recovery_codes.each do |recovery_code| %>
+                  <code class="text-sm">
+                    <%= recovery_code %>
+                  </code>
                 <% end %>
               </div>
             </div>
 
-            <% if show_download %>
-              <div class="alert alert-info mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-6 w-6 shrink-0 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span><%= t("messages.two_factor_auth.save_recovery_codes") %></span>
-              </div>
-            <% end %>
-
-            <div class="mb-6">
-              <button class="btn btn-sm" onclick="window.print()">
-                <%= t("verbs.print_recovery_codes") %>
-              </button>
-              <button class="btn btn-sm" onclick="downloadRecoveryCodes()">
-                <%= t("verbs.download_recovery_codes") %>
-              </button>
+            <div class="alert alert-info">
+              <%= t("messages.two_factor_auth.save_recovery_codes_html") %>
             </div>
-
-            <script>
-              function downloadRecoveryCodes() {
-                const codes = <%= codes_to_show.to_json %>;
-                const content = 'Wikino Recovery Codes\n' +
-                               'Account: <%= current_user.email %>\n' +
-                               'Generated: <%= l(Time.current, format: :long) %>\n\n' +
-                               codes.join('\n') +
-                               '\n\nKeep these codes in a safe place. Each code can only be used once.';
-                const blob = new Blob([content], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'wikino-recovery-codes.txt';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-              }
-            </script>
-          <% else %>
-            <p class="mb-6 text-warning"><%= t("messages.two_factor_auth.no_recovery_codes") %></p>
-          <% end %>
+          </div>
 
           <hr class="my-4">
 
-          <h3 class="mb-2 text-lg font-semibold"><%= t("nouns.regenerate_recovery_codes") %></h3>
-          <p class="mb-4 text-sm text-gray-600"><%= t("messages.two_factor_auth.regenerate_warning") %></p>
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <h3 class="text-lg font-semibold">
+                <%= t("nouns.regenerate_recovery_codes") %>
+              </h3>
 
-          <%= form_with model: regeneration_form, url: settings_two_factor_auth_recovery_code_list_path do |form| %>
-            <div class="mb-4">
-              <%= form.label :password, t("activemodel.attributes.user_session_form/creation.password"), class: "label" %>
-              <%= form.password_field :password, class: "input input-bordered w-full", autocomplete: "current-password" %>
-              <% if regeneration_form.errors[:password].any? %>
-                <p class="mt-1 text-sm text-error"><%= regeneration_form.errors[:password].first %></p>
+              <p class="text-sm text-gray-600">
+                <%= t("messages.two_factor_auth.regenerate_warning") %>
+              </p>
+            </div>
+
+            <%= form_with(
+              class: "flex flex-col gap-4",
+              model: form,
+              url: settings_two_factor_auth_recovery_code_list_path
+            ) do |f| %>
+              <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+              <%= f.label :password, class: "form-control" do %>
+                <div class="label">
+                  <span class="label-text">
+                    <%= t("forms.attributes.user_session_form/creation.password") %>
+                  </span>
+                </div>
+
+                <%= f.password_field(
+                  :password,
+                  class: "input input-bordered w-full",
+                  autocomplete: "current-password"
+                ) %>
               <% end %>
-            </div>
 
-            <div class="flex justify-between">
-              <%= link_to t("verbs.back"), settings_two_factor_auth_path, class: "btn btn-ghost" %>
-              <%= form.submit t("verbs.regenerate_recovery_codes"), class: "btn btn-warning", data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") } %>
-            </div>
-          <% end %>
+              <div class="flex gap-2">
+                <%= f.button(
+                  class: "btn btn-primary no-animation rounded-full w-fit",
+                  data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") },
+                  type: :submit
+                ) do %>
+                  <%= t("verbs.regenerate_recovery_codes") %>
+                <% end %>
+
+                <%= link_to t("verbs.cancel"), settings_two_factor_auth_path, {
+                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                } %>
+              </div>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

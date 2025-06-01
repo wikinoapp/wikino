@@ -68,6 +68,7 @@ module.exports = {
           "base-200": colors.brand[100], // ナビゲーションバーの背景色
           "base-300": colors.gray[100], // カードの背景色
           "base-content": colors.gray[950], // テキストの色
+          info: colors.sky[300],
           "primary-content": colors.gray[100],
           primary: colors.gray[950],
           "secondary-content": colors.gray[950],

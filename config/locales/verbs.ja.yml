@@ -20,7 +20,5 @@ ja:
     disable_two_factor_auth: 二要素認証を無効にする
     regenerate_recovery_codes: リカバリーコードを再生成する
     view_recovery_codes: リカバリーコードを表示
-    print_recovery_codes: リカバリーコードを印刷
-    download_recovery_codes: リカバリーコードをダウンロード
     back: 戻る
     verify: 確認

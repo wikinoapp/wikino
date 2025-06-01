@@ -169,9 +169,15 @@ en:
       status:
         enabled: Two-factor authentication is enabled
         disabled: Two-factor authentication is not enabled
-      recovery_codes_description: These recovery codes can be used to access your account if you lose access to your authenticator app. Each code can only be used once.
-      save_recovery_codes: Please save these recovery codes in a safe place. You won't be able to see them again.
-      no_recovery_codes: No recovery codes available.
+      recovery_codes_description_html: |-
+        These recovery codes can be used to access your account if you lose access to your authenticator app.
+        <br>
+        Each code can only be used once.
+      save_recovery_codes_html: |-
+        Please save these recovery codes in a safe place.
+        <br>
+        These codes are the last means of accessing your account if you lose your authenticator app.
+        If you lose these codes, you will completely lose access to your account.
       regenerate_warning: Regenerating recovery codes will invalidate all existing codes.
       regenerate_confirmation: Are you sure you want to regenerate recovery codes? All existing codes will be invalidated.
       not_enabled: Two-factor authentication is not enabled.

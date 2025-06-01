@@ -32,15 +32,13 @@ module Settings
           )
         end
 
-        result = TwoFactorAuthService::Enable.new.call(
+        TwoFactorAuthService::Enable.new.call(
           user_record: form.user_record.not_nil!,
           password: form.password.not_nil!,
           totp_code: form.totp_code.not_nil!
         )
 
-        session[:recovery_codes] = result.recovery_codes
         flash[:notice] = t("messages.two_factor_auth.enabled_successfully")
-
         redirect_to settings_two_factor_auth_recovery_codes_path
       end
 
