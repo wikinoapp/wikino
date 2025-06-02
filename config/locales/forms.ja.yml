@@ -84,5 +84,7 @@ ja:
           invalid_totp_code: 認証コードが間違っています
           unauthenticated: パスワードが間違っています
           user_two_factor_auth_record_not_found: 二要素認証が設定されていません
+        two_factor_auth_form/recovery_code_regeneration:
+          unauthenticated: パスワードが間違っています
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています

@@ -9,7 +9,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "2FAが無効なとき、404エラーになること" do
+  it "ログインしている & 2FAが無効なとき、二要素認証の設定ページにリダイレクトされること" do
     user_record = create(:user_record, :with_password)
 
     sign_in(user_record:)
@@ -20,10 +20,11 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
       }
     }
 
-    expect(response.status).to eq(404)
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/settings/two_factor_auth")
   end
 
-  it "パスワードが間違っているとき、エラーメッセージが表示されること" do
+  it "ログインしている & パスワードが間違っているとき、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
     old_recovery_codes = two_factor_auth_record.recovery_codes.dup
@@ -44,7 +45,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     expect(two_factor_auth_record.recovery_codes).to eq(old_recovery_codes)
   end
 
-  it "正しいパスワードのとき、リカバリーコードが再生成されること" do
+  it "ログインしている & 正しいパスワードのとき、リカバリーコードが再生成されること" do
     user_record = create(:user_record, :with_password)
     two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
     old_recovery_codes = two_factor_auth_record.recovery_codes.dup
@@ -64,7 +65,5 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     two_factor_auth_record.reload
     expect(two_factor_auth_record.recovery_codes).not_to eq(old_recovery_codes)
     expect(two_factor_auth_record.recovery_codes.size).to eq(10)
-
-    # 新しいリカバリーコードがセッションに設定されていることを確認はコントローラー側で実行されるためスキップ
   end
 end
