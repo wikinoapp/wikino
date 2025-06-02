@@ -84,6 +84,8 @@ en:
           invalid_totp_code: Authentication code is incorrect
           unauthenticated: Password is incorrect
           user_two_factor_auth_record_not_found: Two-factor authentication is not set up
+        two_factor_auth_form/destruction:
+          unauthenticated: Password is incorrect
         two_factor_auth_form/recovery_code_regeneration:
           unauthenticated: Password is incorrect
         user_session_form/creation:

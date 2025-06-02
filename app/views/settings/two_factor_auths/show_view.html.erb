@@ -17,34 +17,42 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
-        <%= main_title.with_subtitle do %>
-          <%= t("messages.two_factor_auth.show.description_html") %>
-        <% end %>
-      <% end  %>
+      <%= render Headers::MainTitleComponent.new(title:) %>
 
       <%= render Basic::CardComponent.new(
         class_name: "bg-base-300 border border-brand-200"
       ) do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <% if user_two_factor_auth&.enabled %>
-            <p class="mb-4 text-success">
-              <%= t("messages.two_factor_auth.status.enabled") %>
-            </p>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <%= render Basic::IconComponent.new(
+                    name: "check-circle",
+                    size: "36px",
+                    class_name: "fill-success"
+                  ) %>
 
-            <p class="mb-4">
-              <%= t(
-                "messages.two_factor_auth.enabled_at",
-                time: l(user_two_factor_auth.enabled_at, format: :long)
-              ) %>
-            </p>
+                  <p class="text-success">
+                    <%= t("messages.two_factor_auth.status.enabled") %>
+                  </p>
+                </div>
 
-            <div class="mb-4">
-              <%= link_to(
-                t("verbs.view_recovery_codes"),
-                settings_two_factor_auth_recovery_codes_path,
-                class: "btn btn-primary"
-              ) %>
+                <p class="text-gray-600 text-sm">
+                  <%= t(
+                    "messages.two_factor_auth.enabled_at",
+                    time: AbsoluteTimeComponent.new(time: user_two_factor_auth.enabled_at).call
+                  ) %>
+                </p>
+              </div>
+
+              <div>
+                <%= link_to(
+                  t("verbs.view_recovery_codes"),
+                  settings_two_factor_auth_recovery_codes_path,
+                  class: "btn btn-primary no-animation rounded-full"
+                ) %>
+              </div>
             </div>
 
             <hr class="my-4">
@@ -54,6 +62,7 @@
             </h3>
 
             <%= form_with(
+              class: "flex flex-col gap-4",
               model: form,
               url: settings_two_factor_auth_path,
               method: :delete
@@ -63,7 +72,7 @@
               <%= f.label :password, class: "form-control" do %>
                 <div class="label">
                   <span class="label-text">
-                    <%= t("activemodel.attributes.user_session_form/creation.password") %>
+                    <%= t("forms.attributes.user_session_form/creation.password") %>
                   </span>
                 </div>
 
@@ -74,11 +83,15 @@
                 ) %>
               <% end %>
 
-              <%= f.submit(
-                t("verbs.disable_two_factor_auth"),
-                class: "btn btn-error no-animation rounded-full",
-                data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") }
-              ) %>
+              <div>
+                <%= f.button(
+                  class: "btn btn-primary no-animation rounded-full",
+                  type: :submit,
+                  data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") }
+                ) do %>
+                  <%= t("verbs.disable_two_factor_auth") %>
+                <% end %>
+              </div>
             <% end %>
           <% else %>
             <p class="mb-4">

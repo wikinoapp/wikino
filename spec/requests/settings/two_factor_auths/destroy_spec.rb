@@ -9,7 +9,7 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "2FAが無効なとき、404エラーになること" do
+  it "ログインしている & 2FAが無効なとき、二要素認証の設定ページにリダイレクトされること" do
     user_record = create(:user_record, :with_password)
 
     sign_in(user_record:)
@@ -20,10 +20,11 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
       }
     }
 
-    expect(response.status).to eq(404)
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/settings/two_factor_auth")
   end
 
-  it "パスワードが間違っているとき、エラーメッセージが表示されること" do
+  it "ログインしている & パスワードが間違っているとき、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
 
@@ -43,7 +44,7 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
     expect(two_factor_auth_record.enabled).to be true
   end
 
-  it "正しいパスワードのとき、2FAが無効化されること" do
+  it "ログインしている & 正しいパスワードのとき、2FAが無効化されること" do
     user_record = create(:user_record, :with_password)
     two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
 

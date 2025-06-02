@@ -4,9 +4,13 @@
 module TwoFactorAuthForm
   class Destruction < ApplicationForm
     include FormConcerns::PasswordValidatable
+    include FormConcerns::PasswordAuthenticatable
+
+    sig { returns(T.nilable(UserRecord)) }
+    attr_accessor :user_record
 
     attribute :password, :string
 
-    validates :password, presence: true
+    validates :user_record, presence: true
   end
 end

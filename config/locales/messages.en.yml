@@ -153,10 +153,6 @@ en:
               below.
       updated: Topic updated.
     two_factor_auth:
-      show:
-        description_html: |-
-          For more information, please see
-          <a class="link link-primary" href="https://wikino.app/s/wikino/pages/55" target="_blank">this page</a>.
       already_enabled: Two-factor authentication is already enabled.
       enabled_successfully: Two-factor authentication has been enabled.
       disabled_successfully: Two-factor authentication has been disabled.
