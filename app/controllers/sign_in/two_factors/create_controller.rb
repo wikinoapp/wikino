@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
-module UserSessions
-  module TwoFactorAuths
+module SignIn
+  module TwoFactors
     class CreateController < ApplicationController
       include ControllerConcerns::Authenticatable
       include ControllerConcerns::Localizable

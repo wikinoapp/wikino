@@ -12,7 +12,9 @@ module SignIn
 
       sig { returns(T.untyped) }
       def call
-        if session[:pending_user_id].blank?
+        pending_user_record = UserRecord.visible.find_by(id: session[:pending_user_id])
+
+        unless pending_user_record&.two_factor_enabled?
           return redirect_to(sign_in_path)
         end
 

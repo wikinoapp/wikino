@@ -33,6 +33,8 @@ class UserRecord < ApplicationRecord
   has_one :user_password_record, dependent: :restrict_with_exception, foreign_key: :user_id
   has_one :user_two_factor_auth_record, dependent: :restrict_with_exception, foreign_key: :user_id
 
+  scope :visible, -> { kept }
+
   sig do
     params(
       email: String,

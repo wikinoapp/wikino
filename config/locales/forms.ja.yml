@@ -61,7 +61,7 @@ ja:
         email: メールアドレス
         password: パスワード
       user_session_form/two_factor_verification:
-        code: コード
+        code: 認証コード
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません

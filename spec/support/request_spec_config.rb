@@ -19,7 +19,7 @@ module RequestHelpers
 
     # 2FAが有効な場合は2FA検証画面にリダイレクトされるはず
     if user_record.two_factor_enabled?
-      expect(response).to redirect_to("/user_session/two_factor_auth/new")
+      expect(response).to redirect_to("/sign_in/two_factor/new")
       expect(session[:pending_user_id]).to eq(user_record.id)
     else
       expect(cookies[UserSession::TOKENS_COOKIE_KEY]).to be_present
@@ -31,7 +31,7 @@ module RequestHelpers
 
     # 2FAが有効な場合は2FA検証画面にリダイレクトされるはず
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/user_session/two_factor_auth/new")
+    expect(response).to redirect_to("/sign_in/two_factor/new")
     expect(session[:pending_user_id]).to eq(user_record.id)
 
     two_factor_auth_record = UserTwoFactorAuthRecord.find_by!(user_record:)
