@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module UserSessions
-  module TwoFactorAuths
+module SignIn
+  module TwoFactors
     class NewView < ApplicationView
       sig { params(form: UserSessionForm::TwoFactorVerification).void }
       def initialize(form:)
@@ -15,12 +15,12 @@ module UserSessions
 
       sig { returns(String) }
       private def title
-        t("meta.title.user_sessions.two_factor_auth")
+        t("meta.title.sign_in.two_factors.new")
       end
 
       sig { returns(PageName) }
       private def current_page_name
-        PageName::SignIn
+        PageName::SignInTwoFactorNew
       end
     end
   end

@@ -67,14 +67,14 @@ Rails.application.routes.draw do
   match "/settings/two_factor_auth/recovery_codes",                        via: :get,    as: :settings_two_factor_auth_recovery_code_list,  to: "settings/two_factor_auths/recovery_codes/show#call"
   match "/settings/two_factor_auth/recovery_codes",                        via: :post,                                                      to: "settings/two_factor_auths/recovery_codes/create#call"
   match "/sign_in",                                                        via: :get,    as: :sign_in,                                      to: "sign_in/show#call"
+  match "/sign_in/two_factor",                                             via: :post,   as: :sign_in_two_factor,                           to: "sign_in/two_factors/create#call"
+  match "/sign_in/two_factor/new",                                         via: :get,    as: :sign_in_new_two_factor,                       to: "sign_in/two_factors/new#call"
   match "/sign_up",                                                        via: :get,    as: :sign_up,                                      to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                                   to: "spaces/create#call"
   match "/spaces/new",                                                     via: :get,    as: :new_space,                                    to: "spaces/new#call"
   match "/terms",                                                          via: :get,    as: :terms,                                        to: redirect("https://wikino.app/s/wikino/pages/41")
   match "/user_session",                                                   via: :delete, as: :user_session,                                 to: "user_sessions/destroy#call"
   match "/user_session",                                                   via: :post,                                                      to: "user_sessions/create#call"
-  match "/user_session/two_factor_auth",                                   via: :post,   as: :user_session_two_factor_auth,                 to: "user_sessions/two_factor_auths/create#call"
-  match "/user_session/two_factor_auth/new",                               via: :get,    as: :user_session_new_two_factor_auth,             to: "user_sessions/two_factor_auths/new#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 
   root "welcome/show#call"

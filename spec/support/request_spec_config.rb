@@ -39,7 +39,7 @@ module RequestHelpers
     correct_code = totp.now
 
     post(
-      user_session_two_factor_auth_path,
+      sign_in_two_factor_path,
       params: {
         user_session_form_two_factor_verification: {
           code: correct_code

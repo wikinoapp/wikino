@@ -133,7 +133,13 @@ module GeneratedPathHelpersModule
   def settings_two_factor_auth_recovery_codes_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def sign_in_new_two_factor_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_path(*args); end
@@ -205,11 +211,5 @@ module GeneratedPathHelpersModule
   def turbo_resume_historical_location_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def user_session_new_two_factor_auth_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def user_session_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_session_two_factor_auth_path(*args); end
 end

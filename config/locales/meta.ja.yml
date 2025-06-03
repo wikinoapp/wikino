@@ -44,10 +44,10 @@ ja:
           recovery_codes: リカバリーコード
       sign_in:
         show: ログイン
+        two_factors:
+          new: 二要素認証の確認
       sign_up:
         show: アカウント作成
-      user_sessions:
-        two_factor_auth: 二要素認証の確認
       spaces:
         new: 新規スペース
         settings:

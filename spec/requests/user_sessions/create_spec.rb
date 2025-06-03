@@ -74,7 +74,7 @@ RSpec.describe "POST /user_session", type: :request do
       }
     })
     expect(response.status).to eq(302)
-    expect(response).to redirect_to("/user_session/two_factor_auth/new")
+    expect(response).to redirect_to("/sign_in/two_factor/new")
 
     # まだログインしていないのでセッションは作られていないはず
     expect(UserSessionRecord.count).to eq(0)
