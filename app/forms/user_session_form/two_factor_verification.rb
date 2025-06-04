@@ -37,10 +37,10 @@ module UserSessionForm
 
       verified = if totp_code?
         # TOTPコードの検証
-        two_factor_auth.verify_code(code_value)
-      elsif recovery_code? && code_value
+        two_factor_auth.verify_code(code)
+      elsif recovery_code? && code
         # リカバリーコードの検証
-        auth_record.recovery_code_valid?(code_value)
+        auth_record.recovery_code_valid?(code)
       else
         false
       end

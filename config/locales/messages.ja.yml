@@ -183,11 +183,12 @@ ja:
         step1: 1. スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします
         step2: 2. 認証アプリで下のQRコードをスキャンします
         step3: 3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します
-      enter_code: 認証アプリに表示される認証コードを入力してください
+      enter_code: 認証アプリに表示される認証コードを入力してください。
       code_hint: 6桁のコードまたは8文字のリカバリーコードを入力してください
       lost_device: 認証デバイスをお持ちでない場合
       use_recovery_code: リカバリーコードを使用
-      recovery_code_hint: 8文字のリカバリーコードを入力してください
+      recovery: 二要素認証のリカバリーコードを入力する
+      recovery_description: 認証アプリが手元に無い場合は、リカバリーコードを使用してログインできます。
     trash:
       empty_state_message: ゴミ箱は空です
       restored: ページを復元しました

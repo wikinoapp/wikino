@@ -19,7 +19,8 @@ class PageName < T::Enum
     SettingsTwoFactorAuthNew = new
     SettingsTwoFactorAuthRecoveryCodes = new
     SignIn = new
-    SignInTwoFactorNew = new
+    SignInTwoFactor = new
+    SignInTwoFactorRecovery = new
     SignUp = new
     SpaceDetail = new
     SpaceNew = new

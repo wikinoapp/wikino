@@ -45,7 +45,9 @@ en:
       sign_in:
         show: Sign in
         two_factors:
-          new: Two-factor authentication
+          show: Two-factor authentication
+          recoveries:
+            show: Two-factor recovery
       sign_up:
         show: Sign up
       spaces:

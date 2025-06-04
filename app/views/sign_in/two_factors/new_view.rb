@@ -15,12 +15,12 @@ module SignIn
 
       sig { returns(String) }
       private def title
-        t("meta.title.sign_in.two_factors.new")
+        t("meta.title.sign_in.two_factors.show")
       end
 
       sig { returns(PageName) }
       private def current_page_name
-        PageName::SignInTwoFactorNew
+        PageName::SignInTwoFactor
       end
     end
   end

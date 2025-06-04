@@ -57,17 +57,9 @@
             <% end %>
           <% end %>
 
-          <hr>
-
-          <div class="flex flex-col gap-2 text-sm">
-            <p>
-              <%= t("messages.two_factor_auth.recovery_description") %>
-            </p>
-
-            <%= link_to sign_in_two_factor_new_recovery_path, class: "link link-primary" do %>
-              <%= t("messages.two_factor_auth.recovery") %>
-            <% end %>
-          </div>
+          <p id="recovery-code-hint" class="mt-2 text-sm text-gray-600">
+            <%= t("messages.two_factor_auth.recovery_code_hint") %>
+          </p>
         </div>
       <% end %>
     <% end %>

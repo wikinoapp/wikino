@@ -45,7 +45,9 @@ ja:
       sign_in:
         show: ログイン
         two_factors:
-          new: 二要素認証の確認
+          show: 二要素認証の確認
+          recoveries:
+            show: 二要素認証のリカバリー
       sign_up:
         show: アカウント作成
       spaces:

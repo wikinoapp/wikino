@@ -185,7 +185,8 @@ en:
       code_hint: Enter a 6-digit code or 8-character recovery code
       lost_device: Lost your authentication device?
       use_recovery_code: Use a recovery code
-      recovery_code_hint: Enter one of your 8-character recovery codes
+      recovery: Enter a recovery code for two-factor authentication
+      recovery_description: If you lose your authenticator app, you can log in using a recovery code.
     trash:
       empty_state_message: Trash is empty.
       restored: Pages have been restored.
