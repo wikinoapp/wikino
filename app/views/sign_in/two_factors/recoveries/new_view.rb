@@ -5,12 +5,12 @@ module SignIn
   module TwoFactors
     module Recoveries
       class NewView < ApplicationView
-        sig { params(form: UserSessionForm::TwoFactorVerification).void }
+        sig { params(form: UserSessionForm::TwoFactorRecovery).void }
         def initialize(form:)
           @form = form
         end
 
-        sig { returns(UserSessionForm::TwoFactorVerification) }
+        sig { returns(UserSessionForm::TwoFactorRecovery) }
         attr_reader :form
         private :form
 
