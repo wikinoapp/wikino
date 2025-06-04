@@ -10,7 +10,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: "123456"
+        code: "123456"
       }
     }
 
@@ -21,7 +21,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
   it "ログインしていない & 2FAが無効 & `pending_user_id` がセッションにないとき、ログインページにリダイレクトすること" do
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: "123456"
+        code: "123456"
       }
     }
 
@@ -34,7 +34,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: "123456"
+        code: "123456"
       }
     }
 
@@ -48,7 +48,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: "123456"
+        code: "123456"
       }
     }
 
@@ -56,32 +56,32 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
-  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 間違った認証コードのとき、エラーメッセージが表示されること" do
+  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 間違ったコードのとき、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     create(:user_two_factor_auth_record, :enabled, user_record:)
     set_session(pending_user_id: user_record.id)
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: "000000"
+        code: "000000"
       }
     }
 
     expect(response.status).to eq(422)
-    expect(response.body).to include("認証コードが間違っています")
+    expect(response.body).to include("認証コードが正しくありません")
 
     # セッションが作成されていないことを確認
     expect(UserSessionRecord.count).to eq(0)
   end
 
-  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 認証コードが空のとき、エラーメッセージが表示されること" do
+  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & コードが空のとき、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     create(:user_two_factor_auth_record, :enabled, user_record:)
     set_session(pending_user_id: user_record.id)
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: ""
+        code: ""
       }
     }
 
@@ -92,7 +92,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
     expect(UserSessionRecord.count).to eq(0)
   end
 
-  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 正しい認証コードのとき、ログインできること" do
+  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 正しいTOTPコードのとき、ログインできること" do
     user_record = create(:user_record, :with_password)
     two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
     set_session(pending_user_id: user_record.id)
@@ -105,7 +105,7 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
 
     post "/sign_in/two_factor", params: {
       user_session_form_two_factor_verification: {
-        totp_code: correct_code
+        code: correct_code
       }
     }
 
@@ -117,5 +117,32 @@ RSpec.describe "POST /sign_in/two_factor", type: :request do
 
     # pending_user_idがクリアされていることを確認
     expect(session[:pending_user_id]).to be_nil
+  end
+
+  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 正しいリカバリーコードのとき、ログインできること" do
+    user_record = create(:user_record, :with_password)
+    recovery_codes = ["code1234", "code5678", "code9012"]
+    two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:, recovery_codes:)
+    set_session(pending_user_id: user_record.id)
+
+    expect(UserSessionRecord.count).to eq(0)
+
+    post "/sign_in/two_factor", params: {
+      user_session_form_two_factor_verification: {
+        code: "code1234"
+      }
+    }
+
+    expect(response.status).to eq(302)
+    expect(response).to redirect_to("/home")
+
+    # セッションが作成されていることを確認
+    expect(UserSessionRecord.count).to eq(1)
+
+    # 使用されたリカバリーコードが削除されていることを確認
+    two_factor_auth_record.reload
+    expect(two_factor_auth_record.recovery_codes).not_to include("code1234")
+    expect(two_factor_auth_record.recovery_codes).to include("code5678")
+    expect(two_factor_auth_record.recovery_codes).to include("code9012")
   end
 end

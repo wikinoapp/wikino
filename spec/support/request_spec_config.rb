@@ -42,7 +42,7 @@ module RequestHelpers
       sign_in_two_factor_path,
       params: {
         user_session_form_two_factor_verification: {
-          code: correct_code
+          totp_code: correct_code
         }
       }
     )

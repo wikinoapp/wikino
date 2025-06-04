@@ -26,16 +26,16 @@
           ) do |f| %>
             <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :code, class: "form-control" do %>
+            <%= f.label :totp_code, class: "form-control" do %>
               <div class="label">
                 <span class="label-text">
-                  <%= t("forms.attributes.user_session_form/two_factor_verification.code") %>
+                  <%= t("forms.attributes.user_session_form/two_factor_verification.totp_code") %>
                 </span>
               </div>
 
-              <%= f.text_field :code, {
+              <%= f.text_field :totp_code, {
                 class: "bg-base-300 input input-bordered w-full",
-                maxlength: 8,
+                maxlength: 6,
                 placeholder: "000000",
                 autocomplete: "one-time-code",
                 autofocus: true

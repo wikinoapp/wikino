@@ -7,8 +7,8 @@
 
 class UserSessionForm::TwoFactorVerification
   sig { returns(T.nilable(::String)) }
-  def code; end
+  def totp_code; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-  def code=(value); end
+  def totp_code=(value); end
 end

@@ -8,6 +8,7 @@ module SignIn
       include ControllerConcerns::Localizable
 
       around_action :set_locale
+      before_action :require_no_authentication
 
       sig { returns(T.untyped) }
       def call
@@ -17,37 +18,24 @@ module SignIn
           return redirect_to(sign_in_path)
         end
 
-        form = UserSessionForm::TwoFactorVerification.new(form_params)
-
-        # ペンディング中のユーザーを取得
-        user_record = UserRecord.find_by(id: session[:pending_user_id])
-        unless user_record
-          session.delete(:pending_user_id)
-          redirect_to sign_in_path
-          return
-        end
-
-        # フォームにユーザーレコードを設定
-        form.user_record = user_record
+        form = UserSessionForm::TwoFactorVerification.new(
+          form_params.merge(user_record: pending_user_record)
+        )
 
         if form.invalid?
           return render_component(
-            UserSessions::TwoFactorAuths::NewView.new(form:),
+            SignIn::TwoFactors::NewView.new(form:),
             status: :unprocessable_entity
           )
         end
 
-        # セッション作成
         result = UserSessionService::Create.new.call(
-          user_record: user_record,
+          user_record: pending_user_record,
           ip_address: original_remote_ip,
           user_agent: request.user_agent
         )
 
-        # ペンディングセッションをクリア
         session.delete(:pending_user_id)
-
-        # ログイン完了
         sign_in(result.user_session_record)
 
         flash[:notice] = t("messages.accounts.signed_in_successfully")
@@ -57,7 +45,7 @@ module SignIn
       sig { returns(ActionController::Parameters) }
       private def form_params
         params.require(:user_session_form_two_factor_verification).permit(
-          :code
+          :totp_code
         )
       end
     end

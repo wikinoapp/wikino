@@ -61,7 +61,7 @@ en:
         email: Email
         password: Password
       user_session_form/two_factor_verification:
-        code: Code
+        totp_code: Authentication code
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
@@ -90,3 +90,5 @@ en:
           unauthenticated: Password is incorrect
         user_session_form/creation:
           unauthenticated: Login failed. Email or password are incorrect
+        user_session_form/two_factor_verification:
+          invalid_code: Authentication code is incorrect
