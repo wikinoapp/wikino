@@ -14,11 +14,4 @@ class UserTwoFactorAuthRecord < ApplicationRecord
     update!(recovery_codes: recovery_codes - [code])
     true
   end
-
-  sig { returns(T::Array[String]) }
-  def generate_recovery_codes!
-    codes = 10.times.map { SecureRandom.alphanumeric(8).downcase }
-    update!(recovery_codes: codes)
-    codes
-  end
 end

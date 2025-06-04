@@ -8,10 +8,15 @@ module SignIn
       include ControllerConcerns::Localizable
 
       around_action :set_locale
-      before_action :require_pending_two_factor_auth
 
       sig { returns(T.untyped) }
       def call
+        pending_user_record = UserRecord.visible.find_by(id: session[:pending_user_id])
+
+        unless pending_user_record&.two_factor_enabled?
+          return redirect_to(sign_in_path)
+        end
+
         form = UserSessionForm::TwoFactorVerification.new(form_params)
 
         # ペンディング中のユーザーを取得
@@ -49,20 +54,11 @@ module SignIn
         redirect_to after_authentication_url
       end
 
-      private
-
       sig { returns(ActionController::Parameters) }
-      def form_params
+      private def form_params
         params.require(:user_session_form_two_factor_verification).permit(
           :code
         )
-      end
-
-      sig { void }
-      def require_pending_two_factor_auth
-        if session[:pending_user_id].blank?
-          redirect_to sign_in_path
-        end
       end
     end
   end
