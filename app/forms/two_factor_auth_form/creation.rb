@@ -30,7 +30,7 @@ module TwoFactorAuthForm
     private def verify_totp_code
       code = totp_code
       return if code.nil?
-      
+
       record = user_record
       return if record.nil?
       return if record.user_two_factor_auth_record.nil?

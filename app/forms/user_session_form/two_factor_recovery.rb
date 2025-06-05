@@ -14,7 +14,7 @@ module UserSessionForm
     sig { void }
     private def verify_recovery_code
       return if recovery_code.blank?
-      
+
       record = user_record
       return if record.nil?
       return unless record.two_factor_enabled?

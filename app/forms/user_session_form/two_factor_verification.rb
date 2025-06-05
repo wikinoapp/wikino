@@ -14,7 +14,7 @@ module UserSessionForm
     sig { void }
     private def verify_totp_code
       return if totp_code.blank?
-      
+
       record = user_record
       return if record.nil?
       return unless record.two_factor_enabled?
