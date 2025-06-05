@@ -145,6 +145,9 @@ module GeneratedPathHelpersModule
   def sign_in_two_factor_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_recovery_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_up_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

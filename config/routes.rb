@@ -70,6 +70,7 @@ Rails.application.routes.draw do
   match "/sign_in/two_factor/new",                                         via: :get,    as: :sign_in_new_two_factor,                       to: "sign_in/two_factors/new#call"
   match "/sign_in/two_factor",                                             via: :post,   as: :sign_in_two_factor,                           to: "sign_in/two_factors/create#call"
   match "/sign_in/two_factor/recovery/new",                                via: :get,    as: :sign_in_two_factor_new_recovery,              to: "sign_in/two_factors/recoveries/new#call"
+  match "/sign_in/two_factor/recovery",                                    via: :post,   as: :sign_in_two_factor_recovery,                  to: "sign_in/two_factors/recoveries/create#call"
   match "/sign_up",                                                        via: :get,    as: :sign_up,                                      to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                                   to: "spaces/create#call"
   match "/spaces/new",                                                     via: :get,    as: :new_space,                                    to: "spaces/new#call"

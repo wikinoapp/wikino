@@ -139,6 +139,9 @@ module GeneratedUrlHelpersModule
   def sign_in_two_factor_new_recovery_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_recovery_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_in_two_factor_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

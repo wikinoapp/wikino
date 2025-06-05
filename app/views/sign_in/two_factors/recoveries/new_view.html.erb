@@ -22,7 +22,7 @@
           <%= form_with(
             class: "flex flex-col gap-4",
             model: form,
-            url: sign_in_two_factor_path
+            url: sign_in_two_factor_recovery_path
           ) do |f| %>
             <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 

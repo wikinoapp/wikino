@@ -7,8 +7,8 @@
 
 class UserSessionForm::TwoFactorRecovery
   sig { returns(T.nilable(::String)) }
-  def code; end
+  def recovery_code; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-  def code=(value); end
+  def recovery_code=(value); end
 end
