@@ -16,7 +16,9 @@
       <%= card.with_body(class_name: "p-4") do %>
         <div class="flex flex-col gap-4">
           <p>
-            <%= t("messages.two_factor_auth.enter_code") %>
+            <%= t("messages.two_factor_auth.enter_recovery_code") %>
+            <br>
+            <%= t("messages.two_factor_auth.recovery_code_usage") %>
           </p>
 
           <%= form_with(
@@ -43,7 +45,7 @@
 
               <div class="label">
                 <span class="label-text-alt">
-                  <%= t("messages.two_factor_auth.code_hint") %>
+                  <%= t("messages.two_factor_auth.recovery_code_hint") %>
                 </span>
               </div>
             <% end %>
@@ -57,9 +59,6 @@
             <% end %>
           <% end %>
 
-          <p id="recovery-code-hint" class="mt-2 text-sm text-gray-600">
-            <%= t("messages.two_factor_auth.recovery_code_hint") %>
-          </p>
         </div>
       <% end %>
     <% end %>

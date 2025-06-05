@@ -182,7 +182,10 @@ en:
         step2: 2. Scan the QR code below with the app.
         step3: 3. Enter the password you use to log in and the 6-digit code displayed in the app below.
       enter_code: Enter the authentication code from your app
+      enter_recovery_code: Enter your recovery code
       code_hint: Enter a 6-digit code or 8-character recovery code
+      recovery_code_hint: Recovery codes are 8 alphanumeric characters
+      recovery_code_usage: If you can't access your authenticator app, you can sign in using a recovery code you saved earlier
       lost_device: Lost your authentication device?
       use_recovery_code: Use a recovery code
       recovery: Enter a recovery code for two-factor authentication
