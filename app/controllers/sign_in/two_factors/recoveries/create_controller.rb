@@ -30,6 +30,12 @@ module SignIn
             )
           end
 
+          # リカバリーコードを消費
+          TwoFactorAuthService::ConsumeRecoveryCode.new.call(
+            user_record: pending_user_record,
+            recovery_code: form.recovery_code
+          )
+
           result = UserSessionService::Create.new.call(
             user_record: pending_user_record,
             ip_address: original_remote_ip,

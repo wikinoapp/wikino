@@ -8,10 +8,6 @@ class UserTwoFactorAuthRecord < ApplicationRecord
 
   sig { params(code: String).returns(T::Boolean) }
   def recovery_code_valid?(code)
-    return false unless recovery_codes.include?(code)
-
-    # リカバリーコードは一度しか使えないため、使用後は削除
-    update!(recovery_codes: recovery_codes - [code])
-    true
+    recovery_codes.include?(code)
   end
 end
