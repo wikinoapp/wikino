@@ -62,6 +62,8 @@ ja:
         password: パスワード
       user_session_form/two_factor_verification:
         totp_code: 認証コード
+      user_session_form/two_factor_recovery:
+        recovery_code: リカバリーコード
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
@@ -91,4 +93,6 @@ ja:
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
         user_session_form/two_factor_verification:
+          invalid_code: が間違っています
+        user_session_form/two_factor_recovery:
           invalid_code: が間違っています

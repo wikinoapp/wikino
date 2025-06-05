@@ -62,6 +62,8 @@ en:
         password: Password
       user_session_form/two_factor_verification:
         totp_code: Authentication code
+      user_session_form/two_factor_recovery:
+        recovery_code: Recovery code
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
@@ -92,3 +94,5 @@ en:
           unauthenticated: Login failed. Email or password are incorrect
         user_session_form/two_factor_verification:
           invalid_code: Authentication code is incorrect
+        user_session_form/two_factor_recovery:
+          invalid_code: Recovery code is incorrect

@@ -68,7 +68,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     }
 
     expect(response.status).to eq(422)
-    expect(response.body).to include("認証コードが正しくありません")
+    expect(response.body).to include("リカバリーコードが間違っています")
 
     # セッションが作成されていないことを確認
     expect(UserSessionRecord.count).to eq(0)
@@ -92,31 +92,25 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     expect(UserSessionRecord.count).to eq(0)
   end
 
-  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 正しいTOTPコードのとき、ログインできること" do
+  it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 間違ったリカバリーコードのとき、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
-    two_factor_auth_record = create(:user_two_factor_auth_record, :enabled, user_record:)
+    recovery_codes = ["code1234", "code5678", "code9012"]
+    create(:user_two_factor_auth_record, :enabled, user_record:, recovery_codes:)
     set_session(pending_user_id: user_record.id)
-
-    # 正しいTOTPコードを生成
-    totp = ROTP::TOTP.new(two_factor_auth_record.secret)
-    correct_code = totp.now
 
     expect(UserSessionRecord.count).to eq(0)
 
     post "/sign_in/two_factor/recovery", params: {
       user_session_form_two_factor_recovery: {
-        recovery_code: correct_code
+        recovery_code: "wrongcode"
       }
     }
 
-    expect(response.status).to eq(302)
-    expect(response).to redirect_to("/home")
+    expect(response.status).to eq(422)
+    expect(response.body).to include("リカバリーコードが間違っています")
 
-    # セッションが作成されていることを確認
-    expect(UserSessionRecord.count).to eq(1)
-
-    # pending_user_idがクリアされていることを確認
-    expect(session[:pending_user_id]).to be_nil
+    # セッションが作成されていないことを確認
+    expect(UserSessionRecord.count).to eq(0)
   end
 
   it "ログインしていない & 2FAが有効 & `pending_user_id` が有効 & 正しいリカバリーコードのとき、ログインできること" do
