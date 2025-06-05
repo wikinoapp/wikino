@@ -30,14 +30,9 @@ module SignIn
             )
           end
 
-          # リカバリーコードを消費
-          TwoFactorAuthService::ConsumeRecoveryCode.new.call(
-            user_record: pending_user_record,
-            recovery_code: form.recovery_code
-          )
-
-          result = UserSessionService::Create.new.call(
-            user_record: pending_user_record,
+          result = UserSessionService::CreateWithRecoveryCode.new.call(
+            user_two_factor_auth_record: pending_user_record.user_two_factor_auth_record.not_nil!,
+            recovery_code: form.recovery_code,
             ip_address: original_remote_ip,
             user_agent: request.user_agent
           )

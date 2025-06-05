@@ -18,7 +18,7 @@ module UserSessionForm
 
       auth_record = user_record.user_two_factor_auth_record.not_nil!
 
-      unless auth_record.recovery_code_valid?(recovery_code)
+      unless auth_record.recovery_code_valid?(recovery_code:)
         errors.add(:recovery_code, :invalid_code)
       end
     end
