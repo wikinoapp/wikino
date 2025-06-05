@@ -13,14 +13,20 @@ module UserSessionForm
 
     sig { void }
     private def verify_totp_code
-      return if totp_code.blank? || user_record.nil?
-      return unless user_record.two_factor_enabled?
+      return if totp_code.blank?
+      
+      record = user_record
+      return if record.nil?
+      return unless record.two_factor_enabled?
+
+      code = totp_code
+      return if code.nil?
 
       two_factor_auth = UserTwoFactorAuthRepository.new.to_model(
-        user_two_factor_auth_record: user_record.user_two_factor_auth_record.not_nil!
+        user_two_factor_auth_record: record.user_two_factor_auth_record.not_nil!
       )
 
-      unless two_factor_auth.verify_code(totp_code)
+      unless two_factor_auth.verify_code(code)
         errors.add(:totp_code, :invalid_code)
       end
     end

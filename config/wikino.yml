@@ -1,6 +1,6 @@
 shared:
   email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
-  host: <%= (Rails.env.test? && !ENV["CI"]) ? `hostname`.strip.downcase : ENV["WIKINO_HOST"] %>
+  host: "<%= (Rails.env.test? && !ENV['CI']) ? `hostname`.strip.downcase : ENV['WIKINO_HOST'] %>"
   resend_api_key: <%= ENV["WIKINO_RESEND_API_KEY"] %>
   reserved_atnames:
     - admin

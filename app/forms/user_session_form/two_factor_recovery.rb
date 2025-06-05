@@ -13,12 +13,15 @@ module UserSessionForm
 
     sig { void }
     private def verify_recovery_code
-      return if recovery_code.blank? || user_record.nil?
-      return unless user_record.two_factor_enabled?
+      return if recovery_code.blank?
+      
+      record = user_record
+      return if record.nil?
+      return unless record.two_factor_enabled?
 
-      auth_record = user_record.user_two_factor_auth_record.not_nil!
+      auth_record = record.user_two_factor_auth_record.not_nil!
 
-      unless auth_record.recovery_code_valid?(recovery_code:)
+      unless auth_record.recovery_code_valid?(recovery_code: recovery_code.not_nil!)
         errors.add(:recovery_code, :invalid_code)
       end
     end
