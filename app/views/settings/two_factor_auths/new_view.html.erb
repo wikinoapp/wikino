@@ -34,7 +34,7 @@
               </div>
 
               <% if qr_code %>
-                <div class="inline-block rounded bg-white p-4 w-fit">
+                <div class="inline-block w-fit rounded bg-white p-4">
                   <%= raw qr_code %>
                 </div>
               <% end %>
@@ -44,7 +44,7 @@
                   <%= t("messages.two_factor_auth.manual_entry") %>
                 </div>
 
-                <code class="rounded px-2 py-1 font-mono border border-brand-200 w-fit">
+                <code class="w-fit rounded border border-brand-200 px-2 py-1 font-mono">
                   <%= secret %>
                 </code>
               </div>
