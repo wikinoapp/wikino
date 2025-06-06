@@ -17,7 +17,7 @@ RSpec.describe "GET /settings/two_factor_auth", type: :request do
     get "/settings/two_factor_auth"
 
     expect(response.status).to eq(200)
-    expect(response.body).to include("二要素認証は無効です")
+    expect(response.body).to include("二要素認証は未設定です")
   end
 
   it "ログインしている & 2FAが有効なとき、有効化状態が表示されること" do
