@@ -166,7 +166,7 @@ ja:
       disable_confirmation: 二要素認証を無効にしてもよろしいですか？
       status:
         enabled: 二要素認証は有効です
-        disabled: 二要素認証は無効です
+        disabled: 二要素認証は未設定です
       recovery_codes_description_html: |-
         これらのリカバリーコードは、認証アプリにアクセスできなくなった場合にアカウントにアクセスするために使用できます。
         <br>
@@ -180,8 +180,8 @@ ja:
       regenerate_confirmation: リカバリーコードを再生成してもよろしいですか？既存のすべてのコードが無効になります。
       not_enabled: 二要素認証が有効になっていません。
       setup_instructions:
-        step1: 1. スマートフォンに認証アプリ（Google Authenticator、Authyなど）をインストールします
-        step2: 2. 認証アプリで下のQRコードをスキャンします
+        step1: 1. スマートフォンに認証アプリ (Google Authenticator、Authyなど) をインストールします
+        step2: 2. 認証アプリで下のQRコードを読み取ります
         step3: 3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します
       enter_code: 認証アプリに表示される認証コードを入力してください。
       enter_recovery_code: リカバリーコードを入力してください。

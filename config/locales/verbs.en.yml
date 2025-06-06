@@ -14,6 +14,7 @@ en:
     sign_up: Create account
     submit: Submit
     update: Update
+    view_help: View help
     view_trash: View Trash
     cancel: Cancel
     enable_two_factor_auth: Enable two-factor authentication

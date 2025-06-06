@@ -17,7 +17,10 @@
     <%= render Containers::MainComponent.new(
       content_screen: ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title:) %>
+      <%= render Headers::MainTitleComponent.new(
+        title:,
+        help_url: "https://wikino.app/s/wikino/pages/55"
+      ) %>
 
       <%= render Basic::CardComponent.new(
         class_name: "bg-base-300 border border-brand-200"

@@ -55,6 +55,7 @@ module.exports = {
     // https://tailwindcss.com/docs/customizing-colors
     colors,
     zIndex: {
+      tooltip: 200,
       navbar: 100,
     },
   },

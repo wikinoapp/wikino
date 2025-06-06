@@ -40,7 +40,7 @@ ja:
           show: プロフィールの編集
         two_factor_auth:
           new: 二要素認証の設定
-          show: 二要素認証
+          show: 二要素認証の設定
           recovery_codes: リカバリーコード
       sign_in:
         show: ログイン
