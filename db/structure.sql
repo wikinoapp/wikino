@@ -344,6 +344,22 @@ CREATE TABLE public.user_sessions (
 
 
 --
+-- Name: user_two_factor_auths; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_two_factor_auths (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    secret character varying NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    enabled_at timestamp(6) without time zone,
+    recovery_codes character varying[] DEFAULT '{}'::character varying[] NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -504,6 +520,14 @@ ALTER TABLE ONLY public.topics
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT user_passwords_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_two_factor_auths user_two_factor_auths_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_two_factor_auths
+    ADD CONSTRAINT user_two_factor_auths_pkey PRIMARY KEY (id);
 
 
 --
@@ -872,6 +896,13 @@ CREATE INDEX index_user_sessions_on_user_id ON public.user_sessions USING btree 
 
 
 --
+-- Name: index_user_two_factor_auths_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON public.user_two_factor_auths USING btree (user_id);
+
+
+--
 -- Name: index_users_on_atname; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1101,12 +1132,21 @@ ALTER TABLE ONLY public.page_editors
 
 
 --
+-- Name: user_two_factor_auths fk_rails_fd6d01946c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_two_factor_auths
+    ADD CONSTRAINT fk_rails_fd6d01946c FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250526173629'),
 ('20250517113235'),
 ('20250517113234'),
 ('20250517113233'),

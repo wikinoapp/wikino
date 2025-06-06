@@ -115,10 +115,34 @@ module GeneratedUrlHelpersModule
   def settings_email_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_new_two_factor_auth_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_profile_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_code_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_codes_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_new_two_factor_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_new_recovery_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_recovery_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def sign_in_url(*args); end

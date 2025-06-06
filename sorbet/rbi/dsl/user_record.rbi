@@ -428,17 +428,32 @@ class UserRecord
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserPasswordRecord) }
     def build_user_password_record(*args, &blk); end
 
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserTwoFactorAuthRecord) }
+    def build_user_two_factor_auth_record(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserPasswordRecord) }
     def create_user_password_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserPasswordRecord) }
     def create_user_password_record!(*args, &blk); end
 
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserTwoFactorAuthRecord) }
+    def create_user_two_factor_auth_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserTwoFactorAuthRecord) }
+    def create_user_two_factor_auth_record!(*args, &blk); end
+
     sig { returns(T.nilable(::UserPasswordRecord)) }
     def reload_user_password_record; end
 
+    sig { returns(T.nilable(::UserTwoFactorAuthRecord)) }
+    def reload_user_two_factor_auth_record; end
+
     sig { void }
     def reset_user_password_record; end
+
+    sig { void }
+    def reset_user_two_factor_auth_record; end
 
     sig { returns(T::Array[T.untyped]) }
     def space_member_record_ids; end
@@ -515,6 +530,12 @@ class UserRecord
 
     sig { params(value: T::Enumerable[::UserSessionRecord]).void }
     def user_session_records=(value); end
+
+    sig { returns(T.nilable(::UserTwoFactorAuthRecord)) }
+    def user_two_factor_auth_record; end
+
+    sig { params(value: T.nilable(::UserTwoFactorAuthRecord)).void }
+    def user_two_factor_auth_record=(value); end
   end
 
   module GeneratedAssociationRelationMethods
@@ -668,6 +689,9 @@ class UserRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def unscope(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def visible(*args, &blk); end
 
     sig { returns(PrivateAssociationRelationWhereChain) }
     sig { params(args: T.untyped).returns(PrivateAssociationRelation) }
@@ -1543,6 +1567,9 @@ class UserRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def unscope(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def visible(*args, &blk); end
 
     sig { returns(PrivateRelationWhereChain) }
     sig { params(args: T.untyped).returns(PrivateRelation) }

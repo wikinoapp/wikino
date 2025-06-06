@@ -1,0 +1,83 @@
+<%= render Layouts::SimpleComponent.new(current_page_name:) do %>
+  <div class="flex flex-col gap-8 px-4 py-12">
+    <div class="text-center">
+      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+      <% end %>
+    </div>
+
+    <div class="text-center">
+      <h1 class="text-2xl font-bold antialiased">
+        <%= title %>
+      </h1>
+    </div>
+
+    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= card.with_body(class_name: "p-4") do %>
+        <div class="flex flex-col gap-4">
+          <p>
+            <%= t("messages.two_factor_auth.enter_code") %>
+          </p>
+
+          <%= form_with(
+            class: "flex flex-col gap-4",
+            model: form,
+            url: sign_in_two_factor_path
+          ) do |f| %>
+            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+            <%= f.label :totp_code, class: "form-control" do %>
+              <div class="label">
+                <span class="label-text">
+                  <%= t("forms.attributes.user_session_form/two_factor_verification.totp_code") %>
+                </span>
+              </div>
+
+              <%= f.text_field :totp_code, {
+                class: "bg-base-300 input input-bordered w-full",
+                maxlength: 6,
+                placeholder: "000000",
+                autocomplete: "one-time-code",
+                autofocus: true
+              } %>
+
+              <div class="label">
+                <span class="label-text-alt">
+                  <%= t("messages.two_factor_auth.code_hint") %>
+                </span>
+              </div>
+            <% end %>
+
+            <%= f.button(
+              class: "btn btn-primary no-animation rounded-full w-fit",
+              type: :submit,
+              tabindex: 3
+            ) do %>
+              <%= t("verbs.verify") %>
+            <% end %>
+          <% end %>
+
+          <hr>
+
+          <div class="flex flex-col gap-2 text-sm">
+            <p>
+              <%= t("messages.two_factor_auth.recovery_description") %>
+            </p>
+
+            <%= link_to sign_in_two_factor_new_recovery_path, class: "link link-primary" do %>
+              <%= t("messages.two_factor_auth.recovery") %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <div class="text-center">
+      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
+        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-content") %>
+
+        <%= t("verbs.back_to_home") %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

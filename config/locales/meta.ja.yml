@@ -38,8 +38,16 @@ ja:
         show: 設定
         profiles:
           show: プロフィールの編集
+        two_factor_auth:
+          new: 二要素認証の設定
+          show: 二要素認証の設定
+          recovery_codes: リカバリーコード
       sign_in:
         show: ログイン
+        two_factors:
+          show: 二要素認証の確認
+          recoveries:
+            show: 二要素認証のリカバリー
       sign_up:
         show: アカウント作成
       spaces:

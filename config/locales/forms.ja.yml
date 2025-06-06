@@ -50,9 +50,20 @@ ja:
         description: 説明
         name: 名前
         visibility: 公開設定
+      two_factor_auth_form/creation:
+        password: パスワード
+        totp_code: 認証コード
+      two_factor_auth_form/destruction:
+        password: パスワード
+      two_factor_auth_form/recovery_code_regeneration:
+        password: パスワード
       user_session_form/creation:
         email: メールアドレス
         password: パスワード
+      user_session_form/two_factor_verification:
+        totp_code: 認証コード
+      user_session_form/two_factor_recovery:
+        recovery_code: リカバリーコード
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
@@ -71,5 +82,17 @@ ja:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         page_form/edit:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
+        two_factor_auth_form/creation:
+          invalid_totp_code: 認証コードが間違っています
+          unauthenticated: パスワードが間違っています
+          user_two_factor_auth_record_not_found: 二要素認証が設定されていません
+        two_factor_auth_form/destruction:
+          unauthenticated: パスワードが間違っています
+        two_factor_auth_form/recovery_code_regeneration:
+          unauthenticated: パスワードが間違っています
         user_session_form/creation:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
+        user_session_form/two_factor_verification:
+          invalid_code: が間違っています
+        user_session_form/two_factor_recovery:
+          invalid_code: が間違っています

@@ -50,9 +50,20 @@ en:
         description: Description
         name: Name
         visibility: Visibility
+      two_factor_auth_form/creation:
+        password: Password
+        totp_code: Authentication code
+      two_factor_auth_form/destruction:
+        password: Password
+      two_factor_auth_form/recovery_code_regeneration:
+        password: Password
       user_session_form/creation:
         email: Email
         password: Password
+      user_session_form/two_factor_verification:
+        totp_code: Authentication code
+      user_session_form/two_factor_recovery:
+        recovery_code: Recovery code
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
@@ -71,5 +82,17 @@ en:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
         page_form/edit:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
+        two_factor_auth_form/creation:
+          invalid_totp_code: Authentication code is incorrect
+          unauthenticated: Password is incorrect
+          user_two_factor_auth_record_not_found: Two-factor authentication is not set up
+        two_factor_auth_form/destruction:
+          unauthenticated: Password is incorrect
+        two_factor_auth_form/recovery_code_regeneration:
+          unauthenticated: Password is incorrect
         user_session_form/creation:
           unauthenticated: Login failed. Email or password are incorrect
+        user_session_form/two_factor_verification:
+          invalid_code: Authentication code is incorrect
+        user_session_form/two_factor_recovery:
+          invalid_code: Recovery code is incorrect

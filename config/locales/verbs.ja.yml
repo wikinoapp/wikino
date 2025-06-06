@@ -14,4 +14,12 @@ ja:
     sign_up: アカウントを作成する
     submit: 送信する
     update: 更新する
+    view_help: ヘルプを見る
     view_trash: ゴミ箱を見る
+    cancel: キャンセル
+    enable_two_factor_auth: 二要素認証を有効にする
+    disable_two_factor_auth: 二要素認証を無効にする
+    regenerate_recovery_codes: リカバリーコードを再生成する
+    view_recovery_codes: リカバリーコードを表示
+    back: 戻る
+    verify: 認証する

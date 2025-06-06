@@ -115,13 +115,37 @@ module GeneratedPathHelpersModule
   def settings_email_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_new_two_factor_auth_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def settings_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def settings_profile_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_code_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def settings_two_factor_auth_recovery_codes_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_new_two_factor_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def sign_in_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_new_recovery_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def sign_in_two_factor_recovery_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def sign_up_path(*args); end

@@ -152,6 +152,44 @@ en:
               (<span class="font-bold">%{topic_name}</span>)
               below.
       updated: Topic updated.
+    two_factor_auth:
+      already_enabled: Two-factor authentication is already enabled.
+      enabled_successfully: Two-factor authentication has been enabled.
+      disabled_successfully: Two-factor authentication has been disabled.
+      invalid_code: Invalid authentication code.
+      manual_entry: If you cannot use the QR code, please enter this code manually.
+      recovery_codes_regenerated: Recovery codes have been regenerated.
+      setup_required: Two-factor authentication setup is required.
+      enabled_at: "Enabled on %{time}"
+      disable_confirmation: Are you sure you want to disable two-factor authentication?
+      status:
+        enabled: Two-factor authentication is enabled
+        disabled: Two-factor authentication is not enabled
+      recovery_codes_description_html: |-
+        These recovery codes can be used to access your account if you lose access to your authenticator app.
+        <br>
+        Each code can only be used once.
+      save_recovery_codes_html: |-
+        Please save these recovery codes in a safe place.
+        <br>
+        These codes are the last means of accessing your account if you lose your authenticator app.
+        If you lose these codes, you will completely lose access to your account.
+      regenerate_warning: Regenerating recovery codes will invalidate all existing codes.
+      regenerate_confirmation: Are you sure you want to regenerate recovery codes? All existing codes will be invalidated.
+      not_enabled: Two-factor authentication is not enabled.
+      setup_instructions:
+        step1: 1. Install an authenticator app (Google Authenticator, Authy, etc.) on your smartphone.
+        step2: 2. Scan the QR code below with the app.
+        step3: 3. Enter the password you use to log in and the 6-digit code displayed in the app below.
+      enter_code: Enter the authentication code from your app
+      enter_recovery_code: Enter your recovery code
+      code_hint: Enter a 6-digit code or 8-character recovery code
+      recovery_code_hint: Recovery codes are 8 alphanumeric characters
+      recovery_code_usage: If you can't access your authenticator app, you can sign in using a recovery code you saved earlier
+      lost_device: Lost your authentication device?
+      use_recovery_code: Use a recovery code
+      recovery: Enter a recovery code for two-factor authentication
+      recovery_description: If you lose your authenticator app, you can log in using a recovery code.
     trash:
       empty_state_message: Trash is empty.
       restored: Pages have been restored.

@@ -31,6 +31,9 @@ class UserRecord < ApplicationRecord
     source: :space_record
   has_many :user_session_records, dependent: :restrict_with_exception, foreign_key: :user_id
   has_one :user_password_record, dependent: :restrict_with_exception, foreign_key: :user_id
+  has_one :user_two_factor_auth_record, dependent: :restrict_with_exception, foreign_key: :user_id
+
+  scope :visible, -> { kept }
 
   sig do
     params(
@@ -110,5 +113,10 @@ class UserRecord < ApplicationRecord
     end
 
     nil
+  end
+
+  sig { returns(T::Boolean) }
+  def two_factor_enabled?
+    user_two_factor_auth_record&.enabled? || false
   end
 end

@@ -1,0 +1,118 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumbs do %>
+        <div class="breadcrumbs py-1 text-sm">
+          <ul>
+            <li>
+              <%= link_to t("nouns.settings"), settings_path %>
+            </li>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(
+        title:,
+        help_url: "https://wikino.app/s/wikino/pages/55"
+      ) %>
+
+      <%= render Basic::CardComponent.new(
+        class_name: "bg-base-300 border border-brand-200"
+      ) do |card| %>
+        <%= card.with_body(class_name: "p-4") do %>
+          <div class="flex flex-col gap-6">
+            <div>
+              <%= t("messages.two_factor_auth.setup_instructions.step1") %>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <%= t("messages.two_factor_auth.setup_instructions.step2") %>
+              </div>
+
+              <% if qr_code %>
+                <div class="inline-block w-fit rounded bg-white p-4">
+                  <%= raw qr_code %>
+                </div>
+              <% end %>
+
+              <div class="flex flex-col gap-2">
+                <div class="text-sm text-gray-600">
+                  <%= t("messages.two_factor_auth.manual_entry") %>
+                </div>
+
+                <code class="w-fit rounded border border-brand-200 px-2 py-1 font-mono">
+                  <%= secret %>
+                </code>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <%= t("messages.two_factor_auth.setup_instructions.step3") %>
+              </div>
+
+              <%= form_with(
+                class: "flex flex-col gap-4",
+                model: form,
+                url: settings_two_factor_auth_path
+              ) do |f| %>
+                <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+
+                <div class="form-control">
+                  <%= f.label :password, class: "form-control" do %>
+                    <div class="label">
+                      <span class="label-text">
+                        <%= t("forms.attributes.user_session_form/creation.password") %>
+                      </span>
+                    </div>
+
+                    <%= f.password_field :password, {
+                      class: "input input-bordered w-full",
+                      autocomplete: "current-password"
+                    } %>
+                  <% end %>
+                </div>
+
+                <%= f.label :totp_code, class: "form-control" do %>
+                  <div class="label">
+                    <span class="label-text">
+                      <%= t("forms.attributes.two_factor_auth_form/creation.totp_code") %>
+                    </span>
+                  </div>
+
+                  <%= f.text_field :totp_code, {
+                    class: "input input-bordered w-full",
+                    maxlength: 6,
+                    placeholder: "000000",
+                    autocomplete: "off"
+                  } %>
+                <% end %>
+
+                <div class="flex gap-2">
+                  <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+                    <%= t("verbs.enable_two_factor_auth") %>
+                  <% end %>
+
+                  <%= link_to t("verbs.cancel"), settings_two_factor_auth_path, {
+                    class: "btn btn-ghost no-animation rounded-full w-fit"
+                  } %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

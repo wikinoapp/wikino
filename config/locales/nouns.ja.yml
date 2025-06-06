@@ -37,3 +37,9 @@ ja:
     topic_deletion: トピックの削除
     topics: トピック
     trash: ゴミ箱
+    two_factor_auth: 二要素認証
+    two_factor_auth_settings: 二要素認証の設定
+    disable_two_factor_auth: 二要素認証を無効にする
+    recovery_codes: リカバリーコード
+    regenerate_recovery_codes: リカバリーコードの再生成
+    two_factor_verification: 二要素認証の確認
