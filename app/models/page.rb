@@ -48,4 +48,9 @@ class Page < T::Struct
   def can_update?
     can_update.not_nil!
   end
+
+  sig { returns(String) }
+  def display_title
+    title.presence || I18n.t("messages.pages.untitled")
+  end
 end
