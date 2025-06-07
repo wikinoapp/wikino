@@ -97,5 +97,4 @@ export default class PageEditorController extends Controller<HTMLDivElement> {
       this.editorView.destroy();
     }
   }
-
 }
