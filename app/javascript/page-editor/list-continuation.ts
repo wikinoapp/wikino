@@ -1,6 +1,3 @@
-// typed: strict
-// frozen_string_literal: true
-
 import { EditorView } from "codemirror";
 
 /**
@@ -32,6 +29,7 @@ const LIST_PATTERNS = {
 export function detectListPattern(line: string): ListInfo | null {
   // 順序なしリストの検出
   const unorderedMatch = line.match(LIST_PATTERNS.unordered);
+
   if (unorderedMatch) {
     return {
       type: "unordered",
@@ -43,6 +41,7 @@ export function detectListPattern(line: string): ListInfo | null {
 
   // 順序付きリストの検出
   const orderedMatch = line.match(LIST_PATTERNS.ordered);
+
   if (orderedMatch) {
     return {
       type: "ordered",
@@ -81,20 +80,20 @@ export function generateContinuationText(listInfo: ListInfo | null): string {
 export function insertNewlineAndContinueList(view: EditorView): boolean {
   const { state } = view;
   const { from, to } = state.selection.main;
-  
+
   // 現在の行を取得
   const line = state.doc.lineAt(from);
   const lineText = line.text;
-  
+
   // リスト記法を検出
   const listInfo = detectListPattern(lineText);
-  
+
   if (!listInfo) {
     // リスト記法でない場合は通常の改行
     return false;
   }
 
-  // 空のリスト項目の場合（マーカーのみでコンテンツがない）
+  // 空のリスト項目の場合 (マーカーのみでコンテンツがない)
   if (listInfo.content.trim() === "") {
     // リスト記法を削除して通常の改行
     const transaction = state.update({
@@ -105,19 +104,22 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
       },
       selection: { anchor: line.from + listInfo.indent.length },
     });
+
     view.dispatch(transaction);
+
     return true;
   }
 
   // リスト記法を継続
   const continuationText = generateContinuationText(listInfo);
   const insertText = `\n${continuationText}`;
-  
+
   const transaction = state.update({
     changes: { from: to, insert: insertText },
     selection: { anchor: to + insertText.length },
   });
-  
+
   view.dispatch(transaction);
+
   return true;
 }
