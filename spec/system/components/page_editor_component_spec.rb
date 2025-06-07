@@ -30,16 +30,7 @@ RSpec.describe "ページエディター", type: :system do
 
   describe "リスト記法の自動継続" do
     it "順序なしリスト記法を入力してEnterキーを押すと次の行にもリスト記法が追加されること" do
-      user_record = create(:user_record, :with_password)
-      space_record = create(:space_record)
-      page_record = create(:page_record, space_record:)
-      topic_record = page_record.topic_record
-      space_member_record = create(:space_member_record, space_record:, user_record:)
-      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-
-      sign_in(user_record:)
-      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
-
+      visit_page_editor
       clear_editor
       fill_in_editor(text: "- 最初のアイテム")
       press_enter_in_editor
@@ -49,16 +40,7 @@ RSpec.describe "ページエディター", type: :system do
     end
 
     it "順序付きリスト記法を入力してEnterキーを押すと次の行に番号がインクリメントされたリスト記法が追加されること" do
-      user_record = create(:user_record, :with_password)
-      space_record = create(:space_record)
-      page_record = create(:page_record, space_record:)
-      topic_record = page_record.topic_record
-      space_member_record = create(:space_member_record, space_record:, user_record:)
-      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-
-      sign_in(user_record:)
-      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
-
+      visit_page_editor
       clear_editor
       fill_in_editor(text: "1. 最初のアイテム")
       press_enter_in_editor
@@ -68,16 +50,7 @@ RSpec.describe "ページエディター", type: :system do
     end
 
     it "空のリスト項目でEnterキーを押すとリスト記法が終了すること" do
-      user_record = create(:user_record, :with_password)
-      space_record = create(:space_record)
-      page_record = create(:page_record, space_record:)
-      topic_record = page_record.topic_record
-      space_member_record = create(:space_member_record, space_record:, user_record:)
-      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-
-      sign_in(user_record:)
-      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
-
+      visit_page_editor
       clear_editor
       fill_in_editor(text: "- ")
       press_enter_in_editor
@@ -87,16 +60,7 @@ RSpec.describe "ページエディター", type: :system do
     end
 
     it "インデント付きリスト記法でEnterキーを押すとインデントが維持されること" do
-      user_record = create(:user_record, :with_password)
-      space_record = create(:space_record)
-      page_record = create(:page_record, space_record:)
-      topic_record = page_record.topic_record
-      space_member_record = create(:space_member_record, space_record:, user_record:)
-      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-
-      sign_in(user_record:)
-      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
-
+      visit_page_editor
       clear_editor
       fill_in_editor(text: "  - インデント付きアイテム")
       press_enter_in_editor
@@ -105,17 +69,8 @@ RSpec.describe "ページエディター", type: :system do
       expect(editor_content).to eq("  - インデント付きアイテム\n  - ")
     end
 
-    it "異なるマーカー（*、+）でも正常に動作すること" do
-      user_record = create(:user_record, :with_password)
-      space_record = create(:space_record)
-      page_record = create(:page_record, space_record:)
-      topic_record = page_record.topic_record
-      space_member_record = create(:space_member_record, space_record:, user_record:)
-      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-
-      sign_in(user_record:)
-      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
-
+    it "異なるマーカー (*、+) でも正常に動作すること" do
+      visit_page_editor
       clear_editor
       # * マーカーのテスト
       fill_in_editor(text: "* アスタリスクマーカー")
@@ -133,6 +88,18 @@ RSpec.describe "ページエディター", type: :system do
 
       editor_content = get_editor_content
       expect(editor_content).to eq("+ プラスマーカー\n+ ")
+    end
+
+    private def visit_page_editor
+      user_record = create(:user_record, :with_password)
+      space_record = create(:space_record)
+      page_record = create(:page_record, space_record:)
+      topic_record = page_record.topic_record
+      space_member_record = create(:space_member_record, space_record:, user_record:)
+      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
+
+      sign_in(user_record:)
+      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
     end
   end
 
