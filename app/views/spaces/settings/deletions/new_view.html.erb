@@ -60,11 +60,17 @@
                 }) %>
               </label>
 
-              <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+              <div class="flex gap-2">
+                <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+                  <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
 
-                <%= t("verbs.delete") %>
-              <% end %>
+                  <%= t("verbs.delete") %>
+                <% end %>
+
+                <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
+                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                } %>
+              </div>
             <% end %>
           </div>
         <% end %>

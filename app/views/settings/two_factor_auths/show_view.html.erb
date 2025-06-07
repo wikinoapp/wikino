@@ -101,12 +101,16 @@
               <%= t("messages.two_factor_auth.status.disabled") %>
             </p>
 
-            <div>
+            <div class="flex gap-2">
               <%= link_to(
                 t("verbs.enable_two_factor_auth"),
                 settings_new_two_factor_auth_path,
                 class: "btn btn-primary no-animation rounded-full"
               ) %>
+
+              <%= link_to t("nouns.cancel"), settings_path, {
+                class: "btn btn-ghost no-animation rounded-full w-fit"
+              } %>
             </div>
           <% end %>
         <% end %>
