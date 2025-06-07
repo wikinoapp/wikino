@@ -16,7 +16,6 @@ en:
     update: Update
     view_help: View help
     view_trash: View Trash
-    cancel: Cancel
     enable_two_factor_auth: Enable two-factor authentication
     disable_two_factor_auth: Disable two-factor authentication
     regenerate_recovery_codes: Regenerate recovery codes

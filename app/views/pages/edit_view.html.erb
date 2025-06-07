@@ -94,13 +94,17 @@
               </div>
             <% end %>
 
-            <div class="flex items-center gap-4">
-              <div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex gap-2">
                 <%= f.button class: "btn btn-primary no-animation rounded-full", type: :submit do %>
                   <%= render Basic::IconComponent.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-content") %>
 
                   <%= t("verbs.save") %>
                 <% end %>
+
+                <%= link_to t("nouns.cancel"), page_path(space.identifier, page.number), {
+                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                } %>
 
                 <input
                   class="hidden"
@@ -110,7 +114,9 @@
                 >
               </div>
 
-              <turbo-frame id="page-editor-draft-saved-time"></turbo-frame>
+              <div class="text-right">
+                <turbo-frame id="page-editor-draft-saved-time"></turbo-frame>
+              </div>
             </div>
           <% end %>
         <% end %>

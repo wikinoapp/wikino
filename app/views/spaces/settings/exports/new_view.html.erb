@@ -23,10 +23,16 @@
 
       <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
-          <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
-            method: :post,
-            class: "btn btn-primary no-animation rounded-full"
-          } %>
+          <div class="flex gap-2">
+            <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
+              method: :post,
+              class: "btn btn-primary no-animation rounded-full"
+            } %>
+
+            <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
+              class: "btn btn-ghost no-animation rounded-full w-fit"
+            } %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

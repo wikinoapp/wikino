@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-4">
-  <%= render Headers::MainTitleComponent.new(title: page_title) do |main_title| %>
+  <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
     <%= main_title.with_actions do %>
       <% if page.can_update? %>
         <%= link_to edit_page_path(space.identifier, page.number), {

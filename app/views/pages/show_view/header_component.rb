@@ -20,11 +20,6 @@ module Pages
       private :page
 
       delegate :space, to: :page
-
-      sig { returns(String) }
-      private def page_title
-        page.title.presence || t("messages.pages.untitled")
-      end
     end
   end
 end
