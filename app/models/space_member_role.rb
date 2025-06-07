@@ -6,6 +6,7 @@ class SpaceMemberRole < T::Enum
 
   enums do
     Owner = new("owner")
+    Member = new("member")
   end
 
   sig { returns(T::Array[SpaceMemberPermission]) }
@@ -18,6 +19,13 @@ class SpaceMemberRole < T::Enum
         SpaceMemberPermission::CreateDraftPage,
         SpaceMemberPermission::ExportSpace,
         SpaceMemberPermission::UpdateSpace,
+        SpaceMemberPermission::UpdateTopic
+      ]
+    when Member
+      [
+        SpaceMemberPermission::CreateTopic,
+        SpaceMemberPermission::CreatePage,
+        SpaceMemberPermission::CreateDraftPage,
         SpaceMemberPermission::UpdateTopic
       ]
     else
