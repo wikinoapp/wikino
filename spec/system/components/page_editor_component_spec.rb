@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe "エディター", type: :system do
+RSpec.describe "ページエディター", type: :system do
   it "Wikiリンクの補完候補が表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
