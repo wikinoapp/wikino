@@ -46,6 +46,7 @@ ja:
       moved_to_trash: ページをゴミ箱に移動しました
       saved: ページを保存しました
       trashed_page: このページはゴミ箱に入れられています。
+      untitled: 無題
     pagination:
       next_html: "次へ&nbsp;&rsaquo;"
       prev_html: "&lsaquo;&nbsp;前へ"

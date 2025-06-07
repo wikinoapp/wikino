@@ -168,6 +168,17 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number", type: :request do
     expect(response.body).to include("このページはゴミ箱に入れられています")
   end
 
+  it "タイトルが設定されていない未公開ページのとき、ページが表示されること" do
+    page_record = create(:page_record, :not_published, title: nil)
+    space_record = page_record.space_record
+
+    get "/s/#{space_record.identifier}/pages/#{page_record.number}"
+
+    expect(response.status).to eq(200)
+    # ページタイトルが設定されていないとき、システム側で「無題」を表示するようにしている
+    expect(response.body).to include("無題")
+  end
+
   it "スペースに参加している & ゴミ箱にあるページにリンクしているとき、そのリンクは表示されないこと" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small)
