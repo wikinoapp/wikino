@@ -64,7 +64,6 @@ export default class PageEditorController extends Controller<HTMLDivElement> {
         crosshairCursor(),
         highlightSelectionMatches(),
         keymap.of([
-          // リスト記法の自動継続キーマップを最優先で配置
           { key: "Enter", run: insertNewlineAndContinueList },
           ...closeBracketsKeymap,
           ...defaultKeymap,
