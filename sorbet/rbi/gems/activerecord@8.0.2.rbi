@@ -25574,12 +25574,12 @@ class ActiveRecord::Migration
   # source://activerecord//lib/active_record/migration.rb#807
   def execution_strategy; end
 
-  # source://strong_migrations/2.0.1/lib/strong_migrations/migration.rb#9
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration.rb#9
   def method_missing(method, *args, **_arg2); end
 
   # Execute this migration in the named direction
   #
-  # source://strong_migrations/2.0.1/lib/strong_migrations/migration.rb#3
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration.rb#3
   def migrate(direction); end
 
   # Returns the value of attribute name.
@@ -25674,7 +25674,7 @@ class ActiveRecord::Migration
   #
   # This command can be nested.
   #
-  # source://strong_migrations/2.0.1/lib/strong_migrations/migration.rb#23
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration.rb#24
   def revert(*_arg0); end
 
   # @return [Boolean]
@@ -26800,8 +26800,8 @@ class ActiveRecord::MigrationContext
   # source://activerecord//lib/active_record/migration.rb#1290
   def current_version; end
 
-  # source://activerecord//lib/active_record/migration.rb#1264
-  def down(target_version = T.unsafe(nil), &block); end
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration_context.rb#9
+  def down(*_arg0, **_arg1, &_arg2); end
 
   # source://activerecord//lib/active_record/migration.rb#1250
   def forward(steps = T.unsafe(nil)); end
@@ -26866,16 +26866,16 @@ class ActiveRecord::MigrationContext
   # source://activerecord//lib/active_record/migration.rb#1246
   def rollback(steps = T.unsafe(nil)); end
 
-  # source://activerecord//lib/active_record/migration.rb#1274
-  def run(direction, target_version); end
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration_context.rb#15
+  def run(*_arg0, **_arg1, &_arg2); end
 
   # Returns the value of attribute schema_migration.
   #
   # source://activerecord//lib/active_record/migration.rb#1212
   def schema_migration; end
 
-  # source://activerecord//lib/active_record/migration.rb#1254
-  def up(target_version = T.unsafe(nil), &block); end
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migration_context.rb#3
+  def up(*_arg0, **_arg1, &_arg2); end
 
   private
 
@@ -27017,8 +27017,8 @@ class ActiveRecord::Migrator
 
   # Wrap the migration in a transaction only if supported by the adapter.
   #
-  # source://strong_migrations/2.0.1/lib/strong_migrations/migrator.rb#3
-  def ddl_transaction(migration, *args); end
+  # source://strong_migrations/2.3.0/lib/strong_migrations/migrator.rb#3
+  def ddl_transaction(migration, *_arg1, **_arg2, &_arg3); end
 
   # source://activerecord//lib/active_record/migration.rb#1484
   def load_migrated; end
@@ -34992,8 +34992,8 @@ end
 class ActiveRecord::SchemaDumper
   # @return [SchemaDumper] a new instance of SchemaDumper
   #
-  # source://strong_migrations/2.0.1/lib/strong_migrations/schema_dumper.rb#3
-  def initialize(connection, *args, **options); end
+  # source://strong_migrations/2.3.0/lib/strong_migrations/schema_dumper.rb#3
+  def initialize(connection, *_arg1, **_arg2, &_arg3); end
 
   # :singleton-method:
   # Specify a custom regular expression matching check constraints which name
@@ -36637,7 +36637,6 @@ class ActiveRecord::Tasks::DatabaseNotSupported < ::StandardError; end
 # source://activerecord//lib/active_record/tasks/database_tasks.rb#40
 module ActiveRecord::Tasks::DatabaseTasks
   extend ::ActiveRecord::Tasks::DatabaseTasks
-  extend ::StrongMigrations::DatabaseTasks
 
   # source://activerecord//lib/active_record/tasks/database_tasks.rb#468
   def cache_dump_filename(db_config, schema_cache_path: T.unsafe(nil)); end
