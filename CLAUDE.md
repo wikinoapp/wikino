@@ -13,3 +13,4 @@ WikinoはWikiアプリです。
 - @docs/claude/base/command-reference.md
 - @docs/claude/base/repository-structure.md
 - @docs/claude/base/tech-stack.md
+- @docs/claude/tech-stack.md
