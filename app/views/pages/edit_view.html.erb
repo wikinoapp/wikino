@@ -24,7 +24,7 @@
         <%= card.with_body(class_name: "p-4") do %>
           <%= form_with(
             class: "flex flex-col gap-4",
-            data: { controller: "page-editor-form" },
+            data: { controller: "markdown-editor-form" },
             model: form,
             method: :patch,
             url: page_path(space.identifier, page.number)
@@ -47,7 +47,7 @@
                       {},
                       {
                         class: "bg-base-300 select select-bordered",
-                        data: {action: "page-editor-form#saveAsDraft"}
+                        data: {action: "markdown-editor-form#saveAsDraft"}
                       }
                     ) %>
                   </label>
@@ -65,7 +65,7 @@
               <%= f.text_field(:title, {
                 autofocus: f.object.autofocus_title?,
                 class: "bg-base-300 input input-bordered w-full",
-                data: {action: "page-editor-form#saveAsDraft"}
+                data: {action: "markdown-editor-form#saveAsDraft"}
               }) %>
             <% end %>
 
@@ -87,7 +87,7 @@
                 <%= f.text_area(:body, {
                   class: "hidden",
                   data: {
-                    action: "page-editor-form#saveAsDraft",
+                    action: "markdown-editor-form#saveAsDraft",
                     markdown_editor_target: "textarea"
                   }
                 }) %>
@@ -108,21 +108,21 @@
 
                 <input
                   class="hidden"
-                  data-page-editor-form-target="draftSaveButton"
+                  data-markdown-editor-form-target="draftSaveButton"
                   formaction="<%= draft_page_path(space.identifier, page.number) %>"
                   type="submit"
                 >
               </div>
 
               <div class="text-right">
-                <turbo-frame id="page-editor-draft-saved-time"></turbo-frame>
+                <turbo-frame id="markdown-editor-draft-saved-time"></turbo-frame>
               </div>
             </div>
           <% end %>
         <% end %>
       <% end %>
 
-      <turbo-frame id="page-editor-footer">
+      <turbo-frame id="markdown-editor-footer">
         <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
       </turbo-frame>
     <% end %>
