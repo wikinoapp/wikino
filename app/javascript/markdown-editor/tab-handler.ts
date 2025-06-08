@@ -27,7 +27,6 @@ export function handleTab(view: EditorView): boolean {
   // 複数行選択または単一行の処理
   const changes = ranges
     .map((range: SelectionRange) => {
-
       // 選択範囲がある場合は、選択されている全ての行にインデントを追加
       if (range.from !== range.to) {
         const startLine = state.doc.lineAt(range.from).number;
