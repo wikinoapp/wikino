@@ -1,4 +1,4 @@
-<turbo-stream action="update" target="page-editor-draft-saved-time">
+<turbo-stream action="update" target="markdown-editor-draft-saved-time">
   <template>
     <div class="text-xs">
       <%= t("messages.draft_saved_time_html", time: draft_saved_time) %>
@@ -6,7 +6,7 @@
   </template>
 </turbo-stream>
 
-<turbo-stream action="update" target="page-editor-footer">
+<turbo-stream action="update" target="markdown-editor-footer">
   <template>
     <%= render Footers::PageComponent.new(
       page:,

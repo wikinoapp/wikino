@@ -22,10 +22,11 @@ import {
 import { Controller } from "@hotwired/stimulus";
 import { EditorView } from "codemirror";
 
-import { wikilinkCompletions } from "../page-editor/wikilink-completions";
-import { insertNewlineAndContinueList } from "../page-editor/list-continuation";
+import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
+import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
+import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 
-export default class PageEditorController extends Controller<HTMLDivElement> {
+export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
   static values = {
     spaceIdentifier: String,
@@ -38,7 +39,7 @@ export default class PageEditorController extends Controller<HTMLDivElement> {
   declare readonly spaceIdentifierValue: string;
   declare readonly codeMirrorTarget: HTMLDivElement;
   declare readonly textareaTarget: HTMLTextAreaElement;
-  editorView: EditorView;
+  editorView!: EditorView;
 
   connect() {
     this.initializeEditor();
@@ -65,6 +66,8 @@ export default class PageEditorController extends Controller<HTMLDivElement> {
         highlightSelectionMatches(),
         keymap.of([
           { key: "Enter", run: insertNewlineAndContinueList },
+          { key: "Tab", run: handleTab },
+          { key: "Shift-Tab", run: handleShiftTab },
           ...closeBracketsKeymap,
           ...defaultKeymap,
           ...searchKeymap,
@@ -72,7 +75,7 @@ export default class PageEditorController extends Controller<HTMLDivElement> {
           ...foldKeymap,
           ...completionKeymap,
         ]),
-        EditorView.updateListener.of((update) => {
+        EditorView.updateListener.of((update: { docChanged: boolean; state: { doc: { toString(): string } } }) => {
           if (update.docChanged) {
             this.textareaTarget.value = update.state.doc.toString();
             this.textareaTarget.dispatchEvent(new Event("input"));
