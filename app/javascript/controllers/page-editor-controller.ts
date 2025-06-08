@@ -23,8 +23,9 @@ import { Controller } from "@hotwired/stimulus";
 import { EditorView } from "codemirror";
 
 import { wikilinkCompletions } from "../page-editor/wikilink-completions";
+import { insertNewlineAndContinueList } from "../page-editor/list-continuation";
 
-export default class extends Controller<HTMLDivElement> {
+export default class PageEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
   static values = {
     spaceIdentifier: String,
@@ -63,6 +64,7 @@ export default class extends Controller<HTMLDivElement> {
         crosshairCursor(),
         highlightSelectionMatches(),
         keymap.of([
+          { key: "Enter", run: insertNewlineAndContinueList },
           ...closeBracketsKeymap,
           ...defaultKeymap,
           ...searchKeymap,
