@@ -2,7 +2,7 @@ import { EditorView } from "codemirror";
 import { EditorSelection, SelectionRange } from "@codemirror/state";
 
 /**
- * インデントサイズ（半角スペース2つ）
+ * インデントサイズ (半角スペース2つ)
  */
 const INDENT_SIZE = "  ";
 
@@ -32,8 +32,8 @@ export function handleTab(view: EditorView): boolean {
         const startLine = state.doc.lineAt(range.from).number;
         let endLine = state.doc.lineAt(range.to).number;
 
-        // 選択終了位置が行の先頭（改行文字の直後）にある場合、
-        // その行は含めない（前の行の改行文字まで選択している状態）
+        // 選択終了位置が行の先頭 (改行文字の直後) にある場合、
+        // その行は含めない (前の行の改行文字まで選択している状態)
         const endLineInfo = state.doc.line(endLine);
         if (range.to === endLineInfo.from && endLine > startLine) {
           endLine = endLine - 1;
@@ -108,7 +108,7 @@ export function handleTab(view: EditorView): boolean {
 }
 
 /**
- * Shift+Tabキーが押されたときの処理（インデント削除）
+ * Shift+Tabキーが押されたときの処理 (インデント削除)
  * @param view CodeMirrorのEditorView
  * @returns 処理が実行された場合はtrue、そうでなければfalse
  */
@@ -121,8 +121,8 @@ export function handleShiftTab(view: EditorView): boolean {
     const startLine = state.doc.lineAt(range.from).number;
     let endLine = state.doc.lineAt(range.to).number;
 
-    // 選択終了位置が行の先頭（改行文字の直後）にある場合、
-    // その行は含めない（前の行の改行文字まで選択している状態）
+    // 選択終了位置が行の先頭 (改行文字の直後) にある場合、
+    // その行は含めない (前の行の改行文字まで選択している状態)
     const endLineInfo = state.doc.line(endLine);
     if (range.to === endLineInfo.from && endLine > startLine) {
       endLine = endLine - 1;

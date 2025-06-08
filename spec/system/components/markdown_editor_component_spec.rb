@@ -113,11 +113,11 @@ RSpec.describe "Markdownエディター", type: :system do
     it "GitHubタスクリスト記法 (完了・大文字X) を入力してEnterキーを押すと次の行に未完了タスクが追加されること" do
       visit_page_editor
       clear_editor
-      fill_in_editor(text: "- [X] 完了タスク（大文字）")
+      fill_in_editor(text: "- [X] 完了タスク (大文字) ")
       press_enter_in_editor
 
       editor_content = get_editor_content
-      expect(editor_content).to eq("- [X] 完了タスク（大文字）\n- [ ] ")
+      expect(editor_content).to eq("- [X] 完了タスク (大文字) \n- [ ] ")
     end
 
     it "インデント付きタスクリスト記法でEnterキーを押すとインデントが維持されること" do
@@ -209,13 +209,13 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(editor_content).to eq("インデント付きテキスト")
     end
 
-    it "行選択（改行文字を含む）でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること" do
+    it "行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること" do
       visit_page_editor
       clear_editor
       # 複数行のテキストを作成
       set_editor_content(text: "- a\n- b\n- c")
 
-      # 2行目を改行文字を含めて選択する（トリプルクリック相当）
+      # 2行目を改行文字を含めて選択する (トリプルクリック相当)
       select_line_with_newline(2)
       press_tab_in_editor
 
@@ -223,13 +223,13 @@ RSpec.describe "Markdownエディター", type: :system do
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n  - b\n- c")
 
-      # カーソル位置の確認（3行目の先頭にあることを確認）
+      # カーソル位置の確認 (3行目の先頭にあることを確認)
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(3)
       expect(cursor_position[:column]).to eq(0)
     end
 
-    it "行選択（改行文字を含む）でShift+タブキーを押すと選択した行のみインデントが削除され、カーソル位置が正しく維持されること" do
+    it "行選択 (改行文字を含む) でShift+タブキーを押すと選択した行のみインデントが削除され、カーソル位置が正しく維持されること" do
       visit_page_editor
       clear_editor
       # インデント付きの複数行テキストを作成
@@ -243,13 +243,13 @@ RSpec.describe "Markdownエディター", type: :system do
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n- b\n- c")
 
-      # カーソル位置の確認（3行目の先頭にあることを確認）
+      # カーソル位置の確認 (3行目の先頭にあることを確認)
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(3)
       expect(cursor_position[:column]).to eq(0)
     end
 
-    it "複数行選択（改行文字を含む）でタブキーを押すと選択した行のみインデントが追加されること" do
+    it "複数行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加されること" do
       visit_page_editor
       clear_editor
       # 複数行のテキストを作成
@@ -263,7 +263,7 @@ RSpec.describe "Markdownエディター", type: :system do
       editor_content = get_editor_content
       expect(editor_content).to eq("行1\n  行2\n  行3\n行4")
 
-      # カーソル位置の確認（4行目の先頭にあることを確認）
+      # カーソル位置の確認 (4行目の先頭にあることを確認)
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(4)
       expect(cursor_position[:column]).to eq(0)
@@ -283,7 +283,7 @@ RSpec.describe "Markdownエディター", type: :system do
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n  - b\n- c")
 
-      # 選択範囲の確認（2行目が行の先頭から選択されていることを確認）
+      # 選択範囲の確認 (2行目が行の先頭から選択されていることを確認)
       selection_info = get_selection_info
       expect(selection_info[:has_selection]).to be true
       expect(selection_info[:from_line]).to eq(2)
@@ -307,7 +307,7 @@ RSpec.describe "Markdownエディター", type: :system do
         current_scope.send_keys(:delete)
       end
 
-      # 内容の確認（2行目が完全に削除されていること）
+      # 内容の確認 (2行目が完全に削除されていること)
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n- c")
     end
@@ -333,7 +333,7 @@ RSpec.describe "Markdownエディター", type: :system do
   end
 
   private def set_editor_content(text:)
-    # CodeMirrorの状態を直接操作してテキストを設定（Tabテスト用）
+    # CodeMirrorの状態を直接操作してテキストを設定 (Tabテスト用)
     page.execute_script(
       "arguments[0].cmView.view.dispatch({ changes: { from: 0, to: arguments[0].cmView.view.state.doc.length, insert: arguments[1] } });",
       find(".cm-content"),
@@ -348,7 +348,7 @@ RSpec.describe "Markdownエディター", type: :system do
   end
 
   private def get_editor_content
-    # CodeMirrorエディターのコンテンツを取得（隠しtextareaから）
+    # CodeMirrorエディターのコンテンツを取得 (隠しtextareaから)
     page.evaluate_script("document.querySelector('[data-markdown-editor-target=\"textarea\"]').value")
   end
 
@@ -386,17 +386,67 @@ RSpec.describe "Markdownエディター", type: :system do
 
   private def select_line_with_newline(line_number)
     # 特定の行を改行文字を含めて選択するJavaScript
-    page.execute_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var doc = editorView.state.doc; var line = doc.line(#{line_number}); var nextLineStart = #{line_number} < doc.lines ? doc.line(#{line_number} + 1).from : doc.length; editorView.dispatch({ selection: { anchor: line.from, head: nextLineStart } }); editorView.focus(); })();")
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var line = doc.line(#{line_number});
+        
+        // 行の開始から次の行の開始まで選択（改行文字を含む）
+        var nextLineStart = #{line_number} < doc.lines 
+          ? doc.line(#{line_number} + 1).from 
+          : doc.length;
+        
+        editorView.dispatch({
+          selection: { anchor: line.from, head: nextLineStart }
+        });
+        
+        editorView.focus();
+      })();
+    JS
   end
 
   private def select_multiple_lines_with_newline(start_line, end_line)
     # 複数行を改行文字を含めて選択するJavaScript
-    page.execute_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var doc = editorView.state.doc; var startLine = doc.line(#{start_line}); var endLine = doc.line(#{end_line}); var nextLineStart = #{end_line} < doc.lines ? doc.line(#{end_line} + 1).from : doc.length; editorView.dispatch({ selection: { anchor: startLine.from, head: nextLineStart } }); editorView.focus(); })();")
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var startLine = doc.line(#{start_line});
+        var endLine = doc.line(#{end_line});
+        
+        // 開始行の先頭から終了行の次の行の先頭まで選択
+        var nextLineStart = #{end_line} < doc.lines 
+          ? doc.line(#{end_line} + 1).from 
+          : doc.length;
+        
+        editorView.dispatch({
+          selection: { anchor: startLine.from, head: nextLineStart }
+        });
+        
+        editorView.focus();
+      })();
+    JS
   end
 
   private def get_cursor_position
     # カーソル位置を取得するJavaScript
-    position = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var cursor = editorView.state.selection.main.head; var line = editorView.state.doc.lineAt(cursor); return { line: line.number, column: cursor - line.from, absolutePosition: cursor }; })();")
+    position = page.evaluate_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var cursor = editorView.state.selection.main.head;
+        var line = editorView.state.doc.lineAt(cursor);
+        
+        return {
+          line: line.number,
+          column: cursor - line.from,
+          absolutePosition: cursor
+        };
+      })();
+    JS
 
     {
       line: position["line"],
@@ -407,7 +457,25 @@ RSpec.describe "Markdownエディター", type: :system do
 
   private def get_selection_info
     # 選択範囲の情報を取得するJavaScript
-    selection_info = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var selection = editorView.state.selection.main; var fromLine = editorView.state.doc.lineAt(selection.from); var toLine = editorView.state.doc.lineAt(selection.to); return { from: selection.from, to: selection.to, fromLine: fromLine.number, toLine: toLine.number, fromColumn: selection.from - fromLine.from, toColumn: selection.to - toLine.from, hasSelection: selection.from !== selection.to }; })();")
+    selection_info = page.evaluate_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var selection = editorView.state.selection.main;
+        var fromLine = editorView.state.doc.lineAt(selection.from);
+        var toLine = editorView.state.doc.lineAt(selection.to);
+        
+        return {
+          from: selection.from,
+          to: selection.to,
+          fromLine: fromLine.number,
+          toLine: toLine.number,
+          fromColumn: selection.from - fromLine.from,
+          toColumn: selection.to - toLine.from,
+          hasSelection: selection.from !== selection.to
+        };
+      })();
+    JS
 
     {
       from: selection_info["from"],
