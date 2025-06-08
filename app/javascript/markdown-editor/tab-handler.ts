@@ -86,7 +86,10 @@ export function handleTab(view: EditorView): boolean {
             newTo = range.to + processedLines * INDENT_SIZE.length;
           }
 
-          return EditorSelection.cursor(newTo);
+          // 選択開始位置は行の先頭に設定
+          const startLineAfterIndent = state.doc.line(startLine);
+          const newFrom = startLineAfterIndent.from;
+          return EditorSelection.range(newFrom, newTo);
         }
       }),
       state.selection.mainIndex,

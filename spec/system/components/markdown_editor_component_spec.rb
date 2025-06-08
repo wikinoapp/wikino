@@ -269,6 +269,49 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(cursor_position[:column]).to eq(0)
     end
 
+    it "行選択でタブキーを押すと選択範囲が維持されること" do
+      visit_page_editor
+      clear_editor
+      # 複数行のテキストを作成
+      set_editor_content(text: "- a\n- b\n- c")
+      
+      # 2行目を改行文字を含めて選択する
+      select_line_with_newline(2)
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n  - b\n- c")
+      
+      # 選択範囲の確認（2行目が行の先頭から選択されていることを確認）
+      selection_info = get_selection_info
+      expect(selection_info[:has_selection]).to be true
+      expect(selection_info[:from_line]).to eq(2)
+      expect(selection_info[:from_column]).to eq(0) # 行の先頭から選択
+      expect(selection_info[:to_line]).to eq(3)
+      expect(selection_info[:to_column]).to eq(0)
+    end
+
+    it "行選択でタブキーを押した後、deleteキーで行全体が削除されること" do
+      visit_page_editor
+      clear_editor
+      # 複数行のテキストを作成
+      set_editor_content(text: "- a\n- b\n- c")
+      
+      # 2行目を改行文字を含めて選択する
+      select_line_with_newline(2)
+      press_tab_in_editor
+      
+      # Deleteキーを押す
+      within ".cm-content" do
+        current_scope.send_keys(:delete)
+      end
+
+      # 内容の確認（2行目が完全に削除されていること）
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n- c")
+    end
+
 
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
@@ -360,6 +403,21 @@ RSpec.describe "Markdownエディター", type: :system do
       line: position["line"],
       column: position["column"],
       absolute_position: position["absolutePosition"]
+    }
+  end
+
+  private def get_selection_info
+    # 選択範囲の情報を取得するJavaScript
+    selection_info = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var selection = editorView.state.selection.main; var fromLine = editorView.state.doc.lineAt(selection.from); var toLine = editorView.state.doc.lineAt(selection.to); return { from: selection.from, to: selection.to, fromLine: fromLine.number, toLine: toLine.number, fromColumn: selection.from - fromLine.from, toColumn: selection.to - toLine.from, hasSelection: selection.from !== selection.to }; })();")
+    
+    {
+      from: selection_info["from"],
+      to: selection_info["to"],
+      from_line: selection_info["fromLine"],
+      to_line: selection_info["toLine"],
+      from_column: selection_info["fromColumn"],
+      to_column: selection_info["toColumn"],
+      has_selection: selection_info["hasSelection"]
     }
   end
 end
