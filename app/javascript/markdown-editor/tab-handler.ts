@@ -22,7 +22,15 @@ export function handleTab(view: EditorView): boolean {
     // 選択範囲がある場合は、選択されている全ての行にインデントを追加
     if (range.from !== range.to) {
       const startLine = state.doc.lineAt(range.from).number;
-      const endLine = state.doc.lineAt(range.to).number;
+      let endLine = state.doc.lineAt(range.to).number;
+      
+      // 選択終了位置が行の先頭（改行文字の直後）にある場合、
+      // その行は含めない（前の行の改行文字まで選択している状態）
+      const endLineInfo = state.doc.line(endLine);
+      if (range.to === endLineInfo.from && endLine > startLine) {
+        endLine = endLine - 1;
+      }
+      
       const lineChanges = [];
       
       for (let i = startLine; i <= endLine; i++) {
@@ -80,7 +88,15 @@ export function handleShiftTab(view: EditorView): boolean {
   // 各選択範囲に対して処理
   const changes = ranges.flatMap((range) => {
     const startLine = state.doc.lineAt(range.from).number;
-    const endLine = state.doc.lineAt(range.to).number;
+    let endLine = state.doc.lineAt(range.to).number;
+    
+    // 選択終了位置が行の先頭（改行文字の直後）にある場合、
+    // その行は含めない（前の行の改行文字まで選択している状態）
+    const endLineInfo = state.doc.line(endLine);
+    if (range.to === endLineInfo.from && endLine > startLine) {
+      endLine = endLine - 1;
+    }
+    
     const lineChanges = [];
     
     for (let i = startLine; i <= endLine; i++) {
