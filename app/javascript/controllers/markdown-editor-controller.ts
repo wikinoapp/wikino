@@ -39,7 +39,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
   declare readonly spaceIdentifierValue: string;
   declare readonly codeMirrorTarget: HTMLDivElement;
   declare readonly textareaTarget: HTMLTextAreaElement;
-  editorView: EditorView;
+  editorView!: EditorView;
 
   connect() {
     this.initializeEditor();
@@ -75,7 +75,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
           ...foldKeymap,
           ...completionKeymap,
         ]),
-        EditorView.updateListener.of((update) => {
+        EditorView.updateListener.of((update: any) => {
           if (update.docChanged) {
             this.textareaTarget.value = update.state.doc.toString();
             this.textareaTarget.dispatchEvent(new Event("input"));

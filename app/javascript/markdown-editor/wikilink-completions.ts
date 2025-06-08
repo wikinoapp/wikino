@@ -1,5 +1,5 @@
 export async function wikilinkCompletions(spaceIdentifier: string) {
-  return async (context) => {
+  return async (context: any) => {
     const before = context.matchBefore(/\[\[.*/);
 
     if (!context.explicit && !before) {
@@ -35,7 +35,7 @@ async function buildCompletions(spaceIdentifier: string, before: any) {
 
   const pageLocations = await fetchPageLocations(spaceIdentifier, keyword);
 
-  return pageLocations.map((pageLocation) => ({
+  return pageLocations.map((pageLocation: any) => ({
     label: `[[${pageLocation.key}`,
     displayLabel: pageLocation.key,
   }));

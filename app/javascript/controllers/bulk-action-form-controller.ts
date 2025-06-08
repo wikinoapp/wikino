@@ -5,7 +5,7 @@ export default class extends Controller<HTMLFormElement> {
 
   declare readonly actionButtonTargets: HTMLButtonElement[];
 
-  disableAllActionButtons(event) {
+  disableAllActionButtons(event: Event) {
     this.actionButtonTargets
       .filter((target) => event.target !== target)
       .forEach((button) => {

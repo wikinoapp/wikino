@@ -1,5 +1,5 @@
 import { EditorView } from "codemirror";
-import { EditorSelection } from "@codemirror/state";
+import { EditorSelection, SelectionRange } from "@codemirror/state";
 
 /**
  * インデントサイズ（半角スペース2つ）
@@ -17,7 +17,7 @@ export function handleTab(view: EditorView): boolean {
 
   // 複数行選択または単一行の処理
   const changes = ranges
-    .map((range) => {
+    .map((range: SelectionRange) => {
       const line = state.doc.lineAt(range.from);
 
       // 選択範囲がある場合は、選択されている全ての行にインデントを追加
@@ -57,7 +57,7 @@ export function handleTab(view: EditorView): boolean {
   const transaction = state.update({
     changes,
     selection: EditorSelection.create(
-      ranges.map((range, i) => {
+      ranges.map((range: SelectionRange, i: number) => {
         if (range.from === range.to) {
           // 単一カーソルの場合、インデント分だけカーソルを移動
           return EditorSelection.cursor(range.from + INDENT_SIZE.length);
@@ -111,7 +111,7 @@ export function handleShiftTab(view: EditorView): boolean {
   const { ranges } = state.selection;
 
   // 各選択範囲に対して処理
-  const changes = ranges.flatMap((range) => {
+  const changes = ranges.flatMap((range: SelectionRange) => {
     const startLine = state.doc.lineAt(range.from).number;
     let endLine = state.doc.lineAt(range.to).number;
 
