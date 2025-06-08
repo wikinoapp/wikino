@@ -7,6 +7,15 @@ import { EditorSelection, SelectionRange } from "@codemirror/state";
 const INDENT_SIZE = "  ";
 
 /**
+ * CodeMirrorの変更オブジェクトの型
+ */
+type ChangeSpec = {
+  from: number;
+  to?: number;
+  insert: string;
+};
+
+/**
  * Tabキーが押されたときの処理
  * @param view CodeMirrorのEditorView
  * @returns 処理が実行された場合はtrue、そうでなければfalse
@@ -32,7 +41,7 @@ export function handleTab(view: EditorView): boolean {
           endLine = endLine - 1;
         }
 
-        const lineChanges = [];
+        const lineChanges: ChangeSpec[] = [];
 
         for (let i = startLine; i <= endLine; i++) {
           const line = state.doc.line(i);
@@ -122,7 +131,7 @@ export function handleShiftTab(view: EditorView): boolean {
       endLine = endLine - 1;
     }
 
-    const lineChanges = [];
+    const lineChanges: ChangeSpec[] = [];
 
     for (let i = startLine; i <= endLine; i++) {
       const line = state.doc.line(i);
