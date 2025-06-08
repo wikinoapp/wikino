@@ -161,6 +161,50 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(editor_content).to eq("+ [x] プラスタスク\n+ [ ] ")
     end
 
+    it "リスト行の行頭で改行した場合、リスト継続せずに通常の改行になること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "- aaa")
+
+      # カーソルを行頭に移動
+      move_cursor_to_start
+
+      # 行頭で改行
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("\n- aaa")
+    end
+
+    it "リスト行のマーカー直前で改行した場合、リスト継続せずに改行すること" do
+      visit_page_editor
+      clear_editor
+      # インデント付きのリスト
+      fill_in_editor(text: "  - bbb")
+
+      # カーソルをマーカー直前 (インデントの後) に移動
+      page.execute_script(<<~JS)
+        (function() {
+          var editor = document.querySelector('.cm-content');
+          var editorView = editor.cmView.view;
+
+          // カーソルをマーカー直前 (位置2) に移動し、フォーカスする
+          editorView.dispatch({
+            selection: { anchor: 2, head: 2 }
+          });
+          editorView.focus();
+        })();
+      JS
+
+      # マーカー直前で改行
+      within ".cm-content" do
+        current_scope.send_keys(:enter)
+      end
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("  \n  - bbb")
+    end
+
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
@@ -392,16 +436,16 @@ RSpec.describe "Markdownエディター", type: :system do
         var editorView = editor.cmView.view;
         var doc = editorView.state.doc;
         var line = doc.line(#{line_number});
-        
+
         // 行の開始から次の行の開始まで選択（改行文字を含む）
-        var nextLineStart = #{line_number} < doc.lines 
-          ? doc.line(#{line_number} + 1).from 
+        var nextLineStart = #{line_number} < doc.lines
+          ? doc.line(#{line_number} + 1).from
           : doc.length;
-        
+
         editorView.dispatch({
           selection: { anchor: line.from, head: nextLineStart }
         });
-        
+
         editorView.focus();
       })();
     JS
@@ -416,16 +460,16 @@ RSpec.describe "Markdownエディター", type: :system do
         var doc = editorView.state.doc;
         var startLine = doc.line(#{start_line});
         var endLine = doc.line(#{end_line});
-        
+
         // 開始行の先頭から終了行の次の行の先頭まで選択
-        var nextLineStart = #{end_line} < doc.lines 
-          ? doc.line(#{end_line} + 1).from 
+        var nextLineStart = #{end_line} < doc.lines
+          ? doc.line(#{end_line} + 1).from
           : doc.length;
-        
+
         editorView.dispatch({
           selection: { anchor: startLine.from, head: nextLineStart }
         });
-        
+
         editorView.focus();
       })();
     JS
@@ -439,7 +483,7 @@ RSpec.describe "Markdownエディター", type: :system do
         var editorView = editor.cmView.view;
         var cursor = editorView.state.selection.main.head;
         var line = editorView.state.doc.lineAt(cursor);
-        
+
         return {
           line: line.number,
           column: cursor - line.from,
@@ -464,7 +508,7 @@ RSpec.describe "Markdownエディター", type: :system do
         var selection = editorView.state.selection.main;
         var fromLine = editorView.state.doc.lineAt(selection.from);
         var toLine = editorView.state.doc.lineAt(selection.to);
-        
+
         return {
           from: selection.from,
           to: selection.to,

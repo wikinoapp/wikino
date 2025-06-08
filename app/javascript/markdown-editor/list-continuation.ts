@@ -113,6 +113,46 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
     return false;
   }
 
+  // カーソルの行内相対位置を計算
+  const cursorPositionInLine = from - line.from;
+
+  // リストマーカーの位置を計算
+  const markerStartPosition = listInfo.indent.length;
+  const markerEndPosition = markerStartPosition + listInfo.marker.length + 1; // マーカー + 空白
+
+  // タスクリストの場合はチェックボックス分も考慮
+  const listMarkerEndPosition =
+    listInfo.type === "task"
+      ? markerEndPosition + 4 // " [ ] " or " [x] "
+      : markerEndPosition;
+
+  // カーソルがリストマーカーより前にある場合
+  if (cursorPositionInLine < listMarkerEndPosition) {
+    // カーソルが行頭にある場合は通常の改行でOK
+    if (cursorPositionInLine === 0) {
+      return false;
+    }
+
+    // カーソルがインデント内にある場合は、リスト継続を行う
+    const beforeCursor = lineText.slice(0, cursorPositionInLine);
+    const continuationText = generateContinuationText(listInfo);
+
+    // 元の行のコンテンツ部分のみを次の行に移動
+    const contentToMove = listInfo.content;
+
+    const transaction = state.update({
+      changes: {
+        from: line.from,
+        to: line.to,
+        insert: beforeCursor + "\n" + continuationText + contentToMove,
+      },
+      selection: { anchor: line.from + beforeCursor.length + 1 + continuationText.length },
+    });
+
+    view.dispatch(transaction);
+    return true;
+  }
+
   // 空のリスト項目の場合 (マーカーのみでコンテンツがない)
   if (listInfo.content.trim() === "") {
     // リスト記法を削除して通常の改行
