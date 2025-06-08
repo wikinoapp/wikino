@@ -4,11 +4,12 @@ import { EditorView } from "codemirror";
  * リスト記法の情報を表す型
  */
 export interface ListInfo {
-  type: "unordered" | "ordered";
+  type: "unordered" | "ordered" | "task";
   indent: string;
   marker: string;
   content: string;
   number?: number;
+  taskState?: "incomplete" | "complete";
 }
 
 /**
@@ -19,6 +20,8 @@ const LIST_PATTERNS = {
   unordered: /^(\s*)([-*+])\s+(.*)$/,
   // 順序付きリスト: '1. ', '2. ', etc.
   ordered: /^(\s*)(\d+)\.\s+(.*)$/,
+  // タスクリスト: '- [ ] ', '- [x] ', '- [X] '
+  task: /^(\s*)([-*+])\s+\[([ xX])\]\s+(.*)$/,
 };
 
 /**
@@ -27,6 +30,20 @@ const LIST_PATTERNS = {
  * @returns リスト記法の情報、または null
  */
 export function detectListPattern(line: string): ListInfo | null {
+  // タスクリストの検出（順序なしリストより先にチェック）
+  const taskMatch = line.match(LIST_PATTERNS.task);
+
+  if (taskMatch) {
+    const checkboxState = taskMatch[3];
+    return {
+      type: "task",
+      indent: taskMatch[1],
+      marker: taskMatch[2],
+      content: taskMatch[4],
+      taskState: checkboxState === " " ? "incomplete" : "complete",
+    };
+  }
+
   // 順序なしリストの検出
   const unorderedMatch = line.match(LIST_PATTERNS.unordered);
 
@@ -63,7 +80,10 @@ export function detectListPattern(line: string): ListInfo | null {
 export function generateContinuationText(listInfo: ListInfo | null): string {
   if (!listInfo) return "";
 
-  if (listInfo.type === "unordered") {
+  if (listInfo.type === "task") {
+    // タスクリストは常に未完了状態で継続
+    return `${listInfo.indent}${listInfo.marker} [ ] `;
+  } else if (listInfo.type === "unordered") {
     return `${listInfo.indent}${listInfo.marker} `;
   } else if (listInfo.type === "ordered" && listInfo.number !== undefined) {
     return `${listInfo.indent}${listInfo.number + 1}. `;

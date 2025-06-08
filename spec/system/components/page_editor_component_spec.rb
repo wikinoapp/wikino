@@ -90,6 +90,77 @@ RSpec.describe "ページエディター", type: :system do
       expect(editor_content).to eq("+ プラスマーカー\n+ ")
     end
 
+    it "GitHubタスクリスト記法 (未完了) を入力してEnterキーを押すと次の行にも未完了タスクが追加されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "- [ ] 未完了タスク")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [ ] 未完了タスク\n- [ ] ")
+    end
+
+    it "GitHubタスクリスト記法 (完了) を入力してEnterキーを押すと次の行に未完了タスクが追加されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "- [x] 完了タスク")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [x] 完了タスク\n- [ ] ")
+    end
+
+    it "GitHubタスクリスト記法 (完了・大文字X) を入力してEnterキーを押すと次の行に未完了タスクが追加されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "- [X] 完了タスク（大文字）")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [X] 完了タスク（大文字）\n- [ ] ")
+    end
+
+    it "インデント付きタスクリスト記法でEnterキーを押すとインデントが維持されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "  - [ ] インデント付きタスク")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("  - [ ] インデント付きタスク\n  - [ ] ")
+    end
+
+    it "空のタスクリスト項目でEnterキーを押すとタスクリスト記法が終了すること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "- [ ] ")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("")
+    end
+
+    it "異なるマーカー (*、+) でもタスクリスト記法が正常に動作すること" do
+      visit_page_editor
+      clear_editor
+      # * マーカーのテスト
+      fill_in_editor(text: "* [ ] アスタリスクタスク")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("* [ ] アスタリスクタスク\n* [ ] ")
+
+      # エディターをクリア
+      clear_editor
+
+      # + マーカーのテスト
+      fill_in_editor(text: "+ [x] プラスタスク")
+      press_enter_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("+ [x] プラスタスク\n+ [ ] ")
+    end
+
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
