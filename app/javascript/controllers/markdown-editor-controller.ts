@@ -22,8 +22,8 @@ import {
 import { Controller } from "@hotwired/stimulus";
 import { EditorView } from "codemirror";
 
-import { wikilinkCompletions } from "../page-editor/wikilink-completions";
-import { insertNewlineAndContinueList } from "../page-editor/list-continuation";
+import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
+import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
