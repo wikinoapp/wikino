@@ -25,6 +25,7 @@ import { EditorView } from "codemirror";
 import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
 import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
+import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -68,6 +69,8 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
           { key: "Enter", run: insertNewlineAndContinueList },
           { key: "Tab", run: handleTab },
           { key: "Shift-Tab", run: handleShiftTab },
+          { key: "Cmd-Enter", run: handleSubmitShortcut },
+          { key: "Ctrl-Enter", run: handleSubmitShortcut },
           ...closeBracketsKeymap,
           ...defaultKeymap,
           ...searchKeymap,
