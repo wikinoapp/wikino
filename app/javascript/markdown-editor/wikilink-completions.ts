@@ -1,6 +1,6 @@
 export async function wikilinkCompletions(spaceIdentifier: string) {
   return async (context) => {
-    let before = context.matchBefore(/\[\[.*/);
+    const before = context.matchBefore(/\[\[.*/);
 
     if (!context.explicit && !before) {
       return null;
