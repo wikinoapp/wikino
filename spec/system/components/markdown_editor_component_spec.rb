@@ -203,6 +203,11 @@ RSpec.describe "Markdownエディター", type: :system do
 
       editor_content = get_editor_content
       expect(editor_content).to eq("  \n  - bbb")
+
+      # カーソルが新しい行の行頭 (マーカーの直前) にあることを確認
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(2)
+      expect(cursor_position[:column]).to eq(2)
     end
 
     private def visit_page_editor

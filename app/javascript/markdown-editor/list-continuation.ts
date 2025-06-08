@@ -146,7 +146,7 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
         to: line.to,
         insert: beforeCursor + "\n" + continuationText + contentToMove,
       },
-      selection: { anchor: line.from + beforeCursor.length + 1 + continuationText.length },
+      selection: { anchor: line.from + beforeCursor.length + 1 + listInfo.indent.length },
     });
 
     view.dispatch(transaction);
