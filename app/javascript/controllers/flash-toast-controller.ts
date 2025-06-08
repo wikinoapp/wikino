@@ -28,15 +28,14 @@ export default class extends Controller {
       this.showFlashToast();
     }
 
-    document.addEventListener(
-      "flash-toast:show",
-      ({ detail: { type, messageHtml } }: { detail: { type: string; messageHtml: string } }) => {
-        this.type = type || "notice";
-        this.messageHtml = messageHtml || "";
+    document.addEventListener("flash-toast:show", (event: Event) => {
+      const customEvent = event as CustomEvent<{ type: string; messageHtml: string }>;
+      const { type, messageHtml } = customEvent.detail;
+      this.type = type || "notice";
+      this.messageHtml = messageHtml || "";
 
-        this.showFlashToast();
-      },
-    );
+      this.showFlashToast();
+    });
   }
 
   showFlashToast() {

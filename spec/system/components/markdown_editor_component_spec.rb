@@ -214,7 +214,7 @@ RSpec.describe "Markdownエディター", type: :system do
       clear_editor
       # 複数行のテキストを作成
       set_editor_content(text: "- a\n- b\n- c")
-      
+
       # 2行目を改行文字を含めて選択する（トリプルクリック相当）
       select_line_with_newline(2)
       press_tab_in_editor
@@ -222,7 +222,7 @@ RSpec.describe "Markdownエディター", type: :system do
       # 内容の確認
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n  - b\n- c")
-      
+
       # カーソル位置の確認（3行目の先頭にあることを確認）
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(3)
@@ -234,7 +234,7 @@ RSpec.describe "Markdownエディター", type: :system do
       clear_editor
       # インデント付きの複数行テキストを作成
       set_editor_content(text: "- a\n  - b\n- c")
-      
+
       # 2行目を改行文字を含めて選択する
       select_line_with_newline(2)
       press_shift_tab_in_editor
@@ -242,7 +242,7 @@ RSpec.describe "Markdownエディター", type: :system do
       # 内容の確認
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n- b\n- c")
-      
+
       # カーソル位置の確認（3行目の先頭にあることを確認）
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(3)
@@ -254,7 +254,7 @@ RSpec.describe "Markdownエディター", type: :system do
       clear_editor
       # 複数行のテキストを作成
       set_editor_content(text: "行1\n行2\n行3\n行4")
-      
+
       # 2〜3行目を改行文字を含めて選択する
       select_multiple_lines_with_newline(2, 3)
       press_tab_in_editor
@@ -262,7 +262,7 @@ RSpec.describe "Markdownエディター", type: :system do
       # 内容の確認
       editor_content = get_editor_content
       expect(editor_content).to eq("行1\n  行2\n  行3\n行4")
-      
+
       # カーソル位置の確認（4行目の先頭にあることを確認）
       cursor_position = get_cursor_position
       expect(cursor_position[:line]).to eq(4)
@@ -274,7 +274,7 @@ RSpec.describe "Markdownエディター", type: :system do
       clear_editor
       # 複数行のテキストを作成
       set_editor_content(text: "- a\n- b\n- c")
-      
+
       # 2行目を改行文字を含めて選択する
       select_line_with_newline(2)
       press_tab_in_editor
@@ -282,7 +282,7 @@ RSpec.describe "Markdownエディター", type: :system do
       # 内容の確認
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n  - b\n- c")
-      
+
       # 選択範囲の確認（2行目が行の先頭から選択されていることを確認）
       selection_info = get_selection_info
       expect(selection_info[:has_selection]).to be true
@@ -297,11 +297,11 @@ RSpec.describe "Markdownエディター", type: :system do
       clear_editor
       # 複数行のテキストを作成
       set_editor_content(text: "- a\n- b\n- c")
-      
+
       # 2行目を改行文字を含めて選択する
       select_line_with_newline(2)
       press_tab_in_editor
-      
+
       # Deleteキーを押す
       within ".cm-content" do
         current_scope.send_keys(:delete)
@@ -311,7 +311,6 @@ RSpec.describe "Markdownエディター", type: :system do
       editor_content = get_editor_content
       expect(editor_content).to eq("- a\n- c")
     end
-
 
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
@@ -398,7 +397,7 @@ RSpec.describe "Markdownエディター", type: :system do
   private def get_cursor_position
     # カーソル位置を取得するJavaScript
     position = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var cursor = editorView.state.selection.main.head; var line = editorView.state.doc.lineAt(cursor); return { line: line.number, column: cursor - line.from, absolutePosition: cursor }; })();")
-    
+
     {
       line: position["line"],
       column: position["column"],
@@ -409,7 +408,7 @@ RSpec.describe "Markdownエディター", type: :system do
   private def get_selection_info
     # 選択範囲の情報を取得するJavaScript
     selection_info = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var selection = editorView.state.selection.main; var fromLine = editorView.state.doc.lineAt(selection.from); var toLine = editorView.state.doc.lineAt(selection.to); return { from: selection.from, to: selection.to, fromLine: fromLine.number, toLine: toLine.number, fromColumn: selection.from - fromLine.from, toColumn: selection.to - toLine.from, hasSelection: selection.from !== selection.to }; })();")
-    
+
     {
       from: selection_info["from"],
       to: selection_info["to"],
