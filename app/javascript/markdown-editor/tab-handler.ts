@@ -27,7 +27,6 @@ export function handleTab(view: EditorView): boolean {
   // 複数行選択または単一行の処理
   const changes = ranges
     .map((range: SelectionRange) => {
-      const line = state.doc.lineAt(range.from);
 
       // 選択範囲がある場合は、選択されている全ての行にインデントを追加
       if (range.from !== range.to) {
@@ -66,7 +65,7 @@ export function handleTab(view: EditorView): boolean {
   const transaction = state.update({
     changes,
     selection: EditorSelection.create(
-      ranges.map((range: SelectionRange, i: number) => {
+      ranges.map((range: SelectionRange) => {
         if (range.from === range.to) {
           // 単一カーソルの場合、インデント分だけカーソルを移動
           return EditorSelection.cursor(range.from + INDENT_SIZE.length);
@@ -82,7 +81,6 @@ export function handleTab(view: EditorView): boolean {
           }
 
           const processedLines = endLine - startLine + 1;
-          const addedLength = processedLines * INDENT_SIZE.length;
 
           // 選択終了位置を調整
           const originalEndLineInfo = state.doc.line(state.doc.lineAt(range.to).number);

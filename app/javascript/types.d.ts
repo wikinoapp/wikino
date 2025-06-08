@@ -1,7 +1,7 @@
 declare module '@hotwired/turbo' {
-  export const fetch: any;
-  export const renderStreamMessage: any;
+  export const fetch: unknown;
+  export const renderStreamMessage: unknown;
   export class FormSubmission {
-    constructor(...args: any[]);
+    constructor(...args: unknown[]);
   }
 }

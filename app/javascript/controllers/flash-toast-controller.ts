@@ -28,7 +28,7 @@ export default class extends Controller {
       this.showFlashToast();
     }
 
-    document.addEventListener("flash-toast:show", ({ detail: { type, messageHtml } }: any) => {
+    document.addEventListener("flash-toast:show", ({ detail: { type, messageHtml } }: { detail: { type: string; messageHtml: string } }) => {
       this.type = type || "notice";
       this.messageHtml = messageHtml || "";
 

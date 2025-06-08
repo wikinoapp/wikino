@@ -75,7 +75,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
           ...foldKeymap,
           ...completionKeymap,
         ]),
-        EditorView.updateListener.of((update: any) => {
+        EditorView.updateListener.of((update: { docChanged: boolean; state: { doc: { toString(): string } } }) => {
           if (update.docChanged) {
             this.textareaTarget.value = update.state.doc.toString();
             this.textareaTarget.dispatchEvent(new Event("input"));

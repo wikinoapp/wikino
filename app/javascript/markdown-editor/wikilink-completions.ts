@@ -1,5 +1,15 @@
+interface CompletionContext {
+  matchBefore: (pattern: RegExp) => { from: number; text: string } | null;
+  explicit: boolean;
+  pos: number;
+}
+
+interface PageLocation {
+  key: string;
+}
+
 export async function wikilinkCompletions(spaceIdentifier: string) {
-  return async (context: any) => {
+  return async (context: CompletionContext) => {
     const before = context.matchBefore(/\[\[.*/);
 
     if (!context.explicit && !before) {
@@ -25,7 +35,7 @@ async function fetchPageLocations(spaceIdentifier: string, keyword: string) {
     .then((data) => data.page_locations);
 }
 
-async function buildCompletions(spaceIdentifier: string, before: any) {
+async function buildCompletions(spaceIdentifier: string, before: { from: number; text: string } | null) {
   if (!before) {
     return [];
   }
@@ -35,7 +45,7 @@ async function buildCompletions(spaceIdentifier: string, before: any) {
 
   const pageLocations = await fetchPageLocations(spaceIdentifier, keyword);
 
-  return pageLocations.map((pageLocation: any) => ({
+  return pageLocations.map((pageLocation: PageLocation) => ({
     label: `[[${pageLocation.key}`,
     displayLabel: pageLocation.key,
   }));
