@@ -209,6 +209,66 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(editor_content).to eq("インデント付きテキスト")
     end
 
+    it "行選択（改行文字を含む）でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること" do
+      visit_page_editor
+      clear_editor
+      # 複数行のテキストを作成
+      set_editor_content(text: "- a\n- b\n- c")
+      
+      # 2行目を改行文字を含めて選択する（トリプルクリック相当）
+      select_line_with_newline(2)
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n  - b\n- c")
+      
+      # カーソル位置の確認（3行目の先頭にあることを確認）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(3)
+      expect(cursor_position[:column]).to eq(0)
+    end
+
+    it "行選択（改行文字を含む）でShift+タブキーを押すと選択した行のみインデントが削除され、カーソル位置が正しく維持されること" do
+      visit_page_editor
+      clear_editor
+      # インデント付きの複数行テキストを作成
+      set_editor_content(text: "- a\n  - b\n- c")
+      
+      # 2行目を改行文字を含めて選択する
+      select_line_with_newline(2)
+      press_shift_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n- b\n- c")
+      
+      # カーソル位置の確認（3行目の先頭にあることを確認）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(3)
+      expect(cursor_position[:column]).to eq(0)
+    end
+
+    it "複数行選択（改行文字を含む）でタブキーを押すと選択した行のみインデントが追加されること" do
+      visit_page_editor
+      clear_editor
+      # 複数行のテキストを作成
+      set_editor_content(text: "行1\n行2\n行3\n行4")
+      
+      # 2〜3行目を改行文字を含めて選択する
+      select_multiple_lines_with_newline(2, 3)
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("行1\n  行2\n  行3\n行4")
+      
+      # カーソル位置の確認（4行目の先頭にあることを確認）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(4)
+      expect(cursor_position[:column]).to eq(0)
+    end
+
 
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
@@ -228,6 +288,15 @@ RSpec.describe "Markdownエディター", type: :system do
       current_scope.click
       current_scope.send_keys(text)
     end
+  end
+
+  private def set_editor_content(text:)
+    # CodeMirrorの状態を直接操作してテキストを設定（Tabテスト用）
+    page.execute_script(
+      "arguments[0].cmView.view.dispatch({ changes: { from: 0, to: arguments[0].cmView.view.state.doc.length, insert: arguments[1] } });",
+      find(".cm-content"),
+      text
+    )
   end
 
   private def press_enter_in_editor
@@ -271,5 +340,26 @@ RSpec.describe "Markdownエディター", type: :system do
     within ".cm-content" do
       current_scope.send_keys([:control, "a"])
     end
+  end
+
+  private def select_line_with_newline(line_number)
+    # 特定の行を改行文字を含めて選択するJavaScript
+    page.execute_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var doc = editorView.state.doc; var line = doc.line(#{line_number}); var nextLineStart = #{line_number} < doc.lines ? doc.line(#{line_number} + 1).from : doc.length; editorView.dispatch({ selection: { anchor: line.from, head: nextLineStart } }); editorView.focus(); })();")
+  end
+
+  private def select_multiple_lines_with_newline(start_line, end_line)
+    # 複数行を改行文字を含めて選択するJavaScript
+    page.execute_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var doc = editorView.state.doc; var startLine = doc.line(#{start_line}); var endLine = doc.line(#{end_line}); var nextLineStart = #{end_line} < doc.lines ? doc.line(#{end_line} + 1).from : doc.length; editorView.dispatch({ selection: { anchor: startLine.from, head: nextLineStart } }); editorView.focus(); })();")
+  end
+
+  private def get_cursor_position
+    # カーソル位置を取得するJavaScript
+    position = page.evaluate_script("(function() { var editor = document.querySelector('.cm-content'); var editorView = editor.cmView.view; var cursor = editorView.state.selection.main.head; var line = editorView.state.doc.lineAt(cursor); return { line: line.number, column: cursor - line.from, absolutePosition: cursor }; })();")
+    
+    {
+      line: position["line"],
+      column: position["column"],
+      absolute_position: position["absolutePosition"]
+    }
   end
 end

@@ -62,9 +62,29 @@ export function handleTab(view: EditorView): boolean {
         } else {
           // 選択範囲がある場合、選択を維持
           const startLine = state.doc.lineAt(range.from).number;
-          const endLine = state.doc.lineAt(range.to).number;
-          const addedLength = (endLine - startLine + 1) * INDENT_SIZE.length;
-          return EditorSelection.range(range.from, range.to + addedLength);
+          let endLine = state.doc.lineAt(range.to).number;
+          
+          // 選択終了位置が行の先頭の場合、実際の処理対象行数を計算
+          const endLineInfo = state.doc.line(endLine);
+          if (range.to === endLineInfo.from && endLine > startLine) {
+            endLine = endLine - 1;
+          }
+          
+          const processedLines = endLine - startLine + 1;
+          const addedLength = processedLines * INDENT_SIZE.length;
+          
+          // 選択終了位置を調整
+          const originalEndLineInfo = state.doc.line(state.doc.lineAt(range.to).number);
+          let newTo;
+          if (range.to === originalEndLineInfo.from && state.doc.lineAt(range.to).number > startLine) {
+            // 改行文字の直後で終わる選択の場合、処理対象行数分のインデントを加算
+            newTo = range.to + (processedLines * INDENT_SIZE.length);
+          } else {
+            // 通常の選択の場合
+            newTo = range.to + (processedLines * INDENT_SIZE.length);
+          }
+          
+          return EditorSelection.cursor(newTo);
         }
       }),
       state.selection.mainIndex
