@@ -174,6 +174,55 @@ RSpec.describe "Markdownエディター", type: :system do
     end
   end
 
+  describe "タブキーによるインデント機能" do
+    it "タブキーを押すと半角スペース2つが挿入されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "テスト")
+      press_tab_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("テスト  ")
+    end
+
+    it "行頭でタブキーを押すと行頭に半角スペース2つが挿入されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "テスト")
+      # カーソルを行頭に移動
+      move_cursor_to_start
+      press_tab_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("  テスト")
+    end
+
+    it "Shift+タブキーを押すとインデントが削除されること" do
+      visit_page_editor
+      clear_editor
+      fill_in_editor(text: "  インデント付きテキスト")
+      # カーソルを行頭に移動
+      move_cursor_to_start
+      press_shift_tab_in_editor
+
+      editor_content = get_editor_content
+      expect(editor_content).to eq("インデント付きテキスト")
+    end
+
+
+    private def visit_page_editor
+      user_record = create(:user_record, :with_password)
+      space_record = create(:space_record)
+      page_record = create(:page_record, space_record:)
+      topic_record = page_record.topic_record
+      space_member_record = create(:space_member_record, space_record:, user_record:)
+      create(:topic_member_record, space_record:, topic_record:, space_member_record:)
+
+      sign_in(user_record:)
+      visit "/s/#{space_record.identifier}/pages/#{page_record.number}/edit"
+    end
+  end
+
   private def fill_in_editor(text:)
     within ".cm-content" do
       current_scope.click
@@ -197,6 +246,30 @@ RSpec.describe "Markdownエディター", type: :system do
     within ".cm-content" do
       current_scope.send_keys([:control, "a"])
       current_scope.send_keys(:delete)
+    end
+  end
+
+  private def press_tab_in_editor
+    within ".cm-content" do
+      current_scope.send_keys(:tab)
+    end
+  end
+
+  private def press_shift_tab_in_editor
+    within ".cm-content" do
+      current_scope.send_keys([:shift, :tab])
+    end
+  end
+
+  private def move_cursor_to_start
+    within ".cm-content" do
+      current_scope.send_keys([:control, :home])
+    end
+  end
+
+  private def select_all_in_editor
+    within ".cm-content" do
+      current_scope.send_keys([:control, "a"])
     end
   end
 end

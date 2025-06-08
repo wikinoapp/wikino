@@ -24,6 +24,7 @@ import { EditorView } from "codemirror";
 
 import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
+import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -65,6 +66,8 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
         highlightSelectionMatches(),
         keymap.of([
           { key: "Enter", run: insertNewlineAndContinueList },
+          { key: "Tab", run: handleTab },
+          { key: "Shift-Tab", run: handleShiftTab },
           ...closeBracketsKeymap,
           ...defaultKeymap,
           ...searchKeymap,
