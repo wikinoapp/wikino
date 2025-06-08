@@ -25,7 +25,7 @@ import { EditorView } from "codemirror";
 import { wikilinkCompletions } from "../page-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../page-editor/list-continuation";
 
-export default class PageEditorController extends Controller<HTMLDivElement> {
+export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
   static values = {
     spaceIdentifier: String,

@@ -189,7 +189,7 @@ RSpec.describe "ページエディター", type: :system do
 
   private def get_editor_content
     # CodeMirrorエディターのコンテンツを取得（隠しtextareaから）
-    page.evaluate_script("document.querySelector('[data-page-editor-target=\"textarea\"]').value")
+    page.evaluate_script("document.querySelector('[data-markdown-editor-target=\"textarea\"]').value")
   end
 
   private def clear_editor

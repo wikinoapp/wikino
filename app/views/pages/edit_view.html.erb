@@ -77,18 +77,18 @@
               </div>
 
               <div
-                data-controller="page-editor"
-                data-page-editor-space-identifier-value="<%= space.identifier %>"
-                data-page-editor-body-value="<%= f.object.body %>"
-                data-page-editor-autofocus-value="<%= f.object.autofocus_body? %>"
+                data-controller="markdown-editor"
+                data-markdown-editor-space-identifier-value="<%= space.identifier %>"
+                data-markdown-editor-body-value="<%= f.object.body %>"
+                data-markdown-editor-autofocus-value="<%= f.object.autofocus_body? %>"
               >
-                <div data-page-editor-target="codeMirror"></div>
+                <div data-markdown-editor-target="codeMirror"></div>
 
                 <%= f.text_area(:body, {
                   class: "hidden",
                   data: {
                     action: "page-editor-form#saveAsDraft",
-                    page_editor_target: "textarea"
+                    markdown_editor_target: "textarea"
                   }
                 }) %>
               </div>
