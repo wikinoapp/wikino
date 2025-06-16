@@ -17,7 +17,7 @@
     "stimulus-use": "^0.52.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
+    "@eslint/js": "^9.29.0",
     "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.1.1",
     "daisyui": "^4.12.13",
     "eslint": "^9.28.0",
