@@ -1,21 +1,4 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: ./Dockerfile.dev
-    depends_on:
-      - postgresql
-      - chrome
-    environment:
-      BINDING: 0.0.0.0
-    ports:
-      - "3000:3000"
-    stdin_open: true
-    tty: true
-    volumes:
-      - .:/app
-      - app_gems_data:/usr/local/bundle
-
   postgresql:
     image: postgres:17.0
     ports:
@@ -29,5 +12,4 @@ services:
     image: selenium/standalone-chromium:136.0.7103.113
 
 volumes:
-  app_gems_data:
   postgresql17_data:
