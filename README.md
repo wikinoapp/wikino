@@ -6,7 +6,8 @@
 git clone git@github.com:wikinoapp/wikino.git
 cd wikino
 docker compose up
-docker compose exec app bin/setup
-docker compose exec app bin/dev
-docker compose exec app bin/rails server
+mise install
+bin/setup
+bin/dev
+bin/rails server
 ```
