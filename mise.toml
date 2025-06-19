@@ -1,0 +1,5 @@
+[tools]
+ruby = "3.4.4"
+node = "20.16.0"
+yarn = "1.22.22"
+postgres = "17.0"
