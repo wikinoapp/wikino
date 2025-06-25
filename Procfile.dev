@@ -1,2 +1,2 @@
-css: yarn build:css --watch
-js: yarn build --watch
+css: pnpm build:css --watch
+js: pnpm build --watch

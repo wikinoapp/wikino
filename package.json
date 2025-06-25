@@ -3,7 +3,7 @@
   "private": "true",
   "engines": {
     "node": "20.16.0",
-    "yarn": "1.22.22"
+    "pnpm": "10.12.3"
   },
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --outdir=app/assets/builds --public-path=assets",
