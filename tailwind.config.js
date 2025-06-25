@@ -1,5 +1,4 @@
 const tailwindColors = require("tailwindcss/colors");
-const daisyuiThemes = require("daisyui/src/theming/themes");
 
 const brand = {
   50: "#f9f7f7",
@@ -58,24 +57,5 @@ module.exports = {
       tooltip: 200,
       navbar: 100,
     },
-  },
-  plugins: [require("daisyui")],
-  daisyui: {
-    themes: [
-      {
-        light: {
-          ...daisyuiThemes["light"],
-          "base-100": colors.brand[100], // ページ全体の背景色
-          "base-200": colors.brand[100], // ナビゲーションバーの背景色
-          "base-300": colors.gray[100], // カードの背景色
-          "base-content": colors.gray[950], // テキストの色
-          info: colors.sky[300],
-          "primary-content": colors.gray[100],
-          primary: colors.gray[950],
-          "secondary-content": colors.gray[950],
-          secondary: colors.brand[100],
-        },
-      },
-    ],
   },
 };
