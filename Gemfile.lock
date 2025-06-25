@@ -341,7 +341,7 @@ GEM
       sorbet-runtime (>= 0.5.9204)
     rbs (3.9.4)
       logger
-    rdoc (6.14.0)
+    rdoc (6.14.1)
       erb
       psych (>= 4.0.0)
     regexp_parser (2.10.0)
@@ -423,10 +423,10 @@ GEM
     selma (0.4.12-aarch64-linux)
     selma (0.4.12-arm64-darwin)
     selma (0.4.12-x86_64-linux)
-    sentry-rails (5.24.0)
+    sentry-rails (5.25.0)
       railties (>= 5.0)
-      sentry-ruby (~> 5.24.0)
-    sentry-ruby (5.24.0)
+      sentry-ruby (~> 5.25.0)
+    sentry-ruby (5.25.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
     sequenced (4.0.0)
