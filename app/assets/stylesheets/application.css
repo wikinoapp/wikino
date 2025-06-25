@@ -368,7 +368,7 @@
   ============================================================================
 */
 .cm-editor {
-  @apply bg-base-300 px-2 text-base;
+  @apply px-2 text-base;
 }
 
 .cm-editor.cm-focused {
@@ -376,9 +376,9 @@
 }
 
 .cm-editor .cm-gutters {
-  @apply bg-base-300;
+  /* @apply bg-base-300; */
 }
 
 .cm-editor .cm-lineNumbers {
-  @apply bg-base-300;
+  /* @apply bg-base-300; */
 }
