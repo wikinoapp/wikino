@@ -35,6 +35,9 @@ importers:
       '@tailwindcss/cli':
         specifier: ^4.1.10
         version: 4.1.10
+      basecoat-css:
+        specifier: ^0.2.7
+        version: 0.2.7
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -630,6 +633,9 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
+  basecoat-css@0.2.7:
+    resolution: {integrity: sha512-DX2fOR+Nbt03+ag6IqeFXlBQWYrSpHyXBuRqReoRnx2zjVKS5noR+VF1H0PrF1OKjIF+yYlQMOzRWWOeKBd+Og==}
 
   brace-expansion@1.1.12:
     resolution: {integrity: sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==}
@@ -1687,6 +1693,8 @@ snapshots:
   argparse@2.0.1: {}
 
   balanced-match@1.0.2: {}
+
+  basecoat-css@0.2.7: {}
 
   brace-expansion@1.1.12:
     dependencies:
