@@ -77,15 +77,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.16.0
-      - name: Install Yarn
+      - name: Install pnpm
         run: |
-          npm install --global yarn@1.22.22
+          npm install --global pnpm@10.12.3
       - name: Install npm packages
         run: |
-          yarn install
+          pnpm install
       - name: Prettier check
         run: |
-          yarn prettier . --check
+          pnpm prettier . --check
 
   rspec:
     name: RSpec
@@ -117,9 +117,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.16.0
-      - name: Install Yarn
+      - name: Install pnpm
         run: |
-          npm install --global yarn@1.22.22
+          npm install --global pnpm@10.12.3
       - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
       - run: chrome --version
