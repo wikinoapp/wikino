@@ -148,65 +148,65 @@
           <% end %>
         </div>
 
-        <footer class="footer grid-cols-2 justify-around sm:grid-cols-3">
-          <nav>
-            <h6 class="footer-title">
+        <footer class="grid grid-cols-2 sm:grid-cols-3 mx-auto gap-8">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               <%= t("messages.welcome.footer_resources") %>
             </h6>
 
-            <%= link_to "https://wikino.app/s/wikino", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_help_page") %>
             <% end %>
 
-            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_release_notes") %>
             <% end %>
 
-            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_about_developer") %>
             <% end %>
           </nav>
 
-          <nav>
-            <h6 class="footer-title">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               <%= t("messages.welcome.footer_community") %>
             </h6>
 
             <%= link_to "Discord", "https://discord.gg/8qMetv8fUn", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "Bluesky", "https://bsky.app/profile/wikino.app", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "Mewst", "https://mewst.com/@wikino", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "GitHub", "https://github.com/wikinoapp/wikino", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
           </nav>
 
-          <nav>
-            <h6 class="footer-title">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               Legal
             </h6>
 
-            <%= link_to terms_path, class: "link link-hover" do %>
+            <%= link_to terms_path, class: "hover:underline" do %>
               <%= t("messages.welcome.footer_terms") %>
             <% end %>
 
-            <%= link_to privacy_path, class: "link link-hover" do %>
+            <%= link_to privacy_path, class: "hover:underline" do %>
               <%= t("messages.welcome.footer_privacy") %>
             <% end %>
           </nav>
