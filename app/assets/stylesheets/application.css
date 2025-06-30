@@ -383,3 +383,11 @@
 .cm-editor .cm-lineNumbers {
   /* @apply bg-base-300; */
 }
+
+@utility border-border {
+  display: block;
+}
+
+@utility outline-ring/50 {
+  display: block;
+}
