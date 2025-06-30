@@ -16,43 +16,35 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
+    <%= render Basic::CardComponent.new do |card| %>
+      <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
-          class: "flex flex-col gap-4",
+          class: "form grid gap-6",
           model: form,
           url: user_session_path
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :email, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.email") %>
-              </span>
-            </div>
+          <div class="grid gap-2">
+            <%= f.label :email %>
 
             <%= f.email_field(:email, {
               autocomplete: "username",
               autofocus: true,
-              class: "bg-base-300 input input-bordered w-full",
+              class: "",
               required: true,
               tabindex: 1
             }) %>
-          <% end %>
+          </div>
 
-          <%= f.label :password, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.password") %>
-              </span>
+          <div class="grid gap-2">
+            <div class="flex items-center gap-2">
+              <%= f.label :password %>
 
-              <span class="label-text-alt">
-                <%= link_to t("meta.title.password_resets.new"), password_reset_path, {
-                  class: "link",
-                  tabindex: 4
-                } %>
-              </span>
+              <%= link_to t("meta.title.password_resets.new"), password_reset_path, {
+                class: "ml-auto underline underline-offset-4 text-sm",
+                tabindex: 4
+              } %>
             </div>
 
             <%= f.password_field(:password, {
@@ -61,10 +53,10 @@
               required: true,
               tabindex: 2
             }) %>
-          <% end %>
+          </div>
 
           <%= f.button(
-            class: "btn btn-primary no-animation rounded-full w-fit",
+            class: "btn btn-primary rounded-full w-fit",
             type: :submit,
             tabindex: 3
           ) do %>
@@ -77,8 +69,8 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
-        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
+      <%= link_to root_path, class: "underline underline-offset-4" do %>
+        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

@@ -51,7 +51,7 @@
             <% end %>
 
             <%= f.button(
-              class: "btn btn-primary no-animation rounded-full w-fit",
+              class: "btn btn-primary rounded-full w-fit",
               type: :submit,
               tabindex: 3
             ) do %>
@@ -64,7 +64,7 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
+      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
         <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
 
         <%= t("verbs.back_to_home") %>

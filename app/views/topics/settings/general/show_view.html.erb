@@ -28,14 +28,14 @@
             <%= render Topics::Shared::VisibilityFieldComponent.new(form_builder: f) %>
 
             <div class="flex gap-2">
-              <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+              <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
                 <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                 <%= t("verbs.save") %>
               <% end %>
 
               <%= link_to t("nouns.cancel"), topic_settings_path(space.identifier, topic.number), {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>

@@ -8,7 +8,7 @@
   <%= main_title.with_actions do %>
     <% if topic.can_create_page? %>
       <%= link_to new_page_path(space.identifier, topic.number), {
-        class: "btn btn-sm btn-primary no-animation rounded-full"
+        class: "btn btn-sm btn-primary rounded-full"
       } do %>
         <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
 

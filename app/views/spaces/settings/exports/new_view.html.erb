@@ -26,11 +26,11 @@
           <div class="flex gap-2">
             <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
               method: :post,
-              class: "btn btn-primary no-animation rounded-full"
+              class: "btn btn-primary rounded-full"
             } %>
 
             <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
-              class: "btn btn-ghost no-animation rounded-full w-fit"
+              class: "btn btn-ghost rounded-full w-fit"
             } %>
           </div>
         <% end %>

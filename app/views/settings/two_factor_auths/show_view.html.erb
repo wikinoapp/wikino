@@ -53,7 +53,7 @@
                 <%= link_to(
                   t("verbs.view_recovery_codes"),
                   settings_two_factor_auth_recovery_codes_path,
-                  class: "btn btn-primary no-animation rounded-full"
+                  class: "btn btn-primary rounded-full"
                 ) %>
               </div>
             </div>
@@ -88,7 +88,7 @@
 
               <div>
                 <%= f.button(
-                  class: "btn btn-primary no-animation rounded-full",
+                  class: "btn btn-primary rounded-full",
                   type: :submit,
                   data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") }
                 ) do %>
@@ -105,11 +105,11 @@
               <%= link_to(
                 t("verbs.enable_two_factor_auth"),
                 settings_new_two_factor_auth_path,
-                class: "btn btn-primary no-animation rounded-full"
+                class: "btn btn-primary rounded-full"
               ) %>
 
               <%= link_to t("nouns.cancel"), settings_path, {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>
