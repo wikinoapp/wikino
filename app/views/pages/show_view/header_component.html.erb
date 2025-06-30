@@ -5,7 +5,7 @@
         <%= link_to edit_page_path(space.identifier, page.number), {
           class: "btn btn-sm btn-primary no-animation rounded-full"
         } do %>
-          <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-content") %>
+          <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
 
           <%= t("verbs.edit") %>
         <% end %>
