@@ -17,6 +17,7 @@ class ApplicationService
     end
   end
 
+  sig { params(block: T.proc.void).void }
   private def with_transaction(&block)
     ApplicationRecord.transaction(&block)
   rescue ActiveRecord::RecordNotUnique => e
