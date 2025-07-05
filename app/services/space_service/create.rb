@@ -12,7 +12,8 @@ module SpaceService
       current_time = T.let(Time.current, ActiveSupport::TimeWithZone)
 
       space_record = with_transaction do
-        new_space_record = SpaceRecord.where(identifier:).first_or_create!(
+        new_space_record = SpaceRecord.create!(
+          identifier:,
           name:,
           plan: Plan::Free.serialize,
           joined_at: current_time

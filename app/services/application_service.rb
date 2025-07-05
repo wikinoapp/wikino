@@ -30,7 +30,7 @@ class ApplicationService
     # PostgreSQLの場合のエラーメッセージ例:
     # "PG::UniqueViolation: ERROR: duplicate key value violates unique constraint "index_pages_on_slug""
     case e.message
-    when /index_space_members_on_space_id_and_user_id/
+    when /index_spaces_on_identifier/
       raise RecordNotUniqueError.new(message:, attribute: :identifier)
     else
       # 予期しない一意性制約違反はシステムエラーとして扱う
