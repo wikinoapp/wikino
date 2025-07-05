@@ -17,7 +17,11 @@ class ApplicationService
     end
   end
 
-  sig { params(block: T.proc.void).void }
+  sig do
+    type_parameters(:T)
+      .params(block: T.proc.returns(T.type_parameter(:T)))
+      .returns(T.type_parameter(:T))
+  end
   private def with_transaction(&block)
     ApplicationRecord.transaction(&block)
   rescue ActiveRecord::RecordNotUnique => e
