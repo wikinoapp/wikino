@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-2">
         <%= f.button(
-          class: "btn btn-primary btn-xs no-animation rounded-full",
+          class: "btn btn-primary btn-xs rounded-full",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
@@ -20,7 +20,7 @@
           <%= render Basic::IconComponent.new(
             name: "arrow-counter-clockwise",
             size: "18px",
-            class_name: "fill-primary-content"
+            class_name: "fill-primary-foreground"
           ) %>
 
           <%= t("verbs.restore") %>
@@ -28,7 +28,7 @@
 
         <% if false %>
         <%= f.button(
-          class: "btn btn-primary btn-xs no-animation rounded-full text-error",
+          class: "btn btn-primary btn-xs rounded-full text-error",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"

@@ -18,24 +18,24 @@
             <%= main_title.with_actions do %>
               <div class="flex items-center gap-2">
                 <%= link_to settings_profile_path, {
-                  class: "btn btn-sm btn-primary no-animation rounded-full"
+                  class: "btn btn-sm btn-primary rounded-full"
                 } do %>
                   <%= render Basic::IconComponent.new(
                     name: "pencil-simple-line",
                     size: "18px",
-                    class_name: "fill-primary-content"
+                    class_name: "fill-primary-foreground"
                   ) %>
 
                   <%= t("nouns.edit_profile") %>
                 <% end %>
 
                 <%= link_to settings_path, {
-                  class: "btn btn-sm btn-outline no-animation rounded-full flex gap-2 items-center group"
+                  class: "btn btn-sm btn-outline rounded-full flex gap-2 items-center group"
                 } do %>
                   <%= render Basic::IconComponent.new(
                     name: "gear-regular",
                     size: "18px",
-                    class_name: "fill-primary group-hover:fill-primary-content"
+                    class_name: "fill-primary group-hover:fill-primary-foreground"
                   ) %>
 
                   <%= t("nouns.settings") %>

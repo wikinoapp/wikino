@@ -28,7 +28,7 @@
               <%= t("messages.two_factor_auth.recovery_codes_description_html") %>
             </p>
 
-            <div class="rounded bg-base-100 p-4">
+            <div class="bg-base-100 rounded p-4">
               <h3 class="mb-4 font-semibold">
                 <%= t("nouns.recovery_codes") %>
               </h3>
@@ -83,7 +83,7 @@
 
               <div class="flex gap-2">
                 <%= f.button(
-                  class: "btn btn-primary no-animation rounded-full w-fit",
+                  class: "btn btn-primary rounded-full w-fit",
                   data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") },
                   type: :submit
                 ) do %>
@@ -91,7 +91,7 @@
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                  class: "btn btn-ghost rounded-full w-fit"
                 } %>
               </div>
             <% end %>

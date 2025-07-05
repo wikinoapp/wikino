@@ -47,7 +47,7 @@
                   <%= t("messages.two_factor_auth.manual_entry") %>
                 </div>
 
-                <code class="w-fit rounded border border-brand-200 px-2 py-1 font-mono">
+                <code class="border-brand-200 w-fit rounded border px-2 py-1 font-mono">
                   <%= secret %>
                 </code>
               </div>
@@ -96,12 +96,12 @@
                 <% end %>
 
                 <div class="flex gap-2">
-                  <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
+                  <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
                     <%= t("verbs.enable_two_factor_auth") %>
                   <% end %>
 
                   <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                    class: "btn btn-ghost no-animation rounded-full w-fit"
+                    class: "btn btn-ghost rounded-full w-fit"
                   } %>
                 </div>
               <% end %>
