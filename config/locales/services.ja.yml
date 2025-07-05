@@ -1,0 +1,5 @@
+ja:
+  services:
+    errors:
+      messages:
+        uniqueness: は既に存在しています

@@ -11,7 +11,7 @@ module SpaceService
     def call(user_record:, identifier:, name:)
       current_time = T.let(Time.current, ActiveSupport::TimeWithZone)
 
-      space_record = ActiveRecord::Base.transaction do
+      space_record = with_transaction do
         new_space_record = SpaceRecord.where(identifier:).first_or_create!(
           name:,
           plan: Plan::Free.serialize,

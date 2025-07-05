@@ -14,13 +14,7 @@ module Spaces
       form = SpaceForm::Creation.new(form_params)
 
       if form.invalid?
-        return render_component(
-          Spaces::NewView.new(
-            current_user: current_user!,
-            form:
-          ),
-          status: :unprocessable_entity
-        )
+        return render_new_view(form:)
       end
 
       result = SpaceService::Create.new.call(
@@ -31,6 +25,9 @@ module Spaces
 
       flash[:notice] = t("messages.spaces.created")
       redirect_to space_path(result.space_record.identifier)
+    rescue ApplicationService::RecordNotUniqueError => e
+      form.errors.add(e.attribute, e.message)
+      render_new_view(form:)
     end
 
     sig { returns(ActionController::Parameters) }
@@ -38,6 +35,16 @@ module Spaces
       T.cast(params.require(:space_form_creation), ActionController::Parameters).permit(
         :identifier,
         :name
+      )
+    end
+
+    private def render_new_view(form:)
+      render_component(
+        Spaces::NewView.new(
+          current_user: current_user!,
+          form:
+        ),
+        status: :unprocessable_entity
       )
     end
   end
