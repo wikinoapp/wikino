@@ -1,0 +1,5 @@
+en:
+  services:
+    errors:
+      messages:
+        uniqueness: has already been taken
