@@ -154,9 +154,9 @@
 }
 
 .cm-editor .cm-gutters {
-  @apply bg-base-300;
+  @apply bg-gray-100;
 }
 
 .cm-editor .cm-lineNumbers {
-  @apply bg-base-300;
+  @apply bg-gray-100;
 }
