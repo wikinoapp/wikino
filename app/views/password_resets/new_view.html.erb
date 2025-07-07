@@ -16,7 +16,7 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+    <%= render Basic::CardComponent.new do |card| %>
       <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
           class: "form grid gap-6",
@@ -45,7 +45,10 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "underline underline-offset-4" do %>
+      <%= render LinkComponent.new(
+        href: root_path,
+        variant: LinkComponent::Variant::Underline
+      ) do %>
         <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
