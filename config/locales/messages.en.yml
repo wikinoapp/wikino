@@ -114,8 +114,7 @@ en:
               below.
       updated: Space updated.
     sign_in:
-      dont_have_an_account_html: |-
-        Don't have an account? <a class="underline" href="%{sign_up_path}">Sign up</a>.
+      dont_have_an_account: Don't have an account?
       forgot_password: Forgot password?
       remember_me: Remember me
       sign_in_failed: Sign in failed.

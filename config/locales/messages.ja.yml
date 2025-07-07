@@ -116,8 +116,7 @@ ja:
               を入力してください。
       updated: スペースを更新しました
     sign_in:
-      dont_have_an_account_html: |-
-        アカウント持ってない？ <a class="underline" href="%{sign_up_path}">アカウント作成</a>
+      dont_have_an_account: アカウント持ってない？
       forgot_password: パスワード忘れた？
       remember_me: パスワードを記憶する
       sign_in_failed: ログインに失敗しました

@@ -6,13 +6,20 @@
       <% end %>
     </div>
 
-    <div class="text-center">
-      <h1 class="text-2xl font-bold antialiased">
+    <div class="mx-auto">
+      <h1 class="text-2xl font-bold antialiased text-center">
         <%= current_page_title %>
       </h1>
 
-      <p class="mt-4">
-        <%= t("messages.sign_in.dont_have_an_account_html", sign_up_path:) %>
+      <p class="mt-4 flex items-center gap-2">
+        <%= t("messages.sign_in.dont_have_an_account") %>
+
+        <%= render LinkComponent.new(
+          href: sign_up_path,
+          variant: LinkComponent::Variant::Underline
+        ) do %>
+          <%= t("nouns.sign_up") %>
+        <% end %>
       </p>
     </div>
 
@@ -40,10 +47,14 @@
             <div class="flex items-center gap-2">
               <%= f.label :password %>
 
-              <%= link_to t("meta.title.password_resets.new"), password_reset_path, {
-                class: "ml-auto underline underline-offset-4 text-sm",
+              <%= render LinkComponent.new(
+                href: password_reset_path,
+                variant: LinkComponent::Variant::Underline,
+                class_name: "ml-auto text-sm",
                 tabindex: 4
-              } %>
+              ) do %>
+                <%= t("meta.title.password_resets.new") %>
+              <% end %>
             </div>
 
             <%= f.password_field(:password, {
@@ -68,7 +79,10 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "underline underline-offset-4" do %>
+      <%= render LinkComponent.new(
+        href: root_path,
+        variant: LinkComponent::Variant::Underline
+      ) do %>
         <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
