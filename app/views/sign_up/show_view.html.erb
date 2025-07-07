@@ -6,35 +6,38 @@
       <% end %>
     </div>
 
-    <div class="text-center">
-      <h1 class="text-3xl font-bold antialiased">
+    <div class="mx-auto">
+      <h1 class="text-2xl font-bold antialiased text-center">
         <%= title %>
       </h1>
 
-      <p class="mt-4">
+      <p class="mt-4 text-center">
         <%= t("messages.sign_up.description_html") %>
       </p>
 
-      <p class="mt-4">
-        <%= t("messages.sign_up.already_have_an_account_html", sign_in_path:) %>
+      <p class="mt-4 flex justify-center gap-2">
+        <%= t("messages.sign_up.already_have_an_account") %>
+
+        <%= render LinkComponent.new(
+          href: sign_in_path,
+          variant: LinkComponent::Variant::Underline
+        ) do %>
+          <%= t("nouns.sign_in") %>
+        <% end %>
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
+    <%= render Basic::CardComponent.new do |card| %>
+      <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
-          class: "flex flex-col gap-4",
+          class: "form grid gap-6",
           model: form,
           url: email_confirmation_path
         ) do |f| %>
           <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :email, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.email_confirmation_form/creation.email") %>
-              </span>
-            </div>
+          <div class="grid gap-2">
+            <%= f.label :email %>
 
             <%= f.email_field(:email, {
               autocomplete: "username",
@@ -42,7 +45,7 @@
               class: "bg-base-300 input input-bordered w-full",
               required: true
             }) %>
-          <% end %>
+          </div>
 
           <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
             <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>

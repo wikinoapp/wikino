@@ -123,8 +123,7 @@ ja:
       sign_up_link_html: アカウント持ってない？ %{link}
       welcome_back: おかえりなさい！
     sign_up:
-      already_have_an_account_html: |-
-        アカウント持ってますか？ <a class="underline" href="%{sign_in_path}">ログイン</a>
+      already_have_an_account: アカウント持ってますか？
       description_html: |-
         お使いのメールアドレスをご入力ください<br>
         アカウント作成用のメールを送信します

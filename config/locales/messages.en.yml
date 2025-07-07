@@ -121,8 +121,7 @@ en:
       sign_up_link_html: Don't have an account? %{link}
       welcome_back: Welcome back!
     sign_up:
-      already_have_an_account_html: |-
-        Already have an account? <a class="underline" href="%{sign_in_path}">Sign in</a>.
+      already_have_an_account: Already have an account?
       description_html: |-
         Enter your email address.<br>
         We will send you an email to create an account.
