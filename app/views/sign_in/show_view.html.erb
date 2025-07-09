@@ -15,8 +15,8 @@
         <%= t("messages.sign_in.dont_have_an_account") %>
 
         <%= render BaseUI::LinkComponent.new(
-          href: sign_up_path,
-          variant: BaseUI::LinkComponent::Variant::Underline
+          variant: BaseUI::LinkComponent::Variant::Underline,
+          options: {href: sign_up_path}
         ) do %>
           <%= t("nouns.sign_up") %>
         <% end %>
@@ -48,10 +48,12 @@
               <%= f.label :password %>
 
               <%= render BaseUI::LinkComponent.new(
-                href: password_reset_path,
                 variant: BaseUI::LinkComponent::Variant::Underline,
-                class_name: "ml-auto text-sm",
-                tabindex: 4
+                options: {
+                  class: "ml-auto text-sm",
+                  href: password_reset_path,
+                  tabindex: "4"
+                }
               ) do %>
                 <%= t("meta.title.password_resets.new") %>
               <% end %>
@@ -79,8 +81,8 @@
 
     <div class="text-center">
       <%= render BaseUI::LinkComponent.new(
-        href: root_path,
-        variant: BaseUI::LinkComponent::Variant::Underline
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {href: root_path}
       ) do %>
         <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 

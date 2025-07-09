@@ -46,8 +46,8 @@
 
     <div class="text-center">
       <%= render BaseUI::LinkComponent.new(
-        href: root_path,
-        variant: BaseUI::LinkComponent::Variant::Underline
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {href: root_path}
       ) do %>
         <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 

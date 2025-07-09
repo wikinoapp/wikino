@@ -12,40 +12,35 @@ module BaseUI
 
     sig do
       params(
-        href: String,
         variant: Variant,
-        class_name: String,
-        tabindex: T.nilable(Integer)
+        options: T::Hash[Symbol, String]
       ).void
     end
-    def initialize(href:, variant: Variant::Plain, class_name: "", tabindex: nil)
-      @href = href
+    def initialize(variant: Variant::Plain, options: {})
       @variant = variant
-      @class_name = class_name
-      @tabindex = tabindex
+      @options = options
     end
-
-    sig { returns(String) }
-    attr_reader :href
-    private :href
 
     sig { returns(Variant) }
     attr_reader :variant
     private :variant
 
-    sig { returns(String) }
-    attr_reader :class_name
-    private :class_name
-
-    sig { returns(T.nilable(Integer)) }
-    attr_reader :tabindex
-    private :tabindex
+    sig { returns(T::Hash[Symbol, String]) }
+    attr_reader :options
+    private :options
 
     sig { returns(String) }
     private def build_class_name
       class_names(
-        class_name,
+        options[:class],
         "underline underline-offset-4": variant == Variant::Underline
+      )
+    end
+
+    sig { returns(T::Hash[Symbol, String]) }
+    private def build_options
+      options.merge(
+        class: build_class_name
       )
     end
   end

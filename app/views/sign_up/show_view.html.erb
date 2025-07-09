@@ -19,8 +19,8 @@
         <%= t("messages.sign_up.already_have_an_account") %>
 
         <%= render BaseUI::LinkComponent.new(
-          href: sign_in_path,
-          variant: BaseUI::LinkComponent::Variant::Underline
+          variant: BaseUI::LinkComponent::Variant::Underline,
+          options: {href: sign_in_path}
         ) do %>
           <%= t("nouns.sign_in") %>
         <% end %>
