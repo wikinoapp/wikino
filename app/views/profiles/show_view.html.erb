@@ -20,7 +20,7 @@
                 <%= link_to settings_profile_path, {
                   class: "btn btn-sm btn-primary rounded-full"
                 } do %>
-                  <%= render Basic::IconComponent.new(
+                  <%= render BaseUI::IconComponent.new(
                     name: "pencil-simple-line",
                     size: "18px",
                     class_name: "fill-primary-foreground"
@@ -32,7 +32,7 @@
                 <%= link_to settings_path, {
                   class: "btn btn-sm btn-outline rounded-full flex gap-2 items-center group"
                 } do %>
-                  <%= render Basic::IconComponent.new(
+                  <%= render BaseUI::IconComponent.new(
                     name: "gear-regular",
                     size: "18px",
                     class_name: "fill-primary group-hover:fill-primary-foreground"

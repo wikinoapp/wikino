@@ -10,7 +10,7 @@
       <%= link_to new_page_path(space.identifier, topic.number), {
         class: "btn btn-sm btn-primary rounded-full"
       } do %>
-        <%= render Basic::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
+        <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
 
         <%= t("nouns.new_page") %>
       <% end %>

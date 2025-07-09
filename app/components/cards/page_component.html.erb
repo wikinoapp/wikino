@@ -1,4 +1,4 @@
-<%= render Basic::CardComponent.new(
+<%= render BaseUI::CardComponent.new(
   class_name: class_names(
     class_name,
     "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px] hover:ring-1 hover:ring-primary transition",
@@ -8,7 +8,7 @@
   <%= card.with_body(class_name: "p-0") do %>
     <%= link_to page_path(space.identifier, page.number), class: "h-full px-4 py-2 w-full" do %>
       <% if page.pinned? %>
-        <%= render Basic::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-amber-800") %>
+        <%= render BaseUI::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-amber-800") %>
       <% end %>
 
       <div class="flex flex-col gap-1">

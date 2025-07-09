@@ -34,7 +34,7 @@
 
           <% if pagination.has_previous? || pagination.has_next? %>
             <div class="flex justify-center">
-              <%= render Basic::PaginationComponent.new(
+              <%= render BaseUI::PaginationComponent.new(
                 pagination:,
                 previous_path: topic_path(before: pagination.previous_cursor),
                 next_path: topic_path(after: pagination.next_cursor)
@@ -54,7 +54,7 @@
           <%= link_to new_page_path(space.identifier, topic.number), {
             class: "btn btn-primary btn-sm rounded-full"
           } do %>
-            <%= render Basic::IconComponent.new(
+            <%= render BaseUI::IconComponent.new(
               name: "pencil-simple-line",
               size: "18px",
               class_name: "fill-primary-foreground"

@@ -1,9 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
+module BaseUI
   module Dropdown
-    class MenuItemComponent < ApplicationComponent
+    class MenuComponent < ApplicationComponent
+      renders_many :items, BaseUI::Dropdown::MenuItemComponent
+
       sig { params(class_name: String).void }
       def initialize(class_name: "")
         @class_name = class_name

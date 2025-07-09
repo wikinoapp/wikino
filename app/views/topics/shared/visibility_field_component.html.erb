@@ -13,7 +13,7 @@
         } %>
 
         <span class="label-text flex items-center gap-1">
-          <%= render Basic::IconComponent.new(name: "globe", size: "16px") %>
+          <%= render BaseUI::IconComponent.new(name: "globe", size: "16px") %>
           <%= t("activerecord.attributes.topic.visibility.public") %>
         </span>
       </label>
@@ -30,7 +30,7 @@
         } %>
 
         <span class="label-text flex items-center gap-1">
-          <%= render Basic::IconComponent.new(name: "lock", size: "16px") %>
+          <%= render BaseUI::IconComponent.new(name: "lock", size: "16px") %>
           <%= t("activerecord.attributes.topic.visibility.private") %>
         </span>
       </label>

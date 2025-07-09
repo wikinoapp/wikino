@@ -1,10 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
+module BaseUI
   class CardComponent < ApplicationComponent
     renders_one :body, ->(class_name: "") do
-      Basic::Card::BodyComponent.new(class_name:)
+      BaseUI::Card::BodyComponent.new(class_name:)
     end
 
     sig { params(class_name: String).void }

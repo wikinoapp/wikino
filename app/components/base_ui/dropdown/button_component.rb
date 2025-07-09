@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
-  module Card
-    class BodyComponent < ApplicationComponent
+module BaseUI
+  module Dropdown
+    class ButtonComponent < ApplicationComponent
       sig { params(class_name: String).void }
       def initialize(class_name: "")
         @class_name = class_name

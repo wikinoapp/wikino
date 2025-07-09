@@ -21,11 +21,11 @@
         <% end %>
       <% end %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <% if export_status.processing? %>
             <div class="flex flex-col place-items-center gap-2">
-              <%= render Basic::IconComponent.new(
+              <%= render BaseUI::IconComponent.new(
                 name: "package-regular",
                 size: "42px",
                 class_name: "fill-amber-600 animate-bounce"
@@ -38,7 +38,7 @@
           <% elsif export_status.succeeded? %>
             <div class="flex flex-col place-items-center gap-6">
               <div class="flex flex-col place-items-center gap-2">
-                <%= render Basic::IconComponent.new(
+                <%= render BaseUI::IconComponent.new(
                   name: "check-circle",
                   size: "42px",
                   class_name: "fill-success"
@@ -57,7 +57,7 @@
                 target: "_blank",
                 rel: "noopener noreferrer"
               } do %>
-                <%= render Basic::IconComponent.new(
+                <%= render BaseUI::IconComponent.new(
                   name: "download-simple-regular",
                   size: "18px",
                   class_name: "fill-primary-foreground"

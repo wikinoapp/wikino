@@ -17,7 +17,7 @@
           formaction: bulk_restored_page_list_path,
           type: :submit
         ) do %>
-          <%= render Basic::IconComponent.new(
+          <%= render BaseUI::IconComponent.new(
             name: "arrow-counter-clockwise",
             size: "18px",
             class_name: "fill-primary-foreground"
@@ -36,7 +36,7 @@
           formaction: "#",
           type: :submit
         ) do %>
-          <%= render Basic::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
+          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
 
           <%= t("verbs.delete") %>
         <% end %>

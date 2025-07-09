@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
+module BaseUI
   class IconComponent < ApplicationComponent
     sig { params(name: String, size: String, class_name: String).void }
     def initialize(name:, size: "16px", class_name: "")

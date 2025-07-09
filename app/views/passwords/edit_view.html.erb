@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
-        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+        <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
 
@@ -16,7 +16,7 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+    <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
       <%= card.with_body(class_name: "p-4") do %>
         <%= form_with(
           class: "flex flex-col gap-4",
@@ -42,7 +42,7 @@
           <% end %>
 
           <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
-            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
+            <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
             <%= t("verbs.submit") %>
           <% end %>
@@ -52,7 +52,7 @@
 
     <div class="text-center">
       <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
-        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
+        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

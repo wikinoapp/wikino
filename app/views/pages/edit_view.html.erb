@@ -20,7 +20,7 @@
         </div>
       <% end %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
+      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300") do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= form_with(
             class: "flex flex-col gap-4",
@@ -97,7 +97,7 @@
             <div class="flex items-center justify-between gap-2">
               <div class="flex gap-2">
                 <%= f.button class: "btn btn-primary rounded-full", type: :submit do %>
-                  <%= render Basic::IconComponent.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-foreground") %>
+                  <%= render BaseUI::IconComponent.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-foreground") %>
 
                   <%= t("verbs.save") %>
                 <% end %>

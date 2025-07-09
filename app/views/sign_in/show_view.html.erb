@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
-        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+        <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
 
@@ -14,16 +14,16 @@
       <p class="mt-4 flex items-center gap-2">
         <%= t("messages.sign_in.dont_have_an_account") %>
 
-        <%= render LinkComponent.new(
+        <%= render BaseUI::LinkComponent.new(
           href: sign_up_path,
-          variant: LinkComponent::Variant::Underline
+          variant: BaseUI::LinkComponent::Variant::Underline
         ) do %>
           <%= t("nouns.sign_up") %>
         <% end %>
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new do |card| %>
+    <%= render BaseUI::CardComponent.new do |card| %>
       <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
           class: "form grid gap-6",
@@ -47,9 +47,9 @@
             <div class="flex items-center gap-2">
               <%= f.label :password %>
 
-              <%= render LinkComponent.new(
+              <%= render BaseUI::LinkComponent.new(
                 href: password_reset_path,
-                variant: LinkComponent::Variant::Underline,
+                variant: BaseUI::LinkComponent::Variant::Underline,
                 class_name: "ml-auto text-sm",
                 tabindex: 4
               ) do %>
@@ -69,7 +69,7 @@
             type: :submit,
             tabindex: 3
           ) do %>
-            <%= render Basic::IconComponent.new(name: "sign-in-regular", size: "18px", class_name: "fill-primary-foreground") %>
+            <%= render BaseUI::IconComponent.new(name: "sign-in-regular", size: "18px", class_name: "fill-primary-foreground") %>
 
             <%= t("verbs.sign_in") %>
           <% end %>
@@ -78,11 +78,11 @@
     <% end %>
 
     <div class="text-center">
-      <%= render LinkComponent.new(
+      <%= render BaseUI::LinkComponent.new(
         href: root_path,
-        variant: LinkComponent::Variant::Underline
+        variant: BaseUI::LinkComponent::Variant::Underline
       ) do %>
-        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
+        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

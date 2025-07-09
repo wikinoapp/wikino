@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
+module BaseUI
   class PaginationComponent < ApplicationComponent
     sig { params(pagination: Pagination, previous_path: String, next_path: String).void }
     def initialize(pagination:, previous_path:, next_path:)

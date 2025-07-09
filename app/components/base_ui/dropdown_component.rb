@@ -1,14 +1,14 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Basic
+module BaseUI
   class DropdownComponent < ApplicationComponent
     renders_one :button, ->(class_name: "") do
-      Basic::Dropdown::ButtonComponent.new(class_name:)
+      BaseUI::Dropdown::ButtonComponent.new(class_name:)
     end
 
     renders_one :menu, ->(class_name: "") do
-      Basic::Dropdown::MenuComponent.new(class_name:)
+      BaseUI::Dropdown::MenuComponent.new(class_name:)
     end
 
     sig { params(class_name: String).void }
