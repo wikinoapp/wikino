@@ -25,6 +25,7 @@ ja:
     optional: 任意
     page_title: ページタイトル
     prev_page: 前のページ
+    privacy_policy: プライバシーポリシー
     profile: プロフィール
     rss_feed: RSSフィード
     search: 検索
@@ -35,6 +36,7 @@ ja:
     sign_up: アカウント作成
     space_deletion: スペースの削除
     system_default: 自動
+    terms_of_service: 利用規約
     topic: トピック
     topic_deletion: トピックの削除
     topics: トピック

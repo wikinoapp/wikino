@@ -71,7 +71,28 @@
     <% end %>
 
     <p class="text-center text-sm">
-      <%= t("messages.accounts.terms_html") %>
+      <%= t("messages.accounts.terms_html",
+        terms_link: render(
+          BaseUI::LinkComponent.new(
+            variant: BaseUI::LinkComponent::Variant::Underline,
+            options: {
+              href: "/terms",
+              rel: "nofollow",
+              target: "_blank"
+            }
+          ).with_content(t("nouns.terms_of_service"))
+        ),
+        privacy_link: render(
+          BaseUI::LinkComponent.new(
+            variant: BaseUI::LinkComponent::Variant::Underline,
+            options: {
+              href: "/privacy",
+              rel: "nofollow",
+              target: "_blank"
+            }
+          ).with_content(t("nouns.privacy_policy"))
+        )
+      ) %>
     </p>
   </div>
 <% end %>

@@ -14,10 +14,7 @@ en:
         Please enter 8 or more characters.
       signed_in_successfully: Signed in successfully.
       signed_up_successfully_html: Account created successfully. Welcome!
-      terms_html: |-
-        Please create an account after agreeing to the
-        <a class="link" href="/terms" rel="nofollow" target="_blank">Terms of Service</a>
-        and <a class="link" href="/privacy" rel="nofollow" target="_blank">Privacy Policy</a>.
+      terms_html: Please create an account after agreeing to the %{terms_link} and %{privacy_link}.
     authentication:
       already_signed_in: Already signed in.
     draft_saved_time_html: 'Draft saved: <span class="font-bold">%{time}</span>'

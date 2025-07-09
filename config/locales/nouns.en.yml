@@ -25,6 +25,7 @@ en:
     optional: Optional
     page_title: Page title
     prev_page: Prev
+    privacy_policy: Privacy policy
     profile: Profile
     rss_feed: RSS feed
     search: Search
@@ -35,6 +36,7 @@ en:
     sign_up: Sign up
     space_deletion: Delete this space
     system_default: System default
+    terms_of_service: Terms of Service
     topic: Topic
     topic_deletion: Delete this topic
     topics: Topics

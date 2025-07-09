@@ -13,11 +13,7 @@ ja:
         8文字以上入力してください
       signed_in_successfully: ログインしました
       signed_up_successfully_html: "アカウントを作成しました。<br class='block sm:hidden'>Wikinoにようこそ！"
-      terms_html: |-
-        <a class="underline underline-offset-4" href="/terms" rel="nofollow" target="_blank">利用規約</a>
-        と
-        <a class="underline underline-offset-4" href="/privacy" rel="nofollow" target="_blank">プライバシーポリシー</a>
-        に同意のうえでアカウントを作成してください
+      terms_html: "%{terms_link} と %{privacy_link} に同意のうえでアカウントを作成してください"
     authentication:
       already_signed_in: すでにログインしています
     draft_saved_time_html: '下書き保存: <span class="font-bold">%{time}</span>'
