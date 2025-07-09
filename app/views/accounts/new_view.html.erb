@@ -31,7 +31,17 @@
             }) %>
 
             <p class="text-muted-foreground text-sm">
-              <%= t("messages.accounts.email_hint_html") %>
+              <%= t("messages.accounts.email_hint_html",
+                sign_up_link: render(
+                  BaseUI::LinkComponent.new(
+                    variant: BaseUI::LinkComponent::Variant::Underline,
+                    options: {
+                      href: sign_up_path,
+                      tabindex: "-1"
+                    }
+                  ).with_content(t("nouns.sign_up_page"))
+                )
+              ) %>
             </p>
           </div>
 
@@ -76,7 +86,7 @@
           BaseUI::LinkComponent.new(
             variant: BaseUI::LinkComponent::Variant::Underline,
             options: {
-              href: "/terms",
+              href: terms_path,
               rel: "nofollow",
               target: "_blank"
             }
@@ -86,7 +96,7 @@
           BaseUI::LinkComponent.new(
             variant: BaseUI::LinkComponent::Variant::Underline,
             options: {
-              href: "/privacy",
+              href: privacy_path,
               rel: "nofollow",
               target: "_blank"
             }

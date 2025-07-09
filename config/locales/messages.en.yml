@@ -8,8 +8,7 @@ en:
         This identifier is used in the URL of the profile.<br>
         Only alphanumeric characters and underscores can be used.<br>
         You can change it later.
-      email_hint_html: |-
-        If you want to change it, please create an account again from the <a class="link" href="/sign_up" tabindex="-1">Sign up</a> page.
+      email_hint_html: If you want to change it, please create an account again from the %{sign_up_link}.
       password_hint_html: |-
         Please enter 8 or more characters.
       signed_in_successfully: Signed in successfully.
