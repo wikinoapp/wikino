@@ -7,7 +7,7 @@
   id="flash-toast"
 >
   <div
-    class="alert bg-base-300 flex w-fit justify-between border-gray-300 p-2"
+    class="alert bg-base-300 flex w-fit justify-between border-gray-300 p-2 items-center gap-4"
     data-flash-toast-target="alert"
   >
     <div class="toast-body flex items-center">
@@ -16,14 +16,14 @@
           class="hidden"
           data-flash-toast-target="noticeIcon"
         >
-          <%= render BaseUI::IconComponent.new(name: "check-circle", size: "36px", class_name: "fill-success") %>
+          <%= render BaseUI::IconComponent.new(name: "check-circle", size: "36px", class_name: "fill-green-600") %>
         </span>
 
         <span
           class="hidden"
           data-flash-toast-target="alertIcon"
         >
-          <%= render BaseUI::IconComponent.new(name: "warning", size: "36px", class_name: "fill-error") %>
+          <%= render BaseUI::IconComponent.new(name: "warning", size: "36px", class_name: "fill-red-600") %>
         </span>
       </span>
 
@@ -35,6 +35,7 @@
 
     <button
       aria-label="Close"
+      class="leading-none hover:cursor-pointer"
       data-action="flash-toast#hideFlashToast"
       type="button"
     >

@@ -28,7 +28,7 @@
 
         <% if false %>
         <%= f.button(
-          class: "btn btn-primary btn-xs rounded-full text-error",
+          class: "btn btn-primary btn-xs rounded-full text-red-600",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
@@ -36,7 +36,7 @@
           formaction: "#",
           type: :submit
         ) do %>
-          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
+          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-red-600") %>
 
           <%= t("verbs.delete") %>
         <% end %>
