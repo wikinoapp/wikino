@@ -26,7 +26,7 @@
             model: form,
             url: sign_in_two_factor_recovery_path
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <%= f.label :recovery_code, class: "form-control" do %>
               <div class="label">

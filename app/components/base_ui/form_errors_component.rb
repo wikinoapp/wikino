@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Cards
+module BaseUI
   class FormErrorsComponent < ApplicationComponent
     sig { params(errors: ActiveModel::Errors, class_name: String).void }
     def initialize(errors:, class_name: "")

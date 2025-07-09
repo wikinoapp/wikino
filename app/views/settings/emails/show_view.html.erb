@@ -21,7 +21,7 @@
             url: settings_email_path,
             method: :patch
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <label class="form-control">
               <div class="label">

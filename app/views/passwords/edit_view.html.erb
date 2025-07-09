@@ -24,7 +24,7 @@
           url: password_path,
           method: :patch
         ) do |f| %>
-          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+          <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <%= f.label :password, class: "form-control" do %>
             <div class="label">

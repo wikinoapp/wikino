@@ -25,7 +25,7 @@
             url: space_settings_general_path(space.identifier),
             method: :patch
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <%= f.label :identifier, class: "form-control" do %>
               <div class="label">

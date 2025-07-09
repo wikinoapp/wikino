@@ -21,7 +21,7 @@
             url: topic_settings_general_path(space.identifier, topic.number),
             method: :patch
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <%= render Topics::Shared::NameFieldComponent.new(form_builder: f) %>
             <%= render Topics::Shared::DescriptionFieldComponent.new(form_builder: f) %>

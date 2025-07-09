@@ -21,7 +21,7 @@
             url: settings_profile_path,
             method: :patch
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <%= f.label :atname, class: "form-control" do %>
               <div class="label">

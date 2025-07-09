@@ -23,7 +23,7 @@
           model: form,
           url: password_reset_path
         ) do |f| %>
-          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+          <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <div class="grid gap-2">
             <%= f.label :email %>

@@ -70,7 +70,7 @@
               url: settings_two_factor_auth_path,
               method: :delete
             ) do |f| %>
-              <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
               <%= f.label :password, class: "form-control" do %>
                 <div class="label">
