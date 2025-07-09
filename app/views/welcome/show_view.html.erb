@@ -11,7 +11,13 @@
             <%= t("messages.welcome.announcement") %>
           </p>
 
-          <%= link_to "https://wikino.app/s/wikino/pages/44", class: "link inline-flex items-center gap-1" do %>
+          <%= render BaseUI::LinkComponent.new(
+            variant: BaseUI::LinkComponent::Variant::Underline,
+            options: {
+              class: "link inline-flex items-center gap-1",
+              href: "https://wikino.app/s/wikino/pages/44"
+            }
+          ) do %>
             <%= render BaseUI::IconComponent.new(
               name: "arrow-right-regular",
               size: "18px",
