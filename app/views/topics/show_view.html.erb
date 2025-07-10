@@ -43,7 +43,7 @@
           <% end %>
         </div>
       <% else %>
-        <%= render Cards::EmptyStateComponent.new(
+        <%= render BaseUI::EmptyStateComponent.new(
           icon_name: "file",
           message: t("messages.spaces.no_pages")
         ) do %>

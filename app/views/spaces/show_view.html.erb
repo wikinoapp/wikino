@@ -62,7 +62,7 @@
           <% end %>
         </div>
       <% elsif joined_space? && first_joined_topic.nil? %>
-        <%= render Cards::EmptyStateComponent.new(
+        <%= render BaseUI::EmptyStateComponent.new(
           icon_name: "file",
           message: t("messages.spaces.no_topics")
         ) do %>
@@ -85,7 +85,7 @@
           <% end %>
         <% end %>
       <% else %>
-        <%= render Cards::EmptyStateComponent.new(
+        <%= render BaseUI::EmptyStateComponent.new(
           icon_name: "file",
           message: t("messages.spaces.no_pages")
         ) do %>

@@ -9,7 +9,7 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.general")) %>
 

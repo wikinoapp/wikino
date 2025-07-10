@@ -43,25 +43,29 @@
             <% end %>
           </div>
         <% else %>
-          <%= render Cards::EmptyStateComponent.new(
+          <%= render BaseUI::EmptyStateComponent.new(
             icon_name: "file",
             message: t("messages.home.no_joined_spaces_html")
           ) do %>
-            <div>
-              <%= t("messages.home.new_space_description_html") %>
+            <div class="flex flex-col gap-4">
+              <div>
+                <%= t("messages.home.new_space_description_html") %>
+              </div>
+
+              <div>
+                <%= link_to new_space_path, {
+                    class: "btn btn-primary btn-sm rounded-full"
+                } do %>
+                    <%= render BaseUI::IconComponent.new(
+                    name: "plus",
+                    size: "18px",
+                    class_name: "fill-primary-foreground"
+                    ) %>
+
+                    <%= t("nouns.new_space") %>
+                <% end %>
+              </div>
             </div>
-
-            <%= link_to new_space_path, {
-              class: "btn btn-primary btn-sm rounded-full"
-            } do %>
-              <%= render BaseUI::IconComponent.new(
-                name: "plus",
-                size: "18px",
-                class_name: "fill-primary-foreground"
-              ) %>
-
-              <%= t("nouns.new_space") %>
-            <% end %>
           <% end %>
         <% end %>
       </div>

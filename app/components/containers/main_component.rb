@@ -3,13 +3,13 @@
 
 module Containers
   class MainComponent < ApplicationComponent
-    sig { params(content_screen: ContainerComponent::ContentScreen, class_name: String).void }
-    def initialize(content_screen: ContainerComponent::ContentScreen::Medium, class_name: "")
+    sig { params(content_screen: BaseUI::ContainerComponent::ContentScreen, class_name: String).void }
+    def initialize(content_screen: BaseUI::ContainerComponent::ContentScreen::Medium, class_name: "")
       @content_screen = content_screen
       @class_name = class_name
     end
 
-    sig { returns(ContainerComponent::ContentScreen) }
+    sig { returns(BaseUI::ContainerComponent::ContentScreen) }
     attr_reader :content_screen
     private :content_screen
 
