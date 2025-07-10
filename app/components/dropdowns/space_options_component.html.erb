@@ -1,5 +1,5 @@
 <%= render BaseUI::DropdownComponent.new(
-  options: {id: "space-options-dropdown"}
+  id: "space-options-dropdown"
 ) do |dropdown| %>
   <%= dropdown.with_button(options: {class: "btn btn-sm btn-circle btn-outline group"}) do %>
     <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-foreground") %>

@@ -33,7 +33,7 @@ module BaseUI
         options.merge(
           class: build_class_name,
           role: "menu",
-          aria_labelledby: button_id
+          "aria-labelledby": button_id
         )
       end
     end

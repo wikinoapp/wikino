@@ -1,4 +1,5 @@
 import "@hotwired/turbo";
+import "basecoat-css/dropdown-menu.min";
 
 import { Application } from "@hotwired/stimulus";
 
