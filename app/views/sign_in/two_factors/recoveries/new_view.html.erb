@@ -12,7 +12,7 @@
       </h1>
     </div>
 
-    <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+    <%= render BaseUI::CardComponent.new do |card| %>
       <%= card.with_body(class_name: "p-4") do %>
         <div class="flex flex-col gap-4">
           <p>
@@ -51,7 +51,7 @@
             <% end %>
 
             <%= f.button(
-              class: "btn btn-primary rounded-full w-fit",
+              class: "btn rounded-full w-fit",
               type: :submit,
               tabindex: 3
             ) do %>

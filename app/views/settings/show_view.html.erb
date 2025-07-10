@@ -9,7 +9,7 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= link_to(t("meta.title.settings.profiles.show"), settings_profile_path, class: "link") %>
           <%= link_to(t("nouns.change_email"), settings_email_path, class: "link") %>

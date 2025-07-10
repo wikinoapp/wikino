@@ -21,7 +21,7 @@
         <% end %>
       <% end %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <% if export_status.processing? %>
             <div class="flex flex-col place-items-center gap-2">
@@ -53,7 +53,7 @@
                 space.identifier,
                 export.database_id
               ), {
-                class: "btn btn-primary rounded-full w-fit",
+                class: "btn rounded-full w-fit",
                 target: "_blank",
                 rel: "noopener noreferrer"
               } do %>

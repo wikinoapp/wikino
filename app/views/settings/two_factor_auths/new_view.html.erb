@@ -22,9 +22,7 @@
         help_url: "https://wikino.app/s/wikino/pages/55"
       ) %>
 
-      <%= render BaseUI::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <div class="flex flex-col gap-6">
             <div>
@@ -96,7 +94,7 @@
                 <% end %>
 
                 <div class="flex gap-2">
-                  <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
+                  <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
                     <%= t("verbs.enable_two_factor_auth") %>
                   <% end %>
 

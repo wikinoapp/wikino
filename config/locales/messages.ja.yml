@@ -84,12 +84,9 @@ ja:
         この識別子はスペースのURLに使用されます。あとから変更もできます<br>
         %{max_length}文字以内で半角英数字とハイフンのみ使用できます
       new_hint_html: |-
-        スペースについては
-        <a class="underline" href="https://wikino.app/s/wikino/pages/16" target="_blank">こちら</a>
-        をご覧下さい<br>
+        スペースについては %{space_help_link} をご覧下さい<br>
         どんなスペースを作ると良いかわからないときは
-        <a class="underline" href="https://wikino.app/s/wikino/pages/50" target="_blank">ベストプラクティス</a>
-        が参考になるかもしれません
+        %{space_best_practice_help_link} が参考になるかもしれません
       new_space: 新しいスペース
       no_pages: ページはありません
       no_topics: トピックはありません

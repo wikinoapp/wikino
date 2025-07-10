@@ -19,9 +19,7 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render BaseUI::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <div class="flex flex-col gap-4">
             <p>
@@ -83,7 +81,7 @@
 
               <div class="flex gap-2">
                 <%= f.button(
-                  class: "btn btn-primary rounded-full w-fit",
+                  class: "btn rounded-full w-fit",
                   data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") },
                   type: :submit
                 ) do %>

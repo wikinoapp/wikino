@@ -83,12 +83,8 @@ en:
         It must be at most %{max_length} characters long and can only contain alphanumeric characters and hyphens.
         You can change it later.
       new_hint_html: |-
-        For more information about spaces, please see
-        <a class="underline" href="https://wikino.app/s/wikino/pages/16" target="_blank">this page</a>.
-        <br>
-        If you are unsure what kind of space to create,
-        <a class="underline" href="https://wikino.app/s/wikino/pages/50" target="_blank">Best Practices</a>
-        may be helpful.
+        For more information about spaces, please see %{space_help_link}.<br>
+        If you are unsure what kind of space to create, %{space_best_practice_help_link} may be helpful.
       new_space: New Space
       no_pages: No pages.
       no_topics: No topics.

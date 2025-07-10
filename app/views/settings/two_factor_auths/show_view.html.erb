@@ -22,9 +22,7 @@
         help_url: "https://wikino.app/s/wikino/pages/55"
       ) %>
 
-      <%= render BaseUI::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <% if user_two_factor_auth&.enabled %>
             <div class="flex flex-col gap-4">
@@ -53,7 +51,7 @@
                 <%= link_to(
                   t("verbs.view_recovery_codes"),
                   settings_two_factor_auth_recovery_codes_path,
-                  class: "btn btn-primary rounded-full"
+                  class: "btn rounded-full"
                 ) %>
               </div>
             </div>
@@ -88,7 +86,7 @@
 
               <div>
                 <%= f.button(
-                  class: "btn btn-primary rounded-full",
+                  class: "btn rounded-full",
                   type: :submit,
                   data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") }
                 ) do %>
@@ -105,7 +103,7 @@
               <%= link_to(
                 t("verbs.enable_two_factor_auth"),
                 settings_new_two_factor_auth_path,
-                class: "btn btn-primary rounded-full"
+                class: "btn rounded-full"
               ) %>
 
               <%= link_to t("nouns.cancel"), settings_path, {

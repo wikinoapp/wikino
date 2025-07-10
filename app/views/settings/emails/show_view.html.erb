@@ -13,7 +13,7 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= form_with(
             class: "flex flex-col gap-4",
@@ -50,7 +50,7 @@
             <% end %>
 
             <div class="flex gap-2">
-              <%= f.button class: "btn btn-primary rounded-full w-fit", type: :submit do %>
+              <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
                 <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                 <%= t("verbs.submit") %>

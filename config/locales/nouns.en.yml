@@ -3,6 +3,7 @@ en:
     account_deletion: Delete account
     actions: Actions
     backlinks: Backlinks
+    best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
     current_email: Current email
@@ -11,6 +12,7 @@ en:
     error: Error
     export: Export
     general: General
+    here: Here
     home: Home
     inbox: Inbox
     info: Info

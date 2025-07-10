@@ -13,7 +13,7 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
+      <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "p-4") do %>
           <%= link_to(
             t("nouns.general"),
