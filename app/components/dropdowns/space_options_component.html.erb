@@ -1,14 +1,14 @@
 <%= render BaseUI::DropdownComponent.new(
   id: "space-options-dropdown"
 ) do |dropdown| %>
-  <%= dropdown.with_button(options: {class: "btn btn-sm btn-circle btn-outline group"}) do %>
-    <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-foreground") %>
+  <%= dropdown.with_button(options: {class: "btn-icon-outline rounded-full"}) do %>
+    <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "") %>
   <% end %>
 
   <%= dropdown.with_menu_popover(options: {class: "w-[200px]"}) do |dropdown_menu_popover| %>
     <%= dropdown_menu_popover.with_menu do |dropdown_menu| %>
       <%= dropdown_menu.with_item do %>
-        <%= link_to atom_path(space.identifier), class: "flex gap-2 items-center", target: "_blank" do %>
+        <%= link_to atom_path(space.identifier), class: "flex gap-2 items-center w-full", target: "_blank" do %>
           <%= render BaseUI::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
 
           <%= t("nouns.rss_feed") %>
@@ -17,7 +17,7 @@
 
       <% if signed_in? %>
         <%= dropdown_menu.with_item do %>
-          <%= link_to new_topic_path(space.identifier), class: "flex gap-2 items-center" do %>
+          <%= link_to new_topic_path(space.identifier), class: "flex gap-2 items-center w-full" do %>
             <%= render BaseUI::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary") %>
 
             <%= t("nouns.new_topic") %>
@@ -25,7 +25,7 @@
         <% end %>
 
         <%= dropdown_menu.with_item do %>
-          <%= link_to trash_path(space.identifier), class: "flex gap-2 items-center" do %>
+          <%= link_to trash_path(space.identifier), class: "flex gap-2 items-center w-full" do %>
             <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-primary") %>
 
             <%= t("nouns.trash") %>
@@ -33,7 +33,7 @@
         <% end %>
 
         <%= dropdown_menu.with_item do %>
-          <%= link_to space_settings_path(space.identifier), class: "flex gap-2 items-center" do %>
+          <%= link_to space_settings_path(space.identifier), class: "flex gap-2 items-center w-full" do %>
             <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
             <%= t("nouns.settings") %>

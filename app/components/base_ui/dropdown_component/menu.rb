@@ -22,10 +22,7 @@ module BaseUI
 
       sig { returns(String) }
       private def build_class_name
-        class_names(
-          "bg-base-300 dropdown-content menu rounded-box shadow z-1",
-          options[:class]
-        )
+        class_names(options[:class])
       end
 
       sig { returns(T::Hash[Symbol, String]) }
