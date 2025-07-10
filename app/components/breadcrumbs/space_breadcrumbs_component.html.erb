@@ -1,11 +1,19 @@
-<div class="breadcrumbs py-1 text-sm">
-  <ul>
+<ol class="flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5">
+  <li class="inline-flex items-center gap-1.5">
+    <%= link_to space.name, space_path(space.identifier) %>
+  </li>
+
+  <% items.each do |item| %>
     <li>
-      <%= link_to space.name, space_path(space.identifier) %>
+      <%= render BaseUI::IconComponent.new(
+        name: "caret-right",
+        size: "14px",
+        class_name: "fill-gray-500"
+      ) %>
     </li>
 
-    <% items.each do |item| %>
+    <li class="inline-flex items-center gap-1.5">
       <%= item %>
-    <% end %>
-  </ul>
-</div>
+    </li>
+  <% end %>
+</ol>
