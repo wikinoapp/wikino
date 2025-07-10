@@ -1,7 +1,9 @@
-<%= render ContainerComponent.new(
-  as: ContainerComponent::As::Main,
+<%= render BaseUI::ContainerComponent.new(
+  as: BaseUI::ContainerComponent::As::Main,
   content_screen:,
-  class_name: class_names("flex flex-col gap-6 px-4", class_name)
+  options: {
+    class: class_names("flex flex-col gap-6 px-4", class_name)
+  }
 ) do %>
   <%= content %>
 <% end %>
