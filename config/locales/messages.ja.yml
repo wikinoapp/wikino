@@ -1,6 +1,7 @@
 ja:
   messages:
     _common:
+      learn_more: 詳しくはこちら
       no_backlinks: バックリンクはありません
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします
     accounts:
@@ -126,12 +127,9 @@ ja:
       created: トピックを作成しました
       deleted: トピックを削除しました
       new_hint_html: |-
-        トピックについては
-        <a class="underline" href="https://wikino.app/s/wikino/pages/11" target="_blank">こちら</a>
-        をご覧下さい<br>
+        トピックについては %{topic_help_link} をご覧下さい<br>
         どんなトピックを作ると良いかわからないときは
-        <a class="underline" href="https://wikino.app/s/wikino/pages/52" target="_blank">ベストプラクティス</a>
-        が参考になるかもしれません
+        %{topic_best_practice_help_link} が参考になるかもしれません
       settings:
         deletions:
           new:

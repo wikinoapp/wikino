@@ -1,6 +1,7 @@
 en:
   messages:
     _common:
+      learn_more: Learn more
       no_backlinks: No Backlinks
       unexpected_error: Sorry, something went wrong. Please try again.
     accounts:

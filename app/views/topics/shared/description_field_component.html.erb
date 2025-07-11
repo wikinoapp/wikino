@@ -1,9 +1,5 @@
-<label class="form-control">
-  <div class="label">
-    <span class="label-text">
-      <%= t("forms.attributes.topic_form/creation.description") %>
-    </span>
-  </div>
+<div class="grid gap-2">
+  <%= form_builder.label :description %>
 
-  <%= form_builder.text_field(:description, class: "bg-base-300 input input-bordered w-full") %>
-</label>
+  <%= form_builder.text_field(:description) %>
+</div>

@@ -13,14 +13,33 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.new_topic")) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.topics.new_hint_html") %>
+          <%= t("messages.topics.new_hint_html",
+            topic_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/11",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.here"))
+            ),
+            topic_best_practice_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/52",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.best_practices"))
+            )
+          ) %>
         <% end %>
       <% end %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: topic_list_path(space.identifier)
           ) do |f| %>
@@ -38,7 +57,7 @@
               <% end %>
 
               <%= link_to t("nouns.cancel"), space_path(space.identifier), {
-                class: "btn btn-ghost rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>
