@@ -1,8 +1,6 @@
-<%= render BaseUI::DropdownComponent.new(
-  id: "space-options-dropdown"
-) do |dropdown| %>
+<%= render BaseUI::DropdownComponent.new(id: "space-options-dropdown") do |dropdown| %>
   <%= dropdown.with_button(options: {class: "btn-sm-icon-ghost border border-primary rounded-full hover:bg-primary group"}) do %>
-    <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-white") %>
+    <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-foreground") %>
   <% end %>
 
   <%= dropdown.with_menu_popover(options: {class: "w-[200px]"}) do |dropdown_menu_popover| %>

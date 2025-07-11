@@ -1,15 +1,17 @@
-<%= render BaseUI::DropdownComponent.new(class_name: "dropdown-bottom dropdown-end") do |dropdown| %>
-  <%= dropdown.with_button(class_name: "btn btn-sm btn-circle btn-outline group") do %>
+<%= render BaseUI::DropdownComponent.new(id: "topic-options-dropdown") do |dropdown| %>
+  <%= dropdown.with_button(options: {class: "btn-sm-icon-ghost border border-primary rounded-full hover:bg-primary group"}) do %>
     <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-foreground") %>
   <% end %>
 
-  <%= dropdown.with_menu(class_name: "w-[200px]") do |dropdown_menu| %>
-    <% if topic.can_update? %>
-      <%= dropdown_menu.with_item do %>
-        <%= link_to topic_settings_path(space.identifier, topic.number), class: "flex gap-2 items-center" do %>
-          <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
+  <%= dropdown.with_menu_popover(options: {class: "w-[200px]"}) do |dropdown_menu_popover| %>
+    <%= dropdown_menu_popover.with_menu do |dropdown_menu| %>
+      <% if topic.can_update? %>
+        <%= dropdown_menu.with_item do %>
+          <%= link_to topic_settings_path(space.identifier, topic.number), class: "flex gap-2 items-center" do %>
+            <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
-          <%= t("nouns.settings") %>
+            <%= t("nouns.settings") %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>
