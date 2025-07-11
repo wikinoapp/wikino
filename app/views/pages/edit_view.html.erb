@@ -15,15 +15,19 @@
       <%= render Headers::MainTitleComponent.new(title:) %>
 
       <% if draft_page.present? %>
-        <div class="alert alert-warning" role="alert">
-          <%= t("messages.pages.current_page_is_draft") %>
+        <div class="alert">
+          <%= render BaseUI::IconComponent.new(name: "warning-circle-regular", size: "18px", class_name: "fill-amber-600") %>
+
+          <h2>
+            <%= t("messages.pages.current_page_is_draft") %>
+          </h2>
         </div>
       <% end %>
 
-      <%= render BaseUI::CardComponent.new(class_name: "bg-base-300") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             data: { controller: "markdown-editor-form" },
             model: form,
             method: :patch,
@@ -31,50 +35,31 @@
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <div>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.page_form/edit.topic_number") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= f.label :topic_number %>
 
-              <div class="flex flex-col gap-4">
-                <div>
-                  <label class="flex cursor-pointer items-center gap-2">
-                    <%= f.select(
-                      :topic_number,
-                      options_from_collection_for_select(f.object.selectable_topics, :number, :name, f.object.topic_number),
-                      {},
-                      {
-                        class: "bg-base-300 select select-bordered",
-                        data: {action: "markdown-editor-form#saveAsDraft"}
-                      }
-                    ) %>
-                  </label>
-                </div>
-              </div>
+              <%= f.select(
+                :topic_number,
+                options_from_collection_for_select(f.object.selectable_topics, :number, :name, f.object.topic_number),
+                {},
+                {
+                  class: "bg-base-300 select select-bordered",
+                  data: {action: "markdown-editor-form#saveAsDraft"}
+                }
+              ) %>
             </div>
 
-            <%= f.label :title, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.page_form/edit.title") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= f.label :title %>
 
               <%= f.text_field(:title, {
                 autofocus: f.object.autofocus_title?,
-                class: "bg-base-300 input input-bordered w-full",
                 data: {action: "markdown-editor-form#saveAsDraft"}
               }) %>
-            <% end %>
+            </div>
 
-            <%= f.label :body, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.page_form/edit.body") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= f.label :body %>
 
               <div
                 data-controller="markdown-editor"
@@ -92,18 +77,18 @@
                   }
                 }) %>
               </div>
-            <% end %>
+            </div>
 
             <div class="flex items-center justify-between gap-2">
               <div class="flex gap-2">
-                <%= f.button class: "btn rounded-full", type: :submit do %>
+                <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
                   <%= render BaseUI::IconComponent.new(name: "floppy-disk", size: "18px", class_name: "fill-primary-foreground") %>
 
                   <%= t("verbs.save") %>
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), page_path(space.identifier, page.number), {
-                  class: "btn btn-ghost rounded-full w-fit"
+                  class: "btn-ghost rounded-full w-fit"
                 } %>
 
                 <input

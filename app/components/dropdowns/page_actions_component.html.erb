@@ -1,4 +1,4 @@
-<%= render BaseUI::DropdownComponent.new(class_name: "dropdown-bottom dropdown-end") do |dropdown| %>
+<%= render BaseUI::DropdownComponent.new(id: "page-actions-dropdown") do |dropdown| %>
   <%= dropdown.with_button(class_name: "btn btn-sm btn-circle btn-outline group") do %>
     <%= render BaseUI::IconComponent.new(name: "dots-three", size: "1.5rem", class_name: "fill-primary group-hover:fill-primary-foreground") %>
   <% end %>

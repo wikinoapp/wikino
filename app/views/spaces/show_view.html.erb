@@ -37,7 +37,7 @@
             <% if pinned_pages.present? %>
               <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <% pinned_pages.each do |page| %>
-                  <%= render Cards::PageComponent.new(page:) %>
+                  <%= render CardLinks::PageComponent.new(page:) %>
                 <% end %>
               </div>
             <% end %>
@@ -45,7 +45,7 @@
             <% if pages.present? %>
               <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <% pages.each do |page| %>
-                  <%= render Cards::PageComponent.new(page:) %>
+                  <%= render CardLinks::PageComponent.new(page:) %>
                 <% end %>
               </div>
             <% end %>

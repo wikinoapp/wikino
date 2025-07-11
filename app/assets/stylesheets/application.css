@@ -146,17 +146,17 @@
   ============================================================================
 */
 .cm-editor {
-  @apply px-2 text-base;
+  @apply border-input rounded-md border bg-transparent px-2 text-base shadow-xs;
 }
 
 .cm-editor.cm-focused {
-  @apply outline-2! outline-offset-2! outline-gray-300! outline-solid!;
+  @apply border-ring ring-ring/50 ring-[3px] outline-2! outline-gray-300! transition-[color,box-shadow] outline-solid!;
 }
 
 .cm-editor .cm-gutters {
-  @apply bg-gray-100;
+  @apply bg-card;
 }
 
 .cm-editor .cm-lineNumbers {
-  @apply bg-gray-100;
+  @apply bg-card;
 }
