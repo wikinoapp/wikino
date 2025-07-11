@@ -14,18 +14,22 @@
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <%= link_to(
-            t("nouns.general"),
-            topic_settings_general_path(space.identifier, topic.number),
-            class: "link"
-          ) %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-3">
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: topic_settings_general_path(space.identifier, topic.number)}
+            ) do %>
+              <%= t("nouns.general") %>
+            <% end %>
 
-          <%= link_to(
-            t("nouns.topic_deletion"),
-            topic_settings_new_deletion_path(space.identifier, topic.number),
-            class: "link"
-          ) %>
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: topic_settings_new_deletion_path(space.identifier, topic.number)}
+            ) do %>
+              <%= t("nouns.topic_deletion") %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     <% end %>
