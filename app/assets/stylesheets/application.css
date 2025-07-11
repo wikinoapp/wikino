@@ -160,3 +160,7 @@
 .cm-editor .cm-lineNumbers {
   @apply bg-card;
 }
+
+.cm-editor .cm-content {
+  @apply py-2;
+}
