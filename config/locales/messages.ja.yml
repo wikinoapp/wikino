@@ -22,9 +22,7 @@ ja:
       email_updated: メールアドレスを変更しました
       enter_code: メールに記載されている確認用コードを入力してください
     exports:
-      description_html: |-
-        スペース内に投稿されたページをエクスポートします。
-        <a class="underline" href="https://wikino.app/s/wikino/pages/35" target="_blank">詳しくはこちら</a>
+      description_html: スペース内に投稿されたページをエクスポートします。%{export_help_link}
       start: エクスポートを開始する
       started: エクスポートを開始しました
       started_html: |-

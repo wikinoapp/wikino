@@ -17,12 +17,22 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.export")) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.exports.description_html") %>
+          <%= t("messages.exports.description_html",
+            export_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/35",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
         <% end %>
       <% end %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <%= card.with_body(class_name: "px-4") do %>
           <div class="flex gap-2">
             <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
               method: :post,
@@ -30,7 +40,7 @@
             } %>
 
             <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
-              class: "btn btn-ghost rounded-full w-fit"
+              class: "btn-ghost rounded-full w-fit"
             } %>
           </div>
         <% end %>

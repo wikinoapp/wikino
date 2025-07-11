@@ -23,9 +23,7 @@ en:
       email_updated: Email address updated.
       enter_code: Enter the confirmation code in the email.
     exports:
-      description_html: |-
-        Export pages posted in the space.
-        <a class="underline" href="https://wikino.app/s/wikino/pages/35" target="_blank">Learn more</a>
+      description_html: Export pages posted in the space. %{export_help_link}
       start: Start export
       started: Export has started.
       started_html: |-
