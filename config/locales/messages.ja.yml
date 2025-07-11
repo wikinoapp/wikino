@@ -34,7 +34,7 @@ ja:
       new_space_description_html: |-
         ページはスペース内のトピックに作成することができます<br>
         まずはスペースを作成しましょう
-      no_joined_spaces_html: 参加しているスペースは<br class="block sm:hidden">ありません
+      no_joined_spaces_html: 参加中のスペースは<br class="block sm:hidden">ありません
     pages:
       are_you_sure_trash: ページをゴミ箱に入れますか？
       current_page_is_draft: 現在下書きを表示しています

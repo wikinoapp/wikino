@@ -1,0 +1,11 @@
+<%= link_to space_path(space.identifier) do %>
+  <%= render BaseUI::CardComponent.new(
+    class_name: build_card_class
+  ) do |card| %>
+    <%= card.with_body do %>
+      <div class="line-clamp-3 text-sm font-bold">
+        <%= space.name %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>
