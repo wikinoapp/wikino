@@ -14,10 +14,29 @@
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <%= link_to t("nouns.general"), space_settings_general_path(space.identifier), class: "link" %>
-          <%= link_to t("nouns.export"), space_settings_new_exports_path(space.identifier), class: "link" %>
-          <%= link_to t("nouns.space_deletion"), space_settings_new_deletion_path(space.identifier), class: "link" %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-3">
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: space_settings_general_path(space.identifier)}
+            ) do %>
+              <%= t("nouns.general") %>
+            <% end %>
+
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: space_settings_new_exports_path(space.identifier)}
+            ) do %>
+              <%= t("nouns.export") %>
+            <% end %>
+
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: space_settings_new_deletion_path(space.identifier)}
+            ) do %>
+              <%= t("nouns.space_deletion") %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

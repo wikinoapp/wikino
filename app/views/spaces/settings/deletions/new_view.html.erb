@@ -18,8 +18,8 @@
       <%= render Headers::MainTitleComponent.new(title: t("nouns.space_deletion")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <div class="flex flex-col gap-4">
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="form grid gap-6">
             <div class="flex flex-col gap-4">
               <p>
                 <%= t("messages.spaces.settings.deletions.new.description_html") %>

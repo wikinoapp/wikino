@@ -14,9 +14,9 @@
       <%= render Headers::MainTitleComponent.new(title: t("nouns.general")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: topic_settings_general_path(space.identifier, topic.number),
             method: :patch

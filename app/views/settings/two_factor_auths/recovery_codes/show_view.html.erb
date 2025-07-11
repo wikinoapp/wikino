@@ -20,8 +20,8 @@
       <%= render Headers::MainTitleComponent.new(title:) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <div class="flex flex-col gap-4">
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="form grid gap-6">
             <p>
               <%= t("messages.two_factor_auth.recovery_codes_description_html") %>
             </p>
