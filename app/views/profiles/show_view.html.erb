@@ -30,7 +30,7 @@
                 <% end %>
 
                 <%= link_to settings_path, {
-                  class: "btn btn-sm btn-outline rounded-full flex gap-2 items-center group"
+                  class: "btn-sm-ghost border border-primary rounded-full hover:bg-primary hover:text-primary-foreground group flex gap-2 items-center"
                 } do %>
                   <%= render BaseUI::IconComponent.new(
                     name: "gear-regular",
@@ -57,13 +57,18 @@
           <%= t("nouns.joined_spaces") %>
         </h2>
 
-        <ul class="list-inside list-disc">
-          <% joined_spaces.each do |joined_space| %>
-            <li>
-              <%= link_to joined_space.name, space_path(joined_space.identifier), class: "link" %>
-            </li>
-          <% end %>
-        </ul>
+        <% if joined_spaces.present? %>
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <% joined_spaces.each do |space| %>
+              <%= render CardLinks::SpaceComponent.new(space:) %>
+            <% end %>
+          </div>
+        <% else %>
+          <%= render BaseUI::EmptyStateComponent.new(
+            icon_name: "file",
+            message: t("messages.home.no_joined_spaces_html")
+          ) %>
+        <% end %>
       </div>
     <% end %>
   <% end %>
