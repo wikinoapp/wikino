@@ -98,13 +98,13 @@ ja:
           new:
             description_html: |-
               スペースを削除しますか？<br>
-              削除する前に以下の内容をご確認ください
+              削除する前に以下の内容をご確認ください。
             warning_1: スペースを削除すると、そのスペースに含まれるトピックやページもすべて削除されます
             warning_2: 削除されたスペースやそのスペースに含まれるトピックやページの復元はできません
             form_description_html: |-
               スペースを削除する場合は、スペース名
               (<span class="font-bold">%{space_name}</span>)
-              を入力してください
+              を入力してください。
       updated: スペースを更新しました
     sign_in:
       dont_have_an_account: アカウント持ってない？
