@@ -7,7 +7,7 @@
     <%= dropdown_menu_popover.with_menu do |dropdown_menu| %>
       <% if topic.can_update? %>
         <%= dropdown_menu.with_item do %>
-          <%= link_to topic_settings_path(space.identifier, topic.number), class: "flex gap-2 items-center" do %>
+          <%= link_to topic_settings_path(space.identifier, topic.number), class: "flex gap-2 items-center w-full" do %>
             <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "18px", class_name: "fill-primary") %>
 
             <%= t("nouns.settings") %>

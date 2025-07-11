@@ -51,17 +51,19 @@
             <%= t("messages.spaces.new_page_description") %>
           </div>
 
-          <%= link_to new_page_path(space.identifier, topic.number), {
-            class: "btn btn-sm rounded-full"
-          } do %>
-            <%= render BaseUI::IconComponent.new(
-              name: "pencil-simple-line",
-              size: "18px",
-              class_name: "fill-primary-foreground"
-            ) %>
+          <div>
+            <%= link_to new_page_path(space.identifier, topic.number), {
+              class: "btn btn-sm rounded-full"
+            } do %>
+              <%= render BaseUI::IconComponent.new(
+                name: "pencil-simple-line",
+                size: "18px",
+                class_name: "fill-primary-foreground"
+              ) %>
 
-            <%= t("nouns.new_page") %>
-          <% end %>
+              <%= t("nouns.new_page") %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

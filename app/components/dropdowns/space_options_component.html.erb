@@ -7,7 +7,7 @@
     <%= dropdown_menu_popover.with_menu do |dropdown_menu| %>
       <%= dropdown_menu.with_item do %>
         <%= link_to atom_path(space.identifier), class: "flex gap-2 items-center w-full", target: "_blank" do %>
-          <%= render BaseUI::IconComponent.new(name: "rss", size: "16px", class_name: "fill-primary") %>
+          <%= render BaseUI::IconComponent.new(name: "rss", size: "18px", class_name: "fill-primary") %>
 
           <%= t("nouns.rss_feed") %>
         <% end %>
