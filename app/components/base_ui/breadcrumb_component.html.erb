@@ -1,0 +1,17 @@
+<ol class="flex flex-wrap items-center gap-1.5 text-sm break-words">
+  <% items.each_with_index do |item, index| %>
+    <% if index > 0 %>
+      <li class="leading-none">
+        <%= render BaseUI::IconComponent.new(
+          name: "caret-right",
+          size: "14px",
+          class_name: "fill-gray-500"
+        ) %>
+      </li>
+    <% end %>
+
+    <li class="inline-flex items-center gap-1.5">
+      <%= item %>
+    </li>
+  <% end %>
+</ol>

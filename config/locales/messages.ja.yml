@@ -158,16 +158,14 @@ ja:
       recovery_code_hint: リカバリーコードは8文字の英数字です
       recovery_code_usage: 認証アプリにアクセスできない場合は、事前に保存したリカバリーコードを使用してログインできます
       recovery_codes_description_html: |-
-        これらのリカバリーコードは、認証アプリにアクセスできなくなった場合にアカウントにアクセスするために使用できます
-        <br>
+        これらのリカバリーコードは、認証アプリにアクセスできなくなった場合にアカウントにアクセスするために使用できます。
         各コードは一度しか使用できません
       recovery_codes_regenerated: リカバリーコードを再生成しました
       recovery_description: 認証アプリが手元に無い場合は、リカバリーコードを使用してログインできます
       regenerate_confirmation: リカバリーコードを再生成してもよろしいですか？既存のすべてのコードが無効になります
       regenerate_warning: リカバリーコードを再生成すると、既存のすべてのコードが無効になります
-      save_recovery_codes_html: |-
-        リカバリーコードを安全な場所に保存してください
-        <br>
+      save_recovery_codes_title: リカバリーコードを安全な場所に保存してください
+      save_recovery_codes_description: |-
         これらのコードは、認証アプリを紛失した場合にアカウントにアクセスするための最後の手段です。
         これらのコードが見つからない場合、アカウントへのアクセスを完全に失うことになります
       setup_instructions:
@@ -175,7 +173,7 @@ ja:
         step2: 2. 認証アプリで下のQRコードを読み取ります
         step3: 3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します
       setup_required: 二要素認証の設定が必要です
-      show_hint_html: "%{two_factor_auth_help_link}"
+      show_hint_html: 二要素認証の設定ができます。%{two_factor_auth_help_link}
       status:
         enabled: 二要素認証は有効です
         disabled: 二要素認証は未設定です

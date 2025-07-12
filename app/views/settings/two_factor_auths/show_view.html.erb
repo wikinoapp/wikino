@@ -2,13 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+        <%= render Breadcrumbs::SettingsComponent.new %>
       <% end %>
     <% end %>
   <% end %>

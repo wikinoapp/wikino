@@ -2,13 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+        <%= render Breadcrumbs::SettingsComponent.new %>
       <% end %>
     <% end %>
   <% end %>
@@ -34,7 +28,7 @@
       <% end %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <%= card.with_body(class_name: "px-4") do %>
           <div class="flex flex-col gap-6">
             <div>
               <%= t("messages.two_factor_auth.setup_instructions.step1") %>
@@ -66,41 +60,41 @@
               <div>
                 <%= t("messages.two_factor_auth.setup_instructions.step3") %>
               </div>
-
-              <%= form_with(
-                class: "form grid gap-6",
-                model: form,
-                url: settings_two_factor_auth_path
-              ) do |f| %>
-                <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
-
-                <div class="grid gap-2">
-                  <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
-
-                  <%= f.password_field :password, autocomplete: "current-password" %>
-                </div>
-
-                <div class="grid gap-2">
-                  <%= render BaseUI::LabelComponent.new(form_builder: f, method: :totp_code) %>
-
-                  <%= f.text_field :totp_code, {
-                    maxlength: 6,
-                    placeholder: "000000",
-                    autocomplete: "off"
-                  } %>
-                </div>
-
-                <div class="flex gap-2">
-                  <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
-                    <%= t("verbs.enable_two_factor_auth") %>
-                  <% end %>
-
-                  <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                    class: "btn-ghost rounded-full w-fit"
-                  } %>
-                </div>
-              <% end %>
             </div>
+
+            <%= form_with(
+              class: "form grid gap-6",
+              model: form,
+              url: settings_two_factor_auth_path
+            ) do |f| %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
+
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
+
+                <%= f.password_field :password, autocomplete: "current-password" %>
+              </div>
+
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :totp_code) %>
+
+                <%= f.text_field :totp_code, {
+                  maxlength: 6,
+                  placeholder: "000000",
+                  autocomplete: "off"
+                } %>
+              </div>
+
+              <div class="flex gap-2">
+                <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                  <%= t("verbs.enable_two_factor_auth") %>
+                <% end %>
+
+                <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
+                  class: "btn-ghost rounded-full w-fit"
+                } %>
+              </div>
+            <% end %>
           </div>
         <% end %>
       <% end %>

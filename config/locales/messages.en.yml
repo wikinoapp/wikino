@@ -159,9 +159,8 @@ en:
         These recovery codes can be used to access your account if you lose access to your authenticator app.
         <br>
         Each code can only be used once.
-      save_recovery_codes_html: |-
-        Please save these recovery codes in a safe place.
-        <br>
+      save_recovery_codes_title: Please save these recovery codes in a safe place.
+      save_recovery_codes_description: |-
         These codes are the last means of accessing your account if you lose your authenticator app.
         If you lose these codes, you will completely lose access to your account.
       regenerate_warning: Regenerating recovery codes will invalidate all existing codes.

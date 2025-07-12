@@ -2,13 +2,11 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+        <%= render Breadcrumbs::SettingsComponent.new do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
+            <%= link_to t("meta.title.settings.two_factor_auth.show"), settings_two_factor_auth_path %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
@@ -40,8 +38,20 @@
               </div>
             </div>
 
-            <div class="alert alert-info">
-              <%= t("messages.two_factor_auth.save_recovery_codes_html") %>
+            <div class="alert">
+              <%= render BaseUI::IconComponent.new(
+                name: "warning",
+                size: "18px",
+                class_name: "fill-red-600"
+              ) %>
+
+              <h2 class="text-red-600 font-bold">
+                <%= t("messages.two_factor_auth.save_recovery_codes_title") %>
+              </h2>
+
+              <section>
+                <%= t("messages.two_factor_auth.save_recovery_codes_description") %>
+              </section>
             </div>
           </div>
 
