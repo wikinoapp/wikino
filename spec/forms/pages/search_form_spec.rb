@@ -6,69 +6,69 @@ require "rails_helper"
 RSpec.describe Pages::SearchForm, type: :model do
   describe "バリデーション" do
     it "有効なキーワードの場合、バリデーションが通ること" do
-      form = described_class.new(keyword: "テストキーワード")
+      form = described_class.new(q: "テストキーワード")
       expect(form).to be_valid
     end
 
     it "空文字列の場合、バリデーションが通ること" do
-      form = described_class.new(keyword: "")
+      form = described_class.new(q: "")
       expect(form).to be_valid
     end
 
     it "nilの場合、バリデーションが通ること" do
-      form = described_class.new(keyword: nil)
+      form = described_class.new(q: nil)
       expect(form).to be_valid
     end
 
     it "1文字の場合、バリデーションエラーになること" do
-      form = described_class.new(keyword: "a")
+      form = described_class.new(q: "a")
       expect(form).not_to be_valid
-      expect(form.errors[:keyword]).to include("は2文字以上で入力してください")
+      expect(form.errors[:q]).to include("は2文字以上で入力してください")
     end
 
     it "101文字以上の場合、バリデーションエラーになること" do
-      form = described_class.new(keyword: "a" * 101)
+      form = described_class.new(q: "a" * 101)
       expect(form).not_to be_valid
-      expect(form.errors[:keyword]).to include("は100文字以内で入力してください")
+      expect(form.errors[:q]).to include("は100文字以内で入力してください")
     end
 
     it "不正な文字(<や>)が含まれている場合、バリデーションエラーになること" do
-      form = described_class.new(keyword: "test<script>")
+      form = described_class.new(q: "test<script>")
       expect(form).not_to be_valid
-      expect(form.errors[:keyword]).to include("不正な文字が含まれています")
+      expect(form.errors[:q]).to include("不正な文字が含まれています")
     end
   end
 
-  describe "#keyword_present?" do
+  describe "#q_present?" do
     it "キーワードが存在する場合、trueを返すこと" do
-      form = described_class.new(keyword: "テスト")
-      expect(form.keyword_present?).to be true
+      form = described_class.new(q: "テスト")
+      expect(form.q_present?).to be true
     end
 
     it "キーワードが空文字列の場合、falseを返すこと" do
-      form = described_class.new(keyword: "")
-      expect(form.keyword_present?).to be false
+      form = described_class.new(q: "")
+      expect(form.q_present?).to be false
     end
 
     it "キーワードがnilの場合、falseを返すこと" do
-      form = described_class.new(keyword: nil)
-      expect(form.keyword_present?).to be false
+      form = described_class.new(q: nil)
+      expect(form.q_present?).to be false
     end
   end
 
   describe "#searchable?" do
     it "有効でキーワードが存在する場合、trueを返すこと" do
-      form = described_class.new(keyword: "テスト")
+      form = described_class.new(q: "テスト")
       expect(form.searchable?).to be true
     end
 
     it "無効な場合、falseを返すこと" do
-      form = described_class.new(keyword: "a")
+      form = described_class.new(q: "a")
       expect(form.searchable?).to be false
     end
 
     it "キーワードが存在しない場合、falseを返すこと" do
-      form = described_class.new(keyword: "")
+      form = described_class.new(q: "")
       expect(form.searchable?).to be false
     end
   end

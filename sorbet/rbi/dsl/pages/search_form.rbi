@@ -7,8 +7,8 @@
 
 class Pages::SearchForm
   sig { returns(T.nilable(::String)) }
-  def keyword; end
+  def q; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-  def keyword=(value); end
+  def q=(value); end
 end

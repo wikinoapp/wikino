@@ -13,12 +13,12 @@ module Search
     def call
       # 検索フォームの初期化
       search_form = Pages::SearchForm.new(
-        keyword: params[:keyword].to_s.strip
+        q: params[:q].to_s.strip
       )
 
       # 検索結果の取得
-      search_results = if search_form.valid? && search_form.keyword.present?
-                         search_pages(search_form.keyword.not_nil!).to_a
+      search_results = if search_form.valid? && search_form.q.present?
+                         search_pages(search_form.q.not_nil!).to_a
                        else
                          []
                        end
@@ -34,8 +34,8 @@ module Search
     private def search_pages(keyword)
       # ユーザーが参加しているスペースのページを検索
       PageRecord
-        .joins(space: :space_memberships)
-        .where(space_memberships: { user_record: current_user_record! })
+        .joins(space: :space_members)
+        .where(space_members: { user_record: current_user_record! })
         .where("page_records.title ILIKE ?", "%#{keyword}%")
         .order(:title)
         .limit(50)

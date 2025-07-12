@@ -13,14 +13,14 @@
       <div class="flex flex-col gap-6">
         <%= form_with model: search_form, url: search_path, local: true, method: :get, class: "flex flex-col gap-4" do |form| %>
           <div class="flex flex-col gap-2">
-            <%= form.label :keyword, t("nouns.search_keyword"), class: "font-medium text-sm" %>
-            <%= form.text_field :keyword,
+            <%= form.label :q, t("nouns.search_keyword"), class: "font-medium text-sm" %>
+            <%= form.text_field :q,
               placeholder: t("placeholders.search_keyword"),
               class: "input w-full",
               autofocus: true %>
-            <% if search_form.errors[:keyword].any? %>
+            <% if search_form.errors[:q].any? %>
               <div class="text-destructive text-sm">
-                <%= search_form.errors[:keyword].first %>
+                <%= search_form.errors[:q].first %>
               </div>
             <% end %>
           </div>
