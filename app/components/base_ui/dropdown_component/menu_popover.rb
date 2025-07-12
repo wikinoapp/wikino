@@ -41,7 +41,7 @@ module BaseUI
 
       sig { returns(String) }
       private def build_class_name
-        options[:class]
+        options[:class].presence || ""
       end
 
       sig { returns(T::Hash[Symbol, String]) }
