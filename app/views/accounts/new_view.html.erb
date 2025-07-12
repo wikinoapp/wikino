@@ -16,13 +16,13 @@
       <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
           class: "form grid gap-6",
-          model: @form,
+          model: form,
           url: account_list_path
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <div class="grid gap-2">
-            <%= f.label :email %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :email) %>
 
             <%= text_field_tag(:email, f.object.email, {
               autocomplete: "off",
@@ -46,7 +46,7 @@
           </div>
 
           <div class="grid gap-2">
-            <%= f.label :atname %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :atname) %>
 
             <%= f.text_field(:atname,
               autofocus: true,
@@ -59,7 +59,7 @@
           </div>
 
           <div class="grid gap-2">
-            <%= f.label :password %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
             <%= f.password_field(:password,
               autocomplete: "new-password",

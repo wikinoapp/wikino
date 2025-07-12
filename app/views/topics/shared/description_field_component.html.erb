@@ -1,5 +1,5 @@
 <div class="grid gap-2">
-  <%= form_builder.label :description %>
+  <%= render BaseUI::LabelComponent.new(form_builder:, method: :description, optional: true) %>
 
   <%= form_builder.text_field(:description) %>
 </div>

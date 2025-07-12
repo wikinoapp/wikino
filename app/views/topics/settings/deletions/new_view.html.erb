@@ -44,7 +44,7 @@
               <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
               <div class="grid gap-2">
-                <%= f.label :topic_name %>
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_name) %>
 
                 <%= f.text_field(:topic_name, required: true) %>
               </div>

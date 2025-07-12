@@ -1,0 +1,13 @@
+<% if optional? %>
+  <%= form_builder.label(method) do |translation| %>
+    <% tag.span(class: "flex items-center gap-1") do %>
+      <%= translation %>
+
+      <%= tag.span(class: "text-xs text-gray-500") do %>
+        - <%= t("nouns.optional") %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% else %>
+  <%= form_builder.label(method) %>
+<% end %>

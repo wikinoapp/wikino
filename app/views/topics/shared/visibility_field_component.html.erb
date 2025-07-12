@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-3">
-  <%= form_builder.label :visibility %>
+  <%= render BaseUI::LabelComponent.new(form_builder:, method: :visibility) %>
 
   <fieldset class="grid gap-3">
     <div class="flex flex-col gap-2">

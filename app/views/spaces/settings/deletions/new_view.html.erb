@@ -48,7 +48,7 @@
               <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
               <div class="grid gap-2">
-                <%= f.label :space_name %>
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :space_name) %>
 
                 <%= f.text_field(:space_name, required: true) %>
               </div>

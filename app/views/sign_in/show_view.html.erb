@@ -33,7 +33,7 @@
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <div class="grid gap-2">
-            <%= f.label :email %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :email) %>
 
             <%= f.email_field(:email, {
               autocomplete: "username",
@@ -45,7 +45,7 @@
 
           <div class="grid gap-2">
             <div class="flex items-center gap-2">
-              <%= f.label :password %>
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
               <%= render BaseUI::LinkComponent.new(
                 variant: BaseUI::LinkComponent::Variant::Underline,

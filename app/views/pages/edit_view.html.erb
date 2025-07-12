@@ -36,7 +36,7 @@
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <div class="grid gap-2">
-              <%= f.label :topic_number %>
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_number) %>
 
               <%= f.select(
                 :topic_number,
@@ -50,7 +50,7 @@
             </div>
 
             <div class="grid gap-2">
-              <%= f.label :title %>
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>
 
               <%= f.text_field(:title, {
                 autofocus: f.object.autofocus_title?,
@@ -59,7 +59,7 @@
             </div>
 
             <div class="grid gap-2">
-              <%= f.label :body %>
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :body) %>
 
               <div
                 data-controller="markdown-editor"

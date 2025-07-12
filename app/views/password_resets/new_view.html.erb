@@ -26,7 +26,7 @@
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <div class="grid gap-2">
-            <%= f.label :email %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :email) %>
 
             <%= f.email_field(:email, {
               autocomplete: "username",

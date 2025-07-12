@@ -1,5 +1,5 @@
 <div class="grid gap-2">
-  <%= form_builder.label :name %>
+  <%= render BaseUI::LabelComponent.new(form_builder:, method: :name) %>
 
   <%= form_builder.text_field(:name, {
     autofocus: true,

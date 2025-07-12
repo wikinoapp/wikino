@@ -21,13 +21,13 @@
         <%= form_with(
           class: "form grid gap-6",
           method: :patch,
-          model: @form,
+          model: form,
           url: email_confirmation_path(after: params[:after])
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
           <div class="grid gap-2">
-            <%= f.label :confirmation_code %>
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :confirmation_code) %>
 
             <%= f.text_field :confirmation_code, {
               autofocus: true

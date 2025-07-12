@@ -59,25 +59,17 @@
             </div>
 
             <%= form_with(
-              class: "flex flex-col gap-4",
+              class: "form grid gap-6",
               model: form,
               url: settings_two_factor_auth_recovery_code_list_path
             ) do |f| %>
               <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-              <%= f.label :password, class: "form-control" do %>
-                <div class="label">
-                  <span class="label-text">
-                    <%= t("forms.attributes.user_session_form/creation.password") %>
-                  </span>
-                </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
-                <%= f.password_field(
-                  :password,
-                  class: "input input-bordered w-full",
-                  autocomplete: "current-password"
-                ) %>
-              <% end %>
+                <%= f.password_field(:password, autocomplete: "current-password") %>
+              </div>
 
               <div class="flex gap-2">
                 <%= f.button(
@@ -89,7 +81,7 @@
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                  class: "btn btn-ghost rounded-full w-fit"
+                  class: "btn-ghost rounded-full w-fit"
                 } %>
               </div>
             <% end %>

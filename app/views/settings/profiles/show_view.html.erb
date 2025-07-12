@@ -23,72 +23,35 @@
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :atname, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.profile_form/edit.atname") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :atname) %>
 
-              <%= f.text_field(:atname,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
+              <%= f.text_field(:atname, required: true) %>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.profiles.atname_hint_html", max_length: User::ATNAME_MAX_LENGTH) %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.profiles.atname_hint_html", max_length: User::ATNAME_MAX_LENGTH) %>
+              </p>
+            </div>
 
-            <%= f.label :name, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.profile_form/edit.name") %>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :name, optional: true) %>
 
-                  <span
-                    class="text-xs text-gray-500"
-                  >
-                    - <%= t("nouns.optional") %>
-                  </span>
-                </span>
-              </div>
+              <%= f.text_field(:name) %>
 
-              <%= f.text_field(:name,
-                class: "bg-base-300 input input-bordered w-full",
-              ) %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.profiles.name_hint", max_length: User::NAME_MAX_LENGTH) %>
+              </p>
+            </div>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.profiles.name_hint", max_length: User::NAME_MAX_LENGTH) %>
-                </span>
-              </div>
-            <% end %>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :description, optional: true) %>
 
-            <%= f.label :description, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.profile_form/edit.description") %>
+              <%= f.text_field(:description) %>
 
-                  <span
-                    class="text-xs text-gray-500"
-                  >
-                    - <%= t("nouns.optional") %>
-                  </span>
-                </span>
-              </div>
-
-              <%= f.text_field(:description,
-                class: "bg-base-300 input input-bordered w-full",
-              ) %>
-
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.profiles.description_hint", max_length: User::DESCRIPTION_MAX_LENGTH) %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.profiles.description_hint", max_length: User::DESCRIPTION_MAX_LENGTH) %>
+              </p>
+            </div>
 
             <div class="flex gap-2">
               <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
@@ -98,7 +61,7 @@
               <% end %>
 
               <%= link_to t("nouns.cancel"), settings_path, {
-                class: "btn btn-ghost rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>

@@ -20,33 +20,26 @@
           </p>
 
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: sign_in_two_factor_path
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :totp_code, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.user_session_form/two_factor_verification.totp_code") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :totp_code) %>
 
               <%= f.text_field :totp_code, {
-                class: "bg-base-300 input input-bordered w-full",
                 maxlength: 6,
                 placeholder: "000000",
                 autocomplete: "one-time-code",
                 autofocus: true
               } %>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.two_factor_auth.code_hint") %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.two_factor_auth.code_hint") %>
+              </p>
+            </div>
 
             <%= f.button(
               class: "btn rounded-full w-fit",

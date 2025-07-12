@@ -23,31 +23,21 @@
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <label class="form-control">
-              <div class="label">
-                <span class="label-text">
-                  <%= t("nouns.current_email") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <label>
+                <%= t("nouns.current_email") %>
+              </label>
 
               <span>
                 <%= current_user.email %>
               </span>
-            </label>
+            </div>
 
-            <%= f.label :new_email, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.email_form/edit.new_email") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :new_email) %>
 
-              <%= f.text_field(:new_email,
-                autofocus: true,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
-            <% end %>
+              <%= f.text_field(:new_email, autofocus: true, required: true) %>
+            </div>
 
             <div class="flex gap-2">
               <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
@@ -57,7 +47,7 @@
               <% end %>
 
               <%= link_to t("nouns.cancel"), settings_path, {
-                class: "btn btn-ghost rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>
