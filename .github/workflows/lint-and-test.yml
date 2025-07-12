@@ -87,6 +87,25 @@ jobs:
         run: |
           pnpm prettier . --check
 
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+      - name: Install pnpm
+        run: |
+          npm install --global pnpm@10.12.3
+      - name: Install npm packages
+        run: |
+          pnpm install
+      - name: ESLint check
+        run: |
+          pnpm eslint .
+
   rspec:
     name: RSpec
     runs-on: ubuntu-latest
