@@ -26,20 +26,15 @@
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :password, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.password_reset_form/creation.password") %>
-              </span>
-            </div>
+          <div class="grid gap-2">
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
             <%= f.password_field(:password, {
               autocomplete: "new-password",
               autofocus: true,
-              class: "bg-base-300 input input-bordered w-full",
               required: true
             }) %>
-          <% end %>
+          </div>
 
           <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
             <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
@@ -51,8 +46,11 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
-        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
+      <%= render BaseUI::LinkComponent.new(
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {href: root_path}
+      ) do %>
+        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

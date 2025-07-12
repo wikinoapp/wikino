@@ -12,7 +12,7 @@
       </h1>
     </div>
 
-    <%= render BaseUI::CardComponent.new(class_name: "bg-base-300") do |card| %>
+    <%= render BaseUI::CardComponent.new do |card| %>
       <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
           class: "form grid gap-6",
