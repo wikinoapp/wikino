@@ -1,9 +1,9 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) do |breadcrumbs| %>
-          <%= breadcrumbs.with_item do %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
             <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
           <% end %>
         <% end %>

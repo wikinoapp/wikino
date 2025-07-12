@@ -11,7 +11,7 @@
       <div class="flex gap-4">
         <%= render Links::BrandIconComponent.new(current_page_name:) %>
 
-        <%= breadcrumbs %>
+        <%= breadcrumb %>
       </div>
 
       <div class="hidden md:flex">
@@ -21,9 +21,9 @@
   </div>
 
   <%# モバイルサイズ %>
-  <% if breadcrumbs? %>
+  <% if breadcrumb? %>
     <div class="flex items-center gap-4 px-4 pt-4 md:hidden">
-      <%= breadcrumbs %>
+      <%= breadcrumb %>
     </div>
   <% end %>
 </header>

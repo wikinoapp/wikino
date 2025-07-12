@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 module Breadcrumbs
-  class SpaceBreadcrumbsComponent < ApplicationComponent
-    renders_many :items, Breadcrumbs::SpaceBreadcrumbs::ItemComponent
+  class SpaceComponent < ApplicationComponent
+    renders_many :items, BaseUI::BreadcrumbComponent::Item
 
     sig { params(space: Space).void }
     def initialize(space:)

@@ -2,7 +2,9 @@
 # frozen_string_literal: true
 
 module Breadcrumbs
-  class TopicBreadcrumbsComponent < ApplicationComponent
+  class TopicComponent < ApplicationComponent
+    renders_many :items, BaseUI::BreadcrumbComponent::Item
+
     sig { params(topic: Topic).void }
     def initialize(topic:)
       @topic = topic

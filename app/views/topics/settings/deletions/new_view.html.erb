@@ -1,8 +1,12 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Topics::Settings::General::ShowView::BreadcrumbsComponent.new(topic:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::TopicComponent.new(topic:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
+            <%= link_to t("nouns.settings"), topic_settings_path(space.identifier, topic.number) %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>

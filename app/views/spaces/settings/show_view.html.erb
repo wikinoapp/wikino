@@ -1,8 +1,8 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
       <% end %>
     <% end %>
   <% end %>
