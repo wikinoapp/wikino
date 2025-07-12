@@ -140,7 +140,7 @@ jobs:
         run: |
           npm install --global pnpm@10.12.3
       - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
       - run: chrome --version
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
