@@ -3,21 +3,6 @@
     <div class="flex flex-wrap-reverse items-center justify-between gap-4 md:flex-nowrap">
       <h1 class="flex items-center gap-2 text-3xl font-bold antialiased">
         <%= title %>
-
-        <% if help_url.present? %>
-          <div
-            class="tooltip z-tooltip"
-            data-tip="<%= t("verbs.view_help") %>"
-          >
-            <%= link_to help_url, target: "_blank", class: "flex items-center" do %>
-              <%= render BaseUI::IconComponent.new(
-                name: "info-regular",
-                size: "28px",
-                class_name: "fill-gray-600 hover:fill-gray-950 transition duration-200 ease-in-out"
-              ) %>
-            <% end %>
-          </div>
-        <% end %>
       </h1>
 
       <% if actions? %>

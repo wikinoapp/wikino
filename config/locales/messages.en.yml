@@ -180,6 +180,7 @@ en:
       use_recovery_code: Use a recovery code
       recovery: Enter a recovery code for two-factor authentication
       recovery_description: If you lose your authenticator app, you can log in using a recovery code.
+      show_hint_html: "%{two_factor_auth_help_link}"
     trash:
       empty_state_message: Trash is empty.
       restored: Pages have been restored.
