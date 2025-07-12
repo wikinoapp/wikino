@@ -23,7 +23,7 @@
     "codemirror": "^6.0.2",
     "esbuild": "^0.25.5",
     "stimulus-use": "^0.52.3",
-    "tailwindcss": "^4.1.10"
+    "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
