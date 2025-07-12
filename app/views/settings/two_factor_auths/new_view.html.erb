@@ -1,31 +1,34 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SettingsComponent.new %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(
-        title:,
-        help_url: "https://wikino.app/s/wikino/pages/55"
-      ) %>
+      <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.two_factor_auth.show_hint_html",
+            two_factor_auth_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/55",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
+        <% end %>
+      <% end %>
 
-      <%= render Basic::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <div class="flex flex-col gap-6">
             <div>
               <%= t("messages.two_factor_auth.setup_instructions.step1") %>
@@ -47,7 +50,7 @@
                   <%= t("messages.two_factor_auth.manual_entry") %>
                 </div>
 
-                <code class="w-fit rounded border border-brand-200 px-2 py-1 font-mono">
+                <code class="border-brand-200 w-fit rounded border px-2 py-1 font-mono">
                   <%= secret %>
                 </code>
               </div>
@@ -57,55 +60,41 @@
               <div>
                 <%= t("messages.two_factor_auth.setup_instructions.step3") %>
               </div>
+            </div>
 
-              <%= form_with(
-                class: "flex flex-col gap-4",
-                model: form,
-                url: settings_two_factor_auth_path
-              ) do |f| %>
-                <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= form_with(
+              class: "form grid gap-6",
+              model: form,
+              url: settings_two_factor_auth_path
+            ) do |f| %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-                <div class="form-control">
-                  <%= f.label :password, class: "form-control" do %>
-                    <div class="label">
-                      <span class="label-text">
-                        <%= t("forms.attributes.user_session_form/creation.password") %>
-                      </span>
-                    </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
-                    <%= f.password_field :password, {
-                      class: "input input-bordered w-full",
-                      autocomplete: "current-password"
-                    } %>
-                  <% end %>
-                </div>
+                <%= f.password_field :password, autocomplete: "current-password" %>
+              </div>
 
-                <%= f.label :totp_code, class: "form-control" do %>
-                  <div class="label">
-                    <span class="label-text">
-                      <%= t("forms.attributes.two_factor_auth_form/creation.totp_code") %>
-                    </span>
-                  </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :totp_code) %>
 
-                  <%= f.text_field :totp_code, {
-                    class: "input input-bordered w-full",
-                    maxlength: 6,
-                    placeholder: "000000",
-                    autocomplete: "off"
-                  } %>
+                <%= f.text_field :totp_code, {
+                  maxlength: 6,
+                  placeholder: "000000",
+                  autocomplete: "off"
+                } %>
+              </div>
+
+              <div class="flex gap-2">
+                <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                  <%= t("verbs.enable_two_factor_auth") %>
                 <% end %>
 
-                <div class="flex gap-2">
-                  <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                    <%= t("verbs.enable_two_factor_auth") %>
-                  <% end %>
-
-                  <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                    class: "btn btn-ghost no-animation rounded-full w-fit"
-                  } %>
-                </div>
-              <% end %>
-            </div>
+                <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
+                  class: "btn-ghost rounded-full w-fit"
+                } %>
+              </div>
+            <% end %>
           </div>
         <% end %>
       <% end %>

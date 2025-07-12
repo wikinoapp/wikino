@@ -3,17 +3,20 @@ ja:
     account_deletion: アカウントの削除
     actions: アクション
     backlinks: バックリンク
+    best_practices: ベストプラクティス
     cancel: キャンセル
     change_email: メールアドレスの変更
     current_email: 現在のメールアドレス
     dark: ダーク
     edit_profile: プロフィール編集
+    error: エラー
     export: エクスポート
     general: 基本情報
+    here: こちら
     home: ホーム
     inbox: 受信トレイ
     info: Info
-    joined_spaces: 参加しているスペース
+    joined_spaces: 参加中のスペース
     light: ライト
     links: リンク
     modified_at: 編集日時
@@ -24,6 +27,7 @@ ja:
     optional: 任意
     page_title: ページタイトル
     prev_page: 前のページ
+    privacy_policy: プライバシーポリシー
     profile: プロフィール
     rss_feed: RSSフィード
     search: 検索
@@ -32,8 +36,10 @@ ja:
     sign_in: ログイン
     sign_out: ログアウト
     sign_up: アカウント作成
+    sign_up_page: アカウント作成ページ
     space_deletion: スペースの削除
     system_default: 自動
+    terms_of_service: 利用規約
     topic: トピック
     topic_deletion: トピックの削除
     topics: トピック

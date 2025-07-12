@@ -1,8 +1,8 @@
 <%= render Layouts::BasicComponent.new(current_user:, current_page_name:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
       <% end %>
     <% end %>
   <% end %>
@@ -19,12 +19,12 @@
 
       <% if pages.present? %>
         <div class="flex flex-col gap-6">
-          <div class="card bg-base-300 p-4">
+          <div class="card p-4">
             <%= render Lists::TrashedPagesComponent.new(form:, pages:) %>
           </div>
 
           <div class="flex justify-center">
-            <%= render Basic::PaginationComponent.new(
+            <%= render BaseUI::PaginationComponent.new(
               pagination:,
               previous_path: trash_path(before: pagination.previous_cursor),
               next_path: trash_path(after: pagination.next_cursor)
@@ -32,12 +32,10 @@
           </div>
         </div>
       <% else %>
-        <div class="card bg-base-300 p-4">
-          <%= render Cards::EmptyStateComponent.new(
-            icon_name: "file",
-            message: t("messages.trash.empty_state_message")
-          ) %>
-        </div>
+        <%= render BaseUI::EmptyStateComponent.new(
+          icon_name: "file",
+          message: t("messages.trash.empty_state_message")
+        ) %>
       <% end %>
     <% end %>
   <% end %>

@@ -3,13 +3,16 @@ en:
     account_deletion: Delete account
     actions: Actions
     backlinks: Backlinks
+    best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
     current_email: Current email
     dark: Dark
     edit_profile: Edit profile
+    error: Error
     export: Export
     general: General
+    here: Here
     home: Home
     inbox: Inbox
     info: Info
@@ -24,6 +27,7 @@ en:
     optional: Optional
     page_title: Page title
     prev_page: Prev
+    privacy_policy: Privacy policy
     profile: Profile
     rss_feed: RSS feed
     search: Search
@@ -32,8 +36,10 @@ en:
     sign_in: Sign in
     sign_out: Sign out
     sign_up: Sign up
+    sign_up_page: Sign up page
     space_deletion: Delete this space
     system_default: System default
+    terms_of_service: Terms of Service
     topic: Topic
     topic_deletion: Delete this topic
     topics: Topics

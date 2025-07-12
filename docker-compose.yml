@@ -10,6 +10,8 @@ services:
 
   chrome:
     image: selenium/standalone-chromium:136.0.7103.113
+    ports:
+      - "4444:4444"
 
 volumes:
   postgresql17_data:

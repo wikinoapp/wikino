@@ -1,0 +1,45 @@
+<div
+  aria-atomic="true"
+  class="ms-auto me-auto hidden transition duration-150 ease-in-out"
+  data-controller="flash-toast"
+  data-flash-toast-type-value="<%= flash_toast_type %>"
+  data-flash-toast-message-html-value="<%= flash[flash_toast_type] %>"
+  id="flash-toast"
+>
+  <div
+    class="alert flex w-fit items-center justify-between gap-4 border-gray-300 p-2"
+    data-flash-toast-target="alert"
+  >
+    <div class="toast-body flex items-center">
+      <span class="me-2">
+        <span
+          class="hidden"
+          data-flash-toast-target="noticeIcon"
+        >
+          <%= render BaseUI::IconComponent.new(name: "check-circle", size: "36px", class_name: "fill-green-600") %>
+        </span>
+
+        <span
+          class="hidden"
+          data-flash-toast-target="alertIcon"
+        >
+          <%= render BaseUI::IconComponent.new(name: "warning", size: "36px", class_name: "fill-red-600") %>
+        </span>
+      </span>
+
+      <span
+        class="grow"
+        data-flash-toast-target="message"
+      ></span>
+    </div>
+
+    <button
+      aria-label="Close"
+      class="leading-none hover:cursor-pointer"
+      data-action="flash-toast#hideFlashToast"
+      type="button"
+    >
+      <%= render BaseUI::IconComponent.new(name: "x") %>
+    </button>
+  </div>
+</div>

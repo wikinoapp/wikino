@@ -58,7 +58,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     get "/s/#{space.identifier}/trash"
 
     expect(response.status).to eq(200)
-    expect(response.body).to include("ゴミ箱に入れたページを表示しています。")
+    expect(response.body).to include("ゴミ箱に入れたページを表示しています")
     expect(response.body).to include("削除されたページ")
   end
 end

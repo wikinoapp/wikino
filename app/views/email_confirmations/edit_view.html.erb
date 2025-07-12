@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
-        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+        <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
 
@@ -16,28 +16,26 @@
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
+    <%= render BaseUI::CardComponent.new do |card| %>
+      <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
-          class: "flex flex-col gap-4",
+          class: "form grid gap-6",
           method: :patch,
-          model: @form,
+          model: form,
           url: email_confirmation_path(after: params[:after])
         ) do |f| %>
-          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+          <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :confirmation_code, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.email_confirmation_form/check.confirmation_code") %>
-              </span>
-            </div>
+          <div class="grid gap-2">
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :confirmation_code) %>
 
-            <%= f.text_field :confirmation_code, autofocus: true, class: "bg-base-300 input input-bordered w-full" %>
-          <% end %>
+            <%= f.text_field :confirmation_code, {
+              autofocus: true
+            } %>
+          </div>
 
-          <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-            <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+          <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+            <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
             <%= t("verbs.submit") %>
           <% end %>

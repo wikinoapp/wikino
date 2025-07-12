@@ -4,9 +4,9 @@
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render ContainerComponent.new(
-      as: ContainerComponent::As::Main,
-      class_name: "flex flex-col gap-6 px-4"
+    <%= render BaseUI::ContainerComponent.new(
+      as: BaseUI::ContainerComponent::As::Main,
+      options: {class: "flex flex-col gap-6 px-4"}
     ) do %>
       <div class="flex flex-col gap-6">
         <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
@@ -18,24 +18,24 @@
             <%= main_title.with_actions do %>
               <div class="flex items-center gap-2">
                 <%= link_to settings_profile_path, {
-                  class: "btn btn-sm btn-primary no-animation rounded-full"
+                  class: "btn btn-sm rounded-full"
                 } do %>
-                  <%= render Basic::IconComponent.new(
+                  <%= render BaseUI::IconComponent.new(
                     name: "pencil-simple-line",
                     size: "18px",
-                    class_name: "fill-primary-content"
+                    class_name: "fill-primary-foreground"
                   ) %>
 
                   <%= t("nouns.edit_profile") %>
                 <% end %>
 
                 <%= link_to settings_path, {
-                  class: "btn btn-sm btn-outline no-animation rounded-full flex gap-2 items-center group"
+                  class: "btn-sm-ghost border border-primary rounded-full hover:bg-primary hover:text-primary-foreground group flex gap-2 items-center"
                 } do %>
-                  <%= render Basic::IconComponent.new(
+                  <%= render BaseUI::IconComponent.new(
                     name: "gear-regular",
                     size: "18px",
-                    class_name: "fill-primary group-hover:fill-primary-content"
+                    class_name: "fill-primary group-hover:fill-primary-foreground"
                   ) %>
 
                   <%= t("nouns.settings") %>
@@ -57,13 +57,18 @@
           <%= t("nouns.joined_spaces") %>
         </h2>
 
-        <ul class="list-inside list-disc">
-          <% joined_spaces.each do |joined_space| %>
-            <li>
-              <%= link_to joined_space.name, space_path(joined_space.identifier), class: "link" %>
-            </li>
-          <% end %>
-        </ul>
+        <% if joined_spaces.present? %>
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <% joined_spaces.each do |space| %>
+              <%= render CardLinks::SpaceComponent.new(space:) %>
+            <% end %>
+          </div>
+        <% else %>
+          <%= render BaseUI::EmptyStateComponent.new(
+            icon_name: "file",
+            message: t("messages.home.no_joined_spaces_html")
+          ) %>
+        <% end %>
       </div>
     <% end %>
   <% end %>

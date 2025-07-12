@@ -4,12 +4,12 @@
   url: false
 ) do |f| %>
   <div class="flex flex-col gap-4">
-    <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+    <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-2">
         <%= f.button(
-          class: "btn btn-primary btn-xs no-animation rounded-full",
+          class: "btn btn-xs rounded-full",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
@@ -17,10 +17,10 @@
           formaction: bulk_restored_page_list_path,
           type: :submit
         ) do %>
-          <%= render Basic::IconComponent.new(
+          <%= render BaseUI::IconComponent.new(
             name: "arrow-counter-clockwise",
             size: "18px",
-            class_name: "fill-primary-content"
+            class_name: "fill-primary-foreground"
           ) %>
 
           <%= t("verbs.restore") %>
@@ -28,7 +28,7 @@
 
         <% if false %>
         <%= f.button(
-          class: "btn btn-primary btn-xs no-animation rounded-full text-error",
+          class: "btn btn-xs rounded-full text-red-600",
           data: {
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
@@ -36,7 +36,7 @@
           formaction: "#",
           type: :submit
         ) do %>
-          <%= render Basic::IconComponent.new(name: "trash", size: "18px", class_name: "fill-error") %>
+          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-red-600") %>
 
           <%= t("verbs.delete") %>
         <% end %>
@@ -51,7 +51,7 @@
                 "page_form_bulk_restoring[page_ids][]",
                 page.database_id,
                 f.object.page_ids&.include?(page.database_id),
-                class: "checkbox"
+                class: "input"
               ) %>
             </div>
 

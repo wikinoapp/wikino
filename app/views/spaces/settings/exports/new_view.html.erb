@@ -1,9 +1,9 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) do |breadcrumbs| %>
-          <%= breadcrumbs.with_item do %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
             <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
           <% end %>
         <% end %>
@@ -13,24 +13,34 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.export")) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.exports.description_html") %>
+          <%= t("messages.exports.description_html",
+            export_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/35",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
         <% end %>
       <% end %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <div class="flex gap-2">
             <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
               method: :post,
-              class: "btn btn-primary no-animation rounded-full"
+              class: "btn rounded-full"
             } %>
 
             <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
-              class: "btn btn-ghost no-animation rounded-full w-fit"
+              class: "btn-ghost rounded-full w-fit"
             } %>
           </div>
         <% end %>

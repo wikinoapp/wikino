@@ -1,20 +1,24 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Topics::Settings::General::ShowView::BreadcrumbsComponent.new(topic:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::TopicComponent.new(topic:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
+            <%= link_to t("nouns.settings"), topic_settings_path(space.identifier, topic.number) %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.topic_deletion")) %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-4">
               <p>
@@ -37,34 +41,27 @@
             </div>
 
             <%= form_with(
-              class: "flex flex-col gap-4",
+              class: "form grid gap-6",
               model: form,
               url: topic_settings_deletion_path(space.identifier, topic.number)
             ) do |f| %>
-              <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-              <label class="form-control">
-                <div class="label">
-                  <span class="label-text">
-                    <%= t("forms.attributes.topic_form/destroy_confirmation.topic_name") %>
-                  </span>
-                </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_name) %>
 
-                <%= f.text_field(:topic_name, {
-                  class: "bg-base-300 input input-bordered w-full",
-                  required: true
-                }) %>
-              </label>
+                <%= f.text_field(:topic_name, required: true) %>
+              </div>
 
               <div class="flex gap-2">
-                <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                  <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+                <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                  <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                   <%= t("verbs.delete") %>
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), topic_settings_path(space.identifier, topic.number), {
-                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                  class: "btn-ghost rounded-full w-fit"
                 } %>
               </div>
             <% end %>

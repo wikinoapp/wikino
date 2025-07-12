@@ -1,13 +1,8 @@
-<label class="form-control">
-  <div class="label">
-    <span class="label-text">
-      <%= t("forms.attributes.topic_form/creation.name") %>
-    </span>
-  </div>
+<div class="grid gap-2">
+  <%= render BaseUI::LabelComponent.new(form_builder:, method: :name) %>
 
   <%= form_builder.text_field(:name, {
     autofocus: true,
-    class: "bg-base-300 input input-bordered w-full",
     required: true
   }) %>
-</label>
+</div>

@@ -1,0 +1,11 @@
+<%= render BaseUI::BreadcrumbComponent.new do |breadcrumb| %>
+  <%= breadcrumb.with_item do %>
+    <%= link_to t("nouns.settings"), settings_path %>
+  <% end %>
+
+  <% items.each do |item| %>
+    <%= breadcrumb.with_item do %>
+      <%= item %>
+    <% end %>
+  <% end %>
+<% end %>

@@ -5,25 +5,52 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <%= link_to(t("meta.title.settings.profiles.show"), settings_profile_path, class: "link") %>
-          <%= link_to(t("nouns.change_email"), settings_email_path, class: "link") %>
-          <%= link_to(t("meta.title.settings.two_factor_auth.show"), settings_two_factor_auth_path, class: "link") %>
-          <%= link_to(t("nouns.account_deletion"), settings_account_new_deletion_path, class: "link") %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-3">
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {href: settings_profile_path}
+              ) do %>
+                <%= t("meta.title.settings.profiles.show") %>
+              <% end %>
 
-          <div class="text-center">
-            <%= button_to(t("nouns.sign_out"), user_session_path,
-              class: "link",
-              method: :delete,
-              data: {
-                turbo_confirm: t("messages.user_sessions.are_you_sure_sign_out")
-              }
-            ) %>
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {href: settings_email_path}
+              ) do %>
+                <%= t("nouns.change_email") %>
+              <% end %>
+
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {href: settings_two_factor_auth_path}
+              ) do %>
+                <%= t("meta.title.settings.two_factor_auth.show") %>
+              <% end %>
+
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {href: settings_account_new_deletion_path}
+              ) do %>
+                <%= t("nouns.account_deletion") %>
+              <% end %>
+            </div>
+
+            <div class="text-center">
+              <%= button_to(t("nouns.sign_out"), user_session_path,
+                class: "underline underline-offset-4",
+                method: :delete,
+                data: {
+                  turbo_confirm: t("messages.user_sessions.are_you_sure_sign_out")
+                }
+              ) %>
+            </div>
           </div>
         <% end %>
       <% end %>

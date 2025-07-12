@@ -1,29 +1,29 @@
-<header class="static md:sticky md:top-0 md:z-navbar">
+<header class="md:z-navbar static md:sticky md:top-0">
   <%# PCサイズ %>
   <div
     class="<%= class_names("
-      bg-base-200 data-[stuck]:drop-shadow-sm data-[stuck]:py-2 py-4 transition-all duration-200
+      bg-brand-100 data-stuck:drop-shadow-sm data-stuck:py-2 py-4 transition-all duration-200
       ease-in-out hidden md:block
     ") %>"
     data-controller="stuck"
   >
-    <div class="navbar mx-auto min-h-[auto] w-full max-w-3xl px-4 py-0">
-      <div class="gap-4 md:navbar-start">
+    <div class="bg-brand-100 mx-auto flex min-h-auto w-full max-w-3xl justify-between px-4 py-0">
+      <div class="flex gap-4">
         <%= render Links::BrandIconComponent.new(current_page_name:) %>
 
-        <%= breadcrumbs %>
+        <%= breadcrumb %>
       </div>
 
-      <div class="navbar-end hidden md:flex">
+      <div class="hidden md:flex">
         <%= render NavbarComponent.new(current_page_name:, current_user:) %>
       </div>
     </div>
   </div>
 
   <%# モバイルサイズ %>
-  <% if breadcrumbs? %>
+  <% if breadcrumb? %>
     <div class="flex items-center gap-4 px-4 pt-4 md:hidden">
-      <%= breadcrumbs %>
+      <%= breadcrumb %>
     </div>
   <% end %>
 </header>

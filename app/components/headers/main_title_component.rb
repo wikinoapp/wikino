@@ -6,18 +6,13 @@ module Headers
     renders_one :subtitle
     renders_one :actions
 
-    sig { params(title: String, help_url: T.nilable(String)).void }
-    def initialize(title:, help_url: nil)
+    sig { params(title: String).void }
+    def initialize(title:)
       @title = title
-      @help_url = help_url
     end
 
     sig { returns(String) }
     attr_reader :title
     private :title
-
-    sig { returns(T.nilable(String)) }
-    attr_reader :help_url
-    private :help_url
   end
 end

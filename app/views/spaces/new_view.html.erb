@@ -5,65 +5,67 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.spaces.new_hint_html") %>
+          <%= t("messages.spaces.new_hint_html",
+            space_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/16",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.here"))
+            ),
+            space_best_practice_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/50",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.best_practices"))
+            )
+          ) %>
         <% end %>
       <% end %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: space_list_path
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :identifier, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.space_form/creation.identifier") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :identifier) %>
 
-              <%= f.text_field(:identifier,
-                autofocus: true,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
+              <%= f.text_field(:identifier, autofocus: true, required: true) %>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.spaces.identifier_hint_html", max_length: Space::IDENTIFIER_MAX_LENGTH) %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.spaces.identifier_hint_html", max_length: Space::IDENTIFIER_MAX_LENGTH) %>
+              </p>
+            </div>
 
-            <%= f.label :name, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.space_form/creation.name") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :name) %>
 
-              <%= f.text_field(:name,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
-            <% end %>
+              <%= f.text_field(:name, required: true) %>
+            </div>
 
             <div class="flex gap-2">
-              <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+              <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                 <%= t("verbs.create") %>
               <% end %>
 
               <%= link_to t("nouns.cancel"), home_path, {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>

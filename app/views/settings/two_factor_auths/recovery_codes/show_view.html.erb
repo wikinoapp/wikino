@@ -1,34 +1,30 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SettingsComponent.new do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
+            <%= link_to t("meta.title.settings.two_factor_auth.show"), settings_two_factor_auth_path %>
+          <% end %>
+        <% end %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title:) %>
 
-      <%= render Basic::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <div class="flex flex-col gap-4">
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="form grid gap-6">
             <p>
               <%= t("messages.two_factor_auth.recovery_codes_description_html") %>
             </p>
 
-            <div class="rounded bg-base-100 p-4">
+            <div class="bg-base-100 rounded p-4">
               <h3 class="mb-4 font-semibold">
                 <%= t("nouns.recovery_codes") %>
               </h3>
@@ -42,8 +38,20 @@
               </div>
             </div>
 
-            <div class="alert alert-info">
-              <%= t("messages.two_factor_auth.save_recovery_codes_html") %>
+            <div class="alert">
+              <%= render BaseUI::IconComponent.new(
+                name: "warning",
+                size: "18px",
+                class_name: "fill-red-600"
+              ) %>
+
+              <h2 class="font-bold text-red-600">
+                <%= t("messages.two_factor_auth.save_recovery_codes_title") %>
+              </h2>
+
+              <section>
+                <%= t("messages.two_factor_auth.save_recovery_codes_description") %>
+              </section>
             </div>
           </div>
 
@@ -61,29 +69,21 @@
             </div>
 
             <%= form_with(
-              class: "flex flex-col gap-4",
+              class: "form grid gap-6",
               model: form,
               url: settings_two_factor_auth_recovery_code_list_path
             ) do |f| %>
-              <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-              <%= f.label :password, class: "form-control" do %>
-                <div class="label">
-                  <span class="label-text">
-                    <%= t("forms.attributes.user_session_form/creation.password") %>
-                  </span>
-                </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
-                <%= f.password_field(
-                  :password,
-                  class: "input input-bordered w-full",
-                  autocomplete: "current-password"
-                ) %>
-              <% end %>
+                <%= f.password_field(:password, autocomplete: "current-password") %>
+              </div>
 
               <div class="flex gap-2">
                 <%= f.button(
-                  class: "btn btn-primary no-animation rounded-full w-fit",
+                  class: "btn rounded-full w-fit",
                   data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") },
                   type: :submit
                 ) do %>
@@ -91,7 +91,7 @@
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                  class: "btn btn-ghost no-animation rounded-full w-fit"
+                  class: "btn-ghost rounded-full w-fit"
                 } %>
               </div>
             <% end %>

@@ -1,42 +1,45 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SettingsComponent.new %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
-      <%= render Headers::MainTitleComponent.new(
-        title:,
-        help_url: "https://wikino.app/s/wikino/pages/55"
-      ) %>
+      <%= render Headers::MainTitleComponent.new(title:) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.two_factor_auth.show_hint_html",
+            two_factor_auth_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/55",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
+        <% end %>
+      <% end %>
 
-      <%= render Basic::CardComponent.new(
-        class_name: "bg-base-300 border border-brand-200"
-      ) do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <% if user_two_factor_auth&.enabled %>
-            <div class="flex flex-col gap-4">
+            <div class="form grid gap-6">
               <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-2">
-                  <%= render Basic::IconComponent.new(
+                  <%= render BaseUI::IconComponent.new(
                     name: "check-circle",
                     size: "36px",
-                    class_name: "fill-success"
+                    class_name: "fill-green-600"
                   ) %>
 
-                  <p class="text-success">
+                  <p class="text-green-600">
                     <%= t("messages.two_factor_auth.status.enabled") %>
                   </p>
                 </div>
@@ -53,7 +56,7 @@
                 <%= link_to(
                   t("verbs.view_recovery_codes"),
                   settings_two_factor_auth_recovery_codes_path,
-                  class: "btn btn-primary no-animation rounded-full"
+                  class: "btn rounded-full"
                 ) %>
               </div>
             </div>
@@ -65,30 +68,22 @@
             </h3>
 
             <%= form_with(
-              class: "flex flex-col gap-4",
+              class: "form grid gap-6",
               model: form,
               url: settings_two_factor_auth_path,
               method: :delete
             ) do |f| %>
-              <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-              <%= f.label :password, class: "form-control" do %>
-                <div class="label">
-                  <span class="label-text">
-                    <%= t("forms.attributes.user_session_form/creation.password") %>
-                  </span>
-                </div>
+              <div class="grid gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
-                <%= f.password_field(
-                  :password,
-                  class: "input input-bordered w-full",
-                  autocomplete: "current-password"
-                ) %>
-              <% end %>
+                <%= f.password_field(:password, autocomplete: "current-password") %>
+              </div>
 
               <div>
                 <%= f.button(
-                  class: "btn btn-primary no-animation rounded-full",
+                  class: "btn rounded-full",
                   type: :submit,
                   data: { turbo_confirm: t("messages.two_factor_auth.disable_confirmation") }
                 ) do %>
@@ -105,11 +100,11 @@
               <%= link_to(
                 t("verbs.enable_two_factor_auth"),
                 settings_new_two_factor_auth_path,
-                class: "btn btn-primary no-animation rounded-full"
+                class: "btn rounded-full"
               ) %>
 
               <%= link_to t("nouns.cancel"), settings_path, {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>
