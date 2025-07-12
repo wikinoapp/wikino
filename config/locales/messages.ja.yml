@@ -64,7 +64,7 @@ ja:
         deletions:
           cannot_destroy_account: このアカウントは削除要件を満たしていません
           cannot_destroy_account_description_html: |-
-            アカウントを削除するには、スペースに参加していない必要があります<br>
+            アカウントを削除するには、スペースに参加していない必要があります。<br>
             参加している以下のスペースを削除してからアカウントを削除してください
           deleted: アカウントを削除しました
           description_html: |-
@@ -73,7 +73,7 @@ ja:
           form_description_html: |-
             アカウントを削除する場合は、アットネーム
             (<span class="font-bold">%{user_atname}</span>)
-            を入力してください。
+            を入力してください
           warning_1: 削除されたアカウント情報の復元はできません
           warning_2: アットネームは他のユーザーが使用できるようになります
     spaces:
@@ -104,7 +104,7 @@ ja:
             form_description_html: |-
               スペースを削除する場合は、スペース名
               (<span class="font-bold">%{space_name}</span>)
-              を入力してください。
+              を入力してください
       updated: スペースを更新しました
     sign_in:
       dont_have_an_account: アカウント持ってない？

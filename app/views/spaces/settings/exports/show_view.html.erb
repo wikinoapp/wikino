@@ -32,7 +32,7 @@
       <% end %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <%= card.with_body(class_name: "px-4") do %>
           <% if export_status.processing? %>
             <div class="flex flex-col place-items-center gap-2">
               <%= render BaseUI::IconComponent.new(

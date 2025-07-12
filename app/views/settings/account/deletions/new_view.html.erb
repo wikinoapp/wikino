@@ -2,13 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumbs do %>
-        <div class="breadcrumbs py-1 text-sm">
-          <ul>
-            <li>
-              <%= link_to t("nouns.settings"), settings_path %>
-            </li>
-          </ul>
-        </div>
+        <%= render Breadcrumbs::SettingsComponent.new %>
       <% end %>
     <% end %>
   <% end %>
@@ -20,7 +14,7 @@
       <%= render Headers::MainTitleComponent.new(title:) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+        <%= card.with_body(class_name: "px-4") do %>
           <% if can_destroy_account? %>
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-4">
@@ -44,24 +38,17 @@
               </div>
 
               <%= form_with(
-                class: "flex flex-col gap-4",
+                class: "form grid gap-6",
                 model: form,
                 url: settings_account_deletion_path
               ) do |f| %>
                 <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-                <label class="form-control">
-                  <div class="label">
-                    <span class="label-text">
-                      <%= t("forms.attributes.account_form/destroy_confirmation.user_atname") %>
-                    </span>
-                  </div>
+                <div class="grid gap-2">
+                  <%= render BaseUI::LabelComponent.new(form_builder: f, method: :user_atname) %>
 
-                  <%= f.text_field(:user_atname, {
-                    class: "bg-base-300 input input-bordered w-full",
-                    required: true
-                  }) %>
-                </label>
+                  <%= f.text_field(:user_atname, required: true) %>
+                </div>
 
                 <div class="flex gap-2">
                   <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
@@ -71,7 +58,7 @@
                   <% end %>
 
                   <%= link_to t("nouns.cancel"), settings_path, {
-                    class: "btn btn-ghost rounded-full w-fit"
+                    class: "btn-ghost rounded-full w-fit"
                   } %>
                 </div>
               <% end %>
@@ -90,7 +77,12 @@
               <ul class="list-inside list-disc">
                 <% active_spaces.each do |space| %>
                   <li>
-                    <%= link_to space.name, space_path(space.identifier), class: "underline" %>
+                    <%= render BaseUI::LinkComponent.new(
+                      variant: BaseUI::LinkComponent::Variant::Underline,
+                      options: {href: space_path(space.identifier)}
+                    ) do %>
+                      <%= space.name %>
+                    <% end %>
                   </li>
                 <% end %>
               </ul>
