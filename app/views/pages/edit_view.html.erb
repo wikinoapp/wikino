@@ -112,4 +112,8 @@
       </turbo-frame>
     <% end %>
   <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
 <% end %>

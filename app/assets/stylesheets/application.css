@@ -150,7 +150,7 @@
 }
 
 .cm-editor.cm-focused {
-  @apply border-ring ring-ring/50 ring-[3px] outline-2! outline-gray-300! outline-solid!;
+  @apply border-ring ring-ring/50 ring-[3px] outline-2 outline-gray-300 outline-solid;
 }
 
 .cm-editor .cm-gutters {
