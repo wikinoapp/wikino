@@ -2,73 +2,76 @@
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
-        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+        <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
 
-    <div class="text-center">
-      <h1 class="text-2xl font-bold antialiased">
+    <div class="mx-auto">
+      <h1 class="text-center text-2xl font-bold antialiased">
         <%= current_page_title %>
       </h1>
 
-      <p class="mt-4 hidden">
-        <%= t("messages.sign_in.dont_have_an_account_html", sign_up_path:) %>
+      <p class="mt-4 flex items-center gap-2">
+        <%= t("messages.sign_in.dont_have_an_account") %>
+
+        <%= render BaseUI::LinkComponent.new(
+          variant: BaseUI::LinkComponent::Variant::Underline,
+          options: {href: sign_up_path}
+        ) do %>
+          <%= t("nouns.sign_up") %>
+        <% end %>
       </p>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
+    <%= render BaseUI::CardComponent.new do |card| %>
+      <%= card.with_body(class_name: "px-4") do %>
         <%= form_with(
-          class: "flex flex-col gap-4",
+          class: "form grid gap-6",
           model: form,
           url: user_session_path
         ) do |f| %>
-          <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+          <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= f.label :email, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.email") %>
-              </span>
-            </div>
+          <div class="grid gap-2">
+            <%= render BaseUI::LabelComponent.new(form_builder: f, method: :email) %>
 
             <%= f.email_field(:email, {
               autocomplete: "username",
               autofocus: true,
-              class: "bg-base-300 input input-bordered w-full",
               required: true,
               tabindex: 1
             }) %>
-          <% end %>
+          </div>
 
-          <%= f.label :password, class: "form-control" do %>
-            <div class="label">
-              <span class="label-text">
-                <%= t("forms.attributes.user_session_form/creation.password") %>
-              </span>
+          <div class="grid gap-2">
+            <div class="flex items-center gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :password) %>
 
-              <span class="label-text-alt">
-                <%= link_to t("meta.title.password_resets.new"), password_reset_path, {
-                  class: "link",
-                  tabindex: 4
-                } %>
-              </span>
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  class: "ml-auto text-sm",
+                  href: password_reset_path,
+                  tabindex: "4"
+                }
+              ) do %>
+                <%= t("meta.title.password_resets.new") %>
+              <% end %>
             </div>
 
             <%= f.password_field(:password, {
               autocomplete: "current-password",
-              class: "bg-base-300 input input-bordered w-full",
               required: true,
               tabindex: 2
             }) %>
-          <% end %>
+          </div>
 
           <%= f.button(
-            class: "btn btn-primary no-animation rounded-full w-fit",
+            class: "btn rounded-full w-fit",
             type: :submit,
             tabindex: 3
           ) do %>
-            <%= render Basic::IconComponent.new(name: "sign-in-regular", size: "18px", class_name: "fill-primary-content") %>
+            <%= render BaseUI::IconComponent.new(name: "sign-in-regular", size: "18px", class_name: "fill-primary-foreground") %>
 
             <%= t("verbs.sign_in") %>
           <% end %>
@@ -77,8 +80,11 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
-        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-content") %>
+      <%= render BaseUI::LinkComponent.new(
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {href: root_path}
+      ) do %>
+        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

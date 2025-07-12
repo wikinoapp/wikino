@@ -1,9 +1,9 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) do |breadcrumbs| %>
-          <%= breadcrumbs.with_item do %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
             <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
           <% end %>
         <% end %>
@@ -13,62 +13,45 @@
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.general")) %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: space_settings_general_path(space.identifier),
             method: :patch
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :identifier, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.space_form/creation.identifier") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :identifier) %>
 
-              <%= f.text_field(:identifier,
-                autofocus: true,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
+              <%= f.text_field(:identifier, autofocus: true, required: true) %>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.spaces.identifier_hint_html", max_length: Space::IDENTIFIER_MAX_LENGTH) %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.spaces.identifier_hint_html", max_length: Space::IDENTIFIER_MAX_LENGTH) %>
+              </p>
+            </div>
 
-            <%= f.label :name, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.space_form/creation.name") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :name) %>
 
-              <%= f.text_field(:name,
-                class: "bg-base-300 input input-bordered w-full",
-                required: true
-              ) %>
-            <% end %>
+              <%= f.text_field(:name, required: true) %>
+            </div>
 
             <div class="flex gap-2">
-              <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+              <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                 <%= t("verbs.save") %>
               <% end %>
 
               <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>

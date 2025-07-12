@@ -1,44 +1,63 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::SpaceBreadcrumbsComponent.new(space:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.new_topic")) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.topics.new_hint_html") %>
+          <%= t("messages.topics.new_hint_html",
+            topic_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/11",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.here"))
+            ),
+            topic_best_practice_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/52",
+                  target: "_blank"
+                }
+              ).with_content(t("nouns.best_practices"))
+            )
+          ) %>
         <% end %>
       <% end %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: topic_list_path(space.identifier)
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
             <%= render Topics::Shared::NameFieldComponent.new(form_builder: f) %>
             <%= render Topics::Shared::DescriptionFieldComponent.new(form_builder: f) %>
             <%= render Topics::Shared::VisibilityFieldComponent.new(form_builder: f) %>
 
             <div class="flex gap-2">
-              <%= f.button class: "btn btn-primary no-animation rounded-full w-fit", type: :submit do %>
-                <%= render Basic::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-content") %>
+              <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
                 <%= t("verbs.create") %>
               <% end %>
 
               <%= link_to t("nouns.cancel"), space_path(space.identifier), {
-                class: "btn btn-ghost no-animation rounded-full w-fit"
+                class: "btn-ghost rounded-full w-fit"
               } %>
             </div>
           <% end %>

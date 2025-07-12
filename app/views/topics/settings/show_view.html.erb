@@ -1,31 +1,35 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Topics::Settings::ShowView::BreadcrumbsComponent.new(topic:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::TopicComponent.new(topic:) %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
     <%= render Containers::MainComponent.new(
-      content_screen: ContainerComponent::ContentScreen::Small
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
-      <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-        <%= card.with_body(class_name: "p-4") do %>
-          <%= link_to(
-            t("nouns.general"),
-            topic_settings_general_path(space.identifier, topic.number),
-            class: "link"
-          ) %>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-3">
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: topic_settings_general_path(space.identifier, topic.number)}
+            ) do %>
+              <%= t("nouns.general") %>
+            <% end %>
 
-          <%= link_to(
-            t("nouns.topic_deletion"),
-            topic_settings_new_deletion_path(space.identifier, topic.number),
-            class: "link"
-          ) %>
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: topic_settings_new_deletion_path(space.identifier, topic.number)}
+            ) do %>
+              <%= t("nouns.topic_deletion") %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     <% end %>

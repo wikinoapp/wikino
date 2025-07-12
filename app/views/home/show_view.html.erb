@@ -4,64 +4,45 @@
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render ContainerComponent.new(
-      as: ContainerComponent::As::Main,
-      class_name: "flex flex-col gap-6 px-4"
+    <%= render BaseUI::ContainerComponent.new(
+      as: BaseUI::ContainerComponent::As::Main,
+      options: {class: "flex flex-col gap-6 px-4"}
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.home")) %>
 
       <div class="flex flex-col gap-4">
-        <h2 class="font-bold antialiased">
-          <%= t("nouns.joined_spaces") %>
-        </h2>
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold antialiased">
+            <%= t("nouns.joined_spaces") %>
+          </h2>
+
+          <%= link_to new_space_path, {
+            class: "btn-sm rounded-full"
+          } do %>
+            <%= render BaseUI::IconComponent.new(
+              name: "plus",
+              size: "18px",
+              class_name: "fill-primary-foreground"
+            ) %>
+
+            <%= t("nouns.new_space") %>
+          <% end %>
+        </div>
 
         <% if active_spaces.present? %>
           <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
             <% active_spaces.each do |space| %>
-              <%= render Cards::SpaceComponent.new(space:) %>
-            <% end %>
-
-            <%= render Basic::CardComponent.new(
-              class_name: class_names(
-                "bg-base-300 border border-brand-200 duration-200 ease-in-out grid min-h-[96px]
-                hover:ring-1 hover:ring-primary transition"
-              )
-            ) do |card| %>
-              <%= card.with_body(class_name: "p-0") do %>
-                <%= link_to new_space_path, {
-                  class: "h-full px-4 py-2 w-full text-sm flex flex-col items-center justify-center gap-2"
-                } do %>
-                  <%= render Basic::IconComponent.new(
-                    name: "plus",
-                    size: "24px",
-                    class_name: "fill-secondary-content"
-                  ) %>
-
-                  <%= t("nouns.new_space") %>
-                <% end %>
-              <% end %>
+              <%= render CardLinks::SpaceComponent.new(space:) %>
             <% end %>
           </div>
         <% else %>
-          <%= render Cards::EmptyStateComponent.new(
+          <%= render BaseUI::EmptyStateComponent.new(
             icon_name: "file",
             message: t("messages.home.no_joined_spaces_html")
           ) do %>
             <div>
               <%= t("messages.home.new_space_description_html") %>
             </div>
-
-            <%= link_to new_space_path, {
-              class: "btn btn-primary btn-sm no-animation rounded-full"
-            } do %>
-              <%= render Basic::IconComponent.new(
-                name: "plus",
-                size: "18px",
-                class_name: "fill-primary-content"
-              ) %>
-
-              <%= t("nouns.new_space") %>
-            <% end %>
           <% end %>
         <% end %>
       </div>

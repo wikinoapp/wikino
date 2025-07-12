@@ -11,8 +11,14 @@
             <%= t("messages.welcome.announcement") %>
           </p>
 
-          <%= link_to "https://wikino.app/s/wikino/pages/44", class: "link inline-flex items-center gap-1" do %>
-            <%= render Basic::IconComponent.new(
+          <%= render BaseUI::LinkComponent.new(
+            variant: BaseUI::LinkComponent::Variant::Underline,
+            options: {
+              class: "link inline-flex items-center gap-1",
+              href: "https://wikino.app/s/wikino/pages/44"
+            }
+          ) do %>
+            <%= render BaseUI::IconComponent.new(
               name: "arrow-right-regular",
               size: "18px",
               class_name: "fill-gray-500"
@@ -24,7 +30,7 @@
 
         <div class="flex flex-col gap-6 text-center">
           <div class="flex flex-col gap-2">
-            <h1 class="text-4xl/8 font-bold leading-snug antialiased">
+            <h1 class="text-4xl/8 leading-snug font-bold antialiased">
               <%= t("messages.welcome.hero_title_html") %>
             </h1>
 
@@ -33,11 +39,11 @@
             </p>
           </div>
 
-          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
-            <%= render Basic::IconComponent.new(
+          <%= link_to sign_up_path, class: "btn rounded-full w-fit self-center" do %>
+            <%= render BaseUI::IconComponent.new(
               name: "paper-plane-tilt",
               size: "18px",
-              class_name: "fill-primary-content"
+              class_name: "fill-primary-foreground"
             ) %>
 
             <%= t("nouns.sign_up") %>
@@ -45,14 +51,14 @@
         </div>
 
         <div class="flex flex-col gap-6 sm:gap-10">
-          <h2 class="text-center text-2xl/8 font-bold leading-snug antialiased">
+          <h2 class="text-center text-xl/8 leading-snug font-bold antialiased">
             <%= t("messages.welcome.features_title") %>
           </h2>
 
           <div class="flex flex-col gap-8">
             <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
-              <div class="flex flex-col gap-4">
-                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+              <div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+                <h3 class="text-lg/8 leading-snug font-bold antialiased">
                   <%= t("messages.welcome.markdown_feature_title") %>
                 </h3>
 
@@ -63,14 +69,14 @@
 
               <%= image_tag "welcome/image_1.png", {
                 alt: "",
-                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                class: "w-full basis-full sm:basis-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
 
             <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
-              <div class="flex flex-col gap-4">
-                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+              <div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+                <h3 class="text-lg/8 leading-snug font-bold antialiased">
                   <%= t("messages.welcome.wikilink_feature_title") %>
                 </h3>
 
@@ -81,14 +87,14 @@
 
               <%= image_tag "welcome/image_4.png", {
                 alt: "",
-                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                class: "w-full basis-full sm:basis-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
 
             <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
-              <div class="flex flex-col gap-4">
-                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+              <div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+                <h3 class="text-lg/8 leading-snug font-bold antialiased">
                   <%= t("messages.welcome.links_feature_title") %>
                 </h3>
 
@@ -103,14 +109,14 @@
 
               <%= image_tag "welcome/image_2.png", {
                 alt: "",
-                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                class: "w-full basis-full sm:basis-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
 
             <div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
-              <div class="flex flex-col gap-4">
-                <h3 class="text-lg/8 font-bold leading-snug antialiased">
+              <div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+                <h3 class="text-lg/8 leading-snug font-bold antialiased">
                   <%= t("messages.welcome.opensource_feature_title") %>
                 </h3>
 
@@ -125,7 +131,7 @@
 
               <%= image_tag "welcome/image_3.png", {
                 alt: "",
-                class: "w-full sm:w-1/2 rounded-lg border border-gray-300",
+                class: "w-full basis-full sm:basis-1/2 rounded-lg border border-gray-300",
                 loading: "lazy"
               } %>
             </div>
@@ -133,80 +139,80 @@
         </div>
 
         <div class="my-6 flex flex-col gap-6 sm:my-10">
-          <div class="text-center text-3xl/8 font-bold antialiased">
+          <div class="text-center text-2xl/8 font-bold antialiased">
             <%= t("messages.welcome.start_cta") %>
           </div>
 
-          <%= link_to sign_up_path, class: "btn btn-primary no-animation rounded-full w-fit self-center" do %>
-            <%= render Basic::IconComponent.new(
+          <%= link_to sign_up_path, class: "btn rounded-full w-fit self-center" do %>
+            <%= render BaseUI::IconComponent.new(
               name: "paper-plane-tilt",
               size: "18px",
-              class_name: "fill-primary-content"
+              class_name: "fill-primary-foreground"
             ) %>
 
             <%= t("nouns.sign_up") %>
           <% end %>
         </div>
 
-        <footer class="footer grid-cols-2 justify-around sm:grid-cols-3">
-          <nav>
-            <h6 class="footer-title">
+        <footer class="mx-auto grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               <%= t("messages.welcome.footer_resources") %>
             </h6>
 
-            <%= link_to "https://wikino.app/s/wikino", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_help_page") %>
             <% end %>
 
-            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino/pages/29", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_release_notes") %>
             <% end %>
 
-            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "link link-hover" do %>
+            <%= link_to "https://wikino.app/s/wikino/pages/3", class: "hover:underline" do %>
               <%= t("messages.welcome.footer_about_developer") %>
             <% end %>
           </nav>
 
-          <nav>
-            <h6 class="footer-title">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               <%= t("messages.welcome.footer_community") %>
             </h6>
 
             <%= link_to "Discord", "https://discord.gg/8qMetv8fUn", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "Bluesky", "https://bsky.app/profile/wikino.app", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "Mewst", "https://mewst.com/@wikino", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
 
             <%= link_to "GitHub", "https://github.com/wikinoapp/wikino", {
-              class: "link link-hover",
+              class: "hover:underline",
               target: "_blank",
               rel: "nofollow"
             } %>
           </nav>
 
-          <nav>
-            <h6 class="footer-title">
+          <nav class="flex flex-col gap-4">
+            <h6 class="font-bold uppercase">
               Legal
             </h6>
 
-            <%= link_to terms_path, class: "link link-hover" do %>
+            <%= link_to terms_path, class: "hover:underline" do %>
               <%= t("messages.welcome.footer_terms") %>
             <% end %>
 
-            <%= link_to privacy_path, class: "link link-hover" do %>
+            <%= link_to privacy_path, class: "hover:underline" do %>
               <%= t("messages.welcome.footer_privacy") %>
             <% end %>
           </nav>

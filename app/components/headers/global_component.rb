@@ -3,7 +3,7 @@
 
 module Headers
   class GlobalComponent < ApplicationComponent
-    renders_one :breadcrumbs
+    renders_one :breadcrumb
 
     sig { params(current_page_name: PageName, current_user: T.nilable(User)).void }
     def initialize(current_page_name:, current_user:)

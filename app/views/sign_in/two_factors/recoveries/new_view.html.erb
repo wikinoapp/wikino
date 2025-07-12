@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
       <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
-        <%= render Basic::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
+        <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
 
@@ -12,9 +12,9 @@
       </h1>
     </div>
 
-    <%= render Basic::CardComponent.new(class_name: "bg-base-300 border border-brand-200") do |card| %>
-      <%= card.with_body(class_name: "p-4") do %>
-        <div class="flex flex-col gap-4">
+    <%= render BaseUI::CardComponent.new do |card| %>
+      <%= card.with_body(class_name: "px-4") do %>
+        <div class="form grid gap-6">
           <p>
             <%= t("messages.two_factor_auth.enter_recovery_code") %>
             <br>
@@ -22,50 +22,42 @@
           </p>
 
           <%= form_with(
-            class: "flex flex-col gap-4",
+            class: "form grid gap-6",
             model: form,
             url: sign_in_two_factor_recovery_path
           ) do |f| %>
-            <%= render Cards::FormErrorsComponent.new(errors: f.object.errors) %>
+            <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <%= f.label :recovery_code, class: "form-control" do %>
-              <div class="label">
-                <span class="label-text">
-                  <%= t("forms.attributes.user_session_form/two_factor_recovery.recovery_code") %>
-                </span>
-              </div>
+            <div class="grid gap-2">
+              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :recovery_code) %>
 
               <%= f.text_field :recovery_code, {
-                class: "bg-base-300 input input-bordered w-full",
                 maxlength: 8,
                 placeholder: "code1234",
                 autocomplete: "off",
                 autofocus: true
               } %>
 
-              <div class="label">
-                <span class="label-text-alt">
-                  <%= t("messages.two_factor_auth.recovery_code_hint") %>
-                </span>
-              </div>
-            <% end %>
+              <p class="text-muted-foreground text-sm">
+                <%= t("messages.two_factor_auth.recovery_code_hint") %>
+              </p>
+            </div>
 
             <%= f.button(
-              class: "btn btn-primary no-animation rounded-full w-fit",
+              class: "btn rounded-full w-fit",
               type: :submit,
               tabindex: 3
             ) do %>
               <%= t("verbs.verify") %>
             <% end %>
           <% end %>
-
         </div>
       <% end %>
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 no-animation rounded-full group" do %>
-        <%= render Basic::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-content") %>
+      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
+        <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
 
         <%= t("verbs.back_to_home") %>
       <% end %>

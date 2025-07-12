@@ -1,108 +1,141 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "basecoat-css";
 
-@layer components {
+@theme {
+  --color-brand-50: #f9f7f7;
+  --color-brand-100: #f2efee;
+  --color-brand-200: #e6dfdd;
+  --color-brand-300: #d7cdca;
+  --color-brand-400: #bfafaa;
+  --color-brand-500: #a7928c;
+  --color-brand-600: #8f7973;
+  --color-brand-700: #77645e;
+  --color-brand-800: #645450;
+  --color-brand-900: #564a46;
+  --color-brand-950: #2c2523;
+
+  --z-index-*: initial;
+  --z-index-tooltip: 200;
+  --z-index-navbar: 100;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility wikino-markdown {
   /*
     ============================================================================
     .wikino-markdown
     ============================================================================
   */
-  .wikino-markdown {
-    @apply break-words;
-  }
+  @apply break-words;
 
-  .wikino-markdown > :first-child {
+  & > :first-child {
     @apply mt-0;
   }
 
-  .wikino-markdown a {
+  & a {
     @apply text-blue-600;
     /* 下線の調整 */
-    @apply underline decoration-blue-800/[.6] decoration-1 underline-offset-[0.25rem] hover:decoration-2;
+    @apply underline decoration-blue-800/60 decoration-1 underline-offset-[0.25rem] hover:decoration-2;
   }
 
-  .wikino-markdown blockquote {
-    @apply border-l-4 border-gray-300 pl-4 pr-4 text-base/8 text-gray-600;
+  & blockquote {
+    @apply border-l-4 border-gray-300 pr-4 pl-4 text-base/8 text-gray-600;
   }
 
-  .wikino-markdown code {
-    @apply inline rounded bg-gray-950/[.06] px-2 py-1 font-mono text-sm/normal;
+  & code {
+    @apply inline rounded-sm bg-gray-950/6 px-2 py-1 font-mono text-sm/normal;
   }
 
-  .wikino-markdown h1 {
-    @apply mb-4 mt-8 text-3xl/8 font-bold antialiased;
+  & h1 {
+    @apply mt-8 mb-4 text-2xl/8 font-bold antialiased;
   }
 
-  .wikino-markdown h2 {
-    @apply mb-4 mt-8 text-2xl/8 font-bold antialiased;
+  & h2 {
+    @apply mt-8 mb-4 text-xl/8 font-bold antialiased;
   }
 
-  .wikino-markdown h3 {
-    @apply mb-4 mt-8 text-xl/8 font-bold antialiased;
+  & h3 {
+    @apply mt-8 mb-4 text-lg/8 font-bold antialiased;
   }
 
-  .wikino-markdown h4 {
-    @apply mb-4 mt-8 text-lg/8 font-bold antialiased;
+  & h4 {
+    @apply mt-8 mb-4 text-base/8 font-bold antialiased;
   }
 
-  .wikino-markdown h5 {
-    @apply mb-4 mt-8 text-base/8 font-bold antialiased;
+  & h5 {
+    @apply mt-8 mb-4 text-base/8 font-bold antialiased;
   }
 
-  .wikino-markdown h6 {
-    @apply mb-4 mt-8 text-sm/8 font-bold antialiased;
+  & h6 {
+    @apply mt-8 mb-4 text-base/8 font-bold antialiased;
   }
 
-  .wikino-markdown hr {
+  & hr {
     @apply my-6 border-gray-300;
   }
 
-  .wikino-markdown img {
+  & img {
     @apply mx-auto;
   }
 
-  .wikino-markdown li {
+  & li {
     @apply mt-1;
   }
 
-  .wikino-markdown li p {
+  & li p {
     @apply mb-0;
   }
 
-  .wikino-markdown ol {
+  & ol {
     @apply mb-4 list-decimal pl-6 text-base/normal;
   }
 
-  .wikino-markdown p {
+  & p {
     @apply mb-4 leading-8;
   }
 
-  .wikino-markdown pre {
-    @apply mb-4 overflow-auto rounded-lg border border-brand-200 bg-gray-100 p-4;
+  & pre {
+    @apply border-brand-200 mb-4 overflow-auto rounded-lg border bg-gray-100 p-4;
   }
 
-  .wikino-markdown pre code {
+  & pre code {
     @apply block overflow-visible rounded-none bg-transparent p-0;
   }
 
-  .wikino-markdown table {
+  & table {
     @apply mb-4 border border-gray-500;
   }
 
-  .wikino-markdown table td {
+  & table td {
     @apply border border-gray-500 px-2 py-1;
   }
 
-  .wikino-markdown table th {
+  & table th {
     @apply border border-gray-500 px-2 py-1;
   }
 
-  .wikino-markdown table tr {
+  & table tr {
     @apply even:bg-gray-200;
   }
 
-  .wikino-markdown ul {
+  & ul {
     @apply mb-4 list-disc pl-6 text-base/normal;
   }
 }
@@ -113,17 +146,21 @@
   ============================================================================
 */
 .cm-editor {
-  @apply textarea textarea-bordered bg-base-300 px-2 text-base;
+  @apply border-input rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
 }
 
 .cm-editor.cm-focused {
-  @apply !outline !outline-2 !outline-offset-2 !outline-gray-300;
+  @apply border-ring ring-ring/50 ring-[3px] outline-2 outline-gray-300 outline-solid;
 }
 
 .cm-editor .cm-gutters {
-  @apply bg-base-300;
+  @apply bg-card;
 }
 
 .cm-editor .cm-lineNumbers {
-  @apply bg-base-300;
+  @apply bg-card;
+}
+
+.cm-editor .cm-content {
+  @apply py-2;
 }

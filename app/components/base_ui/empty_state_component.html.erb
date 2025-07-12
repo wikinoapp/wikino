@@ -1,0 +1,11 @@
+<%= tag.div(**build_options) do %>
+  <div>
+    <%= render BaseUI::IconComponent.new(name: icon_name, size: "50px", class_name: "fill-gray-900") %>
+  </div>
+
+  <h2>
+    <%= message %>
+  </h2>
+
+  <%= content %>
+<% end %>

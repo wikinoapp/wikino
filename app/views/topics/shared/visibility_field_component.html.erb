@@ -1,24 +1,20 @@
-<div>
-  <div class="label">
-    <span class="label-text">
-      <%= t("forms.attributes.topic_form/creation.visibility") %>
-    </span>
-  </div>
+<div class="flex flex-col gap-3">
+  <%= render BaseUI::LabelComponent.new(form_builder:, method: :visibility) %>
 
-  <div class="flex flex-col gap-4">
+  <fieldset class="grid gap-3">
     <div class="flex flex-col gap-2">
       <label class="flex cursor-pointer items-center gap-2">
         <%= form_builder.radio_button :visibility, TopicVisibility::Public.serialize, {
           class: "radio"
         } %>
 
-        <span class="label-text flex items-center gap-1">
-          <%= render Basic::IconComponent.new(name: "globe", size: "16px") %>
+        <span class="flex items-center gap-1">
+          <%= render BaseUI::IconComponent.new(name: "globe", size: "16px") %>
           <%= t("activerecord.attributes.topic.visibility.public") %>
         </span>
       </label>
 
-      <div class="label-text-alt pl-[32px]">
+      <div class="text-muted-foreground pl-[25px] text-sm">
         <%= t("forms.attributes.topic_form/creation.visibility_public_hint") %>
       </div>
     </div>
@@ -29,21 +25,31 @@
           class: "radio"
         } %>
 
-        <span class="label-text flex items-center gap-1">
-          <%= render Basic::IconComponent.new(name: "lock", size: "16px") %>
+        <span class="flex items-center gap-1">
+          <%= render BaseUI::IconComponent.new(name: "lock", size: "16px") %>
           <%= t("activerecord.attributes.topic.visibility.private") %>
         </span>
       </label>
 
-      <div class="label-text-alt pl-[32px]">
+      <div class="text-muted-foreground pl-[25px] text-sm">
         <p>
           <%= t("forms.attributes.topic_form/creation.visibility_private_hint") %>
         </p>
 
-        <p class="text-red-600">
-          <%= t("forms.attributes.topic_form/creation.visibility_private_hint_2_html") %>
+        <p class="font-bold">
+          <%= t("forms.attributes.topic_form/creation.visibility_private_hint_2_html",
+            learn_more_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/38",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
         </p>
       </div>
     </div>
-  </div>
+  </fieldset>
 </div>

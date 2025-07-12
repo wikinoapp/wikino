@@ -1,22 +1,30 @@
 <%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
-      <%= header.with_breadcrumbs do %>
-        <%= render Breadcrumbs::TopicBreadcrumbsComponent.new(topic:) %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::TopicComponent.new(topic:) %>
       <% end %>
     <% end %>
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render ContainerComponent.new(
-      as: ContainerComponent::As::Main,
-      class_name: "flex flex-col gap-6 px-4"
+    <%= render BaseUI::ContainerComponent.new(
+      as: BaseUI::ContainerComponent::As::Main,
+      options: {class: "flex flex-col gap-6 px-4"}
     ) do %>
       <article class="flex flex-col gap-6">
         <% if page.trashed? %>
-          <div class="alert alert-error gap-2" role="alert">
-            <%= t("messages.pages.trashed_page") %>
-            <%= link_to t("verbs.view_trash"), trash_path(space.identifier), class: "link" %>
+          <div class="alert">
+            <h2>
+              <%= t("messages.pages.trashed_page") %>
+
+              <%= render BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {href: trash_path(space.identifier)}
+              ) do %>
+                <%= t("verbs.view_trash") %>
+              <% end %>
+            </h2>
           </div>
         <% end %>
 

@@ -1,0 +1,27 @@
+<nav
+  role="navigation"
+  aria-label="pagination"
+  class="mx-auto flex w-full justify-center"
+>
+  <ul class="flex flex-row items-center gap-1">
+    <li>
+      <% if pagination.has_previous? %>
+        <%= link_to t("messages.pagination.prev_html"), previous_path, class: "btn-ghost" %>
+      <% else %>
+        <button class="btn-ghost" disabled>
+          <%= t("messages.pagination.prev_html") %>
+        </button>
+      <% end %>
+    </li>
+
+    <li>
+      <% if pagination.has_next? %>
+        <%= link_to t("messages.pagination.next_html"), next_path, class: "btn-ghost" %>
+      <% else %>
+        <button class="btn-ghost" disabled>
+          <%= t("messages.pagination.next_html") %>
+        </button>
+      <% end %>
+    </li>
+  </ul>
+</nav>

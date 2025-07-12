@@ -1,0 +1,19 @@
+<div class="<%= class_names("border-l-4 border-red-600", class_name) %>" role="alert">
+  <div class="flex flex-col gap-4 px-4 py-2">
+    <div class="flex items-center gap-2">
+      <%= render BaseUI::IconComponent.new(name: "warning", size: "20px", class_name: "fill-red-600") %>
+
+      <div class="text-lg font-bold text-red-600">
+        <%= t("nouns.error") %>
+      </div>
+    </div>
+
+    <ul class="list-inside list-disc">
+      <% errors.full_messages.each do |message| %>
+        <li>
+          <%= message.html_safe %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>
