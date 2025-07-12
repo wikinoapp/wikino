@@ -1,4 +1,4 @@
-<div class="bg-gray-100 flex w-fit items-center gap-4 rounded-full border border-gray-400 px-4 py-1 md:hidden">
+<div class="flex w-fit items-center gap-4 rounded-full border border-gray-400 bg-gray-100 px-4 py-1 md:hidden">
   <%= link_to signed_in? ? home_path : root_path, class: "flex flex-col gap-1 items-center" do %>
     <%= render BaseUI::IconComponent.new(name: current_page_name == PageName::Home ? "house-fill" : "house-regular", size: "26px", class_name: "fill-base-content") %>
 
