@@ -1,0 +1,73 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render BaseUI::ContainerComponent.new(
+      as: BaseUI::ContainerComponent::As::Main,
+      options: {class: "flex flex-col gap-6 px-4"}
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) %>
+
+      <div class="flex flex-col gap-6">
+        <%= form_with model: search_form, url: search_path, local: true, method: :get, class: "flex flex-col gap-4" do |form| %>
+          <div class="flex flex-col gap-2">
+            <%= form.label :keyword, t("nouns.search_keyword"), class: "font-medium text-sm" %>
+            <%= form.text_field :keyword,
+              placeholder: t("placeholders.search_keyword"),
+              class: "input w-full",
+              autofocus: true %>
+            <% if search_form.errors[:keyword].any? %>
+              <div class="text-destructive text-sm">
+                <%= search_form.errors[:keyword].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <%= form.submit t("actions.search"), class: "btn w-full" %>
+        <% end %>
+
+        <% if show_no_results_message? %>
+          <%= render BaseUI::EmptyStateComponent.new(
+            icon_name: "search",
+            message: t("messages.search.no_results")
+          ) %>
+        <% elsif has_search_results? %>
+          <div class="flex flex-col gap-2">
+            <h2 class="text-sm font-bold">
+              <%= t("messages.search.results_count", count: search_results.size) %>
+            </h2>
+
+            <div class="flex flex-col gap-1">
+              <% search_results.each do |page_record| %>
+                <div class="hover:bg-muted/50 rounded-lg border p-4 transition-colors">
+                  <%= link_to page_path(page_record.space.identifier, page_record.number),
+                    class: "block" do %>
+                    <div class="flex flex-col gap-1">
+                      <h3 class="font-medium">
+                        <%= page_record.title.presence || t("messages.pages.untitled") %>
+                      </h3>
+
+                      <div class="text-muted-foreground text-sm">
+                        <%= page_record.space.name %> / <%= page_record.topic.name %>
+                      </div>
+
+                      <div class="text-muted-foreground text-xs">
+                        <%= t("messages.pages.modified_at", time: l(page_record.modified_at, format: :short)) %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

@@ -12,6 +12,7 @@ class PageName < T::Enum
     PasswordEdit = new
     PasswordReset = new
     Profile = new
+    Search = new
     Settings = new
     SettingsEmail = new
     SettingsProfile = new
