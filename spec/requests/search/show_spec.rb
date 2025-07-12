@@ -31,7 +31,7 @@ RSpec.describe "GET /search", type: :request do
   end
 
   it "有効な検索キーワードがある場合、検索が実行されること" do
-    page_record = create(:page_record, 
+    create(:page_record, 
       space_record:, 
       topic_record:, 
       title: "テストページ"

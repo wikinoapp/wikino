@@ -25,7 +25,8 @@ class PageRepository < ApplicationRepository
       page_records: T.any(
         T::Array[PageRecord],
         PageRecord::PrivateCollectionProxy,
-        PageRecord::PrivateAssociationRelation
+        PageRecord::PrivateAssociationRelation,
+        PageRecord::PrivateRelation
       )
     ).returns(T::Array[Page])
   end

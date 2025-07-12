@@ -3,7 +3,7 @@
 
 module Search
   class ShowView < ApplicationView
-    sig { params(search_form: Pages::SearchForm, search_results: T::Array[PageRecord], current_user: User).void }
+    sig { params(search_form: Pages::SearchForm, search_results: T::Array[Page], current_user: User).void }
     def initialize(search_form:, search_results:, current_user:)
       @search_form = search_form
       @search_results = search_results
@@ -20,7 +20,7 @@ module Search
     attr_reader :search_form
     private :search_form
 
-    sig { returns(T::Array[PageRecord]) }
+    sig { returns(T::Array[Page]) }
     attr_reader :search_results
     private :search_results
 

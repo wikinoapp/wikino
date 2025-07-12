@@ -40,21 +40,21 @@
             </h2>
 
             <div class="flex flex-col gap-1">
-              <% search_results.each do |page_record| %>
+              <% search_results.each do |page| %>
                 <div class="hover:bg-muted/50 rounded-lg border p-4 transition-colors">
-                  <%= link_to page_path(page_record.space.identifier, page_record.number),
+                  <%= link_to page_path(page.space.identifier, page.number),
                     class: "block" do %>
                     <div class="flex flex-col gap-1">
                       <h3 class="font-medium">
-                        <%= page_record.title.presence || t("messages.pages.untitled") %>
+                        <%= page.display_title %>
                       </h3>
 
                       <div class="text-muted-foreground text-sm">
-                        <%= page_record.space.name %> / <%= page_record.topic.name %>
+                        <%= page.space.name %> / <%= page.topic.name %>
                       </div>
 
                       <div class="text-muted-foreground text-xs">
-                        <%= t("messages.pages.modified_at", time: l(page_record.modified_at, format: :short)) %>
+                        <%= t("messages.pages.modified_at", time: l(page.modified_at, format: :short)) %>
                       </div>
                     </div>
                   <% end %>
