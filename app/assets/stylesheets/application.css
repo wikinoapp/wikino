@@ -64,19 +64,19 @@
   }
 
   & h1 {
-    @apply mt-8 mb-4 text-3xl/8 font-bold antialiased;
-  }
-
-  & h2 {
     @apply mt-8 mb-4 text-2xl/8 font-bold antialiased;
   }
 
-  & h3 {
+  & h2 {
     @apply mt-8 mb-4 text-xl/8 font-bold antialiased;
   }
 
-  & h4 {
+  & h3 {
     @apply mt-8 mb-4 text-lg/8 font-bold antialiased;
+  }
+
+  & h4 {
+    @apply mt-8 mb-4 text-base/8 font-bold antialiased;
   }
 
   & h5 {
@@ -84,7 +84,7 @@
   }
 
   & h6 {
-    @apply mt-8 mb-4 text-sm/8 font-bold antialiased;
+    @apply mt-8 mb-4 text-base/8 font-bold antialiased;
   }
 
   & hr {
