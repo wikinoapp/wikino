@@ -146,11 +146,11 @@
   ============================================================================
 */
 .cm-editor {
-  @apply border-input rounded-md border bg-transparent px-2 text-base shadow-xs;
+  @apply border-input rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
 }
 
 .cm-editor.cm-focused {
-  @apply border-ring ring-ring/50 ring-[3px] outline-2! outline-gray-300! transition-[color,box-shadow] outline-solid!;
+  @apply border-ring ring-ring/50 ring-[3px] outline-2! outline-gray-300! outline-solid!;
 }
 
 .cm-editor .cm-gutters {
