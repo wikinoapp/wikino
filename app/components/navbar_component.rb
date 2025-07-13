@@ -32,6 +32,11 @@ class NavbarComponent < ApplicationComponent
   end
 
   sig { returns(String) }
+  private def search_icon_name
+    (current_page_name == PageName::Search) ? "magnifying-glass-fill" : "magnifying-glass-regular"
+  end
+
+  sig { returns(String) }
   private def inbox_icon_name
     (current_page_name == PageName::Inbox) ? "tray-fill" : "tray-regular"
   end

@@ -10,26 +10,18 @@
       title: t("nouns.home")
     ) %>
 
+    <%= render Navbar::ItemLinkComponent.new(
+      path: search_path,
+      icon_name: search_icon_name,
+      title: t("nouns.search")
+    ) %>
+
     <% if false %>
     <%= render Navbar::ItemLinkComponent.new(
       path: "#",
       icon_name: inbox_icon_name,
       title: t("nouns.inbox")
     ) %>
-
-    <%= button_to "#", {
-      class: class_names(
-        "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group",
-        class_name
-      ),
-      title: t("nouns.search")
-    } do %>
-      <%= render BaseUI::IconComponent.new(
-        name: "magnifying-glass",
-        size: "2rem",
-        class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
-      ) %>
-    <% end %>
     <% end %>
 
     <%= render Navbar::ItemLinkComponent.new(
