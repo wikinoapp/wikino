@@ -2,6 +2,7 @@
   class="bg-brand-100 flex min-h-screen flex-col gap-4"
   data-controller="global-hotkey"
   data-global-hotkey-search-path-target="searchPath"
+  <%= "data-global-hotkey-current-space-identifier-value=\"#{current_space.identifier}\"".html_safe if current_space %>
 >
   <meta name="search-path" content="<%= search_path %>" data-global-hotkey-target="searchPath">
   
