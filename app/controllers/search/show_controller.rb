@@ -18,11 +18,11 @@ module Search
 
       # 検索結果の取得
       search_results = if search_form.valid? && search_form.q.present?
-                         page_records = search_pages(search_form.q.not_nil!)
-                         PageRepository.new.to_models(page_records:)
-                       else
-                         []
-                       end
+        page_records = search_pages(search_form.q.not_nil!)
+        PageRepository.new.to_models(page_records:)
+      else
+        []
+      end
 
       render_component Search::ShowView.new(
         search_form:,
@@ -36,7 +36,7 @@ module Search
       # ユーザーが参加しているスペースのページを検索
       PageRecord
         .joins(space_record: :space_member_records)
-        .where(space_member_records: { user_id: current_user_record!.id })
+        .where(space_member_records: {user_id: current_user_record!.id})
         .where("pages.title ILIKE ?", "%#{keyword}%")
         .order(modified_at: :desc)
         .limit(50)
