@@ -12,21 +12,21 @@ module Search
     sig { returns(T.untyped) }
     def call
       # 検索フォームの初期化
-      search_form = Pages::SearchForm.new(
+      form = Pages::SearchForm.new(
         q: params[:q].to_s.strip
       )
 
       # 検索結果の取得
-      search_results = if search_form.valid? && search_form.q.present?
-        page_records = search_pages(search_form.q.not_nil!)
+      pages = if form.valid? && form.q.present?
+        page_records = search_pages(form.q.not_nil!)
         PageRepository.new.to_models(page_records:)
       else
         []
       end
 
       render_component Search::ShowView.new(
-        search_form:,
-        search_results:,
+        form:,
+        pages:,
         current_user: current_user!
       )
     end

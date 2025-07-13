@@ -3,10 +3,10 @@
 
 module Search
   class ShowView < ApplicationView
-    sig { params(search_form: Pages::SearchForm, search_results: T::Array[Page], current_user: User).void }
-    def initialize(search_form:, search_results:, current_user:)
-      @search_form = search_form
-      @search_results = search_results
+    sig { params(form: Pages::SearchForm, pages: T::Array[Page], current_user: User).void }
+    def initialize(form:, pages:, current_user:)
+      @search_form = form
+      @search_results = pages
       @current_user = current_user
     end
 
