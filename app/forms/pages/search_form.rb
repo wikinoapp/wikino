@@ -25,5 +25,27 @@ module Pages
 
       query_present?
     end
+
+    # space:指定子を解析してスペース識別子のリストを取得
+    sig { returns(T::Array[String]) }
+    def space_identifiers
+      return [] unless q.present?
+
+      q.scan(/space:(\S+)/).flatten
+    end
+
+    # space:指定子を除いたキーワードを取得
+    sig { returns(String) }
+    def keyword_without_space_filters
+      return "" unless q.present?
+
+      q.gsub(/space:\S+/, "").strip.squeeze(" ")
+    end
+
+    # スペースフィルターが指定されているかチェック
+    sig { returns(T::Boolean) }
+    def has_space_filters?
+      space_identifiers.any?
+    end
   end
 end

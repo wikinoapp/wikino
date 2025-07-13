@@ -18,7 +18,7 @@ module Search
 
       # 検索結果の取得
       pages = if form.valid? && form.q.present?
-        page_records = search_pages(form.q.not_nil!)
+        page_records = search_pages(form)
         PageRepository.new.to_models(page_records:)
       else
         []
@@ -31,9 +31,43 @@ module Search
       )
     end
 
+    sig { params(form: Pages::SearchForm).returns(PageRecord::PrivateRelation) }
+    private def search_pages(form)
+      # space:フィルターが指定されている場合はそれを使用
+      if form.has_space_filters?
+        search_pages_with_space_filters(form)
+      else
+        keyword = form.q.not_nil!
+        search_pages_all_user_spaces(keyword)
+      end
+    end
+
+    # 指定されたスペース内のページを検索
+    sig { params(form: Pages::SearchForm).returns(PageRecord::PrivateRelation) }
+    private def search_pages_with_space_filters(form)
+      space_identifiers = form.space_identifiers
+      keyword = form.keyword_without_space_filters
+      
+      base_query = PageRecord
+        .joins(:space_record)
+        .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
+        .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
+        .where("spaces.identifier IN (?)", space_identifiers)
+        .active
+        .order(modified_at: :desc)
+        .limit(50)
+      
+      # キーワードが存在する場合のみタイトル検索を追加
+      if keyword.present?
+        base_query.where("pages.title ILIKE ?", "%#{keyword}%")
+      else
+        base_query
+      end
+    end
+
+    # ユーザーが参加している全スペース内のページを検索
     sig { params(keyword: String).returns(PageRecord::PrivateRelation) }
-    private def search_pages(keyword)
-      # ユーザーが参加しているスペースのページを検索
+    private def search_pages_all_user_spaces(keyword)
       PageRecord
         .joins(space_record: :space_member_records)
         .where(space_member_records: {user_id: current_user_record!.id})
