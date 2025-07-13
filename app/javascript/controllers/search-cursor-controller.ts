@@ -25,6 +25,14 @@ export default class extends Controller<HTMLInputElement> {
     const spaceMatches = value.match(/space:\S+/g);
     if (!spaceMatches) return;
 
+    // space:フィルター以外のキーワードがあるかチェック
+    const valueWithoutSpaceFilters = value.replace(/space:\S+/g, "").trim();
+    if (valueWithoutSpaceFilters.length > 0) {
+      // 検索キーワードがある場合はデフォルトのカーソル位置（先頭）にする
+      input.setSelectionRange(0, 0);
+      return;
+    }
+
     // 最後のspace:フィルターの終了位置を計算
     let lastSpaceFilterEnd = 0;
     spaceMatches.forEach((match) => {
