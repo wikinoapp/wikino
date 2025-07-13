@@ -38,6 +38,7 @@ module Search
         .joins(space_record: :space_member_records)
         .where(space_member_records: {user_id: current_user_record!.id})
         .where("pages.title ILIKE ?", "%#{keyword}%")
+        .active
         .order(modified_at: :desc)
         .limit(50)
     end
