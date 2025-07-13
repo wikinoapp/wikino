@@ -64,6 +64,8 @@ en:
         totp_code: Authentication code
       user_session_form/two_factor_recovery:
         recovery_code: Recovery code
+      pages/search_form:
+        q: Search keyword
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
@@ -96,3 +98,9 @@ en:
           invalid_code: Authentication code is incorrect
         user_session_form/two_factor_recovery:
           invalid_code: Recovery code is incorrect
+        pages/search_form:
+          attributes:
+            q:
+              too_short: must be at least %{count} characters
+              too_long: must be no more than %{count} characters
+              invalid: contains invalid characters

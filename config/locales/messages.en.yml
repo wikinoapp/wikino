@@ -42,6 +42,12 @@ en:
       saved: Page saved.
       trashed_page: This page is in the trash.
       untitled: Untitled
+    search:
+      no_results: No search results found
+      results_count:
+        one: "%{count} search result"
+        other: "%{count} search results"
+      search_keyword_placeholder: Enter keywords
     password_resets:
       enter_your_email_html: Enter your email address to send a password reset email.
       reset_successfully_html: Password reset successfully.<br>Please sign in with the new password.
