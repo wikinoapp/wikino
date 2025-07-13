@@ -3,10 +3,23 @@
 
 module CardLinks
   class PageComponent < ApplicationComponent
-    sig { params(page: Page, show_topic_name: T::Boolean, card_class: String).void }
-    def initialize(page:, show_topic_name: true, card_class: "")
+    sig do
+      params(
+        page: Page,
+        show_topic_name: T::Boolean,
+        show_space_name: T::Boolean,
+        card_class: String
+      ).void
+    end
+    def initialize(page:, show_topic_name: true, show_space_name: false, card_class: "")
+      # `show_space_name: true & show_topic_name: false` の組み合わせは想定していない
+      if show_space_name && !show_topic_name
+        raise ArgumentError, "show_space_name: true requires show_topic_name: true"
+      end
+
       @page = page
       @show_topic_name = show_topic_name
+      @show_space_name = show_space_name
       @card_class = card_class
     end
 
@@ -18,6 +31,11 @@ module CardLinks
     attr_reader :show_topic_name
     private :show_topic_name
     alias_method :show_topic_name?, :show_topic_name
+
+    sig { returns(T::Boolean) }
+    attr_reader :show_space_name
+    private :show_space_name
+    alias_method :show_space_name?, :show_space_name
 
     sig { returns(String) }
     attr_reader :card_class

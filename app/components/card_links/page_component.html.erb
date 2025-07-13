@@ -11,7 +11,11 @@
             <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
             <div class="text-xs text-gray-500">
-              <%= topic.name %>
+              <% if show_space_name? %>
+                <%= space.name %> / <%= topic.name %>
+              <% else %>
+                <%= topic.name %>
+              <% end %>
             </div>
           </div>
         <% end %>
