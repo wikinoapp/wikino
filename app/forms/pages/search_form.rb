@@ -21,8 +21,7 @@ module Pages
 
     sig { returns(T::Boolean) }
     def searchable?
-      valid_result = valid?
-      return false unless valid_result == true
+      return false if invalid?
 
       q_present?
     end
