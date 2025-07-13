@@ -52,9 +52,6 @@ ja:
       reset_successfully_html: パスワードをリセットしました<br>新しいパスワードでログインしてください
     search:
       no_results: 検索結果が見つかりませんでした
-      results_count:
-        one: "%{count}件の検索結果"
-        other: "%{count}件の検索結果"
       search_keyword_placeholder: キーワードを入力してください
       subtitle: 参加しているスペース内のページタイトルを検索することができます
     profiles:

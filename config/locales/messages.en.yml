@@ -44,9 +44,6 @@ en:
       untitled: Untitled
     search:
       no_results: No search results found
-      results_count:
-        one: "%{count} search result"
-        other: "%{count} search results"
       search_keyword_placeholder: Enter keywords
       subtitle: Search for page titles within the spaces you are a member of.
     password_resets:
