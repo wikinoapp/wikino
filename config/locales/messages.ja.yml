@@ -55,6 +55,7 @@ ja:
       results_count:
         one: "%{count}件の検索結果"
         other: "%{count}件の検索結果"
+      search_keyword_placeholder: キーワードを入力してください
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます<br>

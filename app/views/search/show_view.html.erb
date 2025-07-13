@@ -15,7 +15,7 @@
           <div class="flex flex-col gap-2">
             <%= form.label :q, t("nouns.search_keyword"), class: "font-medium text-sm" %>
             <%= form.text_field :q,
-              placeholder: t("placeholders.search_keyword"),
+              placeholder: t("messages.search.search_keyword_placeholder"),
               class: "input w-full",
               autofocus: true %>
             <% if search_form.errors[:q].any? %>
