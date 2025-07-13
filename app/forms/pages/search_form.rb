@@ -22,8 +22,10 @@ module Pages
     sig { returns(T::Boolean) }
     def searchable?
       return false if invalid?
+      return false unless query_present?
 
-      query_present?
+      # 検索オプションのみの場合は検索実行しない
+      keyword_without_space_filters.present?
     end
 
     # space:指定子を解析してスペース識別子のリストを取得

@@ -17,7 +17,7 @@ module Search
       )
 
       # 検索結果の取得
-      pages = if form.valid? && form.q.present?
+      pages = if form.valid? && form.searchable?
         page_records = search_pages(form)
         PageRepository.new.to_models(page_records:)
       else
