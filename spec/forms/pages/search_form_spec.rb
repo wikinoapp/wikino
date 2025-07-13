@@ -44,20 +44,20 @@ RSpec.describe Pages::SearchForm, type: :model do
     end
   end
 
-  describe "#q_present?" do
+  describe "#query_present?" do
     it "キーワードが存在する場合、trueを返すこと" do
       form = described_class.new(q: "テスト")
-      expect(form.q_present?).to be true
+      expect(form.query_present?).to be true
     end
 
     it "キーワードが空文字列の場合、falseを返すこと" do
       form = described_class.new(q: "")
-      expect(form.q_present?).to be false
+      expect(form.query_present?).to be false
     end
 
     it "キーワードがnilの場合、falseを返すこと" do
       form = described_class.new(q: nil)
-      expect(form.q_present?).to be false
+      expect(form.query_present?).to be false
     end
   end
 
