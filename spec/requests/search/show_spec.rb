@@ -57,28 +57,45 @@ RSpec.describe "GET /search", type: :request do
     expect(response.body).to include("は2文字以上で入力してください")
   end
 
-  it "他のユーザーのスペースのページは検索結果に含まれないこと" do
+  it "他のユーザーのスペースのプライベートトピックのページは検索結果に含まれないこと" do
     other_user_record = create(:user_record, :with_password)
     other_space_record = create(:space_record)
-    other_topic_record = create(:topic_record, space_record: other_space_record)
+    other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
     create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
     create(:page_record, 
       space_record: other_space_record, 
       topic_record: other_topic_record, 
-      title: "他のユーザーのページ"
+      title: "他のユーザーのプライベートページ"
     )
 
-    get search_path, params: { q: "他のユーザー" }
+    get search_path, params: { q: "プライベートページ" }
     
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果が見つかりませんでした")
   end
 
+  it "他のユーザーのスペースの公開トピックのページは検索結果に含まれること" do
+    other_user_record = create(:user_record, :with_password)
+    other_space_record = create(:space_record)
+    other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
+    create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
+    create(:page_record, 
+      space_record: other_space_record, 
+      topic_record: other_topic_record, 
+      title: "他のユーザーの公開ページ"
+    )
+
+    get search_path, params: { q: "公開ページ" }
+    
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("他のユーザーの公開ページ")
+  end
+
   describe "space:フィルター機能" do
     let!(:space1_record) { create(:space_record, identifier: "space1") }
     let!(:space2_record) { create(:space_record, identifier: "space2") }
-    let!(:topic1_record) { create(:topic_record, space_record: space1_record) }
-    let!(:topic2_record) { create(:topic_record, space_record: space2_record) }
+    let!(:topic1_record) { create(:topic_record, space_record: space1_record, visibility: TopicVisibility::Private.serialize) }
+    let!(:topic2_record) { create(:topic_record, space_record: space2_record, visibility: TopicVisibility::Private.serialize) }
     let!(:membership1) { create(:space_member_record, user_record:, space_record: space1_record) }
     let!(:membership2) { create(:space_member_record, user_record:, space_record: space2_record) }
 
@@ -126,19 +143,34 @@ RSpec.describe "GET /search", type: :request do
       expect(response.body).to include("検索結果が見つかりませんでした")
     end
 
-    it "参加していないスペースは検索できないこと" do
+    it "参加していないスペースのプライベートトピックは検索できないこと" do
       other_space_record = create(:space_record, identifier: "other-space")
-      other_topic_record = create(:topic_record, space_record: other_space_record)
+      other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
       create(:page_record, 
         space_record: other_space_record, 
         topic_record: other_topic_record, 
-        title: "参加していないスペースのページ"
+        title: "参加していないスペースのプライベートページ"
       )
 
       get search_path, params: { q: "space:other-space" }
       
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("検索結果が見つかりませんでした")
+    end
+
+    it "参加していないスペースの公開トピックは検索できること" do
+      other_space_record = create(:space_record, identifier: "other-space")
+      other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
+      create(:page_record, 
+        space_record: other_space_record, 
+        topic_record: other_topic_record, 
+        title: "参加していないスペースの公開ページ"
+      )
+
+      get search_path, params: { q: "space:other-space 公開ページ" }
+      
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("参加していないスペースの公開ページ")
     end
   end
 end
