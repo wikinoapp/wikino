@@ -64,6 +64,8 @@ ja:
         totp_code: 認証コード
       user_session_form/two_factor_recovery:
         recovery_code: リカバリーコード
+      pages/search_form:
+        q: 検索キーワード
     errors:
       messages:
         cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
@@ -96,3 +98,9 @@ ja:
           invalid_code: が間違っています
         user_session_form/two_factor_recovery:
           invalid_code: が間違っています
+        pages/search_form:
+          attributes:
+            q:
+              too_short: は%{count}文字以上で入力してください
+              too_long: は%{count}文字以内で入力してください
+              invalid: に不正な文字が含まれています

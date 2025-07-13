@@ -4,6 +4,11 @@
 require "rails_helper"
 
 RSpec.describe Pages::SearchForm, type: :model do
+  around do |example|
+    I18n.with_locale(:ja) do
+      example.run
+    end
+  end
   describe "バリデーション" do
     it "有効なキーワードの場合、バリデーションが通ること" do
       form = described_class.new(q: "テストキーワード")
@@ -35,7 +40,7 @@ RSpec.describe Pages::SearchForm, type: :model do
     it "不正な文字(<や>)が含まれている場合、バリデーションエラーになること" do
       form = described_class.new(q: "test<script>")
       expect(form).not_to be_valid
-      expect(form.errors[:q]).to include("不正な文字が含まれています")
+      expect(form.errors[:q]).to include("に不正な文字が含まれています")
     end
   end
 
