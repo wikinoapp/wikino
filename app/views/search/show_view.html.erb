@@ -32,7 +32,11 @@
                   value: form.q,
                   placeholder: t("messages.search.search_keyword_placeholder"),
                   class: "input w-full",
-                  autofocus: true
+                  autofocus: true,
+                  data: {
+                    controller: "search-cursor",
+                    search_cursor_has_space_filter_value: form.has_space_filters?
+                  }
                 %>
               </div>
 

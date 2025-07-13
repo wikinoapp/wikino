@@ -7,6 +7,7 @@ import BulkActionFormController from "./controllers/bulk-action-form-controller"
 import FlashToastController from "./controllers/flash-toast-controller";
 import MarkdownEditorController from "./controllers/markdown-editor-controller";
 import MarkdownEditorFormController from "./controllers/markdown-editor-form-controller";
+import SearchCursorController from "./controllers/search-cursor-controller";
 import StuckController from "./controllers/stuck-controller";
 
 declare global {
@@ -24,6 +25,7 @@ window.Stimulus.register("bulk-action-form", BulkActionFormController);
 window.Stimulus.register("flash-toast", FlashToastController);
 window.Stimulus.register("markdown-editor-form", MarkdownEditorFormController);
 window.Stimulus.register("markdown-editor", MarkdownEditorController);
+window.Stimulus.register("search-cursor", SearchCursorController);
 window.Stimulus.register("stuck", StuckController);
 
 // basecoat-cssのドロップダウンメニューを動的に読み込む
