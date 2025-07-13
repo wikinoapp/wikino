@@ -5,8 +5,8 @@ module Search
   class ShowView < ApplicationView
     sig { params(form: Pages::SearchForm, pages: T::Array[Page], current_user: User).void }
     def initialize(form:, pages:, current_user:)
-      @search_form = form
-      @search_results = pages
+      @form = form
+      @pages = pages
       @current_user = current_user
     end
 
@@ -17,12 +17,12 @@ module Search
     end
 
     sig { returns(Pages::SearchForm) }
-    attr_reader :search_form
-    private :search_form
+    attr_reader :form
+    private :form
 
     sig { returns(T::Array[Page]) }
-    attr_reader :search_results
-    private :search_results
+    attr_reader :pages
+    private :pages
 
     sig { returns(User) }
     attr_reader :current_user
@@ -35,12 +35,12 @@ module Search
 
     sig { returns(T::Boolean) }
     private def has_search_results?
-      search_results.any?
+      pages.any?
     end
 
     sig { returns(T::Boolean) }
     private def show_no_results_message?
-      search_form.searchable? && !has_search_results?
+      form.searchable? && !has_search_results?
     end
   end
 end

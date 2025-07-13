@@ -56,6 +56,7 @@ ja:
         one: "%{count}件の検索結果"
         other: "%{count}件の検索結果"
       search_keyword_placeholder: キーワードを入力してください
+      subtitle: 参加しているスペース内のページタイトルを検索することができます
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます<br>

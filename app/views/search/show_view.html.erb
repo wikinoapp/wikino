@@ -8,24 +8,45 @@
       as: BaseUI::ContainerComponent::As::Main,
       options: {class: "flex flex-col gap-6 px-4"}
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) %>
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.search.subtitle") %>
+        <% end %>
+      <% end %>
 
       <div class="flex flex-col gap-6">
-        <%= form_with model: search_form, url: search_path, local: true, method: :get, class: "flex flex-col gap-4" do |form| %>
-          <div class="flex flex-col gap-2">
-            <%= form.label :q, t("nouns.search_keyword"), class: "font-medium text-sm" %>
-            <%= form.text_field :q,
-              placeholder: t("messages.search.search_keyword_placeholder"),
-              class: "input w-full",
-              autofocus: true %>
-            <% if search_form.errors[:q].any? %>
-              <div class="text-destructive text-sm">
-                <%= search_form.errors[:q].first %>
-              </div>
-            <% end %>
-          </div>
+        <%= render BaseUI::CardComponent.new do |card| %>
+          <%= card.with_body(class_name: "px-4") do %>
+            <%= form_with(
+              model: form,
+              url: search_path,
+              local: true,
+              method: :get,
+              class: "form flex flex-col gap-4"
+            ) do |f| %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-          <%= form.submit t("nouns.search"), class: "btn w-full" %>
+              <div class="flex flex-col gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :q) %>
+
+                <%= f.text_field :q,
+                  placeholder: t("messages.search.search_keyword_placeholder"),
+                  class: "input w-full",
+                  autofocus: true
+                %>
+              </div>
+
+              <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+                <%= render BaseUI::IconComponent.new(
+                  name: "magnifying-glass-regular",
+                  size: "18px",
+                  class_name: "fill-primary-foreground"
+                ) %>
+
+                <%= t("verbs.search") %>
+              <% end %>
+            <% end %>
+          <% end %>
         <% end %>
 
         <% if show_no_results_message? %>
@@ -36,11 +57,11 @@
         <% elsif has_search_results? %>
           <div class="flex flex-col gap-2">
             <h2 class="text-sm font-bold">
-              <%= t("messages.search.results_count", count: search_results.size) %>
+              <%= t("messages.search.results_count", count: pages.size) %>
             </h2>
 
             <div class="flex flex-col gap-1">
-              <% search_results.each do |page| %>
+              <% pages.each do |page| %>
                 <div class="hover:bg-muted/50 rounded-lg border p-4 transition-colors">
                   <%= link_to page_path(page.space.identifier, page.number),
                     class: "block" do %>
