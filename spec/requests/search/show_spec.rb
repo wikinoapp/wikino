@@ -31,28 +31,27 @@ RSpec.describe "GET /search", type: :request do
   end
 
   it "有効な検索キーワードがある場合、検索が実行されること" do
-    create(:page_record, 
-      space_record:, 
-      topic_record:, 
-      title: "テストページ"
-    )
+    create(:page_record,
+      space_record:,
+      topic_record:,
+      title: "テストページ")
 
-    get search_path, params: { q: "テスト" }
-    
+    get search_path, params: {q: "テスト"}
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("テストページ")
   end
 
   it "検索結果がない場合、適切なメッセージが表示されること" do
-    get search_path, params: { q: "存在しないキーワード" }
-    
+    get search_path, params: {q: "存在しないキーワード"}
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果が見つかりませんでした")
   end
 
   it "無効な検索キーワードの場合、エラーメッセージが表示されること" do
-    get search_path, params: { q: "a" }
-    
+    get search_path, params: {q: "a"}
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("は2文字以上で入力してください")
   end
@@ -62,14 +61,13 @@ RSpec.describe "GET /search", type: :request do
     other_space_record = create(:space_record)
     other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
     create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
-    create(:page_record, 
-      space_record: other_space_record, 
-      topic_record: other_topic_record, 
-      title: "他のユーザーのプライベートページ"
-    )
+    create(:page_record,
+      space_record: other_space_record,
+      topic_record: other_topic_record,
+      title: "他のユーザーのプライベートページ")
 
-    get search_path, params: { q: "プライベートページ" }
-    
+    get search_path, params: {q: "プライベートページ"}
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果が見つかりませんでした")
   end
@@ -79,14 +77,13 @@ RSpec.describe "GET /search", type: :request do
     other_space_record = create(:space_record)
     other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
     create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
-    create(:page_record, 
-      space_record: other_space_record, 
-      topic_record: other_topic_record, 
-      title: "他のユーザーの公開ページ"
-    )
+    create(:page_record,
+      space_record: other_space_record,
+      topic_record: other_topic_record,
+      title: "他のユーザーの公開ページ")
 
-    get search_path, params: { q: "公開ページ" }
-    
+    get search_path, params: {q: "公開ページ"}
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("他のユーザーの公開ページ")
   end
@@ -100,45 +97,43 @@ RSpec.describe "GET /search", type: :request do
     let!(:membership2) { create(:space_member_record, user_record:, space_record: space2_record) }
 
     before do
-      create(:page_record, 
-        space_record: space1_record, 
-        topic_record: topic1_record, 
-        title: "Space1のテストページ"
-      )
-      create(:page_record, 
-        space_record: space2_record, 
-        topic_record: topic2_record, 
-        title: "Space2のテストページ"
-      )
+      create(:page_record,
+        space_record: space1_record,
+        topic_record: topic1_record,
+        title: "Space1のテストページ")
+      create(:page_record,
+        space_record: space2_record,
+        topic_record: topic2_record,
+        title: "Space2のテストページ")
     end
 
     it "space:指定子で特定のスペース内のページを検索できること" do
-      get search_path, params: { q: "space:space1 テスト" }
-      
+      get search_path, params: {q: "space:space1 テスト"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Space1のテストページ")
       expect(response.body).not_to include("Space2のテストページ")
     end
 
     it "複数のspace:指定子で複数のスペース内のページを検索できること" do
-      get search_path, params: { q: "space:space1 space:space2 テスト" }
-      
+      get search_path, params: {q: "space:space1 space:space2 テスト"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Space1のテストページ")
       expect(response.body).to include("Space2のテストページ")
     end
 
     it "space:指定子のみでキーワードがない場合、そのスペースの全ページが表示されること" do
-      get search_path, params: { q: "space:space1" }
-      
+      get search_path, params: {q: "space:space1"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Space1のテストページ")
       expect(response.body).not_to include("Space2のテストページ")
     end
 
     it "存在しないスペース識別子の場合、検索結果が空になること" do
-      get search_path, params: { q: "space:nonexistent" }
-      
+      get search_path, params: {q: "space:nonexistent"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("検索結果が見つかりませんでした")
     end
@@ -146,14 +141,13 @@ RSpec.describe "GET /search", type: :request do
     it "参加していないスペースのプライベートトピックは検索できないこと" do
       other_space_record = create(:space_record, identifier: "other-space")
       other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
-      create(:page_record, 
-        space_record: other_space_record, 
-        topic_record: other_topic_record, 
-        title: "参加していないスペースのプライベートページ"
-      )
+      create(:page_record,
+        space_record: other_space_record,
+        topic_record: other_topic_record,
+        title: "参加していないスペースのプライベートページ")
 
-      get search_path, params: { q: "space:other-space" }
-      
+      get search_path, params: {q: "space:other-space"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("検索結果が見つかりませんでした")
     end
@@ -161,14 +155,13 @@ RSpec.describe "GET /search", type: :request do
     it "参加していないスペースの公開トピックは検索できること" do
       other_space_record = create(:space_record, identifier: "other-space")
       other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
-      create(:page_record, 
-        space_record: other_space_record, 
-        topic_record: other_topic_record, 
-        title: "参加していないスペースの公開ページ"
-      )
+      create(:page_record,
+        space_record: other_space_record,
+        topic_record: other_topic_record,
+        title: "参加していないスペースの公開ページ")
 
-      get search_path, params: { q: "space:other-space 公開ページ" }
-      
+      get search_path, params: {q: "space:other-space 公開ページ"}
+
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("参加していないスペースの公開ページ")
     end
