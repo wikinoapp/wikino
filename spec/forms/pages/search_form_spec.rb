@@ -9,6 +9,7 @@ RSpec.describe Pages::SearchForm, type: :model do
       example.run
     end
   end
+
   describe "バリデーション" do
     it "有効なキーワードの場合、バリデーションが通ること" do
       form = described_class.new(q: "テストキーワード")
