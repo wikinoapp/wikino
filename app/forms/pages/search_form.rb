@@ -33,7 +33,7 @@ module Pages
     def space_identifiers
       return [] if q.blank?
 
-      q.scan(/space:(\S+)/).flatten
+      q.not_nil!.scan(/space:(\S+)/).flatten
     end
 
     # space:指定子を除いたキーワードを取得
@@ -41,7 +41,7 @@ module Pages
     def keyword_without_space_filters
       return "" if q.blank?
 
-      q.gsub(/space:\S+/, "").strip.squeeze(" ")
+      q.not_nil!.gsub(/space:\S+/, "").strip.squeeze(" ")
     end
 
     # スペースフィルターが指定されているかチェック
