@@ -3,7 +3,7 @@
 
 require "rails_helper"
 
-RSpec.describe Pages::SearchForm, type: :model do
+RSpec.describe Pages::SearchForm, type: :form do
   around do |example|
     I18n.with_locale(:ja) do
       example.run
