@@ -25,22 +25,16 @@
             ) do |f| %>
               <%= render BaseUI::FormErrorsComponent.new(errors: form.errors) %>
 
-              <div class="flex flex-col gap-2">
-                <%= f.label :q, t("nouns.search_keyword") %>
-
-                <%= f.text_field :q,
-                  value: form.q,
-                  placeholder: t("messages.search.search_keyword_placeholder"),
-                  class: "input w-full",
-                  autofocus: true,
-                  data: {
-                    controller: "search-cursor",
-                    search_cursor_has_space_filter_value: form.has_space_filters?
-                  }
-                %>
-              </div>
-
-              <input type="submit" value="<%= t("verbs.search") %>" class="btn rounded-full w-fit" />
+              <%= f.text_field :q,
+                value: form.q,
+                placeholder: t("messages.search.search_keyword_placeholder"),
+                class: "input w-full",
+                autofocus: true,
+                data: {
+                  controller: "search-cursor",
+                  search_cursor_has_space_filter_value: form.has_space_filters?
+                }
+              %>
             <% end %>
           <% end %>
         <% end %>
