@@ -93,6 +93,8 @@ module Search
         .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
         .where("pages.title ILIKE ?", "%#{keyword}%")
         .active
+        .order(modified_at: :desc)
+        .limit(25)
         .pluck(:id)
 
       # 公開トピックのページのID（参加していないスペースも含む）
@@ -101,6 +103,8 @@ module Search
         .where(topics: {visibility: TopicVisibility::Public.serialize})
         .where("pages.title ILIKE ?", "%#{keyword}%")
         .active
+        .order(modified_at: :desc)
+        .limit(25)
         .pluck(:id)
 
       # IDを結合して重複を除去
@@ -111,7 +115,6 @@ module Search
         .where(id: combined_ids)
         .active
         .order(modified_at: :desc)
-        .limit(50)
     end
   end
 end
