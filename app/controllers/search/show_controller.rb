@@ -88,8 +88,9 @@ module Search
     private def search_pages_all_user_spaces(keyword)
       # 参加しているスペースのページのID
       member_page_ids = PageRecord
-        .joins(space_record: :space_member_records)
-        .where(space_member_records: {user_id: current_user_record!.id})
+        .joins(:space_record)
+        .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
+        .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
         .where("pages.title ILIKE ?", "%#{keyword}%")
         .active
         .pluck(:id)

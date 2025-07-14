@@ -40,7 +40,7 @@ RSpec.describe "GET /search", type: :request do
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
-    create(:page_record,
+    create(:page_record, :published,
       space_record:,
       topic_record:,
       title: "テストページ")
@@ -88,7 +88,7 @@ RSpec.describe "GET /search", type: :request do
     other_space_record = create(:space_record)
     other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
     create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
-    create(:page_record,
+    create(:page_record, :published,
       space_record: other_space_record,
       topic_record: other_topic_record,
       title: "他のユーザーのプライベートページ")
@@ -110,7 +110,7 @@ RSpec.describe "GET /search", type: :request do
     other_space_record = create(:space_record)
     other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
     create(:space_member_record, user_record: other_user_record, space_record: other_space_record)
-    create(:page_record,
+    create(:page_record, :published,
       space_record: other_space_record,
       topic_record: other_topic_record,
       title: "他のユーザーの公開ページ")
@@ -132,11 +132,11 @@ RSpec.describe "GET /search", type: :request do
       create(:space_member_record, user_record:, space_record: space2_record)
       sign_in(user_record:)
 
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space1_record,
         topic_record: topic1_record,
         title: "Space1のテストページ")
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space2_record,
         topic_record: topic2_record,
         title: "Space2のテストページ")
@@ -158,11 +158,11 @@ RSpec.describe "GET /search", type: :request do
       create(:space_member_record, user_record:, space_record: space2_record)
       sign_in(user_record:)
 
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space1_record,
         topic_record: topic1_record,
         title: "Space1のテストページ")
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space2_record,
         topic_record: topic2_record,
         title: "Space2のテストページ")
@@ -184,11 +184,11 @@ RSpec.describe "GET /search", type: :request do
       create(:space_member_record, user_record:, space_record: space2_record)
       sign_in(user_record:)
 
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space1_record,
         topic_record: topic1_record,
         title: "Space1のテストページ")
-      create(:page_record,
+      create(:page_record, :published,
         space_record: space2_record,
         topic_record: topic2_record,
         title: "Space2のテストページ")
@@ -222,7 +222,7 @@ RSpec.describe "GET /search", type: :request do
 
       other_space_record = create(:space_record, identifier: "other-space")
       other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Private.serialize)
-      create(:page_record,
+      create(:page_record, :published,
         space_record: other_space_record,
         topic_record: other_topic_record,
         title: "参加していないスペースのプライベートページ")
@@ -242,7 +242,7 @@ RSpec.describe "GET /search", type: :request do
 
       other_space_record = create(:space_record, identifier: "other-space")
       other_topic_record = create(:topic_record, space_record: other_space_record, visibility: TopicVisibility::Public.serialize)
-      create(:page_record,
+      create(:page_record, :published,
         space_record: other_space_record,
         topic_record: other_topic_record,
         title: "参加していないスペースの公開ページ")
