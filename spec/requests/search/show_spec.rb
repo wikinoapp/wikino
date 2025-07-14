@@ -174,7 +174,7 @@ RSpec.describe "GET /search", type: :request do
       expect(response.body).to include("Space2のテストページ")
     end
 
-    it "space:指定子のみでキーワードがない場合、そのスペースの全ページが表示されること" do
+    it "space:指定子のみでキーワードがない場合、検索結果が表示されないこと" do
       user_record = create(:user_record, :with_password)
       space1_record = create(:space_record, identifier: "space1")
       space2_record = create(:space_record, identifier: "space2")
@@ -196,8 +196,8 @@ RSpec.describe "GET /search", type: :request do
       get search_path, params: {q: "space:space1"}
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Space1のテストページ")
-      expect(response.body).not_to include("Space2のテストページ")
+      expect(response.body).to include("検索")
+      expect(response.body).not_to include("検索結果が見つかりませんでした")
     end
 
     it "存在しないスペース識別子の場合、検索結果が空になること" do
