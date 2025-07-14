@@ -253,4 +253,37 @@ RSpec.describe "GET /search", type: :request do
       expect(response.body).to include("参加していないスペースの公開ページ")
     end
   end
+
+  it "`PageRecord.active` でないページは検索結果に表示されないこと" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record)
+    topic_record = create(:topic_record, space_record:)
+    create(:space_member_record, user_record:, space_record:)
+    sign_in(user_record:)
+
+    # 公開済みページ (検索結果に表示される)
+    create(:page_record, :published,
+      space_record:,
+      topic_record:,
+      title: "公開済みページ")
+
+    # 未公開ページ (検索結果に表示されない)
+    create(:page_record, :not_published,
+      space_record:,
+      topic_record:,
+      title: "未公開ページ")
+
+    # ゴミ箱にあるページ (検索結果に表示されない)
+    create(:page_record, :published, :trashed,
+      space_record:,
+      topic_record:,
+      title: "ゴミ箱にあるページ")
+
+    get search_path, params: {q: "ページ"}
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("公開済みページ")
+    expect(response.body).not_to include("未公開ページ")
+    expect(response.body).not_to include("ゴミ箱にあるページ")
+  end
 end
