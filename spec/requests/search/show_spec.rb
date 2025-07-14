@@ -207,7 +207,7 @@ RSpec.describe "GET /search", type: :request do
       create(:space_member_record, user_record:, space_record:)
       sign_in(user_record:)
 
-      get search_path, params: {q: "space:nonexistent"}
+      get search_path, params: {q: "space:nonexistent テスト"}
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("検索結果が見つかりませんでした")
@@ -227,7 +227,7 @@ RSpec.describe "GET /search", type: :request do
         topic_record: other_topic_record,
         title: "参加していないスペースのプライベートページ")
 
-      get search_path, params: {q: "space:other-space"}
+      get search_path, params: {q: "space:other-space プライベート"}
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("検索結果が見つかりませんでした")
