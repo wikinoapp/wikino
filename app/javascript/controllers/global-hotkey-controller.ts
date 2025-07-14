@@ -11,7 +11,7 @@ export default class extends Controller {
 
   connect() {
     // `s` キーまたは `/` キーで検索ページにアクセス
-    install(this.element, "s,/");
+    install(this.element as HTMLElement, "s,/");
     this.element.addEventListener("hotkey-fire", this.navigateToSearch);
   }
 

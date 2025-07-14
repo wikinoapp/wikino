@@ -53,7 +53,7 @@ module Search
         .joins(:space_record)
         .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
         .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
-        .where("spaces.identifier IN (?)", space_identifiers)
+        .where(spaces: {identifier: space_identifiers})
         .active
         .order(modified_at: :desc)
         .limit(25)

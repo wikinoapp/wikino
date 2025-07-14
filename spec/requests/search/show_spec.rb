@@ -7,7 +7,7 @@ RSpec.describe "GET /search", type: :request do
   it "検索ページが正常に表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -24,7 +24,7 @@ RSpec.describe "GET /search", type: :request do
   it "検索キーワードがない場合、検索フォームのみが表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -54,7 +54,7 @@ RSpec.describe "GET /search", type: :request do
   it "検索結果がない場合、適切なメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -67,7 +67,7 @@ RSpec.describe "GET /search", type: :request do
   it "無効な検索キーワードの場合、エラーメッセージが表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -80,7 +80,7 @@ RSpec.describe "GET /search", type: :request do
   it "他のユーザーのスペースのプライベートトピックのページは検索結果に含まれないこと" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -102,7 +102,7 @@ RSpec.describe "GET /search", type: :request do
   it "他のユーザーのスペースの公開トピックのページは検索結果に含まれること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    topic_record = create(:topic_record, space_record:)
+    create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
@@ -203,7 +203,7 @@ RSpec.describe "GET /search", type: :request do
     it "存在しないスペース識別子の場合、検索結果が空になること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
-      topic_record = create(:topic_record, space_record:)
+      create(:topic_record, space_record:)
       create(:space_member_record, user_record:, space_record:)
       sign_in(user_record:)
 
@@ -216,7 +216,7 @@ RSpec.describe "GET /search", type: :request do
     it "参加していないスペースのプライベートトピックは検索できないこと" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
-      topic_record = create(:topic_record, space_record:)
+      create(:topic_record, space_record:)
       create(:space_member_record, user_record:, space_record:)
       sign_in(user_record:)
 
@@ -236,7 +236,7 @@ RSpec.describe "GET /search", type: :request do
     it "参加していないスペースの公開トピックは検索できること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
-      topic_record = create(:topic_record, space_record:)
+      create(:topic_record, space_record:)
       create(:space_member_record, user_record:, space_record:)
       sign_in(user_record:)
 
