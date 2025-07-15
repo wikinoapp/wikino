@@ -47,7 +47,7 @@ module Pages
     # space:指定子を除いたキーワードを配列で取得（複数キーワード対応）
     sig { returns(T::Array[String]) }
     def keywords_without_space_filters
-      keyword_without_space_filters.split.reject(&:blank?)
+      keyword_without_space_filters.split.compact_blank
     end
 
     # スペースフィルターが指定されているかチェック

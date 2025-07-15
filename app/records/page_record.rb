@@ -114,7 +114,7 @@ class PageRecord < ApplicationRecord
   # 全スペース内のページを検索（参加スペース + 公開トピック）
   sig { params(user_record: UserRecord, keyword: String).returns(PageRecord::PrivateRelation) }
   def self.search_in_user_spaces(user_record:, keyword:)
-    keywords = keyword.split.reject(&:blank?)
+    keywords = keyword.split.compact_blank
     return none if keywords.empty?
 
     # 参加しているスペースのページのID
