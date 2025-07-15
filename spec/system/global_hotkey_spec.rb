@@ -90,7 +90,8 @@ RSpec.describe "Global Hotkey", type: :system do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
-    create(:space_member_record, user_record:, space_record:)
+    space_member_record = create(:space_member_record, user_record:, space_record:)
+    create(:topic_member_record, space_record:, topic_record:, space_member_record:)
     page_record = create(:page_record, :published, space_record:, topic_record:)
     sign_in(user_record:)
 
