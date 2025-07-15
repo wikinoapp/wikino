@@ -25,7 +25,6 @@ RSpec.describe "Global Hotkey", type: :system do
   it "スペース内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
-    topic_record = create(:topic_record, space_record:)
     create(:space_member_record, user_record:, space_record:)
     sign_in(user_record:)
 
