@@ -29,6 +29,8 @@ ja:
         edit: パスワードの変更
       profiles:
         show: "%{name} (@%{atname})"
+      search:
+        show: 検索
       settings:
         account:
           deletions:

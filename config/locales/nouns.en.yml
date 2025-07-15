@@ -31,6 +31,7 @@ en:
     profile: Profile
     rss_feed: RSS feed
     search: Search
+    search_keyword: Search keyword
     search_or_create: Search or create
     settings: Settings
     sign_in: Sign in

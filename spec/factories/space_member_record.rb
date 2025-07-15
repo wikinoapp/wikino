@@ -6,6 +6,7 @@ FactoryBot.define do
     space_record
     user_record
     role { SpaceMemberRole::Owner.serialize }
+    active { true }
     joined_at { Time.current }
 
     trait :owner do

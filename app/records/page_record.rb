@@ -111,6 +111,91 @@ class PageRecord < ApplicationRecord
     pages.joins(:topic_record).merge(topic_records)
   end
 
+  # 全スペース内のページを検索（参加スペース + 公開トピック）
+  sig { params(user_record: UserRecord, keyword: String).returns(PageRecord::PrivateRelation) }
+  def self.search_in_user_spaces(user_record:, keyword:)
+    keywords = keyword.split.compact_blank
+    return none if keywords.empty?
+
+    # 参加しているスペースのページのID
+    member_query = joins(:space_record)
+      .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
+      .where("space_members.user_id = ? AND space_members.active = ?", user_record.id, true)
+      .active
+      .order(modified_at: :desc)
+      .limit(25)
+
+    # 各キーワードにAND検索を適用
+    keywords.each do |kw|
+      member_query = member_query.where("pages.title ILIKE ?", "%#{kw}%")
+    end
+    member_page_ids = member_query.pluck(:id)
+
+    # 公開トピックのページのID（参加していないスペースも含む）
+    public_query = joins(:topic_record)
+      .where(topics: {visibility: TopicVisibility::Public.serialize})
+      .active
+      .order(modified_at: :desc)
+      .limit(25)
+
+    # 各キーワードにAND検索を適用
+    keywords.each do |kw|
+      public_query = public_query.where("pages.title ILIKE ?", "%#{kw}%")
+    end
+    public_page_ids = public_query.pluck(:id)
+
+    # IDを結合して重複を除去
+    combined_ids = (member_page_ids + public_page_ids).uniq
+
+    # 結果を取得
+    where(id: combined_ids).active.order(modified_at: :desc)
+  end
+
+  # 指定されたスペース内のページを検索
+  sig do
+    params(
+      user_record: UserRecord,
+      space_identifiers: T::Array[String],
+      keywords: T::Array[String]
+    ).returns(PageRecord::PrivateRelation)
+  end
+  def self.search_in_specific_spaces(user_record:, space_identifiers:, keywords:)
+    # 参加しているスペースのページのクエリ
+    member_query = joins(:space_record)
+      .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
+      .where("space_members.user_id = ? AND space_members.active = ?", user_record.id, true)
+      .where(spaces: {identifier: space_identifiers})
+      .active
+      .order(modified_at: :desc)
+      .limit(25)
+
+    # 各キーワードにAND検索を適用
+    keywords.each do |keyword|
+      member_query = member_query.where("pages.title ILIKE ?", "%#{keyword}%")
+    end
+    member_page_ids = member_query.pluck(:id)
+
+    # 指定されたスペースの公開トピックのページのクエリ
+    public_query = joins(:space_record, :topic_record)
+      .where(spaces: {identifier: space_identifiers})
+      .where(topics: {visibility: TopicVisibility::Public.serialize})
+      .active
+      .order(modified_at: :desc)
+      .limit(25)
+
+    # 各キーワードにAND検索を適用
+    keywords.each do |keyword|
+      public_query = public_query.where("pages.title ILIKE ?", "%#{keyword}%")
+    end
+    public_page_ids = public_query.pluck(:id)
+
+    # IDを結合して重複を除去
+    combined_ids = (member_page_ids + public_page_ids).uniq
+
+    # 結果を取得
+    where(id: combined_ids).active.order(modified_at: :desc)
+  end
+
   sig { params(editor_record: SpaceMemberRecord).void }
   def add_editor!(editor_record:)
     page_editor_records.where(space_record:, space_member_record: editor_record).first_or_create!(

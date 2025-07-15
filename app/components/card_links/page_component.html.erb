@@ -7,13 +7,33 @@
 
       <div class="flex flex-col gap-1">
         <% if show_topic_name? %>
-          <div class="flex items-center gap-1">
-            <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
+          <% if show_space_name? %>
+            <div class="flex items-center gap-1">
+              <span class="text-xs text-gray-500">
+                <%= space.name %>
+              </span>
 
-            <div class="text-xs text-gray-500">
-              <%= topic.name %>
+              <span class="text-xs text-gray-500">
+                /
+              </span>
+
+              <div class="flex items-center gap-0.5">
+                <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
+
+                <span class="text-xs text-gray-500">
+                  <%= topic.name %>
+                </span>
+              </div>
             </div>
-          </div>
+          <% else %>
+            <div class="flex items-center gap-0.5">
+              <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
+
+              <span class="text-xs text-gray-500">
+                <%= topic.name %>
+              </span>
+            </div>
+          <% end %>
         <% end %>
 
         <div class="line-clamp-3 text-sm font-bold">

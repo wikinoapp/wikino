@@ -1,0 +1,70 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render BaseUI::ContainerComponent.new(
+      as: BaseUI::ContainerComponent::As::Main,
+      options: {class: "flex flex-col gap-6 px-4"}
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) do |main_title| %>
+        <%= main_title.with_subtitle do %>
+          <%= t("messages.search.subtitle_html",
+            search_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/62",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
+        <% end %>
+      <% end %>
+
+      <div class="flex flex-col gap-6">
+        <%= render BaseUI::CardComponent.new do |card| %>
+          <%= card.with_body(class_name: "px-4") do %>
+            <%= form_with(
+              url: search_path,
+              local: true,
+              method: :get,
+              class: "form flex flex-col gap-4"
+            ) do |f| %>
+              <%= render BaseUI::FormErrorsComponent.new(errors: form.errors) %>
+
+              <%= f.text_field :q,
+                value: form.q,
+                placeholder: t("messages.search.search_keyword_placeholder"),
+                class: "input w-full",
+                autofocus: true,
+                data: {
+                  controller: "search-cursor",
+                  search_cursor_has_space_filter_value: form.has_space_filters?
+                } %>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <% if show_no_results_message? %>
+          <%= render BaseUI::EmptyStateComponent.new(
+            icon_name: "search",
+            message: t("messages.search.no_results")
+          ) %>
+        <% elsif has_search_results? %>
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <% pages.each do |page| %>
+              <%= render CardLinks::PageComponent.new(page:, show_space_name: true) %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

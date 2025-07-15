@@ -2,7 +2,7 @@
   <%= breadcrumb.with_item do %>
     <%= link_to(
       topic_path(space.identifier, topic.number),
-      class: "flex gap-1 items-center"
+      class: "flex gap-0.5 items-center"
     ) do %>
       <%= render Icons::TopicComponent.new(topic:, size: "16px", class_name: "fill-gray-600") %>
 

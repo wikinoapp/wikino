@@ -50,6 +50,10 @@ ja:
     passwords:
       enter_new_password: 新しいパスワードを入力してください
       reset_successfully_html: パスワードをリセットしました<br>新しいパスワードでログインしてください
+    search:
+      no_results: 検索結果が見つかりませんでした
+      search_keyword_placeholder: キーワードを入力してください
+      subtitle_html: ページタイトルをキーワードで検索することができます。%{search_help_link}
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます<br>

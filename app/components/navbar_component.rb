@@ -2,10 +2,11 @@
 # frozen_string_literal: true
 
 class NavbarComponent < ApplicationComponent
-  sig { params(current_page_name: PageName, current_user: T.nilable(User), class_name: String).void }
-  def initialize(current_page_name:, current_user:, class_name: "")
+  sig { params(current_page_name: PageName, current_user: T.nilable(User), current_space: T.nilable(Space), class_name: String).void }
+  def initialize(current_page_name:, current_user:, current_space: nil, class_name: "")
     @current_page_name = current_page_name
     @current_user = current_user
+    @current_space = current_space
     @class_name = class_name
   end
 
@@ -16,6 +17,10 @@ class NavbarComponent < ApplicationComponent
   sig { returns(T.nilable(User)) }
   attr_reader :current_user
   private :current_user
+
+  sig { returns(T.nilable(Space)) }
+  attr_reader :current_space
+  private :current_space
 
   sig { returns(String) }
   attr_reader :class_name
@@ -32,6 +37,11 @@ class NavbarComponent < ApplicationComponent
   end
 
   sig { returns(String) }
+  private def search_icon_name
+    (current_page_name == PageName::Search) ? "magnifying-glass-fill" : "magnifying-glass-regular"
+  end
+
+  sig { returns(String) }
   private def inbox_icon_name
     (current_page_name == PageName::Inbox) ? "tray-fill" : "tray-regular"
   end
@@ -39,5 +49,14 @@ class NavbarComponent < ApplicationComponent
   sig { returns(String) }
   private def profile_icon_name
     (current_page_name == PageName::Profile) ? "user-circle-fill" : "user-circle-regular"
+  end
+
+  sig { returns(String) }
+  private def search_path_with_space_filter
+    if current_space.present?
+      search_path(q: "space:#{current_space.not_nil!.identifier}")
+    else
+      search_path
+    end
   end
 end
