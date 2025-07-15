@@ -53,7 +53,7 @@ ja:
     search:
       no_results: 検索結果が見つかりませんでした
       search_keyword_placeholder: キーワードを入力してください
-      subtitle: 参加しているスペース内のページと、公開トピック内のページタイトルを検索することができます
+      subtitle_html: ページタイトルをキーワードで検索することができます。%{search_help_link}
     profiles:
       atname_hint_html: |-
         プロフィールのURLに使用されます<br>

@@ -10,7 +10,17 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) do |main_title| %>
         <%= main_title.with_subtitle do %>
-          <%= t("messages.search.subtitle") %>
+          <%= t("messages.search.subtitle_html",
+            search_help_link: render(
+              BaseUI::LinkComponent.new(
+                variant: BaseUI::LinkComponent::Variant::Underline,
+                options: {
+                  href: "https://wikino.app/s/wikino/pages/62",
+                  target: "_blank"
+                }
+              ).with_content(t("messages._common.learn_more"))
+            )
+          ) %>
         <% end %>
       <% end %>
 

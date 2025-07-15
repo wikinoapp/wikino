@@ -45,7 +45,7 @@ en:
     search:
       no_results: No search results found
       search_keyword_placeholder: Enter keywords
-      subtitle: Search for page titles within the spaces you are a member of and in public topics.
+      subtitle_html: You can search for page titles by keyword. %{search_help_link}
     password_resets:
       enter_your_email_html: Enter your email address to send a password reset email.
       reset_successfully_html: Password reset successfully.<br>Please sign in with the new password.
