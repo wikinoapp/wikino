@@ -44,6 +44,12 @@ module Pages
       q.not_nil!.gsub(/space:\S+/, "").strip.squeeze(" ")
     end
 
+    # space:指定子を除いたキーワードを配列で取得（複数キーワード対応）
+    sig { returns(T::Array[String]) }
+    def keywords_without_space_filters
+      keyword_without_space_filters.split.reject(&:blank?)
+    end
+
     # スペースフィルターが指定されているかチェック
     sig { returns(T::Boolean) }
     def has_space_filters?

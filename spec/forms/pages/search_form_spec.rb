@@ -144,4 +144,31 @@ RSpec.describe Pages::SearchForm, type: :form do
       expect(form.has_space_filters?).to be false
     end
   end
+
+  describe "#keywords_without_space_filters" do
+    it "space:指定子を除いたキーワードを配列で返すこと" do
+      form = Pages::SearchForm.new(q: "space:my-space テスト キーワード")
+      expect(form.keywords_without_space_filters).to eq(["テスト", "キーワード"])
+    end
+
+    it "複数のspace:指定子を除いたキーワードを配列で返すこと" do
+      form = Pages::SearchForm.new(q: "space:space1 space:space2 テスト キーワード")
+      expect(form.keywords_without_space_filters).to eq(["テスト", "キーワード"])
+    end
+
+    it "space:指定子のみの場合、空配列を返すこと" do
+      form = Pages::SearchForm.new(q: "space:my-space")
+      expect(form.keywords_without_space_filters).to eq([])
+    end
+
+    it "space:指定子がない場合、キーワードを配列で返すこと" do
+      form = Pages::SearchForm.new(q: "テスト キーワード")
+      expect(form.keywords_without_space_filters).to eq(["テスト", "キーワード"])
+    end
+
+    it "キーワードがnilの場合、空配列を返すこと" do
+      form = Pages::SearchForm.new(q: nil)
+      expect(form.keywords_without_space_filters).to eq([])
+    end
+  end
 end
