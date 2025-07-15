@@ -72,20 +72,14 @@ RSpec.describe "Global Hotkey", type: :system do
     page_record = create(:page_record, :published, space_record:, topic_record:)
     sign_in(user_record:)
 
-    visit page_path(space_record.identifier, topic_record.number, page_record.number)
-
-    # ページが完全に読み込まれるまで待機
-    sleep 0.5
+    visit page_path(space_record.identifier, page_record.number)
 
     # sキーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
     expect(page).to have_current_path(search_path(q: "space:test-space"))
 
     # ページに戻る
-    visit page_path(space_record.identifier, topic_record.number, page_record.number)
-
-    # ページが完全に読み込まれるまで待機
-    sleep 0.5
+    visit page_path(space_record.identifier, page_record.number)
 
     # /キーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("/").perform
@@ -100,10 +94,7 @@ RSpec.describe "Global Hotkey", type: :system do
     page_record = create(:page_record, :published, space_record:, topic_record:)
     sign_in(user_record:)
 
-    visit edit_page_path(space_record.identifier, topic_record.number, page_record.number)
-
-    # ページが完全に読み込まれるまで待機
-    sleep 0.5
+    visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
     find("h1").click
@@ -113,10 +104,7 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path(q: "space:test-space"))
 
     # ページ編集画面に戻る
-    visit edit_page_path(space_record.identifier, topic_record.number, page_record.number)
-
-    # ページが完全に読み込まれるまで待機
-    sleep 0.5
+    visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
     find("h1").click
