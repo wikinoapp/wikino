@@ -1,5 +1,3 @@
-// typed: true
-
 import { Controller } from "@hotwired/stimulus";
 
 // space:フィルターがある場合にカーソル位置を調整するコントローラー
