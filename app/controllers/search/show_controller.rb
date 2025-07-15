@@ -35,103 +35,17 @@ module Search
     private def search_pages(form)
       # space:フィルターが指定されている場合はそれを使用
       if form.has_space_filters?
-        search_pages_with_space_filters(form)
+        PageRecord.search_in_specific_spaces(
+          user_record: current_user_record!,
+          space_identifiers: form.space_identifiers,
+          keywords: form.keywords_without_space_filters
+        )
       else
-        keyword = form.q.not_nil!
-        search_pages_all_user_spaces(keyword)
+        PageRecord.search_in_user_spaces(
+          user_record: current_user_record!,
+          keyword: form.q.not_nil!
+        )
       end
-    end
-
-    # 指定されたスペース内のページを検索
-    sig { params(form: Pages::SearchForm).returns(PageRecord::PrivateRelation) }
-    private def search_pages_with_space_filters(form)
-      space_identifiers = form.space_identifiers
-      keywords = form.keywords_without_space_filters
-
-      # 参加しているスペースのページのクエリ
-      member_query = PageRecord
-        .joins(:space_record)
-        .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
-        .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
-        .where(spaces: {identifier: space_identifiers})
-        .active
-        .order(modified_at: :desc)
-        .limit(25)
-
-      # 各キーワードにAND検索を適用
-      keywords.each do |keyword|
-        member_query = member_query.where("pages.title ILIKE ?", "%#{keyword}%")
-      end
-      member_page_ids = member_query.pluck(:id)
-
-      # 指定されたスペースの公開トピックのページのクエリ
-      public_query = PageRecord
-        .joins(:space_record, :topic_record)
-        .where(spaces: {identifier: space_identifiers})
-        .where(topics: {visibility: TopicVisibility::Public.serialize})
-        .active
-        .order(modified_at: :desc)
-        .limit(25)
-
-      # 各キーワードにAND検索を適用
-      keywords.each do |keyword|
-        public_query = public_query.where("pages.title ILIKE ?", "%#{keyword}%")
-      end
-      public_page_ids = public_query.pluck(:id)
-
-      # IDを結合して重複を除去
-      combined_ids = (member_page_ids + public_page_ids).uniq
-
-      # 結果を取得
-      PageRecord
-        .where(id: combined_ids)
-        .active
-        .order(modified_at: :desc)
-    end
-
-    # 全スペース内のページを検索（参加スペース + 公開トピック）
-    sig { params(keyword: String).returns(PageRecord::PrivateRelation) }
-    private def search_pages_all_user_spaces(keyword)
-      keywords = keyword.split.reject(&:blank?)
-      return PageRecord.none if keywords.empty?
-
-      # 参加しているスペースのページのID
-      member_query = PageRecord
-        .joins(:space_record)
-        .joins("INNER JOIN space_members ON spaces.id = space_members.space_id")
-        .where("space_members.user_id = ? AND space_members.active = ?", current_user_record!.id, true)
-        .active
-        .order(modified_at: :desc)
-        .limit(25)
-
-      # 各キーワードにAND検索を適用
-      keywords.each do |kw|
-        member_query = member_query.where("pages.title ILIKE ?", "%#{kw}%")
-      end
-      member_page_ids = member_query.pluck(:id)
-
-      # 公開トピックのページのID（参加していないスペースも含む）
-      public_query = PageRecord
-        .joins(:topic_record)
-        .where(topics: {visibility: TopicVisibility::Public.serialize})
-        .active
-        .order(modified_at: :desc)
-        .limit(25)
-
-      # 各キーワードにAND検索を適用
-      keywords.each do |kw|
-        public_query = public_query.where("pages.title ILIKE ?", "%#{kw}%")
-      end
-      public_page_ids = public_query.pluck(:id)
-
-      # IDを結合して重複を除去
-      combined_ids = (member_page_ids + public_page_ids).uniq
-
-      # 結果を取得
-      PageRecord
-        .where(id: combined_ids)
-        .active
-        .order(modified_at: :desc)
     end
   end
 end
