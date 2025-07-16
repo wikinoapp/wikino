@@ -54,7 +54,7 @@
             message: t("messages.search.no_results")
           ) %>
         <% elsif has_search_results? %>
-          <div class="grid grid-cols-2 gap-2 md:grid-cols-4 items-stretch">
+          <div class="grid grid-cols-2 items-stretch gap-2 md:grid-cols-4">
             <% pages.each do |page| %>
               <%= render CardLinks::PageComponent.new(
                 page:,
