@@ -1,5 +1,6 @@
 import { EditorView } from "codemirror";
 import { EditorSelection, SelectionRange } from "@codemirror/state";
+import { detectListPattern } from "./list-continuation";
 
 /**
  * インデントサイズ (半角スペース2つ)
@@ -52,7 +53,38 @@ export function handleTab(view: EditorView): boolean {
         return lineChanges;
       }
 
-      // 選択範囲がない場合は、カーソル位置にインデントを挿入
+      // 選択範囲がない場合は、リスト項目の処理またはインデント挿入
+      const line = state.doc.lineAt(range.from);
+      const lineText = line.text;
+      const cursorPositionInLine = range.from - line.from;
+
+      // 現在行のリスト記法を検出
+      const listInfo = detectListPattern(lineText);
+
+      if (listInfo) {
+        // タスクリストの場合のマーカー後の位置を計算
+        let markerEndPosition: number;
+        if (listInfo.type === "task") {
+          // タスクリストの場合: "- [ ] " の長さ
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 5; // "- " + "[ ] "
+        } else {
+          // 通常のリストの場合: "- " の長さ
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 1; // マーカー + 空白
+        }
+
+        // カーソルがリストマーカーの直後にある場合
+        if (cursorPositionInLine === markerEndPosition && listInfo.content === "") {
+          // 空のリスト項目をネストされたリストアイテムにする
+          const originalMarker = lineText.substring(listInfo.indent.length, markerEndPosition);
+          return {
+            from: line.from,
+            to: line.from + markerEndPosition,
+            insert: listInfo.indent + INDENT_SIZE + originalMarker,
+          };
+        }
+      }
+
+      // 通常のインデント挿入
       return {
         from: range.from,
         insert: INDENT_SIZE,
@@ -64,9 +96,18 @@ export function handleTab(view: EditorView): boolean {
   const transaction = state.update({
     changes,
     selection: EditorSelection.create(
-      ranges.map((range: SelectionRange) => {
+      ranges.map((range: SelectionRange, index: number) => {
         if (range.from === range.to) {
-          // 単一カーソルの場合、インデント分だけカーソルを移動
+          // 単一カーソルの場合
+          const change = changes[index] as ChangeSpec;
+
+          // リスト項目のネスト変換の場合
+          if (change.to !== undefined && change.to > change.from) {
+            // 新しいリストマーカーの後にカーソルを配置
+            return EditorSelection.cursor(change.from + change.insert.length);
+          }
+
+          // 通常のインデント挿入の場合
           return EditorSelection.cursor(range.from + INDENT_SIZE.length);
         } else {
           // 選択範囲がある場合、選択を維持
