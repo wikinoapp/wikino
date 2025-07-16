@@ -8,8 +8,25 @@ export default class extends Controller<HTMLInputElement> {
 
   connect() {
     if (this.hasSpaceFilterValue) {
-      this.positionCursorAfterSpaceFilters();
+      // Safari でキーボードショートカットを利用して検索ページに来たとき、
+      // `space:` フィルターのあとにカーソルが来ないため、入力値が設定されるのを待つ
+      this.waitForInputReady().then(() => {
+        this.positionCursorAfterSpaceFilters();
+      });
     }
+  }
+
+  // 入力要素が完全に準備できるまで待機
+  private waitForInputReady(): Promise<void> {
+    return new Promise((resolve) => {
+      // requestAnimationFrame を2回呼び出して描画完了を確実に待つ
+      // 1回目でDOM更新の完了を待ち、2回目で内部処理 (入力要素の初期化など) が完了するのを待つ
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
   }
 
   // space:フィルターの後にカーソルを移動し、必要に応じてスペースを追加
