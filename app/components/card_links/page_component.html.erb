@@ -1,4 +1,4 @@
-<%= link_to page_path(space.identifier, page.number) do %>
+<%= link_to page_path(space.identifier, page.number), build_options do %>
   <%= render BaseUI::CardComponent.new(class_name: build_card_class) do |card| %>
     <%= card.with_body do %>
       <% if page.pinned? %>
@@ -8,9 +8,9 @@
       <div class="flex flex-col gap-1">
         <% if show_topic_name? %>
           <% if show_space_name? %>
-            <div class="flex items-center gap-1">
+            <div class="flex flex-wrap items-center gap-1">
               <span class="text-xs text-gray-500">
-                <%= space.name %>
+                <%= space.name.truncate(10) %>
               </span>
 
               <span class="text-xs text-gray-500">
@@ -21,7 +21,7 @@
                 <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
                 <span class="text-xs text-gray-500">
-                  <%= topic.name %>
+                  <%= topic.name.truncate(10) %>
                 </span>
               </div>
             </div>
@@ -30,7 +30,7 @@
               <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
               <span class="text-xs text-gray-500">
-                <%= topic.name %>
+                <%= topic.name.truncate(20) %>
               </span>
             </div>
           <% end %>
