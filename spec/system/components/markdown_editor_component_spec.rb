@@ -258,6 +258,57 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(editor_content).to eq("インデント付きテキスト")
     end
 
+    it "リスト項目の先頭でタブキーを押すとネストされたリスト項目になること" do
+      visit_page_editor
+      clear_editor
+      # リスト項目を作成
+      set_editor_content(text: "- a\n- ")
+
+      # カーソルを2行目のマーカーの直後に移動
+      set_cursor_position(line: 2, column: 2)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n  - ")
+    end
+
+    it "タスクリスト項目の先頭でタブキーを押すとネストされたタスクリスト項目になること" do
+      visit_page_editor
+      clear_editor
+      # タスクリスト項目を作成
+      set_editor_content(text: "- [ ] タスク1\n- [ ] ")
+
+      # カーソルを2行目のタスクマーカーの直後に移動
+      set_cursor_position(line: 2, column: 6)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [ ] タスク1\n  - [ ] ")
+    end
+
+    it "既にインデントされたリスト項目でタブキーを押すとさらにネストされること" do
+      visit_page_editor
+      clear_editor
+      # インデント付きリスト項目を作成
+      set_editor_content(text: "  - インデント1\n  - ")
+
+      # カーソルを2行目のマーカーの直後に移動
+      set_cursor_position(line: 2, column: 4)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("  - インデント1\n    - ")
+    end
+
     it "行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること" do
       visit_page_editor
       clear_editor
@@ -535,5 +586,23 @@ RSpec.describe "Markdownエディター", type: :system do
       to_column: selection_info["toColumn"],
       has_selection: selection_info["hasSelection"]
     }
+  end
+
+  private def set_cursor_position(line:, column:)
+    # カーソル位置を設定するJavaScript
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var lineInfo = doc.line(#{line});
+        var position = lineInfo.from + #{column};
+
+        editorView.dispatch({
+          selection: { anchor: position, head: position }
+        });
+        editorView.focus();
+      })();
+    JS
   end
 end

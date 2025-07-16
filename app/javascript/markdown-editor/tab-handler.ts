@@ -62,16 +62,24 @@ export function handleTab(view: EditorView): boolean {
       const listInfo = detectListPattern(lineText);
 
       if (listInfo) {
-        // リストマーカーの後の位置を計算
-        const markerEndPosition = listInfo.indent.length + listInfo.marker.length + 1; // マーカー + 空白
+        // タスクリストの場合のマーカー後の位置を計算
+        let markerEndPosition: number;
+        if (listInfo.type === "task") {
+          // タスクリストの場合: "- [ ] " の長さ
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 5; // "- " + "[ ] "
+        } else {
+          // 通常のリストの場合: "- " の長さ
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 1; // マーカー + 空白
+        }
 
         // カーソルがリストマーカーの直後にある場合
-        if (cursorPositionInLine === markerEndPosition) {
-          // "- " を "  - " に変換（ネストされたリストアイテムにする）
+        if (cursorPositionInLine === markerEndPosition && listInfo.content === "") {
+          // 空のリスト項目をネストされたリストアイテムにする
+          const originalMarker = lineText.substring(listInfo.indent.length, markerEndPosition);
           return {
             from: line.from,
             to: line.from + markerEndPosition,
-            insert: listInfo.indent + INDENT_SIZE + listInfo.marker + " ",
+            insert: listInfo.indent + INDENT_SIZE + originalMarker,
           };
         }
       }
