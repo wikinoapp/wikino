@@ -112,7 +112,7 @@
   }
 
   & pre {
-    @apply border-brand-200 mb-4 overflow-auto rounded-lg border bg-gray-100 p-4;
+    @apply border-brand-200 bg-card mb-4 overflow-auto rounded-lg border p-4;
   }
 
   & pre code {
