@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2">
   <% links.each do |link| %>
-    <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-      <%= render CardLinks::PageComponent.new(page: link.page) %>
+    <div class="grid grid-cols-2 gap-2 md:grid-cols-4 items-stretch">
+      <%= render CardLinks::PageComponent.new(page: link.page, card_class: "h-full") %>
       <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list) %>
     </div>
   <% end %>
