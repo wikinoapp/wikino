@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = Emails::EditForm.new
+        form = ::Emails::EditForm.new
 
         render_component Settings::Emails::ShowView.new(
           current_user: current_user!,

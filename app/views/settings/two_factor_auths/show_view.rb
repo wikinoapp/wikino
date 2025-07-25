@@ -8,7 +8,7 @@ module Settings
         params(
           current_user: User,
           user_two_factor_auth: T.nilable(UserTwoFactorAuth),
-          form: TwoFactorAuths::DestructionForm
+          form: ::TwoFactorAuths::DestructionForm
         ).void
       end
       def initialize(current_user:, user_two_factor_auth:, form:)
@@ -30,7 +30,7 @@ module Settings
       attr_reader :user_two_factor_auth
       private :user_two_factor_auth
 
-      sig { returns(TwoFactorAuths::DestructionForm) }
+      sig { returns(::TwoFactorAuths::DestructionForm) }
       attr_reader :form
       private :form
 

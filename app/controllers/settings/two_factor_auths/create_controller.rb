@@ -13,7 +13,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = TwoFactorAuths::CreationForm.new(
+        form = ::TwoFactorAuths::CreationForm.new(
           form_params.merge(user_record: current_user_record!)
         )
 

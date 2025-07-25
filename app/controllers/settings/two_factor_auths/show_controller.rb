@@ -15,7 +15,7 @@ module Settings
         user_two_factor_auth = UserTwoFactorAuthRepository.new.find_by_user(
           user_record: current_user_record!
         )
-        form = TwoFactorAuths::DestructionForm.new
+        form = ::TwoFactorAuths::DestructionForm.new
 
         render_component Settings::TwoFactorAuths::ShowView.new(
           current_user: current_user!,

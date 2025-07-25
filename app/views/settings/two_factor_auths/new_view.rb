@@ -10,7 +10,7 @@ module Settings
           secret: String,
           provisioning_uri: String,
           qr_code: T.nilable(String),
-          form: TwoFactorAuths::CreationForm
+          form: ::TwoFactorAuths::CreationForm
         ).void
       end
       def initialize(current_user:, secret:, provisioning_uri:, qr_code:, form:)
@@ -42,7 +42,7 @@ module Settings
       attr_reader :qr_code
       private :qr_code
 
-      sig { returns(TwoFactorAuths::CreationForm) }
+      sig { returns(::TwoFactorAuths::CreationForm) }
       attr_reader :form
       private :form
 

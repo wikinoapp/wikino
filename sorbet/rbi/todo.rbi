@@ -4,17 +4,8 @@
 
 # typed: false
 
-# Form classes that Sorbet is unable to resolve
-module TwoFactorAuths
-  class CreationForm < ApplicationForm; end
-  class DestructionForm < ApplicationForm; end
-  class RecoveryCodeRegenerationForm < ApplicationForm; end
-end
-
-module Profiles
-  class EditForm < ApplicationForm; end
-end
-
-module Emails
-  class EditForm < ApplicationForm; end
-end
+module Settings::Emails::EditForm; end
+module Settings::Profiles::EditForm; end
+module Settings::TwoFactorAuths::CreationForm; end
+module Settings::TwoFactorAuths::DestructionForm; end
+module Settings::TwoFactorAuths::RecoveryCodeRegenerationForm; end

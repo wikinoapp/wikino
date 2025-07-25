@@ -9,7 +9,7 @@ module Settings
           params(
             current_user: User,
             user_two_factor_auth: UserTwoFactorAuth,
-            form: TwoFactorAuths::RecoveryCodeRegenerationForm
+            form: ::TwoFactorAuths::RecoveryCodeRegenerationForm
           ).void
         end
         def initialize(
@@ -35,7 +35,7 @@ module Settings
         attr_reader :user_two_factor_auth
         private :user_two_factor_auth
 
-        sig { returns(TwoFactorAuths::RecoveryCodeRegenerationForm) }
+        sig { returns(::TwoFactorAuths::RecoveryCodeRegenerationForm) }
         attr_reader :form
         private :form
 

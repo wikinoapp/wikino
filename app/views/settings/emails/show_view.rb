@@ -4,7 +4,7 @@
 module Settings
   module Emails
     class ShowView < ApplicationView
-      sig { params(current_user: User, form: Emails::EditForm).void }
+      sig { params(current_user: User, form: ::Emails::EditForm).void }
       def initialize(current_user:, form:)
         @current_user = current_user
         @form = form
@@ -19,7 +19,7 @@ module Settings
       attr_reader :current_user
       private :current_user
 
-      sig { returns(Emails::EditForm) }
+      sig { returns(::Emails::EditForm) }
       attr_reader :form
       private :form
 

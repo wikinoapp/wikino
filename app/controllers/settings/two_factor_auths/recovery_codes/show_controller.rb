@@ -22,7 +22,7 @@ module Settings
             return redirect_to(settings_two_factor_auth_path)
           end
 
-          form = TwoFactorAuths::RecoveryCodeRegenerationForm.new
+          form = ::TwoFactorAuths::RecoveryCodeRegenerationForm.new
 
           render_component Settings::TwoFactorAuths::RecoveryCodes::ShowView.new(
             current_user: current_user!,
