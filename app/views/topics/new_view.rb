@@ -7,7 +7,7 @@ module Topics
       params(
         current_user: User,
         space: Space,
-        form: TopicForm::Creation
+        form: Topics::CreationForm
       ).void
     end
     def initialize(current_user:, space:, form:)
@@ -29,7 +29,7 @@ module Topics
     attr_reader :space
     private :space
 
-    sig { returns(TopicForm::Creation) }
+    sig { returns(Topics::CreationForm) }
     attr_reader :form
     private :form
 

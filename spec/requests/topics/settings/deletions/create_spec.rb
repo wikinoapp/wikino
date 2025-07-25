@@ -49,7 +49,7 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     sign_in(user_record:)
 
     post "/s/#{space_record.identifier}/topics/#{topic_record.number}/settings/deletion", params: {
-      topic_form_destroy_confirmation: {
+      topics_destroy_confirmation_form: {
         topic_name: "異なるトピック名"
       }
     }
@@ -68,7 +68,7 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     sign_in(user_record:)
 
     post "/s/#{space_record.identifier}/topics/#{topic_record.number}/settings/deletion", params: {
-      topic_form_destroy_confirmation: {
+      topics_destroy_confirmation_form: {
         topic_name: "テストトピック"
       }
     }

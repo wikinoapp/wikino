@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module TopicForm
-  class DestroyConfirmation < ApplicationForm
+module Topics
+  class DestroyConfirmationForm < ApplicationForm
     sig { returns(T.nilable(TopicRecord)) }
     attr_accessor :topic_record
 

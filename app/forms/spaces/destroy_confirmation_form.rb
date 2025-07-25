@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
-module SpaceForm
-  class DestroyConfirmation < ApplicationForm
+module Spaces
+  class DestroyConfirmationForm < ApplicationForm
     sig { returns(T.nilable(SpaceRecord)) }
     attr_accessor :space_record
 

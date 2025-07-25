@@ -8,7 +8,7 @@ module Trash
         current_user: User,
         space: Space,
         page_list: PageList,
-        form: PageForm::BulkRestoring
+        form: Pages::BulkRestoringForm
       ).void
     end
     def initialize(current_user:, space:, page_list:, form:)
@@ -36,7 +36,7 @@ module Trash
     attr_reader :page_list
     private :page_list
 
-    sig { returns(PageForm::BulkRestoring) }
+    sig { returns(Pages::BulkRestoringForm) }
     attr_reader :form
     private :form
 

@@ -28,7 +28,7 @@ module Trash
         before: params[:before],
         after: params[:after]
       )
-      form = PageForm::BulkRestoring.new
+      form = Pages::BulkRestoringForm.new
 
       render_component Trash::ShowView.new(
         current_user: current_user!,

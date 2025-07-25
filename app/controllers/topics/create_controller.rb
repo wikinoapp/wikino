@@ -22,7 +22,7 @@ module Topics
         return render_404
       end
 
-      form = TopicForm::Creation.new(form_params.merge(space_record:))
+      form = Topics::CreationForm.new(form_params.merge(space_record:))
 
       if form.invalid?
         space = SpaceRepository.new.to_model(space_record:)
@@ -50,7 +50,7 @@ module Topics
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:topic_form_creation), ActionController::Parameters).permit(
+      T.cast(params.require(:topics_creation_form), ActionController::Parameters).permit(
         :name,
         :description,
         :visibility

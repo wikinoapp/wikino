@@ -5,7 +5,7 @@ module Spaces
   module Settings
     module Deletions
       class NewView < ApplicationView
-        sig { params(current_user: User, space: Space, form: SpaceForm::DestroyConfirmation).void }
+        sig { params(current_user: User, space: Space, form: Spaces::DestroyConfirmationForm).void }
         def initialize(current_user:, space:, form:)
           @current_user = current_user
           @space = space
@@ -25,7 +25,7 @@ module Spaces
         attr_reader :space
         private :space
 
-        sig { returns(SpaceForm::DestroyConfirmation) }
+        sig { returns(Spaces::DestroyConfirmationForm) }
         attr_reader :form
         private :form
 

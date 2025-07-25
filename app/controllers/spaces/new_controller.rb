@@ -11,7 +11,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      form = SpaceForm::Creation.new
+      form = Spaces::CreationForm.new
 
       render_component Spaces::NewView.new(
         current_user: current_user!,

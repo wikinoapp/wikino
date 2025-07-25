@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module SpaceForm
-  class Creation < ApplicationForm
+module Spaces
+  class CreationForm < ApplicationForm
     include FormConcerns::SpaceIdentifierValidatable
     include FormConcerns::SpaceNameValidatable
 

@@ -9,7 +9,7 @@ module Topics
           params(
             current_user: User,
             topic: Topic,
-            form: TopicForm::Edit
+            form: Topics::EditForm
           ).void
         end
         def initialize(current_user:, topic:, form:)
@@ -34,7 +34,7 @@ module Topics
         attr_reader :topic
         private :topic
 
-        sig { returns(TopicForm::Edit) }
+        sig { returns(Topics::EditForm) }
         attr_reader :form
         private :form
 
