@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module EmailConfirmationForm
-  class Check < ApplicationForm
+module EmailConfirmations
+  class CheckForm < ApplicationForm
     attribute :email_confirmation_id, :string
     attribute :confirmation_code, :string
 

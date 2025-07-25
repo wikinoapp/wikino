@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module AccountForm
-  class Creation < ApplicationForm
+module Accounts
+  class CreationForm < ApplicationForm
     include FormConcerns::UserAtnameValidatable
     include FormConcerns::PasswordValidatable
 

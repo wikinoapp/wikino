@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module TwoFactorAuthForm
-  class RecoveryCodeRegeneration < ApplicationForm
+module TwoFactorAuths
+  class RecoveryCodeRegenerationForm < ApplicationForm
     include FormConcerns::PasswordValidatable
     include FormConcerns::PasswordAuthenticatable
 

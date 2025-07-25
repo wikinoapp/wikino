@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module UserSessionForm
-  class Creation < ApplicationForm
+module UserSessions
+  class CreationForm < ApplicationForm
     attribute :email, :string
     attribute :password, :string
 

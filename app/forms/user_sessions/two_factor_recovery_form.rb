@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module UserSessionForm
-  class TwoFactorRecovery < ApplicationForm
+module UserSessions
+  class TwoFactorRecoveryForm < ApplicationForm
     sig { returns(T.nilable(UserRecord)) }
     attr_accessor :user_record
 

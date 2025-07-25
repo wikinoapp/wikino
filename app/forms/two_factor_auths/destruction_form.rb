@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module TwoFactorAuthForm
-  class Destruction < ApplicationForm
+module TwoFactorAuths
+  class DestructionForm < ApplicationForm
     include FormConcerns::PasswordValidatable
     include FormConcerns::PasswordAuthenticatable
 

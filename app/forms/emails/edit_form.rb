@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module EmailForm
-  class Edit < ApplicationForm
+module Emails
+  class EditForm < ApplicationForm
     attribute :new_email, :string
 
     validates :new_email, email: true, presence: true

@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
-module AccountForm
-  class DestroyConfirmation < ApplicationForm
+module Accounts
+  class DestroyConfirmationForm < ApplicationForm
     sig { returns(T.nilable(UserRecord)) }
     attr_accessor :user_record
 

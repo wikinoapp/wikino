@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module PasswordResetForm
-  class Creation < ApplicationForm
+module PasswordResets
+  class CreationForm < ApplicationForm
     include FormConcerns::PasswordValidatable
 
     attribute :password, :string

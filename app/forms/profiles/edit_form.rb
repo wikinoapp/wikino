@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-module ProfileForm
-  class Edit < ApplicationForm
+module Profiles
+  class EditForm < ApplicationForm
     include ActiveModel::Validations::Callbacks
 
     include FormConcerns::UserAtnameValidatable

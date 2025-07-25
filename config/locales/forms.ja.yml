@@ -1,18 +1,18 @@
 ja:
   forms:
     attributes:
-      account_form/creation:
+      accounts/creation_form:
         atname: アットネーム
         email: メールアドレス
         password: パスワード
-      account_form/destroy_confirmation:
+      accounts/destroy_confirmation_form:
         user_atname: アットネーム
         user_record: アカウント
-      email_confirmation_form/check:
+      email_confirmations/check_form:
         confirmation_code: 確認用コード
-      email_confirmation_form/creation:
+      email_confirmations/creation_form:
         email: メールアドレス
-      email_form/edit:
+      emails/edit_form:
         new_email: 新しいメールアドレス
       pages/bulk_restoring_form:
         page_ids: 選択したページ
@@ -21,9 +21,9 @@ ja:
         topic: トピック
         title: タイトル
         body: 本文
-      password_reset_form/creation:
+      password_resets/creation_form:
         password: 新しいパスワード
-      profile_form/edit:
+      profiles/edit_form:
         atname: アットネーム
         description: 説明
         name: 名前
@@ -51,20 +51,20 @@ ja:
         description: 説明
         name: 名前
         visibility: 公開設定
-      two_factor_auth_form/creation:
+      two_factor_auths/creation_form:
         password: パスワード
         totp_code: 認証コード
         authentication_code: 認証コード
-      two_factor_auth_form/destruction:
+      two_factor_auths/destruction_form:
         password: パスワード
-      two_factor_auth_form/recovery_code_regeneration:
+      two_factor_auths/recovery_code_regeneration_form:
         password: パスワード
-      user_session_form/creation:
+      user_sessions/creation_form:
         email: メールアドレス
         password: パスワード
-      user_session_form/two_factor_verification:
+      user_sessions/two_factor_verification_form:
         totp_code: 認証コード
-      user_session_form/two_factor_recovery:
+      user_sessions/two_factor_recovery_form:
         recovery_code: リカバリーコード
       pages/search_form:
         q: 検索キーワード
@@ -76,9 +76,9 @@ ja:
         reserved: は使用できません
         uniqueness: は既に存在しています
       models:
-        account_form/destroy_confirmation:
+        accounts/destroy_confirmation_form:
           has_active_spaces: にスペースが紐付いているため削除できません
-        email_confirmation_form/check:
+        email_confirmations/check_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
@@ -86,19 +86,19 @@ ja:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
         pages/edit_form:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
-        two_factor_auth_form/creation:
+        two_factor_auths/creation_form:
           invalid_totp_code: 認証コードが間違っています
           unauthenticated: パスワードが間違っています
           user_two_factor_auth_record_not_found: 二要素認証が設定されていません
-        two_factor_auth_form/destruction:
+        two_factor_auths/destruction_form:
           unauthenticated: パスワードが間違っています
-        two_factor_auth_form/recovery_code_regeneration:
+        two_factor_auths/recovery_code_regeneration_form:
           unauthenticated: パスワードが間違っています
-        user_session_form/creation:
+        user_sessions/creation_form:
           unauthenticated: ログインに失敗しました。メールアドレスまたはパスワードが間違っています
-        user_session_form/two_factor_verification:
+        user_sessions/two_factor_verification_form:
           invalid_code: が間違っています
-        user_session_form/two_factor_recovery:
+        user_sessions/two_factor_recovery_form:
           invalid_code: が間違っています
         pages/search_form:
           attributes:
