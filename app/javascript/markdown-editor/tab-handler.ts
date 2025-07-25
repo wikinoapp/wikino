@@ -137,6 +137,12 @@ export function handleTab(view: EditorView): boolean {
             return EditorSelection.cursor(change.from + change.insert.length);
           }
 
+          // 改行とネストされたリストを挿入する場合
+          if (change.insert.startsWith("\n")) {
+            // 改行 + インデント + "- " の後にカーソルを配置
+            return EditorSelection.cursor(change.from + change.insert.length);
+          }
+
           // 通常のインデント挿入の場合
           return EditorSelection.cursor(range.from + INDENT_SIZE.length);
         } else {
