@@ -18,7 +18,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Password can't be blank")
+    expect(form.errors.full_messages).to include("パスワードを入力してください")
   end
 
   it "パスワードが `nil` のとき、エラーになること" do
@@ -35,7 +35,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Password can't be blank")
+    expect(form.errors.full_messages).to include("パスワードを入力してください")
   end
 
   it "パスワードが7文字のとき、エラーになること" do
@@ -52,7 +52,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Password is too short (minimum is 8 characters)")
+    expect(form.errors.full_messages).to include("パスワードは8文字以上で入力してください")
   end
 
   it "パスワードが間違っているとき、エラーになること" do
@@ -69,7 +69,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Password is incorrect")
+    expect(form.errors.full_messages).to include("パスワードが間違っています")
   end
 
   it "TOTPコードが空文字列のとき、エラーになること" do
@@ -86,7 +86,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code can't be blank")
+    expect(form.errors.full_messages).to include("認証コードを入力してください")
   end
 
   it "TOTPコードが `nil` のとき、エラーになること" do
@@ -103,7 +103,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code can't be blank")
+    expect(form.errors.full_messages).to include("認証コードを入力してください")
   end
 
   it "TOTPコードが5文字のとき、エラーになること" do
@@ -120,7 +120,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code is the wrong length (should be 6 characters)")
+    expect(form.errors.full_messages).to include("認証コードは6文字で入力してください")
   end
 
   it "TOTPコードが7文字のとき、エラーになること" do
@@ -137,7 +137,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code is the wrong length (should be 6 characters)")
+    expect(form.errors.full_messages).to include("認証コードは6文字で入力してください")
   end
 
   it "TOTPコードに数字以外が含まれているとき、エラーになること" do
@@ -154,7 +154,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code is invalid")
+    expect(form.errors.full_messages).to include("認証コードが間違っています")
   end
 
   it "user_recordがnilのとき、エラーにならないこと（他のバリデーションは実行される）" do
@@ -173,7 +173,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record_without_2fa
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Two-factor authentication is not set up")
+    expect(form.errors.full_messages).to include("二要素認証が設定されていません")
   end
 
   it "TOTPコードが間違っているとき、エラーになること" do
@@ -193,7 +193,7 @@ RSpec.describe TwoFactorAuthForm::Creation, type: :form do
     form.user_record = user_record
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Authentication code is incorrect")
+    expect(form.errors.full_messages).to include("認証コードが間違っています")
   end
 
   it "正しいパスワードとTOTPコードのとき、エラーにならないこと" do

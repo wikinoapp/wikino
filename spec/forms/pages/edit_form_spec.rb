@@ -1,54 +1,54 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe PageForm::Edit, type: :form do
+RSpec.describe Pages::EditForm, type: :form do
   it "SpaceMember が指定されていないとき、エラーになること" do
-    form = PageForm::Edit.new
+    form = Pages::EditForm.new
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Space member record can't be blank")
+    expect(form.errors.full_messages).to include("Space member recordを入力してください")
   end
 
   it "Page が指定されていないとき、エラーになること" do
-    form = PageForm::Edit.new
+    form = Pages::EditForm.new
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Page record can't be blank")
+    expect(form.errors.full_messages).to include("Page recordを入力してください")
   end
 
   it "トピック番号が `nil` のとき、エラーになること" do
-    form = PageForm::Edit.new(topic_number: nil)
+    form = Pages::EditForm.new(topic_number: nil)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Topic can't be blank")
+    expect(form.errors.full_messages).to include("トピックを入力してください")
   end
 
   it "トピック番号に対応するトピックが存在しないとき、エラーになること" do
-    form = PageForm::Edit.new(topic_number: 1)
+    form = Pages::EditForm.new(topic_number: 1)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Topic can't be blank")
+    expect(form.errors.full_messages).to include("トピックを入力してください")
   end
 
   it "タイトルが空文字列のとき、エラーになること" do
-    form = PageForm::Edit.new(title: "")
+    form = Pages::EditForm.new(title: "")
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Title can't be blank")
+    expect(form.errors.full_messages).to include("タイトルを入力してください")
   end
 
   it "タイトルが `nil` のとき、エラーになること" do
-    form = PageForm::Edit.new(title: nil)
+    form = Pages::EditForm.new(title: nil)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Title can't be blank")
+    expect(form.errors.full_messages).to include("タイトルを入力してください")
   end
 
   it "タイトルが201文字のとき、エラーになること" do
-    form = PageForm::Edit.new(title: "a" * 201)
+    form = Pages::EditForm.new(title: "a" * 201)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Title is too long (maximum is 200 characters)")
+    expect(form.errors.full_messages).to include("タイトルは200文字以内で入力してください")
   end
 
   it "タイトルが重複しているとき、エラーになること" do
@@ -58,7 +58,7 @@ RSpec.describe PageForm::Edit, type: :form do
     create(:topic_member_record, space_record: space, topic_record: topic, space_member_record:)
     other_page = create(:page_record, topic_record: topic, title: "a")
     page_record = create(:page_record, space_record: space, topic_record: topic)
-    form = PageForm::Edit.new(
+    form = Pages::EditForm.new(
       title: "a",
       space_member_record:,
       page_record:,
@@ -67,12 +67,12 @@ RSpec.describe PageForm::Edit, type: :form do
 
     expect(form).not_to be_valid
     expect(form.errors.full_messages).to include(
-      "Title has already existed. <a class=\"underline\" href=\"/s/#{space.identifier}/pages/#{other_page.number}/edit\">Edit the existing page</a>"
+      "タイトルは既に存在しています。<a class=\"underline\" href=\"/s/#{space.identifier}/pages/#{other_page.number}/edit\">既存のページを編集</a>"
     )
   end
 
   it "タイトルが200文字のとき、エラーにならないこと" do
-    form = PageForm::Edit.new(
+    form = Pages::EditForm.new(
       title: "a" * 200,
       **valid_attributes.except(:title)
     )
@@ -83,7 +83,7 @@ RSpec.describe PageForm::Edit, type: :form do
   it "タイトルが別トピックのページと重複しているとき、エラーにならないこと" do
     other_topic = create(:topic_record)
     create(:page_record, topic_record: other_topic, title: "a")
-    form = PageForm::Edit.new(
+    form = Pages::EditForm.new(
       title: "a",
       **valid_attributes.except(:title)
     )
@@ -92,7 +92,7 @@ RSpec.describe PageForm::Edit, type: :form do
   end
 
   it "本文が空文字列のとき、エラーにならないこと" do
-    form = PageForm::Edit.new(
+    form = Pages::EditForm.new(
       body: "",
       **valid_attributes.except(:body)
     )
@@ -101,7 +101,7 @@ RSpec.describe PageForm::Edit, type: :form do
   end
 
   it "本文が `nil` のとき、空文字列に変換され、エラーにならないこと" do
-    form = PageForm::Edit.new(
+    form = Pages::EditForm.new(
       body: nil,
       **valid_attributes.except(:body)
     )

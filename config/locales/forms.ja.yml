@@ -14,10 +14,11 @@ ja:
         email: メールアドレス
       email_form/edit:
         new_email: 新しいメールアドレス
-      page_form/bulk_restoring:
+      pages/bulk_restoring_form:
         page_ids: 選択したページ
-      page_form/edit:
+      pages/edit_form:
         topic_number: トピック
+        topic: トピック
         title: タイトル
         body: 本文
       password_reset_form/creation:
@@ -26,15 +27,15 @@ ja:
         atname: アットネーム
         description: 説明
         name: 名前
-      space_form/creation:
+      spaces/creation_form:
         identifier: 識別子
         name: 名前
-      space_form/destroy_confirmation:
+      spaces/destroy_confirmation_form:
         space_name: スペース名
-      space_form/edit:
+      spaces/edit_form:
         identifier: 識別子
         name: 名前
-      topic_form/creation:
+      topics/creation_form:
         description: 説明
         identifier: 識別子
         name: 名前
@@ -44,15 +45,16 @@ ja:
           %{learn_more_link}
         visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます
         visibility: 公開設定
-      topic_form/destroy_confirmation:
+      topics/destroy_confirmation_form:
         topic_name: トピック名
-      topic_form/edit:
+      topics/edit_form:
         description: 説明
         name: 名前
         visibility: 公開設定
       two_factor_auth_form/creation:
         password: パスワード
         totp_code: 認証コード
+        authentication_code: 認証コード
       two_factor_auth_form/destruction:
         password: パスワード
       two_factor_auth_form/recovery_code_regeneration:
@@ -80,9 +82,9 @@ ja:
           attributes:
             confirmation_code:
               incorrect_or_expired: が間違っているか古くなっています
-        page_form/bulk_restoring:
+        pages/bulk_restoring_form:
           not_joined_topic_exists: 参加していないトピックのページが含まれているため復元できません
-        page_form/edit:
+        pages/edit_form:
           uniqueness_html: は既に存在しています。<a class="underline" href="%{edit_page_path}">既存のページを編集</a>
         two_factor_auth_form/creation:
           invalid_totp_code: 認証コードが間違っています

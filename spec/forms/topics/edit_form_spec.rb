@@ -6,21 +6,21 @@ RSpec.describe Topics::EditForm, type: :form do
     form = Topics::EditForm.new(name: "")
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Name can't be blank")
+    expect(form.errors.full_messages).to include("名前を入力してください")
   end
 
   it "名前が `nil` のとき、エラーになること" do
     form = Topics::EditForm.new(name: nil)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Name can't be blank")
+    expect(form.errors.full_messages).to include("名前を入力してください")
   end
 
   it "名前が31文字のとき、エラーになること" do
     form = Topics::EditForm.new(name: "a" * 31)
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Name is too long (maximum is 30 characters)")
+    expect(form.errors.full_messages).to include("名前は30文字以内で入力してください")
   end
 
   it "名前がすでに使われているとき、エラーになること" do
@@ -30,7 +30,7 @@ RSpec.describe Topics::EditForm, type: :form do
     form = Topics::EditForm.new(topic_record: topic, name: "すでにあるトピック")
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Name has already been taken")
+    expect(form.errors.full_messages).to include("名前は既に存在しています")
   end
 
   it "名前が30文字のとき、エラーにならないこと" do
@@ -60,7 +60,7 @@ RSpec.describe Topics::EditForm, type: :form do
     )
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Description is too long (maximum is 150 characters)")
+    expect(form.errors.full_messages).to include("説明は150文字以内で入力してください")
   end
 
   it "説明文が150文字のとき、エラーにならないこと" do
@@ -110,7 +110,7 @@ RSpec.describe Topics::EditForm, type: :form do
     )
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Visibility is not included in the list")
+    expect(form.errors.full_messages).to include("公開設定は一覧にありません")
   end
 
   it "公開設定が指定されていないとき、エラーになること" do
@@ -122,7 +122,7 @@ RSpec.describe Topics::EditForm, type: :form do
     )
 
     expect(form).not_to be_valid
-    expect(form.errors.full_messages).to include("Visibility can't be blank")
+    expect(form.errors.full_messages).to include("公開設定を入力してください")
   end
 
   it "公開設定が指定されているとき、エラーにならないこと" do
