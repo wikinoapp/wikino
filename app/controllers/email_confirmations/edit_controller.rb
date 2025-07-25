@@ -12,7 +12,7 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm::Check.new
+      form = EmailConfirmations::CheckForm.new
 
       render_component EmailConfirmations::EditView.new(form:)
     end

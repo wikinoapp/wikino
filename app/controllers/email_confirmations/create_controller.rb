@@ -11,7 +11,7 @@ module EmailConfirmations
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm::Creation.new(form_params)
+      form = EmailConfirmations::CreationForm.new(form_params)
 
       if form.invalid?
         return render_component(SignUp::ShowView.new(form:), status: :unprocessable_entity)

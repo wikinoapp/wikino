@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = EmailForm::Edit.new(form_params)
+        form = Emails::EditForm.new(form_params)
 
         if form.invalid?
           return render_component(

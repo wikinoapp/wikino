@@ -13,7 +13,7 @@ module Passwords
 
     sig { returns(T.untyped) }
     def call
-      form = PasswordResetForm::Creation.new
+      form = PasswordResets::CreationForm.new
 
       render_component Passwords::EditView.new(form:)
     end

@@ -13,7 +13,7 @@ module Accounts
 
     sig { returns(T.untyped) }
     def call
-      form = AccountForm::Creation.new(
+      form = Accounts::CreationForm.new(
         form_params.merge(
           email: @email_confirmation.not_nil!.email.not_nil!,
           locale: current_locale.serialize,

@@ -13,7 +13,7 @@ module Passwords
 
     sig { returns(T.untyped) }
     def call
-      form = PasswordResetForm::Creation.new(form_params)
+      form = PasswordResets::CreationForm.new(form_params)
 
       if form.invalid?
         return render_component(

@@ -22,7 +22,7 @@ module Settings
             return redirect_to(settings_two_factor_auth_path)
           end
 
-          form = TwoFactorAuthForm::RecoveryCodeRegeneration.new(
+          form = TwoFactorAuths::RecoveryCodeRegenerationForm.new(
             form_params.merge(user_record: current_user_record!)
           )
 

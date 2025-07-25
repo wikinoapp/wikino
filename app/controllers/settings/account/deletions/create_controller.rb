@@ -13,7 +13,7 @@ module Settings
 
         sig { returns(T.untyped) }
         def call
-          form = AccountForm::DestroyConfirmation.new(
+          form = Accounts::DestroyConfirmationForm.new(
             form_params.merge(user_record: current_user_record!)
           )
 

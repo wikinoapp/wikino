@@ -8,7 +8,7 @@ module Settings
         sig do
           params(
             current_user: User,
-            form: AccountForm::DestroyConfirmation,
+            form: Accounts::DestroyConfirmationForm,
             active_spaces: T::Array[Space]
           ).void
         end
@@ -27,7 +27,7 @@ module Settings
         attr_reader :current_user
         private :current_user
 
-        sig { returns(AccountForm::DestroyConfirmation) }
+        sig { returns(Accounts::DestroyConfirmationForm) }
         attr_reader :form
         private :form
 

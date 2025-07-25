@@ -3,7 +3,7 @@
 
 module Passwords
   class EditView < ApplicationView
-    sig { params(form: PasswordResetForm::Creation).void }
+    sig { params(form: PasswordResets::CreationForm).void }
     def initialize(form:)
       @form = form
     end
@@ -14,7 +14,7 @@ module Passwords
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(PasswordResetForm::Creation) }
+    sig { returns(PasswordResets::CreationForm) }
     attr_reader :form
     private :form
 

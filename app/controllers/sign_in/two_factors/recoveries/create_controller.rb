@@ -19,7 +19,7 @@ module SignIn
             return redirect_to(sign_in_path)
           end
 
-          form = UserSessionForm::TwoFactorRecovery.new(
+          form = UserSessions::TwoFactorRecoveryForm.new(
             form_params.merge(user_record: pending_user_record)
           )
 

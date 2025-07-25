@@ -11,7 +11,7 @@ module PasswordResets
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm::Creation.new
+      form = EmailConfirmations::CreationForm.new
 
       render_component PasswordResets::NewView.new(form:)
     end

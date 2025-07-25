@@ -11,7 +11,7 @@ module UserSessions
 
     sig { returns(T.untyped) }
     def call
-      form = UserSessionForm::Creation.new(form_params)
+      form = UserSessions::CreationForm.new(form_params)
 
       if form.invalid?
         return render_component(SignIn::ShowView.new(form:), status: :unprocessable_entity)
