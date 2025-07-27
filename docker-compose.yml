@@ -2,7 +2,7 @@ services:
   postgresql:
     image: postgres:17.0
     ports:
-      - "5432:5432"
+      - "35432:5432"
     volumes:
       - postgresql17_data:/var/lib/postgresql/data:delegated
     environment:
@@ -11,7 +11,7 @@ services:
   chrome:
     image: selenium/standalone-chromium:136.0.7103.113
     ports:
-      - "4444:4444"
+      - "34444:4444"
 
 volumes:
   postgresql17_data:
