@@ -73,14 +73,26 @@ export function handleTab(view: EditorView): boolean {
         }
 
         // カーソルがリストマーカーの直後にある場合
-        if (cursorPositionInLine === markerEndPosition && listInfo.content === "") {
-          // 空のリスト項目をネストされたリストアイテムにする
+        if (cursorPositionInLine === markerEndPosition) {
+          // リスト項目をネストされたリストアイテムにする
           const originalMarker = lineText.substring(listInfo.indent.length, markerEndPosition);
-          return {
-            from: line.from,
-            to: line.from + markerEndPosition,
-            insert: listInfo.indent + INDENT_SIZE + originalMarker,
-          };
+
+          // 空のリスト項目の場合
+          if (listInfo.content === "") {
+            return {
+              from: line.from,
+              to: line.from + markerEndPosition,
+              insert: listInfo.indent + INDENT_SIZE + originalMarker,
+            };
+          } else {
+            // コンテンツがある場合は、現在の行を置き換えて新しいネストされたリストアイテムにする
+            const content = lineText.substring(markerEndPosition);
+            return {
+              from: line.from,
+              to: line.to,
+              insert: listInfo.indent + INDENT_SIZE + originalMarker + content,
+            };
+          }
         }
       }
 
@@ -103,7 +115,25 @@ export function handleTab(view: EditorView): boolean {
 
           // リスト項目のネスト変換の場合
           if (change.to !== undefined && change.to > change.from) {
-            // 新しいリストマーカーの後にカーソルを配置
+            // 新しいインデントとマーカーの後にカーソルを配置
+            const line = state.doc.lineAt(change.from);
+            const lineText = line.text;
+            const listInfo = detectListPattern(lineText);
+
+            if (listInfo && listInfo.content !== "") {
+              // コンテンツがある場合は、インデント + マーカーの長さ分だけカーソルを移動
+              let newMarkerLength: number;
+              if (listInfo.type === "task") {
+                // タスクリストの場合: "- [ ] " = 6文字
+                newMarkerLength = INDENT_SIZE.length + listInfo.marker.length + 5;
+              } else {
+                // 通常のリストの場合: "- " = 2文字
+                newMarkerLength = INDENT_SIZE.length + listInfo.marker.length + 1;
+              }
+              return EditorSelection.cursor(change.from + listInfo.indent.length + newMarkerLength);
+            }
+
+            // 空のリスト項目の場合は変更後の文字列の最後にカーソルを配置
             return EditorSelection.cursor(change.from + change.insert.length);
           }
 

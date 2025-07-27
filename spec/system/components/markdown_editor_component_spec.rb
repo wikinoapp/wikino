@@ -412,6 +412,72 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(editor_content).to eq("- a\n- c")
     end
 
+    it "リスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたリストアイテムになること" do
+      visit_page_editor
+      clear_editor
+      # リスト項目を作成
+      set_editor_content(text: "- a\n- b")
+
+      # カーソルを2行目のマーカーの直後（bの前）に移動
+      set_cursor_position(line: 2, column: 2)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- a\n  - b")
+
+      # カーソル位置の確認（新しいネストされたリストマーカーの直後）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(2)
+      expect(cursor_position[:column]).to eq(4)
+    end
+
+    it "タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたタスクリストアイテムになること" do
+      visit_page_editor
+      clear_editor
+      # タスクリスト項目を作成
+      set_editor_content(text: "- [ ] タスク1\n- [ ] タスク2")
+
+      # カーソルを2行目のタスクマーカーの直後（タスク2の前）に移動
+      set_cursor_position(line: 2, column: 6)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [ ] タスク1\n  - [ ] タスク2")
+
+      # カーソル位置の確認（新しいネストされたタスクリストマーカーの直後）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(2)
+      expect(cursor_position[:column]).to eq(8)
+    end
+
+    it "完了タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされた完了タスクリストアイテムになること" do
+      visit_page_editor
+      clear_editor
+      # 完了タスクリスト項目を作成
+      set_editor_content(text: "- [ ] aaa\n- [x] bbb\n- [ ] ccc")
+
+      # カーソルを2行目のタスクマーカーの直後（bbbの前）に移動
+      set_cursor_position(line: 2, column: 6)
+
+      # タブキーを押す
+      press_tab_in_editor
+
+      # 内容の確認
+      editor_content = get_editor_content
+      expect(editor_content).to eq("- [ ] aaa\n  - [x] bbb\n- [ ] ccc")
+
+      # カーソル位置の確認（新しいネストされたタスクリストマーカーの直後）
+      cursor_position = get_cursor_position
+      expect(cursor_position[:line]).to eq(2)
+      expect(cursor_position[:column]).to eq(8)
+    end
+
     private def visit_page_editor
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record)
