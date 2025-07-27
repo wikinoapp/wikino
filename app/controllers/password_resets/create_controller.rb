@@ -33,7 +33,7 @@ module PasswordResets
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:email_confirmation_form_creation), ActionController::Parameters)
+      T.cast(params.require(:email_confirmations_creation_form), ActionController::Parameters)
         .permit(:email)
     end
   end

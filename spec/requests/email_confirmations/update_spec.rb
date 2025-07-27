@@ -16,7 +16,7 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
   it "確認用コードが間違っているとき、エラーメッセージを表示すること" do
     # 確認用コードを生成する
     post("/email_confirmation", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: "test@example.com"
       }
     })
@@ -36,7 +36,7 @@ RSpec.describe "PATCH /email_confirmation", type: :request do
 
     # 確認用コードを生成する
     post("/email_confirmation", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: "test@example.com"
       }
     })

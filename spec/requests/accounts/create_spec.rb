@@ -6,7 +6,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
     # 確認用コードを生成する
     post("/email_confirmation", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: "test@example.com"
       }
     })

@@ -7,7 +7,7 @@ RSpec.describe "POST /password_reset", type: :request do
     sign_in(user_record:)
 
     post "/password_reset", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: "test@example.com"
       }
     }
@@ -20,7 +20,7 @@ RSpec.describe "POST /password_reset", type: :request do
     expect(EmailConfirmationRecord.count).to eq(0)
 
     post "/password_reset", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: "invalid-email"
       }
     }
@@ -36,7 +36,7 @@ RSpec.describe "POST /password_reset", type: :request do
     valid_email = "test@example.com"
 
     post "/password_reset", params: {
-      email_confirmation_form_creation: {
+      email_confirmations_creation_form: {
         email: valid_email
       }
     }
