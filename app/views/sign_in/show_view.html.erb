@@ -28,8 +28,7 @@
         <%= form_with(
           class: "form grid gap-6",
           model: form,
-          url: user_session_path,
-          scope: :user_session_form_creation
+          url: user_session_path
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 

@@ -7,15 +7,17 @@ module SystemSpecHelpers
   def sign_in(user_record:, password: "passw0rd")
     visit "/sign_in"
 
-    # Fill in email - handle both languages
-    within("form") do
-      # Email field
-      all('input[type="email"]').first.set(user_record.email)
+    # Debug: let's check what form fields are actually present
+    within("form.form") do
+      # Find email and password fields by their type
+      email_field = find('input[type="email"]')
+      password_field = find('input[type="password"]')
 
-      # Password field
-      all('input[type="password"]').first.set(password)
+      # Fill in the fields
+      email_field.set(user_record.email)
+      password_field.set(password)
 
-      # Submit button
+      # Submit the form
       find('button[type="submit"]').click
     end
 
@@ -29,6 +31,8 @@ module SystemSpecHelpers
           error_text = find('[role="alert"]').text
           raise "Sign in failed with error: #{error_text}"
         else
+          # Debug: save page HTML
+          save_page
           raise "Sign in failed - still on sign in page with no error message"
         end
       end
