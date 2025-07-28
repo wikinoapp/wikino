@@ -20,7 +20,7 @@ module PasswordResets
         )
       end
 
-      result = EmailConfirmationService::Create.new.call(
+      result = EmailConfirmations::CreateService.new.call(
         email: form.email.not_nil!,
         event: EmailConfirmationEvent::PasswordReset,
         locale: current_locale

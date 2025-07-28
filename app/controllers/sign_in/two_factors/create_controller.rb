@@ -29,7 +29,7 @@ module SignIn
           )
         end
 
-        result = UserSessionService::Create.new.call(
+        result = UserSessions::CreateService.new.call(
           user_record: pending_user_record,
           ip_address: original_remote_ip,
           user_agent: request.user_agent

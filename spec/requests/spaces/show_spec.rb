@@ -12,7 +12,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.status).to eq(200)
     expect(response.body).to include("テストページ")
 
-    TopicService::SoftDestroy.new.call(topic_record:)
+    Topics::SoftDestroyService.new.call(topic_record:)
 
     get "/s/#{space_record.identifier}"
 

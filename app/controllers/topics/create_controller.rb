@@ -37,7 +37,7 @@ module Topics
         )
       end
 
-      result = TopicService::Create.new.call(
+      result = Topics::CreateService.new.call(
         space_member_record: space_member_record.not_nil!,
         name: form.name.not_nil!,
         description: form.description.not_nil!,

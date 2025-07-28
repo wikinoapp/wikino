@@ -39,7 +39,7 @@ module BulkRestoredPages
         )
       end
 
-      PageService::BulkRestore.new.call(page_ids: form.page_ids.not_nil!)
+      Pages::BulkRestoreService.new.call(page_ids: form.page_ids.not_nil!)
 
       flash[:notice] = t("messages.trash.restored")
       redirect_to trash_path(space_record.identifier)

@@ -13,7 +13,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        result = TwoFactorAuthService::Setup.new.call(user: current_user!)
+        result = ::TwoFactorAuths::SetupService.new.call(user: current_user!)
 
         render_component Settings::TwoFactorAuths::NewView.new(
           current_user: current_user!,

@@ -17,7 +17,7 @@ module Spaces
         return render_new_view(form:)
       end
 
-      result = SpaceService::Create.new.call(
+      result = Spaces::CreateService.new.call(
         user_record: current_user_record!,
         identifier: form.identifier.not_nil!,
         name: form.name.not_nil!

@@ -23,7 +23,7 @@ module Pages
         return render_404
       end
 
-      result = PageService::CreateBlanked.new.call(
+      result = Pages::CreateBlankedService.new.call(
         topic_record:,
         editor_record: space_member_record.not_nil!
       )

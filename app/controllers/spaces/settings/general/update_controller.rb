@@ -39,7 +39,7 @@ module Spaces
             )
           end
 
-          SpaceService::Update.new.call(
+          Spaces::UpdateService.new.call(
             space_record:,
             identifier: form.identifier.not_nil!,
             name: form.name.not_nil!

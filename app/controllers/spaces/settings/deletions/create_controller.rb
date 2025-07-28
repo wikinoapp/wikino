@@ -39,7 +39,7 @@ module Spaces
             )
           end
 
-          SpaceService::SoftDestroy.new.call(space_record:)
+          Spaces::SoftDestroyService.new.call(space_record:)
 
           flash[:notice] = t("messages.spaces.deleted")
           redirect_to root_path
