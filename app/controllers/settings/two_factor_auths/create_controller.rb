@@ -13,7 +13,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = TwoFactorAuthForm::Creation.new(
+        form = ::TwoFactorAuths::CreationForm.new(
           form_params.merge(user_record: current_user_record!)
         )
 
@@ -44,7 +44,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:two_factor_auth_form_creation).permit(
+        params.require(:two_factor_auths_creation_form).permit(
           :password,
           :totp_code
         )

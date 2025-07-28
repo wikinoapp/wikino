@@ -17,7 +17,7 @@ RSpec.describe "POST /spaces", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/spaces", params: {
-      space_form_creation: {
+      spaces_creation_form: {
         identifier: "", # 識別子が空
         name: "Space Name"
       }
@@ -38,7 +38,7 @@ RSpec.describe "POST /spaces", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/spaces", params: {
-      space_form_creation: {
+      spaces_creation_form: {
         identifier: "test-space",
         name: "テストスペース"
       }

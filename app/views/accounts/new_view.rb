@@ -3,7 +3,7 @@
 
 module Accounts
   class NewView < ApplicationView
-    sig { params(form: AccountForm::Creation).void }
+    sig { params(form: Accounts::CreationForm).void }
     def initialize(form:)
       @form = form
     end
@@ -13,7 +13,7 @@ module Accounts
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(AccountForm::Creation) }
+    sig { returns(Accounts::CreationForm) }
     attr_reader :form
     private :form
 

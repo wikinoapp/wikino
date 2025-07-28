@@ -18,7 +18,7 @@ module SignIn
           return redirect_to(sign_in_path)
         end
 
-        form = UserSessionForm::TwoFactorVerification.new(
+        form = UserSessions::TwoFactorVerificationForm.new(
           form_params.merge(user_record: pending_user_record)
         )
 
@@ -44,7 +44,7 @@ module SignIn
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:user_session_form_two_factor_verification).permit(
+        params.require(:user_sessions_two_factor_verification_form).permit(
           :totp_code
         )
       end

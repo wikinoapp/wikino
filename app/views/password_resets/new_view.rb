@@ -3,7 +3,7 @@
 
 module PasswordResets
   class NewView < ApplicationView
-    sig { params(form: EmailConfirmationForm::Creation).void }
+    sig { params(form: EmailConfirmations::CreationForm).void }
     def initialize(form:)
       @form = form
     end
@@ -14,7 +14,7 @@ module PasswordResets
       helpers.set_meta_tags(title:, **default_meta_tags)
     end
 
-    sig { returns(EmailConfirmationForm::Creation) }
+    sig { returns(EmailConfirmations::CreationForm) }
     attr_reader :form
     private :form
 

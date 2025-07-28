@@ -18,7 +18,7 @@ module SignIn
           return redirect_to(sign_in_path)
         end
 
-        form = UserSessionForm::TwoFactorVerification.new
+        form = UserSessions::TwoFactorVerificationForm.new
 
         render_component SignIn::TwoFactors::NewView.new(
           form:

@@ -13,7 +13,7 @@ module Settings
 
         sig { returns(T.untyped) }
         def call
-          form = AccountForm::DestroyConfirmation.new
+          form = Accounts::DestroyConfirmationForm.new
 
           active_space_records = current_user_record!.active_space_records.order(:identifier)
           active_spaces = SpaceRepository.new.to_models(space_records: active_space_records)

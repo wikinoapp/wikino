@@ -12,7 +12,7 @@ module Settings
 
       sig { returns(T.untyped) }
       def call
-        form = EmailForm::Edit.new(form_params)
+        form = ::Emails::EditForm.new(form_params)
 
         if form.invalid?
           return render_component(
@@ -37,7 +37,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:email_form_edit).permit(
+        params.require(:emails_edit_form).permit(
           :new_email
         )
       end

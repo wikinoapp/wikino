@@ -1,40 +1,40 @@
 en:
   forms:
     attributes:
-      account_form/creation:
+      accounts/creation_form:
         atname: Atname
         email: Email
         password: Password
-      account_form/destroy_confirmation:
+      accounts/destroy_confirmation_form:
         user_atname: Atname
         user_record: Account
-      email_confirmation_form/check:
+      email_confirmations/check_form:
         confirmation_code: Confirmation code
-      email_confirmation_form/creation:
+      email_confirmations/creation_form:
         email: Email
-      email_form/edit:
+      emails/edit_form:
         new_email: New email
-      page_form/bulk_restoring:
+      pages/bulk_restoring_form:
         page_ids: Selected pages
-      page_form/edit:
+      pages/edit_form:
         topic_number: Topic
         title: Title
         body: Body
-      password_reset_form/creation:
+      password_resets/creation_form:
         password: New password
-      profile_form/edit:
+      profiles/edit_form:
         atname: Atname
         description: Description
         name: Name
-      space_form/creation:
+      spaces/creation_form:
         identifier: Identifier
         name: Name
-      space_form/destroy_confirmation:
+      spaces/destroy_confirmation_form:
         space_name: Space name
-      space_form/edit:
+      spaces/edit_form:
         identifier: Identifier
         name: Name
-      topic_form/creation:
+      topics/creation_form:
         description: Description
         identifier: Identifier
         name: Name
@@ -44,25 +44,25 @@ en:
           %{learn_more_link}
         visibility_public_hint: Pages posted in public topics are visible on the internet.
         visibility: Visibility
-      topic_form/destroy_confirmation:
+      topics/destroy_confirmation_form:
         topic_name: Topic name
-      topic_form/edit:
+      topics/edit_form:
         description: Description
         name: Name
         visibility: Visibility
-      two_factor_auth_form/creation:
+      two_factor_auths/creation_form:
         password: Password
         totp_code: Authentication code
-      two_factor_auth_form/destruction:
+      two_factor_auths/destruction_form:
         password: Password
-      two_factor_auth_form/recovery_code_regeneration:
+      two_factor_auths/recovery_code_regeneration_form:
         password: Password
-      user_session_form/creation:
+      user_sessions/creation_form:
         email: Email
         password: Password
-      user_session_form/two_factor_verification:
+      user_sessions/two_factor_verification_form:
         totp_code: Authentication code
-      user_session_form/two_factor_recovery:
+      user_sessions/two_factor_recovery_form:
         recovery_code: Recovery code
       pages/search_form:
         q: Search keyword
@@ -74,29 +74,29 @@ en:
         reserved: cannot be used
         uniqueness: has already been taken
       models:
-        account_form/destroy_confirmation:
+        accounts/destroy_confirmation_form:
           has_active_spaces: cannot be deleted because it has an active space
-        email_confirmation_form/check:
+        email_confirmations/check_form:
           attributes:
             confirmation_code:
               incorrect_or_expired: is incorrect or expired
-        page_form/bulk_restoring:
+        pages/bulk_restoring_form:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
-        page_form/edit:
+        pages/edit_form:
           uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
-        two_factor_auth_form/creation:
+        two_factor_auths/creation_form:
           invalid_totp_code: Authentication code is incorrect
           unauthenticated: Password is incorrect
           user_two_factor_auth_record_not_found: Two-factor authentication is not set up
-        two_factor_auth_form/destruction:
+        two_factor_auths/destruction_form:
           unauthenticated: Password is incorrect
-        two_factor_auth_form/recovery_code_regeneration:
+        two_factor_auths/recovery_code_regeneration_form:
           unauthenticated: Password is incorrect
-        user_session_form/creation:
+        user_sessions/creation_form:
           unauthenticated: Login failed. Email or password are incorrect
-        user_session_form/two_factor_verification:
+        user_sessions/two_factor_verification_form:
           invalid_code: Authentication code is incorrect
-        user_session_form/two_factor_recovery:
+        user_sessions/two_factor_recovery_form:
           invalid_code: Recovery code is incorrect
         pages/search_form:
           attributes:

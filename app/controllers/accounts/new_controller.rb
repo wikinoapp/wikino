@@ -13,7 +13,7 @@ module Accounts
 
     sig { returns(T.untyped) }
     def call
-      form = AccountForm::Creation.new(email: @email_confirmation.not_nil!.email.not_nil!)
+      form = Accounts::CreationForm.new(email: @email_confirmation.not_nil!.email.not_nil!)
 
       render_component Accounts::NewView.new(form:)
     end

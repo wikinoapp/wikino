@@ -8,7 +8,7 @@ RSpec.describe Spaces::NewView, type: :view do
 
     render_inline(Spaces::NewView.new(
       current_user:,
-      form: SpaceForm::Creation.new
+      form: Spaces::CreationForm.new
     ))
 
     expect(page).to have_text("新規スペース")

@@ -24,7 +24,7 @@ module Spaces
             return render_404
           end
 
-          form = SpaceForm::DestroyConfirmation.new(form_params.merge(space_record:))
+          form = Spaces::DestroyConfirmationForm.new(form_params.merge(space_record:))
 
           if form.invalid?
             space = SpaceRepository.new.to_model(space_record:)
@@ -47,7 +47,7 @@ module Spaces
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:space_form_destroy_confirmation), ActionController::Parameters).permit(
+          T.cast(params.require(:spaces_destroy_confirmation_form), ActionController::Parameters).permit(
             :space_name
           )
         end

@@ -27,7 +27,7 @@ module Topics
             return render_404
           end
 
-          form = TopicForm::DestroyConfirmation.new(form_params.merge(topic_record:))
+          form = Topics::DestroyConfirmationForm.new(form_params.merge(topic_record:))
 
           if form.invalid?
             topic = TopicRepository.new.to_model(topic_record:)
@@ -50,7 +50,7 @@ module Topics
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:topic_form_destroy_confirmation), ActionController::Parameters).permit(
+          T.cast(params.require(:topics_destroy_confirmation_form), ActionController::Parameters).permit(
             :topic_name
           )
         end

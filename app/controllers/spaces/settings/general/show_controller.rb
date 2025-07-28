@@ -25,7 +25,7 @@ module Spaces
           end
 
           space = SpaceRepository.new.to_model(space_record:)
-          form = SpaceForm::Edit.new(
+          form = Spaces::EditForm.new(
             identifier: space_record.identifier,
             name: space_record.name
           )

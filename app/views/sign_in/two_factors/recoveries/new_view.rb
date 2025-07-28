@@ -5,7 +5,7 @@ module SignIn
   module TwoFactors
     module Recoveries
       class NewView < ApplicationView
-        sig { params(form: UserSessionForm::TwoFactorRecovery).void }
+        sig { params(form: UserSessions::TwoFactorRecoveryForm).void }
         def initialize(form:)
           @form = form
         end
@@ -15,7 +15,7 @@ module SignIn
           helpers.set_meta_tags(title:, **default_meta_tags)
         end
 
-        sig { returns(UserSessionForm::TwoFactorRecovery) }
+        sig { returns(UserSessions::TwoFactorRecoveryForm) }
         attr_reader :form
         private :form
 

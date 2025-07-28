@@ -27,7 +27,7 @@ module Topics
             return render_404
           end
 
-          form = TopicForm::Edit.new(
+          form = Topics::EditForm.new(
             name: topic_record.name,
             description: topic_record.description,
             visibility: topic_record.visibility

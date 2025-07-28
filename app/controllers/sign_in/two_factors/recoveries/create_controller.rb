@@ -19,7 +19,7 @@ module SignIn
             return redirect_to(sign_in_path)
           end
 
-          form = UserSessionForm::TwoFactorRecovery.new(
+          form = UserSessions::TwoFactorRecoveryForm.new(
             form_params.merge(user_record: pending_user_record)
           )
 
@@ -46,7 +46,7 @@ module SignIn
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          params.require(:user_session_form_two_factor_recovery).permit(
+          params.require(:user_sessions_two_factor_recovery_form).permit(
             :recovery_code
           )
         end

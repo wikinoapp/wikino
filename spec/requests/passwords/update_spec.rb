@@ -28,7 +28,7 @@ RSpec.describe "PATCH /password", type: :request do
     set_session(email_confirmation_id: email_confirmation.id)
 
     patch("/password", params: {
-      password_reset_form_creation: {
+      password_resets_creation_form: {
         password: "" # パスワードが空
       }
     })
@@ -46,7 +46,7 @@ RSpec.describe "PATCH /password", type: :request do
     set_session(email_confirmation_id: email_confirmation.id)
 
     patch("/password", params: {
-      password_reset_form_creation: {
+      password_resets_creation_form: {
         password: "new-password"
       }
     })

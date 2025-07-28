@@ -11,7 +11,7 @@ module Spaces
 
     sig { returns(T.untyped) }
     def call
-      form = SpaceForm::Creation.new(form_params)
+      form = Spaces::CreationForm.new(form_params)
 
       if form.invalid?
         return render_new_view(form:)
@@ -32,7 +32,7 @@ module Spaces
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:space_form_creation), ActionController::Parameters).permit(
+      T.cast(params.require(:spaces_creation_form), ActionController::Parameters).permit(
         :identifier,
         :name
       )

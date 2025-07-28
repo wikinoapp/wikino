@@ -9,7 +9,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     sign_in_with_2fa(user_record:)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "xxxxxxxx"
       }
     }
@@ -20,7 +20,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
 
   it "ログインしていない & 2FAが無効 & `pending_user_id` がセッションにないとき、ログインページにリダイレクトすること" do
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "xxxxxxxx"
       }
     }
@@ -33,7 +33,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     set_session(pending_user_id: "invalid_id")
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "xxxxxxxx"
       }
     }
@@ -47,7 +47,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     set_session(pending_user_id: user_record.id)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_verification: {
+      user_sessions_two_factor_verification_form: {
         recovery_code: "xxxxxxxx"
       }
     }
@@ -62,7 +62,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     set_session(pending_user_id: user_record.id)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "xxxxxxxx"
       }
     }
@@ -80,7 +80,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     set_session(pending_user_id: user_record.id)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: ""
       }
     }
@@ -101,7 +101,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     expect(UserSessionRecord.count).to eq(0)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "wrongcode"
       }
     }
@@ -122,7 +122,7 @@ RSpec.describe "POST /sign_in/two_factor/recovery", type: :request do
     expect(UserSessionRecord.count).to eq(0)
 
     post "/sign_in/two_factor/recovery", params: {
-      user_session_form_two_factor_recovery: {
+      user_sessions_two_factor_recovery_form: {
         recovery_code: "code1234"
       }
     }

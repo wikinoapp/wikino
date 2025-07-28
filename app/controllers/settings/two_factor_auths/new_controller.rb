@@ -20,7 +20,7 @@ module Settings
           secret: result.secret,
           provisioning_uri: result.provisioning_uri,
           qr_code: result.qr_code,
-          form: TwoFactorAuthForm::Creation.new
+          form: ::TwoFactorAuths::CreationForm.new
         )
       end
 

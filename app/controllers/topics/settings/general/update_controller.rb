@@ -27,7 +27,7 @@ module Topics
             return render_404
           end
 
-          form = TopicForm::Edit.new(form_params.merge(topic_record:))
+          form = Topics::EditForm.new(form_params.merge(topic_record:))
 
           if form.invalid?
             topic = TopicRepository.new.to_model(topic_record:)
@@ -55,7 +55,7 @@ module Topics
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:topic_form_edit), ActionController::Parameters).permit(
+          T.cast(params.require(:topics_edit_form), ActionController::Parameters).permit(
             :name,
             :description,
             :visibility

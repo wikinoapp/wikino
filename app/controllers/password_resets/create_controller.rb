@@ -11,7 +11,7 @@ module PasswordResets
 
     sig { returns(T.untyped) }
     def call
-      form = EmailConfirmationForm::Creation.new(form_params)
+      form = EmailConfirmations::CreationForm.new(form_params)
 
       if form.invalid?
         return render_component(
@@ -33,7 +33,7 @@ module PasswordResets
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:email_confirmation_form_creation), ActionController::Parameters)
+      T.cast(params.require(:email_confirmations_creation_form), ActionController::Parameters)
         .permit(:email)
     end
   end

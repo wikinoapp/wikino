@@ -16,7 +16,7 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     sign_in_with_2fa(user_record:)
 
     post "/settings/two_factor_auth", params: {
-      two_factor_auth_form_creation: {
+      two_factor_auths_creation_form: {
         password: "passw0rd",
         totp_code: "123456"
       }
@@ -32,7 +32,7 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     sign_in(user_record:)
 
     post "/settings/two_factor_auth", params: {
-      two_factor_auth_form_creation: {
+      two_factor_auths_creation_form: {
         password: "wrong_password",
         totp_code: "123456"
       }
@@ -48,7 +48,7 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     sign_in(user_record:)
 
     post "/settings/two_factor_auth", params: {
-      two_factor_auth_form_creation: {
+      two_factor_auths_creation_form: {
         password: "passw0rd",
         totp_code: "000000"
       }
@@ -72,7 +72,7 @@ RSpec.describe "POST /settings/two_factor_auth", type: :request do
     correct_code = totp.now
 
     post "/settings/two_factor_auth", params: {
-      two_factor_auth_form_creation: {
+      two_factor_auths_creation_form: {
         password: "passw0rd",
         totp_code: correct_code
       }

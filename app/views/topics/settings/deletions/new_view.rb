@@ -5,7 +5,7 @@ module Topics
   module Settings
     module Deletions
       class NewView < ApplicationView
-        sig { params(current_user: User, topic: Topic, form: TopicForm::DestroyConfirmation).void }
+        sig { params(current_user: User, topic: Topic, form: Topics::DestroyConfirmationForm).void }
         def initialize(current_user:, topic:, form:)
           @current_user = current_user
           @topic = topic
@@ -26,7 +26,7 @@ module Topics
         attr_reader :topic
         private :topic
 
-        sig { returns(TopicForm::DestroyConfirmation) }
+        sig { returns(Topics::DestroyConfirmationForm) }
         attr_reader :form
         private :form
 

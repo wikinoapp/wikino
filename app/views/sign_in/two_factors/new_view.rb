@@ -4,7 +4,7 @@
 module SignIn
   module TwoFactors
     class NewView < ApplicationView
-      sig { params(form: UserSessionForm::TwoFactorVerification).void }
+      sig { params(form: UserSessions::TwoFactorVerificationForm).void }
       def initialize(form:)
         @form = form
       end
@@ -14,7 +14,7 @@ module SignIn
         helpers.set_meta_tags(title:, **default_meta_tags)
       end
 
-      sig { returns(UserSessionForm::TwoFactorVerification) }
+      sig { returns(UserSessions::TwoFactorVerificationForm) }
       attr_reader :form
       private :form
 
