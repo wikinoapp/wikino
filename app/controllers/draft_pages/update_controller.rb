@@ -56,7 +56,7 @@ module DraftPages
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:page_form_edit), ActionController::Parameters).permit(
+      T.cast(params.require(:pages_edit_form), ActionController::Parameters).permit(
         :topic_number,
         :title,
         :body

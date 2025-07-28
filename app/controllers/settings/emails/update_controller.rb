@@ -37,7 +37,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:email_form_edit).permit(
+        params.require(:emails_edit_form).permit(
           :new_email
         )
       end

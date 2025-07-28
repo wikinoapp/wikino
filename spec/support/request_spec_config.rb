@@ -8,7 +8,7 @@ module RequestHelpers
     post(
       user_session_path,
       params: {
-        user_session_form_creation: {
+        user_sessions_creation_form: {
           email: user_record.email,
           password:
         }
@@ -41,7 +41,7 @@ module RequestHelpers
     post(
       sign_in_two_factor_path,
       params: {
-        user_session_form_two_factor_verification: {
+        user_sessions_two_factor_verification_form: {
           totp_code: correct_code
         }
       }

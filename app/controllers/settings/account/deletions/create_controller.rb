@@ -40,7 +40,7 @@ module Settings
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          T.cast(params.require(:account_form_destroy_confirmation), ActionController::Parameters).permit(
+          T.cast(params.require(:accounts_destroy_confirmation_form), ActionController::Parameters).permit(
             :user_atname
           )
         end

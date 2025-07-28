@@ -47,7 +47,7 @@ module Accounts
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:account_form_creation), ActionController::Parameters)
+      T.cast(params.require(:accounts_creation_form), ActionController::Parameters)
         .permit(:atname, :password)
     end
   end

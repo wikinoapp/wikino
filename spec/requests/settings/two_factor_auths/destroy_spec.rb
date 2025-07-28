@@ -15,7 +15,7 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
     sign_in(user_record:)
 
     delete "/settings/two_factor_auth", params: {
-      two_factor_auth_form_destruction: {
+      two_factor_auths_destruction_form: {
         password: "passw0rd"
       }
     }
@@ -31,7 +31,7 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
     sign_in_with_2fa(user_record:)
 
     delete "/settings/two_factor_auth", params: {
-      two_factor_auth_form_destruction: {
+      two_factor_auths_destruction_form: {
         password: "wrong_password"
       }
     }
@@ -51,7 +51,7 @@ RSpec.describe "DELETE /settings/two_factor_auth", type: :request do
     sign_in_with_2fa(user_record:)
 
     delete "/settings/two_factor_auth", params: {
-      two_factor_auth_form_destruction: {
+      two_factor_auths_destruction_form: {
         password: "passw0rd"
       }
     }

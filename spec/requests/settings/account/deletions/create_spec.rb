@@ -15,7 +15,7 @@ RSpec.describe "POST /settings/account/deletion", type: :request do
     sign_in(user_record:)
 
     post "/settings/account/deletion", params: {
-      account_form_destroy_confirmation: {
+      accounts_destroy_confirmation_form: {
         user_atname: "wrong_atname"
       }
     }
@@ -32,7 +32,7 @@ RSpec.describe "POST /settings/account/deletion", type: :request do
     sign_in(user_record:)
 
     post "/settings/account/deletion", params: {
-      account_form_destroy_confirmation: {
+      accounts_destroy_confirmation_form: {
         user_atname: "test_user"
       }
     }
@@ -47,7 +47,7 @@ RSpec.describe "POST /settings/account/deletion", type: :request do
     sign_in(user_record:)
 
     post "/settings/account/deletion", params: {
-      account_form_destroy_confirmation: {
+      accounts_destroy_confirmation_form: {
         user_atname: "test_user"
       }
     }

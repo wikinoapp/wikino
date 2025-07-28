@@ -37,7 +37,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:profile_form_edit).permit(
+        params.require(:profiles_edit_form).permit(
           :atname,
           :name,
           :description

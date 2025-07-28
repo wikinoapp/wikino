@@ -15,7 +15,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     sign_in(user_record:)
 
     post "/settings/two_factor_auth/recovery_codes", params: {
-      two_factor_auth_form_recovery_code_regeneration: {
+      two_factor_auths_recovery_code_regeneration_form: {
         password: "passw0rd"
       }
     }
@@ -32,7 +32,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     sign_in_with_2fa(user_record:)
 
     post "/settings/two_factor_auth/recovery_codes", params: {
-      two_factor_auth_form_recovery_code_regeneration: {
+      two_factor_auths_recovery_code_regeneration_form: {
         password: "wrong_password"
       }
     }
@@ -53,7 +53,7 @@ RSpec.describe "POST /settings/two_factor_auth/recovery_codes", type: :request d
     sign_in_with_2fa(user_record:)
 
     post "/settings/two_factor_auth/recovery_codes", params: {
-      two_factor_auth_form_recovery_code_regeneration: {
+      two_factor_auths_recovery_code_regeneration_form: {
         password: "passw0rd"
       }
     }

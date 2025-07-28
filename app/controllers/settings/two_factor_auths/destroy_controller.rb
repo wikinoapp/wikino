@@ -44,7 +44,7 @@ module Settings
 
       sig { returns(ActionController::Parameters) }
       private def form_params
-        params.require(:two_factor_auth_form_destruction).permit(
+        params.require(:two_factor_auths_destruction_form).permit(
           :password
         )
       end

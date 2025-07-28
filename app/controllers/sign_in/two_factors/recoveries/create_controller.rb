@@ -46,7 +46,7 @@ module SignIn
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          params.require(:user_session_form_two_factor_recovery).permit(
+          params.require(:user_sessions_two_factor_recovery_form).permit(
             :recovery_code
           )
         end

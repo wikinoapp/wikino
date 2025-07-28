@@ -47,7 +47,7 @@ module Settings
 
         sig { returns(ActionController::Parameters) }
         private def form_params
-          params.require(:two_factor_auth_form_recovery_code_regeneration).permit(
+          params.require(:two_factor_auths_recovery_code_regeneration_form).permit(
             :password
           )
         end

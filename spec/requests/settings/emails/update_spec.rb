@@ -15,7 +15,7 @@ RSpec.describe "PATCH /settings/email", type: :request do
     sign_in(user_record:)
 
     patch("/settings/email", params: {
-      email_form_edit: {
+      emails_edit_form: {
         new_email: "" # メールアドレスが空
       }
     })
@@ -30,7 +30,7 @@ RSpec.describe "PATCH /settings/email", type: :request do
     sign_in(user_record:)
 
     patch("/settings/email", params: {
-      email_form_edit: {
+      emails_edit_form: {
         new_email: "new@example.com"
       }
     })

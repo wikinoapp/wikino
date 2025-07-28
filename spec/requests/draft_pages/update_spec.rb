@@ -35,7 +35,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
-      page_form_edit: {
+      pages_edit_form: {
         topic_number: page.topic_record.number,
         title: "Updated Title",
         body: "Updated Body"
@@ -56,7 +56,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     sign_in(user_record: user)
 
     patch("/s/#{space.identifier}/pages/#{page.number}/draft_page", params: {
-      page_form_edit: {
+      pages_edit_form: {
         topic_number: page.topic_record.number,
         title: "Updated Title",
         body: "Updated Body"

@@ -35,7 +35,7 @@ module Passwords
 
     sig { returns(ActionController::Parameters) }
     private def form_params
-      T.cast(params.require(:password_reset_form_creation), ActionController::Parameters)
+      T.cast(params.require(:password_resets_creation_form), ActionController::Parameters)
         .permit(:password)
     end
   end

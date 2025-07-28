@@ -22,7 +22,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(UserRecord.count).to eq(1)
 
     post("/accounts", params: {
-      account_form_creation_creation: {
+      accounts_creation_form: {
         atname: "test",
         password: "passw0rd"
       }
@@ -43,7 +43,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form_creation: {
+      accounts_creation_form: {
         atname: "test",
         password: "passw0rd"
       }
@@ -64,7 +64,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(SpaceRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form_creation: {
+      accounts_creation_form: {
         atname: "test",
         password: "1234" # 短すぎるパスワード
       }
@@ -85,7 +85,7 @@ RSpec.describe "POST /accounts", type: :request do
     expect(UserRecord.count).to eq(0)
 
     post("/accounts", params: {
-      account_form_creation: {
+      accounts_creation_form: {
         atname: "test",
         password: "passw0rd"
       }
