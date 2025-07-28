@@ -18,7 +18,7 @@ module Settings
         )
 
         if form.invalid?
-          setup_result = TwoFactorAuthService::Setup.new.call(user: current_user!)
+          setup_result = ::TwoFactorAuths::SetupService.new.call(user: current_user!)
 
           return render_component(
             Settings::TwoFactorAuths::NewView.new(
@@ -32,7 +32,7 @@ module Settings
           )
         end
 
-        TwoFactorAuthService::Enable.new.call(
+        ::TwoFactorAuths::EnableService.new.call(
           user_record: form.user_record.not_nil!,
           password: form.password.not_nil!,
           totp_code: form.totp_code.not_nil!

@@ -36,7 +36,7 @@ module Settings
           )
         end
 
-        TwoFactorAuthService::Disable.new.call(user_record: current_user_record!)
+        ::TwoFactorAuths::DisableService.new.call(user_record: current_user_record!)
 
         flash[:notice] = t("messages.two_factor_auth.disabled_successfully")
         redirect_to settings_two_factor_auth_path

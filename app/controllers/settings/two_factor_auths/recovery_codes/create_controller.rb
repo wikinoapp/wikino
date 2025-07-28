@@ -37,7 +37,7 @@ module Settings
             )
           end
 
-          TwoFactorAuthService::RegenerateRecoveryCodes.new.call(
+          ::TwoFactorAuths::RegenerateRecoveryCodesService.new.call(
             user_record: current_user_record!
           )
 

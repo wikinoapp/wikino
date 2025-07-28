@@ -6,6 +6,6 @@ class DestroyAccountJob < ApplicationJob
 
   sig { params(user_record_id: T::Wikino::DatabaseId).void }
   def perform(user_record_id:)
-    AccountService::Destroy.new.call(user_record_id:)
+    Accounts::DestroyService.new.call(user_record_id:)
   end
 end

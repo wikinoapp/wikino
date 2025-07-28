@@ -30,7 +30,7 @@ module Settings
             )
           end
 
-          AccountService::SoftDestroy.new.call(user_record: current_user_record!)
+          Accounts::SoftDestroyService.new.call(user_record: current_user_record!)
 
           sign_out
 

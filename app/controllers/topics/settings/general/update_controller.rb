@@ -42,7 +42,7 @@ module Topics
             )
           end
 
-          TopicService::Update.new.call(
+          Topics::UpdateService.new.call(
             topic_record:,
             name: form.name.not_nil!,
             description: form.description.not_nil!,

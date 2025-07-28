@@ -27,7 +27,7 @@ module UserSessions
       end
 
       # 2FAが無効な場合は通常のログイン処理
-      result = UserSessionService::Create.new.call(
+      result = UserSessions::CreateService.new.call(
         user_record: user_record,
         ip_address: original_remote_ip,
         user_agent: request.user_agent

@@ -25,7 +25,7 @@ module Accounts
         return render_component(Accounts::NewView.new(form:), status: :unprocessable_entity)
       end
 
-      account_result = AccountService::Create.new.call(
+      account_result = Accounts::CreateService.new.call(
         email: form.email.not_nil!,
         atname: form.atname.not_nil!,
         locale: Locale.deserialize(form.locale),
@@ -33,7 +33,7 @@ module Accounts
         time_zone: form.time_zone.not_nil!
       )
 
-      user_session_result = UserSessionService::Create.new.call(
+      user_session_result = UserSessions::CreateService.new.call(
         user_record: account_result.user,
         ip_address: original_remote_ip,
         user_agent: request.user_agent

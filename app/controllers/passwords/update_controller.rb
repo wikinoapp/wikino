@@ -22,7 +22,7 @@ module Passwords
         )
       end
 
-      PasswordService::Update.new.call(
+      Passwords::UpdateService.new.call(
         email: @email_confirmation.not_nil!.email.not_nil!,
         password: form.password.not_nil!
       )

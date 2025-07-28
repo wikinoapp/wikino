@@ -24,7 +24,7 @@ module Spaces
             return render_404
           end
 
-          result = SpaceService::Export.new.call(
+          result = Spaces::ExportService.new.call(
             space_record:,
             queued_by_record: space_member_record.not_nil!
           )

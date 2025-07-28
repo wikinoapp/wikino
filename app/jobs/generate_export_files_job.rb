@@ -8,7 +8,7 @@ class GenerateExportFilesJob < ApplicationJob
   def perform(export_record_id:)
     export_record = ExportRecord.find(export_record_id)
 
-    SpaceService::GenerateExportFiles.new.call(export_record:)
+    Spaces::GenerateExportFilesService.new.call(export_record:)
 
     nil
   end

@@ -24,7 +24,7 @@ module Settings
           )
         end
 
-        result = EmailConfirmationService::Create.new.call(
+        result = EmailConfirmations::CreateService.new.call(
           email: form.new_email.not_nil!,
           event: EmailConfirmationEvent::EmailUpdate,
           locale: current_locale
