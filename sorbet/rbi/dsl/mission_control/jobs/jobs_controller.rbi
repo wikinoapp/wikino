@@ -32,9 +32,6 @@ class MissionControl::Jobs::JobsController
     include ::MissionControl::Jobs::ApplicationController::HelperMethods
 
     sig { returns(T.untyped) }
-    def active_filters?; end
-
-    sig { returns(T.untyped) }
     def jobs_status; end
   end
 

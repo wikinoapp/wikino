@@ -31,6 +31,12 @@ class MissionControl::Jobs::ApplicationController
     include ::MissionControl::Jobs::ApplicationHelper
 
     sig { returns(T.untyped) }
+    def active_filters?; end
+
+    sig { returns(T.untyped) }
+    def jobs_filter_param; end
+
+    sig { returns(T.untyped) }
     def queue_pausing_supported?; end
 
     sig { returns(T.untyped) }
