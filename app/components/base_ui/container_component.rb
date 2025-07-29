@@ -15,6 +15,7 @@ module BaseUI
       enums do
         Small = new("sm")
         Medium = new("md")
+        Large = new("lg")
       end
     end
 
@@ -46,6 +47,8 @@ module BaseUI
         "max-w-2xl" # 672px
       when ContentScreen::Medium
         "max-w-3xl" # 768px
+      when ContentScreen::Large
+        "max-w-7xl" # 1280px
       else
         T.absurd(cs)
       end
