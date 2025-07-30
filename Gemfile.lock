@@ -228,7 +228,6 @@ GEM
     matrix (0.4.2)
     meta-tags (2.22.1)
       actionpack (>= 6.0.0, < 8.1)
-    method_source (1.1.0)
     mini_mime (1.1.5)
     minitest (5.25.5)
     mission_control-jobs (1.1.0)
@@ -511,10 +510,9 @@ GEM
     useragent (0.16.11)
     vcr (6.3.1)
       base64
-    view_component (3.23.2)
-      activesupport (>= 5.2.0, < 8.1)
+    view_component (4.0.0)
+      activesupport (>= 7.1.0, < 8.1)
       concurrent-ruby (~> 1)
-      method_source (~> 1.0)
     websocket (1.2.11)
     websocket-driver (0.8.0)
       base64
