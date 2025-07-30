@@ -10,6 +10,6 @@ class CreatePageAttachmentReferences < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :page_attachment_references, [:page_id, :attachment_id], unique: true
+    add_index :page_attachment_references, %i[page_id attachment_id], unique: true
   end
 end
