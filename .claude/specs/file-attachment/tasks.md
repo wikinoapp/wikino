@@ -27,10 +27,10 @@
 ## 2. バックエンド実装
 
 ### 2.1 モデル・レコード
-- [ ] AttachmentRecordの実装
+- [x] AttachmentRecordの実装
   - ActiveStorageとの関連付け
   - スコープ: by_space, by_user, recent
-- [ ] PageAttachmentReferenceRecordの実装
+- [x] PageAttachmentReferenceRecordの実装
   - ページとの関連付け
   - 表示順序の管理
 
