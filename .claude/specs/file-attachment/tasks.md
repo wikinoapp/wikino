@@ -7,10 +7,9 @@
   - `rails active_storage:install`を実行
   - マイグレーションファイルの確認と実行
 - [ ] ストレージサービスの設定
-  - 開発環境: MinIOの設定を`config/storage.yml`に追加
-  - 本番環境: Cloudflare R2の設定を`config/storage.yml`に追加
+  - 開発環境・本番環境: Cloudflare R2の設定を`config/storage.yml`に追加
 - [ ] 環境別のストレージ設定
-  - `config/environments/development.rb`でMinIOを使用
+  - `config/environments/development.rb`でCloudflare R2を使用
   - `config/environments/production.rb`でCloudflare R2を使用
 
 ### 1.2 データベース設計
