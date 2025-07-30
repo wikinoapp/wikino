@@ -52,6 +52,12 @@
 - 添付したファイルが画像のときインライン表示されるようにする
 - 画像をクリックしたとき、新しいタブで画像を開く
 - EXIF情報に基づく自動回転補正
+- プライバシー保護のため、以下のEXIFデータを削除
+  - 位置情報: GPSLatitude, GPSLongitude, GPSAltitude, GPSTimeStamp, GPSImgDirection
+  - 個人情報: Artist, Copyright, CameraOwnerName, BodySerialNumber, LensSerialNumber
+  - 詳細情報: SubSecTime, UserComment, ImageDescription, XPTitle, XPComment, XPAuthor
+  - ソフトウェア情報: Software, ProcessingSoftware
+  - ただし、Orientationタグは自動回転処理のため保持し、処理後に正規化
 
 ### 添付ファイル管理
 
