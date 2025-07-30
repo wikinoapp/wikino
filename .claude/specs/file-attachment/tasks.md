@@ -13,13 +13,13 @@
   - `config/environments/production.rb`でCloudflare R2を使用
 
 ### 1.2 データベース設計
-- [ ] attachmentsテーブルの作成
+- [x] attachmentsテーブルの作成
   - id (ULID)
   - space_id (外部キー)
   - active_storage_attachment_id (外部キー)
   - attached_user_id (外部キー)
   - attached_at (timestamp)
-- [ ] page_attachment_referencesテーブルの作成
+- [x] page_attachment_referencesテーブルの作成
   - id (ULID)
   - attachment_id (外部キー)
   - page_id (外部キー)
