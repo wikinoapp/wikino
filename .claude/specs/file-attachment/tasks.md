@@ -19,7 +19,7 @@
   - active_storage_attachment_id (外部キー)
   - attached_user_id (外部キー)
   - attached_at (timestamp)
-- [ ] attachment_referencesテーブルの作成
+- [ ] page_attachment_referencesテーブルの作成
   - id (ULID)
   - attachment_id (外部キー)
   - page_id (外部キー)
@@ -30,7 +30,7 @@
 - [ ] AttachmentRecordの実装
   - ActiveStorageとの関連付け
   - スコープ: by_space, by_user, recent
-- [ ] AttachmentReferenceRecordの実装
+- [ ] PageAttachmentReferenceRecordの実装
   - ページとの関連付け
   - 表示順序の管理
 
