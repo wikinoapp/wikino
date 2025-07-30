@@ -2,20 +2,14 @@
 # frozen_string_literal: true
 
 class PageAttachmentReferenceRecord < ApplicationRecord
-  extend T::Sig
-
   self.table_name = "page_attachment_references"
 
-  # アソシエーション
-  belongs_to :attachment, class_name: "AttachmentRecord"
-  belongs_to :page, class_name: "PageRecord"
-
-  # バリデーション
-  validates :attachment_id, uniqueness: { scope: :page_id }
+  belongs_to :attachment_record, foreign_key: :attachment_id
+  belongs_to :page_record, foreign_key: :page_id
 
   # ページに関連する添付ファイルを取得
-  sig { params(page_id: String).returns(ActiveRecord::Relation) }
-  def self.attachments_for_page(page_id)
-    includes(:attachment).where(page_id: page_id)
+  sig { params(page_database_id: T::Wikino::DatabaseId).returns(ActiveRecord::Relation) }
+  def self.attachments_for_page(page_database_id:)
+    preload(:attachment_record).where(page_id: page_database_id)
   end
 end
