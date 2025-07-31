@@ -11,28 +11,32 @@ module Attachments
 
     sig { void }
     def call
-      # スペースの権限確認
-      authorize_space_member!
+      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      space_member_record = current_user_record!.space_member_record(space_record:)
+      policy = SpaceMemberPolicy.new(
+        user_record: current_user_record!,
+        space_member_record:
+      )
 
-      # フォームオブジェクトで検証
+      unless policy.joined_space?
+        render json: {error: "Unauthorized"}, status: :forbidden
+      end
+
       form = Attachments::CreationForm.new(blob_signed_id: params[:blob_signed_id])
 
       if form.invalid?
         return render(json: {errors: form.errors.full_messages}, status: :unprocessable_entity)
       end
 
-      # Attachmentレコードの作成
-      service = Attachments::CreateService.new(
-        space_id: current_space.id,
+      result = Attachments::CreateService.new.call(
+        space_record:,
         blob: form.blob.not_nil!,
         user_id: current_user_record.not_nil!.id
       )
-      attachment_record = service.call
 
-      # Attachmentモデルに変換
       attachment = AttachmentRepository.new.to_model(
-        attachment_record: attachment_record,
-        url: attachment_url(attachment_record)
+        attachment_record: result.attachment_record,
+        url: attachment_url(result.attachment_record)
       )
 
       render json: {
@@ -42,27 +46,6 @@ module Attachments
         byte_size: attachment.byte_size,
         url: attachment.url
       }, status: :created
-    rescue ActiveRecord::RecordInvalid => e
-      render json: {error: e.message}, status: :unprocessable_entity
-    end
-
-    # 現在のスペースを取得
-    sig { returns(SpaceRecord) }
-    private def current_space
-      @current_space ||= T.let(SpaceRecord.find_by!(identifier: params[:space_identifier]), T.nilable(SpaceRecord))
-    end
-
-    # スペースメンバーであることを確認
-    sig { void }
-    private def authorize_space_member!
-      space_member_record = current_user_record&.space_member_record(space_record: current_space)
-      policy = SpaceMemberPolicy.new(
-        user_record: current_user_record,
-        space_member_record: space_member_record
-      )
-      unless policy.joined_space?
-        render json: {error: "Unauthorized"}, status: :forbidden
-      end
     end
 
     # 添付ファイルのURLを生成
