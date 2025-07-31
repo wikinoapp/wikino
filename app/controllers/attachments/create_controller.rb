@@ -22,28 +22,12 @@ module Attachments
       end
 
       # Attachmentレコードの作成
-      attachment_record = AttachmentRecord.transaction do
-        # ActiveStorageのアタッチメントを作成
-        active_storage_attachment = ActiveStorage::Attachment.create!(
-          name: "file",
-          record_type: "AttachmentRecord",
-          record_id: SecureRandom.uuid, # 一時的なID
-          blob: form.blob
-        )
-
-        # Attachmentレコードを作成
-        attachment = AttachmentRecord.create!(
-          space_id: current_space.id,
-          active_storage_attachment_id: active_storage_attachment.id,
-          attached_user_id: current_user_record.not_nil!.id,
-          attached_at: Time.current
-        )
-
-        # ActiveStorageのアタッチメントを更新
-        active_storage_attachment.update!(record_id: attachment.id)
-
-        attachment
-      end
+      service = AttachmentCreationService.new(
+        space_id: current_space.id,
+        blob: form.blob.not_nil!,
+        user_id: current_user_record.not_nil!.id
+      )
+      attachment_record = service.call
 
       # Attachmentモデルに変換
       attachment = AttachmentRepository.new.to_model(
