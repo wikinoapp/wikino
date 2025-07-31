@@ -22,7 +22,7 @@ module Attachments
       end
 
       # Attachmentレコードの作成
-      service = AttachmentCreationService.new(
+      service = Attachments::CreateService.new(
         space_id: current_space.id,
         blob: form.blob.not_nil!,
         user_id: current_user_record.not_nil!.id
