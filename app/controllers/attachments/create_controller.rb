@@ -1,15 +1,14 @@
-# typed: strict
+# typed: true
 # frozen_string_literal: true
 
 module Attachments
   class CreateController < ApplicationController
-    extend T::Sig
     include ControllerConcerns::Authenticatable
+    include ControllerConcerns::Localizable
 
+    around_action :set_locale
     before_action :require_authentication
 
-    # アップロード完了通知
-    # POST /s/:space_identifier/attachments
     sig { void }
     def call
       # スペースの権限確認
@@ -69,8 +68,6 @@ module Attachments
     rescue ActiveRecord::RecordInvalid => e
       render json: {error: e.message}, status: :unprocessable_entity
     end
-
-    private
 
     # 現在のスペースを取得
     sig { returns(SpaceRecord) }
