@@ -16,9 +16,9 @@ module Attachments
 
       # フォームオブジェクトで検証
       form = Attachments::CreationForm.new(blob_signed_id: params[:blob_signed_id])
-      unless form.valid?
-        render json: {errors: form.errors.full_messages}, status: :unprocessable_entity
-        return
+
+      if form.invalid?
+        return render(json: {errors: form.errors.full_messages}, status: :unprocessable_entity)
       end
 
       # Attachmentレコードの作成
