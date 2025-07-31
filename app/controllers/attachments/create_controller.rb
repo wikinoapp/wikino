@@ -18,7 +18,7 @@ module Attachments
       blob = ActiveStorage::Blob.find_signed(params[:blob_signed_id])
 
       # フォームオブジェクトで検証
-      form = AttachmentCreationForm.new(blob: blob)
+      form = Attachments::CreationForm.new(blob: blob)
       unless form.valid?
         render json: {errors: form.errors.full_messages}, status: :unprocessable_entity
         return
