@@ -18,27 +18,35 @@ module Attachments
       %r{[/\\]} # パス区切り文字
     ].freeze, T::Array[Regexp])
 
-    # ActiveStorage Blobオブジェクト
-    sig { returns(T.nilable(ActiveStorage::Blob)) }
-    attr_reader :blob
-
-    sig { params(blob: T.nilable(ActiveStorage::Blob)).void }
-    def initialize(blob: nil)
-      super()
-      @blob = T.let(blob, T.nilable(ActiveStorage::Blob))
-    end
+    # Blob署名付きID
+    attribute :blob_signed_id, :string
 
     # バリデーション
-    validate :validate_blob_presence
+    validates :blob_signed_id, presence: true
+
+    validate :validate_blob_existence
     validate :validate_file_format
     validate :validate_file_extension
     validate :validate_content_type
 
+    # Blobオブジェクトを取得
+    sig { returns(T.nilable(ActiveStorage::Blob)) }
+    def blob
+      return nil if blob_signed_id.blank?
+
+      @blob ||= T.let(
+        ActiveStorage::Blob.find_signed(blob_signed_id),
+        T.nilable(ActiveStorage::Blob)
+      )
+    rescue ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature
+      nil
+    end
+
     # Blobの存在確認
     sig { void }
-    private def validate_blob_presence
+    private def validate_blob_existence
       if blob.nil?
-        errors.add(:blob, "が見つかりません")
+        errors.add(:blob_signed_id, "が無効です")
       end
     end
 

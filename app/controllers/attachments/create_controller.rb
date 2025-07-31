@@ -14,11 +14,8 @@ module Attachments
       # スペースの権限確認
       authorize_space_member!
 
-      # blobの取得
-      blob = ActiveStorage::Blob.find_signed(params[:blob_signed_id])
-
       # フォームオブジェクトで検証
-      form = Attachments::CreationForm.new(blob: blob)
+      form = Attachments::CreationForm.new(blob_signed_id: params[:blob_signed_id])
       unless form.valid?
         render json: {errors: form.errors.full_messages}, status: :unprocessable_entity
         return
@@ -31,7 +28,7 @@ module Attachments
           name: "file",
           record_type: "AttachmentRecord",
           record_id: SecureRandom.uuid, # 一時的なID
-          blob: blob
+          blob: form.blob
         )
 
         # Attachmentレコードを作成
