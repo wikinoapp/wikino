@@ -10,11 +10,18 @@ module Attachments
       around_action :set_locale
       before_action :require_authentication
 
-      # ダイレクトアップロード用の署名付きURL生成
       sig { void }
       def call
-        # スペースの権限確認
-        authorize_space_member!
+        space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+        space_member_record = current_user_record!.space_member_record(space_record:)
+        policy = SpaceMemberPolicy.new(
+          user_record: current_user_record!,
+          space_member_record:
+        )
+
+        unless policy.joined_space?
+          render json: {error: "Unauthorized"}, status: :forbidden
+        end
 
         # ファイルのメタデータを検証
         form = AttachmentPresignForm.new(
@@ -23,51 +30,31 @@ module Attachments
           byte_size: params[:byte_size]
         )
 
-        if form.valid?
-          # 署名付きURLの生成
-          blob = ActiveStorage::Blob.create_before_direct_upload!(
-            filename: form.filename,
-            content_type: form.content_type,
-            byte_size: form.byte_size,
-            checksum: OpenSSL::Digest::MD5.base64digest(form.filename),  # 一時的なチェックサム
-            metadata: {
-              space_id: current_space.id,
-              user_id: current_user_record.not_nil!.id
-            }
-          )
+        if form.invalid?
+          return render(json: {errors: form.errors.full_messages}, status: :unprocessable_entity)
+        end
 
-          render json: {
-            direct_upload: {
-              url: blob.service_url_for_direct_upload,
-              headers: blob.service_headers_for_direct_upload
-            },
-            blob_signed_id: blob.signed_id
+        # 署名付きURLの生成
+        blob = ActiveStorage::Blob.create_before_direct_upload!(
+          filename: form.filename,
+          content_type: form.content_type,
+          byte_size: form.byte_size,
+          checksum: OpenSSL::Digest::MD5.base64digest(form.filename),  # 一時的なチェックサム
+          metadata: {
+            space_id: space_record.id,
+            user_id: current_user_record.not_nil!.id
           }
-        else
-          render json: {errors: form.errors.full_messages}, status: :unprocessable_entity
-        end
-      end
-
-      private
-
-      # 現在のスペースを取得
-      sig { returns(SpaceRecord) }
-      private def current_space
-        @current_space ||= T.let(SpaceRecord.find_by!(identifier: params[:space_identifier]), T.nilable(SpaceRecord))
-      end
-
-      # スペースメンバーであることを確認
-      sig { void }
-      private def authorize_space_member!
-        space_member_record = current_user_record&.space_member_record(space_record: current_space)
-        policy = SpaceMemberPolicy.new(
-          user_record: current_user_record,
-          space_member_record: space_member_record
         )
-        unless policy.joined_space?
-          render json: {error: "Unauthorized"}, status: :forbidden
-        end
+
+        render json: {
+          direct_upload: {
+            url: blob.service_url_for_direct_upload,
+            headers: blob.service_headers_for_direct_upload
+          },
+          blob_signed_id: blob.signed_id
+        }
       end
+
     end
   end
 end
