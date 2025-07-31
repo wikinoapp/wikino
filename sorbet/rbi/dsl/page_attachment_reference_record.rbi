@@ -428,58 +428,58 @@ class PageAttachmentReferenceRecord
 
   module GeneratedAssociationMethods
     sig { returns(T.nilable(::AttachmentRecord)) }
-    def attachment; end
+    def attachment_record; end
 
     sig { params(value: T.nilable(::AttachmentRecord)).void }
-    def attachment=(value); end
+    def attachment_record=(value); end
 
     sig { returns(T::Boolean) }
-    def attachment_changed?; end
+    def attachment_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def attachment_previously_changed?; end
+    def attachment_record_previously_changed?; end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
-    def build_attachment(*args, &blk); end
+    def build_attachment_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
-    def build_page(*args, &blk); end
+    def build_page_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
-    def create_attachment(*args, &blk); end
+    def create_attachment_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
-    def create_attachment!(*args, &blk); end
+    def create_attachment_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
-    def create_page(*args, &blk); end
+    def create_page_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
-    def create_page!(*args, &blk); end
+    def create_page_record!(*args, &blk); end
 
     sig { returns(T.nilable(::PageRecord)) }
-    def page; end
+    def page_record; end
 
     sig { params(value: T.nilable(::PageRecord)).void }
-    def page=(value); end
+    def page_record=(value); end
 
     sig { returns(T::Boolean) }
-    def page_changed?; end
+    def page_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def page_previously_changed?; end
+    def page_record_previously_changed?; end
 
     sig { returns(T.nilable(::AttachmentRecord)) }
-    def reload_attachment; end
+    def reload_attachment_record; end
 
     sig { returns(T.nilable(::PageRecord)) }
-    def reload_page; end
+    def reload_page_record; end
 
     sig { void }
-    def reset_attachment; end
+    def reset_attachment_record; end
 
     sig { void }
-    def reset_page; end
+    def reset_page_record; end
   end
 
   module GeneratedAssociationRelationMethods

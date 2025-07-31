@@ -25,6 +25,8 @@ Rails.application.routes.draw do
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")
   match "/s/:space_identifier",                                            via: :get,    as: :space,                                        to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                                         to: "atom/show#call"
+  match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
+  match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,                      to: "bulk_restored_pages/create#call"
   match "/s/:space_identifier/page_locations",                             via: :get,    as: :page_location_list,                           to: "page_locations/index#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                         via: :get,    as: :page,                                         to: "pages/show#call",                             page_number: /\d+/

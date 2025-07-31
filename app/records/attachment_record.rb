@@ -21,7 +21,7 @@ class AttachmentRecord < ApplicationRecord
   # Active Storageのblobへのショートカット
   sig { returns(T.nilable(ActiveStorage::Blob)) }
   def blob
-    active_storage_attachment&.blob
+    active_storage_attachment_record&.blob
   end
 
   # ファイル名を取得

@@ -391,99 +391,72 @@ class AttachmentRecord
 
   module GeneratedAssociationMethods
     sig { returns(T.nilable(::ActiveStorage::Attachment)) }
-    def active_storage_attachment; end
+    def active_storage_attachment_record; end
 
     sig { params(value: T.nilable(::ActiveStorage::Attachment)).void }
-    def active_storage_attachment=(value); end
+    def active_storage_attachment_record=(value); end
 
     sig { returns(T::Boolean) }
-    def active_storage_attachment_changed?; end
+    def active_storage_attachment_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def active_storage_attachment_previously_changed?; end
-
-    sig { returns(T.nilable(::UserRecord)) }
-    def attached_user; end
-
-    sig { params(value: T.nilable(::UserRecord)).void }
-    def attached_user=(value); end
-
-    sig { returns(T::Boolean) }
-    def attached_user_changed?; end
-
-    sig { returns(T::Boolean) }
-    def attached_user_previously_changed?; end
+    def active_storage_attachment_record_previously_changed?; end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::ActiveStorage::Attachment) }
-    def build_active_storage_attachment(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def build_attached_user(*args, &blk); end
+    def build_active_storage_attachment_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def build_space(*args, &blk); end
+    def build_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::ActiveStorage::Attachment) }
-    def create_active_storage_attachment(*args, &blk); end
+    def create_active_storage_attachment_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::ActiveStorage::Attachment) }
-    def create_active_storage_attachment!(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_attached_user(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_attached_user!(*args, &blk); end
+    def create_active_storage_attachment_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space(*args, &blk); end
+    def create_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space!(*args, &blk); end
+    def create_space_record!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def page_attachment_reference_ids; end
+    def page_attachment_reference_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def page_attachment_reference_ids=(ids); end
+    def page_attachment_reference_record_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `AttachmentRecord` class because it declared `has_many :page_attachment_references`.
+    # This method is created by ActiveRecord on the `AttachmentRecord` class because it declared `has_many :page_attachment_reference_records`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
     sig { returns(::PageAttachmentReferenceRecord::PrivateCollectionProxy) }
-    def page_attachment_references; end
+    def page_attachment_reference_records; end
 
     sig { params(value: T::Enumerable[::PageAttachmentReferenceRecord]).void }
-    def page_attachment_references=(value); end
+    def page_attachment_reference_records=(value); end
 
     sig { returns(T.nilable(::ActiveStorage::Attachment)) }
-    def reload_active_storage_attachment; end
-
-    sig { returns(T.nilable(::UserRecord)) }
-    def reload_attached_user; end
+    def reload_active_storage_attachment_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def reload_space; end
+    def reload_space_record; end
 
     sig { void }
-    def reset_active_storage_attachment; end
+    def reset_active_storage_attachment_record; end
 
     sig { void }
-    def reset_attached_user; end
-
-    sig { void }
-    def reset_space; end
+    def reset_space_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def space; end
+    def space_record; end
 
     sig { params(value: T.nilable(::SpaceRecord)).void }
-    def space=(value); end
+    def space_record=(value); end
 
     sig { returns(T::Boolean) }
-    def space_changed?; end
+    def space_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def space_previously_changed?; end
+    def space_record_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods
