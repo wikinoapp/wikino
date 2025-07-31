@@ -40,9 +40,9 @@ module Attachments
       message: :file_size_too_large
     }
 
-    # ファイル名のサニタイズ
     validate :validate_filename_format
 
+    # ファイル名のサニタイズ
     sig { void }
     private def validate_filename_format
       return if filename.blank?
