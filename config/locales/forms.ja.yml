@@ -119,7 +119,8 @@ ja:
             content_type:
               unsupported_content_type: はサポートされていない形式です
             byte_size:
-              file_size_too_large: は50MB以下にしてください
+              file_size_too_large: は%{max}以下にしてください
             filename:
               invalid_characters: に使用できない文字が含まれています
               invalid_path: に不正なパスが含まれています
+              too_long: は255バイト以下にしてください

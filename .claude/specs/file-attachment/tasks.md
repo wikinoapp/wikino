@@ -1,6 +1,6 @@
 # ファイル添付機能 実装タスク
 
-@.claude/specs/file-attachment/requirements.md を元にして作成した実装タスクです。
+細かな要件について知りたいときは @.claude/specs/file-attachment/requirements.md を参照してください。
 
 ## 1. インフラ・基盤設定
 

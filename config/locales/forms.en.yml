@@ -117,7 +117,8 @@ en:
             content_type:
               unsupported_content_type: is not a supported format
             byte_size:
-              file_size_too_large: must be 50MB or less
+              file_size_too_large: must be %{max} or less
             filename:
               invalid_characters: contains invalid characters
               invalid_path: contains an invalid path
+              too_long: must be 255 bytes or less
