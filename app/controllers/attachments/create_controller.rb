@@ -14,17 +14,13 @@ module Attachments
       # スペースの権限確認
       authorize_space_member!
 
-      # blobの取得と検証
+      # blobの取得
       blob = ActiveStorage::Blob.find_signed(params[:blob_signed_id])
-      unless blob
-        render json: {error: "Invalid blob signed id"}, status: :unprocessable_entity
-        return
-      end
 
-      # ファイルの検証
-      validation_service = AttachmentValidationService.new(blob: blob)
-      unless validation_service.valid?
-        render json: {errors: validation_service.errors}, status: :unprocessable_entity
+      # フォームオブジェクトで検証
+      form = AttachmentCreationForm.new(blob: blob)
+      unless form.valid?
+        render json: {errors: form.errors.full_messages}, status: :unprocessable_entity
         return
       end
 
