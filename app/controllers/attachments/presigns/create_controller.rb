@@ -4,13 +4,13 @@
 module Attachments
   module Presigns
     class CreateController < ApplicationController
-      extend T::Sig
       include ControllerConcerns::Authenticatable
+      include ControllerConcerns::Localizable
 
+      around_action :set_locale
       before_action :require_authentication
 
       # ダイレクトアップロード用の署名付きURL生成
-      # POST /s/:space_identifier/attachments/presign
       sig { void }
       def call
         # スペースの権限確認
