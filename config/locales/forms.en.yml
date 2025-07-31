@@ -104,3 +104,7 @@ en:
               too_short: must be at least %{count} characters
               too_long: must be no more than %{count} characters
               invalid: contains invalid characters
+        attachments/creation_form:
+          invalid_filename: Invalid filename
+          executable_file_not_allowed: Executable files cannot be uploaded
+          unsupported_file_format: Unsupported file format

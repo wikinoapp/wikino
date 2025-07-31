@@ -49,7 +49,7 @@ module Attachments
       # 危険なパターンのチェック
       DANGEROUS_FILENAME_PATTERNS.each do |pattern|
         if filename.match?(pattern)
-          errors.add(:base, "ファイル名が不正です")
+          errors.add(:base, :invalid_filename)
           break
         end
       end
@@ -62,7 +62,7 @@ module Attachments
 
       extension = File.extname(blob.not_nil!.filename.to_s).downcase
       if EXECUTABLE_EXTENSIONS.include?(extension)
-        errors.add(:base, "実行可能ファイルはアップロードできません")
+        errors.add(:base, :executable_file_not_allowed)
       end
     end
 
@@ -72,7 +72,7 @@ module Attachments
       return if blob.nil?
 
       unless AttachmentPresignForm::ALLOWED_CONTENT_TYPES.include?(blob.not_nil!.content_type)
-        errors.add(:base, "サポートされていないファイル形式です")
+        errors.add(:base, :unsupported_file_format)
       end
     end
   end

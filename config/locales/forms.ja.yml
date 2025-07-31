@@ -106,3 +106,7 @@ ja:
               too_short: は%{count}文字以上で入力してください
               too_long: は%{count}文字以内で入力してください
               invalid: に不正な文字が含まれています
+        attachments/creation_form:
+          invalid_filename: ファイル名が不正です
+          executable_file_not_allowed: 実行可能ファイルはアップロードできません
+          unsupported_file_format: サポートされていないファイル形式です
