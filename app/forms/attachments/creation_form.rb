@@ -2,11 +2,7 @@
 # frozen_string_literal: true
 
 module Attachments
-  class CreationForm
-    include ActiveModel::Model
-    include ActiveModel::Attributes
-    extend T::Sig
-
+  class CreationForm < ApplicationForm
     # 実行可能ファイルの拡張子
     EXECUTABLE_EXTENSIONS = T.let(%w[
       .exe .bat .cmd .com .scr .vbs .vbe .js .jse .wsf .wsh .msi .jar .app
@@ -37,8 +33,6 @@ module Attachments
     validate :validate_file_format
     validate :validate_file_extension
     validate :validate_content_type
-
-    private
 
     # Blobの存在確認
     sig { void }
