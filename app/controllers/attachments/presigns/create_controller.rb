@@ -23,8 +23,7 @@ module Attachments
           render json: {error: "Unauthorized"}, status: :forbidden
         end
 
-        # ファイルのメタデータを検証
-        form = AttachmentPresignForm.new(
+        form = Attachments::PresignForm.new(
           filename: params[:filename],
           content_type: params[:content_type],
           byte_size: params[:byte_size]
@@ -54,7 +53,6 @@ module Attachments
           blob_signed_id: blob.signed_id
         }
       end
-
     end
   end
 end

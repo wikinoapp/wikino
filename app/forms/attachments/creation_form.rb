@@ -71,7 +71,7 @@ module Attachments
     private def validate_content_type
       return if blob.nil?
 
-      unless AttachmentPresignForm::ALLOWED_CONTENT_TYPES.include?(blob.not_nil!.content_type)
+      unless Attachments::PresignForm::ALLOWED_CONTENT_TYPES.include?(blob.not_nil!.content_type)
         errors.add(:base, :unsupported_file_format)
       end
     end

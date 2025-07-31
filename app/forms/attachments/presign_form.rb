@@ -1,10 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
-class AttachmentPresignForm
-  include ActiveModel::Model
-  include ActiveModel::Attributes
-  extend T::Sig
+module Attachments
+  class PresignForm
+    include ActiveModel::Model
+    include ActiveModel::Attributes
+    extend T::Sig
 
   # 最大ファイルサイズ: 50MB
   MAX_FILE_SIZE = T.let(50.megabytes, Integer)
@@ -64,5 +65,6 @@ class AttachmentPresignForm
     if fname.include?("..") || fname.include?("/") || fname.include?("\\")
       errors.add(:filename, "に不正なパスが含まれています")
     end
+  end
   end
 end
