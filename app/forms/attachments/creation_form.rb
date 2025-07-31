@@ -21,10 +21,7 @@ module Attachments
     # Blob署名付きID
     attribute :blob_signed_id, :string
 
-    # バリデーション
-    validates :blob_signed_id, presence: true
-
-    validate :validate_blob_existence
+    validates :blob, presence: true
     validate :validate_file_format
     validate :validate_file_extension
     validate :validate_content_type
@@ -40,14 +37,6 @@ module Attachments
       )
     rescue ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature
       nil
-    end
-
-    # Blobの存在確認
-    sig { void }
-    private def validate_blob_existence
-      if blob.nil?
-        errors.add(:blob_signed_id, "が無効です")
-      end
     end
 
     # ファイル名の形式検証
