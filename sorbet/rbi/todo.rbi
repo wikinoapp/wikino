@@ -6,5 +6,5 @@
 
 module ::FFI::Function; end
 module ::FFI::Library; end
-module ::FFI::ManagedStruct; end
-module ::FFI::Struct; end
+class ::FFI::ManagedStruct; end
+class ::FFI::Struct; end

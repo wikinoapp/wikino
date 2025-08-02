@@ -21,6 +21,7 @@ module Attachments
 
         unless policy.joined_space?
           render json: {error: "Unauthorized"}, status: :forbidden
+          return
         end
 
         form = Attachments::PresignForm.new(

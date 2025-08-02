@@ -44,7 +44,7 @@ module Attachments
         Result.new(attachment_record:, success: true)
       rescue => e
         Rails.logger.error("Attachments::ProcessService failed: #{e.message}")
-        Rails.logger.error(e.backtrace.join("\n"))
+        Rails.logger.error(e.backtrace.not_nil!.join("\n"))
 
         # 処理失敗としてマーク
         attachment_record.processing_status_failed!

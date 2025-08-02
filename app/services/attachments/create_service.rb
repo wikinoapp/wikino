@@ -23,16 +23,16 @@ module Attachments
           blob: blob_record
         )
 
-        attachment_record = AttachmentRecord.create!(
+        created_attachment_record = AttachmentRecord.create!(
           space_id: space_record.id,
           active_storage_attachment_record:,
           attached_space_member_id:,
           attached_at: Time.current
         )
 
-        active_storage_attachment_record.update!(record: attachment_record)
+        active_storage_attachment_record.update!(record: created_attachment_record)
 
-        attachment_record
+        created_attachment_record
       end
 
       AttachmentProcessingJob.perform_later(attachment_record.id)
