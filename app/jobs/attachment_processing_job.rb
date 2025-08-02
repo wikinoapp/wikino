@@ -10,7 +10,6 @@ class AttachmentProcessingJob < ApplicationJob
     attachment_record = AttachmentRecord.find_by(id: attachment_record_id)
     return unless attachment_record
 
-    service = Attachments::ProcessService.new
-    service.call(attachment_record:)
+    Attachments::ProcessService.new.call(attachment_record:)
   end
 end
