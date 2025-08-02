@@ -40,8 +40,6 @@ module BlobProcessable
     end
   end
 
-  private
-
   sig { returns(T::Boolean) }
   private def supported_image_format?
     # ActiveStorage::Blobのメソッドを明示的にキャスト

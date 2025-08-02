@@ -4,6 +4,53 @@
 require "sanitize"
 
 class AttachmentRecord < ApplicationRecord
+  # SVGファイルで許可する要素
+  SVG_ALLOWED_ELEMENTS = T.let(
+    %w[
+      svg g path rect circle ellipse line polyline polygon text tspan
+      defs clipPath mask pattern linearGradient radialGradient stop
+      use symbol marker image title desc metadata
+    ].freeze,
+    T::Array[String]
+  )
+
+  # SVGファイルで許可する属性
+  SVG_ALLOWED_ATTRIBUTES = T.let(
+    {
+      :all => %w[id class style fill stroke stroke-width stroke-linecap
+        stroke-linejoin stroke-miterlimit stroke-dasharray
+        stroke-dashoffset stroke-opacity fill-opacity opacity
+        transform],
+      "svg" => %w[xmlns xmlns:xlink viewBox width height preserveAspectRatio],
+      "image" => %w[x y width height xlink:href href preserveAspectRatio],
+      "a" => %w[href xlink:href target],
+      "text" => %w[x y dx dy text-anchor font-family font-size font-weight],
+      "tspan" => %w[x y dx dy],
+      "linearGradient" => %w[x1 y1 x2 y2 gradientUnits gradientTransform],
+      "radialGradient" => %w[cx cy r fx fy gradientUnits gradientTransform],
+      "stop" => %w[offset stop-color stop-opacity],
+      "pattern" => %w[x y width height patternUnits patternContentUnits
+        patternTransform],
+      "clipPath" => %w[clipPathUnits],
+      "mask" => %w[x y width height maskUnits maskContentUnits],
+      "use" => %w[x y width height xlink:href href],
+      "path" => %w[d],
+      "rect" => %w[x y width height rx ry],
+      "circle" => %w[cx cy r],
+      "ellipse" => %w[cx cy rx ry],
+      "line" => %w[x1 y1 x2 y2],
+      "polyline" => %w[points],
+      "polygon" => %w[points]
+    }.freeze,
+    T::Hash[T.any(String, Symbol), T::Array[String]]
+  )
+
+  # 危険なプロトコルのパターン
+  DANGEROUS_PROTOCOLS = T.let(
+    /\A(javascript|data|vbscript):/i,
+    Regexp
+  )
+
   self.table_name = "attachments"
 
   belongs_to :space_record, foreign_key: :space_id
@@ -69,55 +116,6 @@ class AttachmentRecord < ApplicationRecord
       false
     end
   end
-
-  private
-
-  # SVGファイルで許可する要素
-  SVG_ALLOWED_ELEMENTS = T.let(
-    %w[
-      svg g path rect circle ellipse line polyline polygon text tspan
-      defs clipPath mask pattern linearGradient radialGradient stop
-      use symbol marker image title desc metadata
-    ].freeze,
-    T::Array[String]
-  )
-
-  # SVGファイルで許可する属性
-  SVG_ALLOWED_ATTRIBUTES = T.let(
-    {
-      :all => %w[id class style fill stroke stroke-width stroke-linecap
-        stroke-linejoin stroke-miterlimit stroke-dasharray
-        stroke-dashoffset stroke-opacity fill-opacity opacity
-        transform],
-      "svg" => %w[xmlns xmlns:xlink viewBox width height preserveAspectRatio],
-      "image" => %w[x y width height xlink:href href preserveAspectRatio],
-      "a" => %w[href xlink:href target],
-      "text" => %w[x y dx dy text-anchor font-family font-size font-weight],
-      "tspan" => %w[x y dx dy],
-      "linearGradient" => %w[x1 y1 x2 y2 gradientUnits gradientTransform],
-      "radialGradient" => %w[cx cy r fx fy gradientUnits gradientTransform],
-      "stop" => %w[offset stop-color stop-opacity],
-      "pattern" => %w[x y width height patternUnits patternContentUnits
-        patternTransform],
-      "clipPath" => %w[clipPathUnits],
-      "mask" => %w[x y width height maskUnits maskContentUnits],
-      "use" => %w[x y width height xlink:href href],
-      "path" => %w[d],
-      "rect" => %w[x y width height rx ry],
-      "circle" => %w[cx cy r],
-      "ellipse" => %w[cx cy rx ry],
-      "line" => %w[x1 y1 x2 y2],
-      "polyline" => %w[points],
-      "polygon" => %w[points]
-    }.freeze,
-    T::Hash[T.any(String, Symbol), T::Array[String]]
-  )
-
-  # 危険なプロトコルのパターン
-  DANGEROUS_PROTOCOLS = T.let(
-    /\A(javascript|data|vbscript):/i,
-    Regexp
-  )
 
   sig { params(svg_content: String).returns(String) }
   private def sanitize_svg(svg_content)
