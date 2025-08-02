@@ -7,13 +7,13 @@ class Attachment < T::Struct
   include T::Struct::ActsAsComparable
 
   const :database_id, T::Wikino::DatabaseId
-  const :space, Space
   const :filename, String
   const :content_type, String
   const :byte_size, Integer
-  const :attached_space_member, SpaceMember
-  const :attached_at, ActiveSupport::TimeWithZone
   const :url, T.nilable(String)
+  const :attached_at, ActiveSupport::TimeWithZone
+  const :space, Space
+  const :attached_space_member, SpaceMember
 
   # ファイルサイズを人間が読みやすい形式で返す
   sig { returns(String) }
