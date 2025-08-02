@@ -35,13 +35,13 @@ module Attachments
 
         # 署名付きURLの生成
         # フォームでサニタイズ済みのファイル名を使用
-        result = Attachments::CreatePresignedUploadService.new(
+        result = Attachments::CreatePresignedUploadService.new.call(
           filename: form.filename.not_nil!,
           content_type: form.content_type.not_nil!,
           byte_size: form.byte_size.not_nil!,
           space_record:,
           user_record: current_user_record!
-        ).call
+        )
 
         render json: {
           direct_upload: {

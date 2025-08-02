@@ -11,18 +11,23 @@ module Attachments
       const :blob_signed_id, String
     end
 
-    sig { params(filename: String, content_type: String, byte_size: Integer, space_record: SpaceRecord, user_record: UserRecord).void }
-    def initialize(filename:, content_type:, byte_size:, space_record:, user_record:)
-      @filename = filename
-      @content_type = content_type
-      @byte_size = byte_size
-      @space_record = space_record
-      @user_record = user_record
+    sig do
+      params(
+        filename: String,
+        content_type: String,
+        byte_size: Integer,
+        space_record: SpaceRecord,
+        user_record: UserRecord
+      ).returns(Result)
     end
-
-    sig { returns(Result) }
-    def call
-      blob = create_blob!
+    def call(filename:, content_type:, byte_size:, space_record:, user_record:)
+      blob = create_blob!(
+        filename:,
+        content_type:,
+        byte_size:,
+        space_record:,
+        user_record:
+      )
 
       Result.new(
         direct_upload_url: blob.service_url_for_direct_upload,
@@ -33,16 +38,24 @@ module Attachments
 
     private
 
-    sig { returns(ActiveStorage::Blob) }
-    private def create_blob!
+    sig do
+      params(
+        filename: String,
+        content_type: String,
+        byte_size: Integer,
+        space_record: SpaceRecord,
+        user_record: UserRecord
+      ).returns(ActiveStorage::Blob)
+    end
+    private def create_blob!(filename:, content_type:, byte_size:, space_record:, user_record:)
       ActiveStorage::Blob.create_before_direct_upload!(
-        filename: @filename,
-        content_type: @content_type,
-        byte_size: @byte_size,
-        checksum: OpenSSL::Digest::MD5.base64digest(@filename), # 一時的なチェックサム
+        filename:,
+        content_type:,
+        byte_size:,
+        checksum: OpenSSL::Digest::MD5.base64digest(filename), # 一時的なチェックサム
         metadata: {
-          space_id: @space_record.id,
-          user_id: @user_record.id
+          space_id: space_record.id,
+          user_id: user_record.id
         }
       )
     end

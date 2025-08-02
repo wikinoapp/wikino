@@ -77,7 +77,8 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
          }
 
     expect(response).to have_http_status(:ok)
-    expect(Attachments::CreatePresignedUploadService).to have_received(:new).with(
+    expect(Attachments::CreatePresignedUploadService).to have_received(:new)
+    expect(service_double).to have_received(:call).with(
       filename: "test.png",
       content_type: "image/png",
       byte_size: 1024,
