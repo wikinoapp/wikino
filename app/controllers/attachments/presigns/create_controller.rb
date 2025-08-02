@@ -34,11 +34,12 @@ module Attachments
         end
 
         # 署名付きURLの生成
+        # フォームでサニタイズ済みのファイル名を使用
         blob = ActiveStorage::Blob.create_before_direct_upload!(
-          filename: form.filename,
-          content_type: form.content_type,
-          byte_size: form.byte_size,
-          checksum: OpenSSL::Digest::MD5.base64digest(form.filename),  # 一時的なチェックサム
+          filename: form.filename.not_nil!,
+          content_type: form.content_type.not_nil!,
+          byte_size: form.byte_size.not_nil!,
+          checksum: OpenSSL::Digest::MD5.base64digest(form.filename.not_nil!),  # 一時的なチェックサム
           metadata: {
             space_id: space_record.id,
             user_id: current_user_record.not_nil!.id

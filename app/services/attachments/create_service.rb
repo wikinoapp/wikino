@@ -41,12 +41,6 @@ module Attachments
         # 画像ファイルの場合はEXIF削除と自動回転を実行
         ImageProcessingService.process(blob_record)
 
-        # ファイル名をサニタイズ
-        sanitized_filename = FilenameSanitizationService.sanitize(
-          blob_record.filename.to_s
-        )
-        blob_record.update!(filename: sanitized_filename)
-
         Result.new(attachment_record:)
       end
     end
