@@ -43,7 +43,13 @@ module Attachments
           user_record: current_user_record!
         ).call
 
-        render json: result
+        render json: {
+          direct_upload: {
+            url: result.direct_upload_url,
+            headers: result.direct_upload_headers
+          },
+          blob_signed_id: result.blob_signed_id
+        }
       end
     end
   end

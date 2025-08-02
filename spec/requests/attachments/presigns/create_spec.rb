@@ -60,14 +60,14 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
 
     # サービスクラスのモック
     service_double = instance_double(Attachments::CreatePresignedUploadService)
-    allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(service_double)
-    allow(service_double).to receive(:call).and_return({
-      direct_upload: {
-        url: "https://example.com/upload",
-        headers: { "Content-Type" => "image/png" }
-      },
+    result_double = instance_double(
+      Attachments::CreatePresignedUploadService::Result,
+      direct_upload_url: "https://example.com/upload",
+      direct_upload_headers: { "Content-Type" => "image/png" },
       blob_signed_id: "test_signed_id"
-    })
+    )
+    allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(service_double)
+    allow(service_double).to receive(:call).and_return(result_double)
 
     post attachment_presign_path(space_identifier: space_record.identifier),
          params: {

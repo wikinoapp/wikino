@@ -5,6 +5,12 @@ module Attachments
   class CreatePresignedUploadService < ApplicationService
     extend T::Sig
 
+    class Result < T::Struct
+      const :direct_upload_url, String
+      const :direct_upload_headers, T::Hash[String, String]
+      const :blob_signed_id, String
+    end
+
     sig { params(filename: String, content_type: String, byte_size: Integer, space_record: SpaceRecord, user_record: UserRecord).void }
     def initialize(filename:, content_type:, byte_size:, space_record:, user_record:)
       @filename = filename
@@ -14,17 +20,15 @@ module Attachments
       @user_record = user_record
     end
 
-    sig { returns(T::Hash[Symbol, T.untyped]) }
+    sig { returns(Result) }
     def call
       blob = create_blob!
 
-      {
-        direct_upload: {
-          url: blob.service_url_for_direct_upload,
-          headers: blob.service_headers_for_direct_upload
-        },
+      Result.new(
+        direct_upload_url: blob.service_url_for_direct_upload,
+        direct_upload_headers: blob.service_headers_for_direct_upload,
         blob_signed_id: blob.signed_id
-      }
+      )
     end
 
     private
