@@ -31,6 +31,7 @@ gem "rails-i18n"
 gem "rotp"
 gem "rqrcode"
 gem "rubyzip"
+gem "sanitize"
 gem "sentry-rails"
 gem "sentry-ruby"
 gem "sequenced"
@@ -39,6 +40,7 @@ gem "sorbet-runtime"
 gem "sorbet-struct-comparable"
 gem "stackprof" # Sentryで使っている
 gem "strong_migrations"
+gem "vips"
 gem "view_component"
 
 group :development, :test do

@@ -8,6 +8,10 @@ en:
       accounts/destroy_confirmation_form:
         user_atname: Atname
         user_record: Account
+      attachments/presign_form:
+        filename: Filename
+        content_type: Content type
+        byte_size: File size
       email_confirmations/check_form:
         confirmation_code: Confirmation code
       email_confirmations/creation_form:
@@ -104,3 +108,19 @@ en:
               too_short: must be at least %{count} characters
               too_long: must be no more than %{count} characters
               invalid: contains invalid characters
+        attachments/creation_form:
+          invalid_filename: Invalid filename
+          executable_file_not_allowed: Executable files cannot be uploaded
+          unsupported_file_format: Unsupported file format
+          content_type_mismatch: File content does not match the declared format
+          file_download_failed: Failed to download file
+        attachments/presign_form:
+          attributes:
+            content_type:
+              unsupported_content_type: is not a supported format
+            byte_size:
+              file_size_too_large: must be %{max} or less
+            filename:
+              invalid_characters: contains invalid characters
+              invalid_path: contains an invalid path
+              too_long: must be 255 bytes or less

@@ -16,6 +16,12 @@ module GeneratedPathHelpersModule
   def atom_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def attachment_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def attachment_presign_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def bulk_restored_page_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

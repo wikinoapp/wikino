@@ -16,6 +16,12 @@ module GeneratedUrlHelpersModule
   def atom_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def attachment_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def attachment_presign_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def bulk_restored_page_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
