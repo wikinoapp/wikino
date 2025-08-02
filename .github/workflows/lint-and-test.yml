@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips libvips-dev
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
@@ -22,6 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips libvips-dev
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
@@ -132,6 +140,10 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Install libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips libvips-dev
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
