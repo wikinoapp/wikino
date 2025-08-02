@@ -113,29 +113,6 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record!.permissions.include?(SpaceMemberPermission::ExportSpace)
   end
 
-  sig { params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
-  def showable_topics(space_record:)
-    if space_member_record
-      return space_member_record!.space_record.not_nil!.topic_records.kept
-    end
-
-    space_record.topic_records.kept.visibility_public
-  end
-
-  sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
-  def joined_topic_records
-    space_member_record&.joined_topic_records.presence || TopicRecord.none
-  end
-
-  sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
-  def showable_pages(space_record:)
-    if space_member_record
-      return space_member_record!.space_record.not_nil!.page_records.active
-    end
-
-    space_record.page_records.active.topics_visibility_public
-  end
-
   # ファイルアップロード権限の確認
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_upload_attachment?(space_record:)
@@ -173,6 +150,29 @@ class SpaceMemberPolicy < ApplicationPolicy
     space_member_record!.active? &&
       space_member_record!.space_id == space_record.id &&
       space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
+  end
+
+  sig { params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
+  def showable_topics(space_record:)
+    if space_member_record
+      return space_member_record!.space_record.not_nil!.topic_records.kept
+    end
+
+    space_record.topic_records.kept.visibility_public
+  end
+
+  sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
+  def joined_topic_records
+    space_member_record&.joined_topic_records.presence || TopicRecord.none
+  end
+
+  sig { params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
+  def showable_pages(space_record:)
+    if space_member_record
+      return space_member_record!.space_record.not_nil!.page_records.active
+    end
+
+    space_record.page_records.active.topics_visibility_public
   end
 
   sig { returns(T.nilable(UserRecord)) }
