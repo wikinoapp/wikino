@@ -14,8 +14,8 @@ class AttachmentRecord < ApplicationRecord
     foreign_key: :attachment_id,
     dependent: :restrict_with_exception
 
-  scope :by_space, ->(space_database_id) { where(space_id: space_database_id) }
-  scope :by_user, ->(user_database_id) { where(attached_user_id: user_database_id) }
+  scope :by_space, ->(space_id) { where(space_id:) }
+  scope :by_user, ->(attached_user_id) { where(attached_user_id:) }
   scope :recent, -> { order(attached_at: :desc) }
 
   # Active Storageのblobへのショートカット
