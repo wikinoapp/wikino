@@ -19,7 +19,7 @@ module Attachments
       )
 
       unless policy.joined_space?
-        render json: {error: "Unauthorized"}, status: :forbidden
+        return render json: {error: "Unauthorized"}, status: :forbidden
       end
 
       form = Attachments::CreationForm.new(blob_signed_id: params[:blob_signed_id])
@@ -30,8 +30,8 @@ module Attachments
 
       result = Attachments::CreateService.new.call(
         space_record:,
-        blob: form.blob.not_nil!,
-        user_id: current_user_record.not_nil!.id
+        blob_record: form.blob.not_nil!,
+        attached_space_member_id: space_member_record.not_nil!.id
       )
 
       attachment = AttachmentRepository.new.to_model(

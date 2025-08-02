@@ -129,7 +129,7 @@ CREATE TABLE public.attachments (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     active_storage_attachment_id uuid NOT NULL,
-    attached_user_id uuid NOT NULL,
+    attached_space_member_id uuid NOT NULL,
     attached_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -625,10 +625,10 @@ CREATE INDEX index_attachments_on_attached_at ON public.attachments USING btree 
 
 
 --
--- Name: index_attachments_on_attached_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_attachments_on_attached_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_attachments_on_attached_user_id ON public.attachments USING btree (attached_user_id);
+CREATE INDEX index_attachments_on_attached_space_member_id ON public.attachments USING btree (attached_space_member_id);
 
 
 --
@@ -1089,14 +1089,6 @@ ALTER TABLE ONLY public.pages
 
 
 --
--- Name: attachments fk_rails_678e961de6; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.attachments
-    ADD CONSTRAINT fk_rails_678e961de6 FOREIGN KEY (attached_user_id) REFERENCES public.users(id);
-
-
---
 -- Name: page_revisions fk_rails_6eb3eeb6b7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1150,6 +1142,14 @@ ALTER TABLE ONLY public.exports
 
 ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+
+--
+-- Name: attachments fk_rails_850712f875; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_850712f875 FOREIGN KEY (attached_space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -1279,6 +1279,7 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250802185226'),
 ('20250730164550'),
 ('20250730164526'),
 ('20250526173629'),

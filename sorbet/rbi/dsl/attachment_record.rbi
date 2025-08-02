@@ -402,8 +402,23 @@ class AttachmentRecord
     sig { returns(T::Boolean) }
     def active_storage_attachment_record_previously_changed?; end
 
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def attached_space_member_record; end
+
+    sig { params(value: T.nilable(::SpaceMemberRecord)).void }
+    def attached_space_member_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def attached_space_member_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def attached_space_member_record_previously_changed?; end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::ActiveStorage::Attachment) }
     def build_active_storage_attachment_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def build_attached_space_member_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
@@ -413,6 +428,12 @@ class AttachmentRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::ActiveStorage::Attachment) }
     def create_active_storage_attachment_record!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_attached_space_member_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_attached_space_member_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record(*args, &blk); end
@@ -437,11 +458,17 @@ class AttachmentRecord
     sig { returns(T.nilable(::ActiveStorage::Attachment)) }
     def reload_active_storage_attachment_record; end
 
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def reload_attached_space_member_record; end
+
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
 
     sig { void }
     def reset_active_storage_attachment_record; end
+
+    sig { void }
+    def reset_attached_space_member_record; end
 
     sig { void }
     def reset_space_record; end
@@ -476,7 +503,7 @@ class AttachmentRecord
     def by_space(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def by_user(*args, &blk); end
+    def by_space_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def create_with(*args, &blk); end
@@ -709,49 +736,49 @@ class AttachmentRecord
     def attached_at_will_change!; end
 
     sig { returns(::String) }
-    def attached_user_id; end
+    def attached_space_member_id; end
 
     sig { params(value: ::String).returns(::String) }
-    def attached_user_id=(value); end
+    def attached_space_member_id=(value); end
 
     sig { returns(T::Boolean) }
-    def attached_user_id?; end
+    def attached_space_member_id?; end
 
     sig { returns(T.nilable(::String)) }
-    def attached_user_id_before_last_save; end
+    def attached_space_member_id_before_last_save; end
 
     sig { returns(T.untyped) }
-    def attached_user_id_before_type_cast; end
+    def attached_space_member_id_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def attached_user_id_came_from_user?; end
+    def attached_space_member_id_came_from_user?; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def attached_user_id_change; end
+    def attached_space_member_id_change; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def attached_user_id_change_to_be_saved; end
+    def attached_space_member_id_change_to_be_saved; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def attached_user_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def attached_space_member_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def attached_user_id_in_database; end
+    def attached_space_member_id_in_database; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def attached_user_id_previous_change; end
+    def attached_space_member_id_previous_change; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def attached_user_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def attached_space_member_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def attached_user_id_previously_was; end
+    def attached_space_member_id_previously_was; end
 
     sig { returns(T.nilable(::String)) }
-    def attached_user_id_was; end
+    def attached_space_member_id_was; end
 
     sig { void }
-    def attached_user_id_will_change!; end
+    def attached_space_member_id_will_change!; end
 
     sig { returns(::ActiveSupport::TimeWithZone) }
     def created_at; end
@@ -895,7 +922,7 @@ class AttachmentRecord
     def restore_attached_at!; end
 
     sig { void }
-    def restore_attached_user_id!; end
+    def restore_attached_space_member_id!; end
 
     sig { void }
     def restore_created_at!; end
@@ -925,10 +952,10 @@ class AttachmentRecord
     def saved_change_to_attached_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_attached_user_id; end
+    def saved_change_to_attached_space_member_id; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_attached_user_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def saved_change_to_attached_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -1057,7 +1084,7 @@ class AttachmentRecord
     def will_save_change_to_attached_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_attached_user_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def will_save_change_to_attached_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
@@ -1092,7 +1119,7 @@ class AttachmentRecord
     def by_space(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def by_user(*args, &blk); end
+    def by_space_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def create_with(*args, &blk); end

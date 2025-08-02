@@ -15,7 +15,7 @@ class AttachmentRepository < ApplicationRepository
       filename: attachment_record.filename.not_nil!,
       content_type: attachment_record.content_type.not_nil!,
       byte_size: attachment_record.byte_size.not_nil!,
-      attached_user_id: attachment_record.attached_user_id,
+      attached_space_member_id: attachment_record.attached_space_member_id,
       attached_at: attachment_record.attached_at,
       url:
     )

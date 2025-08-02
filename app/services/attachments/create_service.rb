@@ -11,10 +11,10 @@ module Attachments
       params(
         space_record: SpaceRecord,
         blob_record: ActiveStorage::Blob,
-        attached_user_id: T::Wikino::DatabaseId
+        attached_space_member_id: T::Wikino::DatabaseId
       ).returns(Result)
     end
-    def call(space_record:, blob_record:, attached_user_id:)
+    def call(space_record:, blob_record:, attached_space_member_id:)
       ActiveRecord::Base.transaction do
         active_storage_attachment_record = ActiveStorage::Attachment.create!(
           name: "file",
@@ -26,7 +26,7 @@ module Attachments
         attachment_record = AttachmentRecord.create!(
           space_id: space_record.id,
           active_storage_attachment_record:,
-          attached_user_id:,
+          attached_space_member_id:,
           attached_at: Time.current
         )
 

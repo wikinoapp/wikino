@@ -5,7 +5,9 @@ class AttachmentRecord < ApplicationRecord
   self.table_name = "attachments"
 
   belongs_to :space_record, foreign_key: :space_id
-  belongs_to :attached_user_record, foreign_key: :attached_user_id
+  belongs_to :attached_space_member_record,
+    class_name: "SpaceMemberRecord",
+    foreign_key: :attached_space_member_id
   belongs_to :active_storage_attachment_record,
     class_name: "ActiveStorage::Attachment"
 
@@ -15,7 +17,7 @@ class AttachmentRecord < ApplicationRecord
     dependent: :restrict_with_exception
 
   scope :by_space, ->(space_id) { where(space_id:) }
-  scope :by_user, ->(attached_user_id) { where(attached_user_id:) }
+  scope :by_space_member, ->(attached_space_member_id) { where(attached_space_member_id:) }
   scope :recent, -> { order(attached_at: :desc) }
 
   # Active Storageのblobへのショートカット

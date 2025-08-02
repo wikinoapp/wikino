@@ -21,7 +21,7 @@
   - id (ULID)
   - space_id (外部キー)
   - active_storage_attachment_id (外部キー)
-  - attached_user_id (外部キー)
+  - attached_space_member_id (外部キー)
   - attached_at (timestamp)
 - [x] page_attachment_referencesテーブルの作成
   - id (ULID)
@@ -34,7 +34,7 @@
 
 - [x] AttachmentRecordの実装
   - ActiveStorageとの関連付け
-  - スコープ: by_space, by_user, recent
+  - スコープ: by_space, by_space_member, recent
 - [x] PageAttachmentReferenceRecordの実装
   - ページとの関連付け
   - 表示順序の管理

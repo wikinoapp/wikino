@@ -11,7 +11,7 @@ class Attachment < T::Struct
   const :filename, String
   const :content_type, String
   const :byte_size, Integer
-  const :attached_user_id, T::Wikino::DatabaseId
+  const :attached_space_member_id, T::Wikino::DatabaseId
   const :attached_at, ActiveSupport::TimeWithZone
   const :url, T.nilable(String)
 
