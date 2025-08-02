@@ -20,25 +20,25 @@ class AttachmentRecord < ApplicationRecord
 
   # Active Storageのblobへのショートカット
   sig { returns(T.nilable(ActiveStorage::Blob)) }
-  def blob
+  def blob_record
     active_storage_attachment_record&.blob
   end
 
   # ファイル名を取得
   sig { returns(T.nilable(String)) }
   def filename
-    blob&.filename&.to_s
+    blob_record&.filename&.to_s
   end
 
   # コンテントタイプを取得
   sig { returns(T.nilable(String)) }
   def content_type
-    blob&.content_type
+    blob_record&.content_type
   end
 
   # ファイルサイズを取得（バイト単位）
   sig { returns(T.nilable(Integer)) }
   def byte_size
-    blob&.byte_size
+    blob_record&.byte_size
   end
 end

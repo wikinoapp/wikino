@@ -33,9 +33,9 @@ class AttachmentRepository < ApplicationRepository
   end
   def to_models(attachment_records:, include_urls: false)
     attachment_records.map do |attachment_record|
-      url = if include_urls && attachment_record.blob
+      url = if include_urls && attachment_record.blob_record
         # 署名付きURLを生成（1時間有効）
-        attachment_record.blob.url(expires_in: 1.hour)
+        attachment_record.blob_record.url(expires_in: 1.hour)
       end
       to_model(attachment_record: attachment_record, url: url)
     end

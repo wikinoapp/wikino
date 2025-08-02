@@ -52,7 +52,7 @@ module Attachments
     sig { params(attachment_record: AttachmentRecord).returns(String) }
     private def attachment_url(attachment_record)
       # 署名付きURLを生成（1時間有効）
-      blob = attachment_record.blob.not_nil!
+      blob = attachment_record.blob_record.not_nil!
       blob.url(expires_in: 1.hour)
     end
   end
