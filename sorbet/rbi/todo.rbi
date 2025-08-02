@@ -4,7 +4,5 @@
 
 # typed: false
 
-module ::FFI::Function; end
-module ::FFI::Library; end
-class ::FFI::ManagedStruct; end
-class ::FFI::Struct; end
+module FFI::Function; end
+module FFI::Library; end
