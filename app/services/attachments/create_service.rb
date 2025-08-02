@@ -32,6 +32,27 @@ module Attachments
 
         active_storage_attachment_record.update!(record: attachment_record)
 
+        # ファイル検証を実行
+        unless AttachmentValidationService.valid?(blob_record)
+          errors = AttachmentValidationService.new(blob_record).errors
+          raise ActiveRecord::RecordInvalid, errors.join(", ")
+        end
+
+        # SVGファイルの場合はサニタイズ処理を実行
+        if blob_record.content_type == "image/svg+xml"
+          sanitized_content = SvgSanitizationService.sanitize(blob_record.download)
+          blob_record.upload(StringIO.new(sanitized_content))
+        end
+
+        # 画像ファイルの場合はEXIF削除と自動回転を実行
+        ImageProcessingService.process(blob_record)
+
+        # ファイル名をサニタイズ
+        sanitized_filename = FilenameSanitizationService.sanitize(
+          blob_record.filename.to_s
+        )
+        blob_record.update!(filename: sanitized_filename)
+
         Result.new(attachment_record:)
       end
     end

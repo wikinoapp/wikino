@@ -41,11 +41,11 @@
 
 ### 2.2 ファイルアップロードAPI
 
-- [ ] ダイレクトアップロード用エンドポイントの実装
+- [x] ダイレクトアップロード用エンドポイントの実装
   - `POST /s/:space_identifier/attachments/presign`
   - ファイルサイズ・形式の事前検証
   - 署名付きURLの生成
-- [ ] アップロード完了通知エンドポイント
+- [x] アップロード完了通知エンドポイント
   - `POST /s/:space_identifier/attachments`
   - Attachmentレコードの作成
   - ファイル検証処理の実行
