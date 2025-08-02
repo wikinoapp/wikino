@@ -1,10 +1,14 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "vips"
 
 module BlobProcessable
-  extend ActiveSupport::Concern
+  extend ::ActiveSupport::Concern
+  extend T::Sig
+  extend T::Helpers
+
+  requires_ancestor { ActiveStorage::Blob }
 
   # 処理対象の画像形式
   SUPPORTED_IMAGE_FORMATS = T.let(
@@ -12,6 +16,7 @@ module BlobProcessable
     T::Array[String]
   )
 
+  sig { returns(T::Boolean) }
   def process_image_with_exif_removal
     return false unless supported_image_format?
 
@@ -20,10 +25,10 @@ module BlobProcessable
 
     begin
       # EXIF情報を削除して自動回転を適用
-      process_image(tempfile.path)
+      process_image(tempfile.path.not_nil!)
 
       # 処理済みファイルをアップロード
-      upload_processed_file(tempfile.path)
+      upload_processed_file(tempfile.path.not_nil!)
 
       true
     rescue => e
@@ -37,20 +42,27 @@ module BlobProcessable
 
   private
 
-  def supported_image_format?
-    extension = filename.extension_without_delimiter.downcase
+  sig { returns(T::Boolean) }
+  private def supported_image_format?
+    # ActiveStorage::Blobのメソッドを明示的にキャスト
+    blob = T.cast(self, ActiveStorage::Blob)
+    extension = blob.filename.extension_without_delimiter.downcase
     SUPPORTED_IMAGE_FORMATS.include?(extension)
   end
 
-  def download_to_tempfile
-    tempfile = Tempfile.new(["image_processing", ".#{filename.extension}"])
+  sig { returns(Tempfile) }
+  private def download_to_tempfile
+    # ActiveStorage::Blobのメソッドを明示的にキャスト
+    blob = T.cast(self, ActiveStorage::Blob)
+    tempfile = Tempfile.new(["image_processing", ".#{blob.filename.extension}"])
     tempfile.binmode
-    tempfile.write(download)
+    tempfile.write(blob.download)
     tempfile.rewind
     tempfile
   end
 
-  def process_image(input_path)
+  sig { params(input_path: String).void }
+  private def process_image(input_path)
     # Vipsを使用して画像を処理
     image = Vips::Image.new_from_file(input_path)
 
@@ -59,7 +71,8 @@ module BlobProcessable
 
     # EXIF情報を削除して保存
     # stripオプションでメタデータを削除
-    case filename.extension_without_delimiter.downcase
+    blob = T.cast(self, ActiveStorage::Blob)
+    case blob.filename.extension_without_delimiter.downcase
     when "jpg", "jpeg"
       image.jpegsave(input_path, strip: true, Q: 90)
     when "png"
@@ -72,10 +85,12 @@ module BlobProcessable
     end
   end
 
-  def upload_processed_file(processed_path)
+  sig { params(processed_path: String).void }
+  private def upload_processed_file(processed_path)
     # 処理済みファイルを読み込んでActive Storageに再アップロード
+    blob = T.cast(self, ActiveStorage::Blob)
     File.open(processed_path, "rb") do |file|
-      upload(file)
+      blob.upload(file)
     end
   end
 end

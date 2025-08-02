@@ -8,4 +8,3 @@ module ::FFI::Function; end
 module ::FFI::Library; end
 module ::FFI::ManagedStruct; end
 module ::FFI::Struct; end
-module Attachments::CreationForm::Marcel::MimeType; end

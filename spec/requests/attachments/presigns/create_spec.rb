@@ -8,11 +8,11 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
     space_record = FactoryBot.create(:space_record)
 
     post attachment_presign_path(space_identifier: space_record.identifier),
-         params: {
-           filename: "test.png",
-           content_type: "image/png",
-           byte_size: 1024
-         }
+      params: {
+        filename: "test.png",
+        content_type: "image/png",
+        byte_size: 1024
+      }
 
     expect(response).to redirect_to(sign_in_path)
   end
@@ -23,11 +23,11 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
     sign_in(user_record:)
 
     post attachment_presign_path(space_identifier: space_record.identifier),
-         params: {
-           filename: "test.png",
-           content_type: "image/png",
-           byte_size: 1024
-         }
+      params: {
+        filename: "test.png",
+        content_type: "image/png",
+        byte_size: 1024
+      }
 
     expect(response).to have_http_status(:forbidden)
   end
@@ -39,11 +39,11 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
     sign_in(user_record:)
 
     post attachment_presign_path(space_identifier: space_record.identifier),
-         params: {
-           filename: "",
-           content_type: "image/png",
-           byte_size: 1024
-         }
+      params: {
+        filename: "",
+        content_type: "image/png",
+        byte_size: 1024
+      }
 
     expect(response).to have_http_status(:unprocessable_entity)
     json = JSON.parse(response.body)
@@ -63,18 +63,18 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
     result_double = instance_double(
       Attachments::CreatePresignedUploadService::Result,
       direct_upload_url: "https://example.com/upload",
-      direct_upload_headers: { "Content-Type" => "image/png" },
+      direct_upload_headers: {"Content-Type" => "image/png"},
       blob_signed_id: "test_signed_id"
     )
     allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(service_double)
     allow(service_double).to receive(:call).and_return(result_double)
 
     post attachment_presign_path(space_identifier: space_record.identifier),
-         params: {
-           filename: "test.png",
-           content_type: "image/png",
-           byte_size: 1024
-         }
+      params: {
+        filename: "test.png",
+        content_type: "image/png",
+        byte_size: 1024
+      }
 
     expect(response).to have_http_status(:ok)
     expect(Attachments::CreatePresignedUploadService).to have_received(:new)

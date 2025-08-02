@@ -92,7 +92,7 @@ module Attachments
         return if file_content.blank?
 
         # Marcelを使用して実際のMIMEタイプを検出
-        detected_mime_type = Marcel::MimeType.for(
+        detected_mime_type = ::Marcel::MimeType.for(
           file_content,
           name: blob.filename.to_s
         )
