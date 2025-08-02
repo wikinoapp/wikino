@@ -19,7 +19,7 @@ module Attachments
           space_member_record:
         )
 
-        unless policy.joined_space?
+        unless policy.can_upload_attachment?(space_record:)
           render json: {error: "Unauthorized"}, status: :forbidden
           return
         end
