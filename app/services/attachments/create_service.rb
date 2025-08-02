@@ -33,13 +33,10 @@ module Attachments
         active_storage_attachment_record.update!(record: attachment_record)
 
         # SVGファイルの場合はサニタイズ処理を実行
-        if blob_record.content_type == "image/svg+xml"
-          sanitized_content = SvgSanitizationService.sanitize(blob_record.download)
-          blob_record.upload(StringIO.new(sanitized_content))
-        end
+        attachment_record.sanitize_svg_content
 
         # 画像ファイルの場合はEXIF削除と自動回転を実行
-        ImageProcessingService.process(blob_record)
+        blob_record.process_image_with_exif_removal
 
         Result.new(attachment_record:)
       end

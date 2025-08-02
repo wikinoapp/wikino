@@ -1,40 +1,29 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 require "vips"
 
-class ImageProcessingService
-  extend T::Sig
+module BlobProcessable
+  extend ActiveSupport::Concern
 
   # 処理対象の画像形式
-  SUPPORTED_FORMATS = T.let(
+  SUPPORTED_IMAGE_FORMATS = T.let(
     %w[jpeg jpg png gif webp].freeze,
     T::Array[String]
   )
 
-  sig { params(blob: ActiveStorage::Blob).returns(T::Boolean) }
-  def self.process(blob)
-    new(blob).process
-  end
-
-  sig { params(blob: ActiveStorage::Blob).void }
-  def initialize(blob)
-    @blob = T.let(blob, ActiveStorage::Blob)
-  end
-
-  sig { returns(T::Boolean) }
-  def process
-    return false unless supported_format?
+  def process_image_with_exif_removal
+    return false unless supported_image_format?
 
     # ファイルをダウンロード
     tempfile = download_to_tempfile
 
     begin
       # EXIF情報を削除して自動回転を適用
-      process_image(tempfile.path.not_nil!)
+      process_image(tempfile.path)
 
       # 処理済みファイルをアップロード
-      upload_processed_file(tempfile.path.not_nil!)
+      upload_processed_file(tempfile.path)
 
       true
     rescue => e
@@ -48,23 +37,20 @@ class ImageProcessingService
 
   private
 
-  sig { returns(T::Boolean) }
-  private def supported_format?
-    extension = @blob.filename.extension_without_delimiter.downcase
-    SUPPORTED_FORMATS.include?(extension)
+  def supported_image_format?
+    extension = filename.extension_without_delimiter.downcase
+    SUPPORTED_IMAGE_FORMATS.include?(extension)
   end
 
-  sig { returns(Tempfile) }
-  private def download_to_tempfile
-    tempfile = Tempfile.new(["image_processing", ".#{@blob.filename.extension}"])
+  def download_to_tempfile
+    tempfile = Tempfile.new(["image_processing", ".#{filename.extension}"])
     tempfile.binmode
-    tempfile.write(@blob.download)
+    tempfile.write(download)
     tempfile.rewind
     tempfile
   end
 
-  sig { params(input_path: String).void }
-  private def process_image(input_path)
+  def process_image(input_path)
     # Vipsを使用して画像を処理
     image = Vips::Image.new_from_file(input_path)
 
@@ -73,7 +59,7 @@ class ImageProcessingService
 
     # EXIF情報を削除して保存
     # stripオプションでメタデータを削除
-    case @blob.filename.extension_without_delimiter.downcase
+    case filename.extension_without_delimiter.downcase
     when "jpg", "jpeg"
       image.jpegsave(input_path, strip: true, Q: 90)
     when "png"
@@ -86,11 +72,10 @@ class ImageProcessingService
     end
   end
 
-  sig { params(processed_path: String).void }
-  private def upload_processed_file(processed_path)
+  def upload_processed_file(processed_path)
     # 処理済みファイルを読み込んでActive Storageに再アップロード
     File.open(processed_path, "rb") do |file|
-      @blob.upload(file)
+      upload(file)
     end
   end
 end
