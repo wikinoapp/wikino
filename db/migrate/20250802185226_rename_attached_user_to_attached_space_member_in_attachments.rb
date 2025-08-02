@@ -9,7 +9,7 @@ class RenameAttachedUserToAttachedSpaceMemberInAttachments < ActiveRecord::Migra
 
       # インデックスの削除（古い名前で存在する場合）
       if index_exists?(:attachments, :attached_user_id, name: "index_attachments_on_attached_user_id")
-        remove_index :attachments, name: "index_attachments_on_attached_user_id"
+        remove_index :attachments, :attached_user_id, name: "index_attachments_on_attached_user_id"
       end
 
       # インデックスの追加（新しい名前で存在しない場合）
