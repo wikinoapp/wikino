@@ -35,24 +35,15 @@ module Attachments
 
         # 署名付きURLの生成
         # フォームでサニタイズ済みのファイル名を使用
-        blob = ActiveStorage::Blob.create_before_direct_upload!(
+        result = Attachments::CreatePresignedUploadService.new(
           filename: form.filename.not_nil!,
           content_type: form.content_type.not_nil!,
           byte_size: form.byte_size.not_nil!,
-          checksum: OpenSSL::Digest::MD5.base64digest(form.filename.not_nil!),  # 一時的なチェックサム
-          metadata: {
-            space_id: space_record.id,
-            user_id: current_user_record.not_nil!.id
-          }
-        )
+          space_record:,
+          user_record: current_user_record!
+        ).call
 
-        render json: {
-          direct_upload: {
-            url: blob.service_url_for_direct_upload,
-            headers: blob.service_headers_for_direct_upload
-          },
-          blob_signed_id: blob.signed_id
-        }
+        render json: result
       end
     end
   end
