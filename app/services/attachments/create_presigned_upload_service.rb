@@ -3,8 +3,6 @@
 
 module Attachments
   class CreatePresignedUploadService < ApplicationService
-    extend T::Sig
-
     class Result < T::Struct
       const :direct_upload_url, String
       const :direct_upload_headers, T::Hash[String, String]
@@ -35,8 +33,6 @@ module Attachments
         blob_signed_id: blob.signed_id
       )
     end
-
-    private
 
     sig do
       params(

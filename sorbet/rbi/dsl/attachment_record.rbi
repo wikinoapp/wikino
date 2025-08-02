@@ -915,6 +915,51 @@ class AttachmentRecord
     sig { void }
     def id_will_change!; end
 
+    sig { returns(::String) }
+    def processing_status; end
+
+    sig { params(value: ::String).returns(::String) }
+    def processing_status=(value); end
+
+    sig { returns(T::Boolean) }
+    def processing_status?; end
+
+    sig { returns(T.nilable(::String)) }
+    def processing_status_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def processing_status_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def processing_status_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def processing_status_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def processing_status_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def processing_status_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def processing_status_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def processing_status_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def processing_status_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def processing_status_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def processing_status_was; end
+
+    sig { void }
+    def processing_status_will_change!; end
+
     sig { void }
     def restore_active_storage_attachment_id!; end
 
@@ -932,6 +977,9 @@ class AttachmentRecord
 
     sig { void }
     def restore_id_value!; end
+
+    sig { void }
+    def restore_processing_status!; end
 
     sig { void }
     def restore_space_id!; end
@@ -974,6 +1022,12 @@ class AttachmentRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_processing_status; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_processing_status?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_space_id; end
@@ -1094,6 +1148,9 @@ class AttachmentRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_processing_status?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end

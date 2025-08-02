@@ -4,6 +4,12 @@
 class AttachmentRecord < ApplicationRecord
   self.table_name = "attachments"
 
+  # 処理状態の定数
+  PROCESSING_STATUS_PENDING = "pending"
+  PROCESSING_STATUS_PROCESSING = "processing"
+  PROCESSING_STATUS_COMPLETED = "completed"
+  PROCESSING_STATUS_FAILED = "failed"
+
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :attached_space_member_record,
     class_name: "SpaceMemberRecord",
@@ -66,5 +72,47 @@ class AttachmentRecord < ApplicationRecord
       Rails.logger.error("SVG sanitization failed: #{e.message}")
       false
     end
+  end
+
+  # 処理状態を「処理中」に更新
+  sig { void }
+  def mark_as_processing!
+    update!(processing_status: PROCESSING_STATUS_PROCESSING)
+  end
+
+  # 処理状態を「完了」に更新
+  sig { void }
+  def mark_as_completed!
+    update!(processing_status: PROCESSING_STATUS_COMPLETED)
+  end
+
+  # 処理状態を「失敗」に更新
+  sig { void }
+  def mark_as_failed!
+    update!(processing_status: PROCESSING_STATUS_FAILED)
+  end
+
+  # 処理が必要かどうか
+  sig { returns(T::Boolean) }
+  def needs_processing?
+    processing_status == PROCESSING_STATUS_PENDING
+  end
+
+  # 処理中かどうか
+  sig { returns(T::Boolean) }
+  def processing?
+    processing_status == PROCESSING_STATUS_PROCESSING
+  end
+
+  # 処理が完了しているかどうか
+  sig { returns(T::Boolean) }
+  def processed?
+    processing_status == PROCESSING_STATUS_COMPLETED
+  end
+
+  # 処理が失敗したかどうか
+  sig { returns(T::Boolean) }
+  def processing_failed?
+    processing_status == PROCESSING_STATUS_FAILED
   end
 end

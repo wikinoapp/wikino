@@ -132,7 +132,8 @@ CREATE TABLE public.attachments (
     attached_space_member_id uuid NOT NULL,
     attached_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    processing_status character varying DEFAULT 'pending'::character varying NOT NULL
 );
 
 
@@ -629,6 +630,13 @@ CREATE INDEX index_attachments_on_attached_at ON public.attachments USING btree 
 --
 
 CREATE INDEX index_attachments_on_attached_space_member_id ON public.attachments USING btree (attached_space_member_id);
+
+
+--
+-- Name: index_attachments_on_processing_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_processing_status ON public.attachments USING btree (processing_status);
 
 
 --
@@ -1279,6 +1287,7 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250802185227'),
 ('20250802185226'),
 ('20250730164550'),
 ('20250730164526'),
