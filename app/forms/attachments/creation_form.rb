@@ -21,14 +21,14 @@ module Attachments
     # Blob署名付きID
     attribute :blob_signed_id, :string
 
-    validates :blob, presence: true
+    validates :blob_record, presence: true
     validate :validate_file_format
     validate :validate_file_extension
     validate :validate_content_type
 
     # Blobオブジェクトを取得
     sig { returns(T.nilable(ActiveStorage::Blob)) }
-    def blob
+    def blob_record
       return nil if blob_signed_id.blank?
 
       @blob ||= T.let(
@@ -42,9 +42,9 @@ module Attachments
     # ファイル名の形式検証
     sig { void }
     private def validate_file_format
-      return if blob.nil?
+      return if blob_record.nil?
 
-      filename = blob.not_nil!.filename.to_s
+      filename = blob_record.not_nil!.filename.to_s
 
       # 危険なパターンのチェック
       DANGEROUS_FILENAME_PATTERNS.each do |pattern|
@@ -58,9 +58,9 @@ module Attachments
     # 拡張子の検証
     sig { void }
     private def validate_file_extension
-      return if blob.nil?
+      return if blob_record.nil?
 
-      extension = File.extname(blob.not_nil!.filename.to_s).downcase
+      extension = File.extname(blob_record.not_nil!.filename.to_s).downcase
       if EXECUTABLE_EXTENSIONS.include?(extension)
         errors.add(:base, :executable_file_not_allowed)
       end
@@ -69,9 +69,9 @@ module Attachments
     # コンテンツタイプの検証
     sig { void }
     private def validate_content_type
-      return if blob.nil?
+      return if blob_record.nil?
 
-      unless Attachments::PresignForm::ALLOWED_CONTENT_TYPES.include?(blob.not_nil!.content_type)
+      unless Attachments::PresignForm::ALLOWED_CONTENT_TYPES.include?(blob_record.not_nil!.content_type)
         errors.add(:base, :unsupported_file_format)
       end
     end
