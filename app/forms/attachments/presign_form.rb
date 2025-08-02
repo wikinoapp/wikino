@@ -58,11 +58,11 @@ module Attachments
     attribute :filename, :string
     attribute :content_type, :string
     attribute :byte_size, :integer
-    
+
     # コンストラクタをオーバーライド
     sig { params(attributes: T.untyped).void }
     def initialize(attributes = {})
-      super(attributes)
+      super
       sanitize_filename
     end
 
@@ -85,7 +85,7 @@ module Attachments
 
       # Unicode正規化（NFC）
       fname = fname.unicode_normalize(:nfc)
-      
+
       # 空白文字をトリム
       fname = fname.strip
 
@@ -94,7 +94,7 @@ module Attachments
 
       # パストラバーサルを防ぐためにパス区切り文字をアンダースコアに置換
       fname = fname.gsub(/[\/\\]/, "_")
-      
+
       # 連続する.を_に置換（パストラバーサル対策）
       fname = fname.gsub(/\.{2,}/, "_")
 
@@ -103,27 +103,27 @@ module Attachments
 
       # ファイル名がピリオドで始まる場合は削除（隠しファイルを防ぐ）
       fname = fname.sub(/^\.*/, "")
-      
+
       # ファイル名と拡張子を分離
       basename = File.basename(fname, ".*")
       extension = File.extname(fname)
 
       # ベース名が空の場合はデフォルト名を使用
       basename = "file" if basename.empty?
-      
+
       # Windowsの予約名をチェックして修正
       reserved_names = %w[
         CON PRN AUX NUL COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8 COM9
         LPT1 LPT2 LPT3 LPT4 LPT5 LPT6 LPT7 LPT8 LPT9
       ]
-      
+
       if reserved_names.include?(basename.upcase)
         basename = "#{basename}_file"
       end
 
       # ファイル名を再構築
       fname = "#{basename}#{extension}"
-      
+
       # ファイル名の長さ制限（255バイト）を適用
       if fname.bytesize > MAX_FILENAME_BYTES
         # 拡張子を保持しつつ、ファイル名を切り詰め
