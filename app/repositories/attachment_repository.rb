@@ -9,9 +9,11 @@ class AttachmentRepository < ApplicationRepository
     ).returns(Attachment)
   end
   def to_model(attachment_record:, url: nil)
+    space = SpaceRepository.new.to_model(space_record: attachment_record.space_record.not_nil!)
+
     Attachment.new(
       database_id: attachment_record.id,
-      space_id: attachment_record.space_id,
+      space:,
       filename: attachment_record.filename.not_nil!,
       content_type: attachment_record.content_type.not_nil!,
       byte_size: attachment_record.byte_size.not_nil!,

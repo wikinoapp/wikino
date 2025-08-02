@@ -7,7 +7,7 @@ class Attachment < T::Struct
   include T::Struct::ActsAsComparable
 
   const :database_id, T::Wikino::DatabaseId
-  const :space_id, T::Wikino::DatabaseId
+  const :space, Space
   const :filename, String
   const :content_type, String
   const :byte_size, Integer
