@@ -74,40 +74,4 @@ class AttachmentRecord < ApplicationRecord
       false
     end
   end
-
-  # 処理状態を「処理中」に更新
-  sig { void }
-  def mark_as_processing!
-    processing_status_processing!
-  end
-
-  # 処理状態を「完了」に更新
-  sig { void }
-  def mark_as_completed!
-    processing_status_completed!
-  end
-
-  # 処理状態を「失敗」に更新
-  sig { void }
-  def mark_as_failed!
-    processing_status_failed!
-  end
-
-  # 処理が必要かどうか
-  sig { returns(T::Boolean) }
-  def needs_processing?
-    processing_status_pending?
-  end
-
-  # 処理が完了しているかどうか
-  sig { returns(T::Boolean) }
-  def processed?
-    processing_status_completed?
-  end
-
-  # 処理が失敗したかどうか
-  sig { returns(T::Boolean) }
-  def processing_failed?
-    processing_status_failed?
-  end
 end

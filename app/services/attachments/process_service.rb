@@ -8,19 +8,19 @@ module Attachments
       const :success, T::Boolean
     end
 
-    sig { params(attachment_record:).returns(Result) }
+    sig { params(attachment_record: AttachmentRecord).returns(Result) }
     def call(attachment_record:)
       # 処理が必要ない場合はスキップ
-      unless attachment_record.needs_processing?
+      unless attachment_record.processing_status_pending?
         return Result.new(attachment_record:, success: true)
       end
 
       # 処理中としてマーク
-      attachment_record.mark_as_processing!
+      attachment_record.processing_status_processing!
 
       blob_record = attachment_record.blob_record
       unless blob_record
-        attachment_record.mark_as_failed!
+        attachment_record.processing_status_failed!
         return Result.new(attachment_record:, success: false)
       end
 
@@ -40,14 +40,14 @@ module Attachments
         end
 
         # 処理完了としてマーク
-        attachment_record.mark_as_completed!
+        attachment_record.processing_status_completed!
         Result.new(attachment_record:, success: true)
       rescue => e
         Rails.logger.error("Attachments::ProcessService failed: #{e.message}")
         Rails.logger.error(e.backtrace.join("\n"))
 
         # 処理失敗としてマーク
-        attachment_record.mark_as_failed!
+        attachment_record.processing_status_failed!
 
         # エラーを再発生させる
         raise
