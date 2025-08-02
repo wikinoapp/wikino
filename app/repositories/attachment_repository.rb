@@ -17,7 +17,7 @@ class AttachmentRepository < ApplicationRepository
       byte_size: attachment_record.byte_size.not_nil!,
       attached_user_id: attachment_record.attached_user_id,
       attached_at: attachment_record.attached_at,
-      url: url
+      url:
     )
   end
 
