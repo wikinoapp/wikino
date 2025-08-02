@@ -2,18 +2,22 @@ en:
   nouns:
     account_deletion: Delete account
     actions: Actions
+    all_files: All files
+    attachments: Attachments
     backlinks: Backlinks
     best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
     current_email: Current email
     dark: Dark
+    documents: Documents
     edit_profile: Edit profile
     error: Error
     export: Export
     general: General
     here: Here
     home: Home
+    images: Images
     inbox: Inbox
     info: Info
     joined_spaces: Joined spaces
@@ -51,3 +55,5 @@ en:
     recovery_codes: Recovery codes
     regenerate_recovery_codes: Regenerate recovery codes
     two_factor_verification: Two-factor verification
+    videos: Videos
+    previous_page: Previous

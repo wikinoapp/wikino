@@ -32,6 +32,13 @@
 
             <%= render BaseUI::LinkComponent.new(
               variant: BaseUI::LinkComponent::Variant::Underline,
+              options: {href: space_settings_attachments_path(space.identifier)}
+            ) do %>
+              <%= t("nouns.attachments") %>
+            <% end %>
+
+            <%= render BaseUI::LinkComponent.new(
+              variant: BaseUI::LinkComponent::Variant::Underline,
               options: {href: space_settings_new_deletion_path(space.identifier)}
             ) do %>
               <%= t("nouns.space_deletion") %>

@@ -4,6 +4,10 @@ en:
       learn_more: Learn more
       no_backlinks: No Backlinks
       unexpected_error: Sorry, something went wrong. Please try again.
+    no_attachments_found: No attachments found
+    uploaded_at: "Uploaded at %{time}"
+    page_of: "Page %{current} of %{total}"
+    delete_attachment_confirmation: Are you sure you want to delete this file?
     accounts:
       atname_hint_html: |-
         This identifier is used in the URL of the profile.<br>
@@ -45,6 +49,7 @@ en:
     search:
       no_results: No search results found
       search_keyword_placeholder: Enter keywords
+      search_filename_placeholder: Search by filename
       subtitle_html: You can search for page titles by keyword. %{search_help_link}
     password_resets:
       enter_your_email_html: Enter your email address to send a password reset email.

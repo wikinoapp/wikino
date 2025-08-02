@@ -45,6 +45,8 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/settings/exports/new",                       via: :get,    as: :space_settings_new_exports,                   to: "spaces/settings/exports/new#call"
   match "/s/:space_identifier/settings/general",                           via: :get,    as: :space_settings_general,                       to: "spaces/settings/general/show#call"
   match "/s/:space_identifier/settings/general",                           via: :patch,                                                     to: "spaces/settings/general/update#call"
+  match "/s/:space_identifier/settings/attachments",                       via: :get,    as: :space_settings_attachments,                   to: "spaces/settings/attachments/index#call"
+  match "/s/:space_identifier/settings/attachments/:attachment_id",        via: :delete, as: :space_settings_attachment,                    to: "spaces/settings/attachments/destroy#call"
   match "/s/:space_identifier/topics",                                     via: :post,   as: :topic_list,                                   to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",                       via: :get,    as: :topic,                                        to: "topics/show#call",                            topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/pages/new",             via: :get,    as: :new_page,                                     to: "pages/new#call",                              topic_number: /\d+/

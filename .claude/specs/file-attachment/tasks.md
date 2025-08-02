@@ -72,11 +72,11 @@
 
 ### 2.5 ファイル管理API
 
-- [ ] ファイル一覧エンドポイント
+- [x] ファイル一覧エンドポイント
   - `GET /s/:space_identifier/settings/attachments`
   - 権限に応じたフィルタリング
   - 検索・ページネーション機能
-- [ ] ファイル削除エンドポイント
+- [x] ファイル削除エンドポイント
   - `DELETE /s/:space_identifier/settings/attachments/:attachment_id`
   - 権限チェック
   - 関連するページ内リンクの処理
