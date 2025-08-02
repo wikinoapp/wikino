@@ -35,7 +35,6 @@ module Attachments
         attachment_record
       end
 
-      # トランザクション外で非同期ジョブをキュー
       AttachmentProcessingJob.perform_later(attachment_record.id)
 
       Result.new(attachment_record:)
