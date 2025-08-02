@@ -40,7 +40,7 @@ module Attachments
       )
 
       render json: {
-        id: attachment.id,
+        id: attachment.database_id,
         filename: attachment.filename,
         content_type: attachment.content_type,
         byte_size: attachment.byte_size,

@@ -10,7 +10,7 @@ class AttachmentRepository < ApplicationRepository
   end
   def to_model(attachment_record:, url: nil)
     Attachment.new(
-      id: attachment_record.id,
+      database_id: attachment_record.id,
       space_id: attachment_record.space_id,
       filename: attachment_record.filename.not_nil!,
       content_type: attachment_record.content_type.not_nil!,
