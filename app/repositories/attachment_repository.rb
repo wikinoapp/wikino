@@ -33,14 +33,14 @@ class AttachmentRepository < ApplicationRepository
         AttachmentRecord::PrivateAssociationRelation,
         ActiveRecord::Relation
       ),
+      space_member_record: T.nilable(SpaceMemberRecord),
       include_urls: T::Boolean
     ).returns(T::Array[Attachment])
   end
-  def to_models(attachment_records:, include_urls: false)
+  def to_models(attachment_records:, space_member_record: nil, include_urls: false)
     attachment_records.map do |attachment_record|
-      url = if include_urls && attachment_record.blob_record
-        # 署名付きURLを生成（1時間有効）
-        attachment_record.blob_record.url(expires_in: 1.hour)
+      url = if include_urls
+        attachment_record.generate_signed_url(space_member_record:)
       end
       to_model(attachment_record: attachment_record, url: url)
     end

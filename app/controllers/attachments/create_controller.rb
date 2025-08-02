@@ -34,9 +34,12 @@ module Attachments
         attached_space_member_id: space_member_record.not_nil!.id
       )
 
+      # 署名付きURLを生成
+      url = result.attachment_record.generate_signed_url(space_member_record:)
+
       attachment = AttachmentRepository.new.to_model(
         attachment_record: result.attachment_record,
-        url: attachment_url(result.attachment_record)
+        url:
       )
 
       render json: {
@@ -46,14 +49,6 @@ module Attachments
         byte_size: attachment.byte_size,
         url: attachment.url
       }, status: :created
-    end
-
-    # 添付ファイルのURLを生成
-    sig { params(attachment_record: AttachmentRecord).returns(String) }
-    private def attachment_url(attachment_record)
-      # 署名付きURLを生成（1時間有効）
-      blob = attachment_record.blob_record.not_nil!
-      blob.url(expires_in: 1.hour)
     end
   end
 end

@@ -74,4 +74,29 @@ class AttachmentRecord < ApplicationRecord
       false
     end
   end
+
+  # 署名付きURLを生成（権限チェック付き）
+  sig do
+    params(
+      space_member_record: T.nilable(SpaceMemberRecord),
+      expires_in: ActiveSupport::Duration
+    ).returns(T.nilable(String))
+  end
+  def generate_signed_url(space_member_record:, expires_in: 1.hour)
+    # ポリシーを使用してアクセス権限を確認
+    policy = SpaceMemberPolicy.new(
+      user_record: space_member_record&.user_record,
+      space_member_record:
+    )
+
+    return nil unless policy.can_view_attachment?(attachment_record: self)
+
+    blob = blob_record
+    return nil unless blob
+
+    blob.url(expires_in:)
+  rescue => e
+    Rails.logger.error("Failed to generate signed URL for attachment #{id}: #{e.message}")
+    nil
+  end
 end
