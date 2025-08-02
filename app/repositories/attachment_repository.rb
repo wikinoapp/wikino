@@ -42,7 +42,7 @@ class AttachmentRepository < ApplicationRepository
       url = if include_urls
         attachment_record.generate_signed_url(space_member_record:)
       end
-      to_model(attachment_record: attachment_record, url: url)
+      to_model(attachment_record:, url:)
     end
   end
 end
