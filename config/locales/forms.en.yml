@@ -112,6 +112,8 @@ en:
           invalid_filename: Invalid filename
           executable_file_not_allowed: Executable files cannot be uploaded
           unsupported_file_format: Unsupported file format
+          content_type_mismatch: File content does not match the declared format
+          file_download_failed: Failed to download file
         attachments/presign_form:
           attributes:
             content_type:

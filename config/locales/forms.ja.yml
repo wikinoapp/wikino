@@ -114,6 +114,8 @@ ja:
           invalid_filename: ファイル名が不正です
           executable_file_not_allowed: 実行可能ファイルはアップロードできません
           unsupported_file_format: サポートされていないファイル形式です
+          content_type_mismatch: ファイルの内容が宣言された形式と一致しません
+          file_download_failed: ファイルのダウンロードに失敗しました
         attachments/presign_form:
           attributes:
             content_type:
