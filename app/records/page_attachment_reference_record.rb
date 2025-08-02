@@ -9,7 +9,7 @@ class PageAttachmentReferenceRecord < ApplicationRecord
 
   # ページに関連する添付ファイルを取得
   sig { params(page_id: T::Wikino::DatabaseId).returns(ActiveRecord::Relation) }
-  def self.attachments_for_page(page_id:)
+  def self.attachment_records_for_page(page_id:)
     preload(:attachment_record).where(page_id:)
   end
 end
