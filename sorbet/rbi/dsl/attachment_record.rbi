@@ -8,6 +8,7 @@
 class AttachmentRecord
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
+  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -24,6 +25,9 @@ class AttachmentRecord
       ).returns(::AttachmentRecord)
     end
     def new(attributes = nil, &block); end
+
+    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
+    def processing_statuses; end
   end
 
   module CommonRelationMethods
@@ -389,6 +393,32 @@ class AttachmentRecord
     def third_to_last!; end
   end
 
+  module EnumMethodsModule
+    sig { void }
+    def processing_status_completed!; end
+
+    sig { returns(T::Boolean) }
+    def processing_status_completed?; end
+
+    sig { void }
+    def processing_status_failed!; end
+
+    sig { returns(T::Boolean) }
+    def processing_status_failed?; end
+
+    sig { void }
+    def processing_status_pending!; end
+
+    sig { returns(T::Boolean) }
+    def processing_status_pending?; end
+
+    sig { void }
+    def processing_status_processing!; end
+
+    sig { returns(T::Boolean) }
+    def processing_status_processing?; end
+  end
+
   module GeneratedAssociationMethods
     sig { returns(T.nilable(::ActiveStorage::Attachment)) }
     def active_storage_attachment_record; end
@@ -566,6 +596,18 @@ class AttachmentRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_processing_status_completed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_processing_status_failed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_processing_status_pending(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_processing_status_processing(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -585,6 +627,18 @@ class AttachmentRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def preload(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def processing_status_completed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def processing_status_failed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def processing_status_pending(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def processing_status_processing(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def readonly(*args, &blk); end
@@ -918,7 +972,7 @@ class AttachmentRecord
     sig { returns(::String) }
     def processing_status; end
 
-    sig { params(value: ::String).returns(::String) }
+    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
     def processing_status=(value); end
 
     sig { returns(T::Boolean) }
@@ -1239,6 +1293,18 @@ class AttachmentRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_processing_status_completed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_processing_status_failed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_processing_status_pending(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_processing_status_processing(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1258,6 +1324,18 @@ class AttachmentRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def preload(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def processing_status_completed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def processing_status_failed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def processing_status_pending(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def processing_status_processing(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def readonly(*args, &blk); end

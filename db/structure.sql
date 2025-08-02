@@ -133,7 +133,7 @@ CREATE TABLE public.attachments (
     attached_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    processing_status character varying DEFAULT 'pending'::character varying NOT NULL
+    processing_status integer DEFAULT 0 NOT NULL
 );
 
 

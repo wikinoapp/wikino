@@ -27,8 +27,7 @@ module Attachments
           space_id: space_record.id,
           active_storage_attachment_record:,
           attached_space_member_id:,
-          attached_at: Time.current,
-          processing_status: AttachmentRecord::PROCESSING_STATUS_PENDING
+          attached_at: Time.current
         )
 
         active_storage_attachment_record.update!(record: attachment_record)
