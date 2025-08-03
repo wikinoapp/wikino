@@ -29,6 +29,7 @@ import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
 import { fileDropHandler, dropZoneStyles } from "../markdown-editor/file-drop-handler";
 import { pasteHandler } from "../markdown-editor/paste-handler";
 import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder } from "../markdown-editor/upload-placeholder";
+import { DirectUpload, UploadError } from "../services/direct-upload";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -126,23 +127,56 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
       
       try {
-        // ファイルアップロード処理（実装予定）
-        // const url = await this.uploadFile(file);
-        // replacePlaceholderWithUrl(this.editorView, placeholderId, url);
+        // DirectUploadを使用してファイルをアップロード
+        const uploader = new DirectUpload(
+          file,
+          this.spaceIdentifierValue,
+          (progress) => {
+            // 進捗状況のログ（必要に応じてUIに反映）
+            console.log(`Uploading ${file.name}: ${progress.percentage}%`);
+          }
+        );
         
-        // TODO: 実際のアップロード処理を実装
-        console.log("File upload:", file.name);
+        const { url } = await uploader.upload();
         
-        // 一時的にプレースホルダーを削除（アップロード機能実装時に削除）
-        setTimeout(() => {
-          removePlaceholder(this.editorView, placeholderId);
-        }, 2000);
+        // プレースホルダーをURLに置換
+        replacePlaceholderWithUrl(this.editorView, placeholderId, url, file.name);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);
-        // エラー通知の表示（実装予定）
+        
+        // エラーメッセージの表示
+        if (error instanceof UploadError) {
+          this.showErrorMessage(error.message);
+        } else {
+          this.showErrorMessage("ファイルのアップロードに失敗しました");
+        }
       }
     }
+  }
+
+  private showErrorMessage(message: string) {
+    // エラーメッセージを表示（一時的な実装）
+    // TODO: 適切なエラー通知システムに置き換える
+    const notification = document.createElement("div");
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ef4444;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 10000;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 5000);
   }
 
   disconnect() {
