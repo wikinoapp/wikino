@@ -26,6 +26,9 @@ import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
 import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
+import { fileDropHandler, dropZoneStyles } from "../markdown-editor/file-drop-handler";
+import { pasteHandler } from "../markdown-editor/paste-handler";
+import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder } from "../markdown-editor/upload-placeholder";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -44,6 +47,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
 
   connect() {
     this.initializeEditor();
+    this.setupFileHandlers();
   }
 
   async initializeEditor() {
@@ -65,6 +69,11 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
         rectangularSelection(),
         crosshairCursor(),
         highlightSelectionMatches(),
+        fileDropHandler,
+        dropZoneStyles,
+        EditorView.domEventHandlers({
+          paste: (event, view) => pasteHandler(view, event as ClipboardEvent)
+        }),
         keymap.of([
           { key: "Enter", run: insertNewlineAndContinueList },
           { key: "Tab", run: handleTab },
@@ -94,6 +103,45 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
 
     if (this.autofocusValue) {
       this.editorView.focus();
+    }
+  }
+
+  setupFileHandlers() {
+    // ファイルドロップイベントのハンドリング
+    this.editorView.dom.addEventListener("file-drop", (event: CustomEvent) => {
+      const { files, position } = event.detail;
+      this.handleFileUpload(files, position);
+    });
+
+    // 画像ペーストイベントのハンドリング
+    this.editorView.dom.addEventListener("image-paste", (event: CustomEvent) => {
+      const { file, position } = event.detail;
+      this.handleFileUpload([file], position);
+    });
+  }
+
+  async handleFileUpload(files: File[], position: number) {
+    for (const file of files) {
+      // アップロード中のプレースホルダーを挿入
+      const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
+      
+      try {
+        // ファイルアップロード処理（実装予定）
+        // const url = await this.uploadFile(file);
+        // replacePlaceholderWithUrl(this.editorView, placeholderId, url);
+        
+        // TODO: 実際のアップロード処理を実装
+        console.log("File upload:", file.name);
+        
+        // 一時的にプレースホルダーを削除（アップロード機能実装時に削除）
+        setTimeout(() => {
+          removePlaceholder(this.editorView, placeholderId);
+        }, 2000);
+      } catch (error) {
+        console.error("Upload error:", error);
+        removePlaceholder(this.editorView, placeholderId);
+        // エラー通知の表示（実装予定）
+      }
     }
   }
 
