@@ -107,14 +107,24 @@ export class DirectUpload {
         content_type: this.file.type,
         byte_size: this.file.size,
       },
+      responseKind: "json",
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = typeof response.json === "function" ? await response.json().catch(() => ({})) : response;
       throw new UploadError(errorData.error || "プリサイン用URLの取得に失敗しました", "PRESIGN_ERROR");
     }
 
-    return response.json();
+    // responseKind: "json" を指定した場合、レスポンスは既にパース済みの可能性がある
+    if (typeof response.json === "function") {
+      return await response.json();
+    }
+    // レスポンスが既にパース済みの場合
+    return response as unknown as {
+      upload_url: string;
+      file_key: string;
+      signed_id: string;
+    };
   }
 
   // ファイルのアップロード
@@ -172,14 +182,23 @@ export class DirectUpload {
         file_key: fileKey,
         signed_id: signedId,
       },
+      responseKind: "json",
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = typeof response.json === "function" ? await response.json().catch(() => ({})) : response;
       throw new UploadError(errorData.error || "アップロード完了の通知に失敗しました", "NOTIFICATION_ERROR");
     }
 
-    return response.json();
+    // responseKind: "json" を指定した場合、レスポンスは既にパース済みの可能性がある
+    if (typeof response.json === "function") {
+      return await response.json();
+    }
+    // レスポンスが既にパース済みの場合
+    return response as unknown as {
+      id: string;
+      url: string;
+    };
   }
 
   // リトライ処理
