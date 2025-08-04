@@ -28,7 +28,11 @@ import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
 import { fileDropHandler, dropZoneStyles } from "../markdown-editor/file-drop-handler";
 import { pasteHandler } from "../markdown-editor/paste-handler";
-import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder } from "../markdown-editor/upload-placeholder";
+import {
+  insertUploadPlaceholder,
+  replacePlaceholderWithUrl,
+  removePlaceholder,
+} from "../markdown-editor/upload-placeholder";
 import { DirectUpload, UploadError } from "../services/direct-upload";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
@@ -46,8 +50,8 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
   declare readonly textareaTarget: HTMLTextAreaElement;
   editorView!: EditorView;
 
-  connect() {
-    this.initializeEditor();
+  async connect() {
+    await this.initializeEditor();
     this.setupFileHandlers();
   }
 
@@ -73,7 +77,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
         fileDropHandler,
         dropZoneStyles,
         EditorView.domEventHandlers({
-          paste: (event, view) => pasteHandler(view, event as ClipboardEvent)
+          paste: (event, view) => pasteHandler(view, event as ClipboardEvent),
         }),
         keymap.of([
           { key: "Enter", run: insertNewlineAndContinueList },
@@ -125,26 +129,22 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
     for (const file of files) {
       // アップロード中のプレースホルダーを挿入
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
-      
+
       try {
         // DirectUploadを使用してファイルをアップロード
-        const uploader = new DirectUpload(
-          file,
-          this.spaceIdentifierValue,
-          (progress) => {
-            // 進捗状況のログ（必要に応じてUIに反映）
-            console.log(`Uploading ${file.name}: ${progress.percentage}%`);
-          }
-        );
-        
+        const uploader = new DirectUpload(file, this.spaceIdentifierValue, (progress) => {
+          // 進捗状況のログ（必要に応じてUIに反映）
+          console.log(`Uploading ${file.name}: ${progress.percentage}%`);
+        });
+
         const { url } = await uploader.upload();
-        
+
         // プレースホルダーをURLに置換
         replacePlaceholderWithUrl(this.editorView, placeholderId, url, file.name);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);
-        
+
         // エラーメッセージの表示
         if (error instanceof UploadError) {
           this.showErrorMessage(error.message);
@@ -171,9 +171,9 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       z-index: 10000;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       notification.remove();
     }, 5000);

@@ -15,7 +15,7 @@ export const fileDropHandler = ViewPlugin.fromClass(
 
     setupEventListeners() {
       const dom = this.view.dom;
-      
+
       // ドラッグイベントをバインド
       dom.addEventListener("dragenter", this.handleDragEnter.bind(this));
       dom.addEventListener("dragleave", this.handleDragLeave.bind(this));
@@ -26,9 +26,9 @@ export const fileDropHandler = ViewPlugin.fromClass(
     handleDragEnter(e: DragEvent) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       this.dragCounter++;
-      
+
       // ファイルがドラッグされているか確認
       if (e.dataTransfer?.types.includes("Files")) {
         this.showDropZone();
@@ -38,9 +38,9 @@ export const fileDropHandler = ViewPlugin.fromClass(
     handleDragLeave(e: DragEvent) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       this.dragCounter--;
-      
+
       if (this.dragCounter === 0) {
         this.hideDropZone();
       }
@@ -49,7 +49,7 @@ export const fileDropHandler = ViewPlugin.fromClass(
     handleDragOver(e: DragEvent) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       // ドロップ効果を設定
       if (e.dataTransfer) {
         e.dataTransfer.dropEffect = "copy";
@@ -59,31 +59,31 @@ export const fileDropHandler = ViewPlugin.fromClass(
     handleDrop(e: DragEvent) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       this.dragCounter = 0;
       this.hideDropZone();
-      
+
       const files = e.dataTransfer?.files;
       if (!files || files.length === 0) return;
-      
+
       // ドロップ位置のカーソル位置を取得
       const pos = this.view.posAtCoords({ x: e.clientX, y: e.clientY });
-      
+
       // ファイルドロップイベントを発火
       this.view.dom.dispatchEvent(
         new CustomEvent("file-drop", {
           detail: {
             files: Array.from(files),
-            position: pos || this.view.state.selection.main.head
+            position: pos || this.view.state.selection.main.head,
           },
-          bubbles: true
-        })
+          bubbles: true,
+        }),
       );
     }
 
     showDropZone() {
       if (this.dropZone) return;
-      
+
       this.dropZone = document.createElement("div");
       this.dropZone.className = "cm-drop-zone";
       this.dropZone.innerHTML = `
@@ -96,7 +96,7 @@ export const fileDropHandler = ViewPlugin.fromClass(
           <p class="cm-drop-zone-text">ファイルをドロップしてアップロード</p>
         </div>
       `;
-      
+
       // スタイルを適用
       Object.assign(this.dropZone.style, {
         position: "absolute",
@@ -109,9 +109,9 @@ export const fileDropHandler = ViewPlugin.fromClass(
         alignItems: "center",
         justifyContent: "center",
         zIndex: "1000",
-        pointerEvents: "none"
+        pointerEvents: "none",
       });
-      
+
       this.view.dom.style.position = "relative";
       this.view.dom.appendChild(this.dropZone);
     }
@@ -130,7 +130,7 @@ export const fileDropHandler = ViewPlugin.fromClass(
     update(update: ViewUpdate) {
       // 必要に応じて更新処理
     }
-  }
+  },
 );
 
 // ドロップゾーンのスタイル
@@ -140,17 +140,17 @@ export const dropZoneStyles = EditorView.theme({
     borderRadius: "8px",
     padding: "32px",
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-    textAlign: "center"
+    textAlign: "center",
   },
   ".cm-drop-zone-icon": {
     width: "48px",
     height: "48px",
     marginBottom: "16px",
-    color: "#6b7280"
+    color: "#6b7280",
   },
   ".cm-drop-zone-text": {
     fontSize: "16px",
     color: "#4b5563",
-    margin: "0"
-  }
+    margin: "0",
+  },
 });
