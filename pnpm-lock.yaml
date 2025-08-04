@@ -35,6 +35,9 @@ importers:
       '@hotwired/turbo':
         specifier: ^8.0.13
         version: 8.0.13
+      '@rails/request.js':
+        specifier: ^0.0.12
+        version: 0.0.12
       '@tailwindcss/cli':
         specifier: ^4.1.11
         version: 4.1.11
@@ -452,6 +455,9 @@ packages:
   '@parcel/watcher@2.5.1':
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
+
+  '@rails/request.js@0.0.12':
+    resolution: {integrity: sha512-g3//JBja1s04Zflj7IoMLQuXza9i4ZvtLmm0r0dMwh1QQUs6rL2iKUOGGyERfLsd81SnXC5ucfVV//rtsDlEEA==}
 
   '@tailwindcss/cli@4.1.11':
     resolution: {integrity: sha512-7RAFOrVaXCFz5ooEG36Kbh+sMJiI2j4+Ozp71smgjnLfBRu7DTfoq8DsTvzse2/6nDeo2M3vS/FGaxfDgr3rtQ==}
@@ -1503,6 +1509,8 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.1
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
+
+  '@rails/request.js@0.0.12': {}
 
   '@tailwindcss/cli@4.1.11':
     dependencies:
