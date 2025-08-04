@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { destroy } from "@rails/request.js"
 
 export default class extends Controller {
   static values = { 
@@ -28,15 +29,10 @@ export default class extends Controller {
     button.disabled = true
 
     // 削除リクエストを送信
-    fetch(`/s/${this.spaceIdentifierValue}/settings/attachments/${attachmentId}`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRF-Token": this.getCSRFToken(),
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      }
+    destroy(`/s/${this.spaceIdentifierValue}/settings/attachments/${attachmentId}`, {
+      responseKind: "json"
     })
-    .then(response => {
+    .then((response: any) => {
       if (response.ok) {
         // 成功時は要素をフェードアウトして削除
         const attachmentElement = document.querySelector(`[data-attachment-id="${attachmentId}"]`)
@@ -62,17 +58,13 @@ export default class extends Controller {
         alert("ファイルの削除に失敗しました")
       }
     })
-    .catch(error => {
+    .catch((error: any) => {
       console.error("Error deleting attachment:", error)
       button.disabled = false
       alert("ファイルの削除に失敗しました")
     })
   }
 
-  private getCSRFToken(): string {
-    const metaTag = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
-    return metaTag ? metaTag.content : ""
-  }
 
   private noAttachmentsMessage(): string {
     // 言語に応じてメッセージを切り替え

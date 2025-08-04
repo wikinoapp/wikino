@@ -1,4 +1,4 @@
-import { csrfToken } from "../utils/csrf-token";
+import { post } from "@rails/request.js";
 
 // ファイルタイプごとのサイズ制限（バイト）
 const FILE_SIZE_LIMITS = {
@@ -109,17 +109,12 @@ export class DirectUpload {
     file_key: string;
     signed_id: string;
   }> {
-    const response = await fetch(`/s/${this.spaceIdentifier}/attachments/presign`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-      },
-      body: JSON.stringify({
+    const response = await post(`/s/${this.spaceIdentifier}/attachments/presign`, {
+      body: {
         filename: this.file.name,
         content_type: this.file.type,
         byte_size: this.file.size
-      })
+      }
     });
 
     if (!response.ok) {
@@ -189,16 +184,11 @@ export class DirectUpload {
     id: string;
     url: string;
   }> {
-    const response = await fetch(`/s/${this.spaceIdentifier}/attachments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-      },
-      body: JSON.stringify({
+    const response = await post(`/s/${this.spaceIdentifier}/attachments`, {
+      body: {
         file_key: fileKey,
         signed_id: signedId
-      })
+      }
     });
 
     if (!response.ok) {
