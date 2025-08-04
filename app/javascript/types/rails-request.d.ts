@@ -13,7 +13,7 @@ declare module "@rails/request.js" {
     redirected: boolean;
     type: ResponseType;
     url: string;
-    json(): Promise<any>;
+    json: Promise<any>; // jsonはプロパティで、Promiseを返す
     text(): Promise<string>;
     response: Response;
   }
