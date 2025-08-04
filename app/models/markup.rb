@@ -8,9 +8,10 @@ require "html_pipeline/convert_filter/markdown_filter"
 class Markup
   extend T::Sig
 
-  sig { params(current_topic: TopicRecord).void }
-  def initialize(current_topic:)
+  sig { params(current_topic: TopicRecord, current_space_member: T.nilable(SpaceMemberRecord)).void }
+  def initialize(current_topic:, current_space_member: nil)
     @current_topic = current_topic
+    @current_space_member = current_space_member
   end
 
   sig { params(text: String).returns(String) }
@@ -37,6 +38,12 @@ class Markup
             current_topic:,
             page_locations:
           }
+        ),
+        MarkupFilters::AttachmentFilter.new(
+          context: {
+            current_space: current_topic.space_record.not_nil!,
+            current_space_member:
+          }
         )
       ]
     )
@@ -48,6 +55,10 @@ class Markup
   sig { returns(TopicRecord) }
   attr_reader :current_topic
   private :current_topic
+
+  sig { returns(T.nilable(SpaceMemberRecord)) }
+  attr_reader :current_space_member
+  private :current_space_member
 
   sig { returns(T::Hash[T.any(Symbol, String), T.untyped]) }
   private def sanitization_config
