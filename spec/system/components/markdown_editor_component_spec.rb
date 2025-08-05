@@ -3,84 +3,47 @@
 
 RSpec.describe "Markdownエディター", type: :system do
   # ファイルアップロードのモックを設定するヘルパーメソッド
+  # 注意: WebMockがActiveStorageと干渉するため、このヘルパーメソッドは現在使用されていません
   private def setup_file_upload_mocks(
     presign_result: nil,
     create_result: nil,
     upload_delay: nil,
     upload_error_count: 0
   )
-    # プリサインURLの生成モック
+    # サービスクラスをモック
     presign_service = instance_double(Attachments::CreatePresignedUploadService)
     allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(presign_service)
-    if presign_result
-      allow(presign_service).to receive(:call).and_return(presign_result)
-    else
-      allow(presign_service).to receive(:call).and_return(
-        Attachments::CreatePresignedUploadService::Result.new(
-          direct_upload_url: "https://r2.example.com/upload",
-          direct_upload_headers: {"Content-Type" => "image/png"},
-          blob_signed_id: "test-signed-id"
-        )
-      )
-    end
 
-    # アタッチメント作成のモック
+    # プリサインURLの結果をモック
+    presign_result ||= instance_double(
+      Attachments::CreatePresignedUploadService::Result,
+      direct_upload_url: "https://r2.example.com/upload",
+      direct_upload_headers: {"Content-Type" => "image/png"},
+      blob_signed_id: "test-signed-id"
+    )
+    allow(presign_service).to receive(:call).and_return(presign_result)
+
+    # アタッチメント作成サービスをモック
     create_service = instance_double(Attachments::CreateService)
     allow(Attachments::CreateService).to receive(:new).and_return(create_service)
 
-    # モックのAttachmentRecordを作成
-    blob = instance_double(ActiveStorage::Blob, signed_id: "test-signed-id")
-    active_storage_attachment = instance_double(
-      ActiveStorage::Attachment,
-      blob: blob
-    )
-    attachment_record = instance_double(
-      AttachmentRecord,
-      id: "test-attachment-id",
-      active_storage_attachment_record: active_storage_attachment
-    )
-    allow(attachment_record).to receive(:generate_signed_url).and_return("https://r2.example.com/test-image.png")
-    if create_result
-      allow(create_service).to receive(:call).and_return(create_result)
-    else
-      # Resultオブジェクト全体をモック化
-      result = instance_double(Attachments::CreateService::Result)
-      allow(result).to receive(:attachment_record).and_return(attachment_record)
-      allow(create_service).to receive(:call).and_return(result)
+    # アタッチメント作成の結果をモック
+    if create_result.nil?
+      blob = instance_double(ActiveStorage::Blob, signed_id: "test-signed-id")
+      active_storage_attachment = instance_double(
+        ActiveStorage::Attachment,
+        blob: blob
+      )
+      attachment_record = instance_double(
+        AttachmentRecord,
+        id: "test-attachment-id",
+        active_storage_attachment_record: active_storage_attachment
+      )
+      allow(attachment_record).to receive(:generate_signed_url).and_return("https://r2.example.com/test-image.png")
+      create_result = instance_double(Attachments::CreateService::Result)
+      allow(create_result).to receive(:attachment_record).and_return(attachment_record)
     end
-
-    # S3へのアップロードのモック（必要に応じて遅延やエラーを設定）
-    # 注: System specでは実際のHTTPリクエストは発生しないため、
-    # サービスクラスのレスポンスで遅延やエラーをシミュレートする
-    if upload_delay
-      # 遅延はJavaScriptで処理されるため、ここでは設定不要
-    end
-    if upload_error_count > 0
-      # エラーはサービスクラスのモックで処理
-      upload_attempt = 0
-      allow(create_service).to receive(:call) do
-        upload_attempt += 1
-        if upload_attempt <= upload_error_count
-          # エラー時は例外を発生させる
-          raise "Network error"
-        else
-          blob = instance_double(ActiveStorage::Blob, signed_id: "test-signed-id")
-          active_storage_attachment = instance_double(
-            ActiveStorage::Attachment,
-            blob: blob
-          )
-          attachment_record = instance_double(
-            AttachmentRecord,
-            id: "test-attachment-id-retry",
-            active_storage_attachment_record: active_storage_attachment
-          )
-          allow(attachment_record).to receive(:generate_signed_url).and_return("https://r2.example.com/test-image.png")
-          result = instance_double(Attachments::CreateService::Result)
-          allow(result).to receive(:attachment_record).and_return(attachment_record)
-          result
-        end
-      end
-    end
+    allow(create_service).to receive(:call).and_return(create_result)
   end
   describe "Wikiリンクの補完候補" do
     it "Wikiリンクの補完候補が表示されること" do
@@ -753,7 +716,7 @@ RSpec.describe "Markdownエディター", type: :system do
   end
 
   describe "ファイルアップロード機能" do
-    it "ページ編集画面でファイルをアップロードできること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "ページ編集画面でファイルをアップロードできること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -771,7 +734,7 @@ RSpec.describe "Markdownエディター", type: :system do
       page.execute_script(<<~JS)
         const editor = document.querySelector('.cm-editor');
         const file = new File(['test content'], 'test-image.png', { type: 'image/png' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file],
@@ -786,7 +749,7 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(page).to have_content("![test-image.png](https://r2.example.com/test-image.png)")
     end
 
-    it "複数のファイルを同時にアップロードできること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "複数のファイルを同時にアップロードできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -796,38 +759,36 @@ RSpec.describe "Markdownエディター", type: :system do
       sign_in(user_record:)
 
       # 複数ファイルアップロードのモックを設定
-      # 各ファイルに対して個別の結果を返すよう設定
-      presign_service = instance_double(Attachments::CreatePresignedUploadService)
-      allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(presign_service)
-      allow(presign_service).to receive(:call).and_return(
-        Attachments::CreatePresignedUploadService::Result.new(
-          direct_upload_url: "https://r2.example.com/upload",
-          direct_upload_headers: {"Content-Type" => "image/png"},
-          blob_signed_id: "test-signed-id"
+      # プリサインURLのエンドポイントをモック（複数回呼ばれることを想定）
+      stub_request(:post, %r{/s/test-space/attachments/presign})
+        .to_return(
+          status: 200,
+          body: {
+            upload_url: "https://r2.example.com/upload",
+            file_key: "test-file-key",
+            signed_id: "test-signed-id"
+          }.to_json,
+          headers: {"Content-Type" => "application/json"}
         )
-      )
 
-      # 複数ファイルのアップロード結果を順番に返す
-      create_service = instance_double(Attachments::CreateService)
-      allow(Attachments::CreateService).to receive(:new).and_return(create_service)
+      # R2へのアップロードをモック（複数回）
+      stub_request(:put, "https://r2.example.com/upload")
+        .to_return(status: 200)
+
+      # アタッチメント作成のエンドポイントをモック（複数ファイル用）
       call_count = 0
-      allow(create_service).to receive(:call) do
-        call_count += 1
-        blob = instance_double(ActiveStorage::Blob, signed_id: "test-signed-id-#{call_count}")
-        active_storage_attachment = instance_double(
-          ActiveStorage::Attachment,
-          blob: blob
-        )
-        attachment_record = instance_double(
-          AttachmentRecord,
-          id: "test-attachment-id-#{call_count}",
-          active_storage_attachment_record: active_storage_attachment
-        )
-        allow(attachment_record).to receive(:generate_signed_url).and_return("https://r2.example.com/test-image-#{call_count}.png")
-        result = instance_double(Attachments::CreateService::Result)
-        allow(result).to receive(:attachment_record).and_return(attachment_record)
-        result
-      end
+      stub_request(:post, %r{/s/test-space/attachments})
+        .to_return do |request|
+          call_count += 1
+          {
+            status: 200,
+            body: {
+              id: "test-attachment-id-#{call_count}",
+              url: "https://r2.example.com/test-image-#{call_count}.png"
+            }.to_json,
+            headers: {"Content-Type" => "application/json"}
+          }
+        end
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -836,7 +797,7 @@ RSpec.describe "Markdownエディター", type: :system do
         const editor = document.querySelector('.cm-editor');
         const file1 = new File(['test content 1'], 'test-image-1.png', { type: 'image/png' });
         const file2 = new File(['test content 2'], 'test-image-2.png', { type: 'image/png' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file1, file2],
@@ -852,7 +813,7 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(page).to have_content("![test-image-2.png](https://r2.example.com/test-image-2.png)")
     end
 
-    it "アップロード中にプレースホルダーが表示されること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "アップロード中にプレースホルダーが表示されること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -870,7 +831,7 @@ RSpec.describe "Markdownエディター", type: :system do
       page.execute_script(<<~JS)
         const editor = document.querySelector('.cm-editor');
         const file = new File(['test content'], 'test-image.png', { type: 'image/png' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file],
@@ -891,7 +852,7 @@ RSpec.describe "Markdownエディター", type: :system do
   end
 
   describe "ファイルのドラッグ&ドロップ" do
-    it "エディタにファイルをドラッグ&ドロップできること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "エディタにファイルをドラッグ&ドロップできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -913,7 +874,7 @@ RSpec.describe "Markdownエディター", type: :system do
         const dataTransfer = new DataTransfer();
         const file = new File(['test content'], 'test-image.png', { type: 'image/png' });
         dataTransfer.items.add(file);
-        
+
         // dragenterイベント
         const dragEnterEvent = new DragEvent('dragenter', {
           dataTransfer: dataTransfer,
@@ -921,7 +882,7 @@ RSpec.describe "Markdownエディター", type: :system do
           cancelable: true
         });
         editor.dispatchEvent(dragEnterEvent);
-        
+
         // dragoverイベント
         const dragOverEvent = new DragEvent('dragover', {
           dataTransfer: dataTransfer,
@@ -929,7 +890,7 @@ RSpec.describe "Markdownエディター", type: :system do
           cancelable: true
         });
         editor.dispatchEvent(dragOverEvent);
-        
+
         // dropイベント
         const dropEvent = new DragEvent('drop', {
           dataTransfer: dataTransfer,
@@ -960,7 +921,7 @@ RSpec.describe "Markdownエディター", type: :system do
         const dataTransfer = new DataTransfer();
         const file = new File(['test content'], 'test-image.png', { type: 'image/png' });
         dataTransfer.items.add(file);
-        
+
         const dragEnterEvent = new DragEvent('dragenter', {
           dataTransfer: dataTransfer,
           bubbles: true,
@@ -987,7 +948,7 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(page).not_to have_css(".cm-drop-zone")
     end
 
-    it "画像をペーストできること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "画像をペーストできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -1025,10 +986,10 @@ RSpec.describe "Markdownエディター", type: :system do
         const editor = document.querySelector('.cm-content');
         const blob = new Blob(['test image data'], { type: 'image/png' });
         const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
-        
+
         const clipboardData = new DataTransfer();
         clipboardData.items.add(file);
-        
+
         const pasteEvent = new ClipboardEvent('paste', {
           clipboardData: clipboardData,
           bubbles: true,
@@ -1059,7 +1020,7 @@ RSpec.describe "Markdownエディター", type: :system do
         const editor = document.querySelector('.cm-editor');
         const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
         const file = new File([largeContent], 'large-image.png', { type: 'image/png' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file],
@@ -1089,7 +1050,7 @@ RSpec.describe "Markdownエディター", type: :system do
       page.execute_script(<<~JS)
         const editor = document.querySelector('.cm-editor');
         const file = new File(['executable content'], 'malicious.exe', { type: 'application/x-msdownload' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file],
@@ -1104,7 +1065,7 @@ RSpec.describe "Markdownエディター", type: :system do
       expect(page).to have_content("このファイル形式はアップロードできません")
     end
 
-    it "ネットワークエラーの場合、リトライが行われること", skip: "WebMockが設定されていないため、実際のHTTPリクエストをモックできない" do
+    it "ネットワークエラーの場合、リトライが行われること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -1122,7 +1083,7 @@ RSpec.describe "Markdownエディター", type: :system do
       page.execute_script(<<~JS)
         const editor = document.querySelector('.cm-editor');
         const file = new File(['test content'], 'test-image.png', { type: 'image/png' });
-        
+
         const event = new CustomEvent('file-drop', {
           detail: {
             files: [file],
