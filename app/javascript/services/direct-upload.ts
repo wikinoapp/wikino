@@ -97,9 +97,8 @@ export class DirectUpload {
 
   // プリサイン用URLの取得
   private async getPresignedUrl(): Promise<{
-    upload_url: string;
-    file_key: string;
-    signed_id: string;
+    directUploadUrl: string;
+    blobSignedId: string;
   }> {
     const response = await post(`/s/${this.spaceIdentifier}/attachments/presign`, {
       body: {
@@ -163,17 +162,13 @@ export class DirectUpload {
   }
 
   // アップロード完了の通知
-  private async notifyUploadComplete(
-    fileKey: string,
-    signedId: string,
-  ): Promise<{
+  private async notifyUploadComplete(blobSignedId: string): Promise<{
     id: string;
     url: string;
   }> {
     const response = await post(`/s/${this.spaceIdentifier}/attachments`, {
       body: {
-        file_key: fileKey,
-        signed_id: signedId,
+        blob_signed_id: blobSignedId,
       },
       responseKind: "json",
     });
@@ -222,13 +217,13 @@ export class DirectUpload {
 
     try {
       // プリサイン用URLの取得
-      const { upload_url, file_key, signed_id } = await this.getPresignedUrl();
+      const { directUploadUrl, blobSignedId } = await this.getPresignedUrl();
 
       // ファイルアップロード（リトライ付き）
-      await this.withRetry(() => this.uploadFile(upload_url));
+      await this.withRetry(() => this.uploadFile(directUploadUrl));
 
       // アップロード完了通知
-      const result = await this.notifyUploadComplete(file_key, signed_id);
+      const result = await this.notifyUploadComplete(blobSignedId);
 
       return result;
     } catch (error) {
