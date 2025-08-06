@@ -9,6 +9,6 @@ cloudflare_r2:
   secret_access_key: <%= ENV["WIKINO_ACTIVE_STORAGE_SECRET_ACCESS_KEY"] %>
   bucket: <%= ENV["WIKINO_ACTIVE_STORAGE_BUCKET"] %>
   region: <%= ENV["WIKINO_ACTIVE_STORAGE_REGION"] %>
-  # https://developers.cloudflare.com/r2/examples/aws/aws-sdk-ruby/
+  # https://github.com/rails/rails/issues/54374
   request_checksum_calculation: when_required
   response_checksum_validation: when_required
