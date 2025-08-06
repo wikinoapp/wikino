@@ -33,7 +33,7 @@ import {
   replacePlaceholderWithUrl,
   removePlaceholder,
 } from "../markdown-editor/upload-placeholder";
-import { DirectUpload, UploadError } from "../services/direct-upload";
+import { DirectUpload, UploadError, UploadProgress } from "../services/direct-upload";
 import { calculateFileChecksum } from "../utils/file-checksum";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
@@ -154,18 +154,26 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
           throw new UploadError("プリサイン用URLの取得に失敗しました");
         }
 
-        const { directUploadUrl } = await presignResponse.json();
+        const { directUploadUrl, directUploadHeaders, blobSignedId } = await presignResponse.json();
 
         // DirectUploadを使用してファイルをアップロード
-        const uploader = new DirectUpload(file, directUploadUrl, (progress) => {
-          // 進捗状況のログ（必要に応じてUIに反映）
-          console.log(`Uploading ${file.name}: ${progress.percentage}%`);
-        });
+        const uploader = new DirectUpload(
+          file,
+          directUploadUrl,
+          directUploadHeaders,
+          (progress: UploadProgress) => {
+            // 進捗状況のログ（必要に応じてUIに反映）
+            console.log(`Uploading ${file.name}: ${progress.percentage}%`);
+          }
+        );
 
-        const { url } = await uploader.upload();
+        await uploader.upload();
+
+        // アップロード成功後、Active StorageのURLを生成
+        const attachmentUrl = `/rails/active_storage/blobs/redirect/${blobSignedId}/${encodeURIComponent(file.name)}`;
 
         // プレースホルダーをURLに置換
-        replacePlaceholderWithUrl(this.editorView, placeholderId, url, file.name);
+        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);

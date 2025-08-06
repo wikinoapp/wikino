@@ -1,4 +1,4 @@
-import { DirectUpload } from "@rails/activestorage";
+// Active StorageのDirectUploadは使用せず、独自実装を使用
 
 // ファイルタイプごとのサイズ制限（バイト）
 const FILE_SIZE_LIMITS = {
@@ -48,16 +48,23 @@ export class UploadError extends Error {
   }
 }
 
-// DirectUploadラッパークラス
+// DirectUploadクラス（独自実装）
 export class DirectUploadWrapper {
   private file: File;
   private directUploadUrl: string;
+  private directUploadHeaders: Record<string, string>;
   private onProgress?: (progress: UploadProgress) => void;
-  private activeStorageUpload?: DirectUpload;
+  private xhr?: XMLHttpRequest;
 
-  constructor(file: File, directUploadUrl: string, onProgress?: (progress: UploadProgress) => void) {
+  constructor(
+    file: File,
+    directUploadUrl: string,
+    directUploadHeaders: Record<string, string> = {},
+    onProgress?: (progress: UploadProgress) => void
+  ) {
     this.file = file;
     this.directUploadUrl = directUploadUrl;
+    this.directUploadHeaders = directUploadHeaders;
     this.onProgress = onProgress;
   }
 
@@ -99,43 +106,60 @@ export class DirectUploadWrapper {
     this.validateFileType();
 
     return new Promise((resolve, reject) => {
-      this.activeStorageUpload = new DirectUpload(this.file, this.directUploadUrl);
-
-      // Active Storageのダイレクトアップロードコールバック
-      const directUploadWillStoreFileWithXHR = (request: XMLHttpRequest) => {
-        // 進捗イベントの設定
-        request.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable && this.onProgress) {
-            this.onProgress({
+      this.xhr = new XMLHttpRequest();
+      this.xhr.open("PUT", this.directUploadUrl, true);
+      this.xhr.responseType = "text";
+      
+      // Active Storageが生成したヘッダーを設定
+      for (const [key, value] of Object.entries(this.directUploadHeaders)) {
+        this.xhr.setRequestHeader(key, value);
+      }
+      
+      // 進捗イベントの設定
+      if (this.onProgress) {
+        this.xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            this.onProgress!({
               loaded: event.loaded,
               total: event.total,
               percentage: Math.round((event.loaded / event.total) * 100),
             });
           }
         });
-      };
-
-      // アップロードの実行
-      this.activeStorageUpload.create((error, blob) => {
-        if (error) {
-          console.error("Upload error:", error);
-          reject(new UploadError("ファイルのアップロードに失敗しました", "UPLOAD_FAILED"));
-        } else {
-          // Active Storageのblobオブジェクトから必要な情報を取得
+      }
+      
+      // 成功時のハンドリング
+      this.xhr.addEventListener("load", () => {
+        if (this.xhr!.status >= 200 && this.xhr!.status < 300) {
+          // アップロード成功
+          // URLはpresignレスポンスから取得済みなので、ここではダミーのIDを返す
           resolve({
-            id: blob.signed_id,
-            url: blob.url || "", // URLが利用可能な場合
+            id: "uploaded",
+            url: this.directUploadUrl.split("?")[0], // クエリパラメータを除いたURL
           });
+        } else {
+          reject(new UploadError(
+            `アップロードに失敗しました (ステータス: ${this.xhr!.status})`,
+            "UPLOAD_FAILED"
+          ));
         }
-      }, directUploadWillStoreFileWithXHR);
+      });
+      
+      // エラー時のハンドリング
+      this.xhr.addEventListener("error", () => {
+        reject(new UploadError("ネットワークエラーが発生しました", "NETWORK_ERROR"));
+      });
+      
+      // ファイルを送信
+      this.xhr.send(this.file);
     });
   }
 
   // アップロードのキャンセル
   cancel(): void {
-    // Active Storageの DirectUpload にはキャンセルメソッドがないため、
-    // 実装上の制限となります
-    console.warn("DirectUpload does not support cancellation");
+    if (this.xhr) {
+      this.xhr.abort();
+    }
   }
 }
 
