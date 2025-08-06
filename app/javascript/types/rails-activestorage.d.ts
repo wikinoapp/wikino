@@ -14,3 +14,9 @@ declare module "@rails/activestorage" {
 
   export function start(): void;
 }
+
+declare module "@rails/activestorage/src/file_checksum" {
+  export class FileChecksum {
+    static create(file: File, callback: (error: string | null, checksum?: string) => void): void;
+  }
+}
