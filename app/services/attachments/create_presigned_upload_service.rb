@@ -48,7 +48,9 @@ module Attachments
         filename:,
         content_type:,
         byte_size:,
-        checksum: OpenSSL::Digest::MD5.base64digest(filename), # 一時的なチェックサム
+        # チェックサムを無効化する
+        # R2はチェックサムなしでも動作するため。指定するとアップロード時403エラーになる
+        checksum: nil,
         metadata: {
           space_id: space_record.id,
           user_id: user_record.id
