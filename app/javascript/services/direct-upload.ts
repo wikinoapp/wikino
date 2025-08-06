@@ -1,4 +1,4 @@
-import { post } from "@rails/request.js";
+import { DirectUpload } from "@rails/activestorage";
 
 // ファイルタイプごとのサイズ制限（バイト）
 const FILE_SIZE_LIMITS = {
@@ -48,19 +48,16 @@ export class UploadError extends Error {
   }
 }
 
-// DirectUploadクラス
-export class DirectUpload {
+// DirectUploadラッパークラス
+export class DirectUploadWrapper {
   private file: File;
-  private spaceIdentifier: string;
+  private directUploadUrl: string;
   private onProgress?: (progress: UploadProgress) => void;
-  private xhr?: XMLHttpRequest;
-  private retryCount = 0;
-  private maxRetries = 3;
-  private baseDelay = 1000; // 1秒
+  private activeStorageUpload?: DirectUpload;
 
-  constructor(file: File, spaceIdentifier: string, onProgress?: (progress: UploadProgress) => void) {
+  constructor(file: File, directUploadUrl: string, onProgress?: (progress: UploadProgress) => void) {
     this.file = file;
-    this.spaceIdentifier = spaceIdentifier;
+    this.directUploadUrl = directUploadUrl;
     this.onProgress = onProgress;
   }
 
@@ -95,150 +92,52 @@ export class DirectUpload {
     }
   }
 
-  // プリサイン用URLの取得
-  private async getPresignedUrl(): Promise<{
-    directUploadUrl: string;
-    blobSignedId: string;
-  }> {
-    const response = await post(`/s/${this.spaceIdentifier}/attachments/presign`, {
-      body: {
-        filename: this.file.name,
-        content_type: this.file.type,
-        byte_size: this.file.size,
-      },
-      responseKind: "json",
-    });
-
-    if (!response.ok) {
-      // responseKind: "json"の場合、response.jsonはプロパティとしてアクセス
-      const errorData = await response.json.catch(() => ({}));
-      throw new UploadError(errorData.error || "プリサイン用URLの取得に失敗しました", "PRESIGN_ERROR");
-    }
-
-    // responseKind: "json"の場合、response.jsonはプロパティとしてアクセス
-    return await response.json;
-  }
-
-  // ファイルのアップロード
-  private uploadFile(uploadUrl: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.xhr = new XMLHttpRequest();
-
-      // 進捗イベント
-      this.xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable && this.onProgress) {
-          this.onProgress({
-            loaded: event.loaded,
-            total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100),
-          });
-        }
-      });
-
-      // 完了イベント
-      this.xhr.addEventListener("load", () => {
-        if (this.xhr!.status >= 200 && this.xhr!.status < 300) {
-          resolve();
-        } else {
-          reject(new UploadError("ファイルのアップロードに失敗しました", "UPLOAD_FAILED"));
-        }
-      });
-
-      // エラーイベント
-      this.xhr.addEventListener("error", () => {
-        reject(new UploadError("ネットワークエラーが発生しました", "NETWORK_ERROR"));
-      });
-
-      // タイムアウトイベント
-      this.xhr.addEventListener("timeout", () => {
-        reject(new UploadError("アップロードがタイムアウトしました", "TIMEOUT"));
-      });
-
-      // アップロードの実行
-      this.xhr.open("PUT", uploadUrl);
-      this.xhr.timeout = 300000; // 5分
-      this.xhr.send(this.file);
-    });
-  }
-
-  // アップロード完了の通知
-  private async notifyUploadComplete(blobSignedId: string): Promise<{
-    id: string;
-    url: string;
-  }> {
-    const response = await post(`/s/${this.spaceIdentifier}/attachments`, {
-      body: {
-        blob_signed_id: blobSignedId,
-      },
-      responseKind: "json",
-    });
-
-    if (!response.ok) {
-      // responseKind: "json"の場合、response.jsonはプロパティとしてアクセス
-      const errorData = await response.json.catch(() => ({}));
-      throw new UploadError(errorData.error || "アップロード完了の通知に失敗しました", "NOTIFICATION_ERROR");
-    }
-
-    // responseKind: "json"の場合、response.jsonはプロパティとしてアクセス
-    return await response.json;
-  }
-
-  // リトライ処理
-  private async withRetry<T>(operation: () => Promise<T>, errorCode?: string): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      // リトライ対象のエラーか判定
-      const shouldRetry =
-        error instanceof UploadError &&
-        ["NETWORK_ERROR", "TIMEOUT", "UPLOAD_FAILED"].includes(error.code || "") &&
-        this.retryCount < this.maxRetries;
-
-      if (!shouldRetry) {
-        throw error;
-      }
-
-      // エクスポネンシャルバックオフ
-      const delay = this.baseDelay * Math.pow(2, this.retryCount);
-      this.retryCount++;
-
-      console.log(`アップロードをリトライします (${this.retryCount}/${this.maxRetries})`);
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return this.withRetry(operation, errorCode);
-    }
-  }
-
   // アップロードの実行
   async upload(): Promise<{ id: string; url: string }> {
     // バリデーション
     this.validateFileSize();
     this.validateFileType();
 
-    try {
-      // プリサイン用URLの取得
-      const { directUploadUrl, blobSignedId } = await this.getPresignedUrl();
+    return new Promise((resolve, reject) => {
+      this.activeStorageUpload = new DirectUpload(this.file, this.directUploadUrl);
 
-      // ファイルアップロード（リトライ付き）
-      await this.withRetry(() => this.uploadFile(directUploadUrl));
+      // Active Storageのダイレクトアップロードコールバック
+      const directUploadWillStoreFileWithXHR = (request: XMLHttpRequest) => {
+        // 進捗イベントの設定
+        request.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable && this.onProgress) {
+            this.onProgress({
+              loaded: event.loaded,
+              total: event.total,
+              percentage: Math.round((event.loaded / event.total) * 100),
+            });
+          }
+        });
+      };
 
-      // アップロード完了通知
-      const result = await this.notifyUploadComplete(blobSignedId);
-
-      return result;
-    } catch (error) {
-      if (error instanceof UploadError) {
-        throw error;
-      }
-      console.error("Unexpected error during upload:", error);
-      throw new UploadError("予期しないエラーが発生しました", "UNKNOWN_ERROR");
-    }
+      // アップロードの実行
+      this.activeStorageUpload.create((error, blob) => {
+        if (error) {
+          console.error("Upload error:", error);
+          reject(new UploadError("ファイルのアップロードに失敗しました", "UPLOAD_FAILED"));
+        } else {
+          // Active Storageのblobオブジェクトから必要な情報を取得
+          resolve({
+            id: blob.signed_id,
+            url: blob.url || "", // URLが利用可能な場合
+          });
+        }
+      }, directUploadWillStoreFileWithXHR);
+    });
   }
 
   // アップロードのキャンセル
   cancel(): void {
-    if (this.xhr) {
-      this.xhr.abort();
-    }
+    // Active Storageの DirectUpload にはキャンセルメソッドがないため、
+    // 実装上の制限となります
+    console.warn("DirectUpload does not support cancellation");
   }
 }
+
+// 既存のコードとの互換性のためのエクスポート
+export { DirectUploadWrapper as DirectUpload };

@@ -113,16 +113,16 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
 
   setupFileHandlers() {
     // ファイルドロップイベントのハンドリング
-    this.editorView.dom.addEventListener("file-drop", (event: CustomEvent) => {
+    this.editorView.dom.addEventListener("file-drop", ((event: CustomEvent) => {
       const { files, position } = event.detail;
       this.handleFileUpload(files, position);
-    });
+    }) as EventListener);
 
     // 画像ペーストイベントのハンドリング
-    this.editorView.dom.addEventListener("image-paste", (event: CustomEvent) => {
+    this.editorView.dom.addEventListener("image-paste", ((event: CustomEvent) => {
       const { file, position } = event.detail;
       this.handleFileUpload([file], position);
-    });
+    }) as EventListener);
   }
 
   async handleFileUpload(files: File[], position: number) {
@@ -131,8 +131,28 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
 
       try {
+        // プリサイン用URLを取得
+        const presignResponse = await fetch(`/s/${this.spaceIdentifierValue}/attachments/presign`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
+          },
+          body: JSON.stringify({
+            filename: file.name,
+            content_type: file.type,
+            byte_size: file.size,
+          }),
+        });
+
+        if (!presignResponse.ok) {
+          throw new UploadError("プリサイン用URLの取得に失敗しました");
+        }
+
+        const { directUploadUrl } = await presignResponse.json();
+
         // DirectUploadを使用してファイルをアップロード
-        const uploader = new DirectUpload(file, this.spaceIdentifierValue, (progress) => {
+        const uploader = new DirectUpload(file, directUploadUrl, (progress) => {
           // 進捗状況のログ（必要に応じてUIに反映）
           console.log(`Uploading ${file.name}: ${progress.percentage}%`);
         });

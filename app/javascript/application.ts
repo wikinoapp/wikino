@@ -1,6 +1,10 @@
 import "@hotwired/turbo";
+import * as ActiveStorage from "@rails/activestorage";
 
 import { Application } from "@hotwired/stimulus";
+
+// Active Storageの初期化
+ActiveStorage.start();
 
 import AbsoluteTimeController from "./controllers/absolute-time-controller";
 import AttachmentsController from "./controllers/attachments-controller";
