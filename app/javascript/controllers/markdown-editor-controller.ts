@@ -34,6 +34,7 @@ import {
   removePlaceholder,
 } from "../markdown-editor/upload-placeholder";
 import { DirectUpload, UploadError } from "../services/direct-upload";
+import { calculateFileChecksum } from "../utils/file-checksum";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -131,6 +132,9 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
 
       try {
+        // ファイルのMD5チェックサムを計算
+        const checksum = await calculateFileChecksum(file);
+
         // プリサイン用URLを取得
         const presignResponse = await fetch(`/s/${this.spaceIdentifierValue}/attachments/presign`, {
           method: "POST",
@@ -142,6 +146,7 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
             filename: file.name,
             content_type: file.type,
             byte_size: file.size,
+            checksum: checksum,
           }),
         });
 

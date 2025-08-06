@@ -58,6 +58,7 @@ module Attachments
     attribute :filename, :string
     attribute :content_type, :string
     attribute :byte_size, :integer
+    attribute :checksum, :string
 
     # コンストラクタをオーバーライド
     sig { params(attributes: T.untyped).void }
@@ -72,6 +73,7 @@ module Attachments
       message: :unsupported_content_type
     }
     validates :byte_size, presence: true
+    validates :checksum, presence: true
 
     validate :validate_filename_format
     validate :validate_file_size

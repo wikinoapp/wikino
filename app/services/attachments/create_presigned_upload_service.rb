@@ -14,15 +14,17 @@ module Attachments
         filename: String,
         content_type: String,
         byte_size: Integer,
+        checksum: String,
         space_record: SpaceRecord,
         user_record: UserRecord
       ).returns(Result)
     end
-    def call(filename:, content_type:, byte_size:, space_record:, user_record:)
+    def call(filename:, content_type:, byte_size:, checksum:, space_record:, user_record:)
       blob = create_blob!(
         filename:,
         content_type:,
         byte_size:,
+        checksum:,
         space_record:,
         user_record:
       )
@@ -39,18 +41,18 @@ module Attachments
         filename: String,
         content_type: String,
         byte_size: Integer,
+        checksum: String,
         space_record: SpaceRecord,
         user_record: UserRecord
       ).returns(ActiveStorage::Blob)
     end
-    private def create_blob!(filename:, content_type:, byte_size:, space_record:, user_record:)
+    private def create_blob!(filename:, content_type:, byte_size:, checksum:, space_record:, user_record:)
       ActiveStorage::Blob.create_before_direct_upload!(
         filename:,
         content_type:,
         byte_size:,
-        # チェックサムを無効化する
-        # R2はチェックサムなしでも動作するため。指定するとアップロード時403エラーになる
-        checksum: nil,
+        # クライアントから提供されたMD5チェックサムを使用
+        checksum:,
         metadata: {
           space_id: space_record.id,
           user_id: user_record.id

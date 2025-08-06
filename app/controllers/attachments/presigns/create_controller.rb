@@ -27,7 +27,8 @@ module Attachments
         form = Attachments::PresignForm.new(
           filename: params[:filename],
           content_type: params[:content_type],
-          byte_size: params[:byte_size]
+          byte_size: params[:byte_size],
+          checksum: params[:checksum]
         )
 
         if form.invalid?
@@ -40,6 +41,7 @@ module Attachments
           filename: form.filename.not_nil!,
           content_type: form.content_type.not_nil!,
           byte_size: form.byte_size.not_nil!,
+          checksum: form.checksum.not_nil!,
           space_record:,
           user_record: current_user_record!
         )

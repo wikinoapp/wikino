@@ -13,6 +13,12 @@ class Attachments::PresignForm
   def byte_size=(value); end
 
   sig { returns(T.nilable(::String)) }
+  def checksum; end
+
+  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+  def checksum=(value); end
+
+  sig { returns(T.nilable(::String)) }
   def content_type; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
