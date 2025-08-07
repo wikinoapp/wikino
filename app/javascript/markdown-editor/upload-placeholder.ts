@@ -12,36 +12,32 @@ interface UploadPlaceholder {
 const placeholders = new Map<string, UploadPlaceholder>();
 
 // アップロード中のプレースホルダーを挿入
-export function insertUploadPlaceholder(
-  view: EditorView, 
-  fileName: string, 
-  position?: number
-): string {
+export function insertUploadPlaceholder(view: EditorView, fileName: string, position?: number): string {
   const id = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const placeholderText = `![アップロード中: ${fileName}]()`;
-  
+
   const insertPos = position ?? view.state.selection.main.head;
-  
+
   // テキストを挿入
   const transaction = view.state.update({
     changes: {
       from: insertPos,
       to: insertPos,
-      insert: placeholderText
+      insert: placeholderText,
     },
-    selection: { anchor: insertPos + placeholderText.length }
+    selection: { anchor: insertPos + placeholderText.length },
   });
-  
+
   view.dispatch(transaction);
-  
+
   // プレースホルダー情報を保存
   placeholders.set(id, {
     id,
     fileName,
     position: insertPos,
-    length: placeholderText.length
+    length: placeholderText.length,
   });
-  
+
   return id;
 }
 
@@ -50,19 +46,19 @@ export function replacePlaceholderWithUrl(
   view: EditorView,
   placeholderId: string,
   url: string,
-  altText?: string
+  altText?: string,
 ): boolean {
   const placeholder = placeholders.get(placeholderId);
   if (!placeholder) return false;
-  
+
   const { position, length, fileName } = placeholder;
   const newText = `![${altText || fileName}](${url})`;
-  
+
   // 現在のドキュメントのテキストを取得して、プレースホルダーがまだ存在するか確認
   const currentText = view.state.doc.toString();
   const expectedText = `![アップロード中: ${fileName}]()`;
   const actualText = currentText.slice(position, position + length);
-  
+
   // プレースホルダーが変更されていないか確認
   if (actualText !== expectedText) {
     // テキストが変更されている場合、検索して置換
@@ -72,16 +68,16 @@ export function replacePlaceholderWithUrl(
       placeholders.delete(placeholderId);
       return false;
     }
-    
+
     // 新しい位置で置換
     const transaction = view.state.update({
       changes: {
         from: searchIndex,
         to: searchIndex + expectedText.length,
-        insert: newText
-      }
+        insert: newText,
+      },
     });
-    
+
     view.dispatch(transaction);
   } else {
     // プレースホルダーを置換
@@ -89,41 +85,39 @@ export function replacePlaceholderWithUrl(
       changes: {
         from: position,
         to: position + length,
-        insert: newText
-      }
+        insert: newText,
+      },
     });
-    
+
     view.dispatch(transaction);
   }
-  
+
   // プレースホルダー情報を削除
   placeholders.delete(placeholderId);
+
   return true;
 }
 
 // アップロードエラー時の処理
-export function removePlaceholder(
-  view: EditorView,
-  placeholderId: string
-): boolean {
+export function removePlaceholder(view: EditorView, placeholderId: string): boolean {
   const placeholder = placeholders.get(placeholderId);
   if (!placeholder) return false;
-  
+
   const { position, length, fileName } = placeholder;
   const expectedText = `![アップロード中: ${fileName}]()`;
   const currentText = view.state.doc.toString();
   const actualText = currentText.slice(position, position + length);
-  
+
   if (actualText === expectedText) {
     // プレースホルダーを削除
     const transaction = view.state.update({
       changes: {
         from: position,
         to: position + length,
-        insert: ""
-      }
+        insert: "",
+      },
     });
-    
+
     view.dispatch(transaction);
   } else {
     // テキストが変更されている場合、検索して削除
@@ -133,14 +127,15 @@ export function removePlaceholder(
         changes: {
           from: searchIndex,
           to: searchIndex + expectedText.length,
-          insert: ""
-        }
+          insert: "",
+        },
       });
-      
+
       view.dispatch(transaction);
     }
   }
-  
+
   placeholders.delete(placeholderId);
+
   return true;
 }
