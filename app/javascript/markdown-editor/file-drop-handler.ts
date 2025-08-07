@@ -111,5 +111,4 @@ export const fileDropHandler = ViewPlugin.fromClass(
   },
 );
 
-// ドロップゾーンのスタイル（現在は使用していない）
-export const dropZoneStyles = EditorView.theme({});
+

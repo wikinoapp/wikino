@@ -26,7 +26,7 @@ import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
 import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
-import { fileDropHandler, dropZoneStyles } from "../markdown-editor/file-drop-handler";
+import { fileDropHandler } from "../markdown-editor/file-drop-handler";
 import { pasteHandler } from "../markdown-editor/paste-handler";
 import { FileUploadHandler } from "../services/file-upload-handler";
 
@@ -71,7 +71,6 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
         crosshairCursor(),
         highlightSelectionMatches(),
         fileDropHandler,
-        dropZoneStyles,
         EditorView.domEventHandlers({
           paste: (event, view) => pasteHandler(view, event as ClipboardEvent),
         }),
