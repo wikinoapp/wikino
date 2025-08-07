@@ -85,21 +85,9 @@ export const fileDropHandler = ViewPlugin.fromClass(
       if (this.dropZone) return;
 
       this.dropZone = document.createElement("div");
-      this.dropZone.className = "cm-drop-zone";
-
-      // スタイルを適用
-      Object.assign(this.dropZone.style, {
-        position: "absolute",
-        top: "4px",
-        left: "4px",
-        right: "4px",
-        bottom: "4px",
-        border: "2px dashed rgba(107, 114, 128, 0.5)",
-        borderRadius: "6px",
-        backgroundColor: "transparent",
-        zIndex: "1000",
-        pointerEvents: "none",
-      });
+      // Tailwindクラスを適用（ビルド時にこれらのクラスが含まれるように注意）
+      this.dropZone.className = "cm-drop-zone absolute inset-1 border-2 border-dashed border-gray-500/50 rounded-md bg-transparent pointer-events-none";
+      this.dropZone.style.zIndex = "1000";
 
       this.view.dom.style.position = "relative";
       this.view.dom.appendChild(this.dropZone);
