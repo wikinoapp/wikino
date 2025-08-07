@@ -110,5 +110,3 @@ export const fileDropHandler = ViewPlugin.fromClass(
     }
   },
 );
-
-
