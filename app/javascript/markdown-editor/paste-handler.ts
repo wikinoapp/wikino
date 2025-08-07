@@ -19,7 +19,7 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
 
   // 画像のペーストを処理
   event.preventDefault();
-  
+
   imageItems.forEach((item) => {
     const file = item.getAsFile();
     if (file) {
@@ -28,10 +28,10 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
         new CustomEvent("image-paste", {
           detail: {
             file,
-            position: view.state.selection.main.head
+            position: view.state.selection.main.head,
           },
-          bubbles: true
-        })
+          bubbles: true,
+        }),
       );
     }
   });
