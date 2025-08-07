@@ -131,9 +131,3 @@
     <%= render Footers::GlobalComponent.new(signed_in: true) %>
   <% end %>
 <% end %>
-
-<!-- Stimulus controller for handling attachment deletion -->
-<div data-controller="attachments"
-     data-attachments-space-identifier-value="<%= space.identifier %>"
-     data-attachments-delete-confirmation-value="<%= t("messages.delete_attachment_confirmation") %>">
-</div>

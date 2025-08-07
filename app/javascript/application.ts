@@ -7,7 +7,6 @@ import { Application } from "@hotwired/stimulus";
 ActiveStorage.start();
 
 import AbsoluteTimeController from "./controllers/absolute-time-controller";
-import AttachmentsController from "./controllers/attachments-controller";
 import BulkActionFormController from "./controllers/bulk-action-form-controller";
 import FlashToastController from "./controllers/flash-toast-controller";
 import GlobalHotkeyController from "./controllers/global-hotkey-controller";
@@ -27,7 +26,6 @@ application.debug = false;
 window.Stimulus = application;
 
 window.Stimulus.register("absolute-time", AbsoluteTimeController);
-window.Stimulus.register("attachments", AttachmentsController);
 window.Stimulus.register("bulk-action-form", BulkActionFormController);
 window.Stimulus.register("flash-toast", FlashToastController);
 window.Stimulus.register("global-hotkey", GlobalHotkeyController);
