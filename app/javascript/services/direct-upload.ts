@@ -60,7 +60,7 @@ export class DirectUploadWrapper {
     file: File,
     directUploadUrl: string,
     directUploadHeaders: Record<string, string> = {},
-    onProgress?: (progress: UploadProgress) => void
+    onProgress?: (progress: UploadProgress) => void,
   ) {
     this.file = file;
     this.directUploadUrl = directUploadUrl;
@@ -109,12 +109,12 @@ export class DirectUploadWrapper {
       this.xhr = new XMLHttpRequest();
       this.xhr.open("PUT", this.directUploadUrl, true);
       this.xhr.responseType = "text";
-      
+
       // Active Storageが生成したヘッダーを設定
       for (const [key, value] of Object.entries(this.directUploadHeaders)) {
         this.xhr.setRequestHeader(key, value);
       }
-      
+
       // 進捗イベントの設定
       if (this.onProgress) {
         this.xhr.upload.addEventListener("progress", (event) => {
@@ -127,7 +127,7 @@ export class DirectUploadWrapper {
           }
         });
       }
-      
+
       // 成功時のハンドリング
       this.xhr.addEventListener("load", () => {
         if (this.xhr!.status >= 200 && this.xhr!.status < 300) {
@@ -138,18 +138,15 @@ export class DirectUploadWrapper {
             url: this.directUploadUrl.split("?")[0], // クエリパラメータを除いたURL
           });
         } else {
-          reject(new UploadError(
-            `アップロードに失敗しました (ステータス: ${this.xhr!.status})`,
-            "UPLOAD_FAILED"
-          ));
+          reject(new UploadError(`アップロードに失敗しました (ステータス: ${this.xhr!.status})`, "UPLOAD_FAILED"));
         }
       });
-      
+
       // エラー時のハンドリング
       this.xhr.addEventListener("error", () => {
         reject(new UploadError("ネットワークエラーが発生しました", "NETWORK_ERROR"));
       });
-      
+
       // ファイルを送信
       this.xhr.send(this.file);
     });
