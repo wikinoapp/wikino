@@ -43,15 +43,21 @@ export class FileUploadHandler {
         // 画像ファイルの場合、幅と高さを取得
         let width: number | undefined;
         let height: number | undefined;
-        
-        if (file.type.startsWith("image/")) {
-          const dimensions = await this.getImageDimensions(file);
-          width = dimensions.width;
-          height = dimensions.height;
+        const isImage = file.type.startsWith("image/");
+
+        if (isImage) {
+          try {
+            const dimensions = await this.getImageDimensions(file);
+            width = dimensions.width;
+            height = dimensions.height;
+          } catch (error) {
+            console.warn("画像サイズの取得に失敗しました:", error);
+            // サイズ取得に失敗しても処理を続行
+          }
         }
 
         // プレースホルダーをURLに置換
-        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height);
+        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height, isImage);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);
@@ -148,4 +154,3 @@ export class FileUploadHandler {
     });
   }
 }
-
