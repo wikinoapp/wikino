@@ -13,7 +13,7 @@ const placeholders = new Map<string, UploadPlaceholder>();
 // アップロード中のプレースホルダーを挿入
 export function insertUploadPlaceholder(view: EditorView, fileName: string, position?: number): string {
   const id = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  const placeholderText = `![アップロード中: ${fileName}]()`;
+  const placeholderText = `<!-- Uploading "${fileName}"... -->`;
 
   const insertPos = position ?? view.state.selection.main.head;
 
@@ -71,7 +71,7 @@ export function replacePlaceholderWithUrl(
 
   // 現在のドキュメントのテキストを取得して、プレースホルダーがまだ存在するか確認
   const currentText = view.state.doc.toString();
-  const expectedText = `![アップロード中: ${fileName}]()`;
+  const expectedText = `<!-- Uploading "${fileName}"... -->`;
   const actualText = currentText.slice(position, position + length);
 
   // プレースホルダーが変更されていないか確認
@@ -119,7 +119,7 @@ export function removePlaceholder(view: EditorView, placeholderId: string): bool
   if (!placeholder) return false;
 
   const { position, length, fileName } = placeholder;
-  const expectedText = `![アップロード中: ${fileName}]()`;
+  const expectedText = `<!-- Uploading "${fileName}"... -->`;
   const currentText = view.state.doc.toString();
   const actualText = currentText.slice(position, position + length);
 
