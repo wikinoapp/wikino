@@ -1,5 +1,3 @@
-// Active StorageのDirectUploadは使用せず、独自実装を使用
-
 // ファイルタイプごとのサイズ制限（バイト）
 const FILE_SIZE_LIMITS = {
   image: 10 * 1024 * 1024, // 10MB
@@ -48,7 +46,6 @@ export class UploadError extends Error {
   }
 }
 
-// DirectUploadクラス（独自実装）
 export class DirectUploadWrapper {
   private file: File;
   private directUploadUrl: string;

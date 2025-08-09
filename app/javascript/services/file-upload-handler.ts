@@ -109,27 +109,14 @@ export class FileUploadHandler {
   }
 
   private showErrorMessage(message: string): void {
-    // エラーメッセージを表示（一時的な実装）
-    // TODO: 適切なエラー通知システムに置き換える
-    const notification = document.createElement("div");
-    notification.textContent = message;
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #ef4444;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 10000;
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.remove();
-    }, 5000);
+    // flash-toast-controllerを使ってエラーメッセージを表示
+    const flashToastEvent = new CustomEvent("flash-toast:show", {
+      detail: {
+        type: "alert",
+        messageHtml: message,
+      },
+    });
+    document.dispatchEvent(flashToastEvent);
   }
 
   private async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
