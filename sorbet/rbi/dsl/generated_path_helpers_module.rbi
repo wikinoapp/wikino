@@ -19,6 +19,9 @@ module GeneratedPathHelpersModule
   def attachment_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def attachment_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def attachment_presign_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -164,6 +167,12 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_attachment_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_attachments_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_deletion_path(*args); end

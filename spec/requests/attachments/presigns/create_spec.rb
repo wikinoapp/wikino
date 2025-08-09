@@ -11,7 +11,8 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
       params: {
         filename: "test.png",
         content_type: "image/png",
-        byte_size: 1024
+        byte_size: 1024,
+        checksum: "test_checksum"
       }
 
     expect(response).to redirect_to(sign_in_path)
@@ -26,7 +27,8 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
       params: {
         filename: "test.png",
         content_type: "image/png",
-        byte_size: 1024
+        byte_size: 1024,
+        checksum: "test_checksum"
       }
 
     expect(response).to have_http_status(:forbidden)
@@ -64,7 +66,8 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
       Attachments::CreatePresignedUploadService::Result,
       direct_upload_url: "https://example.com/upload",
       direct_upload_headers: {"Content-Type" => "image/png"},
-      blob_signed_id: "test_signed_id"
+      blob_signed_id: "test_signed_id",
+      attachment_id: SecureRandom.uuid
     )
     allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(service_double)
     allow(service_double).to receive(:call).and_return(result_double)
@@ -73,7 +76,8 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
       params: {
         filename: "test.png",
         content_type: "image/png",
-        byte_size: 1024
+        byte_size: 1024,
+        checksum: "test_checksum"
       }
 
     expect(response).to have_http_status(:ok)
@@ -82,6 +86,7 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
       filename: "test.png",
       content_type: "image/png",
       byte_size: 1024,
+      checksum: "test_checksum",
       space_record:,
       user_record:
     )

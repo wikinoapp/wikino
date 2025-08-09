@@ -11,6 +11,7 @@ interface PresignResponse {
   directUploadUrl: string;
   directUploadHeaders: Record<string, string>;
   blobSignedId: string;
+  attachmentId: string;
 }
 
 export class FileUploadHandler {
@@ -37,8 +38,8 @@ export class FileUploadHandler {
         // ファイルをアップロード
         await this.uploadFile(file, presignData);
 
-        // アップロード成功後、Active StorageのURLを生成
-        const attachmentUrl = `/rails/active_storage/blobs/redirect/${presignData.blobSignedId}/${encodeURIComponent(file.name)}`;
+        // アップロード成功後、添付ファイルのURLを生成
+        const attachmentUrl = `/attachments/${presignData.attachmentId}`;
 
         // 画像ファイルの場合、幅と高さを取得
         let width: number | undefined;

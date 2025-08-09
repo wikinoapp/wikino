@@ -49,7 +49,8 @@ module Attachments
         render json: {
           directUploadUrl: result.direct_upload_url,
           directUploadHeaders: result.direct_upload_headers,
-          blobSignedId: result.blob_signed_id
+          blobSignedId: result.blob_signed_id,
+          attachmentId: result.attachment_id
         }
       end
     end
