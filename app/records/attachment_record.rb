@@ -12,11 +12,12 @@ class AttachmentRecord < ApplicationRecord
   }, prefix: true
 
   belongs_to :space_record, foreign_key: :space_id
+  belongs_to :active_storage_attachment_record,
+    class_name: "ActiveStorage::Attachment",
+    foreign_key: :active_storage_attachment_id
   belongs_to :attached_space_member_record,
     class_name: "SpaceMemberRecord",
     foreign_key: :attached_space_member_id
-  belongs_to :active_storage_attachment_record,
-    class_name: "ActiveStorage::Attachment"
 
   has_many :page_attachment_reference_records,
     class_name: "PageAttachmentReferenceRecord",
