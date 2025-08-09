@@ -29,6 +29,24 @@ export class FileUploadHandler {
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
 
       try {
+        // ファイルの検証（サイズ、タイプ、画像の次元）
+        await this.validateFile(file);
+
+        // 画像ファイルの場合、事前に幅と高さを取得
+        let width: number | undefined;
+        let height: number | undefined;
+
+        if (file.type.startsWith("image/")) {
+          try {
+            const dimensions = await this.getImageDimensions(file);
+            width = dimensions.width;
+            height = dimensions.height;
+          } catch (error) {
+            console.warn("画像サイズの取得に失敗しました:", error);
+            // サイズ取得に失敗しても処理を続行（画像以外のファイルとして扱う）
+          }
+        }
+
         // ファイルのMD5チェックサムを計算
         const checksum = await calculateFileChecksum(file);
 
@@ -40,21 +58,6 @@ export class FileUploadHandler {
 
         // アップロード成功後、添付ファイルのURLを生成
         const attachmentUrl = `/attachments/${presignData.attachmentId}`;
-
-        // 画像ファイルの場合、幅と高さを取得
-        let width: number | undefined;
-        let height: number | undefined;
-
-        if (file.type.startsWith("image/")) {
-          try {
-            const dimensions = await this.getImageDimensions(file);
-            width = dimensions.width;
-            height = dimensions.height;
-          } catch (error) {
-            console.warn("画像サイズの取得に失敗しました:", error);
-            // サイズ取得に失敗しても処理を続行
-          }
-        }
 
         // プレースホルダーをURLに置換
         replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height, file.type);
@@ -117,6 +120,80 @@ export class FileUploadHandler {
       },
     });
     document.dispatchEvent(flashToastEvent);
+  }
+
+  private async validateFile(file: File): Promise<void> {
+    // ファイルサイズの検証
+    const FILE_SIZE_LIMITS = {
+      image: 10 * 1024 * 1024, // 10MB
+      video: 100 * 1024 * 1024, // 100MB
+      other: 25 * 1024 * 1024, // 25MB
+    };
+
+    // ファイルタイプの検証
+    const ALLOWED_FILE_TYPES = {
+      image: ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/svg+xml", "image/webp"],
+      video: ["video/mp4", "video/webm", "video/quicktime"],
+      document: [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",
+        "text/plain",
+        "text/csv",
+        "text/x-log",
+        "text/markdown",
+        "application/json",
+        "application/x-zip-compressed",
+        "application/zip",
+        "application/gzip",
+        "application/x-gzip",
+        "application/x-tar",
+        "application/x-compressed-tar",
+      ],
+    };
+
+    // ファイルタイプのチェック
+    const allAllowedTypes = [...ALLOWED_FILE_TYPES.image, ...ALLOWED_FILE_TYPES.video, ...ALLOWED_FILE_TYPES.document];
+    if (!allAllowedTypes.includes(file.type)) {
+      throw new UploadError("このファイル形式はアップロードできません");
+    }
+
+    // ファイルサイズのチェック
+    let category: "image" | "video" | "other";
+    if (ALLOWED_FILE_TYPES.image.includes(file.type)) {
+      category = "image";
+    } else if (ALLOWED_FILE_TYPES.video.includes(file.type)) {
+      category = "video";
+    } else {
+      category = "other";
+    }
+
+    const limit = FILE_SIZE_LIMITS[category];
+    if (file.size > limit) {
+      const limitMB = Math.round(limit / (1024 * 1024));
+      throw new UploadError(`ファイルサイズが制限（${limitMB}MB）を超えています`);
+    }
+
+    // 画像の次元検証
+    if (file.type.startsWith("image/")) {
+      try {
+        const dimensions = await this.getImageDimensions(file);
+        const MAX_IMAGE_DIMENSION = 10000;
+        if (dimensions.width > MAX_IMAGE_DIMENSION || dimensions.height > MAX_IMAGE_DIMENSION) {
+          throw new UploadError(
+            `画像のサイズが大きすぎます。${MAX_IMAGE_DIMENSION}×${MAX_IMAGE_DIMENSION}ピクセル以下にしてください`,
+          );
+        }
+      } catch (error) {
+        if (error instanceof UploadError) {
+          throw error;
+        }
+        // 画像の次元取得に失敗した場合はログを出力して続行
+        console.warn("画像の次元取得に失敗しました:", error);
+      }
+    }
   }
 
   private async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
