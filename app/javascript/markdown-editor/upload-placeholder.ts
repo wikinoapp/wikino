@@ -1,5 +1,4 @@
 import { EditorView } from "@codemirror/view";
-import { EditorState, Transaction } from "@codemirror/state";
 
 interface UploadPlaceholder {
   id: string;
