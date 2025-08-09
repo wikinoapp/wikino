@@ -16,10 +16,10 @@ module Attachments
     end
     def call(space_record:, blob_record:, attached_space_member_id:)
       attachment_record = ActiveRecord::Base.transaction do
+        # ActiveStorage::AttachmentをSpaceRecordに関連付けて作成
         active_storage_attachment_record = ActiveStorage::Attachment.create!(
           name: "file",
-          record_type: "AttachmentRecord",
-          record_id: SecureRandom.uuid, # 一時的なID
+          record: space_record,
           blob: blob_record
         )
 
@@ -29,8 +29,6 @@ module Attachments
           attached_space_member_id:,
           attached_at: Time.current
         )
-
-        active_storage_attachment_record.update!(record: created_attachment_record)
 
         created_attachment_record
       end
