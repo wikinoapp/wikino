@@ -113,6 +113,45 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record!.permissions.include?(SpaceMemberPermission::ExportSpace)
   end
 
+  # ファイルアップロード権限の確認
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_upload_attachment?(space_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == space_record.id
+  end
+
+  # ファイル閲覧権限の確認
+  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_view_attachment?(attachment_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == attachment_record.space_id
+  end
+
+  # ファイル削除権限の確認
+  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_delete_attachment?(attachment_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == attachment_record.space_id &&
+      (space_member_record!.id == attachment_record.attached_space_member_id ||
+        space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace))
+  end
+
+  # ファイル管理画面へのアクセス権限の確認
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_attachments?(space_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == space_record.id &&
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
+  end
+
   sig { params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
     if space_member_record

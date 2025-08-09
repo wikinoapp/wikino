@@ -35,6 +35,12 @@ importers:
       '@hotwired/turbo':
         specifier: ^8.0.13
         version: 8.0.13
+      '@rails/activestorage':
+        specifier: ^8.0.200
+        version: 8.0.200
+      '@rails/request.js':
+        specifier: ^0.0.12
+        version: 0.0.12
       '@tailwindcss/cli':
         specifier: ^4.1.11
         version: 4.1.11
@@ -452,6 +458,12 @@ packages:
   '@parcel/watcher@2.5.1':
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
+
+  '@rails/activestorage@8.0.200':
+    resolution: {integrity: sha512-V7GnZXsAMPDWVOBv4/XpHwj5sOw5bWjidWCuUbK3Zx1xt2pOfFaeJDUG7fEWb1MwP4aW1oVVlGkJBdXVyvru0A==}
+
+  '@rails/request.js@0.0.12':
+    resolution: {integrity: sha512-g3//JBja1s04Zflj7IoMLQuXza9i4ZvtLmm0r0dMwh1QQUs6rL2iKUOGGyERfLsd81SnXC5ucfVV//rtsDlEEA==}
 
   '@tailwindcss/cli@4.1.11':
     resolution: {integrity: sha512-7RAFOrVaXCFz5ooEG36Kbh+sMJiI2j4+Ozp71smgjnLfBRu7DTfoq8DsTvzse2/6nDeo2M3vS/FGaxfDgr3rtQ==}
@@ -1128,6 +1140,9 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  spark-md5@3.0.2:
+    resolution: {integrity: sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==}
+
   stimulus-use@0.52.3:
     resolution: {integrity: sha512-stZ5dID6FUrGCR/ChWUa0FT5Z8iqkzT6lputOAb50eF+Ayg7RzJj4U/HoRlp2NV333QfvoRidru9HLbom4hZVw==}
     peerDependencies:
@@ -1503,6 +1518,12 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.1
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
+
+  '@rails/activestorage@8.0.200':
+    dependencies:
+      spark-md5: 3.0.2
+
+  '@rails/request.js@0.0.12': {}
 
   '@tailwindcss/cli@4.1.11':
     dependencies:
@@ -2111,6 +2132,8 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   source-map-js@1.2.1: {}
+
+  spark-md5@3.0.2: {}
 
   stimulus-use@0.52.3(@hotwired/stimulus@3.2.2)(hotkeys-js@3.13.14):
     dependencies:

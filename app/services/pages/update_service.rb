@@ -23,7 +23,7 @@ module Pages
         topic_record:,
         title:,
         body:,
-        body_html: Markup.new(current_topic: topic_record).render_html(text: body),
+        body_html: Markup.new(current_topic: topic_record, current_space_member: space_member_record).render_html(text: body),
         modified_at: now
       }
       page_record.published_at = now if page_record.published_at.nil?

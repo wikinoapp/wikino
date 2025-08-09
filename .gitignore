@@ -6,6 +6,7 @@
 /.env.*.local
 /.env.local
 /.idea
+/.serena/cache
 /.vscode
 /app/assets/builds/*
 /bin/sync
