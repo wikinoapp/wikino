@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Attachments
-  class Show < ApplicationController
+  class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
 
     # GET /attachments/:id
