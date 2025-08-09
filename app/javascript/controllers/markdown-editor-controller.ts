@@ -28,7 +28,7 @@ import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
 import { fileDropHandler } from "../markdown-editor/file-drop-handler";
 import { pasteHandler } from "../markdown-editor/paste-handler";
-import { FileUploadHandler } from "../services/file-upload-handler";
+import { FileUploadHandler } from "../markdown-editor/file-upload-handler";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];

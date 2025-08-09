@@ -5,7 +5,7 @@ import {
   insertUploadPlaceholder,
   replacePlaceholderWithUrl,
   removePlaceholder,
-} from "../markdown-editor/upload-placeholder";
+} from "./upload-placeholder";
 
 interface PresignResponse {
   directUploadUrl: string;
