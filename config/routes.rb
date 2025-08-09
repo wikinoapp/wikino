@@ -10,6 +10,8 @@ Rails.application.routes.draw do
 
   # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
   match "/_test/session",                                                  via: :post,   as: :test_session,                                 to: "test/sessions/create#call" if Rails.env.test?
+  match "/_test/attachments/presign",                                      via: :post,   as: :test_attachment_presign,                      to: "test/attachments#presign" if Rails.env.test?
+  match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments#upload" if Rails.env.test?
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
   match "/accounts",                                                       via: :post,   as: :account_list,                                 to: "accounts/create#call"
   match "/accounts/new",                                                   via: :get,    as: :new_account,                                  to: "accounts/new#call"

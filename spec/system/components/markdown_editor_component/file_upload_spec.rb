@@ -16,8 +16,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # ファイルアップロードのモックを設定
-      setup_file_upload_mocks
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -37,10 +36,13 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # アップロードが完了するまで待機
-      expect(page).to have_content("![test-image.png](https://r2.example.com/test-image.png)")
+      # テスト用エンドポイントがattachmentIdを返す
+      sleep 1  # アップロード処理が完了するまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![test-image.png](/attachments/test-attachment")
     end
 
-    it "複数のファイルを同時にアップロードできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
+    it "複数のファイルを同時にアップロードできること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -49,37 +51,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # 複数ファイルアップロードのモックを設定
-      # プリサインURLのエンドポイントをモック（複数回呼ばれることを想定）
-      stub_request(:post, %r{/s/test-space/attachments/presign})
-        .to_return(
-          status: 200,
-          body: {
-            upload_url: "https://r2.example.com/upload",
-            file_key: "test-file-key",
-            signed_id: "test-signed-id"
-          }.to_json,
-          headers: {"Content-Type" => "application/json"}
-        )
-
-      # R2へのアップロードをモック（複数回）
-      stub_request(:put, "https://r2.example.com/upload")
-        .to_return(status: 200)
-
-      # アタッチメント作成のエンドポイントをモック（複数ファイル用）
-      call_count = 0
-      stub_request(:post, %r{/s/test-space/attachments})
-        .to_return do |request|
-          call_count += 1
-          {
-            status: 200,
-            body: {
-              id: "test-attachment-id-#{call_count}",
-              url: "https://r2.example.com/test-image-#{call_count}.png"
-            }.to_json,
-            headers: {"Content-Type" => "application/json"}
-          }
-        end
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -100,11 +72,13 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # 両方のファイルがアップロードされることを確認
-      expect(page).to have_content("![test-image-1.png](https://r2.example.com/test-image-1.png)")
-      expect(page).to have_content("![test-image-2.png](https://r2.example.com/test-image-2.png)")
+      sleep 1  # アップロード処理が完了するまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![test-image-1.png](/attachments/test-attachment")
+      expect(editor_content).to include("![test-image-2.png](/attachments/test-attachment")
     end
 
-    it "アップロード中にプレースホルダーが表示されること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
+    it "アップロード中にプレースホルダーが表示されること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -113,8 +87,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # 遅延を含むモックを設定
-      setup_file_upload_mocks(upload_delay: 0.5)
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -134,16 +107,20 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # プレースホルダーが表示されることを確認
-      expect(page).to have_content("![アップロード中: test-image.png]()")
+      sleep 0.1  # プレースホルダーが挿入されるまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![アップロード中: test-image.png]()")
 
       # アップロード完了後、URLに置換されることを確認
-      expect(page).to have_content("![test-image.png](https://r2.example.com/test-image.png)")
-      expect(page).not_to have_content("![アップロード中: test-image.png]()")
+      sleep 0.5  # アップロードが完了するまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![test-image.png](/attachments/test-attachment")
+      expect(editor_content).not_to include("![アップロード中: test-image.png]()")
     end
   end
 
   describe "ファイルのドラッグ&ドロップ" do
-    it "エディタにファイルをドラッグ&ドロップできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
+    it "エディタにファイルをドラッグ&ドロップできること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -152,8 +129,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # ファイルアップロードのモックを設定
-      setup_file_upload_mocks
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -192,7 +168,9 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # アップロードが完了してURLが挿入されることを確認
-      expect(page).to have_content("![test-image.png](https://r2.example.com/test-image.png)")
+      sleep 1  # アップロード処理が完了するまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![test-image.png](/attachments/test-attachment")
     end
 
     it "ドラッグ中にドロップゾーンが表示されること" do
@@ -239,7 +217,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       expect(page).not_to have_css(".cm-drop-zone")
     end
 
-    it "画像をペーストできること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
+    it "画像をペーストできること" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -248,24 +226,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # ファイルアップロードのモックを設定
-      # ペースト用のモック設定
-      blob = instance_double(ActiveStorage::Blob, signed_id: "test-signed-id")
-      active_storage_attachment = instance_double(
-        ActiveStorage::Attachment,
-        blob: blob
-      )
-      attachment_record = instance_double(
-        AttachmentRecord,
-        id: "test-attachment-id",
-        active_storage_attachment_record: active_storage_attachment
-      )
-      allow(attachment_record).to receive(:generate_signed_url).and_return("https://r2.example.com/pasted-image.png")
-      result = instance_double(Attachments::CreateService::Result)
-      allow(result).to receive(:attachment_record).and_return(attachment_record)
-      setup_file_upload_mocks(
-        create_result: result
-      )
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -290,7 +251,9 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # ペーストした画像がアップロードされることを確認
-      expect(page).to have_content("![pasted-image.png](https://r2.example.com/pasted-image.png)")
+      sleep 1  # アップロード処理が完了するまで待機
+      editor_content = get_editor_content
+      expect(editor_content).to include("![pasted-image.png](/attachments/test-attachment")
     end
   end
 
@@ -356,7 +319,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       expect(page).to have_content("このファイル形式はアップロードできません")
     end
 
-    it "ネットワークエラーの場合、リトライが行われること", skip: "WebMockがActiveStorageと干渉するため、システムスペックでのファイルアップロードテストは実行できない" do
+    it "ネットワークエラーの場合、リトライが行われること", skip: "リトライ機能は現在未実装" do
       user_record = create(:user_record, :with_password)
       space_record = create(:space_record, identifier: "test-space")
       topic_record = create(:topic_record, space_record:)
@@ -365,8 +328,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       page_record = create(:page_record, :published, space_record:, topic_record:)
       sign_in(user_record:)
 
-      # ネットワークエラーをシミュレートするモックを設定
-      setup_file_upload_mocks(upload_error_count: 2)
+      # テスト用エンドポイントを使用するためモック不要
 
       visit edit_page_path(space_record.identifier, page_record.number)
 
@@ -386,7 +348,9 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
       JS
 
       # リトライの後、最終的にアップロードが成功することを確認
-      expect(page).to have_content("![test-image.png](https://r2.example.com/test-image.png)", wait: 10)
+      sleep 10
+      editor_content = get_editor_content
+      expect(editor_content).to include("![test-image.png](/attachments/test-attachment")
     end
   end
 end

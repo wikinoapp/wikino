@@ -19,7 +19,8 @@ module MarkdownEditorHelpers
       Attachments::CreatePresignedUploadService::Result,
       direct_upload_url: "https://r2.example.com/upload",
       direct_upload_headers: {"Content-Type" => "image/png"},
-      blob_signed_id: "test-signed-id"
+      blob_signed_id: "test-signed-id",
+      attachment_id: "test-attachment-id"
     )
     allow(presign_service).to receive(:call).and_return(presign_result)
 
