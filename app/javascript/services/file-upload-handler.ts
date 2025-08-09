@@ -40,8 +40,18 @@ export class FileUploadHandler {
         // アップロード成功後、Active StorageのURLを生成
         const attachmentUrl = `/rails/active_storage/blobs/redirect/${presignData.blobSignedId}/${encodeURIComponent(file.name)}`;
 
+        // 画像ファイルの場合、幅と高さを取得
+        let width: number | undefined;
+        let height: number | undefined;
+        
+        if (file.type.startsWith("image/")) {
+          const dimensions = await this.getImageDimensions(file);
+          width = dimensions.width;
+          height = dimensions.height;
+        }
+
         // プレースホルダーをURLに置換
-        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name);
+        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);
@@ -114,6 +124,28 @@ export class FileUploadHandler {
     setTimeout(() => {
       notification.remove();
     }, 5000);
+  }
+
+  private async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("画像の読み込みに失敗しました"));
+      };
+
+      img.src = url;
+    });
   }
 }
 

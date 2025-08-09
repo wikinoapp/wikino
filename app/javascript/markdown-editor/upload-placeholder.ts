@@ -46,12 +46,28 @@ export function replacePlaceholderWithUrl(
   placeholderId: string,
   url: string,
   altText?: string,
+  width?: number,
+  height?: number,
+  isImage?: boolean,
 ): boolean {
   const placeholder = placeholders.get(placeholderId);
   if (!placeholder) return false;
 
   const { position, length, fileName } = placeholder;
-  const newText = `![${altText || fileName}](${url})`;
+
+  // 画像タグの生成
+  let newText: string;
+  if (isImage) {
+    // 画像の場合は常に<img>タグを使用
+    if (width && height) {
+      newText = `<img width="${width}" height="${height}" alt="${altText || fileName}" src="${url}">`;
+    } else {
+      newText = `<img alt="${altText || fileName}" src="${url}">`;
+    }
+  } else {
+    // 画像以外の場合は従来のMarkdown形式
+    newText = `![${altText || fileName}](${url})`;
+  }
 
   // 現在のドキュメントのテキストを取得して、プレースホルダーがまだ存在するか確認
   const currentText = view.state.doc.toString();
