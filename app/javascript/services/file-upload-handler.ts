@@ -43,9 +43,8 @@ export class FileUploadHandler {
         // 画像ファイルの場合、幅と高さを取得
         let width: number | undefined;
         let height: number | undefined;
-        const isImage = file.type.startsWith("image/");
 
-        if (isImage) {
+        if (file.type.startsWith("image/")) {
           try {
             const dimensions = await this.getImageDimensions(file);
             width = dimensions.width;
@@ -57,7 +56,7 @@ export class FileUploadHandler {
         }
 
         // プレースホルダーをURLに置換
-        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height, isImage);
+        replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height, file.type);
       } catch (error) {
         console.error("Upload error:", error);
         removePlaceholder(this.editorView, placeholderId);

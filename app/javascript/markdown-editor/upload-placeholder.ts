@@ -48,25 +48,29 @@ export function replacePlaceholderWithUrl(
   altText?: string,
   width?: number,
   height?: number,
-  isImage?: boolean,
+  fileType?: string,
 ): boolean {
   const placeholder = placeholders.get(placeholderId);
+
   if (!placeholder) return false;
 
   const { position, length, fileName } = placeholder;
-
-  // 画像タグの生成
+  // ファイルタイプに応じてタグを生成
   let newText: string;
-  if (isImage) {
-    // 画像の場合は常に<img>タグを使用
+
+  if (fileType?.startsWith("image/")) {
+    // 画像の場合は<img>タグを使用
     if (width && height) {
       newText = `<img width="${width}" height="${height}" alt="${altText || fileName}" src="${url}">`;
     } else {
       newText = `<img alt="${altText || fileName}" src="${url}">`;
     }
+  } else if (fileType?.startsWith("video/")) {
+    // 動画の場合はURLのみ
+    newText = url;
   } else {
-    // 画像以外の場合は従来のMarkdown形式
-    newText = `![${altText || fileName}](${url})`;
+    // その他のファイルはMarkdown形式のリンク（!なし）
+    newText = `[${altText || fileName}](${url})`;
   }
 
   // 現在のドキュメントのテキストを取得して、プレースホルダーがまだ存在するか確認
