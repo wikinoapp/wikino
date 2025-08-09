@@ -19,30 +19,32 @@ module Attachments
         .where(attachment_record:)
 
       # アクセス権限をチェック
-      # いずれかのページへのアクセス権限があればOK
-      can_access = page_attachment_refs.any? do |ref|
-        page_record = ref.page_record
-        next false if page_record.nil?
+      if page_attachment_refs.any?
+        # いずれかのページへのアクセス権限があればOK
+        can_access = page_attachment_refs.any? do |ref|
+          page_record = ref.page_record
+          next false if page_record.nil?
 
-        space_record = page_record.space_record
-        next false if space_record.nil?
+          space_record = page_record.space_record
+          next false if space_record.nil?
 
-        # スペースメンバーかどうかをチェック
-        if current_user_record
-          SpaceMemberRecord.exists?(
-            space_id: space_record.id,
-            user_id: current_user_record.not_nil!.id
-          )
-        else
-          # ログインしていない場合は公開スペースとみなす
-          # TODO: スペースの公開設定を確認する必要がある場合は別途実装
-          true
+          # スペースメンバーかどうかをチェック
+          if current_user_record
+            SpaceMemberRecord.exists?(
+              space_id: space_record.id,
+              user_id: current_user_record.not_nil!.id
+            )
+          else
+            # ログインしていない場合は公開スペースとみなす
+            # TODO: スペースの公開設定を確認する必要がある場合は別途実装
+            true
+          end
         end
-      end
 
-      unless can_access
-        render_404
-        return
+        unless can_access
+          render_404
+          return
+        end
       end
 
       # Active Storageの署名付きURLを生成してリダイレクト
