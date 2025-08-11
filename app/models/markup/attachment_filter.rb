@@ -43,10 +43,8 @@ class Markup
       end
     end
 
-    private
-
     sig { params(element: Selma::HTML::Element).void }
-    def handle_image(element)
+    private def handle_image(element)
       src = element["src"]
       return if src.blank?
 
@@ -87,7 +85,7 @@ class Markup
     end
 
     sig { params(element: Selma::HTML::Element).void }
-    def handle_link(element)
+    private def handle_link(element)
       href = element["href"]
       return if href.blank?
 
@@ -106,7 +104,7 @@ class Markup
 
     # 添付ファイルのURLから添付ファイルIDを抽出
     sig { params(url: String).returns(T.nilable(String)) }
-    def extract_attachment_id(url)
+    private def extract_attachment_id(url)
       return nil if url.blank?
 
       # 添付ファイルのURLパターンかチェック
@@ -118,7 +116,7 @@ class Markup
     end
 
     sig { params(attachment_id: String).returns(T.nilable(String)) }
-    def generate_signed_url(attachment_id)
+    private def generate_signed_url(attachment_id)
       # 権限チェック
       return nil unless can_access_attachment?
 
@@ -137,13 +135,13 @@ class Markup
     end
 
     sig { returns(T::Boolean) }
-    def can_access_attachment?
+    private def can_access_attachment?
       # スペースメンバーであれば添付ファイルにアクセス可能
       current_space_member.present?
     end
 
     sig { params(attachment: AttachmentRecord).returns(T::Boolean) }
-    def can_display_inline?(attachment)
+    private def can_display_inline?(attachment)
       # ファイル拡張子を取得
       filename = attachment.filename
       return false unless filename
@@ -153,7 +151,7 @@ class Markup
     end
 
     sig { params(element: Selma::HTML::Element, attachment: AttachmentRecord).void }
-    def convert_to_download_link(element, attachment)
+    private def convert_to_download_link(element, attachment)
       # img要素をa要素に変換
       filename = attachment.filename || "ファイル"
 
