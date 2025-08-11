@@ -2,6 +2,7 @@ import { EditorView } from "codemirror";
 import { DirectUpload, UploadError, UploadProgress } from "./direct-upload";
 import { calculateFileChecksum } from "../utils/file-checksum";
 import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder } from "./upload-placeholder";
+import { post, put } from "@rails/request.js";
 
 interface PresignResponse {
   directUploadUrl: string;
@@ -83,37 +84,29 @@ export class FileUploadHandler {
       ? "/_test/attachments/presign"
       : `/s/${this.spaceIdentifier}/attachments/presign`;
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-      },
-      body: JSON.stringify({
+    const response = await post(endpoint, {
+      body: {
         filename: file.name,
         content_type: file.type,
         byte_size: file.size,
         checksum: checksum,
-      }),
+      },
+      responseKind: "json",
     });
 
     if (!response.ok) {
       throw new UploadError("プリサイン用URLの取得に失敗しました");
     }
 
-    return response.json();
+    return response.json;
   }
 
   private async uploadFile(file: File, presignData: PresignResponse): Promise<void> {
     // テスト環境では実際のアップロードをスキップ
     if (this.isTestEnvironment) {
       // テスト用のアップロードエンドポイントに送信
-      const response = await fetch("/_test/attachments/upload", {
-        method: "PUT",
-        headers: {
-          ...presignData.directUploadHeaders,
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-        },
+      const response = await put("/_test/attachments/upload", {
+        headers: presignData.directUploadHeaders,
         body: file,
       });
 
