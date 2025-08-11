@@ -92,7 +92,7 @@
   }
 
   & img {
-    @apply mx-auto max-w-full rounded-lg border border-gray-200 shadow-sm;
+    @apply mx-auto;
   }
 
   & li {
