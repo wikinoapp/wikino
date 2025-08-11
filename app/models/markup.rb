@@ -26,8 +26,8 @@ class Markup
       convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
         context: {
           markdown: {
-            parse: {smart: false},
-            render: {hardbreaks: true}
+            parse: {smart: false, html: true},  # HTMLタグの解析を有効化
+            render: {hardbreaks: true, unsafe: true}  # HTMLタグのレンダリングを有効化
           }
         }
       ),

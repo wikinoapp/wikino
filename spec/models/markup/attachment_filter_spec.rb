@@ -258,4 +258,103 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     # CGI.escapeHTMLは < を - に変換しているようなので、ファイル名がエスケープされていることを確認
     expect(output_html).to include("-script-alert")
   end
+
+  it "HTML形式のimg要素で挿入された画像も署名付きURLに変換されること（メンバーの場合）" do
+    space = FactoryBot.create(:space_record)
+    topic = FactoryBot.create(:topic_record, space_record: space)
+    user = FactoryBot.create(:user_record)
+    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    attachment = create_attachment(space: space, filename: "image.jpg")
+
+    # HTML形式のimg要素を含むテキスト
+    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"test image\">"
+    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+
+    # 署名付きURLが生成されていることを確認
+    expect(output_html).to include("expires_in")
+    expect(output_html).to include("signature")
+    expect(output_html).to include("space_member_id")
+
+    # 画像がa要素で囲まれていることを確認
+    expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
+    expect(output_html).to include("rel=\"noopener noreferrer\"")
+    expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
+    expect(output_html).to include("max-w-full")
+  end
+
+  it "HTML形式のimg要素で挿入された画像も変換されないこと（非メンバーの場合）" do
+    space = FactoryBot.create(:space_record)
+    topic = FactoryBot.create(:topic_record, space_record: space)
+    attachment = create_attachment(space: space, filename: "image.jpg")
+
+    # HTML形式のimg要素を含むテキスト
+    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"test image\">"
+    output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
+
+    # 署名付きURLが生成されていないことを確認
+    expect(output_html).not_to include("expires_in")
+    expect(output_html).not_to include("signature")
+
+    # 非メンバーの場合はa要素で囲まれないことを確認
+    expect(output_html).not_to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
+    # max-w-fullクラスは追加されていることを確認
+    expect(output_html).to include("max-w-full")
+  end
+
+  it "HTML形式のimg要素でインライン表示不可の形式の場合、ダウンロードリンクに変換されること" do
+    space = FactoryBot.create(:space_record)
+    topic = FactoryBot.create(:topic_record, space_record: space)
+    user = FactoryBot.create(:user_record)
+    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    attachment = create_attachment(space: space, filename: "document.pdf")
+
+    # HTML形式のimg要素を含むテキスト（PDFファイル）
+    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"pdf document\">"
+    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+
+    # img要素ではなくリンク要素に変換されていることを確認
+    expect(output_html).to match(/<a[^>]*>/)
+    expect(output_html).to include("document.pdf")
+    expect(output_html).to include("target=\"_blank\"")
+    expect(output_html).to include("rel=\"noopener noreferrer\"")
+    expect(output_html).to include("text-blue-600")
+
+    # img要素が存在しないことを確認
+    expect(output_html).not_to match(/<img[^>]*src="[^"]*#{attachment.id}[^"]*"/)
+
+    # SVGアイコンが含まれていることを確認
+    expect(output_html).to include("<svg")
+  end
+
+  it "複数のHTML形式img要素が含まれる場合、すべて変換されること" do
+    space = FactoryBot.create(:space_record)
+    topic = FactoryBot.create(:topic_record, space_record: space)
+    user = FactoryBot.create(:user_record)
+    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+
+    attachment1 = create_attachment(space: space, filename: "image1.jpg")
+    attachment2 = create_attachment(space: space, filename: "image2.png")
+    attachment3 = create_attachment(space: space, filename: "document.pdf")
+
+    text = <<~HTML
+      <p>First image:</p>
+      <img src="/s/#{space.identifier}/attachments/#{attachment1.id}" alt="image1">
+      <p>Second image:</p>
+      <img src="/s/#{space.identifier}/attachments/#{attachment2.id}" alt="image2">
+      <p>PDF as image:</p>
+      <img src="/s/#{space.identifier}/attachments/#{attachment3.id}" alt="pdf">
+    HTML
+
+    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+
+    # 画像1と画像2は署名付きURLでa要素に囲まれていることを確認
+    expect(output_html.scan(/<a[^>]*>.*?<img[^>]*class="max-w-full".*?>.*?<\/a>/m).size).to eq(2)
+
+    # PDFはダウンロードリンクに変換されていることを確認
+    expect(output_html).to include("document.pdf")
+    expect(output_html).not_to match(/<img[^>]*src="[^"]*#{attachment3.id}[^"]*"/)
+
+    # すべての添付ファイルが署名付きURLに変換されていることを確認
+    expect(output_html.scan("expires_in").size).to be >= 3
+  end
 end
