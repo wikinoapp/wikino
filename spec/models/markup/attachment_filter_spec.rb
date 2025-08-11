@@ -58,7 +58,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
     attachment = create_attachment(space: space, filename: "image.jpg")
 
-    text = "![image](/s/#{space.identifier}/attachments/#{attachment.id})"
+    text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
@@ -78,7 +78,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     topic = FactoryBot.create(:topic_record, space_record: space)
     attachment = create_attachment(space: space, filename: "image.jpg")
 
-    text = "![image](/s/#{space.identifier}/attachments/#{attachment.id})"
+    text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
 
     # 署名付きURLが生成されていないことを確認
@@ -99,7 +99,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     %w[jpg jpeg png gif svg webp].each do |ext|
       attachment = create_attachment(space: space, filename: "image.#{ext}")
 
-      text = "![image](/s/#{space.identifier}/attachments/#{attachment.id})"
+      text = "![image](/attachments/#{attachment.id})"
       output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
       # img要素がa要素で囲まれていることを確認
@@ -119,7 +119,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     %w[pdf docx xlsx zip].each do |ext|
       attachment = create_attachment(space: space, filename: "document.#{ext}")
 
-      text = "![document](/s/#{space.identifier}/attachments/#{attachment.id})"
+      text = "![document](/attachments/#{attachment.id})"
       output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
       # リンク要素に変換されていることを確認
@@ -141,7 +141,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
     attachment = create_attachment(space: space, filename: "document.pdf")
 
-    text = "[Download](/s/#{space.identifier}/attachments/#{attachment.id})"
+    text = "[Download](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
@@ -162,7 +162,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment = create_attachment(space: space2, filename: "image.jpg")
 
     # space1のメンバーがspace2の添付ファイルにアクセスしようとする
-    text = "![image](/s/#{space2.identifier}/attachments/#{attachment.id})"
+    text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic1, current_space_member: space_member)
 
     # URLが変換されないことを確認
@@ -177,7 +177,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
 
     non_existent_id = SecureRandom.uuid
-    text = "![image](/s/#{space.identifier}/attachments/#{non_existent_id})"
+    text = "![image](/attachments/#{non_existent_id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # URLが変換されないことを確認
@@ -218,13 +218,13 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment3 = create_attachment(space: space, filename: "image2.png")
 
     text = <<~TEXT
-      ![image1](/s/#{space.identifier}/attachments/#{attachment1.id})
+      ![image1](/attachments/#{attachment1.id})
 
       Some text
 
-      ![document](/s/#{space.identifier}/attachments/#{attachment2.id})
+      ![document](/attachments/#{attachment2.id})
 
-      [Download](/s/#{space.identifier}/attachments/#{attachment3.id})
+      [Download](/attachments/#{attachment3.id})
     TEXT
 
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
@@ -250,7 +250,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     attachment = create_attachment(space: space, filename: "<script>alert('XSS')</script>.pdf")
 
-    text = "![document](/s/#{space.identifier}/attachments/#{attachment.id})"
+    text = "![document](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # XSSが防がれていることを確認
@@ -267,7 +267,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment = create_attachment(space: space, filename: "image.jpg")
 
     # HTML形式のimg要素を含むテキスト
-    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"test image\">"
+    text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
@@ -288,7 +288,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment = create_attachment(space: space, filename: "image.jpg")
 
     # HTML形式のimg要素を含むテキスト
-    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"test image\">"
+    text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
 
     # 署名付きURLが生成されていないことを確認
@@ -309,7 +309,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment = create_attachment(space: space, filename: "document.pdf")
 
     # HTML形式のimg要素を含むテキスト（PDFファイル）
-    text = "<img src=\"/s/#{space.identifier}/attachments/#{attachment.id}\" alt=\"pdf document\">"
+    text = "<img src=\"/attachments/#{attachment.id}\" alt=\"pdf document\">"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
 
     # img要素ではなくリンク要素に変換されていることを確認
@@ -338,11 +338,11 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     text = <<~HTML
       <p>First image:</p>
-      <img src="/s/#{space.identifier}/attachments/#{attachment1.id}" alt="image1">
+      <img src="/attachments/#{attachment1.id}" alt="image1">
       <p>Second image:</p>
-      <img src="/s/#{space.identifier}/attachments/#{attachment2.id}" alt="image2">
+      <img src="/attachments/#{attachment2.id}" alt="image2">
       <p>PDF as image:</p>
-      <img src="/s/#{space.identifier}/attachments/#{attachment3.id}" alt="pdf">
+      <img src="/attachments/#{attachment3.id}" alt="pdf">
     HTML
 
     output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
