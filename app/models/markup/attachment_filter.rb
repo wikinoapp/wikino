@@ -50,12 +50,9 @@ class Markup
       src = element["src"]
       return if src.blank?
 
-      # 添付ファイルのURLパターンかチェック
-      # 例: /s/:space_identifier/attachments/:attachment_id
-      match = src.match(%r{^/s/[^/]+/attachments/([^/]+)$})
-      return unless match
-
-      attachment_id = match[1]
+      # 添付ファイルIDを抽出
+      attachment_id = extract_attachment_id(src)
+      return unless attachment_id
 
       # AttachmentRecordを取得してファイル形式を確認
       attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
@@ -94,11 +91,9 @@ class Markup
       href = element["href"]
       return if href.blank?
 
-      # 添付ファイルのURLパターンかチェック
-      match = href.match(%r{^/s/[^/]+/attachments/([^/]+)$})
-      return unless match
-
-      attachment_id = match[1]
+      # 添付ファイルIDを抽出
+      attachment_id = extract_attachment_id(href)
+      return unless attachment_id
 
       # 署名付きURLを生成
       signed_url = generate_signed_url(attachment_id)
@@ -107,6 +102,19 @@ class Markup
       # 新規タブで開く
       element["target"] = "_blank"
       element["rel"] = "noopener noreferrer"
+    end
+
+    # 添付ファイルのURLから添付ファイルIDを抽出
+    sig { params(url: String).returns(T.nilable(String)) }
+    def extract_attachment_id(url)
+      return nil if url.blank?
+
+      # 添付ファイルのURLパターンかチェック
+      # 例: /attachments/:attachment_id
+      match = url.match(%r{^/attachments/([^/]+)$})
+      return nil unless match
+
+      match[1]
     end
 
     sig { params(attachment_id: String).returns(T.nilable(String)) }
