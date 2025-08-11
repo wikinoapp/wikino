@@ -16,7 +16,7 @@ export class UploadError extends Error {
   }
 }
 
-export class DirectUploadWrapper {
+export class DirectUpload {
   private file: File;
   private directUploadUrl: string;
   private directUploadHeaders: Record<string, string>;
@@ -91,6 +91,3 @@ export class DirectUploadWrapper {
     }
   }
 }
-
-// 既存のコードとの互換性のためのエクスポート
-export { DirectUploadWrapper as DirectUpload };
