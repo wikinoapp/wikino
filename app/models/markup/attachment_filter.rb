@@ -179,8 +179,10 @@ class Markup
 
     sig { returns(SpaceRecord) }
     attr_reader :current_space
+    private :current_space
 
     sig { returns(T.nilable(SpaceMemberRecord)) }
     attr_reader :current_space_member
+    private :current_space_member
   end
 end
