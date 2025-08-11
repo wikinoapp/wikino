@@ -33,13 +33,13 @@ class Markup
       ),
       sanitization_config:,
       node_filters: [
-        MarkupFilters::PageLinkFilter.new(
+        Markup::PageLinkFilter.new(
           context: {
             current_topic:,
             page_locations:
           }
         ),
-        MarkupFilters::AttachmentFilter.new(
+        Markup::AttachmentFilter.new(
           context: {
             current_space: current_topic.space_record.not_nil!,
             current_space_member:

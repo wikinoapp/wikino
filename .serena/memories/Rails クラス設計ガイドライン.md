@@ -18,11 +18,11 @@
   - Repositoryを介したレコードからモデルへの変換
   - フォームバリデーションの処理
   - サービスの実行とエラーハンドリング
-- **命名規則**: 
+- **命名規則**:
   - 基本形: `(ModelPlural)::(ActionName)Controller`
   - ネストした場合: `(ModelPlural)::(SubResource)::(ActionName)Controller`
   - 例: `Test::Attachments::Presigns::CreateController`
-- **アクション名**: 
+- **アクション名**:
   - すべてのアクションは `#call` メソッドで実装
   - routes.rbでは `to: "controller#call"` で指定
 

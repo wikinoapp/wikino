@@ -54,14 +54,14 @@
 
       <div class="grid gap-4">
         <% if attachments.empty? %>
-          <div class="text-center py-12">
+          <div class="py-12 text-center">
             <p class="text-muted-foreground"><%= t("messages.no_attachments_found") %></p>
           </div>
         <% else %>
           <% attachments.each do |attachment| %>
-            <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-muted/50 transition-colors" data-attachment-id="<%= attachment.database_id %>">
+            <div class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors" data-attachment-id="<%= attachment.database_id %>">
               <div class="flex items-center gap-4">
-                <div class="w-16 h-16 flex items-center justify-center border rounded">
+                <div class="flex h-16 w-16 items-center justify-center rounded border">
                   <% if attachment.image? %>
                     <%= image_tag attachment.url, class: "w-full h-full object-contain", loading: "lazy" %>
                   <% else %>
@@ -72,10 +72,10 @@
                 <!-- ファイル情報 -->
                 <div>
                   <p class="font-semibold"><%= attachment.filename %></p>
-                  <p class="text-sm text-muted-foreground">
+                  <p class="text-muted-foreground text-sm">
                     <%= attachment.content_type %> • <%= number_to_human_size(attachment.byte_size) %>
                   </p>
-                  <p class="text-xs text-muted-foreground">
+                  <p class="text-muted-foreground text-xs">
                     <%= t("messages.uploaded_at", time: l(attachment.attached_at, format: :short)) %>
                   </p>
                 </div>
@@ -104,7 +104,7 @@
 
       <!-- ページネーション -->
       <% if total_pages > 1 %>
-        <div class="flex justify-center gap-2 mt-8">
+        <div class="mt-8 flex justify-center gap-2">
           <% if has_previous_page? %>
             <%= link_to space_settings_attachments_path(space.identifier, page: current_page - 1, q: search_query, file_type: file_type),
                 class: "btn-ghost rounded-full px-4 py-2" do %>
@@ -112,7 +112,7 @@
             <% end %>
           <% end %>
 
-          <span class="px-4 py-2 text-muted-foreground">
+          <span class="text-muted-foreground px-4 py-2">
             <%= t("messages.page_of", current: current_page, total: total_pages) %>
           </span>
 

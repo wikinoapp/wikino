@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module MarkupFilters
+class Markup
   class PageLinkFilter < HTMLPipeline::NodeFilter
     extend T::Sig
 

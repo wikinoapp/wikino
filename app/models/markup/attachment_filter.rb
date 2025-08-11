@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-module MarkupFilters
+class Markup
   class AttachmentFilter < HTMLPipeline::NodeFilter
     extend T::Sig
 
@@ -125,19 +125,18 @@ module MarkupFilters
 
     sig { params(attachment: AttachmentRecord).returns(T::Boolean) }
     def can_display_inline?(attachment)
-      return false unless attachment.active_storage_attachment&.blob
-
       # ファイル拡張子を取得
-      filename = attachment.active_storage_attachment.blob.filename.to_s
-      extension = File.extname(filename).downcase.delete(".")
+      filename = attachment.filename
+      return false unless filename
       
+      extension = File.extname(filename).downcase.delete(".")
       INLINE_IMAGE_FORMATS.include?(extension)
     end
 
     sig { params(element: Selma::HTML::Element, attachment: AttachmentRecord).void }
     def convert_to_download_link(element, attachment)
       # img要素をa要素に変換
-      filename = attachment.active_storage_attachment&.blob&.filename&.to_s || "ファイル"
+      filename = attachment.filename || "ファイル"
       
       # 署名付きURLを生成
       signed_url = generate_signed_url(attachment.id)
@@ -156,7 +155,8 @@ module MarkupFilters
         </a>
       HTML
       
-      element.replace(link_html, as: :html)
+      # typed: ignore - Selma::HTML::Element#replace is not recognized by Sorbet
+      T.unsafe(element).replace(link_html, as: :html)
     end
 
     sig { returns(SpaceRecord) }

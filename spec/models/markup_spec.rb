@@ -36,7 +36,7 @@ RSpec.describe Markup, type: :model do
     expect(normalize_html(actual)).to eq(normalize_html(expected))
   end
 
-  it "MarkupFilters::PageLinkFilter: リンク記法がリンクに置き換わること" do # standard:disable RSpec/NoExpectationExample
+  it "Markup::PageLinkFilter: リンク記法がリンクに置き換わること" do # standard:disable RSpec/NoExpectationExample
     space = create(:space_record)
     topic_1 = create(:topic_record, space_record: space, name: "トピック1")
     topic_2 = create(:topic_record, space_record: space, name: "トピック2")

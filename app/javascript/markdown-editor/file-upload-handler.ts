@@ -1,11 +1,7 @@
 import { EditorView } from "codemirror";
 import { DirectUpload, UploadError, UploadProgress } from "./direct-upload";
 import { calculateFileChecksum } from "../utils/file-checksum";
-import {
-  insertUploadPlaceholder,
-  replacePlaceholderWithUrl,
-  removePlaceholder,
-} from "./upload-placeholder";
+import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder } from "./upload-placeholder";
 
 interface PresignResponse {
   directUploadUrl: string;
@@ -23,9 +19,10 @@ export class FileUploadHandler {
     this.editorView = editorView;
     this.spaceIdentifier = spaceIdentifier;
     // テスト環境かどうかを判定（Capybaraが設定するユーザーエージェントで判定）
-    this.isTestEnvironment = navigator.userAgent.includes("HeadlessChrome") || 
-                            navigator.userAgent.includes("Selenium") ||
-                            window.location.hostname === "127.0.0.1";
+    this.isTestEnvironment =
+      navigator.userAgent.includes("HeadlessChrome") ||
+      navigator.userAgent.includes("Selenium") ||
+      window.location.hostname === "127.0.0.1";
   }
 
   async handleFileUpload(files: File[], position: number): Promise<void> {
@@ -82,7 +79,7 @@ export class FileUploadHandler {
 
   private async getPresignUrl(file: File, checksum: string): Promise<PresignResponse> {
     // テスト環境では専用のエンドポイントを使用
-    const endpoint = this.isTestEnvironment 
+    const endpoint = this.isTestEnvironment
       ? "/_test/attachments/presign"
       : `/s/${this.spaceIdentifier}/attachments/presign`;
 
