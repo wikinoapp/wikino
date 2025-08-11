@@ -25,7 +25,7 @@ module Spaces
         limit: 100,
         order: {modified_at: :desc, id: :desc}
       ).fetch
-      pages = PageRepository.new.to_models(page_records: cursor_paginate_page.records)
+      pages = PageRepository.new.to_models(page_records: cursor_paginate_page.records, current_space_member: space_member_record)
       pagination = PaginationRepository.new.to_model(cursor_paginate_page:)
       page_list = PageList.new(pages:, pagination:)
 
@@ -40,7 +40,7 @@ module Spaces
       end
 
       pinned_page_records = showable_pages.pinned.order(pinned_at: :desc, id: :desc)
-      pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records)
+      pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records, current_space_member: space_member_record)
 
       render_component Spaces::ShowView.new(
         current_user:,

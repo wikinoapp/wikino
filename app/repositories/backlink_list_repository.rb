@@ -22,7 +22,7 @@ class BacklinkListRepository < ApplicationRepository
 
     backlinks = cursor_paginate_page.records.map do |page_record|
       Backlink.new(
-        page: PageRepository.new.to_model(page_record:)
+        page: PageRepository.new.to_model(page_record:, current_space_member: nil)
       )
     end
 

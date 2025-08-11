@@ -17,7 +17,7 @@ class PageLocationRepository < ApplicationRepository
         ary << PageLocation.new(
           key:,
           topic: TopicRepository.new.to_model(topic_record:),
-          page: PageRepository.new.to_model(page_record:)
+          page: PageRepository.new.to_model(page_record:, current_space_member: nil)
         )
       end
     end

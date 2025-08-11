@@ -8,7 +8,7 @@ class DraftPageRepository < ApplicationRepository
       database_id: draft_page_record.id,
       modified_at: draft_page_record.modified_at,
       space: SpaceRepository.new.to_model(space_record: draft_page_record.space_record.not_nil!),
-      page: PageRepository.new.to_model(page_record: draft_page_record.page_record.not_nil!)
+      page: PageRepository.new.to_model(page_record: draft_page_record.page_record.not_nil!, current_space_member: nil)
     )
   end
 end

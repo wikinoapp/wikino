@@ -7,6 +7,7 @@ class PageRecord < ApplicationRecord
   include RecordConcerns::Pageable
 
   self.table_name = "pages"
+  self.ignored_columns += ["body_html"]
 
   acts_as_sequenced column: :number, scope: :space_id
 
@@ -50,7 +51,6 @@ class PageRecord < ApplicationRecord
       space_record: topic_record.space_record,
       title: nil,
       body: "",
-      body_html: "",
       linked_page_ids: [],
       modified_at: Time.current
     )
@@ -208,11 +208,10 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       editor_record: SpaceMemberRecord,
-      body: String,
-      body_html: String
+      body: String
     ).returns(PageRevisionRecord)
   end
-  def create_revision!(editor_record:, body:, body_html:)
-    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:)
+  def create_revision!(editor_record:, body:)
+    revision_records.create!(space_record:, space_member_record: editor_record, body:)
   end
 end

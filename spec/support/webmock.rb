@@ -10,7 +10,7 @@ RSpec.configure do |config|
   end
 
   # System spec以外でWebMockを有効化
-  config.before(:each) do |example|
+  config.before do |example|
     unless example.metadata[:type] == :system
       WebMock.disable_net_connect!(
         allow_localhost: true,
@@ -25,7 +25,7 @@ RSpec.configure do |config|
   end
 
   # 各テスト後にWebMockをリセット
-  config.after(:each) do
+  config.after do
     WebMock.reset!
   end
 end

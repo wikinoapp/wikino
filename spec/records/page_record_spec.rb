@@ -51,11 +51,11 @@ RSpec.describe PageRecord, type: :record do
       link_a = link_list.links[0]
       expect(link_a.backlink_list.backlinks.size).to eq(1)
       expect(link_a.backlink_list.backlinks[0]).to eq(
-        Backlink.new(page: PageRepository.new.to_model(page_record: page_record_d))
+        Backlink.new(page: PageRepository.new.to_model(page_record: page_record_d, current_space_member: nil))
       )
 
       link_b = link_list.links[1]
-      expect(link_b.page).to eq(PageRepository.new.to_model(page_record: page_record_a))
+      expect(link_b.page).to eq(PageRepository.new.to_model(page_record: page_record_a, current_space_member: nil))
       expect(link_b.backlink_list.backlinks.size).to eq(0)
     end
   end
