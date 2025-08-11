@@ -1,4 +1,4 @@
-# typed: strict
+# typed: true
 # frozen_string_literal: true
 
 module Test
@@ -6,7 +6,6 @@ module Test
     # テスト環境でのみ使用されるモックエンドポイント
     # ActiveStorageを迂回してファイルアップロードのテストを可能にする
 
-    sig { void }
     def presign
       # テスト環境でのみ動作
       unless Rails.env.test?
@@ -22,7 +21,6 @@ module Test
       }
     end
 
-    sig { void }
     def upload
       # テスト環境でのみ動作
       unless Rails.env.test?
