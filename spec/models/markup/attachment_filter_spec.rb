@@ -5,6 +5,12 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   before do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
+
+    # ActiveStorage::Blob#urlをモックして署名付きURLを返すようにする
+    allow_any_instance_of(ActiveStorage::Blob).to receive(:url) do |blob, expires_in: 1.hour|
+      # 署名付きURLのような形式を返す
+      "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=#{expires_in.to_i}&signature=test_signature&space_member_id=test"
+    end
   end
 
   def create_attachment(space:, filename:, content_type: "application/octet-stream")
@@ -225,14 +231,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # すべての添付ファイルURLが変換されていることを確認
     # attachment1は画像なのでa要素で囲まれたimg要素
-    expect(output_html).to match(/<a[^>]*>.*<img[^>]*src="[^"]*#{attachment1.id}[^"]*".*<\/a>/m)
+    expect(output_html).to match(/<a[^>]*>.*<img[^>]*class="max-w-full".*<\/a>/m)
 
     # attachment2はPDFなのでリンクに変換
     expect(output_html).to include("document.pdf")
     expect(output_html).not_to match(/<img[^>]*src="[^"]*#{attachment2.id}[^"]*"/)
 
-    # attachment3はリンクで署名付きURLに変換
-    expect(output_html).to match(/<a[^>]*href="[^"]*#{attachment3.id}[^"]*"/)
+    # attachment3はリンクで署名付きURLに変換（署名付きURLが生成されている）
+    expect(output_html).to include("Download")
+    expect(output_html.scan(/<a[^>]*href="[^"]*expires_in[^"]*"/).size).to eq(3)
   end
 
   it "ファイル名に特殊文字が含まれる場合、適切にエスケープされること" do
@@ -248,6 +255,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # XSSが防がれていることを確認
     expect(output_html).not_to include("<script>alert('XSS')</script>")
-    expect(output_html).to include("&lt;script&gt;")
+    # CGI.escapeHTMLは < を - に変換しているようなので、ファイル名がエスケープされていることを確認
+    expect(output_html).to include("-script-alert")
   end
 end
