@@ -56,22 +56,33 @@ class Markup
       return unless match
 
       attachment_id = match[1]
-      
+
       # AttachmentRecordを取得してファイル形式を確認
-      attachment = AttachmentRecord.find_by(id: attachment_id, space: current_space)
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
       return unless attachment
 
       # インライン表示可能な画像形式かチェック
       if can_display_inline?(attachment)
         # 署名付きURLを生成
         signed_url = generate_signed_url(attachment_id)
-        element["src"] = signed_url if signed_url
 
-        # 画像のクリックで新規タブ表示するための処理
-        element["class"] = "cursor-pointer hover:opacity-90 transition-opacity max-w-full"
-        element["data-controller"] = "attachment-viewer"
-        element["data-action"] = "click->attachment-viewer#open"
-        element["data-attachment-viewer-url-value"] = signed_url || src
+        # スペースメンバーの場合のみa要素で囲む
+        if signed_url
+          # 署名付きURLが生成できた場合は、a要素で囲む
+          # 新しいHTMLを作成
+          link_html = <<~HTML
+            <a href="#{signed_url}" target="_blank" rel="noopener noreferrer" class="inline-block">
+              <img src="#{signed_url}" class="max-w-full" />
+            </a>
+          HTML
+
+          # element.replaceの代わりに、after挿入してから元のelementを削除
+          element.after(link_html, as: :html)
+          element.remove
+        else
+          # 署名付きURLが生成できない場合（非メンバー）は、img要素のみ
+          element["class"] = "max-w-full"
+        end
       else
         # インライン表示不可の場合はリンクに変換
         convert_to_download_link(element, attachment)
@@ -81,14 +92,14 @@ class Markup
     sig { params(element: Selma::HTML::Element).void }
     def handle_link(element)
       href = element["href"]
-      return if href.nil? || href.empty?
+      return if href.blank?
 
       # 添付ファイルのURLパターンかチェック
       match = href.match(%r{^/s/[^/]+/attachments/([^/]+)$})
       return unless match
 
       attachment_id = match[1]
-      
+
       # 署名付きURLを生成
       signed_url = generate_signed_url(attachment_id)
       element["href"] = signed_url if signed_url
@@ -104,7 +115,7 @@ class Markup
       return nil unless can_access_attachment?
 
       # AttachmentRecordを取得
-      attachment = AttachmentRecord.find_by(id: attachment_id, space: current_space)
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
       return nil unless attachment
 
       # 署名付きURLを生成（1時間の有効期限）
@@ -128,7 +139,7 @@ class Markup
       # ファイル拡張子を取得
       filename = attachment.filename
       return false unless filename
-      
+
       extension = File.extname(filename).downcase.delete(".")
       INLINE_IMAGE_FORMATS.include?(extension)
     end
@@ -137,10 +148,10 @@ class Markup
     def convert_to_download_link(element, attachment)
       # img要素をa要素に変換
       filename = attachment.filename || "ファイル"
-      
+
       # 署名付きURLを生成
       signed_url = generate_signed_url(attachment.id)
-      
+
       # リンクとして表示
       link_html = <<~HTML
         <a href="#{signed_url || element["src"]}" 
@@ -154,9 +165,10 @@ class Markup
           #{CGI.escapeHTML(filename)}
         </a>
       HTML
-      
-      # typed: ignore - Selma::HTML::Element#replace is not recognized by Sorbet
-      T.unsafe(element).replace(link_html, as: :html)
+
+      # element.replaceの代わりに、after挿入してから元のelementを削除
+      element.after(link_html, as: :html)
+      element.remove
     end
 
     sig { returns(SpaceRecord) }
