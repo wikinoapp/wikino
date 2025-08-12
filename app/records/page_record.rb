@@ -219,4 +219,64 @@ class PageRecord < ApplicationRecord
   def create_revision!(editor_record:, body:)
     revision_records.create!(space_record:, space_member_record: editor_record, body:)
   end
+
+  # ページ本文から添付ファイルIDを抽出し、page_attachment_referencesレコードを更新
+  sig { params(body: String).void }
+  def update_attachment_references!(body:)
+    # 本文から添付ファイルのIDを抽出
+    attachment_ids = extract_attachment_ids(body)
+
+    # 現在の参照を取得
+    current_attachment_ids = page_attachment_reference_records.pluck(:attachment_id)
+
+    # 新しく追加される添付ファイル
+    new_attachment_ids = attachment_ids - current_attachment_ids
+
+    # 削除される添付ファイル
+    removed_attachment_ids = current_attachment_ids - attachment_ids
+
+    # 新しい参照を作成
+    new_attachment_ids.each do |attachment_id|
+      # 添付ファイルが実際に存在するか確認
+      if AttachmentRecord.exists?(id: attachment_id, space_id:)
+        PageAttachmentReferenceRecord.create!(
+          page_id: id,
+          attachment_id:
+        )
+      end
+    end
+
+    # 不要な参照を削除
+    if removed_attachment_ids.any?
+      PageAttachmentReferenceRecord.where(
+        page_id: id,
+        attachment_id: removed_attachment_ids
+      ).destroy_all
+    end
+
+    nil
+  end
+
+  # 本文から添付ファイルIDを抽出
+  sig { params(body: String).returns(T::Array[String]) }
+  private def extract_attachment_ids(body)
+    attachment_ids = T.let([], T::Array[String])
+
+    # imgタグのsrc属性から抽出
+    # <img src="/attachments/attachment_id">
+    img_pattern = %r{<img[^>]+src=["'](/attachments/([^/"']+))["'][^>]*>}
+    body.scan(img_pattern) do |_full_url, attachment_id|
+      attachment_ids << attachment_id if attachment_id
+    end
+
+    # aタグのhref属性から抽出
+    # <a href="/attachments/attachment_id">
+    link_pattern = %r{<a[^>]+href=["'](/attachments/([^/"']+))["'][^>]*>}
+    body.scan(link_pattern) do |_full_url, attachment_id|
+      attachment_ids << attachment_id if attachment_id
+    end
+
+    # 重複を削除
+    attachment_ids.uniq
+  end
 end
