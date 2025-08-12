@@ -23,11 +23,13 @@ module Attachments
 
       # リダイレクト先のURLを取得
       redirect_url = attachment_record.redirect_url
-      if redirect_url
-        redirect_to(redirect_url, allow_other_host: true)
-      else
+
+      unless redirect_url
         render_404
+        return
       end
+
+      redirect_to(redirect_url, allow_other_host: true)
     end
   end
 end
