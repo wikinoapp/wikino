@@ -7,13 +7,21 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
   before do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
+    # ActiveStorage::Current.url_optionsも設定
+    ActiveStorage::Current.url_options = { host: "test.host" }
   end
 
   # ActiveStorage::Blobのurlメソッドをスタブ化するヘルパー
   def stub_blob_url(blob)
-    allow(blob).to receive(:url) do
-      "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?test_signature"
-    end
+    signed_url = "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?test_signature"
+    allow(blob).to receive(:url).and_return(signed_url)
+  end
+  
+  # AttachmentRecordのredirect_urlメソッドをスタブ化するヘルパー  
+  def stub_attachment_redirect_url(attachment)
+    signed_url = "http://test.host/rails/active_storage/blobs/redirect/#{attachment.active_storage_attachment_record.blob.id}?test_signature"
+    allow(AttachmentRecord).to receive(:find).with(attachment.id).and_return(attachment)
+    allow(attachment).to receive(:redirect_url).and_return(signed_url)
   end
 
   def create_attachment_with_page(space:, topic:, page:, filename: "test.jpg")
@@ -63,7 +71,10 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
     public_topic = FactoryBot.create(:topic_record, space_record: space, visibility: TopicVisibility::Public.serialize)
     page = FactoryBot.create(:page_record, space_record: space, topic_record: public_topic)
     attachment = create_attachment_with_page(space: space, topic: public_topic, page: page)
-
+    
+    # AttachmentRecordのredirect_urlをスタブ化
+    stub_attachment_redirect_url(attachment)
+    
     # ログインしていない状態でアクセス
     get attachment_path(attachment_id: attachment.id)
 
@@ -77,6 +88,9 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
     private_topic = FactoryBot.create(:topic_record, space_record: space, visibility: TopicVisibility::Private.serialize)
     page = FactoryBot.create(:page_record, space_record: space, topic_record: private_topic)
     attachment = create_attachment_with_page(space: space, topic: private_topic, page: page)
+
+    # AttachmentRecordのredirect_urlをスタブ化
+    stub_attachment_redirect_url(attachment)
 
     # スペースメンバーでログイン
     user = FactoryBot.create(:user_record, :with_password)
@@ -147,6 +161,9 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
     FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
     sign_in(user_record: user)
 
+    # AttachmentRecordのredirect_urlをスタブ化
+    stub_attachment_redirect_url(attachment)
+
     get attachment_path(attachment_id: attachment.id)
 
     # リダイレクトされることを確認
@@ -168,6 +185,9 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
     user = FactoryBot.create(:user_record, :with_password)
     FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
     sign_in(user_record: user)
+
+    # AttachmentRecordのredirect_urlをスタブ化
+    stub_attachment_redirect_url(attachment)
 
     get attachment_path(attachment_id: attachment.id)
 

@@ -5,14 +5,17 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   before do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
+    # ActiveStorage::Current.url_optionsも設定
+    ActiveStorage::Current.url_options = { host: "test.host" }
   end
 
   # ActiveStorage::Blobのurlメソッドをスタブ化するヘルパー
   def stub_blob_url(blob)
-    allow(blob).to receive(:url) do |expires_in: 1.hour|
-      # 署名付きURLのような形式を返す
-      "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=#{expires_in.to_i}&signature=test_signature&space_member_id=test"
-    end
+    # URLを直接モックする方法を変更
+    signed_url = "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=3600&signature=test_signature&space_member_id=test"
+    allow(blob).to receive(:url).and_return(signed_url)
+    # ActiveStorage::Blobクラス全体に対してもスタブを設定
+    allow(ActiveStorage::Blob).to receive(:find).with(blob.id).and_return(blob)
   end
 
   def create_attachment(space:, filename:, content_type: "application/octet-stream")
@@ -38,7 +41,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       blob: blob
     )
 
-    AttachmentRecord.create!(
+    attachment = AttachmentRecord.create!(
       id: SecureRandom.uuid,
       space_id: space.id,
       space_record: space,
@@ -46,6 +49,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       attached_space_member_id: space_member.id,
       attached_at: Time.current
     )
+    
+    # AttachmentRecordのgenerate_signed_urlメソッドを直接スタブ化
+    signed_url = "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=3600&signature=test_signature&space_member_id=test"
+    allow(attachment).to receive(:generate_signed_url).and_return(signed_url)
+    
+    # AttachmentRecord.find_byもスタブ化して、同じインスタンスを返すようにする
+    allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space).and_return(attachment)
+    
+    attachment
   end
 
   def render_markup(text:, current_topic:, current_space_member: nil)
@@ -167,6 +179,9 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member = FactoryBot.create(:space_member_record, space_record: space1, user_record: user)
     attachment = create_attachment(space: space2, filename: "image.jpg")
+    
+    # space1でも添付ファイルを検索するので、そのスタブも追加
+    allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space1).and_return(nil)
 
     # space1のメンバーがspace2の添付ファイルにアクセスしようとする
     text = "![image](/attachments/#{attachment.id})"
