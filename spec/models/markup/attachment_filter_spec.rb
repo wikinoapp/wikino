@@ -73,7 +73,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     expect(output_html).to include("max-w-full")
   end
 
-  it "画像URLが変換されないこと（非メンバーの場合）" do
+  it "画像URLが署名付きURLに変換されること（非メンバーの場合でも）" do
     space = FactoryBot.create(:space_record)
     topic = FactoryBot.create(:topic_record, space_record: space)
     attachment = create_attachment(space: space, filename: "image.jpg")
@@ -81,13 +81,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
 
-    # 署名付きURLが生成されていないことを確認
-    expect(output_html).not_to include("expires_in")
-    expect(output_html).not_to include("signature")
+    # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
+    expect(output_html).to include("expires_in")
+    expect(output_html).to include("signature")
 
-    # インライン表示用の属性も設定されていないことを確認
-    # 非メンバーの場合はa要素で囲まれないことを確認
-    expect(output_html).not_to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
+    # 画像がa要素で囲まれていることを確認
+    expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
+    expect(output_html).to include("rel=\"noopener noreferrer\"")
+    expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
+    expect(output_html).to include("max-w-full")
   end
 
   it "インライン表示可能な画像形式の場合、img要素が維持されること" do
@@ -282,7 +284,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     expect(output_html).to include("max-w-full")
   end
 
-  it "HTML形式のimg要素で挿入された画像も変換されないこと（非メンバーの場合）" do
+  it "HTML形式のimg要素で挿入された画像も署名付きURLに変換されること（非メンバーの場合でも）" do
     space = FactoryBot.create(:space_record)
     topic = FactoryBot.create(:topic_record, space_record: space)
     attachment = create_attachment(space: space, filename: "image.jpg")
@@ -291,13 +293,14 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
     output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
 
-    # 署名付きURLが生成されていないことを確認
-    expect(output_html).not_to include("expires_in")
-    expect(output_html).not_to include("signature")
+    # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
+    expect(output_html).to include("expires_in")
+    expect(output_html).to include("signature")
 
-    # 非メンバーの場合はa要素で囲まれないことを確認
-    expect(output_html).not_to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
-    # max-w-fullクラスは追加されていることを確認
+    # 画像がa要素で囲まれていることを確認
+    expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
+    expect(output_html).to include("rel=\"noopener noreferrer\"")
+    expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
     expect(output_html).to include("max-w-full")
   end
 

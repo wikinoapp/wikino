@@ -76,7 +76,7 @@ class AttachmentRecord < ApplicationRecord
     end
   end
 
-  # 署名付きURLを生成（権限チェック付き）
+  # 署名付きURLを生成（権限チェックは行わない - /attachments/:id エンドポイントで実施）
   sig do
     params(
       space_member_record: T.nilable(SpaceMemberRecord),
@@ -84,13 +84,8 @@ class AttachmentRecord < ApplicationRecord
     ).returns(T.nilable(String))
   end
   def generate_signed_url(space_member_record:, expires_in: 1.hour)
-    # ポリシーを使用してアクセス権限を確認
-    policy = SpaceMemberPolicy.new(
-      user_record: space_member_record&.user_record,
-      space_member_record:
-    )
-
-    return nil unless policy.can_view_attachment?(attachment_record: self)
+    # 権限チェックは /attachments/:id エンドポイントで行うため、ここでは行わない
+    # space_member_recordは将来の拡張用に残している
 
     blob = blob_record
     return nil unless blob
