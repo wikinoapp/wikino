@@ -279,15 +279,17 @@ class PageRecord < ApplicationRecord
     # Markdown形式の画像から抽出
     # ![alt text](/attachments/attachment_id)
     markdown_img_pattern = %r{!\[[^\]]*\]\(/attachments/([^/)]+)\)}
-    body.scan(markdown_img_pattern) do |attachment_id|
-      attachment_ids << attachment_id if attachment_id
+    body.scan(markdown_img_pattern) do |match|
+      # scanの戻り値は配列なので、最初の要素を取得
+      attachment_ids << match[0] if match[0]
     end
 
     # Markdown形式のリンクから抽出
     # [link text](/attachments/attachment_id)
     markdown_link_pattern = %r{(?<!!)\[[^\]]+\]\(/attachments/([^/)]+)\)}
-    body.scan(markdown_link_pattern) do |attachment_id|
-      attachment_ids << attachment_id if attachment_id
+    body.scan(markdown_link_pattern) do |match|
+      # scanの戻り値は配列なので、最初の要素を取得
+      attachment_ids << match[0] if match[0]
     end
 
     # 重複を削除
