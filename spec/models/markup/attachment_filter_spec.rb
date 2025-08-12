@@ -5,9 +5,11 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   before do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
+  end
 
-    # ActiveStorage::Blob#urlをモックして署名付きURLを返すようにする
-    allow_any_instance_of(ActiveStorage::Blob).to receive(:url) do |blob, expires_in: 1.hour|
+  # ActiveStorage::Blobのurlメソッドをスタブ化するヘルパー
+  def stub_blob_url(blob)
+    allow(blob).to receive(:url) do |expires_in: 1.hour|
       # 署名付きURLのような形式を返す
       "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=#{expires_in.to_i}&signature=test_signature&space_member_id=test"
     end
@@ -20,6 +22,9 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       filename: filename,
       content_type: content_type
     )
+
+    # Blobのurlメソッドをスタブ化
+    stub_blob_url(blob)
 
     # ActiveStorageのAttachmentを作成
     user = FactoryBot.create(:user_record)

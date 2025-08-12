@@ -4,12 +4,12 @@ declare module "@rails/activestorage" {
     constructor(file: File, url: string, delegate?: DirectUploadDelegate);
     create(callback: (error: Error | null, blob?: Blob) => void): void;
   }
-  
+
   interface DirectUploadDelegate {
     directUploadWillCreateBlobWithXHR?(xhr: XMLHttpRequest): void;
     directUploadWillStoreFileWithXHR?(xhr: XMLHttpRequest): void;
   }
-  
+
   interface Blob {
     id: string;
     key: string;

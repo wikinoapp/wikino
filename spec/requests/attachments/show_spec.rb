@@ -7,9 +7,11 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
   before do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
+  end
 
-    # ActiveStorage::Blob#urlをモックして署名付きURLを返すようにする
-    allow_any_instance_of(ActiveStorage::Blob).to receive(:url) do |blob|
+  # ActiveStorage::Blobのurlメソッドをスタブ化するヘルパー
+  def stub_blob_url(blob)
+    allow(blob).to receive(:url) do
       "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?test_signature"
     end
   end
@@ -21,6 +23,9 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
       filename: filename,
       content_type: "image/jpeg"
     )
+
+    # Blobのurlメソッドをスタブ化
+    stub_blob_url(blob)
 
     # ActiveStorageのAttachmentを作成
     user = FactoryBot.create(:user_record)
@@ -187,7 +192,8 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
     attachment = create_attachment_with_page(space: space, topic: public_topic, page: page)
 
     # ActiveStorageのblobへのアクセスをモックして、nilを返すようにする
-    allow(attachment).to receive_message_chain(:active_storage_attachment_record, :blob).and_return(nil)
+    active_storage_attachment = instance_double(ActiveStorage::Attachment, blob: nil)
+    allow(attachment).to receive(:active_storage_attachment_record).and_return(active_storage_attachment)
     allow(AttachmentRecord).to receive(:find).with(attachment.id).and_return(attachment)
 
     get attachment_path(attachment_id: attachment.id)
