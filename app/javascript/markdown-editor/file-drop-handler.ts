@@ -1,5 +1,4 @@
 import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { EditorState, Transaction } from "@codemirror/state";
 
 // ファイルドロップハンドラー
 export const fileDropHandler = ViewPlugin.fromClass(
@@ -105,7 +104,8 @@ export const fileDropHandler = ViewPlugin.fromClass(
       this.hideDropZone();
     }
 
-    update(update: ViewUpdate) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    update(_update: ViewUpdate) {
       // 必要に応じて更新処理
     }
   },

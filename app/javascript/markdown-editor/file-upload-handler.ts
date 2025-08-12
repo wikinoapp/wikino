@@ -98,7 +98,7 @@ export class FileUploadHandler {
       throw new UploadError("プリサイン用URLの取得に失敗しました");
     }
 
-    return response.json;
+    return (await response.json) as PresignResponse;
   }
 
   private async uploadFile(file: File, presignData: PresignResponse): Promise<void> {

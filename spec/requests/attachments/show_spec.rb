@@ -75,7 +75,7 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
 
     # スペースメンバーでログイン
     user = FactoryBot.create(:user_record, :with_password)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
+    FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
     sign_in(user_record: user)
 
     get attachment_path(attachment_id: attachment.id)
@@ -107,7 +107,7 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
 
     # 別のスペースのメンバーでログイン
     user = FactoryBot.create(:user_record, :with_password)
-    space_member = FactoryBot.create(:space_member_record, space_record: space2, user_record: user, active: true)
+    FactoryBot.create(:space_member_record, space_record: space2, user_record: user, active: true)
     sign_in(user_record: user)
 
     get attachment_path(attachment_id: attachment.id)
@@ -139,7 +139,7 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
 
     # スペースメンバーでログイン
     user = FactoryBot.create(:user_record, :with_password)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
+    FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
     sign_in(user_record: user)
 
     get attachment_path(attachment_id: attachment.id)
@@ -161,7 +161,7 @@ RSpec.describe "GET /attachments/:attachment_id", type: :request do
 
     # スペースメンバーでログイン
     user = FactoryBot.create(:user_record, :with_password)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
+    FactoryBot.create(:space_member_record, space_record: space, user_record: user, active: true)
     sign_in(user_record: user)
 
     get attachment_path(attachment_id: attachment.id)

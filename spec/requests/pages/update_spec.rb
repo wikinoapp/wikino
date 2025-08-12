@@ -119,7 +119,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
     # 添付ファイルレコードを作成
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: File.open(Rails.root.join("spec/fixtures/files/test-image.png")),
+      io: Rails.root.join("spec/fixtures/files/test-image.png").open,
       filename: "test-image.png",
       content_type: "image/png"
     )
@@ -136,7 +136,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     )
 
     blob2 = ActiveStorage::Blob.create_and_upload!(
-      io: File.open(Rails.root.join("spec/fixtures/files/test-image-2.png")),
+      io: Rails.root.join("spec/fixtures/files/test-image-2.png").open,
       filename: "test-image-2.png",
       content_type: "image/png"
     )
@@ -188,7 +188,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
 
     # 添付ファイルレコードを作成
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: File.open(Rails.root.join("spec/fixtures/files/test-image.png")),
+      io: Rails.root.join("spec/fixtures/files/test-image.png").open,
       filename: "test-image.png",
       content_type: "image/png"
     )
@@ -205,7 +205,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
     )
 
     blob2 = ActiveStorage::Blob.create_and_upload!(
-      io: File.open(Rails.root.join("spec/fixtures/files/test-image-2.png")),
+      io: Rails.root.join("spec/fixtures/files/test-image-2.png").open,
       filename: "test-image-2.png",
       content_type: "image/png"
     )
@@ -227,12 +227,11 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number", type: :request d
       <a href="/attachments/#{attachment2.id}">File</a>
     HTML
 
-    page = create(:page_record, 
-      space_record: space, 
-      topic_record: topic, 
+    page = create(:page_record,
+      space_record: space,
+      topic_record: topic,
       title: "A Page",
-      body: body_with_two_attachments
-    )
+      body: body_with_two_attachments)
 
     # 手動で参照レコードを作成（本来はサービスで作成されるが、テストのため直接作成）
     PageAttachmentReferenceRecord.create!(page_id: page.id, attachment_id: attachment1.id)

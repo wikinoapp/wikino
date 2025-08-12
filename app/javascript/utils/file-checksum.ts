@@ -7,9 +7,9 @@ import { FileChecksum } from "@rails/activestorage/src/file_checksum";
  */
 export async function calculateFileChecksum(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    FileChecksum.create(file, (error: string | null, checksum?: string) => {
+    FileChecksum.create(file, (error: Error | null, checksum?: string) => {
       if (error) {
-        reject(new Error(error));
+        reject(error);
       } else if (checksum) {
         resolve(checksum);
       } else {

@@ -237,7 +237,7 @@ RSpec.describe PageRecord, type: :record do
     end
 
     it "存在しない添付ファイルIDは無視すること" do
-      user = create(:user_record)
+      create(:user_record)
       space = create(:space_record)
       topic = create(:topic_record, space_record: space)
       page = create(:page_record, space_record: space, topic_record: topic)
