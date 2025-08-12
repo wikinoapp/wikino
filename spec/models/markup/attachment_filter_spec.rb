@@ -6,7 +6,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     # ActiveStorageのURL生成にホスト情報が必要
     Rails.application.routes.default_url_options[:host] = "test.host"
     # ActiveStorage::Current.url_optionsも設定
-    ActiveStorage::Current.url_options = { host: "test.host" }
+    ActiveStorage::Current.url_options = {host: "test.host"}
   end
 
   # ActiveStorage::Blobのurlメソッドをスタブ化するヘルパー
@@ -49,14 +49,14 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       attached_space_member_id: space_member.id,
       attached_at: Time.current
     )
-    
+
     # AttachmentRecordのgenerate_signed_urlメソッドを直接スタブ化
     signed_url = "http://test.host/rails/active_storage/blobs/redirect/#{blob.id}?expires_in=3600&signature=test_signature&space_member_id=test"
     allow(attachment).to receive(:generate_signed_url).and_return(signed_url)
-    
+
     # AttachmentRecord.find_byもスタブ化して、同じインスタンスを返すようにする
     allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space).and_return(attachment)
-    
+
     attachment
   end
 
@@ -179,7 +179,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member = FactoryBot.create(:space_member_record, space_record: space1, user_record: user)
     attachment = create_attachment(space: space2, filename: "image.jpg")
-    
+
     # space1でも添付ファイルを検索するので、そのスタブも追加
     allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space1).and_return(nil)
 
