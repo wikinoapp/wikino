@@ -27,6 +27,11 @@ class PageRecord < ApplicationRecord
     dependent: :restrict_with_exception,
     foreign_key: :page_id,
     inverse_of: :page_record
+  has_many :page_attachment_reference_records,
+    class_name: "PageAttachmentReferenceRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :page_id,
+    inverse_of: :page_record
 
   scope :published, -> { where.not(published_at: nil) }
   scope :pinned, -> { where.not(pinned_at: nil) }
