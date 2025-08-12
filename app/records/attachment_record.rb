@@ -135,11 +135,9 @@ class AttachmentRecord < ApplicationRecord
     active_storage_attachment_record&.blob&.url
   end
 
-  private
-
   # ユーザーがスペースメンバーかチェック
   sig { params(user_record: UserRecord).returns(T::Boolean) }
-  def is_space_member?(user_record:)
+  private def is_space_member?(user_record:)
     return false unless space_record
 
     SpaceMemberRecord.exists?(
