@@ -4,240 +4,242 @@
 require "rails_helper"
 
 RSpec.describe BlobProcessable do
-  # ActiveStorage::Blobを拡張したテスト用クラス
-  let(:blob_class) do
-    Class.new(ActiveStorage::Blob) do
-      include BlobProcessable
-    end
-  end
-
-  let(:blob) { blob_class.new }
-
   describe "#process_image_with_exif_removal" do
-    context "サポートされている画像形式の場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.jpg")
-        )
-      end
+    it "サポートされている画像形式の場合、処理が成功するとtrueを返す" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+      file_content = "fake image content"
 
-      context "処理が成功する場合" do
-        let(:tempfile) { Tempfile.new(["test", ".jpg"]) }
-        let(:file_content) { "fake image content" }
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return(file_content)
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:process_image)
+      allow(blob).to receive(:upload_processed_file)
 
-        before do
-          allow(blob).to receive(:download).and_return(file_content)
-          allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
-          allow(blob).to receive(:process_image)
-          allow(blob).to receive(:upload_processed_file)
-        end
+      expect(blob.process_image_with_exif_removal).to be true
 
-        after do
-          tempfile.close if tempfile && !tempfile.closed?
-          tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
-        end
-
-        it "trueを返す" do
-          expect(blob.process_image_with_exif_removal).to be true
-        end
-
-        it "画像処理とアップロードを実行する" do
-          expect(blob).to receive(:process_image).with(tempfile.path)
-          expect(blob).to receive(:upload_processed_file).with(tempfile.path)
-          blob.process_image_with_exif_removal
-        end
-
-        it "tempfileをクリーンアップする" do
-          blob.process_image_with_exif_removal
-          expect(File.exist?(tempfile.path)).to be false if tempfile.path
-        end
-      end
-
-      context "処理中にエラーが発生する場合" do
-        let(:tempfile) { Tempfile.new(["test", ".jpg"]) }
-
-        before do
-          allow(blob).to receive(:download).and_return("fake content")
-          allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
-          allow(blob).to receive(:process_image).and_raise(StandardError, "Processing error")
-        end
-
-        after do
-          tempfile.close if tempfile && !tempfile.closed?
-          tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
-        end
-
-        it "falseを返す" do
-          expect(blob.process_image_with_exif_removal).to be false
-        end
-
-        it "エラーをログに記録する" do
-          expect(Rails.logger).to receive(:error).with("Image processing failed: Processing error")
-          blob.process_image_with_exif_removal
-        end
-
-        it "tempfileをクリーンアップする" do
-          blob.process_image_with_exif_removal
-          expect(File.exist?(tempfile.path)).to be false if tempfile.path
-        end
-      end
+      tempfile.close if tempfile && !tempfile.closed?
+      tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
     end
 
-    context "サポートされていない画像形式の場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.txt")
-        )
-      end
+    it "サポートされている画像形式の場合、画像処理とアップロードを実行する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+      file_content = "fake image content"
 
-      it "falseを返す" do
-        expect(blob.process_image_with_exif_removal).to be false
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return(file_content)
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:upload_processed_file)
 
-      it "処理を実行しない" do
-        expect(blob).not_to receive(:download)
-        blob.process_image_with_exif_removal
-      end
+      expect(blob).to receive(:process_image).with(tempfile.path)
+      expect(blob).to receive(:upload_processed_file).with(tempfile.path)
+      
+      blob.process_image_with_exif_removal
+
+      tempfile.close if tempfile && !tempfile.closed?
+      tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
+    end
+
+    it "処理が成功した場合、tempfileをクリーンアップする" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+      file_content = "fake image content"
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return(file_content)
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:process_image)
+      allow(blob).to receive(:upload_processed_file)
+
+      blob.process_image_with_exif_removal
+      expect(File.exist?(tempfile.path)).to be false if tempfile.path
+    end
+
+    it "処理中にエラーが発生する場合、falseを返す" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return("fake content")
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:process_image).and_raise(StandardError, "Processing error")
+
+      expect(blob.process_image_with_exif_removal).to be false
+
+      tempfile.close if tempfile && !tempfile.closed?
+      tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
+    end
+
+    it "処理中にエラーが発生する場合、エラーをログに記録する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return("fake content")
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:process_image).and_raise(StandardError, "Processing error")
+      
+      expect(Rails.logger).to receive(:error).with("Image processing failed: Processing error")
+      blob.process_image_with_exif_removal
+
+      tempfile.close if tempfile && !tempfile.closed?
+      tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
+    end
+
+    it "処理中にエラーが発生する場合でも、tempfileをクリーンアップする" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      tempfile = Tempfile.new(["test", ".jpg"])
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return("fake content")
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(blob).to receive(:process_image).and_raise(StandardError, "Processing error")
+
+      blob.process_image_with_exif_removal
+      expect(File.exist?(tempfile.path)).to be false if tempfile.path
+    end
+
+    it "サポートされていない画像形式の場合、falseを返す" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.txt"))
+
+      expect(blob.process_image_with_exif_removal).to be false
+    end
+
+    it "サポートされていない画像形式の場合、処理を実行しない" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.txt"))
+      expect(blob).not_to receive(:download)
+      
+      blob.process_image_with_exif_removal
     end
   end
 
   describe "#supported_image_format?" do
-    BlobProcessable::SUPPORTED_IMAGE_FORMATS.each do |format|
-      context "#{format}ファイルの場合" do
-        before do
-          allow(blob).to receive(:filename).and_return(
-            ActiveStorage::Filename.new("test.#{format}")
-          )
-        end
+    %w[jpeg jpg png gif webp].each do |format|
+      it "#{format}ファイルの場合、trueを返す" do
+        blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+        blob = blob_class.new
 
-        it "trueを返す" do
-          expect(blob.send(:supported_image_format?)).to be true
-        end
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.#{format}"))
+        expect(blob.send(:supported_image_format?)).to be true
       end
 
-      context "#{format.upcase}ファイルの場合（大文字）" do
-        before do
-          allow(blob).to receive(:filename).and_return(
-            ActiveStorage::Filename.new("test.#{format.upcase}")
-          )
-        end
+      it "#{format.upcase}ファイル（大文字）の場合、trueを返す" do
+        blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+        blob = blob_class.new
 
-        it "trueを返す" do
-          expect(blob.send(:supported_image_format?)).to be true
-        end
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.#{format.upcase}"))
+        expect(blob.send(:supported_image_format?)).to be true
       end
     end
 
-    context "サポートされていない形式の場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.txt")
-        )
-      end
+    it "サポートされていない形式の場合、falseを返す" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
 
-      it "falseを返す" do
-        expect(blob.send(:supported_image_format?)).to be false
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.txt"))
+      expect(blob.send(:supported_image_format?)).to be false
     end
   end
 
   describe "#process_image" do
-    let(:input_path) { "/tmp/test_image.jpg" }
-    let(:vips_image) { double("Vips::Image") }
+    it "GIFファイルの場合、処理をスキップする（アニメーションを保持）" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      input_path = "/tmp/test_image.gif"
 
-    context "GIFファイルの場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("animated.gif")
-        )
-      end
-
-      it "処理をスキップする（アニメーションを保持）" do
-        expect(Vips::Image).not_to receive(:new_from_file)
-        blob.send(:process_image, input_path)
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
+      
+      expect(Vips::Image).not_to receive(:new_from_file)
+      blob.send(:process_image, input_path)
     end
 
-    context "JPEGファイルの場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.jpg")
-        )
-        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-        allow(vips_image).to receive(:autorot).and_return(vips_image)
-        allow(vips_image).to receive(:jpegsave)
-      end
+    it "JPEGファイルの場合、EXIF情報を削除して保存する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      input_path = "/tmp/test_image.jpg"
+      vips_image = double("Vips::Image")
 
-      it "EXIF情報を削除して保存する" do
-        expect(vips_image).to receive(:autorot)
-        expect(vips_image).to receive(:jpegsave).with(input_path, strip: true, Q: 90)
-        blob.send(:process_image, input_path)
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+      allow(vips_image).to receive(:autorot).and_return(vips_image)
+
+      expect(vips_image).to receive(:autorot)
+      expect(vips_image).to receive(:jpegsave).with(input_path, strip: true, Q: 90)
+      
+      blob.send(:process_image, input_path)
     end
 
-    context "PNGファイルの場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.png")
-        )
-        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-        allow(vips_image).to receive(:autorot).and_return(vips_image)
-        allow(vips_image).to receive(:pngsave)
-      end
+    it "PNGファイルの場合、メタデータを削除して保存する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      input_path = "/tmp/test_image.png"
+      vips_image = double("Vips::Image")
 
-      it "メタデータを削除して保存する" do
-        expect(vips_image).to receive(:autorot)
-        expect(vips_image).to receive(:pngsave).with(input_path, strip: true, compression: 9)
-        blob.send(:process_image, input_path)
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
+      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+      allow(vips_image).to receive(:autorot).and_return(vips_image)
+
+      expect(vips_image).to receive(:autorot)
+      expect(vips_image).to receive(:pngsave).with(input_path, strip: true, compression: 9)
+      
+      blob.send(:process_image, input_path)
     end
 
-    context "WebPファイルの場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.webp")
-        )
-        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-        allow(vips_image).to receive(:autorot).and_return(vips_image)
-        allow(vips_image).to receive(:webpsave)
-      end
+    it "WebPファイルの場合、メタデータを削除して保存する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      input_path = "/tmp/test_image.webp"
+      vips_image = double("Vips::Image")
 
-      it "メタデータを削除して保存する" do
-        expect(vips_image).to receive(:autorot)
-        expect(vips_image).to receive(:webpsave).with(input_path, strip: true, Q: 90)
-        blob.send(:process_image, input_path)
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.webp"))
+      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+      allow(vips_image).to receive(:autorot).and_return(vips_image)
+
+      expect(vips_image).to receive(:autorot)
+      expect(vips_image).to receive(:webpsave).with(input_path, strip: true, Q: 90)
+      
+      blob.send(:process_image, input_path)
     end
 
-    context "その他の形式の場合" do
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("test.bmp")
-        )
-        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-        allow(vips_image).to receive(:autorot).and_return(vips_image)
-        allow(vips_image).to receive(:write_to_file)
-      end
+    it "その他の形式の場合、そのまま保存する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      input_path = "/tmp/test_image.bmp"
+      vips_image = double("Vips::Image")
 
-      it "そのまま保存する" do
-        expect(vips_image).to receive(:autorot)
-        expect(vips_image).to receive(:write_to_file).with(input_path)
-        blob.send(:process_image, input_path)
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.bmp"))
+      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+      allow(vips_image).to receive(:autorot).and_return(vips_image)
+
+      expect(vips_image).to receive(:autorot)
+      expect(vips_image).to receive(:write_to_file).with(input_path)
+      
+      blob.send(:process_image, input_path)
     end
   end
 
   describe "#download_to_tempfile" do
-    let(:file_content) { "fake image binary content" }
-
-    before do
-      allow(blob).to receive(:filename).and_return(
-        ActiveStorage::Filename.new("test.jpg")
-      )
-      allow(blob).to receive(:download).and_return(file_content)
-    end
-
     it "tempfileを作成してファイル内容を書き込む" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      file_content = "fake image binary content"
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+      allow(blob).to receive(:download).and_return(file_content)
+
       tempfile = blob.send(:download_to_tempfile)
       
       expect(tempfile).to be_a(Tempfile)
@@ -253,50 +255,42 @@ RSpec.describe BlobProcessable do
   end
 
   describe "#upload_processed_file" do
-    let(:processed_path) { "/tmp/processed_image.jpg" }
-    let(:file_content) { "processed image content" }
-
-    before do
-      allow(File).to receive(:open).with(processed_path, "rb").and_yield(StringIO.new(file_content))
-    end
-
     it "処理済みファイルをアップロードする" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      processed_path = "/tmp/processed_image.jpg"
+      file_content = "processed image content"
+
+      allow(File).to receive(:open).with(processed_path, "rb").and_yield(StringIO.new(file_content))
+      
       expect(blob).to receive(:upload).with(kind_of(StringIO))
       blob.send(:upload_processed_file, processed_path)
     end
   end
 
   describe "統合テスト: アニメーションGIFの処理" do
-    context "アニメーションGIFをアップロードした場合" do
-      let(:gif_content) { "GIF89a animated gif content with multiple frames" }
-      let(:tempfile) { Tempfile.new(["animated", ".gif"]) }
+    it "アニメーションGIFをアップロードした場合、アニメーション情報を保持したまま処理を完了する" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+      gif_content = "GIF89a animated gif content with multiple frames"
+      tempfile = Tempfile.new(["animated", ".gif"])
 
-      before do
-        allow(blob).to receive(:filename).and_return(
-          ActiveStorage::Filename.new("animated.gif")
-        )
-        allow(blob).to receive(:download).and_return(gif_content)
-        allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
-        
-        # GIFファイルは処理をスキップすることを確認
-        allow(File).to receive(:open).with(tempfile.path, "rb").and_yield(StringIO.new(gif_content))
-      end
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
+      allow(blob).to receive(:download).and_return(gif_content)
+      allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
+      allow(File).to receive(:open).with(tempfile.path, "rb").and_yield(StringIO.new(gif_content))
 
-      after do
-        tempfile.close if tempfile && !tempfile.closed?
-        tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
-      end
+      # Vipsによる画像処理が呼ばれないことを確認
+      expect(Vips::Image).not_to receive(:new_from_file)
+      
+      # アップロードは実行される
+      expect(blob).to receive(:upload).with(kind_of(StringIO))
+      
+      result = blob.process_image_with_exif_removal
+      expect(result).to be true
 
-      it "アニメーション情報を保持したまま処理を完了する" do
-        # Vipsによる画像処理が呼ばれないことを確認
-        expect(Vips::Image).not_to receive(:new_from_file)
-        
-        # アップロードは実行される
-        expect(blob).to receive(:upload).with(kind_of(StringIO))
-        
-        result = blob.process_image_with_exif_removal
-        expect(result).to be true
-      end
+      tempfile.close if tempfile && !tempfile.closed?
+      tempfile.unlink if tempfile && tempfile.path && File.exist?(tempfile.path)
     end
   end
 end
