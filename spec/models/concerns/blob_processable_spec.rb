@@ -30,6 +30,7 @@ RSpec.describe BlobProcessable do
       blob = blob_class.new
       tempfile = Tempfile.new(["test", ".jpg"])
       file_content = "fake image content"
+      tempfile_path = tempfile.path
 
       allow(blob).to receive_messages(
         filename: ActiveStorage::Filename.new("test.jpg"),
@@ -37,10 +38,13 @@ RSpec.describe BlobProcessable do
         download_to_tempfile: tempfile
       )
 
-      expect(blob).to receive(:process_image).with(tempfile.path)
-      expect(blob).to receive(:upload_processed_file).with(tempfile.path)
+      allow(blob).to receive(:process_image)
+      allow(blob).to receive(:upload_processed_file)
 
       blob.process_image_with_exif_removal
+
+      expect(blob).to have_received(:process_image).with(tempfile_path)
+      expect(blob).to have_received(:upload_processed_file).with(tempfile_path)
 
       tempfile&.close unless tempfile&.closed?
       tempfile&.unlink if tempfile&.path && File.exist?(tempfile.path)
@@ -132,9 +136,11 @@ RSpec.describe BlobProcessable do
       blob = blob_class.new
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.txt"))
-      expect(blob).not_to receive(:download)
+      allow(blob).to receive(:download)
 
       blob.process_image_with_exif_removal
+
+      expect(blob).not_to have_received(:download)
     end
   end
 
@@ -183,7 +189,7 @@ RSpec.describe BlobProcessable do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
       input_path = "/tmp/test_image.jpg"
-      vips_image = double("Vips::Image")
+      vips_image = double(:vips_image)
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
       allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
@@ -200,7 +206,7 @@ RSpec.describe BlobProcessable do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
       input_path = "/tmp/test_image.png"
-      vips_image = double("Vips::Image")
+      vips_image = double(:vips_image)
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
       allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
@@ -217,7 +223,7 @@ RSpec.describe BlobProcessable do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
       input_path = "/tmp/test_image.webp"
-      vips_image = double("Vips::Image")
+      vips_image = double(:vips_image)
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.webp"))
       allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
@@ -234,7 +240,7 @@ RSpec.describe BlobProcessable do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
       input_path = "/tmp/test_image.bmp"
-      vips_image = double("Vips::Image")
+      vips_image = double(:vips_image)
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.bmp"))
       allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
