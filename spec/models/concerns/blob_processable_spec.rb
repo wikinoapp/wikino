@@ -36,7 +36,7 @@ RSpec.describe BlobProcessable do
 
       expect(blob).to receive(:process_image).with(tempfile.path)
       expect(blob).to receive(:upload_processed_file).with(tempfile.path)
-      
+
       blob.process_image_with_exif_removal
 
       tempfile.close if tempfile && !tempfile.closed?
@@ -84,7 +84,7 @@ RSpec.describe BlobProcessable do
       allow(blob).to receive(:download).and_return("fake content")
       allow(blob).to receive(:download_to_tempfile).and_return(tempfile)
       allow(blob).to receive(:process_image).and_raise(StandardError, "Processing error")
-      
+
       expect(Rails.logger).to receive(:error).with("Image processing failed: Processing error")
       blob.process_image_with_exif_removal
 
@@ -121,7 +121,7 @@ RSpec.describe BlobProcessable do
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.txt"))
       expect(blob).not_to receive(:download)
-      
+
       blob.process_image_with_exif_removal
     end
   end
@@ -161,7 +161,7 @@ RSpec.describe BlobProcessable do
       input_path = "/tmp/test_image.gif"
 
       allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
-      
+
       expect(Vips::Image).not_to receive(:new_from_file)
       blob.send(:process_image, input_path)
     end
@@ -178,7 +178,7 @@ RSpec.describe BlobProcessable do
 
       expect(vips_image).to receive(:autorot)
       expect(vips_image).to receive(:jpegsave).with(input_path, strip: true, Q: 90)
-      
+
       blob.send(:process_image, input_path)
     end
 
@@ -194,7 +194,7 @@ RSpec.describe BlobProcessable do
 
       expect(vips_image).to receive(:autorot)
       expect(vips_image).to receive(:pngsave).with(input_path, strip: true, compression: 9)
-      
+
       blob.send(:process_image, input_path)
     end
 
@@ -210,7 +210,7 @@ RSpec.describe BlobProcessable do
 
       expect(vips_image).to receive(:autorot)
       expect(vips_image).to receive(:webpsave).with(input_path, strip: true, Q: 90)
-      
+
       blob.send(:process_image, input_path)
     end
 
@@ -226,7 +226,7 @@ RSpec.describe BlobProcessable do
 
       expect(vips_image).to receive(:autorot)
       expect(vips_image).to receive(:write_to_file).with(input_path)
-      
+
       blob.send(:process_image, input_path)
     end
   end
@@ -241,14 +241,14 @@ RSpec.describe BlobProcessable do
       allow(blob).to receive(:download).and_return(file_content)
 
       tempfile = blob.send(:download_to_tempfile)
-      
+
       expect(tempfile).to be_a(Tempfile)
       expect(tempfile.path).to include("image_processing")
       expect(tempfile.path).to include(".jpg")
-      
+
       tempfile.rewind
       expect(tempfile.read).to eq(file_content)
-      
+
       tempfile.close
       tempfile.unlink
     end
@@ -262,7 +262,7 @@ RSpec.describe BlobProcessable do
       file_content = "processed image content"
 
       allow(File).to receive(:open).with(processed_path, "rb").and_yield(StringIO.new(file_content))
-      
+
       expect(blob).to receive(:upload).with(kind_of(StringIO))
       blob.send(:upload_processed_file, processed_path)
     end
@@ -282,10 +282,10 @@ RSpec.describe BlobProcessable do
 
       # Vipsによる画像処理が呼ばれないことを確認
       expect(Vips::Image).not_to receive(:new_from_file)
-      
+
       # アップロードは実行される
       expect(blob).to receive(:upload).with(kind_of(StringIO))
-      
+
       result = blob.process_image_with_exif_removal
       expect(result).to be true
 
@@ -294,3 +294,4 @@ RSpec.describe BlobProcessable do
     end
   end
 end
+

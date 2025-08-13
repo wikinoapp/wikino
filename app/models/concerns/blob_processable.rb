@@ -63,10 +63,10 @@ module BlobProcessable
   private def process_image(input_path)
     blob = T.cast(self, ActiveStorage::Blob)
     extension = blob.filename.extension_without_delimiter.downcase
-    
+
     # GIFファイルは処理をスキップ（アニメーションを保持）
     return if extension == "gif"
-    
+
     # Vipsを使用して画像を処理
     image = Vips::Image.new_from_file(input_path)
 
