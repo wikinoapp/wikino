@@ -121,6 +121,12 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       const { file, position } = event.detail;
       this.fileUploadHandler.handleFileUpload([file], position);
     }) as EventListener);
+
+    // ドキュメントファイルペーストイベントのハンドリング（PDF、Office文書、テキスト、圧縮ファイル）
+    this.editorView.dom.addEventListener("file-paste", ((event: CustomEvent) => {
+      const { file, position } = event.detail;
+      this.fileUploadHandler.handleFileUpload([file], position);
+    }) as EventListener);
   }
 
   disconnect() {
