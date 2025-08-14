@@ -66,8 +66,8 @@ function isAcceptedFileType(mimeType: string): boolean {
   // JSONファイル
   if (mimeType === "application/json") return true;
 
-  // ログファイル（MIMEタイプが設定されない場合もあるため、text/plainも含む）
-  if (mimeType === "text/x-log" || mimeType === "text/plain") return true;
+  // テキストファイル
+  if (mimeType === "text/plain") return true;
 
   // 圧縮ファイル
   const compressionTypes = [

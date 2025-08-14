@@ -161,7 +161,6 @@ export class FileUploadHandler {
         "application/vnd.ms-excel",
         "text/plain",
         "text/csv",
-        "text/x-log",
         "text/markdown",
         "application/json",
         "application/x-zip-compressed",
