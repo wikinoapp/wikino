@@ -43,8 +43,10 @@ module Attachments
       "application/json",
       # アーカイブ
       "application/zip",
+      "application/x-zip-compressed", # .zip (alternative MIME type)
       "application/x-tar",
       "application/gzip",
+      "application/x-gzip", # .gz (alternative MIME type)
       "application/x-compressed-tar" # .tgz
     ].freeze, T::Array[String])
 
