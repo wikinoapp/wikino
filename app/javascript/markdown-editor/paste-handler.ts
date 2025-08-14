@@ -28,7 +28,7 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
     if (file) {
       // ファイルタイプに応じてイベント名を決定
       const eventName = getEventNameForFileType(item.type);
-      
+
       // ファイルペーストイベントを発火
       view.dom.dispatchEvent(
         new CustomEvent(eventName, {
@@ -49,31 +49,38 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
 function isAcceptedFileType(mimeType: string): boolean {
   // 画像
   if (mimeType.startsWith("image/")) return true;
-  
+
   // 動画
   if (mimeType.startsWith("video/")) return true;
-  
+
   // PDF
   if (mimeType === "application/pdf") return true;
-  
+
   // Microsoft Office文書
   if (mimeType.startsWith("application/vnd.ms-")) return true;
   if (mimeType.startsWith("application/vnd.openxmlformats-officedocument.")) return true;
-  
+
   // テキストファイル
   if (mimeType.startsWith("text/")) return true;
-  
+
+  // JSONファイル
+  if (mimeType === "application/json") return true;
+
+  // ログファイル（MIMEタイプが設定されない場合もあるため、text/plainも含む）
+  if (mimeType === "text/x-log" || mimeType === "text/plain") return true;
+
   // 圧縮ファイル
   const compressionTypes = [
     "application/zip",
     "application/x-zip-compressed",
     "application/x-rar-compressed",
     "application/gzip",
+    "application/x-gzip",
     "application/x-tar",
-    "application/x-7z-compressed"
+    "application/x-7z-compressed",
   ];
   if (compressionTypes.includes(mimeType)) return true;
-  
+
   return false;
 }
 
@@ -83,7 +90,7 @@ function getEventNameForFileType(mimeType: string): string {
   if (mimeType.startsWith("image/") || mimeType.startsWith("video/")) {
     return "media-paste";
   }
-  
+
   // その他のファイルは汎用のファイルペーストイベント
   return "file-paste";
 }
