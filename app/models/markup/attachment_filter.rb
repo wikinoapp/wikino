@@ -68,11 +68,20 @@ class Markup
         signed_url = generate_signed_url(attachment_id)
 
         if signed_url
+          # 元のwidth/height属性を取得
+          width_attr = element["width"]
+          height_attr = element["height"]
+          
+          # width/height属性を含むimg要素のHTMLを作成
+          img_attrs = ["src=\"#{signed_url}\"", "class=\"max-w-full\""]
+          img_attrs << "width=\"#{width_attr}\"" if width_attr
+          img_attrs << "height=\"#{height_attr}\"" if height_attr
+          
           # 署名付きURLが生成できた場合は、a要素で囲む
           # 新しいHTMLを作成
           link_html = <<~HTML
             <a href="#{signed_url}" target="_blank" rel="noopener noreferrer" class="inline-block">
-              <img src="#{signed_url}" class="max-w-full" />
+              <img #{img_attrs.join(" ")} />
             </a>
           HTML
 

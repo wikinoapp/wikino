@@ -70,7 +70,13 @@ class Markup
         elements: default_sanitization_config[:elements] + [
           # タスクリスト記法 (`- [ ]`) のために許可する
           "input"
-        ]
+        ],
+        attributes: Selma::Sanitizer::Config.merge(
+          default_sanitization_config[:attributes],
+          {
+            "img" => (default_sanitization_config[:attributes]["img"] || []) + ["width", "height"]
+          }
+        )
       }
     )
   end
