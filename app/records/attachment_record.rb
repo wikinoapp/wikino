@@ -90,7 +90,15 @@ class AttachmentRecord < ApplicationRecord
     blob = blob_record
     return nil unless blob
 
-    blob.url(expires_in:)
+    # 署名付きURLを生成
+    # dispositionとfilenameパラメータを追加して、ダウンロード時のファイル名を指定
+    # content_typeも明示的に指定
+    blob.url(
+      expires_in:,
+      disposition: :inline,
+      filename: blob.filename,
+      content_type: blob.content_type
+    )
   rescue => e
     Rails.logger.error("Failed to generate signed URL for attachment #{id}: #{e.message}")
     nil
