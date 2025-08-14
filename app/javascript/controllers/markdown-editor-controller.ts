@@ -116,8 +116,8 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
       this.fileUploadHandler.handleFileUpload(files, position);
     }) as EventListener);
 
-    // 画像ペーストイベントのハンドリング
-    this.editorView.dom.addEventListener("image-paste", ((event: CustomEvent) => {
+    // メディア（画像・動画）ペーストイベントのハンドリング
+    this.editorView.dom.addEventListener("media-paste", ((event: CustomEvent) => {
       const { file, position } = event.detail;
       this.fileUploadHandler.handleFileUpload([file], position);
     }) as EventListener);

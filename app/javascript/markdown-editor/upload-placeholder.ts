@@ -65,9 +65,6 @@ export function replacePlaceholderWithUrl(
     } else {
       newText = `<img alt="${altText || fileName}" src="${url}">`;
     }
-  } else if (fileType?.startsWith("video/")) {
-    // 動画の場合はURLのみ
-    newText = url;
   } else {
     // その他のファイルはMarkdown形式のリンク（!なし）
     newText = `[${altText || fileName}](${url})`;

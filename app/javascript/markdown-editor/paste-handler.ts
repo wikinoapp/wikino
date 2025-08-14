@@ -5,29 +5,30 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
 
   if (!items) return false;
 
-  const imageItems: DataTransferItem[] = [];
+  const mediaItems: DataTransferItem[] = [];
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
 
-    if (item.type.startsWith("image/")) {
-      imageItems.push(item);
+    // 画像と動画の両方をサポート
+    if (item.type.startsWith("image/") || item.type.startsWith("video/")) {
+      mediaItems.push(item);
     }
   }
 
-  // 画像が含まれていない場合は通常のペースト処理
-  if (imageItems.length === 0) return false;
+  // メディアファイルが含まれていない場合は通常のペースト処理
+  if (mediaItems.length === 0) return false;
 
-  // 画像ペースト時のブラウザのデフォルト動作を無効化する
+  // メディアペースト時のブラウザのデフォルト動作を無効化する
   event.preventDefault();
 
-  imageItems.forEach((item) => {
+  mediaItems.forEach((item) => {
     const file = item.getAsFile();
 
     if (file) {
-      // ペーストイベントを発火
+      // メディアペーストイベントを発火（画像と動画の両方に対応）
       view.dom.dispatchEvent(
-        new CustomEvent("image-paste", {
+        new CustomEvent("media-paste", {
           detail: {
             file,
             position: view.state.selection.main.head,
