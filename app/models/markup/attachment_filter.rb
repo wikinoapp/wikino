@@ -11,6 +11,12 @@ class Markup
       T::Array[String]
     )
 
+    # インライン表示可能な動画フォーマット
+    INLINE_VIDEO_FORMATS = T.let(
+      %w[mp4 webm ogg mov].freeze,
+      T::Array[String]
+    )
+
     # @override
     sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
@@ -57,7 +63,7 @@ class Markup
       return unless attachment
 
       # インライン表示可能な画像形式かチェック
-      if can_display_inline?(attachment)
+      if can_display_inline_image?(attachment)
         # 署名付きURLを生成
         signed_url = generate_signed_url(attachment_id)
 
@@ -92,13 +98,38 @@ class Markup
       attachment_id = extract_attachment_id(href)
       return unless attachment_id
 
-      # 署名付きURLを生成
-      signed_url = generate_signed_url(attachment_id)
-      element["href"] = signed_url if signed_url
+      # AttachmentRecordを取得してファイル形式を確認
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
+      return unless attachment
 
-      # 新規タブで開く
-      element["target"] = "_blank"
-      element["rel"] = "noopener noreferrer"
+      # 動画ファイルの場合はvideo要素に変換
+      if can_display_inline_video?(attachment)
+        # 署名付きURLを生成
+        signed_url = generate_signed_url(attachment_id)
+        
+        if signed_url
+          # video要素として表示
+          video_html = <<~HTML
+            <video src="#{signed_url}" controls class="max-w-full">
+              お使いのブラウザは動画タグをサポートしていません。
+              <a href="#{signed_url}" target="_blank">動画をダウンロード</a>
+            </video>
+          HTML
+
+          # element.replaceの代わりに、after挿入してから元のelementを削除
+          element.after(video_html, as: :html)
+          element.remove
+        end
+      else
+        # 動画以外の場合は通常のリンクとして処理
+        # 署名付きURLを生成
+        signed_url = generate_signed_url(attachment_id)
+        element["href"] = signed_url if signed_url
+
+        # 新規タブで開く
+        element["target"] = "_blank"
+        element["rel"] = "noopener noreferrer"
+      end
     end
 
     # 添付ファイルのURLから添付ファイルIDを抽出
@@ -132,13 +163,23 @@ class Markup
     end
 
     sig { params(attachment: AttachmentRecord).returns(T::Boolean) }
-    private def can_display_inline?(attachment)
+    private def can_display_inline_image?(attachment)
       # ファイル拡張子を取得
       filename = attachment.filename
       return false unless filename
 
       extension = File.extname(filename).downcase.delete(".")
       INLINE_IMAGE_FORMATS.include?(extension)
+    end
+
+    sig { params(attachment: AttachmentRecord).returns(T::Boolean) }
+    private def can_display_inline_video?(attachment)
+      # ファイル拡張子を取得
+      filename = attachment.filename
+      return false unless filename
+
+      extension = File.extname(filename).downcase.delete(".")
+      INLINE_VIDEO_FORMATS.include?(extension)
     end
 
     sig { params(element: Selma::HTML::Element, attachment: AttachmentRecord).void }
