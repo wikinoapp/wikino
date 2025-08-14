@@ -13,11 +13,10 @@ module Spaces
             total_count: Integer,
             current_page: Integer,
             per_page: Integer,
-            search_query: T.nilable(String),
-            file_type: T.nilable(String)
+            search_query: T.nilable(String)
           ).void
         end
-        def initialize(current_user:, space:, attachments:, total_count:, current_page:, per_page:, search_query:, file_type:)
+        def initialize(current_user:, space:, attachments:, total_count:, current_page:, per_page:, search_query:)
           @current_user = current_user
           @space = space
           @attachments = attachments
@@ -25,7 +24,6 @@ module Spaces
           @current_page = current_page
           @per_page = per_page
           @search_query = search_query
-          @file_type = file_type
         end
 
         sig { override.void }
@@ -61,10 +59,6 @@ module Spaces
         sig { returns(T.nilable(String)) }
         attr_reader :search_query
         private :search_query
-
-        sig { returns(T.nilable(String)) }
-        attr_reader :file_type
-        private :file_type
 
         sig { returns(PageName) }
         private def current_page_name

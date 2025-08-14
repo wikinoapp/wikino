@@ -24,7 +24,6 @@ class AttachmentRecord < ApplicationRecord
     foreign_key: :attachment_id,
     dependent: :restrict_with_exception
 
-  scope :by_space, ->(space_id) { where(space_id:) }
   scope :by_space_member, ->(attached_space_member_id) { where(attached_space_member_id:) }
   scope :recent, -> { order(attached_at: :desc) }
 

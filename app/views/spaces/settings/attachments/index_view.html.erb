@@ -17,111 +17,119 @@
     ) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.attachments")) %>
 
-      <div class="mb-6">
-        <%= form_with(
-          url: space_settings_attachments_path(space.identifier),
-          method: :get,
-          class: "flex flex-col gap-4 md:flex-row"
-        ) do |f| %>
-          <div class="flex-1">
-            <%= f.text_field :q,
-              value: search_query,
-              placeholder: t("messages.search.search_filename_placeholder"),
-              class: "w-full" %>
-          </div>
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-6">
+            <%= form_with(
+              url: space_settings_attachments_path(space.identifier),
+              method: :get,
+              class: "form flex flex-col gap-4 md:flex-row"
+            ) do |f| %>
+              <%= f.text_field :q, {
+                value: search_query,
+                placeholder: t("messages.search.search_filename_placeholder"),
+                class: "input w-full",
+                autofocus: true
+              } %>
 
-          <div class="flex gap-2">
-            <%= f.select :file_type, options_for_select([
-              [t("nouns.all_files"), ""],
-              [t("nouns.images"), "image"],
-              [t("nouns.videos"), "video"],
-              [t("nouns.documents"), "application"]
-            ], file_type), {}, class: "w-full md:w-auto" %>
+              <%= f.button type: :submit, class: "btn rounded-full" do %>
+                <%= render BaseUI::IconComponent.new(
+                  name: "magnifying-glass-regular",
+                  size: "18px",
+                  class_name: "fill-primary-foreground"
+                ) %>
 
-            <%= f.button type: :submit, class: "btn rounded-full" do %>
-              <%= render BaseUI::IconComponent.new(
-                name: "magnifying-glass",
-                size: "18px",
-                class_name: "fill-primary-foreground"
-              ) %>
-
-              <%= t("verbs.search") %>
+                <%= t("verbs.search") %>
+              <% end %>
             <% end %>
-          </div>
-        <% end %>
-      </div>
 
-      <div class="grid gap-4">
-        <% if attachments.empty? %>
-          <div class="py-12 text-center">
-            <p class="text-muted-foreground"><%= t("messages.no_attachments_found") %></p>
-          </div>
-        <% else %>
-          <% attachments.each do |attachment| %>
-            <div class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors" data-attachment-id="<%= attachment.database_id %>">
-              <div class="flex items-center gap-4">
-                <div class="flex h-16 w-16 items-center justify-center rounded border">
-                  <% if attachment.image? && attachment.url.present? %>
-                    <%= image_tag attachment.url, class: "w-full h-full object-contain", loading: "lazy" %>
-                  <% else %>
-                    <%= render BaseUI::IconComponent.new(name: "file", size: "32px", class_name: "fill-muted-foreground") %>
+            <div>
+              <div class="grid gap-4">
+                <% if attachments.empty? %>
+                  <div class="py-12 text-center">
+                    <p class="text-muted-foreground">
+                      <%= t("messages.no_attachments_found") %>
+                    </p>
+                  </div>
+                <% else %>
+                  <% attachments.each do |attachment| %>
+                    <div
+                      class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
+                    >
+                      <div class="flex items-center gap-4">
+                        <div class="flex h-16 w-16 items-center justify-center rounded border">
+                          <% if attachment.image? && attachment.url.present? %>
+                            <%= image_tag attachment.url, class: "w-full h-full object-contain", loading: "lazy" %>
+                          <% else %>
+                            <%= render BaseUI::IconComponent.new(
+                              name: "file",
+                              size: "32px",
+                            class_name: "fill-muted-foreground"
+                            ) %>
+                          <% end %>
+                        </div>
+
+                        <div>
+                          <p class="font-semibold">
+                            <%= link_to attachment_path(attachment.database_id), target: "_blank", rel: "noopener", class: "text-primary hover:underline" do %>
+                              <%= attachment.filename %>
+                            <% end %>
+                          </p>
+
+                          <p class="text-muted-foreground text-sm">
+                            <%= attachment.content_type %> • <%= number_to_human_size(attachment.byte_size) %>
+                          </p>
+
+                          <p class="text-muted-foreground text-xs">
+                            <%= t("messages.uploaded_at", time: l(attachment.attached_at, format: :short)) %>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <%= link_to attachment.url, target: "_blank", rel: "noopener", class: "btn-ghost rounded-full p-2" do %>
+                          <%= render BaseUI::IconComponent.new(name: "eye", size: "18px", class_name: "fill-muted-foreground") %>
+                        <% end %>
+
+                        <%= button_tag type: "button",
+                            class: "btn-ghost rounded-full p-2 text-destructive hover:bg-destructive/10",
+                            data: {
+                              action: "click->attachments#delete",
+                              attachment_id: attachment.database_id,
+                              filename: attachment.filename
+                            } do %>
+                          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-current") %>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
+
+              <% if total_pages > 1 %>
+                <div class="mt-8 flex justify-center gap-2">
+                  <% if has_previous_page? %>
+                    <%= link_to space_settings_attachments_path(space.identifier, page: current_page - 1, q: search_query),
+                        class: "btn-ghost rounded-full px-4 py-2" do %>
+                      <%= t("nouns.previous_page") %>
+                    <% end %>
+                  <% end %>
+
+                  <span class="text-muted-foreground px-4 py-2">
+                    <%= t("messages.page_of", current: current_page, total: total_pages) %>
+                  </span>
+
+                  <% if has_next_page? %>
+                    <%= link_to space_settings_attachments_path(space.identifier, page: current_page + 1, q: search_query),
+                        class: "btn-ghost rounded-full px-4 py-2" do %>
+                      <%= t("nouns.next_page") %>
+                    <% end %>
                   <% end %>
                 </div>
-
-                <!-- ファイル情報 -->
-                <div>
-                  <p class="font-semibold"><%= attachment.filename %></p>
-                  <p class="text-muted-foreground text-sm">
-                    <%= attachment.content_type %> • <%= number_to_human_size(attachment.byte_size) %>
-                  </p>
-                  <p class="text-muted-foreground text-xs">
-                    <%= t("messages.uploaded_at", time: l(attachment.attached_at, format: :short)) %>
-                  </p>
-                </div>
-              </div>
-
-              <!-- アクション -->
-              <div class="flex items-center gap-2">
-                <%= link_to attachment.url, target: "_blank", rel: "noopener", class: "btn-ghost rounded-full p-2" do %>
-                  <%= render BaseUI::IconComponent.new(name: "eye", size: "18px", class_name: "fill-muted-foreground") %>
-                <% end %>
-
-                <%= button_tag type: "button",
-                    class: "btn-ghost rounded-full p-2 text-destructive hover:bg-destructive/10",
-                    data: {
-                      action: "click->attachments#delete",
-                      attachment_id: attachment.database_id,
-                      filename: attachment.filename
-                    } do %>
-                  <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-current") %>
-                <% end %>
-              </div>
+              <% end %>
             </div>
-          <% end %>
+          </div>
         <% end %>
-      </div>
-
-      <!-- ページネーション -->
-      <% if total_pages > 1 %>
-        <div class="mt-8 flex justify-center gap-2">
-          <% if has_previous_page? %>
-            <%= link_to space_settings_attachments_path(space.identifier, page: current_page - 1, q: search_query, file_type: file_type),
-                class: "btn-ghost rounded-full px-4 py-2" do %>
-              <%= t("nouns.previous_page") %>
-            <% end %>
-          <% end %>
-
-          <span class="text-muted-foreground px-4 py-2">
-            <%= t("messages.page_of", current: current_page, total: total_pages) %>
-          </span>
-
-          <% if has_next_page? %>
-            <%= link_to space_settings_attachments_path(space.identifier, page: current_page + 1, q: search_query, file_type: file_type),
-                class: "btn-ghost rounded-full px-4 py-2" do %>
-              <%= t("nouns.next_page") %>
-            <% end %>
-          <% end %>
-        </div>
       <% end %>
     <% end %>
   <% end %>

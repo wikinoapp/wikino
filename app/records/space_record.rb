@@ -12,6 +12,10 @@ class SpaceRecord < ApplicationRecord
     Plan::Large.serialize => 2
   }, prefix: true
 
+  has_many :attachment_records,
+    dependent: :restrict_with_exception,
+    foreign_key: :space_id,
+    inverse_of: :space_record
   has_many :draft_page_records,
     dependent: :restrict_with_exception,
     foreign_key: :space_id,
