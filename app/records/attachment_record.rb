@@ -91,12 +91,10 @@ class AttachmentRecord < ApplicationRecord
     return nil unless blob
 
     # 署名付きURLを生成
-    # dispositionとfilenameパラメータを追加して、ダウンロード時のファイル名を指定
-    # content_typeも明示的に指定
     blob.url(
       expires_in:,
-      disposition: :inline,
-      filename: blob.filename,
+      # `content_type` を指定しないと、SVGファイルのContent-Typeが `application/octet-stream` になり
+      # ブラウザでの表示が正しく行われない
       content_type: blob.content_type
     )
   rescue => e
