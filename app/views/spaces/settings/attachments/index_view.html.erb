@@ -43,19 +43,19 @@
               <% end %>
             <% end %>
 
-            <div>
-              <div class="grid gap-4">
-                <% if attachments.empty? %>
-                  <div class="py-12 text-center">
-                    <p class="text-muted-foreground">
-                      <%= t("messages.no_attachments_found") %>
-                    </p>
-                  </div>
-                <% else %>
+            <div class="flex flex-col gap-6">
+              <% if attachments.empty? %>
+                <div class="py-12 text-center">
+                  <p class="text-muted-foreground">
+                    <%= t("messages.no_attachments_found") %>
+                  </p>
+                </div>
+              <% else %>
+                <div
+                  class="divide-y flex flex-col"
+                >
                   <% attachments.each do |attachment| %>
-                    <div
-                      class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
-                    >
+                    <div class="flex items-center justify-between py-4">
                       <div class="flex items-center gap-4">
                         <div class="flex h-16 w-16 items-center justify-center rounded border">
                           <% if attachment.image? && attachment.url.present? %>
@@ -103,11 +103,11 @@
                       </div>
                     </div>
                   <% end %>
-                <% end %>
-              </div>
+                </div>
+              <% end %>
 
               <% if total_pages > 1 %>
-                <div class="mt-8 flex justify-center gap-2">
+                <div class="flex items-center justify-center gap-2">
                   <% if has_previous_page? %>
                     <%= link_to space_settings_attachments_path(space.identifier, page: current_page - 1, q: search_query),
                         class: "btn-ghost rounded-full px-4 py-2" do %>
