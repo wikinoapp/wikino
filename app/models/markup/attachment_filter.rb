@@ -71,12 +71,12 @@ class Markup
           # 元のwidth/height属性を取得
           width_attr = element["width"]
           height_attr = element["height"]
-          
+
           # width/height属性を含むimg要素のHTMLを作成
           img_attrs = ["src=\"#{signed_url}\"", "class=\"max-w-full\""]
           img_attrs << "width=\"#{width_attr}\"" if width_attr
           img_attrs << "height=\"#{height_attr}\"" if height_attr
-          
+
           # 署名付きURLが生成できた場合は、a要素で囲む
           # 新しいHTMLを作成
           link_html = <<~HTML
@@ -112,10 +112,10 @@ class Markup
       return unless attachment
 
       # 動画ファイルの場合はvideo要素に変換
+      signed_url = generate_signed_url(attachment_id)
       if can_display_inline_video?(attachment)
         # 署名付きURLを生成
-        signed_url = generate_signed_url(attachment_id)
-        
+
         if signed_url
           # video要素として表示
           video_html = <<~HTML
@@ -132,7 +132,6 @@ class Markup
       else
         # 動画以外の場合は通常のリンクとして処理
         # 署名付きURLを生成
-        signed_url = generate_signed_url(attachment_id)
         element["href"] = signed_url if signed_url
 
         # 新規タブで開く

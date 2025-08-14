@@ -61,7 +61,7 @@
             <div class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors" data-attachment-id="<%= attachment.database_id %>">
               <div class="flex items-center gap-4">
                 <div class="flex h-16 w-16 items-center justify-center rounded border">
-                  <% if attachment.image? %>
+                  <% if attachment.image? && attachment.url.present? %>
                     <%= image_tag attachment.url, class: "w-full h-full object-contain", loading: "lazy" %>
                   <% else %>
                     <%= render BaseUI::IconComponent.new(name: "file", size: "32px", class_name: "fill-muted-foreground") %>

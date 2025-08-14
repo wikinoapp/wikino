@@ -33,19 +33,25 @@ module Spaces
           file_type = params[:file_type]
 
           # 添付ファイルの取得
-          attachment_records = AttachmentRecord.by_space(space_record)
-            .includes(:blob)
-            .order(created_at: :desc)
+          attachment_records = AttachmentRecord.by_space(space_record.id)
+            .includes(active_storage_attachment_record: :blob)
+            .order(attached_at: :desc)
 
           # 検索フィルタリング
           if search_query.present?
-            attachment_records = attachment_records.joins(:blob)
+            attachment_records = attachment_records
+              .joins(active_storage_attachment_record: :blob)
               .where("active_storage_blobs.filename ILIKE ?", "%#{search_query}%")
           end
 
           # ファイルタイプフィルタリング
           if file_type.present?
-            attachment_records = attachment_records.joins(:blob)
+            # すでにjoinsしている場合は再度joinしない
+            if search_query.blank?
+              attachment_records = attachment_records
+                .joins(active_storage_attachment_record: :blob)
+            end
+            attachment_records = attachment_records
               .where("active_storage_blobs.content_type LIKE ?", "#{file_type}/%")
           end
 
