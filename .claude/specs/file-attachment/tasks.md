@@ -3,15 +3,6 @@
 細かな要件について知りたいときは @.claude/specs/file-attachment/requirements.md を参照してください。
 
 ## TODO
-
-- 画像の署名付きURL変換
-  - Markdown→HTML変換時の処理を実装
-  - アクセス権限に応じたURL生成ロジックを追加
-  - 有効期限の設定（1時間）
-- 画像のインライン表示
-  - 対応フォーマットの判定（JPEG, PNG, GIF, WebP, SVG）
-  - imgタグでのインライン表示実装
-  - クリックで新規タブ表示の実装
 - ファイル一覧コンポーネント
   - サムネイル表示（画像ファイル用）
   - ファイルアイコン表示（その他のファイル用）
@@ -79,6 +70,8 @@
 
 ## Done
 
+- 画像の署名付きURL変換（Markdown→HTML変換時の処理、アクセス権限に応じたURL生成、有効期限1時間）
+- 画像のインライン表示（JPEG/PNG/GIF/WebP/SVG対応、imgタグでのインライン表示、クリックで新規タブ表示）
 - Active Storageのインストールと設定（`rails active_storage:install`を実行、マイグレーションファイルの確認と実行）
 - ストレージサービスの設定（開発環境・本番環境: Cloudflare R2の設定を`config/storage.yml`に追加）
 - 環境別のストレージ設定（`config/environments/development.rb`でCloudflare R2を使用、`config/environments/production.rb`でCloudflare R2を使用）
