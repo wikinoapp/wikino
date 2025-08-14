@@ -62,6 +62,8 @@ ja:
             show: "エクスポート | %{space_name}"
           general:
             show: "基本情報 | %{space_name}"
+          attachments:
+            index: "添付ファイル | %{space_name}"
           show: "設定 | %{space_name}"
         show: "%{space_name}"
       welcome:

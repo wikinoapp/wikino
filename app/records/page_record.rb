@@ -7,6 +7,7 @@ class PageRecord < ApplicationRecord
   include RecordConcerns::Pageable
 
   self.table_name = "pages"
+  self.ignored_columns += ["body_html"]
 
   acts_as_sequenced column: :number, scope: :space_id
 
@@ -23,6 +24,11 @@ class PageRecord < ApplicationRecord
     inverse_of: :page_record
   has_many :revision_records,
     class_name: "PageRevisionRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :page_id,
+    inverse_of: :page_record
+  has_many :page_attachment_reference_records,
+    class_name: "PageAttachmentReferenceRecord",
     dependent: :restrict_with_exception,
     foreign_key: :page_id,
     inverse_of: :page_record
@@ -50,7 +56,6 @@ class PageRecord < ApplicationRecord
       space_record: topic_record.space_record,
       title: nil,
       body: "",
-      body_html: "",
       linked_page_ids: [],
       modified_at: Time.current
     )
@@ -208,11 +213,86 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       editor_record: SpaceMemberRecord,
-      body: String,
-      body_html: String
+      body: String
     ).returns(PageRevisionRecord)
   end
-  def create_revision!(editor_record:, body:, body_html:)
-    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:)
+  def create_revision!(editor_record:, body:)
+    revision_records.create!(space_record:, space_member_record: editor_record, body:)
+  end
+
+  # ページ本文から添付ファイルIDを抽出し、page_attachment_referencesレコードを更新
+  sig { params(body: String).void }
+  def update_attachment_references!(body:)
+    # 本文から添付ファイルのIDを抽出
+    attachment_ids = extract_attachment_ids(body)
+
+    # 現在の参照を取得
+    current_attachment_ids = page_attachment_reference_records.pluck(:attachment_id)
+
+    # 新しく追加される添付ファイル
+    new_attachment_ids = attachment_ids - current_attachment_ids
+
+    # 削除される添付ファイル
+    removed_attachment_ids = current_attachment_ids - attachment_ids
+
+    # 新しい参照を作成
+    new_attachment_ids.each do |attachment_id|
+      # 添付ファイルが実際に存在するか確認
+      if AttachmentRecord.exists?(id: attachment_id, space_id:)
+        PageAttachmentReferenceRecord.create!(
+          page_id: id,
+          attachment_id:
+        )
+      end
+    end
+
+    # 不要な参照を削除
+    if removed_attachment_ids.any?
+      PageAttachmentReferenceRecord.where(
+        page_id: id,
+        attachment_id: removed_attachment_ids
+      ).destroy_all
+    end
+
+    nil
+  end
+
+  # 本文から添付ファイルIDを抽出
+  sig { params(body: String).returns(T::Array[String]) }
+  private def extract_attachment_ids(body)
+    attachment_ids = T.let([], T::Array[String])
+
+    # imgタグのsrc属性から抽出
+    # <img src="/attachments/attachment_id">
+    img_pattern = %r{<img[^>]+src=["'](/attachments/([^/"']+))["'][^>]*>}
+    body.scan(img_pattern) do |_full_url, attachment_id|
+      attachment_ids << attachment_id if attachment_id
+    end
+
+    # aタグのhref属性から抽出
+    # <a href="/attachments/attachment_id">
+    link_pattern = %r{<a[^>]+href=["'](/attachments/([^/"']+))["'][^>]*>}
+    body.scan(link_pattern) do |_full_url, attachment_id|
+      attachment_ids << attachment_id if attachment_id
+    end
+
+    # Markdown形式の画像から抽出
+    # ![alt text](/attachments/attachment_id)
+    markdown_img_pattern = %r{!\[[^\]]*\]\(/attachments/([^/)]+)\)}
+    body.scan(markdown_img_pattern) do |match|
+      # scanの戻り値は配列なので、最初の要素を取得
+      attachment_ids << match[0] if match[0]
+    end
+
+    # Markdown形式のリンクから抽出
+    # [link text](/attachments/attachment_id)
+    markdown_link_pattern = %r{(?<!!)\[[^\]]+\]\(/attachments/([^/)]+)\)}
+    body.scan(markdown_link_pattern) do |match|
+      # scanの戻り値は配列なので、最初の要素を取得
+      attachment_ids << match[0] if match[0]
+    end
+
+    # 重複を削除
+    attachment_ids.uniq
   end
 end

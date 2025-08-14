@@ -3,6 +3,7 @@
 
 class PageRevisionRecord < ApplicationRecord
   self.table_name = "page_revisions"
+  self.ignored_columns += ["body_html"]
 
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :space_member_record, foreign_key: :space_member_id

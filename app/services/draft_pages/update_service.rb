@@ -26,7 +26,6 @@ module DraftPages
           topic_record: topic,
           title:,
           body: new_body,
-          body_html: Markup.new(current_topic: topic.not_nil!).render_html(text: new_body),
           modified_at: Time.zone.now
         }
         draft_page.save!

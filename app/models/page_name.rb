@@ -26,6 +26,7 @@ class PageName < T::Enum
     SpaceDetail = new
     SpaceNew = new
     SpaceSettings = new
+    SpaceSettingsAttachments = new
     SpaceSettingsDeletion = new
     SpaceSettingsExportDetail = new
     SpaceSettingsExportsNew = new

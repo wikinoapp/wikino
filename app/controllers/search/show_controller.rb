@@ -19,7 +19,7 @@ module Search
       # 検索結果の取得
       pages = if form.valid? && form.searchable?
         page_records = search_pages(form)
-        PageRepository.new.to_models(page_records:)
+        PageRepository.new.to_models(page_records:, current_space_member: nil)
       else
         []
       end

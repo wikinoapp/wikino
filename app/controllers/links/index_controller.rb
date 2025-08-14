@@ -28,7 +28,7 @@ module Links
       draft_page_record = space_member_record&.draft_page_records&.find_by(page_record:)
       pageable_record = draft_page_record.presence || page_record
 
-      page = PageRepository.new.to_model(page_record:)
+      page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
       link_list = LinkListRepository.new.to_model(
         user_record: current_user_record,
         pageable_record:,

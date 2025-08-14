@@ -27,7 +27,7 @@ class LinkRepository < ApplicationRepository
 
       backlinks = backlinked_page_records.map do |backlinked_page_record|
         Backlink.new(
-          page: PageRepository.new.to_model(page_record: backlinked_page_record)
+          page: PageRepository.new.to_model(page_record: backlinked_page_record, current_space_member: nil)
         )
       end
 
@@ -37,7 +37,7 @@ class LinkRepository < ApplicationRepository
       )
 
       Link.new(
-        page: PageRepository.new.to_model(page_record:),
+        page: PageRepository.new.to_model(page_record:, current_space_member: nil),
         backlink_list:
       )
     end

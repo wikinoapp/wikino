@@ -418,6 +418,20 @@ class PageRecord
     def draft_page_records=(value); end
 
     sig { returns(T::Array[T.untyped]) }
+    def page_attachment_reference_record_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def page_attachment_reference_record_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `PageRecord` class because it declared `has_many :page_attachment_reference_records`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::PageAttachmentReferenceRecord::PrivateCollectionProxy) }
+    def page_attachment_reference_records; end
+
+    sig { params(value: T::Enumerable[::PageAttachmentReferenceRecord]).void }
+    def page_attachment_reference_records=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def page_editor_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
@@ -699,51 +713,6 @@ class PageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def body_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(::String) }
-    def body_html; end
-
-    sig { params(value: ::String).returns(::String) }
-    def body_html=(value); end
-
-    sig { returns(T::Boolean) }
-    def body_html?; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_html_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def body_html_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def body_html_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def body_html_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def body_html_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_html_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_html_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def body_html_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_html_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_html_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_html_was; end
-
-    sig { void }
-    def body_html_will_change!; end
 
     sig { returns(T.nilable(::String)) }
     def body_in_database; end
@@ -1172,9 +1141,6 @@ class PageRecord
     def restore_body!; end
 
     sig { void }
-    def restore_body_html!; end
-
-    sig { void }
     def restore_created_at!; end
 
     sig { void }
@@ -1221,12 +1187,6 @@ class PageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_body_html; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_body_html?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -1539,9 +1499,6 @@ class PageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_body_html?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end

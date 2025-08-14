@@ -27,7 +27,7 @@ module Pages
       pageable_record = draft_page_record.presence || page_record
 
       space = SpaceRepository.new.to_model(space_record:)
-      page = PageRepository.new.to_model(page_record:)
+      page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
       form = Pages::EditForm.new(
         space_member_record:,
