@@ -46,6 +46,7 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
 }
 
 // サポートするファイルタイプを判定
+// NOTE: `.log` ファイルは `mimeType` が空文字列になることがあるためサポートしない
 function isAcceptedFileType(mimeType: string): boolean {
   // 画像
   if (mimeType.startsWith("image/")) return true;

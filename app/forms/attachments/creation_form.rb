@@ -125,7 +125,7 @@ module Attachments
       compatible_types = {
         "image/jpg" => "image/jpeg",
         "image/jpeg" => "image/jpg",
-        "text/plain" => ["text/x-log", "text/markdown"],
+        "text/plain" => ["text/markdown"],
         "application/x-zip-compressed" => "application/zip"
       }
 

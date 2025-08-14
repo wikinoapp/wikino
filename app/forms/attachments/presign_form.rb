@@ -39,7 +39,6 @@ module Attachments
       # テキストファイル
       "text/plain",
       "text/csv",
-      "text/x-log",
       "text/markdown",
       "application/json",
       # アーカイブ
