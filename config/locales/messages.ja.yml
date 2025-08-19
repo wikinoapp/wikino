@@ -7,7 +7,6 @@ ja:
     no_attachments_found: 添付ファイルが見つかりません
     uploaded_at: "%{time} にアップロード"
     page_of: "%{current} / %{total} ページ"
-    delete_attachment_confirmation: このファイルを削除しますか？
     accounts:
       atname_hint_html: |-
         この識別子はプロフィールのURLに使用されます。あとから変更もできます<br>
@@ -18,6 +17,9 @@ ja:
       signed_in_successfully: ログインしました
       signed_up_successfully_html: "アカウントを作成しました。<br class='block sm:hidden'>Wikinoにようこそ！"
       terms_html: "%{terms_link} と %{privacy_link} に同意のうえでアカウントを作成してください"
+    attachments:
+      delete_confirmation: このファイルを削除しますか？
+      deleted_successfully: ファイルを削除しました
     authentication:
       already_signed_in: すでにログインしています
     draft_saved_time_html: '下書き保存: <span class="font-bold">%{time}</span>'

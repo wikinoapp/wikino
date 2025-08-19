@@ -20,15 +20,14 @@ module Spaces
             space_member_record:
           )
 
-          attachment_record = AttachmentRecord.find(params[:attachment_id])
-
-          # スペースに属していることを確認
-          unless attachment_record.space_id == space_record.id
-            return render(json: {error: "Not found"}, status: :not_found)
-          end
+          attachment_record = space_record.attachment_records.find(params[:attachment_id])
 
           unless space_member_policy.can_delete_attachment?(attachment_record:)
-            return render(json: {error: "Unauthorized"}, status: :forbidden)
+            redirect_to(
+              space_settings_attachments_path(space_record.identifier),
+              alert: t("messages.unauthorized")
+            )
+            return
           end
 
           # 関連するページ内リンクを削除
@@ -37,7 +36,8 @@ module Spaces
           # 添付ファイルを削除
           attachment_record.destroy!
 
-          render json: {message: "Attachment deleted successfully"}, status: :ok
+          flash[:notice] = t("messages.attachments.deleted_successfully")
+          redirect_to space_settings_attachments_path(space_record.identifier)
         end
       end
     end

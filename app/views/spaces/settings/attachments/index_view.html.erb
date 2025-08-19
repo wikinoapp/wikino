@@ -87,18 +87,18 @@
                       </div>
 
                       <div class="flex items-center gap-2">
-                        <%= link_to attachment.url, target: "_blank", rel: "noopener", class: "btn-ghost rounded-full p-2" do %>
-                          <%= render BaseUI::IconComponent.new(name: "eye", size: "18px", class_name: "fill-muted-foreground") %>
-                        <% end %>
-
-                        <%= button_tag type: "button",
-                            class: "btn-ghost rounded-full p-2 text-destructive hover:bg-destructive/10",
-                            data: {
-                              action: "click->attachments#delete",
-                              attachment_id: attachment.database_id,
-                              filename: attachment.filename
-                            } do %>
-                          <%= render BaseUI::IconComponent.new(name: "trash", size: "18px", class_name: "fill-current") %>
+                        <%= button_to space_settings_attachment_path(space.identifier, attachment.database_id), {
+                          method: :delete,
+                          class: "btn-ghost rounded-full p-2 text-destructive hover:bg-destructive/10",
+                          data: {
+                            turbo_confirm: t("messages.attachments.delete_confirmation")
+                          }
+                        } do %>
+                          <%= render BaseUI::IconComponent.new(
+                            name: "trash",
+                            size: "18px",
+                            class_name: "fill-current"
+                          ) %>
                         <% end %>
                       </div>
                     </div>
