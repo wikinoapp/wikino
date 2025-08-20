@@ -6,3 +6,4 @@
 
 module FFI::Function; end
 module FFI::Library; end
+module SpaceMemberRole::Admin; end

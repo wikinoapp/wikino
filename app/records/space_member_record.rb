@@ -5,7 +5,8 @@ class SpaceMemberRecord < ApplicationRecord
   self.table_name = "space_members"
 
   enum :role, {
-    SpaceMemberRole::Owner.serialize => 0
+    SpaceMemberRole::Owner.serialize => 0,
+    SpaceMemberRole::Member.serialize => 1
   }, prefix: true
 
   belongs_to :space_record, foreign_key: :space_id

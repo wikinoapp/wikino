@@ -6,7 +6,31 @@ require "rails_helper"
 RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id", type: :request do
   it "ログインしていないとき、ログインページにリダイレクトされること" do
     space_record = FactoryBot.create(:space_record)
-    attachment_record = FactoryBot.create(:attachment_record, space_record:)
+    space_member = FactoryBot.create(:space_member_record, space_record:)
+
+    # ActiveStorageのテーブルに直接データを作成
+    blob = ActiveStorage::Blob.create!(
+      key: SecureRandom.uuid,
+      filename: "test.txt",
+      content_type: "text/plain",
+      byte_size: 1024,
+      checksum: Digest::MD5.base64digest("test content")
+    )
+
+    active_storage_attachment = ActiveStorage::Attachment.create!(
+      name: "file",
+      record_type: "SpaceRecord",
+      record_id: space_record.id,
+      blob:
+    )
+
+    attachment_record = AttachmentRecord.create!(
+      space_record:,
+      attached_space_member_record: space_member,
+      active_storage_attachment_record: active_storage_attachment,
+      attached_at: Time.current,
+      processing_status: AttachmentProcessingStatus::Completed.serialize
+    )
 
     delete("/s/#{space_record.identifier}/settings/attachments/#{attachment_record.id}")
 
@@ -19,7 +43,31 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    attachment_record = FactoryBot.create(:attachment_record, space_record:)
+    space_member = FactoryBot.create(:space_member_record, space_record:)
+
+    # ActiveStorageのテーブルに直接データを作成
+    blob = ActiveStorage::Blob.create!(
+      key: SecureRandom.uuid,
+      filename: "test.txt",
+      content_type: "text/plain",
+      byte_size: 1024,
+      checksum: Digest::MD5.base64digest("test content")
+    )
+
+    active_storage_attachment = ActiveStorage::Attachment.create!(
+      name: "file",
+      record_type: "SpaceRecord",
+      record_id: space_record.id,
+      blob:
+    )
+
+    attachment_record = AttachmentRecord.create!(
+      space_record:,
+      attached_space_member_record: space_member,
+      active_storage_attachment_record: active_storage_attachment,
+      attached_at: Time.current,
+      processing_status: AttachmentProcessingStatus::Completed.serialize
+    )
 
     delete("/s/#{space_record.identifier}/settings/attachments/#{attachment_record.id}")
 
@@ -31,11 +79,34 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Member.serialize)
-    
+    FactoryBot.create(:space_member_record, :member, space_record:, user_record:)
+
     # 他のメンバーがアップロードしたファイル
     other_member = FactoryBot.create(:space_member_record, space_record:)
-    attachment_record = FactoryBot.create(:attachment_record, space_record:, attached_space_member_record: other_member)
+
+    # ActiveStorageのテーブルに直接データを作成
+    blob = ActiveStorage::Blob.create!(
+      key: SecureRandom.uuid,
+      filename: "test.txt",
+      content_type: "text/plain",
+      byte_size: 1024,
+      checksum: Digest::MD5.base64digest("test content")
+    )
+
+    active_storage_attachment = ActiveStorage::Attachment.create!(
+      name: "file",
+      record_type: "SpaceRecord",
+      record_id: space_record.id,
+      blob:
+    )
+
+    attachment_record = AttachmentRecord.create!(
+      space_record:,
+      attached_space_member_record: other_member,
+      active_storage_attachment_record: active_storage_attachment,
+      attached_at: Time.current,
+      processing_status: AttachmentProcessingStatus::Completed.serialize
+    )
 
     delete("/s/#{space_record.identifier}/settings/attachments/#{attachment_record.id}")
 
@@ -47,8 +118,31 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Admin.serialize)
-    attachment_record = FactoryBot.create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
+    space_member_record = FactoryBot.create(:space_member_record, :owner, space_record:, user_record:)
+
+    # ActiveStorageのテーブルに直接データを作成
+    blob = ActiveStorage::Blob.create!(
+      key: SecureRandom.uuid,
+      filename: "test.txt",
+      content_type: "text/plain",
+      byte_size: 1024,
+      checksum: Digest::MD5.base64digest("test content")
+    )
+
+    active_storage_attachment = ActiveStorage::Attachment.create!(
+      name: "file",
+      record_type: "SpaceRecord",
+      record_id: space_record.id,
+      blob:
+    )
+
+    attachment_record = AttachmentRecord.create!(
+      space_record:,
+      attached_space_member_record: space_member_record,
+      active_storage_attachment_record: active_storage_attachment,
+      attached_at: Time.current,
+      processing_status: AttachmentProcessingStatus::Completed.serialize
+    )
 
     # 削除サービスがモック化されるように
     delete_service = instance_double(Attachments::DeleteService)
@@ -68,10 +162,32 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Member.serialize)
-    
+    space_member_record = FactoryBot.create(:space_member_record, :member, space_record:, user_record:)
+
     # 自分がアップロードしたファイル
-    attachment_record = FactoryBot.create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
+    # ActiveStorageのテーブルに直接データを作成
+    blob = ActiveStorage::Blob.create!(
+      key: SecureRandom.uuid,
+      filename: "test.txt",
+      content_type: "text/plain",
+      byte_size: 1024,
+      checksum: Digest::MD5.base64digest("test content")
+    )
+
+    active_storage_attachment = ActiveStorage::Attachment.create!(
+      name: "file",
+      record_type: "SpaceRecord",
+      record_id: space_record.id,
+      blob:
+    )
+
+    attachment_record = AttachmentRecord.create!(
+      space_record:,
+      attached_space_member_record: space_member_record,
+      active_storage_attachment_record: active_storage_attachment,
+      attached_at: Time.current,
+      processing_status: AttachmentProcessingStatus::Completed.serialize
+    )
 
     # 削除サービスがモック化されるように
     delete_service = instance_double(Attachments::DeleteService)
