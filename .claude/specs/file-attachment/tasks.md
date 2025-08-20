@@ -4,97 +4,94 @@
 
 ## TODO
 
-- ファイル一覧コンポーネント
+- [x] Markdownエディタ内の img 要素の width, height をHTMLにレンダリングしたときも保持するようにして画像の見た目上の大きさを変えられるようにする
+- [x] コピペでファイルアップロードできるようにする
+  - `.json`, `.gz`
+- [x] 画像の署名付きURL変換（Markdown→HTML変換時の処理、アクセス権限に応じたURL生成、有効期限1時間）
+- [x] 画像のインライン表示（JPEG/PNG/GIF/WebP/SVG対応、imgタグでのインライン表示、クリックで新規タブ表示）
+- [x] Active Storageのインストールと設定（`rails active_storage:install`を実行、マイグレーションファイルの確認と実行）
+- [x] ストレージサービスの設定（開発環境・本番環境: Cloudflare R2の設定を`config/storage.yml`に追加）
+- [x] 環境別のストレージ設定（`config/environments/development.rb`でCloudflare R2を使用、`config/environments/production.rb`でCloudflare R2を使用）
+- [x] attachmentsテーブルの作成（id (ULID)、space_id (外部キー)、active_storage_attachment_id (外部キー)、attached_space_member_id (外部キー)、attached_at (timestamp)）
+- [x] page_attachment_referencesテーブルの作成（id (ULID)、attachment_id (外部キー)、page_id (外部キー)）
+- [x] AttachmentRecordの実装（ActiveStorageとの関連付け、スコープ: by_space, by_space_member, recent）
+- [x] PageAttachmentReferenceRecordの実装（ページとの関連付け、表示順序の管理）
+- [x] ダイレクトアップロード用エンドポイントの実装（`POST /s/:space_identifier/attachments/presign`、ファイルサイズ・形式の事前検証、署名付きURLの生成）
+- [x] アップロード完了通知エンドポイント（`POST /s/:space_identifier/attachments`、Attachmentレコードの作成、ファイル検証処理の実行）
+- [x] ファイル形式検証サービスの実装（MIMEタイプのホワイトリスト管理、マジックナンバーによる検証、SVGファイルのサニタイズ処理）
+- [x] 画像処理サービスの実装（EXIF情報の削除（プライバシー保護）、自動回転補正、ファイル名のサニタイズ）
+- [x] ファイルアクセスポリシーの実装（スペースメンバーシップの確認、権限に応じたアクセス制御）
+- [x] 署名付きURL生成サービス（1時間の有効期限設定、アクセス権限の検証）
+- [x] ファイル一覧エンドポイント（`GET /s/:space_identifier/settings/attachments`、権限に応じたフィルタリング、検索・ページネーション機能）
+- [x] ファイル削除エンドポイント（`DELETE /s/:space_identifier/settings/attachments/:attachment_id`、権限チェック、関連するページ内リンクの処理）
+- [x] ドラッグ&ドロップ機能の実装（CodeMirror 6へのドロップゾーン追加、ドラッグ中のビジュアルフィードバック）
+- [x] ペースト機能の実装（クリップボードAPIの使用、画像ペースト時の自動アップロード）
+- [x] アップロード進捗表示（「アップロード中...」テキストの挿入、完了後のURL置換処理）
+- [x] DirectUploadクラスの実装（ファイルサイズ・形式の事前検証、進捗イベントの処理、エラーハンドリング）
+- [x] リトライ機能の実装（最大3回のリトライ、エクスポネンシャルバックオフ）
+- [ ] ファイル一覧コンポーネント
   - サムネイル表示（画像ファイル用）
   - ファイルアイコン表示（その他のファイル用）
   - メタデータ表示（ファイル名、サイズ、アップロード日時、アップロード者）
-- 検索・フィルタリング機能
+- [ ] 検索・フィルタリング機能
   - ファイル名検索の実装
   - 拡張子フィルターの実装
   - リアルタイム検索の実装
-- ページネーション実装
+- [ ] ページネーション実装
   - 50件ずつの表示
   - ページ番号表示
   - 前後ページへのナビゲーション
-- ファイル削除機能
+- [ ] ファイル削除機能
   - 削除確認ダイアログの実装
   - 削除処理の実装
   - 削除後の通知表示
   - 関連するページ内リンクの処理
-- CSRFトークン検証
+- [ ] CSRFトークン検証
   - アップロードリクエストでのCSRFトークン検証
   - 削除リクエストでのCSRFトークン検証
-- ファイルサイズ制限の実装
+- [ ] ファイルサイズ制限の実装
   - クライアント側検証（10MB制限）
   - サーバー側検証（10MB制限）
   - エラーメッセージの表示
-- 実行可能ファイルのブロック
+- [ ] 実行可能ファイルのブロック
   - 拡張子チェック（.exe, .bat, .sh等）
   - MIMEタイプチェック
   - マジックナンバーでの検証
-- 署名付きURLの実装
+- [ ] 署名付きURLの実装
   - Cloudflare R2での署名付きURL生成
   - 有効期限の設定（1時間）
   - アクセス権限の検証
-- モデルのユニットテスト
+- [ ] モデルのユニットテスト
   - AttachmentRecordのテスト
   - PageAttachmentReferenceRecordのテスト
   - バリデーションのテスト
-- APIエンドポイントのリクエストスペック
+- [ ] APIエンドポイントのリクエストスペック
   - アップロードエンドポイントのテスト
   - 削除エンドポイントのテスト
   - 一覧取得エンドポイントのテスト
-- ファイル検証サービスのテスト
+- [ ] ファイル検証サービスのテスト
   - MIMEタイプ検証のテスト
   - ファイルサイズ検証のテスト
   - マジックナンバー検証のテスト
-- アクセス制御のテスト
+- [ ] アクセス制御のテスト
   - スペースメンバーのみアクセス可能なことを確認
   - 権限に応じた操作制限のテスト
-- アップロード機能のE2Eテスト
+- [ ] アップロード機能のE2Eテスト
   - ドラッグ&ドロップでのアップロード
   - ペーストでのアップロード
   - ファイル選択でのアップロード
-- ドラッグ&ドロップのテスト
+- [ ] ドラッグ&ドロップのテスト
   - ドロップゾーンの表示確認
   - ファイルドロップ時の処理確認
-- エラーハンドリングのテスト
+- [ ] エラーハンドリングのテスト
   - ネットワークエラー時のリトライ
   - ファイルサイズ超過時のエラー表示
   - 無効なファイル形式時のエラー表示
-- ファイルアップロードの脆弱性テスト
+- [ ] ファイルアップロードの脆弱性テスト
   - パストラバーサル攻撃の防止確認
   - ファイル名インジェクションの防止確認
-- XSS対策のテスト（SVGファイル）
+- [ ] XSS対策のテスト（SVGファイル）
   - SVGファイル内のスクリプトタグ除去確認
   - イベントハンドラー属性の除去確認
-- エクスポート機能の修正
+- [ ] エクスポート機能の修正
   - エクスポートファイルに添付ファイルを含めるようにする
-
-## Done
-
-- Markdownエディタ内の img 要素の width, height をHTMLにレンダリングしたときも保持するようにして画像の見た目上の大きさを変えられるようにする
-- コピペでファイルアップロードできるようにする
-  - `.json`, `.gz`
-- 画像の署名付きURL変換（Markdown→HTML変換時の処理、アクセス権限に応じたURL生成、有効期限1時間）
-- 画像のインライン表示（JPEG/PNG/GIF/WebP/SVG対応、imgタグでのインライン表示、クリックで新規タブ表示）
-- Active Storageのインストールと設定（`rails active_storage:install`を実行、マイグレーションファイルの確認と実行）
-- ストレージサービスの設定（開発環境・本番環境: Cloudflare R2の設定を`config/storage.yml`に追加）
-- 環境別のストレージ設定（`config/environments/development.rb`でCloudflare R2を使用、`config/environments/production.rb`でCloudflare R2を使用）
-- attachmentsテーブルの作成（id (ULID)、space_id (外部キー)、active_storage_attachment_id (外部キー)、attached_space_member_id (外部キー)、attached_at (timestamp)）
-- page_attachment_referencesテーブルの作成（id (ULID)、attachment_id (外部キー)、page_id (外部キー)）
-- AttachmentRecordの実装（ActiveStorageとの関連付け、スコープ: by_space, by_space_member, recent）
-- PageAttachmentReferenceRecordの実装（ページとの関連付け、表示順序の管理）
-- ダイレクトアップロード用エンドポイントの実装（`POST /s/:space_identifier/attachments/presign`、ファイルサイズ・形式の事前検証、署名付きURLの生成）
-- アップロード完了通知エンドポイント（`POST /s/:space_identifier/attachments`、Attachmentレコードの作成、ファイル検証処理の実行）
-- ファイル形式検証サービスの実装（MIMEタイプのホワイトリスト管理、マジックナンバーによる検証、SVGファイルのサニタイズ処理）
-- 画像処理サービスの実装（EXIF情報の削除（プライバシー保護）、自動回転補正、ファイル名のサニタイズ）
-- ファイルアクセスポリシーの実装（スペースメンバーシップの確認、権限に応じたアクセス制御）
-- 署名付きURL生成サービス（1時間の有効期限設定、アクセス権限の検証）
-- ファイル一覧エンドポイント（`GET /s/:space_identifier/settings/attachments`、権限に応じたフィルタリング、検索・ページネーション機能）
-- ファイル削除エンドポイント（`DELETE /s/:space_identifier/settings/attachments/:attachment_id`、権限チェック、関連するページ内リンクの処理）
-- ドラッグ&ドロップ機能の実装（CodeMirror 6へのドロップゾーン追加、ドラッグ中のビジュアルフィードバック）
-- ペースト機能の実装（クリップボードAPIの使用、画像ペースト時の自動アップロード）
-- アップロード進捗表示（「アップロード中...」テキストの挿入、完了後のURL置換処理）
-- DirectUploadクラスの実装（ファイルサイズ・形式の事前検証、進捗イベントの処理、エラーハンドリング）
-- リトライ機能の実装（最大3回のリトライ、エクスポネンシャルバックオフ）
