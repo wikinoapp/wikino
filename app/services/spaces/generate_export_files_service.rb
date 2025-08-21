@@ -29,12 +29,60 @@ module Spaces
 
     sig { params(export_record: ExportRecord).returns(String) }
     private def output_to_files!(export_record:)
-      target_pages = export_record.target_pages.preload(:topic_record)
+      target_pages = export_record.target_pages.preload(:topic_record, page_attachment_reference_records: { attachment_record: :active_storage_attachment_record })
 
       export_base_dir = Rails.root.join("tmp", "export_#{export_record.id}")
       FileUtils.mkdir_p(export_base_dir)
 
+      # 添付ファイルディレクトリを作成
+      attachments_dir = File.join(export_base_dir, "attachments")
+      FileUtils.mkdir_p(attachments_dir)
+
       topics = {}
+      # 添付ファイルのIDとファイル名のマッピングを保持
+      attachment_id_to_filename = T.let({}, T::Hash[String, String])
+      
+      # 全ページから参照されている添付ファイルを収集
+      all_attachment_records = T.let([], T::Array[AttachmentRecord])
+      target_pages.each do |page|
+        page.page_attachment_reference_records.each do |reference|
+          attachment_record = reference.attachment_record
+          if attachment_record && !all_attachment_records.include?(attachment_record)
+            all_attachment_records << attachment_record
+          end
+        end
+      end
+
+      # 添付ファイルをダウンロードして保存
+      all_attachment_records.each do |attachment_record|
+        blob = attachment_record.blob_record
+        next unless blob
+
+        begin
+          # ファイル名を取得（重複する場合は番号を付ける）
+          original_filename = attachment_record.filename || "attachment"
+          filename = original_filename
+          counter = 1
+          
+          while File.exist?(File.join(attachments_dir, filename))
+            # ファイル名に番号を追加（例: image.png → image_2.png）
+            ext = File.extname(original_filename)
+            basename = File.basename(original_filename, ext)
+            filename = "#{basename}_#{counter}#{ext}"
+            counter += 1
+          end
+
+          # ファイルをダウンロードして保存
+          File.open(File.join(attachments_dir, filename), "wb") do |file|
+            blob.download { |chunk| file.write(chunk) }
+          end
+
+          # IDとファイル名のマッピングを保存
+          attachment_id_to_filename[attachment_record.id] = filename
+        rescue => e
+          Rails.logger.error("Failed to download attachment #{attachment_record.id}: #{e.message}")
+        end
+      end
 
       target_pages.find_each.with_index do |page, index|
         topic = page.topic_record.not_nil!
@@ -45,10 +93,13 @@ module Spaces
           topics[topic.id] = topic_dir
         end
 
+        # Markdown内のURLを相対パスに変換
+        body_with_relative_paths = convert_attachment_urls(page.body, attachment_id_to_filename)
+
         filename = "#{page.title}.md"
         file_path = File.join(topics[topic.id], filename)
 
-        File.write(file_path, page.body)
+        File.write(file_path, body_with_relative_paths)
       end
 
       export_base_dir.to_s
@@ -92,6 +143,36 @@ module Spaces
         export_id: export_record.id,
         locale: export_record.queued_by_record.not_nil!.user_record_locale
       ).deliver_later
+    end
+
+    # Markdown内の添付ファイルURLを相対パスに変換
+    sig { params(body: String, attachment_id_to_filename: T::Hash[String, String]).returns(String) }
+    private def convert_attachment_urls(body, attachment_id_to_filename)
+      converted_body = body.dup
+
+      attachment_id_to_filename.each do |attachment_id, filename|
+        # imgタグのsrc属性を変換
+        # <img src="/attachments/id"> → <img src="attachments/filename">
+        converted_body.gsub!(%r{(<img[^>]+src=["'])/attachments/#{Regexp.escape(attachment_id)}(["'][^>]*>)}, "\\1attachments/#{filename}\\2")
+        
+        # imgタグのwidth/height属性も考慮
+        # <img width="600" height="400" alt="alt" src="/attachments/id"> → <img width="600" height="400" alt="alt" src="attachments/filename">
+        converted_body.gsub!(%r{(<img[^>]+src=["'])/attachments/#{Regexp.escape(attachment_id)}(["'])}, "\\1attachments/#{filename}\\2")
+
+        # aタグのhref属性を変換
+        # <a href="/attachments/id"> → <a href="attachments/filename">
+        converted_body.gsub!(%r{(<a[^>]+href=["'])/attachments/#{Regexp.escape(attachment_id)}(["'][^>]*>)}, "\\1attachments/#{filename}\\2")
+
+        # Markdown形式の画像を変換
+        # ![alt](/attachments/id) → ![alt](attachments/filename)
+        converted_body.gsub!(%r{(!\[[^\]]*\]\()/attachments/#{Regexp.escape(attachment_id)}(\))}, "\\1attachments/#{filename}\\2")
+
+        # Markdown形式のリンクを変換
+        # [text](/attachments/id) → [text](attachments/filename)
+        converted_body.gsub!(%r{((?<!!)\[[^\]]+\]\()/attachments/#{Regexp.escape(attachment_id)}(\))}, "\\1attachments/#{filename}\\2")
+      end
+
+      converted_body
     end
   end
 end
