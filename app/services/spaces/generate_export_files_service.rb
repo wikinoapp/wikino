@@ -34,72 +34,80 @@ module Spaces
       export_base_dir = Rails.root.join("tmp", "export_#{export_record.id}")
       FileUtils.mkdir_p(export_base_dir)
 
-      # 添付ファイルディレクトリを作成
-      attachments_dir = File.join(export_base_dir, "attachments")
-      FileUtils.mkdir_p(attachments_dir)
-
       topics = {}
-      # 添付ファイルのIDとファイル名のマッピングを保持
-      attachment_id_to_filename = T.let({}, T::Hash[String, String])
+      # 各トピックごとの添付ファイルIDとファイル名のマッピングを保持
+      topic_attachment_mappings = T.let({}, T::Hash[String, T::Hash[String, String]])
 
-      # 全ページから参照されている添付ファイルを収集
-      all_attachment_records = T.let([], T::Array[AttachmentRecord])
-      target_pages.each do |page|
-        page.page_attachment_reference_records.each do |reference|
-          attachment_record = reference.attachment_record
-          if attachment_record && !all_attachment_records.include?(attachment_record)
-            all_attachment_records << attachment_record
+      # トピックごとにページと添付ファイルを整理
+      pages_by_topic = target_pages.group_by(&:topic_record)
+
+      pages_by_topic.each do |topic, pages|
+        # トピックディレクトリを作成
+        topic_dir = File.join(export_base_dir, topic.name)
+        FileUtils.mkdir_p(topic_dir)
+        topics[topic.id] = topic_dir
+
+        # トピック内の添付ファイルディレクトリを作成
+        attachments_dir = File.join(topic_dir, "attachments")
+        FileUtils.mkdir_p(attachments_dir)
+
+        # このトピックのページから参照されている添付ファイルを収集
+        topic_attachment_records = T.let([], T::Array[AttachmentRecord])
+        attachment_id_to_filename = T.let({}, T::Hash[String, String])
+
+        pages.each do |page|
+          page.page_attachment_reference_records.each do |reference|
+            attachment_record = reference.attachment_record
+            if attachment_record && !topic_attachment_records.include?(attachment_record)
+              topic_attachment_records << attachment_record
+            end
           end
         end
-      end
 
-      # 添付ファイルをダウンロードして保存
-      all_attachment_records.each do |attachment_record|
-        blob = attachment_record.blob_record
-        next unless blob
+        # 添付ファイルをダウンロードして保存
+        topic_attachment_records.each do |attachment_record|
+          blob = attachment_record.blob_record
+          next unless blob
 
-        begin
-          # ファイル名を取得（重複する場合は番号を付ける）
-          original_filename = attachment_record.filename || "attachment"
-          filename = original_filename
-          counter = 1
+          begin
+            # ファイル名を取得（重複する場合は番号を付ける）
+            original_filename = attachment_record.filename || "attachment"
+            filename = original_filename
+            counter = 1
 
-          while File.exist?(File.join(attachments_dir, filename))
-            # ファイル名に番号を追加（例: image.png → image_2.png）
-            ext = File.extname(original_filename)
-            basename = File.basename(original_filename, ext)
-            filename = "#{basename}_#{counter}#{ext}"
-            counter += 1
+            while File.exist?(File.join(attachments_dir, filename))
+              # ファイル名に番号を追加（例: image.png → image_2.png）
+              ext = File.extname(original_filename)
+              basename = File.basename(original_filename, ext)
+              filename = "#{basename}_#{counter}#{ext}"
+              counter += 1
+            end
+
+            # ファイルをダウンロードして保存
+            File.open(File.join(attachments_dir, filename), "wb") do |file|
+              blob.download { |chunk| file.write(chunk) }
+            end
+
+            # IDとファイル名のマッピングを保存
+            attachment_id_to_filename[attachment_record.id] = filename
+          rescue => e
+            Rails.logger.error("Failed to download attachment #{attachment_record.id}: #{e.message}")
           end
-
-          # ファイルをダウンロードして保存
-          File.open(File.join(attachments_dir, filename), "wb") do |file|
-            blob.download { |chunk| file.write(chunk) }
-          end
-
-          # IDとファイル名のマッピングを保存
-          attachment_id_to_filename[attachment_record.id] = filename
-        rescue => e
-          Rails.logger.error("Failed to download attachment #{attachment_record.id}: #{e.message}")
-        end
-      end
-
-      target_pages.find_each.with_index do |page, index|
-        topic = page.topic_record.not_nil!
-
-        unless topics[topic.id]
-          topic_dir = File.join(export_base_dir, topic.name)
-          FileUtils.mkdir_p(topic_dir)
-          topics[topic.id] = topic_dir
         end
 
-        # Markdown内のURLを相対パスに変換
-        body_with_relative_paths = convert_attachment_urls(page.body, attachment_id_to_filename)
+        # このトピックのマッピングを保存
+        topic_attachment_mappings[topic.id] = attachment_id_to_filename
 
-        filename = "#{page.title}.md"
-        file_path = File.join(topics[topic.id], filename)
+        # ページのMarkdownファイルを作成
+        pages.each do |page|
+          # Markdown内のURLを相対パスに変換
+          body_with_relative_paths = convert_attachment_urls(page.body, attachment_id_to_filename)
 
-        File.write(file_path, body_with_relative_paths)
+          filename = "#{page.title}.md"
+          file_path = File.join(topic_dir, filename)
+
+          File.write(file_path, body_with_relative_paths)
+        end
       end
 
       export_base_dir.to_s

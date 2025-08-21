@@ -113,8 +113,8 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
 
           # ZIPファイルの内容を確認
           Zip::File.open(zip_path) do |zipfile|
-            # attachmentsディレクトリが存在することを確認
-            attachments_entry = zipfile.find_entry("attachments/test-image.png")
+            # トピック内のattachmentsディレクトリが存在することを確認
+            attachments_entry = zipfile.find_entry("#{topic_record.name}/attachments/test-image.png")
             expect(attachments_entry).not_to be_nil
 
             # ページファイルが存在することを確認
@@ -216,8 +216,8 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
 
           Zip::File.open(zip_path) do |zipfile|
             # 両方のファイルが異なる名前で保存されていることを確認
-            expect(zipfile.find_entry("attachments/image.png")).not_to be_nil
-            expect(zipfile.find_entry("attachments/image_1.png")).not_to be_nil
+            expect(zipfile.find_entry("#{topic_record.name}/attachments/image.png")).not_to be_nil
+            expect(zipfile.find_entry("#{topic_record.name}/attachments/image_1.png")).not_to be_nil
 
             # ページ内容を確認
             page_entry = zipfile.find_entry("#{topic_record.name}/#{page_record.title}.md")
