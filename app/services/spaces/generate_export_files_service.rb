@@ -29,7 +29,7 @@ module Spaces
 
     sig { params(export_record: ExportRecord).returns(String) }
     private def output_to_files!(export_record:)
-      target_pages = export_record.target_pages.preload(:topic_record, page_attachment_reference_records: { attachment_record: :active_storage_attachment_record })
+      target_pages = export_record.target_pages.preload(:topic_record, page_attachment_reference_records: {attachment_record: :active_storage_attachment_record})
 
       export_base_dir = Rails.root.join("tmp", "export_#{export_record.id}")
       FileUtils.mkdir_p(export_base_dir)
@@ -41,7 +41,7 @@ module Spaces
       topics = {}
       # 添付ファイルのIDとファイル名のマッピングを保持
       attachment_id_to_filename = T.let({}, T::Hash[String, String])
-      
+
       # 全ページから参照されている添付ファイルを収集
       all_attachment_records = T.let([], T::Array[AttachmentRecord])
       target_pages.each do |page|
@@ -63,7 +63,7 @@ module Spaces
           original_filename = attachment_record.filename || "attachment"
           filename = original_filename
           counter = 1
-          
+
           while File.exist?(File.join(attachments_dir, filename))
             # ファイル名に番号を追加（例: image.png → image_2.png）
             ext = File.extname(original_filename)
@@ -154,7 +154,7 @@ module Spaces
         # imgタグのsrc属性を変換
         # <img src="/attachments/id"> → <img src="attachments/filename">
         converted_body.gsub!(%r{(<img[^>]+src=["'])/attachments/#{Regexp.escape(attachment_id)}(["'][^>]*>)}, "\\1attachments/#{filename}\\2")
-        
+
         # imgタグのwidth/height属性も考慮
         # <img width="600" height="400" alt="alt" src="/attachments/id"> → <img width="600" height="400" alt="alt" src="attachments/filename">
         converted_body.gsub!(%r{(<img[^>]+src=["'])/attachments/#{Regexp.escape(attachment_id)}(["'])}, "\\1attachments/#{filename}\\2")

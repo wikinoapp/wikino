@@ -66,7 +66,7 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
           record: space_record,  # recordパラメータを使用
           blob:
         )
-        
+
         attachment_record = create(
           :attachment_record,
           space_record:,
@@ -84,9 +84,9 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
           And a link:
           [Download test-image.png](/attachments/#{attachment_record.id})
         MARKDOWN
-        
+
         page_record.update!(body: page_body)
-        
+
         # 添付ファイル参照を作成
         PageAttachmentReferenceRecord.create!(
           page_id: page_record.id,
@@ -96,19 +96,19 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
         # エクスポートレコードを作成
         export_record = create(:export_record, :queued,
           space_record:,
-          queued_by_record: space_member_record
-        )
+          queued_by_record: space_member_record)
 
         # ZIPファイルをテスト用に一時ディレクトリに作成
         Dir.mktmpdir do |temp_dir|
+          export_dir = File.join(temp_dir, "export_#{export_record.id}")
           allow(Rails.root).to receive(:join).and_call_original
-          allow(Rails.root).to receive(:join).with("tmp", "export_#{export_record.id}").and_return(Pathname.new(temp_dir))
+          allow(Rails.root).to receive(:join).with("tmp", "export_#{export_record.id}").and_return(Pathname.new(export_dir))
 
           # サービスを実行
           Spaces::GenerateExportFilesService.new.call(export_record:)
 
           # ZIPファイルが作成されていることを確認
-          zip_path = "#{temp_dir}.zip"
+          zip_path = "#{export_dir}.zip"
           expect(File.exist?(zip_path)).to be true
 
           # ZIPファイルの内容を確認
@@ -123,11 +123,11 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
 
             # ページ内容を確認
             page_content = zipfile.read(page_entry)
-            
+
             # URLが相対パスに変換されていることを確認
             expect(page_content).to include('src="attachments/test-image.png"')
-            expect(page_content).to include('[Download test-image.png](attachments/test-image.png)')
-            
+            expect(page_content).to include("[Download test-image.png](attachments/test-image.png)")
+
             # 絶対パスが残っていないことを確認
             expect(page_content).not_to include("/attachments/#{attachment_record.id}")
           end
@@ -152,7 +152,7 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
           record: space_record,
           blob: blob1
         )
-        
+
         attachment_record1 = create(
           :attachment_record,
           space_record:,
@@ -171,7 +171,7 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
           record: space_record,
           blob: blob2
         )
-        
+
         attachment_record2 = create(
           :attachment_record,
           space_record:,
@@ -184,9 +184,9 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
           ![First Image](/attachments/#{attachment_record1.id})
           ![Second Image](/attachments/#{attachment_record2.id})
         MARKDOWN
-        
+
         page_record.update!(body: page_body)
-        
+
         # 添付ファイル参照を作成
         PageAttachmentReferenceRecord.create!(
           page_id: page_record.id,
@@ -200,20 +200,20 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
         # エクスポートレコードを作成
         export_record = create(:export_record, :queued,
           space_record:,
-          queued_by_record: space_member_record
-        )
+          queued_by_record: space_member_record)
 
         # ZIPファイルをテスト用に一時ディレクトリに作成
         Dir.mktmpdir do |temp_dir|
+          export_dir = File.join(temp_dir, "export_#{export_record.id}")
           allow(Rails.root).to receive(:join).and_call_original
-          allow(Rails.root).to receive(:join).with("tmp", "export_#{export_record.id}").and_return(Pathname.new(temp_dir))
+          allow(Rails.root).to receive(:join).with("tmp", "export_#{export_record.id}").and_return(Pathname.new(export_dir))
 
           # サービスを実行
           Spaces::GenerateExportFilesService.new.call(export_record:)
 
           # ZIPファイルが作成されていることを確認
-          zip_path = "#{temp_dir}.zip"
-          
+          zip_path = "#{export_dir}.zip"
+
           Zip::File.open(zip_path) do |zipfile|
             # 両方のファイルが異なる名前で保存されていることを確認
             expect(zipfile.find_entry("attachments/image.png")).not_to be_nil
@@ -222,7 +222,7 @@ RSpec.describe Spaces::GenerateExportFilesService, type: :service do
             # ページ内容を確認
             page_entry = zipfile.find_entry("#{topic_record.name}/#{page_record.title}.md")
             page_content = zipfile.read(page_entry)
-            
+
             # 相対パスに変換されていることを確認
             expect(page_content).to match(/!\[First Image\]\(attachments\/image(_\d+)?\.png\)/)
             expect(page_content).to match(/!\[Second Image\]\(attachments\/image(_\d+)?\.png\)/)
