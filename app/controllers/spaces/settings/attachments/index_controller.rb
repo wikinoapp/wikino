@@ -26,9 +26,10 @@ module Spaces
 
           # ページネーション
           page = (params[:page] || 1).to_i
-          per_page = 10
+          per_page = 50
 
           search_query = params[:q]
+          file_type = params[:file_type]
 
           attachment_records = space_record.attachment_records
             .preload(active_storage_attachment_record: :blob)
@@ -38,6 +39,12 @@ module Spaces
             attachment_records = attachment_records
               .joins(active_storage_attachment_record: :blob)
               .where("active_storage_blobs.filename ILIKE ?", "%#{search_query}%")
+          end
+
+          if file_type.present?
+            attachment_records = attachment_records
+              .joins(active_storage_attachment_record: :blob)
+              .where("active_storage_blobs.content_type LIKE ?", "#{file_type}/%")
           end
 
           total_count = attachment_records.count

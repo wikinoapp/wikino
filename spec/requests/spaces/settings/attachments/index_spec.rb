@@ -149,7 +149,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
     # HTMLにimage.pngが含まれていても、それがファイル名として表示されていなければ問題ない
     # より正確なテストにする
     doc = Nokogiri::HTML(body)
-    filenames = doc.css("p.font-semibold").map(&:text)
+    filenames = doc.css("p.font-semibold").map { |element| element.text.strip }
 
     expect(filenames).to include("document.pdf")
     expect(filenames).not_to include("image.png")
