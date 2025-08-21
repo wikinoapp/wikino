@@ -95,3 +95,8 @@
   - イベントハンドラー属性の除去確認
 - [ ] エクスポート機能の修正
   - エクスポートファイルに添付ファイルを含めるようにする
+  - 添付ファイルを`attachments`ディレクトリに格納
+  - Markdown内の `/attachments/{id}` を相対パス `attachments/{filename}` に変換
+  - 画像タグ: `<img src="/attachments/{id}">` → `<img src="attachments/{filename}">`
+  - リンク: `[text](/attachments/{id})` → `[text](attachments/{filename})`
+  - VSCodeなどで開いたときに正しく参照できるようにする
