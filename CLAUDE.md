@@ -6,6 +6,7 @@ WikinoはWikiアプリケーションです。
 ## 技術スタック
 
 ### バックエンド
+
 - Ruby 3.4.4
 - Ruby on Rails 8.0.0
 - PostgreSQL
@@ -13,12 +14,14 @@ WikinoはWikiアプリケーションです。
 - Active Job（Solid Queue）
 
 ### フロントエンド
+
 - TypeScript
 - Hotwire (Turbo + Stimulus)
 - Tailwind CSS 4
 - CodeMirror 6（ページエディタ）
 
 ### ツール・ライブラリ
+
 - パッケージマネージャー: Bundler, pnpm
 - テスティング: RSpec, FactoryBot
 - Linter: Standard (Ruby), ERB Lint, ESLint, Prettier
@@ -28,39 +31,39 @@ WikinoはWikiアプリケーションです。
 
 ### app/ディレクトリの構成と責務
 
-| ディレクトリ | 責務 | 説明 |
-|------------|------|------|
-| **controllers/** | HTTPリクエスト処理 | 1アクション1コントローラー、`#call`メソッドで実装 |
-| **records/** | DBテーブル操作 | ActiveRecord::Base継承、1テーブル1レコード |
-| **models/** | ドメインロジック | PORO、データベースアクセスなし |
-| **repositories/** | データ変換 | RecordとModel間の変換 |
-| **services/** | ビジネスロジック | **データ永続化を伴う処理のみ**実装 |
-| **forms/** | フォーム処理 | バリデーションとデータ変換 |
-| **components/** | UIコンポーネント | ViewComponent、再利用可能なUI要素 |
-| **views/** | ビュー | ViewComponent使用、DB直接アクセス禁止 |
-| **policies/** | 認可ルール | 権限管理 |
-| **validators/** | カスタムバリデーション | ActiveModelバリデーター拡張 |
-| **jobs/** | 非同期処理 | 最小限のロジック、主にService呼び出し |
-| **mailers/** | メール送信 | Action Mailer |
+| ディレクトリ      | 責務                   | 説明                                              |
+| ----------------- | ---------------------- | ------------------------------------------------- |
+| **controllers/**  | HTTPリクエスト処理     | 1アクション1コントローラー、`#call`メソッドで実装 |
+| **records/**      | DBテーブル操作         | ActiveRecord::Base継承、1テーブル1レコード        |
+| **models/**       | ドメインロジック       | PORO、データベースアクセスなし                    |
+| **repositories/** | データ変換             | RecordとModel間の変換                             |
+| **services/**     | ビジネスロジック       | **データ永続化を伴う処理のみ**実装                |
+| **forms/**        | フォーム処理           | バリデーションとデータ変換                        |
+| **components/**   | UIコンポーネント       | ViewComponent、再利用可能なUI要素                 |
+| **views/**        | ビュー                 | ViewComponent使用、DB直接アクセス禁止             |
+| **policies/**     | 認可ルール             | 権限管理                                          |
+| **validators/**   | カスタムバリデーション | ActiveModelバリデーター拡張                       |
+| **jobs/**         | 非同期処理             | 最小限のロジック、主にService呼び出し             |
+| **mailers/**      | メール送信             | Action Mailer                                     |
 
 ## Railsクラス設計と依存関係
 
 ### クラス間の依存関係ルール
 
-| クラス | 依存可能な先 |
-|--------|------------|
-| Component | Component, Form, Model |
+| クラス     | 依存可能な先                                   |
+| ---------- | ---------------------------------------------- |
+| Component  | Component, Form, Model                         |
 | Controller | Form, Model, Record, Repository, Service, View |
-| Form | Record, Validator |
-| Job | Service |
-| Mailer | Model, Record, Repository, View |
-| Model | Model |
-| Policy | Record |
-| Record | Record |
-| Repository | Model, Record |
-| Service | Job, Mailer, Record |
-| Validator | Record |
-| View | Component, Form, Model |
+| Form       | Record, Validator                              |
+| Job        | Service                                        |
+| Mailer     | Model, Record, Repository, View                |
+| Model      | Model                                          |
+| Policy     | Record                                         |
+| Record     | Record                                         |
+| Repository | Model, Record                                  |
+| Service    | Job, Mailer, Record                            |
+| Validator  | Record                                         |
+| View       | Component, Form, Model                         |
 
 ### ServiceとJobの依存関係について
 
@@ -171,6 +174,7 @@ end
 ### I18n
 
 翻訳ファイルは用途別に分類し、日本語と英語の両方を更新：
+
 - `forms.(ja,en).yml`: フォーム関連
 - `messages.(ja,en).yml`: メッセージ・説明文
 - `meta.(ja,en).yml`: メタデータ
@@ -179,11 +183,13 @@ end
 ## サービスクラスのルール
 
 ### サービスクラスを使用する場合
+
 - ✅ データベースへの永続化を伴う処理
 - ✅ 複数のモデル/レコードにまたがる複雑なビジネスロジックで永続化を伴うもの
 - ✅ トランザクション管理が必要な処理
 
 ### サービスクラスを使用しない場合
+
 - ❌ データベースへの永続化を伴わない処理（URL生成、データ変換など）
 - ❌ 単一のモデル/レコードに閉じた処理（モデルやレコードのメソッドとして定義）
 
@@ -204,10 +210,12 @@ bin/rails server     # サーバー起動
 ### タスク実装フロー
 
 #### 1. タスク理解
+
 - 要件を理解
 - このガイドの固有ルールを確認
 
 #### 2. 実装前の準備
+
 - 既存コードの調査
 - 特に以下を意識：
   - プライベートメソッドは `private def`
@@ -215,10 +223,12 @@ bin/rails server     # サーバー起動
   - `T.must` ではなく `not_nil!`
 
 #### 3. 実装
+
 - 規約に従ってコーディング
 - 新規ファイルにはマジックコメント追加
 
 #### 4. 完了前の確認
+
 ```bash
 # Rubyのファイルを編集したとき実行する (Lintチェック)
 bin/standardrb
