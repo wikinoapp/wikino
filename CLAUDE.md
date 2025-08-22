@@ -230,17 +230,15 @@ bin/rails server     # サーバー起動
 #### 4. 完了前の確認
 
 ```bash
-# Rubyのファイルを編集したとき実行する (Lintチェック)
+# Rubyのファイルを編集したとき実行する
 bin/standardrb
 bin/erb_lint --lint-all
 bin/srb tc
 bin/rails sorbet:update
 bin/rails zeitwerk:check
-
-# Rubyのファイルを編集したとき実行する (テスト実行)
 bin/rspec
 
-# JavaScript/TypeScriptを編集したとき
+# JavaScript/TypeScriptを編集したとき実行する
 pnpm prettier . --write
 pnpm eslint . --fix
 pnpm tsc
