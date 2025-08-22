@@ -43,6 +43,7 @@ module Spaces
 
       pages_by_topic.each do |topic, pages|
         # トピックディレクトリを作成
+        topic = topic.not_nil!
         topic_dir = File.join(export_base_dir, topic.name)
         FileUtils.mkdir_p(topic_dir)
         topics[topic.id] = topic_dir
