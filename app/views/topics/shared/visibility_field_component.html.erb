@@ -15,7 +15,7 @@
       </label>
 
       <div class="text-muted-foreground pl-[25px] text-sm">
-        <%= t("forms.attributes.topic_form/creation.visibility_public_hint") %>
+        <%= t("forms.attributes.topics/creation_form.visibility_public_hint") %>
       </div>
     </div>
 
@@ -33,11 +33,11 @@
 
       <div class="text-muted-foreground pl-[25px] text-sm">
         <p>
-          <%= t("forms.attributes.topic_form/creation.visibility_private_hint") %>
+          <%= t("forms.attributes.topics/creation_form.visibility_private_hint") %>
         </p>
 
         <p class="font-bold">
-          <%= t("forms.attributes.topic_form/creation.visibility_private_hint_2_html",
+          <%= t("forms.attributes.topics/creation_form.visibility_private_hint_2_html",
             learn_more_link: render(
               BaseUI::LinkComponent.new(
                 variant: BaseUI::LinkComponent::Variant::Underline,
