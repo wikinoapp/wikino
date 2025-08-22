@@ -14,6 +14,7 @@ module Attachments
     sig { void }
     def call
       attachment_record = AttachmentRecord.find(params[:attachment_id])
+      space_record = attachment_record.space_record.not_nil!
       space_member_record = current_user_record&.space_member_record(space_record:)
       policy = SpaceMemberPolicy.new(user_record: current_user_record, space_member_record:)
 
