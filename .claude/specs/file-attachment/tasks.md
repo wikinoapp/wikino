@@ -100,3 +100,7 @@
   - 画像タグ: `<img src="/attachments/{id}">` → `<img src="attachments/{filename}">`
   - リンク: `[text](/attachments/{id})` → `[text](attachments/{filename})`
   - VSCodeなどで開いたときに正しく参照できるようにする
+- [ ] ページに表示された画像のスタイル調整
+  - 画像を中央寄せしたい
+  - 本文より少し大きめに画像を表示したい
+    - 例: https://www.anthropic.com/news/claude-opus-4-1
