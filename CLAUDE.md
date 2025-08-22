@@ -84,7 +84,10 @@ class Example
   name = "example"
 
   # ✅ ハッシュの省略記法
-  { user:, name: } # user: user → user:
+  {user:, name:}
+
+  # ❌
+  {user: user, name: name}
 
   # ✅ プライベートメソッドは private def
   private def process_value(value)
