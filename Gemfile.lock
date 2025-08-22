@@ -130,9 +130,6 @@ GEM
     commonmarker (2.3.1-x86_64-linux)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.3)
-    crack (1.0.0)
-      bigdecimal
-      rexml
     crass (1.0.6)
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
@@ -172,7 +169,6 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    hashdiff (1.2.0)
     html-pipeline (3.2.3)
       selma (~> 0.4)
       zeitwerk (~> 2.5)
@@ -524,10 +520,6 @@ GEM
       method_source (~> 1.0)
     vips (8.15.1)
       ffi (~> 1.12)
-    webmock (3.25.1)
-      addressable (>= 2.8.0)
-      crack (>= 0.3.2)
-      hashdiff (>= 0.4.0, < 2.0.0)
     websocket (1.2.11)
     websocket-driver (0.8.0)
       base64
@@ -604,7 +596,6 @@ DEPENDENCIES
   vcr
   view_component
   vips
-  webmock
 
 RUBY VERSION
    ruby 3.4.4p34
