@@ -123,12 +123,23 @@ class SpaceMemberPolicy < ApplicationPolicy
   end
 
   # ファイル閲覧権限の確認
+  # 公開トピックの添付ファイルは誰でも閲覧可能
+  # それ以外はスペースメンバーのみ閲覧可能
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    return false if space_member_record.nil?
-
-    space_member_record!.active? &&
-      space_member_record!.space_id == attachment_record.space_id
+    # 添付ファイルを参照している全てのページが公開トピックかチェック
+    if attachment_record.all_referencing_pages_public?
+      # 全て公開トピックの場合は誰でもアクセス可能
+      true
+    elsif user_record.nil?
+      # ログインしていない場合はアクセス不可
+      false
+    else
+      # スペースメンバーかどうかをチェック
+      space_member_record.present? &&
+        space_member_record!.active? &&
+        space_member_record!.space_id == attachment_record.space_id
+    end
   end
 
   # ファイル削除権限の確認

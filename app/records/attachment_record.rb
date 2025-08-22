@@ -101,22 +101,6 @@ class AttachmentRecord < ApplicationRecord
     nil
   end
 
-  # ユーザーがこの添付ファイルを閲覧可能かチェック
-  sig { params(user_record: T.nilable(UserRecord)).returns(T::Boolean) }
-  def viewable_by?(user_record:)
-    # 添付ファイルを参照している全てのページが公開トピックかチェック
-    if all_referencing_pages_public?
-      # 全て公開トピックの場合は誰でもアクセス可能
-      true
-    elsif user_record.nil?
-      # ログインしていない場合はアクセス不可
-      false
-    else
-      # スペースメンバーかどうかをチェック
-      is_space_member?(user_record:)
-    end
-  end
-
   # この添付ファイルを参照している全てのページが公開トピックかチェック
   sig { returns(T::Boolean) }
   def all_referencing_pages_public?
@@ -138,17 +122,5 @@ class AttachmentRecord < ApplicationRecord
   sig { returns(T.nilable(String)) }
   def redirect_url
     active_storage_attachment_record&.blob&.url
-  end
-
-  # ユーザーがスペースメンバーかチェック
-  sig { params(user_record: UserRecord).returns(T::Boolean) }
-  private def is_space_member?(user_record:)
-    return false unless space_record
-
-    SpaceMemberRecord.exists?(
-      space_id: space_record.not_nil!.id,
-      user_id: user_record.id,
-      active: true
-    )
   end
 end

@@ -14,9 +14,10 @@ module Attachments
     sig { void }
     def call
       attachment_record = AttachmentRecord.find(params[:attachment_id])
+      space_member_record = current_user_record&.space_member_record(space_record:)
+      policy = SpaceMemberPolicy.new(user_record: current_user_record, space_member_record:)
 
-      # アクセス権限をチェック
-      unless attachment_record.viewable_by?(user_record: current_user_record)
+      unless policy.can_view_attachment?(attachment_record:)
         render_404
         return
       end
