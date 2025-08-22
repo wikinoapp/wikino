@@ -62,6 +62,32 @@ WikinoはWikiアプリケーションです。
 | Validator | Record |
 | View | Component, Form, Model |
 
+### ServiceとJobの依存関係について
+
+ServiceとJobの間には相互依存が存在しますが、以下のルールで循環依存を回避します：
+
+- **Service → Job**: `perform_later`メソッドによるキューへの追加のみ許可
+- **Job → Service**: ジョブ実行時のService呼び出しは許可
+- **重要**: ServiceからJobインスタンスの直接実行（`perform`メソッド）は禁止
+
+```ruby
+# ✅ 良い例：Serviceからジョブをキューに追加
+class Users::CreateService
+  def call
+    user = UserRecord.create!(...)
+    Users::SendWelcomeEmailJob.perform_later(user.id)  # キューに追加のみ
+  end
+end
+
+# ❌ 悪い例：Serviceからジョブを直接実行
+class Users::CreateService
+  def call
+    user = UserRecord.create!(...)
+    Users::SendWelcomeEmailJob.new.perform(user.id)  # 直接実行は禁止
+  end
+end
+```
+
 ### 命名規則
 
 - Controller: `(ModelPlural)::(ActionName)Controller`
