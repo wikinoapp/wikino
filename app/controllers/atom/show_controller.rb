@@ -17,7 +17,7 @@ module Atom
 
       space = SpaceRepository.new.to_model(space_record:)
       pages = page_records.map do |page_record|
-        PageRepository.new.to_model(page_record:, current_space_member: nil)
+        PageRepository.new.to_model(page_record:)
       end
 
       render_component(
