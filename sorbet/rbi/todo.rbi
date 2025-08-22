@@ -6,4 +6,3 @@
 
 module FFI::Function; end
 module FFI::Library; end
-module Minitest::Test::WebMock::API; end
