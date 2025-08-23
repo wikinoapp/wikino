@@ -31,7 +31,7 @@
         <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>
-          <div class="wikino-markdown">
+          <div class="wikino-markdown" data-controller="attachment-loader" data-attachment-loader-csrf-token-value="<%= form_authenticity_token %>">
             <%= page.body_html.html_safe %>
           </div>
         <% end %>

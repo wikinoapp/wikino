@@ -65,34 +65,30 @@ class Markup
 
       # インライン表示可能な画像形式かチェック
       if can_display_inline_image?(attachment)
-        # 署名付きURLを生成
-        signed_url = generate_signed_url(attachment_id)
+        # 元のwidth/height属性を取得
+        width_attr = element["width"]
+        height_attr = element["height"]
 
-        if signed_url
-          # 元のwidth/height属性を取得
-          width_attr = element["width"]
-          height_attr = element["height"]
+        # プレースホルダーとして表示（署名付きURLは後でJavaScriptで置換）
+        img_attrs = [
+          "src=\"\"",
+          "data-attachment-id=\"#{attachment_id}\"",
+          "data-attachment-type=\"image\"",
+          "class=\"max-w-full wikino-attachment-placeholder\""
+        ]
+        img_attrs << "width=\"#{width_attr}\"" if width_attr
+        img_attrs << "height=\"#{height_attr}\"" if height_attr
 
-          # width/height属性を含むimg要素のHTMLを作成
-          img_attrs = ["src=\"#{signed_url}\"", "class=\"max-w-full\""]
-          img_attrs << "width=\"#{width_attr}\"" if width_attr
-          img_attrs << "height=\"#{height_attr}\"" if height_attr
+        # a要素で囲む（href属性も後でJavaScriptで設定）
+        link_html = <<~HTML
+          <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank" rel="noopener noreferrer" class="inline-block wikino-attachment-link">
+            <img #{img_attrs.join(" ")} />
+          </a>
+        HTML
 
-          # 署名付きURLが生成できた場合は、a要素で囲む
-          # 新しいHTMLを作成
-          link_html = <<~HTML
-            <a href="#{signed_url}" target="_blank" rel="noopener noreferrer" class="inline-block">
-              <img #{img_attrs.join(" ")} />
-            </a>
-          HTML
-
-          # element.replaceの代わりに、after挿入してから元のelementを削除
-          element.after(link_html, as: :html)
-          element.remove
-        else
-          # 署名付きURLが生成できない場合は、img要素のみ（エラー時のフォールバック）
-          element["class"] = "max-w-full"
-        end
+        # element.replaceの代わりに、after挿入してから元のelementを削除
+        element.after(link_html, as: :html)
+        element.remove
       else
         # インライン表示不可の場合はリンクに変換
         convert_to_download_link(element, attachment)
@@ -114,27 +110,24 @@ class Markup
       return unless attachment
 
       # 動画ファイルの場合はvideo要素に変換
-      signed_url = generate_signed_url(attachment_id)
       if can_display_inline_video?(attachment)
-        # 署名付きURLを生成
+        # video要素として表示（署名付きURLは後でJavaScriptで置換）
+        video_html = <<~HTML
+          <video src="" data-attachment-id="#{attachment_id}" data-attachment-type="video" controls class="max-w-full wikino-attachment-placeholder">
+            お使いのブラウザは動画タグをサポートしていません。
+            <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank">動画をダウンロード</a>
+          </video>
+        HTML
 
-        if signed_url
-          # video要素として表示
-          video_html = <<~HTML
-            <video src="#{signed_url}" controls class="max-w-full">
-              お使いのブラウザは動画タグをサポートしていません。
-              <a href="#{signed_url}" target="_blank">動画をダウンロード</a>
-            </video>
-          HTML
-
-          # element.replaceの代わりに、after挿入してから元のelementを削除
-          element.after(video_html, as: :html)
-          element.remove
-        end
+        # element.replaceの代わりに、after挿入してから元のelementを削除
+        element.after(video_html, as: :html)
+        element.remove
       else
         # 動画以外の場合は通常のリンクとして処理
-        # 署名付きURLを生成
-        element["href"] = signed_url if signed_url
+        # data属性を追加（署名付きURLは後でJavaScriptで置換）
+        element["href"] = "#"
+        element["data-attachment-id"] = attachment_id
+        element["data-attachment-link"] = "true"
 
         # 新規タブで開く
         element["target"] = "_blank"
@@ -153,31 +146,6 @@ class Markup
       return nil unless match
 
       match[1]
-    end
-
-    sig { params(attachment_id: String).returns(T.nilable(String)) }
-    private def generate_signed_url(attachment_id)
-      # AttachmentRecordを取得
-      space_record = SpaceRecord.find_by!(identifier: current_space.identifier)
-      attachment = AttachmentRecord.find_by(id: attachment_id, space_record:)
-      return nil unless attachment
-
-      # 署名付きURLを常に生成（権限チェックは/attachments/:idエンドポイントで行う）
-      # 1時間の有効期限
-      current_space_member_record = if current_space_member
-        SpaceMemberRecord.find_by!(
-          space_id: space_record.id,
-          user_id: current_space_member.not_nil!.user.database_id
-        )
-      end
-
-      attachment.generate_signed_url(
-        space_member_record: current_space_member_record,
-        expires_in: 1.hour
-      )
-    rescue => e
-      Rails.logger.error("Failed to generate signed URL for attachment #{attachment_id}: #{e.message}")
-      nil
     end
 
     sig { params(attachment: AttachmentRecord).returns(T::Boolean) }
@@ -205,15 +173,14 @@ class Markup
       # img要素をa要素に変換
       filename = attachment.filename || "ファイル"
 
-      # 署名付きURLを生成
-      signed_url = generate_signed_url(attachment.id)
-
-      # リンクとして表示
+      # リンクとして表示（署名付きURLは後でJavaScriptで置換）
       link_html = <<~HTML
-        <a href="#{signed_url || element["src"]}"
+        <a href="#"
+           data-attachment-id="#{attachment.id}"
+           data-attachment-link="true"
            target="_blank"
            rel="noopener noreferrer"
-           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline">
+           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline wikino-attachment-link">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

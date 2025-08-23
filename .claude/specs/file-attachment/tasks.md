@@ -100,7 +100,14 @@
   - 画像タグ: `<img src="/attachments/{id}">` → `<img src="attachments/{filename}">`
   - リンク: `[text](/attachments/{id})` → `[text](attachments/{filename})`
   - VSCodeなどで開いたときに正しく参照できるようにする
-- [ ] N+1対応
+- [x] body_htmlキャッシュの実装（非同期URL更新方式）
+  - [x] マイグレーション作成 - body_htmlカラムを3つのテーブルに追加
+  - [x] AttachmentFilterの修正 - プレースホルダー生成
+  - [x] バッチ署名URL取得エンドポイントの作成
+  - [x] Stimulusコントローラー作成 - 非同期URL置換
+  - [x] PageRepositoryの修正 - キャッシュ利用
+  - [x] ページ保存時のbody_html生成処理追加
+  - [ ] テストの作成
 - [ ] ページに表示された画像のスタイル調整
   - 画像を中央寄せしたい
   - 本文より少し大きめに画像を表示したい

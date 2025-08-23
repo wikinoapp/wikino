@@ -677,6 +677,51 @@ class DraftPageRecord
     def body_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
+    def body_html; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def body_html=(value); end
+
+    sig { returns(T::Boolean) }
+    def body_html?; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def body_html_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def body_html_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_html_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_html_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def body_html_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_html_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def body_html_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_html_was; end
+
+    sig { void }
+    def body_html_will_change!; end
+
+    sig { returns(T.nilable(::String)) }
     def body_in_database; end
 
     sig { returns(T.nilable([::String, ::String])) }
@@ -968,6 +1013,9 @@ class DraftPageRecord
     def restore_body!; end
 
     sig { void }
+    def restore_body_html!; end
+
+    sig { void }
     def restore_created_at!; end
 
     sig { void }
@@ -1005,6 +1053,12 @@ class DraftPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_body_html; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_body_html?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -1299,6 +1353,9 @@ class DraftPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_body_html?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end

@@ -19,10 +19,22 @@ module Pages
     def call(space_member_record:, page_record:, topic_record:, title:, body:)
       now = Time.current
 
+      # body_htmlを生成（プレースホルダー形式）
+      topic = TopicRepository.new.to_model(topic_record:)
+      space = SpaceRepository.new.to_model(space_record: page_record.space_record!)
+      space_member = SpaceMemberRepository.new.to_model(space_member_record:)
+
+      body_html = Markup.new(
+        current_topic: topic,
+        current_space: space,
+        current_space_member: space_member
+      ).render_html(text: body)
+
       page_record.attributes = {
         topic_record:,
         title:,
         body:,
+        body_html:,
         modified_at: now
       }
       page_record.published_at = now if page_record.published_at.nil?
