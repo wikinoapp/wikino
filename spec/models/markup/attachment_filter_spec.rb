@@ -60,23 +60,28 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment
   end
 
-  def render_markup(text:, current_topic:, current_space_member: nil)
+  def render_markup(text:, current_topic:, current_space:, current_space_member: nil)
     markup = Markup.new(
       current_topic: current_topic,
+      current_space: current_space,
       current_space_member: current_space_member
     )
     markup.render_html(text: text)
   end
 
   it "画像URLが署名付きURLに変換されること（メンバーの場合）" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
-    attachment = create_attachment(space: space, filename: "image.jpg")
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    attachment = create_attachment(space: space_record, filename: "image.jpg")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = "![image](/attachments/#{attachment.id})"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
     expect(output_html).to include("expires_in")
@@ -91,12 +96,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "画像URLが署名付きURLに変換されること（非メンバーの場合でも）" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
-    attachment = create_attachment(space: space, filename: "image.jpg")
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
+    attachment = create_attachment(space: space_record, filename: "image.jpg")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
 
     text = "![image](/attachments/#{attachment.id})"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: nil)
 
     # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
     expect(output_html).to include("expires_in")
@@ -110,16 +118,20 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "インライン表示可能な画像形式の場合、img要素が維持されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     %w[jpg jpeg png gif svg webp].each do |ext|
-      attachment = create_attachment(space: space, filename: "image.#{ext}")
+      attachment = create_attachment(space: space_record, filename: "image.#{ext}")
 
       text = "![image](/attachments/#{attachment.id})"
-      output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+      output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
       # img要素がa要素で囲まれていることを確認
       expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
@@ -130,16 +142,20 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "インライン表示不可の形式の場合、ダウンロードリンクに変換されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     %w[pdf docx xlsx zip].each do |ext|
-      attachment = create_attachment(space: space, filename: "document.#{ext}")
+      attachment = create_attachment(space: space_record, filename: "document.#{ext}")
 
       text = "![document](/attachments/#{attachment.id})"
-      output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+      output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
       # リンク要素に変換されていることを確認
       expect(output_html).to match(/<a[^>]*>/)
@@ -154,14 +170,18 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "添付ファイルリンクが署名付きURLに変換されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
-    attachment = create_attachment(space: space, filename: "document.pdf")
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    attachment = create_attachment(space: space_record, filename: "document.pdf")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = "[Download](/attachments/#{attachment.id})"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
     expect(output_html).to include("expires_in")
@@ -173,19 +193,23 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "異なるスペースの添付ファイルは変換されないこと" do
-    space1 = FactoryBot.create(:space_record)
-    space2 = FactoryBot.create(:space_record)
-    topic1 = FactoryBot.create(:topic_record, space_record: space1)
+    space1_record = FactoryBot.create(:space_record)
+    space2_record = FactoryBot.create(:space_record)
+    topic1_record = FactoryBot.create(:topic_record, space_record: space1_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space1, user_record: user)
-    attachment = create_attachment(space: space2, filename: "image.jpg")
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space1_record, user_record: user)
+    attachment = create_attachment(space: space2_record, filename: "image.jpg")
 
     # space1でも添付ファイルを検索するので、そのスタブも追加
-    allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space1).and_return(nil)
+    allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space1_record).and_return(nil)
+    
+    topic1 = TopicRepository.new.to_model(topic_record: topic1_record)
+    space1 = SpaceRepository.new.to_model(space_record: space1_record)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     # space1のメンバーがspace2の添付ファイルにアクセスしようとする
     text = "![image](/attachments/#{attachment.id})"
-    output_html = render_markup(text: text, current_topic: topic1, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic1, current_space: space1, current_space_member: space_member)
 
     # URLが変換されないことを確認
     expect(output_html).not_to include("expires_in")
@@ -193,14 +217,18 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "存在しない添付ファイルIDの場合、変換されないこと" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     non_existent_id = SecureRandom.uuid
     text = "![image](/attachments/#{non_existent_id})"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # URLが変換されないことを確認
     expect(output_html).not_to include("expires_in")
@@ -208,14 +236,18 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "添付ファイルURLパターンにマッチしない場合、変換されないこと" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     # 通常の画像URL
     text = "![image](https://example.com/image.jpg)"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # URLが変更されていないことを確認
     expect(output_html).to include("https://example.com/image.jpg")
@@ -223,21 +255,25 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # 通常のリンク
     text = "[Link](https://example.com)"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     expect(output_html).to include("https://example.com")
     expect(output_html).not_to include("expires_in")
   end
 
   it "複数の添付ファイルが含まれる場合、すべて変換されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
 
-    attachment1 = create_attachment(space: space, filename: "image1.jpg")
-    attachment2 = create_attachment(space: space, filename: "document.pdf")
-    attachment3 = create_attachment(space: space, filename: "image2.png")
+    attachment1 = create_attachment(space: space_record, filename: "image1.jpg")
+    attachment2 = create_attachment(space: space_record, filename: "document.pdf")
+    attachment3 = create_attachment(space: space_record, filename: "image2.png")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = <<~TEXT
       ![image1](/attachments/#{attachment1.id})
@@ -249,7 +285,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       [Download](/attachments/#{attachment3.id})
     TEXT
 
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # すべての添付ファイルURLが変換されていることを確認
     # attachment1は画像なのでa要素で囲まれたimg要素
@@ -265,15 +301,19 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "ファイル名に特殊文字が含まれる場合、適切にエスケープされること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
 
-    attachment = create_attachment(space: space, filename: "<script>alert('XSS')</script>.pdf")
+    attachment = create_attachment(space: space_record, filename: "<script>alert('XSS')</script>.pdf")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = "![document](/attachments/#{attachment.id})"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # XSSが防がれていることを確認
     expect(output_html).not_to include("<script>alert('XSS')</script>")
@@ -282,15 +322,19 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "HTML形式のimg要素で挿入された画像も署名付きURLに変換されること（メンバーの場合）" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
-    attachment = create_attachment(space: space, filename: "image.jpg")
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    attachment = create_attachment(space: space_record, filename: "image.jpg")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     # HTML形式のimg要素を含むテキスト
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # 署名付きURLが生成されていることを確認
     expect(output_html).to include("expires_in")
@@ -305,13 +349,16 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "HTML形式のimg要素で挿入された画像も署名付きURLに変換されること（非メンバーの場合でも）" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
-    attachment = create_attachment(space: space, filename: "image.jpg")
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
+    attachment = create_attachment(space: space_record, filename: "image.jpg")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
 
     # HTML形式のimg要素を含むテキスト
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: nil)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: nil)
 
     # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
     expect(output_html).to include("expires_in")
@@ -325,15 +372,19 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "HTML形式のimg要素でインライン表示不可の形式の場合、ダウンロードリンクに変換されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
-    attachment = create_attachment(space: space, filename: "document.pdf")
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    attachment = create_attachment(space: space_record, filename: "document.pdf")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     # HTML形式のimg要素を含むテキスト（PDFファイル）
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"pdf document\">"
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # img要素ではなくリンク要素に変換されていることを確認
     expect(output_html).to match(/<a[^>]*>/)
@@ -350,14 +401,18 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
   end
 
   it "複数のHTML形式img要素が含まれる場合、すべて変換されること" do
-    space = FactoryBot.create(:space_record)
-    topic = FactoryBot.create(:topic_record, space_record: space)
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
-    space_member = FactoryBot.create(:space_member_record, space_record: space, user_record: user)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
 
-    attachment1 = create_attachment(space: space, filename: "image1.jpg")
-    attachment2 = create_attachment(space: space, filename: "image2.png")
-    attachment3 = create_attachment(space: space, filename: "document.pdf")
+    attachment1 = create_attachment(space: space_record, filename: "image1.jpg")
+    attachment2 = create_attachment(space: space_record, filename: "image2.png")
+    attachment3 = create_attachment(space: space_record, filename: "document.pdf")
+    
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = <<~HTML
       <p>First image:</p>
@@ -368,7 +423,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       <img src="/attachments/#{attachment3.id}" alt="pdf">
     HTML
 
-    output_html = render_markup(text: text, current_topic: topic, current_space_member: space_member)
+    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
     # 画像1と画像2は署名付きURLでa要素に囲まれていることを確認
     expect(output_html.scan(/<a[^>]*>.*?<img[^>]*class="max-w-full".*?>.*?<\/a>/m).size).to eq(2)
