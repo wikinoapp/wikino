@@ -104,4 +104,5 @@
   - 画像を中央寄せしたい
   - 本文より少し大きめに画像を表示したい
     - 例: https://www.anthropic.com/news/claude-opus-4-1
+- [ ] 画像を `loading=lazy` で表示する
 - [ ] 退会処理の見直し
