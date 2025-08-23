@@ -4,8 +4,8 @@
 class PageLocationRepository < ApplicationRepository
   sig { params(current_space: SpaceRecord, keys: T::Array[PageLocationKey]).returns(T::Array[PageLocation]) }
   def to_models(current_space:, keys:)
-    topic_records = current_space.topic_records.where(name: keys.map(&:topic_name).uniq)
-    page_records = current_space.page_records.where(title: keys.map(&:page_title).uniq)
+    topic_records = current_space.topic_records.where(name: keys.map(&:topic_name).uniq).preload(:space_record)
+    page_records = current_space.page_records.where(title: keys.map(&:page_title).uniq).preload(:topic_record, :space_record)
 
     keys.each_with_object([]) do |key, ary|
       topic_record = topic_records.find { |topic_record| topic_record.name == key.topic_name }
