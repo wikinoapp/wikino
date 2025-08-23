@@ -13,27 +13,12 @@ class PageRepository < ApplicationRepository
     topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
     space = SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!)
 
-    # キャッシュされたbody_htmlがあればそれを使用、なければ生成
-    body_html = if page_record.body_html.present?
-      page_record.body_html.not_nil!
-    else
-      current_space_member_model = if current_space_member
-        SpaceMemberRepository.new.to_model(space_member_record: current_space_member)
-      end
-
-      Markup.new(
-        current_topic: topic,
-        current_space: space,
-        current_space_member: current_space_member_model
-      ).render_html(text: page_record.body)
-    end
-
     Page.new(
       database_id: page_record.id,
       number: page_record.number,
       title: page_record.title,
       body: page_record.body,
-      body_html:,
+      body_html: page_record.body_html,
       modified_at: page_record.modified_at,
       published_at: page_record.published_at,
       pinned_at: page_record.pinned_at,
@@ -74,27 +59,12 @@ class PageRepository < ApplicationRepository
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
-      # キャッシュされたbody_htmlがあればそれを使用、なければ生成
-      body_html = if page_record.body_html.present?
-        page_record.body_html.not_nil!
-      else
-        current_space_member_model = if current_space_member
-          SpaceMemberRepository.new.to_model(space_member_record: current_space_member)
-        end
-
-        Markup.new(
-          current_topic: topic,
-          current_space: space,
-          current_space_member: current_space_member_model
-        ).render_html(text: page_record.body)
-      end
-
       all_pages << Page.new(
         database_id: page_record.id,
         number: page_record.number,
         title: page_record.title,
         body: page_record.body,
-        body_html:,
+        body_html: page_record.body_html,
         modified_at: page_record.modified_at,
         published_at: page_record.published_at,
         pinned_at: page_record.pinned_at,
