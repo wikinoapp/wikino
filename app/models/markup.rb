@@ -19,38 +19,75 @@ class Markup
   def render_html(text:)
     return "" if text.empty?
 
-    location_keys = PageLocationKey.scan_text(text:, current_topic:)
-    page_locations = PageLocationRepository.new.to_models_by_keys(current_space:, keys: location_keys)
+    # 単一テキストの場合はバッチ処理を使用
+    results = render_html_batch(texts: [text])
+    results.first || ""
+  end
 
-    pipeline = HTMLPipeline.new(
-      text_filters: [],
-      convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
-        context: {
-          markdown: {
-            parse: {smart: false, html: true},  # HTMLタグの解析を有効化
-            render: {hardbreaks: true, unsafe: true}  # HTMLタグのレンダリングを有効化
-          }
-        }
-      ),
-      sanitization_config:,
-      node_filters: [
-        Markup::PageLinkFilter.new(
+  sig { params(texts: T::Array[String]).returns(T::Array[String]) }
+  def render_html_batch(texts:)
+    return [] if texts.empty?
+
+    # 全てのテキストから一括でlocation_keysを抽出
+    all_location_keys = []
+    text_to_keys_mapping = {}
+
+    texts.each do |text|
+      keys = PageLocationKey.scan_text(text:, current_topic:)
+      text_to_keys_mapping[text] = keys
+      all_location_keys.concat(keys)
+    end
+
+    # 重複を除いて一括でpage_locationsを取得
+    unique_keys = all_location_keys.uniq { |key| "#{key.topic_name}/#{key.page_title}" }
+    all_page_locations = if unique_keys.empty?
+      []
+    else
+      PageLocationRepository.new.to_models_by_keys(current_space:, keys: unique_keys)
+    end
+
+    # 各テキストを処理
+    texts.map do |text|
+      next "" if text.empty?
+
+      # このテキストに関連するpage_locationsを抽出
+      text_keys = text_to_keys_mapping[text] || []
+      relevant_page_locations = all_page_locations.select do |location|
+        text_keys.any? do |key|
+          location.key.topic_name == key.topic_name && location.key.page_title == key.page_title
+        end
+      end
+
+      pipeline = HTMLPipeline.new(
+        text_filters: [],
+        convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
           context: {
-            current_topic:,
-            page_locations:
+            markdown: {
+              parse: {smart: false, html: true},  # HTMLタグの解析を有効化
+              render: {hardbreaks: true, unsafe: true}  # HTMLタグのレンダリングを有効化
+            }
           }
         ),
-        Markup::AttachmentFilter.new(
-          context: {
-            current_space:,
-            current_space_member:
-          }
-        )
-      ]
-    )
-    result = pipeline.call(text)
+        sanitization_config:,
+        node_filters: [
+          Markup::PageLinkFilter.new(
+            context: {
+              current_topic:,
+              page_locations: relevant_page_locations
+            }
+          ),
+          Markup::AttachmentFilter.new(
+            context: {
+              current_space:,
+              current_space_member:
+            }
+          )
+        ]
+      )
+      result = pipeline.call(text)
 
-    result[:output].to_s
+      result[:output].to_s
+    end
   end
 
   sig { returns(Topic) }
