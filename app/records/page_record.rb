@@ -223,11 +223,12 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       editor_record: SpaceMemberRecord,
-      body: String
+      body: String,
+      body_html: String
     ).returns(PageRevisionRecord)
   end
-  def create_revision!(editor_record:, body:)
-    revision_records.create!(space_record:, space_member_record: editor_record, body:)
+  def create_revision!(editor_record:, body:, body_html:)
+    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:)
   end
 
   # ページ本文から添付ファイルIDを抽出し、page_attachment_referencesレコードを更新

@@ -42,7 +42,7 @@ module Pages
       updated_page_record = ActiveRecord::Base.transaction do
         page_record.save!
         page_record.add_editor!(editor_record: space_member_record)
-        page_record.create_revision!(editor_record: space_member_record, body:)
+        page_record.create_revision!(editor_record: space_member_record, body:, body_html:)
         page_record.link!(editor_record: space_member_record)
         space_member_record.destroy_draft_page!(page_record:)
 
