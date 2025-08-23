@@ -193,6 +193,35 @@ end
 - ❌ データベースへの永続化を伴わない処理（URL生成、データ変換など）
 - ❌ 単一のモデル/レコードに閉じた処理（モデルやレコードのメソッドとして定義）
 
+### トランザクション処理
+
+**重要**: Serviceクラスでトランザクションを張る場合は、必ず `#with_transaction` メソッドを使用すること
+
+```ruby
+# ✅ 良い例：with_transactionを使用
+module Users
+  class CreateService < ApplicationService
+    def call
+      with_transaction do
+        user = UserRecord.create!(...)
+        ProfileRecord.create!(user:, ...)
+      end
+    end
+  end
+end
+
+# ❌ 悪い例：transactionを直接使用
+module Users
+  class CreateService < ApplicationService
+    def call
+      ApplicationRecord.transaction do
+        # with_transactionを使うべき
+      end
+    end
+  end
+end
+```
+
 **重要**: Controller、Job、Rakeタスク内で永続化処理を書く場合は、必ずServiceクラスを定義すること
 
 ## 開発ワークフロー
