@@ -21,8 +21,8 @@ class Markup
     sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
       super
-      @current_space = T.let(context[:current_space], SpaceRecord)
-      @current_space_member = T.let(context[:current_space_member], T.nilable(SpaceMemberRecord))
+      @current_space = T.let(context[:current_space], Space)
+      @current_space_member = T.let(context[:current_space_member], T.nilable(SpaceMember))
     end
 
     # @override
@@ -59,7 +59,8 @@ class Markup
       return unless attachment_id
 
       # AttachmentRecordを取得してファイル形式を確認
-      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
+      space_record = SpaceRecord.find_by!(identifier: current_space.identifier)
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record:)
       return unless attachment
 
       # インライン表示可能な画像形式かチェック
@@ -108,7 +109,8 @@ class Markup
       return unless attachment_id
 
       # AttachmentRecordを取得してファイル形式を確認
-      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
+      space_record = SpaceRecord.find_by!(identifier: current_space.identifier)
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record:)
       return unless attachment
 
       # 動画ファイルの場合はvideo要素に変換
@@ -156,13 +158,21 @@ class Markup
     sig { params(attachment_id: String).returns(T.nilable(String)) }
     private def generate_signed_url(attachment_id)
       # AttachmentRecordを取得
-      attachment = AttachmentRecord.find_by(id: attachment_id, space_record: current_space)
+      space_record = SpaceRecord.find_by!(identifier: current_space.identifier)
+      attachment = AttachmentRecord.find_by(id: attachment_id, space_record:)
       return nil unless attachment
 
       # 署名付きURLを常に生成（権限チェックは/attachments/:idエンドポイントで行う）
       # 1時間の有効期限
+      current_space_member_record = if current_space_member
+        SpaceMemberRecord.find_by!(
+          space_id: space_record.id,
+          user_id: current_space_member.not_nil!.user.database_id
+        )
+      end
+
       attachment.generate_signed_url(
-        space_member_record: current_space_member,
+        space_member_record: current_space_member_record,
         expires_in: 1.hour
       )
     rescue => e
@@ -217,11 +227,11 @@ class Markup
       element.remove
     end
 
-    sig { returns(SpaceRecord) }
+    sig { returns(Space) }
     attr_reader :current_space
     private :current_space
 
-    sig { returns(T.nilable(SpaceMemberRecord)) }
+    sig { returns(T.nilable(SpaceMember)) }
     attr_reader :current_space_member
     private :current_space_member
   end

@@ -21,10 +21,10 @@ module Topics
         number: params[:topic_number]
       )
 
-      pinned_page_records = topic_record.page_records.active.pinned.preload(:topic_record, :space_record).order(pinned_at: :desc, id: :desc)
+      pinned_page_records = topic_record.page_records.active.pinned.order(pinned_at: :desc, id: :desc)
       pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records, current_space_member: space_member_record)
 
-      cursor_paginate_page = topic_record.not_nil!.page_records.active.not_pinned.preload(:topic_record, :space_record).cursor_paginate(
+      cursor_paginate_page = topic_record.not_nil!.page_records.active.not_pinned.cursor_paginate(
         after: params[:after].presence,
         before: params[:before].presence,
         limit: 100,

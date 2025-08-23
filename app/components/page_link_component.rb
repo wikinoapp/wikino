@@ -2,13 +2,13 @@
 # frozen_string_literal: true
 
 class PageLinkComponent < ApplicationComponent
-  sig { params(current_space: SpaceRecord, page_location: PageLocation).void }
+  sig { params(current_space: Space, page_location: PageLocation).void }
   def initialize(current_space:, page_location:)
-    @current_space = T.let(current_space, SpaceRecord)
+    @current_space = T.let(current_space, Space)
     @page_location = T.let(page_location, PageLocation)
   end
 
-  sig { returns(SpaceRecord) }
+  sig { returns(Space) }
   attr_reader :current_space
   private :current_space
 
