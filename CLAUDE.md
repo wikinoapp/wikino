@@ -266,7 +266,7 @@ bin/rails server     # サーバー起動
 - **コード実装**: コード記述後は、必ず以下を確認する:
   - 型チェックが成功すること（`bin/srb tc` or `pnpm tsc`）
   - Linterの実行が成功すること（`bin/standardrb` or `bin/erb_lint --lint-all` or `pnpm prettier . --write && pnpm eslint . --fix`）
-  - 関連するテストが通ること（`bin/rspec`）
+  - 関連するテストが通ること（`bin/rspec path/to/xxx_spec.rb`）
   - 明らかなランタイムエラーがないこと
 - **ドキュメント編集**: Markdownファイルを編集した後は、必ず以下を行う:
   - Prettierの実行 (`pnpm prettier . --write`)
