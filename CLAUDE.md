@@ -180,6 +180,32 @@ end
 - `meta.(ja,en).yml`: メタデータ
 - `nouns.(ja,en).yml`: 名詞・ラベル
 
+### JavaScript/TypeScript
+
+#### HTTPリクエスト
+
+```typescript
+// ❌ fetchを使用しない
+const response = await fetch("/api/endpoint", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken,
+  },
+  body: JSON.stringify(data),
+});
+
+// ✅ @rails/request.jsを使用
+import { post } from "@rails/request.js";
+
+const response = await post("/api/endpoint", {
+  body: data,
+  responseKind: "json",
+});
+```
+
+**重要**: Railsアプリケーション内でのHTTPリクエストには、`fetch`ではなく`@rails/request.js`パッケージを使用すること。CSRFトークンの管理が自動化され、Railsとの統合がよりシームレスになります。
+
 ## サービスクラスのルール
 
 ### サービスクラスを使用する場合
