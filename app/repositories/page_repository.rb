@@ -11,9 +11,17 @@ class PageRepository < ApplicationRepository
   end
   def to_model(page_record:, can_update: nil, current_space_member: nil)
     # body_html を動的に生成
+    topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
+    space = SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!)
+
+    current_space_member_model = if current_space_member
+      SpaceMemberRepository.new.to_model(space_member_record: current_space_member)
+    end
+
     body_html = Markup.new(
-      current_topic: page_record.topic_record.not_nil!,
-      current_space_member:
+      current_topic: topic,
+      current_space: space,
+      current_space_member: current_space_member_model
     ).render_html(text: page_record.body)
 
     Page.new(
@@ -27,8 +35,8 @@ class PageRepository < ApplicationRepository
       pinned_at: page_record.pinned_at,
       trashed_at: page_record.trashed_at,
       can_update:,
-      space: SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!),
-      topic: TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
+      space:,
+      topic:
     )
   end
 

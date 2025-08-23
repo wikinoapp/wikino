@@ -9,7 +9,7 @@ class Markup
     sig { params(context: T::Hash[Symbol, T.untyped], result: T::Hash[Symbol, T.untyped]).void }
     def initialize(context: {}, result: {})
       super
-      @current_topic = T.let(context[:current_topic], TopicRecord)
+      @current_topic = T.let(context[:current_topic], Topic)
       @page_locations = T.let(context[:page_locations], T::Array[PageLocation])
     end
 
@@ -42,14 +42,14 @@ class Markup
         if page_location
           text.gsub!(
             /\[\[#{Regexp.escape(location_key.raw)}\]\]/,
-            view_context.render(PageLinkComponent.new(current_space: current_topic.space_record.not_nil!, page_location:))
+            view_context.render(PageLinkComponent.new(current_space: current_topic.space, page_location:))
           )
           text_chunk.replace(text, as: :html)
         end
       end
     end
 
-    sig { returns(TopicRecord) }
+    sig { returns(Topic) }
     attr_reader :current_topic
     private :current_topic
 

@@ -22,4 +22,12 @@ class PageLocationRepository < ApplicationRepository
       end
     end
   end
+
+  sig { params(current_space: Space, keys: T::Array[PageLocationKey]).returns(T::Array[PageLocation]) }
+  def to_models_by_keys(current_space:, keys:)
+    return [] if keys.empty?
+
+    space_record = SpaceRecord.find_by!(identifier: current_space.identifier)
+    to_models(current_space: space_record, keys:)
+  end
 end

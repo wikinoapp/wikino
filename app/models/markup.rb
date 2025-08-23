@@ -8,9 +8,10 @@ require "html_pipeline/convert_filter/markdown_filter"
 class Markup
   extend T::Sig
 
-  sig { params(current_topic: TopicRecord, current_space_member: T.nilable(SpaceMemberRecord)).void }
-  def initialize(current_topic:, current_space_member: nil)
+  sig { params(current_topic: Topic, current_space: Space, current_space_member: T.nilable(SpaceMember)).void }
+  def initialize(current_topic:, current_space:, current_space_member: nil)
     @current_topic = current_topic
+    @current_space = current_space
     @current_space_member = current_space_member
   end
 
@@ -19,7 +20,7 @@ class Markup
     return "" if text.empty?
 
     location_keys = PageLocationKey.scan_text(text:, current_topic:)
-    page_locations = PageLocationRepository.new.to_models(current_space: current_topic.space_record.not_nil!, keys: location_keys)
+    page_locations = PageLocationRepository.new.to_models_by_keys(current_space:, keys: location_keys)
 
     pipeline = HTMLPipeline.new(
       text_filters: [],
@@ -41,7 +42,7 @@ class Markup
         ),
         Markup::AttachmentFilter.new(
           context: {
-            current_space: current_topic.space_record.not_nil!,
+            current_space:,
             current_space_member:
           }
         )
@@ -52,11 +53,15 @@ class Markup
     result[:output].to_s
   end
 
-  sig { returns(TopicRecord) }
+  sig { returns(Topic) }
   attr_reader :current_topic
   private :current_topic
 
-  sig { returns(T.nilable(SpaceMemberRecord)) }
+  sig { returns(Space) }
+  attr_reader :current_space
+  private :current_space
+
+  sig { returns(T.nilable(SpaceMember)) }
   attr_reader :current_space_member
   private :current_space_member
 
