@@ -16,7 +16,7 @@ Rails.application.routes.draw do
   match "/accounts",                                                       via: :post,   as: :account_list,                                 to: "accounts/create#call"
   match "/accounts/new",                                                   via: :get,    as: :new_account,                                  to: "accounts/new#call"
   match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
-  match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/index#call"
+  match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
   match "/email_confirmation",                                             via: :patch,  as: :email_confirmation,                           to: "email_confirmations/update#call"
   match "/email_confirmation",                                             via: :post,                                                      to: "email_confirmations/create#call"
   match "/email_confirmation/edit",                                        via: :get,    as: :edit_email_confirmation,                      to: "email_confirmations/edit#call"

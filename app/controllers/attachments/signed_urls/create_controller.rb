@@ -3,7 +3,7 @@
 
 module Attachments
   module SignedUrls
-    class IndexController < ApplicationController
+    class CreateController < ApplicationController
       include ControllerConcerns::Authenticatable
 
       before_action :restore_user_session
