@@ -10,7 +10,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
     it "通常のテキストはそのまま出力されること" do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -25,7 +25,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "Page 1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -40,7 +40,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "Page 1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -56,7 +56,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       topic_one_record = create(:topic_record, space_record: space_record, name: "トピック1")
       topic_two_record = create(:topic_record, space_record: space_record, name: "トピック2")
       create(:page_record, space_record: space_record, topic_record: topic_two_record, title: "Page 2")
-      
+
       topic_one = TopicRepository.new.to_model(topic_record: topic_one_record)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -73,7 +73,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       topic_one_record = create(:topic_record, space_record: space_record, name: "トピック1")
       topic_two_record = create(:topic_record, space_record: space_record, name: "トピック2")
       create(:page_record, space_record: space_record, topic_record: topic_two_record, title: "Page 2")
-      
+
       topic_one = TopicRepository.new.to_model(topic_record: topic_one_record)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -89,7 +89,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       topic_one_record = create(:topic_record, space_record: space_record, name: "トピック1")
       topic_two_record = create(:topic_record, space_record: space_record, name: "トピック2")
       page = create(:page_record, space_record: space_record, topic_record: topic_two_record, title: "Page 2")
-      
+
       topic_one = TopicRepository.new.to_model(topic_record: topic_one_record)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -103,7 +103,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
     it "存在しないページはリンクにならないこと" do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -118,7 +118,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "Notebook -> List")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -133,7 +133,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "Page 1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -148,7 +148,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "Page 1")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -165,7 +165,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       topic_two_record = create(:topic_record, space_record: space_record, name: "トピック2")
       page_one = create(:page_record, space_record: space_record, topic_record: topic_one_record, title: "Page 1")
       page_two = create(:page_record, space_record: space_record, topic_record: topic_two_record, title: "Page 2")
-      
+
       topic_one = TopicRepository.new.to_model(topic_record: topic_one_record)
       space = SpaceRepository.new.to_model(space_record:)
 
@@ -180,7 +180,7 @@ RSpec.describe "Markup::PageLinkFilter", type: :model do
       space_record = create(:space_record)
       topic_record = create(:topic_record, space_record: space_record, name: "トピック1")
       page = create(:page_record, space_record: space_record, topic_record: topic_record, title: "日記 (2025)")
-      
+
       topic = TopicRepository.new.to_model(topic_record:)
       space = SpaceRepository.new.to_model(space_record:)
 

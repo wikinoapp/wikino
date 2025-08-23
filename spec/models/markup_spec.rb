@@ -9,10 +9,10 @@ RSpec.describe Markup, type: :model do
   def test_render_html(current_topic:, text:, expected:)
     topic_record = create(:topic_record)
     space_record = topic_record.space_record
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
-    
+
     actual = Markup.new(current_topic: topic, current_space: space).render_html(text:)
     expect(normalize_html(actual)).to eq(normalize_html(expected))
   end
@@ -20,10 +20,10 @@ RSpec.describe Markup, type: :model do
   it "渡したテキストが空文字列のとき: 空文字列を返すこと" do
     topic_record = create(:topic_record)
     space_record = topic_record.space_record
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
-    
+
     actual = Markup.new(current_topic: topic, current_space: space).render_html(text: "")
 
     expect(actual).to eq("")
@@ -32,10 +32,10 @@ RSpec.describe Markup, type: :model do
   it "タスクリスト記法: チェックボックスが生成されること" do
     topic_record = create(:topic_record)
     space_record = topic_record.space_record
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
-    
+
     actual = Markup.new(current_topic: topic, current_space: space).render_html(
       text: [
         "- [ ] 未完了",

@@ -75,7 +75,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
     attachment = create_attachment(space: space_record, filename: "image.jpg")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -99,7 +99,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     attachment = create_attachment(space: space_record, filename: "image.jpg")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
 
@@ -122,7 +122,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -146,7 +146,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -175,7 +175,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
     attachment = create_attachment(space: space_record, filename: "document.pdf")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -202,7 +202,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # space1でも添付ファイルを検索するので、そのスタブも追加
     allow(AttachmentRecord).to receive(:find_by).with(id: attachment.id, space_record: space1_record).and_return(nil)
-    
+
     topic1 = TopicRepository.new.to_model(topic_record: topic1_record)
     space1 = SpaceRepository.new.to_model(space_record: space1_record)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -221,7 +221,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -240,7 +240,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -270,7 +270,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment1 = create_attachment(space: space_record, filename: "image1.jpg")
     attachment2 = create_attachment(space: space_record, filename: "document.pdf")
     attachment3 = create_attachment(space: space_record, filename: "image2.png")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -307,7 +307,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
 
     attachment = create_attachment(space: space_record, filename: "<script>alert('XSS')</script>.pdf")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -327,7 +327,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
     attachment = create_attachment(space: space_record, filename: "image.jpg")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -352,7 +352,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record: space_record)
     attachment = create_attachment(space: space_record, filename: "image.jpg")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
 
@@ -377,7 +377,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     user = FactoryBot.create(:user_record)
     space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
     attachment = create_attachment(space: space_record, filename: "document.pdf")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
@@ -409,7 +409,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     attachment1 = create_attachment(space: space_record, filename: "image1.jpg")
     attachment2 = create_attachment(space: space_record, filename: "image2.png")
     attachment3 = create_attachment(space: space_record, filename: "document.pdf")
-    
+
     topic = TopicRepository.new.to_model(topic_record:)
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
