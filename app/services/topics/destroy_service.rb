@@ -7,10 +7,11 @@ module Topics
     def call(topic_record_id:)
       topic_record = TopicRecord.find(topic_record_id)
 
-      topic_record.page_records.destroy_all_with_related_records!
-      topic_record.member_records.destroy_all
-
-      topic_record.destroy!
+      with_transaction do
+        topic_record.page_records.destroy_all_with_related_records!
+        topic_record.member_records.destroy_all
+        topic_record.destroy!
+      end
 
       nil
     end
