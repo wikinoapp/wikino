@@ -23,7 +23,7 @@ module DraftPages
         new_body = body.presence || ""
 
         # body_htmlを生成
-        topic = TopicRepository.new.to_model(topic_record:)
+        topic = TopicRepository.new.to_model(topic_record: topic_record.not_nil!)
         space = SpaceRepository.new.to_model(space_record: page_record.space_record!)
         space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 

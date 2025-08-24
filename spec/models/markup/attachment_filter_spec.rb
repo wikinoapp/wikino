@@ -83,16 +83,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
-    # 署名付きURLが生成されていることを確認
-    expect(output_html).to include("expires_in")
-    expect(output_html).to include("signature")
-    expect(output_html).to include("space_member_id")
+    # data属性が設定されていることを確認
+    expect(output_html).to include("data-attachment-id=\"#{attachment.id}\"")
+    expect(output_html).to include("data-attachment-type=\"image\"")
 
     # 画像がa要素で囲まれていることを確認
     expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
     expect(output_html).to include("rel=\"noopener noreferrer\"")
     expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
-    expect(output_html).to include("max-w-full")
+    expect(output_html).to include("wikino-attachment-image")
   end
 
   it "画像URLが署名付きURLに変換されること（非メンバーの場合でも）" do
@@ -106,15 +105,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "![image](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: nil)
 
-    # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
-    expect(output_html).to include("expires_in")
-    expect(output_html).to include("signature")
+    # data属性が設定されていることを確認（非メンバーでも設定される）
+    expect(output_html).to include("data-attachment-id=\"#{attachment.id}\"")
+    expect(output_html).to include("data-attachment-type=\"image\"")
 
     # 画像がa要素で囲まれていることを確認
     expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
     expect(output_html).to include("rel=\"noopener noreferrer\"")
     expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
-    expect(output_html).to include("max-w-full")
+    expect(output_html).to include("wikino-attachment-image")
   end
 
   it "インライン表示可能な画像形式の場合、img要素が維持されること" do
@@ -183,9 +182,9 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "[Download](/attachments/#{attachment.id})"
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
-    # 署名付きURLが生成されていることを確認
-    expect(output_html).to include("expires_in")
-    expect(output_html).to include("signature")
+    # data属性が設定されていることを確認
+    expect(output_html).to include("data-attachment-id=\"#{attachment.id}\"")
+    expect(output_html).to include("data-attachment-link=\"true\"")
 
     # リンク属性が設定されていることを確認
     expect(output_html).to include("target=\"_blank\"")
@@ -289,15 +288,16 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # すべての添付ファイルURLが変換されていることを確認
     # attachment1は画像なのでa要素で囲まれたimg要素
-    expect(output_html).to match(/<a[^>]*>.*<img[^>]*class="max-w-full".*<\/a>/m)
+    expect(output_html).to include("data-attachment-id=\"#{attachment1.id}\"")
+    expect(output_html).to match(/<a[^>]*>.*<img[^>]*class="wikino-attachment-image".*<\/a>/m)
 
     # attachment2はPDFなのでリンクに変換
     expect(output_html).to include("document.pdf")
     expect(output_html).not_to match(/<img[^>]*src="[^"]*#{attachment2.id}[^"]*"/)
 
-    # attachment3はリンクで署名付きURLに変換（署名付きURLが生成されている）
+    # attachment3はリンクで署名付きURLに変換（data属性が設定されている）
     expect(output_html).to include("Download")
-    expect(output_html.scan(/<a[^>]*href="[^"]*expires_in[^"]*"/).size).to eq(3)
+    expect(output_html).to include("data-attachment-id=\"#{attachment3.id}\"")
   end
 
   it "ファイル名に特殊文字が含まれる場合、適切にエスケープされること" do
@@ -336,16 +336,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
-    # 署名付きURLが生成されていることを確認
-    expect(output_html).to include("expires_in")
-    expect(output_html).to include("signature")
-    expect(output_html).to include("space_member_id")
+    # data属性が設定されていることを確認
+    expect(output_html).to include("data-attachment-id=\"#{attachment.id}\"")
+    expect(output_html).to include("data-attachment-type=\"image\"")
 
     # 画像がa要素で囲まれていることを確認
     expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
     expect(output_html).to include("rel=\"noopener noreferrer\"")
     expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
-    expect(output_html).to include("max-w-full")
+    expect(output_html).to include("wikino-attachment-image")
   end
 
   it "HTML形式のimg要素で挿入された画像も署名付きURLに変換されること（非メンバーの場合でも）" do
@@ -360,15 +359,15 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     text = "<img src=\"/attachments/#{attachment.id}\" alt=\"test image\">"
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: nil)
 
-    # 署名付きURLが生成されていることを確認（非メンバーでも生成される）
-    expect(output_html).to include("expires_in")
-    expect(output_html).to include("signature")
+    # data属性が設定されていることを確認（非メンバーでも設定される）
+    expect(output_html).to include("data-attachment-id=\"#{attachment.id}\"")
+    expect(output_html).to include("data-attachment-type=\"image\"")
 
     # 画像がa要素で囲まれていることを確認
     expect(output_html).to match(/<a[^>]*target="_blank"[^>]*>/)
     expect(output_html).to include("rel=\"noopener noreferrer\"")
     expect(output_html).to match(/<a[^>]*>.*<img[^>]*>.*<\/a>/m)
-    expect(output_html).to include("max-w-full")
+    expect(output_html).to include("wikino-attachment-image")
   end
 
   it "HTML形式のimg要素でインライン表示不可の形式の場合、ダウンロードリンクに変換されること" do
@@ -425,14 +424,16 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
 
-    # 画像1と画像2は署名付きURLでa要素に囲まれていることを確認
-    expect(output_html.scan(/<a[^>]*>.*?<img[^>]*class="max-w-full".*?>.*?<\/a>/m).size).to eq(2)
+    # 画像1と画像2はa要素に囲まれていることを確認
+    expect(output_html).to include("data-attachment-id=\"#{attachment1.id}\"")
+    expect(output_html).to include("data-attachment-id=\"#{attachment2.id}\"")
+    expect(output_html.scan(/<a[^>]*>.*?<img[^>]*class="wikino-attachment-image".*?>.*?<\/a>/m).size).to eq(2)
 
     # PDFはダウンロードリンクに変換されていることを確認
     expect(output_html).to include("document.pdf")
     expect(output_html).not_to match(/<img[^>]*src="[^"]*#{attachment3.id}[^"]*"/)
 
-    # すべての添付ファイルが署名付きURLに変換されていることを確認
-    expect(output_html.scan("expires_in").size).to be >= 3
+    # すべての添付ファイルがdata属性付きで変換されていることを確認
+    expect(output_html).to include("data-attachment-id=\"#{attachment3.id}\"")
   end
 end

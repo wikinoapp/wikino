@@ -676,10 +676,10 @@ class DraftPageRecord
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def body_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(::String) }
     def body_html; end
 
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    sig { params(value: ::String).returns(::String) }
     def body_html=(value); end
 
     sig { returns(T::Boolean) }
@@ -694,10 +694,10 @@ class DraftPageRecord
     sig { returns(T::Boolean) }
     def body_html_came_from_user?; end
 
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    sig { returns(T.nilable([::String, ::String])) }
     def body_html_change; end
 
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    sig { returns(T.nilable([::String, ::String])) }
     def body_html_change_to_be_saved; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -706,7 +706,7 @@ class DraftPageRecord
     sig { returns(T.nilable(::String)) }
     def body_html_in_database; end
 
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    sig { returns(T.nilable([::String, ::String])) }
     def body_html_previous_change; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1054,7 +1054,7 @@ class DraftPageRecord
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_body_html; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
