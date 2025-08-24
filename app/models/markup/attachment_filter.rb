@@ -69,11 +69,16 @@ class Markup
         width_attr = element["width"]
         height_attr = element["height"]
 
+        # ファイル名を取得（alt属性用）
+        filename = attachment.filename || "Image"
+        escaped_filename = CGI.escapeHTML(filename)
+
         # プレースホルダーとして表示（署名付きURLは後でJavaScriptで置換）
         img_attrs = [
           "src=\"\"",
           "data-attachment-id=\"#{attachment_id}\"",
           "data-attachment-type=\"image\"",
+          "alt=\"#{escaped_filename}\"",
           "class=\"max-w-full wikino-attachment-placeholder\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
