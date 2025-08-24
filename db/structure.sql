@@ -11,6 +11,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
@@ -142,6 +149,7 @@ CREATE TABLE public.draft_pages (
     topic_id uuid NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
+    body_html text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -231,6 +239,7 @@ CREATE TABLE public.page_revisions (
     space_member_id uuid NOT NULL,
     page_id uuid NOT NULL,
     body public.citext NOT NULL,
+    body_html text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -247,6 +256,7 @@ CREATE TABLE public.pages (
     number integer NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
+    body_html text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     published_at timestamp(6) without time zone,
@@ -1277,7 +1287,6 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20250811093211'),
 ('20250802185227'),
 ('20250802185226'),
 ('20250730164550'),

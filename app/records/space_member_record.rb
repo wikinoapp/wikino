@@ -37,6 +37,7 @@ class SpaceMemberRecord < ApplicationRecord
     page = space_record.not_nil!.page_records.where(topic_record:, title:).first_or_create!(
       space_record:,
       body: "",
+      body_html: "",
       linked_page_ids: [],
       modified_at: Time.zone.now
     )
@@ -52,6 +53,7 @@ class SpaceMemberRecord < ApplicationRecord
       topic_record: page.topic_record,
       title: page.title,
       body: page.body,
+      body_html: page.body_html,
       linked_page_ids: page.linked_page_ids,
       modified_at: Time.zone.now
     ).find_or_create_by!(page_record: page)

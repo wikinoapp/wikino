@@ -7,7 +7,6 @@ class PageRecord < ApplicationRecord
   include RecordConcerns::Pageable
 
   self.table_name = "pages"
-  self.ignored_columns += ["body_html"]
 
   acts_as_sequenced column: :number, scope: :space_id
 
@@ -52,10 +51,21 @@ class PageRecord < ApplicationRecord
 
   sig { params(topic_record: TopicRecord).returns(PageRecord) }
   def self.create_as_blanked!(topic_record:)
+    # 空のbody_htmlを生成
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record: topic_record.space_record.not_nil!)
+
+    body_html = Markup.new(
+      current_topic: topic,
+      current_space: space,
+      current_space_member: nil
+    ).render_html(text: "")
+
     topic_record.page_records.create!(
       space_record: topic_record.space_record,
       title: nil,
       body: "",
+      body_html:,
       linked_page_ids: [],
       modified_at: Time.current
     )
@@ -213,11 +223,12 @@ class PageRecord < ApplicationRecord
   sig do
     params(
       editor_record: SpaceMemberRecord,
-      body: String
+      body: String,
+      body_html: String
     ).returns(PageRevisionRecord)
   end
-  def create_revision!(editor_record:, body:)
-    revision_records.create!(space_record:, space_member_record: editor_record, body:)
+  def create_revision!(editor_record:, body:, body_html:)
+    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:)
   end
 
   # ページ本文から添付ファイルIDを抽出し、page_attachment_referencesレコードを更新

@@ -8,23 +8,24 @@ FactoryBot.define do
     attached_at { Time.current }
     processing_status { AttachmentProcessingStatus::Completed.serialize }
 
-    # Active Storage Attachment は作成時に設定する必要がある
-    active_storage_attachment_id { nil }
-
     trait :with_blob do
-      after(:create) do |attachment_record|
+      before(:create) do |attachment_record|
+        # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
+        temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
+
         blob = ActiveStorage::Blob.create_and_upload!(
           io: StringIO.new("test file content"),
           filename: "test-file.txt",
           content_type: "text/plain"
         )
+
         active_storage_attachment = ActiveStorage::Attachment.create!(
           name: "file",
-          record_type: "AttachmentRecord",
-          record_id: attachment_record.id,
+          record: temp_attachment,
           blob:
         )
-        attachment_record.update!(active_storage_attachment_id: active_storage_attachment.id)
+
+        attachment_record.active_storage_attachment_id = active_storage_attachment.id
       end
     end
 

@@ -19,13 +19,25 @@ module DraftPages
     def call(space_member_record:, page_record:, topic_number:, title:, body:)
       updated_draft_page = ActiveRecord::Base.transaction do
         draft_page = space_member_record.find_or_create_draft_page!(page: page_record)
-        topic = space_member_record.topic_records.find_by(number: topic_number).presence || page_record.topic_record
+        topic_record = space_member_record.topic_records.find_by(number: topic_number).presence || page_record.topic_record
         new_body = body.presence || ""
 
+        # body_htmlを生成
+        topic = TopicRepository.new.to_model(topic_record: topic_record.not_nil!)
+        space = SpaceRepository.new.to_model(space_record: page_record.space_record!)
+        space_member = SpaceMemberRepository.new.to_model(space_member_record:)
+
+        body_html = Markup.new(
+          current_topic: topic,
+          current_space: space,
+          current_space_member: space_member
+        ).render_html(text: new_body)
+
         draft_page.attributes = {
-          topic_record: topic,
+          topic_record:,
           title:,
           body: new_body,
+          body_html:,
           modified_at: Time.zone.now
         }
         draft_page.save!

@@ -22,6 +22,9 @@ module GeneratedUrlHelpersModule
   def attachment_presign_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def attachment_signed_url_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def attachment_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

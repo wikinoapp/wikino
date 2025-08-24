@@ -5,7 +5,6 @@ class DraftPageRecord < ApplicationRecord
   include RecordConcerns::Pageable
 
   self.table_name = "draft_pages"
-  self.ignored_columns += ["body_html"]
 
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :topic_record, foreign_key: :topic_id
