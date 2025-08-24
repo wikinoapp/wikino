@@ -69,24 +69,20 @@ class Markup
         width_attr = element["width"]
         height_attr = element["height"]
 
-        # ファイル名を取得（alt属性用）
-        filename = attachment.filename || "Image"
-        escaped_filename = CGI.escapeHTML(filename)
-
         # プレースホルダーとして表示（署名付きURLは後でJavaScriptで置換）
         img_attrs = [
           "src=\"\"",
           "data-attachment-id=\"#{attachment_id}\"",
           "data-attachment-type=\"image\"",
-          "alt=\"#{escaped_filename}\"",
-          "class=\"max-w-full\""
+          "alt=\"\"",
+          "class=\"rounded-md invisible\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
         img_attrs << "height=\"#{height_attr}\"" if height_attr
 
         # a要素で囲む（href属性も後でJavaScriptで設定）
         link_html = <<~HTML
-          <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank" rel="noopener noreferrer" class="inline-block wikino-attachment-link">
+          <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank" rel="noopener noreferrer" class="inline-block">
             <img #{img_attrs.join(" ")} />
           </a>
         HTML
@@ -185,7 +181,7 @@ class Markup
            data-attachment-link="true"
            target="_blank"
            rel="noopener noreferrer"
-           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline wikino-attachment-link">
+           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
