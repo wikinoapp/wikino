@@ -113,6 +113,56 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record!.permissions.include?(SpaceMemberPermission::ExportSpace)
   end
 
+  # ファイルアップロード権限の確認
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_upload_attachment?(space_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == space_record.id
+  end
+
+  # ファイル閲覧権限の確認
+  # 公開トピックの添付ファイルは誰でも閲覧可能
+  # それ以外はスペースメンバーのみ閲覧可能
+  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_view_attachment?(attachment_record:)
+    # 添付ファイルを参照している全てのページが公開トピックかチェック
+    if attachment_record.all_referencing_pages_public?
+      # 全て公開トピックの場合は誰でもアクセス可能
+      true
+    elsif user_record.nil?
+      # ログインしていない場合はアクセス不可
+      false
+    else
+      # スペースメンバーかどうかをチェック
+      space_member_record.present? &&
+        space_member_record!.active? &&
+        space_member_record!.space_id == attachment_record.space_id
+    end
+  end
+
+  # ファイル削除権限の確認
+  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_delete_attachment?(attachment_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == attachment_record.space_id &&
+      (space_member_record!.id == attachment_record.attached_space_member_id ||
+        space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace))
+  end
+
+  # ファイル管理画面へのアクセス権限の確認
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_attachments?(space_record:)
+    return false if space_member_record.nil?
+
+    space_member_record!.active? &&
+      space_member_record!.space_id == space_record.id &&
+      space_member_record!.permissions.include?(SpaceMemberPermission::UpdateSpace)
+  end
+
   sig { params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
     if space_member_record

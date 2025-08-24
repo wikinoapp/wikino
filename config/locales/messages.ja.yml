@@ -4,6 +4,9 @@ ja:
       learn_more: 詳しくはこちら
       no_backlinks: バックリンクはありません
       unexpected_error: 予期せぬエラーが発生しました。申し訳ありませんが、再度やり直しをお願いします
+    no_attachments_found: 添付ファイルが見つかりません
+    uploaded_at: "%{time} にアップロード"
+    page_of: "%{current} / %{total} ページ"
     accounts:
       atname_hint_html: |-
         この識別子はプロフィールのURLに使用されます。あとから変更もできます<br>
@@ -14,6 +17,9 @@ ja:
       signed_in_successfully: ログインしました
       signed_up_successfully_html: "アカウントを作成しました。<br class='block sm:hidden'>Wikinoにようこそ！"
       terms_html: "%{terms_link} と %{privacy_link} に同意のうえでアカウントを作成してください"
+    attachments:
+      delete_confirmation: このファイルを削除しますか？
+      deleted_successfully: ファイルを削除しました
     authentication:
       already_signed_in: すでにログインしています
     draft_saved_time_html: '下書き保存: <span class="font-bold">%{time}</span>'
@@ -53,6 +59,7 @@ ja:
     search:
       no_results: 検索結果が見つかりませんでした
       search_keyword_placeholder: キーワードを入力してください
+      search_filename_placeholder: ファイル名で検索
       subtitle_html: ページタイトルをキーワードで検索することができます。%{search_help_link}
     profiles:
       atname_hint_html: |-

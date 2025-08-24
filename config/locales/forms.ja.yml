@@ -8,6 +8,10 @@ ja:
       accounts/destroy_confirmation_form:
         user_atname: アットネーム
         user_record: アカウント
+      attachments/presign_form:
+        filename: ファイル名
+        content_type: ファイル形式
+        byte_size: ファイルサイズ
       email_confirmations/check_form:
         confirmation_code: 確認用コード
       email_confirmations/creation_form:
@@ -106,3 +110,19 @@ ja:
               too_short: は%{count}文字以上で入力してください
               too_long: は%{count}文字以内で入力してください
               invalid: に不正な文字が含まれています
+        attachments/creation_form:
+          invalid_filename: ファイル名が不正です
+          executable_file_not_allowed: 実行可能ファイルはアップロードできません
+          unsupported_file_format: サポートされていないファイル形式です
+          content_type_mismatch: ファイルの内容が宣言された形式と一致しません
+          file_download_failed: ファイルのダウンロードに失敗しました
+        attachments/presign_form:
+          attributes:
+            content_type:
+              unsupported_content_type: はサポートされていない形式です
+            byte_size:
+              file_size_too_large: は%{max}以下にしてください
+            filename:
+              invalid_characters: に使用できない文字が含まれています
+              invalid_path: に不正なパスが含まれています
+              too_long: は255バイト以下にしてください

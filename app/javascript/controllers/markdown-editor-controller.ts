@@ -26,6 +26,9 @@ import { wikilinkCompletions } from "../markdown-editor/wikilink-completions";
 import { insertNewlineAndContinueList } from "../markdown-editor/list-continuation";
 import { handleTab, handleShiftTab } from "../markdown-editor/tab-handler";
 import { handleSubmitShortcut } from "../markdown-editor/submit-handler";
+import { fileDropHandler } from "../markdown-editor/file-drop-handler";
+import { pasteHandler } from "../markdown-editor/paste-handler";
+import { FileUploadHandler } from "../markdown-editor/file-upload-handler";
 
 export default class MarkdownEditorController extends Controller<HTMLDivElement> {
   static targets = ["codeMirror", "textarea"];
@@ -41,9 +44,11 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
   declare readonly codeMirrorTarget: HTMLDivElement;
   declare readonly textareaTarget: HTMLTextAreaElement;
   editorView!: EditorView;
+  private fileUploadHandler!: FileUploadHandler;
 
-  connect() {
-    this.initializeEditor();
+  async connect() {
+    await this.initializeEditor();
+    this.setupFileHandlers();
   }
 
   async initializeEditor() {
@@ -65,6 +70,10 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
         rectangularSelection(),
         crosshairCursor(),
         highlightSelectionMatches(),
+        fileDropHandler,
+        EditorView.domEventHandlers({
+          paste: (event, view) => pasteHandler(view, event as ClipboardEvent),
+        }),
         keymap.of([
           { key: "Enter", run: insertNewlineAndContinueList },
           { key: "Tab", run: handleTab },
@@ -95,6 +104,29 @@ export default class MarkdownEditorController extends Controller<HTMLDivElement>
     if (this.autofocusValue) {
       this.editorView.focus();
     }
+
+    // FileUploadHandlerのインスタンスを作成
+    this.fileUploadHandler = new FileUploadHandler(this.editorView, this.spaceIdentifierValue);
+  }
+
+  setupFileHandlers() {
+    // ファイルドロップイベントのハンドリング
+    this.editorView.dom.addEventListener("file-drop", ((event: CustomEvent) => {
+      const { files, position } = event.detail;
+      this.fileUploadHandler.handleFileUpload(files, position);
+    }) as EventListener);
+
+    // メディア（画像・動画）ペーストイベントのハンドリング
+    this.editorView.dom.addEventListener("media-paste", ((event: CustomEvent) => {
+      const { file, position } = event.detail;
+      this.fileUploadHandler.handleFileUpload([file], position);
+    }) as EventListener);
+
+    // ドキュメントファイルペーストイベントのハンドリング（PDF、Office文書、テキスト、圧縮ファイル）
+    this.editorView.dom.addEventListener("file-paste", ((event: CustomEvent) => {
+      const { file, position } = event.detail;
+      this.fileUploadHandler.handleFileUpload([file], position);
+    }) as EventListener);
   }
 
   disconnect() {

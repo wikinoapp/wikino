@@ -418,6 +418,20 @@ class PageRecord
     def draft_page_records=(value); end
 
     sig { returns(T::Array[T.untyped]) }
+    def page_attachment_reference_record_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def page_attachment_reference_record_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `PageRecord` class because it declared `has_many :page_attachment_reference_records`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::PageAttachmentReferenceRecord::PrivateCollectionProxy) }
+    def page_attachment_reference_records; end
+
+    sig { params(value: T::Enumerable[::PageAttachmentReferenceRecord]).void }
+    def page_attachment_reference_records=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def page_editor_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }

@@ -10,9 +10,14 @@ Rails.application.routes.draw do
 
   # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
   match "/_test/session",                                                  via: :post,   as: :test_session,                                 to: "test/sessions/create#call" if Rails.env.test?
+  match "/_test/attachments/presign",                                      via: :post,   as: :test_attachment_presign,                      to: "test/attachments/presigns/create#call" if Rails.env.test?
+  match "/_test/attachments/signed_urls",                                  via: :post,   as: :test_attachment_signed_urls,                   to: "test/attachments/signed_urls/create#call" if Rails.env.test?
+  match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments/uploads/create#call" if Rails.env.test?
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
   match "/accounts",                                                       via: :post,   as: :account_list,                                 to: "accounts/create#call"
   match "/accounts/new",                                                   via: :get,    as: :new_account,                                  to: "accounts/new#call"
+  match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
+  match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
   match "/email_confirmation",                                             via: :patch,  as: :email_confirmation,                           to: "email_confirmations/update#call"
   match "/email_confirmation",                                             via: :post,                                                      to: "email_confirmations/create#call"
   match "/email_confirmation/edit",                                        via: :get,    as: :edit_email_confirmation,                      to: "email_confirmations/edit#call"
@@ -25,6 +30,8 @@ Rails.application.routes.draw do
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")
   match "/s/:space_identifier",                                            via: :get,    as: :space,                                        to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                                         to: "atom/show#call"
+  match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
+  match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,                      to: "bulk_restored_pages/create#call"
   match "/s/:space_identifier/page_locations",                             via: :get,    as: :page_location_list,                           to: "page_locations/index#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                         via: :get,    as: :page,                                         to: "pages/show#call",                             page_number: /\d+/
@@ -43,6 +50,8 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/settings/exports/new",                       via: :get,    as: :space_settings_new_exports,                   to: "spaces/settings/exports/new#call"
   match "/s/:space_identifier/settings/general",                           via: :get,    as: :space_settings_general,                       to: "spaces/settings/general/show#call"
   match "/s/:space_identifier/settings/general",                           via: :patch,                                                     to: "spaces/settings/general/update#call"
+  match "/s/:space_identifier/settings/attachments",                       via: :get,    as: :space_settings_attachments,                   to: "spaces/settings/attachments/index#call"
+  match "/s/:space_identifier/settings/attachments/:attachment_id",        via: :delete, as: :space_settings_attachment,                    to: "spaces/settings/attachments/destroy#call"
   match "/s/:space_identifier/topics",                                     via: :post,   as: :topic_list,                                   to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",                       via: :get,    as: :topic,                                        to: "topics/show#call",                            topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/pages/new",             via: :get,    as: :new_page,                                     to: "pages/new#call",                              topic_number: /\d+/

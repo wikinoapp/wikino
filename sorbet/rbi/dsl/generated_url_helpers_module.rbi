@@ -16,6 +16,18 @@ module GeneratedUrlHelpersModule
   def atom_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def attachment_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def attachment_presign_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def attachment_signed_url_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def attachment_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def bulk_restored_page_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -155,6 +167,12 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_attachment_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def space_settings_attachments_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_deletion_url(*args); end

@@ -62,6 +62,8 @@ en:
             show: "Export | %{space_name}"
           general:
             show: "General | %{space_name}"
+          attachments:
+            index: "Attachments | %{space_name}"
           show: "Settings | %{space_name}"
         show: "%{space_name}"
       welcome:

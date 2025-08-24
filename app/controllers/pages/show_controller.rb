@@ -25,7 +25,8 @@ module Pages
 
       page = PageRepository.new.to_model(
         page_record:,
-        can_update: space_member_policy.can_update_page?(page_record:)
+        can_update: space_member_policy.can_update_page?(page_record:),
+        current_space_member: space_member_record
       )
       link_list = LinkListRepository.new.to_model(
         user_record: current_user_record,

@@ -24,7 +24,7 @@ class PageListRepository < ApplicationRepository
       )
       .fetch
 
-    pages = PageRepository.new.to_models(page_records: cursor_paginate_page.records)
+    pages = PageRepository.new.to_models(page_records: cursor_paginate_page.records, current_space_member: nil)
     pagination = PaginationRepository.new.to_model(cursor_paginate_page:)
 
     PageList.new(pages:, pagination:)

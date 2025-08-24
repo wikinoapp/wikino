@@ -7,6 +7,6 @@ FactoryBot.define do
     page_record
     space_member_record
     sequence(:body) { |n| "Body #{n}" }
-    sequence(:body_html) { |n| "<div>Body #{n}</div>" }
+    body_html { "<p>#{body}</p>" }
   end
 end

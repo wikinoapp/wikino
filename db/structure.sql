@@ -122,6 +122,22 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.attachments (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    active_storage_attachment_id uuid NOT NULL,
+    attached_space_member_id uuid NOT NULL,
+    attached_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    processing_status integer DEFAULT 0 NOT NULL
+);
+
+
+--
 -- Name: draft_pages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -180,6 +196,19 @@ CREATE TABLE public.exports (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     queued_by_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: page_attachment_references; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.page_attachment_references (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    attachment_id uuid NOT NULL,
+    page_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -411,6 +440,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: attachments attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT attachments_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: draft_pages draft_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -440,6 +477,14 @@ ALTER TABLE ONLY public.export_statuses
 
 ALTER TABLE ONLY public.exports
     ADD CONSTRAINT exports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: page_attachment_references page_attachment_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT page_attachment_references_pkey PRIMARY KEY (id);
 
 
 --
@@ -567,6 +612,41 @@ CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.ac
 
 
 --
+-- Name: index_attachments_on_active_storage_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_active_storage_attachment_id ON public.attachments USING btree (active_storage_attachment_id);
+
+
+--
+-- Name: index_attachments_on_attached_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_attached_at ON public.attachments USING btree (attached_at);
+
+
+--
+-- Name: index_attachments_on_attached_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_attached_space_member_id ON public.attachments USING btree (attached_space_member_id);
+
+
+--
+-- Name: index_attachments_on_processing_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_processing_status ON public.attachments USING btree (processing_status);
+
+
+--
+-- Name: index_attachments_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_attachments_on_space_id ON public.attachments USING btree (space_id);
+
+
+--
 -- Name: index_draft_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -648,6 +728,27 @@ CREATE INDEX index_exports_on_queued_by_id ON public.exports USING btree (queued
 --
 
 CREATE INDEX index_exports_on_space_id ON public.exports USING btree (space_id);
+
+
+--
+-- Name: index_page_attachment_references_on_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_page_attachment_references_on_attachment_id ON public.page_attachment_references USING btree (attachment_id);
+
+
+--
+-- Name: index_page_attachment_references_on_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_page_attachment_references_on_page_id ON public.page_attachment_references USING btree (page_id);
+
+
+--
+-- Name: index_page_attachment_references_on_page_id_and_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_page_attachment_references_on_page_id_and_attachment_id ON public.page_attachment_references USING btree (page_id, attachment_id);
 
 
 --
@@ -924,11 +1025,27 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
+-- Name: attachments fk_rails_06223f0ea2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_06223f0ea2 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
 -- Name: topic_members fk_rails_0f8ef246f7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_0f8ef246f7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: page_attachment_references fk_rails_1bb2aa81d8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT fk_rails_1bb2aa81d8 FOREIGN KEY (page_id) REFERENCES public.pages(id);
 
 
 --
@@ -945,6 +1062,14 @@ ALTER TABLE ONLY public.page_editors
 
 ALTER TABLE ONLY public.space_members
     ADD CONSTRAINT fk_rails_26446af0e7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: page_attachment_references fk_rails_2cba0cae86; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT fk_rails_2cba0cae86 FOREIGN KEY (attachment_id) REFERENCES public.attachments(id);
 
 
 --
@@ -1028,6 +1153,14 @@ ALTER TABLE ONLY public.topic_members
 
 
 --
+-- Name: attachments fk_rails_850712f875; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_850712f875 FOREIGN KEY (attached_space_member_id) REFERENCES public.space_members(id);
+
+
+--
 -- Name: draft_pages fk_rails_8d9bc1217e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1057,6 +1190,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 ALTER TABLE ONLY public.topics
     ADD CONSTRAINT fk_rails_9b3ff1bd6e FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: attachments fk_rails_a2990ed7e9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_a2990ed7e9 FOREIGN KEY (active_storage_attachment_id) REFERENCES public.active_storage_attachments(id);
 
 
 --
@@ -1146,6 +1287,10 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250802185227'),
+('20250802185226'),
+('20250730164550'),
+('20250730164526'),
 ('20250526173629'),
 ('20250517113235'),
 ('20250517113234'),

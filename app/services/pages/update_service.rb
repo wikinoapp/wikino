@@ -19,11 +19,22 @@ module Pages
     def call(space_member_record:, page_record:, topic_record:, title:, body:)
       now = Time.current
 
+      # body_htmlを生成（プレースホルダー形式）
+      topic = TopicRepository.new.to_model(topic_record:)
+      space = SpaceRepository.new.to_model(space_record: page_record.space_record!)
+      space_member = SpaceMemberRepository.new.to_model(space_member_record:)
+
+      body_html = Markup.new(
+        current_topic: topic,
+        current_space: space,
+        current_space_member: space_member
+      ).render_html(text: body)
+
       page_record.attributes = {
         topic_record:,
         title:,
         body:,
-        body_html: Markup.new(current_topic: topic_record).render_html(text: body),
+        body_html:,
         modified_at: now
       }
       page_record.published_at = now if page_record.published_at.nil?
@@ -31,9 +42,12 @@ module Pages
       updated_page_record = ActiveRecord::Base.transaction do
         page_record.save!
         page_record.add_editor!(editor_record: space_member_record)
-        page_record.create_revision!(editor_record: space_member_record, body:, body_html: body)
+        page_record.create_revision!(editor_record: space_member_record, body:, body_html:)
         page_record.link!(editor_record: space_member_record)
         space_member_record.destroy_draft_page!(page_record:)
+
+        # ページ本文から添付ファイルIDを検知し、参照を更新
+        page_record.update_attachment_references!(body:)
 
         page_record
       end

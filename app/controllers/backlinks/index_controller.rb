@@ -30,7 +30,7 @@ module Backlinks
         page_record:,
         after: params[:after]
       )
-      page = PageRepository.new.to_model(page_record:)
+      page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
       render_component(
         Backlinks::IndexView.new(page:, backlink_list:),

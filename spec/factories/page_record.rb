@@ -8,7 +8,7 @@ FactoryBot.define do
     sequence(:number) { |n| n }
     sequence(:title) { |n| "Page #{n}" }
     sequence(:body) { |n| "Body #{n}" }
-    sequence(:body_html) { |n| "<div>Body #{n}</div>" }
+    body_html { "<p>#{body}</p>" }
     linked_page_ids { [] }
     modified_at { Time.current }
 

@@ -395,6 +395,12 @@ class SpaceMemberRecord
 
   module EnumMethodsModule
     sig { void }
+    def role_member!; end
+
+    sig { returns(T::Boolean) }
+    def role_member?; end
+
+    sig { void }
     def role_owner!; end
 
     sig { returns(T::Boolean) }
@@ -593,6 +599,9 @@ class SpaceMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_role_member(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def not_role_owner(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -636,6 +645,9 @@ class SpaceMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def rewhere(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def role_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def role_owner(*args, &blk); end
@@ -1269,6 +1281,9 @@ class SpaceMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_role_member(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def not_role_owner(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1312,6 +1327,9 @@ class SpaceMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def rewhere(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def role_member(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def role_owner(*args, &blk); end

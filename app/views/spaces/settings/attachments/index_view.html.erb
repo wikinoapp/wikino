@@ -1,0 +1,140 @@
+<%= render Layouts::BasicComponent.new(current_page_name:, current_user:) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::SpaceComponent.new(space:) do |breadcrumb| %>
+          <%= breadcrumb.with_item do %>
+            <%= link_to t("nouns.settings"), space_settings_path(space.identifier) %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new(
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
+    ) do %>
+      <%= render Headers::MainTitleComponent.new(title: t("nouns.attachments")) %>
+
+      <%= render BaseUI::CardComponent.new do |card| %>
+        <%= card.with_body(class_name: "px-4") do %>
+          <div class="flex flex-col gap-6">
+            <%= form_with(
+              url: space_settings_attachments_path(space.identifier),
+              method: :get,
+              class: "form flex flex-col gap-4 md:flex-row"
+            ) do |f| %>
+              <%= f.text_field :q, {
+                value: search_query,
+                placeholder: t("messages.search.search_filename_placeholder"),
+                class: "input w-full",
+                autofocus: true
+              } %>
+
+              <%= f.button type: :submit, class: "btn rounded-full" do %>
+                <%= render BaseUI::IconComponent.new(
+                  name: "magnifying-glass-regular",
+                  size: "18px",
+                  class_name: "fill-primary-foreground"
+                ) %>
+
+                <%= t("verbs.search") %>
+              <% end %>
+            <% end %>
+
+            <div class="flex flex-col gap-6">
+              <% if attachments.empty? %>
+                <div class="py-12 text-center">
+                  <p class="text-muted-foreground">
+                    <%= t("messages.no_attachments_found") %>
+                  </p>
+                </div>
+              <% else %>
+                <div
+                  class="flex flex-col divide-y"
+                >
+                  <% attachments.each do |attachment| %>
+                    <div class="flex items-center justify-between py-4">
+                      <div class="flex items-center gap-4">
+                        <div class="flex h-16 w-16 items-center justify-center rounded border">
+                          <% if attachment.image? && attachment.url.present? %>
+                            <%= image_tag attachment.url, class: "w-full h-full object-contain", loading: "lazy" %>
+                          <% else %>
+                            <%= render BaseUI::IconComponent.new(
+                              name: "file",
+                              size: "32px",
+                            class_name: "fill-muted-foreground"
+                            ) %>
+                          <% end %>
+                        </div>
+
+                        <div>
+                          <p class="font-semibold">
+                            <%= link_to attachment_path(attachment.database_id), target: "_blank", rel: "noopener", class: "text-primary hover:underline" do %>
+                              <%= attachment.filename %>
+                            <% end %>
+                          </p>
+
+                          <p class="text-muted-foreground text-sm">
+                            <%= attachment.content_type %> • <%= number_to_human_size(attachment.byte_size) %>
+                          </p>
+
+                          <p class="text-muted-foreground text-xs">
+                            <%= t("messages.uploaded_at", time: l(attachment.attached_at, format: :short)) %>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <%= button_to space_settings_attachment_path(space.identifier, attachment.database_id), {
+                          method: :delete,
+                          class: "btn-ghost rounded-full p-2 text-destructive hover:bg-destructive/10",
+                          data: {
+                            turbo_confirm: t("messages.attachments.delete_confirmation")
+                          }
+                        } do %>
+                          <%= render BaseUI::IconComponent.new(
+                            name: "trash",
+                            size: "18px",
+                            class_name: "fill-current"
+                          ) %>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+
+              <% if total_pages > 1 %>
+                <div class="flex items-center justify-center gap-2">
+                  <% if has_previous_page? %>
+                    <%= link_to space_settings_attachments_path(space.identifier, page: current_page - 1, q: search_query),
+                        class: "btn-ghost rounded-full px-4 py-2" do %>
+                      <%= t("nouns.previous_page") %>
+                    <% end %>
+                  <% end %>
+
+                  <span class="text-muted-foreground px-4 py-2">
+                    <%= t("messages.page_of", current: current_page, total: total_pages) %>
+                  </span>
+
+                  <% if has_next_page? %>
+                    <%= link_to space_settings_attachments_path(space.identifier, page: current_page + 1, q: search_query),
+                        class: "btn-ghost rounded-full px-4 py-2" do %>
+                      <%= t("nouns.next_page") %>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+  <% end %>
+<% end %>

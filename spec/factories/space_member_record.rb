@@ -12,5 +12,9 @@ FactoryBot.define do
     trait :owner do
       role { SpaceMemberRole::Owner.serialize }
     end
+
+    trait :member do
+      role { SpaceMemberRole::Member.serialize }
+    end
   end
 end

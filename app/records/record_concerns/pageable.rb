@@ -26,7 +26,8 @@ module RecordConcerns
 
     sig { params(editor_record: SpaceMemberRecord).void }
     def link!(editor_record:)
-      location_keys = PageLocationKey.scan_text(text: body, current_topic: topic_record)
+      topic = TopicRepository.new.to_model(topic_record:)
+      location_keys = PageLocationKey.scan_text(text: body, current_topic: topic)
       topics = space_record.not_nil!.topic_records.where(name: location_keys.map(&:topic_name).uniq)
 
       linked_pages = location_keys.each_with_object([]) do |location_key, ary|
