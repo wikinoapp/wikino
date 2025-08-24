@@ -96,11 +96,11 @@
   }
 
   & img.wikino-attachment-image {
-    @apply rounded-md opacity-0 transition-opacity duration-100 ease-in-out;
+    @apply opacity-0 transition-opacity duration-100 ease-in-out;
   }
 
   & img.wikino-attachment-image-loaded {
-    @apply rounded-md opacity-100 transition-opacity duration-100 ease-in-out;
+    @apply opacity-100 transition-opacity duration-100 ease-in-out;
   }
 
   & li {
