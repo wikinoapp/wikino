@@ -82,7 +82,14 @@ class Markup
 
         # a要素で囲む（href属性も後でJavaScriptで設定）
         link_html = <<~HTML
-          <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank" rel="noopener noreferrer" class="inline-block">
+          <a
+            href="#"
+            data-attachment-id="#{attachment_id}"
+            data-attachment-link="true"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="wikino-attachment-image-link"
+          >
             <img #{img_attrs.join(" ")} />
           </a>
         HTML

@@ -108,9 +108,7 @@
   - [x] PageRepositoryの修正 - キャッシュ利用
   - [x] ページ保存時のbody_html生成処理追加
   - [ ] テストの作成
+- [ ] 画像を `loading=lazy` で表示する
 - [ ] ページに表示された画像のスタイル調整
   - 画像を中央寄せしたい
-  - 本文より少し大きめに画像を表示したい
-    - 例: https://www.anthropic.com/news/claude-opus-4-1
-- [ ] 画像を `loading=lazy` で表示する
 - [ ] 退会処理の見直し
