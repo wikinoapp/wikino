@@ -119,7 +119,7 @@
   & img + br + em,
   & video + br + em,
   & a.wikino-attachment-image-link + br + em {
-    @apply block text-center text-sm text-gray-600 mt-2 mb-4 italic;
+    @apply mt-2 mb-4 block text-center text-sm text-gray-600 italic;
   }
 
   /* キャプション前のbr要素を非表示にして高さを取らないようにする */
