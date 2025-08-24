@@ -48,8 +48,16 @@ export default class extends Controller {
 
         // 要素のタイプに応じて適切な属性を更新
         if (element.tagName === "IMG") {
+          const imgElement = element as HTMLImageElement;
+
+          // 画像のロード完了を待ってからフェードイン
+          imgElement.onload = () => {
+            imgElement.classList.remove("wikino-attachment-image");
+            imgElement.classList.add("wikino-attachment-image-loaded");
+          };
+
           // img要素のsrc属性を更新
-          (element as HTMLImageElement).src = signedUrl;
+          imgElement.src = signedUrl;
           // loading="lazy"を追加
           element.setAttribute("loading", "lazy");
         } else if (element.tagName === "VIDEO") {

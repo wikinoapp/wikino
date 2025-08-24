@@ -75,7 +75,7 @@ class Markup
           "data-attachment-id=\"#{attachment_id}\"",
           "data-attachment-type=\"image\"",
           "alt=\"\"",
-          "class=\"rounded-md invisible\""
+          "class=\"wikino-attachment-image\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
         img_attrs << "height=\"#{height_attr}\"" if height_attr
