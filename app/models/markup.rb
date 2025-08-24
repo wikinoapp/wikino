@@ -96,14 +96,19 @@ class Markup
       output = output.gsub(/^<p>‌<br \/>/, "<p>").gsub(/‌/, "")
 
       # 単独の画像リンク（a.wikino-attachment-image-link）をp要素で囲む
-      # 行頭にあり、p要素内にない画像リンクのみを対象とする
-      output.gsub(/^(<a\s+[^>]*class="wikino-attachment-image-link"[^>]*>.*?<\/a>)$/m) do |match|
+      # p要素で囲まれていない、完全に独立した画像リンクのみを対象とする
+      # 連続する改行の間にあり、前後に他のHTML要素がない場合のみp要素で囲む
+      output.gsub(/(?<=\n|^)(<a\s+[^>]*class="wikino-attachment-image-link"[^>]*>.*?<\/a>)(?=\n|$)/m) do
+        link = $1
+
         # この画像リンクが既にp要素内にあるかチェック
-        # p要素の開始タグと終了タグの間にあるかを判定
-        if output.match?(/<p[^>]*>.*?#{Regexp.escape(match)}.*?<\/p>/m)
-          match  # 既にp要素内にある場合はそのまま
+        # または直後にbr要素やem要素などのインライン要素が続くかチェック
+        if output.match?(/<p[^>]*>[^<]*#{Regexp.escape(link)}[^<]*<\/p>/m) ||
+            output.match?(/#{Regexp.escape(link)}\s*\n\s*<br/m) ||
+            output.match?(/#{Regexp.escape(link)}\s*\n\s*<em>/m)
+          link  # そのまま
         else
-          "<p>\n  #{match}\n</p>"  # p要素内にない場合は囲む
+          "<p>\n  #{link}\n</p>"  # p要素で囲む
         end
       end
     end
