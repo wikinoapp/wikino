@@ -4,6 +4,6 @@
 namespace :page do
   desc "ゴミ箱に入っているページを削除する"
   task bulk_destroy_trashed: :environment do
-    PageService::BulkDestroyTrashed.new.call
+    Pages::BulkDestroyTrashedService.new.call
   end
 end
