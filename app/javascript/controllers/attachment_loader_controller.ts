@@ -59,9 +59,6 @@ export default class extends Controller {
           // a要素のhref属性を更新
           (element as HTMLAnchorElement).href = signedUrl;
         }
-
-        // プレースホルダークラスを削除
-        element.classList.remove("wikino-attachment-placeholder");
       });
     } catch (error) {
       console.error("Error loading attachment URLs:", error);

@@ -79,7 +79,7 @@ class Markup
           "data-attachment-id=\"#{attachment_id}\"",
           "data-attachment-type=\"image\"",
           "alt=\"#{escaped_filename}\"",
-          "class=\"max-w-full wikino-attachment-placeholder\""
+          "class=\"max-w-full\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
         img_attrs << "height=\"#{height_attr}\"" if height_attr
@@ -118,7 +118,7 @@ class Markup
       if can_display_inline_video?(attachment)
         # video要素として表示（署名付きURLは後でJavaScriptで置換）
         video_html = <<~HTML
-          <video src="" data-attachment-id="#{attachment_id}" data-attachment-type="video" controls class="max-w-full wikino-attachment-placeholder">
+          <video src="" data-attachment-id="#{attachment_id}" data-attachment-type="video" controls class="max-w-full">
             お使いのブラウザは動画タグをサポートしていません。
             <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank">動画をダウンロード</a>
           </video>
