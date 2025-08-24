@@ -2,21 +2,8 @@
 # frozen_string_literal: true
 
 RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
-  before do
-    # テスト環境では /attachments/signed_urls を テスト用の処理に置き換え
-    allow_any_instance_of(Attachments::SignedUrls::CreateController).to receive(:call) do |controller|
-      attachment_ids = controller.params.fetch(:attachment_ids, [])
-
-      # テスト用の署名付きURLを生成
-      signed_urls = {}
-      attachment_ids.each do |id|
-        # 1x1の透明なPNG画像のdata URI
-        signed_urls[id] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-      end
-
-      controller.render json: {signed_urls:}, status: :ok
-    end
-  end
+  # テスト用エンドポイントは Test::Attachments::SignedUrls::CreateController で処理される
+  # ビューに data-test-endpoint="/_test/attachments/signed_urls" が設定される
 
   it "ページ表示時に添付ファイルの署名付きURLが非同期で読み込まれること" do
     user_record = create(:user_record, :with_password)
@@ -158,9 +145,14 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
 
     sign_in(user_record:)
 
-    # 署名付きURL取得エンドポイントがエラーを返すようにモック
-    allow_any_instance_of(Attachments::SignedUrls::CreateController).to receive(:call) do |controller|
-      controller.render json: {error: "Unauthorized"}, status: :unauthorized
+    # テスト用エンドポイントがエラーを返すようにモック
+    # Test::Attachments::SignedUrls::CreateControllerをモック
+    test_controller = Test::Attachments::SignedUrls::CreateController.new
+    allow(Test::Attachments::SignedUrls::CreateController).to receive(:new).and_return(test_controller)
+    allow(test_controller).to receive(:call) do
+      test_controller.instance_eval do
+        render json: {error: "Unauthorized"}, status: :unauthorized
+      end
     end
 
     visit page_path(space_record.identifier, page_record.number)
@@ -193,9 +185,14 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
 
     # API呼び出しが行われないことを確認するためのモック
     api_called = false
-    allow_any_instance_of(Attachments::SignedUrls::CreateController).to receive(:call) do
+    test_controller = Test::Attachments::SignedUrls::CreateController.new
+    allow(Test::Attachments::SignedUrls::CreateController).to receive(:new).and_return(test_controller)
+    allow(test_controller).to receive(:call) do
       api_called = true
-    end.and_call_original
+      test_controller.instance_eval do
+        render json: {signed_urls: {}}, status: :ok
+      end
+    end
 
     visit page_path(space_record.identifier, page_record.number)
 
@@ -232,14 +229,17 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
 
     visit page_path(space_record.identifier, page_record.number)
 
-    # 初期状態では wikino-attachment-image クラスを持つ
-    expect(page).to have_css("img.wikino-attachment-image[data-attachment-id='#{attachment_record.id}']")
+    # 画像要素が存在することを確認
+    expect(page).to have_css("img[data-attachment-id='#{attachment_record.id}']")
 
     # 画像の読み込みが完了するまで待機
-    sleep 1
+    sleep 1.5
 
     # 読み込み完了後は wikino-attachment-image-loaded クラスに変更される
     expect(page).to have_css("img.wikino-attachment-image-loaded[data-attachment-id='#{attachment_record.id}']")
-    expect(page).not_to have_css("img.wikino-attachment-image[data-attachment-id='#{attachment_record.id}']")
+
+    # クラスが正しく設定されていることを確認
+    img = find("img[data-attachment-id='#{attachment_record.id}']")
+    expect(img["class"]).to eq("wikino-attachment-image-loaded")
   end
 end

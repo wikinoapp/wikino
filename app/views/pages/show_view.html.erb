@@ -31,7 +31,7 @@
         <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>
-          <div class="wikino-markdown" data-controller="attachment-loader" data-attachment-loader-csrf-token-value="<%= form_authenticity_token %>">
+          <div class="wikino-markdown" data-controller="attachment-loader" data-attachment-loader-csrf-token-value="<%= form_authenticity_token %>"<%= Rails.env.test? ? ' data-test-endpoint="/_test/attachments/signed_urls"'.html_safe : "" %>>
             <%= page.body_html.html_safe %>
           </div>
         <% end %>

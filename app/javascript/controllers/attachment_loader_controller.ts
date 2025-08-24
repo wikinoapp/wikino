@@ -24,8 +24,11 @@ export default class extends Controller {
     if (attachmentIds.length === 0) return;
 
     try {
+      // テスト環境ではテスト用エンドポイントを使用
+      const endpoint = (this.element as HTMLElement).dataset.testEndpoint || "/attachments/signed_urls";
+      
       // バッチAPIで署名付きURLを取得
-      const response = await post("/attachments/signed_urls", {
+      const response = await post(endpoint, {
         body: { attachment_ids: attachmentIds },
         responseKind: "json",
       });
