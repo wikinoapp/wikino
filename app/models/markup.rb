@@ -93,7 +93,19 @@ class Markup
 
       # ゼロ幅非接合子と余分な改行を削除
       output = result[:output].to_s
-      output.gsub(/^<p>‌<br \/>/, "<p>").gsub(/‌/, "")
+      output = output.gsub(/^<p>‌<br \/>/, "<p>").gsub(/‌/, "")
+
+      # 単独の画像リンク（a.wikino-attachment-image-link）をp要素で囲む
+      # 行頭にあり、p要素内にない画像リンクのみを対象とする
+      output.gsub(/^(<a\s+[^>]*class="wikino-attachment-image-link"[^>]*>.*?<\/a>)$/m) do |match|
+        # この画像リンクが既にp要素内にあるかチェック
+        # p要素の開始タグと終了タグの間にあるかを判定
+        if output.match?(/<p[^>]*>.*?#{Regexp.escape(match)}.*?<\/p>/m)
+          match  # 既にp要素内にある場合はそのまま
+        else
+          "<p>\n  #{match}\n</p>"  # p要素内にない場合は囲む
+        end
+      end
     end
   end
 

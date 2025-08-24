@@ -453,12 +453,17 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
     text = <<~HTML
+      Test
+
       <img width="600" height="400" alt="600x400.png" src="/attachments/#{attachment.id}">
+
+      Test
     HTML
 
     output_html = render_markup(text:, current_topic: topic, current_space: space, current_space_member: space_member)
 
     expected = <<~HTML
+      <p>Test</p>
       <p>
         <a
           href="#"
@@ -479,6 +484,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
           />
         </a>
       </p>
+      <p>Test</p>
     HTML
 
     expect(normalize_html(output_html)).to eq(normalize_html(expected))
