@@ -31,7 +31,7 @@ RSpec.describe "Markdownエディター/ペースト処理", type: :system do
   it "既存のテキストに追加入力できること" do
     visit_page_editor
     clear_editor
-    
+
     fill_in_editor(text: "既存のテキスト")
     fill_in_editor(text: " 追加テキスト")
 
