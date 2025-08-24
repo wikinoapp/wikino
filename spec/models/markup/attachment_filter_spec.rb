@@ -498,7 +498,6 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
     space = SpaceRepository.new.to_model(space_record:)
     space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
-    # HTML形式でwidth/height属性とキャプションを含む
     text = <<~MARKDOWN
       ![600x400.png](/attachments/#{attachment.id})
       *サンプル画像です*
