@@ -116,23 +116,17 @@
   }
 
   /* 画像・動画のキャプション */
-  & img + em,
-  & video + em,
-  & a.wikino-attachment-image-link + em,
-  & img + p > em:only-child,
-  & video + p > em:only-child,
-  & a.wikino-attachment-image-link + p > em:only-child,
   & img + br + em,
   & video + br + em,
   & a.wikino-attachment-image-link + br + em {
     @apply block text-center text-sm text-gray-600 mt-2 mb-4 italic;
   }
 
-  /* 画像を含むリンクの後のキャプション（AttachmentFilterで生成される構造用） */
-  & a:has(img.wikino-attachment-image) + em,
-  & a:has(img.wikino-attachment-image) + p > em:only-child,
-  & a:has(img.wikino-attachment-image) + br + em {
-    @apply block text-center text-sm text-gray-600 mt-2 mb-4 italic;
+  /* キャプション前のbr要素を非表示にして高さを取らないようにする */
+  & img + br:has(+ em),
+  & video + br:has(+ em),
+  & a.wikino-attachment-image-link + br:has(+ em) {
+    @apply hidden;
   }
 
   & li {
