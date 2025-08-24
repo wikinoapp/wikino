@@ -10,7 +10,14 @@ module Attachments
       with_transaction do
         PageAttachmentReferenceRecord.where(attachment_id: attachment_record.id).destroy_all
 
+        # Active StorageのAttachmentを保持
+        active_storage_attachment = attachment_record.active_storage_attachment_record
+
+        # AttachmentRecordを削除
         attachment_record.destroy!
+
+        # Active StorageのAttachmentとBlobを削除
+        active_storage_attachment&.purge
       end
 
       nil

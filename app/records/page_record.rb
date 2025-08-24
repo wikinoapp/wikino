@@ -77,6 +77,7 @@ class PageRecord < ApplicationRecord
       page_record.draft_page_records.delete_all(:delete_all)
       page_record.page_editor_records.delete_all(:delete_all)
       page_record.revision_records.delete_all(:delete_all)
+      page_record.page_attachment_reference_records.delete_all(:delete_all)
     end
 
     delete_all
