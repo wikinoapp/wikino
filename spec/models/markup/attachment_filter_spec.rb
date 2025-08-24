@@ -458,29 +458,30 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
       *サンプル画像です*
     HTML
 
-    output_html = render_markup(text: text, current_topic: topic, current_space: space, current_space_member: space_member)
+    output_html = render_markup(text:, current_topic: topic, current_space: space, current_space_member: space_member)
 
     expected = <<~HTML
-      <a
-        href="#"
-        data-attachment-id="#{attachment.id}"
-        data-attachment-link="true"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="wikino-attachment-image-link"
-      >
-        <img
-          src=""
+      <p>
+        <a
+          href="#"
           data-attachment-id="#{attachment.id}"
-          data-attachment-type="image"
-          alt="600x400.png"
-          class="wikino-attachment-image"
-          width="600"
-          height="400"
-        />
-      </a>
-      <br />
-      <em>サンプル画像です</em>
+          data-attachment-link="true"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="wikino-attachment-image-link"
+        >
+          <img
+            src=""
+            data-attachment-id="#{attachment.id}"
+            data-attachment-type="image"
+            alt="600x400.png"
+            class="wikino-attachment-image"
+            width="600"
+            height="400"
+          />
+        </a>
+        <br />
+        <em>サンプル画像です</em></p>
     HTML
 
     expect(normalize_html(output_html)).to eq(normalize_html(expected))

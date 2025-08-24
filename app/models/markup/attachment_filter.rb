@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cgi"
+
 class Markup
   class AttachmentFilter < HTMLPipeline::NodeFilter
     extend T::Sig
@@ -65,16 +67,17 @@ class Markup
 
       # インライン表示可能な画像形式かチェック
       if can_display_inline_image?(attachment)
-        # 元のwidth/height属性を取得
+        # 元のwidth/height/alt属性を取得
         width_attr = element["width"]
         height_attr = element["height"]
+        alt_attr = element["alt"] || attachment.filename
 
         # プレースホルダーとして表示（署名付きURLは後でJavaScriptで置換）
         img_attrs = [
           "src=\"\"",
           "data-attachment-id=\"#{attachment_id}\"",
           "data-attachment-type=\"image\"",
-          "alt=\"\"",
+          "alt=\"#{CGI.escapeHTML(alt_attr)}\"",
           "class=\"wikino-attachment-image\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
