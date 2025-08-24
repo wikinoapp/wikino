@@ -115,6 +115,18 @@
     @apply opacity-100 transition-opacity duration-300 ease-in-out;
   }
 
+  /* 画像・動画のキャプション */
+  & img + em,
+  & video + em,
+  & a.wikino-attachment-image-link + em {
+    @apply block text-center text-sm text-gray-600 mt-2 mb-4 italic;
+  }
+
+  /* 画像を含むリンクの後のキャプション（AttachmentFilterで生成される構造用） */
+  & a:has(img.wikino-attachment-image) + em {
+    @apply block text-center text-sm text-gray-600 mt-2 mb-4 italic;
+  }
+
   & li {
     @apply mt-1;
   }
