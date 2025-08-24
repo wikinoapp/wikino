@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cgi"
 require "selma"
 require "html_pipeline"
 require "html_pipeline/convert_filter/markdown_filter"
@@ -58,6 +59,10 @@ class Markup
         end
       end
 
+      # HTMLブロックとMarkdownの混在を処理
+      # 単独行のimgタグの前にゼロ幅非接合子を追加してインラインHTMLとして処理
+      processed_text = text.gsub(/^(<img[^>]*>)\n(\*[^*]+\*)$/) { "\u200C\n#{$1}\n#{$2}" }
+
       pipeline = HTMLPipeline.new(
         text_filters: [],
         convert_filter: HTMLPipeline::ConvertFilter::MarkdownFilter.new(
@@ -84,9 +89,11 @@ class Markup
           )
         ]
       )
-      result = pipeline.call(text)
+      result = pipeline.call(processed_text)
 
-      result[:output].to_s
+      # ゼロ幅非接合子と余分な改行を削除
+      output = result[:output].to_s
+      output.gsub(/^<p>‌<br \/>/, "<p>").gsub(/‌/, "")
     end
   end
 

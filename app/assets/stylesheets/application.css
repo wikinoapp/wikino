@@ -92,7 +92,12 @@
   }
 
   & img {
-    @apply mx-auto;
+    @apply mx-auto block;
+  }
+
+  /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
+  & a:has(img) {
+    @apply mx-auto table;
   }
 
   & img.wikino-attachment-image {
@@ -113,6 +118,20 @@
 
   & video.wikino-attachment-video-loaded {
     @apply opacity-100 transition-opacity duration-300 ease-in-out;
+  }
+
+  /* 画像・動画のキャプション */
+  & img + br + em,
+  & video + br + em,
+  & a.wikino-attachment-image-link + br + em {
+    @apply mt-2 mb-4 block text-center text-sm text-gray-600 italic;
+  }
+
+  /* キャプション前のbr要素を非表示にして高さを取らないようにする */
+  & img + br:has(+ em),
+  & video + br:has(+ em),
+  & a.wikino-attachment-image-link + br:has(+ em) {
+    @apply hidden;
   }
 
   & li {
