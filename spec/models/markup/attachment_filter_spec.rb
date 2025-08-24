@@ -500,7 +500,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     # HTML形式でwidth/height属性とキャプションを含む
     text = <<~MARKDOWN
-      ![](/attachments/#{attachment.id})
+      ![600x400.png](/attachments/#{attachment.id})
       *サンプル画像です*
     MARKDOWN
 
@@ -519,7 +519,7 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
             src=""
             data-attachment-id="#{attachment.id}"
             data-attachment-type="image"
-            alt=""
+            alt="600x400.png"
             class="wikino-attachment-image"
           />
         </a>
@@ -527,8 +527,6 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
         <em>サンプル画像です</em></p>
     HTML
 
-    puts normalize_html(output_html)
-    puts normalize_html(expected)
     expect(normalize_html(output_html)).to eq(normalize_html(expected))
   end
 end
