@@ -485,4 +485,49 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
 
     expect(normalize_html(output_html)).to eq(normalize_html(expected))
   end
+
+  it "Markdown記法で書かれた画像のすぐ下に強調構文が書かれているとき、強調構文がem要素に変換されること" do
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record: space_record)
+    user = FactoryBot.create(:user_record)
+    space_member_record = FactoryBot.create(:space_member_record, space_record: space_record, user_record: user)
+    attachment = create_attachment(space: space_record, filename: "600x400.png")
+
+    topic = TopicRepository.new.to_model(topic_record:)
+    space = SpaceRepository.new.to_model(space_record:)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record:)
+
+    # HTML形式でwidth/height属性とキャプションを含む
+    text = <<~MARKDOWN
+      ![](/attachments/#{attachment.id})
+      *サンプル画像です*
+    MARKDOWN
+
+    output_html = render_markup(text:, current_topic: topic, current_space: space, current_space_member: space_member)
+
+    expected = <<~HTML
+      <p><a
+          href="#"
+          data-attachment-id="#{attachment.id}"
+          data-attachment-link="true"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="wikino-attachment-image-link"
+        >
+          <img
+            src=""
+            data-attachment-id="#{attachment.id}"
+            data-attachment-type="image"
+            alt=""
+            class="wikino-attachment-image"
+          />
+        </a>
+        <br />
+        <em>サンプル画像です</em></p>
+    HTML
+
+    puts normalize_html(output_html)
+    puts normalize_html(expected)
+    expect(normalize_html(output_html)).to eq(normalize_html(expected))
+  end
 end
