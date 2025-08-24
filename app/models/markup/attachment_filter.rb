@@ -121,9 +121,22 @@ class Markup
       if can_display_inline_video?(attachment)
         # video要素として表示（署名付きURLは後でJavaScriptで置換）
         video_html = <<~HTML
-          <video src="" data-attachment-id="#{attachment_id}" data-attachment-type="video" controls class="max-w-full">
+          <video
+            src=""
+            data-attachment-id="#{attachment_id}"
+            data-attachment-type="video"
+            class="wikino-attachment-video"
+            controls
+          >
             お使いのブラウザは動画タグをサポートしていません。
-            <a href="#" data-attachment-id="#{attachment_id}" data-attachment-link="true" target="_blank">動画をダウンロード</a>
+            <a
+              href="#"
+              data-attachment-id="#{attachment_id}"
+              data-attachment-link="true"
+              target="_blank"
+            >
+              動画をダウンロード
+            </a>
           </video>
         HTML
 

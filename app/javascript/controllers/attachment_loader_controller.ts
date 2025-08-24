@@ -56,13 +56,21 @@ export default class extends Controller {
             imgElement.classList.add("wikino-attachment-image-loaded");
           };
 
+          // loading="lazy"を追加
+          imgElement.setAttribute("loading", "lazy");
           // img要素のsrc属性を更新
           imgElement.src = signedUrl;
-          // loading="lazy"を追加
-          element.setAttribute("loading", "lazy");
         } else if (element.tagName === "VIDEO") {
+          const videoElement = element as HTMLVideoElement;
+
+          // 動画のロード完了を待ってからフェードイン
+          videoElement.onloadeddata = () => {
+            videoElement.classList.remove("wikino-attachment-video");
+            videoElement.classList.add("wikino-attachment-video-loaded");
+          };
+
           // video要素のsrc属性を更新
-          (element as HTMLVideoElement).src = signedUrl;
+          videoElement.src = signedUrl;
         } else if (element.tagName === "A" && element.hasAttribute("data-attachment-link")) {
           // a要素のhref属性を更新
           (element as HTMLAnchorElement).href = signedUrl;
