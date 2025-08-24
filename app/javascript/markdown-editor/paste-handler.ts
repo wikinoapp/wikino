@@ -10,8 +10,9 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
 
-    // サポートするファイルタイプを判定
-    if (isAcceptedFileType(item.type)) {
+    // ファイルのみを対象とする（通常のテキストペーストは除外）
+    // item.kind === "file" の場合のみファイルペーストとして処理
+    if (item.kind === "file" && isAcceptedFileType(item.type)) {
       fileItems.push(item);
     }
   }
@@ -66,9 +67,6 @@ function isAcceptedFileType(mimeType: string): boolean {
 
   // JSONファイル
   if (mimeType === "application/json") return true;
-
-  // テキストファイル
-  if (mimeType === "text/plain") return true;
 
   // 圧縮ファイル
   const compressionTypes = [
