@@ -92,7 +92,12 @@
   }
 
   & img {
-    @apply mx-auto;
+    @apply mx-auto block;
+  }
+
+  /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
+  & a:has(img) {
+    @apply mx-auto table;
   }
 
   & img.wikino-attachment-image {
