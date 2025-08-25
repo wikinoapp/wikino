@@ -22,7 +22,7 @@
     "@rails/activestorage": "^8.0.200",
     "@rails/request.js": "^0.0.12",
     "@tailwindcss/cli": "^4.1.11",
-    "basecoat-css": "^0.3.0",
+    "basecoat-css": "^0.3.2",
     "codemirror": "^6.0.2",
     "esbuild": "^0.25.9",
     "stimulus-use": "^0.52.3",
