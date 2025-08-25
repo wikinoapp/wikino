@@ -4,6 +4,8 @@
 
 # typed: false
 
+module ::PreviewHelper; end
 module FFI::Function; end
 module FFI::Library; end
 module FFI::ModernForkTracking; end
+module ViewComponent::TestHelpers; end
