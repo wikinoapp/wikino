@@ -2648,7 +2648,7 @@ end
 
 # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#23
 module Selenium::WebDriver::DriverExtensions::HasFileDownloads
-  # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#49
+  # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#55
   def delete_downloadable_files; end
 
   # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#30
@@ -2661,7 +2661,7 @@ module Selenium::WebDriver::DriverExtensions::HasFileDownloads
 
   # @raise [Error::WebDriverError]
   #
-  # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#57
+  # source://selenium-webdriver//lib/selenium/webdriver/common/driver_extensions/has_file_downloads.rb#63
   def verify_enabled; end
 end
 
@@ -9156,39 +9156,44 @@ end
 
 # @api private
 #
-# source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#31
+# source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#32
 module Selenium::WebDriver::Zipper
   class << self
     # @api private
     #
-    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#35
+    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#37
     def unzip(path); end
 
     # @api private
     #
-    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#52
+    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#58
     def zip(path); end
 
     # @api private
     #
-    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#63
+    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#69
     def zip_file(path); end
 
     private
 
     # @api private
     #
-    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#82
+    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#92
     def add_zip_entry(zip, file, entry_name); end
 
     # @api private
     #
-    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#74
+    # source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#80
     def with_tmp_zip(&blk); end
   end
 end
 
 # @api private
 #
-# source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#32
+# source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#33
 Selenium::WebDriver::Zipper::EXTENSIONS = T.let(T.unsafe(nil), Array)
+
+# @api private
+#
+# source://selenium-webdriver//lib/selenium/webdriver/common/zipper.rb#34
+Selenium::WebDriver::Zipper::RUBYZIP_V3 = T.let(T.unsafe(nil), FalseClass)
