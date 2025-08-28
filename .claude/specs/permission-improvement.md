@@ -74,20 +74,30 @@
 ## 現在の課題
 
 - 権限チェックが各コントローラーに散在
+
 - ロールと権限の関係がハードコーディング
+
 - 細かい権限制御には対応していない（例：読み取り専用メンバー）
+
 - `SpaceMemberRole#permissions` と `SpaceMemberPolicy` の責務が重複
   - `SpaceMemberRole`で定義した権限と実際のチェックロジックが一致しない
   - 例：`CreateTopic`権限は定義されているが、`can_create_topic?`では権限をチェックしていない
   - 一部のメソッドは`permissions.include?`を使い、一部は独自ロジックのみで判定
   - 権限の宣言的定義と実装が乖離しており、メンテナンス性に課題
+
 - 権限（Permission）とビジネスルールが混在している
   - UpdateTopicは「能力」を表す
   - 「トピックに参加している」は「状態」を表す
   - これらが AND 条件で結合されている
+
 - ロールの特権を表現できない
   - 「Ownerは全トピックを編集可能」のようなルールが書きづらい
   - 各メソッドに個別にロールチェックを追加する必要がある
+
+- SpaceとTopicの2層構造の権限管理が複雑
+  - SpaceMemberRecordとTopicMemberRecordの2つの権限状態が存在
+  - Space権限とTopic権限の優先順位が不明確
+  - 権限の継承関係（Space Owner→Topic全権限）が暗黙的
 
 ## 要件
 
@@ -101,6 +111,20 @@
 
 - ロールの権限定義を見れば、そのロールで何ができるかが明確にわかる
 - ロール特有の特権（Ownerは全トピック編集可能など）を表現できる
+
+### SpaceとTopicの2層構造の権限管理
+
+- WikinoはSlackのようにSpace（ワークスペース）とTopic（チャンネル）の2層構造
+- SpaceMemberRecordとTopicMemberRecordという2つの権限レイヤーが存在
+- Space権限とTopic権限の優先順位を明確にしたい
+- 権限の継承関係を明示的に表現したい
+
+#### 達成条件
+
+- Space OwnerがTopic全体で持つ特権が明確
+- Topic固有の権限（Topicモデレーター等）を追加可能
+- Space権限とTopic権限の組み合わせによる権限判定が理解しやすい
+- 新しい階層（Sub-topicなど）の追加が容易
 
 ## 修正案
 
@@ -135,11 +159,11 @@ class BaseMemberPolicy < ApplicationPolicy
   def joined_space?
     !space_member_record.nil?
   end
-  
+
   def in_same_space?(space_id)
     space_member_record&.space_id == space_id
   end
-  
+
   def active?
     space_member_record&.active?
   end
@@ -154,22 +178,22 @@ class OwnerPolicy < BaseMemberPolicy
   def can_update_topic?(topic_record:)
     in_same_space?(topic_record.space_id)
   end
-  
+
   # Ownerはスペース設定を変更可能
   def can_update_space?(space_record:)
     in_same_space?(space_record.id)
   end
-  
+
   # Ownerは全ファイルを削除可能
   def can_delete_attachment?(attachment_record:)
     active? && in_same_space?(attachment_record.space_id)
   end
-  
+
   # Ownerはファイル管理画面にアクセス可能
   def can_manage_attachments?(space_record:)
     active? && in_same_space?(space_record.id)
   end
-  
+
   def can_export_space?(space_record:)
     in_same_space?(space_record.id)
   end
@@ -185,24 +209,24 @@ class MemberPolicy < BaseMemberPolicy
     in_same_space?(topic_record.space_id) &&
       space_member_record!.topic_records.where(id: topic_record.id).exists?
   end
-  
+
   # Memberはスペース設定を変更不可
   def can_update_space?(space_record:)
     false
   end
-  
+
   # Memberは自分がアップロードしたファイルのみ削除可能
   def can_delete_attachment?(attachment_record:)
     active? &&
       in_same_space?(attachment_record.space_id) &&
       space_member_record!.id == attachment_record.attached_space_member_id
   end
-  
+
   # Memberはファイル管理画面にアクセス不可
   def can_manage_attachments?(space_record:)
     false
   end
-  
+
   def can_export_space?(space_record:)
     false
   end
@@ -216,22 +240,22 @@ class GuestPolicy < ApplicationPolicy
   def initialize(user_record:)
     @user_record = user_record
   end
-  
+
   def can_show_page?(page_record:)
     # 公開トピックのページのみ閲覧可能
     page_record.topic_record!.visibility_public?
   end
-  
+
   def can_view_attachment?(attachment_record:)
     # 公開ページで使用されているファイルのみ閲覧可能
     attachment_record.all_referencing_pages_public?
   end
-  
+
   # その他の操作は全て不可
   def can_update_topic?(topic_record:)
     false
   end
-  
+
   def can_update_space?(space_record:)
     false
   end
@@ -245,7 +269,7 @@ class SpaceMemberPolicyFactory
   def self.build(user_record:, space_member_record: nil)
     # 非メンバーの場合
     return GuestPolicy.new(user_record:) if space_member_record.nil?
-    
+
     # ロールに応じたPolicyを返す
     case space_member_record.role
     when "owner"
@@ -318,6 +342,255 @@ end
 
 3. **既存コードへの影響**
    - Factoryパターンにより、インターフェースは変わらないため影響最小限
+
+### SpaceとTopicの2層構造の権限管理
+
+Space（ワークスペース）とTopic（チャンネル）の2層構造の権限を適切に管理するための設計案です。
+
+#### 権限の階層構造
+
+```
+権限の優先順位：
+1. Space Owner     → Space内の全権限（全Topic含む）
+2. Topic Admin     → Topic内の全権限
+3. Topic Member    → Topic内の基本操作権限
+4. Space Member    → Space内の基本操作権限（Topic未参加）
+5. Guest          → 公開コンテンツのみ閲覧
+```
+
+#### クラス構造
+
+```
+app/policies/
+├── spaces/
+│   ├── space_owner_policy.rb
+│   ├── space_member_policy.rb
+│   └── space_guest_policy.rb
+├── topics/
+│   ├── topic_admin_policy.rb
+│   ├── topic_member_policy.rb
+│   └── topic_guest_policy.rb
+├── permission_resolver.rb       # 権限の優先順位を解決
+└── policy_factory.rb           # 適切なPolicyを生成
+```
+
+#### 実装例
+
+**1. 権限リゾルバー（優先順位の解決）**
+```ruby
+# app/policies/permission_resolver.rb
+class PermissionResolver
+  def initialize(user:, space:, topic: nil)
+    @user = user
+    @space = space
+    @topic = topic
+    @space_member = user&.space_members&.find_by(space:)
+    @topic_member = topic ? user&.topic_members&.find_by(topic:) : nil
+  end
+
+  def resolve
+    # 1. Space Ownerが最優先
+    if @space_member&.owner?
+      return SpaceOwnerPolicy.new(
+        space_member: @space_member,
+        topic_member: @topic_member
+      )
+    end
+
+    # 2. Topic権限をチェック
+    if @topic && @topic_member
+      return build_topic_policy
+    end
+
+    # 3. Space権限をチェック
+    if @space_member
+      return SpaceMemberPolicy.new(space_member: @space_member)
+    end
+
+    # 4. ゲスト権限
+    GuestPolicy.new(user: @user)
+  end
+
+  private
+
+  def build_topic_policy
+    case @topic_member.role
+    when "admin"
+      TopicAdminPolicy.new(
+        topic_member: @topic_member,
+        space_member: @space_member
+      )
+    when "member"
+      TopicMemberPolicy.new(
+        topic_member: @topic_member,
+        space_member: @space_member
+      )
+    else
+      TopicGuestPolicy.new(space_member: @space_member)
+    end
+  end
+end
+```
+
+**2. Space Ownerポリシー（最高権限）**
+```ruby
+# app/policies/spaces/space_owner_policy.rb
+class SpaceOwnerPolicy < BasePolicy
+  def initialize(space_member:, topic_member: nil)
+    @space_member = space_member
+    @topic_member = topic_member
+  end
+
+  # Space Ownerは全トピックで全権限
+  def can_update_topic?(topic:)
+    topic.space_id == @space_member.space_id
+  end
+
+  def can_manage_topic_members?(topic:)
+    topic.space_id == @space_member.space_id
+  end
+
+  def can_delete_any_page?(page:)
+    page.space_id == @space_member.space_id
+  end
+
+  # Space管理権限
+  def can_manage_space?
+    true
+  end
+
+  def can_invite_space_members?
+    true
+  end
+end
+```
+
+**3. Topic Memberポリシー（Topic参加者）**
+```ruby
+# app/policies/topics/topic_member_policy.rb
+class TopicMemberPolicy < BasePolicy
+  def initialize(topic_member:, space_member:)
+    @topic_member = topic_member
+    @space_member = space_member
+  end
+
+  # 参加しているTopicのページのみ編集可能
+  def can_update_page?(page:)
+    page.topic_id == @topic_member.topic_id &&
+      @topic_member.active?
+  end
+
+  # Topic設定は変更不可（Adminのみ）
+  def can_update_topic?(topic:)
+    false
+  end
+
+  # 他のメンバーを招待不可（Adminのみ）
+  def can_invite_to_topic?(topic:)
+    false
+  end
+
+  # Topicから離脱は可能
+  def can_leave_topic?
+    true
+  end
+end
+```
+
+**4. 複合権限チェック**
+```ruby
+# app/policies/composite_policy.rb
+class CompositePolicy
+  def initialize(policies:)
+    @policies = Array(policies)
+  end
+
+  # いずれかのPolicyで許可されていればtrue
+  def can_view_page?(page:)
+    @policies.any? { |policy| policy.can_view_page?(page:) }
+  end
+
+  # 全てのPolicyで許可されている場合のみtrue
+  def can_delete_page?(page:)
+    @policies.all? { |policy| policy.can_delete_page?(page:) }
+  end
+end
+```
+
+#### コントローラーでの使用例
+
+```ruby
+class Pages::UpdateController
+  def call
+    # 権限を解決
+    policy = PermissionResolver.new(
+      user: current_user,
+      space: @page.space,
+      topic: @page.topic
+    ).resolve
+
+    # 権限チェック
+    unless policy.can_update_page?(page: @page)
+      raise NotAuthorizedError
+    end
+
+    # ページ更新処理
+    @page.update!(page_params)
+  end
+end
+```
+
+#### Topic固有のロール追加例
+
+```ruby
+# app/models/topic_member_role.rb
+class TopicMemberRole < T::Enum
+  enums do
+    Admin = new("admin")        # Topic管理者
+    Moderator = new("moderator") # モデレーター（新規）
+    Member = new("member")       # 一般メンバー
+    ReadOnly = new("read_only")  # 読み取り専用（新規）
+  end
+end
+
+# app/policies/topics/topic_moderator_policy.rb
+class TopicModeratorPolicy < BasePolicy
+  # モデレーター固有の権限
+  def can_pin_page?(page:)
+    page.topic_id == @topic_member.topic_id
+  end
+
+  def can_delete_others_page?(page:)
+    page.topic_id == @topic_member.topic_id
+  end
+
+  def can_mute_member?(member:)
+    member.topic_id == @topic_member.topic_id
+  end
+end
+```
+
+### メリット
+
+1. **権限の優先順位が明確**
+   - Space Owner → Topic Admin → Topic Member の階層が明示的
+   - 上位権限の特権が保証される
+
+2. **柔軟な権限設定**
+   - Topic固有のロール（モデレーター等）を簡単に追加可能
+   - プライベートTopic、読み取り専用Topicなどの実装が容易
+
+3. **関心の分離**
+   - Space権限とTopic権限が独立して管理される
+   - 各レイヤーの権限ロジックが分離
+
+4. **拡張性**
+   - 新しい階層（Sub-topic、Thread等）の追加が簡単
+   - 既存の権限構造に影響を与えずに拡張可能
+
+5. **テスタビリティ**
+   - 各権限レイヤーを独立してテスト可能
+   - 権限の組み合わせテストも容易
 
 ## タスクリスト
 
