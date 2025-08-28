@@ -76,7 +76,7 @@
 - 権限チェックが各コントローラーに散在
 - ロールと権限の関係がハードコーディング
 - 細かい権限制御には対応していない（例：読み取り専用メンバー）
-- **`SpaceMemberRole#permissions`と`SpaceMemberPolicy`の責務が重複**
+- `SpaceMemberRole#permissions` と `SpaceMemberPolicy` の責務が重複
   - `SpaceMemberRole`で定義した権限と実際のチェックロジックが一致しない
   - 例：`CreateTopic`権限は定義されているが、`can_create_topic?`では権限をチェックしていない
   - 一部のメソッドは`permissions.include?`を使い、一部は独自ロジックのみで判定
