@@ -633,12 +633,12 @@ class TopicPermissionLevel < T::Enum
     Triage = new("triage")     # ラベル付け、アサイン権限
     Read = new("read")         # 読み取り専用
   end
-  
+
   sig { returns(T::Boolean) }
   def can_write?
     [Admin, Maintain, Write].include?(self)
   end
-  
+
   sig { returns(T::Boolean) }
   def can_manage?
     [Admin, Maintain].include?(self)
@@ -657,13 +657,13 @@ class GithubStylePermissionResolver
     @space_member = user&.space_members&.find_by(space:)
     @topic_member = topic ? user&.topic_members&.find_by(topic:) : nil
   end
-  
+
   def resolve
     # Publicトピックの特別処理（GitHubのPublic Repo相当）
     if @topic&.public? && !authenticated?
       return PublicTopicGuestPolicy.new(topic: @topic)
     end
-    
+
     # Organization Owner（GitHub Org Owner相当）
     if @space_member&.owner?
       return OrganizationOwnerPolicy.new(
@@ -671,33 +671,33 @@ class GithubStylePermissionResolver
         topic: @topic
       )
     end
-    
+
     # Private Topicで非Collaboratorはアクセス不可
     if @topic&.private? && !@topic_member
       return NoAccessPolicy.new
     end
-    
+
     # Repository権限（GitHub Collaborator相当）
     if @topic_member
       return build_repository_policy
     end
-    
+
     # Internal Topic（組織内部公開）
     if @topic&.internal? && authenticated?
       return InternalTopicViewerPolicy.new(user: @user, topic: @topic)
     end
-    
+
     # Space Memberのデフォルト権限
     if @space_member
       return OrganizationMemberPolicy.new(space_member: @space_member)
     end
-    
+
     # 未認証ユーザー
     AnonymousPolicy.new
   end
-  
+
   private
-  
+
   def build_repository_policy
     case @topic_member.permission_level
     when TopicPermissionLevel::Admin
@@ -712,7 +712,7 @@ class GithubStylePermissionResolver
       RepositoryReaderPolicy.new(topic_member: @topic_member)
     end
   end
-  
+
   def authenticated?
     @user.present?
   end
@@ -728,19 +728,19 @@ class RepositoryAdminPolicy < BasePolicy
   def can_manage_settings?
     true
   end
-  
+
   def can_manage_collaborators?
     true
   end
-  
+
   def can_delete_repository?
     true
   end
-  
+
   def can_change_visibility?
     true  # Public/Private切り替え
   end
-  
+
   def can_create_protected_branch?
     true
   end
@@ -752,19 +752,19 @@ class PublicTopicGuestPolicy < BasePolicy
   def can_view_pages?
     true
   end
-  
+
   def can_clone_repository?
     true  # Read-onlyクローン
   end
-  
+
   def can_create_issue?
     @topic.allow_public_issues?  # 設定次第
   end
-  
+
   def can_fork?
     false  # 認証が必要
   end
-  
+
   def can_star?
     false  # 認証が必要
   end
@@ -776,19 +776,19 @@ class OrganizationOwnerPolicy < BasePolicy
   def can_manage_all_repositories?
     true
   end
-  
+
   def can_manage_billing?
     true
   end
-  
+
   def can_manage_teams?
     true
   end
-  
+
   def can_transfer_repository?(repository:)
     repository.space_id == @space_member.space_id
   end
-  
+
   def can_create_private_repository?
     true
   end
@@ -803,7 +803,7 @@ class SpaceTeam < ApplicationRecord
   belongs_to :space
   has_many :team_members
   has_many :team_topic_permissions
-  
+
   # GitHub Teamsのような権限グループ
   enum :permission_level, {
     member: 0,
@@ -820,7 +820,7 @@ class TeamBasedPolicy < BasePolicy
     @topic = topic
     @teams = user.space_teams.where(space: space)
   end
-  
+
   def can_access_topic?
     # チーム単位でのトピックアクセス権限
     @teams.any? do |team|
@@ -829,6 +829,75 @@ class TeamBasedPolicy < BasePolicy
   end
 end
 ```
+
+#### WikinoにおけるPublic/Privateトピックの仕様
+
+**重要**: WikinoのPrivateトピックはGitHubのPrivate Repositoryとは異なる動作をします。
+
+**1. Publicトピック**
+```ruby
+# 誰でも閲覧可能（ログイン不要）
+topic.visibility_public?
+  → 非ログインユーザーでもページ閲覧可能
+  → 添付ファイルも閲覧可能
+  → 編集は不可（Spaceメンバーである必要がある）
+```
+
+**2. Privateトピック（Wikino独自仕様）**
+```ruby
+# Spaceメンバーなら誰でも閲覧可能
+topic.visibility_private?
+  → Space外のユーザーはアクセス不可
+  → Spaceメンバーなら自動的にアクセス可能（招待不要）
+  → TopicMemberRecordは編集権限の制御に使用
+```
+
+**GitHubとの違い**
+
+| 項目 | GitHub Private Repo | Wikino Private Topic |
+|------|-------------------|---------------------|
+| アクセス制御 | Collaboratorへの明示的な招待が必要 | Spaceメンバーなら自動的にアクセス可能 |
+| 権限管理 | Repository単位で個別管理 | Space単位で一括管理 |
+| 閲覧権限 | Collaboratorのみ | Spaceメンバー全員 |
+| 編集権限 | Collaboratorの権限レベルに依存 | TopicMemberRecordで制御 |
+
+**実装上の注意点**
+```ruby
+# GitHubスタイル（WikinoではNG）
+def can_view_private_topic?(topic:, user:)
+  topic.collaborators.include?(user)  # 個別招待が必要
+end
+
+# Wikinoスタイル（正しい実装）
+def can_view_private_topic?(topic:, user:)
+  user.space_members.exists?(space: topic.space)  # Spaceメンバーなら自動的にOK
+end
+```
+
+**TopicMemberRecordの役割**
+- **GitHubでは**: Collaboratorとしての基本的なアクセス権を付与
+- **Wikinoでは**: 主に編集権限の制御（閲覧はSpaceMemberで判定）
+
+```ruby
+# Wikinoの権限判定フロー
+def can_update_topic?(topic:, user:)
+  # 1. Space Ownerなら無条件でOK
+  return true if user.space_owner?(topic.space)
+
+  # 2. TopicMemberRecordで編集権限をチェック
+  topic_member = user.topic_members.find_by(topic:)
+  topic_member&.can_edit?  # 参加していて、かつ編集権限がある場合のみ
+end
+```
+
+**Internal追加の必要性について**
+
+現在のWikinoの仕様では：
+- **Public**: 社外公開（誰でも閲覧可能）
+- **Private**: Space内共有（≒社内共有）
+
+この2つで基本的なユースケースはカバーできるため、Internalの追加は必須ではありません。
+将来的に複数Space運用や、より細かい権限制御が必要になった場合に検討すべき拡張機能と位置づけられます。
 
 #### GitHubモデル採用のメリット
 
