@@ -114,10 +114,11 @@
 
 ### SpaceとTopicの2層構造の権限管理
 
-- WikinoはSlackのようにSpace（ワークスペース）とTopic（チャンネル）の2層構造
+- WikinoはGitHubのようにSpace（Organization）とTopic（Repository）の2層構造
 - SpaceMemberRecordとTopicMemberRecordという2つの権限レイヤーが存在
 - Space権限とTopic権限の優先順位を明確にしたい
 - 権限の継承関係を明示的に表現したい
+- Public/Privateの可視性制御が必要
 
 #### 達成条件
 
@@ -125,6 +126,7 @@
 - Topic固有の権限（Topicモデレーター等）を追加可能
 - Space権限とTopic権限の組み合わせによる権限判定が理解しやすい
 - 新しい階層（Sub-topicなど）の追加が容易
+- PublicトピックとPrivateトピックの権限制御が明確
 
 ## 修正案
 
@@ -591,6 +593,274 @@ end
 5. **テスタビリティ**
    - 各権限レイヤーを独立してテスト可能
    - 権限の組み合わせテストも容易
+
+### GitHubモデルとの比較と実装案
+
+WikinoはSlackよりもGitHubに近い権限モデルを採用しています。
+
+#### モデル対応表
+
+| Wikino | GitHub | 説明 |
+|--------|--------|------|
+| Space | Organization | 最上位の組織単位 |
+| Topic | Repository | プロジェクト単位、Public/Private設定可能 |
+| Page | Issue/PR/Wiki | 個別のコンテンツ |
+| SpaceMemberRecord | Organization Member | 組織レベルのメンバーシップ |
+| TopicMemberRecord | Repository Collaborator | リポジトリレベルのアクセス権 |
+
+#### GitHubライクな権限レベル
+
+**1. Topic（Repository）の可視性**
+```ruby
+# app/models/topic_visibility.rb
+class TopicVisibility < T::Enum
+  enums do
+    Public = new("public")      # 誰でも閲覧可能（GitHubのPublic Repo）
+    Internal = new("internal")  # ログインユーザーのみ閲覧可能
+    Private = new("private")    # メンバーのみアクセス可能（GitHubのPrivate Repo）
+  end
+end
+```
+
+**2. 権限レベルの細分化（GitHub風）**
+```ruby
+# app/models/topic_permission_level.rb
+class TopicPermissionLevel < T::Enum
+  enums do
+    Admin = new("admin")       # フルアクセス（Settings変更可能）
+    Maintain = new("maintain") # マージ、デプロイ権限相当
+    Write = new("write")       # ページ作成・編集権限
+    Triage = new("triage")     # ラベル付け、アサイン権限
+    Read = new("read")         # 読み取り専用
+  end
+  
+  sig { returns(T::Boolean) }
+  def can_write?
+    [Admin, Maintain, Write].include?(self)
+  end
+  
+  sig { returns(T::Boolean) }
+  def can_manage?
+    [Admin, Maintain].include?(self)
+  end
+end
+```
+
+**3. GitHubライクな権限リゾルバー**
+```ruby
+# app/policies/github_style_permission_resolver.rb
+class GithubStylePermissionResolver
+  def initialize(user:, space:, topic: nil)
+    @user = user
+    @space = space
+    @topic = topic
+    @space_member = user&.space_members&.find_by(space:)
+    @topic_member = topic ? user&.topic_members&.find_by(topic:) : nil
+  end
+  
+  def resolve
+    # Publicトピックの特別処理（GitHubのPublic Repo相当）
+    if @topic&.public? && !authenticated?
+      return PublicTopicGuestPolicy.new(topic: @topic)
+    end
+    
+    # Organization Owner（GitHub Org Owner相当）
+    if @space_member&.owner?
+      return OrganizationOwnerPolicy.new(
+        space_member: @space_member,
+        topic: @topic
+      )
+    end
+    
+    # Private Topicで非Collaboratorはアクセス不可
+    if @topic&.private? && !@topic_member
+      return NoAccessPolicy.new
+    end
+    
+    # Repository権限（GitHub Collaborator相当）
+    if @topic_member
+      return build_repository_policy
+    end
+    
+    # Internal Topic（組織内部公開）
+    if @topic&.internal? && authenticated?
+      return InternalTopicViewerPolicy.new(user: @user, topic: @topic)
+    end
+    
+    # Space Memberのデフォルト権限
+    if @space_member
+      return OrganizationMemberPolicy.new(space_member: @space_member)
+    end
+    
+    # 未認証ユーザー
+    AnonymousPolicy.new
+  end
+  
+  private
+  
+  def build_repository_policy
+    case @topic_member.permission_level
+    when TopicPermissionLevel::Admin
+      RepositoryAdminPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Maintain
+      RepositoryMaintainerPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Write
+      RepositoryWriterPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Triage
+      RepositoryTriagerPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Read
+      RepositoryReaderPolicy.new(topic_member: @topic_member)
+    end
+  end
+  
+  def authenticated?
+    @user.present?
+  end
+end
+```
+
+**4. GitHub風のPolicy実装例**
+
+```ruby
+# app/policies/repository_admin_policy.rb
+class RepositoryAdminPolicy < BasePolicy
+  # GitHubのRepo Admin権限
+  def can_manage_settings?
+    true
+  end
+  
+  def can_manage_collaborators?
+    true
+  end
+  
+  def can_delete_repository?
+    true
+  end
+  
+  def can_change_visibility?
+    true  # Public/Private切り替え
+  end
+  
+  def can_create_protected_branch?
+    true
+  end
+end
+
+# app/policies/public_topic_guest_policy.rb
+class PublicTopicGuestPolicy < BasePolicy
+  # GitHubのPublic Repoを未認証で見る場合
+  def can_view_pages?
+    true
+  end
+  
+  def can_clone_repository?
+    true  # Read-onlyクローン
+  end
+  
+  def can_create_issue?
+    @topic.allow_public_issues?  # 設定次第
+  end
+  
+  def can_fork?
+    false  # 認証が必要
+  end
+  
+  def can_star?
+    false  # 認証が必要
+  end
+end
+
+# app/policies/organization_owner_policy.rb
+class OrganizationOwnerPolicy < BasePolicy
+  # GitHub Organization Ownerの権限
+  def can_manage_all_repositories?
+    true
+  end
+  
+  def can_manage_billing?
+    true
+  end
+  
+  def can_manage_teams?
+    true
+  end
+  
+  def can_transfer_repository?(repository:)
+    repository.space_id == @space_member.space_id
+  end
+  
+  def can_create_private_repository?
+    true
+  end
+end
+```
+
+**5. GitHub Teams相当の実装（将来拡張）**
+
+```ruby
+# app/models/space_team.rb
+class SpaceTeam < ApplicationRecord
+  belongs_to :space
+  has_many :team_members
+  has_many :team_topic_permissions
+  
+  # GitHub Teamsのような権限グループ
+  enum :permission_level, {
+    member: 0,
+    maintainer: 1,
+    admin: 2
+  }
+end
+
+# app/policies/team_based_policy.rb
+class TeamBasedPolicy < BasePolicy
+  def initialize(user:, space:, topic:)
+    @user = user
+    @space = space
+    @topic = topic
+    @teams = user.space_teams.where(space: space)
+  end
+  
+  def can_access_topic?
+    # チーム単位でのトピックアクセス権限
+    @teams.any? do |team|
+      team.team_topic_permissions.exists?(topic: @topic)
+    end
+  end
+end
+```
+
+#### GitHubモデル採用のメリット
+
+1. **成熟した権限モデル**
+   - GitHubの権限モデルは長年の実績があり、多くの開発者に馴染みがある
+   - Public/Private/Internalの3段階の可視性は実用的
+
+2. **細かい権限制御**
+   - Read/Triage/Write/Maintain/Adminの5段階は多くのユースケースをカバー
+   - 各権限レベルの責務が明確
+
+3. **外部コラボレーション対応**
+   - PublicトピックでのIssue作成やPull Request（将来実装）が可能
+   - Fork機能（将来実装）による派生プロジェクトの作成
+
+4. **エンタープライズ対応**
+   - Teams機能による大規模組織での権限管理
+   - SAML/SSOとの統合が容易（将来実装）
+
+#### 実装における注意点
+
+1. **段階的な実装**
+   - まずはBasic権限（Owner/Member）から始める
+   - 必要に応じて細分化された権限レベルを追加
+
+2. **既存データとの互換性**
+   - 現在のOwner→Admin、Member→Writeへのマッピング
+   - マイグレーション時の権限変換ルール策定
+
+3. **UI/UXの考慮**
+   - GitHubライクな権限設定画面の実装
+   - 権限レベルの説明とヘルプの充実
 
 ## タスクリスト
 
