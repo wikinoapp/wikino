@@ -15,7 +15,7 @@ module Topics
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
           space_member_record = current_user_record!.space_member_record(space_record:)
-          space_member_policy = SpaceMemberPolicy.new(
+          space_member_policy = SpaceMemberPolicyFactory.build(
             user_record: current_user_record!,
             space_member_record:
           )
