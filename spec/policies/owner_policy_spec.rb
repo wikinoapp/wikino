@@ -146,4 +146,3 @@ RSpec.describe OwnerPolicy do
     end
   end
 end
-

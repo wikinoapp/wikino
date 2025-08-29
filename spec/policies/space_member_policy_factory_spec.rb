@@ -50,4 +50,3 @@ RSpec.describe SpaceMemberPolicyFactory do
     end
   end
 end
-

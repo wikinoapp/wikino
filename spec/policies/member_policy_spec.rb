@@ -168,4 +168,3 @@ RSpec.describe MemberPolicy do
     end
   end
 end
-

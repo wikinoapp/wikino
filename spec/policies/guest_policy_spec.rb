@@ -117,4 +117,3 @@ RSpec.describe GuestPolicy do
   # showable_pagesの詳細なテストは複雑なscopeの動作に依存するため
   # 結合テストで確認することとする
 end
-

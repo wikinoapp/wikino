@@ -5,6 +5,90 @@ require "rails_helper"
 
 # BaseMemberPolicyは抽象クラスなので、テスト用の具象クラスを定義
 class TestMemberPolicy < BaseMemberPolicy
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:)
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:)
+    true
+  end
+
+  sig { override.returns(T::Boolean) }
+  def can_create_topic?
+    true
+  end
+
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_create_page?(topic_record:)
+    true
+  end
+
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:)
+    true
+  end
+
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_draft_page?(page_record:)
+    true
+  end
+
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_show_page?(page_record:)
+    true
+  end
+
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_trash_page?(page_record:)
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_show_trash?(space_record:)
+    true
+  end
+
+  sig { override.returns(T::Boolean) }
+  def can_create_bulk_restore_pages?
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_upload_attachment?(space_record:)
+    true
+  end
+
+  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_view_attachment?(attachment_record:)
+    true
+  end
+
+  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_delete_attachment?(attachment_record:)
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_attachments?(space_record:)
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:)
+    true
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
+  def showable_topics(space_record:)
+    T.cast(TopicRecord.none, TopicRecord::PrivateAssociationRelation)
+  end
+
+  sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
+  def showable_pages(space_record:)
+    T.cast(PageRecord.none, PageRecord::PrivateAssociationRelation)
+  end
 end
 
 RSpec.describe BaseMemberPolicy do
@@ -169,12 +253,12 @@ RSpec.describe BaseMemberPolicy do
       expect(topic_records.count).to eq(2)
     end
 
-    it "space_member_recordがnilの場合はnilを返すこと" do
+    it "space_member_recordがnilの場合は空のコレクションを返すこと" do
       user_record = FactoryBot.create(:user_record)
 
       policy = TestMemberPolicy.new(user_record:, space_member_record: nil)
 
-      expect(policy.joined_topic_records).to be_nil
+      expect(policy.joined_topic_records.to_a).to eq([])
     end
   end
 end
