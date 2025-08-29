@@ -31,9 +31,9 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   # 指定されたスペースIDと同じスペースにいるかどうか
-  sig { params(space_id: String).returns(T::Boolean) }
-  def in_same_space?(space_id:)
-    space_member_record&.space_id == space_id
+  sig { params(space_record_id: String).returns(T::Boolean) }
+  def in_same_space?(space_record_id:)
+    space_member_record&.space_id == space_record_id
   end
 
   # アクティブなメンバーかどうか
@@ -51,11 +51,11 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   # トピックに参加しているかどうか
-  sig { params(topic_id: String).returns(T::Boolean) }
-  def joined_topic?(topic_id:)
+  sig { params(topic_record_id: String).returns(T::Boolean) }
+  def joined_topic?(topic_record_id:)
     return false if space_member_record.nil?
 
-    space_member_record!.topic_records.where(id: topic_id).exists?
+    space_member_record!.topic_records.where(id: topic_record_id).exists?
   end
 
   protected

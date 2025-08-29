@@ -66,7 +66,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: space_member)
 
-      expect(policy.in_same_space?(space_id: space.id)).to be(true)
+      expect(policy.in_same_space?(space_record_id: space.id)).to be(true)
     end
 
     it "異なるスペースIDの場合はfalseを返すこと" do
@@ -77,7 +77,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: space_member)
 
-      expect(policy.in_same_space?(space_id: other_space.id)).to be(false)
+      expect(policy.in_same_space?(space_record_id: other_space.id)).to be(false)
     end
 
     it "space_member_recordがnilの場合はfalseを返すこと" do
@@ -85,7 +85,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: nil)
 
-      expect(policy.in_same_space?(space_id: "any_space_id")).to be(false)
+      expect(policy.in_same_space?(space_record_id: "any_space_id")).to be(false)
     end
   end
 
@@ -129,7 +129,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: space_member)
 
-      expect(policy.joined_topic?(topic_id: topic.id)).to be(true)
+      expect(policy.joined_topic?(topic_record_id: topic.id)).to be(true)
     end
 
     it "トピックに参加していない場合はfalseを返すこと" do
@@ -140,7 +140,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: space_member)
 
-      expect(policy.joined_topic?(topic_id: topic.id)).to be(false)
+      expect(policy.joined_topic?(topic_record_id: topic.id)).to be(false)
     end
 
     it "space_member_recordがnilの場合はfalseを返すこと" do
@@ -148,7 +148,7 @@ RSpec.describe BaseMemberPolicy do
 
       policy = TestMemberPolicy.new(user_record: user, space_member_record: nil)
 
-      expect(policy.joined_topic?(topic_id: "any_topic_id")).to be(false)
+      expect(policy.joined_topic?(topic_record_id: "any_topic_id")).to be(false)
     end
   end
 
