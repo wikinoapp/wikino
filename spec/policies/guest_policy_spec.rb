@@ -36,6 +36,33 @@ RSpec.describe GuestPolicy do
     end
   end
 
+  describe "#can_delete_topic?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      topic_record = FactoryBot.create(:topic_record)
+
+      expect(policy.can_delete_topic?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_manage_topic_members?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      topic_record = FactoryBot.create(:topic_record)
+
+      expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_delete_page?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      page_record = FactoryBot.create(:page_record)
+
+      expect(policy.can_delete_page?(page_record:)).to be(false)
+    end
+  end
+
   describe "#can_create_topic?" do
     it "常にfalseを返すこと" do
       policy = GuestPolicy.new(user_record: nil)

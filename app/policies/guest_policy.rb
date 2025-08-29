@@ -10,6 +10,18 @@ class GuestPolicy < ApplicationPolicy
     false
   end
 
+  # ゲストはトピック削除不可
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+    false
+  end
+
+  # ゲストはトピックメンバー管理不可
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+    false
+  end
+
   # ゲストはスペース設定変更不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
@@ -49,6 +61,12 @@ class GuestPolicy < ApplicationPolicy
   # ゲストはページ削除不可
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
+    false
+  end
+
+  # ゲストはページ完全削除不可
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_delete_page?(page_record:)
     false
   end
 

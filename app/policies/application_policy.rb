@@ -17,6 +17,14 @@ class ApplicationPolicy
   def can_update_topic?(topic_record:)
   end
 
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+  end
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+  end
+
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
   end
@@ -43,6 +51,10 @@ class ApplicationPolicy
 
   sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
+  end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_delete_page?(page_record:)
   end
 
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }

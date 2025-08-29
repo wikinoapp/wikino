@@ -16,6 +16,18 @@ class MemberPolicy < BaseMemberPolicy
       joined_topic?(topic_record_id: topic_record.id)
   end
 
+  # Memberはトピックを削除不可（Topic Adminのみ）
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+    false
+  end
+
+  # Memberはトピックメンバーを管理不可（Topic Adminのみ）
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+    false
+  end
+
   # Memberはスペース設定を変更不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
@@ -81,6 +93,12 @@ class MemberPolicy < BaseMemberPolicy
     end
 
     active? && in_same_space?(space_record_id: page_record.space_id)
+  end
+
+  # Memberはページを完全削除不可（Ownerのみ）
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_delete_page?(page_record:)
+    false
   end
 
   # Memberはゴミ箱を閲覧可能

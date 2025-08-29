@@ -89,6 +89,21 @@ class TestMemberPolicy < BaseMemberPolicy
   def showable_pages(space_record:)
     T.cast(PageRecord.none, PageRecord::PrivateAssociationRelation)
   end
+
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+    false
+  end
+
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+    false
+  end
+
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_delete_page?(page_record:)
+    false
+  end
 end
 
 RSpec.describe BaseMemberPolicy do

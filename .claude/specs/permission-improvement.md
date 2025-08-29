@@ -1237,12 +1237,20 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - 現状、Topic AdminはOwnerPolicyと同じ権限を持つ実装
   - `can_delete_topic?`メソッドは未実装（今後の実装が必要）
 
-- [ ] Topic権限判定メソッドの追加
+- [x] Topic権限判定メソッドの追加
   - 各PolicyクラスにTopic関連メソッドを追加
   - `can_update_page?`, `can_delete_page?`等のページ操作権限
   - `can_manage_topic_members?`等のTopic管理権限
   - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
   - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
+  
+  **実装結果:**
+  - `ApplicationPolicy`に抽象メソッドとして定義
+  - `OwnerPolicy`: 全トピックで削除・メンバー管理可能
+  - `MemberPolicy`: トピック削除・メンバー管理不可
+  - `GuestPolicy`: 全て不可
+  - `can_delete_page?`メソッドも追加（完全削除権限）
+  - 全メソッドのテストを作成済み
 
 - [ ] PermissionResolverのテスト作成
   - 権限優先順位のテスト

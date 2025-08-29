@@ -72,6 +72,60 @@ RSpec.describe MemberPolicy do
     end
   end
 
+  describe "#can_delete_topic?" do
+    it "常にfalseを返すこと" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Member.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      policy = MemberPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_delete_topic?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_manage_topic_members?" do
+    it "常にfalseを返すこと" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Member.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      policy = MemberPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_delete_page?" do
+    it "常にfalseを返すこと" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Member.serialize
+      )
+      page_record = FactoryBot.create(:page_record, space_record:)
+
+      policy = MemberPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_delete_page?(page_record:)).to be(false)
+    end
+  end
+
   # AttachmentRecordのFactoryが複雑なため、attachment関連のテストは省略
   # 実際の動作は結合テストで確認
 
