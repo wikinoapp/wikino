@@ -1152,6 +1152,36 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - Factoryのテスト
   - 既存テストの動作確認
 
+### Phase 1.5: Policyクラスのリネーム（Topic権限追加前の準備）
+
+- [x] SpaceプレフィクスへのPolicyクラスリネーム
+  - [x] `BaseMemberPolicy` → `BaseSpaceMemberPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`base_member_policy.rb` → `base_space_member_policy.rb`）
+    - [x] 継承元の更新（`SpaceOwnerPolicy`、`SpaceMemberPolicy`）
+  - [x] `OwnerPolicy` → `SpaceOwnerPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`owner_policy.rb` → `space_owner_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `MemberPolicy` → `SpaceMemberPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`member_policy.rb` → `space_member_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `GuestPolicy` → `SpaceGuestPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`guest_policy.rb` → `space_guest_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `PermissionResolver`の更新
+    - [x] リネーム後のクラスへの参照更新
+  - [x] テストファイルのリネーム
+    - [x] `base_member_policy_spec.rb` → `base_space_member_policy_spec.rb`
+    - [x] `owner_policy_spec.rb` → `space_owner_policy_spec.rb`
+    - [x] `member_policy_spec.rb` → `space_member_policy_spec.rb`
+    - [x] `guest_policy_spec.rb` → `space_guest_policy_spec.rb`
+    - [x] 各テスト内のクラス参照更新
+  - [x] 型チェックとLinter実行
+  - [x] テスト実行と確認
+
 ### Phase 2: 権限モデルの拡張
 
 - [x] 権限定義の整理

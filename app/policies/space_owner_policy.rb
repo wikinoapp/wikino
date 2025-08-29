@@ -3,7 +3,7 @@
 
 # Space Ownerロール専用のPolicyクラス
 # Ownerは全権限を持つ
-class OwnerPolicy < BaseMemberPolicy
+class SpaceOwnerPolicy < BaseSpaceMemberPolicy
   # Ownerは全トピックを編集可能
   # TopicMemberRecordの有無に関わらず、Space内の全トピックで編集権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
