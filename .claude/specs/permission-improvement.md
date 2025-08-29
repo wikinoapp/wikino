@@ -1243,7 +1243,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `can_manage_topic_members?`等のTopic管理権限
   - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
   - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
-  
+
   **実装結果:**
   - `ApplicationPolicy`に抽象メソッドとして定義
   - `OwnerPolicy`: 全トピックで削除・メンバー管理可能
