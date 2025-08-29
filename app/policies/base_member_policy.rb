@@ -106,10 +106,6 @@ class BaseMemberPolicy < ApplicationPolicy
   def can_trash_page?(page_record:)
   end
 
-  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-  end
-
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
   end

@@ -54,15 +54,6 @@ RSpec.describe GuestPolicy do
     end
   end
 
-  describe "#can_delete_page?" do
-    it "常にfalseを返すこと" do
-      policy = GuestPolicy.new(user_record: nil)
-      page_record = FactoryBot.create(:page_record)
-
-      expect(policy.can_delete_page?(page_record:)).to be(false)
-    end
-  end
-
   describe "#can_create_topic?" do
     it "常にfalseを返すこと" do
       policy = GuestPolicy.new(user_record: nil)

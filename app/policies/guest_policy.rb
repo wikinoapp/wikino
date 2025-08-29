@@ -64,12 +64,6 @@ class GuestPolicy < ApplicationPolicy
     false
   end
 
-  # ゲストはページ完全削除不可
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    false
-  end
-
   # ゲストはゴミ箱閲覧不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)

@@ -66,12 +66,6 @@ class OwnerPolicy < BaseMemberPolicy
     active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
-  # Ownerはページを完全削除可能
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    active? && in_same_space?(space_record_id: page_record.space_id)
-  end
-
   # Ownerはゴミ箱を閲覧可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)

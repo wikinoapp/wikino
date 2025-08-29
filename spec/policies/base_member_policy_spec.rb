@@ -99,11 +99,6 @@ class TestMemberPolicy < BaseMemberPolicy
   def can_manage_topic_members?(topic_record:)
     false
   end
-
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    false
-  end
 end
 
 RSpec.describe BaseMemberPolicy do
