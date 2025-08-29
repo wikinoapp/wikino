@@ -27,6 +27,7 @@
 ### 権限チェックのフロー
 
 1. **コントローラーでの権限チェック**
+
    ```ruby
    space_member_policy = SpaceMemberPolicy.new(
      user_record: current_user_record,
@@ -176,6 +177,7 @@ app/policies/
 #### 実装例
 
 **1. 基底クラス（共通ロジック）**
+
 ```ruby
 # app/policies/base_member_policy.rb
 class BaseMemberPolicy < ApplicationPolicy
@@ -199,6 +201,7 @@ end
 ```
 
 **2. Ownerロール専用Policy**
+
 ```ruby
 # app/policies/owner_policy.rb
 class OwnerPolicy < BaseMemberPolicy
@@ -229,6 +232,7 @@ end
 ```
 
 **3. Memberロール専用Policy**
+
 ```ruby
 # app/policies/member_policy.rb
 class MemberPolicy < BaseMemberPolicy
@@ -262,6 +266,7 @@ end
 ```
 
 **4. ゲスト（非メンバー）用Policy**
+
 ```ruby
 # app/policies/guest_policy.rb
 class GuestPolicy < ApplicationPolicy
@@ -291,6 +296,7 @@ end
 ```
 
 **5. Factoryパターンで適切なPolicyを生成**
+
 ```ruby
 # app/policies/space_member_policy_factory.rb
 class SpaceMemberPolicyFactory
@@ -405,6 +411,7 @@ app/policies/
 #### 実装例
 
 **1. 権限リゾルバー（優先順位の解決）**
+
 ```ruby
 # app/policies/permission_resolver.rb
 class PermissionResolver
@@ -461,6 +468,7 @@ end
 ```
 
 **2. Space Ownerポリシー（最高権限）**
+
 ```ruby
 # app/policies/spaces/space_owner_policy.rb
 class SpaceOwnerPolicy < BasePolicy
@@ -494,6 +502,7 @@ end
 ```
 
 **3. Topic Memberポリシー（Topic参加者）**
+
 ```ruby
 # app/policies/topics/topic_member_policy.rb
 class TopicMemberPolicy < BasePolicy
@@ -526,6 +535,7 @@ end
 ```
 
 **4. 複合権限チェック**
+
 ```ruby
 # app/policies/composite_policy.rb
 class CompositePolicy
@@ -626,17 +636,18 @@ WikinoはSlackよりもGitHubに近い権限モデルを採用しています。
 
 #### モデル対応表
 
-| Wikino | GitHub | 説明 |
-|--------|--------|------|
-| Space | Organization | 最上位の組織単位 |
-| Topic | Repository | プロジェクト単位、Public/Private設定可能 |
-| Page | Issue/PR/Wiki | 個別のコンテンツ |
-| SpaceMemberRecord | Organization Member | 組織レベルのメンバーシップ |
-| TopicMemberRecord | Repository Collaborator | リポジトリレベルのアクセス権 |
+| Wikino            | GitHub                  | 説明                                     |
+| ----------------- | ----------------------- | ---------------------------------------- |
+| Space             | Organization            | 最上位の組織単位                         |
+| Topic             | Repository              | プロジェクト単位、Public/Private設定可能 |
+| Page              | Issue/PR/Wiki           | 個別のコンテンツ                         |
+| SpaceMemberRecord | Organization Member     | 組織レベルのメンバーシップ               |
+| TopicMemberRecord | Repository Collaborator | リポジトリレベルのアクセス権             |
 
 #### GitHubライクな権限レベル
 
 **1. Topic（Repository）の可視性**
+
 ```ruby
 # app/models/topic_visibility.rb
 class TopicVisibility < T::Enum
@@ -649,6 +660,7 @@ end
 ```
 
 **2. 権限レベルの細分化（GitHub風）**
+
 ```ruby
 # app/models/topic_permission_level.rb
 class TopicPermissionLevel < T::Enum
@@ -673,6 +685,7 @@ end
 ```
 
 **3. GitHubライクな権限リゾルバー**
+
 ```ruby
 # app/policies/github_style_permission_resolver.rb
 class GithubStylePermissionResolver
@@ -861,6 +874,7 @@ end
 **重要**: WikinoのPrivateトピックはGitHubのPrivate Repositoryとは異なる動作をします。
 
 **1. Publicトピック**
+
 ```ruby
 # 誰でも閲覧可能（ログイン不要）
 topic.visibility_public?
@@ -870,6 +884,7 @@ topic.visibility_public?
 ```
 
 **2. Privateトピック（Wikino独自仕様）**
+
 ```ruby
 # Spaceメンバーなら誰でも閲覧可能
 topic.visibility_private?
@@ -880,14 +895,15 @@ topic.visibility_private?
 
 **GitHubとの違い**
 
-| 項目 | GitHub Private Repo | Wikino Private Topic |
-|------|-------------------|---------------------|
+| 項目         | GitHub Private Repo                | Wikino Private Topic                  |
+| ------------ | ---------------------------------- | ------------------------------------- |
 | アクセス制御 | Collaboratorへの明示的な招待が必要 | Spaceメンバーなら自動的にアクセス可能 |
-| 権限管理 | Repository単位で個別管理 | Space単位で一括管理 |
-| 閲覧権限 | Collaboratorのみ | Spaceメンバー全員 |
-| 編集権限 | Collaboratorの権限レベルに依存 | TopicMemberRecordで制御 |
+| 権限管理     | Repository単位で個別管理           | Space単位で一括管理                   |
+| 閲覧権限     | Collaboratorのみ                   | Spaceメンバー全員                     |
+| 編集権限     | Collaboratorの権限レベルに依存     | TopicMemberRecordで制御               |
 
 **実装上の注意点**
+
 ```ruby
 # GitHubスタイル（WikinoではNG）
 def can_view_private_topic?(topic:, user:)
@@ -901,6 +917,7 @@ end
 ```
 
 **TopicMemberRecordの役割**
+
 - **GitHubでは**: Collaboratorとしての基本的なアクセス権を付与
 - **Wikinoでは**: 主に編集権限の制御（閲覧はSpaceMemberで判定）
 
@@ -919,6 +936,7 @@ end
 **Internal追加の必要性について**
 
 現在のWikinoの仕様では：
+
 - **Public**: 社外公開（誰でも閲覧可能）
 - **Private**: Space内共有（≒社内共有）
 
@@ -967,6 +985,7 @@ end
 これにより単一責任の原則を守り、保守性を向上させます。
 
 **実装方針:**
+
 - 基底クラス`BaseMemberPolicy`に共通ロジックを集約
 - `OwnerPolicy`、`MemberPolicy`、`GuestPolicy`をロール別に実装
 - `SpaceMemberPolicyFactory`でインターフェースの互換性を維持
@@ -977,12 +996,14 @@ end
 WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構造における権限の優先順位と継承関係を明確にします。
 
 **権限階層の定義:**
+
 1. Space Owner → Space内の全権限（全Topic含む）
 2. Topic権限 → TopicMemberRecordによる編集権限制御
 3. Space Member → Privateトピックの閲覧権限（Wikino独自仕様）
 4. Guest → Publicトピックのみ閲覧可能
 
 **重要な仕様決定:**
+
 - **PrivateトピックはSpaceメンバー全員が閲覧可能**（GitHubと異なる）
 - TopicMemberRecordは主に編集権限の制御に使用
 - Space Ownerは全トピックで特権を持つ
@@ -992,6 +1013,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 現在混在している権限（Permission）とビジネスルール（参加状態など）を明確に分離します。
 
 **分離方針:**
+
 - 権限: ロールに紐づく能力（UpdateSpace、CreateTopicなど）
 - ビジネスルール: 状態や条件（トピック参加、アクティブ状態など）
 - Policyクラス内で両者を組み合わせて最終的な判定を行う
