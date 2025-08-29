@@ -80,11 +80,12 @@
 
 - 細かい権限制御には対応していない（例：読み取り専用メンバー）
 
-- `SpaceMemberRole#permissions` と `SpaceMemberPolicy` の責務が重複
-  - `SpaceMemberRole`で定義した権限と実際のチェックロジックが一致しない
-  - 例：`CreateTopic`権限は定義されているが、`can_create_topic?`では権限をチェックしていない
-  - 一部のメソッドは`permissions.include?`を使い、一部は独自ロジックのみで判定
-  - 権限の宣言的定義と実装が乖離しており、メンテナンス性に課題
+- ~~`SpaceMemberRole#permissions` と `SpaceMemberPolicy` の責務が重複~~ **解決済み**
+  - ~~`SpaceMemberRole`で定義した権限と実際のチェックロジックが一致しない~~
+  - ~~例：`CreateTopic`権限は定義されているが、`can_create_topic?`では権限をチェックしていない~~
+  - ~~一部のメソッドは`permissions.include?`を使い、一部は独自ロジックのみで判定~~
+  - ~~権限の宣言的定義と実装が乖離しており、メンテナンス性に課題~~
+  - → `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除し、権限チェックをPolicyクラスに一元化
 
 - 権限（Permission）とビジネスルールが混在している
   - UpdateTopicは「能力」を表す
@@ -104,14 +105,16 @@
 
 ### ロールの権限を明確に定義する
 
-- 各ロール（Owner、Member等）が持つ権限を一箇所で明確に定義したい
-- 新しいロールや権限を追加する際の変更箇所を最小限にしたい
-- 権限の定義と実際のチェックロジックを一致させたい
+- ~~各ロール（Owner、Member等）が持つ権限を一箇所で明確に定義したい~~ **達成**
+- ~~新しいロールや権限を追加する際の変更箇所を最小限にしたい~~ **達成**
+- ~~権限の定義と実際のチェックロジックを一致させたい~~ **達成**
 
 #### 達成条件
 
-- ロールの権限定義を見れば、そのロールで何ができるかが明確にわかる
-- ロール特有の特権（Ownerは全トピック編集可能など）を表現できる
+- ~~ロールの権限定義を見れば、そのロールで何ができるかが明確にわかる~~ **達成**
+  - 各Policyクラス（`OwnerPolicy`、`MemberPolicy`）を見れば権限が明確
+- ~~ロール特有の特権（Ownerは全トピック編集可能など）を表現できる~~ **達成**
+  - `OwnerPolicy`でOwner特有の権限を明示的に実装
 
 ### SpaceとTopicの2層構造の権限管理
 
@@ -977,6 +980,26 @@ end
 
 ## 修正案を踏まえた修正方針 (決定方針)
 
+### 2025年8月30日更新
+
+#### 権限定義の簡素化
+
+`SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除し、権限チェックロジックをPolicyクラスに完全に一元化しました。
+
+**削除した理由：**
+- `SpaceMemberPermission`で定義された権限が実際には使用されていなかった
+- `SpaceMemberRole#permissions`メソッドがどこからも呼ばれていなかった
+- 権限の定義と実装が二重管理になっており、メンテナンス性に課題があった
+
+**新しい構造：**
+- `SpaceMemberRole`：ロールのEnum定義のみ（Owner、Member）
+- `OwnerPolicy`/`MemberPolicy`：各ロールの権限チェックロジックを実装
+- `SpaceMemberPolicyFactory`：ロールに応じた適切なPolicyを生成
+
+これにより、権限チェックのロジックが明確になり、新しいロールや権限の追加が容易になりました。
+
+## 修正案を踏まえた修正方針 (決定方針)
+
 ### 採用する設計方針
 
 #### 1. ロールベースのPolicyクラス分離とFactoryパターンの採用
@@ -1129,9 +1152,12 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 
 ### Phase 2: 権限モデルの拡張
 
-- [ ] 権限定義の整理
-  - `SpaceMemberPermission`と実際の権限チェックメソッドの整合性確保
-  - ロール特有の特権の明文化
+- [x] 権限定義の整理
+  - ~~`SpaceMemberPermission`と実際の権限チェックメソッドの整合性確保~~
+    - `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除
+    - 権限チェックをPolicyクラスに一元化
+  - ~~ロール特有の特権の明文化~~
+    - `OwnerPolicy`と`MemberPolicy`で明確に定義
 
 - [ ] Topic権限の明確化
   - TopicMemberRecordの役割を編集権限に特化

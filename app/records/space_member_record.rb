@@ -73,11 +73,6 @@ class SpaceMemberRecord < ApplicationRecord
     SpaceMemberRole.deserialize(role)
   end
 
-  sig { returns(T::Array[SpaceMemberPermission]) }
-  def permissions
-    deserialized_role.permissions
-  end
-
   sig { returns(PageRecord::PrivateAssociationRelation) }
   def last_modified_pages
     space_record.not_nil!.page_records.joins(:page_editor_records).merge(
