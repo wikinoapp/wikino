@@ -16,6 +16,18 @@ class MemberPolicy < BaseMemberPolicy
       joined_topic?(topic_record_id: topic_record.id)
   end
 
+  # Memberはトピックを削除不可（Topic Adminのみ）
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+    false
+  end
+
+  # Memberはトピックメンバーを管理不可（Topic Adminのみ）
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+    false
+  end
+
   # Memberはスペース設定を変更不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)

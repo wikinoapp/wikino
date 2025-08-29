@@ -11,6 +11,18 @@ class OwnerPolicy < BaseMemberPolicy
     in_same_space?(space_record_id: topic_record.space_id)
   end
 
+  # Ownerは全トピックを削除可能
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:)
+    in_same_space?(space_record_id: topic_record.space_id)
+  end
+
+  # Ownerは全トピックのメンバー管理可能
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_manage_topic_members?(topic_record:)
+    in_same_space?(space_record_id: topic_record.space_id)
+  end
+
   # Ownerはスペース設定を変更可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
