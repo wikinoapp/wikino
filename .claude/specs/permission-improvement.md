@@ -957,11 +957,192 @@ end
    - GitHubライクな権限設定画面の実装
    - 権限レベルの説明とヘルプの充実
 
+## 修正案を踏まえた修正方針 (決定方針)
+
+### 採用する設計方針
+
+#### 1. ロールベースのPolicyクラス分離とFactoryパターンの採用
+
+現在の`SpaceMemberPolicy`が肥大化している問題を解決するため、ロールごとに独立したPolicyクラスに分離する設計を採用します。
+これにより単一責任の原則を守り、保守性を向上させます。
+
+**実装方針:**
+- 基底クラス`BaseMemberPolicy`に共通ロジックを集約
+- `OwnerPolicy`、`MemberPolicy`、`GuestPolicy`をロール別に実装
+- `SpaceMemberPolicyFactory`でインターフェースの互換性を維持
+- 既存コントローラーへの影響を最小化
+
+#### 2. Space-Topic 2層構造の権限管理の明確化
+
+WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構造における権限の優先順位と継承関係を明確にします。
+
+**権限階層の定義:**
+1. Space Owner → Space内の全権限（全Topic含む）
+2. Topic権限 → TopicMemberRecordによる編集権限制御
+3. Space Member → Privateトピックの閲覧権限（Wikino独自仕様）
+4. Guest → Publicトピックのみ閲覧可能
+
+**重要な仕様決定:**
+- **PrivateトピックはSpaceメンバー全員が閲覧可能**（GitHubと異なる）
+- TopicMemberRecordは主に編集権限の制御に使用
+- Space Ownerは全トピックで特権を持つ
+
+#### 3. 権限とビジネスルールの分離
+
+現在混在している権限（Permission）とビジネスルール（参加状態など）を明確に分離します。
+
+**分離方針:**
+- 権限: ロールに紐づく能力（UpdateSpace、CreateTopicなど）
+- ビジネスルール: 状態や条件（トピック参加、アクティブ状態など）
+- Policyクラス内で両者を組み合わせて最終的な判定を行う
+
+### 段階的な移行計画
+
+#### Phase 1: 基盤整備（互換性維持）
+
+1. **新しいPolicyクラスの作成**
+   - `app/policies/base_member_policy.rb`
+   - `app/policies/owner_policy.rb`
+   - `app/policies/member_policy.rb`
+   - `app/policies/guest_policy.rb`
+   - `app/policies/space_member_policy_factory.rb`
+
+2. **既存`SpaceMemberPolicy`のリファクタリング**
+   - 新しいFactoryを通じて適切なPolicyに処理を委譲
+   - 既存のインターフェースは維持
+
+3. **テストの整備**
+   - 各Policyクラスの単体テスト作成
+   - 既存テストが通ることを確認
+
+#### Phase 2: 権限モデルの拡張
+
+1. **権限定義の明確化**
+   - `SpaceMemberPermission`を実際の権限チェックと一致させる
+   - ロール特有の特権を明示的に定義
+
+2. **Topic権限の整理**
+   - TopicMemberRecordの役割を編集権限制御に特化
+   - Space権限との関係を明確化
+
+3. **権限リゾルバーの導入**
+   - Space権限とTopic権限の優先順位を解決
+   - 複合的な権限チェックを一元管理
+
+#### Phase 3: コントローラーの移行
+
+1. **段階的なコントローラー更新**
+   - 重要度の低いコントローラーから順次移行
+   - Factoryパターンを通じた新Policy利用
+
+2. **権限チェックの標準化**
+   - コントローラー内の権限チェックパターンを統一
+   - 共通のbefore_actionやconcernの活用
+
+#### Phase 4: 最適化と削除
+
+1. **旧コードの削除**
+   - 全コントローラー移行後、旧`SpaceMemberPolicy`を削除
+   - 不要になった中間層のコードを整理
+
+2. **パフォーマンス最適化**
+   - N+1問題の解消
+   - 権限チェックのキャッシュ機構導入
+
+### 実装上の重要な考慮事項
+
+#### 1. Wikino固有の仕様への対応
+
+- **PrivateトピックはGitHubと異なり、Spaceメンバー全員が閲覧可能**
+- TopicMemberRecordは編集権限の制御が主目的
+- Space Ownerの特権は明示的に実装
+
+#### 2. 既存システムとの互換性
+
+- Factoryパターンにより既存のインターフェースを維持
+- 段階的移行により本番環境での安全な展開が可能
+- 既存のテストスイートを活用した品質保証
+
+#### 3. 将来の拡張性
+
+- 新しいロール（ReadOnly、Moderatorなど）の追加が容易
+- GitHubライクな権限レベル（Read/Write/Admin）への移行パスを確保
+- Teamsのような権限グループ機能の追加余地
+
+### 成功指標
+
+1. **コードの保守性向上**
+   - 各ロールの権限が独立したクラスで管理される
+   - 新しいロール追加時の変更箇所が最小限
+
+2. **権限の明確性**
+   - Space-Topic間の権限継承が明示的
+   - ロールと権限の対応が一目瞭然
+
+3. **システムの安定性**
+   - 既存機能への影響なし
+   - テストカバレッジの維持・向上
+
 ## タスクリスト
 
-- [ ] (タスク1)
-  - (サブタスクの詳細)
+### Phase 1: 基盤整備
 
-- [ ] (タスク2)
+- [ ] 基底Policyクラスの作成
+  - `BaseMemberPolicy`の実装（共通メソッド: joined_space?, in_same_space?, active?）
+  - `ApplicationPolicy`の作成（全Policyの基底クラス）
 
-- [ ] (タスク3)
+- [ ] ロール別Policyクラスの実装
+  - `OwnerPolicy`の実装（全権限を持つ）
+  - `MemberPolicy`の実装（基本操作権限のみ）
+  - `GuestPolicy`の実装（公開コンテンツのみ閲覧）
+
+- [ ] Factoryパターンの実装
+  - `SpaceMemberPolicyFactory`の作成
+  - ロールに応じた適切なPolicyインスタンスの返却
+
+- [ ] テストの作成
+  - 各Policyクラスの単体テスト
+  - Factoryのテスト
+  - 既存テストの動作確認
+
+### Phase 2: 権限モデルの拡張
+
+- [ ] 権限定義の整理
+  - `SpaceMemberPermission`と実際の権限チェックメソッドの整合性確保
+  - ロール特有の特権の明文化
+
+- [ ] Topic権限の明確化
+  - TopicMemberRecordの役割を編集権限に特化
+  - PrivateトピックのWikino独自仕様の文書化
+
+- [ ] 権限リゾルバーの実装
+  - `PermissionResolver`クラスの作成
+  - Space Owner > Topic権限 > Space Member > Guestの優先順位実装
+
+### Phase 3: コントローラーの段階的移行
+
+- [ ] 移行対象コントローラーの優先順位付け
+  - リスクの低いコントローラーから開始
+  - 重要な機能は後回し
+
+- [ ] コントローラーの更新
+  - SpaceMemberPolicyFactory経由での新Policy利用
+  - 権限チェックパターンの統一
+
+- [ ] 動作確認とロールバック準備
+  - Feature flagの活用検討
+  - 旧実装への切り戻し手順の準備
+
+### Phase 4: 最適化とクリーンアップ
+
+- [ ] 旧コードの削除
+  - 旧`SpaceMemberPolicy`の削除
+  - 不要な中間層コードの整理
+
+- [ ] パフォーマンス最適化
+  - 権限チェックのメモ化
+  - データベースクエリの最適化
+
+- [ ] ドキュメント更新
+  - 権限システムの設計文書作成
+  - 開発者向けガイドラインの更新
