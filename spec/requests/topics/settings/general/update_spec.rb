@@ -42,7 +42,7 @@ RSpec.describe "PATCH /s/:space_identifier/topics/:topic_number/settings/general
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
     topic_record = create(:topic_record, space_record:)
-    create(:space_member_record, space_record:, user_record:)
+    create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Member.serialize)
 
     sign_in(user_record:)
 
