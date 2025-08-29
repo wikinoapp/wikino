@@ -30,7 +30,7 @@ RSpec.describe "GET /s/:space_identifier/pages/:page_number/edit", type: :reques
   it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
-    create(:space_member_record, space_record: space, user_record: user)
+    create(:space_member_record, space_record: space, user_record: user, role: SpaceMemberRole::Member.serialize)
     topic = create(:topic_record, space_record: space)
     page = create(:page_record, space_record: space, topic_record: topic, title: "ページタイトル")
 
