@@ -1175,6 +1175,34 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - リスクの低いコントローラーから開始
   - 重要な機能は後回し
 
+#### PermissionResolver活用の準備タスク
+
+**PermissionResolverを使用開始するための前提条件:**
+
+- [ ] TopicMemberRole enumの実装確認
+  - 現在のロール定義（Admin, Member等）の確認
+  - TopicMemberRecordとの関連付け確認
+
+- [ ] Topic権限判定メソッドの追加
+  - 各PolicyクラスにTopic関連メソッドを追加
+  - `can_update_page?`, `can_delete_page?`等のページ操作権限
+  - `can_manage_topic_members?`等のTopic管理権限
+
+- [ ] PermissionResolverのテスト作成
+  - 権限優先順位のテスト
+  - Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認
+  - Topic指定有無による挙動の違いをテスト
+
+- [ ] コントローラーヘルパーメソッドの作成
+  - `current_space_record`の取得メソッド
+  - `current_topic_record`の取得メソッド（該当する場合）
+  - PermissionResolverインスタンス生成のヘルパー
+
+- [ ] 移行戦略の決定
+  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
+  - Topic関連の操作を行うコントローラーから優先的に移行
+  - Space単独の操作は既存のFactoryパターンを継続使用
+
 #### 移行順序（優先度順）
 
 **優先度1: 低リスク（読み取り専用）**
