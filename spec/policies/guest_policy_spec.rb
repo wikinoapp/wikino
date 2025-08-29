@@ -85,6 +85,68 @@ RSpec.describe GuestPolicy do
     end
   end
 
+  describe "#can_create_page?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      topic_record = FactoryBot.create(:topic_record)
+
+      expect(policy.can_create_page?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_update_page?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      page_record = FactoryBot.create(:page_record)
+
+      expect(policy.can_update_page?(page_record:)).to be(false)
+    end
+  end
+
+  describe "#can_update_draft_page?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      page_record = FactoryBot.create(:page_record)
+
+      expect(policy.can_update_draft_page?(page_record:)).to be(false)
+    end
+  end
+
+  describe "#can_trash_page?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      page_record = FactoryBot.create(:page_record)
+
+      expect(policy.can_trash_page?(page_record:)).to be(false)
+    end
+  end
+
+  describe "#can_show_trash?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      space_record = FactoryBot.create(:space_record)
+
+      expect(policy.can_show_trash?(space_record:)).to be(false)
+    end
+  end
+
+  describe "#can_create_bulk_restore_pages?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+
+      expect(policy.can_create_bulk_restore_pages?).to be(false)
+    end
+  end
+
+  describe "#can_upload_attachment?" do
+    it "常にfalseを返すこと" do
+      policy = GuestPolicy.new(user_record: nil)
+      space_record = FactoryBot.create(:space_record)
+
+      expect(policy.can_upload_attachment?(space_record:)).to be(false)
+    end
+  end
+
   describe "#joined_space?" do
     it "常にfalseを返すこと" do
       policy = GuestPolicy.new(user_record: nil)

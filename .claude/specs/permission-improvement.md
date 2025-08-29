@@ -1122,7 +1122,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `SpaceMemberPolicyFactory`の作成
   - ロールに応じた適切なPolicyインスタンスの返却
 
-- [ ] テストの作成
+- [x] テストの作成
   - 各Policyクラスの単体テスト
   - Factoryのテスト
   - 既存テストの動作確認
