@@ -78,22 +78,25 @@ class PermissionResolver
     resolve
   end
 
-  private
-
   sig { returns(T.nilable(UserRecord)) }
   attr_reader :user_record
+  private :user_record
 
   sig { returns(T.nilable(SpaceRecord)) }
   attr_reader :space_record
+  private :space_record
 
   sig { returns(T.nilable(TopicRecord)) }
   attr_reader :topic_record
+  private :topic_record
 
   sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_reader :space_member_record
+  private :space_member_record
 
   sig { returns(T.nilable(TopicMemberRecord)) }
   attr_reader :topic_member_record
+  private :topic_member_record
 
   sig { returns(T::Wikino::PolicyInstance) }
   private def build_topic_policy
