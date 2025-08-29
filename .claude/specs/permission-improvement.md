@@ -1281,26 +1281,26 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `GuestPolicy`: 全て不可
   - 全メソッドのテストを作成済み
 
-- [ ] PermissionResolverのテスト作成
+- [x] PermissionResolverのテスト作成
   - 権限優先順位のテスト
   - Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認
   - Topic指定有無による挙動の違いをテスト
-
-- [ ] コントローラーヘルパーメソッドの作成
-  - `current_space_record`の取得メソッド
-  - `current_topic_record`の取得メソッド（該当する場合）
-  - PermissionResolverインスタンス生成のヘルパー
-
-- [ ] 移行戦略の決定
-  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
-  - Topic関連の操作を行うコントローラーから優先的に移行
-  - Space単独の操作は既存のFactoryパターンを継続使用
 
 - [ ] Topic Admin専用権限の実装
   - TopicAdminPolicyクラスでの管理権限定義
   - `can_update_topic?` メソッドの実装（基本情報更新）
   - `can_delete_topic?` メソッドの実装（トピック削除）
   - Space Ownerにも同等の権限を付与（権限の継承）
+
+- [ ] 移行戦略の決定
+  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
+  - Topic関連の操作を行うコントローラーから優先的に移行
+  - Space単独の操作は既存のFactoryパターンを継続使用
+
+- [ ] コントローラーヘルパーメソッドの作成
+  - `current_space_record`の取得メソッド
+  - `current_topic_record`の取得メソッド（該当する場合）
+  - PermissionResolverインスタンス生成のヘルパー
 
 #### Topic関連コントローラーの移行
 
