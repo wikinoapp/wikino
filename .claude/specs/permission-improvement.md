@@ -1165,7 +1165,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - TopicMemberRecordの役割を編集権限に特化
   - PrivateトピックのWikino独自仕様の文書化
 
-- [ ] 権限リゾルバーの実装
+- [x] 権限リゾルバーの実装
   - `PermissionResolver`クラスの作成
   - Space Owner > Topic権限 > Space Member > Guestの優先順位実装
 
