@@ -14,7 +14,7 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
       topic_record = space_record.topic_records.kept.find_by!(number: params[:topic_number])
-      space_member_policy = SpaceMemberPolicy.new(
+      space_member_policy = SpaceMemberPolicyFactory.build(
         user_record: current_user_record!,
         space_member_record:
       )
