@@ -4,8 +4,6 @@
 # Space Ownerロール専用のPolicyクラス
 # Ownerは全権限を持つ
 class OwnerPolicy < BaseMemberPolicy
-  extend T::Sig
-
   # Ownerは全トピックを編集可能
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)

@@ -4,8 +4,6 @@
 # Space Memberロール専用のPolicyクラス
 # Memberは基本操作権限のみを持つ
 class MemberPolicy < BaseMemberPolicy
-  extend T::Sig
-
   # Memberは参加しているトピックのみ編集可能
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)

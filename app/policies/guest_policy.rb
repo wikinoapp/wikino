@@ -4,8 +4,6 @@
 # ゲスト（非メンバー）用のPolicyクラス
 # 公開コンテンツのみ閲覧可能
 class GuestPolicy < ApplicationPolicy
-  extend T::Sig
-
   # ゲストはトピック編集不可
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
