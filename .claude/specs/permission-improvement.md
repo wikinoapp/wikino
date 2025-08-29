@@ -1178,6 +1178,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 #### 移行順序（優先度順）
 
 **優先度1: 低リスク（読み取り専用）**
+
 1. pages/show_controller.rb - ページ表示
 2. topics/show_controller.rb - トピック表示
 3. spaces/show_controller.rb - スペース表示
@@ -1187,17 +1188,20 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 7. trash/show_controller.rb - ゴミ箱表示
 
 **優先度2: 中リスク（添付ファイル）**
+
 8. attachments/show_controller.rb - ファイル表示
 9. attachments/create_controller.rb - アップロード
 10. attachments/presigns/create_controller.rb - presigned URL
 11. attachments/signed_urls/create_controller.rb - signed URL
 
 **優先度3: 中リスク（作成系）**
+
 12. pages/new_controller.rb - ページ作成画面
 13. topics/new_controller.rb - トピック作成画面
 14. topics/create_controller.rb - トピック作成実行
 
 **優先度4: 高リスク（更新系）**
+
 15. pages/edit_controller.rb - ページ編集画面
 16. pages/update_controller.rb - ページ更新
 17. draft_pages/update_controller.rb - ドラフト更新
@@ -1205,8 +1209,9 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 19. bulk_restored_pages/create_controller.rb - 一括復元
 
 **優先度5: 最高リスク（設定管理）**
-20-35. spaces/settings/* - スペース設定関連
-36-40. topics/settings/* - トピック設定関連
+
+20-35. spaces/settings/_ - スペース設定関連
+36-40. topics/settings/_ - トピック設定関連
 
 - [x] コントローラーの更新
   - SpaceMemberPolicyFactory経由での新Policy利用
