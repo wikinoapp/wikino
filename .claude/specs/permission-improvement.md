@@ -1109,7 +1109,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 
 ### Phase 1: 基盤整備
 
-- [ ] 基底Policyクラスの作成
+- [x] 基底Policyクラスの作成
   - `BaseMemberPolicy`の実装（共通メソッド: joined_space?, in_same_space?, active?）
   - `ApplicationPolicy`の作成（全Policyの基底クラス）
 
