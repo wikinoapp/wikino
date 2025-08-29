@@ -16,7 +16,7 @@ class SpaceMemberPolicy < ApplicationPolicy
     # Factoryパターンを使用して適切なPolicyインスタンスを生成
     @delegate_policy = T.let(
       SpaceMemberPolicyFactory.build(user_record:, space_member_record:),
-      T.any(OwnerPolicy, MemberPolicy, GuestPolicy)
+      T::Wikino::PolicyInstance
     )
   end
 
@@ -123,7 +123,7 @@ class SpaceMemberPolicy < ApplicationPolicy
   attr_reader :space_member_record
   private :space_member_record
 
-  sig { returns(T.any(OwnerPolicy, MemberPolicy, GuestPolicy)) }
+  sig { returns(T::Wikino::PolicyInstance) }
   attr_reader :delegate_policy
   private :delegate_policy
 end
