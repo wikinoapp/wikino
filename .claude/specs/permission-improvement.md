@@ -1118,7 +1118,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `MemberPolicy`の実装（基本操作権限のみ）
   - `GuestPolicy`の実装（公開コンテンツのみ閲覧）
 
-- [ ] Factoryパターンの実装
+- [x] Factoryパターンの実装
   - `SpaceMemberPolicyFactory`の作成
   - ロールに応じた適切なPolicyインスタンスの返却
 
