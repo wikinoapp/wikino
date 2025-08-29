@@ -6,5 +6,9 @@ module T
     extend T::Sig
 
     DatabaseId = T.type_alias { String }
+
+    # Policy関連の型エイリアス
+    # SpaceMemberPolicyFactoryが返す可能性のあるPolicyクラスの共用型
+    PolicyInstance = T.type_alias { T.any(OwnerPolicy, MemberPolicy, GuestPolicy) }
   end
 end
