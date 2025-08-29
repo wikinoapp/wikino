@@ -3,7 +3,7 @@
 
 # ゲスト（非メンバー）用のPolicyクラス
 # 公開コンテンツのみ閲覧可能
-class GuestPolicy < ApplicationPolicy
+class SpaceGuestPolicy < ApplicationPolicy
   # ゲストはトピック編集不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)

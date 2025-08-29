@@ -3,156 +3,106 @@
 
 require "rails_helper"
 
-RSpec.describe OwnerPolicy do
-  it "Ownerロールで初期化できること" do
+RSpec.describe SpaceMemberPolicy do
+  it "Memberロールで初期化できること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     space_member_record = FactoryBot.create(
       :space_member_record,
       user_record:,
       space_record:,
-      role: SpaceMemberRole::Owner.serialize
+      role: SpaceMemberRole::Member.serialize
     )
 
-    policy = OwnerPolicy.new(user_record:, space_member_record:)
+    policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
-    expect(policy).to be_instance_of(OwnerPolicy)
+    expect(policy).to be_instance_of(SpaceMemberPolicy)
   end
 
   describe "#can_update_space?" do
-    it "同じスペースの場合はtrueを返すこと" do
+    it "常にfalseを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
-      expect(policy.can_update_space?(space_record:)).to be(true)
-    end
-
-    it "異なるスペースの場合はfalseを返すこと" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(
-        :space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Owner.serialize
-      )
-
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
-
-      expect(policy.can_update_space?(space_record: other_space_record)).to be(false)
+      expect(policy.can_update_space?(space_record:)).to be(false)
     end
   end
 
   describe "#can_update_topic?" do
-    it "同じスペースのトピックなら参加していなくても編集可能であること" do
+    it "参加しているトピックは編集可能であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      # TopicMemberRecordは作成しない（参加していない）
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_update_topic?(topic_record:)).to be(true)
     end
 
-    it "異なるスペースのトピックは編集不可であること" do
+    it "参加していないトピックは編集不可であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
-      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      # TopicMemberRecordは作成しない
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_update_topic?(topic_record:)).to be(false)
     end
   end
 
   describe "#can_delete_topic?" do
-    it "同じスペースのトピックを削除可能であること" do
+    it "常にfalseを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
-
-      expect(policy.can_delete_topic?(topic_record:)).to be(true)
-    end
-
-    it "異なるスペースのトピックは削除不可であること" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(
-        :space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Owner.serialize
-      )
-      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
-
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_delete_topic?(topic_record:)).to be(false)
     end
   end
 
   describe "#can_manage_topic_members?" do
-    it "同じスペースのトピックメンバーを管理可能であること" do
+    it "常にfalseを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
-
-      expect(policy.can_manage_topic_members?(topic_record:)).to be(true)
-    end
-
-    it "異なるスペースのトピックメンバーは管理不可であること" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(
-        :space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Owner.serialize
-      )
-      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
-
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
     end
@@ -162,52 +112,36 @@ RSpec.describe OwnerPolicy do
   # 実際の動作は結合テストで確認
 
   describe "#can_manage_attachments?" do
-    it "同じスペースなら管理画面にアクセス可能であること" do
+    it "常にfalseを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
-      expect(policy.can_manage_attachments?(space_record:)).to be(true)
+      expect(policy.can_manage_attachments?(space_record:)).to be(false)
     end
   end
 
   describe "#can_export_space?" do
-    it "同じスペースならエクスポート可能であること" do
+    it "常にfalseを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
-      expect(policy.can_export_space?(space_record:)).to be(true)
-    end
-
-    it "異なるスペースならエクスポート不可であること" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(
-        :space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Owner.serialize
-      )
-
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
-
-      expect(policy.can_export_space?(space_record: other_space_record)).to be(false)
+      expect(policy.can_export_space?(space_record:)).to be(false)
     end
   end
 
@@ -219,103 +153,103 @@ RSpec.describe OwnerPolicy do
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_create_topic?).to be(true)
     end
   end
 
   describe "#can_create_page?" do
-    it "同じスペースのトピックならページ作成可能であること" do
+    it "参加しているトピックならページ作成可能であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_create_page?(topic_record:)).to be(true)
     end
 
-    it "異なるスペースのトピックならページ作成不可であること" do
+    it "参加していないトピックならページ作成不可であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      other_space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
-      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_create_page?(topic_record:)).to be(false)
     end
   end
 
   describe "#can_update_page?" do
-    it "アクティブかつ同じスペースならページ編集可能であること" do
+    it "参加しているトピックのページは編集可能であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
-        active: true
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      page_record = FactoryBot.create(:page_record, topic_record:, space_id: space_record.id)
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record:)
+      page_record = FactoryBot.create(:page_record, space_record:, topic_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_update_page?(page_record:)).to be(true)
     end
 
-    it "非アクティブならページ編集不可であること" do
+    it "参加していないトピックのページは編集不可であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
-        active: false
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      page_record = FactoryBot.create(:page_record, topic_record:, space_id: space_record.id)
+      # TopicMemberRecordは作成しない
+      page_record = FactoryBot.create(:page_record, space_record:, topic_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_update_page?(page_record:)).to be(false)
     end
   end
 
   describe "#can_trash_page?" do
-    it "アクティブかつ同じスペースならページ削除可能であること" do
+    it "参加しているトピックのページは削除可能であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
-        active: true
+        role: SpaceMemberRole::Member.serialize
       )
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      page_record = FactoryBot.create(:page_record, topic_record:, space_id: space_record.id)
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record:)
+      page_record = FactoryBot.create(:page_record, space_record:, topic_record:)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_trash_page?(page_record:)).to be(true)
     end
@@ -329,11 +263,11 @@ RSpec.describe OwnerPolicy do
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
+        role: SpaceMemberRole::Member.serialize,
         active: true
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_show_trash?(space_record:)).to be(true)
     end
@@ -347,29 +281,13 @@ RSpec.describe OwnerPolicy do
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
+        role: SpaceMemberRole::Member.serialize,
         active: true
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_create_bulk_restore_pages?).to be(true)
-    end
-
-    it "非アクティブなら一括復元不可であること" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(
-        :space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Owner.serialize,
-        active: false
-      )
-
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
-
-      expect(policy.can_create_bulk_restore_pages?).to be(false)
     end
   end
 
@@ -381,11 +299,11 @@ RSpec.describe OwnerPolicy do
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize,
+        role: SpaceMemberRole::Member.serialize,
         active: true
       )
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       expect(policy.can_upload_attachment?(space_record:)).to be(true)
     end
@@ -399,12 +317,12 @@ RSpec.describe OwnerPolicy do
         :space_member_record,
         user_record:,
         space_record:,
-        role: SpaceMemberRole::Owner.serialize
+        role: SpaceMemberRole::Member.serialize
       )
       public_topic = FactoryBot.create(:topic_record, space_record:, visibility: TopicVisibility::Public.serialize)
       private_topic = FactoryBot.create(:topic_record, space_record:, visibility: TopicVisibility::Private.serialize)
 
-      policy = OwnerPolicy.new(user_record:, space_member_record:)
+      policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
       topics = policy.showable_topics(space_record:)
       expect(topics).to include(public_topic)

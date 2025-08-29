@@ -21,7 +21,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(OwnerPolicy)
+      expect(policy).to be_a(SpaceOwnerPolicy)
     end
 
     it "Space Memberの場合、MemberPolicyを返すこと" do
@@ -40,7 +40,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(MemberPolicy)
+      expect(policy).to be_a(SpaceMemberPolicy)
     end
 
     it "非メンバーの場合、GuestPolicyを返すこと" do
@@ -55,7 +55,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(GuestPolicy)
+      expect(policy).to be_a(SpaceGuestPolicy)
     end
 
     it "ユーザーがnilの場合、GuestPolicyを返すこと" do
@@ -69,7 +69,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(GuestPolicy)
+      expect(policy).to be_a(SpaceGuestPolicy)
     end
 
     it "Topic Adminの場合、OwnerPolicyを返すこと" do
@@ -94,7 +94,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(OwnerPolicy)
+      expect(policy).to be_a(SpaceOwnerPolicy)
     end
 
     it "Topic Memberの場合、MemberPolicyを返すこと" do
@@ -119,7 +119,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(MemberPolicy)
+      expect(policy).to be_a(SpaceMemberPolicy)
     end
 
     it "Space OwnerはTopic権限よりも優先されること" do
@@ -146,7 +146,7 @@ RSpec.describe PermissionResolver do
       policy = resolver.resolve
 
       # Space Ownerの権限が優先される
-      expect(policy).to be_a(OwnerPolicy)
+      expect(policy).to be_a(SpaceOwnerPolicy)
     end
   end
 
@@ -167,7 +167,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve_for_topic
 
-      expect(policy).to be_a(MemberPolicy)
+      expect(policy).to be_a(SpaceMemberPolicy)
     end
 
     it "topic_recordが指定されている場合、Topic権限を考慮すること" do
@@ -192,7 +192,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve_for_topic
 
-      expect(policy).to be_a(OwnerPolicy)
+      expect(policy).to be_a(SpaceOwnerPolicy)
     end
   end
 end

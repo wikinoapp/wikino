@@ -14,15 +14,15 @@ class SpaceMemberPolicyFactory
   def self.build(user_record:, space_member_record: nil)
     # 非メンバーの場合
     if space_member_record.nil?
-      return GuestPolicy.new(user_record:)
+      return SpaceGuestPolicy.new(user_record:)
     end
 
     # ロールに応じたPolicyを返す
     case space_member_record.role
     when SpaceMemberRole::Owner.serialize
-      OwnerPolicy.new(user_record:, space_member_record:)
+      SpaceOwnerPolicy.new(user_record:, space_member_record:)
     when SpaceMemberRole::Member.serialize
-      MemberPolicy.new(user_record:, space_member_record:)
+      SpaceMemberPolicy.new(user_record:, space_member_record:)
     else
       raise ArgumentError, "Unknown role: #{space_member_record.role}"
     end

@@ -3,7 +3,7 @@
 
 # 権限チェックの基底クラス
 # SpaceメンバーのPolicyクラスで共通して使用するロジックを提供
-class BaseMemberPolicy < ApplicationPolicy
+class BaseSpaceMemberPolicy < ApplicationPolicy
   extend T::Helpers
   abstract!
 

@@ -3,8 +3,8 @@
 
 require "rails_helper"
 
-# BaseMemberPolicyは抽象クラスなので、テスト用の具象クラスを定義
-class TestMemberPolicy < BaseMemberPolicy
+# BaseSpaceMemberPolicyは抽象クラスなので、テスト用の具象クラスを定義
+class TestMemberPolicy < BaseSpaceMemberPolicy
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
     true
@@ -101,7 +101,7 @@ class TestMemberPolicy < BaseMemberPolicy
   end
 end
 
-RSpec.describe BaseMemberPolicy do
+RSpec.describe BaseSpaceMemberPolicy do
   it "user_recordとspace_member_recordを受け取って初期化できること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)

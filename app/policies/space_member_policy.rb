@@ -3,7 +3,7 @@
 
 # Space Memberロール専用のPolicyクラス
 # Memberは基本操作権限のみを持つ
-class MemberPolicy < BaseMemberPolicy
+class SpaceMemberPolicy < BaseSpaceMemberPolicy
   # Memberは参加しているトピックのみ編集可能
   # TopicMemberRecordが存在する場合のみ編集権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }

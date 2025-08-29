@@ -9,6 +9,6 @@ module T
 
     # Policy関連の型エイリアス
     # SpaceMemberPolicyFactoryが返す可能性のあるPolicyクラスの共用型
-    PolicyInstance = T.type_alias { T.any(OwnerPolicy, MemberPolicy, GuestPolicy) }
+    PolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy) }
   end
 end

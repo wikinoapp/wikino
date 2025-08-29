@@ -10,7 +10,7 @@ RSpec.describe SpaceMemberPolicyFactory do
 
       policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record: nil)
 
-      expect(policy).to be_instance_of(GuestPolicy)
+      expect(policy).to be_instance_of(SpaceGuestPolicy)
     end
 
     it "Ownerロールの場合はOwnerPolicyを返すこと" do
@@ -25,7 +25,7 @@ RSpec.describe SpaceMemberPolicyFactory do
 
       policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record:)
 
-      expect(policy).to be_instance_of(OwnerPolicy)
+      expect(policy).to be_instance_of(SpaceOwnerPolicy)
     end
 
     it "Memberロールの場合はMemberPolicyを返すこと" do
@@ -40,13 +40,13 @@ RSpec.describe SpaceMemberPolicyFactory do
 
       policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record:)
 
-      expect(policy).to be_instance_of(MemberPolicy)
+      expect(policy).to be_instance_of(SpaceMemberPolicy)
     end
 
     it "user_recordがnilでもGuestPolicyを返すこと" do
       policy = SpaceMemberPolicyFactory.build(user_record: nil, space_member_record: nil)
 
-      expect(policy).to be_instance_of(GuestPolicy)
+      expect(policy).to be_instance_of(SpaceGuestPolicy)
     end
 
     it "未知のロールの場合はエラーを発生させること" do

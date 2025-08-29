@@ -44,7 +44,7 @@ class PermissionResolver
   def resolve
     # 1. Space Ownerが最優先
     if space_member_record&.role == SpaceMemberRole::Owner.serialize
-      return OwnerPolicy.new(
+      return SpaceOwnerPolicy.new(
         user_record: user_record.not_nil!,
         space_member_record: space_member_record.not_nil!
       )
@@ -57,14 +57,14 @@ class PermissionResolver
 
     # 3. Space権限をチェック
     if space_member_record
-      return MemberPolicy.new(
+      return SpaceMemberPolicy.new(
         user_record: user_record.not_nil!,
         space_member_record: space_member_record.not_nil!
       )
     end
 
     # 4. ゲスト権限
-    GuestPolicy.new(user_record:)
+    SpaceGuestPolicy.new(user_record:)
   end
 
   sig { returns(T::Wikino::PolicyInstance) }
@@ -102,15 +102,15 @@ class PermissionResolver
   private def build_topic_policy
     # Topic Adminの場合
     if topic_member_record&.role == TopicMemberRole::Admin.serialize
-      # 現在のポリシー構造では、Topic AdminもOwnerPolicyと同じ権限を持つ
+      # 現在のポリシー構造では、Topic AdminもSpaceOwnerPolicyと同じ権限を持つ
       # 将来的にTopicAdminPolicyを作成する場合はここで分岐
-      OwnerPolicy.new(
+      SpaceOwnerPolicy.new(
         user_record: user_record.not_nil!,
         space_member_record: space_member_record.not_nil!
       )
     else
       # Topic Memberの場合
-      MemberPolicy.new(
+      SpaceMemberPolicy.new(
         user_record: user_record.not_nil!,
         space_member_record: space_member_record.not_nil!
       )
