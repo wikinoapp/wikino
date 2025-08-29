@@ -987,11 +987,13 @@ end
 `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除し、権限チェックロジックをPolicyクラスに完全に一元化しました。
 
 **削除した理由：**
+
 - `SpaceMemberPermission`で定義された権限が実際には使用されていなかった
 - `SpaceMemberRole#permissions`メソッドがどこからも呼ばれていなかった
 - 権限の定義と実装が二重管理になっており、メンテナンス性に課題があった
 
 **新しい構造：**
+
 - `SpaceMemberRole`：ロールのEnum定義のみ（Owner、Member）
 - `OwnerPolicy`/`MemberPolicy`：各ロールの権限チェックロジックを実装
 - `SpaceMemberPolicyFactory`：ロールに応じた適切なPolicyを生成
