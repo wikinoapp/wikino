@@ -4,6 +4,9 @@
 # 権限チェックの基底クラス
 # SpaceメンバーのPolicyクラスで共通して使用するロジックを提供
 class BaseMemberPolicy < ApplicationPolicy
+  extend T::Helpers
+  abstract!
+
   sig do
     params(
       user_record: T.nilable(UserRecord),
@@ -11,7 +14,7 @@ class BaseMemberPolicy < ApplicationPolicy
     ).void
   end
   def initialize(user_record:, space_member_record:)
-    @user_record = user_record
+    super(user_record:)
     @space_member_record = space_member_record
 
     # user_recordとspace_member_recordの関連性を検証
@@ -25,7 +28,7 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   # スペースに参加しているかどうか
-  sig { returns(T::Boolean) }
+  sig { override.returns(T::Boolean) }
   def joined_space?
     !space_member_record.nil?
   end
@@ -43,9 +46,11 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   # 参加しているトピックのレコードを取得
-  sig { returns(T.nilable(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation))) }
+  sig { override.returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topic_records
-    return nil if space_member_record.nil?
+    if space_member_record.nil?
+      return TopicRecord.none
+    end
 
     space_member_record!.joined_topic_records
   end
@@ -53,18 +58,85 @@ class BaseMemberPolicy < ApplicationPolicy
   # トピックに参加しているかどうか
   sig { params(topic_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
   def joined_topic?(topic_record_id:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     space_member_record!.joined_topic_records.where(id: topic_record_id).exists?
   end
 
-  protected
+  # 抽象メソッド - 子クラスで実装が必要
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:)
+  end
 
-  sig { returns(T.nilable(UserRecord)) }
-  attr_reader :user_record
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:)
+  end
+
+  sig { abstract.returns(T::Boolean) }
+  def can_create_topic?
+  end
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_create_page?(topic_record:)
+  end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:)
+  end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_draft_page?(page_record:)
+  end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_show_page?(page_record:)
+  end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_trash_page?(page_record:)
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_show_trash?(space_record:)
+  end
+
+  sig { abstract.returns(T::Boolean) }
+  def can_create_bulk_restore_pages?
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_upload_attachment?(space_record:)
+  end
+
+  sig { abstract.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_view_attachment?(attachment_record:)
+  end
+
+  sig { abstract.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  def can_delete_attachment?(attachment_record:)
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_attachments?(space_record:)
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:)
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
+  def showable_topics(space_record:)
+  end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
+  def showable_pages(space_record:)
+  end
 
   sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_reader :space_member_record
+  protected :space_member_record
 
   # space_member_record の non-nil バージョン
   sig { returns(SpaceMemberRecord) }
@@ -75,7 +147,9 @@ class BaseMemberPolicy < ApplicationPolicy
   # user_recordとspace_member_recordの関連性が不整合かどうか
   sig { returns(T::Boolean) }
   private def mismatched_relations?
-    return false if user_record.nil? || space_member_record.nil?
+    if user_record.nil? || space_member_record.nil?
+      return false
+    end
 
     user_record.not_nil!.id != space_member_record.not_nil!.user_id
   end
