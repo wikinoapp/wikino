@@ -1219,7 +1219,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 
 ### Phase 4: 最適化とクリーンアップ
 
-- [ ] 旧コードの削除
+- [x] 旧コードの削除
   - 旧`SpaceMemberPolicy`の削除
   - 不要な中間層コードの整理
 
