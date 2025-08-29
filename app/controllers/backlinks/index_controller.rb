@@ -16,7 +16,7 @@ module Backlinks
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
-      space_member_policy = SpaceMemberPolicy.new(
+      space_member_policy = SpaceMemberPolicyFactory.build(
         user_record: current_user_record,
         space_member_record:
       )

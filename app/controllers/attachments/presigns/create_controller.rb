@@ -14,7 +14,7 @@ module Attachments
       def call
         space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
         space_member_record = current_user_record!.space_member_record(space_record:)
-        policy = SpaceMemberPolicy.new(
+        policy = SpaceMemberPolicyFactory.build(
           user_record: current_user_record!,
           space_member_record:
         )
