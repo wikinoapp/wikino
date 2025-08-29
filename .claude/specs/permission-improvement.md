@@ -1225,16 +1225,31 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 
 #### Topic権限管理の本格導入
 
-- [ ] TopicMemberRole enumの実装確認
+- [x] TopicMemberRole enumの実装確認
   - 現在のロール定義（Admin, Member等）の確認
   - TopicMemberRecordとの関連付け確認
 
-- [ ] Topic権限判定メソッドの追加
+  **確認結果:**
+  - `TopicMemberRole`はT::Enumとして実装済み（`app/models/topic_member_role.rb`）
+  - ロールは2種類：`Admin`と`Member`
+  - `TopicMemberRecord`でenumとして関連付け済み（Admin=0, Member=1）
+  - `PermissionResolver`でTopic Adminの判定に使用中
+  - 現状、Topic AdminはOwnerPolicyと同じ権限を持つ実装
+  - `can_delete_topic?`メソッドは未実装（今後の実装が必要）
+
+- [x] Topic権限判定メソッドの追加
   - 各PolicyクラスにTopic関連メソッドを追加
-  - `can_update_page?`, `can_delete_page?`等のページ操作権限
+  - `can_update_page?`等のページ操作権限
   - `can_manage_topic_members?`等のTopic管理権限
   - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
   - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
+
+  **実装結果:**
+  - `ApplicationPolicy`に抽象メソッドとして定義
+  - `OwnerPolicy`: 全トピックで削除・メンバー管理可能
+  - `MemberPolicy`: トピック削除・メンバー管理不可
+  - `GuestPolicy`: 全て不可
+  - 全メソッドのテストを作成済み
 
 - [ ] PermissionResolverのテスト作成
   - 権限優先順位のテスト

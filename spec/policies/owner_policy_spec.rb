@@ -88,6 +88,76 @@ RSpec.describe OwnerPolicy do
     end
   end
 
+  describe "#can_delete_topic?" do
+    it "同じスペースのトピックを削除可能であること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Owner.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      policy = OwnerPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_delete_topic?(topic_record:)).to be(true)
+    end
+
+    it "異なるスペースのトピックは削除不可であること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      other_space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Owner.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
+
+      policy = OwnerPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_delete_topic?(topic_record:)).to be(false)
+    end
+  end
+
+  describe "#can_manage_topic_members?" do
+    it "同じスペースのトピックメンバーを管理可能であること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Owner.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      policy = OwnerPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_manage_topic_members?(topic_record:)).to be(true)
+    end
+
+    it "異なるスペースのトピックメンバーは管理不可であること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      other_space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Owner.serialize
+      )
+      topic_record = FactoryBot.create(:topic_record, space_record: other_space_record)
+
+      policy = OwnerPolicy.new(user_record:, space_member_record:)
+
+      expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
+    end
+  end
+
   # AttachmentRecordのFactoryが複雑なため、attachment関連のテストは省略
   # 実際の動作は結合テストで確認
 
