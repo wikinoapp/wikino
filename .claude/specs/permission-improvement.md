@@ -1217,16 +1217,69 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - SpaceMemberPolicyFactory経由での新Policy利用
   - 権限チェックパターンの統一
 
-### Phase 4: 最適化とクリーンアップ
-
 - [x] 旧コードの削除
   - 旧`SpaceMemberPolicy`の削除
   - 不要な中間層コードの整理
 
+### Phase 4: PermissionResolverの活用
+
+#### Topic権限管理の本格導入
+
+- [ ] TopicMemberRole enumの実装確認
+  - 現在のロール定義（Admin, Member等）の確認
+  - TopicMemberRecordとの関連付け確認
+
+- [ ] Topic権限判定メソッドの追加
+  - 各PolicyクラスにTopic関連メソッドを追加
+  - `can_update_page?`, `can_delete_page?`等のページ操作権限
+  - `can_manage_topic_members?`等のTopic管理権限
+  - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
+  - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
+
+- [ ] PermissionResolverのテスト作成
+  - 権限優先順位のテスト
+  - Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認
+  - Topic指定有無による挙動の違いをテスト
+
+- [ ] コントローラーヘルパーメソッドの作成
+  - `current_space_record`の取得メソッド
+  - `current_topic_record`の取得メソッド（該当する場合）
+  - PermissionResolverインスタンス生成のヘルパー
+
+- [ ] 移行戦略の決定
+  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
+  - Topic関連の操作を行うコントローラーから優先的に移行
+  - Space単独の操作は既存のFactoryパターンを継続使用
+
+- [ ] Topic Admin専用権限の実装
+  - TopicAdminPolicyクラスでの管理権限定義
+  - `can_update_topic?` メソッドの実装（基本情報更新）
+  - `can_delete_topic?` メソッドの実装（トピック削除）
+  - Space Ownerにも同等の権限を付与（権限の継承）
+
+#### Topic関連コントローラーの移行
+
+**Topic操作を含むコントローラー（PermissionResolver対象）:**
+
+- [ ] pages/show_controller.rb - ページ表示（Topic権限チェック）
+- [ ] pages/edit_controller.rb - ページ編集（Topic編集権限）
+- [ ] pages/update_controller.rb - ページ更新（Topic編集権限）
+- [ ] pages/new_controller.rb - ページ作成（Topic参加チェック）
+- [ ] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
+- [ ] trashed_pages/create_controller.rb - ページ削除（Topic権限）
+- [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
+  - topics/settings/edit_controller.rb - トピック基本情報編集画面
+  - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
+  - topics/delete_controller.rb - トピック削除（Topic Admin専用）
+
+**Space単独操作のコントローラー（Factory継続使用）:**
+
+- spaces/settings/\* - Space設定関連
+- spaces/show_controller.rb - Space表示
+- attachments/\* - 添付ファイル関連（Space権限ベース）
+
+### Phase 5: 最適化
+
 - [ ] パフォーマンス最適化
   - 権限チェックのメモ化
   - データベースクエリの最適化
-
-- [ ] ドキュメント更新
-  - 権限システムの設計文書作成
-  - 開発者向けガイドラインの更新
