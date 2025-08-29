@@ -1233,6 +1233,8 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - 各PolicyクラスにTopic関連メソッドを追加
   - `can_update_page?`, `can_delete_page?`等のページ操作権限
   - `can_manage_topic_members?`等のTopic管理権限
+  - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
+  - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
 
 - [ ] PermissionResolverのテスト作成
   - 権限優先順位のテスト
@@ -1249,6 +1251,12 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - Topic関連の操作を行うコントローラーから優先的に移行
   - Space単独の操作は既存のFactoryパターンを継続使用
 
+- [ ] Topic Admin専用権限の実装
+  - TopicAdminPolicyクラスでの管理権限定義
+  - `can_update_topic?` メソッドの実装（基本情報更新）
+  - `can_delete_topic?` メソッドの実装（トピック削除）
+  - Space Ownerにも同等の権限を付与（権限の継承）
+
 #### Topic関連コントローラーの移行
 
 **Topic操作を含むコントローラー（PermissionResolver対象）:**
@@ -1260,6 +1268,9 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 - [ ] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
 - [ ] trashed_pages/create_controller.rb - ページ削除（Topic権限）
 - [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
+  - topics/settings/edit_controller.rb - トピック基本情報編集画面
+  - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
+  - topics/delete_controller.rb - トピック削除（Topic Admin専用）
 
 **Space単独操作のコントローラー（Factory継続使用）:**
 
