@@ -1259,13 +1259,13 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 - [ ] pages/new_controller.rb - ページ作成（Topic参加チェック）
 - [ ] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
 - [ ] trashed_pages/create_controller.rb - ページ削除（Topic権限）
-- [ ] topics/settings/* - Topic設定関連（Topic Admin権限）
+- [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
 
 **Space単独操作のコントローラー（Factory継続使用）:**
 
-- spaces/settings/* - Space設定関連
+- spaces/settings/\* - Space設定関連
 - spaces/show_controller.rb - Space表示
-- attachments/* - 添付ファイル関連（Space権限ベース）
+- attachments/\* - 添付ファイル関連（Space権限ベース）
 
 ### Phase 5: 最適化
 
