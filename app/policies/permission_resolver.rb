@@ -102,11 +102,11 @@ class PermissionResolver
   private def build_topic_policy
     # Topic Adminの場合
     if topic_member_record&.role == TopicMemberRole::Admin.serialize
-      # 現在のポリシー構造では、Topic AdminもSpaceOwnerPolicyと同じ権限を持つ
-      # 将来的にTopicAdminPolicyを作成する場合はここで分岐
-      SpaceOwnerPolicy.new(
+      # Topic Admin専用のポリシーを使用
+      TopicAdminPolicy.new(
         user_record: user_record.not_nil!,
-        space_member_record: space_member_record.not_nil!
+        space_member_record: space_member_record.not_nil!,
+        topic_member_record: topic_member_record.not_nil!
       )
     else
       # Topic Memberの場合

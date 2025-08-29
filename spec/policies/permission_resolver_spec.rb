@@ -72,7 +72,7 @@ RSpec.describe PermissionResolver do
       expect(policy).to be_a(SpaceGuestPolicy)
     end
 
-    it "Topic Adminの場合、OwnerPolicyを返すこと" do
+    it "Topic Adminの場合、TopicAdminPolicyを返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
@@ -94,7 +94,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve
 
-      expect(policy).to be_a(SpaceOwnerPolicy)
+      expect(policy).to be_a(TopicAdminPolicy)
     end
 
     it "Topic Memberの場合、MemberPolicyを返すこと" do
@@ -192,7 +192,7 @@ RSpec.describe PermissionResolver do
 
       policy = resolver.resolve_for_topic
 
-      expect(policy).to be_a(SpaceOwnerPolicy)
+      expect(policy).to be_a(TopicAdminPolicy)
     end
   end
 
@@ -260,7 +260,7 @@ RSpec.describe PermissionResolver do
         space_record:,
         topic_record:
       )
-      expect(resolver.resolve).to be_a(SpaceOwnerPolicy) # Topic AdminもOwnerPolicyを持つ
+      expect(resolver.resolve).to be_a(TopicAdminPolicy) # Topic Admin専用のポリシー
 
       # 3. Topic Member
       resolver = PermissionResolver.new(
@@ -375,7 +375,7 @@ RSpec.describe PermissionResolver do
 
       # Topic Adminの権限が適用される
       policy = resolver.resolve
-      expect(policy).to be_a(SpaceOwnerPolicy)
+      expect(policy).to be_a(TopicAdminPolicy)
     end
 
     it "異なるTopicを指定した場合、そのTopicのメンバーでなければSpace権限が適用されること" do
