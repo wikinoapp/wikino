@@ -45,7 +45,9 @@ class BaseMemberPolicy < ApplicationPolicy
   # 参加しているトピックのレコードを取得
   sig { returns(T.nilable(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation))) }
   def joined_topic_records
-    return nil if space_member_record.nil?
+    if space_member_record.nil?
+      return nil
+    end
 
     space_member_record!.joined_topic_records
   end
@@ -53,15 +55,16 @@ class BaseMemberPolicy < ApplicationPolicy
   # トピックに参加しているかどうか
   sig { params(topic_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
   def joined_topic?(topic_record_id:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     space_member_record!.joined_topic_records.where(id: topic_record_id).exists?
   end
 
-  protected
-
   sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_reader :space_member_record
+  protected :space_member_record
 
   # space_member_record の non-nil バージョン
   sig { returns(SpaceMemberRecord) }
@@ -72,7 +75,9 @@ class BaseMemberPolicy < ApplicationPolicy
   # user_recordとspace_member_recordの関連性が不整合かどうか
   sig { returns(T::Boolean) }
   private def mismatched_relations?
-    return false if user_record.nil? || space_member_record.nil?
+    if user_record.nil? || space_member_record.nil?
+      return false
+    end
 
     user_record.not_nil!.id != space_member_record.not_nil!.user_id
   end

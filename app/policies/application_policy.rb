@@ -12,8 +12,7 @@ class ApplicationPolicy
     @user_record = user_record
   end
 
-  private
-
   sig { returns(T.nilable(UserRecord)) }
   attr_reader :user_record
+  private :user_record
 end

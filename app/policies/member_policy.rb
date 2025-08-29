@@ -9,7 +9,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは参加しているトピックのみ編集可能
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     in_same_space?(space_record_id: topic_record.space_id) &&
       joined_topic?(topic_record_id: topic_record.id)
@@ -30,7 +32,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは参加しているトピックにページ作成可能
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     joined_topic?(topic_record_id: topic_record.id)
   end
@@ -38,7 +42,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは参加しているトピックのページを編集可能
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && joined_topic?(topic_record_id: page_record.topic_id)
   end
@@ -46,7 +52,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは参加しているトピックのドラフトページを編集可能
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? &&
       in_same_space?(space_record_id: page_record.space_id) &&
@@ -56,7 +64,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberはスペース内のページを閲覧可能
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && in_same_space?(space_record_id: page_record.space_id)
   end
@@ -64,7 +74,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberはページを削除可能
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && in_same_space?(space_record_id: page_record.space_id)
   end
@@ -72,7 +84,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberはゴミ箱を閲覧可能
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && in_same_space?(space_record_id: space_record.id)
   end
@@ -80,7 +94,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは一括復元可能
   sig { returns(T::Boolean) }
   def can_create_bulk_restore_pages?
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active?
   end
@@ -88,7 +104,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberはファイルアップロード可能
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_upload_attachment?(space_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && in_same_space?(space_record_id: space_record.id)
   end
@@ -96,7 +114,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberはファイル閲覧可能
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? && in_same_space?(space_record_id: attachment_record.space_id)
   end
@@ -104,7 +124,9 @@ class MemberPolicy < BaseMemberPolicy
   # Memberは自分がアップロードしたファイルのみ削除可能
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_delete_attachment?(attachment_record:)
-    return false if space_member_record.nil?
+    if space_member_record.nil?
+      return false
+    end
 
     active? &&
       in_same_space?(space_record_id: attachment_record.space_id) &&
@@ -143,4 +165,3 @@ class MemberPolicy < BaseMemberPolicy
     space_member_record!.space_record.not_nil!.page_records.active
   end
 end
-

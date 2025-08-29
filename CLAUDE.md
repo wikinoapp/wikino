@@ -136,6 +136,14 @@ class Example
     return
   end
 
+  # ❌ attr_readerにprivateブロックを使用しない
+  # private
+  # attr_reader :user_record
+
+  # ✅ attr_readerは個別にprivate指定
+  attr_reader :user_record
+  private :user_record
+
   # ✅ T.mustではなくnot_nil!を使用
   value.not_nil!
 end

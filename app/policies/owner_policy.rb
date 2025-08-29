@@ -116,4 +116,3 @@ class OwnerPolicy < BaseMemberPolicy
     space_member_record!.space_record.not_nil!.page_records.active
   end
 end
-

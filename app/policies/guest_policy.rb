@@ -120,4 +120,3 @@ class GuestPolicy < ApplicationPolicy
     space_record.page_records.active.topics_visibility_public
   end
 end
-

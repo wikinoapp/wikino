@@ -28,4 +28,3 @@ class SpaceMemberPolicyFactory
     end
   end
 end
-
