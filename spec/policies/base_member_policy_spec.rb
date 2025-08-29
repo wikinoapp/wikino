@@ -156,16 +156,16 @@ RSpec.describe BaseMemberPolicy do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
-      topic1_record = FactoryBot.create(:topic_record, space_record:)
-      topic2_record = FactoryBot.create(:topic_record, space_record:)
-      FactoryBot.create(:topic_member_record, space_member_record:, topic_record: topic1_record)
-      FactoryBot.create(:topic_member_record, space_member_record:, topic_record: topic2_record)
+      topic_record1 = FactoryBot.create(:topic_record, space_record:)
+      topic_record2 = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record: topic_record1)
+      FactoryBot.create(:topic_member_record, space_member_record:, topic_record: topic_record2)
 
       policy = TestMemberPolicy.new(user_record:, space_member_record:)
 
       topic_records = policy.joined_topic_records
-      expect(topic_records).to include(topic1_record)
-      expect(topic_records).to include(topic2_record)
+      expect(topic_records).to include(topic_record1)
+      expect(topic_records).to include(topic_record2)
       expect(topic_records.count).to eq(2)
     end
 
