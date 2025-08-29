@@ -1161,7 +1161,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - ~~ロール特有の特権の明文化~~
     - `OwnerPolicy`と`MemberPolicy`で明確に定義
 
-- [ ] Topic権限の明確化
+- [x] Topic権限の明確化
   - TopicMemberRecordの役割を編集権限に特化
   - PrivateトピックのWikino独自仕様の文書化
 

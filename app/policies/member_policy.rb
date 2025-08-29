@@ -5,6 +5,7 @@
 # Memberは基本操作権限のみを持つ
 class MemberPolicy < BaseMemberPolicy
   # Memberは参加しているトピックのみ編集可能
+  # TopicMemberRecordが存在する場合のみ編集権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
     if space_member_record.nil?
@@ -28,6 +29,7 @@ class MemberPolicy < BaseMemberPolicy
   end
 
   # Memberは参加しているトピックにページ作成可能
+  # TopicMemberRecordが存在する場合のみページ作成権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
     if space_member_record.nil?
@@ -38,6 +40,7 @@ class MemberPolicy < BaseMemberPolicy
   end
 
   # Memberは参加しているトピックのページを編集可能
+  # TopicMemberRecordが存在する場合のみ編集権限を持つ
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:)
     if space_member_record.nil?
@@ -60,6 +63,7 @@ class MemberPolicy < BaseMemberPolicy
   end
 
   # Memberはスペース内のページを閲覧可能
+  # PrivateトピックでもSpaceMemberなら閲覧可能（Wikino独自仕様）
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
     if space_member_record.nil?
