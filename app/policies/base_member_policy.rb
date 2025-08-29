@@ -43,11 +43,11 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   # 参加しているトピックのレコードを取得
-  sig { returns(T.nilable(::ActiveRecord::Relation)) }
+  sig { returns(T.nilable(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation))) }
   def joined_topic_records
     return nil if space_member_record.nil?
 
-    space_member_record!.topic_records
+    space_member_record!.joined_topic_records
   end
 
   # トピックに参加しているかどうか
@@ -55,7 +55,7 @@ class BaseMemberPolicy < ApplicationPolicy
   def joined_topic?(topic_record_id:)
     return false if space_member_record.nil?
 
-    space_member_record!.topic_records.where(id: topic_record_id).exists?
+    space_member_record!.joined_topic_records.where(id: topic_record_id).exists?
   end
 
   protected
