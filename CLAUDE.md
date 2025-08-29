@@ -190,6 +190,15 @@ it "xxxのとき、somethingすること" do
   user = FactoryBot.create(:user)
   # テスト実装
 end
+
+# ✅ FactoryBotで作成したレコードの変数名には_recordサフィックスを付ける
+user_record = FactoryBot.create(:user_record)
+space_record = FactoryBot.create(:space_record)
+space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
+
+# ❌ サフィックスなしの変数名は避ける
+user = FactoryBot.create(:user_record)
+space = FactoryBot.create(:space_record)
 ```
 
 ### I18n
