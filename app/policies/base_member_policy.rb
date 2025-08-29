@@ -11,7 +11,7 @@ class BaseMemberPolicy < ApplicationPolicy
     ).void
   end
   def initialize(user_record:, space_member_record:)
-    @user_record = user_record
+    super(user_record:)
     @space_member_record = space_member_record
 
     # user_recordとspace_member_recordの関連性を検証
@@ -59,9 +59,6 @@ class BaseMemberPolicy < ApplicationPolicy
   end
 
   protected
-
-  sig { returns(T.nilable(UserRecord)) }
-  attr_reader :user_record
 
   sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_reader :space_member_record

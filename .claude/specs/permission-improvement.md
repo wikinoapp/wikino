@@ -1113,7 +1113,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `BaseMemberPolicy`の実装（共通メソッド: joined_space?, in_same_space?, active?）
   - `ApplicationPolicy`の作成（全Policyの基底クラス）
 
-- [ ] ロール別Policyクラスの実装
+- [x] ロール別Policyクラスの実装
   - `OwnerPolicy`の実装（全権限を持つ）
   - `MemberPolicy`の実装（基本操作権限のみ）
   - `GuestPolicy`の実装（公開コンテンツのみ閲覧）
