@@ -1208,13 +1208,9 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 20-35. spaces/settings/* - スペース設定関連
 36-40. topics/settings/* - トピック設定関連
 
-- [ ] コントローラーの更新
+- [x] コントローラーの更新
   - SpaceMemberPolicyFactory経由での新Policy利用
   - 権限チェックパターンの統一
-
-- [ ] 動作確認とロールバック準備
-  - Feature flagの活用検討
-  - 旧実装への切り戻し手順の準備
 
 ### Phase 4: 最適化とクリーンアップ
 
