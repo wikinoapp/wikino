@@ -123,6 +123,11 @@ class Example
     value.upcase
   end
 
+  # ✅ プロテクテッドメソッドは protected def
+  protected def shared_method(value)
+    value.downcase
+  end
+
   # ❌ 後置ifは使用しない
   # return if value.nil? # 悪い例
 
