@@ -58,7 +58,7 @@ RSpec.describe SpaceMemberPolicyFactory do
         space_record:,
         role: SpaceMemberRole::Member.serialize
       )
-      
+
       # モックを使ってroleメソッドをオーバーライド
       allow(space_member_record).to receive(:role).and_return("unknown_role")
 
