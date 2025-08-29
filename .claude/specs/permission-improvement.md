@@ -1228,7 +1228,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 - [x] TopicMemberRole enumの実装確認
   - 現在のロール定義（Admin, Member等）の確認
   - TopicMemberRecordとの関連付け確認
-  
+
   **確認結果:**
   - `TopicMemberRole`はT::Enumとして実装済み（`app/models/topic_member_role.rb`）
   - ロールは2種類：`Admin`と`Member`
