@@ -68,17 +68,15 @@ class BaseMemberPolicy < ApplicationPolicy
 
   # space_member_record の non-nil バージョン
   sig { returns(SpaceMemberRecord) }
-  def space_member_record!
-    T.must(space_member_record)
+  private def space_member_record!
+    space_member_record.not_nil!
   end
-
-  private
 
   # user_recordとspace_member_recordの関連性が不整合かどうか
   sig { returns(T::Boolean) }
-  def mismatched_relations?
+  private def mismatched_relations?
     return false if user_record.nil? || space_member_record.nil?
 
-    T.must(user_record).id != T.must(space_member_record).user_id
+    user_record.not_nil!.id != space_member_record.not_nil!.user_id
   end
 end

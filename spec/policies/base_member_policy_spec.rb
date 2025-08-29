@@ -8,7 +8,6 @@ class TestMemberPolicy < BaseMemberPolicy
 end
 
 RSpec.describe BaseMemberPolicy do
-
   it "user_recordとspace_member_recordを受け取って初期化できること" do
     user = FactoryBot.create(:user_record)
     space = FactoryBot.create(:space_record)
