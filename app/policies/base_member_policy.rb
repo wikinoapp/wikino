@@ -32,7 +32,7 @@ class BaseMemberPolicy < ApplicationPolicy
 
   # 指定されたスペースIDと同じスペースにいるかどうか
   sig { params(space_id: String).returns(T::Boolean) }
-  def in_same_space?(space_id)
+  def in_same_space?(space_id:)
     space_member_record&.space_id == space_id
   end
 
@@ -52,7 +52,7 @@ class BaseMemberPolicy < ApplicationPolicy
 
   # トピックに参加しているかどうか
   sig { params(topic_id: String).returns(T::Boolean) }
-  def joined_topic?(topic_id)
+  def joined_topic?(topic_id:)
     return false if space_member_record.nil?
 
     space_member_record!.topic_records.where(id: topic_id).exists?
