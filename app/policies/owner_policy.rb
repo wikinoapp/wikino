@@ -5,6 +5,7 @@
 # Ownerは全権限を持つ
 class OwnerPolicy < BaseMemberPolicy
   # Ownerは全トピックを編集可能
+  # TopicMemberRecordの有無に関わらず、Space内の全トピックで編集権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
     in_same_space?(space_record_id: topic_record.space_id)
@@ -23,6 +24,7 @@ class OwnerPolicy < BaseMemberPolicy
   end
 
   # Ownerはページ作成可能
+  # TopicMemberRecordの有無に関わらず、全トピックでページ作成権限を持つ
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
     in_same_space?(space_record_id: topic_record.space_id)
