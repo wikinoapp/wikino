@@ -6,7 +6,7 @@
 class SpaceOwnerPolicy < ApplicationPolicy
   include SpacePermissions
 
-  sig { params(user_record: T.nilable(UserRecord), space_member_record: T.nilable(SpaceMemberRecord)).void }
+  sig { params(user_record: UserRecord, space_member_record: SpaceMemberRecord).void }
   def initialize(user_record:, space_member_record:)
     super(user_record:)
     @space_member_record = space_member_record
@@ -70,42 +70,34 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # 閲覧可能なトピック（Ownerは全トピック閲覧可能）
   sig { override.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
-    if space_member_record.nil?
-      return T.cast(TopicRecord.none, TopicRecord::PrivateAssociationRelation)
-    end
-
-    space_member_record!.space_record.not_nil!.topic_records.kept
+    space_member_record.space_record.not_nil!.topic_records.kept
   end
 
   # 閲覧可能なページ（Ownerは全ページ閲覧可能）
   sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
-    if space_member_record.nil?
-      return T.cast(PageRecord.none, PageRecord::PrivateAssociationRelation)
-    end
-
-    space_member_record!.space_record.not_nil!.page_records.active
+    space_member_record.space_record.not_nil!.page_records.active
   end
 
   sig { override.returns(T::Boolean) }
   def joined_space?
-    !space_member_record.nil?
+    true # space_member_recordが非nilableなので常にtrue
   end
 
   sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation)) }
   def joined_topic_records
-    space_member_record&.topic_records || TopicRecord.none
+    space_member_record.topic_records
   end
 
   # 共通ヘルパーメソッド
   sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
   def in_same_space?(space_record_id:)
-    space_member_record&.space_id == space_record_id
+    space_member_record.space_id == space_record_id
   end
 
   sig { returns(T::Boolean) }
   def active?
-    space_member_record&.active? || false
+    space_member_record.active?
   end
 
   # Topic/Page操作権限（互換性のため）
@@ -166,14 +158,9 @@ class SpaceOwnerPolicy < ApplicationPolicy
     in_same_space?(space_record_id: attachment_record.space_id) || attachment_record.all_referencing_pages_public?
   end
 
-  sig { returns(T.nilable(SpaceMemberRecord)) }
+  sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
-
-  sig { returns(SpaceMemberRecord) }
-  private def space_member_record!
-    space_member_record.not_nil!
-  end
 
   # Topic権限への委譲メソッド
   sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
@@ -185,7 +172,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
       # 既存のTopicMemberRecordがある場合はそれを使用
       TopicAdminPolicy.new(
         user_record:,
-        space_member_record: space_member_record!,
+        space_member_record:,
         topic_member_record:
       )
     else
@@ -193,12 +180,12 @@ class SpaceOwnerPolicy < ApplicationPolicy
       # 仮想的なTopicMemberRecordを作成
       virtual_topic_member = TopicMemberRecord.new(
         topic_record:,
-        space_member_record: space_member_record!,
+        space_member_record:,
         role: TopicMemberRole::Admin.serialize
       )
       TopicAdminPolicy.new(
         user_record:,
-        space_member_record: space_member_record!,
+        space_member_record:,
         topic_member_record: virtual_topic_member
       )
     end

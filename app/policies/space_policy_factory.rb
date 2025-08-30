@@ -17,6 +17,9 @@ class SpacePolicyFactory
       return SpaceGuestPolicy.new(user_record:)
     end
 
+    # space_member_recordが存在する場合、user_recordも必ず存在するはず
+    raise ArgumentError, "user_record must not be nil when space_member_record is present" if user_record.nil?
+
     # ロールに応じたPolicyを返す
     case space_member_record.role
     when SpaceMemberRole::Owner.serialize
