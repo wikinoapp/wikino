@@ -16,11 +16,6 @@ class TopicGuestPolicy < ApplicationPolicy
   def initialize(user_record:, topic_record:)
     super(user_record:)
     @topic_record = topic_record
-
-    # ゲストは公開トピックのみアクセス可能
-    unless topic_record.visibility_public?
-      raise ArgumentError, "Guest can only access public topics"
-    end
   end
 
   # Topic Guestはトピックの基本情報を更新不可
