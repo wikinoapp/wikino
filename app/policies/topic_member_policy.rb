@@ -40,19 +40,13 @@ class TopicMemberPolicy < ApplicationPolicy
   # Topic Memberは自分が参加しているトピックにページを作成可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
-    return false unless space_member_record.active?
-
-    # 自分が参加しているトピックにページ作成可能
-    topic_member_record.topic_id == topic_record.id
+    active? && in_same_topic?(topic_record_id: topic_record.id)
   end
 
   # Topic Memberはページを更新可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:)
-    return false unless space_member_record.active?
-
-    # 自分が参加しているトピックのページは更新可能
-    topic_member_record.topic_id == page_record.topic_id
+    active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
   # Topic Memberはドラフトページを更新可能
@@ -68,10 +62,7 @@ class TopicMemberPolicy < ApplicationPolicy
     topic_record = page_record.topic_record
     return true if topic_record&.visibility_public?
 
-    return false unless space_member_record.active?
-
-    # 参加しているトピックのページは閲覧可能
-    topic_member_record.topic_id == page_record.topic_id
+    active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
   # Topic Memberはページを削除不可（ゴミ箱移動は可能）
@@ -83,18 +74,13 @@ class TopicMemberPolicy < ApplicationPolicy
   # Topic Memberはページをゴミ箱に移動可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
-    return false unless space_member_record.active?
-
-    # 自分が参加しているトピックのページはゴミ箱移動可能
-    topic_member_record.topic_id == page_record.topic_id
+    active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
   # Topic Memberはドラフトページを作成可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_draft_page?(topic_record:)
-    return false unless space_member_record.active?
-
-    topic_member_record.topic_id == topic_record.id
+    active? && in_same_topic?(topic_record_id: topic_record.id)
   end
 
   # Topic Memberはファイルを閲覧可能
@@ -102,20 +88,16 @@ class TopicMemberPolicy < ApplicationPolicy
   def can_view_attachment?(attachment_record:)
     # 公開ページで使用されているファイルは誰でも閲覧可能
     return true if attachment_record.all_referencing_pages_public?
-    return false unless space_member_record.active?
 
-    # 同じSpace内のファイルは閲覧可能
-    attachment_record.space_id == space_member_record.space_id
+    active? && in_same_space?(space_record_id: attachment_record.space_id)
   end
 
   # Topic Memberは自分がアップロードしたファイルのみ削除可能
   sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_delete_attachment?(attachment_record:)
-    return false unless space_member_record.active?
-
-    # 自分がアップロードしたファイルのみ削除可能
-    attachment_record.space_id == space_member_record.space_id &&
-      attachment_record.attached_space_member_id == space_member_record.id
+    active? &&
+      in_same_space?(space_record_id: attachment_record.space_id) &&
+      owns_attachment?(attachment_record:)
   end
 
   sig { returns(SpaceMemberRecord) }
@@ -125,4 +107,25 @@ class TopicMemberPolicy < ApplicationPolicy
   sig { returns(TopicMemberRecord) }
   attr_reader :topic_member_record
   private :topic_member_record
+
+  # 共通ヘルパーメソッド
+  sig { params(topic_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  private def in_same_topic?(topic_record_id:)
+    topic_member_record.topic_id == topic_record_id
+  end
+
+  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  private def in_same_space?(space_record_id:)
+    space_member_record.space_id == space_record_id
+  end
+
+  sig { returns(T::Boolean) }
+  private def active?
+    space_member_record.active?
+  end
+
+  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
+  private def owns_attachment?(attachment_record:)
+    attachment_record.attached_space_member_id == space_member_record.id
+  end
 end
