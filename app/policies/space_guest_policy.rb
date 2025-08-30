@@ -7,6 +7,7 @@ class SpaceGuestPolicy < ApplicationPolicy
   include SpacePermissions
   include TopicPermissions
   include SpaceMemberCommon
+
   # ゲストはトピック編集不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
