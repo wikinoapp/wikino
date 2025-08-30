@@ -291,22 +291,38 @@ RSpec.describe BlobProcessable do
   describe "#upload_processed_file" do
     it "処理済みファイルをアップロードする" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
-      blob = blob_class.new
+      blob = blob_class.new(
+        id: "test-blob-id",
+        key: "test-key",
+        filename: "test.jpg",
+        content_type: "image/jpeg",
+        byte_size: 100,
+        checksum: "test-checksum"
+      )
       processed_path = "/tmp/processed_image.jpg"
       file_content = "processed image content"
 
       allow(File).to receive(:open).with(processed_path, "rb").and_yield(StringIO.new(file_content))
-
       allow(blob).to receive(:upload)
+      allow(blob).to receive(:save!)
+
       blob.send(:upload_processed_file, processed_path)
       expect(blob).to have_received(:upload).with(kind_of(StringIO))
+      expect(blob).to have_received(:save!)
     end
   end
 
   describe "統合テスト: アニメーションGIFの処理" do
     it "アニメーションGIFをアップロードした場合、アニメーション情報を保持したまま処理を完了する" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
-      blob = blob_class.new
+      blob = blob_class.new(
+        id: "test-blob-id",
+        key: "test-key",
+        filename: "animated.gif",
+        content_type: "image/gif",
+        byte_size: 100,
+        checksum: "test-checksum"
+      )
       gif_content = "GIF89a animated gif content with multiple frames"
       tempfile = Tempfile.new(["animated", ".gif"])
 
@@ -320,13 +336,15 @@ RSpec.describe BlobProcessable do
       # Vipsによる画像処理が呼ばれないことを確認
       allow(Vips::Image).to receive(:new_from_file)
 
-      # アップロードは実行される
+      # アップロードとsaveが実行される
       allow(blob).to receive(:upload)
+      allow(blob).to receive(:save!)
 
       result = blob.process_image_with_exif_removal
       expect(result).to be true
       expect(Vips::Image).not_to have_received(:new_from_file)
       expect(blob).to have_received(:upload).with(kind_of(StringIO))
+      expect(blob).to have_received(:save!)
 
       tempfile&.close unless tempfile&.closed?
       tempfile&.unlink if tempfile&.path && File.exist?(tempfile.path)
