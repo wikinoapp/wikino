@@ -23,7 +23,7 @@ module ControllerConcerns
     # 現在のユーザーのSpaceメンバーレコードを取得（必須）
     sig { params(space_record: SpaceRecord).returns(SpaceMemberRecord) }
     def current_space_member_record!(space_record:)
-      current_user_record!.space_member_record(space_record:).not_nil!
+      current_space_member_record(space_record:).not_nil!
     end
 
     # Space用のPolicyインスタンスを取得
