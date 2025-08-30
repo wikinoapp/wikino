@@ -38,10 +38,7 @@ module Attachments
             raise "Image processing failed for attachment_record: #{attachment_record.id}"
           end
 
-          # サムネイルを事前生成
-          unless attachment_record.generate_thumbnails
-            Rails.logger.warn("Thumbnail generation failed for attachment_record: #{attachment_record.id}, but continuing...")
-          end
+          # サムネイルは事前生成しない - Active Storageがon-demandで生成する
         end
 
         # 処理完了としてマーク

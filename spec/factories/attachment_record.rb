@@ -36,5 +36,50 @@ FactoryBot.define do
     trait :failed do
       processing_status { AttachmentProcessingStatus::Failed.serialize }
     end
+
+    trait :with_image do
+      before(:create) do |attachment_record|
+        # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
+        temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
+
+        # テスト用の小さな画像を作成
+        file = StringIO.new(Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="))
+
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io: file,
+          filename: "test-image.png",
+          content_type: "image/png"
+        )
+
+        active_storage_attachment = ActiveStorage::Attachment.create!(
+          name: "file",
+          record: temp_attachment,
+          blob:
+        )
+
+        attachment_record.active_storage_attachment_id = active_storage_attachment.id
+      end
+    end
+
+    trait :with_pdf do
+      before(:create) do |attachment_record|
+        # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
+        temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
+
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io: StringIO.new("%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n"),
+          filename: "test-document.pdf",
+          content_type: "application/pdf"
+        )
+
+        active_storage_attachment = ActiveStorage::Attachment.create!(
+          name: "file",
+          record: temp_attachment,
+          blob:
+        )
+
+        attachment_record.active_storage_attachment_id = active_storage_attachment.id
+      end
+    end
   end
 end

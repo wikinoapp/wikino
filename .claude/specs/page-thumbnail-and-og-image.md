@@ -216,16 +216,16 @@ end
 
 ### フェーズ1: データベーススキーマの更新
 
-- [ ] マイグレーションファイルを作成（`featured_image_attachment_id`カラム追加）
-- [ ] マイグレーションを実行
+- [x] マイグレーションファイルを作成（`featured_image_attachment_id`カラム追加）
+- [x] マイグレーションを実行
 
 ### フェーズ2: バリアント定義の更新
 
-- [ ] `AttachmentThumbnailSize`クラスを作成（T::Enumを使用）
-- [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（型安全な実装）
-- [ ] AttachmentRecordの`thumbnail_url`メソッドを更新（型安全な実装）
-- [ ] `generate_thumbnails`メソッドは削除または無効化（事前生成は行わない）
-- [ ] テストを作成（spec/records/attachment_record_spec.rb）
+- [x] `AttachmentThumbnailSize`クラスを作成（T::Enumを使用）
+- [x] AttachmentRecordの`thumbnail_variant`メソッドを更新（型安全な実装）
+- [x] AttachmentRecordの`thumbnail_url`メソッドを更新（型安全な実装）
+- [x] `generate_thumbnails`メソッドは削除または無効化（事前生成は行わない）
+- [x] テストを作成（spec/records/attachment_record_spec.rb）
 
 ### フェーズ3: データ取得ロジックの実装
 
