@@ -257,8 +257,8 @@ end
 
 ### フェーズ7: パフォーマンス最適化
 
-- [ ] N+1問題の確認と対策（featured_image_attachment_recordのpreload）
-- [ ] ページ一覧表示時のクエリ最適化
+- [x] N+1問題の確認と対策（featured_image_attachment_recordのpreload）
+- [x] ページ一覧表示時のクエリ最適化
 - [ ] キャッシュの検討（必要に応じて）
 
 ## 注意事項
