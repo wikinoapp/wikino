@@ -25,7 +25,9 @@ class PageRepository < ApplicationRepository
       trashed_at: page_record.trashed_at,
       can_update:,
       space:,
-      topic:
+      topic:,
+      card_image_url: page_record.card_image_url,
+      og_image_url: page_record.og_image_url
     )
   end
 
