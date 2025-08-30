@@ -9,8 +9,6 @@ module ControllerConcerns
     include SpaceAware
 
     # 現在のユーザーのTopicメンバーレコードを取得
-    # @param topic_record [TopicRecord] 対象のTopicレコード
-    # @return [TopicMemberRecord, nil] TopicMemberレコード（未参加の場合はnil）
     sig { params(topic_record: TopicRecord).returns(T.nilable(TopicMemberRecord)) }
     def current_topic_member_record(topic_record:)
       user_record = current_user_record
@@ -20,16 +18,12 @@ module ControllerConcerns
     end
 
     # 現在のユーザーのTopicメンバーレコードを取得（必須）
-    # @param topic_record [TopicRecord] 対象のTopicレコード
-    # @return [TopicMemberRecord] TopicMemberレコード
-    # @raise [NoMethodError] TopicMemberRecordが存在しない場合
     sig { params(topic_record: TopicRecord).returns(TopicMemberRecord) }
     def current_topic_member_record!(topic_record:)
       current_topic_member_record(topic_record:).not_nil!
     end
 
     # リクエストパラメータからTopicレコードを取得
-    # @return [TopicRecord, nil] Topicレコード
     sig { returns(T.nilable(TopicRecord)) }
     def current_topic_record
       return @current_topic_record if defined?(@current_topic_record)
@@ -44,16 +38,12 @@ module ControllerConcerns
     end
 
     # リクエストパラメータからTopicレコードを取得（必須）
-    # @return [TopicRecord] Topicレコード
-    # @raise [NoMethodError] Topicレコードが存在しない場合
     sig { returns(TopicRecord) }
     def current_topic_record!
       current_topic_record.not_nil!
     end
 
     # Topic用のPolicyインスタンスを取得
-    # @param topic_record [TopicRecord] 対象のTopicレコード
-    # @return [T::Wikino::TopicContextPolicyInstance] 適切なPolicyインスタンス（Topic権限を考慮）
     sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicContextPolicyInstance) }
     def topic_policy_for(topic_record:)
       space_record = topic_record.space_record.not_nil!
