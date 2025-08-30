@@ -21,6 +21,7 @@
 - [ ] ページ一覧のカードに画像が表示される
 - [ ] 各ページのog:imageメタタグが適切に設定される
 - [ ] 画像がない場合の適切なフォールバック処理
+- [ ] アニメーションGIFの特別処理（サムネイル生成せず、元画像を使用）
 - [ ] パフォーマンスを考慮したサムネイル事前生成
 - [ ] 公開ページのOGP画像は認証なしでアクセス可能
 
@@ -55,14 +56,39 @@ def first_image_attachment
   # page_attachment_reference_recordsと結合して取得
 end
 
-# カード用サムネイルURLを取得
-def card_thumbnail_url(expires_in: 1.hour)
-  first_image_attachment&.thumbnail_url(size: :card, expires_in:)
+# 最初の画像がGIFかどうか判定
+def first_image_is_gif?
+  attachment = first_image_attachment
+  return false unless attachment
+  
+  filename = attachment.filename
+  return false unless filename
+  
+  filename.downcase.end_with?('.gif')
+end
+
+# カード用画像URLを取得
+def card_image_url(expires_in: 1.hour)
+  attachment = first_image_attachment
+  return nil unless attachment
+  
+  # GIFの場合はオリジナル画像のURLを返す
+  if first_image_is_gif?
+    attachment.generate_signed_url(space_member_record: nil, expires_in:)
+  else
+    attachment.thumbnail_url(size: :card, expires_in:)
+  end
 end
 
 # OGP画像URLを取得
 def og_image_url(expires_in: 1.hour)
-  first_image_attachment&.thumbnail_url(size: :og, expires_in:)
+  attachment = first_image_attachment
+  return nil unless attachment
+  
+  # GIFの場合はnilを返す（デフォルトOGP画像を使用）
+  return nil if first_image_is_gif?
+  
+  attachment.thumbnail_url(size: :og, expires_in:)
 end
 ```
 
@@ -71,18 +97,20 @@ end
 `Pages::UpdateService`および`Pages::CreateService`で：
 
 1. ページ保存後に最初の画像を検出
-2. 画像が見つかった場合、サムネイル事前生成ジョブをキューに追加
-3. `:card`（カード表示用）サイズのサムネイルを生成
-4. `:og`（OGP用）サイズは必要になったタイミングで生成
+2. 画像が見つかった場合、GIFかどうかをチェック
+3. GIFでない場合のみ、サムネイル事前生成ジョブをキューに追加
+4. `:card`（カード表示用）サイズのサムネイルを生成
+5. `:og`（OGP用）サイズは必要になったタイミングで生成
 
 ### 4. ページ一覧カードの更新
 
 `CardLinks::PageComponent`を更新：
 
-1. PageRecordから`card_thumbnail_url`を取得
-2. 画像がある場合はカード内に表示（左側に画像、右側にテキスト）
-3. 画像がない場合は既存のテキストのみ表示を維持
-4. レスポンシブデザインに対応（モバイルでは画像サイズを調整）
+1. PageRecordから`card_image_url`を取得
+2. 画像がある場合はカード内に表示（テキストを左側、画像を右側に配置）
+3. GIFの場合はアニメーションを維持したまま表示
+4. 画像がない場合は既存のテキストのみ表示を維持
+5. レスポンシブデザインに対応（モバイルでは画像サイズを調整）
 
 ### 5. OGP設定の更新
 
@@ -90,7 +118,7 @@ end
 
 1. PageRecordから`og_image_url`を取得
 2. `set_meta_tags`のog:imageに設定
-3. 画像がない場合はデフォルトのOGP画像を使用
+3. GIFの場合または画像がない場合はデフォルトのOGP画像を使用
 
 ### 6. 公開ページのOGP画像アクセス
 
@@ -110,7 +138,8 @@ end
 ### フェーズ2: データ取得ロジックの実装
 
 - [ ] PageRecordに`first_image_attachment`メソッドを追加
-- [ ] PageRecordに`card_thumbnail_url`メソッドを追加
+- [ ] PageRecordに`first_image_is_gif?`メソッドを追加
+- [ ] PageRecordに`card_image_url`メソッドを追加
 - [ ] PageRecordに`og_image_url`メソッドを追加
 - [ ] テストを作成（spec/records/page_record_spec.rb）
 
@@ -160,6 +189,7 @@ end
 
 - 画像処理エラー時の適切なフォールバック
 - 画像がない場合のデフォルト表示
+- GIFファイルの適切な処理（サムネイル生成をスキップ）
 - サムネイル生成失敗時のリトライ処理
 
 ### 互換性
@@ -185,8 +215,9 @@ end
 ### システムテスト
 
 - ページ一覧での画像表示
+- アニメーションGIFの表示確認
 - SNSシェア時のOGP画像表示（手動確認）
-- 様々な画像フォーマットでの動作確認
+- 様々な画像フォーマットでの動作確認（JPEG、PNG、GIF等）
 
 ## 実装優先度
 
