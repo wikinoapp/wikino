@@ -65,9 +65,7 @@ class SpaceGuestPolicy < ApplicationPolicy
   sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
     # ゲストは公開トピックのページのみ閲覧可能
-    space_record.page_records.joins(:topic_record).where(
-      topic_records: {visibility: TopicVisibility::Public.serialize}
-    )
+    space_record.page_records.active.topics_visibility_public
   end
 
   sig { override.returns(T::Boolean) }
