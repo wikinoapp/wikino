@@ -131,7 +131,7 @@ class AttachmentRecord < ApplicationRecord
   end
 
   # サムネイル用のvariantを取得
-  # @param size [Symbol] サムネイルサイズ (:small, :medium, :large)
+  # @param size [Symbol] サムネイルサイズ (:thumb, :card, :medium, :large, :og)
   sig { params(size: Symbol).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
   def thumbnail_variant(size: :medium)
     blob = blob_record
@@ -140,14 +140,24 @@ class AttachmentRecord < ApplicationRecord
     return nil unless blob.variable?
 
     variant_options = case size
-    when :small
-      {resize_to_limit: [150, 150]}
+    when :thumb
+      # アイコンサイズ（小さなサムネイル用）
+      {resize_to_limit: [100, 100]}
+    when :card
+      # ページ一覧のカード用（横200px、縦は比率維持）
+      {resize_to_limit: [200, 200]}
     when :medium
-      {resize_to_limit: [300, 300]}
+      # 記事内の画像表示用
+      {resize_to_limit: [400, 400]}
     when :large
-      {resize_to_limit: [600, 600]}
+      # 大きめの画像表示用
+      {resize_to_limit: [800, 800]}
+    when :og
+      # OGP画像用（推奨: 1200x630、最小: 600x315）
+      # resize_to_fillで中央クロップして確実に1200x630にする
+      {resize_to_fill: [1200, 630]}
     else
-      {resize_to_limit: [300, 300]}
+      {resize_to_limit: [400, 400]}
     end
 
     blob.variant(**variant_options)
@@ -174,8 +184,9 @@ class AttachmentRecord < ApplicationRecord
     return false unless blob
     return false unless blob.variable?
 
-    # 各サイズのサムネイルを生成
-    %i[small medium large].each do |size|
+    # よく使用されるサイズのサムネイルを事前生成
+    # OGP用は必要になったタイミングで生成（使用頻度が低いため）
+    %i[thumb card medium].each do |size|
       variant = thumbnail_variant(size:)
       next unless variant
 
