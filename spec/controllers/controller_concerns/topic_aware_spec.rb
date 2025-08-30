@@ -60,7 +60,8 @@ RSpec.describe ControllerConcerns::TopicAware do
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.topic_policy_for(topic_record:)
-    expect(policy).to be_a(SpaceOwnerPolicy)
+    # Space OwnerはTopicに対してTopicOwnerPolicyを持つ
+    expect(policy).to be_a(TopicOwnerPolicy)
   end
 
   it "topic_policy_forがTopic Adminに対して正しいPolicyを返すこと" do
