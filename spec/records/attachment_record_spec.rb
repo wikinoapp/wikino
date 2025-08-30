@@ -48,7 +48,6 @@ RSpec.describe AttachmentRecord do
   describe "#thumbnail_url" do
     it "カードサイズのサムネイルURLを生成できること" do
       attachment = FactoryBot.create(:attachment_record, :with_image)
-
       # variantがprocessedを返すようにモック
       variant = instance_double(ActiveStorage::Variant)
       processed_variant = instance_double(ActiveStorage::VariantWithRecord)
@@ -65,7 +64,6 @@ RSpec.describe AttachmentRecord do
 
     it "OGサイズのサムネイルURLを生成できること" do
       attachment = FactoryBot.create(:attachment_record, :with_image)
-
       # variantがprocessedを返すようにモック
       variant = instance_double(ActiveStorage::Variant)
       processed_variant = instance_double(ActiveStorage::VariantWithRecord)
@@ -82,7 +80,6 @@ RSpec.describe AttachmentRecord do
 
     it "有効期限を指定できること" do
       attachment = FactoryBot.create(:attachment_record, :with_image)
-
       # variantがprocessedを返すようにモック
       variant = instance_double(ActiveStorage::Variant)
       processed_variant = instance_double(ActiveStorage::VariantWithRecord)
