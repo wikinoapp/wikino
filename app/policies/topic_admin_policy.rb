@@ -90,11 +90,6 @@ class TopicAdminPolicy < ApplicationPolicy
   end
 
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
-  def can_manage_attachments?(space_record:)
-    false # Topic Adminはファイル管理画面にアクセスできない
-  end
-
-  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
     false # Topic AdminはSpaceをエクスポートできない
   end

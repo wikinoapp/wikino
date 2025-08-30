@@ -206,33 +206,6 @@ RSpec.describe TopicAdminPolicy do
     end
   end
 
-  describe "#can_manage_attachments?" do
-    it "Topic Adminはファイル管理画面にアクセスできないこと" do
-      user_record = FactoryBot.create(:user_record)
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record, space_record:)
-
-      space_member_record = FactoryBot.create(:space_member_record,
-        user_record:,
-        space_record:,
-        role: SpaceMemberRole::Member.serialize)
-
-      topic_member_record = FactoryBot.create(:topic_member_record,
-        space_record:,
-        topic_record:,
-        space_member_record:,
-        role: TopicMemberRole::Admin.serialize)
-
-      policy = TopicAdminPolicy.new(
-        user_record:,
-        space_member_record:,
-        topic_member_record:
-      )
-
-      expect(policy.can_manage_attachments?(space_record:)).to be(false)
-    end
-  end
-
   describe "#can_export_space?" do
     it "Topic Adminはスペースをエクスポートできないこと" do
       user_record = FactoryBot.create(:user_record)
