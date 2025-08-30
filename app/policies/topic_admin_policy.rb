@@ -129,6 +129,29 @@ class TopicAdminPolicy < ApplicationPolicy
     attachment_record.space_id == space_member_record.space_id
   end
 
+  # Topic Admin固有のメソッド（Space権限は扱わない）
+  # Space関連のメソッドはテスト目的で最小限の実装のみ提供
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:)
+    false # Topic AdminはSpace設定を変更できない
+  end
+
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_attachments?(space_record:)
+    false # Topic Adminはファイル管理画面にアクセスできない
+  end
+
+  sig { params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:)
+    false # Topic AdminはSpaceをエクスポートできない
+  end
+
+  sig { returns(T::Boolean) }
+  def can_create_topic?
+    # Topic Adminは新しいトピックを作成可能
+    space_member_record.active?
+  end
+
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
