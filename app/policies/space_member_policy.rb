@@ -84,20 +84,9 @@ class SpaceMemberPolicy < ApplicationPolicy
     true # space_member_recordが非nilableなので常にtrue
   end
 
-  sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation)) }
+  sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation, TopicRecord::PrivateAssociationRelation)) }
   def joined_topic_records
     space_member_record.joined_topic_records
-  end
-
-  # 共通ヘルパーメソッド
-  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
-  def in_same_space?(space_record_id:)
-    space_member_record.space_id == space_record_id
-  end
-
-  sig { returns(T::Boolean) }
-  def active?
-    space_member_record.active?
   end
 
   # Topic/Page操作権限（互換性のため）
@@ -176,6 +165,17 @@ class SpaceMemberPolicy < ApplicationPolicy
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
+
+  # 共通ヘルパーメソッド
+  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  private def in_same_space?(space_record_id:)
+    space_member_record.space_id == space_record_id
+  end
+
+  sig { returns(T::Boolean) }
+  private def active?
+    space_member_record.active?
+  end
 
   # Topic権限への委譲メソッド
   sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }

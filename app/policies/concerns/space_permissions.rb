@@ -43,7 +43,7 @@ module SpacePermissions
   end
 
   # 参加しているトピック一覧
-  sig { abstract.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation)) }
+  sig { abstract.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation, TopicRecord::PrivateAssociationRelation)) }
   def joined_topic_records
   end
 

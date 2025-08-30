@@ -89,17 +89,6 @@ class SpaceOwnerPolicy < ApplicationPolicy
     space_member_record.topic_records
   end
 
-  # 共通ヘルパーメソッド
-  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
-  def in_same_space?(space_record_id:)
-    space_member_record.space_id == space_record_id
-  end
-
-  sig { returns(T::Boolean) }
-  def active?
-    space_member_record.active?
-  end
-
   # Topic/Page操作権限（互換性のため）
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
@@ -161,6 +150,17 @@ class SpaceOwnerPolicy < ApplicationPolicy
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
+
+  # 共通ヘルパーメソッド
+  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  private def in_same_space?(space_record_id:)
+    space_member_record.space_id == space_record_id
+  end
+
+  sig { returns(T::Boolean) }
+  private def active?
+    space_member_record.active?
+  end
 
   # Topic権限への委譲メソッド
   sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
