@@ -103,19 +103,19 @@ belongs_to :featured_image_attachment_record,
 # Markdown本文の1行目から画像IDを抽出（featured画像として使用）
 def extract_featured_image_id
   return nil if body.blank?
-  
+
   # 1行目を取得
   first_line = body.lines.first&.strip
   return nil if first_line.blank?
-  
+
   # 1. Markdown画像形式をチェック: ![alt text](/attachments/attachment_id)
   markdown_match = first_line.match(/!\[[^\]]*\]\(\/attachments\/([^)]+)\)/)
   return markdown_match[1] if markdown_match
-  
+
   # 2. HTML img要素をチェック: <img src="/attachments/attachment_id" ...>
   img_match = first_line.match(/<img[^>]+src=["']\/attachments\/([^"']+)["'][^>]*>/i)
   return img_match[1] if img_match
-  
+
   nil
 end
 
@@ -123,10 +123,10 @@ end
 def featured_image_is_gif?
   attachment = featured_image_attachment_record
   return false unless attachment
-  
+
   filename = attachment.filename
   return false unless filename
-  
+
   filename.downcase.end_with?('.gif')
 end
 
@@ -134,7 +134,7 @@ end
 def card_image_url(expires_in: 1.hour)
   attachment = featured_image_attachment_record
   return nil unless attachment
-  
+
   # GIFの場合はオリジナル画像のURLを返す
   if featured_image_is_gif?
     attachment.generate_signed_url(space_member_record: nil, expires_in:)
@@ -147,10 +147,10 @@ end
 def og_image_url(expires_in: 1.hour)
   attachment = featured_image_attachment_record
   return nil unless attachment
-  
+
   # GIFの場合はnilを返す（デフォルトOGP画像を使用）
   return nil if featured_image_is_gif?
-  
+
   attachment.thumbnail_url(size: AttachmentThumbnailSize::Og, expires_in:)
 end
 ```
@@ -162,17 +162,17 @@ end
 ```ruby
 def call
   # ... 既存の処理 ...
-  
+
   # 1行目の画像IDを抽出（featured画像として）
   featured_image_id = page_record.extract_featured_image_id
-  
+
   if featured_image_id
     # 同じスペースの添付ファイルか確認
     attachment = AttachmentRecord.find_by(
       id: featured_image_id,
       space_id: page_record.space_id
     )
-    
+
     if attachment
       # featured_image_attachment_idを更新
       page_record.update!(featured_image_attachment_id: attachment.id)
