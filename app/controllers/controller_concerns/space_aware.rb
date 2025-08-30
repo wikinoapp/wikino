@@ -37,22 +37,12 @@ module ControllerConcerns
     end
 
     # リクエストパラメータからSpaceレコードを取得
-    sig { returns(T.nilable(SpaceRecord)) }
+    sig { returns(SpaceRecord) }
     def current_space_record
-      return @current_space_record if defined?(@current_space_record)
-
-      @current_space_record = T.let(
-        if params[:space_identifier].present?
-          SpaceRecord.find_by(identifier: params[:space_identifier])
-        end,
+      @current_space_record ||= T.let(
+        SpaceRecord.find_by_identifier!(params[:space_identifier]),
         T.nilable(SpaceRecord)
       )
-    end
-
-    # リクエストパラメータからSpaceレコードを取得（必須）
-    sig { returns(SpaceRecord) }
-    def current_space_record!
-      current_space_record.not_nil!
     end
   end
 end

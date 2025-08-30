@@ -25,10 +25,10 @@ module ControllerConcerns
     def current_topic_record
       return @current_topic_record if defined?(@current_topic_record)
 
-      space_record = current_space_record
       @current_topic_record = T.let(
-        if params[:topic_number].present? && space_record
-          space_record.topic_records.find_by(number: params[:topic_number])
+        if params[:topic_number].present? && params[:space_identifier].present?
+          space_record = SpaceRecord.kept.find_by(identifier: params[:space_identifier])
+          space_record&.topic_records&.find_by(number: params[:topic_number])
         end,
         T.nilable(TopicRecord)
       )

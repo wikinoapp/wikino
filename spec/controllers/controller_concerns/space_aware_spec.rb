@@ -18,7 +18,6 @@ RSpec.describe ControllerConcerns::SpaceAware do
     expect(controller).to respond_to(:current_space_member_record!)
     expect(controller).to respond_to(:space_policy_for)
     expect(controller).to respond_to(:current_space_record)
-    expect(controller).to respond_to(:current_space_record!)
   end
 
   it "current_space_member_recordが正しく動作すること" do
