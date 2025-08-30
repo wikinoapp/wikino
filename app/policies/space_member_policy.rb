@@ -158,8 +158,10 @@ class SpaceMemberPolicy < ApplicationPolicy
   # 添付ファイル閲覧権限
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    return true if attachment_record.all_referencing_pages_public?
-    in_same_space?(space_record_id: attachment_record.space_id)
+    active? && (
+      in_same_space?(space_record_id: attachment_record.space_id) ||
+      attachment_record.all_referencing_pages_public?
+    )
   end
 
   sig { returns(SpaceMemberRecord) }

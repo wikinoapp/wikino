@@ -16,25 +16,25 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # Ownerはスペース設定を変更可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    active? && in_same_space?(space_record_id: space_record.id)
   end
 
   # Ownerはトピック作成可能
   sig { override.returns(T::Boolean) }
   def can_create_topic?
-    joined_space?
+    active? && joined_space?
   end
 
   # OwnerはSpaceを削除可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_delete_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    active? && in_same_space?(space_record_id: space_record.id)
   end
 
   # OwnerはSpaceメンバーを管理可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_space_members?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    active? && in_same_space?(space_record_id: space_record.id)
   end
 
   # Ownerはゴミ箱を閲覧可能
@@ -64,7 +64,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # Ownerはエクスポート可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    active? && in_same_space?(space_record_id: space_record.id)
   end
 
   # 閲覧可能なトピック（Ownerは全トピック閲覧可能）
@@ -84,25 +84,25 @@ class SpaceOwnerPolicy < ApplicationPolicy
     true # space_member_recordが非nilableなので常にtrue
   end
 
-  sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation)) }
+  sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation, TopicRecord::PrivateAssociationRelation)) }
   def joined_topic_records
-    space_member_record.topic_records
+    space_member_record.joined_topic_records
   end
 
   # Topic/Page操作権限（互換性のため）
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
-    in_same_space?(space_record_id: topic_record.space_id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_delete_topic?(topic_record:)
-    in_same_space?(space_record_id: topic_record.space_id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_manage_topic_members?(topic_record:)
-    in_same_space?(space_record_id: topic_record.space_id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   sig { params(topic_record: TopicRecord).returns(T::Boolean) }
@@ -117,7 +117,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
-    in_same_space?(space_record_id: page_record.space_id) || page_record.topic_record!.visibility_public?
+    active? && (in_same_space?(space_record_id: page_record.space_id) || page_record.topic_record!.visibility_public?)
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
@@ -144,7 +144,10 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # 添付ファイル閲覧権限
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    in_same_space?(space_record_id: attachment_record.space_id) || attachment_record.all_referencing_pages_public?
+    active? && (
+      in_same_space?(space_record_id: attachment_record.space_id) ||
+      attachment_record.all_referencing_pages_public?
+    )
   end
 
   sig { returns(SpaceMemberRecord) }
