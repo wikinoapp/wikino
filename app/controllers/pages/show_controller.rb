@@ -5,6 +5,7 @@ module Pages
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::TopicAware
 
     around_action :set_locale
     before_action :restore_user_session
@@ -12,13 +13,12 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
         .tap { |p| p.featured_image_attachment_record&.active_storage_attachment_record }
-      space_member_policy = SpacePolicyFactory.build(
-        user_record: current_user_record,
-        space_member_record:
-      )
+
+      # ヘルパーメソッドを使用
+      space_member_record = current_space_member_record(space_record:)
+      space_member_policy = T.cast(space_policy_for(space_record:), T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy))
 
       unless space_member_policy.can_show_page?(page_record:)
         return render_404
