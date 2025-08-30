@@ -53,8 +53,8 @@ module ControllerConcerns
 
     # Topic用のPolicyインスタンスを取得
     # @param topic_record [TopicRecord] 対象のTopicレコード
-    # @return [ApplicationPolicy] 適切なPolicyインスタンス（Topic権限を考慮）
-    sig { params(topic_record: TopicRecord).returns(ApplicationPolicy) }
+    # @return [T::Wikino::TopicContextPolicyInstance] 適切なPolicyインスタンス（Topic権限を考慮）
+    sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicContextPolicyInstance) }
     def topic_policy_for(topic_record:)
       space_record = topic_record.space_record.not_nil!
       space_member_record = current_space_member_record(space_record:)

@@ -13,5 +13,8 @@ module T
 
     # Topic層のPolicyクラスの型
     TopicPolicyInstance = T.type_alias { T.any(TopicAdminPolicy, TopicMemberPolicy) }
+
+    # Topic権限を考慮したPolicyクラスの型（Space OwnerはTopic全権限を持つため含まれる）
+    TopicContextPolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, TopicAdminPolicy, SpacePolicyInstance) }
   end
 end

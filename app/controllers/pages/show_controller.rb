@@ -18,7 +18,7 @@ module Pages
 
       # ヘルパーメソッドを使用
       space_member_record = current_space_member_record(space_record:)
-      space_member_policy = T.cast(space_policy_for(space_record:), T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy))
+      space_member_policy = space_policy_for(space_record:)
 
       unless space_member_policy.can_show_page?(page_record:)
         return render_404

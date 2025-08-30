@@ -36,8 +36,8 @@ module ControllerConcerns
 
     # Space用のPolicyインスタンスを取得
     # @param space_record [SpaceRecord] 対象のSpaceレコード
-    # @return [ApplicationPolicy] 適切なPolicyインスタンス
-    sig { params(space_record: SpaceRecord).returns(ApplicationPolicy) }
+    # @return [T::Wikino::SpacePolicyInstance] 適切なPolicyインスタンス
+    sig { params(space_record: SpaceRecord).returns(T::Wikino::SpacePolicyInstance) }
     def space_policy_for(space_record:)
       space_member_record = current_space_member_record(space_record:)
       SpacePolicyFactory.build(
