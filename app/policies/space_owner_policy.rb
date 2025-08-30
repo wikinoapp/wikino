@@ -174,11 +174,8 @@ class SpaceOwnerPolicy < ApplicationPolicy
   end
 
   # Topic権限への委譲メソッド
-  sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }
+  sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
-    # user_recordが必須
-    return nil unless user_record
-
     # Space Ownerは常にTopicの全権限を持つため、TopicOwnerPolicyを返す
     TopicOwnerPolicy.new(
       user_record: user_record.not_nil!,
