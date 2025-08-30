@@ -155,9 +155,9 @@ def og_image_url(expires_in: 1.hour)
 end
 ```
 
-### 4. ページ作成・更新時の処理
+### 4. ページ更新時の処理
 
-`Pages::UpdateService`および`Pages::CreateService`で：
+`Pages::UpdateService`で：
 
 ```ruby
 def call
@@ -238,9 +238,8 @@ end
 
 ### フェーズ4: ページ更新時の処理実装
 
-- [ ] `Pages::CreateService`で1行目画像の検出と保存処理を追加
 - [ ] `Pages::UpdateService`で1行目画像の検出と保存処理を追加
-- [ ] テストを作成
+- [ ] テストを作成（spec/services/pages/update_service_spec.rb）
 
 ### フェーズ5: UI表示の実装
 
@@ -302,7 +301,7 @@ end
 
 ### 統合テスト
 
-- ページ作成・更新時のサムネイル生成
+- ページ更新時のfeatured画像の検出と保存
 - カードコンポーネントの画像表示
 - OGPメタタグの設定
 
