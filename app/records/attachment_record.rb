@@ -131,74 +131,44 @@ class AttachmentRecord < ApplicationRecord
   end
 
   # サムネイル用のvariantを取得
-  # @param size [Symbol] サムネイルサイズ (:thumb, :card, :medium, :large, :og)
-  sig { params(size: Symbol).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
-  def thumbnail_variant(size: :medium)
+  sig { params(size: AttachmentThumbnailSize).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
+  def thumbnail_variant(size:)
     blob = blob_record
     return nil unless blob
     return nil unless blob.image?
     return nil unless blob.variable?
 
     variant_options = case size
-    when :thumb
-      # アイコンサイズ（小さなサムネイル用）
-      {resize_to_limit: [100, 100]}
-    when :card
-      # ページ一覧のカード用（横200px、縦は比率維持）
-      {resize_to_limit: [200, 200]}
-    when :medium
-      # 記事内の画像表示用
+    when AttachmentThumbnailSize::Card
+      # ページ一覧のカード用（高解像度対応で400x400px）
       {resize_to_limit: [400, 400]}
-    when :large
-      # 大きめの画像表示用
-      {resize_to_limit: [800, 800]}
-    when :og
-      # OGP画像用（推奨: 1200x630、最小: 600x315）
-      # resize_to_fitで比率を維持しつつ最大1200x630に収める
-      # 小さい画像の場合は拡大しない
+    when AttachmentThumbnailSize::Og
+      # OGP画像用（推奨: 1200x630）
       {resize_to_fit: [1200, 630]}
     else
-      {resize_to_limit: [400, 400]}
+      T.absurd(size)
     end
 
     blob.variant(**variant_options)
   end
 
   # サムネイルURLを取得
-  sig { params(size: Symbol, expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
-  def thumbnail_url(size: :medium, expires_in: 1.hour)
+  sig { params(size: AttachmentThumbnailSize, expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+  def thumbnail_url(size:, expires_in: 1.hour)
     variant = thumbnail_variant(size:)
     return nil unless variant
 
     variant.processed.url(expires_in:)
   rescue => e
     Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.class.name}: #{e.message}")
-    Rails.logger.error(e.backtrace&.first(5)&.join("\n") || "No backtrace")
     nil
   end
 
-  # サムネイルを事前生成（バックグラウンド処理用）
+  # サムネイルを事前生成（廃止予定 - Active Storageが必要に応じて自動生成するため）
+  # @deprecated このメソッドは使用しないでください
   sig { returns(T::Boolean) }
   def generate_thumbnails
-    return false unless image?
-
-    blob = blob_record
-    return false unless blob
-    return false unless blob.variable?
-
-    # よく使用されるサイズのサムネイルを事前生成
-    # OGP用は必要になったタイミングで生成（使用頻度が低いため）
-    %i[thumb card medium].each do |size|
-      variant = thumbnail_variant(size:)
-      next unless variant
-
-      # processedを呼ぶことで実際に変換処理が実行される
-      variant.processed
-    end
-
+    # 事前生成は行わない - Active Storageのon-demandで対応
     true
-  rescue => e
-    Rails.logger.error("Failed to generate thumbnails for attachment #{id}: #{e.message}")
-    false
   end
 end
