@@ -152,4 +152,10 @@ class SpaceGuestPolicy < ApplicationPolicy
   sig { returns(T.nilable(UserRecord)) }
   attr_reader :user_record
   private :user_record
+
+  # Topic権限への委譲メソッド（ゲストはTopic権限を持たない）
+  sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }
+  def topic_policy_for(topic_record:)
+    nil # ゲストはTopic権限を持たない
+  end
 end

@@ -210,4 +210,30 @@ class SpaceMemberPolicy < ApplicationPolicy
   private def space_member_record!
     space_member_record.not_nil!
   end
+
+  # Topic権限への委譲メソッド
+  sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }
+  def topic_policy_for(topic_record:)
+    return nil if space_member_record.nil?
+
+    # TopicMemberRecordを取得
+    topic_member_record = user_record&.topic_member_records&.find_by(topic_record:)
+    return nil unless topic_member_record
+
+    # TopicMemberのロールに応じて適切なPolicyを返す
+    case topic_member_record.role
+    when TopicMemberRole::Admin.serialize
+      TopicAdminPolicy.new(
+        user_record:,
+        space_member_record: space_member_record!,
+        topic_member_record:
+      )
+    when TopicMemberRole::Member.serialize
+      TopicMemberPolicy.new(
+        user_record:,
+        space_member_record: space_member_record!,
+        topic_member_record:
+      )
+    end
+  end
 end

@@ -11,6 +11,9 @@ module T
     # SpaceMemberPolicyFactoryが返す可能性のあるPolicyクラスの型
     SpacePolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy) }
 
+    # Topic層のPolicyクラスの型
+    TopicPolicyInstance = T.type_alias { T.any(TopicAdminPolicy, TopicMemberPolicy) }
+
     # PermissionResolverが返す可能性のあるPolicyクラスの型（Topic権限を含む）
     PolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy, TopicAdminPolicy) }
   end
