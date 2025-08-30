@@ -1,13 +1,13 @@
 <div class="flex flex-col gap-2">
   <% links.each do |link| %>
-    <div class="grid grid-cols-2 items-stretch gap-2 md:grid-cols-3">
+    <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
       <%= render CardLinks::PageComponent.new(page: link.page, card_class: "h-full") %>
       <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list) %>
     </div>
   <% end %>
 
   <% if pagination.has_next? %>
-    <turbo-frame class="grid grid-cols-2 gap-2 md:grid-cols-3" id="link-collection">
+    <turbo-frame class="grid grid-cols-1 gap-2 md:grid-cols-3" id="link-collection">
       <%= render Buttons::LinkPaginationComponent.new(
         path: page_link_list_path(space.identifier, page.number, after: pagination.next_cursor)
       ) %>
