@@ -2,7 +2,11 @@
   <%= render BaseUI::CardComponent.new(class_name: build_card_class) do |card| %>
     <%= card.with_body do %>
       <% if page.pinned? %>
-        <%= render BaseUI::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-amber-800") %>
+        <%= render BaseUI::IconComponent.new(
+          name: "push-pin-filled",
+          size: "18px",
+          class_name: "-right-1 -top-1 absolute fill-amber-800"
+        ) %>
       <% end %>
 
       <div class="flex gap-3">
@@ -31,7 +35,7 @@
                 <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
                 <span class="text-xs text-gray-500">
-                  <%= topic.name.truncate(20) %>
+                  <%= topic.name.truncate(10) %>
                 </span>
               </div>
             <% end %>
@@ -44,10 +48,12 @@
 
         <% if page.card_image_url.present? %>
           <div class="shrink-0">
-            <img src="<%= page.card_image_url %>"
-                 alt=""
-                 class="h-16 w-16 rounded object-cover sm:h-20 sm:w-20"
-                 loading="lazy">
+            <img
+              src="<%= page.card_image_url %>"
+              alt=""
+              class="h-16 w-16 rounded object-cover sm:h-20 sm:w-20"
+              loading="lazy"
+            >
           </div>
         <% end %>
       </div>
