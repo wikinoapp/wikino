@@ -13,7 +13,7 @@ class TopicGuestPolicy < ApplicationPolicy
     ).void
   end
   def initialize(user_record:)
-    super(user_record:)
+    super
   end
 
   # Topic Guestはトピックの基本情報を更新不可

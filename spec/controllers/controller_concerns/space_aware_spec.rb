@@ -35,11 +35,10 @@ RSpec.describe ControllerConcerns::SpaceAware do
   it "space_policy_forが正しいPolicyを返すこと" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, 
-      user_record:, 
+    FactoryBot.create(:space_member_record,
+      user_record:,
       space_record:,
-      role: SpaceMemberRole::Owner.serialize
-    )
+      role: SpaceMemberRole::Owner.serialize)
 
     controller = TestController.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
@@ -52,7 +51,7 @@ RSpec.describe ControllerConcerns::SpaceAware do
     space_record = FactoryBot.create(:space_record, identifier: "test-space")
 
     controller = TestController.new
-    allow(controller).to receive(:params).and_return({ space_identifier: "test-space" })
+    allow(controller).to receive(:params).and_return({space_identifier: "test-space"})
 
     result = controller.current_space_record
     expect(result).to eq(space_record)

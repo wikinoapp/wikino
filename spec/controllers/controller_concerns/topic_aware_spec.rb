@@ -30,10 +30,9 @@ RSpec.describe ControllerConcerns::TopicAware do
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
-    topic_member_record = FactoryBot.create(:topic_member_record, 
+    topic_member_record = FactoryBot.create(:topic_member_record,
       space_member_record:,
-      topic_record:
-    )
+      topic_record:)
 
     controller = TestController.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
@@ -46,11 +45,10 @@ RSpec.describe ControllerConcerns::TopicAware do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
-    space_member_record = FactoryBot.create(:space_member_record, 
-      user_record:, 
+    FactoryBot.create(:space_member_record,
+      user_record:,
       space_record:,
-      role: SpaceMemberRole::Owner.serialize
-    )
+      role: SpaceMemberRole::Owner.serialize)
 
     controller = TestController.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
@@ -63,16 +61,14 @@ RSpec.describe ControllerConcerns::TopicAware do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
-    space_member_record = FactoryBot.create(:space_member_record, 
-      user_record:, 
+    space_member_record = FactoryBot.create(:space_member_record,
+      user_record:,
       space_record:,
-      role: SpaceMemberRole::Member.serialize
-    )
-    topic_member_record = FactoryBot.create(:topic_member_record,
+      role: SpaceMemberRole::Member.serialize)
+    FactoryBot.create(:topic_member_record,
       space_member_record:,
       topic_record:,
-      role: TopicMemberRole::Admin.serialize
-    )
+      role: TopicMemberRole::Admin.serialize)
 
     controller = TestController.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
@@ -86,7 +82,7 @@ RSpec.describe ControllerConcerns::TopicAware do
     topic_record = FactoryBot.create(:topic_record, space_record:, number: 1)
 
     controller = TestController.new
-    allow(controller).to receive(:params).and_return({ 
+    allow(controller).to receive(:params).and_return({
       space_identifier: "test-space",
       topic_number: "1"  # Topicはnumberで識別される
     })
