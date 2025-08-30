@@ -22,7 +22,7 @@ class SpaceMemberPolicy < ApplicationPolicy
   # Memberはトピック作成可能
   sig { override.returns(T::Boolean) }
   def can_create_topic?
-    joined_space?
+    active? && joined_space?
   end
 
   # MemberはSpaceを削除不可
@@ -86,7 +86,7 @@ class SpaceMemberPolicy < ApplicationPolicy
 
   sig { override.returns(T.any(TopicRecord::PrivateCollectionProxy, TopicRecord::PrivateRelation)) }
   def joined_topic_records
-    space_member_record.topic_records
+    space_member_record.joined_topic_records
   end
 
   # 共通ヘルパーメソッド
