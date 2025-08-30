@@ -6,6 +6,7 @@ module ControllerConcerns
   module TopicAware
     extend T::Sig
     extend ActiveSupport::Concern
+
     include SpaceAware
 
     # 現在のユーザーのTopicメンバーレコードを取得
