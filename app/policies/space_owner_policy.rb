@@ -179,8 +179,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
     # Space Ownerは常にTopicの全権限を持つため、TopicOwnerPolicyを返す
     TopicOwnerPolicy.new(
       user_record: user_record.not_nil!,
-      space_member_record:,
-      topic_record:
+      space_member_record:
     )
   end
 end

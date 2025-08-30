@@ -10,14 +10,12 @@ class TopicOwnerPolicy < ApplicationPolicy
   sig do
     params(
       user_record: UserRecord,
-      space_member_record: SpaceMemberRecord,
-      topic_record: TopicRecord
+      space_member_record: SpaceMemberRecord
     ).void
   end
-  def initialize(user_record:, space_member_record:, topic_record:)
+  def initialize(user_record:, space_member_record:)
     super(user_record:)
     @space_member_record = space_member_record
-    @topic_record = topic_record
 
     if mismatched_relations?
       raise ArgumentError, [
@@ -26,44 +24,36 @@ class TopicOwnerPolicy < ApplicationPolicy
         "space_member_record.user_id: #{space_member_record.user_id.inspect}"
       ].join(" ")
     end
-
-    if !in_same_space?(space_record_id: topic_record.space_id)
-      raise ArgumentError, [
-        "Topic does not belong to the same space.",
-        "topic_record.space_id: #{topic_record.space_id.inspect}",
-        "space_member_record.space_id: #{space_member_record.space_id.inspect}"
-      ].join(" ")
-    end
   end
 
   # Topic Ownerはトピックの基本情報を更新可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   # Topic Ownerはトピックを削除可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_delete_topic?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   # Topic Ownerはトピックメンバーを管理可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_manage_topic_members?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   # Topic Ownerは自分が管理するトピックにページを作成可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    active? && in_same_space?(space_record_id: topic_record.space_id)
   end
 
   # Topic Ownerはページを更新可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:)
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
   # Topic Ownerはドラフトページを更新可能
@@ -80,29 +70,20 @@ class TopicOwnerPolicy < ApplicationPolicy
       return true
     end
 
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
   # Topic Ownerはページをゴミ箱に移動可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
 
-  sig { returns(TopicRecord) }
-  attr_reader :topic_record
-  private :topic_record
-
   # 共通ヘルパーメソッド
-  sig { params(topic_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
-  private def in_same_topic?(topic_record_id:)
-    @topic_record.id == topic_record_id
-  end
-
   sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
   private def in_same_space?(space_record_id:)
     space_member_record.space_id == space_record_id
