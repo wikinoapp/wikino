@@ -59,8 +59,9 @@ class TopicAdminPolicy < ApplicationPolicy
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
     # 公開トピックのページは誰でも閲覧可能
-    topic_record = page_record.topic_record
-    return true if topic_record&.visibility_public?
+    if page_record.topic_record.not_nil!.visibility_public?
+      return true
+    end
 
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
