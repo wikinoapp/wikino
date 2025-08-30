@@ -84,9 +84,9 @@ end
 
 ```ruby
 # マイグレーション
-add_column :pages, :first_image_attachment_id, :uuid, null: true
-add_foreign_key :pages, :attachments, column: :first_image_attachment_id
-add_index :pages, :first_image_attachment_id
+add_column :pages, :featured_image_attachment_id, :uuid, null: true
+add_foreign_key :pages, :attachments, column: :featured_image_attachment_id
+add_index :pages, :featured_image_attachment_id
 ```
 
 ### 3. PageRecordへのメソッド追加
@@ -95,13 +95,13 @@ add_index :pages, :first_image_attachment_id
 
 ```ruby
 # belongs_to関連の追加
-belongs_to :first_image_attachment_record,
+belongs_to :featured_image_attachment_record,
   class_name: "AttachmentRecord",
-  foreign_key: :first_image_attachment_id,
+  foreign_key: :featured_image_attachment_id,
   optional: true
 
-# Markdown本文の1行目から画像IDを抽出
-def extract_first_line_image_id
+# Markdown本文の1行目から画像IDを抽出（featured画像として使用）
+def extract_featured_image_id
   return nil if body.blank?
   
   # 1行目を取得
@@ -115,9 +115,9 @@ def extract_first_line_image_id
   match[1]
 end
 
-# 最初の画像がGIFかどうか判定
-def first_image_is_gif?
-  attachment = first_image_attachment_record
+# featured画像がGIFかどうか判定
+def featured_image_is_gif?
+  attachment = featured_image_attachment_record
   return false unless attachment
   
   filename = attachment.filename
@@ -128,11 +128,11 @@ end
 
 # カード用画像URLを取得
 def card_image_url(expires_in: 1.hour)
-  attachment = first_image_attachment_record
+  attachment = featured_image_attachment_record
   return nil unless attachment
   
   # GIFの場合はオリジナル画像のURLを返す
-  if first_image_is_gif?
+  if featured_image_is_gif?
     attachment.generate_signed_url(space_member_record: nil, expires_in:)
   else
     attachment.thumbnail_url(size: AttachmentThumbnailSize::Card, expires_in:)
@@ -141,11 +141,11 @@ end
 
 # OGP画像URLを取得
 def og_image_url(expires_in: 1.hour)
-  attachment = first_image_attachment_record
+  attachment = featured_image_attachment_record
   return nil unless attachment
   
   # GIFの場合はnilを返す（デフォルトOGP画像を使用）
-  return nil if first_image_is_gif?
+  return nil if featured_image_is_gif?
   
   attachment.thumbnail_url(size: AttachmentThumbnailSize::Og, expires_in:)
 end
@@ -159,26 +159,26 @@ end
 def call
   # ... 既存の処理 ...
   
-  # 1行目の画像IDを抽出
-  first_image_id = page_record.extract_first_line_image_id
+  # 1行目の画像IDを抽出（featured画像として）
+  featured_image_id = page_record.extract_featured_image_id
   
-  if first_image_id
+  if featured_image_id
     # 同じスペースの添付ファイルか確認
     attachment = AttachmentRecord.find_by(
-      id: first_image_id,
+      id: featured_image_id,
       space_id: page_record.space_id
     )
     
     if attachment
-      # first_image_attachment_idを更新
-      page_record.update!(first_image_attachment_id: attachment.id)
+      # featured_image_attachment_idを更新
+      page_record.update!(featured_image_attachment_id: attachment.id)
     else
       # 画像が見つからない場合はnullに設定
-      page_record.update!(first_image_attachment_id: nil)
+      page_record.update!(featured_image_attachment_id: nil)
     end
   else
     # 1行目に画像がない場合はnullに設定
-    page_record.update!(first_image_attachment_id: nil)
+    page_record.update!(featured_image_attachment_id: nil)
   end
 end
 ```
@@ -212,7 +212,7 @@ end
 
 ### フェーズ1: データベーススキーマの更新
 
-- [ ] マイグレーションファイルを作成（`first_image_attachment_id`カラム追加）
+- [ ] マイグレーションファイルを作成（`featured_image_attachment_id`カラム追加）
 - [ ] マイグレーションを実行
 
 ### フェーズ2: バリアント定義の更新
@@ -225,9 +225,9 @@ end
 
 ### フェーズ3: データ取得ロジックの実装
 
-- [ ] PageRecordに`first_image_attachment_record`関連を追加
-- [ ] PageRecordに`extract_first_line_image_id`メソッドを追加
-- [ ] PageRecordに`first_image_is_gif?`メソッドを追加
+- [ ] PageRecordに`featured_image_attachment_record`関連を追加
+- [ ] PageRecordに`extract_featured_image_id`メソッドを追加
+- [ ] PageRecordに`featured_image_is_gif?`メソッドを追加
 - [ ] PageRecordに`card_image_url`メソッドを追加
 - [ ] PageRecordに`og_image_url`メソッドを追加
 - [ ] テストを作成（spec/records/page_record_spec.rb）
@@ -254,7 +254,7 @@ end
 
 ### フェーズ7: パフォーマンス最適化
 
-- [ ] N+1問題の確認と対策（first_image_attachment_recordのpreload）
+- [ ] N+1問題の確認と対策（featured_image_attachment_recordのpreload）
 - [ ] ページ一覧表示時のクエリ最適化
 - [ ] キャッシュの検討（必要に応じて）
 
