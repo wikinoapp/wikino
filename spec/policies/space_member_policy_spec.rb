@@ -3,7 +3,7 @@
 
 require "rails_helper"
 
-RSpec.describe SpaceRegularMemberPolicy do
+RSpec.describe SpaceMemberPolicy do
   it "Memberロールで初期化できること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
@@ -14,9 +14,9 @@ RSpec.describe SpaceRegularMemberPolicy do
       role: SpaceMemberRole::Member.serialize
     )
 
-    policy = SpaceRegularMemberPolicy.new(user_record:, space_member_record:)
+    policy = SpaceMemberPolicy.new(user_record:, space_member_record:)
 
-    expect(policy).to be_instance_of(SpaceRegularMemberPolicy)
+    expect(policy).to be_instance_of(SpaceMemberPolicy)
   end
 
   describe "#can_update_space?" do

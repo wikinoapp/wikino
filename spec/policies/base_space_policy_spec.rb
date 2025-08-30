@@ -3,12 +3,8 @@
 
 require "rails_helper"
 
-# BaseSpaceMemberPolicyは抽象クラスなので、テスト用の具象クラスを定義
-class TestMemberPolicy < BaseSpaceMemberPolicy
-  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic_record:)
-    true
-  end
+# BaseSpacePolicyは抽象クラスなので、テスト用の具象クラスを定義
+class TestMemberPolicy < BaseSpacePolicy
 
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
@@ -20,30 +16,6 @@ class TestMemberPolicy < BaseSpaceMemberPolicy
     true
   end
 
-  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_page?(topic_record:)
-    true
-  end
-
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_page?(page_record:)
-    true
-  end
-
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_draft_page?(page_record:)
-    true
-  end
-
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_show_page?(page_record:)
-    true
-  end
-
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page_record:)
-    true
-  end
 
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
@@ -60,15 +32,6 @@ class TestMemberPolicy < BaseSpaceMemberPolicy
     true
   end
 
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_view_attachment?(attachment_record:)
-    true
-  end
-
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_delete_attachment?(attachment_record:)
-    true
-  end
 
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_attachments?(space_record:)
@@ -90,18 +53,18 @@ class TestMemberPolicy < BaseSpaceMemberPolicy
     T.cast(PageRecord.none, PageRecord::PrivateAssociationRelation)
   end
 
-  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_delete_topic?(topic_record:)
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_delete_space?(space_record:)
     false
   end
 
-  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_manage_topic_members?(topic_record:)
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_space_members?(space_record:)
     false
   end
 end
 
-RSpec.describe BaseSpaceMemberPolicy do
+RSpec.describe BaseSpacePolicy do
   it "user_recordとspace_member_recordを受け取って初期化できること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)

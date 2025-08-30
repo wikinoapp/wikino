@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-# Space Regular Memberロール専用のPolicyクラス
+# Space Memberロール専用のPolicyクラス
 # Space関連の基本操作権限のみを持つ
-class SpaceRegularMemberPolicy < BaseSpaceMemberPolicy
+class SpaceMemberPolicy < BaseSpacePolicy
   # Space権限の実装
 
   # Memberはスペース設定を変更不可

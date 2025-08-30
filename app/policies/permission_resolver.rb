@@ -57,7 +57,7 @@ class PermissionResolver
 
     # 3. Space権限をチェック
     if space_member_record
-      return SpaceRegularMemberPolicy.new(
+      return SpaceMemberPolicy.new(
         user_record: user_record.not_nil!,
         space_member_record: space_member_record.not_nil!
       )
@@ -101,7 +101,7 @@ class PermissionResolver
   sig { returns(T::Wikino::PolicyInstance) }
   private def build_topic_policy
     # Topic Adminの場合
-    if topic_member_record&.role == TopicMemberRole::Admin.serialize && space_member_record
+    if topic_member_record&.role == TopicMemberRole::Admin.serialize && space_member_record && topic_member_record
       # Topic Admin専用のポリシーを使用
       TopicAdminPolicy.new(
         user_record: user_record,
@@ -110,7 +110,7 @@ class PermissionResolver
       )
     elsif space_member_record
       # Topic Memberの場合
-      SpaceRegularMemberPolicy.new(
+      SpaceMemberPolicy.new(
         user_record: user_record,
         space_member_record: space_member_record
       )

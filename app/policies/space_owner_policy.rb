@@ -3,7 +3,7 @@
 
 # Space Ownerロール専用のPolicyクラス
 # Space関連の全権限を持つ
-class SpaceOwnerPolicy < BaseSpaceMemberPolicy
+class SpaceOwnerPolicy < BaseSpacePolicy
   # Space権限の実装
 
   # Ownerはスペース設定を変更可能

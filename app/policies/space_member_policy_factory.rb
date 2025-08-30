@@ -22,7 +22,7 @@ class SpaceMemberPolicyFactory
     when SpaceMemberRole::Owner.serialize
       SpaceOwnerPolicy.new(user_record:, space_member_record:)
     when SpaceMemberRole::Member.serialize
-      SpaceRegularMemberPolicy.new(user_record:, space_member_record:)
+      SpaceMemberPolicy.new(user_record:, space_member_record:)
     else
       raise ArgumentError, "Unknown role: #{space_member_record.role}"
     end
