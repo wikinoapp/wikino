@@ -81,23 +81,6 @@ class TopicMemberPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
-  # Topic Memberはファイルを閲覧可能
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_view_attachment?(attachment_record:)
-    # 公開ページで使用されているファイルは誰でも閲覧可能
-    return true if attachment_record.all_referencing_pages_public?
-
-    active? && in_same_space?(space_record_id: attachment_record.space_id)
-  end
-
-  # Topic Memberは自分がアップロードしたファイルのみ削除可能
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_delete_attachment?(attachment_record:)
-    active? &&
-      in_same_space?(space_record_id: attachment_record.space_id) &&
-      owns_attachment?(attachment_record:)
-  end
-
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record
@@ -120,11 +103,6 @@ class TopicMemberPolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   private def active?
     space_member_record.active?
-  end
-
-  sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  private def owns_attachment?(attachment_record:)
-    attachment_record.attached_space_member_id == space_member_record.id
   end
 
   sig { returns(T::Boolean) }

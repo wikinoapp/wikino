@@ -41,13 +41,4 @@ module TopicPermissions
   sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page_record:)
   end
-
-  # 添付ファイル権限（Topic/Pageレベル）
-  sig { abstract.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_view_attachment?(attachment_record:)
-  end
-
-  sig { abstract.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_delete_attachment?(attachment_record:)
-  end
 end

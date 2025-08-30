@@ -82,21 +82,6 @@ class TopicAdminPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
-  # Topic Adminはファイルを閲覧可能
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_view_attachment?(attachment_record:)
-    # 公開ページで使用されているファイルは誰でも閲覧可能
-    return true if attachment_record.all_referencing_pages_public?
-
-    active? && in_same_space?(space_record_id: attachment_record.space_id)
-  end
-
-  # Topic AdminはTopic内のファイルを削除可能
-  sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
-  def can_delete_attachment?(attachment_record:)
-    active? && in_same_space?(space_record_id: attachment_record.space_id)
-  end
-
   # Topic Admin固有のメソッド（Space権限は扱わない）
   # Space関連のメソッドはテスト目的で最小限の実装のみ提供
   sig { params(space_record: SpaceRecord).returns(T::Boolean) }
