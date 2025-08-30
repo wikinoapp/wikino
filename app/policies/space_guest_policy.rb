@@ -110,11 +110,6 @@ class SpaceGuestPolicy < ApplicationPolicy
   end
 
   sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    false
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
     # 公開トピックのページのみ閲覧可能
     page_record.topic_record!.visibility_public?

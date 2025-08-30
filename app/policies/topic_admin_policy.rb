@@ -66,12 +66,6 @@ class TopicAdminPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
-  # Topic Adminはページを削除可能
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
-  end
-
   # Topic Adminはページをゴミ箱に移動可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)

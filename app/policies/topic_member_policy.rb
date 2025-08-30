@@ -65,12 +65,6 @@ class TopicMemberPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
-  # Topic Memberはページを削除不可（ゴミ箱移動は可能）
-  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-    false # 完全削除は不可
-  end
-
   # Topic Memberはページをゴミ箱に移動可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)

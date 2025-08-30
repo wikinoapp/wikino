@@ -30,10 +30,6 @@ module TopicPermissions
   end
 
   sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
-  def can_delete_page?(page_record:)
-  end
-
-  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
   end
 
