@@ -29,18 +29,52 @@
 
 ### 1. AttachmentRecordのバリアント定義更新
 
-`AttachmentRecord#thumbnail_variant`メソッドを更新して、2種類のバリアントのみに絞る：
+T::Enumでサムネイルサイズを定義：
 
 ```ruby
-variant_options = case size
-when :card
-  # ページ一覧のカード用（高解像度対応で400x400px）
-  {resize_to_limit: [400, 400]}
-when :og
-  # OGP画像用（推奨: 1200x630）
-  {resize_to_fit: [1200, 630]}
-else
-  {resize_to_limit: [400, 400]}
+# app/models/attachment_thumbnail_size.rb
+class AttachmentThumbnailSize < T::Enum
+  enums do
+    Card = new('card')  # ページ一覧のカード用
+    Og = new('og')      # OGP画像用
+  end
+end
+```
+
+`AttachmentRecord#thumbnail_variant`メソッドを更新：
+
+```ruby
+sig { params(size: AttachmentThumbnailSize).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
+def thumbnail_variant(size:)
+  blob = blob_record
+  return nil unless blob
+  return nil unless blob.image?
+  return nil unless blob.variable?
+
+  variant_options = case size
+  when AttachmentThumbnailSize::Card
+    # ページ一覧のカード用（高解像度対応で400x400px）
+    {resize_to_limit: [400, 400]}
+  when AttachmentThumbnailSize::Og
+    # OGP画像用（推奨: 1200x630）
+    {resize_to_fit: [1200, 630]}
+  else
+    T.absurd(size)
+  end
+
+  blob.variant(**variant_options)
+end
+
+# サムネイルURLを取得
+sig { params(size: AttachmentThumbnailSize, expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+def thumbnail_url(size:, expires_in: 1.hour)
+  variant = thumbnail_variant(size:)
+  return nil unless variant
+
+  variant.processed.url(expires_in:)
+rescue => e
+  Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.class.name}: #{e.message}")
+  nil
 end
 ```
 
@@ -101,7 +135,7 @@ def card_image_url(expires_in: 1.hour)
   if first_image_is_gif?
     attachment.generate_signed_url(space_member_record: nil, expires_in:)
   else
-    attachment.thumbnail_url(size: :card, expires_in:)
+    attachment.thumbnail_url(size: AttachmentThumbnailSize::Card, expires_in:)
   end
 end
 
@@ -113,7 +147,7 @@ def og_image_url(expires_in: 1.hour)
   # GIFの場合はnilを返す（デフォルトOGP画像を使用）
   return nil if first_image_is_gif?
   
-  attachment.thumbnail_url(size: :og, expires_in:)
+  attachment.thumbnail_url(size: AttachmentThumbnailSize::Og, expires_in:)
 end
 ```
 
@@ -183,7 +217,9 @@ end
 
 ### フェーズ2: バリアント定義の更新
 
-- [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（`:card`と`:og`のみに）
+- [ ] `AttachmentThumbnailSize`クラスを作成（T::Enumを使用）
+- [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（型安全な実装）
+- [ ] AttachmentRecordの`thumbnail_url`メソッドを更新（型安全な実装）
 - [ ] `generate_thumbnails`メソッドは削除または無効化（事前生成は行わない）
 - [ ] テストを作成（spec/records/attachment_record_spec.rb）
 
