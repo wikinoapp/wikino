@@ -179,25 +179,11 @@ class SpaceOwnerPolicy < ApplicationPolicy
     # user_recordが必須
     return nil unless user_record
 
-    user = user_record.not_nil!
-
-    # TopicMemberRecordを取得
-    topic_member_record = user.topic_member_records.find_by(topic_record:)
-
-    if topic_member_record
-      # 既存のTopicMemberRecordがある場合はTopicAdminPolicyを使用
-      TopicAdminPolicy.new(
-        user_record: user,
-        space_member_record:,
-        topic_member_record:
-      )
-    else
-      # Space OwnerはTopicMemberRecordがなくてもTopicOwnerPolicyで全権限を持つ
-      TopicOwnerPolicy.new(
-        user_record: user,
-        space_member_record:,
-        topic_record:
-      )
-    end
+    # Space Ownerは常にTopicの全権限を持つため、TopicOwnerPolicyを返す
+    TopicOwnerPolicy.new(
+      user_record: user_record.not_nil!,
+      space_member_record:,
+      topic_record:
+    )
   end
 end
