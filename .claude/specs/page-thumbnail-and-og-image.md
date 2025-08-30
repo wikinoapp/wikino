@@ -22,7 +22,6 @@
 - [ ] 各ページのog:imageメタタグが適切に設定される
 - [ ] 画像がない場合の適切なフォールバック処理
 - [ ] アニメーションGIFの特別処理（サムネイル生成せず、元画像を使用）
-- [ ] パフォーマンスを考慮したサムネイル事前生成
 - [ ] pagesテーブルに最初の画像IDを保存してパフォーマンス向上
 - [ ] 公開ページのOGP画像は認証なしでアクセス可能
 
@@ -139,11 +138,6 @@ def call
     if attachment
       # first_image_attachment_idを更新
       page_record.update!(first_image_attachment_id: attachment.id)
-      
-      # GIFでない場合のみサムネイル生成
-      unless attachment.filename&.downcase&.end_with?('.gif')
-        Attachments::GenerateThumbnailsJob.perform_later(attachment.id)
-      end
     else
       # 画像が見つからない場合はnullに設定
       page_record.update!(first_image_attachment_id: nil)
@@ -190,7 +184,7 @@ end
 ### フェーズ2: バリアント定義の更新
 
 - [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（`:card`と`:og`のみに）
-- [ ] `generate_thumbnails`メソッドを更新（`:card`のみ事前生成）
+- [ ] `generate_thumbnails`メソッドは削除または無効化（事前生成は行わない）
 - [ ] テストを作成（spec/records/attachment_record_spec.rb）
 
 ### フェーズ3: データ取得ロジックの実装
@@ -202,9 +196,8 @@ end
 - [ ] PageRecordに`og_image_url`メソッドを追加
 - [ ] テストを作成（spec/records/page_record_spec.rb）
 
-### フェーズ4: サムネイル生成処理の実装
+### フェーズ4: ページ更新時の処理実装
 
-- [ ] `Attachments::GenerateThumbnailsJob`を作成（既存のものがあれば活用）
 - [ ] `Pages::CreateService`で1行目画像の検出と保存処理を追加
 - [ ] `Pages::UpdateService`で1行目画像の検出と保存処理を追加
 - [ ] テストを作成
@@ -225,8 +218,8 @@ end
 
 ### フェーズ7: パフォーマンス最適化
 
-- [ ] サムネイル生成の非同期処理を確認
-- [ ] N+1問題の確認と対策
+- [ ] N+1問題の確認と対策（first_image_attachment_recordのpreload）
+- [ ] ページ一覧表示時のクエリ最適化
 - [ ] キャッシュの検討（必要に応じて）
 
 ## 注意事項
@@ -239,9 +232,9 @@ end
 
 ### パフォーマンス
 
-- サムネイル生成は非同期で実行
-- 頻繁に使用されるサイズ（:card）は事前生成
-- OGP用（:og）は必要時に生成
+- Active Storageのvariant機能により初回表示時に自動生成
+- 一度生成されたサムネイルはキャッシュされる
+- pagesテーブルに画像IDを保存することでページ一覧表示を高速化
 - Retinaディスプレイ対応（2x解像度を考慮）
 
 ### エラーハンドリング
