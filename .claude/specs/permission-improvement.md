@@ -1,5 +1,31 @@
 # 権限管理の改善
 
+## 実装状況サマリー（2025年8月30日）
+
+### 完了した主な変更
+
+1. **権限定義の簡素化**
+   - `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除
+   - 権限チェックロジックをPolicyクラスに一元化
+
+2. **Policyクラスの分離**
+   - `BaseSpacePolicy`を削除し、よりシンプルな階層構造に
+   - `SpaceOwnerPolicy`、`SpaceMemberPolicy`、`SpaceGuestPolicy`に分離
+   - 各ロールの権限が独立したクラスで管理される
+
+3. **Factory Pattern の導入**
+   - `SpaceMemberPolicyFactory`を`SpacePolicyFactory`にリネーム
+   - ロールに応じた適切なPolicyインスタンスを生成
+
+4. **PermissionResolverの削除**
+   - `SpacePolicyFactory`と機能が重複していたため削除
+   - よりシンプルな設計を実現
+
+5. **責務の明確化**
+   - `SpacePermissions`モジュール: Space関連の権限定義
+   - `TopicPermissions`モジュール: Topic/Page関連の権限定義
+   - 各Policyクラスが必要なモジュールのみをinclude
+
 ## 現在の権限まわりの処理
 
 ### アーキテクチャ概要
@@ -1195,9 +1221,10 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - TopicMemberRecordの役割を編集権限に特化
   - PrivateトピックのWikino独自仕様の文書化
 
-- [x] 権限リゾルバーの実装
-  - `PermissionResolver`クラスの作成
-  - Space Owner > Topic権限 > Space Member > Guestの優先順位実装
+- [x] ~~権限リゾルバーの実装~~
+  - ~~`PermissionResolver`クラスの作成~~
+  - ~~Space Owner > Topic権限 > Space Member > Guestの優先順位実装~~
+  - **削除済み**: `PermissionResolver`は`SpacePolicyFactory`と重複していたため削除
 
 ### Phase 3: コントローラーの段階的移行
 
@@ -1251,7 +1278,10 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - 旧`SpaceMemberPolicy`の削除
   - 不要な中間層コードの整理
 
-### Phase 4: PermissionResolverの活用
+### Phase 4: ~~PermissionResolverの活用~~ SpacePolicyFactoryへの統合
+
+**注記**: PermissionResolverは`SpacePolicyFactory`と機能が重複していたため削除しました。
+`SpacePolicyFactory`（旧`SpaceMemberPolicyFactory`）に統一することで、よりシンプルな設計になりました。
 
 #### Topic権限管理の本格導入
 
@@ -1281,10 +1311,11 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `GuestPolicy`: 全て不可
   - 全メソッドのテストを作成済み
 
-- [x] PermissionResolverのテスト作成
-  - 権限優先順位のテスト
-  - Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認
-  - Topic指定有無による挙動の違いをテスト
+- [x] ~~PermissionResolverのテスト作成~~
+  - ~~権限優先順位のテスト~~
+  - ~~Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認~~
+  - ~~Topic指定有無による挙動の違いをテスト~~
+  - **削除済み**: PermissionResolverと共にテストも削除
 
 - [ ] Topic Admin専用権限の実装
   - TopicAdminPolicyクラスでの管理権限定義
@@ -1391,23 +1422,25 @@ end
   - TopicMemberPolicy: 未実装（次フェーズ）
   - TopicGuestPolicy: 未実装（次フェーズ）
 
-- [x] PermissionResolverの更新
-  - SpaceMemberPolicyをSpaceRegularMemberPolicyに変更
-  - SpaceMemberPolicyFactoryも同様に更新
+- [x] ~~PermissionResolverの更新~~
+  - ~~SpaceMemberPolicyをSpaceRegularMemberPolicyに変更~~
+  - ~~SpaceMemberPolicyFactoryも同様に更新~~
+  - **削除済み**: PermissionResolverを削除し、SpacePolicyFactoryに統一
 
-- [ ] 移行戦略の決定
-  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
+- [x] 移行戦略の決定
+  - ~~SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針~~
+  - SpacePolicyFactoryに統一（PermissionResolverは削除済み）
   - Topic関連の操作を行うコントローラーから優先的に移行
   - Space単独の操作は既存のFactoryパターンを継続使用
 
 - [ ] コントローラーヘルパーメソッドの作成
   - `current_space_record`の取得メソッド
   - `current_topic_record`の取得メソッド（該当する場合）
-  - PermissionResolverインスタンス生成のヘルパー
+  - SpacePolicyFactoryインスタンス生成のヘルパー
 
 #### Topic関連コントローラーの移行
 
-**Topic操作を含むコントローラー（PermissionResolver対象）:**
+**Topic操作を含むコントローラー（SpacePolicyFactory対象）:**
 
 - [ ] pages/show_controller.rb - ページ表示（Topic権限チェック）
 - [ ] pages/edit_controller.rb - ページ編集（Topic編集権限）

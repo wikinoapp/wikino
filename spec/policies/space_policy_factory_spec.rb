@@ -3,12 +3,12 @@
 
 require "rails_helper"
 
-RSpec.describe SpaceMemberPolicyFactory do
+RSpec.describe SpacePolicyFactory do
   describe ".build" do
     it "space_member_recordがnilの場合はGuestPolicyを返すこと" do
       user_record = FactoryBot.create(:user_record)
 
-      policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record: nil)
+      policy = SpacePolicyFactory.build(user_record:, space_member_record: nil)
 
       expect(policy).to be_instance_of(SpaceGuestPolicy)
     end
@@ -23,7 +23,7 @@ RSpec.describe SpaceMemberPolicyFactory do
         role: SpaceMemberRole::Owner.serialize
       )
 
-      policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record:)
+      policy = SpacePolicyFactory.build(user_record:, space_member_record:)
 
       expect(policy).to be_instance_of(SpaceOwnerPolicy)
     end
@@ -38,13 +38,13 @@ RSpec.describe SpaceMemberPolicyFactory do
         role: SpaceMemberRole::Member.serialize
       )
 
-      policy = SpaceMemberPolicyFactory.build(user_record:, space_member_record:)
+      policy = SpacePolicyFactory.build(user_record:, space_member_record:)
 
       expect(policy).to be_instance_of(SpaceMemberPolicy)
     end
 
     it "user_recordがnilでもGuestPolicyを返すこと" do
-      policy = SpaceMemberPolicyFactory.build(user_record: nil, space_member_record: nil)
+      policy = SpacePolicyFactory.build(user_record: nil, space_member_record: nil)
 
       expect(policy).to be_instance_of(SpaceGuestPolicy)
     end
@@ -63,7 +63,7 @@ RSpec.describe SpaceMemberPolicyFactory do
       allow(space_member_record).to receive(:role).and_return("unknown_role")
 
       expect do
-        SpaceMemberPolicyFactory.build(user_record:, space_member_record:)
+        SpacePolicyFactory.build(user_record:, space_member_record:)
       end.to raise_error(ArgumentError, /Unknown role: unknown_role/)
     end
 
@@ -78,7 +78,7 @@ RSpec.describe SpaceMemberPolicyFactory do
         role: SpaceMemberRole::Owner.serialize
       )
 
-      owner_policy = SpaceMemberPolicyFactory.build(
+      owner_policy = SpacePolicyFactory.build(
         user_record: owner_user_record,
         space_member_record: owner_space_member_record
       )
@@ -95,7 +95,7 @@ RSpec.describe SpaceMemberPolicyFactory do
         role: SpaceMemberRole::Member.serialize
       )
 
-      member_policy = SpaceMemberPolicyFactory.build(
+      member_policy = SpacePolicyFactory.build(
         user_record: member_user_record,
         space_member_record: member_space_member_record
       )
@@ -104,7 +104,7 @@ RSpec.describe SpaceMemberPolicyFactory do
       expect(member_policy.can_update_space?(space_record:)).to be(false)
 
       # Guestのケース
-      guest_policy = SpaceMemberPolicyFactory.build(
+      guest_policy = SpacePolicyFactory.build(
         user_record: nil,
         space_member_record: nil
       )

@@ -1,8 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-# ロールに応じた適切なPolicyクラスを生成するFactory
-class SpaceMemberPolicyFactory
+# ロールに応じた適切なSpace Policyクラスを生成するFactory
+class SpacePolicyFactory
   extend T::Sig
 
   sig do

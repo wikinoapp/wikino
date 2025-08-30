@@ -29,7 +29,7 @@ module Attachments
 
           space_record = attachment_record.space_record.not_nil!
           space_member_record = current_user_record&.space_member_record(space_record:)
-          policy = SpaceMemberPolicyFactory.build(user_record: current_user_record, space_member_record:)
+          policy = SpacePolicyFactory.build(user_record: current_user_record, space_member_record:)
 
           # 権限チェック
           next unless policy.can_view_attachment?(attachment_record:)
