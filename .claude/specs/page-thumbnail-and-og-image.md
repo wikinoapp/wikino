@@ -7,7 +7,7 @@
 1. **ページ一覧のカード表示**
    - ページ一覧（トピック表示、スペース表示など）のカードコンポーネントにサムネイル画像を表示
    - Scrapboxのようなカード表示（画像を左側に配置、テキストを右側に配置）
-   - 高解像度ディスプレイ対応のため、`:medium`サイズ（400x400px）を使用
+   - 高解像度ディスプレイ対応のため、`:card`サイズ（400x400px）を使用
    - CSSで表示サイズは調整（実際の表示は100-150px程度）
 
 2. **OGP画像（og:image）**
@@ -26,20 +26,38 @@
 
 ## 修正方針
 
-### 1. PageRecordへのメソッド追加
+### 1. AttachmentRecordのバリアント定義更新
+
+`AttachmentRecord#thumbnail_variant`メソッドを更新して、2種類のバリアントのみに絞る：
+
+```ruby
+variant_options = case size
+when :card
+  # ページ一覧のカード用（高解像度対応で400x400px）
+  {resize_to_limit: [400, 400]}
+when :og
+  # OGP画像用（推奨: 1200x630）
+  {resize_to_fit: [1200, 630]}
+else
+  {resize_to_limit: [400, 400]}
+end
+```
+
+### 2. PageRecordへのメソッド追加
 
 `PageRecord`に以下のメソッドを追加：
 
 ```ruby
 # ページ本文の最初の添付画像を取得
 def first_image_attachment
-  # body_htmlから最初のimg要素のattachment-idを抽出
+  # bodyから最初の画像添付ファイルのIDを抽出
+  # Markdown形式: ![alt text](/attachments/attachment_id)
   # page_attachment_reference_recordsと結合して取得
 end
 
 # カード用サムネイルURLを取得
 def card_thumbnail_url(expires_in: 1.hour)
-  first_image_attachment&.thumbnail_url(size: :medium, expires_in:)
+  first_image_attachment&.thumbnail_url(size: :card, expires_in:)
 end
 
 # OGP画像URLを取得
@@ -48,15 +66,16 @@ def og_image_url(expires_in: 1.hour)
 end
 ```
 
-### 2. ページ作成・更新時の処理
+### 3. ページ作成・更新時の処理
 
 `Pages::UpdateService`および`Pages::CreateService`で：
 
 1. ページ保存後に最初の画像を検出
 2. 画像が見つかった場合、サムネイル事前生成ジョブをキューに追加
-3. `:medium`（カード表示用）と`:og`（OGP用）サイズのサムネイルを生成
+3. `:card`（カード表示用）サイズのサムネイルを生成
+4. `:og`（OGP用）サイズは必要になったタイミングで生成
 
-### 3. ページ一覧カードの更新
+### 4. ページ一覧カードの更新
 
 `CardLinks::PageComponent`を更新：
 
@@ -65,7 +84,7 @@ end
 3. 画像がない場合は既存のテキストのみ表示を維持
 4. レスポンシブデザインに対応（モバイルでは画像サイズを調整）
 
-### 4. OGP設定の更新
+### 5. OGP設定の更新
 
 `Pages::ShowView`を更新：
 
@@ -73,7 +92,7 @@ end
 2. `set_meta_tags`のog:imageに設定
 3. 画像がない場合はデフォルトのOGP画像を使用
 
-### 5. 公開ページのOGP画像アクセス
+### 6. 公開ページのOGP画像アクセス
 
 `Attachments::ShowController`を更新：
 
@@ -82,35 +101,41 @@ end
 
 ## タスクリスト
 
-### フェーズ1: データ取得ロジックの実装
+### フェーズ1: バリアント定義の更新
+
+- [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（`:card`と`:og`のみに）
+- [ ] `generate_thumbnails`メソッドを更新（`:card`のみ事前生成）
+- [ ] テストを作成（spec/records/attachment_record_spec.rb）
+
+### フェーズ2: データ取得ロジックの実装
 
 - [ ] PageRecordに`first_image_attachment`メソッドを追加
 - [ ] PageRecordに`card_thumbnail_url`メソッドを追加
 - [ ] PageRecordに`og_image_url`メソッドを追加
 - [ ] テストを作成（spec/records/page_record_spec.rb）
 
-### フェーズ2: サムネイル生成処理の実装
+### フェーズ3: サムネイル生成処理の実装
 
 - [ ] `Attachments::GenerateThumbnailsJob`を作成（既存のものがあれば活用）
 - [ ] `Pages::CreateService`でサムネイル生成ジョブを追加
 - [ ] `Pages::UpdateService`でサムネイル生成ジョブを追加
 - [ ] テストを作成
 
-### フェーズ3: UI表示の実装
+### フェーズ4: UI表示の実装
 
 - [ ] `CardLinks::PageComponent`にサムネイル表示を追加
 - [ ] コンポーネントのHTMLテンプレートを更新
 - [ ] CSSでレイアウト調整（画像とテキストのバランス）
 - [ ] システムテストを作成
 
-### フェーズ4: OGP設定の実装
+### フェーズ5: OGP設定の実装
 
 - [ ] `Pages::ShowView`でog:imageメタタグを設定
 - [ ] `ApplicationView`のdefault_meta_tagsメソッドを調整（必要に応じて）
 - [ ] 公開ページの画像アクセス権限を調整
 - [ ] テストを作成
 
-### フェーズ5: パフォーマンス最適化
+### フェーズ6: パフォーマンス最適化
 
 - [ ] サムネイル生成の非同期処理を確認
 - [ ] N+1問題の確認と対策
@@ -127,7 +152,7 @@ end
 ### パフォーマンス
 
 - サムネイル生成は非同期で実行
-- 頻繁に使用されるサイズ（:medium）は事前生成
+- 頻繁に使用されるサイズ（:card）は事前生成
 - OGP用（:og）は必要時に生成
 - Retinaディスプレイ対応（2x解像度を考慮）
 
