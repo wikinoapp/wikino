@@ -4,11 +4,10 @@
 # ゲスト（非メンバー）用のPolicyクラス
 # 公開コンテンツのみ閲覧可能
 class SpaceGuestPolicy < ApplicationPolicy
+  extend T::Helpers
+
   include SpacePermissions
   include TopicPermissions
-
-  extend T::Sig
-  extend T::Helpers
 
   sig { params(user_record: T.nilable(UserRecord)).void }
   def initialize(user_record:)
@@ -151,8 +150,7 @@ class SpaceGuestPolicy < ApplicationPolicy
     false
   end
 
-  private
-
   sig { returns(T.nilable(UserRecord)) }
   attr_reader :user_record
+  private :user_record
 end

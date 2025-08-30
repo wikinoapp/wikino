@@ -4,7 +4,6 @@
 # Topic Admin専用のポリシークラス
 # TopicのAdmin権限を持つユーザーの権限を定義
 class TopicAdminPolicy < ApplicationPolicy
-  extend T::Sig
   include TopicPermissions
 
   sig do

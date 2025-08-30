@@ -4,9 +4,10 @@
 # 権限チェックの基底クラス
 # SpaceメンバーのPolicyクラスで共通して使用するロジックを提供
 class BaseSpacePolicy < ApplicationPolicy
-  extend T::Sig
   extend T::Helpers
+
   include SpacePermissions
+
   abstract!
 
   sig { params(user_record: T.nilable(UserRecord), space_member_record: T.nilable(SpaceMemberRecord)).void }
@@ -112,13 +113,12 @@ class BaseSpacePolicy < ApplicationPolicy
     false
   end
 
-  private
-
   sig { returns(T.nilable(SpaceMemberRecord)) }
   attr_reader :space_member_record
+  private :space_member_record
 
   sig { returns(SpaceMemberRecord) }
-  def space_member_record!
+  private def space_member_record!
     space_member_record.not_nil!
   end
 end
