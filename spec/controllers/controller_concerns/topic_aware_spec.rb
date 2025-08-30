@@ -4,14 +4,12 @@
 require "rails_helper"
 
 RSpec.describe ControllerConcerns::TopicAware do
-  # テスト用のコントローラークラス
-  class TestController < ApplicationController
-    include ControllerConcerns::Authenticatable
-    include ControllerConcerns::TopicAware
-  end
-
   it "ヘルパーメソッドが使用できること" do
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
 
     # TopicAwareのメソッドが定義されていること
     expect(controller).to respond_to(:current_topic_member_record)
@@ -34,7 +32,11 @@ RSpec.describe ControllerConcerns::TopicAware do
       space_member_record:,
       topic_record:)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     result = controller.current_topic_member_record(topic_record:)
@@ -50,7 +52,11 @@ RSpec.describe ControllerConcerns::TopicAware do
       space_record:,
       role: SpaceMemberRole::Owner.serialize)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.topic_policy_for(topic_record:)
@@ -70,7 +76,11 @@ RSpec.describe ControllerConcerns::TopicAware do
       topic_record:,
       role: TopicMemberRole::Admin.serialize)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.topic_policy_for(topic_record:)
@@ -81,7 +91,11 @@ RSpec.describe ControllerConcerns::TopicAware do
     space_record = FactoryBot.create(:space_record, identifier: "test-space")
     topic_record = FactoryBot.create(:topic_record, space_record:, number: 1)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:params).and_return({
       space_identifier: "test-space",
       topic_number: "1"  # Topicはnumberで識別される

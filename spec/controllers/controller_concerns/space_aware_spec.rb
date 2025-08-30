@@ -4,14 +4,12 @@
 require "rails_helper"
 
 RSpec.describe ControllerConcerns::SpaceAware do
-  # テスト用のコントローラークラス
-  class TestController < ApplicationController
-    include ControllerConcerns::Authenticatable
-    include ControllerConcerns::SpaceAware
-  end
-
   it "ヘルパーメソッドが使用できること" do
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
+    end
+    controller = controller_class.new
 
     # current_space_member_recordメソッドが定義されていること
     expect(controller).to respond_to(:current_space_member_record)
@@ -25,7 +23,11 @@ RSpec.describe ControllerConcerns::SpaceAware do
     space_record = FactoryBot.create(:space_record)
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     result = controller.current_space_member_record(space_record:)
@@ -40,7 +42,11 @@ RSpec.describe ControllerConcerns::SpaceAware do
       space_record:,
       role: SpaceMemberRole::Owner.serialize)
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.space_policy_for(space_record:)
@@ -50,7 +56,11 @@ RSpec.describe ControllerConcerns::SpaceAware do
   it "current_space_recordがパラメータからSpaceレコードを取得すること" do
     space_record = FactoryBot.create(:space_record, identifier: "test-space")
 
-    controller = TestController.new
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
+    end
+    controller = controller_class.new
     allow(controller).to receive(:params).and_return({space_identifier: "test-space"})
 
     result = controller.current_space_record
