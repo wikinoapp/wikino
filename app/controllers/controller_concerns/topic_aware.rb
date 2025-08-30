@@ -42,18 +42,14 @@ module ControllerConcerns
     end
 
     # Topic用のPolicyインスタンスを取得
-    # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出し、
-    # nilの場合はSpacePolicyInstanceをそのまま返す
-    sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicContextPolicyInstance) }
+    # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出す
+    sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
     def topic_policy_for(topic_record:)
       space_record = topic_record.space_record.not_nil!
       space_policy = space_policy_for(space_record:)
 
       # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出す
-      topic_policy = space_policy.topic_policy_for(topic_record:)
-
-      # nilの場合はSpacePolicyをそのまま使用
-      topic_policy || space_policy
+      space_policy.topic_policy_for(topic_record:)
     end
   end
 end
