@@ -12,6 +12,11 @@ class PageRecord < ApplicationRecord
 
   belongs_to :topic_record, foreign_key: :topic_id
   belongs_to :space_record, foreign_key: :space_id
+  belongs_to :featured_image_attachment_record,
+    class_name: "AttachmentRecord",
+    foreign_key: :featured_image_attachment_id,
+    optional: true
+
   has_many :draft_page_records,
     dependent: :restrict_with_exception,
     foreign_key: :page_id,
@@ -307,11 +312,6 @@ class PageRecord < ApplicationRecord
     # 重複を削除
     attachment_ids.uniq
   end
-
-  belongs_to :featured_image_attachment_record,
-    class_name: "AttachmentRecord",
-    foreign_key: :featured_image_attachment_id,
-    optional: true
 
   # Markdown本文の1行目から画像IDを抽出（featured画像として使用）
   sig { returns(T.nilable(String)) }
