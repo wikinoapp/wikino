@@ -120,11 +120,6 @@ class SpaceGuestPolicy < ApplicationPolicy
     false
   end
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_draft_page?(topic_record:)
-    false
-  end
-
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page_record:)
     false

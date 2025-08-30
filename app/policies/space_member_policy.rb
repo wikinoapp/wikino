@@ -133,13 +133,6 @@ class SpaceMemberPolicy < ApplicationPolicy
       space_member_record.topic_records.where(id: page_record.topic_id).exists?
   end
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_draft_page?(topic_record:)
-    active? &&
-      in_same_space?(space_record_id: topic_record.space_id) &&
-      space_member_record.topic_records.where(id: topic_record.id).exists?
-  end
-
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page_record:)
     active? &&

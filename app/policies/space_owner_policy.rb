@@ -125,11 +125,6 @@ class SpaceOwnerPolicy < ApplicationPolicy
     active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_draft_page?(topic_record:)
-    active? && in_same_space?(space_record_id: topic_record.space_id)
-  end
-
   sig { params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_draft_page?(page_record:)
     active? && in_same_space?(space_record_id: page_record.space_id)

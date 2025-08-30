@@ -71,12 +71,6 @@ class TopicMemberPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
-  # Topic Memberはドラフトページを作成可能
-  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_draft_page?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
-  end
-
   # Topic Memberはファイルを閲覧可能
   sig { override.params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
