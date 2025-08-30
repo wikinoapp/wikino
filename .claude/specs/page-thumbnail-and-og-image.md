@@ -17,12 +17,12 @@
 
 ### 達成条件
 
-- [ ] Markdown形式のページ本文1行目の画像を特定できる
+- [ ] ページ本文1行目の画像を特定できる（Markdown形式・HTML img要素の両方対応）
 - [ ] ページ一覧のカードに画像が表示される
 - [ ] 各ページのog:imageメタタグが適切に設定される
 - [ ] 画像がない場合の適切なフォールバック処理
 - [ ] アニメーションGIFの特別処理（サムネイル生成せず、元画像を使用）
-- [ ] pagesテーブルに最初の画像IDを保存してパフォーマンス向上
+- [ ] pagesテーブルに画像IDを保存してパフォーマンス向上
 - [ ] 公開ページのOGP画像は認証なしでアクセス可能
 
 ## 修正方針
@@ -108,11 +108,15 @@ def extract_featured_image_id
   first_line = body.lines.first&.strip
   return nil if first_line.blank?
   
-  # Markdown画像形式をチェック: ![alt text](/attachments/attachment_id)
-  match = first_line.match(/!\[[^\]]*\]\(\/attachments\/([^)]+)\)/)
-  return nil unless match
+  # 1. Markdown画像形式をチェック: ![alt text](/attachments/attachment_id)
+  markdown_match = first_line.match(/!\[[^\]]*\]\(\/attachments\/([^)]+)\)/)
+  return markdown_match[1] if markdown_match
   
-  match[1]
+  # 2. HTML img要素をチェック: <img src="/attachments/attachment_id" ...>
+  img_match = first_line.match(/<img[^>]+src=["']\/attachments\/([^"']+)["'][^>]*>/i)
+  return img_match[1] if img_match
+  
+  nil
 end
 
 # featured画像がGIFかどうか判定
@@ -291,7 +295,9 @@ end
 ### ユニットテスト
 
 - PageRecordの新メソッドのテスト
-- サムネイル生成ジョブのテスト
+  - Markdown形式の画像抽出
+  - HTML img要素の画像抽出
+  - 両形式が混在する場合の優先順位
 - 画像抽出ロジックのテスト
 
 ### 統合テスト
