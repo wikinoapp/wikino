@@ -1317,7 +1317,7 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - ~~Topic指定有無による挙動の違いをテスト~~
   - **削除済み**: PermissionResolverと共にテストも削除
 
-- [ ] Topic Admin専用権限の実装
+- [x] Topic Admin専用権限の実装
   - TopicAdminPolicyクラスでの管理権限定義
   - `can_update_topic?` メソッドの実装（基本情報更新）
   - `can_delete_topic?` メソッドの実装（トピック削除）
