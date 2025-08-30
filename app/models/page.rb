@@ -23,6 +23,8 @@ class Page < T::Struct
   const :can_update, T.nilable(T::Boolean)
   const :space, Space
   const :topic, Topic
+  const :card_image_url, T.nilable(String)
+  const :og_image_url, T.nilable(String)
 
   sig { returns(T::Boolean) }
   def published?

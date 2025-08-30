@@ -19,6 +19,7 @@ gem "discard"
 gem "email_validator"
 gem "html-pipeline"
 gem "http_accept_language"
+gem "image_processing" # 画像のサムネイル生成で使っている
 gem "inline_svg"
 gem "jsbundling-rails"
 gem "meta-tags"

@@ -359,4 +359,336 @@ RSpec.describe PageRecord, type: :record do
       expect(references.first.attachment_id).to eq(attachment.id)
     end
   end
+
+  describe "#extract_featured_image_id" do
+    it "Markdown画像形式から画像IDを抽出すること" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic)
+
+      page.body = "![サムネイル画像](/attachments/abc-123-def)\n本文の続き"
+      expect(page.extract_featured_image_id).to eq("abc-123-def")
+    end
+
+    it "HTML img要素から画像IDを抽出すること" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic)
+
+      page.body = "<img src=\"/attachments/xyz-456-uvw\" alt=\"画像\">\n本文の続き"
+      expect(page.extract_featured_image_id).to eq("xyz-456-uvw")
+    end
+
+    it "1行目に画像がない場合はnilを返すこと" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic)
+
+      page.body = "テキストのみの1行目\n![画像](/attachments/abc-123)"
+      expect(page.extract_featured_image_id).to be_nil
+    end
+
+    it "bodyが空の場合はnilを返すこと" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic, body: "")
+
+      expect(page.extract_featured_image_id).to be_nil
+    end
+
+    it "1行目に前後の空白があっても画像IDを抽出すること" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic)
+
+      page.body = "  ![画像](/attachments/test-id-123)  \n続きの文章"
+      expect(page.extract_featured_image_id).to eq("test-id-123")
+    end
+  end
+
+  describe "#featured_image_is_gif?" do
+    it "GIFファイルの場合はtrueを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # GIFファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_gif",
+        filename: "animation.gif",
+        content_type: "image/gif",
+        metadata: {},
+        byte_size: 1024,
+        checksum: "checksum_gif"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+      expect(page.featured_image_is_gif?).to be true
+    end
+
+    it "GIF以外のファイルの場合はfalseを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # JPEGファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_jpg",
+        filename: "photo.jpg",
+        content_type: "image/jpeg",
+        metadata: {},
+        byte_size: 2048,
+        checksum: "checksum_jpg"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+      expect(page.featured_image_is_gif?).to be false
+    end
+
+    it "featured_image_attachment_recordがない場合はfalseを返すこと" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: nil)
+
+      expect(page.featured_image_is_gif?).to be false
+    end
+
+    it "大文字の拡張子でもGIFと判定すること" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # 大文字拡張子のGIFファイル
+      blob = ActiveStorage::Blob.create!(
+        key: "test_gif_upper",
+        filename: "ANIMATION.GIF",
+        content_type: "image/gif",
+        metadata: {},
+        byte_size: 1024,
+        checksum: "checksum_gif_upper"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+      expect(page.featured_image_is_gif?).to be true
+    end
+  end
+
+  describe "#card_image_url" do
+    it "通常の画像の場合はサムネイルURLを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # JPEGファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_jpg_card",
+        filename: "photo.jpg",
+        content_type: "image/jpeg",
+        metadata: {},
+        byte_size: 2048,
+        checksum: "checksum_jpg_card"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+
+      # reloadして関連を読み込み
+      page.reload
+
+      # thumbnail_urlが呼ばれることを期待
+      allow(page.featured_image_attachment_record).to receive(:thumbnail_url).with(size: AttachmentThumbnailSize::Card, expires_in: 1.hour).and_return("https://example.com/thumbnail.jpg")
+      expect(page.card_image_url).to eq("https://example.com/thumbnail.jpg")
+    end
+
+    it "GIFファイルの場合はオリジナル画像URLを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # GIFファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_gif_card",
+        filename: "animation.gif",
+        content_type: "image/gif",
+        metadata: {},
+        byte_size: 1024,
+        checksum: "checksum_gif_card"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+
+      # reloadして関連を読み込み
+      page.reload
+
+      # generate_signed_urlが呼ばれることを期待
+      allow(page.featured_image_attachment_record).to receive(:generate_signed_url).with(space_member_record: nil, expires_in: 1.hour).and_return("https://example.com/original.gif")
+      expect(page.card_image_url).to eq("https://example.com/original.gif")
+    end
+
+    it "featured_image_attachment_recordがない場合はnilを返すこと" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: nil)
+
+      expect(page.card_image_url).to be_nil
+    end
+  end
+
+  describe "#og_image_url" do
+    it "通常の画像の場合はOGサイズのサムネイルURLを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # JPEGファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_jpg_og",
+        filename: "photo.jpg",
+        content_type: "image/jpeg",
+        metadata: {},
+        byte_size: 2048,
+        checksum: "checksum_jpg_og"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+
+      # reloadして関連を読み込み
+      page.reload
+
+      # thumbnail_urlが呼ばれることを期待
+      allow(page.featured_image_attachment_record).to receive(:thumbnail_url).with(size: AttachmentThumbnailSize::Og, expires_in: 1.hour).and_return("https://example.com/og-thumbnail.jpg")
+      expect(page.og_image_url).to eq("https://example.com/og-thumbnail.jpg")
+    end
+
+    it "GIFファイルの場合はnilを返すこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+
+      # GIFファイルのAttachmentRecordを作成
+      blob = ActiveStorage::Blob.create!(
+        key: "test_gif_og",
+        filename: "animation.gif",
+        content_type: "image/gif",
+        metadata: {},
+        byte_size: 1024,
+        checksum: "checksum_gif_og"
+      )
+
+      as_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: space,
+        blob: blob
+      )
+
+      attachment = AttachmentRecord.create!(
+        space_id: space.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+      expect(page.og_image_url).to be_nil
+    end
+
+    it "featured_image_attachment_recordがない場合はnilを返すこと" do
+      space = create(:space_record)
+      topic = create(:topic_record, space_record: space)
+      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: nil)
+
+      expect(page.og_image_url).to be_nil
+    end
+  end
 end

@@ -123,4 +123,44 @@ class AttachmentRecord < ApplicationRecord
   def redirect_url
     active_storage_attachment_record&.blob&.url
   end
+
+  # 画像ファイルかどうかチェック
+  sig { returns(T::Boolean) }
+  def image?
+    blob_record&.image? || false
+  end
+
+  # サムネイル用のvariantを取得
+  sig { params(size: AttachmentThumbnailSize).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
+  def thumbnail_variant(size:)
+    blob = blob_record
+    return nil unless blob
+    return nil unless blob.image?
+    return nil unless blob.variable?
+
+    variant_options = case size
+    when AttachmentThumbnailSize::Card
+      # ページ一覧のカード用（高解像度対応で400x400px）
+      {resize_to_limit: [400, 400]}
+    when AttachmentThumbnailSize::Og
+      # OGP画像用（推奨: 1200x630）
+      {resize_to_fit: [1200, 630]}
+    else
+      T.absurd(size)
+    end
+
+    blob.variant(**variant_options)
+  end
+
+  # サムネイルURLを取得
+  sig { params(size: AttachmentThumbnailSize, expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+  def thumbnail_url(size:, expires_in: 1.hour)
+    variant = thumbnail_variant(size:)
+    return nil unless variant
+
+    variant.processed.url(expires_in:)
+  rescue => e
+    Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.class.name}: #{e.message}")
+    nil
+  end
 end

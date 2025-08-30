@@ -264,7 +264,8 @@ CREATE TABLE public.pages (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     pinned_at timestamp without time zone,
-    discarded_at timestamp(6) without time zone
+    discarded_at timestamp(6) without time zone,
+    featured_image_attachment_id uuid
 );
 
 
@@ -808,6 +809,13 @@ CREATE INDEX index_pages_on_discarded_at ON public.pages USING btree (discarded_
 
 
 --
+-- Name: index_pages_on_featured_image_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pages_on_featured_image_attachment_id ON public.pages USING btree (featured_image_attachment_id);
+
+
+--
 -- Name: index_pages_on_linked_page_ids; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1161,6 +1169,14 @@ ALTER TABLE ONLY public.attachments
 
 
 --
+-- Name: pages fk_rails_89b3a4bafa; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_89b3a4bafa FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+
+
+--
 -- Name: draft_pages fk_rails_8d9bc1217e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1287,6 +1303,8 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250830075516'),
+('20250830075345'),
 ('20250802185227'),
 ('20250802185226'),
 ('20250730164550'),

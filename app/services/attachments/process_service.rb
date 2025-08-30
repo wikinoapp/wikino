@@ -37,6 +37,8 @@ module Attachments
           unless blob_record.process_image_with_exif_removal
             raise "Image processing failed for attachment_record: #{attachment_record.id}"
           end
+
+          # サムネイルは事前生成しない - Active Storageがon-demandで生成する
         end
 
         # 処理完了としてマーク

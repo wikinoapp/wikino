@@ -35,7 +35,7 @@
         <div class="flex flex-col gap-6">
           <div class="flex flex-col gap-4">
             <% if pinned_pages.present? %>
-              <div class="grid grid-cols-2 items-stretch gap-2 md:grid-cols-4">
+              <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
                 <% pinned_pages.each do |page| %>
                   <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
                 <% end %>
@@ -43,7 +43,7 @@
             <% end %>
 
             <% if pages.present? %>
-              <div class="grid grid-cols-2 items-stretch gap-2 md:grid-cols-4">
+              <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
                 <% pages.each do |page| %>
                   <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
                 <% end %>

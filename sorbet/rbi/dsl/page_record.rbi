@@ -385,11 +385,20 @@ class PageRecord
   end
 
   module GeneratedAssociationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def build_featured_image_attachment_record(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
     def build_topic_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def create_featured_image_attachment_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def create_featured_image_attachment_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record(*args, &blk); end
@@ -416,6 +425,18 @@ class PageRecord
 
     sig { params(value: T::Enumerable[::DraftPageRecord]).void }
     def draft_page_records=(value); end
+
+    sig { returns(T.nilable(::AttachmentRecord)) }
+    def featured_image_attachment_record; end
+
+    sig { params(value: T.nilable(::AttachmentRecord)).void }
+    def featured_image_attachment_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_record_previously_changed?; end
 
     sig { returns(T::Array[T.untyped]) }
     def page_attachment_reference_record_ids; end
@@ -445,11 +466,17 @@ class PageRecord
     sig { params(value: T::Enumerable[::PageEditorRecord]).void }
     def page_editor_records=(value); end
 
+    sig { returns(T.nilable(::AttachmentRecord)) }
+    def reload_featured_image_attachment_record; end
+
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
 
     sig { returns(T.nilable(::TopicRecord)) }
     def reload_topic_record; end
+
+    sig { void }
+    def reset_featured_image_attachment_record; end
 
     sig { void }
     def reset_space_record; end
@@ -867,6 +894,51 @@ class PageRecord
     sig { void }
     def discarded_at_will_change!; end
 
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def featured_image_attachment_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def featured_image_attachment_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_id_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def featured_image_attachment_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def featured_image_attachment_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_was; end
+
+    sig { void }
+    def featured_image_attachment_id_will_change!; end
+
     sig { returns(::String) }
     def id; end
 
@@ -1195,6 +1267,9 @@ class PageRecord
     def restore_discarded_at!; end
 
     sig { void }
+    def restore_featured_image_attachment_id!; end
+
+    sig { void }
     def restore_id!; end
 
     sig { void }
@@ -1253,6 +1328,12 @@ class PageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_discarded_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_featured_image_attachment_id; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_featured_image_attachment_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_id; end
@@ -1562,6 +1643,9 @@ class PageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_discarded_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_featured_image_attachment_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end

@@ -93,7 +93,16 @@ module BlobProcessable
     # 処理済みファイルを読み込んでActive Storageに再アップロード
     blob = T.cast(self, ActiveStorage::Blob)
     File.open(processed_path, "rb") do |file|
+      # ファイルサイズとチェックサムを更新
+      blob.byte_size = file.size
+      blob.checksum = Digest::MD5.base64digest(file.read)
+      file.rewind
+
+      # ファイルをアップロード
       blob.upload(file)
+
+      # メタデータを保存
+      blob.save!
     end
   end
 end
