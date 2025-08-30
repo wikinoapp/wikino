@@ -12,13 +12,10 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+      page_record = current_space_record.find_page_by_number!(params[:page_number]&.to_i)
         .tap { |p| p.featured_image_attachment_record&.active_storage_attachment_record }
-
-      # ヘルパーメソッドを使用
-      space_member_record = current_space_member_record(space_record:)
-      space_member_policy = space_policy_for(space_record:)
+      space_member_record = current_space_member_record(space_record: current_space_record)
+      space_member_policy = space_policy_for(space_record: current_space_record)
 
       unless space_member_policy.can_show_page?(page_record:)
         return render_404

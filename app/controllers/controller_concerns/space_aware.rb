@@ -29,10 +29,9 @@ module ControllerConcerns
     # Space用のPolicyインスタンスを取得
     sig { params(space_record: SpaceRecord).returns(T::Wikino::SpacePolicyInstance) }
     def space_policy_for(space_record:)
-      space_member_record = current_space_member_record(space_record:)
       SpacePolicyFactory.build(
         user_record: current_user_record,
-        space_member_record:
+        space_member_record: current_space_member_record(space_record:)
       )
     end
 
