@@ -42,31 +42,18 @@ module ControllerConcerns
     end
 
     # Topic用のPolicyインスタンスを取得
+    # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出し、
+    # nilの場合はSpacePolicyInstanceをそのまま返す
     sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicContextPolicyInstance) }
     def topic_policy_for(topic_record:)
       space_record = topic_record.space_record.not_nil!
-      space_member_record = current_space_member_record(space_record:)
+      space_policy = space_policy_for(space_record:)
 
-      # Space Ownerの場合は、TopicでもOwner権限を持つ
-      if space_member_record && space_member_record.role == SpaceMemberRole::Owner.serialize
-        return SpaceOwnerPolicy.new(
-          user_record: current_user_record.not_nil!,
-          space_member_record:
-        )
-      end
+      # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出す
+      topic_policy = space_policy.topic_policy_for(topic_record:)
 
-      # Topic Adminの場合
-      topic_member_record = current_topic_member_record(topic_record:)
-      if topic_member_record && topic_member_record.role == TopicMemberRole::Admin.serialize
-        return TopicAdminPolicy.new(
-          user_record: current_user_record.not_nil!,
-          topic_member_record:,
-          space_member_record: space_member_record.not_nil!
-        )
-      end
-
-      # その他の場合は通常のSpace Policyを返す
-      space_policy_for(space_record:)
+      # nilの場合はSpacePolicyをそのまま使用
+      topic_policy || space_policy
     end
   end
 end
