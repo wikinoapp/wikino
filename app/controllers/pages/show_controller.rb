@@ -14,6 +14,7 @@ module Pages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
+        .tap { |p| p.featured_image_attachment_record&.active_storage_attachment_record }
       space_member_policy = SpaceMemberPolicy.new(
         user_record: current_user_record,
         space_member_record:

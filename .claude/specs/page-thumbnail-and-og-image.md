@@ -243,22 +243,22 @@ end
 
 ### フェーズ5: UI表示の実装
 
-- [ ] `CardLinks::PageComponent`にサムネイル表示を追加
-- [ ] コンポーネントのHTMLテンプレートを更新
-- [ ] CSSでレイアウト調整（画像とテキストのバランス）
-- [ ] システムテストを作成
+- [x] `CardLinks::PageComponent`にサムネイル表示を追加
+- [x] コンポーネントのHTMLテンプレートを更新
+- [x] CSSでレイアウト調整（画像とテキストのバランス）
+- [x] システムテストを作成
 
 ### フェーズ6: OGP設定の実装
 
-- [ ] `Pages::ShowView`でog:imageメタタグを設定
-- [ ] `ApplicationView`のdefault_meta_tagsメソッドを調整（必要に応じて）
-- [ ] 公開ページの画像アクセス権限を調整
-- [ ] テストを作成
+- [x] `Pages::ShowView`でog:imageメタタグを設定
+- [x] `ApplicationView`のdefault_meta_tagsメソッドを調整（必要に応じて）
+- [x] 公開ページの画像アクセス権限を調整
+- [x] テストを作成
 
 ### フェーズ7: パフォーマンス最適化
 
-- [ ] N+1問題の確認と対策（featured_image_attachment_recordのpreload）
-- [ ] ページ一覧表示時のクエリ最適化
+- [x] N+1問題の確認と対策（featured_image_attachment_recordのpreload）
+- [x] ページ一覧表示時のクエリ最適化
 - [ ] キャッシュの検討（必要に応じて）
 
 ## 注意事項

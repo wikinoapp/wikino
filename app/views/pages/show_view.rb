@@ -23,7 +23,16 @@ module Pages
       title = I18n.t("meta.title.pages.show",
         space_name: space.name,
         page_title: page.display_title)
-      helpers.set_meta_tags(title:, **default_meta_tags(site: false))
+
+      meta_tags = default_meta_tags(site: false)
+
+      # OGP画像を設定
+      if page.og_image_url.present?
+        meta_tags[:og] ||= {}
+        meta_tags[:og][:image] = page.og_image_url
+      end
+
+      helpers.set_meta_tags(title:, **meta_tags)
     end
 
     sig { returns(T.nilable(User)) }

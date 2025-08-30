@@ -2,21 +2,35 @@
   <%= render BaseUI::CardComponent.new(class_name: build_card_class) do |card| %>
     <%= card.with_body do %>
       <% if page.pinned? %>
-        <%= render BaseUI::IconComponent.new(name: "push-pin-filled", size: "18px", class_name: "-right-1 -top-1 absolute fill-amber-800") %>
+        <%= render BaseUI::IconComponent.new(
+          name: "push-pin-filled",
+          size: "18px",
+          class_name: "-right-1 -top-1 absolute fill-amber-800"
+        ) %>
       <% end %>
 
-      <div class="flex flex-col gap-1">
-        <% if show_topic_name? %>
-          <% if show_space_name? %>
-            <div class="flex flex-wrap items-center gap-1">
-              <span class="text-xs text-gray-500">
-                <%= space.name.truncate(10) %>
-              </span>
+      <div class="flex gap-3">
+        <div class="flex flex-1 flex-col gap-1">
+          <% if show_topic_name? %>
+            <% if show_space_name? %>
+              <div class="flex flex-wrap items-center gap-1">
+                <span class="text-xs text-gray-500">
+                  <%= space.name.truncate(10) %>
+                </span>
 
-              <span class="text-xs text-gray-500">
-                /
-              </span>
+                <span class="text-xs text-gray-500">
+                  /
+                </span>
 
+                <div class="flex items-center gap-0.5">
+                  <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
+
+                  <span class="text-xs text-gray-500">
+                    <%= topic.name.truncate(10) %>
+                  </span>
+                </div>
+              </div>
+            <% else %>
               <div class="flex items-center gap-0.5">
                 <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
@@ -24,21 +38,24 @@
                   <%= topic.name.truncate(10) %>
                 </span>
               </div>
-            </div>
-          <% else %>
-            <div class="flex items-center gap-0.5">
-              <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
-
-              <span class="text-xs text-gray-500">
-                <%= topic.name.truncate(20) %>
-              </span>
-            </div>
+            <% end %>
           <% end %>
-        <% end %>
 
-        <div class="line-clamp-3 text-sm font-bold">
-          <%= page.title %>
+          <div class="line-clamp-3 text-sm font-bold">
+            <%= page.title %>
+          </div>
         </div>
+
+        <% if page.card_image_url.present? %>
+          <div class="shrink-0">
+            <img
+              src="<%= page.card_image_url %>"
+              alt=""
+              class="h-16 w-16 rounded object-cover sm:h-20 sm:w-20"
+              loading="lazy"
+            >
+          </div>
+        <% end %>
       </div>
     <% end %>
   <% end %>
