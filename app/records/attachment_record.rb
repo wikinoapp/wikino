@@ -123,4 +123,69 @@ class AttachmentRecord < ApplicationRecord
   def redirect_url
     active_storage_attachment_record&.blob&.url
   end
+
+  # 画像ファイルかどうかチェック
+  sig { returns(T::Boolean) }
+  def image?
+    blob_record&.image? || false
+  end
+
+  # サムネイル用のvariantを取得
+  # @param size [Symbol] サムネイルサイズ (:small, :medium, :large)
+  sig { params(size: Symbol).returns(T.nilable(T.any(ActiveStorage::Variant, ActiveStorage::VariantWithRecord))) }
+  def thumbnail_variant(size: :medium)
+    blob = blob_record
+    return nil unless blob
+    return nil unless blob.image?
+    return nil unless blob.variable?
+
+    variant_options = case size
+    when :small
+      {resize_to_limit: [150, 150]}
+    when :medium
+      {resize_to_limit: [300, 300]}
+    when :large
+      {resize_to_limit: [600, 600]}
+    else
+      {resize_to_limit: [300, 300]}
+    end
+
+    blob.variant(**variant_options)
+  end
+
+  # サムネイルURLを取得
+  sig { params(size: Symbol, expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+  def thumbnail_url(size: :medium, expires_in: 1.hour)
+    variant = thumbnail_variant(size:)
+    return nil unless variant
+
+    variant.processed.url(expires_in:)
+  rescue => e
+    Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.message}")
+    nil
+  end
+
+  # サムネイルを事前生成（バックグラウンド処理用）
+  sig { returns(T::Boolean) }
+  def generate_thumbnails
+    return false unless image?
+
+    blob = blob_record
+    return false unless blob
+    return false unless blob.variable?
+
+    # 各サイズのサムネイルを生成
+    %i[small medium large].each do |size|
+      variant = thumbnail_variant(size:)
+      next unless variant
+
+      # processedを呼ぶことで実際に変換処理が実行される
+      variant.processed
+    end
+
+    true
+  rescue => e
+    Rails.logger.error("Failed to generate thumbnails for attachment #{id}: #{e.message}")
+    false
+  end
 end

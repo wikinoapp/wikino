@@ -37,6 +37,11 @@ module Attachments
           unless blob_record.process_image_with_exif_removal
             raise "Image processing failed for attachment_record: #{attachment_record.id}"
           end
+
+          # サムネイルを事前生成
+          unless attachment_record.generate_thumbnails
+            Rails.logger.warn("Thumbnail generation failed for attachment_record: #{attachment_record.id}, but continuing...")
+          end
         end
 
         # 処理完了としてマーク
