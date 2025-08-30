@@ -17,10 +17,7 @@ module ControllerConcerns
     # 現在のユーザーのSpaceメンバーレコードを取得
     sig { params(space_record: SpaceRecord).returns(T.nilable(SpaceMemberRecord)) }
     def current_space_member_record(space_record:)
-      user_record = current_user_record
-      return if user_record.nil?
-
-      user_record.space_member_record(space_record:)
+      current_user_record&.space_member_record(space_record:)
     end
 
     # 現在のユーザーのSpaceメンバーレコードを取得（必須）

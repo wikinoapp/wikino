@@ -11,10 +11,7 @@ module ControllerConcerns
     # 現在のユーザーのTopicメンバーレコードを取得
     sig { params(topic_record: TopicRecord).returns(T.nilable(TopicMemberRecord)) }
     def current_topic_member_record(topic_record:)
-      user_record = current_user_record
-      return if user_record.nil?
-
-      user_record.topic_member_records.find_by(topic_record:)
+      current_user_record&.topic_member_records&.find_by(topic_record:)
     end
 
     # 現在のユーザーのTopicメンバーレコードを取得（必須）
