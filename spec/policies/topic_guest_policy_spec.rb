@@ -152,4 +152,3 @@ RSpec.describe TopicGuestPolicy do
     end
   end
 end
-
