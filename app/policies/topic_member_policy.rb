@@ -17,6 +17,16 @@ class TopicMemberPolicy < ApplicationPolicy
     super(user_record:)
     @space_member_record = space_member_record
     @topic_member_record = topic_member_record
+
+    if mismatched_relations?
+      raise ArgumentError, [
+        "Mismatched relations.",
+        "user_record.id: #{user_record.id.inspect}",
+        "space_member_record.user_id: #{space_member_record.user_id.inspect}",
+        "topic_member_record.space_member_id: #{topic_member_record.space_member_id.inspect}",
+        "space_member_record.id: #{space_member_record.id.inspect}"
+      ].join(" ")
+    end
   end
 
   # Topic Memberはトピックの基本情報を更新不可
@@ -115,5 +125,11 @@ class TopicMemberPolicy < ApplicationPolicy
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   private def owns_attachment?(attachment_record:)
     attachment_record.attached_space_member_id == space_member_record.id
+  end
+
+  sig { returns(T::Boolean) }
+  private def mismatched_relations?
+    user_record.not_nil!.id != space_member_record.user_id ||
+      topic_member_record.space_member_id != space_member_record.id
   end
 end

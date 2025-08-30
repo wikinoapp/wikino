@@ -10,6 +10,14 @@ class SpaceMemberPolicy < ApplicationPolicy
   def initialize(user_record:, space_member_record:)
     super(user_record:)
     @space_member_record = space_member_record
+
+    if mismatched_relations?
+      raise ArgumentError, [
+        "Mismatched relations.",
+        "user_record.id: #{user_record.id.inspect}",
+        "space_member_record.user_id: #{space_member_record.user_id.inspect}"
+      ].join(" ")
+    end
   end
   # Space権限の実装
 
@@ -170,6 +178,11 @@ class SpaceMemberPolicy < ApplicationPolicy
   sig { returns(T::Boolean) }
   private def active?
     space_member_record.active?
+  end
+
+  sig { returns(T::Boolean) }
+  private def mismatched_relations?
+    user_record.not_nil!.id != space_member_record.user_id
   end
 
   # Topic権限への委譲メソッド
