@@ -4,6 +4,9 @@
 # ゲスト（非メンバー）用のPolicyクラス
 # 公開コンテンツのみ閲覧可能
 class SpaceGuestPolicy < ApplicationPolicy
+  include SpacePermissions
+  include TopicPermissions
+  include SpaceMemberCommon
   # ゲストはトピック編集不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
@@ -37,6 +40,30 @@ class SpaceGuestPolicy < ApplicationPolicy
   # ゲストはページ作成不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
+    false
+  end
+
+  # ゲストはスペース削除不可
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_delete_space?(space_record:)
+    false
+  end
+
+  # ゲストはスペースメンバー管理不可
+  sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_space_members?(space_record:)
+    false
+  end
+
+  # ゲストはドラフトページ作成不可
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_create_draft_page?(topic_record:)
+    false
+  end
+
+  # ゲストはページ削除不可
+  sig { override.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_delete_page?(page_record:)
     false
   end
 

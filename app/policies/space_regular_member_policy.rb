@@ -1,67 +1,79 @@
 # typed: strict
 # frozen_string_literal: true
 
-# Space Ownerロール専用のPolicyクラス
-# Space関連の全権限を持つ
-class SpaceOwnerPolicy < BaseSpaceMemberPolicy
+# Space Regular Memberロール専用のPolicyクラス
+# Space関連の基本操作権限のみを持つ
+class SpaceRegularMemberPolicy < BaseSpaceMemberPolicy
   # Space権限の実装
 
-  # Ownerはスペース設定を変更可能
+  # Memberはスペース設定を変更不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    false
   end
 
-  # Ownerはトピック作成可能
+  # Memberはトピック作成可能
   sig { override.returns(T::Boolean) }
   def can_create_topic?
     joined_space?
   end
 
-  # OwnerはSpaceを削除可能
+  # MemberはSpaceを削除不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_delete_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    false
   end
 
-  # OwnerはSpaceメンバーを管理可能
+  # MemberはSpaceメンバーを管理不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_space_members?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    false
   end
 
-  # Ownerはゴミ箱を閲覧可能
+  # Memberはゴミ箱を閲覧可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
+    if space_member_record.nil?
+      return false
+    end
+
     active? && in_same_space?(space_record_id: space_record.id)
   end
 
-  # Ownerは一括復元可能
+  # Memberは一括復元可能
   sig { override.returns(T::Boolean) }
   def can_create_bulk_restore_pages?
+    if space_member_record.nil?
+      return false
+    end
+
     active?
   end
 
-  # Ownerはファイルアップロード可能
+  # Memberはファイルアップロード可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_upload_attachment?(space_record:)
+    if space_member_record.nil?
+      return false
+    end
+
     active? && in_same_space?(space_record_id: space_record.id)
   end
 
 
-  # Ownerはファイル管理画面にアクセス可能
+  # Memberはファイル管理画面にアクセス不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_attachments?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    false
   end
 
-  # Ownerはエクスポート可能
+  # Memberはエクスポート不可
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
-    in_same_space?(space_record_id: space_record.id)
+    false
   end
 
-  # 閲覧可能なトピック（Ownerは全トピック閲覧可能）
+  # 閲覧可能なトピック（Memberは全トピック閲覧可能）
   sig { override.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
     if space_member_record.nil?
@@ -71,7 +83,7 @@ class SpaceOwnerPolicy < BaseSpaceMemberPolicy
     space_member_record!.space_record.not_nil!.topic_records.kept
   end
 
-  # 閲覧可能なページ（Ownerは全ページ閲覧可能）
+  # 閲覧可能なページ（Memberは全ページ閲覧可能）
   sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
     if space_member_record.nil?

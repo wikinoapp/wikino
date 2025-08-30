@@ -1292,6 +1292,109 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `can_delete_topic?` メソッドの実装（トピック削除）
   - Space Ownerにも同等の権限を付与（権限の継承）
 
+### Phase 4.5: Space/Topic権限の責務分離
+
+#### 設計方針
+
+権限管理の責務を明確に分離し、より整理された設計を実現します：
+
+1. **Space関係の操作**: `space_*_policy` が担当
+   - Space設定の更新（`can_update_space?`）
+   - Spaceメンバー管理（`can_manage_space_members?`）
+   - Spaceエクスポート（`can_export_space?`）
+   - Space削除（`can_delete_space?`）
+
+2. **Topic/Page関係の操作**: `topic_*_policy` が担当
+   - Topic設定の更新（`can_update_topic?`）
+   - Topicメンバー管理（`can_manage_topic_members?`）
+   - Topic削除（`can_delete_topic?`）
+   - ページ作成・編集・削除（`can_create_page?`, `can_update_page?`, `can_delete_page?`）
+   - ドラフト操作（`can_create_draft_page?`, `can_update_draft_page?`）
+
+3. **共通メソッドの定義方法**
+   - `ApplicationPolicy`での`abstract!`定義を削除
+   - 代わりにモジュールで権限メソッドを定義し、必要なポリシーでinclude
+   - Space系とTopic系でそれぞれ異なるモジュールを定義
+
+#### 実装構造
+
+```ruby
+# app/policies/concerns/space_permissions.rb
+module SpacePermissions
+  extend T::Sig
+  extend T::Helpers
+  
+  interface!
+  
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:); end
+  
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_space_members?(space_record:); end
+  
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:); end
+end
+
+# app/policies/concerns/topic_permissions.rb
+module TopicPermissions
+  extend T::Sig
+  extend T::Helpers
+  
+  interface!
+  
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:); end
+  
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:); end
+  
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:); end
+  
+  # ... 他のTopic/Page関連メソッド
+end
+
+# Space系ポリシーはSpacePermissionsをinclude
+class SpaceOwnerPolicy < BaseSpaceMemberPolicy
+  include SpacePermissions
+  # Space関連の権限実装
+end
+
+# Topic系ポリシーはTopicPermissionsをinclude
+class TopicAdminPolicy < ApplicationPolicy
+  include TopicPermissions
+  # Topic関連の権限実装
+end
+```
+
+#### 移行手順
+
+- [x] SpacePermissionsモジュールの作成
+  - Space操作に関する抽象メソッド定義
+  - Space系ポリシーでinclude
+
+- [x] TopicPermissionsモジュールの作成
+  - Topic/Page操作に関する抽象メソッド定義
+  - Topic系ポリシーでinclude
+
+- [x] ApplicationPolicyから抽象メソッドを削除
+  - 各ポリシーが必要なモジュールのみinclude
+
+- [x] 既存ポリシーのリファクタリング
+  - SpaceOwnerPolicy: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceRegularMemberPolicy（旧SpaceMemberPolicy）: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceGuestPolicy: 責務の分離を実施
+
+- [x] Topicポリシーのリファクタリング
+  - TopicAdminPolicy: TopicPermissionsをinclude、Space権限から分離
+  - TopicMemberPolicy: 未実装（次フェーズ）
+  - TopicGuestPolicy: 未実装（次フェーズ）
+
+- [x] PermissionResolverの更新
+  - SpaceMemberPolicyをSpaceRegularMemberPolicyに変更
+  - SpaceMemberPolicyFactoryも同様に更新
+
 - [ ] 移行戦略の決定
   - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
   - Topic関連の操作を行うコントローラーから優先的に移行
