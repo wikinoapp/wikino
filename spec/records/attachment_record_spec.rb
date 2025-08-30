@@ -115,22 +115,4 @@ RSpec.describe AttachmentRecord do
       expect(url).to be_nil
     end
   end
-
-  describe "#generate_thumbnails" do
-    it "廃止されたメソッドなので常にtrueを返すこと" do
-      attachment = FactoryBot.create(:attachment_record, :with_image)
-
-      result = attachment.generate_thumbnails
-
-      expect(result).to be true
-    end
-
-    it "画像でないファイルでもtrueを返すこと" do
-      attachment = FactoryBot.create(:attachment_record, :with_pdf)
-
-      result = attachment.generate_thumbnails
-
-      expect(result).to be true
-    end
-  end
 end

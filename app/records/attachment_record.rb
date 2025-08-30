@@ -163,12 +163,4 @@ class AttachmentRecord < ApplicationRecord
     Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.class.name}: #{e.message}")
     nil
   end
-
-  # サムネイルを事前生成（廃止予定 - Active Storageが必要に応じて自動生成するため）
-  # @deprecated このメソッドは使用しないでください
-  sig { returns(T::Boolean) }
-  def generate_thumbnails
-    # 事前生成は行わない - Active Storageのon-demandで対応
-    true
-  end
 end
