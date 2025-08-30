@@ -9,13 +9,11 @@ class TopicGuestPolicy < ApplicationPolicy
 
   sig do
     params(
-      user_record: T.nilable(UserRecord),
-      topic_record: TopicRecord
+      user_record: T.nilable(UserRecord)
     ).void
   end
-  def initialize(user_record:, topic_record:)
+  def initialize(user_record:)
     super(user_record:)
-    @topic_record = topic_record
   end
 
   # Topic Guestはトピックの基本情報を更新不可
@@ -66,8 +64,4 @@ class TopicGuestPolicy < ApplicationPolicy
   def can_trash_page?(page_record:)
     false
   end
-
-  sig { returns(TopicRecord) }
-  attr_reader :topic_record
-  private :topic_record
 end

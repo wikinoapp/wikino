@@ -145,6 +145,6 @@ class SpaceGuestPolicy < ApplicationPolicy
   sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
     # 常にTopicGuestPolicyを返す（権限チェックはTopicGuestPolicy側で行う）
-    TopicGuestPolicy.new(user_record:, topic_record:)
+    TopicGuestPolicy.new(user_record:)
   end
 end
