@@ -125,5 +125,4 @@ RSpec.describe TopicAdminPolicy do
       expect(policy.can_manage_topic_members?(topic_record: other_topic_record)).to be(false)
     end
   end
-
 end
