@@ -1459,7 +1459,58 @@ end
 - spaces/show_controller.rb - Space表示
 - attachments/\* - 添付ファイル関連（Space権限ベース）
 
-### Phase 5: 最適化
+### Phase 5: 後方互換メソッドの削除
+
+**背景**: 現在、`SpaceGuestPolicy`、`SpaceOwnerPolicy`、`SpaceMemberPolicy`などのSpace系Policyクラスに、本来Topic層で管理すべき権限チェックメソッドが後方互換性のために残されています。これらは責務の分離を妨げているため、段階的に削除する必要があります。
+
+#### 削除対象メソッド
+
+Space系Policyクラスから削除すべきTopic関連メソッド：
+
+- `can_update_topic?(topic_record:)` - Topic更新権限
+- `can_delete_topic?(topic_record:)` - Topic削除権限  
+- `can_manage_topic_members?(topic_record:)` - Topicメンバー管理権限
+- `can_create_page?(topic_record:)` - ページ作成権限
+- `can_update_page?(page_record:)` - ページ更新権限
+- `can_delete_page?(page_record:)` - ページ削除権限
+- `can_show_page?(page_record:)` - ページ閲覧権限
+- `can_trash_page?(page_record:)` - ページゴミ箱移動権限
+- `can_create_draft_page?(topic_record:)` - ドラフト作成権限
+- `can_update_draft_page?(page_record:)` - ドラフト更新権限
+
+#### 移行手順
+
+- [ ] コントローラーの権限チェック方法を更新
+  - Topic関連の操作では`topic_policy_for`メソッドを使用してTopicPolicyを取得
+  - TopicPolicy経由で権限チェックを実施
+  
+- [ ] 既存コントローラーの段階的移行
+  - 各コントローラーで直接Space Policyのメソッドを呼んでいる箇所を特定
+  - Topic権限チェックをTopicPolicy経由に変更
+  
+- [ ] テストの更新
+  - Space PolicyのテストからTopic関連メソッドのテストを削除
+  - TopicPolicyのテストに移行
+  
+- [ ] 後方互換メソッドの削除
+  - 全コントローラー移行完了後、Space PolicyからTopic関連メソッドを削除
+  - インターフェースのクリーンアップ
+
+#### 最終的な責務分離
+
+**Space Policy (SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy)**
+- Space設定の管理
+- Spaceメンバーの管理
+- Space全体の権限
+- Topic Policyへの委譲（`topic_policy_for`メソッド）
+
+**Topic Policy (TopicAdminPolicy, TopicMemberPolicy)**  
+- Topic設定の管理
+- Topicメンバーの管理
+- ページの作成・編集・削除
+- Topic内のコンテンツ管理
+
+### Phase 6: 最適化
 
 - [ ] パフォーマンス最適化
   - 権限チェックのメモ化
