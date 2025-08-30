@@ -154,8 +154,9 @@ class AttachmentRecord < ApplicationRecord
       {resize_to_limit: [800, 800]}
     when :og
       # OGP画像用（推奨: 1200x630、最小: 600x315）
-      # resize_to_fillで中央クロップして確実に1200x630にする
-      {resize_to_fill: [1200, 630]}
+      # resize_to_fitで比率を維持しつつ最大1200x630に収める
+      # 小さい画像の場合は拡大しない
+      {resize_to_fit: [1200, 630]}
     else
       {resize_to_limit: [400, 400]}
     end
@@ -171,7 +172,8 @@ class AttachmentRecord < ApplicationRecord
 
     variant.processed.url(expires_in:)
   rescue => e
-    Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.message}")
+    Rails.logger.error("Failed to generate thumbnail URL for attachment #{id}: #{e.class.name}: #{e.message}")
+    Rails.logger.error(e.backtrace&.first(5)&.join("\n") || "No backtrace")
     nil
   end
 
