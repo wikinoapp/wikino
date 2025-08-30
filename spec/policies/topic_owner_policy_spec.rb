@@ -490,3 +490,4 @@ RSpec.describe TopicOwnerPolicy do
     end
   end
 end
+
