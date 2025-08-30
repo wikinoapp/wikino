@@ -166,15 +166,20 @@ class SpaceOwnerPolicy < ApplicationPolicy
   end
 
   # Topic権限への委譲メソッド
-  sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
+  sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }
   def topic_policy_for(topic_record:)
+    # user_recordが必須
+    return nil unless user_record
+
+    user = user_record.not_nil!
+
     # Space OwnerはすべてのTopicでAdmin権限を持つ
     # TopicAdminPolicyを返す
-    topic_member_record = user_record&.topic_member_records&.find_by(topic_record:)
+    topic_member_record = user.topic_member_records.find_by(topic_record:)
     if topic_member_record
       # 既存のTopicMemberRecordがある場合はそれを使用
       TopicAdminPolicy.new(
-        user_record:,
+        user_record: user,
         space_member_record:,
         topic_member_record:
       )
@@ -187,7 +192,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
         role: TopicMemberRole::Admin.serialize
       )
       TopicAdminPolicy.new(
-        user_record:,
+        user_record: user,
         space_member_record:,
         topic_member_record: virtual_topic_member
       )

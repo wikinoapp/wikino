@@ -8,7 +8,7 @@ class TopicAdminPolicy < ApplicationPolicy
 
   sig do
     params(
-      user_record: T.nilable(UserRecord),
+      user_record: UserRecord,
       space_member_record: SpaceMemberRecord,
       topic_member_record: TopicMemberRecord
     ).void

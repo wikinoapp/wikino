@@ -1354,15 +1354,15 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 module SpacePermissions
   extend T::Sig
   extend T::Helpers
-  
+
   interface!
-  
+
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:); end
-  
+
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_space_members?(space_record:); end
-  
+
   sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:); end
 end
@@ -1371,18 +1371,18 @@ end
 module TopicPermissions
   extend T::Sig
   extend T::Helpers
-  
+
   interface!
-  
+
   sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:); end
-  
+
   sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_delete_topic?(topic_record:); end
-  
+
   sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:); end
-  
+
   # ... 他のTopic/Page関連メソッド
 end
 
@@ -1468,7 +1468,7 @@ end
 Space系Policyクラスから削除すべきTopic関連メソッド：
 
 - `can_update_topic?(topic_record:)` - Topic更新権限
-- `can_delete_topic?(topic_record:)` - Topic削除権限  
+- `can_delete_topic?(topic_record:)` - Topic削除権限
 - `can_manage_topic_members?(topic_record:)` - Topicメンバー管理権限
 - `can_create_page?(topic_record:)` - ページ作成権限
 - `can_update_page?(page_record:)` - ページ更新権限
@@ -1483,15 +1483,12 @@ Space系Policyクラスから削除すべきTopic関連メソッド：
 - [ ] コントローラーの権限チェック方法を更新
   - Topic関連の操作では`topic_policy_for`メソッドを使用してTopicPolicyを取得
   - TopicPolicy経由で権限チェックを実施
-  
 - [ ] 既存コントローラーの段階的移行
   - 各コントローラーで直接Space Policyのメソッドを呼んでいる箇所を特定
   - Topic権限チェックをTopicPolicy経由に変更
-  
 - [ ] テストの更新
   - Space PolicyのテストからTopic関連メソッドのテストを削除
   - TopicPolicyのテストに移行
-  
 - [ ] 後方互換メソッドの削除
   - 全コントローラー移行完了後、Space PolicyからTopic関連メソッドを削除
   - インターフェースのクリーンアップ
@@ -1499,12 +1496,14 @@ Space系Policyクラスから削除すべきTopic関連メソッド：
 #### 最終的な責務分離
 
 **Space Policy (SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy)**
+
 - Space設定の管理
 - Spaceメンバーの管理
 - Space全体の権限
 - Topic Policyへの委譲（`topic_policy_for`メソッド）
 
-**Topic Policy (TopicAdminPolicy, TopicMemberPolicy)**  
+**Topic Policy (TopicAdminPolicy, TopicMemberPolicy)**
+
 - Topic設定の管理
 - Topicメンバーの管理
 - ページの作成・編集・削除
