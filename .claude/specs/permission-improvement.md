@@ -1433,7 +1433,7 @@ end
   - Topic関連の操作を行うコントローラーから優先的に移行
   - Space単独の操作は既存のFactoryパターンを継続使用
 
-- [ ] コントローラーヘルパーメソッドの作成
+- [x] コントローラーヘルパーメソッドの作成
   - `current_space_record`の取得メソッド
   - `current_topic_record`の取得メソッド（該当する場合）
   - SpacePolicyFactoryインスタンス生成のヘルパー

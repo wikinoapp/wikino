@@ -186,31 +186,32 @@ class SpaceMemberPolicy < ApplicationPolicy
   end
 
   # Topic権限への委譲メソッド
-  sig { params(topic_record: TopicRecord).returns(T.nilable(T::Wikino::TopicPolicyInstance)) }
+  sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
-    # user_recordが必須
-    return nil unless user_record
+    topic_member_record = user_record.not_nil!.topic_member_records.find_by(topic_record:)
 
-    user = user_record.not_nil!
-
-    # TopicMemberRecordを取得
-    topic_member_record = user.topic_member_records.find_by(topic_record:)
-    return nil unless topic_member_record
-
-    # TopicMemberのロールに応じて適切なPolicyを返す
-    case topic_member_record.role
-    when TopicMemberRole::Admin.serialize
-      TopicAdminPolicy.new(
-        user_record: user,
-        space_member_record:,
-        topic_member_record:
-      )
-    when TopicMemberRole::Member.serialize
-      TopicMemberPolicy.new(
-        user_record: user,
-        space_member_record:,
-        topic_member_record:
-      )
+    if topic_member_record
+      # TopicMemberのロールに応じて適切なPolicyを返す
+      case topic_member_record.role
+      when TopicMemberRole::Admin.serialize
+        TopicAdminPolicy.new(
+          user_record: user_record.not_nil!,
+          space_member_record:,
+          topic_member_record:
+        )
+      when TopicMemberRole::Member.serialize
+        TopicMemberPolicy.new(
+          user_record: user_record.not_nil!,
+          space_member_record:,
+          topic_member_record:
+        )
+      else
+        # 想定外のロールの場合は例外を投げる
+        raise ArgumentError, "Unexpected topic member role: #{topic_member_record.role.inspect}"
+      end
+    else
+      # TopicMemberRecordがない場合はTopicGuestPolicyを返す（公開トピックのみ閲覧可能）
+      TopicGuestPolicy.new(user_record: user_record.not_nil!)
     end
   end
 end
