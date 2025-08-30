@@ -45,12 +45,12 @@ module SpacePermissions
   end
 
   # 閲覧可能なトピック一覧
-  sig { abstract.params(space_record: SpaceRecord).returns(TopicRecord::PrivateCollectionProxy) }
+  sig { abstract.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
   end
 
   # 閲覧可能なページ一覧
-  sig { abstract.params(space_record: SpaceRecord).returns(PageRecord::PrivateCollectionProxy) }
+  sig { abstract.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
   end
 

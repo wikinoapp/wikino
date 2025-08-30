@@ -36,16 +36,16 @@ class BaseSpacePolicy < ApplicationPolicy
     space_member_record&.topic_records || TopicRecord.none
   end
 
-  sig { override.params(space_record: SpaceRecord).returns(TopicRecord::PrivateCollectionProxy) }
+  sig { override.params(space_record: SpaceRecord).returns(TopicRecord::PrivateAssociationRelation) }
   def showable_topics(space_record:)
     # デフォルト実装：Spaceメンバーは全トピック閲覧可能
-    space_record.topic_records
+    space_record.topic_records.kept
   end
 
-  sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateCollectionProxy) }
+  sig { override.params(space_record: SpaceRecord).returns(PageRecord::PrivateAssociationRelation) }
   def showable_pages(space_record:)
     # デフォルト実装：Spaceメンバーは全ページ閲覧可能
-    space_record.page_records
+    space_record.page_records.kept
   end
 
   sig { override.returns(T::Boolean) }
@@ -94,8 +94,8 @@ class BaseSpacePolicy < ApplicationPolicy
     false # デフォルト実装
   end
 
-  sig { params(draft_page_record: DraftPageRecord).returns(T::Boolean) }
-  def can_update_draft_page?(draft_page_record:)
+  sig { params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_draft_page?(page_record:)
     false # デフォルト実装
   end
 
