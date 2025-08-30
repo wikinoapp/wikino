@@ -229,17 +229,17 @@ end
 
 ### フェーズ3: データ取得ロジックの実装
 
-- [ ] PageRecordに`featured_image_attachment_record`関連を追加
-- [ ] PageRecordに`extract_featured_image_id`メソッドを追加
-- [ ] PageRecordに`featured_image_is_gif?`メソッドを追加
-- [ ] PageRecordに`card_image_url`メソッドを追加
-- [ ] PageRecordに`og_image_url`メソッドを追加
-- [ ] テストを作成（spec/records/page_record_spec.rb）
+- [x] PageRecordに`featured_image_attachment_record`関連を追加
+- [x] PageRecordに`extract_featured_image_id`メソッドを追加
+- [x] PageRecordに`featured_image_is_gif?`メソッドを追加
+- [x] PageRecordに`card_image_url`メソッドを追加
+- [x] PageRecordに`og_image_url`メソッドを追加
+- [x] テストを作成（spec/records/page_record_spec.rb）
 
 ### フェーズ4: ページ更新時の処理実装
 
-- [ ] `Pages::UpdateService`で1行目画像の検出と保存処理を追加
-- [ ] テストを作成（spec/services/pages/update_service_spec.rb）
+- [x] `Pages::UpdateService`で1行目画像の検出と保存処理を追加
+- [x] テストを作成（spec/services/pages/update_service_spec.rb）
 
 ### フェーズ5: UI表示の実装
 
