@@ -12,6 +12,11 @@ class PageRecord < ApplicationRecord
 
   belongs_to :topic_record, foreign_key: :topic_id
   belongs_to :space_record, foreign_key: :space_id
+  belongs_to :featured_image_attachment_record,
+    class_name: "AttachmentRecord",
+    foreign_key: :featured_image_attachment_id,
+    optional: true
+
   has_many :draft_page_records,
     dependent: :restrict_with_exception,
     foreign_key: :page_id,
@@ -306,5 +311,63 @@ class PageRecord < ApplicationRecord
 
     # 重複を削除
     attachment_ids.uniq
+  end
+
+  # Markdown本文の1行目から画像IDを抽出（featured画像として使用）
+  sig { returns(T.nilable(String)) }
+  def extract_featured_image_id
+    return nil if body.blank?
+
+    # 1行目を取得
+    first_line = body.lines.first&.strip
+    return nil if first_line.blank?
+
+    # 1. Markdown画像形式をチェック: ![alt text](/attachments/attachment_id)
+    markdown_match = first_line.match(%r{!\[[^\]]*\]\(/attachments/([^)]+)\)})
+    return markdown_match[1] if markdown_match
+
+    # 2. HTML img要素をチェック: <img src="/attachments/attachment_id" ...>
+    img_match = first_line.match(%r{<img[^>]+src=[\"']/attachments/([^\"']+)[\"'][^>]*>}i)
+    return img_match[1] if img_match
+
+    nil
+  end
+
+  # featured画像がGIFかどうか判定
+  sig { returns(T::Boolean) }
+  def featured_image_is_gif?
+    attachment = featured_image_attachment_record
+    return false unless attachment
+
+    filename = attachment.filename
+    return false unless filename
+
+    filename.downcase.end_with?(".gif")
+  end
+
+  # カード用画像URLを取得
+  sig { params(expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+  def card_image_url(expires_in: 1.hour)
+    attachment = featured_image_attachment_record
+    return nil unless attachment
+
+    # GIFの場合はオリジナル画像のURLを返す
+    if featured_image_is_gif?
+      attachment.generate_signed_url(space_member_record: nil, expires_in:)
+    else
+      attachment.thumbnail_url(size: AttachmentThumbnailSize::Card, expires_in:)
+    end
+  end
+
+  # OGP画像URLを取得
+  sig { params(expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
+  def og_image_url(expires_in: 1.hour)
+    attachment = featured_image_attachment_record
+    return nil unless attachment
+
+    # GIFの場合はnilを返す（デフォルトOGP画像を使用）
+    return nil if featured_image_is_gif?
+
+    attachment.thumbnail_url(size: AttachmentThumbnailSize::Og, expires_in:)
   end
 end

@@ -49,6 +49,28 @@ module Pages
         # ページ本文から添付ファイルIDを検知し、参照を更新
         page_record.update_attachment_references!(body:)
 
+        # 1行目の画像IDを抽出（featured画像として）
+        featured_image_id = page_record.extract_featured_image_id
+
+        if featured_image_id
+          # 同じスペースの添付ファイルか確認
+          attachment = AttachmentRecord.find_by(
+            id: featured_image_id,
+            space_id: page_record.space_id
+          )
+
+          if attachment
+            # featured_image_attachment_idを更新
+            page_record.update!(featured_image_attachment_id: attachment.id)
+          else
+            # 画像が見つからない場合はnullに設定
+            page_record.update!(featured_image_attachment_id: nil)
+          end
+        else
+          # 1行目に画像がない場合はnullに設定
+          page_record.update!(featured_image_attachment_id: nil)
+        end
+
         page_record
       end
 

@@ -385,11 +385,20 @@ class PageRecord
   end
 
   module GeneratedAssociationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def build_featured_image_attachment_record(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
     def build_topic_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def create_featured_image_attachment_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::AttachmentRecord) }
+    def create_featured_image_attachment_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record(*args, &blk); end
@@ -416,6 +425,18 @@ class PageRecord
 
     sig { params(value: T::Enumerable[::DraftPageRecord]).void }
     def draft_page_records=(value); end
+
+    sig { returns(T.nilable(::AttachmentRecord)) }
+    def featured_image_attachment_record; end
+
+    sig { params(value: T.nilable(::AttachmentRecord)).void }
+    def featured_image_attachment_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_record_previously_changed?; end
 
     sig { returns(T::Array[T.untyped]) }
     def page_attachment_reference_record_ids; end
@@ -445,11 +466,17 @@ class PageRecord
     sig { params(value: T::Enumerable[::PageEditorRecord]).void }
     def page_editor_records=(value); end
 
+    sig { returns(T.nilable(::AttachmentRecord)) }
+    def reload_featured_image_attachment_record; end
+
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
 
     sig { returns(T.nilable(::TopicRecord)) }
     def reload_topic_record; end
+
+    sig { void }
+    def reset_featured_image_attachment_record; end
 
     sig { void }
     def reset_space_record; end
