@@ -188,7 +188,6 @@ class SpaceMemberPolicy < ApplicationPolicy
   # Topic権限への委譲メソッド
   sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
-    # TopicMemberRecordを取得
     topic_member_record = user_record.not_nil!.topic_member_records.find_by(topic_record:)
 
     if topic_member_record
@@ -207,8 +206,8 @@ class SpaceMemberPolicy < ApplicationPolicy
           topic_member_record:
         )
       else
-        # 想定外のロールの場合はTopicGuestPolicyを返す
-        TopicGuestPolicy.new(user_record: user_record.not_nil!)
+        # 想定外のロールの場合は例外を投げる
+        raise ArgumentError, "Unexpected topic member role: #{topic_member_record.role.inspect}"
       end
     else
       # TopicMemberRecordがない場合はTopicGuestPolicyを返す（公開トピックのみ閲覧可能）
