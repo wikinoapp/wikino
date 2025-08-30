@@ -17,12 +17,13 @@
 
 ### 達成条件
 
-- [ ] ページ本文の最初の画像を特定できる
+- [ ] Markdown形式のページ本文1行目の画像を特定できる
 - [ ] ページ一覧のカードに画像が表示される
 - [ ] 各ページのog:imageメタタグが適切に設定される
 - [ ] 画像がない場合の適切なフォールバック処理
 - [ ] アニメーションGIFの特別処理（サムネイル生成せず、元画像を使用）
 - [ ] パフォーマンスを考慮したサムネイル事前生成
+- [ ] pagesテーブルに最初の画像IDを保存してパフォーマンス向上
 - [ ] 公開ページのOGP画像は認証なしでアクセス可能
 
 ## 修正方針
@@ -44,21 +45,46 @@ else
 end
 ```
 
-### 2. PageRecordへのメソッド追加
+### 2. データベーススキーマの更新
+
+`pages`テーブルにカラムを追加：
+
+```ruby
+# マイグレーション
+add_column :pages, :first_image_attachment_id, :uuid, null: true
+add_foreign_key :pages, :attachments, column: :first_image_attachment_id
+add_index :pages, :first_image_attachment_id
+```
+
+### 3. PageRecordへのメソッド追加
 
 `PageRecord`に以下のメソッドを追加：
 
 ```ruby
-# ページ本文の最初の添付画像を取得
-def first_image_attachment
-  # bodyから最初の画像添付ファイルのIDを抽出
-  # Markdown形式: ![alt text](/attachments/attachment_id)
-  # page_attachment_reference_recordsと結合して取得
+# belongs_to関連の追加
+belongs_to :first_image_attachment_record,
+  class_name: "AttachmentRecord",
+  foreign_key: :first_image_attachment_id,
+  optional: true
+
+# Markdown本文の1行目から画像IDを抽出
+def extract_first_line_image_id
+  return nil if body.blank?
+  
+  # 1行目を取得
+  first_line = body.lines.first&.strip
+  return nil if first_line.blank?
+  
+  # Markdown画像形式をチェック: ![alt text](/attachments/attachment_id)
+  match = first_line.match(/!\[[^\]]*\]\(\/attachments\/([^)]+)\)/)
+  return nil unless match
+  
+  match[1]
 end
 
 # 最初の画像がGIFかどうか判定
 def first_image_is_gif?
-  attachment = first_image_attachment
+  attachment = first_image_attachment_record
   return false unless attachment
   
   filename = attachment.filename
@@ -69,7 +95,7 @@ end
 
 # カード用画像URLを取得
 def card_image_url(expires_in: 1.hour)
-  attachment = first_image_attachment
+  attachment = first_image_attachment_record
   return nil unless attachment
   
   # GIFの場合はオリジナル画像のURLを返す
@@ -82,7 +108,7 @@ end
 
 # OGP画像URLを取得
 def og_image_url(expires_in: 1.hour)
-  attachment = first_image_attachment
+  attachment = first_image_attachment_record
   return nil unless attachment
   
   # GIFの場合はnilを返す（デフォルトOGP画像を使用）
@@ -92,17 +118,44 @@ def og_image_url(expires_in: 1.hour)
 end
 ```
 
-### 3. ページ作成・更新時の処理
+### 4. ページ作成・更新時の処理
 
 `Pages::UpdateService`および`Pages::CreateService`で：
 
-1. ページ保存後に最初の画像を検出
-2. 画像が見つかった場合、GIFかどうかをチェック
-3. GIFでない場合のみ、サムネイル事前生成ジョブをキューに追加
-4. `:card`（カード表示用）サイズのサムネイルを生成
-5. `:og`（OGP用）サイズは必要になったタイミングで生成
+```ruby
+def call
+  # ... 既存の処理 ...
+  
+  # 1行目の画像IDを抽出
+  first_image_id = page_record.extract_first_line_image_id
+  
+  if first_image_id
+    # 同じスペースの添付ファイルか確認
+    attachment = AttachmentRecord.find_by(
+      id: first_image_id,
+      space_id: page_record.space_id
+    )
+    
+    if attachment
+      # first_image_attachment_idを更新
+      page_record.update!(first_image_attachment_id: attachment.id)
+      
+      # GIFでない場合のみサムネイル生成
+      unless attachment.filename&.downcase&.end_with?('.gif')
+        Attachments::GenerateThumbnailsJob.perform_later(attachment.id)
+      end
+    else
+      # 画像が見つからない場合はnullに設定
+      page_record.update!(first_image_attachment_id: nil)
+    end
+  else
+    # 1行目に画像がない場合はnullに設定
+    page_record.update!(first_image_attachment_id: nil)
+  end
+end
+```
 
-### 4. ページ一覧カードの更新
+### 5. ページ一覧カードの更新
 
 `CardLinks::PageComponent`を更新：
 
@@ -112,7 +165,7 @@ end
 4. 画像がない場合は既存のテキストのみ表示を維持
 5. レスポンシブデザインに対応（モバイルでは画像サイズを調整）
 
-### 5. OGP設定の更新
+### 6. OGP設定の更新
 
 `Pages::ShowView`を更新：
 
@@ -120,7 +173,7 @@ end
 2. `set_meta_tags`のog:imageに設定
 3. GIFの場合または画像がない場合はデフォルトのOGP画像を使用
 
-### 6. 公開ページのOGP画像アクセス
+### 7. 公開ページのOGP画像アクセス
 
 `Attachments::ShowController`を更新：
 
@@ -129,42 +182,48 @@ end
 
 ## タスクリスト
 
-### フェーズ1: バリアント定義の更新
+### フェーズ1: データベーススキーマの更新
+
+- [ ] マイグレーションファイルを作成（`first_image_attachment_id`カラム追加）
+- [ ] マイグレーションを実行
+
+### フェーズ2: バリアント定義の更新
 
 - [ ] AttachmentRecordの`thumbnail_variant`メソッドを更新（`:card`と`:og`のみに）
 - [ ] `generate_thumbnails`メソッドを更新（`:card`のみ事前生成）
 - [ ] テストを作成（spec/records/attachment_record_spec.rb）
 
-### フェーズ2: データ取得ロジックの実装
+### フェーズ3: データ取得ロジックの実装
 
-- [ ] PageRecordに`first_image_attachment`メソッドを追加
+- [ ] PageRecordに`first_image_attachment_record`関連を追加
+- [ ] PageRecordに`extract_first_line_image_id`メソッドを追加
 - [ ] PageRecordに`first_image_is_gif?`メソッドを追加
 - [ ] PageRecordに`card_image_url`メソッドを追加
 - [ ] PageRecordに`og_image_url`メソッドを追加
 - [ ] テストを作成（spec/records/page_record_spec.rb）
 
-### フェーズ3: サムネイル生成処理の実装
+### フェーズ4: サムネイル生成処理の実装
 
 - [ ] `Attachments::GenerateThumbnailsJob`を作成（既存のものがあれば活用）
-- [ ] `Pages::CreateService`でサムネイル生成ジョブを追加
-- [ ] `Pages::UpdateService`でサムネイル生成ジョブを追加
+- [ ] `Pages::CreateService`で1行目画像の検出と保存処理を追加
+- [ ] `Pages::UpdateService`で1行目画像の検出と保存処理を追加
 - [ ] テストを作成
 
-### フェーズ4: UI表示の実装
+### フェーズ5: UI表示の実装
 
 - [ ] `CardLinks::PageComponent`にサムネイル表示を追加
 - [ ] コンポーネントのHTMLテンプレートを更新
 - [ ] CSSでレイアウト調整（画像とテキストのバランス）
 - [ ] システムテストを作成
 
-### フェーズ5: OGP設定の実装
+### フェーズ6: OGP設定の実装
 
 - [ ] `Pages::ShowView`でog:imageメタタグを設定
 - [ ] `ApplicationView`のdefault_meta_tagsメソッドを調整（必要に応じて）
 - [ ] 公開ページの画像アクセス権限を調整
 - [ ] テストを作成
 
-### フェーズ6: パフォーマンス最適化
+### フェーズ7: パフォーマンス最適化
 
 - [ ] サムネイル生成の非同期処理を確認
 - [ ] N+1問題の確認と対策
