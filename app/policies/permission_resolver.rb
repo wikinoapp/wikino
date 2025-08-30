@@ -105,14 +105,14 @@ class PermissionResolver
       # Topic Admin専用のポリシーを使用
       TopicAdminPolicy.new(
         user_record: user_record,
-        space_member_record: space_member_record,
-        topic_member_record: topic_member_record
+        space_member_record: space_member_record.not_nil!,
+        topic_member_record: topic_member_record.not_nil!
       )
     elsif space_member_record
       # Topic Memberの場合
       SpaceMemberPolicy.new(
-        user_record: user_record,
-        space_member_record: space_member_record
+        user_record: user_record.not_nil!,
+        space_member_record: space_member_record.not_nil!
       )
     else
       # ゲストの場合
