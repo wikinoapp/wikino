@@ -12,7 +12,7 @@ class SpaceGuestPolicy < ApplicationPolicy
 
   sig { params(user_record: T.nilable(UserRecord)).void }
   def initialize(user_record:)
-    super(user_record:)
+    super
     @user_record = user_record
   end
 
@@ -68,7 +68,7 @@ class SpaceGuestPolicy < ApplicationPolicy
   def showable_pages(space_record:)
     # ゲストは公開トピックのページのみ閲覧可能
     space_record.page_records.joins(:topic_record).where(
-      topic_records: { visibility: TopicVisibility::Public.serialize }
+      topic_records: {visibility: TopicVisibility::Public.serialize}
     )
   end
 

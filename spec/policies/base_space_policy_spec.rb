@@ -5,7 +5,6 @@ require "rails_helper"
 
 # BaseSpacePolicyは抽象クラスなので、テスト用の具象クラスを定義
 class TestMemberPolicy < BaseSpacePolicy
-
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
     true
@@ -15,7 +14,6 @@ class TestMemberPolicy < BaseSpacePolicy
   def can_create_topic?
     true
   end
-
 
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
@@ -31,7 +29,6 @@ class TestMemberPolicy < BaseSpacePolicy
   def can_upload_attachment?(space_record:)
     true
   end
-
 
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_attachments?(space_record:)

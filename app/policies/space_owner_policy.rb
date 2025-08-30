@@ -48,7 +48,6 @@ class SpaceOwnerPolicy < BaseSpacePolicy
     active? && in_same_space?(space_record_id: space_record.id)
   end
 
-
   # Ownerはファイル管理画面にアクセス可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_attachments?(space_record:)
