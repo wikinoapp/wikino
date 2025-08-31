@@ -79,6 +79,11 @@ class SpaceRecord < ApplicationRecord
     page_records.visible.find_by!(number:)
   end
 
+  sig { params(number: Integer).returns(TopicRecord) }
+  def find_topic_by_number!(number)
+    topic_records.kept.find_by!(number:)
+  end
+
   sig do
     params(
       user_record: UserRecord,

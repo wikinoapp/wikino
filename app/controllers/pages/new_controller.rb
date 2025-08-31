@@ -14,7 +14,7 @@ module Pages
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
-      topic_record = space_record.topic_records.kept.find_by!(number: params[:topic_number])
+      topic_record = space_record.find_topic_by_number!(params[:topic_number]&.to_i)
       topic_policy = topic_policy_for(topic_record:)
 
       unless topic_policy.can_create_page?(topic_record:)
