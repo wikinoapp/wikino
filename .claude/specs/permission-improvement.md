@@ -1448,7 +1448,7 @@ end
 - [x] pages/new_controller.rb - ページ作成（Topic参加チェック）
 - [x] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
 - [x] trashed_pages/create_controller.rb - ページ削除（Topic権限）
-- [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
+- [x] topics/settings/\* - Topic設定関連（Topic Admin権限）
   - topics/settings/edit_controller.rb - トピック基本情報編集画面
   - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
   - topics/delete_controller.rb - トピック削除（Topic Admin専用）
