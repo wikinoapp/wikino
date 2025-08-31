@@ -13,7 +13,6 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user_record!.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
       topic_policy = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
 
@@ -21,6 +20,7 @@ module Pages
         return render_404
       end
 
+      space_member_record = current_user_record!.space_member_record(space_record:)
       draft_page_record = space_member_record.not_nil!.draft_page_records.find_by(page_record:)
       pageable_record = draft_page_record.presence || page_record
 
