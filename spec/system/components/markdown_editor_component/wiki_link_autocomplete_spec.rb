@@ -9,9 +9,9 @@ RSpec.describe "Markdownエディター/Wikiリンクの補完候補", type: :sy
   it "Wikiリンクの補完候補が表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    page_record = create(:page_record, space_record:)
-    topic_record = page_record.topic_record
     space_member_record = create(:space_member_record, space_record:, user_record:)
+    topic_record = create(:topic_record, space_record:)
+    page_record = create(:page_record, space_record:, topic_record:)
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
     create(:page_record, :published, space_record:, topic_record:, title: "Other Page 1")
     create(:page_record, :published, space_record:, topic_record:, title: "Other Page 2")
