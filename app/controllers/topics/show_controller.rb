@@ -15,13 +15,11 @@ module Topics
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       topic_record = space_record.topic_record_by_number!(params[:topic_number])
+      topic_policy = topic_policy_for(topic_record:)
 
-      # 非公開トピックへのアクセス制限
-      if topic_record.visibility_private? && space_member_record.nil?
+      unless topic_policy.can_show_topic?(topic_record:)
         return render_404
       end
-
-      topic_policy = topic_policy_for(topic_record:)
 
       pinned_page_records = topic_record.page_records.active.pinned
         .preload(featured_image_attachment_record: {active_storage_attachment_record: :blob})

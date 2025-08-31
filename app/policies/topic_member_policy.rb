@@ -28,6 +28,11 @@ class TopicMemberPolicy < ApplicationPolicy
       ].join(" ")
     end
   end
+  # Topic Memberは常にトピックを閲覧可能
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_show_topic?(topic_record:)
+    active?
+  end
 
   # Topic Memberはトピックの基本情報を更新不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
