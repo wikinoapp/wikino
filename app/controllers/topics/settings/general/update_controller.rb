@@ -15,10 +15,7 @@ module Topics
         sig { returns(T.untyped) }
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_policy = space_policy_for(space_record:)
-          topic_record = space_policy.showable_topics(space_record:).find_by!(
-            number: params[:topic_number]
-          )
+          topic_record = space_record.topic_records.kept.find_by!(number: params[:topic_number])
           topic_policy = topic_policy_for(topic_record:)
 
           unless topic_policy.can_update_topic?(topic_record:)
