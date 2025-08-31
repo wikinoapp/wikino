@@ -1,5 +1,31 @@
 # 権限管理の改善
 
+## 実装状況サマリー（2025年8月30日）
+
+### 完了した主な変更
+
+1. **権限定義の簡素化**
+   - `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除
+   - 権限チェックロジックをPolicyクラスに一元化
+
+2. **Policyクラスの分離**
+   - `BaseSpacePolicy`を削除し、よりシンプルな階層構造に
+   - `SpaceOwnerPolicy`、`SpaceMemberPolicy`、`SpaceGuestPolicy`に分離
+   - 各ロールの権限が独立したクラスで管理される
+
+3. **Factory Pattern の導入**
+   - `SpaceMemberPolicyFactory`を`SpacePolicyFactory`にリネーム
+   - ロールに応じた適切なPolicyインスタンスを生成
+
+4. **PermissionResolverの削除**
+   - `SpacePolicyFactory`と機能が重複していたため削除
+   - よりシンプルな設計を実現
+
+5. **責務の明確化**
+   - `SpacePermissions`モジュール: Space関連の権限定義
+   - `TopicPermissions`モジュール: Topic/Page関連の権限定義
+   - 各Policyクラスが必要なモジュールのみをinclude
+
 ## 現在の権限まわりの処理
 
 ### アーキテクチャ概要
@@ -1195,9 +1221,10 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - TopicMemberRecordの役割を編集権限に特化
   - PrivateトピックのWikino独自仕様の文書化
 
-- [x] 権限リゾルバーの実装
-  - `PermissionResolver`クラスの作成
-  - Space Owner > Topic権限 > Space Member > Guestの優先順位実装
+- [x] ~~権限リゾルバーの実装~~
+  - ~~`PermissionResolver`クラスの作成~~
+  - ~~Space Owner > Topic権限 > Space Member > Guestの優先順位実装~~
+  - **削除済み**: `PermissionResolver`は`SpacePolicyFactory`と重複していたため削除
 
 ### Phase 3: コントローラーの段階的移行
 
@@ -1251,7 +1278,10 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - 旧`SpaceMemberPolicy`の削除
   - 不要な中間層コードの整理
 
-### Phase 4: PermissionResolverの活用
+### Phase 4: ~~PermissionResolverの活用~~ SpacePolicyFactoryへの統合
+
+**注記**: PermissionResolverは`SpacePolicyFactory`と機能が重複していたため削除しました。
+`SpacePolicyFactory`（旧`SpaceMemberPolicyFactory`）に統一することで、よりシンプルな設計になりました。
 
 #### Topic権限管理の本格導入
 
@@ -1281,38 +1311,144 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
   - `GuestPolicy`: 全て不可
   - 全メソッドのテストを作成済み
 
-- [ ] PermissionResolverのテスト作成
-  - 権限優先順位のテスト
-  - Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認
-  - Topic指定有無による挙動の違いをテスト
+- [x] ~~PermissionResolverのテスト作成~~
+  - ~~権限優先順位のテスト~~
+  - ~~Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認~~
+  - ~~Topic指定有無による挙動の違いをテスト~~
+  - **削除済み**: PermissionResolverと共にテストも削除
 
-- [ ] コントローラーヘルパーメソッドの作成
-  - `current_space_record`の取得メソッド
-  - `current_topic_record`の取得メソッド（該当する場合）
-  - PermissionResolverインスタンス生成のヘルパー
-
-- [ ] 移行戦略の決定
-  - SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針
-  - Topic関連の操作を行うコントローラーから優先的に移行
-  - Space単独の操作は既存のFactoryパターンを継続使用
-
-- [ ] Topic Admin専用権限の実装
+- [x] Topic Admin専用権限の実装
   - TopicAdminPolicyクラスでの管理権限定義
   - `can_update_topic?` メソッドの実装（基本情報更新）
   - `can_delete_topic?` メソッドの実装（トピック削除）
   - Space Ownerにも同等の権限を付与（権限の継承）
 
+### Phase 4.5: Space/Topic権限の責務分離
+
+#### 設計方針
+
+権限管理の責務を明確に分離し、より整理された設計を実現します：
+
+1. **Space関係の操作**: `space_*_policy` が担当
+   - Space設定の更新（`can_update_space?`）
+   - Spaceメンバー管理（`can_manage_space_members?`）
+   - Spaceエクスポート（`can_export_space?`）
+   - Space削除（`can_delete_space?`）
+
+2. **Topic/Page関係の操作**: `topic_*_policy` が担当
+   - Topic設定の更新（`can_update_topic?`）
+   - Topicメンバー管理（`can_manage_topic_members?`）
+   - Topic削除（`can_delete_topic?`）
+   - ページ作成・編集・削除（`can_create_page?`, `can_update_page?`, `can_delete_page?`）
+   - ドラフト操作（`can_create_draft_page?`, `can_update_draft_page?`）
+
+3. **共通メソッドの定義方法**
+   - `ApplicationPolicy`での`abstract!`定義を削除
+   - 代わりにモジュールで権限メソッドを定義し、必要なポリシーでinclude
+   - Space系とTopic系でそれぞれ異なるモジュールを定義
+
+#### 実装構造
+
+```ruby
+# app/policies/concerns/space_permissions.rb
+module SpacePermissions
+  extend T::Sig
+  extend T::Helpers
+
+  interface!
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:); end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_space_members?(space_record:); end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:); end
+end
+
+# app/policies/concerns/topic_permissions.rb
+module TopicPermissions
+  extend T::Sig
+  extend T::Helpers
+
+  interface!
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:); end
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:); end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:); end
+
+  # ... 他のTopic/Page関連メソッド
+end
+
+# Space系ポリシーはSpacePermissionsをinclude
+class SpaceOwnerPolicy < BaseSpaceMemberPolicy
+  include SpacePermissions
+  # Space関連の権限実装
+end
+
+# Topic系ポリシーはTopicPermissionsをinclude
+class TopicAdminPolicy < ApplicationPolicy
+  include TopicPermissions
+  # Topic関連の権限実装
+end
+```
+
+#### 移行手順
+
+- [x] SpacePermissionsモジュールの作成
+  - Space操作に関する抽象メソッド定義
+  - Space系ポリシーでinclude
+
+- [x] TopicPermissionsモジュールの作成
+  - Topic/Page操作に関する抽象メソッド定義
+  - Topic系ポリシーでinclude
+
+- [x] ApplicationPolicyから抽象メソッドを削除
+  - 各ポリシーが必要なモジュールのみinclude
+
+- [x] 既存ポリシーのリファクタリング
+  - SpaceOwnerPolicy: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceRegularMemberPolicy（旧SpaceMemberPolicy）: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceGuestPolicy: 責務の分離を実施
+
+- [x] Topicポリシーのリファクタリング
+  - TopicAdminPolicy: TopicPermissionsをinclude、Space権限から分離
+  - TopicMemberPolicy: 未実装（次フェーズ）
+  - TopicGuestPolicy: 未実装（次フェーズ）
+
+- [x] ~~PermissionResolverの更新~~
+  - ~~SpaceMemberPolicyをSpaceRegularMemberPolicyに変更~~
+  - ~~SpaceMemberPolicyFactoryも同様に更新~~
+  - **削除済み**: PermissionResolverを削除し、SpacePolicyFactoryに統一
+
+- [x] 移行戦略の決定
+  - ~~SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針~~
+  - SpacePolicyFactoryに統一（PermissionResolverは削除済み）
+  - Topic関連の操作を行うコントローラーから優先的に移行
+  - Space単独の操作は既存のFactoryパターンを継続使用
+
+- [x] コントローラーヘルパーメソッドの作成
+  - `current_space_record`の取得メソッド
+  - `current_topic_record`の取得メソッド（該当する場合）
+  - SpacePolicyFactoryインスタンス生成のヘルパー
+
 #### Topic関連コントローラーの移行
 
-**Topic操作を含むコントローラー（PermissionResolver対象）:**
+**Topic操作を含むコントローラー（SpacePolicyFactory対象）:**
 
-- [ ] pages/show_controller.rb - ページ表示（Topic権限チェック）
-- [ ] pages/edit_controller.rb - ページ編集（Topic編集権限）
-- [ ] pages/update_controller.rb - ページ更新（Topic編集権限）
-- [ ] pages/new_controller.rb - ページ作成（Topic参加チェック）
-- [ ] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
-- [ ] trashed_pages/create_controller.rb - ページ削除（Topic権限）
-- [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
+- [x] pages/show_controller.rb - ページ表示（Topic権限チェック）
+- [x] pages/edit_controller.rb - ページ編集（Topic編集権限）
+- [x] pages/update_controller.rb - ページ更新（Topic編集権限）
+- [x] pages/new_controller.rb - ページ作成（Topic参加チェック）
+- [x] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
+- [x] trashed_pages/create_controller.rb - ページ削除（Topic権限）
+- [x] topics/settings/\* - Topic設定関連（Topic Admin権限）
   - topics/settings/edit_controller.rb - トピック基本情報編集画面
   - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
   - topics/delete_controller.rb - トピック削除（Topic Admin専用）
@@ -1323,7 +1459,57 @@ WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構�
 - spaces/show_controller.rb - Space表示
 - attachments/\* - 添付ファイル関連（Space権限ベース）
 
-### Phase 5: 最適化
+### Phase 5: 後方互換メソッドの削除
+
+**背景**: 現在、`SpaceGuestPolicy`、`SpaceOwnerPolicy`、`SpaceMemberPolicy`などのSpace系Policyクラスに、本来Topic層で管理すべき権限チェックメソッドが後方互換性のために残されています。これらは責務の分離を妨げているため、段階的に削除する必要があります。
+
+#### 削除対象メソッド
+
+Space系Policyクラスから削除すべきTopic関連メソッド：
+
+- `can_update_topic?(topic_record:)` - Topic更新権限
+- `can_delete_topic?(topic_record:)` - Topic削除権限
+- `can_manage_topic_members?(topic_record:)` - Topicメンバー管理権限
+- `can_create_page?(topic_record:)` - ページ作成権限
+- `can_update_page?(page_record:)` - ページ更新権限
+- `can_delete_page?(page_record:)` - ページ削除権限
+- `can_show_page?(page_record:)` - ページ閲覧権限
+- `can_trash_page?(page_record:)` - ページゴミ箱移動権限
+- `can_create_draft_page?(topic_record:)` - ドラフト作成権限
+- `can_update_draft_page?(page_record:)` - ドラフト更新権限
+
+#### 移行手順
+
+- [x] コントローラーの権限チェック方法を更新
+  - Topic関連の操作では`topic_policy_for`メソッドを使用してTopicPolicyを取得
+  - TopicPolicy経由で権限チェックを実施
+- [x] 既存コントローラーの段階的移行
+  - 各コントローラーで直接Space Policyのメソッドを呼んでいる箇所を特定
+  - Topic権限チェックをTopicPolicy経由に変更
+- [x] テストの更新
+  - Space PolicyのテストからTopic関連メソッドのテストを削除
+  - TopicPolicyのテストに移行
+- [x] 後方互換メソッドの削除
+  - 全コントローラー移行完了後、Space PolicyからTopic関連メソッドを削除
+  - インターフェースのクリーンアップ
+
+#### 最終的な責務分離
+
+**Space Policy (SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy)**
+
+- Space設定の管理
+- Spaceメンバーの管理
+- Space全体の権限
+- Topic Policyへの委譲（`topic_policy_for`メソッド）
+
+**Topic Policy (TopicAdminPolicy, TopicMemberPolicy)**
+
+- Topic設定の管理
+- Topicメンバーの管理
+- ページの作成・編集・削除
+- Topic内のコンテンツ管理
+
+### Phase 6: 最適化
 
 - [ ] パフォーマンス最適化
   - 権限チェックのメモ化

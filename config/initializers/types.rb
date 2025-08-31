@@ -8,7 +8,10 @@ module T
     DatabaseId = T.type_alias { String }
 
     # Policy関連の型エイリアス
-    # SpaceMemberPolicyFactoryが返す可能性のあるPolicyクラスの共用型
-    PolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy) }
+    # SpacePolicyFactoryが返す可能性のあるPolicyクラスの型
+    SpacePolicyInstance = T.type_alias { T.any(SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy) }
+
+    # Topic層のPolicyクラスの型
+    TopicPolicyInstance = T.type_alias { T.any(TopicOwnerPolicy, TopicAdminPolicy, TopicMemberPolicy, TopicGuestPolicy) }
   end
 end

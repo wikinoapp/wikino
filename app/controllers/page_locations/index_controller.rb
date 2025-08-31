@@ -5,6 +5,7 @@ module PageLocations
   class IndexController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceAware
 
     layout false
 
@@ -13,18 +14,14 @@ module PageLocations
 
     sig { returns(T.untyped) }
     def call
-      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user_record&.space_member_record(space_record:)
-      space_member_policy = SpaceMemberPolicyFactory.build(
-        user_record: current_user_record,
-        space_member_record:
-      )
+      space_record = current_space_record
+      space_policy = space_policy_for(space_record:)
 
-      unless space_member_policy.joined_space?
+      unless space_policy.joined_space?
         return render_404
       end
 
-      page_records = space_member_policy
+      page_records = space_policy
         .showable_pages(space_record:)
         .filter_by_title(q: params[:q])
         .order(modified_at: :desc)

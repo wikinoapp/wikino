@@ -5,19 +5,17 @@ module Spaces
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceAware
 
     around_action :set_locale
     before_action :restore_user_session
 
     sig { returns(T.untyped) }
     def call
-      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      space_member_record = current_user_record&.space_member_record(space_record:)
-      space_member_policy = SpaceMemberPolicyFactory.build(
-        user_record: current_user_record,
-        space_member_record:
-      )
-      showable_pages = space_member_policy.showable_pages(space_record:).preload(:topic_record)
+      space_record = current_space_record
+      space_member_record = current_space_member_record(space_record:)
+      space_policy = space_policy_for(space_record:)
+      showable_pages = space_policy.showable_pages(space_record:).preload(:topic_record)
 
       cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
@@ -31,10 +29,10 @@ module Spaces
 
       space = SpaceRepository.new.to_model(
         space_record:,
-        can_create_topic: space_member_policy.can_create_topic?
+        can_create_topic: space_policy.can_create_topic?
       )
 
-      first_joined_topic_record = space_member_policy.joined_topic_records.order(:id).first
+      first_joined_topic_record = space_policy.joined_topic_records.order(:id).first
       first_joined_topic = if first_joined_topic_record
         TopicRepository.new.to_model(topic_record: first_joined_topic_record)
       end
