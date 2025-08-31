@@ -14,10 +14,13 @@ module Topics
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
-      space_policy = space_policy_for(space_record:)
-      topic_record = space_policy.showable_topics(space_record:).find_by!(
-        number: params[:topic_number]
-      )
+      topic_record = space_record.find_topic_by_number!(params[:topic_number].to_i)
+
+      # 非公開トピックへのアクセス制限
+      if topic_record.visibility_private? && space_member_record.nil?
+        return render_404
+      end
+
       topic_policy = topic_policy_for(topic_record:)
 
       pinned_page_records = topic_record.page_records.active.pinned

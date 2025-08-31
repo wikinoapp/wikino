@@ -13,12 +13,13 @@ module Topics
     sig { returns(T.untyped) }
     def call
       space_record = current_space_record
-      space_member_record = current_space_member_record!(space_record:)
       space_policy = space_policy_for(space_record:)
 
       unless space_policy.can_create_topic?
         return render_404
       end
+
+      space_member_record = current_space_member_record!(space_record:)
 
       form = Topics::CreationForm.new(form_params.merge(space_record:))
 
