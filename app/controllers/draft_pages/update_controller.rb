@@ -5,6 +5,7 @@ module DraftPages
   class UpdateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::TopicAware
 
     around_action :set_locale
     before_action :require_authentication
@@ -14,12 +15,9 @@ module DraftPages
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record!.space_member_record(space_record:)
       page_record = space_record.find_page_by_number!(params[:page_number]&.to_i)
-      space_member_policy = SpacePolicyFactory.build(
-        user_record: current_user_record!,
-        space_member_record:
-      )
+      topic_policy = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
 
-      unless space_member_policy.can_update_draft_page?(page_record:)
+      unless topic_policy.can_update_draft_page?(page_record:)
         return render_404
       end
 
