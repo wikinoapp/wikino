@@ -13,7 +13,7 @@ module Pages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      topic_record = space_record.find_topic_by_number!(params[:topic_number]&.to_i)
+      topic_record = space_record.topic_record_by_number!(params[:topic_number])
       topic_policy = topic_policy_for(topic_record:)
 
       unless topic_policy.can_create_page?(topic_record:)
