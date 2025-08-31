@@ -4,6 +4,7 @@
 module Attachments
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
+    include ControllerConcerns::SpaceAware
 
     before_action :restore_user_session
 
@@ -15,10 +16,9 @@ module Attachments
     def call
       attachment_record = AttachmentRecord.find(params[:attachment_id])
       space_record = attachment_record.space_record.not_nil!
-      space_member_record = current_user_record&.space_member_record(space_record:)
-      policy = SpacePolicyFactory.build(user_record: current_user_record, space_member_record:)
+      space_policy = space_policy_for(space_record:)
 
-      unless policy.can_view_attachment?(attachment_record:)
+      unless space_policy.can_view_attachment?(attachment_record:)
         render_404
         return
       end
