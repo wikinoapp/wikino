@@ -5,11 +5,17 @@
 # Space関連の全権限を持つ
 class SpaceOwnerPolicy < ApplicationPolicy
   include SpacePermissions
+  include Memoizable
+  include QueryOptimizer
 
   sig { params(user_record: UserRecord, space_member_record: SpaceMemberRecord).void }
   def initialize(user_record:, space_member_record:)
     super(user_record:)
-    @space_member_record = space_member_record
+    # 関連をプリロードして最適化
+    @space_member_record = T.let(
+      preload_space_member_associations(space_member_record).not_nil!,
+      SpaceMemberRecord
+    )
 
     if mismatched_relations?
       raise ArgumentError, [
@@ -24,7 +30,9 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # Ownerはスペース設定を変更可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_update_space?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_update_space, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Ownerはトピック作成可能
@@ -36,19 +44,25 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # OwnerはSpaceを削除可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_delete_space?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_delete_space, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # OwnerはSpaceメンバーを管理可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_space_members?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_manage_space_members, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Ownerはゴミ箱を閲覧可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_show_trash, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Ownerは一括復元可能
@@ -60,19 +74,25 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # Ownerはファイルアップロード可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_upload_attachment?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_upload_attachment, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Ownerはファイル管理画面にアクセス可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_manage_attachments?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_manage_attachments, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Ownerはエクスポート可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_export_space?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_export_space, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # 閲覧可能なトピック（Ownerは全トピック閲覧可能）
@@ -100,16 +120,20 @@ class SpaceOwnerPolicy < ApplicationPolicy
   # 添付ファイル削除権限（Ownerは全ファイル削除可能）
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_delete_attachment?(attachment_record:)
-    active? && in_same_space?(space_record_id: attachment_record.space_id)
+    memoize(:can_delete_attachment, { attachment_id: attachment_record.id }) do
+      active? && in_same_space?(space_record_id: attachment_record.space_id)
+    end
   end
 
   # 添付ファイル閲覧権限
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    active? && (
-      in_same_space?(space_record_id: attachment_record.space_id) ||
-      attachment_record.all_referencing_pages_public?
-    )
+    memoize(:can_view_attachment, { attachment_id: attachment_record.id }) do
+      active? && (
+        in_same_space?(space_record_id: attachment_record.space_id) ||
+        attachment_record.all_referencing_pages_public?
+      )
+    end
   end
 
   sig { returns(SpaceMemberRecord) }

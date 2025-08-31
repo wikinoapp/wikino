@@ -1511,6 +1511,23 @@ Space系Policyクラスから削除すべきTopic関連メソッド：
 
 ### Phase 6: 最適化
 
-- [ ] パフォーマンス最適化
+- [x] パフォーマンス最適化
   - 権限チェックのメモ化
   - データベースクエリの最適化
+
+#### 実装内容
+
+1. **Memoizableモジュール**
+   - 同じ引数での権限チェック結果をキャッシュ
+   - Policyクラスにincludeするだけでメモ化機能を利用可能
+   - ActiveRecordオブジェクトのIDを使用したキャッシュキー生成
+
+2. **QueryOptimizerモジュール**
+   - N+1クエリを防ぐためのプリロードヘルパー
+   - SpaceMemberRecord、TopicMemberRecord、PageRecord等の関連を最適化
+   - バッチ処理での権限チェック最適化
+
+3. **既存Policyクラスへの適用**
+   - SpaceOwnerPolicy、SpaceMemberPolicy、TopicAdminPolicyに適用
+   - 頻繁にアクセスされる権限チェックメソッドをメモ化
+   - 初期化時に必要な関連をプリロード

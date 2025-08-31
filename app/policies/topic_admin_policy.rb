@@ -5,6 +5,8 @@
 # TopicのAdmin権限を持つユーザーの権限を定義
 class TopicAdminPolicy < ApplicationPolicy
   include TopicPermissions
+  include Memoizable
+  include QueryOptimizer
 
   sig do
     params(
@@ -15,8 +17,15 @@ class TopicAdminPolicy < ApplicationPolicy
   end
   def initialize(user_record:, space_member_record:, topic_member_record:)
     super(user_record:)
-    @space_member_record = space_member_record
-    @topic_member_record = topic_member_record
+    # 関連をプリロードして最適化
+    @space_member_record = T.let(
+      preload_space_member_associations(space_member_record).not_nil!,
+      SpaceMemberRecord
+    )
+    @topic_member_record = T.let(
+      preload_topic_member_associations(topic_member_record).not_nil!,
+      TopicMemberRecord
+    )
 
     if mismatched_relations?
       raise ArgumentError, [
@@ -37,31 +46,41 @@ class TopicAdminPolicy < ApplicationPolicy
   # Topic Adminはトピックの基本情報を更新可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    memoize(:can_update_topic, { topic_record_id: topic_record.id }) do
+      active? && in_same_topic?(topic_record_id: topic_record.id)
+    end
   end
 
   # Topic Adminはトピックを削除可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_delete_topic?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    memoize(:can_delete_topic, { topic_record_id: topic_record.id }) do
+      active? && in_same_topic?(topic_record_id: topic_record.id)
+    end
   end
 
   # Topic Adminはトピックメンバーを管理可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_manage_topic_members?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    memoize(:can_manage_topic_members, { topic_record_id: topic_record.id }) do
+      active? && in_same_topic?(topic_record_id: topic_record.id)
+    end
   end
 
   # Topic Adminは自分が管理するトピックにページを作成可能
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_create_page?(topic_record:)
-    active? && in_same_topic?(topic_record_id: topic_record.id)
+    memoize(:can_create_page, { topic_record_id: topic_record.id }) do
+      active? && in_same_topic?(topic_record_id: topic_record.id)
+    end
   end
 
   # Topic Adminはページを更新可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_update_page?(page_record:)
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    memoize(:can_update_page, { page_id: page_record.id }) do
+      active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    end
   end
 
   # Topic Adminはドラフトページを更新可能
@@ -73,18 +92,22 @@ class TopicAdminPolicy < ApplicationPolicy
   # Topic Adminはページを閲覧可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_show_page?(page_record:)
-    # 公開トピックのページは誰でも閲覧可能
-    if page_record.topic_record.not_nil!.visibility_public?
-      return true
-    end
+    memoize(:can_show_page, { page_id: page_record.id }) do
+      # 公開トピックのページは誰でも閲覧可能
+      if page_record.topic_record.not_nil!.visibility_public?
+        return true
+      end
 
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+      active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    end
   end
 
   # Topic Adminはページをゴミ箱に移動可能
   sig { override.params(page_record: PageRecord).returns(T::Boolean) }
   def can_trash_page?(page_record:)
-    active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    memoize(:can_trash_page, { page_id: page_record.id }) do
+      active? && in_same_topic?(topic_record_id: page_record.topic_id)
+    end
   end
 
   sig { returns(SpaceMemberRecord) }

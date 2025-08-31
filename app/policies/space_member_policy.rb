@@ -5,11 +5,17 @@
 # Space関連の基本操作権限のみを持つ
 class SpaceMemberPolicy < ApplicationPolicy
   include SpacePermissions
+  include Memoizable
+  include QueryOptimizer
 
   sig { params(user_record: UserRecord, space_member_record: SpaceMemberRecord).void }
   def initialize(user_record:, space_member_record:)
     super(user_record:)
-    @space_member_record = space_member_record
+    # 関連をプリロードして最適化
+    @space_member_record = T.let(
+      preload_space_member_associations(space_member_record).not_nil!,
+      SpaceMemberRecord
+    )
 
     if mismatched_relations?
       raise ArgumentError, [
@@ -48,7 +54,9 @@ class SpaceMemberPolicy < ApplicationPolicy
   # Memberはゴミ箱を閲覧可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_show_trash?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_show_trash, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Memberは一括復元可能
@@ -60,7 +68,9 @@ class SpaceMemberPolicy < ApplicationPolicy
   # Memberはファイルアップロード可能
   sig { override.params(space_record: SpaceRecord).returns(T::Boolean) }
   def can_upload_attachment?(space_record:)
-    active? && in_same_space?(space_record_id: space_record.id)
+    memoize(:can_upload_attachment, { space_record_id: space_record.id }) do
+      active? && in_same_space?(space_record_id: space_record.id)
+    end
   end
 
   # Memberはファイル管理画面にアクセス不可
@@ -100,18 +110,22 @@ class SpaceMemberPolicy < ApplicationPolicy
   # 添付ファイル削除権限（Memberは自分がアップロードしたファイルのみ削除可能）
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_delete_attachment?(attachment_record:)
-    active? &&
-      in_same_space?(space_record_id: attachment_record.space_id) &&
-      space_member_record.id == attachment_record.attached_space_member_id
+    memoize(:can_delete_attachment, { attachment_id: attachment_record.id }) do
+      active? &&
+        in_same_space?(space_record_id: attachment_record.space_id) &&
+        space_member_record.id == attachment_record.attached_space_member_id
+    end
   end
 
   # 添付ファイル閲覧権限
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
-    active? && (
-      in_same_space?(space_record_id: attachment_record.space_id) ||
-      attachment_record.all_referencing_pages_public?
-    )
+    memoize(:can_view_attachment, { attachment_id: attachment_record.id }) do
+      active? && (
+        in_same_space?(space_record_id: attachment_record.space_id) ||
+        attachment_record.all_referencing_pages_public?
+      )
+    end
   end
 
   sig { returns(SpaceMemberRecord) }
@@ -137,7 +151,11 @@ class SpaceMemberPolicy < ApplicationPolicy
   # Topic権限への委譲メソッド
   sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
-    topic_member_record = user_record.not_nil!.topic_member_records.find_by(topic_record:)
+    # Topic関連をプリロードして最適化
+    optimized_topic_record = preload_topic_associations(topic_record)
+    topic_member_record = user_record.not_nil!.topic_member_records
+      .preload(:topic_record, :space_member_record)
+      .find_by(topic_record: optimized_topic_record)
 
     if topic_member_record
       # TopicMemberのロールに応じて適切なPolicyを返す
