@@ -15,6 +15,11 @@ class TopicGuestPolicy < ApplicationPolicy
   def initialize(user_record:)
     super
   end
+  # Topic Guestは公開トピックのみ閲覧可能
+  sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_show_topic?(topic_record:)
+    topic_record.visibility_public?
+  end
 
   # Topic Guestはトピックの基本情報を更新不可
   sig { override.params(topic_record: TopicRecord).returns(T::Boolean) }

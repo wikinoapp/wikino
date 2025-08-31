@@ -9,6 +9,10 @@ module TopicPermissions
 
   # Topic管理権限
   sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_show_topic?(topic_record:)
+  end
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
   def can_update_topic?(topic_record:)
   end
 

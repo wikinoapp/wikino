@@ -12,7 +12,7 @@ module Pages
 
     sig { returns(T.untyped) }
     def call
-      page_record = current_space_record.find_page_by_number!(params[:page_number]&.to_i)
+      page_record = current_space_record.page_record_by_number!(params[:page_number])
         .tap { |p| p.featured_image_attachment_record&.active_storage_attachment_record }
       space_member_record = current_space_member_record(space_record: current_space_record)
       space_policy = space_policy_for(space_record: current_space_record)

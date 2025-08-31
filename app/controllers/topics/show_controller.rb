@@ -5,6 +5,7 @@ module Topics
   class ShowController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::TopicAware
 
     around_action :set_locale
     before_action :restore_user_session
@@ -13,13 +14,12 @@ module Topics
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
-      space_member_policy = SpacePolicyFactory.build(
-        user_record: current_user_record,
-        space_member_record:
-      )
-      topic_record = space_member_policy.showable_topics(space_record:).find_by!(
-        number: params[:topic_number]
-      )
+      topic_record = space_record.topic_record_by_number!(params[:topic_number])
+      topic_policy = topic_policy_for(topic_record:)
+
+      unless topic_policy.can_show_topic?(topic_record:)
+        return render_404
+      end
 
       pinned_page_records = topic_record.page_records.active.pinned
         .preload(featured_image_attachment_record: {active_storage_attachment_record: :blob})
@@ -42,8 +42,8 @@ module Topics
       page_list = PageList.new(pages:, pagination:)
       topic = TopicRepository.new.to_model(
         topic_record:,
-        can_update: space_member_policy.can_update_topic?(topic_record:),
-        can_create_page: space_member_policy.can_create_page?(topic_record:)
+        can_update: topic_policy.can_update_topic?(topic_record:),
+        can_create_page: topic_policy.can_create_page?(topic_record:)
       )
 
       render_component Topics::ShowView.new(current_user:, topic:, pinned_pages:, page_list:)
