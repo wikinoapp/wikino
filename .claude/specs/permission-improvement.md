@@ -1442,12 +1442,12 @@ end
 
 **Topic操作を含むコントローラー（SpacePolicyFactory対象）:**
 
-- [ ] pages/show_controller.rb - ページ表示（Topic権限チェック）
-- [ ] pages/edit_controller.rb - ページ編集（Topic編集権限）
-- [ ] pages/update_controller.rb - ページ更新（Topic編集権限）
-- [ ] pages/new_controller.rb - ページ作成（Topic参加チェック）
-- [ ] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
-- [ ] trashed_pages/create_controller.rb - ページ削除（Topic権限）
+- [x] pages/show_controller.rb - ページ表示（Topic権限チェック）
+- [x] pages/edit_controller.rb - ページ編集（Topic編集権限）
+- [x] pages/update_controller.rb - ページ更新（Topic編集権限）
+- [x] pages/new_controller.rb - ページ作成（Topic参加チェック）
+- [x] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
+- [x] trashed_pages/create_controller.rb - ページ削除（Topic権限）
 - [ ] topics/settings/\* - Topic設定関連（Topic Admin権限）
   - topics/settings/edit_controller.rb - トピック基本情報編集画面
   - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
