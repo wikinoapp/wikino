@@ -15,15 +15,15 @@ module Pages
       page_record = current_space_record.page_record_by_number!(params[:page_number])
         .tap { |p| p.featured_image_attachment_record&.active_storage_attachment_record }
       space_member_record = current_space_member_record(space_record: current_space_record)
-      space_policy = space_policy_for(space_record: current_space_record)
+      topic_policy = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
 
-      unless space_policy.can_show_page?(page_record:)
+      unless topic_policy.can_show_page?(page_record:)
         return render_404
       end
 
       page = PageRepository.new.to_model(
         page_record:,
-        can_update: space_policy.can_update_page?(page_record:),
+        can_update: topic_policy.can_update_page?(page_record:),
         current_space_member: space_member_record
       )
       link_list = LinkListRepository.new.to_model(

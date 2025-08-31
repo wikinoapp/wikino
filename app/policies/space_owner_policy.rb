@@ -97,47 +97,6 @@ class SpaceOwnerPolicy < ApplicationPolicy
     space_member_record.joined_topic_records
   end
 
-  # Topic/Page操作権限（互換性のため）
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic_record:)
-    active? && in_same_space?(space_record_id: topic_record.space_id)
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_delete_topic?(topic_record:)
-    active? && in_same_space?(space_record_id: topic_record.space_id)
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_manage_topic_members?(topic_record:)
-    active? && in_same_space?(space_record_id: topic_record.space_id)
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_page?(topic_record:)
-    active? && in_same_space?(space_record_id: topic_record.space_id)
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_page?(page_record:)
-    active? && in_same_space?(space_record_id: page_record.space_id)
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_show_page?(page_record:)
-    active? && (in_same_space?(space_record_id: page_record.space_id) || page_record.topic_record!.visibility_public?)
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page_record:)
-    active? && in_same_space?(space_record_id: page_record.space_id)
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_draft_page?(page_record:)
-    active? && in_same_space?(space_record_id: page_record.space_id)
-  end
-
   # 添付ファイル削除権限（Ownerは全ファイル削除可能）
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_delete_attachment?(attachment_record:)
