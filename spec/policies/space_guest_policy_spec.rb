@@ -27,58 +27,11 @@ RSpec.describe SpaceGuestPolicy do
     end
   end
 
-  describe "#can_update_topic?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      topic_record = FactoryBot.create(:topic_record)
-
-      expect(policy.can_update_topic?(topic_record:)).to be(false)
-    end
-  end
-
-  describe "#can_delete_topic?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      topic_record = FactoryBot.create(:topic_record)
-
-      expect(policy.can_delete_topic?(topic_record:)).to be(false)
-    end
-  end
-
-  describe "#can_manage_topic_members?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      topic_record = FactoryBot.create(:topic_record)
-
-      expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
-    end
-  end
-
   describe "#can_create_topic?" do
     it "常にfalseを返すこと" do
       policy = SpaceGuestPolicy.new(user_record: nil)
 
       expect(policy.can_create_topic?).to be(false)
-    end
-  end
-
-  describe "#can_show_page?" do
-    it "公開トピックのページは閲覧可能であること" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      space_record = FactoryBot.create(:space_record)
-      public_topic = FactoryBot.create(:topic_record, space_record:, visibility: TopicVisibility::Public.serialize)
-      page_record = FactoryBot.create(:page_record, space_record:, topic_record: public_topic)
-
-      expect(policy.can_show_page?(page_record:)).to be(true)
-    end
-
-    it "非公開トピックのページは閲覧不可であること" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      space_record = FactoryBot.create(:space_record)
-      private_topic = FactoryBot.create(:topic_record, space_record:, visibility: TopicVisibility::Private.serialize)
-      page_record = FactoryBot.create(:page_record, space_record:, topic_record: private_topic)
-
-      expect(policy.can_show_page?(page_record:)).to be(false)
     end
   end
 
@@ -100,42 +53,6 @@ RSpec.describe SpaceGuestPolicy do
       space_record = FactoryBot.create(:space_record)
 
       expect(policy.can_export_space?(space_record:)).to be(false)
-    end
-  end
-
-  describe "#can_create_page?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      topic_record = FactoryBot.create(:topic_record)
-
-      expect(policy.can_create_page?(topic_record:)).to be(false)
-    end
-  end
-
-  describe "#can_update_page?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      page_record = FactoryBot.create(:page_record)
-
-      expect(policy.can_update_page?(page_record:)).to be(false)
-    end
-  end
-
-  describe "#can_update_draft_page?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      page_record = FactoryBot.create(:page_record)
-
-      expect(policy.can_update_draft_page?(page_record:)).to be(false)
-    end
-  end
-
-  describe "#can_trash_page?" do
-    it "常にfalseを返すこと" do
-      policy = SpaceGuestPolicy.new(user_record: nil)
-      page_record = FactoryBot.create(:page_record)
-
-      expect(policy.can_trash_page?(page_record:)).to be(false)
     end
   end
 

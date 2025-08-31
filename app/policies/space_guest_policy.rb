@@ -83,48 +83,6 @@ class SpaceGuestPolicy < ApplicationPolicy
     false
   end
 
-  # Topic権限（全て不可）
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_update_topic?(topic_record:)
-    false
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_delete_topic?(topic_record:)
-    false
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_manage_topic_members?(topic_record:)
-    false
-  end
-
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_create_page?(topic_record:)
-    false
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_page?(page_record:)
-    false
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_show_page?(page_record:)
-    # 公開トピックのページのみ閲覧可能
-    page_record.topic_record!.visibility_public?
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_trash_page?(page_record:)
-    false
-  end
-
-  sig { params(page_record: PageRecord).returns(T::Boolean) }
-  def can_update_draft_page?(page_record:)
-    false
-  end
-
   # 添付ファイル権限
   sig { params(attachment_record: AttachmentRecord).returns(T::Boolean) }
   def can_view_attachment?(attachment_record:)
