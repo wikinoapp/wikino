@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+# 型定義を早期に読み込むためのイニシャライザー
+# ファイル名を001_で始めることで、他のイニシャライザーより先に読み込まれる
+
 module T
   module Wikino
     extend T::Sig
