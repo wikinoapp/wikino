@@ -5,20 +5,18 @@ module Attachments
   class CreateController < ApplicationController
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
+    include ControllerConcerns::SpaceAware
 
     around_action :set_locale
     before_action :require_authentication
 
     sig { void }
     def call
-      space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
+      space_record = current_space_record
       space_member_record = current_user_record!.space_member_record(space_record:)
-      policy = SpaceMemberPolicy.new(
-        user_record: current_user_record!,
-        space_member_record:
-      )
+      space_policy = space_policy_for(space_record:)
 
-      unless policy.can_upload_attachment?(space_record:)
+      unless space_policy.can_upload_attachment?(space_record:)
         return render(json: {error: "Unauthorized"}, status: :forbidden)
       end
 

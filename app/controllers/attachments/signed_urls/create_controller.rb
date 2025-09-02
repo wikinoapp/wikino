@@ -5,6 +5,7 @@ module Attachments
   module SignedUrls
     class CreateController < ApplicationController
       include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
 
       before_action :restore_user_session
 
@@ -29,10 +30,10 @@ module Attachments
 
           space_record = attachment_record.space_record.not_nil!
           space_member_record = current_user_record&.space_member_record(space_record:)
-          policy = SpaceMemberPolicy.new(user_record: current_user_record, space_member_record:)
+          space_policy = space_policy_for(space_record:)
 
           # 権限チェック
-          next unless policy.can_view_attachment?(attachment_record:)
+          next unless space_policy.can_view_attachment?(attachment_record:)
 
           # 署名付きURLを生成
           signed_url = attachment_record.generate_signed_url(

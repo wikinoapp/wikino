@@ -231,9 +231,9 @@ module MarkdownEditorHelpers
   private def visit_page_editor
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
-    page_record = create(:page_record, space_record:)
-    topic_record = page_record.topic_record
     space_member_record = create(:space_member_record, space_record:, user_record:)
+    topic_record = create(:topic_record, space_record:)
+    page_record = create(:page_record, space_record:, topic_record:)
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     sign_in(user_record:)

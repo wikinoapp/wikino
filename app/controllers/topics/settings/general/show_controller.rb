@@ -7,6 +7,7 @@ module Topics
       class ShowController < ApplicationController
         include ControllerConcerns::Authenticatable
         include ControllerConcerns::Localizable
+        include ControllerConcerns::TopicAware
 
         around_action :set_locale
         before_action :require_authentication
@@ -14,16 +15,10 @@ module Topics
         sig { returns(T.untyped) }
         def call
           space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_member_record = current_user_record!.space_member_record(space_record:)
-          space_member_policy = SpaceMemberPolicy.new(
-            user_record: current_user_record!,
-            space_member_record:
-          )
-          topic_record = space_member_policy.showable_topics(space_record:).find_by!(
-            number: params[:topic_number]
-          )
+          topic_record = space_record.topic_record_by_number!(params[:topic_number])
+          topic_policy = topic_policy_for(topic_record:)
 
-          unless space_member_policy.can_update_topic?(topic_record:)
+          unless topic_policy.can_update_topic?(topic_record:)
             return render_404
           end
 

@@ -123,6 +123,11 @@ class Example
     value.upcase
   end
 
+  # ✅ プロテクテッドメソッドは protected def
+  protected def shared_method(value)
+    value.downcase
+  end
+
   # ❌ 後置ifは使用しない
   # return if value.nil? # 悪い例
 
@@ -130,6 +135,14 @@ class Example
   if value.nil?
     return
   end
+
+  # ❌ attr_readerにprivateブロックを使用しない
+  # private
+  # attr_reader :user_record
+
+  # ✅ attr_readerは個別にprivate指定
+  attr_reader :user_record
+  private :user_record
 
   # ✅ T.mustではなくnot_nil!を使用
   value.not_nil!
@@ -156,6 +169,22 @@ create_table :examples, id: false do |t|
 end
 ```
 
+### 型定義
+
+```ruby
+# データベースIDの型はT::Wikino::DatabaseIdを使用
+sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+def in_same_space?(space_record_id:)
+  # ...
+end
+
+# ❌ 単純なStringではなく
+sig { params(space_record_id: String).returns(T::Boolean) }
+
+# ✅ T::Wikino::DatabaseIdを使用
+sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+```
+
 ### RSpec
 
 ```ruby
@@ -169,6 +198,15 @@ it "xxxのとき、somethingすること" do
   user = FactoryBot.create(:user)
   # テスト実装
 end
+
+# ✅ FactoryBotで作成したレコードの変数名には_recordサフィックスを付ける
+user_record = FactoryBot.create(:user_record)
+space_record = FactoryBot.create(:space_record)
+space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
+
+# ❌ サフィックスなしの変数名は避ける
+user = FactoryBot.create(:user_record)
+space = FactoryBot.create(:space_record)
 ```
 
 ### I18n

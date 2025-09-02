@@ -30,7 +30,7 @@ RSpec.describe "PATCH /s/:space_identifier/pages/:page_number/draft_page", type:
     space = create(:space_record, :small)
     page = create(:page_record, :published, space_record: space)
     user = create(:user_record, :with_password)
-    create(:space_member_record, space_record: space, user_record: user)
+    create(:space_member_record, space_record: space, user_record: user, role: SpaceMemberRole::Member.serialize)
 
     sign_in(user_record: user)
 

@@ -7,22 +7,19 @@ module Spaces
       class DestroyController < ApplicationController
         include ControllerConcerns::Authenticatable
         include ControllerConcerns::Localizable
+        include ControllerConcerns::SpaceAware
 
         around_action :set_locale
         before_action :require_authentication
 
         sig { void }
         def call
-          space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-          space_member_record = current_user_record!.space_member_record(space_record:)
-          space_member_policy = SpaceMemberPolicy.new(
-            user_record: current_user_record!,
-            space_member_record:
-          )
+          space_record = current_space_record
+          space_policy = space_policy_for(space_record:)
 
           attachment_record = space_record.attachment_records.find(params[:attachment_id])
 
-          unless space_member_policy.can_delete_attachment?(attachment_record:)
+          unless space_policy.can_delete_attachment?(attachment_record:)
             return render_404
           end
 
