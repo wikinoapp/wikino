@@ -67,9 +67,8 @@ class Markup
 
       # インライン表示可能な画像形式かチェック
       if can_display_inline_image?(attachment)
-        # 元のwidth/height/alt属性を取得
+        # 元のwidth/alt属性を取得（heightは除外）
         width_attr = element["width"]
-        height_attr = element["height"]
         alt_attr = element["alt"] || attachment.filename
 
         # プレースホルダーとして表示（署名付きURLは後でJavaScriptで置換）
@@ -81,7 +80,6 @@ class Markup
           "class=\"wikino-attachment-image\""
         ]
         img_attrs << "width=\"#{width_attr}\"" if width_attr
-        img_attrs << "height=\"#{height_attr}\"" if height_attr
 
         # a要素で囲む（href属性も後でJavaScriptで設定）
         link_html = <<~HTML
