@@ -480,7 +480,6 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
             alt="600x400.png"
             class="wikino-attachment-image"
             width="600"
-            height="400"
           />
         </a>
       </p>
@@ -526,7 +525,6 @@ RSpec.describe "Markup::AttachmentFilter", type: :model do
             alt="600x400.png"
             class="wikino-attachment-image"
             width="600"
-            height="400"
           />
         </a>
         <br />
