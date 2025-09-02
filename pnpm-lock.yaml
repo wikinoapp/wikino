@@ -36,8 +36,8 @@ importers:
         specifier: ^8.0.13
         version: 8.0.13
       '@rails/activestorage':
-        specifier: ^8.0.200
-        version: 8.0.200
+        specifier: ^8.0.201
+        version: 8.0.201
       '@rails/request.js':
         specifier: ^0.0.12
         version: 0.0.12
@@ -458,8 +458,8 @@ packages:
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
 
-  '@rails/activestorage@8.0.200':
-    resolution: {integrity: sha512-V7GnZXsAMPDWVOBv4/XpHwj5sOw5bWjidWCuUbK3Zx1xt2pOfFaeJDUG7fEWb1MwP4aW1oVVlGkJBdXVyvru0A==}
+  '@rails/activestorage@8.0.201':
+    resolution: {integrity: sha512-nwc2UnffHA3lgStYP01JUF9ni9dZTPX7YJESj5qRjrox4Q3oA7bDErKySP6bS9fOTcwtrPvTHBH95gKpLEic6Q==}
 
   '@rails/request.js@0.0.12':
     resolution: {integrity: sha512-g3//JBja1s04Zflj7IoMLQuXza9i4ZvtLmm0r0dMwh1QQUs6rL2iKUOGGyERfLsd81SnXC5ucfVV//rtsDlEEA==}
@@ -1521,7 +1521,7 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
 
-  '@rails/activestorage@8.0.200':
+  '@rails/activestorage@8.0.201':
     dependencies:
       spark-md5: 3.0.2
 
