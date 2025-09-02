@@ -59,9 +59,9 @@ export function replacePlaceholderWithUrl(
   let newText: string;
 
   if (fileType?.startsWith("image/")) {
-    // 画像の場合は<img>タグを使用
-    if (width && height) {
-      newText = `<img width="${width}" height="${height}" alt="${altText || fileName}" src="${url}">`;
+    // 画像の場合は<img>タグを使用（heightは除外）
+    if (width) {
+      newText = `<img width="${width}" alt="${altText || fileName}" src="${url}">`;
     } else {
       newText = `<img alt="${altText || fileName}" src="${url}">`;
     }
