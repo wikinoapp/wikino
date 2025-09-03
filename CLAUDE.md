@@ -172,8 +172,8 @@ end
 ### 型定義
 
 ```ruby
-# データベースIDの型はT::Wikino::DatabaseIdを使用
-sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+# データベースIDの型はTypes::DatabaseIdを使用
+sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
 def in_same_space?(space_record_id:)
   # ...
 end
@@ -181,8 +181,8 @@ end
 # ❌ 単純なStringではなく
 sig { params(space_record_id: String).returns(T::Boolean) }
 
-# ✅ T::Wikino::DatabaseIdを使用
-sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+# ✅ Types::DatabaseIdを使用
+sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
 ```
 
 ### RSpec
