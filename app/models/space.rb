@@ -14,7 +14,7 @@ class Space < T::Struct
   # 名前の最大文字数 (値に強い理由は無い)
   NAME_MAX_LENGTH = 30
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :identifier, String
   const :name, String
   const :plan, Plan

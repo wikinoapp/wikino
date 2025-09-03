@@ -3,7 +3,7 @@
 
 module Accounts
   class DestroyService < ApplicationService
-    sig { params(user_record_id: T::Wikino::DatabaseId).void }
+    sig { params(user_record_id: Types::DatabaseId).void }
     def call(user_record_id:)
       user_record = UserRecord.find(user_record_id)
 

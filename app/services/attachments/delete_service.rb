@@ -3,7 +3,7 @@
 
 module Attachments
   class DeleteService < ApplicationService
-    sig { params(attachment_record_id: T::Wikino::DatabaseId).void }
+    sig { params(attachment_record_id: Types::DatabaseId).void }
     def call(attachment_record_id:)
       attachment_record = AttachmentRecord.find(attachment_record_id)
 

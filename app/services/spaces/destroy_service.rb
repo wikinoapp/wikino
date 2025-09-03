@@ -3,7 +3,7 @@
 
 module Spaces
   class DestroyService < ApplicationService
-    sig { params(space_record_id: T::Wikino::DatabaseId).void }
+    sig { params(space_record_id: Types::DatabaseId).void }
     def call(space_record_id:)
       space_record = SpaceRecord.find(space_record_id)
 

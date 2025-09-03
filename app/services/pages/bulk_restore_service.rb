@@ -7,7 +7,7 @@ module Pages
       const :pages, PageRecord::PrivateRelation
     end
 
-    sig { params(page_ids: T::Array[T::Wikino::DatabaseId]).returns(Result) }
+    sig { params(page_ids: T::Array[Types::DatabaseId]).returns(Result) }
     def call(page_ids:)
       pages = PageRecord.where(id: page_ids)
 

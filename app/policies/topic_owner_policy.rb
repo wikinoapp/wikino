@@ -89,7 +89,7 @@ class TopicOwnerPolicy < ApplicationPolicy
   private :space_member_record
 
   # 共通ヘルパーメソッド
-  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
   private def in_same_space?(space_record_id:)
     space_member_record.space_id == space_record_id
   end

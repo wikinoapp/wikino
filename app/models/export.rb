@@ -6,7 +6,7 @@ class Export < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :queued_by, SpaceMember
   const :space, Space
 end

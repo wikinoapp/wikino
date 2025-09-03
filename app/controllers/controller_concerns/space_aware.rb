@@ -27,7 +27,7 @@ module ControllerConcerns
     end
 
     # Space用のPolicyインスタンスを取得
-    sig { params(space_record: SpaceRecord).returns(T::Wikino::SpacePolicyInstance) }
+    sig { params(space_record: SpaceRecord).returns(Types::SpacePolicyInstance) }
     def space_policy_for(space_record:)
       SpacePolicyFactory.build(
         user_record: current_user_record,

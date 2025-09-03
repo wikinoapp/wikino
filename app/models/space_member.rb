@@ -6,7 +6,7 @@ class SpaceMember < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :space, Space
   const :user, User
 end
