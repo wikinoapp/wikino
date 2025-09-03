@@ -5,7 +5,7 @@ class LinkRepository < ApplicationRepository
   sig do
     params(
       page_records: T::Array[PageRecord],
-      added_page_ids: T::Array[T::Wikino::DatabaseId],
+      added_page_ids: T::Array[Types::DatabaseId],
       backlink_limit: Integer,
       user_record: T.nilable(UserRecord)
     ).returns(T::Array[Link])

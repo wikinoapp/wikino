@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 class ExportMailer < ApplicationMailer
-  sig { params(export_id: T::Wikino::DatabaseId, locale: String).void }
+  sig { params(export_id: Types::DatabaseId, locale: String).void }
   def succeeded(export_id:, locale:)
     @export = ExportRecord.find(export_id)
     @space = @export.space_record

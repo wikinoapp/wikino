@@ -6,7 +6,7 @@ class ExportStatus < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :kind, ExportStatusKind
   const :changed_at, ActiveSupport::TimeWithZone
   const :space, Space

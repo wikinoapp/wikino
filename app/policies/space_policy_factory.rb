@@ -9,7 +9,7 @@ class SpacePolicyFactory
     params(
       user_record: T.nilable(UserRecord),
       space_member_record: T.nilable(SpaceMemberRecord)
-    ).returns(T::Wikino::SpacePolicyInstance)
+    ).returns(Types::SpacePolicyInstance)
   end
   def self.build(user_record:, space_member_record: nil)
     # 非メンバーの場合

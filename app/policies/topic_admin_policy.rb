@@ -96,12 +96,12 @@ class TopicAdminPolicy < ApplicationPolicy
   private :topic_member_record
 
   # 共通ヘルパーメソッド
-  sig { params(topic_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  sig { params(topic_record_id: Types::DatabaseId).returns(T::Boolean) }
   private def in_same_topic?(topic_record_id:)
     topic_member_record.topic_id == topic_record_id
   end
 
-  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
   private def in_same_space?(space_record_id:)
     space_member_record.space_id == space_record_id
   end

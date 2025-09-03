@@ -11,7 +11,7 @@ class Page < T::Struct
   # タイトルの最大文字数 (値に強い理由は無い)
   TITLE_MAX_LENGTH = 200
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :number, Integer
   const :title, T.nilable(String)
   const :body, String

@@ -3,7 +3,7 @@
 
 module Exports
   class DestroyService < ApplicationService
-    sig { params(export_record_id: T::Wikino::DatabaseId).void }
+    sig { params(export_record_id: Types::DatabaseId).void }
     def call(export_record_id:)
       export_record = ExportRecord.find(export_record_id)
 

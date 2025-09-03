@@ -3,7 +3,7 @@
 
 module Topics
   class DestroyService < ApplicationService
-    sig { params(topic_record_id: T::Wikino::DatabaseId).void }
+    sig { params(topic_record_id: Types::DatabaseId).void }
     def call(topic_record_id:)
       topic_record = TopicRecord.find(topic_record_id)
 

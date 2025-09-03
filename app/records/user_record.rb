@@ -80,7 +80,7 @@ class UserRecord < ApplicationRecord
     topic_records.include?(topic)
   end
 
-  sig { params(topic_ids: T::Array[T::Wikino::DatabaseId]).returns(T::Boolean) }
+  sig { params(topic_ids: T::Array[Types::DatabaseId]).returns(T::Boolean) }
   def joined_all_topics?(topic_ids:)
     joined_topic_ids = topic_records.pluck(:id)
     topic_ids - joined_topic_ids == []

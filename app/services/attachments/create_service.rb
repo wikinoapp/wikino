@@ -11,7 +11,7 @@ module Attachments
       params(
         space_record: SpaceRecord,
         blob_record: ActiveStorage::Blob,
-        attached_space_member_id: T::Wikino::DatabaseId
+        attached_space_member_id: Types::DatabaseId
       ).returns(Result)
     end
     def call(space_record:, blob_record:, attached_space_member_id:)

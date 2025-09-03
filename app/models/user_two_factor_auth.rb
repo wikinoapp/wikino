@@ -8,8 +8,8 @@ class UserTwoFactorAuth < T::Struct
 
   include T::Struct::ActsAsComparable
 
-  const :database_id, T::Wikino::DatabaseId
-  const :user_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
+  const :user_id, Types::DatabaseId
   const :secret, String, sensitivity: []
   const :enabled, T::Boolean
   const :enabled_at, T.nilable(ActiveSupport::TimeWithZone)

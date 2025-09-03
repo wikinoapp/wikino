@@ -4,7 +4,7 @@
 class GenerateExportFilesJob < ApplicationJob
   queue_as :default
 
-  sig { params(export_record_id: T::Wikino::DatabaseId).void }
+  sig { params(export_record_id: Types::DatabaseId).void }
   def perform(export_record_id:)
     export_record = ExportRecord.find(export_record_id)
 

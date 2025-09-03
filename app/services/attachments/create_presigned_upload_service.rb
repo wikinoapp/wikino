@@ -7,7 +7,7 @@ module Attachments
       const :direct_upload_url, String
       const :direct_upload_headers, T::Hash[String, String]
       const :blob_signed_id, String
-      const :attachment_id, T::Wikino::DatabaseId
+      const :attachment_id, Types::DatabaseId
     end
 
     sig do

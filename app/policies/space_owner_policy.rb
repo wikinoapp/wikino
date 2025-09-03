@@ -117,7 +117,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
   private :space_member_record
 
   # 共通ヘルパーメソッド
-  sig { params(space_record_id: T::Wikino::DatabaseId).returns(T::Boolean) }
+  sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
   private def in_same_space?(space_record_id:)
     space_member_record.space_id == space_record_id
   end
@@ -133,7 +133,7 @@ class SpaceOwnerPolicy < ApplicationPolicy
   end
 
   # Topic権限への委譲メソッド
-  sig { params(topic_record: TopicRecord).returns(T::Wikino::TopicPolicyInstance) }
+  sig { params(topic_record: TopicRecord).returns(Types::TopicPolicyInstance) }
   def topic_policy_for(topic_record:)
     # Space Ownerは常にTopicの全権限を持つため、TopicOwnerPolicyを返す
     TopicOwnerPolicy.new(

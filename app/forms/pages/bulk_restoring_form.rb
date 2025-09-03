@@ -6,7 +6,7 @@ module Pages
     sig { returns(T.nilable(UserRecord)) }
     attr_accessor :user_record
 
-    sig { returns(T.nilable(T::Array[T::Wikino::DatabaseId])) }
+    sig { returns(T.nilable(T::Array[Types::DatabaseId])) }
     attr_accessor :page_ids
 
     validates :user_record, presence: true

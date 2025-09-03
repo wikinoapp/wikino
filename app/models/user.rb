@@ -14,7 +14,7 @@ class User < T::Struct
   # 説明の最大文字数 (値に強い理由は無い)
   DESCRIPTION_MAX_LENGTH = 150
 
-  const :database_id, T::Wikino::DatabaseId
+  const :database_id, Types::DatabaseId
   const :email, String
   const :atname, String
   const :name, String
