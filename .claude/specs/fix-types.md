@@ -71,6 +71,7 @@ app/
 ### 3. 実装内容
 
 `app/models/types.rb`:
+
 ```ruby
 # typed: strict
 # frozen_string_literal: true
@@ -122,11 +123,13 @@ end
 ## 変更サマリー
 
 ### 変更前
+
 - 型定義：`config/initializers/001_types.rb`
 - モジュール名：`T::Wikino`
 - 使用例：`T::Wikino::DatabaseId`
 
 ### 変更後
+
 - 型定義：`app/models/types.rb`
 - モジュール名：`Types`
 - 使用例：`Types::DatabaseId`
