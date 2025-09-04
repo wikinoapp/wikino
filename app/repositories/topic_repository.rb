@@ -36,7 +36,7 @@ class TopicRepository < ApplicationRepository
       .where(member_records: {space_id: space_record.id})
       .group("topics.id")
       .preload(:space_record)
-      .order("max_last_modified DESC NULLS LAST")
+      .order("max_last_modified DESC NULLS LAST, topics.id DESC")
 
     # 権限情報を含めてモデルに変換
     topic_records.map do |topic_record|
