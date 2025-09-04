@@ -30,10 +30,9 @@ class TopicRepository < ApplicationRepository
   end
   def find_topics_by_space(space_record:, current_user_record:)
     # スペースに参加しているトピックを取得し、最新のlast_page_modified_atでソート
-    topic_records = TopicRecord
+    topic_records = space_record.topic_records
       .select("topics.*, MAX(member_records.last_page_modified_at) as max_last_modified")
       .joins(:member_records)
-      .where(space_id: space_record.id)
       .where(member_records: {space_id: space_record.id})
       .group("topics.id")
       .preload(:space_record)
