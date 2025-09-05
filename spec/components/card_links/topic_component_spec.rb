@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe CardLinks::TopicCardComponent, type: :view do
+RSpec.describe CardLinks::TopicComponent, type: :view do
   it "トピックカードが表示されること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
@@ -13,7 +13,7 @@ RSpec.describe CardLinks::TopicCardComponent, type: :view do
       can_create_page: false
     )
 
-    render_inline(CardLinks::TopicCardComponent.new(
+    render_inline(CardLinks::TopicComponent.new(
       topic:,
       current_user_record: user_record
     ))
@@ -35,7 +35,7 @@ RSpec.describe CardLinks::TopicCardComponent, type: :view do
       can_create_page: true
     )
 
-    render_inline(CardLinks::TopicCardComponent.new(
+    render_inline(CardLinks::TopicComponent.new(
       topic:,
       current_user_record: user_record
     ))
@@ -54,7 +54,7 @@ RSpec.describe CardLinks::TopicCardComponent, type: :view do
       can_create_page: false
     )
 
-    render_inline(CardLinks::TopicCardComponent.new(
+    render_inline(CardLinks::TopicComponent.new(
       topic:,
       current_user_record: user_record
     ))
@@ -76,7 +76,7 @@ RSpec.describe CardLinks::TopicCardComponent, type: :view do
       can_create_page: true
     )
 
-    render_inline(CardLinks::TopicCardComponent.new(
+    render_inline(CardLinks::TopicComponent.new(
       topic:,
       current_user_record: user_record
     ))
@@ -97,7 +97,7 @@ RSpec.describe CardLinks::TopicCardComponent, type: :view do
       can_create_page: false
     )
 
-    render_inline(CardLinks::TopicCardComponent.new(
+    render_inline(CardLinks::TopicComponent.new(
       topic:,
       current_user_record: user_record
     ))
