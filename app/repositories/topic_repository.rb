@@ -79,6 +79,7 @@ class TopicRepository < ApplicationRepository
     # トピックメンバー情報を一括取得
     topic_members = TopicMemberRecord
       .where(space_member_id: space_member.id, topic_id: topic_ids)
+      .preload(:topic_record) # ポリシーで必要になる可能性があるため
       .index_by(&:topic_id)
 
     # 各トピックの権限情報をマッピング
@@ -86,10 +87,16 @@ class TopicRepository < ApplicationRepository
       topic_member = topic_members[topic_id]
 
       if topic_member
-        # ポリシークラスのロジックを参考に権限を判定
-        # TopicAdminPolicyとTopicMemberPolicyの判定ロジックを統合
-        can_update = topic_member.role_admin? && space_member.active?
-        can_create_page = space_member.active?
+        # ポリシークラスを使用して権限を判定
+        policy = build_topic_policy(
+          user_record: current_user_record,
+          space_member_record: space_member,
+          topic_member_record: topic_member
+        )
+
+        # ポリシークラスのメソッドを直接使用
+        can_update = policy.can_update_topic?(topic_record: topic_member.topic_record.not_nil!)
+        can_create_page = policy.can_create_page?(topic_record: topic_member.topic_record.not_nil!)
 
         map[topic_id] = {
           can_update:,
@@ -101,6 +108,29 @@ class TopicRepository < ApplicationRepository
           can_create_page: false
         }
       end
+    end
+  end
+
+  sig do
+    params(
+      user_record: UserRecord,
+      space_member_record: SpaceMemberRecord,
+      topic_member_record: TopicMemberRecord
+    ).returns(T.any(TopicAdminPolicy, TopicMemberPolicy))
+  end
+  private def build_topic_policy(user_record:, space_member_record:, topic_member_record:)
+    if topic_member_record.role_admin?
+      TopicAdminPolicy.new(
+        user_record:,
+        space_member_record:,
+        topic_member_record:
+      )
+    else
+      TopicMemberPolicy.new(
+        user_record:,
+        space_member_record:,
+        topic_member_record:
+      )
     end
   end
 end
