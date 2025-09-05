@@ -38,38 +38,69 @@ class TopicRepository < ApplicationRepository
       .preload(:space_record)
       .order("max_last_modified DESC NULLS LAST, topics.id DESC")
 
+    # N+1を避けるため、必要なデータを一括取得
+    topic_ids = topic_records.map(&:id)
+    topic_permissions_map = build_topic_permissions_map(
+      space_record:,
+      topic_ids:,
+      current_user_record:
+    )
+
     # 権限情報を含めてモデルに変換
     topic_records.map do |topic_record|
-      can_update = false
-      can_create_page = false
-
-      if current_user_record
-        # 現在のユーザーがスペースメンバーか確認
-        space_member = SpaceMemberRecord.find_by(
-          space_id: space_record.id,
-          user_id: current_user_record.id
-        )
-
-        if space_member
-          # トピックメンバーか確認
-          topic_member = TopicMemberRecord.find_by(
-            topic_id: topic_record.id,
-            space_member_id: space_member.id
-          )
-
-          if topic_member
-            # 権限の判定
-            can_update = topic_member.role_admin?
-            can_create_page = true # メンバーであればページ作成可能
-          end
-        end
-      end
+      permissions = topic_permissions_map[topic_record.id] || {can_update: false, can_create_page: false}
 
       to_model(
         topic_record:,
-        can_update:,
-        can_create_page:
+        can_update: permissions[:can_update],
+        can_create_page: permissions[:can_create_page]
       )
+    end
+  end
+
+  sig do
+    params(
+      space_record: SpaceRecord,
+      topic_ids: T::Array[Types::DatabaseId],
+      current_user_record: T.nilable(UserRecord)
+    ).returns(T::Hash[Types::DatabaseId, T::Hash[Symbol, T::Boolean]])
+  end
+  private def build_topic_permissions_map(space_record:, topic_ids:, current_user_record:)
+    return {} unless current_user_record
+
+    # ユーザーのスペースメンバー情報を取得
+    space_member = SpaceMemberRecord.find_by(
+      space_id: space_record.id,
+      user_id: current_user_record.id
+    )
+
+    return {} unless space_member
+
+    # トピックメンバー情報を一括取得
+    topic_members = TopicMemberRecord
+      .where(space_member_id: space_member.id, topic_id: topic_ids)
+      .index_by(&:topic_id)
+
+    # 各トピックの権限情報をマッピング
+    topic_ids.each_with_object({}) do |topic_id, map|
+      topic_member = topic_members[topic_id]
+
+      if topic_member
+        # ポリシークラスのロジックを参考に権限を判定
+        # TopicAdminPolicyとTopicMemberPolicyの判定ロジックを統合
+        can_update = topic_member.role_admin? && space_member.active?
+        can_create_page = space_member.active?
+
+        map[topic_id] = {
+          can_update:,
+          can_create_page:
+        }
+      else
+        map[topic_id] = {
+          can_update: false,
+          can_create_page: false
+        }
+      end
     end
   end
 end
