@@ -29,14 +29,26 @@ class TopicRepository < ApplicationRepository
     ).returns(T::Array[Topic])
   end
   def find_topics_by_space(space_record:, current_user_record:)
-    # スペースに参加しているトピックを取得し、最新のlast_page_modified_atでソート
+    # ユーザーがスペースメンバーでない場合は空配列を返す
+    return [] unless current_user_record
+
+    space_member = SpaceMemberRecord.find_by(
+      space_id: space_record.id,
+      user_id: current_user_record.id
+    )
+
+    return [] unless space_member
+
+    # ユーザーが参加しているトピックのみ取得し、last_page_modified_atでソート
     topic_records = space_record.topic_records
-      .select("topics.*, MAX(member_records.last_page_modified_at) as max_last_modified")
+      .select("topics.*, member_records.last_page_modified_at")
       .joins(:member_records)
-      .where(member_records: {space_id: space_record.id})
-      .group("topics.id")
+      .where(member_records: {
+        space_id: space_record.id,
+        space_member_id: space_member.id
+      })
       .preload(:space_record)
-      .order("max_last_modified DESC NULLS LAST, topics.id DESC")
+      .order("member_records.last_page_modified_at DESC NULLS LAST, topics.id DESC")
 
     # N+1を避けるため、必要なデータを一括取得
     topic_ids = topic_records.map(&:id)
