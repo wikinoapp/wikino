@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe Topics::CardListComponent, type: :view do
+RSpec.describe CardLists::TopicComponent, type: :view do
   it "トピックカードのリストが表示されること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
@@ -17,7 +17,7 @@ RSpec.describe Topics::CardListComponent, type: :view do
       )
     end
 
-    render_inline(Topics::CardListComponent.new(
+    render_inline(CardLists::TopicComponent.new(
       topics:,
       current_user_record: user_record
     ))
@@ -31,7 +31,7 @@ RSpec.describe Topics::CardListComponent, type: :view do
   it "トピックがない場合に空のリストが表示されること" do
     user_record = FactoryBot.create(:user_record)
 
-    render_inline(Topics::CardListComponent.new(
+    render_inline(CardLists::TopicComponent.new(
       topics: [],
       current_user_record: user_record
     ))

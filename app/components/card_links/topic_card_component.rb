@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module CardLinks
-  class TopicComponent < ApplicationComponent
+  class TopicCardComponent < ApplicationComponent
     sig { params(topic: Topic, current_user_record: T.nilable(UserRecord), card_class: String).void }
     def initialize(topic:, current_user_record:, card_class: "")
       @topic = topic
