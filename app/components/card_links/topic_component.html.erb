@@ -5,28 +5,45 @@
         <div class="line-clamp-3 text-sm font-bold">
           <%= topic.name %>
         </div>
+
         <div class="flex gap-2">
           <% if can_create_page? %>
-            <%= link_to new_page_path, class: "inline-flex items-center gap-1 text-sm text-muted hover:text-primary", data: { turbo: false } do %>
+            <%= link_to new_page_path, {
+              class: "inline-flex items-center gap-1 text-sm text-muted hover:text-primary"
+            } do %>
               <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px") %>
-              <span class="text-xs"><%= t("nouns.create_page") %></span>
+
+              <span class="text-xs">
+                <%= t("nouns.create_page") %>
+              </span>
             <% end %>
           <% else %>
             <span class="inline-flex items-center gap-1 text-sm text-muted opacity-50 cursor-not-allowed">
               <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px") %>
-              <span class="text-xs"><%= t("nouns.create_page") %></span>
+
+              <span class="text-xs">
+                <%= t("nouns.create_page") %>
+              </span>
             </span>
           <% end %>
 
           <% if can_update? %>
-            <%= link_to settings_path, class: "inline-flex items-center gap-1 text-sm text-muted hover:text-primary", data: { turbo: false } do %>
+            <%= link_to settings_path, {
+              class: "inline-flex items-center gap-1 text-sm text-muted hover:text-primary"
+            } do %>
               <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "16px") %>
-              <span class="text-xs"><%= t("nouns.settings") %></span>
+
+              <span class="text-xs">
+                <%= t("nouns.settings") %>
+              </span>
             <% end %>
           <% else %>
             <span class="inline-flex items-center gap-1 text-sm text-muted opacity-50 cursor-not-allowed">
               <%= render BaseUI::IconComponent.new(name: "gear-regular", size: "16px") %>
-              <span class="text-xs"><%= t("nouns.settings") %></span>
+
+              <span class="text-xs">
+                <%= t("nouns.settings") %>
+              </span>
             </span>
           <% end %>
         </div>
