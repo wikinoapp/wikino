@@ -39,7 +39,7 @@ class TopicRepository < ApplicationRepository
       .order("max_last_modified DESC NULLS LAST, topics.id DESC")
 
     # N+1を避けるため、必要なデータを一括取得
-    topic_ids = topic_records.pluck(:id)
+    topic_ids = topic_records.map(&:id)
     topic_permissions_map = build_topic_permissions_map(
       space_record:,
       topic_ids:,
