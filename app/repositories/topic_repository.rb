@@ -87,8 +87,8 @@ class TopicRepository < ApplicationRepository
       topic_member = topic_members[topic_id]
 
       if topic_member
-        # ポリシークラスを使用して権限を判定
-        policy = build_topic_policy(
+        # TopicPolicyFactoryを使用して適切なポリシークラスを取得
+        policy = TopicPolicyFactory.build(
           user_record: current_user_record,
           space_member_record: space_member,
           topic_member_record: topic_member
@@ -103,34 +103,12 @@ class TopicRepository < ApplicationRepository
           can_create_page:
         }
       else
+        # トピックメンバーではない場合は権限なし
         map[topic_id] = {
           can_update: false,
           can_create_page: false
         }
       end
-    end
-  end
-
-  sig do
-    params(
-      user_record: UserRecord,
-      space_member_record: SpaceMemberRecord,
-      topic_member_record: TopicMemberRecord
-    ).returns(T.any(TopicAdminPolicy, TopicMemberPolicy))
-  end
-  private def build_topic_policy(user_record:, space_member_record:, topic_member_record:)
-    if topic_member_record.role_admin?
-      TopicAdminPolicy.new(
-        user_record:,
-        space_member_record:,
-        topic_member_record:
-      )
-    else
-      TopicMemberPolicy.new(
-        user_record:,
-        space_member_record:,
-        topic_member_record:
-      )
     end
   end
 end
