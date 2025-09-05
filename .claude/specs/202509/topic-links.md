@@ -30,8 +30,8 @@
 ## 実装タスクリスト
 
 ### 1. データ取得層の実装
-- [ ] スペースに参加しているトピックを取得するRepositoryメソッドの実装
-- [ ] `last_page_modified_at` でソートする処理の実装
+- [x] スペースに参加しているトピックを取得するRepositoryメソッドの実装
+- [x] `last_page_modified_at` でソートする処理の実装
 
 ### 2. UIコンポーネントの実装
 - [ ] トピックカードコンポーネント (`Topics::CardComponent`) の作成
