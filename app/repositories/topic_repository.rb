@@ -25,19 +25,12 @@ class TopicRepository < ApplicationRepository
   sig do
     params(
       space_record: SpaceRecord,
-      current_user_record: T.nilable(UserRecord)
+      space_member_record: T.nilable(SpaceMemberRecord)
     ).returns(T::Array[Topic])
   end
-  def find_topics_by_space(space_record:, current_user_record:)
-    # ユーザーがスペースメンバーでない場合は空配列を返す
-    return [] unless current_user_record
-
-    space_member = SpaceMemberRecord.find_by(
-      space_id: space_record.id,
-      user_id: current_user_record.id
-    )
-
-    return [] unless space_member
+  def find_topics_by_space(space_record:, space_member_record:)
+    # スペースメンバーでない場合は空配列を返す
+    return [] unless space_member_record
 
     # ユーザーが参加しているトピックのみ取得し、last_page_modified_atでソート
     topic_records = space_record.topic_records
@@ -45,7 +38,7 @@ class TopicRepository < ApplicationRepository
       .joins(:member_records)
       .where(member_records: {
         space_id: space_record.id,
-        space_member_id: space_member.id
+        space_member_id: space_member_record.id
       })
       .preload(:space_record)
       .order("member_records.last_page_modified_at DESC NULLS LAST, topics.id DESC")
@@ -53,9 +46,8 @@ class TopicRepository < ApplicationRepository
     # N+1を避けるため、必要なデータを一括取得
     topic_ids = topic_records.map(&:id)
     topic_permissions_map = build_topic_permissions_map(
-      space_record:,
-      topic_ids:,
-      current_user_record:
+      space_member_record:,
+      topic_ids:
     )
 
     # 権限情報を含めてモデルに変換
@@ -72,25 +64,16 @@ class TopicRepository < ApplicationRepository
 
   sig do
     params(
-      space_record: SpaceRecord,
-      topic_ids: T::Array[Types::DatabaseId],
-      current_user_record: T.nilable(UserRecord)
+      space_member_record: T.nilable(SpaceMemberRecord),
+      topic_ids: T::Array[Types::DatabaseId]
     ).returns(T::Hash[Types::DatabaseId, T::Hash[Symbol, T::Boolean]])
   end
-  private def build_topic_permissions_map(space_record:, topic_ids:, current_user_record:)
-    return {} unless current_user_record
-
-    # ユーザーのスペースメンバー情報を取得
-    space_member = SpaceMemberRecord.find_by(
-      space_id: space_record.id,
-      user_id: current_user_record.id
-    )
-
-    return {} unless space_member
+  private def build_topic_permissions_map(space_member_record:, topic_ids:)
+    return {} unless space_member_record
 
     # トピックメンバー情報を一括取得
     topic_members = TopicMemberRecord
-      .where(space_member_id: space_member.id, topic_id: topic_ids)
+      .where(space_member_id: space_member_record.id, topic_id: topic_ids)
       .preload(:topic_record) # ポリシーで必要になる可能性があるため
       .index_by(&:topic_id)
 
@@ -101,8 +84,8 @@ class TopicRepository < ApplicationRepository
       if topic_member
         # TopicPolicyFactoryを使用して適切なポリシークラスを取得
         policy = TopicPolicyFactory.build(
-          user_record: current_user_record,
-          space_member_record: space_member,
+          user_record: space_member_record.user_record.not_nil!,
+          space_member_record:,
           topic_member_record: topic_member
         )
 

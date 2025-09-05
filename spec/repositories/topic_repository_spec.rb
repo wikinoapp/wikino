@@ -38,7 +38,7 @@ RSpec.describe TopicRepository do
 
       # メソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record)
+      topics = repository.find_topics_by_space(space_record:, space_member_record:)
 
       # 検証
       expect(topics.size).to eq(3)
@@ -47,7 +47,7 @@ RSpec.describe TopicRepository do
       expect(topics[2].name).to eq("Topic 1") # 3日前（最古）
     end
 
-    it "current_user_recordがnilの場合、空配列を返すこと" do
+    it "space_member_recordがnilの場合、空配列を返すこと" do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
@@ -55,9 +55,9 @@ RSpec.describe TopicRepository do
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
-      # メソッド実行（current_user_record: nil）
+      # メソッド実行（space_member_record: nil）
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: nil)
+      topics = repository.find_topics_by_space(space_record:, space_member_record: nil)
 
       # 検証
       expect(topics).to be_empty
@@ -94,7 +94,7 @@ RSpec.describe TopicRepository do
 
       # user_record1でメソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record1)
+      topics = repository.find_topics_by_space(space_record:, space_member_record: space_member_record1)
 
       # 検証: user_record1が参加している2つのトピックのみが返される
       expect(topics.size).to eq(2)
@@ -103,15 +103,14 @@ RSpec.describe TopicRepository do
 
     it "ユーザーがスペースメンバーでない場合、空配列を返すこと" do
       # テスト用のデータ作成
-      user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       FactoryBot.create(:topic_record, space_record:)
 
-      # user_recordはspace_memberではない
+      # space_member_recordはnil（スペースメンバーではない）
 
       # メソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record)
+      topics = repository.find_topics_by_space(space_record:, space_member_record: nil)
 
       # 検証
       expect(topics).to be_empty
@@ -131,7 +130,7 @@ RSpec.describe TopicRepository do
 
       # メソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record)
+      topics = repository.find_topics_by_space(space_record:, space_member_record:)
 
       # 検証
       expect(topics.size).to eq(1)
@@ -154,7 +153,7 @@ RSpec.describe TopicRepository do
 
       # メソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record)
+      topics = repository.find_topics_by_space(space_record:, space_member_record:)
 
       # 検証
       expect(topics.size).to eq(1)
@@ -187,7 +186,7 @@ RSpec.describe TopicRepository do
 
       # メソッド実行
       repository = TopicRepository.new
-      topics = repository.find_topics_by_space(space_record:, current_user_record: user_record)
+      topics = repository.find_topics_by_space(space_record:, space_member_record:)
 
       # 検証
       expect(topics.size).to eq(2)
