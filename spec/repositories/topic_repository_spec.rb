@@ -145,4 +145,3 @@ RSpec.describe TopicRepository do
     end
   end
 end
-
