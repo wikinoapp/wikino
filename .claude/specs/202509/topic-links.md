@@ -35,8 +35,13 @@
 
 ### 1. データ取得層の実装
 
-- [x] スペースに参加しているトピックを取得するRepositoryメソッドの実装
+- [x] ユーザーが参加しているトピックを取得するRepositoryメソッドの実装
+  - `TopicRepository#find_topics_by_space` メソッドを実装
+  - `space_member_record` を引数として受け取る設計
+  - ユーザーが参加している（`topic_members`テーブルにレコードがある）トピックのみを取得
 - [x] `last_page_modified_at` でソートする処理の実装
+  - `topic_members.last_page_modified_at` の降順でソート
+  - NULL値は最後に配置
 
 ### 2. UIコンポーネントの実装
 
@@ -67,7 +72,11 @@
 
 ### 6. テスト
 
-- [ ] Repositoryメソッドのテスト
+- [x] Repositoryメソッドのテスト
+  - ユーザーが参加しているトピックのみを取得することを確認
+  - `space_member_record`がnilの場合は空配列を返すことを確認
+  - `last_page_modified_at`でソートされることを確認
+  - 権限フラグが正しく設定されることを確認
 - [ ] コンポーネントのテスト
 - [ ] 権限チェックのテスト
 - [ ] Request spec
