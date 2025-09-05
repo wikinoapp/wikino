@@ -21,7 +21,7 @@
     "@hotwired/turbo": "^8.0.13",
     "@rails/activestorage": "^8.0.201",
     "@rails/request.js": "^0.0.12",
-    "@tailwindcss/cli": "^4.1.12",
+    "@tailwindcss/cli": "^4.1.13",
     "basecoat-css": "^0.3.2",
     "codemirror": "^6.0.2",
     "esbuild": "^0.25.9",
