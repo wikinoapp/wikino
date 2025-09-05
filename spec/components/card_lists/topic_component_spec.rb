@@ -3,7 +3,6 @@
 
 RSpec.describe CardLists::TopicComponent, type: :view do
   it "トピックカードのリストが表示されること" do
-    user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Topic 1")
     topic_record2 = FactoryBot.create(:topic_record, space_record:, name: "Topic 2")
@@ -17,10 +16,7 @@ RSpec.describe CardLists::TopicComponent, type: :view do
       )
     end
 
-    render_inline(CardLists::TopicComponent.new(
-      topics:,
-      current_user_record: user_record
-    ))
+    render_inline(CardLists::TopicComponent.new(topics:))
 
     expect(page).to have_text("Topic 1")
     expect(page).to have_text("Topic 2")
@@ -29,12 +25,7 @@ RSpec.describe CardLists::TopicComponent, type: :view do
   end
 
   it "トピックがない場合に空のリストが表示されること" do
-    user_record = FactoryBot.create(:user_record)
-
-    render_inline(CardLists::TopicComponent.new(
-      topics: [],
-      current_user_record: user_record
-    ))
+    render_inline(CardLists::TopicComponent.new(topics: []))
 
     expect(page).to have_css(".grid")
     expect(page).not_to have_css("a")

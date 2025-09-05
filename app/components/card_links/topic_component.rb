@@ -3,20 +3,15 @@
 
 module CardLinks
   class TopicComponent < ApplicationComponent
-    sig { params(topic: Topic, current_user_record: T.nilable(UserRecord), card_class: String).void }
-    def initialize(topic:, current_user_record:, card_class: "")
+    sig { params(topic: Topic, card_class: String).void }
+    def initialize(topic:, card_class: "")
       @topic = topic
-      @current_user_record = current_user_record
       @card_class = card_class
     end
 
     sig { returns(Topic) }
     attr_reader :topic
     private :topic
-
-    sig { returns(T.nilable(UserRecord)) }
-    attr_reader :current_user_record
-    private :current_user_record
 
     sig { returns(String) }
     attr_reader :card_class
@@ -33,15 +28,11 @@ module CardLinks
 
     sig { returns(T::Boolean) }
     private def can_create_page?
-      return false if current_user_record.nil?
-
       topic.can_create_page?
     end
 
     sig { returns(T::Boolean) }
     private def can_update?
-      return false if current_user_record.nil?
-
       topic.can_update?
     end
 
