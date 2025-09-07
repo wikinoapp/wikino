@@ -61,7 +61,7 @@
 - [x] `last_page_modified_at` でソートする処理の実装
   - `topic_members.last_page_modified_at` の降順でソート
   - NULL値は最後に配置
-- [ ] ゲスト向け：公開トピックを取得するRepositoryメソッドの実装
+- [x] ゲスト向け：公開トピックを取得するRepositoryメソッドの実装
   - `TopicRepository#find_public_topics_by_space` メソッドを実装
   - 公開トピック（visibility: public）のみを取得
   - トピックの作成日時でソート
