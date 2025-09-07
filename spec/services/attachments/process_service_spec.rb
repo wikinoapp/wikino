@@ -11,8 +11,8 @@ RSpec.describe Attachments::ProcessService do
       service = Attachments::ProcessService.new
       result = service.call(attachment_record:)
 
-      expect(result.success).to eq(true)
-      expect(attachment_record.processing_status_completed?).to eq(true)
+      expect(result.success).to be(true)
+      expect(attachment_record.processing_status_completed?).to be(true)
     end
 
     it "blobがない場合は失敗すること" do
@@ -22,8 +22,8 @@ RSpec.describe Attachments::ProcessService do
       service = Attachments::ProcessService.new
       result = service.call(attachment_record:)
 
-      expect(result.success).to eq(false)
-      expect(attachment_record.processing_status_failed?).to eq(true)
+      expect(result.success).to be(false)
+      expect(attachment_record.processing_status_failed?).to be(true)
     end
 
     it "S3にファイルが存在しない場合はpendingに戻すこと" do
@@ -36,8 +36,8 @@ RSpec.describe Attachments::ProcessService do
       service = Attachments::ProcessService.new
       result = service.call(attachment_record:)
 
-      expect(result.success).to eq(false)
-      expect(attachment_record.processing_status_pending?).to eq(true)
+      expect(result.success).to be(false)
+      expect(attachment_record.processing_status_pending?).to be(true)
     end
 
     it "画像処理に失敗した場合はpendingに戻すこと" do
@@ -46,14 +46,13 @@ RSpec.describe Attachments::ProcessService do
 
       # S3にファイルは存在するが、画像処理に失敗
       allow(blob_record.service).to receive(:exist?).with(blob_record.key).and_return(true)
-      allow(blob_record).to receive(:image?).and_return(true)
-      allow(blob_record).to receive(:process_image_with_exif_removal).and_return(false)
+      allow(blob_record).to receive_messages(image?: true, process_image_with_exif_removal: false)
 
       service = Attachments::ProcessService.new
       result = service.call(attachment_record:)
 
-      expect(result.success).to eq(false)
-      expect(attachment_record.processing_status_pending?).to eq(true)
+      expect(result.success).to be(false)
+      expect(attachment_record.processing_status_pending?).to be(true)
     end
 
     it "正常に処理が完了した場合はcompletedにすること" do
@@ -62,14 +61,13 @@ RSpec.describe Attachments::ProcessService do
 
       # 正常な処理をシミュレート
       allow(blob_record.service).to receive(:exist?).with(blob_record.key).and_return(true)
-      allow(blob_record).to receive(:image?).and_return(true)
-      allow(blob_record).to receive(:process_image_with_exif_removal).and_return(true)
+      allow(blob_record).to receive_messages(image?: true, process_image_with_exif_removal: true)
 
       service = Attachments::ProcessService.new
       result = service.call(attachment_record:)
 
-      expect(result.success).to eq(true)
-      expect(attachment_record.processing_status_completed?).to eq(true)
+      expect(result.success).to be(true)
+      expect(attachment_record.processing_status_completed?).to be(true)
     end
 
     it "例外が発生した場合はfailedにすること" do
@@ -85,8 +83,7 @@ RSpec.describe Attachments::ProcessService do
         service.call(attachment_record:)
       }.to raise_error(StandardError, "Test error")
 
-      expect(attachment_record.processing_status_failed?).to eq(true)
+      expect(attachment_record.processing_status_failed?).to be(true)
     end
   end
 end
-

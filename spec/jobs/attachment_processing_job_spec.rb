@@ -37,7 +37,7 @@ RSpec.describe AttachmentProcessingJob, type: :job do
       allow(service).to receive(:call).with(attachment_record:).and_return(result)
 
       # リトライジョブがスケジュールされることを確認
-      job_wrapper = double("job_wrapper")
+      job_wrapper = instance_double(ActiveJob::ConfiguredJob)
       allow(AttachmentProcessingJob).to receive(:set).with(wait: 5.seconds).and_return(job_wrapper)
       expect(job_wrapper).to receive(:perform_later).with(attachment_record.id)
 
