@@ -8,25 +8,27 @@ FactoryBot.define do
     attached_at { Time.current }
     processing_status { AttachmentProcessingStatus::Completed.serialize }
 
-    trait :with_blob do
-      before(:create) do |attachment_record|
-        # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
-        temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
+    # デフォルトでActive Storage Attachmentを作成
+    after(:build) do |attachment_record|
+      # active_storage_attachment_recordが既に設定されている場合はスキップ
+      next if attachment_record.active_storage_attachment_record.present?
 
-        blob = ActiveStorage::Blob.create_and_upload!(
-          io: StringIO.new("test file content"),
-          filename: "test-file.txt",
-          content_type: "text/plain"
-        )
+      # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
+      temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
 
-        active_storage_attachment = ActiveStorage::Attachment.create!(
-          name: "file",
-          record: temp_attachment,
-          blob:
-        )
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: StringIO.new("test file content"),
+        filename: "test-file.txt",
+        content_type: "text/plain"
+      )
 
-        attachment_record.active_storage_attachment_id = active_storage_attachment.id
-      end
+      active_storage_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: temp_attachment,
+        blob:
+      )
+
+      attachment_record.active_storage_attachment_record = active_storage_attachment
     end
 
     trait :processing do
@@ -38,7 +40,7 @@ FactoryBot.define do
     end
 
     trait :with_image do
-      before(:create) do |attachment_record|
+      after(:build) do |attachment_record|
         # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
         temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
 
@@ -57,12 +59,12 @@ FactoryBot.define do
           blob:
         )
 
-        attachment_record.active_storage_attachment_id = active_storage_attachment.id
+        attachment_record.active_storage_attachment_record = active_storage_attachment
       end
     end
 
     trait :with_pdf do
-      before(:create) do |attachment_record|
+      after(:build) do |attachment_record|
         # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
         temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
 
@@ -78,7 +80,7 @@ FactoryBot.define do
           blob:
         )
 
-        attachment_record.active_storage_attachment_id = active_storage_attachment.id
+        attachment_record.active_storage_attachment_record = active_storage_attachment
       end
     end
   end

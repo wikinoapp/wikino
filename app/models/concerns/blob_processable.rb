@@ -23,6 +23,9 @@ module BlobProcessable
     # ファイルをダウンロード
     tempfile = download_to_tempfile
 
+    # ダウンロードに失敗した場合はfalseを返す
+    return false if tempfile.nil?
+
     begin
       # EXIF情報を削除して自動回転を適用
       process_image(tempfile.path.not_nil!)
@@ -35,8 +38,10 @@ module BlobProcessable
       Rails.logger.error("Image processing failed: #{e.message}")
       false
     ensure
-      tempfile.close
-      tempfile.unlink
+      if tempfile
+        tempfile.close
+        tempfile.unlink
+      end
     end
   end
 
@@ -48,13 +53,23 @@ module BlobProcessable
     SUPPORTED_IMAGE_FORMATS.include?(extension)
   end
 
-  sig { returns(Tempfile) }
+  sig { returns(T.nilable(Tempfile)) }
   private def download_to_tempfile
     # ActiveStorage::Blobのメソッドを明示的にキャスト
     blob = T.cast(self, ActiveStorage::Blob)
     tempfile = Tempfile.new(["image_processing", ".#{blob.filename.extension}"])
     tempfile.binmode
-    tempfile.write(blob.download)
+
+    begin
+      tempfile.write(blob.download)
+    rescue Aws::S3::Errors::NoSuchKey, ActiveStorage::FileNotFoundError => e
+      # S3にファイルが見つからない場合はnilを返す
+      Rails.logger.warn("Blob download failed: #{e.message} (blob_id: #{blob.id})")
+      tempfile.close
+      tempfile.unlink
+      return nil
+    end
+
     tempfile.rewind
     tempfile
   end
