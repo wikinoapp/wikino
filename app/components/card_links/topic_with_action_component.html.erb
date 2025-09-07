@@ -1,0 +1,21 @@
+<div class="flex bg-stone-800 rounded-xl">
+  <div class="grow">
+    <%= render CardLinks::TopicComponent.new(topic:, card_class:) %>
+  </div>
+
+  <div class="flex-none">
+    <div class="grid grid-cols-1 content-center gap-2 h-full">
+      <% if can_create_page? %>
+        <%= link_to new_page_path, {
+          class: "p-2 text-white hover:text-primary leading-0"
+        } do %>
+          <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px", class_name: "fill-white") %>
+        <% end %>
+      <% else %>
+        <span class="text-muted inline-flex cursor-not-allowed items-center gap-1 text-sm opacity-50">
+          <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px") %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+</div>
