@@ -21,6 +21,7 @@ en:
     inbox: Inbox
     info: Info
     joined_spaces: Joined spaces
+    joined_topics: Joined topics
     light: Light
     links: Links
     modified_at: Modified at
@@ -30,6 +31,8 @@ en:
     next_page: Next
     optional: Optional
     page_title: Page title
+    pages_in_space: Pages in space
+    pinned_pages: Pinned pages
     prev_page: Prev
     privacy_policy: Privacy policy
     profile: Profile

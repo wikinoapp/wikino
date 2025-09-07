@@ -4,6 +4,33 @@
 require "rails_helper"
 
 RSpec.describe TopicAdminPolicy do
+  describe "#can_create_page?" do
+    it "Topic Adminはページ作成が許可されること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      space_member_record = FactoryBot.create(:space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Member.serialize)
+
+      topic_member_record = FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record:,
+        space_member_record:,
+        role: TopicMemberRole::Admin.serialize)
+
+      policy = TopicAdminPolicy.new(
+        user_record:,
+        space_member_record:,
+        topic_member_record:
+      )
+
+      expect(policy.can_create_page?(topic_record:)).to be(true)
+    end
+  end
+
   describe "#can_update_topic?" do
     it "自分がAdminであるトピックのみ更新可能であること" do
       user_record = FactoryBot.create(:user_record)

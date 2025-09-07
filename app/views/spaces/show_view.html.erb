@@ -11,43 +11,47 @@
     <%= render Containers::MainComponent.new do %>
       <%= render Headers::MainTitleComponent.new(title: space.name) do |main_title| %>
         <%= main_title.with_actions do %>
-          <div class="flex gap-2">
-            <% if first_joined_topic %>
-              <%= link_to new_page_path(space.identifier, first_joined_topic.number), {
-                class: "btn btn-sm rounded-full"
-              } do %>
-                <%= render BaseUI::IconComponent.new(
-                  name: "pencil-simple-line",
-                  size: "18px",
-                  class_name: "fill-primary-foreground"
-                ) %>
-
-                <%= t("nouns.new_page") %>
-              <% end %>
-            <% end %>
-
-            <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
-          </div>
+          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
         <% end %>
       <% end %>
 
-      <% if pinned_pages.present? || pages.present? %>
-        <div class="flex flex-col gap-6">
-          <div class="flex flex-col gap-4">
-            <% if pinned_pages.present? %>
-              <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-                <% pinned_pages.each do |page| %>
-                  <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
-                <% end %>
-              </div>
+      <% if topics.present? %>
+        <div class="flex flex-col gap-4">
+          <h2 class="font-bold antialiased">
+            <% if joined_space? %>
+              <%= t("nouns.joined_topics") %>
+            <% else %>
+              <%= t("nouns.topics") %>
             <% end %>
+          </h2>
 
-            <% if pages.present? %>
-              <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-                <% pages.each do |page| %>
-                  <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
-                <% end %>
-              </div>
+          <%= render CardLists::TopicComponent.new(topics:, is_guest: !joined_space?) %>
+        </div>
+      <% end %>
+
+      <% if pinned_pages.present? %>
+        <div class="flex flex-col gap-4">
+          <h2 class="font-bold antialiased">
+            <%= t("nouns.pinned_pages") %>
+          </h2>
+
+          <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+            <% pinned_pages.each do |page| %>
+              <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if pages.present? %>
+        <div class="flex flex-col gap-4">
+          <h2 class="font-bold antialiased">
+            <%= t("nouns.pages_in_space") %>
+          </h2>
+
+          <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+            <% pages.each do |page| %>
+              <%= render CardLinks::PageComponent.new(page:, card_class: "h-full") %>
             <% end %>
           </div>
 

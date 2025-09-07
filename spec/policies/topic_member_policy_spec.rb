@@ -86,6 +86,31 @@ RSpec.describe TopicMemberPolicy do
   end
 
   describe "#can_create_page?" do
+    it "Topic Memberはページ作成が許可されること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      space_member_record = FactoryBot.create(:space_member_record,
+        user_record:,
+        space_record:,
+        role: SpaceMemberRole::Member.serialize)
+
+      topic_member_record = FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record:,
+        space_member_record:,
+        role: TopicMemberRole::Member.serialize)
+
+      policy = TopicMemberPolicy.new(
+        user_record:,
+        space_member_record:,
+        topic_member_record:
+      )
+
+      expect(policy.can_create_page?(topic_record:)).to be(true)
+    end
+
     it "自分が参加しているトピックにページを作成可能であること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)

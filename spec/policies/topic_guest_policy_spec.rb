@@ -4,6 +4,22 @@
 require "rails_helper"
 
 RSpec.describe TopicGuestPolicy do
+  describe "#can_create_page?" do
+    it "Topic Guestはページ作成が許可されないこと" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_create_page?(topic_record:)).to be(false)
+
+      # ユーザーがいる場合でもページ作成不可
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_create_page?(topic_record:)).to be(false)
+    end
+  end
+
   describe "#can_update_topic?" do
     it "Topic Guestはトピックの基本情報を更新できないこと" do
       space_record = FactoryBot.create(:space_record)
@@ -49,22 +65,6 @@ RSpec.describe TopicGuestPolicy do
       user_record = FactoryBot.create(:user_record)
       policy = TopicGuestPolicy.new(user_record:)
       expect(policy.can_manage_topic_members?(topic_record:)).to be(false)
-    end
-  end
-
-  describe "#can_create_page?" do
-    it "Topic Guestはページを作成できないこと" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record, space_record:)
-
-      # ユーザーがいない場合
-      policy = TopicGuestPolicy.new(user_record: nil)
-      expect(policy.can_create_page?(topic_record:)).to be(false)
-
-      # ユーザーがいる場合でも作成不可
-      user_record = FactoryBot.create(:user_record)
-      policy = TopicGuestPolicy.new(user_record:)
-      expect(policy.can_create_page?(topic_record:)).to be(false)
     end
   end
 

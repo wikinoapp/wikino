@@ -1,0 +1,21 @@
+<%= link_to topic_path do %>
+  <%= render BaseUI::CardComponent.new(class_name: build_card_class) do |card| %>
+    <%= card.with_body do %>
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center gap-0.5">
+          <%= render Icons::TopicComponent.new(topic:, size: "14px") %>
+
+          <span class="line-clamp-1 text-sm font-bold">
+            <%= topic.name %>
+          </span>
+        </div>
+
+        <% if topic.description.present? %>
+          <div class="line-clamp-2 text-xs text-gray-600">
+            <%= topic.description %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

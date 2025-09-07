@@ -21,6 +21,7 @@ ja:
     inbox: 受信トレイ
     info: Info
     joined_spaces: 参加中のスペース
+    joined_topics: 参加中のトピック
     light: ライト
     links: リンク
     modified_at: 編集日時
@@ -30,6 +31,8 @@ ja:
     next_page: 次のページ
     optional: 任意
     page_title: ページタイトル
+    pages_in_space: スペース内のページ
+    pinned_pages: ピン留めされたページ
     prev_page: 前のページ
     privacy_policy: プライバシーポリシー
     profile: プロフィール
