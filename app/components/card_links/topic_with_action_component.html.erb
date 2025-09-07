@@ -1,10 +1,10 @@
-<div class="flex bg-stone-700 rounded-xl">
+<div class="flex rounded-xl bg-stone-700">
   <div class="grow">
     <%= render CardLinks::TopicComponent.new(topic:, card_class:) %>
   </div>
 
   <div class="flex-none">
-    <div class="grid grid-cols-1 content-center gap-2 h-full">
+    <div class="grid h-full grid-cols-1 content-center gap-2">
       <% if can_create_page? %>
         <%= link_to new_page_path, {
           class: "p-2 text-white hover:text-primary leading-0"
