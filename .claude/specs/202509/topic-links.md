@@ -21,22 +21,20 @@
 
 #### スペースメンバー向け表示
 
-1. トピック名
-2. フッター
-   1. トピックにページを作成するリンク
-      - リンク先: `GET /s/:space_identifier/topics/:topic_number/pages/new`
-      - アイコン: `pencil-simple-line`
-      - 権限チェック: トピックにページを作成する権限がない場合はリンクを非アクティブにする
-   2. 設定ページへのリンク
-      - リンク先: `/s/:space_identifier/topics/:topic_number/settings`
-      - アイコン: `gear-regular`
-      - 権限チェック: トピックの設定を変更する権限がない場合はリンクを非アクティブにする
+1. トピックアイコン（`Icons::TopicComponent`）
+2. トピック名
+3. トピックの説明（description）※存在する場合
+4. アクションボタン（カードの右側に配置）
+   - トピックにページを作成するリンク
+     - リンク先: `GET /s/:space_identifier/topics/:topic_number/pages/new`
+     - アイコン: `pencil-simple-line`
+     - 権限チェック: トピックにページを作成する権限がない場合はリンクを非アクティブにする
 
 #### ゲスト向け表示
 
-1. トピック名
-2. トピックの説明（description）
-3. トピックページへのリンク
+1. トピックアイコン（`Icons::TopicComponent`）
+2. トピック名
+3. トピックの説明（description）※存在する場合
 
 ### 表示順
 
@@ -68,15 +66,14 @@
 
 ### 2. UIコンポーネントの実装
 
-- [x] スペースメンバー向けトピックカードコンポーネント (`CardLinks::TopicComponent`) の作成
-  - [x] トピック名の表示
-  - [x] トピックページへのリンク
-  - [x] ページ作成リンク（権限がある場合のみ）
-  - [x] 設定ページへのリンク（権限がある場合のみ）
-- [x] ゲスト向けトピックカードコンポーネント (`CardLinks::PublicTopicComponent`) の作成
+- [x] 共通トピックカードコンポーネント (`CardLinks::TopicComponent`) の作成
+  - [x] トピックアイコンの表示
   - [x] トピック名の表示
   - [x] トピックの説明（description）の表示
   - [x] トピックページへのリンク
+- [x] スペースメンバー向けアクション付きトピックカードコンポーネント (`CardLinks::TopicWithActionComponent`) の作成
+  - [x] ベースのトピックカードを内包
+  - [x] ページ作成リンク（権限がある場合のみ）
 - [x] トピックカードリストコンポーネント (`CardLists::TopicComponent`) の作成
   - [x] カードの一覧表示
   - [x] グリッドレイアウトの実装
@@ -96,9 +93,14 @@
 
 ### 5. スタイリング
 
-- [ ] カードのデザイン実装（Tailwind CSS）
-- [ ] レスポンシブデザインの対応
-- [ ] ホバー効果やトランジションの追加
+- [x] カードのデザイン実装（Tailwind CSS）
+  - [x] カードの最小高さを72pxに設定
+  - [x] ホバー時のボーダー表示
+  - [x] スペースメンバー向けのアクションボタンを右側に配置（背景色: stone-700）
+- [x] レスポンシブデザインの対応
+  - [x] モバイル: 2カラムグリッド
+  - [x] デスクトップ: 3カラムグリッド
+- [x] ホバー効果やトランジションの追加
 
 ### 6. テスト
 
@@ -111,8 +113,8 @@
   - 公開トピックのみを取得することを確認
   - 作成日時でソートされることを確認
 - [ ] コンポーネントのテスト
-  - [ ] スペースメンバー向けカードコンポーネント
-  - [ ] ゲスト向けカードコンポーネント
+  - [ ] 共通トピックカードコンポーネント
+  - [ ] スペースメンバー向けアクション付きカードコンポーネント
 - [ ] 権限チェックのテスト
 - [ ] Request spec
 
@@ -138,14 +140,14 @@
 ## 関連ファイル（想定）
 
 - `app/repositories/topic_repository.rb`
-- `app/components/card_links/topic_component.rb` （スペースメンバー向け）
-- `app/components/card_links/public_topic_component.rb` （ゲスト向け）
+- `app/components/card_links/topic_component.rb` （共通トピックカード）
+- `app/components/card_links/topic_with_action_component.rb` （スペースメンバー向けアクション付き）
 - `app/components/card_lists/topic_component.rb`
 - `app/views/spaces/show_view.rb`
 - `app/controllers/spaces/show_controller.rb`
 - `app/policies/topic_policy.rb`
 - `spec/repositories/topic_repository_spec.rb`
 - `spec/components/card_links/topic_component_spec.rb`
-- `spec/components/card_links/public_topic_component_spec.rb`
+- `spec/components/card_links/topic_with_action_component_spec.rb`
 - `spec/components/card_lists/topic_component_spec.rb`
 - `spec/system/spaces/topics_display_spec.rb`

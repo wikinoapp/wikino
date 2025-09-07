@@ -18,24 +18,9 @@ RSpec.describe CardLinks::TopicComponent, type: :view do
     expect(page).to have_link(href: "/s/#{space_record.identifier}/topics/#{topic_record.number}")
   end
 
-  it "権限がある場合にページ作成リンクが表示されること" do
+  it "トピックの説明が存在する場合に表示されること" do
     space_record = FactoryBot.create(:space_record)
-    topic_record = FactoryBot.create(:topic_record, space_record:)
-
-    topic = TopicRepository.new.to_model(
-      topic_record:,
-      can_update: false,
-      can_create_page: true
-    )
-
-    render_inline(CardLinks::TopicComponent.new(topic:))
-
-    expect(page).to have_link(href: "/s/#{space_record.identifier}/topics/#{topic_record.number}/pages/new")
-  end
-
-  it "権限がない場合にページ作成リンクが非アクティブになること" do
-    space_record = FactoryBot.create(:space_record)
-    topic_record = FactoryBot.create(:topic_record, space_record:, visibility: "private")
+    topic_record = FactoryBot.create(:topic_record, space_record:, description: "これはトピックの説明です")
 
     topic = TopicRepository.new.to_model(
       topic_record:,
@@ -45,26 +30,25 @@ RSpec.describe CardLinks::TopicComponent, type: :view do
 
     render_inline(CardLinks::TopicComponent.new(topic:))
 
-    expect(page).not_to have_link(href: "/s/#{space_record.identifier}/topics/#{topic_record.number}/pages/new")
-    expect(page).to have_css(".opacity-50.cursor-not-allowed")
+    expect(page).to have_text("これはトピックの説明です")
   end
 
-  it "権限がある場合に設定リンクが表示されること" do
+  it "トピックの説明が存在しない場合に表示されないこと" do
     space_record = FactoryBot.create(:space_record)
-    topic_record = FactoryBot.create(:topic_record, space_record:)
+    topic_record = FactoryBot.create(:topic_record, space_record:, description: "")
 
     topic = TopicRepository.new.to_model(
       topic_record:,
-      can_update: true,
-      can_create_page: true
+      can_update: false,
+      can_create_page: false
     )
 
     render_inline(CardLinks::TopicComponent.new(topic:))
 
-    expect(page).to have_link(href: "/s/#{space_record.identifier}/topics/#{topic_record.number}/settings")
+    expect(page).not_to have_css(".text-gray-600")
   end
 
-  it "権限がない場合に設定リンクが非アクティブになること" do
+  it "トピックアイコンが表示されること" do
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
 
@@ -76,6 +60,22 @@ RSpec.describe CardLinks::TopicComponent, type: :view do
 
     render_inline(CardLinks::TopicComponent.new(topic:))
 
-    expect(page).not_to have_link(href: "/s/#{space_record.identifier}/topics/#{topic_record.number}/settings")
+    # Icons::TopicComponentが表示されることを確認
+    expect(page).to have_css("svg")
+  end
+
+  it "カスタムクラスが適用されること" do
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record:)
+
+    topic = TopicRepository.new.to_model(
+      topic_record:,
+      can_update: false,
+      can_create_page: false
+    )
+
+    render_inline(CardLinks::TopicComponent.new(topic:, card_class: "custom-class"))
+
+    expect(page).to have_css(".custom-class")
   end
 end

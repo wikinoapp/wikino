@@ -21,8 +21,8 @@ module CardLinks
     private def build_card_class
       class_names(
         card_class,
-        "bg-card duration-200 ease-in-out grid min-h-[80px] transition px-3 py-2",
-        "hover:border hover:border-primary"
+        "bg-card duration-200 ease-in-out grid min-h-[72px] transition px-3 py-2",
+        "hover:border hover:border-primary h-full"
       )
     end
 
