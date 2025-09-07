@@ -45,9 +45,9 @@ RSpec.describe Spaces::DestroyService, type: :service do
       create(:export_record, :succeeded, space_record:, queued_by_record: space_member_record)
 
       # 添付ファイルを作成
-      attachment_record_1 = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
-      attachment_record_2 = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
-      create(:attachment_record, :with_blob, :processing, space_record:, attached_space_member_record: space_member_record)
+      attachment_record_1 = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
+      attachment_record_2 = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
+      create(:attachment_record, :processing, space_record:, attached_space_member_record: space_member_record)
 
       # 添付ファイルの参照を作成
       create(:page_attachment_reference_record, page_record:, attachment_record: attachment_record_1)

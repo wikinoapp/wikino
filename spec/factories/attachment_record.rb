@@ -31,11 +31,6 @@ FactoryBot.define do
       attachment_record.active_storage_attachment_record = active_storage_attachment
     end
 
-    # with_blobトレイトは既にデフォルトで作成されているので不要
-    # 互換性のために空のトレイトとして残す
-    trait :with_blob do
-    end
-
     trait :processing do
       processing_status { AttachmentProcessingStatus::Processing.serialize }
     end

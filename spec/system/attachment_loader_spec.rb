@@ -13,8 +13,8 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     # 添付ファイル作成
-    attachment_record1 = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
-    attachment_record2 = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
+    attachment_record1 = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
+    attachment_record2 = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
 
     # ページ作成（body_htmlにプレースホルダー画像を含む）
     page_record = create(:page_record, :published,
@@ -58,7 +58,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     # 動画の添付ファイル作成
-    attachment_record = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
+    attachment_record = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
 
     # ページ作成（body_htmlにプレースホルダー動画を含む）
     page_record = create(:page_record, :published,
@@ -95,7 +95,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     # ファイルの添付ファイル作成
-    attachment_record = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
+    attachment_record = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
 
     # ページ作成（body_htmlにダウンロードリンクを含む）
     page_record = create(:page_record, :published,
@@ -132,7 +132,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     # 添付ファイル作成
-    attachment_record = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
+    attachment_record = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
 
     # ページ作成
     page_record = create(:page_record, :published,
@@ -214,7 +214,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     # 添付ファイル作成
-    attachment_record = create(:attachment_record, :with_blob, space_record:, attached_space_member_record: space_member_record)
+    attachment_record = create(:attachment_record, space_record:, attached_space_member_record: space_member_record)
 
     # ページ作成
     page_record = create(:page_record, :published,
