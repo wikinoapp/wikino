@@ -60,7 +60,7 @@ WikinoはWikiアプリケーションです。
 | Model      | Model                                          |
 | Policy     | Record                                         |
 | Record     | Record                                         |
-| Repository | Model, Record                                  |
+| Repository | Model, Record, Policy                          |
 | Service    | Job, Mailer, Record                            |
 | Validator  | Record                                         |
 | View       | Component, Form, Model                         |

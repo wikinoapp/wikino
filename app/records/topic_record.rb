@@ -17,7 +17,7 @@ class TopicRecord < ApplicationRecord
   has_many :member_records, class_name: "TopicMemberRecord", foreign_key: :topic_id, dependent: :restrict_with_exception
   has_many :page_records, dependent: :restrict_with_exception, foreign_key: :topic_id, inverse_of: :topic_record
 
-  scope :public_or_private, -> { where(visibility: [TopicVisibility::Public.serialize, TopicVisibility::Private.serialize]) }
+  scope :public_visibility, -> { where(visibility: TopicVisibility::Public.serialize) }
 
   sig { params(member: SpaceMemberRecord, role: TopicMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
   def add_member!(member:, role:, joined_at: Time.zone.now)
