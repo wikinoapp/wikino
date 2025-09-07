@@ -39,10 +39,11 @@
 
 #### スペースメンバー向け
 - `topic_members.last_page_modified_at` の降順
+- トピック番号（`topics.number`）の降順
 
 #### ゲスト向け
 - トピックの作成日時（`topics.created_at`）の降順
-- または、トピック番号（`topics.number`）の昇順
+- トピック番号（`topics.number`）の降順
 
 ## 実装タスクリスト
 

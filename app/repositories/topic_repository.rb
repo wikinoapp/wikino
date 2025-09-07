@@ -41,7 +41,7 @@ class TopicRepository < ApplicationRepository
         space_member_id: space_member_record.id
       })
       .preload(:space_record)
-      .order("member_records.last_page_modified_at DESC NULLS LAST, topics.id DESC")
+      .order("member_records.last_page_modified_at DESC NULLS LAST, topics.number DESC")
 
     # N+1を避けるため、必要なデータを一括取得
     topic_ids = topic_records.map(&:id)
