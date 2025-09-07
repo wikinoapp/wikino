@@ -10,16 +10,18 @@ module Spaces
         space: Space,
         first_joined_topic: T.nilable(Topic),
         pinned_pages: T::Array[Page],
-        page_list: PageList
+        page_list: PageList,
+        topics: T::Array[Topic]
       ).void
     end
-    def initialize(current_user:, joined_space:, space:, first_joined_topic:, pinned_pages:, page_list:)
+    def initialize(current_user:, joined_space:, space:, first_joined_topic:, pinned_pages:, page_list:, topics:)
       @current_user = current_user
       @joined_space = joined_space
       @space = space
       @first_joined_topic = first_joined_topic
       @pinned_pages = pinned_pages
       @page_list = page_list
+      @topics = topics
     end
 
     sig { override.void }
@@ -52,6 +54,10 @@ module Spaces
     sig { returns(PageList) }
     attr_reader :page_list
     private :page_list
+
+    sig { returns(T::Array[Topic]) }
+    attr_reader :topics
+    private :topics
 
     delegate :pages, :pagination, to: :page_list
 
