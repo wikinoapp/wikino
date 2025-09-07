@@ -70,7 +70,7 @@ class TopicRepository < ApplicationRepository
   def find_public_topics_by_space(space_record:)
     # 公開トピックのみを取得し、作成日時でソート
     topic_records = space_record.topic_records
-      .where(visibility: TopicVisibility::Public.serialize)
+      .public_visibility
       .preload(:space_record)
       .order(created_at: :desc, number: :desc)
 
