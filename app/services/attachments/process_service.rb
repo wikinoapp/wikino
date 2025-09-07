@@ -25,6 +25,14 @@ module Attachments
       end
 
       begin
+        # blobがアップロード済みかチェック
+        unless blob_record.service.exist?(blob_record.key)
+          Rails.logger.warn("Blob not yet uploaded to storage: #{blob_record.id}")
+          # 処理をpendingに戻してリトライできるようにする
+          attachment_record.processing_status_pending!
+          return Result.new(attachment_record:, success: false)
+        end
+
         # SVGファイルの場合はサニタイズ処理を実行
         if blob_record.content_type == "image/svg+xml"
           unless attachment_record.sanitize_svg_content
@@ -34,8 +42,14 @@ module Attachments
 
         # 画像ファイルの場合はEXIF削除と自動回転を実行
         if blob_record.image?
-          unless blob_record.process_image_with_exif_removal
-            raise "Image processing failed for attachment_record: #{attachment_record.id}"
+          result = blob_record.process_image_with_exif_removal
+
+          # 処理に失敗した場合（ファイルが見つからない等）
+          unless result
+            Rails.logger.warn("Image processing skipped or failed for attachment_record: #{attachment_record.id}")
+            # 処理をpendingに戻してリトライできるようにする
+            attachment_record.processing_status_pending!
+            return Result.new(attachment_record:, success: false)
           end
 
           # サムネイルは事前生成しない - Active Storageがon-demandで生成する

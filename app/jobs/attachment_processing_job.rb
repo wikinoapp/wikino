@@ -10,6 +10,15 @@ class AttachmentProcessingJob < ApplicationJob
     attachment_record = AttachmentRecord.find_by(id: attachment_record_id)
     return unless attachment_record
 
-    Attachments::ProcessService.new.call(attachment_record:)
+    result = Attachments::ProcessService.new.call(attachment_record:)
+
+    # 処理に失敗した場合（ファイルがまだアップロードされていない等）、リトライする
+    unless result.success
+      # pendingステータスの場合のみリトライ（failedの場合はリトライしない）
+      if attachment_record.processing_status_pending?
+        # 少し待ってからリトライ
+        AttachmentProcessingJob.set(wait: 5.seconds).perform_later(attachment_record_id)
+      end
+    end
   end
 end

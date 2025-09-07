@@ -8,6 +8,26 @@ FactoryBot.define do
     attached_at { Time.current }
     processing_status { AttachmentProcessingStatus::Completed.serialize }
 
+    # デフォルトでActive Storage Attachmentを作成
+    after(:build) do |attachment_record|
+      # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
+      temp_attachment = AttachmentRecord.new(id: SecureRandom.uuid)
+
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: StringIO.new("test file content"),
+        filename: "test-file.txt",
+        content_type: "text/plain"
+      )
+
+      active_storage_attachment = ActiveStorage::Attachment.create!(
+        name: "file",
+        record: temp_attachment,
+        blob:
+      )
+
+      attachment_record.active_storage_attachment_record = active_storage_attachment
+    end
+
     trait :with_blob do
       before(:create) do |attachment_record|
         # 一時的なダミーレコードを作成してActive Storage Attachmentを生成
