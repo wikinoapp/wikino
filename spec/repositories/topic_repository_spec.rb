@@ -194,4 +194,135 @@ RSpec.describe TopicRepository do
       expect(topics[1].name).to eq("Topic with nil")
     end
   end
+
+  describe "#find_public_topics_by_space" do
+    it "公開トピックのみを返すこと" do
+      # テスト用のデータ作成
+      space_record = FactoryBot.create(:space_record)
+
+      # 公開トピックと非公開トピックを作成
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Public Topic 1",
+        visibility: TopicVisibility::Public.serialize)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Private Topic",
+        visibility: TopicVisibility::Private.serialize)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Public Topic 2",
+        visibility: TopicVisibility::Public.serialize)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_public_topics_by_space(space_record:)
+
+      # 検証：公開トピックのみが返される
+      expect(topics.size).to eq(2)
+      expect(topics.map(&:name)).to contain_exactly("Public Topic 1", "Public Topic 2")
+    end
+
+    it "作成日時の降順でソートされること" do
+      # テスト用のデータ作成
+      space_record = FactoryBot.create(:space_record)
+
+      # 異なる作成日時で公開トピックを作成
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Old Topic",
+        visibility: TopicVisibility::Public.serialize,
+        created_at: 3.days.ago)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "New Topic",
+        visibility: TopicVisibility::Public.serialize,
+        created_at: 1.day.ago)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Middle Topic",
+        visibility: TopicVisibility::Public.serialize,
+        created_at: 2.days.ago)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_public_topics_by_space(space_record:)
+
+      # 検証：新しい順にソートされている
+      expect(topics.size).to eq(3)
+      expect(topics[0].name).to eq("New Topic")
+      expect(topics[1].name).to eq("Middle Topic")
+      expect(topics[2].name).to eq("Old Topic")
+    end
+
+    it "権限フラグがすべてfalseになること" do
+      # テスト用のデータ作成
+      space_record = FactoryBot.create(:space_record)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        visibility: TopicVisibility::Public.serialize)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_public_topics_by_space(space_record:)
+
+      # 検証：権限フラグがすべてfalse
+      expect(topics.size).to eq(1)
+      topic = topics.first
+      expect(topic.can_update).to be(false)
+      expect(topic.can_create_page).to be(false)
+    end
+
+    it "公開トピックがない場合、空配列を返すこと" do
+      # テスト用のデータ作成
+      space_record = FactoryBot.create(:space_record)
+      # 非公開トピックのみ作成
+      FactoryBot.create(:topic_record,
+        space_record:,
+        visibility: TopicVisibility::Private.serialize)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_public_topics_by_space(space_record:)
+
+      # 検証
+      expect(topics).to be_empty
+    end
+
+    it "作成日時が同じ場合、トピック番号の降順でソートされること" do
+      # テスト用のデータ作成
+      space_record = FactoryBot.create(:space_record)
+      same_time = 1.day.ago
+
+      # 同じ作成日時で異なるnumberのトピックを作成
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Topic Number 1",
+        number: 1,
+        visibility: TopicVisibility::Public.serialize,
+        created_at: same_time)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Topic Number 3",
+        number: 3,
+        visibility: TopicVisibility::Public.serialize,
+        created_at: same_time)
+      FactoryBot.create(:topic_record,
+        space_record:,
+        name: "Topic Number 2",
+        number: 2,
+        visibility: TopicVisibility::Public.serialize,
+        created_at: same_time)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_public_topics_by_space(space_record:)
+
+      # 検証：numberの降順でソート
+      expect(topics.size).to eq(3)
+      expect(topics[0].name).to eq("Topic Number 3")
+      expect(topics[1].name).to eq("Topic Number 2")
+      expect(topics[2].name).to eq("Topic Number 1")
+    end
+  end
 end

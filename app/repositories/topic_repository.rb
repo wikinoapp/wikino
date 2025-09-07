@@ -64,6 +64,28 @@ class TopicRepository < ApplicationRepository
 
   sig do
     params(
+      space_record: SpaceRecord
+    ).returns(T::Array[Topic])
+  end
+  def find_public_topics_by_space(space_record:)
+    # 公開トピックのみを取得し、作成日時でソート
+    topic_records = space_record.topic_records
+      .where(visibility: TopicVisibility::Public.serialize)
+      .preload(:space_record)
+      .order(created_at: :desc, number: :desc)
+
+    # 権限情報なしでモデルに変換（ゲスト向けなので権限はすべてfalse）
+    topic_records.map do |topic_record|
+      to_model(
+        topic_record:,
+        can_update: false,
+        can_create_page: false
+      )
+    end
+  end
+
+  sig do
+    params(
       space_member_record: T.nilable(SpaceMemberRecord),
       topic_ids: T::Array[Types::DatabaseId]
     ).returns(T::Hash[Types::DatabaseId, T::Hash[Symbol, T::Boolean]])
