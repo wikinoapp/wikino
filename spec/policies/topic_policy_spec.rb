@@ -23,7 +23,7 @@ RSpec.describe "Topic Policies" do
         space_member_record:,
         topic_member_record:
       )
-      
+
       # 検証
       expect(policy.can_create_page?(topic_record:)).to be(true)
     end
@@ -46,7 +46,7 @@ RSpec.describe "Topic Policies" do
         space_member_record:,
         topic_member_record:
       )
-      
+
       # 検証
       expect(policy.can_create_page?(topic_record:)).to be(true)
     end
@@ -56,14 +56,14 @@ RSpec.describe "Topic Policies" do
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      
+
       # ポリシー実行（topic_member_record: nil）
       policy = TopicPolicyFactory.build(
         user_record:,
         space_member_record:,
         topic_member_record: nil
       )
-      
+
       # 検証
       # TopicGuestPolicyのcan_create_page?はtopic_recordを必要とするが、常にfalseを返す
       expect(policy.can_create_page?(topic_record:)).to be(false)
@@ -89,7 +89,7 @@ RSpec.describe "Topic Policies" do
         space_member_record:,
         topic_member_record:
       )
-      
+
       # 検証
       expect(policy.can_update_topic?(topic_record:)).to be(true)
     end
@@ -112,7 +112,7 @@ RSpec.describe "Topic Policies" do
         space_member_record:,
         topic_member_record:
       )
-      
+
       # 検証
       expect(policy.can_update_topic?(topic_record:)).to be(false)
     end
@@ -122,14 +122,14 @@ RSpec.describe "Topic Policies" do
       space_record = FactoryBot.create(:space_record)
       space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
-      
+
       # ポリシー実行（topic_member_record: nil）
       policy = TopicPolicyFactory.build(
         user_record:,
         space_member_record:,
         topic_member_record: nil
       )
-      
+
       # 検証
       expect(policy.can_update_topic?(topic_record:)).to be(false)
     end

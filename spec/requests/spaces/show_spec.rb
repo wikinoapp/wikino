@@ -103,7 +103,7 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
       topic_record1 = create(:topic_record,
         space_record:,
         name: "参加しているトピック")
-      topic_record2 = create(:topic_record,
+      create(:topic_record,
         space_record:,
         name: "参加していないトピック")
 
