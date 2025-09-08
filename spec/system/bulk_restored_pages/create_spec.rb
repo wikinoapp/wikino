@@ -43,8 +43,8 @@ RSpec.describe "ページの一括復元", type: :system do
     # 復元ボタンをクリック
     find('button[type="submit"]', text: /Restore|復元/).click
 
-    # エラーメッセージが表示されることを確認（英語）
-    expect(page).to have_content("Cannot be restored because it contains a page for a topic you have not participated in")
+    # エラーメッセージが表示されることを確認
+    expect(page).to have_content("参加していないトピックのページが含まれているため復元できません")
 
     # ページがまだトラッシュページにいることを確認
     expect(page).to have_current_path(trash_path(space_record.identifier))
