@@ -5,7 +5,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
   # テスト用エンドポイントは Test::Attachments::SignedUrls::CreateController で処理される
   # ビューに data-test-endpoint="/_test/attachments/signed_urls" が設定される
 
-  it "ページ表示時に添付ファイルの署名付きURLが非同期で読み込まれること" do
+  it "ページ表示時に添付ファイルの署名付きURLが非同期で読み込まれること", js: true do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -50,7 +50,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     expect(img2["loading"]).to eq("lazy")
   end
 
-  it "動画ファイルの署名付きURLが非同期で読み込まれること" do
+  it "動画ファイルの署名付きURLが非同期で読み込まれること", js: true do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -87,7 +87,7 @@ RSpec.describe "添付ファイルの非同期URL読み込み", type: :system do
     expect(video["src"]).to start_with("data:image/png;base64,")
   end
 
-  it "ダウンロードリンクの署名付きURLが非同期で読み込まれること" do
+  it "ダウンロードリンクの署名付きURLが非同期で読み込まれること", js: true do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)

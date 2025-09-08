@@ -6,7 +6,7 @@ require_relative "shared_helpers"
 RSpec.describe "Markdownエディター/Wikiリンクの補完候補", type: :system do
   include MarkdownEditorHelpers
 
-  it "Wikiリンクの補完候補が表示されること" do
+  it "Wikiリンクの補完候補が表示されること", js: true do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
     space_member_record = create(:space_member_record, space_record:, user_record:)

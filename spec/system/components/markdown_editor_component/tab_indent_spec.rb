@@ -6,7 +6,7 @@ require_relative "shared_helpers"
 RSpec.describe "Markdownエディター/タブキーによるインデント機能", type: :system do
   include MarkdownEditorHelpers
 
-  it "タブキーを押すと半角スペース2つが挿入されること" do
+  it "タブキーを押すと半角スペース2つが挿入されること", js: true do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "テスト")
@@ -16,7 +16,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("テスト  ")
   end
 
-  it "行頭でタブキーを押すと行頭に半角スペース2つが挿入されること" do
+  it "行頭でタブキーを押すと行頭に半角スペース2つが挿入されること", js: true do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "テスト")
@@ -28,7 +28,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("  テスト")
   end
 
-  it "Shift+タブキーを押すとインデントが削除されること" do
+  it "Shift+タブキーを押すとインデントが削除されること", js: true do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "  インデント付きテキスト")
@@ -40,7 +40,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("インデント付きテキスト")
   end
 
-  it "リスト項目の先頭でタブキーを押すとネストされたリスト項目になること" do
+  it "リスト項目の先頭でタブキーを押すとネストされたリスト項目になること", js: true do
     visit_page_editor
     clear_editor
     # リスト項目を作成
@@ -57,7 +57,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("- a\n  - ")
   end
 
-  it "タスクリスト項目の先頭でタブキーを押すとネストされたタスクリスト項目になること" do
+  it "タスクリスト項目の先頭でタブキーを押すとネストされたタスクリスト項目になること", js: true do
     visit_page_editor
     clear_editor
     # タスクリスト項目を作成
@@ -74,7 +74,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("- [ ] タスク1\n  - [ ] ")
   end
 
-  it "既にインデントされたリスト項目でタブキーを押すとさらにネストされること" do
+  it "既にインデントされたリスト項目でタブキーを押すとさらにネストされること", js: true do
     visit_page_editor
     clear_editor
     # インデント付きリスト項目を作成
@@ -91,7 +91,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("  - インデント1\n    - ")
   end
 
-  it "行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること" do
+  it "行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加され、カーソル位置が正しく維持されること", js: true do
     visit_page_editor
     clear_editor
     # 複数行のテキストを作成
@@ -111,7 +111,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(cursor_position[:column]).to eq(0)
   end
 
-  it "行選択 (改行文字を含む) でShift+タブキーを押すと選択した行のみインデントが削除され、カーソル位置が正しく維持されること" do
+  it "行選択 (改行文字を含む) でShift+タブキーを押すと選択した行のみインデントが削除され、カーソル位置が正しく維持されること", js: true do
     visit_page_editor
     clear_editor
     # インデント付きの複数行テキストを作成
@@ -131,7 +131,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(cursor_position[:column]).to eq(0)
   end
 
-  it "複数行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加されること" do
+  it "複数行選択 (改行文字を含む) でタブキーを押すと選択した行のみインデントが追加されること", js: true do
     visit_page_editor
     clear_editor
     # 複数行のテキストを作成
@@ -151,7 +151,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(cursor_position[:column]).to eq(0)
   end
 
-  it "行選択でタブキーを押すと選択範囲が維持されること" do
+  it "行選択でタブキーを押すと選択範囲が維持されること", js: true do
     visit_page_editor
     clear_editor
     # 複数行のテキストを作成
@@ -174,7 +174,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(selection_info[:to_column]).to eq(0)
   end
 
-  it "行選択でタブキーを押した後、deleteキーで行全体が削除されること" do
+  it "行選択でタブキーを押した後、deleteキーで行全体が削除されること", js: true do
     visit_page_editor
     clear_editor
     # 複数行のテキストを作成
@@ -194,7 +194,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(editor_content).to eq("- a\n- c")
   end
 
-  it "リスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたリストアイテムになること" do
+  it "リスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたリストアイテムになること", js: true do
     visit_page_editor
     clear_editor
     # リスト項目を作成
@@ -216,7 +216,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(cursor_position[:column]).to eq(4)
   end
 
-  it "タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたタスクリストアイテムになること" do
+  it "タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされたタスクリストアイテムになること", js: true do
     visit_page_editor
     clear_editor
     # タスクリスト項目を作成
@@ -238,7 +238,7 @@ RSpec.describe "Markdownエディター/タブキーによるインデント機�
     expect(cursor_position[:column]).to eq(8)
   end
 
-  it "完了タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされた完了タスクリストアイテムになること" do
+  it "完了タスクリスト項目のマーカー直後にテキストがある状態でタブキーを押すとネストされた完了タスクリストアイテムになること", js: true do
     visit_page_editor
     clear_editor
     # 完了タスクリスト項目を作成
