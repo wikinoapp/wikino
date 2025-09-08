@@ -11,6 +11,8 @@ Capybara.register_driver :chrome_headless do |app|
   options.add_argument("--window-size=1400,1400")
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-dev-shm-usage")
+  options.add_argument("--lang=ja")
+  options.add_preference("intl.accept_languages", "ja")
 
   if ENV["CI"]
     Capybara::Selenium::Driver.new(
