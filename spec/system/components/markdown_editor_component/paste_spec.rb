@@ -6,7 +6,7 @@ require_relative "shared_helpers"
 RSpec.describe "Markdownエディター/ペースト処理", type: :system do
   include MarkdownEditorHelpers
 
-  it "通常のテキストを入力できること", js: true do
+  it "通常のテキストを入力できること", :js do
     visit_page_editor
     clear_editor
 
@@ -17,7 +17,7 @@ RSpec.describe "Markdownエディター/ペースト処理", type: :system do
     expect(editor_content).to eq("テキスト入力のテスト")
   end
 
-  it "複数行のテキストを入力できること", js: true do
+  it "複数行のテキストを入力できること", :js do
     visit_page_editor
     clear_editor
 
@@ -28,7 +28,7 @@ RSpec.describe "Markdownエディター/ペースト処理", type: :system do
     expect(editor_content).to eq("1行目\n2行目\n3行目")
   end
 
-  it "既存のテキストに追加入力できること", js: true do
+  it "既存のテキストに追加入力できること", :js do
     visit_page_editor
     clear_editor
 
@@ -41,7 +41,7 @@ RSpec.describe "Markdownエディター/ペースト処理", type: :system do
 
   # ペーストイベントの詳細なテストはJavaScriptユニットテストで実施すべき
   # ここではペーストハンドラーが正常にロードされているかを確認
-  it "ペーストハンドラーが正しく登録されていること", js: true do
+  it "ペーストハンドラーが正しく登録されていること", :js do
     visit_page_editor
 
     # pasteHandlerが登録されているか確認
@@ -65,7 +65,7 @@ RSpec.describe "Markdownエディター/ペースト処理", type: :system do
   # 実際のファイルペーストはブラウザのセキュリティ制限により
   # システムテストでは完全にシミュレートできないため、
   # file-drop-handlerのテストと同様のアプローチを取る
-  it "ファイルドロップハンドラーが正しく設定されていること", js: true do
+  it "ファイルドロップハンドラーが正しく設定されていること", :js do
     visit_page_editor
 
     # ファイルドロップハンドラーの存在を確認

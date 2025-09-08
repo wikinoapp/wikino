@@ -23,7 +23,7 @@ RSpec.describe "ページの一括復元", type: :system do
     expect(page).to have_content("お探しのページは見つかりませんでした")
   end
 
-  it "選択したページに問題があるとき、エラーメッセージを表示すること", js: true do
+  it "選択したページに問題があるとき、エラーメッセージを表示すること", :js do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     create(:space_member_record, space_record:, user_record:)
@@ -45,12 +45,12 @@ RSpec.describe "ページの一括復元", type: :system do
 
     # エラーメッセージが表示されることを確認（英語）
     expect(page).to have_content("Cannot be restored because it contains a page for a topic you have not participated in")
-    
+
     # ページがまだトラッシュページにいることを確認
     expect(page).to have_current_path(trash_path(space_record.identifier))
   end
 
-  it "選択したページに問題がないとき、ページを復元できること", js: true do
+  it "選択したページに問題がないとき、ページを復元できること", :js do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     space_member_record = create(:space_member_record, space_record:, user_record:)
@@ -80,7 +80,7 @@ RSpec.describe "ページの一括復元", type: :system do
 
     # リダイレクトまたはページ更新を待つ
     sleep 2
-    
+
     # 現在のパスを確認
     expect(page).to have_current_path(trash_path(space_record.identifier))
 
@@ -92,13 +92,13 @@ RSpec.describe "ページの一括復元", type: :system do
     expect(page).not_to have_content(page_record.title)
   end
 
-  it "複数のページを一括で復元できること", js: true do
+  it "複数のページを一括で復元できること", :js do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     space_member_record = create(:space_member_record, space_record:, user_record:)
     topic_record = create(:topic_record, space_record:)
     create(:topic_member_record, space_record:, topic_record:, space_member_record:)
-    
+
     # 複数のページを作成
     page_record1 = create(:page_record, :trashed, space_record:, topic_record:, title: "削除されたページ1")
     page_record2 = create(:page_record, :trashed, space_record:, topic_record:, title: "削除されたページ2")
@@ -151,7 +151,7 @@ RSpec.describe "ページの一括復元", type: :system do
 
     # 空の状態メッセージが表示されることを確認
     expect(page).to have_content(I18n.t("messages.trash.empty_state_message"))
-    
+
     # 復元ボタンが表示されないことを確認
     expect(page).not_to have_css('button[type="submit"]', text: /Restore|復元/)
   end

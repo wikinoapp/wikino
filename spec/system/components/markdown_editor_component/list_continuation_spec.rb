@@ -6,7 +6,7 @@ require_relative "shared_helpers"
 RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :system do
   include MarkdownEditorHelpers
 
-  it "順序なしリスト記法を入力してEnterキーを押すと次の行にもリスト記法が追加されること", js: true do
+  it "順序なしリスト記法を入力してEnterキーを押すと次の行にもリスト記法が追加されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- 最初のアイテム")
@@ -16,7 +16,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("- 最初のアイテム\n- ")
   end
 
-  it "順序付きリスト記法を入力してEnterキーを押すと次の行に番号がインクリメントされたリスト記法が追加されること", js: true do
+  it "順序付きリスト記法を入力してEnterキーを押すと次の行に番号がインクリメントされたリスト記法が追加されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "1. 最初のアイテム")
@@ -26,7 +26,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("1. 最初のアイテム\n2. ")
   end
 
-  it "空のリスト項目でEnterキーを押すとリスト記法が終了すること", js: true do
+  it "空のリスト項目でEnterキーを押すとリスト記法が終了すること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- ")
@@ -36,7 +36,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("")
   end
 
-  it "インデント付きリスト記法でEnterキーを押すとインデントが維持されること", js: true do
+  it "インデント付きリスト記法でEnterキーを押すとインデントが維持されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "  - インデント付きアイテム")
@@ -46,7 +46,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("  - インデント付きアイテム\n  - ")
   end
 
-  it "異なるマーカー (*、+) でも正常に動作すること", js: true do
+  it "異なるマーカー (*、+) でも正常に動作すること", :js do
     visit_page_editor
     clear_editor
     # * マーカーのテスト
@@ -67,7 +67,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("+ プラスマーカー\n+ ")
   end
 
-  it "GitHubタスクリスト記法 (未完了) を入力してEnterキーを押すと次の行にも未完了タスクが追加されること", js: true do
+  it "GitHubタスクリスト記法 (未完了) を入力してEnterキーを押すと次の行にも未完了タスクが追加されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- [ ] 未完了タスク")
@@ -77,7 +77,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("- [ ] 未完了タスク\n- [ ] ")
   end
 
-  it "GitHubタスクリスト記法 (完了) を入力してEnterキーを押すと次の行に未完了タスクが追加されること", js: true do
+  it "GitHubタスクリスト記法 (完了) を入力してEnterキーを押すと次の行に未完了タスクが追加されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- [x] 完了タスク")
@@ -87,7 +87,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("- [x] 完了タスク\n- [ ] ")
   end
 
-  it "GitHubタスクリスト記法 (完了・大文字X) を入力してEnterキーを押すと次の行に未完了タスクが追加されること", js: true do
+  it "GitHubタスクリスト記法 (完了・大文字X) を入力してEnterキーを押すと次の行に未完了タスクが追加されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- [X] 完了タスク (大文字) ")
@@ -97,7 +97,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("- [X] 完了タスク (大文字) \n- [ ] ")
   end
 
-  it "インデント付きタスクリスト記法でEnterキーを押すとインデントが維持されること", js: true do
+  it "インデント付きタスクリスト記法でEnterキーを押すとインデントが維持されること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "  - [ ] インデント付きタスク")
@@ -107,7 +107,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("  - [ ] インデント付きタスク\n  - [ ] ")
   end
 
-  it "空のタスクリスト項目でEnterキーを押すとタスクリスト記法が終了すること", js: true do
+  it "空のタスクリスト項目でEnterキーを押すとタスクリスト記法が終了すること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- [ ] ")
@@ -117,7 +117,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("")
   end
 
-  it "異なるマーカー (*、+) でもタスクリスト記法が正常に動作すること", js: true do
+  it "異なるマーカー (*、+) でもタスクリスト記法が正常に動作すること", :js do
     visit_page_editor
     clear_editor
     # * マーカーのテスト
@@ -138,7 +138,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("+ [x] プラスタスク\n+ [ ] ")
   end
 
-  it "リスト行の行頭で改行した場合、リスト継続せずに通常の改行になること", js: true do
+  it "リスト行の行頭で改行した場合、リスト継続せずに通常の改行になること", :js do
     visit_page_editor
     clear_editor
     fill_in_editor(text: "- aaa")
@@ -153,7 +153,7 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(editor_content).to eq("\n- aaa")
   end
 
-  it "リスト行のマーカー直前で改行した場合、リスト継続せずに改行すること", js: true do
+  it "リスト行のマーカー直前で改行した場合、リスト継続せずに改行すること", :js do
     visit_page_editor
     clear_editor
     # インデント付きのリスト
