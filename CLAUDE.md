@@ -209,6 +209,27 @@ user = FactoryBot.create(:user_record)
 space = FactoryBot.create(:space_record)
 ```
 
+#### システムテストの待機処理
+
+```ruby
+# ❌ sleepを使用した待機処理は避ける
+button.click
+sleep 2
+expect(page).to have_current_path(some_path)
+
+# ✅ Capybaraの待機機能を活用
+button.click
+# ページ上の要素の変化を待つ（Capybaraが自動的に最大5秒待機）
+expect(page).not_to have_content("削除されたコンテンツ")
+expect(page).to have_content("新しく表示されるコンテンツ")
+
+# ✅ have_css/not_to have_cssで要素の出現/消失を待つ
+expect(page).to have_css(".success-message")
+expect(page).not_to have_css(".loading-spinner")
+```
+
+**重要**: システムテストでは`sleep`の使用を避け、Capybaraの自動待機機能を活用すること。要素の出現や消失、コンテンツの変化を検証することで、適切な待機処理が自動的に行われる。
+
 ### I18n
 
 翻訳ファイルは用途別に分類し、日本語と英語の両方を更新：

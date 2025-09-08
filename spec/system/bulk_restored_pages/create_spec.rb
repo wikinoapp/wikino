@@ -78,8 +78,8 @@ RSpec.describe "ページの一括復元", type: :system do
     button = find('button[type="submit"]', text: /Restore|復元/)
     button.click
 
-    # リダイレクトまたはページ更新を待つ
-    sleep 2
+    # ページが復元されるまで待機（ページタイトルが消えるのを待つ）
+    expect(page).not_to have_content(page_record.title)
 
     # 現在のパスを確認
     expect(page).to have_current_path(trash_path(space_record.identifier))
@@ -87,9 +87,6 @@ RSpec.describe "ページの一括復元", type: :system do
     # ページが復元されたことを確認
     page_record.reload
     expect(page_record.trashed?).to be(false)
-
-    # 復元されたページがトラッシュから消えていることを確認
-    expect(page).not_to have_content(page_record.title)
   end
 
   it "複数のページを一括で復元できること", :js do
@@ -120,8 +117,9 @@ RSpec.describe "ページの一括復元", type: :system do
     # 復元ボタンをクリック
     find('button[type="submit"]', text: /Restore|復元/).click
 
-    # 処理が完了するまで待機
-    sleep 1
+    # 復元されたページがトラッシュから消えるのを待つ
+    expect(page).not_to have_content(page_record1.title)
+    expect(page).not_to have_content(page_record2.title)
 
     # トラッシュページにリダイレクトされることを確認
     expect(page).to have_current_path(trash_path(space_record.identifier))
@@ -134,10 +132,8 @@ RSpec.describe "ページの一括復元", type: :system do
     expect(page_record2.trashed?).to be(false)
     expect(page_record3.trashed?).to be(true) # 選択していないページは復元されない
 
-    # 復元されたページがトラッシュから消えていることを確認
-    expect(page).not_to have_content(page_record1.title)
-    expect(page).not_to have_content(page_record2.title)
-    expect(page).to have_content(page_record3.title) # 選択していないページは残っている
+    # 選択していないページは残っていることを確認
+    expect(page).to have_content(page_record3.title)
   end
 
   it "ゴミ箱が空のとき、空の状態メッセージが表示されること" do
