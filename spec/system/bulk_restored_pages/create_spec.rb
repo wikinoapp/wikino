@@ -23,7 +23,7 @@ RSpec.describe "ページの一括復元", type: :system do
     expect(page).to have_content("お探しのページは見つかりませんでした")
   end
 
-  it "選択したページに問題があるとき、エラーメッセージを表示すること", :js do
+  it "選択したページに問題があるとき、エラーメッセージを表示すること" do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     create(:space_member_record, space_record:, user_record:)
@@ -46,11 +46,10 @@ RSpec.describe "ページの一括復元", type: :system do
     # エラーメッセージが表示されることを確認
     expect(page).to have_content("参加していないトピックのページが含まれているため復元できません")
 
-    # ページがまだトラッシュページにいることを確認
-    expect(page).to have_current_path(trash_path(space_record.identifier))
+    expect(page).to have_current_path(bulk_restored_page_list_path(space_record.identifier))
   end
 
-  it "選択したページに問題がないとき、ページを復元できること", :js do
+  it "選択したページに問題がないとき、ページを復元できること" do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     space_member_record = create(:space_member_record, space_record:, user_record:)
@@ -89,7 +88,7 @@ RSpec.describe "ページの一括復元", type: :system do
     expect(page_record.trashed?).to be(false)
   end
 
-  it "複数のページを一括で復元できること", :js do
+  it "複数のページを一括で復元できること" do
     space_record = create(:space_record, :small)
     user_record = create(:user_record, :with_password)
     space_member_record = create(:space_member_record, space_record:, user_record:)
