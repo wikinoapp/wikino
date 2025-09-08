@@ -3,10 +3,11 @@
 
 module Lists
   class TrashedPagesComponent < ApplicationComponent
-    sig { params(form: Pages::BulkRestoringForm, pages: T::Array[Page]).void }
-    def initialize(form:, pages:)
+    sig { params(form: Pages::BulkRestoringForm, pages: T::Array[Page], space: Space).void }
+    def initialize(form:, pages:, space:)
       @form = form
       @pages = pages
+      @space = space
     end
 
     sig { returns(Pages::BulkRestoringForm) }
@@ -16,5 +17,9 @@ module Lists
     sig { returns(T::Array[Page]) }
     attr_reader :pages
     private :pages
+
+    sig { returns(Space) }
+    attr_reader :space
+    private :space
   end
 end

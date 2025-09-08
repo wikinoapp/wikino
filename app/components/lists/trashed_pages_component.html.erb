@@ -14,7 +14,7 @@
             action: "bulk-action-form#disableAllActionButtons",
             bulk_action_form_target: "actionButton"
           },
-          formaction: bulk_restored_page_list_path,
+          formaction: bulk_restored_page_list_path(space.identifier),
           type: :submit
         ) do %>
           <%= render BaseUI::IconComponent.new(
@@ -48,7 +48,7 @@
           <div class="flex items-center gap-4">
             <div class="py-2">
               <%= check_box_tag(
-                "page_form_bulk_restoring[page_ids][]",
+                "pages_bulk_restoring_form[page_ids][]",
                 page.database_id,
                 f.object.page_ids&.include?(page.database_id),
                 class: "input"
