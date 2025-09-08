@@ -5,6 +5,6 @@ RSpec.describe "トップページ", type: :system do
   it do
     visit "/"
 
-    expect(page).to have_content "A Wiki app where you write in Markdown"
+    expect(page).to have_content "Markdownで書き、リンクで見つかるWikiアプリ"
   end
 end

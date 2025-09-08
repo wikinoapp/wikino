@@ -4,7 +4,7 @@
 require "rails_helper"
 
 RSpec.describe "Global Hotkey", type: :system do
-  it "検索ページ以外でsキーまたは/キーを押すと検索ページに遷移すること" do
+  it "検索ページ以外でsキーまたは/キーを押すと検索ページに遷移すること", :js do
     user_record = create(:user_record, :with_password)
     sign_in(user_record:)
 
@@ -22,7 +22,7 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path)
   end
 
-  it "スペース内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること" do
+  it "スペース内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     create(:space_member_record, user_record:, space_record:)
@@ -42,7 +42,7 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path(q: "space:test-space"))
   end
 
-  it "トピック内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること" do
+  it "トピック内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -63,7 +63,7 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path(q: "space:test-space"))
   end
 
-  it "ページ内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること" do
+  it "ページ内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -85,7 +85,7 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path(q: "space:test-space"))
   end
 
-  it "ページ編集画面でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること" do
+  it "ページ編集画面でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)

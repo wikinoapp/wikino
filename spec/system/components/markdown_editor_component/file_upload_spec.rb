@@ -6,7 +6,7 @@ require_relative "shared_helpers"
 RSpec.describe "Markdownエディター/ファイルアップロード機能", type: :system do
   include MarkdownEditorHelpers
 
-  it "ページ編集画面でファイルをアップロードできること" do
+  it "ページ編集画面でファイルをアップロードできること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -43,7 +43,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(editor_content).to include("/attachments/test-attachment")
   end
 
-  it "複数のファイルを同時にアップロードできること" do
+  it "複数のファイルを同時にアップロードできること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -80,7 +80,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(editor_content).to include("/attachments/test-attachment")
   end
 
-  it "エディタにファイルをドラッグ&ドロップできること" do
+  it "エディタにファイルをドラッグ&ドロップできること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -133,7 +133,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(editor_content).to include("/attachments/test-attachment")
   end
 
-  it "ドラッグ中にドロップゾーンが表示されること" do
+  it "ドラッグ中にドロップゾーンが表示されること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -176,7 +176,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(page).not_to have_css(".cm-drop-zone")
   end
 
-  it "画像をペーストできること" do
+  it "画像をペーストできること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -216,7 +216,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(editor_content).to include("/attachments/test-attachment")
   end
 
-  it "ファイルサイズが制限を超えている場合、エラーメッセージが表示されること" do
+  it "ファイルサイズが制限を超えている場合、エラーメッセージが表示されること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)
@@ -247,7 +247,7 @@ RSpec.describe "Markdownエディター/ファイルアップロード機能", t
     expect(page).to have_content("ファイルサイズが制限（10MB）を超えています")
   end
 
-  it "サポートされていないファイル形式の場合、エラーメッセージが表示されること" do
+  it "サポートされていないファイル形式の場合、エラーメッセージが表示されること", :js do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, identifier: "test-space")
     topic_record = create(:topic_record, space_record:)

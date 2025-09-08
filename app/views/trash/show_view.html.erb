@@ -20,7 +20,7 @@
       <% if pages.present? %>
         <div class="flex flex-col gap-6">
           <div class="card p-4">
-            <%= render Lists::TrashedPagesComponent.new(form:, pages:) %>
+            <%= render Lists::TrashedPagesComponent.new(form:, pages:, space:) %>
           </div>
 
           <div class="flex justify-center">

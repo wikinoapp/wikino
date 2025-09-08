@@ -11,6 +11,8 @@ Capybara.register_driver :chrome_headless do |app|
   options.add_argument("--window-size=1400,1400")
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-dev-shm-usage")
+  options.add_argument("--lang=ja")
+  options.add_preference("intl.accept_languages", "ja")
 
   if ENV["CI"]
     Capybara::Selenium::Driver.new(
@@ -29,7 +31,7 @@ Capybara.register_driver :chrome_headless do |app|
 end
 
 Capybara.configure do |config|
-  config.default_driver = :chrome_headless
+  config.default_driver = :rack_test
   config.javascript_driver = :chrome_headless
 
   config.server = :puma
@@ -47,8 +49,12 @@ Capybara.configure do |config|
 end
 
 RSpec.configure do |config|
-  config.prepend_before(:each, type: :system) do
-    driven_by Capybara.javascript_driver
+  config.prepend_before(:each, type: :system) do |example|
+    if example.metadata[:js]
+      driven_by :chrome_headless
+    else
+      driven_by :rack_test
+    end
   end
 
   config.filter_gems_from_backtrace("capybara", "cuprite", "ferrum")
