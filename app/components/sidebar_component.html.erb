@@ -1,43 +1,55 @@
-<aside>
-  <% if signed_in? %>
-    <%= render Navbar::ItemLinkComponent.new(
-      path: home_path,
-      icon_name: home_icon_name,
-      title: t("nouns.home")
-    ) %>
+<aside class="sidebar" data-side="left" aria-hidden="false">
+  <nav class="flex flex-col gap-6 px-2 py-4">
+    <div class="flex flex-col gap-4">
+      <% if signed_in? %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: home_path,
+          title: t("nouns.home"),
+          default_icon_name: "house-regular",
+          active_icon_name: "house-fill",
+          active: current_page_name == PageName::Home,
+        ) %>
 
-    <%= render Navbar::ItemLinkComponent.new(
-      path: search_path_with_space_filter,
-      icon_name: search_icon_name,
-      title: t("nouns.search")
-    ) %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: search_path_with_space_filter,
+          title: t("nouns.search"),
+          default_icon_name: "magnifying-glass-regular",
+          active_icon_name: "magnifying-glass-fill",
+          active: current_page_name == PageName::Search
+        ) %>
 
-    <% if false %>
-    <%= render Navbar::ItemLinkComponent.new(
-      path: "#",
-      icon_name: inbox_icon_name,
-      title: t("nouns.inbox")
-    ) %>
-    <% end %>
+        <% if false %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: "#",
+          title: t("nouns.inbox"),
+          default_icon_name: "tray-regular",
+          active_icon_name: "tray-fill",
+          active: current_page_name == PageName::Inbox
+        ) %>
+        <% end %>
 
-    <%= render Navbar::ItemLinkComponent.new(
-      path: profile_path(current_user.not_nil!.atname),
-      icon_name: profile_icon_name,
-      title: t("nouns.profile")
-    ) %>
-  <% else %>
-    <%= link_to sign_in_path, {
-      class: class_names(
-        "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group",
-        class_name
-      ),
-      title: t("nouns.sign_in")
-    } do %>
-      <%= render BaseUI::IconComponent.new(
-        name: "sign-in-regular",
-        size: "2rem",
-        class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
-      ) %>
-    <% end %>
-  <% end %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: profile_path(current_user.not_nil!.atname),
+          title: t("nouns.profile"),
+          default_icon_name: "user-circle-regular",
+          active_icon_name: "user-circle-fill",
+          active: current_page_name == PageName::Profile
+        ) %>
+      <% else %>
+        <%= link_to sign_in_path, {
+          class: class_names(
+            "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group",
+            class_name
+          ),
+          title: t("nouns.sign_in")
+        } do %>
+          <%= render BaseUI::IconComponent.new(
+            name: "sign-in-regular",
+            size: "2rem",
+            class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
+          ) %>
+        <% end %>
+      <% end %>
+    </div>
+  </nav>
 </aside>

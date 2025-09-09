@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module Layouts
+  # サイドバーを除いた1カラムのレイアウト
   class Column1Component < ApplicationComponent
     renders_one :header
     renders_one :main

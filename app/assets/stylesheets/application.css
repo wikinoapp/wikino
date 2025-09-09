@@ -16,7 +16,7 @@
 
   --z-index-*: initial;
   --z-index-tooltip: 200;
-  --z-index-navbar: 100;
+  --z-index-sidebar: 100;
 }
 
 /*
@@ -177,6 +177,11 @@
   & ul {
     @apply mb-4 list-disc pl-6 text-base/normal;
   }
+}
+
+:root {
+  /* https://basecoatui.com/components/sidebar/ */
+  --sidebar-width: 200px;
 }
 
 /*
