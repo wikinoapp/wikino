@@ -15,8 +15,9 @@
   --color-brand-950: #2c2523;
 
   --z-index-*: initial;
-  --z-index-tooltip: 200;
-  --z-index-sidebar: 100;
+  --z-index-tooltip: 300;
+  --z-index-sidebar: 200;
+  --z-index-navbar: 100;
 }
 
 /*

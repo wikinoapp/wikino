@@ -46,7 +46,7 @@ module BaseUI
       when ContentScreen::Small
         "max-w-2xl" # 672px
       when ContentScreen::Medium
-        "max-w-3xl" # 768px
+        "max-w-[700px]" # 768px
       when ContentScreen::Large
         "max-w-7xl" # 1280px
       else
