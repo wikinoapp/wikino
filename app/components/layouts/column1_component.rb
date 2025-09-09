@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module Layouts
-  class BasicComponent < ApplicationComponent
+  class Column1Component < ApplicationComponent
     renders_one :header
     renders_one :main
     renders_one :footer

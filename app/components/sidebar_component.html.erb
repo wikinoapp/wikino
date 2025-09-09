@@ -1,8 +1,4 @@
-<div
-  class="<%= class_names("flex gap-6 items-center",
-    class_name
-  ) %>"
->
+<aside>
   <% if signed_in? %>
     <%= render Navbar::ItemLinkComponent.new(
       path: home_path,
@@ -44,4 +40,4 @@
       ) %>
     <% end %>
   <% end %>
-</div>
+</aside>
