@@ -2,12 +2,12 @@
   <%# PCサイズ %>
   <div
     class="<%= class_names("
-      bg-brand-100 data-stuck:drop-shadow-sm data-stuck:py-2 py-4 transition-all duration-200
+      bg-brand-100 data-stuck:drop-shadow-sm py-3 transition-all duration-200
       ease-in-out hidden md:block
     ") %>"
     data-controller="stuck"
   >
-    <div class="bg-brand-100 mx-auto flex min-h-auto w-full max-w-3xl justify-between px-4 py-0">
+    <div class="bg-brand-100 mx-auto flex min-h-auto w-full justify-between px-4 py-0 max-w-(--content-max-width)">
       <div class="flex gap-4">
         <%= render Links::BrandIconComponent.new(current_page_name:) %>
 

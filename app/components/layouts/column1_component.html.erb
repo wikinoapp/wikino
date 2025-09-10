@@ -7,10 +7,11 @@
   <meta name="search-path" content="<%= search_path %>" data-global-hotkey-target="searchPath">
 
   <div>
-    <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
+    <%= header %>
 
-    <div>
-      <%= header %>
+    <div class="max-w-(--content-max-width) m-auto">
+      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
+
       <%= main %>
     </div>
   </div>
