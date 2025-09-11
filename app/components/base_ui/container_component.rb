@@ -44,11 +44,11 @@ module BaseUI
 
       case cs
       when ContentScreen::Small
-        "max-w-2xl" # 672px
+        "max-w-(--content-screen-max-width-small)"
       when ContentScreen::Medium
-        "max-w-[700px]" # 768px
+        "max-w-(--content-screen-max-width-medium)"
       when ContentScreen::Large
-        "max-w-7xl" # 1280px
+        "max-w-(--content-screen-max-width-large)"
       else
         T.absurd(cs)
       end

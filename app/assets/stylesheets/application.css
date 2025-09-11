@@ -19,7 +19,10 @@
   --z-index-navbar: 200;
   --z-index-sidebar: 100;
 
-  --content-max-width: 1400px;
+  --screen-max-width: 1400px;
+  --content-screen-max-width-small: 650px;
+  --content-screen-max-width-medium: 800px;
+  --content-screen-max-width-large: 1200px;
 }
 
 /*
