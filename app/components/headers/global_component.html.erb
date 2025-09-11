@@ -1,18 +1,10 @@
-<header class="md:z-navbar static md:sticky md:top-0">
+<header>
   <%# PCサイズ %>
-  <div
-    class="<%= class_names("
-      bg-brand-100 data-stuck:drop-shadow-sm py-3 transition-all duration-200
-      ease-in-out hidden md:block
-    ") %>"
-    data-controller="stuck"
-  >
-    <div class="bg-brand-100 mx-auto flex min-h-auto w-full justify-between px-4 py-0 max-w-(--content-screen-max-width-medium)">
-      <div class="flex gap-4">
-        <%= render Links::BrandIconComponent.new(current_page_name:) %>
+  <div class="bg-brand-100 mx-auto flex min-h-auto w-full justify-between p-4 max-w-(--content-screen-max-width-medium)">
+    <div class="flex gap-4">
+      <%= render Links::BrandIconComponent.new(current_page_name:) %>
 
-        <%= breadcrumb %>
-      </div>
+      <%= breadcrumb %>
     </div>
   </div>
 

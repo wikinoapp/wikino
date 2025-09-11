@@ -6,10 +6,10 @@
 >
   <meta name="search-path" content="<%= search_path %>" data-global-hotkey-target="searchPath">
 
-  <div>
+  <div class="flex flex-col gap-4">
     <%= header %>
 
-    <div class="max-w-(--screen-max-width) m-auto">
+    <div class="max-w-(--screen-max-width)">
       <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
 
       <%= main %>
