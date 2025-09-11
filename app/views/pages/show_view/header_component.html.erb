@@ -3,7 +3,7 @@
   data-controller="stuck"
 >
   <%# スクロールする前に表示されるヘッダー %>
-  <div class="block group-data-stuck:hidden">
+  <div class="block group-data-stuck:hidden h-[50px]">
     <div class="flex flex-col gap-4">
       <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
         <%= main_title.with_actions do %>
@@ -50,7 +50,7 @@
   </div>
 
   <%# スクロールした後に表示されるヘッダー %>
-  <div class="hidden group-data-stuck:block">
+  <div class="hidden group-data-stuck:block h-[50px]">
     (^^)
   </div>
 </div>
