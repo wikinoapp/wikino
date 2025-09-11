@@ -29,16 +29,7 @@
           </div>
         <% end %>
 
-        <div class="md:z-sticky-bar static md:sticky md:top-0">
-          <div
-            class="<%= class_names("
-              data-stuck:drop-shadow-sm transition-all duration-200 ease-in-out
-            ") %>"
-            data-controller="stuck"
-          >
-            <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
-          </div>
-        </div>
+        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>
           <div

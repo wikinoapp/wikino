@@ -1,43 +1,56 @@
-<div class="flex flex-col gap-4">
-  <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
-    <%= main_title.with_actions do %>
-      <% if page.can_update? %>
-        <%= link_to edit_page_path(space.identifier, page.number), {
-          class: "btn btn-sm rounded-full"
-        } do %>
-          <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
+<div
+  class="bg-brand-100 md:z-sticky-bar static md:sticky md:top-0 group transition-all duration-200 ease-in-out"
+  data-controller="stuck"
+>
+  <%# スクロールする前に表示されるヘッダー %>
+  <div class="block group-data-stuck:hidden">
+    <div class="flex flex-col gap-4">
+      <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
+        <%= main_title.with_actions do %>
+          <% if page.can_update? %>
+            <%= link_to edit_page_path(space.identifier, page.number), {
+              class: "btn btn-sm rounded-full"
+            } do %>
+              <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>
 
-          <%= t("verbs.edit") %>
+              <%= t("verbs.edit") %>
+            <% end %>
+          <% end %>
+
+          <% if signed_in? %>
+            <%= render Dropdowns::PageActionsComponent.new(page:) %>
+          <% end %>
         <% end %>
       <% end %>
 
-      <% if signed_in? %>
-        <%= render Dropdowns::PageActionsComponent.new(page:) %>
+      <% if false %>
+      <div class="flex items-center gap-2">
+        <% if page.published? %>
+          <div
+            class="text-sm text-gray-500"
+            data-controller="absolute-time"
+            data-absolute-time-utc-time-value="<%= page.published_at.iso8601 %>"
+          >
+            <%= t("messages.time.ago_published", time: time_ago_in_words(page.published_at)) %>
+          </div>
+        <% end %>
+
+        <% if page.modified_after_published? %>
+          <div
+            class="text-sm text-gray-500"
+            data-controller="absolute-time"
+            data-absolute-time-utc-time-value="<%= page.modified_at.iso8601 %>"
+          >
+            <%= t("messages.time.ago_modified", time: time_ago_in_words(page.modified_at)) %>
+          </div>
+        <% end %>
+      </div>
       <% end %>
-    <% end %>
-  <% end %>
-
-  <% if false %>
-  <div class="flex items-center gap-2">
-    <% if page.published? %>
-      <div
-        class="text-sm text-gray-500"
-        data-controller="absolute-time"
-        data-absolute-time-utc-time-value="<%= page.published_at.iso8601 %>"
-      >
-        <%= t("messages.time.ago_published", time: time_ago_in_words(page.published_at)) %>
-      </div>
-    <% end %>
-
-    <% if page.modified_after_published? %>
-      <div
-        class="text-sm text-gray-500"
-        data-controller="absolute-time"
-        data-absolute-time-utc-time-value="<%= page.modified_at.iso8601 %>"
-      >
-        <%= t("messages.time.ago_modified", time: time_ago_in_words(page.modified_at)) %>
-      </div>
-    <% end %>
+    </div>
   </div>
-  <% end %>
+
+  <%# スクロールした後に表示されるヘッダー %>
+  <div class="hidden group-data-stuck:block">
+    (^^)
+  </div>
 </div>
