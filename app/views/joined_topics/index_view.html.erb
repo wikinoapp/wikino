@@ -1,15 +1,21 @@
 <turbo-frame id="joined-topics">
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-1">
     <% @topics.each do |topic| %>
       <%= link_to topic_path(topic.space.database_id, topic.number), {
-        class: "flex items-center gap-0.5",
+        class: "text-gray-700 hover:bg-brand-200 transition duration-200 ease-in-out flex items-center gap-2 p-2 rounded-md",
         title: topic.name
       } do %>
-        <%= render Icons::TopicComponent.new(topic:, size: "14px") %>
+        <%= render Icons::TopicComponent.new(topic:, size: "22px", class_name: "fill-gray-600") %>
 
-        <span class="line-clamp-1 text-sm">
-          <%= topic.space.name %>/<%= topic.name %>
-        </span>
+        <div class="flex flex-col gap-1">
+          <div class="line-clamp-1 text-xs text-gray-500">
+            <%= topic.space.name %>
+          </div>
+
+          <div class="line-clamp-1 text-sm">
+            <%= topic.name %>
+          </div>
+        </div>
       <% end %>
     <% end %>
   </div>

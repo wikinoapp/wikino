@@ -86,18 +86,24 @@ class TopicRepository < ApplicationRepository
 
   sig do
     params(
-      user_record: UserRecord
+      user_record: UserRecord,
+      limit: T.nilable(Integer)
     ).returns(T::Array[Topic])
   end
-  def find_joined_topics(user_record:)
+  def find_joined_topics(user_record:, limit: nil)
     # ユーザーが参加している全てのトピックメンバーレコードを取得
-    topic_member_records = TopicMemberRecord
+    query = TopicMemberRecord
       .joins(:topic_record, :space_member_record)
       .where(space_members: {user_id: user_record.id, active: true})
       .merge(TopicRecord.kept)
       .select("topic_members.*, topic_members.last_page_modified_at")
       .preload(:topic_record, space_member_record: :space_record)
       .order("topic_members.last_page_modified_at DESC NULLS LAST, topics.number DESC")
+
+    # limitが指定されている場合は制限を適用
+    query = query.limit(limit) if limit
+
+    topic_member_records = query
 
     # 権限情報を含めてモデルに変換
     topic_member_records.map do |topic_member_record|

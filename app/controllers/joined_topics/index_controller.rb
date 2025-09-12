@@ -11,7 +11,7 @@ module JoinedTopics
 
     sig { returns(T.untyped) }
     def call
-      topics = TopicRepository.new.find_joined_topics(user_record: current_user_record!)
+      topics = TopicRepository.new.find_joined_topics(user_record: current_user_record!, limit: 10)
 
       render_component(JoinedTopics::IndexView.new(
         topics:
