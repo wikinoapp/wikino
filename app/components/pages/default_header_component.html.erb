@@ -1,1 +1,7 @@
-<%= render Headers::MainTitleComponent.new(title: page.display_title) %>
+<%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
+  <%= main_title.with_actions do %>
+    <div class="hidden md:block">
+      <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+    </div>
+  <% end %>
+<% end %>
