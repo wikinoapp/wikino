@@ -1,0 +1,9 @@
+<div class="flex items-center justify-between py-2">
+  <div class="text-sm font-bold antialiased">
+    <%= page.title %>
+  </div>
+
+  <div class="flex gap-2">
+    <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+  </div>
+</div>

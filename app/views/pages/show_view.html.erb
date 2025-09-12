@@ -29,7 +29,7 @@
           </div>
         <% end %>
 
-        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
+        <%= render Pages::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>
           <div
