@@ -1,5 +1,4 @@
-<%# <div class="h-[180px]"> %>
-<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto -mb-2">
+<div class="w-full flex-none items-center justify-end gap-2 md:w-auto -mb-2 flex md:hidden">
   <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
 </div>
 
@@ -17,4 +16,3 @@
     <%= render Pages::StickyHeaderComponent.new(signed_in:, page:) %>
   </div>
 </div>
-<%# </div> %>
