@@ -93,7 +93,7 @@ class TopicRepository < ApplicationRepository
     # ユーザーが参加している全てのトピックメンバーレコードを取得
     topic_member_records = TopicMemberRecord
       .joins(:topic_record, :space_member_record)
-      .where(space_member_records: {user_id: user_record.id, active: true})
+      .where(space_members: {user_id: user_record.id, active: true})
       .merge(TopicRecord.kept)
       .select("topic_members.*, topic_members.last_page_modified_at")
       .preload(:topic_record, space_member_record: :space_record)
