@@ -1,0 +1,8 @@
+<%= link_to url, {
+  title:,
+  class: "hover:bg-brand-200 transition duration-200 ease-in-out p-2 rounded-md leading-none text-center",
+  rel: "nofollow",
+  target: "_blank"
+} do %>
+  <%= render BaseUI::IconComponent.new(name: icon_name, size: "20px", class_name: fill_class) %>
+<% end %>
