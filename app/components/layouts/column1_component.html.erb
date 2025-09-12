@@ -9,7 +9,9 @@
   <div class="flex flex-col gap-4">
     <%= header %>
 
-    <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
+    <% if show_sidebar? %>
+      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
+    <% end %>
 
     <%= main %>
   </div>
