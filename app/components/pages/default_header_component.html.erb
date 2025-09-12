@@ -1,5 +1,1 @@
-<%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
-  <%= main_title.with_actions do %>
-    <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
-  <% end %>
-<% end %>
+<%= render Headers::MainTitleComponent.new(title: page.display_title) %>

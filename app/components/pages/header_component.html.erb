@@ -1,5 +1,10 @@
+<%# <div class="h-[180px]"> %>
+<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
+  <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+</div>
+
 <div
-  class="bg-brand-100 md:z-sticky-bar static md:sticky md:top-0 group min-h-[40px]"
+  class="bg-brand-100 z-sticky-bar sticky top-0 group min-h-[40px]"
   data-controller="stuck"
 >
   <%# スクロールする前に表示されるヘッダー %>
@@ -12,3 +17,4 @@
     <%= render Pages::StickyHeaderComponent.new(signed_in:, page:) %>
   </div>
 </div>
+<%# </div> %>
