@@ -46,6 +46,13 @@ module Pages
         page_record.link!(editor_record: space_member_record)
         space_member_record.destroy_draft_page!(page_record:)
 
+        # topic_membersレコードのlast_page_modified_atを更新
+        topic_member_record = TopicMemberRecord.find_by(
+          topic_id: topic_record.id,
+          space_member_id: space_member_record.id
+        )
+        topic_member_record&.update!(last_page_modified_at: now)
+
         # ページ本文から添付ファイルIDを検知し、参照を更新
         page_record.update_attachment_references!(body:)
 

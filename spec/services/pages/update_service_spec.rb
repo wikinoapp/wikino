@@ -299,5 +299,51 @@ RSpec.describe Pages::UpdateService, type: :service do
 
       expect(result.page_record.featured_image_attachment_id).to eq(attachment2.id)
     end
+
+    it "topic_memberのlast_page_modified_atを更新すること" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+      topic_member = create(:topic_member_record, 
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member,
+        last_page_modified_at: nil
+      )
+      page = create(:page_record, space_record: space, topic_record: topic, title: "Old Title", body: "Old Body")
+
+      result = Pages::UpdateService.new.call(
+        space_member_record: space_member,
+        page_record: page,
+        topic_record: topic,
+        title: "New Title",
+        body: "New Body"
+      )
+
+      topic_member.reload
+      expect(topic_member.last_page_modified_at).to be_present
+      expect(topic_member.last_page_modified_at).to be_within(1.second).of(Time.current)
+    end
+
+    it "topic_memberが存在しない場合でもエラーにならないこと" do
+      user = create(:user_record)
+      space = create(:space_record)
+      space_member = create(:space_member_record, user_record: user, space_record: space)
+      topic = create(:topic_record, space_record: space)
+      # topic_memberを作成しない
+      page = create(:page_record, space_record: space, topic_record: topic, title: "Old Title", body: "Old Body")
+
+      expect {
+        result = Pages::UpdateService.new.call(
+          space_member_record: space_member,
+          page_record: page,
+          topic_record: topic,
+          title: "New Title",
+          body: "New Body"
+        )
+        expect(result.page_record.title).to eq("New Title")
+      }.not_to raise_error
+    end
   end
 end
