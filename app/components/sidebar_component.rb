@@ -26,18 +26,4 @@ class SidebarComponent < ApplicationComponent
   sig { returns(T.nilable(Space)) }
   attr_reader :current_space
   private :current_space
-
-  sig { returns(T::Boolean) }
-  private def signed_in?
-    !current_user.nil?
-  end
-
-  sig { returns(String) }
-  private def search_path_with_space_filter
-    if current_space.present?
-      search_path(q: "space:#{current_space.not_nil!.identifier}")
-    else
-      search_path
-    end
-  end
 end
