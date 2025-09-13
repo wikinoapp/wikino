@@ -39,18 +39,17 @@ module Pages
       }
       page_record.published_at = now if page_record.published_at.nil?
 
+      topic_member_record = TopicMemberRecord.find_by!(
+        topic_id: topic_record.id,
+        space_member_id: space_member_record.id
+      )
+
       updated_page_record = ActiveRecord::Base.transaction do
         page_record.save!
         page_record.add_editor!(editor_record: space_member_record)
         page_record.create_revision!(editor_record: space_member_record, body:, body_html:)
         page_record.link!(editor_record: space_member_record)
         space_member_record.destroy_draft_page!(page_record:)
-
-        # topic_membersレコードのlast_page_modified_atを更新
-        topic_member_record = TopicMemberRecord.find_by!(
-          topic_id: topic_record.id,
-          space_member_id: space_member_record.id
-        )
         topic_member_record.update_last_page_modified_at!(time: now)
 
         # ページ本文から添付ファイルIDを検知し、参照を更新
