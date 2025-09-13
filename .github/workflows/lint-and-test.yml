@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
       - name: Install pnpm
@@ -101,7 +101,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
       - name: Install pnpm
@@ -145,7 +145,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvips libvips-dev
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
       - name: Install pnpm
