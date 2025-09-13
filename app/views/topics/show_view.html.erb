@@ -14,20 +14,20 @@
 
       <% if pinned_pages.present? || pages.present? %>
         <div class="flex flex-col gap-6">
-          <div class="flex flex-col gap-4">
-            <% if pinned_pages.present? %>
-              <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-                <% pinned_pages.each do |page| %>
-                  <%= render CardLinks::PageComponent.new(
-                    page:,
-                    show_topic_name: false,
-                    card_class: "h-full"
-                  ) %>
-                <% end %>
-              </div>
-            <% end %>
+          <% if pinned_pages.present? %>
+            <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+              <% pinned_pages.each do |page| %>
+                <%= render CardLinks::PageComponent.new(
+                  page:,
+                  show_topic_name: false,
+                  card_class: "h-full"
+                ) %>
+              <% end %>
+            </div>
+          <% end %>
 
-            <% if pages.present? %>
+          <% if pages.present? %>
+            <div class="flex flex-col gap-4">
               <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
                 <% pages.each do |page| %>
                   <%= render CardLinks::PageComponent.new(
@@ -37,16 +37,16 @@
                   ) %>
                 <% end %>
               </div>
-            <% end %>
-          </div>
 
-          <% if pagination.has_previous? || pagination.has_next? %>
-            <div class="flex justify-center">
-              <%= render BaseUI::PaginationComponent.new(
-                pagination:,
-                previous_path: topic_path(before: pagination.previous_cursor),
-                next_path: topic_path(after: pagination.next_cursor)
-              ) %>
+              <% if pagination.has_previous? || pagination.has_next? %>
+                <div class="flex justify-center">
+                  <%= render BaseUI::PaginationComponent.new(
+                    pagination:,
+                    previous_path: topic_path(before: pagination.previous_cursor),
+                    next_path: topic_path(after: pagination.next_cursor)
+                  ) %>
+                </div>
+              <% end %>
             </div>
           <% end %>
         </div>
