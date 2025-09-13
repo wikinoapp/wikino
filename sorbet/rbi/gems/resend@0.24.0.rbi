@@ -25,7 +25,7 @@ module Resend
     # @yield [_self]
     # @yieldparam _self [Resend] the object that the method was called on
     #
-    # source://resend//lib/resend.rb#30
+    # source://resend//lib/resend.rb#34
     def config; end
 
     # @yield [_self]
@@ -465,7 +465,7 @@ class Resend::Mailer
   # @param Mail mail
   # @return Array headers
   #
-  # source://resend//lib/resend/mailer.rb#234
+  # source://resend//lib/resend/mailer.rb#237
   def unignored_headers(mail); end
 end
 
