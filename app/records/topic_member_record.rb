@@ -12,4 +12,9 @@ class TopicMemberRecord < ApplicationRecord
     TopicMemberRole::Admin.serialize => 0,
     TopicMemberRole::Member.serialize => 1
   }, prefix: true
+
+  sig { params(time: ActiveSupport::TimeWithZone).void }
+  def update_last_page_modified_at!(time:)
+    update!(last_page_modified_at: time)
+  end
 end

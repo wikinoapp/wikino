@@ -47,11 +47,11 @@ module Pages
         space_member_record.destroy_draft_page!(page_record:)
 
         # topic_membersレコードのlast_page_modified_atを更新
-        topic_member_record = TopicMemberRecord.find_by(
+        topic_member_record = TopicMemberRecord.find_by!(
           topic_id: topic_record.id,
           space_member_id: space_member_record.id
         )
-        topic_member_record&.update!(last_page_modified_at: now)
+        topic_member_record.update_last_page_modified_at!(time: now)
 
         # ページ本文から添付ファイルIDを検知し、参照を更新
         page_record.update_attachment_references!(body:)

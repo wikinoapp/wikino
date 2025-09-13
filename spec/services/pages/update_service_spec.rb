@@ -8,6 +8,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
       page = create(:page_record, space_record: space, topic_record: topic, title: "Old Title", body: "Old Body")
 
       result = Pages::UpdateService.new.call(
@@ -29,6 +33,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
       page = create(:page_record, space_record: space, topic_record: topic)
 
       # AttachmentRecordを作成
@@ -74,6 +82,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
       page = create(:page_record, space_record: space, topic_record: topic)
 
       # AttachmentRecordを作成
@@ -119,6 +131,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
 
       # 既にfeatured_image_attachment_idが設定されているページを作成
       # 実際に存在するAttachmentRecordを作成してIDを使用
@@ -167,6 +183,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space2 = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space1)
       topic = create(:topic_record, space_record: space1)
+      create(:topic_member_record,
+        space_record: space1,
+        topic_record: topic,
+        space_member_record: space_member)
       page = create(:page_record, space_record: space1, topic_record: topic)
 
       # 異なるスペースのAttachmentRecordを作成
@@ -213,6 +233,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
       page = create(:page_record, space_record: space, topic_record: topic)
 
       # 存在しない画像IDを含む本文
@@ -234,6 +258,10 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
+      create(:topic_member_record,
+        space_record: space,
+        topic_record: topic,
+        space_member_record: space_member)
 
       # 最初のAttachmentRecord
       blob1 = ActiveStorage::Blob.create!(
@@ -305,15 +333,14 @@ RSpec.describe Pages::UpdateService, type: :service do
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
       topic = create(:topic_record, space_record: space)
-      topic_member = create(:topic_member_record, 
+      topic_member = create(:topic_member_record,
         space_record: space,
         topic_record: topic,
         space_member_record: space_member,
-        last_page_modified_at: nil
-      )
+        last_page_modified_at: nil)
       page = create(:page_record, space_record: space, topic_record: topic, title: "Old Title", body: "Old Body")
 
-      result = Pages::UpdateService.new.call(
+      Pages::UpdateService.new.call(
         space_member_record: space_member,
         page_record: page,
         topic_record: topic,
@@ -326,7 +353,7 @@ RSpec.describe Pages::UpdateService, type: :service do
       expect(topic_member.last_page_modified_at).to be_within(1.second).of(Time.current)
     end
 
-    it "topic_memberが存在しない場合でもエラーにならないこと" do
+    it "topic_memberが存在しない場合は例外を投げること" do
       user = create(:user_record)
       space = create(:space_record)
       space_member = create(:space_member_record, user_record: user, space_record: space)
@@ -335,15 +362,14 @@ RSpec.describe Pages::UpdateService, type: :service do
       page = create(:page_record, space_record: space, topic_record: topic, title: "Old Title", body: "Old Body")
 
       expect {
-        result = Pages::UpdateService.new.call(
+        Pages::UpdateService.new.call(
           space_member_record: space_member,
           page_record: page,
           topic_record: topic,
           title: "New Title",
           body: "New Body"
         )
-        expect(result.page_record.title).to eq("New Title")
-      }.not_to raise_error
+      }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
 end
