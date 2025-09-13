@@ -155,17 +155,46 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
 
   // 空のリスト項目の場合 (マーカーのみでコンテンツがない)
   if (listInfo.content.trim() === "") {
-    // リスト記法を削除して通常の改行
-    const transaction = state.update({
-      changes: {
-        from: line.from,
-        to: line.to,
-        insert: listInfo.indent,
-      },
-      selection: { anchor: line.from + listInfo.indent.length },
-    });
+    // インデントレベルを判定
+    const indentLevel = listInfo.indent.length / 2; // 2スペースごとに1レベル
 
-    view.dispatch(transaction);
+    if (indentLevel > 0) {
+      // ネストされたリストの場合、1レベル上のリストを継続
+      const newIndent = " ".repeat((indentLevel - 1) * 2);
+      const newMarker = listInfo.type === "ordered" ? "1" : listInfo.marker;
+      let newListText: string;
+
+      if (listInfo.type === "task") {
+        newListText = `${newIndent}${newMarker} [ ] `;
+      } else if (listInfo.type === "ordered") {
+        newListText = `${newIndent}${newMarker}. `;
+      } else {
+        newListText = `${newIndent}${newMarker} `;
+      }
+
+      const transaction = state.update({
+        changes: {
+          from: line.from,
+          to: line.to,
+          insert: newListText,
+        },
+        selection: { anchor: line.from + newListText.length },
+      });
+
+      view.dispatch(transaction);
+    } else {
+      // トップレベルのリストの場合、リスト記法を完全に削除
+      const transaction = state.update({
+        changes: {
+          from: line.from,
+          to: line.to,
+          insert: "",
+        },
+        selection: { anchor: line.from },
+      });
+
+      view.dispatch(transaction);
+    }
 
     return true;
   }
