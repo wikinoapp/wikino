@@ -3,16 +3,31 @@
 
 module CardLinks
   class PageComponent < ApplicationComponent
+    class CardImageSize < T::Enum
+      enums do
+        Small = new("small")
+        Medium = new("medium")
+      end
+    end
+
     sig do
       params(
         page: Page,
         show_topic_name: T::Boolean,
         show_space_name: T::Boolean,
         options: T::Hash[Symbol, String],
-        card_class: String
+        card_class: String,
+        card_image_size: CardImageSize
       ).void
     end
-    def initialize(page:, show_topic_name: true, show_space_name: false, options: {}, card_class: "")
+    def initialize(
+      page:,
+      show_topic_name: true,
+      show_space_name: false,
+      options: {},
+      card_class: "",
+      card_image_size: CardImageSize::Medium
+    )
       # `show_space_name: true & show_topic_name: false` の組み合わせは想定していない
       if show_space_name && !show_topic_name
         raise ArgumentError, "show_space_name: true requires show_topic_name: true"
@@ -23,6 +38,7 @@ module CardLinks
       @show_space_name = show_space_name
       @options = options
       @card_class = card_class
+      @card_image_size = card_image_size
     end
 
     sig { returns(Page) }
@@ -47,6 +63,10 @@ module CardLinks
     attr_reader :card_class
     private :card_class
 
+    sig { returns(CardImageSize) }
+    attr_reader :card_image_size
+    private :card_image_size
+
     delegate :space, :topic, to: :page
 
     sig { returns(String) }
@@ -69,6 +89,20 @@ module CardLinks
         "hover:border hover:border-primary",
         relative: page.pinned?
       )
+    end
+
+    sig { returns(String) }
+    private def build_card_image_class
+      size_class = case card_image_size
+      when CardImageSize::Small
+        "h-16 w-16 md:h-12 md:w-12"
+      when CardImageSize::Medium
+        "h-16 w-16 md:h-18 md:w-18"
+      else
+        T.absurd(card_image_size)
+      end
+
+      class_names("rounded object-cover", size_class)
     end
   end
 end
