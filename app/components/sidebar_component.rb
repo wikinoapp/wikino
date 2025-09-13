@@ -6,15 +6,13 @@ class SidebarComponent < ApplicationComponent
     params(
       current_page_name: PageName,
       current_user: T.nilable(User),
-      current_space: T.nilable(Space),
-      variant: T.nilable(Symbol)
+      current_space: T.nilable(Space)
     ).void
   end
-  def initialize(current_page_name:, current_user:, current_space:, variant: nil)
+  def initialize(current_page_name:, current_user:, current_space:)
     @current_page_name = current_page_name
     @current_user = current_user
     @current_space = current_space
-    @variant = T.let(variant || :fixed, Symbol)
   end
 
   sig { returns(PageName) }
@@ -28,8 +26,4 @@ class SidebarComponent < ApplicationComponent
   sig { returns(T.nilable(Space)) }
   attr_reader :current_space
   private :current_space
-
-  sig { returns(Symbol) }
-  attr_reader :variant
-  private :variant
 end

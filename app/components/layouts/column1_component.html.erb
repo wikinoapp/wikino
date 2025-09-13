@@ -10,11 +10,7 @@
     <%= header %>
 
     <% if show_sidebar? %>
-      <!-- 固定サイドバー (xl以上) -->
-      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:, variant: :fixed) %>
-      
-      <!-- スライドサイドバー (xl未満) -->
-      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:, variant: :slide) %>
+      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
     <% end %>
 
     <%= main %>

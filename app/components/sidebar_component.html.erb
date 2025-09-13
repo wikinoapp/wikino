@@ -1,29 +1,29 @@
-<% if variant == :fixed %>
-  <%# 固定サイドバー (xl以上) %>
-  <aside class="fixed left-0 top-0 h-screen z-sidebar hidden xl:block xl:max-w-[230px]">
-    <%= render Sidebar::ContentComponent.new(
-      current_page_name:,
-      current_user:,
-      current_space:
-    ) %>
-  </aside>
-<% elsif variant == :slide %>
-  <%# スライドサイドバー (xl未満) %>
-  <aside
-    data-sidebar-target="panel"
-    class="fixed left-0 top-0 h-screen z-sidebar w-[230px] bg-white transform -translate-x-full transition-transform duration-300 ease-in-out xl:hidden"
-  >
-    <%= render Sidebar::ContentComponent.new(
-      current_page_name:,
-      current_user:,
-      current_space:
-    ) %>
-  </aside>
+<%# 固定サイドバー (xl以上) %>
+<aside class="fixed left-0 top-0 h-screen z-sidebar hidden xl:block xl:max-w-[230px]">
+  <%= render Sidebar::ContentComponent.new(
+    current_page_name:,
+    current_user:,
+    current_space:,
+    variant: :fixed
+  ) %>
+</aside>
 
-  <%# オーバーレイ %>
-  <div
-    data-sidebar-target="overlay"
-    data-action="click->sidebar#close"
-    class="fixed inset-0 bg-black/30 z-overlay hidden xl:hidden"
-  ></div>
-<% end %>
+<%# スライドサイドバー (xl未満) %>
+<aside
+  data-sidebar-target="panel"
+  class="fixed left-0 top-0 h-screen z-sidebar w-[230px] bg-white transform -translate-x-full transition-transform duration-300 ease-in-out xl:hidden"
+>
+  <%= render Sidebar::ContentComponent.new(
+    current_page_name:,
+    current_user:,
+    current_space:,
+    variant: :slide
+  ) %>
+</aside>
+
+<%# オーバーレイ %>
+<div
+  data-sidebar-target="overlay"
+  data-action="click->sidebar#close"
+  class="fixed inset-0 bg-black/30 z-overlay hidden xl:hidden"
+></div>
