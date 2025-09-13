@@ -8,6 +8,7 @@ en:
     best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
+    community: Community
     current_email: Current email
     dark: Dark
     documents: Documents
@@ -15,6 +16,7 @@ en:
     error: Error
     export: Export
     general: General
+    help_page: Help
     here: Here
     home: Home
     images: Images
@@ -24,6 +26,7 @@ en:
     joined_topics: Joined topics
     light: Light
     links: Links
+    menu: Menu
     modified_at: Modified at
     new_page: New page
     new_space: New space
@@ -36,6 +39,7 @@ en:
     prev_page: Prev
     privacy_policy: Privacy policy
     profile: Profile
+    roadmap: Roadmap
     rss_feed: RSS feed
     search: Search
     search_keyword: Search keyword

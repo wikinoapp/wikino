@@ -40,24 +40,13 @@ module Spaces
       pinned_page_records = showable_pages.pinned.order(pinned_at: :desc, id: :desc)
       pinned_pages = PageRepository.new.to_models(page_records: pinned_page_records, current_space_member: space_member_record)
 
-      # トピック一覧の取得
-      topic_repository = TopicRepository.new
-      topics = if space_member_record.present?
-        # スペースメンバーの場合は参加トピックを取得
-        topic_repository.find_topics_by_space(space_record:, space_member_record:)
-      else
-        # ゲストの場合は公開トピックを取得
-        topic_repository.find_public_topics_by_space(space_record:)
-      end
-
       render_component Spaces::ShowView.new(
         current_user:,
         joined_space: space_member_record.present?,
         space:,
         first_joined_topic:,
         pinned_pages:,
-        page_list:,
-        topics:
+        page_list:
       )
     end
   end

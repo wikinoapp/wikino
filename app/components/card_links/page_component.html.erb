@@ -9,7 +9,7 @@
         ) %>
       <% end %>
 
-      <div class="flex gap-3">
+      <div class="flex h-full gap-3">
         <div class="flex flex-1 flex-col gap-1">
           <% if show_topic_name? %>
             <% if show_space_name? %>
@@ -47,11 +47,11 @@
         </div>
 
         <% if page.card_image_url.present? %>
-          <div class="shrink-0">
+          <div class="shrink-0 self-center">
             <img
               src="<%= page.card_image_url %>"
               alt=""
-              class="h-16 w-16 rounded object-cover sm:h-20 sm:w-20"
+              class="<%= build_card_image_class %>"
               loading="lazy"
             >
           </div>

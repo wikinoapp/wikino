@@ -1,5 +1,9 @@
 <% backlinks.each do |backlink| %>
-  <%= render CardLinks::PageComponent.new(page: backlink.page, card_class: "h-full") %>
+  <%= render CardLinks::PageComponent.new(
+    page: backlink.page,
+    card_class: "h-full",
+    card_image_size: CardLinks::PageComponent::CardImageSize::Small
+  ) %>
 <% end %>
 
 <% if pagination.has_next? %>

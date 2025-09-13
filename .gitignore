@@ -6,6 +6,7 @@
 /.env.*.local
 /.env.local
 /.idea
+/.playwright-mcp
 /.serena/cache
 /.vscode
 /app/assets/builds/*

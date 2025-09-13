@@ -1,0 +1,29 @@
+<%# 固定サイドバー (xl以上) %>
+<aside class="z-sidebar fixed top-0 left-0 hidden h-screen xl:block xl:max-w-[230px]">
+  <%= render Sidebar::ContentComponent.new(
+    current_page_name:,
+    current_user:,
+    current_space:,
+    variant: :fixed
+  ) %>
+</aside>
+
+<%# スライドサイドバー (xl未満) %>
+<aside
+  data-sidebar-target="panel"
+  class="z-sidebar fixed top-0 left-0 h-screen w-[230px] -translate-x-full transform bg-white transition-transform duration-300 ease-in-out xl:hidden"
+>
+  <%= render Sidebar::ContentComponent.new(
+    current_page_name:,
+    current_user:,
+    current_space:,
+    variant: :slide
+  ) %>
+</aside>
+
+<%# オーバーレイ %>
+<div
+  data-sidebar-target="overlay"
+  data-action="click->sidebar#close"
+  class="z-overlay fixed inset-0 hidden bg-black/30 xl:hidden"
+></div>

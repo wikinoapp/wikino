@@ -325,4 +325,361 @@ RSpec.describe TopicRepository do
       expect(topics[2].name).to eq("Topic Number 1")
     end
   end
+
+  describe "#find_joined_topics" do
+    it "ユーザーが参加している全スペースの全トピックを返すこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+
+      # 2つのスペースを作成
+      space_record1 = FactoryBot.create(:space_record, name: "Space 1")
+      space_record2 = FactoryBot.create(:space_record, name: "Space 2")
+
+      # ユーザーを両方のスペースのメンバーにする
+      space_member_record1 = FactoryBot.create(:space_member_record, :member, user_record:, space_record: space_record1)
+      space_member_record2 = FactoryBot.create(:space_member_record, :member, user_record:, space_record: space_record2)
+
+      # 各スペースにトピックを作成
+      topic_record1 = FactoryBot.create(:topic_record, space_record: space_record1, name: "Topic 1 in Space 1")
+      topic_record2 = FactoryBot.create(:topic_record, space_record: space_record1, name: "Topic 2 in Space 1")
+      topic_record3 = FactoryBot.create(:topic_record, space_record: space_record2, name: "Topic 1 in Space 2")
+
+      # ユーザーを各トピックのメンバーにする
+      FactoryBot.create(:topic_member_record,
+        space_record: space_record1,
+        topic_record: topic_record1,
+        space_member_record: space_member_record1,
+        last_page_modified_at: 3.days.ago)
+      FactoryBot.create(:topic_member_record,
+        space_record: space_record1,
+        topic_record: topic_record2,
+        space_member_record: space_member_record1,
+        last_page_modified_at: 1.day.ago)
+      FactoryBot.create(:topic_member_record,
+        space_record: space_record2,
+        topic_record: topic_record3,
+        space_member_record: space_member_record2,
+        last_page_modified_at: 2.days.ago)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証
+      expect(topics.size).to eq(3)
+      expect(topics.map(&:name)).to contain_exactly("Topic 1 in Space 1", "Topic 2 in Space 1", "Topic 1 in Space 2")
+    end
+
+    it "last_page_modified_atの降順でソートされること" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # 3つのトピックを作成
+      topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Oldest Topic")
+      topic_record2 = FactoryBot.create(:topic_record, space_record:, name: "Newest Topic")
+      topic_record3 = FactoryBot.create(:topic_record, space_record:, name: "Middle Topic")
+
+      # 異なるlast_page_modified_atで参加
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic_record1,
+        space_member_record:,
+        last_page_modified_at: 3.days.ago)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic_record2,
+        space_member_record:,
+        last_page_modified_at: 1.day.ago)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic_record3,
+        space_member_record:,
+        last_page_modified_at: 2.days.ago)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証：新しい順にソート
+      expect(topics.size).to eq(3)
+      expect(topics[0].name).to eq("Newest Topic")
+      expect(topics[1].name).to eq("Middle Topic")
+      expect(topics[2].name).to eq("Oldest Topic")
+    end
+
+    it "非アクティブなスペースメンバーのトピックは含まれないこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record1 = FactoryBot.create(:space_record)
+      space_record2 = FactoryBot.create(:space_record)
+
+      # アクティブなスペースメンバー
+      active_space_member = FactoryBot.create(:space_member_record, :member,
+        user_record:,
+        space_record: space_record1,
+        active: true)
+
+      # 非アクティブなスペースメンバー
+      inactive_space_member = FactoryBot.create(:space_member_record, :member,
+        user_record:,
+        space_record: space_record2,
+        active: false)
+
+      # 各スペースにトピックを作成
+      topic_record1 = FactoryBot.create(:topic_record, space_record: space_record1, name: "Active Space Topic")
+      topic_record2 = FactoryBot.create(:topic_record, space_record: space_record2, name: "Inactive Space Topic")
+
+      # トピックメンバーを作成
+      FactoryBot.create(:topic_member_record,
+        space_record: space_record1,
+        topic_record: topic_record1,
+        space_member_record: active_space_member)
+      FactoryBot.create(:topic_member_record,
+        space_record: space_record2,
+        topic_record: topic_record2,
+        space_member_record: inactive_space_member)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証：アクティブなスペースのトピックのみ
+      expect(topics.size).to eq(1)
+      expect(topics[0].name).to eq("Active Space Topic")
+    end
+
+    it "削除されたトピックは含まれないこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # アクティブなトピックと削除されたトピックを作成
+      active_topic = FactoryBot.create(:topic_record, space_record:, name: "Active Topic")
+      deleted_topic = FactoryBot.create(:topic_record, space_record:, name: "Deleted Topic")
+      deleted_topic.discard!
+
+      # 両方のトピックにメンバーとして参加
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: active_topic,
+        space_member_record:)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: deleted_topic,
+        space_member_record:)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証：アクティブなトピックのみ
+      expect(topics.size).to eq(1)
+      expect(topics[0].name).to eq("Active Topic")
+    end
+
+    it "正しい権限情報が設定されること" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # 管理者として参加するトピック
+      admin_topic = FactoryBot.create(:topic_record, space_record:, name: "Admin Topic")
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: admin_topic,
+        space_member_record:,
+        role: TopicMemberRole::Admin.serialize)
+
+      # メンバーとして参加するトピック
+      member_topic = FactoryBot.create(:topic_record, space_record:, name: "Member Topic")
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: member_topic,
+        space_member_record:,
+        role: TopicMemberRole::Member.serialize)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証
+      expect(topics.size).to eq(2)
+
+      admin_topic_model = topics.find { |t| t.name == "Admin Topic" }
+      expect(admin_topic_model.can_update).to be(true)
+      expect(admin_topic_model.can_create_page).to be(true)
+
+      member_topic_model = topics.find { |t| t.name == "Member Topic" }
+      expect(member_topic_model.can_update).to be(false)
+      expect(member_topic_model.can_create_page).to be(true)
+    end
+
+    it "last_page_modified_atがnilの場合は最後にソートされること" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # トピックを作成
+      topic_with_date = FactoryBot.create(:topic_record, space_record:, name: "Topic with date", number: 1)
+      topic_with_nil = FactoryBot.create(:topic_record, space_record:, name: "Topic with nil", number: 2)
+
+      # トピックメンバーを作成（一つはlast_page_modified_atがnil）
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic_with_date,
+        space_member_record:,
+        last_page_modified_at: 1.day.ago)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic_with_nil,
+        space_member_record:,
+        last_page_modified_at: nil)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証
+      expect(topics.size).to eq(2)
+      expect(topics[0].name).to eq("Topic with date")
+      expect(topics[1].name).to eq("Topic with nil")
+    end
+
+    it "同じlast_page_modified_atの場合、トピック番号の降順でソートされること" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      same_time = 1.day.ago
+
+      # 同じlast_page_modified_atで異なるnumberのトピックを作成
+      topic1 = FactoryBot.create(:topic_record, space_record:, name: "Topic Number 1", number: 1)
+      topic3 = FactoryBot.create(:topic_record, space_record:, name: "Topic Number 3", number: 3)
+      topic2 = FactoryBot.create(:topic_record, space_record:, name: "Topic Number 2", number: 2)
+
+      # トピックメンバーを作成（同じlast_page_modified_at）
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic1,
+        space_member_record:,
+        last_page_modified_at: same_time)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic3,
+        space_member_record:,
+        last_page_modified_at: same_time)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record: topic2,
+        space_member_record:,
+        last_page_modified_at: same_time)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証：numberの降順でソート
+      expect(topics.size).to eq(3)
+      expect(topics[0].name).to eq("Topic Number 3")
+      expect(topics[1].name).to eq("Topic Number 2")
+      expect(topics[2].name).to eq("Topic Number 1")
+    end
+
+    it "参加しているトピックがない場合、空配列を返すこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      other_user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+
+      # 他のユーザーだけがメンバーのトピックを作成
+      other_space_member = FactoryBot.create(:space_member_record, :member, user_record: other_user_record, space_record:)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record:,
+        space_member_record: other_space_member)
+
+      # メソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証
+      expect(topics).to be_empty
+    end
+
+    it "limitが指定された場合、指定した件数のみ返すこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # 5つのトピックを作成
+      5.times do |i|
+        topic_record = FactoryBot.create(:topic_record, space_record:, name: "Topic #{i + 1}")
+        FactoryBot.create(:topic_member_record,
+          space_record:,
+          topic_record:,
+          space_member_record:,
+          last_page_modified_at: (5 - i).days.ago)
+      end
+
+      # limit: 3でメソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:, limit: 3)
+
+      # 検証：3件のみ返される
+      expect(topics.size).to eq(3)
+      expect(topics[0].name).to eq("Topic 5") # 最新
+      expect(topics[1].name).to eq("Topic 4")
+      expect(topics[2].name).to eq("Topic 3")
+    end
+
+    it "limitがnilの場合、全件返すこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      # 5つのトピックを作成
+      5.times do |i|
+        topic_record = FactoryBot.create(:topic_record, space_record:, name: "Topic #{i + 1}")
+        FactoryBot.create(:topic_member_record,
+          space_record:,
+          topic_record:,
+          space_member_record:)
+      end
+
+      # limit: nilでメソッド実行（デフォルト）
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:)
+
+      # 検証：全5件返される
+      expect(topics.size).to eq(5)
+    end
+
+    it "limit: 0の場合、空配列を返すこと" do
+      # テスト用のデータ作成
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_member_record,
+        space_record:,
+        topic_record:,
+        space_member_record:)
+
+      # limit: 0でメソッド実行
+      repository = TopicRepository.new
+      topics = repository.find_joined_topics(user_record:, limit: 0)
+
+      # 検証：0件返される
+      expect(topics).to be_empty
+    end
+  end
 end
