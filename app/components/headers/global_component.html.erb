@@ -4,12 +4,12 @@
     <div class="flex gap-4 items-center">
       <% if show_sidebar %>
         <!-- サイドバー開くボタン (md以上xl未満) -->
-        <button 
+        <button
           data-action="click->sidebar#open"
           class="hidden md:block xl:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
           aria-label="<%= t('nouns.menu') %>"
         >
-          <%= render BaseUI::IconComponent.new(name: "bars-regular", size: "24px", class_name: "fill-base-content") %>
+          <%= render BaseUI::IconComponent.new(name: "sidebar-regular", size: "24px", class_name: "fill-base-content") %>
         </button>
       <% end %>
 
