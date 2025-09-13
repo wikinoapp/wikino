@@ -56,7 +56,7 @@ module BaseUI
 
     sig { returns(String) }
     private def build_class_name
-      class_names("mx-auto w-full", options[:class], max_width_class_name)
+      class_names("mx-auto w-full pb-4", options[:class], max_width_class_name)
     end
 
     sig { returns(T::Hash[Symbol, String]) }

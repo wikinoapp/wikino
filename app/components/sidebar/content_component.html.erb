@@ -36,16 +36,21 @@
           active: current_page_name == PageName::Profile
         ) %>
       <% else %>
-        <%= link_to sign_in_path, {
-          class: "text-gray-600 hover:text-gray-950 text-sm transition duration-200 ease-in-out group",
-          title: t("nouns.sign_in")
-        } do %>
-          <%= render BaseUI::IconComponent.new(
-            name: "sign-in-regular",
-            size: "2rem",
-            class_name: "fill-gray-600 group-hover:fill-gray-950 transition duration-200 ease-in-out"
-          ) %>
-        <% end %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: root_path,
+          title: t("nouns.home"),
+          default_icon_name: "house-regular",
+          active_icon_name: "house-fill",
+          active: current_page_name == PageName::Welcome,
+        ) %>
+
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: sign_in_path,
+          title: t("nouns.sign_in"),
+          default_icon_name: "sign-in-regular",
+          active_icon_name: "sign-in-regular",
+          active: false
+        ) %>
       <% end %>
     </div>
   </nav>
@@ -54,17 +59,19 @@
     <hr class="border-gray-300">
   </div>
 
-  <nav class="flex flex-col gap-2 px-2">
-    <div class="px-2 text-sm font-bold">
-      <%= t("nouns.joined_topics") %>
+  <% if signed_in? %>
+    <nav class="flex flex-col gap-2 px-2">
+      <div class="px-2 text-sm font-bold">
+        <%= t("nouns.joined_topics") %>
+      </div>
+
+      <%= render Sidebar::JoinedTopicsComponent.new(variant:) %>
+    </nav>
+
+    <div class="px-2">
+      <hr class="border-gray-300">
     </div>
-
-    <%= render Sidebar::JoinedTopicsComponent.new(variant:) %>
-  </nav>
-
-  <div class="px-2">
-    <hr class="border-gray-300">
-  </div>
+  <% end %>
 
   <nav class="flex flex-col gap-2 px-2">
     <div class="px-2 text-sm font-bold">
