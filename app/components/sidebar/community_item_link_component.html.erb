@@ -1,8 +1,17 @@
 <%= link_to url, {
   title:,
-  class: "hover:bg-brand-200 transition duration-200 ease-in-out p-2 rounded-md leading-none text-center",
+  class: "hover:bg-brand-200 transition duration-200 ease-in-out p-2 rounded-md leading-none flex items-center justify-center",
   rel: "nofollow",
   target: "_blank"
 } do %>
-  <%= render BaseUI::IconComponent.new(name: icon_name, size: "20px", class_name: fill_class) %>
+  <% if icon_name == "mixi2" %>
+    <%= image_tag "icons/mixi2.png", {
+      alt: "mixi2",
+      class: "rounded-lg",
+      loading: "lazy",
+      width: "24px"
+    } %>
+  <% else %>
+    <%= render BaseUI::IconComponent.new(name: icon_name, size: "20px", class_name: fill_class) %>
+  <% end %>
 <% end %>

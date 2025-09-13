@@ -1,5 +1,5 @@
 <% if variant == :fixed %>
-  <!-- 固定サイドバー (xl以上) -->
+  <%# 固定サイドバー (xl以上) %>
   <aside class="fixed left-0 top-0 h-screen z-sidebar hidden xl:block xl:max-w-[230px]">
     <%= render Sidebar::ContentComponent.new(
       current_page_name:,
@@ -8,8 +8,8 @@
     ) %>
   </aside>
 <% elsif variant == :slide %>
-  <!-- スライドサイドバー (xl未満) -->
-  <aside 
+  <%# スライドサイドバー (xl未満) %>
+  <aside
     data-sidebar-target="panel"
     class="fixed left-0 top-0 h-screen z-sidebar w-[230px] bg-white transform -translate-x-full transition-transform duration-300 ease-in-out xl:hidden"
   >
@@ -19,9 +19,9 @@
       current_space:
     ) %>
   </aside>
-  
-  <!-- オーバーレイ -->
-  <div 
+
+  <%# オーバーレイ %>
+  <div
     data-sidebar-target="overlay"
     data-action="click->sidebar#close"
     class="fixed inset-0 bg-black/30 z-overlay hidden xl:hidden"
