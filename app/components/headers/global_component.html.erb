@@ -1,12 +1,12 @@
 <header>
   <%# PCサイズ %>
-  <div class="hidden md:flex mx-auto min-h-auto w-full justify-between p-4 max-w-(--content-screen-max-width-medium)">
-    <div class="flex gap-4 items-center">
+  <div class="mx-auto hidden min-h-auto w-full max-w-(--content-screen-max-width-medium) justify-between p-4 md:flex">
+    <div class="flex items-center gap-4">
       <% if show_sidebar %>
         <!-- サイドバー開くボタン (md以上xl未満) -->
         <button
           data-action="click->sidebar#open"
-          class="hidden md:block xl:hidden p-2 hover:bg-brand-200 rounded-md transition-colors cursor-pointer"
+          class="hover:bg-brand-200 hidden cursor-pointer rounded-md p-2 transition-colors md:block xl:hidden"
           aria-label="<%= t('nouns.menu') %>"
         >
           <%= render BaseUI::IconComponent.new(name: "sidebar-regular", size: "24px", class_name: "fill-base-content") %>

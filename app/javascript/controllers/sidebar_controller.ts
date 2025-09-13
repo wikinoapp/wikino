@@ -10,10 +10,10 @@ export default class extends Controller {
     // サイドバーを表示
     this.panelTarget.classList.remove("-translate-x-full");
     this.panelTarget.classList.add("translate-x-0");
-    
+
     // オーバーレイを表示
     this.overlayTarget.classList.remove("hidden");
-    
+
     // スクロールを無効化
     document.body.style.overflow = "hidden";
   }
@@ -22,10 +22,10 @@ export default class extends Controller {
     // サイドバーを非表示
     this.panelTarget.classList.add("-translate-x-full");
     this.panelTarget.classList.remove("translate-x-0");
-    
+
     // オーバーレイを非表示
     this.overlayTarget.classList.add("hidden");
-    
+
     // スクロールを有効化
     document.body.style.overflow = "";
   }

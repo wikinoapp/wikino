@@ -1,6 +1,6 @@
 <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
   <%= main_title.with_actions do %>
-    <div class="hidden md:flex gap-2">
+    <div class="hidden gap-2 md:flex">
       <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
     </div>
   <% end %>

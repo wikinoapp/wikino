@@ -1,9 +1,9 @@
-<div class="w-full flex-none items-center justify-end gap-2 md:w-auto -mb-2 flex md:hidden">
+<div class="-mb-2 flex w-full flex-none items-center justify-end gap-2 md:hidden md:w-auto">
   <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
 </div>
 
 <div
-  class="bg-brand-100 z-sticky-bar sticky top-0 group min-h-[40px]"
+  class="bg-brand-100 z-sticky-bar group sticky top-0 min-h-[40px]"
   data-controller="stuck"
 >
   <%# スクロールする前に表示されるヘッダー %>
@@ -12,7 +12,7 @@
   </div>
 
   <%# スクロールした後に表示されるヘッダー %>
-  <div class="hidden group-data-stuck:block border-b-1 border-gray-300">
+  <div class="hidden border-b-1 border-gray-300 group-data-stuck:block">
     <%= render Pages::StickyHeaderComponent.new(signed_in:, page:) %>
   </div>
 </div>
