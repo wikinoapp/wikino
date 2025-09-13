@@ -1,6 +1,6 @@
 <%= render Layouts::Column1Component.new(current_page_name:, current_user:, current_space: space) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space, show_sidebar: layout.show_sidebar?) do |header| %>
       <%= header.with_breadcrumb do %>
         <%= render Breadcrumbs::SpaceComponent.new(space:) %>
       <% end %>

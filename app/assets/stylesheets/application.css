@@ -18,6 +18,7 @@
   --z-index-tooltip: 300;
   --z-index-sticky-bar: 200;
   --z-index-sidebar: 100;
+  --z-index-overlay: 90;
 
   --screen-max-width: 1400px;
   --content-screen-max-width-small: 650px;

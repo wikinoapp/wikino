@@ -1,6 +1,6 @@
 <div
   class="bg-brand-100 min-h-screen"
-  data-controller="global-hotkey"
+  data-controller="global-hotkey sidebar"
   data-global-hotkey-search-path-target="searchPath"
   <%= "data-global-hotkey-current-space-identifier-value=\"#{current_space.identifier}\"".html_safe if current_space %>
 >
@@ -10,11 +10,15 @@
     <%= header %>
 
     <% if show_sidebar? %>
-      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
+      <!-- 固定サイドバー (xl以上) -->
+      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:, variant: :fixed) %>
+      
+      <!-- スライドサイドバー (xl未満) -->
+      <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:, variant: :slide) %>
     <% end %>
 
     <%= main %>
   </div>
 </div>
 
-<%= render FixedBottomComponent.new(current_page_name:, current_user:, current_space:) %>
+<%= render FixedBottomComponent.new(current_page_name:, current_user:, current_space:, show_sidebar:) %>

@@ -1,26 +1,19 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Layouts
-  # サイドバーを除いた1カラムのレイアウト
-  class Column1Component < ApplicationComponent
-    renders_one :header
-    renders_one :main
-    renders_one :footer
-
+module Sidebar
+  class ContentComponent < ApplicationComponent
     sig do
       params(
         current_page_name: PageName,
         current_user: T.nilable(User),
-        current_space: T.nilable(Space),
-        show_sidebar: T::Boolean
+        current_space: T.nilable(Space)
       ).void
     end
-    def initialize(current_page_name:, current_user:, current_space: nil, show_sidebar: true)
+    def initialize(current_page_name:, current_user:, current_space:)
       @current_page_name = current_page_name
       @current_user = current_user
       @current_space = current_space
-      @show_sidebar = show_sidebar
     end
 
     sig { returns(PageName) }
@@ -36,7 +29,17 @@ module Layouts
     private :current_space
 
     sig { returns(T::Boolean) }
-    attr_reader :show_sidebar
-    alias_method :show_sidebar?, :show_sidebar
+    private def signed_in?
+      !current_user.nil?
+    end
+
+    sig { returns(String) }
+    private def search_path_with_space_filter
+      if current_space.present?
+        search_path(q: "space:#{current_space.not_nil!.identifier}")
+      else
+        search_path
+      end
+    end
   end
 end
