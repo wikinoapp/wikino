@@ -1,4 +1,4 @@
-<%= render Layouts::BasicComponent.new(current_user:, current_page_name:) do |layout| %>
+<%= render Layouts::Column1Component.new(current_user:, current_page_name:) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) do |header| %>
       <%= header.with_breadcrumb do %>

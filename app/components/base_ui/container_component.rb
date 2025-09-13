@@ -44,11 +44,11 @@ module BaseUI
 
       case cs
       when ContentScreen::Small
-        "max-w-2xl" # 672px
+        "max-w-(--content-screen-max-width-small)"
       when ContentScreen::Medium
-        "max-w-3xl" # 768px
+        "max-w-(--content-screen-max-width-medium)"
       when ContentScreen::Large
-        "max-w-7xl" # 1280px
+        "max-w-(--content-screen-max-width-large)"
       else
         T.absurd(cs)
       end
@@ -56,7 +56,7 @@ module BaseUI
 
     sig { returns(String) }
     private def build_class_name
-      class_names("mx-auto w-full", options[:class], max_width_class_name)
+      class_names("mx-auto w-full pb-24", options[:class], max_width_class_name)
     end
 
     sig { returns(T::Hash[Symbol, String]) }

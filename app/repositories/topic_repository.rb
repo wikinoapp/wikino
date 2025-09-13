@@ -86,6 +86,51 @@ class TopicRepository < ApplicationRepository
 
   sig do
     params(
+      user_record: UserRecord,
+      limit: T.nilable(Integer)
+    ).returns(T::Array[Topic])
+  end
+  def find_joined_topics(user_record:, limit: nil)
+    # ユーザーが参加している全てのトピックメンバーレコードを取得
+    query = TopicMemberRecord
+      .joins(:topic_record, :space_member_record)
+      .where(space_members: {user_id: user_record.id, active: true})
+      .merge(TopicRecord.kept)
+      .select("topic_members.*, topic_members.last_page_modified_at")
+      .preload(:topic_record, space_member_record: :space_record)
+      .order("topic_members.last_page_modified_at DESC NULLS LAST, topics.number DESC")
+
+    # limitが指定されている場合は制限を適用
+    query = query.limit(limit) if limit
+
+    topic_member_records = query
+
+    # 権限情報を含めてモデルに変換
+    topic_member_records.map do |topic_member_record|
+      topic_record = topic_member_record.topic_record.not_nil!
+      space_member_record = topic_member_record.space_member_record.not_nil!
+
+      # TopicPolicyFactoryを使用して適切なポリシークラスを取得
+      policy = TopicPolicyFactory.build(
+        user_record:,
+        space_member_record:,
+        topic_member_record:
+      )
+
+      # ポリシークラスのメソッドを直接使用
+      can_update = policy.can_update_topic?(topic_record:)
+      can_create_page = policy.can_create_page?(topic_record:)
+
+      to_model(
+        topic_record:,
+        can_update:,
+        can_create_page:
+      )
+    end
+  end
+
+  sig do
+    params(
       space_member_record: T.nilable(SpaceMemberRecord),
       topic_ids: T::Array[Types::DatabaseId]
     ).returns(T::Hash[Types::DatabaseId, T::Hash[Symbol, T::Boolean]])

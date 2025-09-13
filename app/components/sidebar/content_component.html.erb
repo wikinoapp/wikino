@@ -1,0 +1,171 @@
+<div class="flex h-full flex-col gap-4 overflow-y-auto py-4">
+  <nav class="flex flex-col gap-6 px-2">
+    <div class="flex flex-col">
+      <% if signed_in? %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: home_path,
+          title: t("nouns.home"),
+          default_icon_name: "house-regular",
+          active_icon_name: "house-fill",
+          active: current_page_name == PageName::Home,
+        ) %>
+
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: search_path_with_space_filter,
+          title: t("nouns.search"),
+          default_icon_name: "magnifying-glass-regular",
+          active_icon_name: "magnifying-glass-fill",
+          active: current_page_name == PageName::Search
+        ) %>
+
+        <% if false %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: "#",
+          title: t("nouns.inbox"),
+          default_icon_name: "tray-regular",
+          active_icon_name: "tray-fill",
+          active: current_page_name == PageName::Inbox
+        ) %>
+        <% end %>
+
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: profile_path(current_user.not_nil!.atname),
+          title: t("nouns.profile"),
+          default_icon_name: "user-circle-regular",
+          active_icon_name: "user-circle-fill",
+          active: current_page_name == PageName::Profile
+        ) %>
+      <% else %>
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: root_path,
+          title: t("nouns.home"),
+          default_icon_name: "house-regular",
+          active_icon_name: "house-fill",
+          active: current_page_name == PageName::Welcome,
+        ) %>
+
+        <%= render Sidebar::ItemLinkComponent.new(
+          path: sign_in_path,
+          title: t("nouns.sign_in"),
+          default_icon_name: "sign-in-regular",
+          active_icon_name: "sign-in-regular",
+          active: false
+        ) %>
+      <% end %>
+    </div>
+  </nav>
+
+  <div class="px-2">
+    <hr class="border-gray-300">
+  </div>
+
+  <% if signed_in? %>
+    <nav class="flex flex-col gap-2 px-2">
+      <div class="px-2 text-sm font-bold">
+        <%= t("nouns.joined_topics") %>
+      </div>
+
+      <%= render Sidebar::JoinedTopicsComponent.new(variant:) %>
+    </nav>
+
+    <div class="px-2">
+      <hr class="border-gray-300">
+    </div>
+  <% end %>
+
+  <nav class="flex flex-col gap-2 px-2">
+    <div class="px-2 text-sm font-bold">
+      <%= t("nouns.community") %>
+    </div>
+
+    <div class="grid grid-cols-5 px-2">
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://bsky.app/profile/wikino.app",
+        title: "Bluesky",
+        icon_name: "bluesky",
+        fill_class: "fill-[#0285ff]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://discord.gg/8qMetv8fUn",
+        title: "Discord",
+        icon_name: "discord",
+        fill_class: "fill-[#5865f2]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://github.com/wikinoapp/wikino",
+        title: "GitHub",
+        icon_name: "github",
+        fill_class: "fill-[#181717]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://mastodon.social/@wikino",
+        title: "Mastodon",
+        icon_name: "mastodon",
+        fill_class: "fill-[#6364ff]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://mewst.com/@wikino",
+        title: "Mewst",
+        icon_name: "mewst",
+        fill_class: "fill-[#1da1f2]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://mewst.com/@wikino",
+        title: "mixi2",
+        icon_name: "mixi2",
+        fill_class: "fill-[#1da1f2]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://www.threads.com/@wikino.app",
+        title: "Threads",
+        icon_name: "threads",
+        fill_class: "fill-[#000000]"
+      ) %>
+
+      <%= render Sidebar::CommunityItemLinkComponent.new(
+        url: "https://x.com/wikino_app",
+        title: "X",
+        icon_name: "x",
+        fill_class: "fill-[#000000]"
+      ) %>
+    </div>
+  </nav>
+
+  <div class="px-2">
+    <hr class="border-gray-300">
+  </div>
+
+  <div class="flex flex-col gap-2 px-2">
+    <div class="flex gap-2 px-2">
+      <%= render BaseUI::LinkComponent.new(
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {
+          href: "https://wikino.app/s/wikino/topics/1",
+          rel: "nofollow",
+          target: "_blank",
+          class: "text-xs text-gray-700"
+        }
+      ).with_content(t("nouns.help_page")) %>
+
+      <%= render BaseUI::LinkComponent.new(
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {
+          href: "https://wikino.app/s/wikino/topics/2",
+          rel: "nofollow",
+          target: "_blank",
+          class: "text-xs text-gray-700"
+        }
+      ).with_content(t("nouns.roadmap")) %>
+    </div>
+
+    <div class="px-2 text-xs">
+      © Wikino
+    </div>
+  </div>
+</div>

@@ -8,6 +8,7 @@ ja:
     best_practices: ベストプラクティス
     cancel: キャンセル
     change_email: メールアドレスの変更
+    community: コミュニティ
     current_email: 現在のメールアドレス
     dark: ダーク
     documents: ドキュメント
@@ -15,6 +16,7 @@ ja:
     error: エラー
     export: エクスポート
     general: 基本情報
+    help_page: ヘルプページ
     here: こちら
     images: 画像
     home: ホーム
@@ -24,6 +26,7 @@ ja:
     joined_topics: 参加中のトピック
     light: ライト
     links: リンク
+    menu: メニュー
     modified_at: 編集日時
     new_page: 新規ページ
     new_space: 新規スペース
@@ -36,6 +39,7 @@ ja:
     prev_page: 前のページ
     privacy_policy: プライバシーポリシー
     profile: プロフィール
+    roadmap: ロードマップ
     rss_feed: RSSフィード
     search: 検索
     search_keyword: 検索キーワード

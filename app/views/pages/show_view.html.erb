@@ -1,4 +1,4 @@
-<%= render Layouts::BasicComponent.new(current_page_name:, current_user:, current_space: space) do |layout| %>
+<%= render Layouts::Column1Component.new(current_page_name:, current_user:, current_space: space) do |layout| %>
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space) do |header| %>
       <%= header.with_breadcrumb do %>
@@ -10,6 +10,7 @@
   <%= layout.with_main do %>
     <%= render BaseUI::ContainerComponent.new(
       as: BaseUI::ContainerComponent::As::Main,
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Small,
       options: {class: "flex flex-col gap-6 px-4"}
     ) do %>
       <article class="flex flex-col gap-6">
@@ -28,7 +29,7 @@
           </div>
         <% end %>
 
-        <%= render Pages::ShowView::HeaderComponent.new(signed_in: signed_in?, page:) %>
+        <%= render Pages::HeaderComponent.new(signed_in: signed_in?, page:) %>
 
         <% if page.body_html.present? %>
           <div
