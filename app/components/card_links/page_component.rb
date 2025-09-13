@@ -93,13 +93,14 @@ module CardLinks
 
     sig { returns(String) }
     private def build_card_image_class
-      size_class = case card_image_size
+      size = card_image_size
+      size_class = case size
       when CardImageSize::Small
         "h-16 w-16 md:h-12 md:w-12"
       when CardImageSize::Medium
         "h-16 w-16 md:h-18 md:w-18"
       else
-        T.absurd(card_image_size)
+        T.absurd(size)
       end
 
       class_names("rounded object-cover", size_class)

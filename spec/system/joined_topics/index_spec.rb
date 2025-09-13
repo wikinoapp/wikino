@@ -16,7 +16,7 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     # トピックを作成
     topic_record1 = FactoryBot.create(:topic_record, space_record: space_record1, name: "バグ修正", number: 1)
     topic_record2 = FactoryBot.create(:topic_record, space_record: space_record2, name: "新機能開発", number: 2)
-    topic_record3 = FactoryBot.create(:topic_record, space_record: space_record3, name: "リファクタリング", number: 3)
+    FactoryBot.create(:topic_record, space_record: space_record3, name: "リファクタリング", number: 3)
 
     # ユーザーをトピックに参加させる（topic_record3には参加しない）
     FactoryBot.create(:topic_member_record, space_member_record: space_member_record1, topic_record: topic_record1, space_record: space_record1)
@@ -41,7 +41,6 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     # トピックへのリンクが存在することを確認
     within("turbo-frame#joined-topics-fixed") do
       expect(page).to have_css("a.text-gray-700", count: 2)
-      
       # 新規ページ作成へのリンクが存在することを確認
       expect(page).to have_css("a[href*='pages/new']", count: 2)
     end

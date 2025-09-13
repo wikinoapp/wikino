@@ -4,7 +4,7 @@
       href: page_path(page.space.identifier, page.number),
       class: "line-clamp-2 text-sm font-bold"
     }
-  ).with_content(page.title) %>
+  ).with_content(page.title || "") %>
 
   <div class="flex gap-2">
     <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
