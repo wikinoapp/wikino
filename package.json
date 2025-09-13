@@ -31,7 +31,7 @@
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@ttskch/prettier-plugin-tailwindcss-anywhere": "^0.1.1",
-    "eslint": "^9.34.0",
+    "eslint": "^9.35.0",
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
