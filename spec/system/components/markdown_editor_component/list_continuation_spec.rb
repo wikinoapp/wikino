@@ -186,4 +186,110 @@ RSpec.describe "Markdownエディター/リスト記法の自動継続", type: :
     expect(cursor_position[:line]).to eq(2)
     expect(cursor_position[:column]).to eq(2)
   end
+
+  it "ネストされた空のリスト項目でEnterキーを押すと1階層上のリストを継続すること", :js do
+    visit_page_editor
+    clear_editor
+    fill_in_editor(text: "- aaa")
+    press_enter_in_editor
+    # 自動で"- "が追加されるので、それを削除してインデント付きリストにする
+    press_tab_in_editor
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("- aaa\n- ")
+  end
+
+  it "2階層ネストされた空のリスト項目でEnterキーを押すと1階層上のリストを継続すること", :js do
+    visit_page_editor
+    clear_editor
+    # CodeMirrorに直接設定
+    set_editor_content(text: "- aaa\n  - bbb\n    - ")
+    # カーソルを最後に設定
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var lastPos = doc.length;
+        editorView.dispatch({
+          selection: { anchor: lastPos, head: lastPos }
+        });
+        editorView.focus();
+      })();
+    JS
+    # 空のリスト項目で改行
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("- aaa\n  - bbb\n  - ")
+  end
+
+  it "ネストされたリストの継続と終了が正しく動作すること", :js do
+    visit_page_editor
+    clear_editor
+    # CodeMirrorに直接設定（2階層のリストとその後の空項目）
+    set_editor_content(text: "- aaa\n  - bbb\n  - ")
+    # カーソルを最後に設定
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var lastPos = doc.length;
+        editorView.dispatch({
+          selection: { anchor: lastPos, head: lastPos }
+        });
+        editorView.focus();
+      })();
+    JS
+    # 空のネストされたリスト項目で改行（1階層上に戻る）
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("- aaa\n  - bbb\n- ")
+
+    # 空のトップレベルリスト項目で改行（リスト終了）
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("- aaa\n  - bbb\n")
+  end
+
+  it "ネストされたタスクリストの空項目でEnterキーを押すと1階層上のタスクリストを継続すること", :js do
+    visit_page_editor
+    clear_editor
+    fill_in_editor(text: "- [ ] タスク1")
+    press_enter_in_editor
+    press_tab_in_editor
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("- [ ] タスク1\n- [ ] ")
+  end
+
+  it "ネストされた順序付きリストの空項目でEnterキーを押すと1階層上の順序付きリストを継続すること", :js do
+    visit_page_editor
+    clear_editor
+    # CodeMirrorに直接設定
+    set_editor_content(text: "1. 項目1\n  1. ")
+    # カーソルを最後に設定
+    page.execute_script(<<~JS)
+      (function() {
+        var editor = document.querySelector('.cm-content');
+        var editorView = editor.cmView.view;
+        var doc = editorView.state.doc;
+        var lastPos = doc.length;
+        editorView.dispatch({
+          selection: { anchor: lastPos, head: lastPos }
+        });
+        editorView.focus();
+      })();
+    JS
+    # 空のリスト項目で改行
+    press_enter_in_editor
+
+    editor_content = get_editor_content
+    expect(editor_content).to eq("1. 項目1\n1. ")
+  end
 end
