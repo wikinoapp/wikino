@@ -127,9 +127,16 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 - [ ] 編集提案一覧：GET /s/:space_identifier/topics/:topic_number/edit-suggestions
 - [ ] 編集提案詳細：GET /s/:space_identifier/topics/:topic_number/edit-suggestions/:id
+- [ ] 編集提案新規：GET /s/:space_identifier/topics/:topic_number/edit-suggestions/new
 - [ ] 編集提案作成：POST /s/:space_identifier/topics/:topic_number/edit-suggestions
+- [ ] 編集提案編集：GET /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/edit
 - [ ] 編集提案更新：PATCH /s/:space_identifier/topics/:topic_number/edit-suggestions/:id
+- [ ] オープンへ変更：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/open
+- [ ] 下書きへ変更：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/draft
 - [ ] 編集提案反映：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/apply
+- [ ] 編集提案クローズ：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/close
+- [ ] ページ追加：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/pages
+- [ ] ページ削除：DELETE /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/pages/:page_id
 - [ ] コメント追加：POST /s/:space_identifier/topics/:topic_number/edit-suggestions/:id/comments
 
 ### テスト
