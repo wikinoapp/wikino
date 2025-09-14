@@ -73,7 +73,7 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
   - EditSuggestionモデル
   - EditSuggestionRepository
 - [ ] ポリシーの実装
-  - SpaceMemberPolicy、TopicMemberPolicyなどの既存ポリシーに編集提案関連の権限を追加
+  - TopicMemberPolicyなどの既存ポリシーに編集提案関連の権限を追加
 - [ ] テスト作成
   - レコードのFactoryBot定義
   - モデルのユニットテスト
