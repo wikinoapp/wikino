@@ -15,76 +15,10 @@ class RuboCop::CommentConfig
   # source://standard//lib/standard/rubocop/ext.rb#20
   def initialize(processed_source); end
 
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#63
-  def comment_only_line?(line_number); end
-
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def config(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#51
-  def cop_disabled_line_ranges; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#39
-  def cop_enabled_at_line?(cop, line_number); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#47
-  def cop_opted_in?(cop); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#55
-  def extra_enabled_comments; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#30
-  def processed_source; end
-
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def registry(*_arg0, **_arg1, &_arg2); end
-
   private
 
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#96
-  def analyze; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#124
-  def analyze_cop(analysis, directive); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#144
-  def analyze_disabled(analysis, directive); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#155
-  def analyze_rest(analysis, directive); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#135
-  def analyze_single_line(analysis, directive); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#164
-  def cop_line_ranges(analysis); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#170
-  def each_directive; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#69
-  def extra_enabled_comments_with_names(extras:, names:); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#190
-  def handle_enable_all(directive, names, extras); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#204
-  def handle_switch(directive, names, extras); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#115
-  def inject_disabled_cops_directives(analyses); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#183
-  def non_comment_token_line_numbers; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#34
+  # source://standard//lib/standard/rubocop/ext.rb#18
   def old_initialize(processed_source); end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#83
-  def opt_in_cops; end
-
-  # source://rubocop/1.75.7/lib/rubocop/comment_config.rb#179
-  def qualified_cop_name(cop_name); end
 end
 
 module RuboCop::Cop; end
@@ -94,127 +28,10 @@ module RuboCop::Cop::Lint; end
 class RuboCop::Cop::Lint::AssignmentInCondition < ::RuboCop::Cop::Base
   # source://standard//lib/standard/rubocop/ext.rb#4
   def message(_); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#55
-  def on_if(node); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#55
-  def on_until(node); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#55
-  def on_while(node); end
-
-  private
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#80
-  def allowed_construct?(asgn_node); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#84
-  def conditional_assignment?(asgn_node); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#88
-  def skip_children?(asgn_node); end
-
-  # source://rubocop/1.75.7/lib/rubocop/cop/lint/assignment_in_condition.rb#94
-  def traverse_node(node, &block); end
 end
 
 # source://standard//lib/standard/rubocop/ext.rb#9
-class RuboCop::DirectiveComment
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#46
-  def initialize(comment, cop_registry = T.unsafe(nil)); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#115
-  def all_cops?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#44
-  def comment; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#120
-  def cop_names; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#44
-  def cop_registry; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#44
-  def cops; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#131
-  def department_names; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#145
-  def directive_count; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#95
-  def disabled?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#110
-  def disabled_all?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#100
-  def enabled?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#105
-  def enabled_all?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#136
-  def in_directive_department?(cop); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#150
-  def line_number; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#59
-  def malformed?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#77
-  def match?(cop_names); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#90
-  def match_captures; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#67
-  def missing_cop_name?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#44
-  def mode; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#141
-  def overridden_by_department?(cop); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#81
-  def range; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#125
-  def raw_cop_names; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#72
-  def single_line?; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#54
-  def start_with_marker?; end
-
-  private
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#167
-  def all_cop_names; end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#171
-  def cop_names_for_department(department); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#163
-  def department?(name); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#176
-  def exclude_lint_department_cops(cops); end
-
-  # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#156
-  def parsed_cop_names; end
-
-  class << self
-    # source://rubocop/1.75.7/lib/rubocop/directive_comment.rb#40
-    def before_comment(line); end
-  end
-end
+class RuboCop::DirectiveComment; end
 
 # source://standard//lib/standard/rubocop/ext.rb#11
 RuboCop::DirectiveComment::DIRECTIVE_COMMENT_REGEXP = T.let(T.unsafe(nil), Regexp)
@@ -249,52 +66,77 @@ class Standard::Config < ::Struct
   # Returns the value of attribute paths
   #
   # @return [Object] the current value of paths
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def paths; end
 
   # Sets the attribute paths
   #
   # @param value [Object] the value to set the attribute paths to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def paths=(_); end
 
   # Returns the value of attribute rubocop_config_store
   #
   # @return [Object] the current value of rubocop_config_store
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def rubocop_config_store; end
 
   # Sets the attribute rubocop_config_store
   #
   # @param value [Object] the value to set the attribute rubocop_config_store to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def rubocop_config_store=(_); end
 
   # Returns the value of attribute rubocop_options
   #
   # @return [Object] the current value of rubocop_options
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def rubocop_options; end
 
   # Sets the attribute rubocop_options
   #
   # @param value [Object] the value to set the attribute rubocop_options to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def rubocop_options=(_); end
 
   # Returns the value of attribute runner
   #
   # @return [Object] the current value of runner
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def runner; end
 
   # Sets the attribute runner
   #
   # @param value [Object] the value to set the attribute runner to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/builds_config.rb#6
   def runner=(_); end
 
   class << self
+    # source://standard//lib/standard/builds_config.rb#6
     def [](*_arg0); end
+
+    # source://standard//lib/standard/builds_config.rb#6
     def inspect; end
+
+    # source://standard//lib/standard/builds_config.rb#6
     def keyword_init?; end
+
+    # source://standard//lib/standard/builds_config.rb#6
     def members; end
+
+    # source://standard//lib/standard/builds_config.rb#6
     def new(*_arg0); end
   end
 end
@@ -563,16 +405,16 @@ class Standard::Lsp::Routes
   # source://standard//lib/standard/lsp/routes.rb#19
   def for(name); end
 
-  # source://standard//lib/standard/lsp/routes.rb#26
+  # source://standard//lib/standard/lsp/routes.rb#16
   def handle_initialize(request); end
 
-  # source://standard//lib/standard/lsp/routes.rb#38
+  # source://standard//lib/standard/lsp/routes.rb#16
   def handle_initialized(request); end
 
   # source://standard//lib/standard/lsp/routes.rb#129
   def handle_method_missing(request); end
 
-  # source://standard//lib/standard/lsp/routes.rb#42
+  # source://standard//lib/standard/lsp/routes.rb#16
   def handle_shutdown(request); end
 
   # source://standard//lib/standard/lsp/routes.rb#121
@@ -692,41 +534,62 @@ class Standard::MergesSettings::Settings < ::Struct
   # Returns the value of attribute options
   #
   # @return [Object] the current value of options
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def options; end
 
   # Sets the attribute options
   #
   # @param value [Object] the value to set the attribute options to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def options=(_); end
 
   # Returns the value of attribute paths
   #
   # @return [Object] the current value of paths
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def paths; end
 
   # Sets the attribute paths
   #
   # @param value [Object] the value to set the attribute paths to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def paths=(_); end
 
   # Returns the value of attribute runner
   #
   # @return [Object] the current value of runner
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def runner; end
 
   # Sets the attribute runner
   #
   # @param value [Object] the value to set the attribute runner to.
   # @return [Object] the newly set value
+  #
+  # source://standard//lib/standard/merges_settings.rb#5
   def runner=(_); end
 
   class << self
+    # source://standard//lib/standard/merges_settings.rb#5
     def [](*_arg0); end
+
+    # source://standard//lib/standard/merges_settings.rb#5
     def inspect; end
+
+    # source://standard//lib/standard/merges_settings.rb#5
     def keyword_init?; end
+
+    # source://standard//lib/standard/merges_settings.rb#5
     def members; end
+
+    # source://standard//lib/standard/merges_settings.rb#5
     def new(*_arg0); end
   end
 end
