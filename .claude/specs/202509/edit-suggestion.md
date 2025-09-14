@@ -56,100 +56,167 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ## タスクリスト
 
-### データベース設計
+### 1. データベース基盤の構築
 
-- [ ] 編集提案テーブル (`edit_suggestions`) の作成
-  - id, space_id, topic_id, created_user_id, title, description, status, applied_at, created_at, updated_at
-- [ ] 編集提案ページテーブル (`edit_suggestion_pages`) の作成
-  - id, space_id, edit_suggestion_id, page_id, title_before, title_after, body_before, body_after
-- [ ] 編集提案コメントテーブル (`edit_suggestion_comments`) の作成
-  - id, space_id, edit_suggestion_id, created_user_id, body, body_html, created_at, updated_at
+- [ ] マイグレーションファイルの作成
+  - 編集提案テーブル (`edit_suggestions`)
+    - id, space_id, topic_id, created_user_id, title, description, status, applied_at, created_at, updated_at
+  - 編集提案ページテーブル (`edit_suggestion_pages`)
+    - id, space_id, edit_suggestion_id, page_id, title_before, title_after, body_before, body_after
+  - 編集提案コメントテーブル (`edit_suggestion_comments`)
+    - id, space_id, edit_suggestion_id, created_user_id, body, body_html, created_at, updated_at
+- [ ] レコードクラスの作成
+  - EditSuggestionRecord
+  - EditSuggestionPageRecord
+  - EditSuggestionCommentRecord
+- [ ] モデル・リポジトリの作成
+  - EditSuggestionモデル
+  - EditSuggestionRepository
+- [ ] ポリシーの実装
+  - EditSuggestionPolicy（作成・反映・閲覧権限）
+- [ ] テスト作成
+  - レコードのFactoryBot定義
+  - モデルのユニットテスト
+  - ポリシーのテスト
 
-### モデル層
+### 2. トピックページへのタブ追加
 
-- [ ] EditSuggestionRecordクラスの作成
-- [ ] EditSuggestionPageRecordクラスの作成
-- [ ] EditSuggestionCommentRecordクラスの作成
-- [ ] EditSuggestionモデルクラスの作成
-- [ ] EditSuggestionRepositoryクラスの作成
+- [ ] Topics::TabsComponentの作成
+- [ ] Topics::ShowControllerの修正（タブ表示対応）
+- [ ] ルーティングの追加
+  - GET /s/:space_identifier/topics/:topic_number/edit_suggestions
+- [ ] テスト作成
+  - コンポーネントのテスト
+  - システムテスト（タブ表示確認）
 
-### サービス層
-
-- [ ] EditSuggestions::CreateServiceの実装
-- [ ] EditSuggestions::UpdateServiceの実装
-- [ ] EditSuggestions::OpenServiceの実装（下書きからオープンへ）
-- [ ] EditSuggestions::ConvertToDraftServiceの実装（オープンから下書きへ）
-- [ ] EditSuggestions::ApplyServiceの実装（編集提案の反映）
-- [ ] EditSuggestions::CloseServiceの実装
-- [ ] EditSuggestionPages::AddServiceの実装
-- [ ] EditSuggestionPages::RemoveServiceの実装
-- [ ] EditSuggestionComments::CreateServiceの実装
-
-### コントローラー層
+### 3. 編集提案一覧画面
 
 - [ ] EditSuggestions::IndexControllerの実装
-- [ ] EditSuggestions::ShowControllerの実装
+- [ ] EditSuggestions::IndexViewの実装
+- [ ] EditSuggestions::ListComponentの作成
+- [ ] オープン/クローズのフィルタリング機能
+- [ ] テスト作成
+  - コントローラーのリクエストスペック
+  - システムテスト（一覧表示・フィルタリング）
+
+### 4. 編集提案作成機能（ページ編集画面から）
+
+- [ ] EditSuggestions::CreateServiceの実装
 - [ ] EditSuggestions::CreateControllerの実装
+- [ ] EditSuggestions::CreateFormの実装
+- [ ] EditSuggestions::CreateModalComponentの作成
+- [ ] edit-suggestion-modal-controllerの実装（Stimulus）
+- [ ] Pages::EditControllerの修正（モーダル追加）
+- [ ] ルーティングの追加
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（モーダル表示・作成）
+
+### 5. 編集提案詳細画面（会話タブ）
+
+- [ ] EditSuggestions::ShowControllerの実装
+- [ ] EditSuggestions::ShowViewの実装
+- [ ] EditSuggestions::DetailComponentの作成
+- [ ] EditSuggestions::TabsComponentの作成
+- [ ] EditSuggestions::ConversationComponentの作成
+- [ ] edit-suggestion-tabs-controllerの実装（Stimulus）
+- [ ] ルーティングの追加
+  - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id
+- [ ] テスト作成
+  - コントローラーのリクエストスペック
+  - システムテスト（詳細表示・タブ切り替え）
+
+### 6. 編集提案詳細画面（編集したページタブ）
+
+- [ ] EditSuggestions::DiffViewComponentの作成
+- [ ] diff-view-controllerの実装（Stimulus）
+- [ ] 差分表示のスタイリング
+- [ ] テスト作成
+  - コンポーネントのテスト
+  - システムテスト（差分表示）
+
+### 7. 編集提案へのコメント機能
+
+- [ ] EditSuggestionComments::CreateServiceの実装
+- [ ] EditSuggestionComments::CreateControllerの実装
+- [ ] EditSuggestionComments::CreateFormの実装
+- [ ] コメント表示コンポーネントの作成
+- [ ] ルーティングの追加
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/comments
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（コメント投稿・表示）
+
+### 8. 編集提案のステータス変更機能
+
+- [ ] EditSuggestions::OpenServiceの実装
+- [ ] EditSuggestions::ConvertToDraftServiceの実装
+- [ ] EditSuggestions::CloseServiceの実装
+- [ ] EditSuggestionOpens::CreateControllerの実装
+- [ ] EditSuggestionDrafts::CreateControllerの実装
+- [ ] EditSuggestionClosures::CreateControllerの実装
+- [ ] ステータス変更ボタンの追加
+- [ ] ルーティングの追加
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/open
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/draft
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/close
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（ステータス変更）
+
+### 9. 編集提案の反映機能
+
+- [ ] EditSuggestions::ApplyServiceの実装
+- [ ] EditSuggestionApplications::CreateControllerの実装
+- [ ] 反映確認モーダルの作成
+- [ ] ルーティングの追加
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/apply
+- [ ] テスト作成
+  - サービスのユニットテスト（反映処理）
+  - システムテスト（反映確認・実行）
+
+### 10. 編集提案の編集機能
+
+- [ ] EditSuggestions::UpdateServiceの実装
 - [ ] EditSuggestions::EditControllerの実装
 - [ ] EditSuggestions::UpdateControllerの実装
-- [ ] EditSuggestionOpens::CreateControllerの実装（下書き→オープン）
-- [ ] EditSuggestionDrafts::CreateControllerの実装（オープン→下書き）
-- [ ] EditSuggestionApplications::CreateControllerの実装（編集提案の反映）
-- [ ] EditSuggestionClosures::CreateControllerの実装（編集提案のクローズ）
+- [ ] EditSuggestions::EditFormの実装
+- [ ] 編集画面の作成
+- [ ] ルーティングの追加
+  - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/edit
+  - PATCH /s/:space_identifier/topics/:topic_number/edit_suggestions/:id
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（編集画面表示・更新）
+
+### 11. 既存の編集提案へのページ追加機能
+
+- [ ] EditSuggestionPages::AddServiceの実装
 - [ ] EditSuggestionPages::CreateControllerの実装
+- [ ] 既存編集提案選択UIの実装
+- [ ] ルーティングの追加
+  - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（ページ追加）
+
+### 12. 編集提案からのページ削除機能
+
+- [ ] EditSuggestionPages::RemoveServiceの実装
 - [ ] EditSuggestionPages::DestroyControllerの実装
-- [ ] EditSuggestionComments::CreateControllerの実装
+- [ ] 削除確認UIの実装
+- [ ] ルーティングの追加
+  - DELETE /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/:page_id
+- [ ] テスト作成
+  - サービスのユニットテスト
+  - システムテスト（ページ削除）
 
-### ビュー・コンポーネント層
+### 13. その他の機能
 
-- [ ] Topics::TabsComponentの作成（ページ/編集提案タブ）
-- [ ] EditSuggestions::ListComponentの作成
-- [ ] EditSuggestions::DetailComponentの作成
-- [ ] EditSuggestions::TabsComponentの作成（会話/編集したページタブ）
-- [ ] EditSuggestions::DiffViewComponentの作成
-- [ ] EditSuggestions::ConversationComponentの作成
-- [ ] EditSuggestions::CreateModalComponentの作成
-
-### フロントエンド（Stimulus）
-
-- [ ] edit-suggestion-modal-controllerの実装
-- [ ] edit-suggestion-tabs-controllerの実装
-- [ ] diff-view-controllerの実装
-
-### ポリシー層
-
-- [ ] EditSuggestionPolicyの実装
-  - 作成権限の確認
-  - 反映権限の確認
-  - 閲覧権限の確認
-
-### ルーティング
-
-- [ ] 編集提案一覧：GET /s/:space_identifier/topics/:topic_number/edit_suggestions
-- [ ] 編集提案詳細：GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id
-- [ ] 編集提案新規：GET /s/:space_identifier/topics/:topic_number/edit_suggestions/new
-- [ ] 編集提案作成：POST /s/:space_identifier/topics/:topic_number/edit_suggestions
-- [ ] 編集提案編集：GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/edit
-- [ ] 編集提案更新：PATCH /s/:space_identifier/topics/:topic_number/edit_suggestions/:id
-- [ ] オープンへ変更：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/open
-- [ ] 下書きへ変更：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/draft
-- [ ] 編集提案反映：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/apply
-- [ ] 編集提案クローズ：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/close
-- [ ] ページ追加：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages
-- [ ] ページ削除：DELETE /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/:page_id
-- [ ] コメント追加：POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/comments
-
-### テスト
-
-- [ ] モデルのユニットテスト
-- [ ] サービスのユニットテスト
-- [ ] コントローラーのリクエストスペック
-- [ ] システムテスト（E2Eテスト）
-- [ ] ポリシーのテスト
-
-### その他
-
-- [ ] 既存のページ編集画面への「編集提案する...」ボタン追加
-- [ ] 通知機能との連携（編集提案へのコメント、反映時など）
+- [ ] 通知機能との連携
+  - コメント通知
+  - ステータス変更通知
+  - 反映通知
 - [ ] アクティビティログへの記録
 - [ ] I18n対応（日本語・英語）
