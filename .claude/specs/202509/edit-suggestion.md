@@ -59,11 +59,11 @@ GitHubのPull Requestsのような形で、公開トピックであれば誰で�
 ### データベース設計
 
 - [ ] 編集提案テーブル（edit_suggestions）の作成
-  - id, topic_id, created_by_user_id, title, description, status, created_at, updated_at
+  - id, space_id, topic_id, created_by_id, title, description, status, applied_at, created_at, updated_at
 - [ ] 編集提案ページテーブル（edit_suggestion_pages）の作成
-  - id, edit_suggestion_id, page_id, action (create/update), content_before, content_after
+  - id, space_id, edit_suggestion_id, page_id, action (create/update), body_before, body_after
 - [ ] 編集提案コメントテーブル（edit_suggestion_comments）の作成
-  - id, edit_suggestion_id, user_id, content, created_at, updated_at
+  - id, space_id, edit_suggestion_id, user_id, content, created_at, updated_at
 
 ### モデル層
 
