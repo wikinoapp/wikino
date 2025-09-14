@@ -119,9 +119,8 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 - [ ] EditSuggestions::ShowControllerの実装
 - [ ] EditSuggestions::ShowViewの実装
 - [ ] EditSuggestions::DetailComponentの作成
-- [ ] EditSuggestions::TabsComponentの作成
+- [ ] EditSuggestions::TabsComponentの作成（リンクベースのタブ）
 - [ ] EditSuggestions::ConversationComponentの作成
-- [ ] edit-suggestion-tabs-controllerの実装（Stimulus）
 - [ ] ルーティングの追加
   - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id
 - [ ] テスト作成
