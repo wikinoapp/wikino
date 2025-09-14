@@ -63,7 +63,7 @@ GitHubのPull Requestsのような形で、公開トピックであれば誰で�
 - [ ] 編集提案ページテーブル (`edit_suggestion_pages`) の作成
   - id, space_id, edit_suggestion_id, page_id, title_before, title_after, body_before, body_after
 - [ ] 編集提案コメントテーブル (`edit_suggestion_comments`) の作成
-  - id, space_id, edit_suggestion_id, user_id, content, created_at, updated_at
+  - id, space_id, edit_suggestion_id, user_id, body, body_html, created_at, updated_at
 
 ### モデル層
 
