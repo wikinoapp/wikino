@@ -3,16 +3,25 @@
 </div>
 
 <div
-  class="bg-brand-100 z-sticky-bar group sticky top-0 min-h-[40px]"
+  class="bg-brand-100 z-sticky-bar sticky top-0 group"
   data-controller="stuck"
 >
-  <%# スクロールする前に表示されるヘッダー %>
-  <div class="block group-data-stuck:hidden">
-    <%= render Pages::DefaultHeaderComponent.new(signed_in:, page:) %>
-  </div>
+  <div class="flex flex-col gap-4 md:group-data-stuck:pt-4">
+    <div class="flex items-center justify-between">
+      <h1>
+        <%= render BaseUI::LinkComponent.new(
+          options: {
+            href: page_path(page.space.identifier, page.number),
+            class: "text-sm md:text-2xl md:group-data-stuck:text-sm font-bold antialiased md:group-data-stuck:line-clamp-1"
+          }
+        ).with_content(page.title || "") %>
+      </h1>
 
-  <%# スクロールした後に表示されるヘッダー %>
-  <div class="hidden border-b-1 border-gray-300 group-data-stuck:block">
-    <%= render Pages::StickyHeaderComponent.new(signed_in:, page:) %>
+      <div class="flex gap-2 items-center">
+        <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+      </div>
+    </div>
+
+    <hr class="border-gray-300">
   </div>
 </div>
