@@ -21,8 +21,9 @@ export default class extends Controller<HTMLElement> {
       {
         // 要素が画面上端に到達したときを正確に検出
         rootMargin: "-1px 0px 0px 0px",
-        threshold: [0, 1],
-      }
+        // より細かいthresholdで中間状態も検出
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+      },
     );
 
     this.observer.observe(this.element);
