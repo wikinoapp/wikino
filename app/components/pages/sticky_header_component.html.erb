@@ -1,12 +1,12 @@
-<div class="flex items-center justify-between py-2">
+<div class="flex items-center justify-between py-2 gap-2 flex-wrap md:flex-nowrap">
   <%= render BaseUI::LinkComponent.new(
     options: {
       href: page_path(page.space.identifier, page.number),
-      class: "line-clamp-2 text-sm font-bold"
+      class: "line-clamp-1 text-sm font-bold"
     }
   ).with_content(page.title || "") %>
 
-  <div class="flex gap-2">
+  <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
     <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
   </div>
 </div>

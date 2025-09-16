@@ -1,14 +1,14 @@
-<div class="-mb-2 flex w-full flex-none items-center justify-end gap-2 md:hidden md:w-auto">
-  <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
-</div>
-
 <div
-  class="bg-brand-100 z-sticky-bar group sticky top-0 min-h-[40px]"
+  class="bg-brand-100 z-sticky-bar group sticky top-0 min-h-[76px] md:min-h-[49px]"
   data-controller="stuck"
 >
   <%# スクロールする前に表示されるヘッダー %>
   <div class="block group-data-stuck:hidden">
-    <%= render Pages::DefaultHeaderComponent.new(signed_in:, page:) %>
+    <%= render Headers::MainTitleComponent.new(title: page.display_title) do |main_title| %>
+      <%= main_title.with_actions do %>
+        <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+      <% end %>
+    <% end %>
   </div>
 
   <%# スクロールした後に表示されるヘッダー %>
