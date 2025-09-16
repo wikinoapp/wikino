@@ -12,7 +12,7 @@
   </div>
 
   <%# スクロールした後に表示されるヘッダー %>
-  <div class="hidden border-b-1 border-gray-300 group-data-stuck:block">
+  <div class="-translate-y-full opacity-0 transition-all duration-300 ease-out group-data-stuck:translate-y-0 group-data-stuck:opacity-100 border-b-1 border-gray-300">
     <%= render Pages::StickyHeaderComponent.new(signed_in:, page:) %>
   </div>
 </div>
