@@ -2,24 +2,15 @@
   current_page_name:,
   current_user:,
   current_space: space,
-  show_sidebar: false
+  show_sidebar: false,
+  show_fixed_bottom: false
 ) do |layout| %>
-  <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:, current_space: space) do |header| %>
-      <%= header.with_breadcrumb do %>
-        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
-      <% end %>
-    <% end %>
-  <% end %>
-
   <%= layout.with_main do %>
     <%= render BaseUI::ContainerComponent.new(
       as: BaseUI::ContainerComponent::As::Main,
-      content_screen: BaseUI::ContainerComponent::ContentScreen::Large,
-      options: {class: "flex flex-col gap-6 px-4"}
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Full,
+      options: {class: "flex flex-col gap-6 md:p-4"}
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title:) %>
-
       <% if draft_page.present? %>
         <div class="alert">
           <%= render BaseUI::IconComponent.new(name: "warning-circle-regular", size: "18px", class_name: "fill-amber-600") %>
@@ -30,7 +21,7 @@
         </div>
       <% end %>
 
-      <%= render BaseUI::CardComponent.new do |card| %>
+      <%= render BaseUI::CardComponent.new(class_name: "!rounded-none md:!rounded-xl") do |card| %>
         <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
             class: "form flex flex-col gap-6",
@@ -117,9 +108,5 @@
         <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
       </turbo-frame>
     <% end %>
-  <% end %>
-
-  <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in: true) %>
   <% end %>
 <% end %>

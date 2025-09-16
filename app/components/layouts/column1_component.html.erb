@@ -17,5 +17,7 @@
     </div>
   </div>
 
-  <%= render FixedBottomComponent.new(current_page_name:, current_user:, current_space:) %>
+  <% if show_fixed_bottom? %>
+    <%= render FixedBottomComponent.new(current_page_name:, current_user:, current_space:) %>
+  <% end %>
 </div>

@@ -13,14 +13,22 @@ module Layouts
         current_page_name: PageName,
         current_user: T.nilable(User),
         current_space: T.nilable(Space),
-        show_sidebar: T::Boolean
+        show_sidebar: T::Boolean,
+        show_fixed_bottom: T::Boolean
       ).void
     end
-    def initialize(current_page_name:, current_user:, current_space: nil, show_sidebar: true)
+    def initialize(
+      current_page_name:,
+      current_user:,
+      current_space: nil,
+      show_sidebar: true,
+      show_fixed_bottom: true
+    )
       @current_page_name = current_page_name
       @current_user = current_user
       @current_space = current_space
       @show_sidebar = show_sidebar
+      @show_fixed_bottom = show_fixed_bottom
     end
 
     sig { returns(PageName) }
@@ -37,6 +45,12 @@ module Layouts
 
     sig { returns(T::Boolean) }
     attr_reader :show_sidebar
+    private :show_sidebar
     alias_method :show_sidebar?, :show_sidebar
+
+    sig { returns(T::Boolean) }
+    attr_reader :show_fixed_bottom
+    private :show_fixed_bottom
+    alias_method :show_fixed_bottom?, :show_fixed_bottom
   end
 end

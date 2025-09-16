@@ -16,6 +16,7 @@ module BaseUI
         Small = new("sm")
         Medium = new("md")
         Large = new("lg")
+        Full = new("full")
       end
     end
 
@@ -49,6 +50,8 @@ module BaseUI
         "max-w-(--content-screen-max-width-medium)"
       when ContentScreen::Large
         "max-w-(--content-screen-max-width-large)"
+      when ContentScreen::Full
+        "max-w-screen"
       else
         T.absurd(cs)
       end
