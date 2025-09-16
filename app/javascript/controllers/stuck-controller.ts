@@ -4,13 +4,13 @@ export default class extends Controller<HTMLElement> {
   declare observer: IntersectionObserver;
 
   connect() {
-    // IntersectionObserverのみを使用してスティッキー状態を検出
-    // スクロールイベントハンドラを削除してパフォーマンスを改善
+    // スティッキーヘッダーの表示状態を管理するためのオブザーバーを設定
+    // 要素が画面上端に固定されたときにdata-stuck属性を付与し、CSSで表示を切り替える
     this.observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // 要素が完全に表示されているかどうかをチェック
-          // threshold: 1のみを使用してパフォーマンスを最適化
+          // intersectionRatio < 1: 要素の一部が画面外に出ている（スティッキー状態）
+          // intersectionRatio = 1: 要素が完全に画面内に表示されている（通常状態）
           if (entry.intersectionRatio < 1) {
             this.element.dataset.stuck = "";
           } else {
@@ -19,9 +19,9 @@ export default class extends Controller<HTMLElement> {
         });
       },
       {
-        // 要素が画面上端に到達したときを検出
+        // rootMargin: -1px により、要素が画面上端から1px上に移動したタイミングを検出
         rootMargin: "-1px 0px 0px 0px",
-        // 単一のthresholdでパフォーマンスを改善
+        // threshold: 1 で要素が完全に表示されているかどうかを判定
         threshold: 1,
       },
     );
@@ -30,7 +30,8 @@ export default class extends Controller<HTMLElement> {
   }
 
   disconnect() {
-    // クリーンアップ：要素が削除されるときにobserverを停止
+    // Stimulusコントローラーがアンマウントされる際のクリーンアップ処理
+    // IntersectionObserverを停止してメモリリークを防ぐ
     if (this.observer) {
       this.observer.disconnect();
     }
