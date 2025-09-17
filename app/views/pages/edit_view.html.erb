@@ -2,35 +2,28 @@
   current_page_name:,
   current_user:,
   current_space: space,
-  show_sidebar: false
+  show_sidebar: false,
+  show_bottom_navbar: false
 ) do |layout| %>
-  <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:, current_space: space) do |header| %>
-      <%= header.with_breadcrumb do %>
-        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
-      <% end %>
-    <% end %>
-  <% end %>
-
   <%= layout.with_main do %>
     <%= render BaseUI::ContainerComponent.new(
       as: BaseUI::ContainerComponent::As::Main,
-      content_screen: BaseUI::ContainerComponent::ContentScreen::Large,
-      options: {class: "flex flex-col gap-6 px-4"}
+      content_screen: BaseUI::ContainerComponent::ContentScreen::Full,
+      options: {class: "flex flex-col gap-4 py-4 md:px-4"}
     ) do %>
-      <%= render Headers::MainTitleComponent.new(title:) %>
-
       <% if draft_page.present? %>
-        <div class="alert">
-          <%= render BaseUI::IconComponent.new(name: "warning-circle-regular", size: "18px", class_name: "fill-amber-600") %>
+        <div class="px-4 md:px-0">
+          <div class="alert">
+            <%= render BaseUI::IconComponent.new(name: "warning-circle-regular", size: "18px", class_name: "fill-amber-600") %>
 
-          <h2>
-            <%= t("messages.pages.current_page_is_draft") %>
-          </h2>
+            <h2>
+              <%= t("messages.pages.current_page_is_draft") %>
+            </h2>
+          </div>
         </div>
       <% end %>
 
-      <%= render BaseUI::CardComponent.new do |card| %>
+      <%= render BaseUI::CardComponent.new(class_name: "!rounded-none md:!rounded-xl") do |card| %>
         <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
             class: "form flex flex-col gap-6",
@@ -41,27 +34,29 @@
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <div class="flex flex-col gap-2">
-              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_number) %>
+            <div class="flex flex-col gap-6 md:flex-row md:gap-4">
+              <div class="flex flex-none flex-col gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_number) %>
 
-              <%= f.select(
-                :topic_number,
-                options_from_collection_for_select(f.object.selectable_topics, :number, :name, f.object.topic_number),
-                {},
-                {
-                  class: "bg-base-300 select select-bordered",
+                <%= f.select(
+                  :topic_number,
+                  options_from_collection_for_select(f.object.selectable_topics, :number, :name, f.object.topic_number),
+                  {},
+                  {
+                    class: "bg-base-300 select select-bordered",
+                    data: {action: "markdown-editor-form#saveAsDraft"}
+                  }
+                ) %>
+              </div>
+
+              <div class="flex flex-1 flex-col gap-2">
+                <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>
+
+                <%= f.text_field(:title, {
+                  autofocus: f.object.autofocus_title?,
                   data: {action: "markdown-editor-form#saveAsDraft"}
-                }
-              ) %>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>
-
-              <%= f.text_field(:title, {
-                autofocus: f.object.autofocus_title?,
-                data: {action: "markdown-editor-form#saveAsDraft"}
-              }) %>
+                }) %>
+              </div>
             </div>
 
             <div class="flex flex-col gap-2">
@@ -113,13 +108,11 @@
         <% end %>
       <% end %>
 
-      <turbo-frame id="markdown-editor-footer">
-        <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
-      </turbo-frame>
+      <div class="px-4 md:px-0">
+        <turbo-frame id="markdown-editor-footer">
+          <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
+        </turbo-frame>
+      </div>
     <% end %>
-  <% end %>
-
-  <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in: true) %>
   <% end %>
 <% end %>

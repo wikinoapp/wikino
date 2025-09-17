@@ -197,7 +197,7 @@
   ============================================================================
 */
 .cm-editor {
-  @apply border-input rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
+  @apply border-input max-h-[calc(100vh-400px)] rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
 }
 
 .cm-editor.cm-focused {

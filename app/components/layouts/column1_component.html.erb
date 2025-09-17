@@ -17,5 +17,11 @@
     </div>
   </div>
 
-  <%= render FixedBottomComponent.new(current_page_name:, current_user:, current_space:) %>
+  <div class="fixed bottom-2 left-1/2 z-50 flex w-full translate-x-[-50%] flex-col items-center gap-4 px-2">
+    <%= render BaseUI::Toasts::FlashComponent.new(flash:) %>
+
+    <% if show_bottom_navbar? %>
+      <%= render Navbars::BottomComponent.new(current_page_name:, current_user:, current_space:) %>
+    <% end %>
+  </div>
 </div>

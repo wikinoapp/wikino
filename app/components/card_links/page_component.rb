@@ -77,7 +77,8 @@ module CardLinks
     sig { returns(T::Hash[Symbol, String]) }
     private def build_options
       options.merge(
-        class: build_class_name
+        class: build_class_name,
+        target: "_self"
       )
     end
 
