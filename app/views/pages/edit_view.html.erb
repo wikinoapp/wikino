@@ -9,7 +9,7 @@
     <%= render BaseUI::ContainerComponent.new(
       as: BaseUI::ContainerComponent::As::Main,
       content_screen: BaseUI::ContainerComponent::ContentScreen::Full,
-      options: {class: "flex flex-col gap-6 md:p-4"}
+      options: {class: "flex flex-col gap-4 md:p-4"}
     ) do %>
       <% if draft_page.present? %>
         <div class="alert">
@@ -63,7 +63,6 @@
                 data-markdown-editor-space-identifier-value="<%= space.identifier %>"
                 data-markdown-editor-body-value="<%= f.object.body %>"
                 data-markdown-editor-autofocus-value="<%= f.object.autofocus_body? %>"
-                class="overflow-y-auto max-h-[calc(100vh-400px)]"
               >
                 <div data-markdown-editor-target="codeMirror"></div>
 
