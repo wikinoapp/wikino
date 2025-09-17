@@ -34,8 +34,8 @@
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-            <div class="flex flex-col md:flex-row gap-6 md:gap-4">
-              <div class="flex flex-col gap-2 flex-none">
+            <div class="flex flex-col gap-6 md:flex-row md:gap-4">
+              <div class="flex flex-none flex-col gap-2">
                 <%= render BaseUI::LabelComponent.new(form_builder: f, method: :topic_number) %>
 
                 <%= f.select(
@@ -49,7 +49,7 @@
                 ) %>
               </div>
 
-              <div class="flex flex-col gap-2 flex-1">
+              <div class="flex flex-1 flex-col gap-2">
                 <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>
 
                 <%= f.text_field(:title, {
