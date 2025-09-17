@@ -45,7 +45,6 @@ module Layouts
 
     sig { returns(T::Boolean) }
     attr_reader :show_sidebar
-    private :show_sidebar
     alias_method :show_sidebar?, :show_sidebar
 
     sig { returns(T::Boolean) }
