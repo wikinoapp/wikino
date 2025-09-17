@@ -1,8 +1,7 @@
 <% backlinks.each do |backlink| %>
   <%= render CardLinks::PageComponent.new(
     page: backlink.page,
-    card_class: "h-full",
-    options: {target:},
+    card_class: "h-full"
   ) %>
 <% end %>
 

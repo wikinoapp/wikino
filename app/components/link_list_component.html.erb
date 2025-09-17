@@ -3,11 +3,10 @@
     <div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
       <%= render CardLinks::PageComponent.new(
         page: link.page,
-        card_class: "h-full",
-        options: {target:},
+        card_class: "h-full"
       ) %>
 
-      <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list, target:) %>
+      <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list) %>
     </div>
   <% end %>
 
