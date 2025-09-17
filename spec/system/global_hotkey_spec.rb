@@ -97,7 +97,7 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    find("h1").click
+    find("label[for='pages_edit_form_topic_number']").click
 
     # sキーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
@@ -107,7 +107,7 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    find("h1").click
+    find("label[for='pages_edit_form_topic_number']").click
 
     # /キーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("/").perform
