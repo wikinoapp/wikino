@@ -97,7 +97,9 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    find("label[for='pages_edit_form_topic_number']").click
+    # CodeMirrorエディタからフォーカスを外すため、bodyをクリックしてからTabキーでフォーカスを移動
+    find("body").click
+    page.send_keys(:tab)
 
     # sキーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
@@ -107,7 +109,9 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    find("label[for='pages_edit_form_topic_number']").click
+    # CodeMirrorエディタからフォーカスを外すため、bodyをクリックしてからTabキーでフォーカスを移動
+    find("body").click
+    page.send_keys(:tab)
 
     # /キーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("/").perform
