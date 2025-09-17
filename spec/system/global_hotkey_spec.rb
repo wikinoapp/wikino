@@ -97,9 +97,18 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    # CodeMirrorエディタからフォーカスを外すため、bodyをクリックしてからTabキーでフォーカスを移動
-    find("body").click
-    page.send_keys(:tab)
+    # トピック選択のselectボックスにフォーカスを移してからblurする
+    topic_select = find("select[name='pages_edit_form[topic_number]']")
+    topic_select.click
+    topic_select.send_keys(:escape)
+
+    # JavaScriptでも確実にフォーカスを外す
+    page.execute_script(<<~JS)
+      // すべての入力要素からフォーカスを外す
+      document.activeElement?.blur();
+      // bodyにフォーカスを設定
+      document.body.focus();
+    JS
 
     # sキーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
@@ -109,9 +118,18 @@ RSpec.describe "Global Hotkey", type: :system do
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # エディタ外の要素にフォーカスを移す
-    # CodeMirrorエディタからフォーカスを外すため、bodyをクリックしてからTabキーでフォーカスを移動
-    find("body").click
-    page.send_keys(:tab)
+    # トピック選択のselectボックスにフォーカスを移してからblurする
+    topic_select = find("select[name='pages_edit_form[topic_number]']")
+    topic_select.click
+    topic_select.send_keys(:escape)
+
+    # JavaScriptでも確実にフォーカスを外す
+    page.execute_script(<<~JS)
+      // すべての入力要素からフォーカスを外す
+      document.activeElement?.blur();
+      // bodyにフォーカスを設定
+      document.body.focus();
+    JS
 
     # /キーを押すとspace:フィルターが付与された検索ページに遷移
     page.driver.browser.action.send_keys("/").perform
