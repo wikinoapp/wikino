@@ -2,10 +2,11 @@
 # frozen_string_literal: true
 
 class LinkListComponent < ApplicationComponent
-  sig { params(page: Page, link_list: LinkList).void }
-  def initialize(page:, link_list:)
+  sig { params(page: Page, link_list: LinkList, target: String).void }
+  def initialize(page:, link_list:, target: "_self")
     @page = page
     @link_list = link_list
+    @target = target
   end
 
   sig { returns(Page) }
@@ -15,6 +16,10 @@ class LinkListComponent < ApplicationComponent
   sig { returns(LinkList) }
   attr_reader :link_list
   private :link_list
+
+  sig { returns(String) }
+  attr_reader :target
+  private :target
 
   delegate :space, to: :page
   delegate :links, :pagination, to: :link_list

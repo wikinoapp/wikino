@@ -4,9 +4,10 @@
       <%= render CardLinks::PageComponent.new(
         page: link.page,
         card_class: "h-full",
-        card_image_size: CardLinks::PageComponent::CardImageSize::Small
+        options: {target:},
       ) %>
-      <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list) %>
+
+      <%= render BacklinkListComponent.new(page: link.page, backlink_list: link.backlink_list, target:) %>
     </div>
   <% end %>
 
