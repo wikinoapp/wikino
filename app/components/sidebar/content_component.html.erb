@@ -73,76 +73,8 @@
     </div>
   <% end %>
 
-  <nav class="flex flex-col gap-2 px-2">
-    <div class="px-2 text-sm font-bold">
-      <%= t("nouns.community") %>
-    </div>
-
-    <div class="grid grid-cols-5 px-2">
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://bsky.app/profile/wikino.app",
-        title: "Bluesky",
-        icon_name: "bluesky",
-        fill_class: "fill-[#0285ff]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://discord.gg/8qMetv8fUn",
-        title: "Discord",
-        icon_name: "discord",
-        fill_class: "fill-[#5865f2]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://github.com/wikinoapp/wikino",
-        title: "GitHub",
-        icon_name: "github",
-        fill_class: "fill-[#181717]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://mastodon.social/@wikino",
-        title: "Mastodon",
-        icon_name: "mastodon",
-        fill_class: "fill-[#6364ff]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://mewst.com/@wikino",
-        title: "Mewst",
-        icon_name: "mewst",
-        fill_class: "fill-[#1da1f2]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://mewst.com/@wikino",
-        title: "mixi2",
-        icon_name: "mixi2",
-        fill_class: "fill-[#1da1f2]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://www.threads.com/@wikino.app",
-        title: "Threads",
-        icon_name: "threads",
-        fill_class: "fill-[#000000]"
-      ) %>
-
-      <%= render Sidebar::CommunityItemLinkComponent.new(
-        url: "https://x.com/wikino_app",
-        title: "X",
-        icon_name: "x",
-        fill_class: "fill-[#000000]"
-      ) %>
-    </div>
-  </nav>
-
-  <div class="px-2">
-    <hr class="border-gray-300">
-  </div>
-
-  <div class="flex flex-col gap-2 px-2">
-    <div class="flex gap-2 px-2">
+  <div class="flex flex-col gap-4 px-2">
+    <div class="flex flex-wrap gap-3 px-2">
       <%= render BaseUI::LinkComponent.new(
         variant: BaseUI::LinkComponent::Variant::Underline,
         options: {
@@ -162,6 +94,16 @@
           class: "text-xs text-gray-700"
         }
       ).with_content(t("nouns.roadmap")) %>
+
+      <%= render BaseUI::LinkComponent.new(
+        variant: BaseUI::LinkComponent::Variant::Underline,
+        options: {
+          href: "https://wikino.app/s/wikino/pages/1",
+          rel: "nofollow",
+          target: "_blank",
+          class: "text-xs text-gray-700"
+        }
+      ).with_content(t("nouns.community")) %>
     </div>
 
     <div class="px-2 text-xs">
