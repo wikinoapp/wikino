@@ -8,19 +8,19 @@ FactoryBot.define do
     association :created_user, factory: :user_record
     title { "編集提案タイトル" }
     description { "編集提案の説明" }
-    status { "draft" }
+    status { EditSuggestionStatus::Draft.serialize }
 
     trait :open do
-      status { "open" }
+      status { EditSuggestionStatus::Open.serialize }
     end
 
     trait :applied do
-      status { "applied" }
+      status { EditSuggestionStatus::Applied.serialize }
       applied_at { Time.current }
     end
 
     trait :closed do
-      status { "closed" }
+      status { EditSuggestionStatus::Closed.serialize }
     end
   end
 end

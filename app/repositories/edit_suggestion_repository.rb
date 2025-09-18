@@ -8,7 +8,7 @@ class EditSuggestionRepository < ApplicationRepository
       database_id: edit_suggestion_record.id,
       title: edit_suggestion_record.title,
       description: edit_suggestion_record.description,
-      status: edit_suggestion_record.status,
+      status: EditSuggestionStatus.deserialize(edit_suggestion_record.status),
       applied_at: edit_suggestion_record.applied_at,
       created_at: edit_suggestion_record.created_at,
       updated_at: edit_suggestion_record.updated_at,

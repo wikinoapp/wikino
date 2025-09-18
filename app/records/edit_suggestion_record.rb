@@ -4,8 +4,6 @@
 class EditSuggestionRecord < ApplicationRecord
   self.table_name = "edit_suggestions"
 
-  STATUSES = T.let(%w[draft open applied closed].freeze, T::Array[String])
-
   belongs_to :space, class_name: "SpaceRecord"
   belongs_to :topic, class_name: "TopicRecord"
   belongs_to :created_user, class_name: "UserRecord"
@@ -13,30 +11,30 @@ class EditSuggestionRecord < ApplicationRecord
   has_many :comments, class_name: "EditSuggestionCommentRecord", dependent: :destroy
 
   validates :title, presence: true
-  validates :status, inclusion: {in: STATUSES}
+  validates :status, inclusion: {in: EditSuggestionStatus.values.map(&:serialize)}
 
   scope :by_status, ->(status) { where(status:) }
-  scope :open_or_draft, -> { where(status: %w[draft open]) }
-  scope :closed_or_applied, -> { where(status: %w[closed applied]) }
+  scope :open_or_draft, -> { where(status: [EditSuggestionStatus::Draft.serialize, EditSuggestionStatus::Open.serialize]) }
+  scope :closed_or_applied, -> { where(status: [EditSuggestionStatus::Closed.serialize, EditSuggestionStatus::Applied.serialize]) }
 
   sig { returns(T::Boolean) }
   def draft?
-    status == "draft"
+    status == EditSuggestionStatus::Draft.serialize
   end
 
   sig { returns(T::Boolean) }
   def open?
-    status == "open"
+    status == EditSuggestionStatus::Open.serialize
   end
 
   sig { returns(T::Boolean) }
   def applied?
-    status == "applied"
+    status == EditSuggestionStatus::Applied.serialize
   end
 
   sig { returns(T::Boolean) }
   def closed?
-    status == "closed"
+    status == EditSuggestionStatus::Closed.serialize
   end
 
   sig { returns(T::Boolean) }

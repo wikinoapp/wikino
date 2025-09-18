@@ -9,7 +9,7 @@ class EditSuggestion < T::Struct
   const :database_id, Types::DatabaseId
   const :title, String
   const :description, T.nilable(String)
-  const :status, String
+  const :status, EditSuggestionStatus
   const :applied_at, T.nilable(ActiveSupport::TimeWithZone)
   const :created_at, ActiveSupport::TimeWithZone
   const :updated_at, ActiveSupport::TimeWithZone
@@ -19,22 +19,22 @@ class EditSuggestion < T::Struct
 
   sig { returns(T::Boolean) }
   def draft?
-    status == "draft"
+    status == EditSuggestionStatus::Draft
   end
 
   sig { returns(T::Boolean) }
   def open?
-    status == "open"
+    status == EditSuggestionStatus::Open
   end
 
   sig { returns(T::Boolean) }
   def applied?
-    status == "applied"
+    status == EditSuggestionStatus::Applied
   end
 
   sig { returns(T::Boolean) }
   def closed?
-    status == "closed"
+    status == EditSuggestionStatus::Closed
   end
 
   sig { returns(T::Boolean) }
