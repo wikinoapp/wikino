@@ -6,7 +6,7 @@
         <%# サイドバー開くボタン (md以上xl未満) %>
         <button
           data-action="click->sidebar#open"
-          class="hover:bg-brand-200 hidden cursor-pointer rounded-md p-2 transition-colors md:block xl:hidden"
+          class="hover:bg-brand-200/70 hidden cursor-pointer rounded-md p-2 transition-colors md:block xl:hidden"
           aria-label="<%= t('nouns.menu') %>"
         >
           <%= render BaseUI::IconComponent.new(name: "sidebar-regular", size: "24px", class_name: "fill-base-content") %>
