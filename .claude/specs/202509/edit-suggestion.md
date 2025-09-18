@@ -58,23 +58,23 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ### 1. データベース基盤の構築
 
-- [ ] マイグレーションファイルの作成
+- [x] マイグレーションファイルの作成
   - 編集提案テーブル (`edit_suggestions`)
     - id, space_id, topic_id, created_user_id, title, description, status, applied_at, created_at, updated_at
   - 編集提案ページテーブル (`edit_suggestion_pages`)
     - id, space_id, edit_suggestion_id, page_id, title_before, title_after, body_before, body_after
   - 編集提案コメントテーブル (`edit_suggestion_comments`)
     - id, space_id, edit_suggestion_id, created_user_id, body, body_html, created_at, updated_at
-- [ ] レコードクラスの作成
+- [x] レコードクラスの作成
   - EditSuggestionRecord
   - EditSuggestionPageRecord
   - EditSuggestionCommentRecord
-- [ ] モデル・リポジトリの作成
+- [x] モデル・リポジトリの作成
   - EditSuggestionモデル
   - EditSuggestionRepository
-- [ ] ポリシーの実装
+- [x] ポリシーの実装
   - TopicMemberPolicyなどの既存ポリシーに編集提案関連の権限を追加
-- [ ] テスト作成
+- [x] テスト作成
   - レコードのFactoryBot定義
   - モデルのユニットテスト
   - ポリシーのテスト
