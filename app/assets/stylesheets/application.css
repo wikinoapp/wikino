@@ -26,8 +26,17 @@
   --content-screen-max-width-large: 1200px;
 }
 
-@variant touch (@media (hover: none) and (pointer: coarse));
-@variant non-touch (@media (hover: hover) and (pointer: fine));
+/* タッチデバイスかどうかを判別するためのカスタムバリアント */
+/*
+  hover: none ... hoverがサポートされていないデバイスかどうか
+  pointer: coarse ... タッチスクリーンのようなポインターが粗いデバイスかどうか
+*/
+@custom-variant touch (@media (hover: none) and (pointer: coarse));
+/*
+  hover: hover ... hoverがサポートされているデバイスかどうか
+  pointer: fine ... マウスのような精密なポインターデバイスかどうか
+*/
+@custom-variant non-touch (@media (hover: hover) and (pointer: fine));
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
