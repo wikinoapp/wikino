@@ -1,76 +1,21 @@
 # typed: strict
 # frozen_string_literal: true
 
-class EditSuggestion
+class EditSuggestion < T::Struct
   extend T::Sig
 
-  sig { returns(Types::DatabaseId) }
-  attr_reader :id
+  include T::Struct::ActsAsComparable
 
-  sig { returns(Types::DatabaseId) }
-  attr_reader :space_id
-
-  sig { returns(Types::DatabaseId) }
-  attr_reader :topic_id
-
-  sig { returns(Types::DatabaseId) }
-  attr_reader :created_user_id
-
-  sig { returns(String) }
-  attr_reader :title
-
-  sig { returns(T.nilable(String)) }
-  attr_reader :description
-
-  sig { returns(String) }
-  attr_reader :status
-
-  sig { returns(T.nilable(ActiveSupport::TimeWithZone)) }
-  attr_reader :applied_at
-
-  sig { returns(ActiveSupport::TimeWithZone) }
-  attr_reader :created_at
-
-  sig { returns(ActiveSupport::TimeWithZone) }
-  attr_reader :updated_at
-
-  sig do
-    params(
-      id: Types::DatabaseId,
-      space_id: Types::DatabaseId,
-      topic_id: Types::DatabaseId,
-      created_user_id: Types::DatabaseId,
-      title: String,
-      description: T.nilable(String),
-      status: String,
-      applied_at: T.nilable(ActiveSupport::TimeWithZone),
-      created_at: ActiveSupport::TimeWithZone,
-      updated_at: ActiveSupport::TimeWithZone
-    ).void
-  end
-  def initialize(
-    id:,
-    space_id:,
-    topic_id:,
-    created_user_id:,
-    title:,
-    description:,
-    status:,
-    applied_at:,
-    created_at:,
-    updated_at:
-  )
-    @id = id
-    @space_id = space_id
-    @topic_id = topic_id
-    @created_user_id = created_user_id
-    @title = title
-    @description = description
-    @status = status
-    @applied_at = applied_at
-    @created_at = created_at
-    @updated_at = updated_at
-  end
+  const :database_id, Types::DatabaseId
+  const :title, String
+  const :description, T.nilable(String)
+  const :status, String
+  const :applied_at, T.nilable(ActiveSupport::TimeWithZone)
+  const :created_at, ActiveSupport::TimeWithZone
+  const :updated_at, ActiveSupport::TimeWithZone
+  const :space, Space
+  const :topic, Topic
+  const :created_user, User
 
   sig { returns(T::Boolean) }
   def draft?
