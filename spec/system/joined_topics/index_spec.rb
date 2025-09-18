@@ -93,7 +93,7 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     # turbo-frameは存在するが、トピックが表示されないことを確認
     expect(page).to have_css("turbo-frame#joined-topics-fixed")
     expect(page).to have_css(".flex.flex-col")
-    expect(page).not_to have_css(".text-gray-700.hover\\:bg-brand-200")
+    expect(page).not_to have_css("a.text-gray-700[data-turbo-frame='_top']")
   end
 
   it "10件を超えるトピックがある場合は最新の10件のみ表示されること" do
@@ -112,7 +112,7 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     visit "/joined_topics"
 
     # トピックの要素が10件のみ表示されることを確認
-    topic_links = all(".text-gray-700.hover\\:bg-brand-200")
+    topic_links = all("a.text-gray-700[data-turbo-frame='_top']")
     expect(topic_links.count).to eq(10)
   end
 end
