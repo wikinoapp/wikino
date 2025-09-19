@@ -160,8 +160,8 @@ Model.preload(:association)   # 別クエリで取得（基本はこちら）
 Model.eager_load(:association) # JOINで取得（関連テーブルでフィルタリング時）
 
 # ✅ アソシエーションには_recordまたは_recordsサフィックスを付ける
-belongs_to :user_record, class_name: "UserRecord", foreign_key: :user_id
-has_many :comment_records, class_name: "CommentRecord", foreign_key: :post_id
+belongs_to :user_record, foreign_key: :user_id
+has_many :comment_records, foreign_key: :post_id
 
 # ❌ サフィックスなしのアソシエーション名は避ける
 belongs_to :user, class_name: "UserRecord"
