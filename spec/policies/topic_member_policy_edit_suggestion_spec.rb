@@ -77,7 +77,7 @@ RSpec.describe TopicMemberPolicy do
     expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be true
   end
 
-  it "一般メンバーは編集提案を反映できないこと" do
+  it "一般メンバーも編集提案を反映できること" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
@@ -90,10 +90,10 @@ RSpec.describe TopicMemberPolicy do
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
-    expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be false
+    expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be true
   end
 
-  it "作成者とトピック管理者は編集提案をクローズできること" do
+  it "作成者、トピック管理者、トピックメンバーは編集提案をクローズできること" do
     user_record = FactoryBot.create(:user_record)
     admin_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
