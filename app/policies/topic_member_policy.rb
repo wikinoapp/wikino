@@ -105,7 +105,7 @@ class TopicMemberPolicy < ApplicationPolicy
     return false unless active?
     return false unless in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
 
-    topic_member_record.not_nil!.role == "admin"
+    topic_member_record.not_nil!.role_admin?
   end
 
   sig { params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
