@@ -10,9 +10,6 @@ class EditSuggestionRecord < ApplicationRecord
   has_many :edit_suggestion_page_records, foreign_key: :edit_suggestion_id, dependent: :restrict_with_exception
   has_many :comment_records, class_name: "EditSuggestionCommentRecord", foreign_key: :edit_suggestion_id, dependent: :restrict_with_exception
 
-  validates :title, presence: true
-  validates :status, inclusion: {in: EditSuggestionStatus.values.map(&:serialize)}
-
   scope :by_status, ->(status) { where(status:) }
   scope :open_or_draft, -> { where(status: [EditSuggestionStatus::Draft.serialize, EditSuggestionStatus::Open.serialize]) }
   scope :closed_or_applied, -> { where(status: [EditSuggestionStatus::Closed.serialize, EditSuggestionStatus::Applied.serialize]) }
