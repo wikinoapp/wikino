@@ -4,9 +4,9 @@
 class EditSuggestionPageRecord < ApplicationRecord
   self.table_name = "edit_suggestion_pages"
 
-  belongs_to :space, class_name: "SpaceRecord"
-  belongs_to :edit_suggestion, class_name: "EditSuggestionRecord"
-  belongs_to :page, class_name: "PageRecord", optional: true
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :edit_suggestion_record, foreign_key: :edit_suggestion_id
+  belongs_to :page_record, foreign_key: :page_id, optional: true
 
   sig { returns(T::Boolean) }
   def new_page?

@@ -422,114 +422,87 @@ class EditSuggestionRecord
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def build_created_user(*args, &blk); end
-
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def build_space(*args, &blk); end
+    def build_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
-    def build_topic(*args, &blk); end
+    def build_topic_record(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def comment_ids; end
+    def comment_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def comment_ids=(ids); end
+    def comment_record_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `EditSuggestionRecord` class because it declared `has_many :comments`.
+    # This method is created by ActiveRecord on the `EditSuggestionRecord` class because it declared `has_many :comment_records`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
     sig { returns(::EditSuggestionCommentRecord::PrivateCollectionProxy) }
-    def comments; end
+    def comment_records; end
 
     sig { params(value: T::Enumerable[::EditSuggestionCommentRecord]).void }
-    def comments=(value); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user!(*args, &blk); end
+    def comment_records=(value); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space(*args, &blk); end
+    def create_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space!(*args, &blk); end
+    def create_space_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
-    def create_topic(*args, &blk); end
+    def create_topic_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
-    def create_topic!(*args, &blk); end
-
-    sig { returns(T.nilable(::UserRecord)) }
-    def created_user; end
-
-    sig { params(value: T.nilable(::UserRecord)).void }
-    def created_user=(value); end
-
-    sig { returns(T::Boolean) }
-    def created_user_changed?; end
-
-    sig { returns(T::Boolean) }
-    def created_user_previously_changed?; end
+    def create_topic_record!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
-    def edit_suggestion_page_ids; end
+    def edit_suggestion_page_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def edit_suggestion_page_ids=(ids); end
+    def edit_suggestion_page_record_ids=(ids); end
 
-    # This method is created by ActiveRecord on the `EditSuggestionRecord` class because it declared `has_many :edit_suggestion_pages`.
+    # This method is created by ActiveRecord on the `EditSuggestionRecord` class because it declared `has_many :edit_suggestion_page_records`.
     # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
     sig { returns(::EditSuggestionPageRecord::PrivateCollectionProxy) }
-    def edit_suggestion_pages; end
+    def edit_suggestion_page_records; end
 
     sig { params(value: T::Enumerable[::EditSuggestionPageRecord]).void }
-    def edit_suggestion_pages=(value); end
-
-    sig { returns(T.nilable(::UserRecord)) }
-    def reload_created_user; end
+    def edit_suggestion_page_records=(value); end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def reload_space; end
+    def reload_space_record; end
 
     sig { returns(T.nilable(::TopicRecord)) }
-    def reload_topic; end
+    def reload_topic_record; end
 
     sig { void }
-    def reset_created_user; end
+    def reset_space_record; end
 
     sig { void }
-    def reset_space; end
-
-    sig { void }
-    def reset_topic; end
+    def reset_topic_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def space; end
+    def space_record; end
 
     sig { params(value: T.nilable(::SpaceRecord)).void }
-    def space=(value); end
+    def space_record=(value); end
 
     sig { returns(T::Boolean) }
-    def space_changed?; end
+    def space_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def space_previously_changed?; end
+    def space_record_previously_changed?; end
 
     sig { returns(T.nilable(::TopicRecord)) }
-    def topic; end
+    def topic_record; end
 
     sig { params(value: T.nilable(::TopicRecord)).void }
-    def topic=(value); end
+    def topic_record=(value); end
 
     sig { returns(T::Boolean) }
-    def topic_changed?; end
+    def topic_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def topic_previously_changed?; end
+    def topic_record_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods

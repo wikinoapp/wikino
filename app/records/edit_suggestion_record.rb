@@ -4,11 +4,11 @@
 class EditSuggestionRecord < ApplicationRecord
   self.table_name = "edit_suggestions"
 
-  belongs_to :space, class_name: "SpaceRecord"
-  belongs_to :topic, class_name: "TopicRecord"
-  belongs_to :created_user, class_name: "UserRecord"
-  has_many :edit_suggestion_pages, class_name: "EditSuggestionPageRecord", dependent: :destroy
-  has_many :comments, class_name: "EditSuggestionCommentRecord", dependent: :destroy
+  belongs_to :space_record, foreign_key: :space_id
+  belongs_to :topic_record, foreign_key: :topic_id
+  belongs_to :created_user_record, foreign_key: :created_user_id
+  has_many :edit_suggestion_page_records, foreign_key: :edit_suggestion_id, dependent: :destroy
+  has_many :comment_records, class_name: "EditSuggestionCommentRecord", foreign_key: :edit_suggestion_id, dependent: :destroy
 
   validates :title, presence: true
   validates :status, inclusion: {in: EditSuggestionStatus.values.map(&:serialize)}
