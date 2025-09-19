@@ -180,6 +180,14 @@ has_many :post_records, dependent: :destroy
 create_table :examples, id: false do |t|
   # ULIDを使用
   t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+
+  # ✅ 外部キーはt.referencesを使用
+  t.references :user, type: :uuid, null: false, foreign_key: true
+  t.references :created_by, type: :uuid, null: false, foreign_key: {to_table: :users}
+
+  # ❌ 外部キーカラムを直接定義してadd_foreign_keyするのは避ける
+  # t.uuid :user_id, null: false
+  # add_foreign_key :examples, :users, column: :user_id
 end
 ```
 
