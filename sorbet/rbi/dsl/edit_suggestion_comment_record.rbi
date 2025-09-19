@@ -428,85 +428,85 @@ class EditSuggestionCommentRecord
 
   module GeneratedAssociationMethods
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def build_created_user(*args, &blk); end
+    def build_created_user_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
-    def build_edit_suggestion(*args, &blk); end
+    def build_edit_suggestion_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def build_space(*args, &blk); end
+    def build_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user(*args, &blk); end
+    def create_created_user_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user!(*args, &blk); end
+    def create_created_user_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
-    def create_edit_suggestion(*args, &blk); end
+    def create_edit_suggestion_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
-    def create_edit_suggestion!(*args, &blk); end
+    def create_edit_suggestion_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space(*args, &blk); end
+    def create_space_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
-    def create_space!(*args, &blk); end
+    def create_space_record!(*args, &blk); end
 
     sig { returns(T.nilable(::UserRecord)) }
-    def created_user; end
+    def created_user_record; end
 
     sig { params(value: T.nilable(::UserRecord)).void }
-    def created_user=(value); end
+    def created_user_record=(value); end
 
     sig { returns(T::Boolean) }
-    def created_user_changed?; end
+    def created_user_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def created_user_previously_changed?; end
+    def created_user_record_previously_changed?; end
 
     sig { returns(T.nilable(::EditSuggestionRecord)) }
-    def edit_suggestion; end
+    def edit_suggestion_record; end
 
     sig { params(value: T.nilable(::EditSuggestionRecord)).void }
-    def edit_suggestion=(value); end
+    def edit_suggestion_record=(value); end
 
     sig { returns(T::Boolean) }
-    def edit_suggestion_changed?; end
+    def edit_suggestion_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def edit_suggestion_previously_changed?; end
+    def edit_suggestion_record_previously_changed?; end
 
     sig { returns(T.nilable(::UserRecord)) }
-    def reload_created_user; end
+    def reload_created_user_record; end
 
     sig { returns(T.nilable(::EditSuggestionRecord)) }
-    def reload_edit_suggestion; end
+    def reload_edit_suggestion_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def reload_space; end
+    def reload_space_record; end
 
     sig { void }
-    def reset_created_user; end
+    def reset_created_user_record; end
 
     sig { void }
-    def reset_edit_suggestion; end
+    def reset_edit_suggestion_record; end
 
     sig { void }
-    def reset_space; end
+    def reset_space_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
-    def space; end
+    def space_record; end
 
     sig { params(value: T.nilable(::SpaceRecord)).void }
-    def space=(value); end
+    def space_record=(value); end
 
     sig { returns(T::Boolean) }
-    def space_changed?; end
+    def space_record_changed?; end
 
     sig { returns(T::Boolean) }
-    def space_previously_changed?; end
+    def space_record_previously_changed?; end
   end
 
   module GeneratedAssociationRelationMethods
