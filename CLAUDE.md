@@ -161,11 +161,17 @@ Model.eager_load(:association) # JOINで取得（関連テーブルでフィル�
 
 # ✅ アソシエーションには_recordまたは_recordsサフィックスを付ける
 belongs_to :user_record, foreign_key: :user_id
-has_many :comment_records, foreign_key: :post_id
+has_many :comment_records, foreign_key: :post_id, dependent: :restrict_with_exception
 
 # ❌ サフィックスなしのアソシエーション名は避ける
 belongs_to :user, class_name: "UserRecord"
 has_many :comments, class_name: "CommentRecord"
+
+# ✅ has_manyのdependentオプションは:restrict_with_exceptionを使用
+has_many :post_records, dependent: :restrict_with_exception
+
+# ❌ :destroyや:delete_allは避ける
+has_many :post_records, dependent: :destroy
 ```
 
 ### マイグレーション
