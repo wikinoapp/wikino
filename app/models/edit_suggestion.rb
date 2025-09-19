@@ -39,12 +39,12 @@ class EditSuggestion < T::Struct
 
   sig { returns(T::Boolean) }
   def editable?
-    draft? || open?
+    open_or_draft?
   end
 
   sig { returns(T::Boolean) }
   def open_or_draft?
-    draft? || open?
+    open? || draft?
   end
 
   sig { returns(T::Boolean) }
