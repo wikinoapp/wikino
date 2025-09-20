@@ -406,4 +406,137 @@ RSpec.describe TopicMemberPolicy do
       expect(policy.can_trash_page?(page_record:)).to be(false)
     end
   end
+
+  describe "#can_create_edit_suggestion?" do
+    it "Topic Memberは編集提案を作成できること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_create_edit_suggestion?).to be true
+    end
+
+    it "非アクティブなメンバーは編集提案を作成できないこと" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: false)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_create_edit_suggestion?).to be false
+    end
+  end
+
+  describe "#can_update_edit_suggestion?" do
+    it "作成者は自分の編集提案を更新できること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_update_edit_suggestion?(edit_suggestion_record:)).to be true
+    end
+
+    it "他のユーザーは編集提案を更新できないこと" do
+      user_record = FactoryBot.create(:user_record)
+      other_user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      other_space_member_record = FactoryBot.create(:space_member_record, user_record: other_user_record, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: other_space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_update_edit_suggestion?(edit_suggestion_record:)).to be false
+    end
+  end
+
+  describe "#can_apply_edit_suggestion?" do
+    it "Topic Memberは編集提案を反映できること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be true
+    end
+  end
+
+  describe "#can_close_edit_suggestion?" do
+    it "Topic Member（作成者）は自分の編集提案をクローズできること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_close_edit_suggestion?(edit_suggestion_record:)).to be true
+    end
+
+    it "Topic Memberは他のメンバーの編集提案をクローズできること" do
+      user_record = FactoryBot.create(:user_record)
+      FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_close_edit_suggestion?(edit_suggestion_record:)).to be true
+    end
+  end
+
+  describe "#can_comment_on_edit_suggestion?" do
+    it "Topic Memberは編集提案にコメントできること" do
+      user_record = FactoryBot.create(:user_record)
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
+      topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: TopicMemberRole::Member.serialize)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_space_member_record: space_member_record)
+
+      policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
+
+      expect(policy.can_comment_on_edit_suggestion?(edit_suggestion_record:)).to be true
+    end
+  end
 end
