@@ -1,0 +1,20 @@
+en:
+  edit_suggestions:
+    statuses:
+      draft: Draft
+      open: Open
+      applied: Applied
+      closed: Closed
+    filters:
+      open: Open
+      closed: Closed
+    page_count:
+      one: "%{count} page"
+      other: "%{count} pages"
+    empty_state:
+      title: No edit suggestions
+      description: There are no edit suggestions for this topic yet.
+  meta:
+    title:
+      edit_suggestions:
+        index: "%{topic_name} - Edit Suggestions - %{space_name}"

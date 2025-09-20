@@ -1,0 +1,78 @@
+<% if edit_suggestions.present? %>
+  <div class="flex flex-col gap-4">
+    <% edit_suggestions.each do |edit_suggestion| %>
+      <div class="rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <!-- タイトルとステータス -->
+            <div class="flex items-center gap-3 mb-2">
+              <%= link_to edit_suggestion_path(edit_suggestion:), {
+                class: "text-lg font-semibold text-foreground hover:text-primary transition-colors"
+              } do %>
+                <%= edit_suggestion.title %>
+              <% end %>
+
+              <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium <%= status_color_class(edit_suggestion:) %>">
+                <%= status_label(edit_suggestion:) %>
+              </span>
+            </div>
+
+            <!-- 説明文 -->
+            <% if edit_suggestion.description.present? %>
+              <p class="text-sm text-muted-foreground mb-3 line-clamp-2">
+                <%= edit_suggestion.description %>
+              </p>
+            <% end %>
+
+            <!-- メタ情報 -->
+            <div class="flex items-center gap-4 text-xs text-muted-foreground">
+              <div class="flex items-center gap-1">
+                <%= render BaseUI::IconComponent.new(
+                  name: "user",
+                  size: "14px",
+                  class_name: "fill-muted-foreground"
+                ) %>
+                <%= edit_suggestion.created_space_member.user.name %>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <%= render BaseUI::IconComponent.new(
+                  name: "clock",
+                  size: "14px",
+                  class_name: "fill-muted-foreground"
+                ) %>
+                <%= edit_suggestion.created_at.strftime("%Y年%m月%d日") %>
+              </div>
+
+              <!-- TODO: ページ数の表示は後で実装 -->
+              <%# if edit_suggestion.page_count > 0 %>
+                <%# <div class="flex items-center gap-1"> %>
+                  <%#= render BaseUI::IconComponent.new( %>
+                    <%# name: "file", %>
+                    <%# size: "14px", %>
+                    <%# class_name: "fill-muted-foreground" %>
+                  <%# ) %> %>
+                  <%#= t("edit_suggestions.page_count", count: edit_suggestion.page_count) %>
+                <%# </div> %>
+              <%# end %>
+            </div>
+          </div>
+
+          <!-- アクションボタン（将来の機能として） -->
+          <div class="flex-shrink-0">
+            <!-- ここに詳細ページへのリンクやその他のアクションボタンを配置 -->
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <%= render BaseUI::EmptyStateComponent.new(
+    icon_name: "file-plus",
+    message: t("edit_suggestions.empty_state.title")
+  ) do %>
+    <div class="text-muted-foreground">
+      <%= t("edit_suggestions.empty_state.description") %>
+    </div>
+  <% end %>
+<% end %>

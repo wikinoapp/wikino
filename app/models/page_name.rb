@@ -4,6 +4,7 @@
 class PageName < T::Enum
   enums do
     AccountNew = new
+    EditSuggestionList = new
     EmailConfirmationEdit = new
     Home = new
     Inbox = new

@@ -1,0 +1,40 @@
+<%= render Layouts::Column1Component.new(current_page_name:, current_user:, current_space: space) do |layout| %>
+  <%= layout.with_header do %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space) do |header| %>
+      <%= header.with_breadcrumb do %>
+        <%= render Breadcrumbs::TopicComponent.new(topic:) %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_main do %>
+    <%= render Containers::MainComponent.new() do %>
+      <%= render Topics::ShowView::HeaderComponent.new(signed_in: signed_in?, topic:) %>
+
+      <%= render Topics::TabsComponent.new(tabs:) %>
+
+      <div class="flex flex-col gap-6">
+        <!-- フィルタータブ -->
+        <div class="flex border-b border-border">
+          <% filter_tabs.each do |tab| %>
+            <%= link_to tab[:path], {
+              class: "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors #{tab[:active] ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}"
+            } do %>
+              <%= tab[:label] %>
+              <span class="rounded-full bg-muted px-2 py-1 text-xs">
+                <%= tab[:count] %>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <!-- 編集提案一覧 -->
+        <%= render EditSuggestions::ListComponent.new(edit_suggestions:, topic:) %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= layout.with_footer do %>
+    <%= render Footers::GlobalComponent.new(signed_in: signed_in?) %>
+  <% end %>
+<% end %>

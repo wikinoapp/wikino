@@ -23,7 +23,7 @@ class EditSuggestionRepository < ApplicationRepository
     # N+1を避けるため関連データをpreload
     records = T.unsafe(edit_suggestion_records)
     if records.is_a?(ActiveRecord::Relation)
-      records = records.preload(:space, :topic, :created_space_member)
+      records = records.preload(:space_record, :topic_record, :created_space_member_record)
     end
 
     records.map { |record| to_model(edit_suggestion_record: record) }
