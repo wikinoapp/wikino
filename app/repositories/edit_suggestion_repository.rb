@@ -12,9 +12,9 @@ class EditSuggestionRepository < ApplicationRepository
       applied_at: edit_suggestion_record.applied_at,
       created_at: edit_suggestion_record.created_at,
       updated_at: edit_suggestion_record.updated_at,
-      space: SpaceRepository.new.to_model(space_record: edit_suggestion_record.space.not_nil!),
-      topic: TopicRepository.new.to_model(topic_record: edit_suggestion_record.topic.not_nil!),
-      created_user: UserRepository.new.to_model(user_record: edit_suggestion_record.created_user.not_nil!)
+      space: SpaceRepository.new.to_model(space_record: edit_suggestion_record.space_record.not_nil!),
+      topic: TopicRepository.new.to_model(topic_record: edit_suggestion_record.topic_record.not_nil!),
+      created_user: UserRepository.new.to_model(user_record: edit_suggestion_record.created_user_record.not_nil!)
     )
   end
 

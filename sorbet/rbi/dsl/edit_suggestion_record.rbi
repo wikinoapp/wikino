@@ -8,6 +8,7 @@
 class EditSuggestionRecord
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
+  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -24,6 +25,9 @@ class EditSuggestionRecord
       ).returns(::EditSuggestionRecord)
     end
     def new(attributes = nil, &block); end
+
+    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
+    def statuses; end
   end
 
   module CommonRelationMethods
@@ -421,7 +425,36 @@ class EditSuggestionRecord
     def third_to_last!; end
   end
 
+  module EnumMethodsModule
+    sig { void }
+    def status_applied!; end
+
+    sig { returns(T::Boolean) }
+    def status_applied?; end
+
+    sig { void }
+    def status_closed!; end
+
+    sig { returns(T::Boolean) }
+    def status_closed?; end
+
+    sig { void }
+    def status_draft!; end
+
+    sig { returns(T::Boolean) }
+    def status_draft?; end
+
+    sig { void }
+    def status_open!; end
+
+    sig { returns(T::Boolean) }
+    def status_open?; end
+  end
+
   module GeneratedAssociationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
+    def build_created_user_record(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
 
@@ -442,6 +475,12 @@ class EditSuggestionRecord
     sig { params(value: T::Enumerable[::EditSuggestionCommentRecord]).void }
     def comment_records=(value); end
 
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
+    def create_created_user_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
+    def create_created_user_record!(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record(*args, &blk); end
 
@@ -453,6 +492,18 @@ class EditSuggestionRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
     def create_topic_record!(*args, &blk); end
+
+    sig { returns(T.nilable(::UserRecord)) }
+    def created_user_record; end
+
+    sig { params(value: T.nilable(::UserRecord)).void }
+    def created_user_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def created_user_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def created_user_record_previously_changed?; end
 
     sig { returns(T::Array[T.untyped]) }
     def edit_suggestion_page_record_ids; end
@@ -468,11 +519,17 @@ class EditSuggestionRecord
     sig { params(value: T::Enumerable[::EditSuggestionPageRecord]).void }
     def edit_suggestion_page_records=(value); end
 
+    sig { returns(T.nilable(::UserRecord)) }
+    def reload_created_user_record; end
+
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
 
     sig { returns(T.nilable(::TopicRecord)) }
     def reload_topic_record; end
+
+    sig { void }
+    def reset_created_user_record; end
 
     sig { void }
     def reset_space_record; end
@@ -585,6 +642,18 @@ class EditSuggestionRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_status_applied(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_status_closed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_status_draft(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_status_open(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -636,6 +705,18 @@ class EditSuggestionRecord
       ).returns(T::Array[::EditSuggestionRecord])
     end
     def select(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def status_applied(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def status_closed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def status_draft(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def status_open(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def strict_loading(*args, &blk); end
@@ -1081,7 +1162,7 @@ class EditSuggestionRecord
     sig { returns(::String) }
     def status; end
 
-    sig { params(value: ::String).returns(::String) }
+    sig { params(value: T.any(::String, ::Symbol)).returns(T.any(::String, ::Symbol)) }
     def status=(value); end
 
     sig { returns(T::Boolean) }
@@ -1372,6 +1453,18 @@ class EditSuggestionRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_status_applied(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_status_closed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_status_draft(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_status_open(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1423,6 +1516,18 @@ class EditSuggestionRecord
       ).returns(T::Array[::EditSuggestionRecord])
     end
     def select(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def status_applied(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def status_closed(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def status_draft(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def status_open(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def strict_loading(*args, &blk); end
