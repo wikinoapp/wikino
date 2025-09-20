@@ -15,7 +15,7 @@ class EditSuggestionPageRecord < ApplicationRecord
 
   sig { returns(T::Boolean) }
   def existing_page?
-    page_id.present?
+    !new_page?
   end
 
   sig { returns(T::Boolean) }
