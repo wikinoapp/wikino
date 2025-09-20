@@ -795,49 +795,49 @@ class EditSuggestionCommentRecord
     def created_at_will_change!; end
 
     sig { returns(::String) }
-    def created_user_id; end
+    def created_space_member_id; end
 
     sig { params(value: ::String).returns(::String) }
-    def created_user_id=(value); end
+    def created_space_member_id=(value); end
 
     sig { returns(T::Boolean) }
-    def created_user_id?; end
+    def created_space_member_id?; end
 
     sig { returns(T.nilable(::String)) }
-    def created_user_id_before_last_save; end
+    def created_space_member_id_before_last_save; end
 
     sig { returns(T.untyped) }
-    def created_user_id_before_type_cast; end
+    def created_space_member_id_before_type_cast; end
 
     sig { returns(T::Boolean) }
-    def created_user_id_came_from_user?; end
+    def created_space_member_id_came_from_user?; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def created_user_id_change; end
+    def created_space_member_id_change; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def created_user_id_change_to_be_saved; end
+    def created_space_member_id_change_to_be_saved; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def created_user_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def created_space_member_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def created_user_id_in_database; end
+    def created_space_member_id_in_database; end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def created_user_id_previous_change; end
+    def created_space_member_id_previous_change; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def created_user_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def created_space_member_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable(::String)) }
-    def created_user_id_previously_was; end
+    def created_space_member_id_previously_was; end
 
     sig { returns(T.nilable(::String)) }
-    def created_user_id_was; end
+    def created_space_member_id_was; end
 
     sig { void }
-    def created_user_id_will_change!; end
+    def created_space_member_id_will_change!; end
 
     sig { returns(::String) }
     def edit_suggestion_id; end
@@ -984,7 +984,7 @@ class EditSuggestionCommentRecord
     def restore_created_at!; end
 
     sig { void }
-    def restore_created_user_id!; end
+    def restore_created_space_member_id!; end
 
     sig { void }
     def restore_edit_suggestion_id!; end
@@ -1020,10 +1020,10 @@ class EditSuggestionCommentRecord
     def saved_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_created_user_id; end
+    def saved_change_to_created_space_member_id; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_created_user_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def saved_change_to_created_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_edit_suggestion_id; end
@@ -1155,7 +1155,7 @@ class EditSuggestionCommentRecord
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_created_user_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+    def will_save_change_to_created_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_edit_suggestion_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end

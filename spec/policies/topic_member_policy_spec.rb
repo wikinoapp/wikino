@@ -506,7 +506,7 @@ RSpec.describe TopicMemberPolicy do
 
     it "Topic Memberは他のメンバーの編集提案をクローズできること" do
       user_record = FactoryBot.create(:user_record)
-      other_user_record = FactoryBot.create(:user_record)
+      FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
