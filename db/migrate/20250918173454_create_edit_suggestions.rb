@@ -7,7 +7,7 @@ class CreateEditSuggestions < ActiveRecord::Migration[8.0]
       t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
       t.references :space, type: :uuid, null: false, foreign_key: true
       t.references :topic, type: :uuid, null: false, foreign_key: true
-      t.references :created_user, type: :uuid, null: false, foreign_key: {to_table: :users}
+      t.references :created_space_member, type: :uuid, null: false, foreign_key: {to_table: :space_members}
       t.string :title, null: false
       t.text :description, null: false
       t.integer :status, null: false, default: 0
