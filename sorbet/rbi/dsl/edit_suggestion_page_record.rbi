@@ -727,6 +727,51 @@ class EditSuggestionPageRecord
   end
 
   module GeneratedAttributeMethods
+    sig { returns(T.nilable(::String)) }
+    def body; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def body=(value); end
+
+    sig { returns(T::Boolean) }
+    def body?; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def body_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def body_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def body_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def body_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def body_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def body_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def body_was; end
+
+    sig { void }
+    def body_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def created_at; end
 
@@ -908,51 +953,6 @@ class EditSuggestionPageRecord
     def id_will_change!; end
 
     sig { returns(T.nilable(::String)) }
-    def latest_revision_id; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def latest_revision_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def latest_revision_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def latest_revision_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def latest_revision_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def latest_revision_id_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def latest_revision_id_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def latest_revision_id_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def latest_revision_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def latest_revision_id_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def latest_revision_id_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def latest_revision_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def latest_revision_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def latest_revision_id_was; end
-
-    sig { void }
-    def latest_revision_id_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
     def page_id; end
 
     sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
@@ -1043,6 +1043,9 @@ class EditSuggestionPageRecord
     def page_revision_id_will_change!; end
 
     sig { void }
+    def restore_body!; end
+
+    sig { void }
     def restore_created_at!; end
 
     sig { void }
@@ -1055,9 +1058,6 @@ class EditSuggestionPageRecord
     def restore_id_value!; end
 
     sig { void }
-    def restore_latest_revision_id!; end
-
-    sig { void }
     def restore_page_id!; end
 
     sig { void }
@@ -1067,7 +1067,16 @@ class EditSuggestionPageRecord
     def restore_space_id!; end
 
     sig { void }
+    def restore_title!; end
+
+    sig { void }
     def restore_updated_at!; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_body; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -1094,12 +1103,6 @@ class EditSuggestionPageRecord
     def saved_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_latest_revision_id; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_latest_revision_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def saved_change_to_page_id; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1116,6 +1119,12 @@ class EditSuggestionPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_title; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_title?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
@@ -1168,6 +1177,51 @@ class EditSuggestionPageRecord
     sig { void }
     def space_id_will_change!; end
 
+    sig { returns(T.nilable(::String)) }
+    def title; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def title=(value); end
+
+    sig { returns(T::Boolean) }
+    def title?; end
+
+    sig { returns(T.nilable(::String)) }
+    def title_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def title_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def title_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def title_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def title_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def title_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def title_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def title_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def title_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def title_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def title_was; end
+
+    sig { void }
+    def title_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
 
@@ -1214,6 +1268,9 @@ class EditSuggestionPageRecord
     def updated_at_will_change!; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_body?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1226,9 +1283,6 @@ class EditSuggestionPageRecord
     def will_save_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_latest_revision_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_page_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1236,6 +1290,9 @@ class EditSuggestionPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_title?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_updated_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end

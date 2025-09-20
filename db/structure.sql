@@ -202,7 +202,8 @@ CREATE TABLE public.edit_suggestion_pages (
     page_revision_id uuid,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    latest_revision_id uuid
+    body public.citext,
+    title public.citext
 );
 
 
@@ -853,13 +854,6 @@ CREATE UNIQUE INDEX index_edit_suggestion_pages_on_edit_suggestion_id_and_page_i
 
 
 --
--- Name: index_edit_suggestion_pages_on_latest_revision_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_edit_suggestion_pages_on_latest_revision_id ON public.edit_suggestion_pages USING btree (latest_revision_id);
-
-
---
 -- Name: index_edit_suggestion_pages_on_page_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1323,14 +1317,6 @@ ALTER TABLE ONLY public.page_editors
 
 
 --
--- Name: edit_suggestion_pages fk_rails_4226ebc7a6; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.edit_suggestion_pages
-    ADD CONSTRAINT fk_rails_4226ebc7a6 FOREIGN KEY (latest_revision_id) REFERENCES public.edit_suggestion_page_revisions(id);
-
-
---
 -- Name: edit_suggestion_pages fk_rails_42ff6f1c8f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1641,14 +1627,11 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20250920173050'),
-('20250920173027'),
-('20250920172844'),
-('20250920172818'),
 ('20250920082216'),
 ('20250920074019'),
 ('20250918173549'),
 ('20250918173527'),
+('20250918173526'),
 ('20250918173454'),
 ('20250830075516'),
 ('20250830075345'),
