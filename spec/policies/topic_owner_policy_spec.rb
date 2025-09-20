@@ -494,7 +494,7 @@ RSpec.describe TopicOwnerPolicy do
     it "Topic Ownerは編集提案を作成できること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_record, space_record:)
       space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true, role: SpaceMemberRole::Owner.serialize)
 
       policy = TopicOwnerPolicy.new(user_record:, space_member_record:)
@@ -505,7 +505,7 @@ RSpec.describe TopicOwnerPolicy do
     it "非アクティブなOwnerは編集提案を作成できないこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record, space_record:)
+      FactoryBot.create(:topic_record, space_record:)
       space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: false, role: SpaceMemberRole::Owner.serialize)
 
       policy = TopicOwnerPolicy.new(user_record:, space_member_record:)

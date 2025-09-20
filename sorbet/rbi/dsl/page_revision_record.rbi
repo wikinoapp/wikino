@@ -933,6 +933,9 @@ class PageRevisionRecord
     def restore_space_member_id!; end
 
     sig { void }
+    def restore_title!; end
+
+    sig { void }
     def restore_updated_at!; end
 
     sig { returns(T.nilable([::String, ::String])) }
@@ -982,6 +985,12 @@ class PageRevisionRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_title; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_title?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_updated_at; end
@@ -1079,6 +1088,51 @@ class PageRevisionRecord
     sig { void }
     def space_member_id_will_change!; end
 
+    sig { returns(::String) }
+    def title; end
+
+    sig { params(value: ::String).returns(::String) }
+    def title=(value); end
+
+    sig { returns(T::Boolean) }
+    def title?; end
+
+    sig { returns(T.nilable(::String)) }
+    def title_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def title_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def title_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def title_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def title_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def title_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def title_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def title_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def title_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def title_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def title_was; end
+
+    sig { void }
+    def title_will_change!; end
+
     sig { returns(::ActiveSupport::TimeWithZone) }
     def updated_at; end
 
@@ -1147,6 +1201,9 @@ class PageRevisionRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_title?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_updated_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
