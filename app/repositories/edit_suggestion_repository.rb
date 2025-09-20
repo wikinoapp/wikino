@@ -14,7 +14,7 @@ class EditSuggestionRepository < ApplicationRepository
       updated_at: edit_suggestion_record.updated_at,
       space: SpaceRepository.new.to_model(space_record: edit_suggestion_record.space_record.not_nil!),
       topic: TopicRepository.new.to_model(topic_record: edit_suggestion_record.topic_record.not_nil!),
-      created_user: UserRepository.new.to_model(user_record: edit_suggestion_record.created_user_record.not_nil!)
+      created_space_member: SpaceMemberRepository.new.to_model(space_member_record: edit_suggestion_record.created_space_member_record.not_nil!)
     )
   end
 
@@ -23,7 +23,7 @@ class EditSuggestionRepository < ApplicationRepository
     # N+1を避けるため関連データをpreload
     records = T.unsafe(edit_suggestion_records)
     if records.is_a?(ActiveRecord::Relation)
-      records = records.preload(:space, :topic, :created_user)
+      records = records.preload(:space, :topic, :created_space_member)
     end
 
     records.map { |record| to_model(edit_suggestion_record: record) }

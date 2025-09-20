@@ -13,7 +13,7 @@ class EditSuggestionRecord < ApplicationRecord
 
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :topic_record, foreign_key: :topic_id
-  belongs_to :created_user_record, class_name: "UserRecord", foreign_key: :created_user_id
+  belongs_to :created_space_member_record, class_name: "SpaceMemberRecord", foreign_key: :created_space_member_id
   has_many :edit_suggestion_page_records, foreign_key: :edit_suggestion_id, dependent: :restrict_with_exception
   has_many :comment_records, class_name: "EditSuggestionCommentRecord", foreign_key: :edit_suggestion_id, dependent: :restrict_with_exception
 

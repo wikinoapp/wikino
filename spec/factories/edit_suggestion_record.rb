@@ -5,7 +5,7 @@ FactoryBot.define do
   factory :edit_suggestion_record do
     space_record
     topic_record
-    association :created_user_record, factory: :user_record
+    association :created_space_member_record, factory: :space_member_record
     title { "編集提案タイトル" }
     description { "編集提案の説明" }
     status { EditSuggestionStatus::Draft.serialize }

@@ -15,7 +15,7 @@ class EditSuggestion < T::Struct
   const :updated_at, ActiveSupport::TimeWithZone
   const :space, Space
   const :topic, Topic
-  const :created_user, User
+  const :created_space_member, SpaceMember
 
   sig { returns(T::Boolean) }
   def draft?

@@ -452,8 +452,8 @@ class EditSuggestionRecord
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def build_created_user_record(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def build_created_space_member_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
@@ -475,11 +475,11 @@ class EditSuggestionRecord
     sig { params(value: T::Enumerable[::EditSuggestionCommentRecord]).void }
     def comment_records=(value); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user_record(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_created_space_member_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::UserRecord) }
-    def create_created_user_record!(*args, &blk); end
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_created_space_member_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record(*args, &blk); end
@@ -493,17 +493,17 @@ class EditSuggestionRecord
     sig { params(args: T.untyped, blk: T.untyped).returns(::TopicRecord) }
     def create_topic_record!(*args, &blk); end
 
-    sig { returns(T.nilable(::UserRecord)) }
-    def created_user_record; end
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def created_space_member_record; end
 
-    sig { params(value: T.nilable(::UserRecord)).void }
-    def created_user_record=(value); end
-
-    sig { returns(T::Boolean) }
-    def created_user_record_changed?; end
+    sig { params(value: T.nilable(::SpaceMemberRecord)).void }
+    def created_space_member_record=(value); end
 
     sig { returns(T::Boolean) }
-    def created_user_record_previously_changed?; end
+    def created_space_member_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def created_space_member_record_previously_changed?; end
 
     sig { returns(T::Array[T.untyped]) }
     def edit_suggestion_page_record_ids; end
@@ -519,8 +519,8 @@ class EditSuggestionRecord
     sig { params(value: T::Enumerable[::EditSuggestionPageRecord]).void }
     def edit_suggestion_page_records=(value); end
 
-    sig { returns(T.nilable(::UserRecord)) }
-    def reload_created_user_record; end
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def reload_created_space_member_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
@@ -529,7 +529,7 @@ class EditSuggestionRecord
     def reload_topic_record; end
 
     sig { void }
-    def reset_created_user_record; end
+    def reset_created_space_member_record; end
 
     sig { void }
     def reset_space_record; end

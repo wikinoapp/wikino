@@ -32,6 +32,11 @@ RSpec.describe EditSuggestion do
       locale: Locale::Ja,
       time_zone: "Asia/Tokyo"
     )
+    space_member = SpaceMember.new(
+      database_id: "space_member_id",
+      space:,
+      user:
+    )
     edit_suggestion = EditSuggestion.new(
       database_id: "id",
       title: "タイトル",
@@ -42,7 +47,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     expect(edit_suggestion.draft?).to be true
@@ -79,6 +84,11 @@ RSpec.describe EditSuggestion do
       locale: Locale::Ja,
       time_zone: "Asia/Tokyo"
     )
+    space_member = SpaceMember.new(
+      database_id: "space_member_id",
+      space:,
+      user:
+    )
     edit_suggestion = EditSuggestion.new(
       database_id: "id",
       title: "タイトル",
@@ -89,7 +99,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     expect(edit_suggestion.draft?).to be false
@@ -126,6 +136,11 @@ RSpec.describe EditSuggestion do
       locale: Locale::Ja,
       time_zone: "Asia/Tokyo"
     )
+    space_member = SpaceMember.new(
+      database_id: "space_member_id",
+      space:,
+      user:
+    )
     edit_suggestion = EditSuggestion.new(
       database_id: "id",
       title: "タイトル",
@@ -136,7 +151,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     expect(edit_suggestion.draft?).to be false
@@ -173,6 +188,11 @@ RSpec.describe EditSuggestion do
       locale: Locale::Ja,
       time_zone: "Asia/Tokyo"
     )
+    space_member = SpaceMember.new(
+      database_id: "space_member_id",
+      space:,
+      user:
+    )
     edit_suggestion = EditSuggestion.new(
       database_id: "id",
       title: "タイトル",
@@ -183,7 +203,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     expect(edit_suggestion.draft?).to be false
@@ -220,6 +240,11 @@ RSpec.describe EditSuggestion do
       locale: Locale::Ja,
       time_zone: "Asia/Tokyo"
     )
+    space_member = SpaceMember.new(
+      database_id: "space_member_id",
+      space:,
+      user:
+    )
 
     draft = EditSuggestion.new(
       database_id: "id",
@@ -231,7 +256,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     open = EditSuggestion.new(
@@ -244,7 +269,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     applied = EditSuggestion.new(
@@ -257,7 +282,7 @@ RSpec.describe EditSuggestion do
       updated_at: Time.current,
       space:,
       topic:,
-      created_user: user
+      created_space_member: space_member
     )
 
     expect(draft.editable?).to be true
