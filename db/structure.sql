@@ -242,7 +242,7 @@ CREATE TABLE public.page_revisions (
     body_html text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    title public.citext
+    title public.citext NOT NULL
 );
 
 
@@ -1304,6 +1304,7 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250920082216'),
 ('20250920074019'),
 ('20250830075516'),
 ('20250830075345'),
