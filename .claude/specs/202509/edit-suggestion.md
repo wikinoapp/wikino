@@ -95,11 +95,11 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ### 2. トピックページへのタブ追加
 
-- [ ] Topics::TabsComponentの作成
-- [ ] Topics::ShowControllerの修正（タブ表示対応）
-- [ ] ルーティングの追加
+- [x] Topics::TabsComponentの作成
+- [x] Topics::ShowControllerの修正（タブ表示対応）
+- [x] ルーティングの追加
   - GET /s/:space_identifier/topics/:topic_number/edit_suggestions
-- [ ] テスト作成
+- [x] テスト作成
   - コンポーネントのテスト
   - システムテスト（タブ表示確認）
 
