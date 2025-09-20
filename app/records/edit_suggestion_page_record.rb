@@ -12,6 +12,10 @@ class EditSuggestionPageRecord < ApplicationRecord
 
   has_many :revision_records, foreign_key: :edit_suggestion_page_id, class_name: "EditSuggestionPageRevisionRecord", dependent: :restrict_with_exception
 
+  # 循環参照の問題を避けるため `edit_suggestion_pages.latest_revision_id` ではNULLを許容している
+  # ただし、レコード更新時は必ずセットされて欲しいのでバリデーションでチェックする
+  validates :latest_revision_id, presence: true, unless: :new_record?
+
   sig { returns(T::Boolean) }
   def new_page?
     page_id.nil? && page_revision_id.nil?
