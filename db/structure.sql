@@ -11,6 +11,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
@@ -167,6 +174,23 @@ CREATE TABLE public.edit_suggestion_comments (
 
 
 --
+-- Name: edit_suggestion_page_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.edit_suggestion_page_revisions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    edit_suggestion_page_id uuid NOT NULL,
+    editor_space_member_id uuid NOT NULL,
+    title public.citext NOT NULL,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: edit_suggestion_pages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -176,10 +200,9 @@ CREATE TABLE public.edit_suggestion_pages (
     edit_suggestion_id uuid NOT NULL,
     page_id uuid,
     page_revision_id uuid,
-    title public.citext NOT NULL,
-    body public.citext NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    latest_revision_id uuid
 );
 
 
@@ -510,6 +533,14 @@ ALTER TABLE ONLY public.edit_suggestion_comments
 
 
 --
+-- Name: edit_suggestion_page_revisions edit_suggestion_page_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_page_revisions
+    ADD CONSTRAINT edit_suggestion_page_revisions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: edit_suggestion_pages edit_suggestion_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -654,6 +685,20 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: idx_on_edit_suggestion_page_id_b2797ca40b; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_edit_suggestion_page_id_b2797ca40b ON public.edit_suggestion_page_revisions USING btree (edit_suggestion_page_id);
+
+
+--
+-- Name: idx_on_edit_suggestion_page_id_created_at_155e14c0bd; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_edit_suggestion_page_id_created_at_155e14c0bd ON public.edit_suggestion_page_revisions USING btree (edit_suggestion_page_id, created_at);
+
+
+--
 -- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -780,6 +825,20 @@ CREATE INDEX index_edit_suggestion_comments_on_space_id ON public.edit_suggestio
 
 
 --
+-- Name: index_edit_suggestion_page_revisions_on_editor_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_edit_suggestion_page_revisions_on_editor_space_member_id ON public.edit_suggestion_page_revisions USING btree (editor_space_member_id);
+
+
+--
+-- Name: index_edit_suggestion_page_revisions_on_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_edit_suggestion_page_revisions_on_space_id ON public.edit_suggestion_page_revisions USING btree (space_id);
+
+
+--
 -- Name: index_edit_suggestion_pages_on_edit_suggestion_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -791,6 +850,13 @@ CREATE INDEX index_edit_suggestion_pages_on_edit_suggestion_id ON public.edit_su
 --
 
 CREATE UNIQUE INDEX index_edit_suggestion_pages_on_edit_suggestion_id_and_page_id ON public.edit_suggestion_pages USING btree (edit_suggestion_id, page_id);
+
+
+--
+-- Name: index_edit_suggestion_pages_on_latest_revision_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_edit_suggestion_pages_on_latest_revision_id ON public.edit_suggestion_pages USING btree (latest_revision_id);
 
 
 --
@@ -1257,6 +1323,14 @@ ALTER TABLE ONLY public.page_editors
 
 
 --
+-- Name: edit_suggestion_pages fk_rails_4226ebc7a6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_pages
+    ADD CONSTRAINT fk_rails_4226ebc7a6 FOREIGN KEY (latest_revision_id) REFERENCES public.edit_suggestion_page_revisions(id);
+
+
+--
 -- Name: edit_suggestion_pages fk_rails_42ff6f1c8f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1278,6 +1352,22 @@ ALTER TABLE ONLY public.edit_suggestion_pages
 
 ALTER TABLE ONLY public.topic_members
     ADD CONSTRAINT fk_rails_50149efe6b FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
+-- Name: edit_suggestion_page_revisions fk_rails_532e04880c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_page_revisions
+    ADD CONSTRAINT fk_rails_532e04880c FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: edit_suggestion_page_revisions fk_rails_5814416d56; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_page_revisions
+    ADD CONSTRAINT fk_rails_5814416d56 FOREIGN KEY (editor_space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -1433,6 +1523,14 @@ ALTER TABLE ONLY public.space_members
 
 
 --
+-- Name: edit_suggestion_page_revisions fk_rails_a82154c5a6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_page_revisions
+    ADD CONSTRAINT fk_rails_a82154c5a6 FOREIGN KEY (edit_suggestion_page_id) REFERENCES public.edit_suggestion_pages(id);
+
+
+--
 -- Name: export_statuses fk_rails_a8d9f2050b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1543,6 +1641,10 @@ ALTER TABLE ONLY public.user_two_factor_auths
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250920173050'),
+('20250920173027'),
+('20250920172844'),
+('20250920172818'),
 ('20250920082216'),
 ('20250920074019'),
 ('20250918173549'),
