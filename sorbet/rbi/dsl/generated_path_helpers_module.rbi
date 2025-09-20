@@ -208,6 +208,9 @@ module GeneratedPathHelpersModule
   def terms_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def topic_edit_suggestion_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def topic_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

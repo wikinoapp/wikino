@@ -208,6 +208,9 @@ module GeneratedUrlHelpersModule
   def terms_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def topic_edit_suggestion_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
