@@ -8,10 +8,9 @@ class CreateEditSuggestionPages < ActiveRecord::Migration[8.0]
       t.references :space, type: :uuid, null: false, foreign_key: true
       t.references :edit_suggestion, type: :uuid, null: false, foreign_key: true
       t.references :page, type: :uuid, foreign_key: true
-      t.string :title_before
-      t.string :title_after
-      t.text :body_before
-      t.text :body_after
+      t.references :page_revision, type: :uuid, null: false, foreign_key: true
+      t.citext :title
+      t.citext :body
       t.timestamps
 
       t.index [:edit_suggestion_id, :page_id], unique: true
