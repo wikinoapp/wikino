@@ -35,9 +35,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "member")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: user_record)
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -52,9 +52,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "member")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: other_user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: other_user_record)
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -68,9 +68,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "admin")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: user_record)
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -84,9 +84,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "member")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: user_record)
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -103,9 +103,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "member")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: user_record)
 
     creator_policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
     expect(creator_policy.can_close_edit_suggestion?(edit_suggestion_record:)).to be true
@@ -125,9 +125,9 @@ RSpec.describe TopicMemberPolicy do
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
     topic_member_record = FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, role: "member")
     edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
-      space: space_record,
-      topic: topic_record,
-      created_user: user_record)
+      space_record:,
+      topic_record:,
+      created_user_record: user_record)
 
     policy = TopicMemberPolicy.new(user_record:, space_member_record:, topic_member_record:)
 

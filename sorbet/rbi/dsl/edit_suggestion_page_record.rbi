@@ -7,7 +7,6 @@
 
 class EditSuggestionPageRecord
   include GeneratedAssociationMethods
-  include GeneratedAttributeMethods
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -286,7 +285,7 @@ class EditSuggestionPageRecord
     sig { returns(::EditSuggestionPageRecord) }
     def fourth!; end
 
-    sig { returns(T::Array[T.untyped]) }
+    sig { returns(Array) }
     def ids; end
 
     sig do
@@ -427,37 +426,46 @@ class EditSuggestionPageRecord
   end
 
   module GeneratedAssociationMethods
-    sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def build_edit_suggestion_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def build_page_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
+    def build_page_revision_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def build_space_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_edit_suggestion_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_edit_suggestion_record!(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_page_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::PageRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_page_record!(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
+    def create_page_revision_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
+    def create_page_revision_record!(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_space_record(*args, &blk); end
 
-    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
+    sig { params(args: T.untyped, blk: T.untyped).returns(T.untyped) }
     def create_space_record!(*args, &blk); end
 
-    sig { returns(T.nilable(::EditSuggestionRecord)) }
+    sig { returns(T.untyped) }
     def edit_suggestion_record; end
 
-    sig { params(value: T.nilable(::EditSuggestionRecord)).void }
+    sig { params(value: T.untyped).void }
     def edit_suggestion_record=(value); end
 
     sig { returns(T::Boolean) }
@@ -466,10 +474,10 @@ class EditSuggestionPageRecord
     sig { returns(T::Boolean) }
     def edit_suggestion_record_previously_changed?; end
 
-    sig { returns(T.nilable(::PageRecord)) }
+    sig { returns(T.untyped) }
     def page_record; end
 
-    sig { params(value: T.nilable(::PageRecord)).void }
+    sig { params(value: T.untyped).void }
     def page_record=(value); end
 
     sig { returns(T::Boolean) }
@@ -478,13 +486,28 @@ class EditSuggestionPageRecord
     sig { returns(T::Boolean) }
     def page_record_previously_changed?; end
 
-    sig { returns(T.nilable(::EditSuggestionRecord)) }
+    sig { returns(T.untyped) }
+    def page_revision_record; end
+
+    sig { params(value: T.untyped).void }
+    def page_revision_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def page_revision_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def page_revision_record_previously_changed?; end
+
+    sig { returns(T.untyped) }
     def reload_edit_suggestion_record; end
 
-    sig { returns(T.nilable(::PageRecord)) }
+    sig { returns(T.untyped) }
     def reload_page_record; end
 
-    sig { returns(T.nilable(::SpaceRecord)) }
+    sig { returns(T.untyped) }
+    def reload_page_revision_record; end
+
+    sig { returns(T.untyped) }
     def reload_space_record; end
 
     sig { void }
@@ -494,12 +517,15 @@ class EditSuggestionPageRecord
     def reset_page_record; end
 
     sig { void }
+    def reset_page_revision_record; end
+
+    sig { void }
     def reset_space_record; end
 
-    sig { returns(T.nilable(::SpaceRecord)) }
+    sig { returns(T.untyped) }
     def space_record; end
 
-    sig { params(value: T.nilable(::SpaceRecord)).void }
+    sig { params(value: T.untyped).void }
     def space_record=(value); end
 
     sig { returns(T::Boolean) }
@@ -656,635 +682,6 @@ class EditSuggestionPageRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def without(*args, &blk); end
-  end
-
-  module GeneratedAttributeMethods
-    sig { returns(T.nilable(::String)) }
-    def body_after; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def body_after=(value); end
-
-    sig { returns(T::Boolean) }
-    def body_after?; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_after_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def body_after_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def body_after_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_after_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_after_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_after_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_after_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_after_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_after_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_after_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_after_was; end
-
-    sig { void }
-    def body_after_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_before; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def body_before=(value); end
-
-    sig { returns(T::Boolean) }
-    def body_before?; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_before_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def body_before_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def body_before_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_before_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_before_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_before_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_before_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def body_before_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def body_before_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def body_before_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def body_before_was; end
-
-    sig { void }
-    def body_before_will_change!; end
-
-    sig { returns(::ActiveSupport::TimeWithZone) }
-    def created_at; end
-
-    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
-    def created_at=(value); end
-
-    sig { returns(T::Boolean) }
-    def created_at?; end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def created_at_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def created_at_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def created_at_came_from_user?; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def created_at_change; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def created_at_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def created_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def created_at_in_database; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def created_at_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def created_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def created_at_previously_was; end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def created_at_was; end
-
-    sig { void }
-    def created_at_will_change!; end
-
-    sig { returns(::String) }
-    def edit_suggestion_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def edit_suggestion_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def edit_suggestion_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def edit_suggestion_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def edit_suggestion_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def edit_suggestion_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def edit_suggestion_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def edit_suggestion_id_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def edit_suggestion_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def edit_suggestion_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def edit_suggestion_id_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def edit_suggestion_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def edit_suggestion_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def edit_suggestion_id_was; end
-
-    sig { void }
-    def edit_suggestion_id_will_change!; end
-
-    sig { returns(::String) }
-    def id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def id=(value); end
-
-    sig { returns(T::Boolean) }
-    def id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def id_previously_was; end
-
-    sig { returns(::String) }
-    def id_value; end
-
-    sig { params(value: ::String).returns(::String) }
-    def id_value=(value); end
-
-    sig { returns(T::Boolean) }
-    def id_value?; end
-
-    sig { returns(T.nilable(::String)) }
-    def id_value_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def id_value_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def id_value_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_value_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_value_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def id_value_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def id_value_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def id_value_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def id_value_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def id_value_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def id_value_was; end
-
-    sig { void }
-    def id_value_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
-    def id_was; end
-
-    sig { void }
-    def id_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
-    def page_id; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def page_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def page_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def page_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def page_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def page_id_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def page_id_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def page_id_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def page_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def page_id_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def page_id_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def page_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def page_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def page_id_was; end
-
-    sig { void }
-    def page_id_will_change!; end
-
-    sig { void }
-    def restore_body_after!; end
-
-    sig { void }
-    def restore_body_before!; end
-
-    sig { void }
-    def restore_created_at!; end
-
-    sig { void }
-    def restore_edit_suggestion_id!; end
-
-    sig { void }
-    def restore_id!; end
-
-    sig { void }
-    def restore_id_value!; end
-
-    sig { void }
-    def restore_page_id!; end
-
-    sig { void }
-    def restore_space_id!; end
-
-    sig { void }
-    def restore_title_after!; end
-
-    sig { void }
-    def restore_title_before!; end
-
-    sig { void }
-    def restore_updated_at!; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_body_after; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_body_after?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_body_before; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_body_before?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def saved_change_to_created_at; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_edit_suggestion_id; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_edit_suggestion_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_id; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_id_value; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_page_id; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_page_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def saved_change_to_space_id; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_title_after; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_title_after?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def saved_change_to_title_before; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_title_before?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def saved_change_to_updated_at; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_updated_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(::String) }
-    def space_id; end
-
-    sig { params(value: ::String).returns(::String) }
-    def space_id=(value); end
-
-    sig { returns(T::Boolean) }
-    def space_id?; end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def space_id_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def space_id_came_from_user?; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_change; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def space_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_in_database; end
-
-    sig { returns(T.nilable([::String, ::String])) }
-    def space_id_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def space_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def space_id_was; end
-
-    sig { void }
-    def space_id_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_after; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def title_after=(value); end
-
-    sig { returns(T::Boolean) }
-    def title_after?; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_after_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def title_after_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def title_after_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_after_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_after_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def title_after_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def title_after_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_after_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def title_after_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def title_after_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_after_was; end
-
-    sig { void }
-    def title_after_will_change!; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_before; end
-
-    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-    def title_before=(value); end
-
-    sig { returns(T::Boolean) }
-    def title_before?; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_before_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def title_before_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def title_before_came_from_user?; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_before_change; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_before_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def title_before_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def title_before_in_database; end
-
-    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
-    def title_before_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def title_before_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::String)) }
-    def title_before_previously_was; end
-
-    sig { returns(T.nilable(::String)) }
-    def title_before_was; end
-
-    sig { void }
-    def title_before_will_change!; end
-
-    sig { returns(::ActiveSupport::TimeWithZone) }
-    def updated_at; end
-
-    sig { params(value: ::ActiveSupport::TimeWithZone).returns(::ActiveSupport::TimeWithZone) }
-    def updated_at=(value); end
-
-    sig { returns(T::Boolean) }
-    def updated_at?; end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def updated_at_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def updated_at_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def updated_at_came_from_user?; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def updated_at_change; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def updated_at_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def updated_at_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def updated_at_in_database; end
-
-    sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
-    def updated_at_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def updated_at_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def updated_at_previously_was; end
-
-    sig { returns(T.nilable(::ActiveSupport::TimeWithZone)) }
-    def updated_at_was; end
-
-    sig { void }
-    def updated_at_will_change!; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_body_after?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_body_before?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_edit_suggestion_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_id_value?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_page_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_title_after?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_title_before?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_updated_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
   end
 
   module GeneratedRelationMethods
