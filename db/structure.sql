@@ -167,7 +167,7 @@ CREATE TABLE public.edit_suggestion_comments (
     edit_suggestion_id uuid NOT NULL,
     created_user_id uuid NOT NULL,
     body text NOT NULL,
-    body_html text,
+    body_html text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -182,10 +182,9 @@ CREATE TABLE public.edit_suggestion_pages (
     space_id uuid NOT NULL,
     edit_suggestion_id uuid NOT NULL,
     page_id uuid,
-    title_before character varying,
-    title_after character varying,
-    body_before text,
-    body_after text,
+    page_revision_id uuid,
+    title public.citext NOT NULL,
+    body public.citext NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -201,8 +200,8 @@ CREATE TABLE public.edit_suggestions (
     topic_id uuid NOT NULL,
     created_user_id uuid NOT NULL,
     title character varying NOT NULL,
-    description text,
-    status character varying DEFAULT 'draft'::character varying NOT NULL,
+    description text NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
     applied_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -809,6 +808,13 @@ CREATE INDEX index_edit_suggestion_pages_on_page_id ON public.edit_suggestion_pa
 
 
 --
+-- Name: index_edit_suggestion_pages_on_page_revision_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_edit_suggestion_pages_on_page_revision_id ON public.edit_suggestion_pages USING btree (page_revision_id);
+
+
+--
 -- Name: index_edit_suggestion_pages_on_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1242,6 +1248,14 @@ ALTER TABLE ONLY public.page_attachment_references
 
 
 --
+-- Name: edit_suggestion_pages fk_rails_3401ded95d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_pages
+    ADD CONSTRAINT fk_rails_3401ded95d FOREIGN KEY (page_revision_id) REFERENCES public.page_revisions(id);
+
+
+--
 -- Name: page_editors fk_rails_3b3700fcdf; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1538,7 +1552,6 @@ SET search_path TO "$user", public;
 INSERT INTO "schema_migrations" (version) VALUES
 ('20250920082216'),
 ('20250920074019'),
-('20250918174153'),
 ('20250918173549'),
 ('20250918173527'),
 ('20250918173454'),
