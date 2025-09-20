@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :edit_suggestion_record, class: "EditSuggestionRecord" do
-    association :space, factory: :space_record
-    association :topic, factory: :topic_record
-    association :created_user, factory: :user_record
+  factory :edit_suggestion_record do
+    space_record
+    topic_record
+    association :created_user_record, factory: :user_record
     title { "編集提案タイトル" }
     description { "編集提案の説明" }
     status { EditSuggestionStatus::Draft.serialize }
