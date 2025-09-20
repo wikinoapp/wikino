@@ -10,7 +10,7 @@ class CreateEditSuggestions < ActiveRecord::Migration[8.0]
       t.references :created_user, type: :uuid, null: false, foreign_key: {to_table: :users}
       t.string :title, null: false
       t.text :description
-      t.string :status, null: false, default: "draft"
+      t.integer :status, null: false, default: 0
       t.datetime :applied_at
       t.timestamps
 
