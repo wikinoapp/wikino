@@ -9,7 +9,7 @@ class CreateEditSuggestionComments < ActiveRecord::Migration[8.0]
       t.references :edit_suggestion, type: :uuid, null: false, foreign_key: true
       t.references :created_user, type: :uuid, null: false, foreign_key: {to_table: :users}
       t.text :body, null: false
-      t.text :body_html
+      t.text :body_html, null: false
       t.timestamps
     end
   end

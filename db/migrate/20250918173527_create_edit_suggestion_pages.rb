@@ -13,7 +13,7 @@ class CreateEditSuggestionPages < ActiveRecord::Migration[8.0]
       t.citext :body
       t.timestamps
 
-      t.index [:edit_suggestion_id, :page_id], unique: true
+      t.index %i[edit_suggestion_id page_id], unique: true
     end
   end
 end
