@@ -170,10 +170,11 @@ RSpec.describe TopicGuestPolicy do
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       # ユーザーがいない場合
       policy = TopicGuestPolicy.new(user_record: nil)
@@ -190,10 +191,11 @@ RSpec.describe TopicGuestPolicy do
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       # ユーザーがいない場合
       policy = TopicGuestPolicy.new(user_record: nil)
@@ -210,10 +212,11 @@ RSpec.describe TopicGuestPolicy do
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       # ユーザーがいない場合
       policy = TopicGuestPolicy.new(user_record: nil)
@@ -230,10 +233,11 @@ RSpec.describe TopicGuestPolicy do
       space_record = FactoryBot.create(:space_record)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:, active: true)
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       # ユーザーがいない場合
       policy = TopicGuestPolicy.new(user_record: nil)

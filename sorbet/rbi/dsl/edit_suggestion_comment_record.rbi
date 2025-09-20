@@ -427,11 +427,20 @@ class EditSuggestionCommentRecord
   end
 
   module GeneratedAssociationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def build_created_space_member_record(*args, &blk); end
+
     sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
     def build_edit_suggestion_record(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_created_space_member_record(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
+    def create_created_space_member_record!(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(::EditSuggestionRecord) }
     def create_edit_suggestion_record(*args, &blk); end
@@ -445,6 +454,18 @@ class EditSuggestionCommentRecord
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def create_space_record!(*args, &blk); end
 
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def created_space_member_record; end
+
+    sig { params(value: T.nilable(::SpaceMemberRecord)).void }
+    def created_space_member_record=(value); end
+
+    sig { returns(T::Boolean) }
+    def created_space_member_record_changed?; end
+
+    sig { returns(T::Boolean) }
+    def created_space_member_record_previously_changed?; end
+
     sig { returns(T.nilable(::EditSuggestionRecord)) }
     def edit_suggestion_record; end
 
@@ -457,11 +478,17 @@ class EditSuggestionCommentRecord
     sig { returns(T::Boolean) }
     def edit_suggestion_record_previously_changed?; end
 
+    sig { returns(T.nilable(::SpaceMemberRecord)) }
+    def reload_created_space_member_record; end
+
     sig { returns(T.nilable(::EditSuggestionRecord)) }
     def reload_edit_suggestion_record; end
 
     sig { returns(T.nilable(::SpaceRecord)) }
     def reload_space_record; end
+
+    sig { void }
+    def reset_created_space_member_record; end
 
     sig { void }
     def reset_edit_suggestion_record; end

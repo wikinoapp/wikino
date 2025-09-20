@@ -99,7 +99,7 @@ class TopicAdminPolicy < ApplicationPolicy
     return false unless active?
     return false unless in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
 
-    edit_suggestion_record.created_user_id == space_member_record.user_id
+    edit_suggestion_record.created_space_member_id == space_member_record.id
   end
 
   # Topic Adminは編集提案を反映可能

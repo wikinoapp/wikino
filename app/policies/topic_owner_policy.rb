@@ -96,7 +96,7 @@ class TopicOwnerPolicy < ApplicationPolicy
     return false unless active?
     return false unless in_same_space?(space_record_id: edit_suggestion_record.space_id)
 
-    edit_suggestion_record.created_user_id == space_member_record.user_id
+    edit_suggestion_record.created_space_member_id == space_member_record.id
   end
 
   # Topic Ownerは同じスペースの編集提案を反映可能

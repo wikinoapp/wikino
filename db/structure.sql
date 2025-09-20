@@ -11,13 +11,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
@@ -165,7 +158,7 @@ CREATE TABLE public.edit_suggestion_comments (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     edit_suggestion_id uuid NOT NULL,
-    created_user_id uuid NOT NULL,
+    created_space_member_id uuid NOT NULL,
     body text NOT NULL,
     body_html text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -198,7 +191,7 @@ CREATE TABLE public.edit_suggestions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     topic_id uuid NOT NULL,
-    created_user_id uuid NOT NULL,
+    created_space_member_id uuid NOT NULL,
     title character varying NOT NULL,
     description text NOT NULL,
     status integer DEFAULT 0 NOT NULL,
@@ -766,10 +759,10 @@ CREATE INDEX index_draft_pages_on_topic_id ON public.draft_pages USING btree (to
 
 
 --
--- Name: index_edit_suggestion_comments_on_created_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_edit_suggestion_comments_on_created_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_edit_suggestion_comments_on_created_user_id ON public.edit_suggestion_comments USING btree (created_user_id);
+CREATE INDEX index_edit_suggestion_comments_on_created_space_member_id ON public.edit_suggestion_comments USING btree (created_space_member_id);
 
 
 --
@@ -822,10 +815,10 @@ CREATE INDEX index_edit_suggestion_pages_on_space_id ON public.edit_suggestion_p
 
 
 --
--- Name: index_edit_suggestions_on_created_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_edit_suggestions_on_created_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_edit_suggestions_on_created_user_id ON public.edit_suggestions USING btree (created_user_id);
+CREATE INDEX index_edit_suggestions_on_created_space_member_id ON public.edit_suggestions USING btree (created_space_member_id);
 
 
 --
@@ -1296,11 +1289,11 @@ ALTER TABLE ONLY public.pages
 
 
 --
--- Name: edit_suggestions fk_rails_64a9fee8ac; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: edit_suggestions fk_rails_644fb6c6f3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.edit_suggestions
-    ADD CONSTRAINT fk_rails_64a9fee8ac FOREIGN KEY (created_user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT fk_rails_644fb6c6f3 FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
 
 
 --
@@ -1400,14 +1393,6 @@ ALTER TABLE ONLY public.draft_pages
 
 
 --
--- Name: edit_suggestion_comments fk_rails_8f401e3066; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.edit_suggestion_comments
-    ADD CONSTRAINT fk_rails_8f401e3066 FOREIGN KEY (created_user_id) REFERENCES public.users(id);
-
-
---
 -- Name: edit_suggestions fk_rails_98b4a981b3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1453,6 +1438,14 @@ ALTER TABLE ONLY public.space_members
 
 ALTER TABLE ONLY public.export_statuses
     ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
+
+
+--
+-- Name: edit_suggestion_comments fk_rails_a97c7adbe3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_comments
+    ADD CONSTRAINT fk_rails_a97c7adbe3 FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
 
 
 --

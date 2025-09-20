@@ -177,7 +177,7 @@ RSpec.describe TopicAdminPolicy do
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       policy = TopicAdminPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -195,7 +195,7 @@ RSpec.describe TopicAdminPolicy do
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       policy = TopicAdminPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -214,7 +214,7 @@ RSpec.describe TopicAdminPolicy do
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: other_user_record)
+        created_space_member_record: space_member_record)
 
       policy = TopicAdminPolicy.new(user_record:, space_member_record:, topic_member_record:)
 
@@ -232,7 +232,7 @@ RSpec.describe TopicAdminPolicy do
       edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
         space_record:,
         topic_record:,
-        created_user_record: user_record)
+        created_space_member_record: space_member_record)
 
       policy = TopicAdminPolicy.new(user_record:, space_member_record:, topic_member_record:)
 

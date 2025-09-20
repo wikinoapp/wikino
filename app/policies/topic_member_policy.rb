@@ -97,7 +97,7 @@ class TopicMemberPolicy < ApplicationPolicy
     return false unless active?
     return false unless in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
 
-    edit_suggestion_record.created_user_id == space_member_record.not_nil!.user_id
+    edit_suggestion_record.created_space_member_id == space_member_record.not_nil!.id
   end
 
   sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
@@ -111,7 +111,7 @@ class TopicMemberPolicy < ApplicationPolicy
   sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
   def can_close_edit_suggestion?(edit_suggestion_record:)
     can_apply_edit_suggestion?(edit_suggestion_record:) ||
-      edit_suggestion_record.created_user_id == space_member_record.not_nil!.user_id
+      edit_suggestion_record.created_space_member_id == space_member_record.not_nil!.id
   end
 
   sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
