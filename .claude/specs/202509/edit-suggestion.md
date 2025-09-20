@@ -61,23 +61,33 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 - [x] マイグレーションファイルの作成
   - 編集提案テーブル (`edit_suggestions`)
     - id, space_id, topic_id, created_user_id, title, description, status, applied_at, created_at, updated_at
+    - インデックス: status, [topic_id, status]
   - 編集提案ページテーブル (`edit_suggestion_pages`)
-    - id, space_id, edit_suggestion_id, page_id, title_before, title_after, body_before, body_after
+    - id, space_id, edit_suggestion_id, page_id, page_revision_id, title, body, created_at, updated_at
+    - page_id, page_revision_idはoptional（新規ページ作成の場合）
+    - ユニークインデックス: [edit_suggestion_id, page_id]
   - 編集提案コメントテーブル (`edit_suggestion_comments`)
     - id, space_id, edit_suggestion_id, created_user_id, body, body_html, created_at, updated_at
 - [x] レコードクラスの作成
-  - EditSuggestionRecord
-  - EditSuggestionPageRecord
+  - EditSuggestionRecord（enum、スコープ、関連付けを含む）
+  - EditSuggestionPageRecord（新規ページ判定、変更検知メソッドを含む）
   - EditSuggestionCommentRecord
 - [x] モデル・リポジトリの作成
-  - EditSuggestionモデル
-  - EditSuggestionRepository
+  - EditSuggestionモデル（ステータス判定メソッドを含む）
+  - EditSuggestionStatusモデル（T::Enum）
+  - EditSuggestionRepository（N+1対策を含む）
 - [x] ポリシーの実装
-  - TopicMemberPolicyなどの既存ポリシーに編集提案関連の権限を追加
+  - TopicPermissionsモジュールに編集提案関連メソッドを追加
+  - TopicMemberPolicy、TopicAdminPolicy、TopicOwnerPolicy、TopicGuestPolicyに実装
+    - can_create_edit_suggestion?
+    - can_update_edit_suggestion?（作成者のみ）
+    - can_apply_edit_suggestion?（権限者のみ）
+    - can_close_edit_suggestion?（権限者または作成者）
+    - can_comment_on_edit_suggestion?
 - [x] テスト作成
-  - レコードのFactoryBot定義
-  - モデルのユニットテスト
-  - ポリシーのテスト
+  - レコードのFactoryBot定義（トレイト含む）
+  - EditSuggestionモデルのユニットテスト（ステータス判定メソッド）
+  - 全ポリシークラスの編集提案関連権限テスト
 
 ### 2. トピックページへのタブ追加
 
