@@ -87,6 +87,38 @@ class TopicMemberPolicy < ApplicationPolicy
     active? && in_same_topic?(topic_record_id: page_record.topic_id)
   end
 
+  sig { override.returns(T::Boolean) }
+  def can_create_edit_suggestion?
+    active? && space_member_record.present?
+  end
+
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_update_edit_suggestion?(edit_suggestion_record:)
+    return false unless active?
+    return false unless in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
+
+    edit_suggestion_record.created_space_member_id == space_member_record.not_nil!.id
+  end
+
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_apply_edit_suggestion?(edit_suggestion_record:)
+    return false unless active?
+    return false unless in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
+
+    topic_member_record.not_nil!.role_admin? || topic_member_record.not_nil!.role_member?
+  end
+
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_close_edit_suggestion?(edit_suggestion_record:)
+    can_apply_edit_suggestion?(edit_suggestion_record:) ||
+      edit_suggestion_record.created_space_member_id == space_member_record.not_nil!.id
+  end
+
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_comment_on_edit_suggestion?(edit_suggestion_record:)
+    active? && in_same_topic?(topic_record_id: edit_suggestion_record.topic_id)
+  end
+
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record

@@ -158,6 +158,20 @@ Model.includes(:association)
 # ✅ 明示的にpreloadまたはeager_loadを使用
 Model.preload(:association)   # 別クエリで取得（基本はこちら）
 Model.eager_load(:association) # JOINで取得（関連テーブルでフィルタリング時）
+
+# ✅ アソシエーションには_recordまたは_recordsサフィックスを付ける
+belongs_to :user_record, foreign_key: :user_id
+has_many :comment_records, foreign_key: :post_id, dependent: :restrict_with_exception
+
+# ❌ サフィックスなしのアソシエーション名は避ける
+belongs_to :user, class_name: "UserRecord"
+has_many :comments, class_name: "CommentRecord"
+
+# ✅ has_manyのdependentオプションは:restrict_with_exceptionを使用
+has_many :post_records, dependent: :restrict_with_exception
+
+# ❌ :destroyや:delete_allは避ける
+has_many :post_records, dependent: :destroy
 ```
 
 ### マイグレーション
@@ -166,6 +180,14 @@ Model.eager_load(:association) # JOINで取得（関連テーブルでフィル�
 create_table :examples, id: false do |t|
   # ULIDを使用
   t.uuid :id, default: "generate_ulid()", null: false, primary_key: true
+
+  # ✅ 外部キーはt.referencesを使用
+  t.references :user, type: :uuid, null: false, foreign_key: true
+  t.references :created_by, type: :uuid, null: false, foreign_key: {to_table: :users}
+
+  # ❌ 外部キーカラムを直接定義してadd_foreign_keyするのは避ける
+  # t.uuid :user_id, null: false
+  # add_foreign_key :examples, :users, column: :user_id
 end
 ```
 
