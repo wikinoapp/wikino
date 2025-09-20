@@ -151,4 +151,97 @@ RSpec.describe TopicGuestPolicy do
       expect(policy.can_trash_page?(page_record:)).to be(false)
     end
   end
+
+  describe "#can_create_edit_suggestion?" do
+    it "Topic Guestは編集提案を作成できないこと" do
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_create_edit_suggestion?).to be false
+
+      # ユーザーがいる場合でも作成不可
+      user_record = FactoryBot.create(:user_record)
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_create_edit_suggestion?).to be false
+    end
+  end
+
+  describe "#can_update_edit_suggestion?" do
+    it "Topic Guestは編集提案を更新できないこと" do
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      user_record = FactoryBot.create(:user_record)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_user_record: user_record)
+
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_update_edit_suggestion?(edit_suggestion_record:)).to be false
+
+      # ユーザーがいる場合でも更新不可
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_update_edit_suggestion?(edit_suggestion_record:)).to be false
+    end
+  end
+
+  describe "#can_apply_edit_suggestion?" do
+    it "Topic Guestは編集提案を反映できないこと" do
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      user_record = FactoryBot.create(:user_record)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_user_record: user_record)
+
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be false
+
+      # ユーザーがいる場合でも反映不可
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_apply_edit_suggestion?(edit_suggestion_record:)).to be false
+    end
+  end
+
+  describe "#can_close_edit_suggestion?" do
+    it "Topic Guestは編集提案をクローズできないこと" do
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      user_record = FactoryBot.create(:user_record)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_user_record: user_record)
+
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_close_edit_suggestion?(edit_suggestion_record:)).to be false
+
+      # ユーザーがいる場合でもクローズ不可
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_close_edit_suggestion?(edit_suggestion_record:)).to be false
+    end
+  end
+
+  describe "#can_comment_on_edit_suggestion?" do
+    it "Topic Guestは編集提案にコメントできないこと" do
+      space_record = FactoryBot.create(:space_record)
+      topic_record = FactoryBot.create(:topic_record, space_record:)
+      user_record = FactoryBot.create(:user_record)
+      edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+        space_record:,
+        topic_record:,
+        created_user_record: user_record)
+
+      # ユーザーがいない場合
+      policy = TopicGuestPolicy.new(user_record: nil)
+      expect(policy.can_comment_on_edit_suggestion?(edit_suggestion_record:)).to be false
+
+      # ユーザーがいる場合でもコメント不可
+      policy = TopicGuestPolicy.new(user_record:)
+      expect(policy.can_comment_on_edit_suggestion?(edit_suggestion_record:)).to be false
+    end
+  end
 end

@@ -69,4 +69,34 @@ class TopicGuestPolicy < ApplicationPolicy
   def can_trash_page?(page_record:)
     false
   end
+
+  # Topic Guestは編集提案を作成不可
+  sig { override.returns(T::Boolean) }
+  def can_create_edit_suggestion?
+    false
+  end
+
+  # Topic Guestは編集提案を更新不可
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_update_edit_suggestion?(edit_suggestion_record:)
+    false
+  end
+
+  # Topic Guestは編集提案を反映不可
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_apply_edit_suggestion?(edit_suggestion_record:)
+    false
+  end
+
+  # Topic Guestは編集提案をクローズ不可
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_close_edit_suggestion?(edit_suggestion_record:)
+    false
+  end
+
+  # Topic Guestは編集提案にコメント不可
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_comment_on_edit_suggestion?(edit_suggestion_record:)
+    false
+  end
 end
