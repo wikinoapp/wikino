@@ -231,10 +231,10 @@ class PageRecord < ApplicationRecord
       editor_record: SpaceMemberRecord,
       body: String,
       body_html: String,
-      title: T.nilable(String)
+      title: String
     ).returns(PageRevisionRecord)
   end
-  def create_revision!(editor_record:, body:, body_html:, title: nil)
+  def create_revision!(editor_record:, body:, body_html:, title:)
     revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:, title:)
   end
 
