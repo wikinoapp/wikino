@@ -22,27 +22,7 @@ class EditSuggestionRecord < ApplicationRecord
   scope :closed_or_applied, -> { where(status: [EditSuggestionStatus::Closed.serialize, EditSuggestionStatus::Applied.serialize]) }
 
   sig { returns(T::Boolean) }
-  def draft?
-    status == EditSuggestionStatus::Draft.serialize
-  end
-
-  sig { returns(T::Boolean) }
-  def open?
-    status == EditSuggestionStatus::Open.serialize
-  end
-
-  sig { returns(T::Boolean) }
-  def applied?
-    status == EditSuggestionStatus::Applied.serialize
-  end
-
-  sig { returns(T::Boolean) }
-  def closed?
-    status == EditSuggestionStatus::Closed.serialize
-  end
-
-  sig { returns(T::Boolean) }
   def editable?
-    draft? || open?
+    status_draft? || status_open?
   end
 end
