@@ -13,6 +13,14 @@ en:
     dark: Dark
     documents: Documents
     edit_suggestions: Edit suggestions
+    edit_suggestion_status:
+      draft: Draft
+      open: Open
+      applied: Applied
+      closed: Closed
+    edit_suggestion_filter:
+      open: Open
+      closed: Closed
     edit_profile: Edit profile
     error: Error
     export: Export

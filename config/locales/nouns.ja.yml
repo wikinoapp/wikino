@@ -13,6 +13,14 @@ ja:
     dark: ダーク
     documents: ドキュメント
     edit_suggestions: 編集提案
+    edit_suggestion_status:
+      draft: 下書き
+      open: オープン
+      applied: 反映済み
+      closed: クローズ
+    edit_suggestion_filter:
+      open: オープン
+      closed: クローズ
     edit_profile: プロフィール編集
     error: エラー
     export: エクスポート
