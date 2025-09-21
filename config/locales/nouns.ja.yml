@@ -12,6 +12,15 @@ ja:
     current_email: 現在のメールアドレス
     dark: ダーク
     documents: ドキュメント
+    edit_suggestions: 編集提案
+    edit_suggestion_status:
+      draft: 下書き
+      open: オープン
+      applied: 反映済み
+      closed: クローズ
+    edit_suggestion_filter:
+      open: オープン
+      closed: クローズ
     edit_profile: プロフィール編集
     error: エラー
     export: エクスポート
@@ -34,6 +43,7 @@ ja:
     next_page: 次のページ
     optional: 任意
     page_title: ページタイトル
+    pages: ページ
     pages_in_space: スペース内のページ
     pinned_pages: ピン留めされたページ
     prev_page: 前のページ

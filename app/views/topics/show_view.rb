@@ -52,5 +52,21 @@ module Topics
     private def current_page_name
       PageName::TopicDetail
     end
+
+    sig { returns(T::Array[Topics::TabsComponent::TabItem]) }
+    private def tabs
+      [
+        Topics::TabsComponent::TabItem.new(
+          label: I18n.t("nouns.pages"),
+          path: topic_path(space.identifier, topic.number),
+          active: true
+        ),
+        Topics::TabsComponent::TabItem.new(
+          label: I18n.t("nouns.edit_suggestions"),
+          path: topic_edit_suggestion_list_path(space.identifier, topic.number),
+          active: false
+        )
+      ]
+    end
   end
 end

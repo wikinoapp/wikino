@@ -84,6 +84,39 @@ class TopicOwnerPolicy < ApplicationPolicy
     active? && in_same_space?(space_record_id: page_record.space_id)
   end
 
+  # Topic Ownerは編集提案を作成可能
+  sig { override.returns(T::Boolean) }
+  def can_create_edit_suggestion?
+    active? && space_member_record.present?
+  end
+
+  # Topic Ownerは自分の編集提案を更新可能
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_update_edit_suggestion?(edit_suggestion_record:)
+    return false unless active?
+    return false unless in_same_space?(space_record_id: edit_suggestion_record.space_id)
+
+    edit_suggestion_record.created_space_member_id == space_member_record.id
+  end
+
+  # Topic Ownerは同じスペースの編集提案を反映可能
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_apply_edit_suggestion?(edit_suggestion_record:)
+    active? && in_same_space?(space_record_id: edit_suggestion_record.space_id)
+  end
+
+  # Topic Ownerは同じスペースの編集提案をクローズ可能
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_close_edit_suggestion?(edit_suggestion_record:)
+    active? && in_same_space?(space_record_id: edit_suggestion_record.space_id)
+  end
+
+  # Topic Ownerは同じスペースの編集提案にコメント可能
+  sig { override.params(edit_suggestion_record: EditSuggestionRecord).returns(T::Boolean) }
+  def can_comment_on_edit_suggestion?(edit_suggestion_record:)
+    active? && in_same_space?(space_record_id: edit_suggestion_record.space_id)
+  end
+
   sig { returns(SpaceMemberRecord) }
   attr_reader :space_member_record
   private :space_member_record

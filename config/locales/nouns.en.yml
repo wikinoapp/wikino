@@ -12,6 +12,15 @@ en:
     current_email: Current email
     dark: Dark
     documents: Documents
+    edit_suggestions: Edit suggestions
+    edit_suggestion_status:
+      draft: Draft
+      open: Open
+      applied: Applied
+      closed: Closed
+    edit_suggestion_filter:
+      open: Open
+      closed: Closed
     edit_profile: Edit profile
     error: Error
     export: Export
@@ -34,6 +43,7 @@ en:
     next_page: Next
     optional: Optional
     page_title: Page title
+    pages: Pages
     pages_in_space: Pages in space
     pinned_pages: Pinned pages
     prev_page: Prev
