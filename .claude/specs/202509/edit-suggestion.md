@@ -105,11 +105,11 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ### 3. 編集提案一覧画面
 
-- [ ] EditSuggestions::IndexControllerの実装
-- [ ] EditSuggestions::IndexViewの実装
-- [ ] EditSuggestions::ListComponentの作成
-- [ ] オープン/クローズのフィルタリング機能
-- [ ] テスト作成
+- [x] EditSuggestions::IndexControllerの実装
+- [x] EditSuggestions::IndexViewの実装
+- [x] EditSuggestions::ListComponentの作成
+- [x] オープン/クローズのフィルタリング機能
+- [x] テスト作成
   - コントローラーのリクエストスペック
   - システムテスト（一覧表示・フィルタリング）
 

@@ -224,3 +224,10 @@ en:
       start_cta: Get Started with Wikino
       wikilink_feature_description_1: Create and link pages using a wikilink syntax.
       wikilink_feature_title: Create and link pages using a wikilink syntax.
+    edit_suggestions:
+      page_count:
+        one: "%{count} page"
+        other: "%{count} pages"
+      empty_state:
+        title: No edit suggestions
+        description: There are no edit suggestions for this topic yet.

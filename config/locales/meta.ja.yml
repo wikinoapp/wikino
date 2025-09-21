@@ -12,6 +12,8 @@ ja:
       topics:
         new: "新規トピック | %{space_name}"
         show: "%{topic_name} | %{space_name}"
+        edit_suggestions:
+          index: "%{topic_name} - 編集提案 - %{space_name}"
         settings:
           deletions:
             new: "トピックの削除 | %{topic_name} | %{space_name}"

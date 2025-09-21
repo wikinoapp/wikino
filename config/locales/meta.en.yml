@@ -12,6 +12,8 @@ en:
       topics:
         new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
+        edit_suggestions:
+          index: "%{topic_name} - Edit Suggestions - %{space_name}"
         settings:
           deletions:
             new: "Delete topic | %{topic_name} | %{space_name}"
