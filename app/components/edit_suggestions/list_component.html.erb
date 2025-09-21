@@ -52,7 +52,7 @@
                     <%# size: "14px", %>
                     <%# class_name: "fill-muted-foreground" %>
                   <%# ) %> %>
-                  <%#= t("edit_suggestions.page_count", count: edit_suggestion.page_count) %>
+                  <%#= t("messages.edit_suggestions.page_count", count: edit_suggestion.page_count) %>
                 <%# </div> %>
               <%# end %>
             </div>
@@ -69,10 +69,10 @@
 <% else %>
   <%= render BaseUI::EmptyStateComponent.new(
     icon_name: "file-plus",
-    message: t("edit_suggestions.empty_state.title")
+    message: t("messages.edit_suggestions.empty_state.title")
   ) do %>
     <div class="text-muted-foreground">
-      <%= t("edit_suggestions.empty_state.description") %>
+      <%= t("messages.edit_suggestions.empty_state.description") %>
     </div>
   <% end %>
 <% end %>

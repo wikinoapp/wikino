@@ -23,13 +23,13 @@ module EditSuggestions
     private def status_label(edit_suggestion:)
       case edit_suggestion.status.serialize
       when EditSuggestionStatus::Draft.serialize
-        I18n.t("edit_suggestions.statuses.draft")
+        I18n.t("nouns.edit_suggestion_status.draft")
       when EditSuggestionStatus::Open.serialize
-        I18n.t("edit_suggestions.statuses.open")
+        I18n.t("nouns.edit_suggestion_status.open")
       when EditSuggestionStatus::Applied.serialize
-        I18n.t("edit_suggestions.statuses.applied")
+        I18n.t("nouns.edit_suggestion_status.applied")
       when EditSuggestionStatus::Closed.serialize
-        I18n.t("edit_suggestions.statuses.closed")
+        I18n.t("nouns.edit_suggestion_status.closed")
       else
         ""
       end

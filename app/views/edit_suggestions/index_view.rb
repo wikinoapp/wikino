@@ -20,7 +20,7 @@ module EditSuggestions
 
     sig { override.void }
     def before_render
-      title = I18n.t("meta.title.edit_suggestions.index", space_name: space.name, topic_name: topic.name)
+      title = I18n.t("meta.title.topics.edit_suggestions.index", space_name: space.name, topic_name: topic.name)
       helpers.set_meta_tags(title:, **default_meta_tags(site: false))
     end
 
@@ -77,13 +77,13 @@ module EditSuggestions
     private def filter_tabs
       [
         {
-          label: I18n.t("edit_suggestions.filters.open"),
+          label: I18n.t("nouns.edit_suggestion_filter.open"),
           path: topic_edit_suggestion_list_path(space.identifier, topic.number, state: "open"),
           active: is_open_filter?,
           count: open_count
         },
         {
-          label: I18n.t("edit_suggestions.filters.closed"),
+          label: I18n.t("nouns.edit_suggestion_filter.closed"),
           path: topic_edit_suggestion_list_path(space.identifier, topic.number, state: "closed"),
           active: !is_open_filter?,
           count: closed_count
