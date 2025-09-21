@@ -88,6 +88,17 @@
                   <%= t("verbs.save") %>
                 <% end %>
 
+                <% if can_create_edit_suggestion %>
+                  <button
+                    type="button"
+                    class="btn-outline w-fit rounded-full"
+                    data-action="click->edit-suggestion-dialog#open"
+                  >
+                    <%= render BaseUI::IconComponent.new(name: "code-pull-request", size: "18px") %>
+                    編集提案する...
+                  </button>
+                <% end %>
+
                 <%= link_to t("nouns.cancel"), page_path(space.identifier, page.number), {
                   class: "btn-ghost rounded-full w-fit"
                 } %>
@@ -114,5 +125,19 @@
         </turbo-frame>
       </div>
     <% end %>
+  <% end %>
+
+  <% if can_create_edit_suggestion %>
+    <%= render EditSuggestions::CreateDialogComponent.new(
+      form: EditSuggestions::CreateForm.new(
+        space_member_record: form.space_member_record,
+        topic_record: topic.instance_variable_get(:@topic_record),
+        page_record: page.instance_variable_get(:@page_record)
+      ),
+      space:,
+      topic:,
+      page:,
+      existing_edit_suggestions:
+    ) %>
   <% end %>
 <% end %>

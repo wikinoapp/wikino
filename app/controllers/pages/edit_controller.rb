@@ -38,6 +38,25 @@ module Pages
       backlink_list = BacklinkListRepository.new.to_model(user_record: current_user_record, page_record:)
       current_user = UserRepository.new.to_model(user_record: current_user_record!)
 
+      # 編集提案の作成が可能かチェック
+      topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
+      can_create_edit_suggestion = topic_policy.can_create_edit_suggestion?
+
+      # 既存の編集提案（自分が作成した下書き/オープンのもの）を取得
+      existing_edit_suggestions = if can_create_edit_suggestion && space_member_record
+        edit_suggestion_records = EditSuggestionRecord
+          .open_or_draft
+          .where(
+            topic_id: page_record.topic_record.not_nil!.id,
+            created_space_member_id: space_member_record.not_nil!.id
+          )
+          .order(created_at: :desc)
+
+        EditSuggestionRepository.new.to_models(edit_suggestion_records:)
+      else
+        []
+      end
+
       render_component Pages::EditView.new(
         space:,
         page:,
@@ -45,7 +64,10 @@ module Pages
         form:,
         link_list:,
         backlink_list:,
-        current_user:
+        current_user:,
+        topic:,
+        can_create_edit_suggestion:,
+        existing_edit_suggestions:
       )
     end
 

@@ -115,16 +115,15 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ### 4. 編集提案作成機能（ページ編集画面から）
 
-- [ ] EditSuggestions::CreateServiceの実装
-- [ ] EditSuggestions::CreateControllerの実装
-- [ ] EditSuggestions::CreateFormの実装
-- [ ] EditSuggestions::CreateDialogComponentの作成（Basecoat Dialog使用）
-  - https://basecoatui.com/components/dialog/
-- [ ] edit-suggestion-dialog-controllerの実装（Stimulus）
-- [ ] Pages::EditControllerの修正（ダイアログ追加）
-- [ ] ルーティングの追加
+- [x] EditSuggestions::CreateServiceの実装
+- [x] EditSuggestions::CreateControllerの実装
+- [x] EditSuggestions::CreateFormの実装
+- [x] EditSuggestions::CreateDialogComponentの作成
+- [x] edit-suggestion-dialog-controllerの実装（Stimulus）
+- [x] Pages::EditControllerの修正（ダイアログ追加）
+- [x] ルーティングの追加
   - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
-- [ ] テスト作成
+- [x] テスト作成
   - サービスのユニットテスト
   - システムテスト（ダイアログ表示・作成）
 

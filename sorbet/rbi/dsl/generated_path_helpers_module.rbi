@@ -43,6 +43,12 @@ module GeneratedPathHelpersModule
   def edit_password_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def edit_suggestion_list_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_suggestion_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

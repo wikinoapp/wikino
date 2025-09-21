@@ -43,6 +43,12 @@ module GeneratedUrlHelpersModule
   def edit_password_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def edit_suggestion_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def edit_suggestion_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
