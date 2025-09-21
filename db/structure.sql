@@ -200,10 +200,9 @@ CREATE TABLE public.edit_suggestion_pages (
     edit_suggestion_id uuid NOT NULL,
     page_id uuid,
     page_revision_id uuid,
+    latest_revision_id uuid,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    body public.citext,
-    title public.citext
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1317,6 +1316,14 @@ ALTER TABLE ONLY public.page_editors
 
 
 --
+-- Name: edit_suggestion_pages fk_rails_4226ebc7a6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.edit_suggestion_pages
+    ADD CONSTRAINT fk_rails_4226ebc7a6 FOREIGN KEY (latest_revision_id) REFERENCES public.edit_suggestion_page_revisions(id);
+
+
+--
 -- Name: edit_suggestion_pages fk_rails_42ff6f1c8f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1629,9 +1636,11 @@ SET search_path TO "$user", public;
 INSERT INTO "schema_migrations" (version) VALUES
 ('20250920082216'),
 ('20250920074019'),
+('20250918173551'),
+('20250918173550'),
 ('20250918173549'),
+('20250918173528'),
 ('20250918173527'),
-('20250918173526'),
 ('20250918173454'),
 ('20250830075516'),
 ('20250830075345'),
