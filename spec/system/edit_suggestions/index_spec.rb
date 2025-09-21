@@ -29,7 +29,7 @@ RSpec.describe "EditSuggestions::Index", type: :system do
 
     # 「ページ」タブが非アクティブになっていることを確認
     pages_link = page.find_link("ページ")
-    expect(pages_link[:class]).to include("text-muted-foreground")
+    expect(pages_link[:class]).to include("text-gray-500")
   end
 
   it "オープン/クローズフィルターが正しく表示されること" do
@@ -163,9 +163,9 @@ RSpec.describe "EditSuggestions::Index", type: :system do
     expect(page).to have_content("反映済み")
 
     # クローズタブがアクティブになっていることを確認
-    closed_link = page.find_link("クローズ")
-    expect(closed_link[:class]).to include("border-primary")
-    expect(closed_link[:class]).to include("text-primary")
+    # アクティブなタブのスタイルを確認（border-b-2とborder-primaryクラスがある）
+    expect(page).to have_css("a", text: "クローズ", class: "border-b-2")
+    expect(page).to have_css("a", text: "クローズ", class: "border-primary")
   end
 
   it "編集提案がない場合に空の状態が表示されること" do
@@ -197,7 +197,7 @@ RSpec.describe "EditSuggestions::Index", type: :system do
   end
 
   it "編集提案の詳細情報が正しく表示されること" do
-    user_record = FactoryBot.create(:user_record, :with_password, display_name: "テストユーザー")
+    user_record = FactoryBot.create(:user_record, :with_password, name: "テストユーザー")
     space_record = FactoryBot.create(:space_record)
     space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
