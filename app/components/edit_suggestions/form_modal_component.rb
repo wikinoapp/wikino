@@ -66,13 +66,12 @@ module EditSuggestions
       end
     end
 
-    sig { params(edit_suggestion: EditSuggestion).returns(String) }
-    private def add_to_existing_path(edit_suggestion)
+    sig { returns(String) }
+    private def add_to_existing_path
       if page
         helpers.new_edit_suggestion_page_path(
           space_identifier: space.identifier,
           topic_number: topic.number,
-          id: edit_suggestion.database_id,
           page_number: page&.number,
           page_title:,
           page_body:
@@ -81,7 +80,6 @@ module EditSuggestions
         helpers.new_edit_suggestion_page_path(
           space_identifier: space.identifier,
           topic_number: topic.number,
-          id: edit_suggestion.database_id,
           page_title:,
           page_body:
         )

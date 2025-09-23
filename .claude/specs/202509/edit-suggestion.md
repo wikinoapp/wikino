@@ -157,14 +157,16 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
   #### 既存に追加フロー
   - [x] EditSuggestionPages::NewControllerの実装
-    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
+    - GET /s/:space_identifier/topics/:topic_number/edit_suggestion_pages/new
     - Turbo Frameで既存編集提案へのページ追加フォームを返す
+    - 既存の編集提案一覧を取得してセレクトボックスで選択可能にする
   - [x] EditSuggestionPages::CreateFormの実装
-    - ページ追加専用のフォーム（ページタイトル、ページ本文のみ）
-    - 編集提案IDはURLから取得
+    - ページ追加専用のフォーム（編集提案ID、ページタイトル、ページ本文）
+    - 編集提案IDはセレクトボックスから選択
   - [x] EditSuggestionPages::CreateControllerの実装
-    - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages
+    - POST /s/:space_identifier/topics/:topic_number/edit_suggestion_pages
     - 既存編集提案へのページ追加専用エンドポイント
+    - フォームから送信された編集提案IDを使用
     - Turbo Stream対応でエラー表示を改善
   - [x] EditSuggestionPages::AddServiceは既存のものを使用
     - 既に既存編集提案へのページ追加機能を持っているため変更不要
@@ -175,7 +177,9 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
     - タブ切り替えUIを含むモーダルコンポーネント
     - Turbo Frameを使用してフォームを動的に読み込み
   - [x] ダイアログ内でのタブ切り替え実装
-    - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
+    - 「新規作成」「既存に追加」の2つのタブを実装
+    - 「新規作成」タブ：新規編集提案作成フォームを表示
+    - 「既存に追加」タブ：既存編集提案選択セレクトボックス付きフォームを表示
     - タブクリック時にTurbo Frameで適切なフォームを読み込み
     - FormModalComponent内でタブとTurbo Frameを管理
 

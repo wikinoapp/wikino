@@ -22,15 +22,12 @@ module EditSuggestionPages
       end
 
       space_member_record = current_user_record!.space_member_record(space_record:)
-      edit_suggestion_record = EditSuggestionRecord
+
+      # 現在のユーザーが作成した下書き/オープンの編集提案を取得
+      existing_edit_suggestions = EditSuggestionRecord
         .open_or_draft
         .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
-        .find_by(id: params[:id])
-
-      # 編集提案が存在しない、または権限がない場合
-      unless edit_suggestion_record
-        return render_404
-      end
+        .order(created_at: :desc)
 
       page_record = params[:page_number].present? ? space_record.page_records.find_by(number: params[:page_number]) : nil
 
@@ -43,14 +40,14 @@ module EditSuggestionPages
       space = SpaceRepository.new.to_model(space_record:)
       topic = TopicRepository.new.to_model(topic_record:)
       page = page_record ? PageRepository.new.to_model(page_record:) : nil
-      edit_suggestion = EditSuggestionRepository.new.to_model(edit_suggestion_record:)
+      existing_edit_suggestions_models = existing_edit_suggestions.map { |record| EditSuggestionRepository.new.to_model(edit_suggestion_record: record) }
 
       render EditSuggestionPages::NewView.new(
         form:,
         space:,
         topic:,
         page:,
-        edit_suggestion:
+        existing_edit_suggestions: existing_edit_suggestions_models
       ), layout: false
     end
   end

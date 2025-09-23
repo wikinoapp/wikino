@@ -1,6 +1,7 @@
 # 編集提案機能 - ブランチ edit-suggestion-4 の進捗状況
 
 ## ブランチ情報
+
 - ブランチ名: `edit-suggestion-4`
 - ベースブランチ: `edit-suggestion`
 - 作業内容: 編集提案作成機能（ページ編集画面から）の実装
@@ -8,10 +9,12 @@
 ## 完了済みタスク（edit-suggestionブランチとの差分）
 
 ### 1. 基本コンポーネント
+
 - **BaseUi::DialogComponent**: Basecoat UIベースのダイアログコンポーネント
 - **dialog-controller**: Stimulusコントローラー（ダイアログのopen/close制御）
 
 ### 2. 編集提案作成機能
+
 - **EditSuggestions::CreateService**: 新規編集提案作成サービス
 - **EditSuggestionPages::AddService**: 既存編集提案へのページ追加サービス
 - **EditSuggestions::CreateController**: 編集提案作成コントローラー
@@ -25,10 +28,12 @@
   - 「既存の編集提案に加える」（オープン/下書きから選択）
 
 ### 3. 既存画面の修正
+
 - **Pages::EditController**: 編集提案ダイアログ用のデータ準備
 - **Pages::EditView**: 「編集提案する...」ボタンとダイアログの追加
 
 ### 4. テスト
+
 - EditSuggestions::CreateServiceのユニットテスト
 - EditSuggestionPages::AddServiceのユニットテスト
 - EditSuggestions::Createのシステムテスト
@@ -36,6 +41,7 @@
 ## 今後の改善予定（Turbo Frame対応）
 
 ### 新規作成フロー
+
 1. **EditSuggestions::NewController**
    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/new
    - Turbo Frameで新規編集提案フォームを返す
@@ -51,6 +57,7 @@
    - EditSuggestions::CreateServiceは既存のものを使用
 
 ### 既存に追加フロー
+
 4. **EditSuggestionPages::NewController**
    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
    - Turbo Frameで既存編集提案へのページ追加フォームを返す
@@ -66,6 +73,7 @@
    - EditSuggestionPages::AddServiceは既存のものを使用
 
 ### UI実装
+
 7. **EditSuggestions::FormModalComponent**
    - 既存のEditSuggestions::CreateModalComponentをリネーム・改修
    - タブ切り替えUIを含むモーダルコンポーネント
@@ -78,6 +86,7 @@
    - FormModalComponent内でタブとTurbo Frameを管理
 
 ## 注意事項
+
 - 現在の実装は動作しており、テストも通過している
 - 既存のServiceクラスは再利用可能
 - モーダルコンポーネントは保持し、その中でTurbo Frameを活用する設計

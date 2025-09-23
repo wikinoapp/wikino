@@ -22,10 +22,14 @@ module EditSuggestionPages
       end
 
       space_member_record = current_user_record!.space_member_record(space_record:)
+
+      # フォームから編集提案IDを取得
+      edit_suggestion_id = form_params[:edit_suggestion_id]
+
       edit_suggestion_record = EditSuggestionRecord
         .open_or_draft
         .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
-        .find_by(id: params[:id])
+        .find_by(id: edit_suggestion_id)
 
       # 編集提案が存在しない、または権限がない場合
       unless edit_suggestion_record
@@ -85,6 +89,7 @@ module EditSuggestionPages
     sig { returns(ActionController::Parameters) }
     private def form_params
       T.cast(params.require(:edit_suggestion_pages_create_form), ActionController::Parameters).permit(
+        :edit_suggestion_id,
         :page_title,
         :page_body
       )

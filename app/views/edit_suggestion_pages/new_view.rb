@@ -9,15 +9,15 @@ module EditSuggestionPages
         space: Space,
         topic: Topic,
         page: T.nilable(Page),
-        edit_suggestion: EditSuggestion
+        existing_edit_suggestions: T::Array[EditSuggestion]
       ).void
     end
-    def initialize(form:, space:, topic:, page:, edit_suggestion:)
+    def initialize(form:, space:, topic:, page:, existing_edit_suggestions:)
       @form = form
       @space = space
       @topic = topic
       @page = page
-      @edit_suggestion = edit_suggestion
+      @existing_edit_suggestions = existing_edit_suggestions
     end
 
     sig { returns(EditSuggestionPages::CreateForm) }
@@ -32,8 +32,8 @@ module EditSuggestionPages
     sig { returns(T.nilable(Page)) }
     attr_reader :page
 
-    sig { returns(EditSuggestion) }
-    attr_reader :edit_suggestion
+    sig { returns(T::Array[EditSuggestion]) }
+    attr_reader :existing_edit_suggestions
 
     sig { returns(String) }
     def form_action_path
@@ -41,14 +41,12 @@ module EditSuggestionPages
         edit_suggestion_page_list_path(
           space_identifier: space.identifier,
           topic_number: topic.number,
-          id: edit_suggestion.database_id,
           page_number: page.not_nil!.number
         )
       else
         edit_suggestion_page_list_path(
           space_identifier: space.identifier,
-          topic_number: topic.number,
-          id: edit_suggestion.database_id
+          topic_number: topic.number
         )
       end
     end

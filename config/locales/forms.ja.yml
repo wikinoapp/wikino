@@ -18,6 +18,15 @@ ja:
         email: メールアドレス
       emails/edit_form:
         new_email: 新しいメールアドレス
+      edit_suggestions/create_form:
+        title: タイトル
+        description: 概要
+        page_title: ページタイトル
+        page_body: ページ本文
+      edit_suggestion_pages/create_form:
+        edit_suggestion_id: 編集提案
+        page_title: ページタイトル
+        page_body: ページ本文
       pages/bulk_restoring_form:
         page_ids: 選択したページ
       pages/edit_form:
@@ -126,3 +135,9 @@ ja:
               invalid_characters: に使用できない文字が含まれています
               invalid_path: に不正なパスが含まれています
               too_long: は255バイト以下にしてください
+    edit_suggestion_pages:
+      select_edit_suggestion: 編集提案を選択
+      select_prompt: 編集提案を選択してください
+      cancel: キャンセル
+      add_submit: ページを追加
+      adding_to: "%{title} に追加中"

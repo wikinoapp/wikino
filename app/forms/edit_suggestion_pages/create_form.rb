@@ -12,11 +12,12 @@ module EditSuggestionPages
     sig { returns(T.nilable(EditSuggestionRecord)) }
     attr_accessor :edit_suggestion_record
 
+    attribute :edit_suggestion_id, :string
     attribute :page_title, :string
     attribute :page_body, :string, default: ""
 
     validates :space_member_record, presence: true
-    validates :edit_suggestion_record, presence: true
+    validates :edit_suggestion_id, presence: true
     validates :page_title, presence: true, length: {maximum: 255}
   end
 end
