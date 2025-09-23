@@ -1,73 +1,32 @@
-<%= render BaseUI::Modal::DialogComponent.new(
+<%= render BaseUI::DialogComponent.new(
   class_name: "sm:max-w-3xl"
 ) do %>
-  <div
-    data-edit-suggestion-dialog-target="dialogContent"
-  >
-    <%= form_with(
-      model: form,
-      url: form_action_path,
-      data: {
-        turbo: true,
-        action: "turbo:submit-end->edit-suggestion-dialog#handleSubmit"
-      },
-      class: "p-6"
-    ) do |f| %>
-      <header class="mb-6">
-        <h2 class="text-xl font-semibold">編集提案を作成</h2>
-      </header>
+  <%= form_with(
+    model: form,
+    url: form_action_path,
+    data: {
+      turbo: true,
+      action: "turbo:submit-end->edit-suggestion-dialog#handleSubmit"
+    },
+    class: "p-6"
+  ) do |f| %>
+    <header class="mb-6">
+      <h2 class="text-xl font-semibold">編集提案を作成</h2>
+    </header>
 
-      <div id="edit-suggestion-dialog-errors"></div>
+    <div id="edit-suggestion-dialog-errors"></div>
 
-      <section class="mb-6">
-        <% if has_existing_edit_suggestions? %>
-          <div class="mb-6">
-            <div class="mb-4">
-              <label class="flex items-center">
-                <%= f.radio_button :existing_edit_suggestion_id, "", checked: true, class: "mr-2", data: { action: "change->edit-suggestion-dialog#toggleNewSuggestionFields" } %>
-                <span class="font-medium">新しい編集提案を作成する</span>
-              </label>
-            </div>
-
-            <div id="new-suggestion-fields" class="ml-6 space-y-4">
-              <div>
-                <%= f.label :title, "タイトル", class: "block text-sm font-medium mb-1" %>
-                <%= f.text_field :title, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "編集提案のタイトルを入力" %>
-              </div>
-
-              <div>
-                <%= f.label :description, "概要", class: "block text-sm font-medium mb-1" %>
-                <%= f.text_area :description, rows: 3, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "変更内容の概要を説明（任意）" %>
-              </div>
-            </div>
-
-            <div class="mt-4 mb-4">
-              <label class="flex items-center">
-                <%= f.radio_button :existing_edit_suggestion_id, "", value: "existing", class: "mr-2", data: { action: "change->edit-suggestion-dialog#toggleNewSuggestionFields" } %>
-                <span class="font-medium">既存の編集提案に追加する</span>
-              </label>
-            </div>
-
-            <div id="existing-suggestion-fields" class="ml-6 hidden">
-              <div class="max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-200 p-2">
-                <% existing_edit_suggestions.each do |suggestion| %>
-                  <label class="flex cursor-pointer items-start rounded p-2 hover:bg-gray-50">
-                    <%= f.radio_button :existing_edit_suggestion_id, suggestion.id, class: "mt-1 mr-2" %>
-                    <div class="flex-1">
-                      <div class="font-medium"><%= suggestion.title %></div>
-                      <div class="text-sm text-gray-600">
-                        <%= suggestion.status_label %>
-                        <span class="mx-1">·</span>
-                        <%= l(suggestion.created_at, format: :short) %>
-                      </div>
-                    </div>
-                  </label>
-                <% end %>
-              </div>
-            </div>
+    <section class="mb-6">
+      <% if has_existing_edit_suggestions? %>
+        <div class="mb-6">
+          <div class="mb-4">
+            <label class="flex items-center">
+              <%= f.radio_button :existing_edit_suggestion_id, "", checked: true, class: "mr-2", data: { action: "change->edit-suggestion-dialog#toggleNewSuggestionFields" } %>
+              <span class="font-medium">新しい編集提案を作成する</span>
+            </label>
           </div>
-        <% else %>
-          <div class="space-y-4">
+
+          <div id="new-suggestion-fields" class="ml-6 space-y-4">
             <div>
               <%= f.label :title, "タイトル", class: "block text-sm font-medium mb-1" %>
               <%= f.text_field :title, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "編集提案のタイトルを入力" %>
@@ -78,23 +37,60 @@
               <%= f.text_area :description, rows: 3, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "変更内容の概要を説明（任意）" %>
             </div>
           </div>
-        <% end %>
 
-        <!-- ページのタイトルと内容（hidden fields） -->
-        <%= f.hidden_field :page_title %>
-        <%= f.hidden_field :page_body %>
-      </section>
+          <div class="mt-4 mb-4">
+            <label class="flex items-center">
+              <%= f.radio_button :existing_edit_suggestion_id, "", value: "existing", class: "mr-2", data: { action: "change->edit-suggestion-dialog#toggleNewSuggestionFields" } %>
+              <span class="font-medium">既存の編集提案に追加する</span>
+            </label>
+          </div>
 
-      <footer class="flex justify-end gap-2">
-        <button
-          type="button"
-          class="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
-          data-action="click->edit-suggestion-dialog#close"
-        >
-          キャンセル
-        </button>
-        <%= f.submit "編集提案を作成", class: "px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors" %>
-      </footer>
-    <% end %>
-  </div>
+          <div id="existing-suggestion-fields" class="ml-6 hidden">
+            <div class="max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-200 p-2">
+              <% existing_edit_suggestions.each do |suggestion| %>
+                <label class="flex cursor-pointer items-start rounded p-2 hover:bg-gray-50">
+                  <%= f.radio_button :existing_edit_suggestion_id, suggestion.id, class: "mt-1 mr-2" %>
+                  <div class="flex-1">
+                    <div class="font-medium"><%= suggestion.title %></div>
+                    <div class="text-sm text-gray-600">
+                      <%= suggestion.status_label %>
+                      <span class="mx-1">·</span>
+                      <%= l(suggestion.created_at, format: :short) %>
+                    </div>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="space-y-4">
+          <div>
+            <%= f.label :title, "タイトル", class: "block text-sm font-medium mb-1" %>
+            <%= f.text_field :title, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "編集提案のタイトルを入力" %>
+          </div>
+
+          <div>
+            <%= f.label :description, "概要", class: "block text-sm font-medium mb-1" %>
+            <%= f.text_area :description, rows: 3, class: "w-full px-3 py-2 border border-gray-300 rounded-md", placeholder: "変更内容の概要を説明（任意）" %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- ページのタイトルと内容（hidden fields） -->
+      <%= f.hidden_field :page_title %>
+      <%= f.hidden_field :page_body %>
+    </section>
+
+    <footer class="flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+        data-action="click->edit-suggestion-dialog#close"
+      >
+        キャンセル
+      </button>
+      <%= f.submit "編集提案を作成", class: "px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors" %>
+    </footer>
+  <% end %>
 <% end %>

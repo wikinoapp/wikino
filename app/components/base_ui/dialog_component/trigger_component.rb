@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module BaseUI
-  module Modal
+  class DialogComponent
     class TriggerComponent < ApplicationComponent
       sig { params(controller_name: String, target_name: String, action_name: String).void }
       def initialize(controller_name: "dialog", target_name: "trigger", action_name: "open")

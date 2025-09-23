@@ -3,7 +3,8 @@
   current_user:,
   current_space: space,
   show_sidebar: false,
-  show_bottom_navbar: false
+  show_bottom_navbar: false,
+  controller_name: "dialog"
 ) do |layout| %>
   <%= layout.with_main do %>
     <%= render BaseUI::ContainerComponent.new(
@@ -27,7 +28,7 @@
         <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
             class: "form flex flex-col gap-6",
-            data: { controller: "markdown-editor-form edit-suggestion-dialog" },
+            data: { controller: "markdown-editor-form" },
             model: form,
             method: :patch,
             url: page_path(space.identifier, page.number)
@@ -89,7 +90,7 @@
                 <% end %>
 
                 <% if can_create_edit_suggestion %>
-                  <%= BaseUI::Modal::TriggerComponent.new(controller_name:, target_name:) do %>
+                  <%= render BaseUI::DialogComponent::TriggerComponent.new do %>
                     <button
                       type="button"
                       class="btn-outline w-fit rounded-full"
@@ -116,20 +117,6 @@
                 <turbo-frame id="markdown-editor-draft-saved-time"></turbo-frame>
               </div>
             </div>
-
-            <% if can_create_edit_suggestion %>
-              <%= render EditSuggestions::CreateModalComponent.new(
-                form: EditSuggestions::CreateForm.new(
-                  space_member_record: form.space_member_record,
-                  topic_record: topic.instance_variable_get(:@topic_record),
-                  page_record: page.instance_variable_get(:@page_record)
-                ),
-                space:,
-                topic:,
-                page:,
-                existing_edit_suggestions:
-              ) %>
-            <% end %>
           <% end %>
         <% end %>
       <% end %>
@@ -139,6 +126,20 @@
           <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
         </turbo-frame>
       </div>
+    <% end %>
+
+    <% if can_create_edit_suggestion %>
+      <%= render EditSuggestions::CreateModalComponent.new(
+        form: EditSuggestions::CreateForm.new(
+          space_member_record: form.space_member_record,
+          topic_record: topic.instance_variable_get(:@topic_record),
+          page_record: page.instance_variable_get(:@page_record)
+        ),
+        space:,
+        topic:,
+        page:,
+        existing_edit_suggestions:
+      ) %>
     <% end %>
   <% end %>
 <% end %>
