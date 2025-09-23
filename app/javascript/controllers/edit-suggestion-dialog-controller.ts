@@ -1,14 +1,17 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["dialog", "newSuggestionFields", "existingSuggestionFields"];
+  static targets = ["dialogContent"];
 
-  declare readonly dialogTarget: HTMLDialogElement;
-  declare readonly newSuggestionFieldsTarget: HTMLElement;
-  declare readonly existingSuggestionFieldsTarget: HTMLElement;
+  declare readonly dialogContentTarget: HTMLElement;
+
+  private get dialog(): HTMLDialogElement {
+    // BaseUI::DialogComponentによって生成されるdialog要素を取得
+    return document.getElementById("edit-suggestion-dialog") as HTMLDialogElement;
+  }
 
   connect() {
-    // ダイアログはdata-edit-suggestion-dialog-targetで参照される
+    // ダイアログはIDで直接参照される
   }
 
   open(event: Event) {
@@ -21,7 +24,7 @@ export default class extends Controller {
       const bodyTextarea = form.querySelector('textarea[name="pages_edit_form[body]"]') as HTMLTextAreaElement;
 
       // ダイアログフォームにデータをセット
-      const dialogForm = this.dialogTarget.querySelector("form") as HTMLFormElement;
+      const dialogForm = this.dialogContentTarget.querySelector("form") as HTMLFormElement;
       if (dialogForm) {
         const pageTitleInput = dialogForm.querySelector(
           'input[name="edit_suggestions_create_form[page_title]"]',
@@ -39,14 +42,14 @@ export default class extends Controller {
       }
     }
 
-    this.dialogTarget.showModal();
+    this.dialog.showModal();
   }
 
   close(event?: Event) {
     if (event) {
       event.preventDefault();
     }
-    this.dialogTarget.close();
+    this.dialog.close();
   }
 
   handleSubmit(event: CustomEvent) {

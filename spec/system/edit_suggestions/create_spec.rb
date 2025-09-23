@@ -5,14 +5,14 @@ require "rails_helper"
 
 RSpec.describe "編集提案の作成" do
   it "ページ編集画面から新しい編集提案を作成できること" do
-    user_record = FactoryBot.create(:user_record, :with_confirmed_email)
+    user_record = FactoryBot.create(:user_record, :with_password)
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, :admin, user_record:, space_record:)
+    space_member_record = FactoryBot.create(:space_member_record, :owner, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     FactoryBot.create(:topic_member_record, :admin, space_member_record:, topic_record:)
     page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
 
-    sign_in_as(user_record)
+    sign_in(user_record:)
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # ページ編集フォームに入力
@@ -22,9 +22,9 @@ RSpec.describe "編集提案の作成" do
     # 編集提案ボタンをクリック
     click_button "編集提案する..."
 
-    # ダイアログが表示されることを確認
-    expect(page).to have_css("dialog[open]")
-    within("dialog") do
+    # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
+    expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
+    within("#edit-suggestion-dialog") do
       fill_in "edit_suggestions_create_form[title]", with: "ページ更新の提案"
       fill_in "edit_suggestions_create_form[description]", with: "内容を更新しました"
       click_button "編集提案を作成"
@@ -38,9 +38,9 @@ RSpec.describe "編集提案の作成" do
   end
 
   it "既存の編集提案にページを追加できること" do
-    user_record = FactoryBot.create(:user_record, :with_confirmed_email)
+    user_record = FactoryBot.create(:user_record, :with_password)
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, :admin, user_record:, space_record:)
+    space_member_record = FactoryBot.create(:space_member_record, :owner, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     FactoryBot.create(:topic_member_record, :admin, space_member_record:, topic_record:)
     page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
@@ -55,7 +55,7 @@ RSpec.describe "編集提案の作成" do
       title: "既存の編集提案"
     )
 
-    sign_in_as(user_record)
+    sign_in(user_record:)
     visit edit_page_path(space_record.identifier, page_record.number)
 
     # ページ編集フォームに入力
@@ -65,9 +65,9 @@ RSpec.describe "編集提案の作成" do
     # 編集提案ボタンをクリック
     click_button "編集提案する..."
 
-    # ダイアログが表示されることを確認
-    expect(page).to have_css("dialog[open]")
-    within("dialog") do
+    # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
+    expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
+    within("#edit-suggestion-dialog") do
       # 既存の編集提案を選択
       choose "existing_edit_suggestion_id_existing"
       choose "edit_suggestions_create_form_existing_edit_suggestion_id_#{existing_edit_suggestion.id}"
