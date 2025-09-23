@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module EditSuggestions
-  class CreateDialogComponent < ApplicationComponent
+  class CreateModalComponent < ApplicationComponent
     sig do
       params(
         form: EditSuggestions::CreateForm,

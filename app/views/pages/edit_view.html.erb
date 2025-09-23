@@ -89,15 +89,15 @@
                 <% end %>
 
                 <% if can_create_edit_suggestion %>
-                  <button
-                    type="button"
-                    class="btn-outline w-fit rounded-full"
-                    data-edit-suggestion-dialog-target="trigger"
-                    data-action="edit-suggestion-dialog#open"
-                  >
-                    <%= render BaseUI::IconComponent.new(name: "git-pull-request-regular", size: "18px") %>
-                    編集提案する...
-                  </button>
+                  <%= BaseUI::Modal::TriggerComponent.new(controller_name:, target_name:) do %>
+                    <button
+                      type="button"
+                      class="btn-outline w-fit rounded-full"
+                    >
+                      <%= render BaseUI::IconComponent.new(name: "git-pull-request-regular", size: "18px") %>
+                      編集提案する...
+                    </button>
+                  <% end %>
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), page_path(space.identifier, page.number), {
@@ -118,7 +118,7 @@
             </div>
 
             <% if can_create_edit_suggestion %>
-              <%= render EditSuggestions::CreateDialogComponent.new(
+              <%= render EditSuggestions::CreateModalComponent.new(
                 form: EditSuggestions::CreateForm.new(
                   space_member_record: form.space_member_record,
                   topic_record: topic.instance_variable_get(:@topic_record),
