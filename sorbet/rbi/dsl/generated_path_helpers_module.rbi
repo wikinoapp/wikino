@@ -70,6 +70,9 @@ module GeneratedPathHelpersModule
   def new_account_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def new_edit_suggestion_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

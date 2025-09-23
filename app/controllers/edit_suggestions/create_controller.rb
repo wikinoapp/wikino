@@ -35,7 +35,7 @@ module EditSuggestions
       if form.invalid?
         return render(
           turbo_stream: helpers.turbo_stream.update(
-            "edit-suggestion-dialog-errors",
+            "edit-suggestion-form-errors",
             partial: "shared/form_errors",
             locals: {form:}
           ),
@@ -43,36 +43,36 @@ module EditSuggestions
         )
       end
 
-      # 新規編集提案を作成するか、既存の編集提案にページを追加するか
-      if form.create_new_edit_suggestion?
-        result = EditSuggestions::CreateService.new.call(
-          space_member_record: space_member_record.not_nil!,
-          page_record:,
-          topic_record:,
-          title: form.title.not_nil!,
-          description: form.description.not_nil!,
-          page_title: form.page_title.not_nil!,
-          page_body: form.page_body.not_nil!
-        )
-        edit_suggestion_record = result.edit_suggestion_record
+      # 新規編集提案を作成（このコントローラーは新規作成専用）
+      result = EditSuggestions::CreateService.new.call(
+        space_member_record: space_member_record.not_nil!,
+        page_record:,
+        topic_record:,
+        title: form.title.not_nil!,
+        description: form.description.not_nil!,
+        page_title: form.page_title.not_nil!,
+        page_body: form.page_body.not_nil!
+      )
+      edit_suggestion_record = result.edit_suggestion_record
+
+      # Turbo Streamリクエストの場合はリダイレクト用のレスポンスを返す
+      if request.headers["Accept"]&.include?("text/vnd.turbo-stream.html")
+        flash.now[:notice] = t("messages.edit_suggestions.created")
+        render turbo_stream: [
+          helpers.turbo_stream.redirect(edit_suggestion_path(
+            space_identifier: space_record.identifier,
+            topic_number: topic_record.number,
+            id: edit_suggestion_record.id
+          ))
+        ]
       else
-        # 既存の編集提案にページを追加
-        edit_suggestion_record = form.existing_edit_suggestion.not_nil!
-        EditSuggestionPages::AddService.new.call(
-          edit_suggestion_record:,
-          space_member_record: space_member_record.not_nil!,
-          page_record:,
-          page_title: form.page_title.not_nil!,
-          page_body: form.page_body.not_nil!
+        flash[:notice] = t("messages.edit_suggestions.created")
+        redirect_to edit_suggestion_path(
+          space_identifier: space_record.identifier,
+          topic_number: topic_record.number,
+          id: edit_suggestion_record.id
         )
       end
-
-      flash[:notice] = t("messages.edit_suggestions.created")
-      redirect_to edit_suggestion_path(
-        space_identifier: space_record.identifier,
-        topic_number: topic_record.number,
-        id: edit_suggestion_record.id
-      )
     end
 
     sig { returns(ActionController::Parameters) }
@@ -81,8 +81,7 @@ module EditSuggestions
         :title,
         :description,
         :page_title,
-        :page_body,
-        :existing_edit_suggestion_id
+        :page_body
       )
     end
   end
