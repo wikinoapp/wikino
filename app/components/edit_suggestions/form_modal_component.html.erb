@@ -1,12 +1,10 @@
 <%= render BaseUI::DialogComponent.new(
   class_name: "sm:max-w-3xl",
-  data: {
-    controller: "dialog"
-  }
+  controller_name: "dialog"
 ) do %>
   <div class="p-6">
     <header class="mb-6">
-      <h2 class="text-xl font-semibold">編集提案を作成</h2>
+      <h2 class="text-xl font-semibold"><%= t("nouns.edit_suggestion_modal.title") %></h2>
     </header>
 
     <div id="edit-suggestion-dialog-errors"></div>
@@ -14,16 +12,16 @@
     <% if has_existing_edit_suggestions? %>
       <!-- タブナビゲーション -->
       <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <nav class="flex space-x-8" aria-label="編集提案タブ">
+        <nav class="flex space-x-8" aria-label="<%= t("nouns.edit_suggestion_modal.title") %>">
           <a href="<%= new_edit_suggestion_form_path %>"
              data-turbo-frame="edit-suggestion-form"
              class="border-b-2 border-indigo-500 px-1 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-            新規作成
+            <%= t("nouns.edit_suggestion_tabs.create_new") %>
           </a>
           <a href="<%= add_to_existing_path %>"
              data-turbo-frame="edit-suggestion-form"
              class="border-b-2 border-transparent px-1 py-2 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-            既存に追加
+            <%= t("nouns.edit_suggestion_tabs.add_to_existing") %>
           </a>
         </nav>
       </div>

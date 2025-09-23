@@ -21,6 +21,11 @@ ja:
     edit_suggestion_filter:
       open: オープン
       closed: クローズ
+    edit_suggestion_tabs:
+      create_new: 新規作成
+      add_to_existing: 既存に追加
+    edit_suggestion_modal:
+      title: 編集提案を作成
     edit_profile: プロフィール編集
     error: エラー
     export: エクスポート

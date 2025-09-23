@@ -41,7 +41,7 @@
                   size: "14px",
                   class_name: "fill-muted-foreground"
                 ) %>
-                <%= edit_suggestion.created_at.strftime("%Y年%m月%d日") %>
+                <%= l(edit_suggestion.created_at.to_date, format: :long) %>
               </div>
 
               <!-- TODO: ページ数の表示は後で実装 -->

@@ -20,7 +20,7 @@ RSpec.describe "編集提案の作成" do
     fill_in "pages_edit_form[body]", with: "# 更新後のタイトル\n\n更新された内容です。"
 
     # 編集提案ボタンをクリック
-    click_button "編集提案する..."
+    click_button I18n.t("verbs.suggest_edit")
 
     # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
     expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
@@ -63,7 +63,7 @@ RSpec.describe "編集提案の作成" do
     fill_in "pages_edit_form[body]", with: "# 更新後のタイトル\n\n更新された内容です。"
 
     # 編集提案ボタンをクリック
-    click_button "編集提案する..."
+    click_button I18n.t("verbs.suggest_edit")
 
     # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
     expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
