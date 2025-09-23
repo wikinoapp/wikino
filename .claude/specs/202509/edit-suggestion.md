@@ -170,11 +170,14 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
     - 既に既存編集提案へのページ追加機能を持っているため変更不要
 
   #### UI実装
+  - [ ] EditSuggestions::FormModalComponentの実装
+    - 既存のEditSuggestions::CreateModalComponentをリネーム・改修
+    - タブ切り替えUIを含むモーダルコンポーネント
+    - Turbo Frameを使用してフォームを動的に読み込み
   - [ ] ダイアログ内でのタブ切り替え実装
     - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
     - タブクリック時にTurbo Frameで適切なフォームを読み込み
-  - [ ] 既存のEditSuggestions::CreateModalComponentを削除
-    - Turbo Frame対応により不要になるため
+    - FormModalComponent内でタブとTurbo Frameを管理
 
 ### 5. 編集提案詳細画面（会話タブ）
 

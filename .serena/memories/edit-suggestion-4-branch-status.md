@@ -66,15 +66,20 @@
    - EditSuggestionPages::AddServiceは既存のものを使用
 
 ### UI実装
-7. **ダイアログ内でのタブ切り替え**
+7. **EditSuggestions::FormModalComponent**
+   - 既存のEditSuggestions::CreateModalComponentをリネーム・改修
+   - タブ切り替えUIを含むモーダルコンポーネント
+   - Turbo Frameを使用してフォームを動的に読み込み
+   - Pages::EditViewから呼び出され、モーダルの内容を管理
+
+8. **ダイアログ内でのタブ切り替え**
    - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
    - タブクリック時にTurbo Frameで適切なフォームを動的に読み込み
-
-8. **既存コンポーネントの削除**
-   - EditSuggestions::CreateModalComponentを削除（Turbo Frame対応により不要）
+   - FormModalComponent内でタブとTurbo Frameを管理
 
 ## 注意事項
 - 現在の実装は動作しており、テストも通過している
 - 既存のServiceクラスは再利用可能
+- モーダルコンポーネントは保持し、その中でTurbo Frameを活用する設計
 - Turbo Frame対応は将来的な改善として位置付けられている
 - 基本機能は完成しているため、次のタスク（編集提案詳細画面など）に進むことも可能
