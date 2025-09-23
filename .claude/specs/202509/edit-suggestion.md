@@ -139,7 +139,7 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
   - EditSuggestions::CreateServiceのユニットテスト
   - EditSuggestionPages::AddServiceのユニットテスト
   - システムテスト（ダイアログ表示・新規作成・既存へのページ追加）
-- [ ] Turbo Frame対応への移行
+- [x] Turbo Frame対応への移行
 
   #### 新規作成フロー
   - [x] EditSuggestions::NewControllerの実装
@@ -170,11 +170,11 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
     - 既に既存編集提案へのページ追加機能を持っているため変更不要
 
   #### UI実装
-  - [ ] EditSuggestions::FormModalComponentの実装
+  - [x] EditSuggestions::FormModalComponentの実装
     - 既存のEditSuggestions::CreateModalComponentをリネーム・改修
     - タブ切り替えUIを含むモーダルコンポーネント
     - Turbo Frameを使用してフォームを動的に読み込み
-  - [ ] ダイアログ内でのタブ切り替え実装
+  - [x] ダイアログ内でのタブ切り替え実装
     - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
     - タブクリック時にTurbo Frameで適切なフォームを読み込み
     - FormModalComponent内でタブとTurbo Frameを管理

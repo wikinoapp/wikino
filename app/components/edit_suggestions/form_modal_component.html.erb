@@ -1,0 +1,61 @@
+<%= render BaseUI::DialogComponent.new(
+  class_name: "sm:max-w-3xl",
+  data: {
+    controller: "dialog"
+  }
+) do %>
+  <div class="p-6">
+    <header class="mb-6">
+      <h2 class="text-xl font-semibold">編集提案を作成</h2>
+    </header>
+
+    <div id="edit-suggestion-dialog-errors"></div>
+
+    <% if has_existing_edit_suggestions? %>
+      <!-- タブナビゲーション -->
+      <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <nav class="flex space-x-8" aria-label="編集提案タブ">
+          <a href="<%= new_edit_suggestion_form_path %>"
+             data-turbo-frame="edit-suggestion-form"
+             class="py-2 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600 dark:text-indigo-400">
+            新規作成
+          </a>
+          <% existing_edit_suggestions.each_with_index do |suggestion, index| %>
+            <% if index < 3 %>
+              <a href="<%= add_to_existing_path(suggestion) %>"
+                 data-turbo-frame="edit-suggestion-form"
+                 class="py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300">
+                <%= truncate(suggestion.title, length: 20) %>
+              </a>
+            <% end %>
+          <% end %>
+          <% if existing_edit_suggestions.size > 3 %>
+            <details class="relative inline-block">
+              <summary class="py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 cursor-pointer dark:text-gray-400 dark:hover:text-gray-300">
+                その他...
+              </summary>
+              <div class="absolute z-10 mt-2 w-72 rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5">
+                <div class="max-h-60 overflow-y-auto py-1">
+                  <% existing_edit_suggestions.drop(3).each do |suggestion| %>
+                    <a href="<%= add_to_existing_path(suggestion) %>"
+                       data-turbo-frame="edit-suggestion-form"
+                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                      <%= suggestion.title %>
+                    </a>
+                  <% end %>
+                </div>
+              </div>
+            </details>
+          <% end %>
+        </nav>
+      </div>
+    <% end %>
+
+    <!-- Turbo Frame: フォームコンテンツがここに動的に読み込まれる -->
+    <turbo-frame id="edit-suggestion-form" src="<%= new_edit_suggestion_form_path %>" class="block">
+      <div class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+      </div>
+    </turbo-frame>
+  </div>
+<% end %>
