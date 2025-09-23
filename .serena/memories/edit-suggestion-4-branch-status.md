@@ -46,8 +46,9 @@
    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
    - Turbo Frameで既存編集提案へのページ追加フォームを返す
 
-3. **ダイアログ内でのTurbo Frame切り替え**
-   - ラジオボタン選択時にTurbo Frameで適切なフォームを動的に読み込み
+3. **ダイアログ内でのタブ切り替え**
+   - 「新しい編集提案を作成する」「既存の編集提案に加える」のタブを通常のリンクとして実装
+   - タブクリック時にTurbo Frameで適切なフォームを動的に読み込み
 
 4. **エラー表示の改善**
    - Turbo Streamを使用したリアルタイムエラー表示
