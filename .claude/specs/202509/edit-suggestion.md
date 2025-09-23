@@ -147,7 +147,7 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
     - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
     - Turbo Frameで既存編集提案へのページ追加フォームを返す
   - [ ] ダイアログ内でのタブ切り替え実装
-    - 「新しい編集提案を作成する」「既存の編集提案に加える」のタブを通常のリンクとして実装
+    - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
     - タブクリック時にTurbo Frameで適切なフォームを読み込み
   - [ ] EditSuggestions::CreateControllerの調整
     - Turbo Stream対応でエラー表示を改善
