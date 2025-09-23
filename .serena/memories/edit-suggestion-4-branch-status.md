@@ -33,38 +33,48 @@
 - EditSuggestionPages::AddServiceのユニットテスト
 - EditSuggestions::Createのシステムテスト
 
-## 今後の改善予定
+## 今後の改善予定（Turbo Frame対応）
 
-### Turbo Frame対応への移行
-現在はダイアログ内で通常のフォーム送信を行っているが、より良いUXのためにTurbo Frameを使用した実装への移行を検討中：
-
-#### 新規作成フロー
+### 新規作成フロー
 1. **EditSuggestions::NewController**
    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/new
    - Turbo Frameで新規編集提案フォームを返す
 
-2. **EditSuggestions::CreateController（再実装）**
+2. **EditSuggestions::CreateForm（再実装）**
+   - 新規作成専用のフォーム
+   - タイトル、概要、ページタイトル、ページ本文のみ
+   - 既存編集提案選択フィールドを削除
+
+3. **EditSuggestions::CreateController（再実装）**
    - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
    - 新規編集提案の作成専用エンドポイントとして再実装
-   - Turbo Stream対応でエラー表示を改善
+   - EditSuggestions::CreateServiceは既存のものを使用
 
-#### 既存に追加フロー
-3. **EditSuggestionPages::NewController**
+### 既存に追加フロー
+4. **EditSuggestionPages::NewController**
    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
    - Turbo Frameで既存編集提案へのページ追加フォームを返す
 
-4. **EditSuggestionPages::CreateController**
+5. **EditSuggestionPages::CreateForm（新規）**
+   - ページ追加専用のフォーム
+   - ページタイトル、ページ本文のみ
+   - 編集提案IDはURLから取得
+
+6. **EditSuggestionPages::CreateController（新規）**
    - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages
    - 既存編集提案へのページ追加専用エンドポイント
-   - Turbo Stream対応でエラー表示を改善
+   - EditSuggestionPages::AddServiceは既存のものを使用
 
-#### UI実装
-5. **ダイアログ内でのタブ切り替え**
+### UI実装
+7. **ダイアログ内でのタブ切り替え**
    - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
    - タブクリック時にTurbo Frameで適切なフォームを動的に読み込み
 
+8. **既存コンポーネントの削除**
+   - EditSuggestions::CreateModalComponentを削除（Turbo Frame対応により不要）
+
 ## 注意事項
 - 現在の実装は動作しており、テストも通過している
-- 現在のEditSuggestions::CreateControllerは両方のケースを処理しているが、将来的には分離予定
+- 既存のServiceクラスは再利用可能
 - Turbo Frame対応は将来的な改善として位置付けられている
 - 基本機能は完成しているため、次のタスク（編集提案詳細画面など）に進むことも可能

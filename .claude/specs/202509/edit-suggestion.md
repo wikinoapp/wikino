@@ -140,23 +140,41 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
   - EditSuggestionPages::AddServiceのユニットテスト
   - システムテスト（ダイアログ表示・新規作成・既存へのページ追加）
 - [ ] Turbo Frame対応への移行
+
+  #### 新規作成フロー
   - [ ] EditSuggestions::NewControllerの実装
     - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/new
     - Turbo Frameで新規編集提案フォームを返す
+  - [ ] EditSuggestions::CreateFormの再実装
+    - 新規作成専用のフォーム（タイトル、概要、ページタイトル、ページ本文）
+    - 既存編集提案選択フィールドを削除
   - [ ] EditSuggestions::CreateControllerの再実装
     - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
     - 新規編集提案の作成専用エンドポイントとして再実装
     - Turbo Stream対応でエラー表示を改善
+  - [ ] EditSuggestions::CreateServiceは既存のものを使用
+    - 既に新規編集提案作成機能を持っているため変更不要
+
+  #### 既存に追加フロー
   - [ ] EditSuggestionPages::NewControllerの実装
     - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages/new
     - Turbo Frameで既存編集提案へのページ追加フォームを返す
+  - [ ] EditSuggestionPages::CreateFormの実装
+    - ページ追加専用のフォーム（ページタイトル、ページ本文のみ）
+    - 編集提案IDはURLから取得
   - [ ] EditSuggestionPages::CreateControllerの実装
     - POST /s/:space_identifier/topics/:topic_number/edit_suggestions/:id/pages
     - 既存編集提案へのページ追加専用エンドポイント
     - Turbo Stream対応でエラー表示を改善
+  - [ ] EditSuggestionPages::AddServiceは既存のものを使用
+    - 既に既存編集提案へのページ追加機能を持っているため変更不要
+
+  #### UI実装
   - [ ] ダイアログ内でのタブ切り替え実装
     - 「新規作成」「既存に追加」のタブを通常のリンクとして実装
     - タブクリック時にTurbo Frameで適切なフォームを読み込み
+  - [ ] 既存のEditSuggestions::CreateModalComponentを削除
+    - Turbo Frame対応により不要になるため
 
 ### 5. 編集提案詳細画面（会話タブ）
 
