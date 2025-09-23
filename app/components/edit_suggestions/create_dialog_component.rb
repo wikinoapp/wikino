@@ -22,18 +22,23 @@ module EditSuggestions
 
     sig { returns(EditSuggestions::CreateForm) }
     attr_reader :form
+    private :form
 
     sig { returns(Space) }
     attr_reader :space
+    private :space
 
     sig { returns(Topic) }
     attr_reader :topic
+    private :topic
 
     sig { returns(T.nilable(Page)) }
     attr_reader :page
+    private :page
 
     sig { returns(T::Array[EditSuggestion]) }
     attr_reader :existing_edit_suggestions
+    private :existing_edit_suggestions
 
     sig { returns(String) }
     private def form_action_path

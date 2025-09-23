@@ -3,20 +3,19 @@
 
 module BaseUI
   class DialogComponent < ApplicationComponent
-    sig { params(id: String, class_name: String).void }
-    def initialize(id:, class_name: "")
-      @id = id
-      @class_name = class_name
+    sig { params(options: T::Hash[Symbol, String]).void }
+    def initialize(options:)
+      @options = options
+      build_dialog_classes
     end
 
-    sig { returns(String) }
-    def dom_id
-      @id
-    end
+    sig { returns(T::Hash[Symbol, String]) }
+    attr_reader :options
+    private :options
 
-    sig { returns(String) }
-    def dialog_classes
-      [
+    sig { void }
+    def build_dialog_classes
+      @options[:class] = [
         "dialog",
         "w-full sm:max-w-2xl",
         "rounded-lg",
@@ -24,16 +23,8 @@ module BaseUI
         "p-0",
         "shadow-xl",
         "backdrop:bg-black/50",
-        @class_name
+        @options[:class]
       ].compact.join(" ")
     end
-
-    private
-
-    sig { returns(String) }
-    attr_reader :id
-
-    sig { returns(String) }
-    attr_reader :class_name
   end
 end

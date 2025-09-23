@@ -1,9 +1,10 @@
-<%= render BaseUI::DialogComponent.new(
-  id: "edit-suggestion-dialog",
-  class_name: "sm:max-w-3xl"
-) do %>
+<%= render BaseUI::DialogComponent.new(options: {
+  class: "sm:max-w-3xl",
+  data: {
+    edit_suggestion_dialog_target: "dialog"
+  }
+}) do %>
   <div
-    data-controller="edit-suggestion-dialog"
     data-edit-suggestion-dialog-target="dialogContent"
   >
     <%= form_with(

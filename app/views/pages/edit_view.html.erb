@@ -27,7 +27,7 @@
         <%= card.with_body(class_name: "px-4") do %>
           <%= form_with(
             class: "form flex flex-col gap-6",
-            data: { controller: "markdown-editor-form" },
+            data: { controller: "markdown-editor-form edit-suggestion-dialog" },
             model: form,
             method: :patch,
             url: page_path(space.identifier, page.number)
@@ -92,7 +92,8 @@
                   <button
                     type="button"
                     class="btn-outline w-fit rounded-full"
-                    data-action="click->edit-suggestion-dialog#open"
+                    data-edit-suggestion-dialog-target="trigger"
+                    data-action="edit-suggestion-dialog#open"
                   >
                     <%= render BaseUI::IconComponent.new(name: "git-pull-request-regular", size: "18px") %>
                     編集提案する...
@@ -115,6 +116,20 @@
                 <turbo-frame id="markdown-editor-draft-saved-time"></turbo-frame>
               </div>
             </div>
+
+            <% if can_create_edit_suggestion %>
+              <%= render EditSuggestions::CreateDialogComponent.new(
+                form: EditSuggestions::CreateForm.new(
+                  space_member_record: form.space_member_record,
+                  topic_record: topic.instance_variable_get(:@topic_record),
+                  page_record: page.instance_variable_get(:@page_record)
+                ),
+                space:,
+                topic:,
+                page:,
+                existing_edit_suggestions:
+              ) %>
+            <% end %>
           <% end %>
         <% end %>
       <% end %>
@@ -125,19 +140,5 @@
         </turbo-frame>
       </div>
     <% end %>
-  <% end %>
-
-  <% if can_create_edit_suggestion %>
-    <%= render EditSuggestions::CreateDialogComponent.new(
-      form: EditSuggestions::CreateForm.new(
-        space_member_record: form.space_member_record,
-        topic_record: topic.instance_variable_get(:@topic_record),
-        page_record: page.instance_variable_get(:@page_record)
-      ),
-      space:,
-      topic:,
-      page:,
-      existing_edit_suggestions:
-    ) %>
   <% end %>
 <% end %>

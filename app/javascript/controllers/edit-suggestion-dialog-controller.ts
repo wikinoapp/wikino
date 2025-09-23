@@ -1,55 +1,52 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["dialogContent"];
+  static targets = ["dialog", "trigger"];
 
-  declare readonly dialogContentTarget: HTMLElement;
-
-  private get dialog(): HTMLDialogElement {
-    // BaseUI::DialogComponentによって生成されるdialog要素を取得
-    return document.getElementById("edit-suggestion-dialog") as HTMLDialogElement;
-  }
+  declare readonly dialogTarget: HTMLDialogElement;
+  declare readonly triggerTarget: HTMLElement;
 
   connect() {
     // ダイアログはIDで直接参照される
   }
 
   open(event: Event) {
-    event.preventDefault();
+    console.log("!!!!!!!!!!!! open dialog");
+    // event.preventDefault();
 
-    // フォームのデータを取得
-    const form = document.querySelector("#pages_edit_form") as HTMLFormElement;
-    if (form) {
-      const titleInput = form.querySelector('input[name="pages_edit_form[title]"]') as HTMLInputElement;
-      const bodyTextarea = form.querySelector('textarea[name="pages_edit_form[body]"]') as HTMLTextAreaElement;
+    // // フォームのデータを取得
+    // const form = document.querySelector("#pages_edit_form") as HTMLFormElement;
+    // if (form) {
+    //   const titleInput = form.querySelector('input[name="pages_edit_form[title]"]') as HTMLInputElement;
+    //   const bodyTextarea = form.querySelector('textarea[name="pages_edit_form[body]"]') as HTMLTextAreaElement;
 
-      // ダイアログフォームにデータをセット
-      const dialogForm = this.dialogContentTarget.querySelector("form") as HTMLFormElement;
-      if (dialogForm) {
-        const pageTitleInput = dialogForm.querySelector(
-          'input[name="edit_suggestions_create_form[page_title]"]',
-        ) as HTMLInputElement;
-        const pageBodyInput = dialogForm.querySelector(
-          'input[name="edit_suggestions_create_form[page_body]"]',
-        ) as HTMLInputElement;
+    //   // ダイアログフォームにデータをセット
+    //   const dialogForm = this.dialogContentTarget.querySelector("form") as HTMLFormElement;
+    //   if (dialogForm) {
+    //     const pageTitleInput = dialogForm.querySelector(
+    //       'input[name="edit_suggestions_create_form[page_title]"]',
+    //     ) as HTMLInputElement;
+    //     const pageBodyInput = dialogForm.querySelector(
+    //       'input[name="edit_suggestions_create_form[page_body]"]',
+    //     ) as HTMLInputElement;
 
-        if (pageTitleInput && titleInput) {
-          pageTitleInput.value = titleInput.value;
-        }
-        if (pageBodyInput && bodyTextarea) {
-          pageBodyInput.value = bodyTextarea.value;
-        }
-      }
-    }
+    //     if (pageTitleInput && titleInput) {
+    //       pageTitleInput.value = titleInput.value;
+    //     }
+    //     if (pageBodyInput && bodyTextarea) {
+    //       pageBodyInput.value = bodyTextarea.value;
+    //     }
+    //   }
+    // }
 
-    this.dialog.showModal();
+    this.dialogTarget.showModal();
   }
 
   close(event?: Event) {
     if (event) {
       event.preventDefault();
     }
-    this.dialog.close();
+    this.dialogTarget.close();
   }
 
   handleSubmit(event: CustomEvent) {
