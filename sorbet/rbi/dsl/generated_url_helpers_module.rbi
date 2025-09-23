@@ -46,6 +46,9 @@ module GeneratedUrlHelpersModule
   def edit_suggestion_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def edit_suggestion_page_list_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def edit_suggestion_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -68,6 +71,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def new_account_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def new_edit_suggestion_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_edit_suggestion_url(*args); end
