@@ -5,34 +5,25 @@ module EditSuggestions
   class FormModalComponent < ApplicationComponent
     sig do
       params(
-        space: Space,
-        topic: Topic,
-        page: T.nilable(Page),
+        page: Page,
         existing_edit_suggestions: T::Array[EditSuggestion]
       ).void
     end
-    def initialize(space:, topic:, page:, existing_edit_suggestions:)
-      @space = space
-      @topic = topic
+    def initialize(page:, existing_edit_suggestions:)
       @page = page
       @existing_edit_suggestions = existing_edit_suggestions
     end
 
-    sig { returns(Space) }
-    attr_reader :space
-    private :space
-
-    sig { returns(Topic) }
-    attr_reader :topic
-    private :topic
-
-    sig { returns(T.nilable(Page)) }
+    sig { returns(Page) }
     attr_reader :page
     private :page
 
     sig { returns(T::Array[EditSuggestion]) }
     attr_reader :existing_edit_suggestions
     private :existing_edit_suggestions
+
+    delegate :space, to: :page, private: true
+    delegate :topic, to: :page, private: true
 
     sig { returns(T.nilable(String)) }
     private def new_edit_suggestion_form_path

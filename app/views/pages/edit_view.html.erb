@@ -129,12 +129,7 @@
     <% end %>
 
     <% if can_create_edit_suggestion %>
-      <%= render EditSuggestions::FormModalComponent.new(
-        space:,
-        topic:,
-        page:,
-        existing_edit_suggestions:
-      ) %>
+      <%= render EditSuggestions::FormModalComponent.new(page:, existing_edit_suggestions:) %>
     <% end %>
   <% end %>
 <% end %>
