@@ -23,7 +23,7 @@
     <div class="grid gap-2">
       <%= render BaseUI::LabelComponent.new(form_builder: f, method: :description) %>
 
-      <%= f.text_area(:description, class: "textarea", required: true, rows: 3) %>
+      <%= f.text_area(:description, class: "textarea", rows: 3) %>
     </div>
 
     <%= f.hidden_field :page_title %>
