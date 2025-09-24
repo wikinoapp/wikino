@@ -1,4 +1,5 @@
 <%= render BaseUI::DialogComponent.new(
+  id: "edit-suggestion-dialog",
   class_name: "sm:max-w-3xl"
 ) do %>
   <div class="p-6">
@@ -12,7 +13,7 @@
 
     <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
       <nav class="flex space-x-8">
-        <%= link_to new_edit_suggestion_form_path, {
+        <%= link_to new_edit_suggestion_path(space.identifier, page.number), {
           data: { turbo_frame: "edit-suggestion-form" },
           class: "border-b-2 border-indigo-500 px-1 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
         } do %>
@@ -28,7 +29,11 @@
       </nav>
     </div>
 
-    <turbo-frame id="edit-suggestion-form" src="<%= new_edit_suggestion_form_path %>" class="block">
+    <turbo-frame
+      id="edit-suggestion-form"
+      src="<%= new_edit_suggestion_path(space.identifier, page.number) %>"
+      class="block"
+    >
       <div class="flex justify-center py-8">
         <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900 dark:border-gray-100"></div>
       </div>

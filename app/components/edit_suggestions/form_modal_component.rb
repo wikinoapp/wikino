@@ -26,27 +26,12 @@ module EditSuggestions
     delegate :topic, to: :page, private: true
 
     sig { returns(T.nilable(String)) }
-    private def new_edit_suggestion_form_path
-      # ページが存在する場合のみパスを返す
-      # 新規ページ作成の場合は、まだページが存在しないため、フォームは表示しない
-      if page
-        helpers.new_edit_suggestion_path(
-          space_identifier: space.identifier,
-          page_number: page.not_nil!.number
-        )
-      end
-    end
-
-    sig { returns(T.nilable(String)) }
     private def add_to_existing_path
-      # ページが存在する場合のみパスを返す
-      if page
-        helpers.new_edit_suggestion_page_path(
-          space_identifier: space.identifier,
-          topic_number: topic.number,
-          page_number: page.not_nil!.number
-        )
-      end
+      helpers.new_edit_suggestion_page_path(
+        space_identifier: space.identifier,
+        topic_number: topic.number,
+        page_number: page.not_nil!.number
+      )
     end
 
     sig { returns(T::Boolean) }

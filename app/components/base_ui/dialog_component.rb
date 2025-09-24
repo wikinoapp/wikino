@@ -3,12 +3,17 @@
 
 module BaseUI
   class DialogComponent < ApplicationComponent
-    sig { params(controller_name: String, target_name: String, class_name: String).void }
-    def initialize(controller_name: "dialog", target_name: "dialog", class_name: "")
+    sig { params(id: String, controller_name: String, target_name: String, class_name: String).void }
+    def initialize(id:, controller_name: "dialog", target_name: "dialog", class_name: "")
+      @id = id
       @controller_name = controller_name
       @target_name = target_name
       @class_name = class_name
     end
+
+    sig { returns(String) }
+    attr_reader :id
+    private :id
 
     sig { returns(String) }
     attr_reader :controller_name
