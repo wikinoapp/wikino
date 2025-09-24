@@ -162,7 +162,7 @@ private def add_to_existing_path
 end
 
 # ✅ テンプレートに直接パスヘルパーを記述
-<%= link_to new_edit_suggestion_page_path(space_identifier: space.identifier, topic_number: topic.number, page_number: page.number), { ... } do %>
+<%= link_to new_edit_suggestion_page_path(space.identifier, topic.number, page.number), { ... } do %>
 ```
 
 **重要**: ViewComponentでURLパスをプライベートメソッドとして定義せず、テンプレートに直接記述すること。これによりリンク先のエンドポイントが明確になり、コードの可読性が向上します。
