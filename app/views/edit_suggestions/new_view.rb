@@ -20,18 +20,22 @@ module EditSuggestions
 
     sig { returns(EditSuggestions::CreateForm) }
     attr_reader :form
+    private :form
 
     sig { returns(Space) }
     attr_reader :space
+    private :space
 
     sig { returns(Topic) }
     attr_reader :topic
+    private :topic
 
     sig { returns(T.nilable(Page)) }
     attr_reader :page
+    private :page
 
     sig { returns(String) }
-    def form_action_path
+    private def form_action_path
       if page
         edit_suggestion_list_path(
           space_identifier: space.identifier,

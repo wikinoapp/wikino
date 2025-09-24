@@ -21,9 +21,6 @@ en:
     edit_suggestion_filter:
       open: Open
       closed: Closed
-    edit_suggestion_tabs:
-      create_new: Create new
-      add_to_existing: Add to existing
     edit_profile: Edit profile
     error: Error
     export: Export

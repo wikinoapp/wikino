@@ -10,25 +10,24 @@
 
     <div id="edit-suggestion-dialog-errors"></div>
 
-    <% if has_existing_edit_suggestions? %>
-      <!-- タブナビゲーション -->
-      <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <nav class="flex space-x-8" aria-label="<%= t("nouns.edit_suggestion_modal.title") %>">
-          <a href="<%= new_edit_suggestion_form_path %>"
-             data-turbo-frame="edit-suggestion-form"
-             class="border-b-2 border-indigo-500 px-1 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-            <%= t("nouns.edit_suggestion_tabs.create_new") %>
-          </a>
-          <a href="<%= add_to_existing_path %>"
-             data-turbo-frame="edit-suggestion-form"
-             class="border-b-2 border-transparent px-1 py-2 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-            <%= t("nouns.edit_suggestion_tabs.add_to_existing") %>
-          </a>
-        </nav>
-      </div>
-    <% end %>
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+      <nav class="flex space-x-8">
+        <%= link_to new_edit_suggestion_form_path, {
+          data: { turbo_frame: "edit-suggestion-form" },
+          class: "border-b-2 border-indigo-500 px-1 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+        } do %>
+          <%= t("components.edit_suggestions.form_modal_component.tabs.create_new") %>
+        <% end %>
 
-    <!-- Turbo Frame: フォームコンテンツがここに動的に読み込まれる -->
+        <%= link_to add_to_existing_path, {
+          data: { turbo_frame: "edit-suggestion-form" },
+          class: "border-b-2 border-transparent px-1 py-2 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+        } do %>
+          <%= t("components.edit_suggestions.form_modal_component.tabs.add_to_existing") %>
+        <% end %>
+      </nav>
+    </div>
+
     <turbo-frame id="edit-suggestion-form" src="<%= new_edit_suggestion_form_path %>" class="block">
       <div class="flex justify-center py-8">
         <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900 dark:border-gray-100"></div>

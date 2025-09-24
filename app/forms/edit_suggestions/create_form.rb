@@ -20,7 +20,7 @@ module EditSuggestions
 
     validates :space_member_record, presence: true
     validates :topic_record, presence: true
-    validates :title, presence: true, length: {maximum: 255}
+    validates :title, presence: true, length: {maximum: 2}
     validates :page_title, presence: true, length: {maximum: 255}
 
     validate :validate_edit_suggestion_selection
