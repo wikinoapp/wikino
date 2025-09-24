@@ -8,7 +8,7 @@ module EditSuggestions
     attribute :page_title, :string
     attribute :page_body, :string
 
-    validates :title, presence: true, length: {maximum: 2}
+    validates :title, presence: true, length: {maximum: 255}
     validates :description, length: {maximum: 10_000}
   end
 end
