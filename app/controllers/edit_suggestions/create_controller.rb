@@ -30,10 +30,7 @@ module EditSuggestions
         page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
         return render_component(
-          EditSuggestions::NewView.new(
-            form:,
-            page:
-          ),
+          EditSuggestions::NewView.new(form:, page:),
           status: :unprocessable_entity
         )
       end
