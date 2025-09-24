@@ -1,10 +1,11 @@
 <%= render BaseUI::DialogComponent.new(
-  class_name: "sm:max-w-3xl",
-  controller_name: "dialog"
+  class_name: "sm:max-w-3xl"
 ) do %>
   <div class="p-6">
     <header class="mb-6">
-      <h2 class="text-xl font-semibold"><%= t("nouns.edit_suggestion_modal.title") %></h2>
+      <h2 class="text-xl font-semibold">
+        <%= t("nouns.edit_suggestion_modal.title") %>
+      </h2>
     </header>
 
     <div id="edit-suggestion-dialog-errors"></div>
