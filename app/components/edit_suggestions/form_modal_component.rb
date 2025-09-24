@@ -25,15 +25,6 @@ module EditSuggestions
     delegate :space, to: :page, private: true
     delegate :topic, to: :page, private: true
 
-    sig { returns(T.nilable(String)) }
-    private def add_to_existing_path
-      helpers.new_edit_suggestion_page_path(
-        space_identifier: space.identifier,
-        topic_number: topic.number,
-        page_number: page.not_nil!.number
-      )
-    end
-
     sig { returns(T::Boolean) }
     private def has_existing_edit_suggestions?
       existing_edit_suggestions.any?
