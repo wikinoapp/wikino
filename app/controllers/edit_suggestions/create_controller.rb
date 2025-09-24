@@ -27,11 +27,16 @@ module EditSuggestions
       form = EditSuggestions::CreateForm.new(form_params)
 
       if form.invalid?
-        return render(
-          turbo_stream: helpers.turbo_stream.update(
-            "edit-suggestion-form-errors",
-            partial: "shared/form_errors",
-            locals: {form:}
+        space = SpaceRepository.new.to_model(space_record:)
+        topic = TopicRepository.new.to_model(topic_record:)
+        page = page_record ? PageRepository.new.to_model(page_record:, current_space_member: space_member_record) : nil
+
+        return render_component(
+          EditSuggestions::NewView.new(
+            form:,
+            space:,
+            topic:,
+            page:
           ),
           status: :unprocessable_entity
         )
@@ -49,24 +54,12 @@ module EditSuggestions
       )
       edit_suggestion_record = result.edit_suggestion_record
 
-      # Turbo Streamリクエストの場合はリダイレクト用のレスポンスを返す
-      if request.headers["Accept"]&.include?("text/vnd.turbo-stream.html")
-        flash.now[:notice] = t("messages.edit_suggestions.created")
-        render turbo_stream: [
-          helpers.turbo_stream.redirect(edit_suggestion_path(
-            space_identifier: space_record.identifier,
-            topic_number: topic_record.number,
-            id: edit_suggestion_record.id
-          ))
-        ]
-      else
-        flash[:notice] = t("messages.edit_suggestions.created")
-        redirect_to edit_suggestion_path(
-          space_identifier: space_record.identifier,
-          topic_number: topic_record.number,
-          id: edit_suggestion_record.id
-        )
-      end
+      flash[:notice] = t("messages.edit_suggestions.created")
+      redirect_to edit_suggestion_path(
+        space_identifier: space_record.identifier,
+        topic_number: topic_record.number,
+        id: edit_suggestion_record.id
+      )
     end
 
     sig { returns(ActionController::Parameters) }
