@@ -17,7 +17,6 @@ module EditSuggestions
       topic_record = page_record.topic_record.not_nil!
       topic_policy = topic_policy_for(topic_record:)
 
-      # 編集提案の作成権限をチェック
       unless topic_policy.can_create_edit_suggestion?
         return render_404
       end
@@ -35,7 +34,6 @@ module EditSuggestions
         )
       end
 
-      # 新規編集提案を作成（このコントローラーは新規作成専用）
       result = EditSuggestions::CreateService.new.call(
         space_member_record: space_member_record.not_nil!,
         page_record:,
