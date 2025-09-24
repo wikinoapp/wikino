@@ -1,0 +1,5 @@
+ja:
+  components:
+    edit_suggestions:
+      form_modal_component:
+        title: 編集提案を作成

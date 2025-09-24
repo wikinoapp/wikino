@@ -1,0 +1,5 @@
+en:
+  components:
+    edit_suggestions:
+      form_modal_component:
+        title: Create edit suggestion
