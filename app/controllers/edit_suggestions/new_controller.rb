@@ -34,16 +34,12 @@ module EditSuggestions
         page_body: pageable_record.body
       )
 
-      space = SpaceRepository.new.to_model(space_record:)
-      topic = TopicRepository.new.to_model(topic_record:)
       page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
-      render EditSuggestions::NewView.new(
-        form:,
-        space:,
-        topic:,
-        page:
-      ), layout: false
+      render(
+        EditSuggestions::NewView.new(form:, page:),
+        layout: false
+      )
     end
   end
 end

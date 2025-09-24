@@ -6,15 +6,11 @@ module EditSuggestions
     sig do
       params(
         form: EditSuggestions::CreateForm,
-        space: Space,
-        topic: Topic,
-        page: T.nilable(Page)
+        page: Page
       ).void
     end
-    def initialize(form:, space:, topic:, page:)
+    def initialize(form:, page:)
       @form = form
-      @space = space
-      @topic = topic
       @page = page
     end
 
@@ -22,17 +18,12 @@ module EditSuggestions
     attr_reader :form
     private :form
 
-    sig { returns(Space) }
-    attr_reader :space
-    private :space
-
-    sig { returns(Topic) }
-    attr_reader :topic
-    private :topic
-
-    sig { returns(T.nilable(Page)) }
+    sig { returns(Page) }
     attr_reader :page
     private :page
+
+    delegate :space, to: :page, private: true
+    delegate :topic, to: :page, private: true
 
     sig { returns(String) }
     private def form_action_path
