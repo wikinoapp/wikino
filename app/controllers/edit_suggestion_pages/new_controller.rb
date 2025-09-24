@@ -13,7 +13,16 @@ module EditSuggestionPages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      topic_record = space_record.topic_records.find_by!(number: params[:topic_number])
+
+      # ページ番号が指定されている場合はページから、そうでない場合はトピック番号から取得
+      if params[:page_number].present?
+        page_record = space_record.page_record_by_number!(params[:page_number])
+        topic_record = page_record.topic_record.not_nil!
+      else
+        topic_record = space_record.topic_records.find_by!(number: params[:topic_number])
+        page_record = nil
+      end
+
       topic_policy = topic_policy_for(topic_record:)
 
       # 編集提案の作成権限をチェック
@@ -29,17 +38,25 @@ module EditSuggestionPages
         .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
         .order(created_at: :desc)
 
-      page_record = params[:page_number].present? ? space_record.page_records.find_by(number: params[:page_number]) : nil
-
-      # 編集中のページデータを受け取る
-      form = EditSuggestionPages::CreateForm.new(
-        page_title: params[:page_title],
-        page_body: params[:page_body]
-      )
+      # ページの下書きまたは公開版からデータを取得
+      if page_record
+        draft_page_record = space_member_record.not_nil!.draft_page_records.find_by(page_record:)
+        pageable_record = draft_page_record.presence || page_record
+        form = EditSuggestionPages::CreateForm.new(
+          page_title: pageable_record.title,
+          page_body: pageable_record.body
+        )
+      else
+        # 新規ページ作成の場合はパラメータから取得
+        form = EditSuggestionPages::CreateForm.new(
+          page_title: params[:page_title],
+          page_body: params[:page_body]
+        )
+      end
 
       space = SpaceRepository.new.to_model(space_record:)
       topic = TopicRepository.new.to_model(topic_record:)
-      page = page_record ? PageRepository.new.to_model(page_record:) : nil
+      page = page_record ? PageRepository.new.to_model(page_record:, current_space_member: space_member_record) : nil
       existing_edit_suggestions_models = existing_edit_suggestions.map { |record| EditSuggestionRepository.new.to_model(edit_suggestion_record: record) }
 
       render EditSuggestionPages::NewView.new(

@@ -13,7 +13,8 @@ module EditSuggestions
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      topic_record = space_record.topic_records.find_by!(number: params[:topic_number])
+      page_record = space_record.page_record_by_number!(params[:page_number])
+      topic_record = page_record.topic_record.not_nil!
       topic_policy = topic_policy_for(topic_record:)
 
       # 編集提案の作成権限をチェック
@@ -21,18 +22,21 @@ module EditSuggestions
         return render_404
       end
 
-      current_user_record!.space_member_record(space_record:)
-      page_record = params[:page_number].present? ? space_record.page_records.find_by(number: params[:page_number]) : nil
+      space_member_record = current_user_record!.space_member_record(space_record:)
 
-      # 編集中のページデータを受け取る
+      # ページの下書きまたは公開版からデータを取得
+      draft_page_record = space_member_record.not_nil!.draft_page_records.find_by(page_record:)
+      pageable_record = draft_page_record.presence || page_record
+
+      # 下書きまたは公開版からタイトルと本文を取得
       form = EditSuggestions::CreateForm.new(
-        page_title: params[:page_title],
-        page_body: params[:page_body]
+        page_title: pageable_record.title,
+        page_body: pageable_record.body
       )
 
       space = SpaceRepository.new.to_model(space_record:)
       topic = TopicRepository.new.to_model(topic_record:)
-      page = page_record ? PageRepository.new.to_model(page_record:) : nil
+      page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
       render EditSuggestions::NewView.new(
         form:,

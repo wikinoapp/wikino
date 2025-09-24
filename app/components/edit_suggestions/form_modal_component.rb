@@ -8,17 +8,13 @@ module EditSuggestions
         space: Space,
         topic: Topic,
         page: T.nilable(Page),
-        page_title: String,
-        page_body: String,
         existing_edit_suggestions: T::Array[EditSuggestion]
       ).void
     end
-    def initialize(space:, topic:, page:, page_title:, page_body:, existing_edit_suggestions:)
+    def initialize(space:, topic:, page:, existing_edit_suggestions:)
       @space = space
       @topic = topic
       @page = page
-      @page_title = page_title
-      @page_body = page_body
       @existing_edit_suggestions = existing_edit_suggestions
     end
 
@@ -34,54 +30,30 @@ module EditSuggestions
     attr_reader :page
     private :page
 
-    sig { returns(String) }
-    attr_reader :page_title
-    private :page_title
-
-    sig { returns(String) }
-    attr_reader :page_body
-    private :page_body
-
     sig { returns(T::Array[EditSuggestion]) }
     attr_reader :existing_edit_suggestions
     private :existing_edit_suggestions
 
-    sig { returns(String) }
+    sig { returns(T.nilable(String)) }
     private def new_edit_suggestion_form_path
+      # ページが存在する場合のみパスを返す
+      # 新規ページ作成の場合は、まだページが存在しないため、フォームは表示しない
       if page
         helpers.new_edit_suggestion_path(
           space_identifier: space.identifier,
-          topic_number: topic.number,
-          page_number: page&.number,
-          page_title:,
-          page_body:
-        )
-      else
-        helpers.new_edit_suggestion_path(
-          space_identifier: space.identifier,
-          topic_number: topic.number,
-          page_title:,
-          page_body:
+          page_number: page.not_nil!.number
         )
       end
     end
 
-    sig { returns(String) }
+    sig { returns(T.nilable(String)) }
     private def add_to_existing_path
+      # ページが存在する場合のみパスを返す
       if page
         helpers.new_edit_suggestion_page_path(
           space_identifier: space.identifier,
           topic_number: topic.number,
-          page_number: page&.number,
-          page_title:,
-          page_body:
-        )
-      else
-        helpers.new_edit_suggestion_page_path(
-          space_identifier: space.identifier,
-          topic_number: topic.number,
-          page_title:,
-          page_body:
+          page_number: page.not_nil!.number
         )
       end
     end
