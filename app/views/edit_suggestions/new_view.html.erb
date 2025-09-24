@@ -9,7 +9,10 @@
       turbo_stream: true
     }
   ) do |f| %>
-    <div id="edit-suggestion-form-errors"></div>
+    <div
+      class="hidden"
+      id="edit-suggestion-form-errors"
+    ></div>
 
     <div class="grid gap-2">
       <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>

@@ -13,12 +13,6 @@ class EditSuggestions::CreateForm
   def description=(value); end
 
   sig { returns(T.nilable(::String)) }
-  def existing_edit_suggestion_id; end
-
-  sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
-  def existing_edit_suggestion_id=(value); end
-
-  sig { returns(T.nilable(::String)) }
   def page_body; end
 
   sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }

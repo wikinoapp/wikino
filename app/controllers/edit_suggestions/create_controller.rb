@@ -24,13 +24,7 @@ module EditSuggestions
       space_member_record = current_user_record!.space_member_record(space_record:)
       page_record = params[:page_number].present? ? space_record.page_records.find_by(number: params[:page_number]) : nil
 
-      form = EditSuggestions::CreateForm.new(
-        form_params.merge(
-          space_member_record:,
-          topic_record:,
-          page_record:
-        )
-      )
+      form = EditSuggestions::CreateForm.new(form_params)
 
       if form.invalid?
         return render(
