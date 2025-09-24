@@ -67,21 +67,20 @@ module EditSuggestionPages
       )
 
       # Turbo Streamリクエストの場合はリダイレクト用のレスポンスを返す
+      # TODO: ShowControllerが実装されたらedit_suggestion_pathに変更する
       if request.headers["Accept"]&.include?("text/vnd.turbo-stream.html")
         flash.now[:notice] = t("messages.edit_suggestion_pages.added")
         render turbo_stream: [
-          helpers.turbo_stream.redirect(edit_suggestion_path(
+          helpers.turbo_stream.redirect(topic_edit_suggestion_list_path(
             space_identifier: space_record.identifier,
-            topic_number: topic_record.number,
-            id: edit_suggestion_record.id
+            topic_number: topic_record.number
           ))
         ]
       else
         flash[:notice] = t("messages.edit_suggestion_pages.added")
-        redirect_to edit_suggestion_path(
+        redirect_to topic_edit_suggestion_list_path(
           space_identifier: space_record.identifier,
-          topic_number: topic_record.number,
-          id: edit_suggestion_record.id
+          topic_number: topic_record.number
         )
       end
     end

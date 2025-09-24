@@ -6,18 +6,19 @@ require "rails_helper"
 RSpec.describe "EditSuggestions::New", type: :system do
   it "編集提案の新規作成フォームを表示すること" do
     space_record = FactoryBot.create(:space_record)
-    user_record = FactoryBot.create(:user_record, :activated, password: "passw0rd")
+    user_record = FactoryBot.create(:user_record, :with_password)
     FactoryBot.create(:space_member_record, space_record:, user_record:, role: "owner")
     topic_record = FactoryBot.create(:topic_record, space_record:)
 
     sign_in(user_record:)
 
+    # ページを作成
+    page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "テストページ", body: "テスト内容")
+
     # Turbo Frameでフォームを取得
     visit new_edit_suggestion_path(
       space_identifier: space_record.identifier,
-      topic_number: topic_record.number,
-      page_title: "テストページ",
-      page_body: "テスト内容"
+      page_number: page_record.number
     )
 
     # フォームが表示されることを確認
@@ -31,44 +32,35 @@ RSpec.describe "EditSuggestions::New", type: :system do
 
   it "新規編集提案を作成できること" do
     space_record = FactoryBot.create(:space_record)
-    user_record = FactoryBot.create(:user_record, :activated, password: "passw0rd")
+    user_record = FactoryBot.create(:user_record, :with_password)
     FactoryBot.create(:space_member_record, space_record:, user_record:, role: "owner")
     topic_record = FactoryBot.create(:topic_record, space_record:)
+    page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存ページ", body: "既存内容")
 
     sign_in(user_record:)
 
-    # ページ編集画面を開く
-    visit edit_page_path(space_identifier: space_record.identifier, page_number: nil)
+    # 直接新規編集提案フォームページにアクセス
+    visit new_edit_suggestion_path(
+      space_identifier: space_record.identifier,
+      page_number: page_record.number
+    )
 
-    # ページ内容を入力
-    fill_in "pages_update_form[title]", with: "新しいページ"
-
-    # CodeMirrorエディタに値を設定
-    execute_script("document.querySelector('.cm-editor').CodeMirror.setValue('新しい内容')")
-
-    # 編集提案ダイアログを開く
-    click_button "編集提案する..."
-
-    # ダイアログが表示されるまで待つ
-    expect(page).to have_css("dialog[open]")
-
-    within("dialog") do
-      # 新規作成タブがアクティブなことを確認（将来実装）
-      # フォームに入力
+    # フォームに入力
+    within("turbo-frame#edit-suggestion-form") do
       fill_in "edit_suggestions_create_form[title]", with: "新しい編集提案"
       fill_in "edit_suggestions_create_form[description]", with: "テストの編集提案です"
 
-      click_button "編集提案を作成"
+      click_button "作成する"
     end
 
-    # 編集提案詳細ページにリダイレクトされることを確認
-    expect(page).to have_current_path(edit_suggestion_path(
+    # 編集提案一覧ページにリダイレクトされることを確認（ShowControllerが未実装のため）
+    expect(page).to have_current_path(topic_edit_suggestion_list_path(
       space_identifier: space_record.identifier,
-      topic_number: topic_record.number,
-      id: EditSuggestionRecord.last.id
+      topic_number: topic_record.number
     ))
 
-    # フラッシュメッセージを確認
-    expect(page).to have_content("編集提案を作成しました")
+    # 作成した編集提案が表示されることを確認
+    expect(page).to have_content("新しい編集提案")
+    expect(page).to have_content("下書き")
   end
 end

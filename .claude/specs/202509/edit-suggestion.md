@@ -143,13 +143,13 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
   #### 新規作成フロー
   - [x] EditSuggestions::NewControllerの実装
-    - GET /s/:space_identifier/topics/:topic_number/edit_suggestions/new
+    - GET /s/:space_identifier/pages/:page_number/edit_suggestions/new
     - Turbo Frameで新規編集提案フォームを返す
   - [x] EditSuggestions::CreateFormの再実装
     - 新規作成専用のフォーム（タイトル、概要、ページタイトル、ページ本文）
     - 既存編集提案選択フィールドを削除（既存のものをそのまま使用）
   - [x] EditSuggestions::CreateControllerの再実装
-    - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
+    - POST /s/:space_identifier/pages/:page_number/edit_suggestions
     - 新規編集提案の作成専用エンドポイントとして再実装
     - Turbo Stream対応でエラー表示を改善
   - [x] EditSuggestions::CreateServiceは既存のものを使用

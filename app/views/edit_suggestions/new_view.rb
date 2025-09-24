@@ -27,18 +27,10 @@ module EditSuggestions
 
     sig { returns(String) }
     private def form_action_path
-      if page
-        edit_suggestion_list_path(
-          space_identifier: space.identifier,
-          topic_number: topic.number,
-          page_number: page.not_nil!.number
-        )
-      else
-        edit_suggestion_list_path(
-          space_identifier: space.identifier,
-          topic_number: topic.number
-        )
-      end
+      edit_suggestion_list_path(
+        space_identifier: space.identifier,
+        page_number: page.not_nil!.number
+      )
     end
   end
 end

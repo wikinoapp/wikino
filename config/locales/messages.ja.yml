@@ -223,7 +223,10 @@ ja:
       wikilink_feature_description_1: 独自で用意したリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます。
       wikilink_feature_title: リンク記法でページを作成し、繋げる
     edit_suggestions:
+      created: 編集提案を作成しました
       page_count: "%{count}ページ"
       empty_state:
         title: 編集提案はありません
         description: このトピックにはまだ編集提案がありません。
+    edit_suggestion_pages:
+      added: 編集提案にページを追加しました

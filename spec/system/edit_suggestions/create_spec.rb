@@ -13,28 +13,29 @@ RSpec.describe "編集提案の作成" do
     page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
 
     sign_in(user_record:)
-    visit edit_page_path(space_record.identifier, page_record.number)
 
-    # ページ編集フォームに入力
-    fill_in "pages_edit_form[title]", with: "更新後のタイトル"
-    fill_in "pages_edit_form[body]", with: "# 更新後のタイトル\n\n更新された内容です。"
+    # 直接新規編集提案フォームページにアクセス
+    visit new_edit_suggestion_path(space_record.identifier, page_record.number)
 
-    # 編集提案ボタンをクリック
-    click_button I18n.t("verbs.suggest_edit")
+    # フォームが表示されることを確認
+    expect(page).to have_field("edit_suggestions_create_form[title]")
+    expect(page).to have_field("edit_suggestions_create_form[description]")
+    # page_titleとpage_bodyは隠しフィールドなので、visible: :hiddenで確認
+    expect(page).to have_field("edit_suggestions_create_form[page_title]", type: :hidden, with: "既存のページ")
+    expect(page).to have_field("edit_suggestions_create_form[page_body]", type: :hidden, with: "既存の内容")
 
-    # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
-    expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
-    within("#edit-suggestion-dialog") do
-      fill_in "edit_suggestions_create_form[title]", with: "ページ更新の提案"
-      fill_in "edit_suggestions_create_form[description]", with: "内容を更新しました"
-      click_button "編集提案を作成"
-    end
+    # フォームに入力
+    fill_in "edit_suggestions_create_form[title]", with: "ページ更新の提案"
+    fill_in "edit_suggestions_create_form[description]", with: "内容を更新しました"
 
-    # 編集提案詳細ページにリダイレクトされることを確認
-    expect(page).to have_content("編集提案を作成しました")
-    expect(page).to have_current_path(%r{/s/#{space_record.identifier}/topics/\d+/edit_suggestions/\d+})
+    # フォームを送信
+    click_button "作成する"
+
+    # 編集提案一覧ページにリダイレクトされることを確認（ShowControllerが未実装のため）
+    expect(page).to have_current_path(topic_edit_suggestion_list_path(space_record.identifier, topic_record.number))
+    # 作成した編集提案が一覧に表示されることを確認
     expect(page).to have_content("ページ更新の提案")
-    expect(page).to have_content("内容を更新しました")
+    expect(page).to have_content("下書き")  # デフォルトステータスは下書き
   end
 
   it "既存の編集提案にページを追加できること" do
@@ -43,7 +44,7 @@ RSpec.describe "編集提案の作成" do
     space_member_record = FactoryBot.create(:space_member_record, :owner, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     FactoryBot.create(:topic_member_record, :admin, space_member_record:, topic_record:)
-    page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
+    FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
 
     # 既存の編集提案を作成
     existing_edit_suggestion = FactoryBot.create(
@@ -56,27 +57,31 @@ RSpec.describe "編集提案の作成" do
     )
 
     sign_in(user_record:)
-    visit edit_page_path(space_record.identifier, page_record.number)
 
-    # ページ編集フォームに入力
-    fill_in "pages_edit_form[title]", with: "更新後のタイトル"
-    fill_in "pages_edit_form[body]", with: "# 更新後のタイトル\n\n更新された内容です。"
+    # 直接既存編集提案へのページ追加フォームページにアクセス（page_titleとpage_bodyをパラメータとして渡す）
+    visit new_edit_suggestion_page_path(
+      space_record.identifier,
+      topic_record.number,
+      page_title: "既存のページ",
+      page_body: "既存の内容"
+    )
 
-    # 編集提案ボタンをクリック
-    click_button I18n.t("verbs.suggest_edit")
+    # フォームが表示されることを確認
+    expect(page).to have_field("edit_suggestion_pages_create_form[edit_suggestion_id]")
+    # page_titleとpage_bodyは隠しフィールドで、パラメータから受け取った値が入る
+    expect(page).to have_field("edit_suggestion_pages_create_form[page_title]", type: :hidden, with: "既存のページ")
+    expect(page).to have_field("edit_suggestion_pages_create_form[page_body]", type: :hidden, with: "既存の内容")
 
-    # ダイアログが表示されることを確認（Capybaraの自動待機を利用）
-    expect(page).to have_css("#edit-suggestion-dialog[open]", wait: 5)
-    within("#edit-suggestion-dialog") do
-      # 既存の編集提案を選択
-      choose "existing_edit_suggestion_id_existing"
-      choose "edit_suggestions_create_form_existing_edit_suggestion_id_#{existing_edit_suggestion.id}"
-      click_button "編集提案を作成"
-    end
+    # フォームに入力
+    select existing_edit_suggestion.title, from: "edit_suggestion_pages_create_form[edit_suggestion_id]"
 
-    # 編集提案詳細ページにリダイレクトされることを確認
-    expect(page).to have_content("編集提案を作成しました")
-    expect(page).to have_current_path(edit_suggestion_path(space_record.identifier, topic_record.number, existing_edit_suggestion.id))
+    # フォームを送信
+    click_button "ページを追加"
+
+    # 編集提案一覧ページにリダイレクトされることを確認（ShowControllerが未実装のため）
+    expect(page).to have_current_path(topic_edit_suggestion_list_path(space_record.identifier, topic_record.number))
+    # 既存の編集提案が一覧に表示されることを確認
     expect(page).to have_content("既存の編集提案")
+    expect(page).to have_content("下書き")
   end
 end

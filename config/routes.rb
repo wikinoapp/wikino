@@ -56,7 +56,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/topics",                                     via: :post,   as: :topic_list,                                   to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",                       via: :get,    as: :topic,                                        to: "topics/show#call",                            topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/edit_suggestions",          via: :get,    as: :topic_edit_suggestion_list,               to: "edit_suggestions/index#call",                 topic_number: /\d+/
-  match "/s/:space_identifier/topics/:topic_number/edit_suggestions",          via: :post,   as: :edit_suggestion_list,                     to: "edit_suggestions/create#call",                topic_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/edit_suggestions",          via: :post,   as: :edit_suggestion_list,                     to: "edit_suggestions/create#call",                page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/edit_suggestions/new",         via: :get,    as: :new_edit_suggestion,                      to: "edit_suggestions/new#call",                   page_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/edit_suggestions/:id",      via: :get,    as: :edit_suggestion,                          to: "edit_suggestions/show#call",                  topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/edit_suggestion_pages",     via: :post,   as: :edit_suggestion_page_list,                to: "edit_suggestion_pages/create#call",           topic_number: /\d+/
