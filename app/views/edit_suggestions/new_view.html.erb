@@ -2,7 +2,7 @@
   <%= form_with(
     class: "form grid gap-6",
     model: form,
-    url: form_action_path,
+    url: edit_suggestion_list_path(space.identifier, page.number),
     local: false,
     data: {
       turbo: true,
