@@ -226,6 +226,11 @@ class PageRecord < ApplicationRecord
     nil
   end
 
+  sig { returns(T.nilable(PageRevisionRecord)) }
+  def latest_revision_record
+    revision_records.order(created_at: :desc, id: :desc).first
+  end
+
   sig do
     params(
       editor_record: SpaceMemberRecord,

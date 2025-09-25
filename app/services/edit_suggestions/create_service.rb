@@ -28,10 +28,9 @@ module EditSuggestions
           description:
         )
 
-        page_revision_record = page_record.revision_records.order(created_at: :desc, id: :desc).first
         edit_suggestion_page_record = edit_suggestion_record.create_edit_suggestion_page_record!(
           page_record:,
-          page_revision_record:
+          page_revision_record: page_record.latest_revision_record
         )
 
         edit_suggestion_page_record.create_revision_with_html!(
