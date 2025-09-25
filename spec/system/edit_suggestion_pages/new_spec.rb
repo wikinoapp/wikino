@@ -40,7 +40,7 @@ RSpec.describe "EditSuggestionPages::New", type: :system do
     user_record = FactoryBot.create(:user_record, :with_password)
     space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:, role: "owner")
     topic_record = FactoryBot.create(:topic_record, space_record:)
-    edit_suggestion_record = FactoryBot.create(:edit_suggestion_record,
+    FactoryBot.create(:edit_suggestion_record,
       space_record:,
       topic_record:,
       created_space_member_record: space_member_record,

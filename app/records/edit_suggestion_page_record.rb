@@ -74,7 +74,7 @@ class EditSuggestionPageRecord < ApplicationRecord
     topic = TopicRepository.new.to_model(topic_record: edit_suggestion_record.not_nil!.topic_record.not_nil!)
     space = SpaceRepository.new.to_model(space_record: space_record.not_nil!)
     space_member = SpaceMemberRepository.new.to_model(space_member_record: editor_space_member_record)
-    
+
     body_html = Markup.new(
       current_topic: topic,
       current_space: space,
