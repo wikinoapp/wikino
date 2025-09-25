@@ -20,36 +20,28 @@ module EditSuggestions
     end
     def call(space_member_record:, page_record:, title:, description:, page_title:, page_body:)
       topic_record = page_record.topic_record.not_nil!
-      space_record = page_record.space_record.not_nil!
 
       with_transaction do
-        # 編集提案を作成（ビジネスロジックはRecordに委譲）
-        edit_suggestion_record = EditSuggestionRecord.create_draft!(
-          space_record:,
+        edit_suggestion_record = space_member_record.create_draft_edit_suggestion_record!(
           topic_record:,
-          created_space_member_record: space_member_record,
           title:,
           description:
         )
 
-        # 編集提案ページを作成（ビジネスロジックはRecordに委譲）
-        page_revision_record = page_record.revision_records.order(created_at: :desc).first
-        edit_suggestion_page_record = EditSuggestionPageRecord.create_without_validation!(
-          space_record:,
-          edit_suggestion_record:,
+        page_revision_record = page_record.revision_records.order(created_at: :desc, id: :desc).first
+        edit_suggestion_page_record = edit_suggestion_record.create_edit_suggestion_page_record!(
           page_record:,
           page_revision_record:
         )
 
         # Modelオブジェクトを生成（HTMLレンダリングに必要）
+        space_record = page_record.space_record.not_nil!
         topic = TopicRepository.new.to_model(topic_record:)
-        space = SpaceRepository.new.to_model(space_record: space_record.not_nil!)
+        space = SpaceRepository.new.to_model(space_record:)
         space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
-        # 編集提案ページリビジョンを作成（ビジネスロジックはRecordに委譲）
-        edit_suggestion_page_revision_record = EditSuggestionPageRevisionRecord.create_with_html!(
-          space_record:,
-          edit_suggestion_page_record:,
+        # 編集提案ページがリビジョンを作成
+        edit_suggestion_page_record.create_revision_with_html!(
           editor_space_member_record: space_member_record,
           title: page_title,
           body: page_body,
@@ -57,9 +49,6 @@ module EditSuggestions
           space:,
           space_member:
         )
-
-        # latest_revisionを設定（ビジネスロジックはRecordに委譲）
-        edit_suggestion_page_record.set_latest_revision!(revision_record: edit_suggestion_page_revision_record)
 
         Result.new(
           edit_suggestion_record:,

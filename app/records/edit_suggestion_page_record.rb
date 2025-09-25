@@ -61,29 +61,36 @@ class EditSuggestionPageRecord < ApplicationRecord
     latest_revision_record.not_nil!.body_html
   end
 
-  # 編集提案ページを作成する（最初はlatest_revisionなし）
+  # リビジョンを作成してHTMLを生成する
   sig do
     params(
-      space_record: SpaceRecord,
-      edit_suggestion_record: EditSuggestionRecord,
-      page_record: T.nilable(PageRecord),
-      page_revision_record: T.nilable(PageRevisionRecord)
-    ).returns(EditSuggestionPageRecord)
+      editor_space_member_record: SpaceMemberRecord,
+      title: String,
+      body: String,
+      topic: Topic,
+      space: Space,
+      space_member: SpaceMember
+    ).returns(EditSuggestionPageRevisionRecord)
   end
-  def self.create_without_validation!(space_record:, edit_suggestion_record:, page_record:, page_revision_record:)
-    record = new(
-      space_record:,
-      edit_suggestion_record:,
-      page_record:,
-      page_revision_record:
-    )
-    record.save!(validate: false)
-    record
-  end
+  def create_revision_with_html!(editor_space_member_record:, title:, body:, topic:, space:, space_member:)
+    body_html = Markup.new(
+      current_topic: topic,
+      current_space: space,
+      current_space_member: space_member
+    ).render_html(text: body)
 
-  # latest_revisionを設定する
-  sig { params(revision_record: EditSuggestionPageRevisionRecord).void }
-  def set_latest_revision!(revision_record:)
-    update!(latest_revision_record: revision_record)
+    revision = EditSuggestionPageRevisionRecord.create!(
+      space_record:,
+      edit_suggestion_page_record: self,
+      editor_space_member_record:,
+      title:,
+      body:,
+      body_html:
+    )
+    
+    # latest_revisionを更新
+    update!(latest_revision_record: revision)
+    
+    revision
   end
 end

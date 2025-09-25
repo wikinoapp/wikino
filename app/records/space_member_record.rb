@@ -85,6 +85,25 @@ class SpaceMemberRecord < ApplicationRecord
     topic_records.kept
   end
 
+  # 編集提案を作成する（ドラフトステータスで作成）
+  sig do
+    params(
+      topic_record: TopicRecord,
+      title: String,
+      description: String
+    ).returns(EditSuggestionRecord)
+  end
+  def create_draft_edit_suggestion_record!(topic_record:, title:, description:)
+    EditSuggestionRecord.create!(
+      space_record:,
+      topic_record:,
+      created_space_member_record: self,
+      title:,
+      description:,
+      status: EditSuggestionStatus::Draft.serialize
+    )
+  end
+
   sig { params(space: SpaceRecord).returns(T::Boolean) }
   def can_create_bulk_restored_pages?(space:)
     active? && space_id == space.id

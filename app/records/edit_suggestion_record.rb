@@ -26,24 +26,21 @@ class EditSuggestionRecord < ApplicationRecord
     status_draft? || status_open?
   end
 
-  # 編集提案を作成する（初期ステータスはdraft）
+  # 編集提案ページを作成する（最初はlatest_revisionなし）
   sig do
     params(
-      space_record: SpaceRecord,
-      topic_record: TopicRecord,
-      created_space_member_record: SpaceMemberRecord,
-      title: String,
-      description: String
-    ).returns(EditSuggestionRecord)
+      page_record: T.nilable(PageRecord),
+      page_revision_record: T.nilable(PageRevisionRecord)
+    ).returns(EditSuggestionPageRecord)
   end
-  def self.create_draft!(space_record:, topic_record:, created_space_member_record:, title:, description:)
-    create!(
+  def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
+    record = EditSuggestionPageRecord.new(
       space_record:,
-      topic_record:,
-      created_space_member_record:,
-      title:,
-      description:,
-      status: EditSuggestionStatus::Draft.serialize
+      edit_suggestion_record: self,
+      page_record:,
+      page_revision_record:
     )
+    record.save!(validate: false)
+    record
   end
 end
