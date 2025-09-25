@@ -81,18 +81,17 @@ class EditSuggestionPageRecord < ApplicationRecord
       current_space_member: space_member
     ).render_html(text: body)
 
-    revision = EditSuggestionPageRevisionRecord.create!(
+    revision = revision_records.create!(
       space_record:,
-      edit_suggestion_page_record: self,
       editor_space_member_record:,
       title:,
       body:,
       body_html:
     )
-    
+
     # latest_revisionを更新
     update!(latest_revision_record: revision)
-    
+
     revision
   end
 end
