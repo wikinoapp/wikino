@@ -37,7 +37,6 @@ module EditSuggestions
       result = EditSuggestions::CreateService.new.call(
         space_member_record: space_member_record.not_nil!,
         page_record:,
-        topic_record:,
         title: form.title.not_nil!,
         description: form.description.not_nil!,
         page_title: form.page_title.not_nil!,

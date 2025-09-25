@@ -11,16 +11,16 @@ module EditSuggestions
     sig do
       params(
         space_member_record: SpaceMemberRecord,
-        page_record: T.nilable(PageRecord),
-        topic_record: TopicRecord,
+        page_record: PageRecord,
         title: String,
         description: String,
         page_title: String,
         page_body: String
       ).returns(Result)
     end
-    def call(space_member_record:, page_record:, topic_record:, title:, description:, page_title:, page_body:)
-      space_record = topic_record.space_record.not_nil!
+    def call(space_member_record:, page_record:, title:, description:, page_title:, page_body:)
+      topic_record = page_record.topic_record.not_nil!
+      space_record = page_record.space_record.not_nil!
 
       # 編集提案のステータスは最初はdraft
       status = EditSuggestionStatus::Draft.serialize
