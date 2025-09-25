@@ -60,4 +60,30 @@ class EditSuggestionPageRecord < ApplicationRecord
   def body_html
     latest_revision_record.not_nil!.body_html
   end
+
+  # 編集提案ページを作成する（最初はlatest_revisionなし）
+  sig do
+    params(
+      space_record: SpaceRecord,
+      edit_suggestion_record: EditSuggestionRecord,
+      page_record: T.nilable(PageRecord),
+      page_revision_record: T.nilable(PageRevisionRecord)
+    ).returns(EditSuggestionPageRecord)
+  end
+  def self.create_without_validation!(space_record:, edit_suggestion_record:, page_record:, page_revision_record:)
+    record = new(
+      space_record:,
+      edit_suggestion_record:,
+      page_record:,
+      page_revision_record:
+    )
+    record.save!(validate: false)
+    record
+  end
+
+  # latest_revisionを設定する
+  sig { params(revision_record: EditSuggestionPageRevisionRecord).void }
+  def set_latest_revision!(revision_record:)
+    update!(latest_revision_record: revision_record)
+  end
 end

@@ -318,6 +318,50 @@ const response = await post("/api/endpoint", {
 - ❌ データベースへの永続化を伴わない処理（URL生成、データ変換など）
 - ❌ 単一のモデル/レコードに閉じた処理（モデルやレコードのメソッドとして定義）
 
+### ビジネスロジックの配置
+
+**重要**: Serviceクラスにはビジネスロジックを直接書かず、RecordクラスまたはModelクラスにメソッドとして定義し、Serviceはそれらを呼び出すだけにすること
+
+```ruby
+# ✅ 良い例：ビジネスロジックをRecordに定義
+class EditSuggestionRecord < ApplicationRecord
+  def self.create_draft!(space_record:, topic_record:, created_space_member_record:, title:, description:)
+    create!(
+      space_record:,
+      topic_record:,
+      created_space_member_record:,
+      title:,
+      description:,
+      status: EditSuggestionStatus::Draft.serialize
+    )
+  end
+end
+
+class EditSuggestions::CreateService < ApplicationService
+  def call(...)
+    with_transaction do
+      # ビジネスロジックはRecordに委譲
+      edit_suggestion_record = EditSuggestionRecord.create_draft!(...)
+      # ...
+    end
+  end
+end
+
+# ❌ 悪い例：Serviceクラスにビジネスロジックを直接記述
+class EditSuggestions::CreateService < ApplicationService
+  def call(...)
+    with_transaction do
+      # ステータスの決定などのビジネスロジックをServiceに直接書いている
+      status = EditSuggestionStatus::Draft.serialize
+      edit_suggestion_record = EditSuggestionRecord.create!(
+        status: status,
+        # ...
+      )
+    end
+  end
+end
+```
+
 ### トランザクション処理
 
 **重要**: Serviceクラスでトランザクションを張る場合は、必ず `#with_transaction` メソッドを使用すること

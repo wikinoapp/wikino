@@ -22,52 +22,44 @@ module EditSuggestions
       topic_record = page_record.topic_record.not_nil!
       space_record = page_record.space_record.not_nil!
 
-      # 編集提案のステータスは最初はdraft
-      status = EditSuggestionStatus::Draft.serialize
-
       with_transaction do
-        # 編集提案を作成
-        edit_suggestion_record = EditSuggestionRecord.create!(
+        # 編集提案を作成（ビジネスロジックはRecordに委譲）
+        edit_suggestion_record = EditSuggestionRecord.create_draft!(
           space_record:,
           topic_record:,
           created_space_member_record: space_member_record,
           title:,
-          description:,
-          status:
+          description:
         )
 
-        # 編集提案ページを作成（最初はlatest_revision無し）
-        edit_suggestion_page_record = EditSuggestionPageRecord.new(
+        # 編集提案ページを作成（ビジネスロジックはRecordに委譲）
+        page_revision_record = page_record.revision_records.order(created_at: :desc).first
+        edit_suggestion_page_record = EditSuggestionPageRecord.create_without_validation!(
           space_record:,
           edit_suggestion_record:,
           page_record:,
-          page_revision_record: page_record&.revision_records&.order(created_at: :desc)&.first
+          page_revision_record:
         )
-        edit_suggestion_page_record.save!(validate: false)
 
-        # body_htmlを生成
+        # Modelオブジェクトを生成（HTMLレンダリングに必要）
         topic = TopicRepository.new.to_model(topic_record:)
         space = SpaceRepository.new.to_model(space_record: space_record.not_nil!)
         space_member = SpaceMemberRepository.new.to_model(space_member_record:)
 
-        body_html = Markup.new(
-          current_topic: topic,
-          current_space: space,
-          current_space_member: space_member
-        ).render_html(text: page_body)
-
-        # 編集提案ページリビジョンを作成
-        edit_suggestion_page_revision_record = EditSuggestionPageRevisionRecord.create!(
+        # 編集提案ページリビジョンを作成（ビジネスロジックはRecordに委譲）
+        edit_suggestion_page_revision_record = EditSuggestionPageRevisionRecord.create_with_html!(
           space_record:,
           edit_suggestion_page_record:,
           editor_space_member_record: space_member_record,
           title: page_title,
           body: page_body,
-          body_html:
+          topic:,
+          space:,
+          space_member:
         )
 
-        # latest_revision_idを更新
-        edit_suggestion_page_record.update!(latest_revision_record: edit_suggestion_page_revision_record)
+        # latest_revisionを設定（ビジネスロジックはRecordに委譲）
+        edit_suggestion_page_record.set_latest_revision!(revision_record: edit_suggestion_page_revision_record)
 
         Result.new(
           edit_suggestion_record:,

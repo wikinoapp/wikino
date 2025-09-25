@@ -25,4 +25,25 @@ class EditSuggestionRecord < ApplicationRecord
   def editable?
     status_draft? || status_open?
   end
+
+  # 編集提案を作成する（初期ステータスはdraft）
+  sig do
+    params(
+      space_record: SpaceRecord,
+      topic_record: TopicRecord,
+      created_space_member_record: SpaceMemberRecord,
+      title: String,
+      description: String
+    ).returns(EditSuggestionRecord)
+  end
+  def self.create_draft!(space_record:, topic_record:, created_space_member_record:, title:, description:)
+    create!(
+      space_record:,
+      topic_record:,
+      created_space_member_record:,
+      title:,
+      description:,
+      status: EditSuggestionStatus::Draft.serialize
+    )
+  end
 end
