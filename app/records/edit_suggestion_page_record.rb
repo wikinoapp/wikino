@@ -66,13 +66,15 @@ class EditSuggestionPageRecord < ApplicationRecord
     params(
       editor_space_member_record: SpaceMemberRecord,
       title: String,
-      body: String,
-      topic: Topic,
-      space: Space,
-      space_member: SpaceMember
+      body: String
     ).returns(EditSuggestionPageRevisionRecord)
   end
-  def create_revision_with_html!(editor_space_member_record:, title:, body:, topic:, space:, space_member:)
+  def create_revision_with_html!(editor_space_member_record:, title:, body:)
+    # HTMLレンダリングに必要なModelオブジェクトを生成
+    topic = TopicRepository.new.to_model(topic_record: edit_suggestion_record.not_nil!.topic_record.not_nil!)
+    space = SpaceRepository.new.to_model(space_record: space_record.not_nil!)
+    space_member = SpaceMemberRepository.new.to_model(space_member_record: editor_space_member_record)
+    
     body_html = Markup.new(
       current_topic: topic,
       current_space: space,
