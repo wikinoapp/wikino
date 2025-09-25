@@ -325,7 +325,6 @@ const response = await post("/api/endpoint", {
 ```ruby
 # ✅ 良い例：オブジェクト指向的にビジネスロジックをRecordに定義
 class SpaceMemberRecord < ApplicationRecord
-  # スペースメンバーが編集提案を作成する
   def create_draft_edit_suggestion_record!(topic_record:, title:, description:)
     EditSuggestionRecord.create!(
       space_record:,
@@ -339,7 +338,6 @@ class SpaceMemberRecord < ApplicationRecord
 end
 
 class EditSuggestionRecord < ApplicationRecord
-  # 編集提案がページを作成する
   def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
     EditSuggestionPageRecord.new(
       space_record:,
@@ -353,10 +351,7 @@ end
 class EditSuggestions::CreateService < ApplicationService
   def call(space_member_record:, page_record:, ...)
     with_transaction do
-      # スペースメンバーが編集提案を作成
       edit_suggestion_record = space_member_record.create_draft_edit_suggestion_record!(...)
-
-      # 編集提案がページを作成
       edit_suggestion_page_record = edit_suggestion_record.create_edit_suggestion_page_record!(...)
 
       # ...
@@ -396,10 +391,7 @@ module Users
   class CreateService < ApplicationService
     def call(organization_record:, user_params:)
       with_transaction do
-        # 組織がユーザーを作成
         user_record = organization_record.create_user_record!(user_params)
-
-        # ユーザーがプロフィールを作成
         profile_record = user_record.create_default_profile_record!
 
         # ...
