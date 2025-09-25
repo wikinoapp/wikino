@@ -320,16 +320,17 @@ const response = await post("/api/endpoint", {
 
 ### ビジネスロジックの配置
 
-**重要**: Serviceクラスにはビジネスロジックを直接書かず、RecordクラスまたはModelクラスにメソッドとして定義し、Serviceはそれらを呼び出すだけにすること
+**重要**: Serviceクラスにはビジネスロジックを直接書かず、RecordクラスまたはModelクラスにメソッドとして定義し、Serviceはそれらを呼び出すだけにすること。オブジェクト指向的に「誰が何をするか」を明確にする。
 
 ```ruby
-# ✅ 良い例：ビジネスロジックをRecordに定義
-class EditSuggestionRecord < ApplicationRecord
-  def self.create_draft!(space_record:, topic_record:, created_space_member_record:, title:, description:)
-    create!(
+# ✅ 良い例：オブジェクト指向的にビジネスロジックをRecordに定義
+class SpaceMemberRecord < ApplicationRecord
+  # スペースメンバーが編集提案を作成する
+  def create_draft_edit_suggestion_record!(topic_record:, title:, description:)
+    EditSuggestionRecord.create!(
       space_record:,
       topic_record:,
-      created_space_member_record:,
+      created_space_member_record: self,
       title:,
       description:,
       status: EditSuggestionStatus::Draft.serialize
@@ -337,11 +338,27 @@ class EditSuggestionRecord < ApplicationRecord
   end
 end
 
+class EditSuggestionRecord < ApplicationRecord
+  # 編集提案がページを作成する
+  def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
+    EditSuggestionPageRecord.new(
+      space_record:,
+      edit_suggestion_record: self,
+      page_record:,
+      page_revision_record:
+    ).tap { |record| record.save!(validate: false) }
+  end
+end
+
 class EditSuggestions::CreateService < ApplicationService
-  def call(...)
+  def call(space_member_record:, page_record:, ...)
     with_transaction do
-      # ビジネスロジックはRecordに委譲
-      edit_suggestion_record = EditSuggestionRecord.create_draft!(...)
+      # スペースメンバーが編集提案を作成
+      edit_suggestion_record = space_member_record.create_draft_edit_suggestion_record!(...)
+
+      # 編集提案がページを作成
+      edit_suggestion_page_record = edit_suggestion_record.create_edit_suggestion_page_record!(...)
+
       # ...
     end
   end
@@ -355,8 +372,15 @@ class EditSuggestions::CreateService < ApplicationService
       status = EditSuggestionStatus::Draft.serialize
       edit_suggestion_record = EditSuggestionRecord.create!(
         status: status,
+        space_record:,
+        topic_record:,
         # ...
       )
+
+      # 関連オブジェクトの生成もServiceが直接行っている
+      edit_suggestion_page_record = EditSuggestionPageRecord.new(...)
+      edit_suggestion_page_record.save!(validate: false)
+      # ...
     end
   end
 end
@@ -367,24 +391,30 @@ end
 **重要**: Serviceクラスでトランザクションを張る場合は、必ず `#with_transaction` メソッドを使用すること
 
 ```ruby
-# ✅ 良い例：with_transactionを使用
+# ✅ 良い例：with_transactionを使用し、オブジェクト指向的に処理
 module Users
   class CreateService < ApplicationService
-    def call
+    def call(organization_record:, user_params:)
       with_transaction do
-        user = UserRecord.create!(...)
-        ProfileRecord.create!(user:, ...)
+        # 組織がユーザーを作成
+        user_record = organization_record.create_user_record!(user_params)
+
+        # ユーザーがプロフィールを作成
+        profile_record = user_record.create_default_profile_record!
+
+        # ...
       end
     end
   end
 end
 
-# ❌ 悪い例：transactionを直接使用
+# ❌ 悪い例：transactionを直接使用し、Serviceがすべてのロジックを持つ
 module Users
   class CreateService < ApplicationService
     def call
       ApplicationRecord.transaction do
-        # with_transactionを使うべき
+        user = UserRecord.create!(...)
+        ProfileRecord.create!(user:, ...)
       end
     end
   end
