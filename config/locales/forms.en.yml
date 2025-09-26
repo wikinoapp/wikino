@@ -18,6 +18,15 @@ en:
         email: Email
       emails/edit_form:
         new_email: New email
+      edit_suggestions/create_form:
+        title: Title
+        description: Description
+        page_title: Page title
+        page_body: Page body
+      edit_suggestion_pages/create_form:
+        edit_suggestion_id: Edit suggestion
+        page_title: Page title
+        page_body: Page body
       pages/bulk_restoring_form:
         page_ids: Selected pages
       pages/edit_form:
@@ -75,6 +84,7 @@ en:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
         contains_invalid_characters_html: cannot contain the following characters <code>/\:*?"<>|"</code>
         incorrect: is incorrect
+        not_found: not found
         reserved: cannot be used
         uniqueness: has already been taken
       models:
@@ -124,3 +134,9 @@ en:
               invalid_characters: contains invalid characters
               invalid_path: contains an invalid path
               too_long: must be 255 bytes or less
+    edit_suggestion_pages:
+      select_edit_suggestion: Select edit suggestion
+      select_prompt: Please select an edit suggestion
+      cancel: Cancel
+      add_submit: Add page
+      adding_to: "Adding to %{title}"

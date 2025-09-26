@@ -35,6 +35,10 @@ module Pages
           page_record:
         )
 
+        # 編集提案の作成が可能かチェック（エラー時も必要）
+        topic_policy_for_error = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
+        can_create_edit_suggestion = topic_policy_for_error.can_create_edit_suggestion?
+
         return render_component(
           Pages::EditView.new(
             current_user: current_user!,
@@ -42,7 +46,8 @@ module Pages
             page:,
             form:,
             link_list:,
-            backlink_list:
+            backlink_list:,
+            can_create_edit_suggestion:
           ),
           status: :unprocessable_entity
         )

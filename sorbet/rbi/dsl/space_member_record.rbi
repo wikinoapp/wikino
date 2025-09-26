@@ -427,6 +427,20 @@ class SpaceMemberRecord
     def create_user_record!(*args, &blk); end
 
     sig { returns(T::Array[T.untyped]) }
+    def created_edit_suggestion_record_ids; end
+
+    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
+    def created_edit_suggestion_record_ids=(ids); end
+
+    # This method is created by ActiveRecord on the `SpaceMemberRecord` class because it declared `has_many :created_edit_suggestion_records`.
+    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
+    sig { returns(::EditSuggestionRecord::PrivateCollectionProxy) }
+    def created_edit_suggestion_records; end
+
+    sig { params(value: T::Enumerable[::EditSuggestionRecord]).void }
+    def created_edit_suggestion_records=(value); end
+
+    sig { returns(T::Array[T.untyped]) }
     def draft_page_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }

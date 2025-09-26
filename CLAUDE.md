@@ -149,6 +149,24 @@ class Example
 end
 ```
 
+### ViewComponent
+
+```ruby
+# ❌ ヘルパーメソッドでパスを隠蔽しない
+private def add_to_existing_path
+  helpers.new_edit_suggestion_page_path(
+    space_identifier: space.identifier,
+    topic_number: topic.number,
+    page_number: page.number
+  )
+end
+
+# ✅ テンプレートに直接パスヘルパーを記述
+<%= link_to new_edit_suggestion_page_path(space.identifier, topic.number, page.number), { ... } do %>
+```
+
+**重要**: ViewComponentでURLパスをプライベートメソッドとして定義せず、テンプレートに直接記述すること。これによりリンク先のエンドポイントが明確になり、コードの可読性が向上します。
+
 ### ActiveRecord
 
 ```ruby
@@ -300,29 +318,95 @@ const response = await post("/api/endpoint", {
 - ❌ データベースへの永続化を伴わない処理（URL生成、データ変換など）
 - ❌ 単一のモデル/レコードに閉じた処理（モデルやレコードのメソッドとして定義）
 
+### ビジネスロジックの配置
+
+**重要**: Serviceクラスにはビジネスロジックを直接書かず、RecordクラスまたはModelクラスにメソッドとして定義し、Serviceはそれらを呼び出すだけにすること。オブジェクト指向的に「誰が何をするか」を明確にする。
+
+```ruby
+# ✅ 良い例：オブジェクト指向的にビジネスロジックをRecordに定義
+class SpaceMemberRecord < ApplicationRecord
+  def create_draft_edit_suggestion_record!(topic_record:, title:, description:)
+    EditSuggestionRecord.create!(
+      space_record:,
+      topic_record:,
+      created_space_member_record: self,
+      title:,
+      description:,
+      status: EditSuggestionStatus::Draft.serialize
+    )
+  end
+end
+
+class EditSuggestionRecord < ApplicationRecord
+  def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
+    EditSuggestionPageRecord.new(
+      space_record:,
+      edit_suggestion_record: self,
+      page_record:,
+      page_revision_record:
+    ).tap { |record| record.save!(validate: false) }
+  end
+end
+
+class EditSuggestions::CreateService < ApplicationService
+  def call(space_member_record:, page_record:, ...)
+    with_transaction do
+      edit_suggestion_record = space_member_record.create_draft_edit_suggestion_record!(...)
+      edit_suggestion_page_record = edit_suggestion_record.create_edit_suggestion_page_record!(...)
+
+      # ...
+    end
+  end
+end
+
+# ❌ 悪い例：Serviceクラスにビジネスロジックを直接記述
+class EditSuggestions::CreateService < ApplicationService
+  def call(...)
+    with_transaction do
+      # ステータスの決定などのビジネスロジックをServiceに直接書いている
+      status = EditSuggestionStatus::Draft.serialize
+      edit_suggestion_record = EditSuggestionRecord.create!(
+        status: status,
+        space_record:,
+        topic_record:,
+        # ...
+      )
+
+      # 関連オブジェクトの生成もServiceが直接行っている
+      edit_suggestion_page_record = EditSuggestionPageRecord.new(...)
+      edit_suggestion_page_record.save!(validate: false)
+      # ...
+    end
+  end
+end
+```
+
 ### トランザクション処理
 
 **重要**: Serviceクラスでトランザクションを張る場合は、必ず `#with_transaction` メソッドを使用すること
 
 ```ruby
-# ✅ 良い例：with_transactionを使用
+# ✅ 良い例：with_transactionを使用し、オブジェクト指向的に処理
 module Users
   class CreateService < ApplicationService
-    def call
+    def call(organization_record:, user_params:)
       with_transaction do
-        user = UserRecord.create!(...)
-        ProfileRecord.create!(user:, ...)
+        user_record = organization_record.create_user_record!(user_params)
+        profile_record = user_record.create_default_profile_record!
+
+        # ...
       end
     end
   end
 end
 
-# ❌ 悪い例：transactionを直接使用
+# ❌ 悪い例：transactionを直接使用し、Serviceがすべてのロジックを持つ
 module Users
   class CreateService < ApplicationService
     def call
       ApplicationRecord.transaction do
-        # with_transactionを使うべき
+        user = UserRecord.create!(...)
+        ProfileRecord.create!(user:, ...)
       end
     end
   end

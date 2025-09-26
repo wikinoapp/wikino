@@ -1,0 +1,12 @@
+en:
+  components:
+    edit_suggestions:
+      form_modal_component:
+        title: Create edit suggestion
+        tabs:
+          create_new: Create new
+          add_to_existing: Add to existing
+      tabs_component:
+        tabs:
+          create_new: Create new
+          add_to_existing: Add to existing

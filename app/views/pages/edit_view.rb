@@ -11,6 +11,7 @@ module Pages
         form: Pages::EditForm,
         link_list: LinkList,
         backlink_list: BacklinkList,
+        can_create_edit_suggestion: T::Boolean,
         draft_page: T.nilable(DraftPage)
       ).void
     end
@@ -21,6 +22,7 @@ module Pages
       form:,
       link_list:,
       backlink_list:,
+      can_create_edit_suggestion:,
       draft_page: nil
     )
       @space = space
@@ -30,6 +32,7 @@ module Pages
       @backlink_list = backlink_list
       @current_user = current_user
       @draft_page = draft_page
+      @can_create_edit_suggestion = can_create_edit_suggestion
     end
 
     sig { override.void }
@@ -64,6 +67,11 @@ module Pages
     sig { returns(T.nilable(DraftPage)) }
     attr_reader :draft_page
     private :draft_page
+
+    sig { returns(T::Boolean) }
+    attr_reader :can_create_edit_suggestion
+    private :can_create_edit_suggestion
+    alias_method :can_create_edit_suggestion?, :can_create_edit_suggestion
 
     sig { returns(String) }
     private def title

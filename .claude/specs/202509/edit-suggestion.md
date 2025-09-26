@@ -115,18 +115,73 @@ GitHubのPull Requestsのような形で、スペースメンバーが編集を�
 
 ### 4. 編集提案作成機能（ページ編集画面から）
 
-- [ ] EditSuggestions::CreateServiceの実装
-- [ ] EditSuggestions::CreateControllerの実装
-- [ ] EditSuggestions::CreateFormの実装
-- [ ] EditSuggestions::CreateDialogComponentの作成（Basecoat Dialog使用）
-  - https://basecoatui.com/components/dialog/
-- [ ] edit-suggestion-dialog-controllerの実装（Stimulus）
-- [ ] Pages::EditControllerの修正（ダイアログ追加）
-- [ ] ルーティングの追加
+- [x] EditSuggestions::CreateServiceの実装
+  - 新規編集提案作成とページリビジョンの作成を同時に実行
+- [x] EditSuggestionPages::AddServiceの実装
+  - 既存編集提案へのページ追加処理
+- [x] EditSuggestions::CreateControllerの実装
+  - 新規編集提案作成と既存編集提案へのページ追加の両方に対応
   - POST /s/:space_identifier/topics/:topic_number/edit_suggestions
-- [ ] テスト作成
-  - サービスのユニットテスト
-  - システムテスト（ダイアログ表示・作成）
+- [x] EditSuggestions::CreateFormの実装
+  - タイトル、概要、ページタイトル、ページ本文の入力
+  - 既存編集提案選択の管理
+- [x] EditSuggestions::CreateModalComponentの作成
+  - 「新しい編集提案を作成する」（デフォルト）
+  - 「既存の編集提案に加える」（オープン/下書きから選択）
+  - 通常のフォーム送信を実装
+- [x] BaseUi::DialogComponentの実装
+  - Basecoat UIベースのダイアログコンポーネント
+- [x] dialog-controllerの実装（Stimulus）
+  - ダイアログのopen/close制御
+- [x] Pages::EditControllerの修正
+  - ダイアログコンポーネント用のデータ準備（既存編集提案の取得）
+- [x] テスト作成
+  - EditSuggestions::CreateServiceのユニットテスト
+  - EditSuggestionPages::AddServiceのユニットテスト
+  - システムテスト（ダイアログ表示・新規作成・既存へのページ追加）
+- [x] Turbo Frame対応への移行
+
+  #### 新規作成フロー
+  - [x] EditSuggestions::NewControllerの実装
+    - GET /s/:space_identifier/pages/:page_number/edit_suggestions/new
+    - Turbo Frameで新規編集提案フォームを返す
+  - [x] EditSuggestions::CreateFormの再実装
+    - 新規作成専用のフォーム（タイトル、概要、ページタイトル、ページ本文）
+    - 既存編集提案選択フィールドを削除（既存のものをそのまま使用）
+  - [x] EditSuggestions::CreateControllerの再実装
+    - POST /s/:space_identifier/pages/:page_number/edit_suggestions
+    - 新規編集提案の作成専用エンドポイントとして再実装
+    - Turbo Stream対応でエラー表示を改善
+  - [x] EditSuggestions::CreateServiceは既存のものを使用
+    - 既に新規編集提案作成機能を持っているため変更不要
+
+  #### 既存に追加フロー
+  - [x] EditSuggestionPages::NewControllerの実装
+    - GET /s/:space_identifier/topics/:topic_number/edit_suggestion_pages/new
+    - Turbo Frameで既存編集提案へのページ追加フォームを返す
+    - 既存の編集提案一覧を取得してセレクトボックスで選択可能にする
+  - [x] EditSuggestionPages::CreateFormの実装
+    - ページ追加専用のフォーム（編集提案ID、ページタイトル、ページ本文）
+    - 編集提案IDはセレクトボックスから選択
+  - [x] EditSuggestionPages::CreateControllerの実装
+    - POST /s/:space_identifier/topics/:topic_number/edit_suggestion_pages
+    - 既存編集提案へのページ追加専用エンドポイント
+    - フォームから送信された編集提案IDを使用
+    - Turbo Stream対応でエラー表示を改善
+  - [x] EditSuggestionPages::AddServiceは既存のものを使用
+    - 既に既存編集提案へのページ追加機能を持っているため変更不要
+
+  #### UI実装
+  - [x] EditSuggestions::FormModalComponentの実装
+    - 既存のEditSuggestions::CreateModalComponentをリネーム・改修
+    - タブ切り替えUIを含むモーダルコンポーネント
+    - Turbo Frameを使用してフォームを動的に読み込み
+  - [x] ダイアログ内でのタブ切り替え実装
+    - 「新規作成」「既存に追加」の2つのタブを実装
+    - 「新規作成」タブ：新規編集提案作成フォームを表示
+    - 「既存に追加」タブ：既存編集提案選択セレクトボックス付きフォームを表示
+    - タブクリック時にTurbo Frameで適切なフォームを読み込み
+    - FormModalComponent内でタブとTurbo Frameを管理
 
 ### 5. 編集提案詳細画面（会話タブ）
 

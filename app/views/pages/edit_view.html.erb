@@ -3,7 +3,8 @@
   current_user:,
   current_space: space,
   show_sidebar: false,
-  show_bottom_navbar: false
+  show_bottom_navbar: false,
+  controller_name: "dialog"
 ) do |layout| %>
   <%= layout.with_main do %>
     <%= render BaseUI::ContainerComponent.new(
@@ -88,6 +89,18 @@
                   <%= t("verbs.save") %>
                 <% end %>
 
+                <% if can_create_edit_suggestion? %>
+                  <%= render BaseUI::DialogComponent::TriggerComponent.new do %>
+                    <button
+                      type="button"
+                      class="btn-outline w-fit rounded-full"
+                    >
+                      <%= render BaseUI::IconComponent.new(name: "git-pull-request-regular", size: "18px") %>
+                      <%= t("verbs.suggest_edit") %>
+                    </button>
+                  <% end %>
+                <% end %>
+
                 <%= link_to t("nouns.cancel"), page_path(space.identifier, page.number), {
                   class: "btn-ghost rounded-full w-fit"
                 } %>
@@ -113,6 +126,10 @@
           <%= render Footers::PageComponent.new(page:, link_list:, backlink_list:) %>
         </turbo-frame>
       </div>
+    <% end %>
+
+    <% if can_create_edit_suggestion? %>
+      <%= render EditSuggestions::FormModalComponent.new(page:) %>
     <% end %>
   <% end %>
 <% end %>

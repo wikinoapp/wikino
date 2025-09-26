@@ -45,7 +45,8 @@ module Pages
         form:,
         link_list:,
         backlink_list:,
-        current_user:
+        current_user:,
+        can_create_edit_suggestion: topic_policy.can_create_edit_suggestion?
       )
     end
 

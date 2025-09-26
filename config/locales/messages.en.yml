@@ -225,9 +225,13 @@ en:
       wikilink_feature_description_1: Create and link pages using a wikilink syntax.
       wikilink_feature_title: Create and link pages using a wikilink syntax.
     edit_suggestions:
+      created: Edit suggestion created
       page_count:
         one: "%{count} page"
         other: "%{count} pages"
       empty_state:
         title: No edit suggestions
         description: There are no edit suggestions for this topic yet.
+    edit_suggestion_pages:
+      added: Page added to edit suggestion
+      no_existing_suggestions_html: There are no existing edit suggestions to add to.<br>Please create a new edit suggestion first.

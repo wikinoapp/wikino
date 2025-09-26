@@ -1,0 +1,45 @@
+<turbo-frame id="edit-suggestion-form">
+  <%= render EditSuggestions::TabsComponent.new(
+    page:,
+    active_tab: :create_new
+  ) %>
+
+  <%= form_with(
+    class: "form grid gap-6",
+    model: form,
+    url: edit_suggestion_list_path(space.identifier, page.number),
+  ) do |f| %>
+    <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
+
+    <div class="grid gap-2">
+      <%= render BaseUI::LabelComponent.new(form_builder: f, method: :title) %>
+
+      <%= f.text_field(:title, autofocus: true, required: true) %>
+    </div>
+
+    <div class="grid gap-2">
+      <%= render BaseUI::LabelComponent.new(form_builder: f, method: :description) %>
+
+      <%= f.text_area(:description, class: "textarea", rows: 3) %>
+    </div>
+
+    <%= f.hidden_field :page_title %>
+    <%= f.hidden_field :page_body %>
+
+    <div class="flex gap-2">
+      <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+        <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
+
+        <%= t("verbs.create") %>
+      <% end %>
+
+      <button
+        type="button"
+        data-action="dialog#close"
+        class="btn-ghost w-fit rounded-full"
+      >
+        <%= t("nouns.cancel") %>
+      </button>
+    </div>
+  <% end %>
+</turbo-frame>

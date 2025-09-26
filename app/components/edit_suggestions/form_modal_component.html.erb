@@ -1,0 +1,22 @@
+<%= render BaseUI::DialogComponent.new(
+  id: "edit-suggestion-dialog",
+  class_name: "sm:max-w-3xl"
+) do %>
+  <article>
+    <header>
+      <h2 class="text-xl font-semibold">
+        <%= t("components.edit_suggestions.form_modal_component.title") %>
+      </h2>
+    </header>
+
+    <turbo-frame
+      id="edit-suggestion-form"
+      src="<%= new_edit_suggestion_path(space.identifier, page.number) %>"
+      class="block"
+    >
+      <div class="flex justify-center py-8">
+        <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900 dark:border-gray-100"></div>
+      </div>
+    </turbo-frame>
+  </article>
+<% end %>

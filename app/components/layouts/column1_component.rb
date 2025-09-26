@@ -14,7 +14,8 @@ module Layouts
         current_user: T.nilable(User),
         current_space: T.nilable(Space),
         show_sidebar: T::Boolean,
-        show_bottom_navbar: T::Boolean
+        show_bottom_navbar: T::Boolean,
+        controller_name: String
       ).void
     end
     def initialize(
@@ -22,13 +23,15 @@ module Layouts
       current_user:,
       current_space: nil,
       show_sidebar: true,
-      show_bottom_navbar: true
+      show_bottom_navbar: true,
+      controller_name: ""
     )
       @current_page_name = current_page_name
       @current_user = current_user
       @current_space = current_space
       @show_sidebar = show_sidebar
       @show_bottom_navbar = show_bottom_navbar
+      @controller_name = controller_name
     end
 
     sig { returns(PageName) }
@@ -51,5 +54,14 @@ module Layouts
     attr_reader :show_bottom_navbar
     private :show_bottom_navbar
     alias_method :show_bottom_navbar?, :show_bottom_navbar
+
+    sig { returns(String) }
+    attr_reader :controller_name
+    private :controller_name
+
+    sig { returns(String) }
+    def controller_names
+      "global-hotkey sidebar #{controller_name}".strip
+    end
   end
 end

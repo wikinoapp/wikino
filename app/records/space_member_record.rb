@@ -26,6 +26,11 @@ class SpaceMemberRecord < ApplicationRecord
     dependent: :restrict_with_exception,
     foreign_key: :space_member_id,
     inverse_of: :space_member_record
+  has_many :created_edit_suggestion_records,
+    class_name: "EditSuggestionRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :created_space_member_id,
+    inverse_of: :created_space_member_record
 
   delegate :locale, :time_zone, to: :user_record, prefix: true
 
@@ -83,6 +88,33 @@ class SpaceMemberRecord < ApplicationRecord
   sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topic_records
     topic_records.kept
+  end
+
+  # 編集提案を作成する（ドラフトステータスで作成）
+  sig do
+    params(
+      topic_record: TopicRecord,
+      title: String,
+      description: String
+    ).returns(EditSuggestionRecord)
+  end
+  def create_draft_edit_suggestion_record!(topic_record:, title:, description:)
+    EditSuggestionRecord.create!(
+      space_record:,
+      topic_record:,
+      created_space_member_record: self,
+      title:,
+      description:,
+      status: EditSuggestionStatus::Draft.serialize
+    )
+  end
+
+  # トピックに対する自分のオープンまたはドラフトステータスの編集提案を取得する
+  sig { params(topic_record: TopicRecord).returns(EditSuggestionRecord::PrivateAssociationRelation) }
+  def open_or_draft_edit_suggestion_records_for(topic_record:)
+    created_edit_suggestion_records
+      .open_or_draft
+      .where(topic_id: topic_record.id)
   end
 
   sig { params(space: SpaceRecord).returns(T::Boolean) }
