@@ -34,13 +34,10 @@ class EditSuggestionRecord < ApplicationRecord
     ).returns(EditSuggestionPageRecord)
   end
   def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
-    record = EditSuggestionPageRecord.new(
+    edit_suggestion_page_records.create!(
       space_record:,
-      edit_suggestion_record: self,
       page_record:,
       page_revision_record:
     )
-    record.save!(validate: false)
-    record
   end
 end
