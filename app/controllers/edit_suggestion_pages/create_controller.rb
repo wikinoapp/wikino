@@ -35,8 +35,6 @@ module EditSuggestionPages
         )
       end
 
-      # 既存の編集提案にページを追加
-      # フォームのバリデーションで取得したedit_suggestion_recordを使用
       EditSuggestionPages::AddService.new.call(
         edit_suggestion_record: form.edit_suggestion_record.not_nil!,
         space_member_record: space_member_record.not_nil!,
