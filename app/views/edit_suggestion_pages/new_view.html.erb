@@ -5,40 +5,41 @@
   ) %>
 
   <%= form_with(
+    class: "form grid gap-6",
     model: form,
     url: edit_suggestion_page_list_path(
       space_identifier: space.identifier,
       page_number: page.number
     ),
-    local: false,
-    data: {
-      turbo: true,
-      turbo_stream: true
-    }
   ) do |f| %>
-    <div id="edit-suggestion-form-errors"></div>
+    <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-    <div class="space-y-4">
-      <div>
-        <%= f.label :edit_suggestion_id, t("forms.edit_suggestion_pages.select_edit_suggestion"), class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
-        <%= f.select :edit_suggestion_id,
-            options_for_select(existing_edit_suggestions.map { |s| [s.title, s.database_id] }),
-            { prompt: t("forms.edit_suggestion_pages.select_prompt") },
-            class: "mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
-      </div>
+    <div class="grid gap-2">
+      <%= render BaseUI::LabelComponent.new(form_builder: f, method: :edit_suggestion_id) %>
 
-      <%= f.hidden_field :page_title %>
-      <%= f.hidden_field :page_body %>
+      <%= f.select :edit_suggestion_id,
+          options_for_select(existing_edit_suggestions.map { |s| [s.title, s.database_id] }),
+          { prompt: t("forms.edit_suggestion_pages.select_prompt") },
+          class: "select" %>
     </div>
 
-    <div class="mt-6 flex justify-end space-x-3">
-      <button type="button"
-              data-action="dialog#close"
-              class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-        <%= t("forms.edit_suggestion_pages.cancel") %>
+    <%= f.hidden_field :page_title %>
+    <%= f.hidden_field :page_body %>
+
+    <div class="flex gap-2">
+      <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+        <%= render BaseUI::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary-foreground") %>
+
+        <%= t("forms.edit_suggestion_pages.add_submit") %>
+      <% end %>
+
+      <button
+        type="button"
+        data-action="dialog#close"
+        class="btn-ghost w-fit rounded-full"
+      >
+        <%= t("nouns.cancel") %>
       </button>
-      <%= f.submit t("forms.edit_suggestion_pages.add_submit"),
-          class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
     </div>
   <% end %>
 </turbo-frame>
