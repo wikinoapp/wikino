@@ -13,12 +13,12 @@ module ControllerConcerns
       params(
         form: EditSuggestionPages::CreateForm,
         page_record: PageRecord,
-        topic_record: TopicRecord,
         space_member_record: T.nilable(SpaceMemberRecord)
       ).returns(T.untyped)
     end
-    private def build_edit_suggestion_page_view(form:, page_record:, topic_record:, space_member_record:)
+    private def build_edit_suggestion_page_view(form:, page_record:, space_member_record:)
       page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
+      topic_record = page_record.topic_record.not_nil!
 
       # 既存の編集提案を取得（フォームで選択可能な編集提案）
       existing_edit_suggestion_records = space_member_record

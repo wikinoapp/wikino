@@ -37,7 +37,6 @@ module EditSuggestionPages
       view = build_edit_suggestion_page_view(
         form:,
         page_record:,
-        topic_record:,
         space_member_record:
       )
 

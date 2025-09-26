@@ -32,7 +32,6 @@ module EditSuggestionPages
         view = build_edit_suggestion_page_view(
           form:,
           page_record:,
-          topic_record:,
           space_member_record:
         )
         return render_component(view, status: :unprocessable_entity)
