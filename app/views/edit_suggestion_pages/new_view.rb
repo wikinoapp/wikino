@@ -30,13 +30,5 @@ module EditSuggestionPages
 
     delegate :space, to: :page, private: true
     delegate :topic, to: :page, private: true
-
-    sig { returns(String) }
-    def form_action_path
-      edit_suggestion_page_list_path(
-        space_identifier: space.identifier,
-        page_number: page.number
-      )
-    end
   end
 end

@@ -6,7 +6,10 @@
 
   <%= form_with(
     model: form,
-    url: form_action_path,
+    url: edit_suggestion_page_list_path(
+      space_identifier: space.identifier,
+      page_number: page.number
+    ),
     local: false,
     data: {
       turbo: true,
