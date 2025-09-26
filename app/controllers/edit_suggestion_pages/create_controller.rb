@@ -35,9 +35,9 @@ module EditSuggestionPages
         page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
         # 既存の編集提案を取得（フォームで選択可能な編集提案）
-        existing_edit_suggestion_records = EditSuggestionRecord
-          .open_or_draft
-          .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
+        existing_edit_suggestion_records = space_member_record
+          .not_nil!
+          .open_or_draft_edit_suggestion_records_for(topic_record:)
           .preload(:created_space_member_record)
 
         existing_edit_suggestions = EditSuggestionRepository.new.to_models(

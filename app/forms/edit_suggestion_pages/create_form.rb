@@ -30,14 +30,10 @@ module EditSuggestionPages
       return if space_member_record.nil?
       return if topic_record.nil?
 
-      self.edit_suggestion_record = EditSuggestionRecord
-        .open_or_draft
-        .where(
-          id: edit_suggestion_id,
-          topic_id: topic_record.not_nil!.id,
-          created_space_member_id: space_member_record.not_nil!.id
-        )
-        .first
+      self.edit_suggestion_record = space_member_record
+        .not_nil!
+        .open_or_draft_edit_suggestion_records_for(topic_record: topic_record.not_nil!)
+        .find_by(id: edit_suggestion_id)
 
       if edit_suggestion_record.nil?
         errors.add(:edit_suggestion_id, :not_found)

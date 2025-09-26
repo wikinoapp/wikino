@@ -25,9 +25,9 @@ module EditSuggestionPages
       space_member_record = current_user_record!.space_member_record(space_record:)
 
       # 現在のユーザーが作成した下書き/オープンの編集提案を取得
-      existing_edit_suggestion_records = EditSuggestionRecord
-        .open_or_draft
-        .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
+      existing_edit_suggestion_records = space_member_record
+        .not_nil!
+        .open_or_draft_edit_suggestion_records_for(topic_record:)
         .order(created_at: :desc)
 
       # ページの下書きまたは公開版からデータを取得

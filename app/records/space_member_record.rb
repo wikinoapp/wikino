@@ -26,6 +26,11 @@ class SpaceMemberRecord < ApplicationRecord
     dependent: :restrict_with_exception,
     foreign_key: :space_member_id,
     inverse_of: :space_member_record
+  has_many :created_edit_suggestion_records,
+    class_name: "EditSuggestionRecord",
+    dependent: :restrict_with_exception,
+    foreign_key: :created_space_member_id,
+    inverse_of: :created_space_member_record
 
   delegate :locale, :time_zone, to: :user_record, prefix: true
 
@@ -102,6 +107,14 @@ class SpaceMemberRecord < ApplicationRecord
       description:,
       status: EditSuggestionStatus::Draft.serialize
     )
+  end
+
+  # トピックに対する自分のオープンまたはドラフトステータスの編集提案を取得する
+  sig { params(topic_record: TopicRecord).returns(EditSuggestionRecord::PrivateAssociationRelation) }
+  def open_or_draft_edit_suggestion_records_for(topic_record:)
+    created_edit_suggestion_records
+      .open_or_draft
+      .where(topic_id: topic_record.id)
   end
 
   sig { params(space: SpaceRecord).returns(T::Boolean) }
