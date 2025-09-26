@@ -29,12 +29,10 @@ module EditSuggestionPages
       )
 
       if form.invalid?
-        view = build_edit_suggestion_page_view(
-          form:,
-          page_record:,
-          space_member_record:
+        return render_component(
+          build_edit_suggestion_page_view(form:, page_record:, space_member_record:),
+          status: :unprocessable_entity
         )
-        return render_component(view, status: :unprocessable_entity)
       end
 
       # 既存の編集提案にページを追加

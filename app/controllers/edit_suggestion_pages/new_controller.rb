@@ -34,13 +34,10 @@ module EditSuggestionPages
         page_body: pageable_record.body
       )
 
-      view = build_edit_suggestion_page_view(
-        form:,
-        page_record:,
-        space_member_record:
+      render(
+        build_edit_suggestion_page_view(form:, page_record:, space_member_record:),
+        layout: false
       )
-
-      render(view, layout: false)
     end
   end
 end
