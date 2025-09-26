@@ -3,11 +3,7 @@
 
 module EditSuggestions
   class FormModalComponent < ApplicationComponent
-    sig do
-      params(
-        page: Page
-      ).void
-    end
+    sig { params(page: Page).void }
     def initialize(page:)
       @page = page
     end
