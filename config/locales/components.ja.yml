@@ -6,3 +6,7 @@ ja:
         tabs:
           create_new: 新規作成
           add_to_existing: 既存に追加
+      tabs_component:
+        tabs:
+          create_new: 新規作成
+          add_to_existing: 既存に追加

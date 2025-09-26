@@ -1,0 +1,17 @@
+<div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+  <nav class="flex space-x-8">
+    <%= link_to new_edit_suggestion_path(space.identifier, page.number), {
+      data: { turbo_frame: "edit-suggestion-form" },
+      class: create_new_link_classes
+    } do %>
+      <%= t("components.edit_suggestions.tabs_component.tabs.create_new") %>
+    <% end %>
+
+    <%= link_to new_edit_suggestion_page_path(space.identifier, page.number), {
+      data: { turbo_frame: "edit-suggestion-form" },
+      class: add_to_existing_link_classes
+    } do %>
+      <%= t("components.edit_suggestions.tabs_component.tabs.add_to_existing") %>
+    <% end %>
+  </nav>
+</div>

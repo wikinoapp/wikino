@@ -9,24 +9,6 @@
       </h2>
     </header>
 
-    <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-      <nav class="flex space-x-8">
-        <%= link_to new_edit_suggestion_path(space.identifier, page.number), {
-          data: { turbo_frame: "edit-suggestion-form" },
-          class: "border-b-2 border-indigo-500 px-1 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
-        } do %>
-          <%= t("components.edit_suggestions.form_modal_component.tabs.create_new") %>
-        <% end %>
-
-        <%= link_to new_edit_suggestion_page_path(space.identifier, topic.number, page.number), {
-          data: { turbo_frame: "edit-suggestion-form" },
-          class: "border-b-2 border-transparent px-1 py-2 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        } do %>
-          <%= t("components.edit_suggestions.form_modal_component.tabs.add_to_existing") %>
-        <% end %>
-      </nav>
-    </div>
-
     <turbo-frame
       id="edit-suggestion-form"
       src="<%= new_edit_suggestion_path(space.identifier, page.number) %>"

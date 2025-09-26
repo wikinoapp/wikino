@@ -6,3 +6,7 @@ en:
         tabs:
           create_new: Create new
           add_to_existing: Add to existing
+      tabs_component:
+        tabs:
+          create_new: Create new
+          add_to_existing: Add to existing

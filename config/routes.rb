@@ -60,7 +60,7 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/pages/:page_number/edit_suggestions/new",         via: :get,    as: :new_edit_suggestion,                      to: "edit_suggestions/new#call",                   page_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/edit_suggestions/:id",      via: :get,    as: :edit_suggestion,                          to: "edit_suggestions/show#call",                  topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/edit_suggestion_pages",     via: :post,   as: :edit_suggestion_page_list,                to: "edit_suggestion_pages/create#call",           topic_number: /\d+/
-  match "/s/:space_identifier/topics/:topic_number/edit_suggestion_pages/new", via: :get,    as: :new_edit_suggestion_page,                 to: "edit_suggestion_pages/new#call",              topic_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/edit_suggestion_pages/new", via: :get,    as: :new_edit_suggestion_page,                 to: "edit_suggestion_pages/new#call",              page_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/pages/new",             via: :get,    as: :new_page,                                     to: "pages/new#call",                              topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/settings",              via: :get,    as: :topic_settings,                               to: "topics/settings/show#call",                   topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/settings/deletion",     via: :post,   as: :topic_settings_deletion,                      to: "topics/settings/deletions/create#call",       topic_number: /\d+/
