@@ -6,6 +6,7 @@ module EditSuggestionPages
     include ControllerConcerns::Authenticatable
     include ControllerConcerns::Localizable
     include ControllerConcerns::TopicAware
+    include ControllerConcerns::EditSuggestionRenderable
 
     around_action :set_locale
     before_action :require_authentication
@@ -24,12 +25,6 @@ module EditSuggestionPages
 
       space_member_record = current_user_record!.space_member_record(space_record:)
 
-      # 現在のユーザーが作成した下書き/オープンの編集提案を取得
-      existing_edit_suggestion_records = space_member_record
-        .not_nil!
-        .open_or_draft_edit_suggestion_records_for(topic_record:)
-        .order(created_at: :desc)
-
       # ページの下書きまたは公開版からデータを取得
       draft_page_record = space_member_record.not_nil!.draft_page_records.find_by(page_record:)
       pageable_record = draft_page_record.presence || page_record
@@ -39,15 +34,14 @@ module EditSuggestionPages
         page_body: pageable_record.body
       )
 
-      page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
-      existing_edit_suggestions = EditSuggestionRepository.new.to_models(
-        edit_suggestion_records: existing_edit_suggestion_records
+      view = render_edit_suggestion_page_form(
+        form:,
+        page_record:,
+        topic_record:,
+        space_member_record:
       )
 
-      render(
-        EditSuggestionPages::NewView.new(form:, page:, existing_edit_suggestions:),
-        layout: false
-      )
+      render(view, layout: false)
     end
   end
 end
