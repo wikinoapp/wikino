@@ -17,7 +17,7 @@ module ControllerConcerns
         space_member_record: T.nilable(SpaceMemberRecord)
       ).returns(T.untyped)
     end
-    private def render_edit_suggestion_page_form(form:, page_record:, topic_record:, space_member_record:)
+    private def build_edit_suggestion_page_view(form:, page_record:, topic_record:, space_member_record:)
       page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
 
       # 既存の編集提案を取得（フォームで選択可能な編集提案）

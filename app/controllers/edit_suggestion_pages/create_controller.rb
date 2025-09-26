@@ -29,7 +29,7 @@ module EditSuggestionPages
       )
 
       if form.invalid?
-        view = render_edit_suggestion_page_form(
+        view = build_edit_suggestion_page_view(
           form:,
           page_record:,
           topic_record:,
