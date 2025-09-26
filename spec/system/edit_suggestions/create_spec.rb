@@ -33,6 +33,7 @@ RSpec.describe "編集提案の作成" do
 
     # 編集提案一覧ページにリダイレクトされることを確認（ShowControllerが未実装のため）
     expect(page).to have_current_path(topic_edit_suggestion_list_path(space_record.identifier, topic_record.number))
+
     # 作成した編集提案が一覧に表示されることを確認
     expect(page).to have_content("ページ更新の提案")
     expect(page).to have_content("下書き")  # デフォルトステータスは下書き

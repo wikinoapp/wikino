@@ -34,10 +34,11 @@ class EditSuggestionRecord < ApplicationRecord
     ).returns(EditSuggestionPageRecord)
   end
   def create_edit_suggestion_page_record!(page_record:, page_revision_record:)
-    edit_suggestion_page_records.create!(
+    EditSuggestionPageRecord.new(
       space_record:,
+      edit_suggestion_record: self,
       page_record:,
       page_revision_record:
-    )
+    ).tap { |record| record.save!(validate: false) }
   end
 end
