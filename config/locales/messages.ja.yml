@@ -230,3 +230,4 @@ ja:
         description: このトピックにはまだ編集提案がありません。
     edit_suggestion_pages:
       added: 編集提案にページを追加しました
+      no_existing_suggestions_html: 追加できる編集提案がありません。<br>まず新しい編集提案を作成してください。

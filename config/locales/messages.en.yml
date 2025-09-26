@@ -234,3 +234,4 @@ en:
         description: There are no edit suggestions for this topic yet.
     edit_suggestion_pages:
       added: Page added to edit suggestion
+      no_existing_suggestions_html: There are no existing edit suggestions to add to.<br>Please create a new edit suggestion first.

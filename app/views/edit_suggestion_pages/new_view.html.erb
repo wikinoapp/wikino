@@ -4,41 +4,57 @@
     active_tab: :add_to_existing
   ) %>
 
-  <%= form_with(
-    class: "form grid gap-6",
-    model: form,
-    url: edit_suggestion_page_list_path(
-      space_identifier: space.identifier,
-      page_number: page.number
-    ),
-  ) do |f| %>
-    <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
+  <% if existing_edit_suggestions.present? %>
+    <%= form_with(
+      class: "form grid gap-6",
+      model: form,
+      url: edit_suggestion_page_list_path(
+        space_identifier: space.identifier,
+        page_number: page.number
+      ),
+    ) do |f| %>
+      <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
-    <div class="grid gap-2">
-      <%= render BaseUI::LabelComponent.new(form_builder: f, method: :edit_suggestion_id) %>
+      <div class="grid gap-2">
+        <%= render BaseUI::LabelComponent.new(form_builder: f, method: :edit_suggestion_id) %>
 
-      <%= f.select :edit_suggestion_id,
-          options_for_select(existing_edit_suggestions.map { |s| [s.title, s.database_id] }),
-          { prompt: t("forms.edit_suggestion_pages.select_prompt") },
-          class: "select" %>
-    </div>
+        <%= f.select :edit_suggestion_id,
+            options_for_select(existing_edit_suggestions.map { |s| [s.title, s.database_id] }),
+            { prompt: t("forms.edit_suggestion_pages.select_prompt") },
+            class: "select" %>
+      </div>
 
-    <%= f.hidden_field :page_title %>
-    <%= f.hidden_field :page_body %>
+      <%= f.hidden_field :page_title %>
+      <%= f.hidden_field :page_body %>
 
-    <div class="flex gap-2">
-      <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
-        <%= render BaseUI::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary-foreground") %>
+      <div class="flex gap-2">
+        <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
+          <%= render BaseUI::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary-foreground") %>
 
-        <%= t("forms.edit_suggestion_pages.add_submit") %>
-      <% end %>
+          <%= t("forms.edit_suggestion_pages.add_submit") %>
+        <% end %>
+
+        <button
+          type="button"
+          data-action="dialog#close"
+          class="btn-ghost w-fit rounded-full"
+        >
+          <%= t("nouns.cancel") %>
+        </button>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-8">
+      <p class="text-gray-500 dark:text-gray-400 mb-4">
+        <%= t("messages.edit_suggestion_pages.no_existing_suggestions_html") %>
+      </p>
 
       <button
         type="button"
         data-action="dialog#close"
         class="btn-ghost w-fit rounded-full"
       >
-        <%= t("nouns.cancel") %>
+        <%= t("nouns.close") %>
       </button>
     </div>
   <% end %>
