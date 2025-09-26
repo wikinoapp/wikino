@@ -38,9 +38,6 @@ module Pages
       backlink_list = BacklinkListRepository.new.to_model(user_record: current_user_record, page_record:)
       current_user = UserRepository.new.to_model(user_record: current_user_record!)
 
-      # 編集提案の作成が可能かチェック
-      can_create_edit_suggestion = topic_policy.can_create_edit_suggestion?
-
       render_component Pages::EditView.new(
         space:,
         page:,
@@ -49,7 +46,7 @@ module Pages
         link_list:,
         backlink_list:,
         current_user:,
-        can_create_edit_suggestion:
+        can_create_edit_suggestion: topic_policy.can_create_edit_suggestion?
       )
     end
 
