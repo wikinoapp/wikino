@@ -39,7 +39,6 @@ module Pages
       current_user = UserRepository.new.to_model(user_record: current_user_record!)
 
       # 編集提案の作成が可能かチェック
-      topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
       can_create_edit_suggestion = topic_policy.can_create_edit_suggestion?
 
       render_component Pages::EditView.new(
@@ -50,7 +49,6 @@ module Pages
         link_list:,
         backlink_list:,
         current_user:,
-        topic:,
         can_create_edit_suggestion:
       )
     end

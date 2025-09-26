@@ -36,7 +36,6 @@ module Pages
         )
 
         # 編集提案の作成が可能かチェック（エラー時も必要）
-        topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
         topic_policy_for_error = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
         can_create_edit_suggestion = topic_policy_for_error.can_create_edit_suggestion?
 
@@ -48,7 +47,6 @@ module Pages
             form:,
             link_list:,
             backlink_list:,
-            topic:,
             can_create_edit_suggestion:
           ),
           status: :unprocessable_entity

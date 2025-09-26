@@ -11,7 +11,6 @@ module Pages
         form: Pages::EditForm,
         link_list: LinkList,
         backlink_list: BacklinkList,
-        topic: Topic,
         can_create_edit_suggestion: T::Boolean,
         draft_page: T.nilable(DraftPage)
       ).void
@@ -23,7 +22,6 @@ module Pages
       form:,
       link_list:,
       backlink_list:,
-      topic:,
       can_create_edit_suggestion:,
       draft_page: nil
     )
@@ -34,7 +32,6 @@ module Pages
       @backlink_list = backlink_list
       @current_user = current_user
       @draft_page = draft_page
-      @topic = topic
       @can_create_edit_suggestion = can_create_edit_suggestion
     end
 
@@ -70,10 +67,6 @@ module Pages
     sig { returns(T.nilable(DraftPage)) }
     attr_reader :draft_page
     private :draft_page
-
-    sig { returns(Topic) }
-    attr_reader :topic
-    private :topic
 
     sig { returns(T::Boolean) }
     attr_reader :can_create_edit_suggestion
