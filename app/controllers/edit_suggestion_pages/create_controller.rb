@@ -23,24 +23,11 @@ module EditSuggestionPages
 
       space_member_record = current_user_record!.space_member_record(space_record:)
 
-      # フォームから編集提案IDを取得
-      edit_suggestion_id = form_params[:edit_suggestion_id]
-
-      edit_suggestion_record = EditSuggestionRecord
-        .open_or_draft
-        .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
-        .find_by(id: edit_suggestion_id)
-
-      # 編集提案が存在しない、または権限がない場合
-      unless edit_suggestion_record
-        return render_404
-      end
-
       form = EditSuggestionPages::CreateForm.new(
         form_params.merge(
           space_member_record:,
           page_record:,
-          edit_suggestion_record:
+          topic_record:
         )
       )
 
@@ -64,8 +51,9 @@ module EditSuggestionPages
       end
 
       # 既存の編集提案にページを追加
+      # フォームのバリデーションで取得したedit_suggestion_recordを使用
       EditSuggestionPages::AddService.new.call(
-        edit_suggestion_record:,
+        edit_suggestion_record: form.edit_suggestion_record.not_nil!,
         space_member_record: space_member_record.not_nil!,
         page_record:,
         page_title: form.page_title.not_nil!,

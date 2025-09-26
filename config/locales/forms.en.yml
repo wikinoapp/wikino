@@ -84,6 +84,7 @@ en:
         cannot_start_or_end_with_space_or_dot: cannot start or end with a space or dot
         contains_invalid_characters_html: cannot contain the following characters <code>/\:*?"<>|"</code>
         incorrect: is incorrect
+        not_found: not found
         reserved: cannot be used
         uniqueness: has already been taken
       models:
