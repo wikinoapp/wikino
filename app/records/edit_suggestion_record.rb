@@ -59,7 +59,7 @@ class EditSuggestionRecord < ApplicationRecord
       # 新規作成（最初はlatest_revision無し）
       edit_suggestion_page_record = create_edit_suggestion_page_record!(
         page_record:,
-        page_revision_record: page_record&.revision_records&.order(created_at: :desc)&.first
+        page_revision_record: page_record&.latest_revision_record
       )
     end
 
