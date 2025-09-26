@@ -13,7 +13,8 @@ module EditSuggestionPages
     sig { returns(T.untyped) }
     def call
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
-      topic_record = space_record.topic_records.find_by!(number: params[:topic_number])
+      page_record = space_record.page_records.find_by!(number: params[:page_number])
+      topic_record = page_record.topic_record.not_nil!
       topic_policy = topic_policy_for(topic_record:)
 
       unless topic_policy.can_create_edit_suggestion?
@@ -34,9 +35,6 @@ module EditSuggestionPages
       unless edit_suggestion_record
         return render_404
       end
-
-      # ページ番号からページレコードを取得
-      page_record = space_record.page_records.find_by!(number: params[:page_number])
 
       form = EditSuggestionPages::CreateForm.new(
         form_params.merge(
