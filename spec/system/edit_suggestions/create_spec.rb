@@ -39,13 +39,16 @@ RSpec.describe "編集提案の作成" do
     expect(page).to have_content("下書き")  # デフォルトステータスは下書き
   end
 
-  it "既存の編集提案にページを追加できること" do
+  it "既存の編集提案にページを追加できること", js: true do
     user_record = FactoryBot.create(:user_record, :with_password)
     space_record = FactoryBot.create(:space_record)
     space_member_record = FactoryBot.create(:space_member_record, :owner, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     FactoryBot.create(:topic_member_record, :admin, space_member_record:, topic_record:)
-    FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
+
+    # ページを作成
+    page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "既存のページ", body: "既存の内容")
+    page_revision_record = FactoryBot.create(:page_revision_record, page_record:, body: page_record.body)
 
     # 既存の編集提案を作成
     existing_edit_suggestion = FactoryBot.create(
@@ -59,25 +62,45 @@ RSpec.describe "編集提案の作成" do
 
     sign_in(user_record:)
 
-    # 直接既存編集提案へのページ追加フォームページにアクセス（page_titleとpage_bodyをパラメータとして渡す）
-    visit new_edit_suggestion_page_path(
-      space_record.identifier,
-      topic_record.number,
-      page_title: "既存のページ",
-      page_body: "既存の内容"
+    # ページ編集画面にアクセス
+    visit edit_page_path(
+      space_identifier: space_record.identifier,
+      page_number: page_record.number
     )
 
-    # フォームが表示されることを確認
-    expect(page).to have_field("edit_suggestion_pages_create_form[edit_suggestion_id]")
-    # page_titleとpage_bodyは隠しフィールドで、パラメータから受け取った値が入る
-    expect(page).to have_field("edit_suggestion_pages_create_form[page_title]", type: :hidden, with: "既存のページ")
-    expect(page).to have_field("edit_suggestion_pages_create_form[page_body]", type: :hidden, with: "既存の内容")
+    # ページがロードされるまで待つ
+    expect(page).to have_button("保存する")
 
-    # フォームに入力
-    select existing_edit_suggestion.title, from: "edit_suggestion_pages_create_form[edit_suggestion_id]"
+    # textareaに直接入力（hiddenフィールドなのでJavaScriptで操作）
+    page.execute_script(<<~JS)
+      const textarea = document.querySelector('textarea[name="pages_edit_form[body]"]');
+      textarea.value = "編集後の内容";
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    JS
 
-    # フォームを送信
-    click_button "ページを追加"
+    # フォームの変更が反映されるまで少し待つ
+    sleep 0.5
+
+    # 「編集提案する...」ボタンをクリック
+    click_button "編集提案する..."
+
+    # ダイアログが表示されるまで待つ
+    expect(page).to have_css("[role=dialog]")
+
+    # ダイアログ内で既存の編集提案に追加
+    within("[role=dialog]") do
+      # 既存の編集提案に追加タブをクリック
+      click_link "既存の提案に追加"
+
+      # フォームが表示されることを確認
+      expect(page).to have_select("edit_suggestion_pages_create_form[edit_suggestion_id]")
+
+      # 既存の編集提案を選択
+      select existing_edit_suggestion.title, from: "edit_suggestion_pages_create_form[edit_suggestion_id]"
+
+      # フォームを送信
+      click_button "ページを追加"
+    end
 
     # 編集提案一覧ページにリダイレクトされることを確認（ShowControllerが未実装のため）
     expect(page).to have_current_path(topic_edit_suggestion_list_path(space_record.identifier, topic_record.number))
