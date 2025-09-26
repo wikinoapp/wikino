@@ -6,20 +6,18 @@ module EditSuggestionPages
     sig { returns(T.nilable(SpaceMemberRecord)) }
     attr_accessor :space_member_record
 
-    sig { returns(T.nilable(PageRecord)) }
-    attr_accessor :page_record
+    sig { returns(T.nilable(TopicRecord)) }
+    attr_accessor :topic_record
 
     sig { returns(T.nilable(EditSuggestionRecord)) }
     attr_accessor :edit_suggestion_record
-
-    sig { returns(T.nilable(TopicRecord)) }
-    attr_accessor :topic_record
 
     attribute :edit_suggestion_id, :string
     attribute :page_title, :string
     attribute :page_body, :string, default: ""
 
     validates :space_member_record, presence: true
+    validates :topic_record, presence: true
     validates :edit_suggestion_id, presence: true
     validates :page_title, presence: true, length: {maximum: 255}
     validate :validate_edit_suggestion_exists

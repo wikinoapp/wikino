@@ -24,11 +24,7 @@ module EditSuggestionPages
       space_member_record = current_user_record!.space_member_record(space_record:)
 
       form = EditSuggestionPages::CreateForm.new(
-        form_params.merge(
-          space_member_record:,
-          page_record:,
-          topic_record:
-        )
+        form_params.merge(space_member_record:, topic_record:)
       )
 
       if form.invalid?
