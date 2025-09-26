@@ -5,34 +5,25 @@ module EditSuggestions
   class TabsComponent < ApplicationComponent
     sig do
       params(
-        space: Space,
-        topic: Topic,
-        page: T.nilable(Page),
+        page: Page,
         active_tab: Symbol
       ).void
     end
-    def initialize(space:, topic:, page:, active_tab:)
-      @space = space
-      @topic = topic
+    def initialize(page:, active_tab:)
       @page = page
       @active_tab = active_tab
     end
 
-    sig { returns(Space) }
-    attr_reader :space
-    private :space
-
-    sig { returns(Topic) }
-    attr_reader :topic
-    private :topic
-
-    sig { returns(T.nilable(Page)) }
+    sig { returns(Page) }
     attr_reader :page
     private :page
 
     sig { returns(Symbol) }
     attr_reader :active_tab
     private :active_tab
+
+    delegate :space, to: :page, private: true
+    delegate :topic, to: :page, private: true
 
     sig { returns(T::Boolean) }
     private def create_new_active?
