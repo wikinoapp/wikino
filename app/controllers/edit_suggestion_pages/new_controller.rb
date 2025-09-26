@@ -25,7 +25,7 @@ module EditSuggestionPages
       space_member_record = current_user_record!.space_member_record(space_record:)
 
       # 現在のユーザーが作成した下書き/オープンの編集提案を取得
-      existing_edit_suggestions = EditSuggestionRecord
+      existing_edit_suggestion_records = EditSuggestionRecord
         .open_or_draft
         .where(topic_id: topic_record.id, created_space_member_id: space_member_record.not_nil!.id)
         .order(created_at: :desc)
@@ -40,13 +40,14 @@ module EditSuggestionPages
       )
 
       page = PageRepository.new.to_model(page_record:, current_space_member: space_member_record)
-      existing_edit_suggestions_models = existing_edit_suggestions.map { |record| EditSuggestionRepository.new.to_model(edit_suggestion_record: record) }
+      existing_edit_suggestions = EditSuggestionRepository.new.to_models(
+        edit_suggestion_records: existing_edit_suggestion_records
+      )
 
-      render EditSuggestionPages::NewView.new(
-        form:,
-        page:,
-        existing_edit_suggestions: existing_edit_suggestions_models
-      ), layout: false
+      render(
+        EditSuggestionPages::NewView.new(form:, page:, existing_edit_suggestions:),
+        layout: false
+      )
     end
   end
 end
