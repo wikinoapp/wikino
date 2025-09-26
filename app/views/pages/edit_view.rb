@@ -13,7 +13,6 @@ module Pages
         backlink_list: BacklinkList,
         topic: Topic,
         can_create_edit_suggestion: T::Boolean,
-        existing_edit_suggestions: T::Array[EditSuggestion],
         draft_page: T.nilable(DraftPage)
       ).void
     end
@@ -26,7 +25,6 @@ module Pages
       backlink_list:,
       topic:,
       can_create_edit_suggestion:,
-      existing_edit_suggestions:,
       draft_page: nil
     )
       @space = space
@@ -38,7 +36,6 @@ module Pages
       @draft_page = draft_page
       @topic = topic
       @can_create_edit_suggestion = can_create_edit_suggestion
-      @existing_edit_suggestions = existing_edit_suggestions
     end
 
     sig { override.void }
@@ -81,10 +78,6 @@ module Pages
     sig { returns(T::Boolean) }
     attr_reader :can_create_edit_suggestion
     private :can_create_edit_suggestion
-
-    sig { returns(T::Array[EditSuggestion]) }
-    attr_reader :existing_edit_suggestions
-    private :existing_edit_suggestions
 
     sig { returns(String) }
     private def title

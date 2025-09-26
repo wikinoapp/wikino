@@ -39,7 +39,6 @@ module Pages
         topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
         topic_policy_for_error = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
         can_create_edit_suggestion = topic_policy_for_error.can_create_edit_suggestion?
-        existing_edit_suggestions = []
 
         return render_component(
           Pages::EditView.new(
@@ -50,8 +49,7 @@ module Pages
             link_list:,
             backlink_list:,
             topic:,
-            can_create_edit_suggestion:,
-            existing_edit_suggestions:
+            can_create_edit_suggestion:
           ),
           status: :unprocessable_entity
         )
