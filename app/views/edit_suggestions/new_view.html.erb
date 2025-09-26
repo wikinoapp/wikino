@@ -3,11 +3,6 @@
     class: "form grid gap-6",
     model: form,
     url: edit_suggestion_list_path(space.identifier, page.number),
-    local: false,
-    data: {
-      turbo: true,
-      turbo_stream: true
-    }
   ) do |f| %>
     <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 

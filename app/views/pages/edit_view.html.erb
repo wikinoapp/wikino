@@ -89,7 +89,7 @@
                   <%= t("verbs.save") %>
                 <% end %>
 
-                <% if can_create_edit_suggestion %>
+                <% if can_create_edit_suggestion? %>
                   <%= render BaseUI::DialogComponent::TriggerComponent.new do %>
                     <button
                       type="button"
@@ -128,7 +128,7 @@
       </div>
     <% end %>
 
-    <% if can_create_edit_suggestion %>
+    <% if can_create_edit_suggestion? %>
       <%= render EditSuggestions::FormModalComponent.new(page:) %>
     <% end %>
   <% end %>

@@ -71,6 +71,7 @@ module Pages
     sig { returns(T::Boolean) }
     attr_reader :can_create_edit_suggestion
     private :can_create_edit_suggestion
+    alias_method :can_create_edit_suggestion?, :can_create_edit_suggestion
 
     sig { returns(String) }
     private def title
