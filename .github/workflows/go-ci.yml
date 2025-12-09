@@ -24,6 +24,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Install tools
+        run: |
+          go install github.com/a-h/templ/cmd/templ@latest
+          go install golang.org/x/tools/cmd/goimports@latest
+
       - name: Check templ generate
         run: |
           make templ-generate
@@ -84,6 +89,9 @@ jobs:
       - name: Get dependencies
         run: go mod download
 
+      - name: Install tools
+        run: go install github.com/mfridman/tparse@latest
+
       - name: Setup test database
         run: make db-setup-test
 
@@ -105,6 +113,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Install tools
+        run: |
+          go install github.com/a-h/templ/cmd/templ@latest
+          go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Build
         run: make build
