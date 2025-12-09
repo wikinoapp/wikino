@@ -10,13 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 )
 
 func main() {
-	port := os.Getenv("WIKINO_PORT")
-	if port == "" {
-		port = "4004"
+	// 設定を読み込む
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("設定の読み込みに失敗しました", "error", err)
+		os.Exit(1)
 	}
 
 	r := chi.NewRouter()
@@ -29,8 +32,8 @@ func main() {
 
 	r.Get("/health", healthHandler.Show)
 
-	addr := fmt.Sprintf("0.0.0.0:%s", port)
-	slog.Info("HTTPサーバーを起動します", "addr", addr)
+	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
+	slog.Info("HTTPサーバーを起動します", "addr", addr, "env", cfg.Env)
 
 	srv := &http.Server{
 		Addr:           addr,
