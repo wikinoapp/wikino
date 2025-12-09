@@ -1,0 +1,10 @@
+/.env
+/.playwright-mcp
+/.pnpm-store
+/bin
+/node_modules
+/server
+/static/css/*
+/static/js/*
+/tmp
+/web/dist

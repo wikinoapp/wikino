@@ -1,23 +1,8 @@
 .DS_Store
 
-/.bundle
-/.claude/settings.local.json
-/.devcontainer
-/.env.*.local
-/.env.local
-/.idea
-/.playwright-mcp
-/.serena/cache
+/.claude
+/.pnpm-store
 /.vscode
-/app/assets/builds/*
-/bin/sync
-/config/master.key
+/compose-up.sh
 /docker-compose.override.yml
-/lib/tasks/dev.rake
-/log/*
-/node_modules
-/wikino.iml
-/private
-/tmp/*
-/vendor/bundle
-!/app/assets/builds/.keep
+/docs

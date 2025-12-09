@@ -13,6 +13,9 @@ RUN \
   git \
   # PostgreSQLやNode.jsのインストールに必要
   gnupg \
+  libglib2.0-0 \
+  libvips42 \
+  libyaml-dev \
   # PostgreSQLのインストールに必要
   lsb-release \
   sudo \

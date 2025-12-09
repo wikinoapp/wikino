@@ -1,1 +1,0 @@
-/home/shimbaco/Dev/src/github.com/shimbaco/wikino-private/compose-up.sh
