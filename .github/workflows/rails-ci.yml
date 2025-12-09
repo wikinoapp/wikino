@@ -1,4 +1,4 @@
-name: Lint and test
+name: Rails CI
 
 on: push
 
@@ -6,8 +6,11 @@ jobs:
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -17,6 +20,7 @@ jobs:
         with:
           ruby-version: 3.4.4
           bundler-cache: true
+          working-directory: rails
       - run: bin/rails zeitwerk:check
 
   sorbet:
@@ -24,8 +28,11 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -35,6 +42,7 @@ jobs:
         with:
           ruby-version: 3.4.4
           bundler-cache: true
+          working-directory: rails
       - run: bin/rails sorbet:update
       - name: Push RBI files or fail
         run: |
@@ -55,32 +63,43 @@ jobs:
   standard:
     name: Standard
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4.4
           bundler-cache: true
+          working-directory: rails
       - run: bin/standardrb
 
   erb_lint:
     name: ERB Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4.4
           bundler-cache: true
+          working-directory: rails
       - run: bin/erb_lint --lint-all
 
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
@@ -98,8 +117,11 @@ jobs:
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
@@ -117,6 +139,9 @@ jobs:
   rspec:
     name: RSpec
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rails
     env:
       DATABASE_URL: postgresql://postgres@localhost:5432/wikino_test
       RAILS_ENV: test
@@ -139,7 +164,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -159,6 +184,7 @@ jobs:
         with:
           ruby-version: 3.4.4
           bundler-cache: true
+          working-directory: rails
       - name: Setup Database
         run: |
           bin/rails db:schema:load
