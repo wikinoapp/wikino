@@ -1,0 +1,668 @@
+-- Wikino データベーススキーマ
+-- このファイルは Rails 版の db/structure.sql から移植したものです
+-- Go 版と Rails 版で同じデータベースを共有します
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: generate_ulid(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.generate_ulid() RETURNS uuid
+    LANGUAGE sql
+    AS $$
+  SELECT (lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 12, '0') || encode(gen_random_bytes(10), 'hex'))::uuid;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: active_storage_attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_attachments (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    name character varying NOT NULL,
+    record_type character varying NOT NULL,
+    record_id uuid NOT NULL,
+    blob_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_blobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_blobs (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    key character varying NOT NULL,
+    filename character varying NOT NULL,
+    content_type character varying,
+    metadata text,
+    service_name character varying NOT NULL,
+    byte_size bigint NOT NULL,
+    checksum character varying,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_variant_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_variant_records (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    blob_id uuid NOT NULL,
+    variation_digest character varying NOT NULL
+);
+
+
+--
+-- Name: attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.attachments (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    active_storage_attachment_id uuid NOT NULL,
+    attached_space_member_id uuid NOT NULL,
+    attached_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    processing_status integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: draft_pages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.draft_pages (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    topic_id uuid NOT NULL,
+    title public.citext,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
+    linked_page_ids character varying[] NOT NULL,
+    modified_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: email_confirmations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_confirmations (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    email character varying NOT NULL,
+    event integer NOT NULL,
+    code character varying NOT NULL,
+    started_at timestamp without time zone NOT NULL,
+    succeeded_at timestamp without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.export_statuses (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    export_id uuid NOT NULL,
+    kind integer NOT NULL,
+    changed_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: exports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.exports (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    queued_by_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: page_attachment_references; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.page_attachment_references (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    attachment_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: page_editors; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.page_editors (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    last_page_modified_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: page_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.page_revisions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    title public.citext NOT NULL
+);
+
+
+--
+-- Name: pages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pages (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    topic_id uuid NOT NULL,
+    number integer NOT NULL,
+    title public.citext,
+    body public.citext NOT NULL,
+    body_html text NOT NULL,
+    linked_page_ids character varying[] NOT NULL,
+    modified_at timestamp(6) without time zone NOT NULL,
+    published_at timestamp(6) without time zone,
+    trashed_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    pinned_at timestamp without time zone,
+    discarded_at timestamp(6) without time zone,
+    featured_image_attachment_id uuid
+);
+
+
+--
+-- Name: space_members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.space_members (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: spaces; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.spaces (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    identifier public.citext NOT NULL,
+    name character varying NOT NULL,
+    plan integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    discarded_at timestamp without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: topic_members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.topic_members (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    topic_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    role integer NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    last_page_modified_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: topics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.topics (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    number integer NOT NULL,
+    name character varying NOT NULL,
+    description character varying NOT NULL,
+    visibility integer NOT NULL,
+    discarded_at timestamp without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: user_passwords; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_passwords (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    password_digest character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: user_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_sessions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    token character varying NOT NULL,
+    ip_address character varying NOT NULL,
+    user_agent character varying NOT NULL,
+    signed_in_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: user_two_factor_auths; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_two_factor_auths (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    secret character varying NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    enabled_at timestamp(6) without time zone,
+    recovery_codes character varying[] DEFAULT '{}'::character varying[] NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    email character varying NOT NULL,
+    atname public.citext NOT NULL,
+    name character varying NOT NULL,
+    description character varying NOT NULL,
+    locale integer NOT NULL,
+    time_zone character varying NOT NULL,
+    joined_at timestamp without time zone NOT NULL,
+    discarded_at timestamp without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Primary Keys
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT active_storage_attachments_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.active_storage_blobs
+    ADD CONSTRAINT active_storage_blobs_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT attachments_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT draft_pages_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.email_confirmations
+    ADD CONSTRAINT email_confirmations_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT export_statuses_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT exports_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT page_attachment_references_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.page_editors
+    ADD CONSTRAINT page_editorships_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT page_revisions_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT pages_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.user_sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.space_members
+    ADD CONSTRAINT space_members_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.spaces
+    ADD CONSTRAINT spaces_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.topic_members
+    ADD CONSTRAINT topic_memberships_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.topics
+    ADD CONSTRAINT topics_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.user_passwords
+    ADD CONSTRAINT user_passwords_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.user_two_factor_auths
+    ADD CONSTRAINT user_two_factor_auths_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Indexes
+--
+
+CREATE INDEX index_active_storage_attachments_on_blob_id ON public.active_storage_attachments USING btree (blob_id);
+
+CREATE UNIQUE INDEX index_active_storage_attachments_uniqueness ON public.active_storage_attachments USING btree (record_type, record_id, name, blob_id);
+
+CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_blobs USING btree (key);
+
+CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+CREATE INDEX index_attachments_on_active_storage_attachment_id ON public.attachments USING btree (active_storage_attachment_id);
+
+CREATE INDEX index_attachments_on_attached_at ON public.attachments USING btree (attached_at);
+
+CREATE INDEX index_attachments_on_attached_space_member_id ON public.attachments USING btree (attached_space_member_id);
+
+CREATE INDEX index_attachments_on_processing_status ON public.attachments USING btree (processing_status);
+
+CREATE INDEX index_attachments_on_space_id ON public.attachments USING btree (space_id);
+
+CREATE INDEX index_draft_pages_on_linked_page_ids ON public.draft_pages USING gin (linked_page_ids);
+
+CREATE INDEX index_draft_pages_on_page_id ON public.draft_pages USING btree (page_id);
+
+CREATE INDEX index_draft_pages_on_space_id ON public.draft_pages USING btree (space_id);
+
+CREATE INDEX index_draft_pages_on_space_member_id ON public.draft_pages USING btree (space_member_id);
+
+CREATE UNIQUE INDEX index_draft_pages_on_space_member_id_and_page_id ON public.draft_pages USING btree (space_member_id, page_id);
+
+CREATE INDEX index_draft_pages_on_topic_id ON public.draft_pages USING btree (topic_id);
+
+CREATE UNIQUE INDEX index_email_confirmations_on_code ON public.email_confirmations USING btree (code);
+
+CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
+
+CREATE INDEX index_export_statuses_on_export_id ON public.export_statuses USING btree (export_id);
+
+CREATE INDEX index_export_statuses_on_space_id ON public.export_statuses USING btree (space_id);
+
+CREATE INDEX index_exports_on_queued_by_id ON public.exports USING btree (queued_by_id);
+
+CREATE INDEX index_exports_on_space_id ON public.exports USING btree (space_id);
+
+CREATE INDEX index_page_attachment_references_on_attachment_id ON public.page_attachment_references USING btree (attachment_id);
+
+CREATE INDEX index_page_attachment_references_on_page_id ON public.page_attachment_references USING btree (page_id);
+
+CREATE UNIQUE INDEX index_page_attachment_references_on_page_id_and_attachment_id ON public.page_attachment_references USING btree (page_id, attachment_id);
+
+CREATE INDEX index_page_editors_on_page_id ON public.page_editors USING btree (page_id);
+
+CREATE UNIQUE INDEX index_page_editors_on_page_id_and_space_member_id ON public.page_editors USING btree (page_id, space_member_id);
+
+CREATE INDEX index_page_editors_on_space_id ON public.page_editors USING btree (space_id);
+
+CREATE INDEX index_page_editors_on_space_member_id ON public.page_editors USING btree (space_member_id);
+
+CREATE INDEX index_page_revisions_on_page_id ON public.page_revisions USING btree (page_id);
+
+CREATE INDEX index_page_revisions_on_space_id ON public.page_revisions USING btree (space_id);
+
+CREATE INDEX index_page_revisions_on_space_member_id ON public.page_revisions USING btree (space_member_id);
+
+CREATE INDEX index_pages_on_discarded_at ON public.pages USING btree (discarded_at);
+
+CREATE INDEX index_pages_on_featured_image_attachment_id ON public.pages USING btree (featured_image_attachment_id);
+
+CREATE INDEX index_pages_on_linked_page_ids ON public.pages USING gin (linked_page_ids);
+
+CREATE INDEX index_pages_on_space_id ON public.pages USING btree (space_id);
+
+CREATE INDEX index_pages_on_space_id_and_created_at ON public.pages USING btree (space_id, created_at);
+
+CREATE INDEX index_pages_on_space_id_and_modified_at ON public.pages USING btree (space_id, modified_at);
+
+CREATE UNIQUE INDEX index_pages_on_space_id_and_number ON public.pages USING btree (space_id, number);
+
+CREATE INDEX index_pages_on_space_id_and_pinned_at ON public.pages USING btree (space_id, pinned_at);
+
+CREATE INDEX index_pages_on_space_id_and_published_at ON public.pages USING btree (space_id, published_at);
+
+CREATE INDEX index_pages_on_space_id_and_trashed_at ON public.pages USING btree (space_id, trashed_at);
+
+CREATE INDEX index_pages_on_topic_id ON public.pages USING btree (topic_id);
+
+CREATE UNIQUE INDEX index_pages_on_topic_id_and_title ON public.pages USING btree (topic_id, title);
+
+CREATE INDEX index_space_members_on_space_id ON public.space_members USING btree (space_id);
+
+CREATE UNIQUE INDEX index_space_members_on_space_id_and_user_id ON public.space_members USING btree (space_id, user_id);
+
+CREATE INDEX index_space_members_on_user_id ON public.space_members USING btree (user_id);
+
+CREATE INDEX index_spaces_on_discarded_at ON public.spaces USING btree (discarded_at);
+
+CREATE UNIQUE INDEX index_spaces_on_identifier ON public.spaces USING btree (identifier);
+
+CREATE INDEX index_topic_members_on_space_id ON public.topic_members USING btree (space_id);
+
+CREATE INDEX index_topic_members_on_space_member_id ON public.topic_members USING btree (space_member_id);
+
+CREATE INDEX index_topic_members_on_topic_id ON public.topic_members USING btree (topic_id);
+
+CREATE UNIQUE INDEX index_topic_members_on_topic_id_and_space_member_id ON public.topic_members USING btree (topic_id, space_member_id);
+
+CREATE INDEX index_topics_on_discarded_at ON public.topics USING btree (discarded_at);
+
+CREATE INDEX index_topics_on_space_id ON public.topics USING btree (space_id);
+
+CREATE INDEX index_topics_on_space_id_and_discarded_at ON public.topics USING btree (space_id, discarded_at);
+
+CREATE UNIQUE INDEX index_topics_on_space_id_and_name ON public.topics USING btree (space_id, name);
+
+CREATE UNIQUE INDEX index_topics_on_space_id_and_number ON public.topics USING btree (space_id, number);
+
+CREATE UNIQUE INDEX index_user_passwords_on_user_id ON public.user_passwords USING btree (user_id);
+
+CREATE UNIQUE INDEX index_user_sessions_on_token ON public.user_sessions USING btree (token);
+
+CREATE INDEX index_user_sessions_on_user_id ON public.user_sessions USING btree (user_id);
+
+CREATE UNIQUE INDEX index_user_two_factor_auths_on_user_id ON public.user_two_factor_auths USING btree (user_id);
+
+CREATE UNIQUE INDEX index_users_on_atname ON public.users USING btree (atname);
+
+CREATE INDEX index_users_on_discarded_at ON public.users USING btree (discarded_at);
+
+CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
+
+
+--
+-- Foreign Keys
+--
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_06223f0ea2 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.topic_members
+    ADD CONSTRAINT fk_rails_0f8ef246f7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT fk_rails_1bb2aa81d8 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+ALTER TABLE ONLY public.page_editors
+    ADD CONSTRAINT fk_rails_2088082077 FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.space_members
+    ADD CONSTRAINT fk_rails_26446af0e7 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.page_attachment_references
+    ADD CONSTRAINT fk_rails_2cba0cae86 FOREIGN KEY (attachment_id) REFERENCES public.attachments(id);
+
+ALTER TABLE ONLY public.page_editors
+    ADD CONSTRAINT fk_rails_3b3700fcdf FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.topic_members
+    ADD CONSTRAINT fk_rails_50149efe6b FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_5d9ff2d9dc FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_6eb3eeb6b7 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_74648de0a3 FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.user_sessions
+    ADD CONSTRAINT fk_rails_758836b4f0 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_793c81c055 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.topic_members
+    ADD CONSTRAINT fk_rails_80fd6512fa FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_850712f875 FOREIGN KEY (attached_space_member_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_rails_89b3a4bafa FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_8d9bc1217e FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_8e68719216 FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+ALTER TABLE ONLY public.topics
+    ADD CONSTRAINT fk_rails_9b3ff1bd6e FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.attachments
+    ADD CONSTRAINT fk_rails_a2990ed7e9 FOREIGN KEY (active_storage_attachment_id) REFERENCES public.active_storage_attachments(id);
+
+ALTER TABLE ONLY public.space_members
+    ADD CONSTRAINT fk_rails_a7900d8de9 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_a989662ed2 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_rails_b87bfd2937 FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+ALTER TABLE ONLY public.user_passwords
+    ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.export_statuses
+    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.page_revisions
+    ADD CONSTRAINT fk_rails_d3466381ba FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+ALTER TABLE ONLY public.page_editors
+    ADD CONSTRAINT fk_rails_fc18bdf1dd FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+ALTER TABLE ONLY public.user_two_factor_auths
+    ADD CONSTRAINT fk_rails_fd6d01946c FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+SET search_path TO "$user", public;
