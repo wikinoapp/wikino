@@ -1,14 +1,19 @@
 package sign_in_two_factor
 
 import (
-	"context"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
+// RecoveryNewPageData はリカバリーコード入力ページに渡すデータ構造体です
+type RecoveryNewPageData struct {
+	CSRFToken  string
+	FormErrors *session.FormErrors
+}
+
 // RecoveryNew はリカバリーコード入力ページのコンテンツを表示します
-templ RecoveryNew(ctx context.Context, formErrors *session.FormErrors, csrfToken string) {
+templ RecoveryNew(data RecoveryNewPageData) {
 	<div class="flex flex-col gap-6 min-w-full md:min-w-md px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
@@ -22,7 +27,7 @@ templ RecoveryNew(ctx context.Context, formErrors *session.FormErrors, csrfToken
 			</h1>
 		</div>
 
-		@components.FormErrors(formErrors)
+		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
 			<div class="card-body px-4 py-6">
@@ -41,7 +46,7 @@ templ RecoveryNew(ctx context.Context, formErrors *session.FormErrors, csrfToken
 						class="form grid gap-6"
 						method="POST"
 					>
-						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 						<div class="grid gap-2">
 							<label for="recovery_code">
@@ -49,7 +54,7 @@ templ RecoveryNew(ctx context.Context, formErrors *session.FormErrors, csrfToken
 							</label>
 
 							<input
-								if formErrors != nil && formErrors.HasFieldError("recovery_code") {
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
 									aria-invalid="true"
 								} else {
 									aria-invalid="false"
@@ -70,8 +75,8 @@ templ RecoveryNew(ctx context.Context, formErrors *session.FormErrors, csrfToken
 								{ templates.T(ctx, "sign_in_two_factor_recovery_code_hint") }
 							</p>
 
-							if formErrors != nil && formErrors.HasFieldError("recovery_code") {
-								for _, errorMsg := range formErrors.GetFieldErrors("recovery_code") {
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
+								for _, errorMsg := range data.FormErrors.GetFieldErrors("recovery_code") {
 									<p class="text-sm text-destructive">{ errorMsg }</p>
 								}
 							}
