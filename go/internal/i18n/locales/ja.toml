@@ -104,3 +104,7 @@ other = "認証コードが正しくありません"
 
 [sign_in_two_factor_recovery_invalid_code]
 other = "リカバリーコードが正しくありません"
+
+# ログアウト
+[signed_out_successfully]
+other = "ログアウトしました"

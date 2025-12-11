@@ -64,6 +64,7 @@ func main() {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// Turnstileクライアントを初期化
 	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
@@ -78,8 +79,10 @@ func main() {
 	userSessionHandler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		turnstileClient,
 	)
@@ -119,6 +122,12 @@ func main() {
 		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
 		r.Get("/sign_in/two_factor/recovery/new", signInTwoFactorRecoveryHandler.New)
 		r.Post("/sign_in/two_factor/recovery", signInTwoFactorRecoveryHandler.Create)
+	})
+
+	// 認証済みユーザー専用ルート
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.RequireAuth)
+		r.Delete("/user_session", userSessionHandler.Delete)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

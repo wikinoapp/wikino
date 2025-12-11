@@ -13,8 +13,10 @@ import (
 type Handler struct {
 	cfg                 *config.Config
 	sessionMgr          *session.Manager
+	flashMgr            *session.FlashManager
 	userRepo            *repository.UserRepository
 	userPasswordRepo    *repository.UserPasswordRepository
+	userSessionRepo     *repository.UserSessionRepository
 	createUserSessionUC *usecase.CreateUserSessionUsecase
 	turnstileVerifier   turnstile.Verifier
 }
@@ -23,16 +25,20 @@ type Handler struct {
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
+	flashMgr *session.FlashManager,
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
+	userSessionRepo *repository.UserSessionRepository,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 	turnstileVerifier turnstile.Verifier,
 ) *Handler {
 	return &Handler{
 		cfg:                 cfg,
 		sessionMgr:          sessionMgr,
+		flashMgr:            flashMgr,
 		userRepo:            userRepo,
 		userPasswordRepo:    userPasswordRepo,
+		userSessionRepo:     userSessionRepo,
 		createUserSessionUC: createUserSessionUC,
 		turnstileVerifier:   turnstileVerifier,
 	}
