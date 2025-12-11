@@ -98,3 +98,9 @@ other = "Invalid authentication code"
 
 [validation_recovery_code_invalid]
 other = "Invalid recovery code"
+
+[sign_in_two_factor_invalid_code]
+other = "The authentication code is incorrect"
+
+[sign_in_two_factor_recovery_invalid_code]
+other = "The recovery code is incorrect"
