@@ -70,6 +70,7 @@ func TestCreate_Success(t *testing.T) {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
@@ -78,8 +79,10 @@ func TestCreate_Success(t *testing.T) {
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -169,6 +172,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
@@ -177,8 +181,10 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -254,6 +260,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
@@ -262,8 +269,10 @@ func TestCreate_WrongPassword(t *testing.T) {
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -328,6 +337,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
@@ -336,8 +346,10 @@ func TestCreate_UserNotFound(t *testing.T) {
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -402,6 +414,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// モックTurnstileを初期化（常に失敗）
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
@@ -410,8 +423,10 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		userRepo,
 		userPasswordRepo,
+		userSessionRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)

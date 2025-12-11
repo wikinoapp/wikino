@@ -104,3 +104,7 @@ other = "The authentication code is incorrect"
 
 [sign_in_two_factor_recovery_invalid_code]
 other = "The recovery code is incorrect"
+
+# Sign out
+[signed_out_successfully]
+other = "Signed out successfully."
