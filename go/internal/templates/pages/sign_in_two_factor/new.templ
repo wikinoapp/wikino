@@ -1,0 +1,106 @@
+package sign_in_two_factor
+
+import (
+	"context"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// New は2FAコード入力ページのコンテンツを表示します
+templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string) {
+	<div class="flex flex-col gap-6 min-w-full md:min-w-md px-4">
+		<div class="text-center">
+			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
+				@templates.Icon("logo")
+			</a>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<h1 class="text-center text-3xl font-bold antialiased">
+				{ templates.T(ctx, "sign_in_two_factor_heading") }
+			</h1>
+		</div>
+
+		@components.FormErrors(formErrors)
+
+		<div class="card">
+			<div class="card-body px-4 py-6">
+				<div class="flex flex-col gap-4">
+					<p class="text-muted-foreground">
+						{ templates.T(ctx, "sign_in_two_factor_enter_code") }
+					</p>
+
+					<form
+						action="/sign_in/two_factor"
+						class="form grid gap-6"
+						method="POST"
+					>
+						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+
+						<div class="grid gap-2">
+							<label for="totp_code">
+								{ templates.T(ctx, "sign_in_two_factor_code_label") }
+							</label>
+
+							<input
+								if formErrors != nil && formErrors.HasFieldError("totp_code") {
+									aria-invalid="true"
+								} else {
+									aria-invalid="false"
+								}
+								autocomplete="one-time-code"
+								autofocus
+								class="input"
+								id="totp_code"
+								maxlength="6"
+								name="totp_code"
+								placeholder="000000"
+								required
+								tabindex="1"
+								type="text"
+							/>
+
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "sign_in_two_factor_code_hint") }
+							</p>
+
+							if formErrors != nil && formErrors.HasFieldError("totp_code") {
+								for _, errorMsg := range formErrors.GetFieldErrors("totp_code") {
+									<p class="text-sm text-destructive">{ errorMsg }</p>
+								}
+							}
+						</div>
+
+						<button
+							class="btn rounded-full w-fit"
+							tabindex="2"
+							type="submit"
+						>
+							{ templates.T(ctx, "sign_in_two_factor_submit_button") }
+						</button>
+					</form>
+
+					<hr/>
+
+					<div class="flex flex-col gap-2 text-sm">
+						<p class="text-muted-foreground">
+							{ templates.T(ctx, "sign_in_two_factor_recovery_description") }
+						</p>
+
+						<a href="/sign_in/two_factor/recovery/new" class="link underline">
+							{ templates.T(ctx, "sign_in_two_factor_recovery_link") }
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="text-center">
+			<a href="/" class="link underline inline-flex items-center gap-1">
+				@templates.Icon("arrow-left", "w-4 h-4")
+				{ templates.T(ctx, "back_to_home") }
+			</a>
+		</div>
+	</div>
+}

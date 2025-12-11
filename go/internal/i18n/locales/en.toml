@@ -47,3 +47,54 @@ other = "Please enter a valid email address"
 
 [validation_email_or_password_invalid]
 other = "Invalid email or password"
+
+# Two-factor authentication
+[sign_in_two_factor_title]
+other = "Two-factor authentication"
+
+[sign_in_two_factor_heading]
+other = "Two-factor authentication"
+
+[sign_in_two_factor_enter_code]
+other = "Enter the authentication code from your app"
+
+[sign_in_two_factor_code_label]
+other = "Authentication code"
+
+[sign_in_two_factor_code_hint]
+other = "Enter a 6-digit code"
+
+[sign_in_two_factor_submit_button]
+other = "Verify"
+
+[sign_in_two_factor_recovery_description]
+other = "If you lose your authenticator app, you can sign in using a recovery code"
+
+[sign_in_two_factor_recovery_link]
+other = "Use a recovery code"
+
+# Two-factor authentication recovery
+[sign_in_two_factor_recovery_title]
+other = "Two-factor recovery"
+
+[sign_in_two_factor_recovery_heading]
+other = "Recovery code"
+
+[sign_in_two_factor_recovery_enter_code]
+other = "Enter your recovery code"
+
+[sign_in_two_factor_recovery_code_usage]
+other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
+
+[sign_in_two_factor_recovery_code_label]
+other = "Recovery code"
+
+[sign_in_two_factor_recovery_code_hint]
+other = "Recovery codes are 8 alphanumeric characters"
+
+# Two-factor authentication validation errors
+[validation_totp_code_invalid]
+other = "Invalid authentication code"
+
+[validation_recovery_code_invalid]
+other = "Invalid recovery code"
