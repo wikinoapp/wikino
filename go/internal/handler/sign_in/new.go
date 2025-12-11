@@ -21,7 +21,11 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitle(ctx, "sign_in_title")
 
 	// テンプレートをレンダリング
-	content := signinpages.New(ctx, nil, csrfToken, h.cfg.TurnstileSiteKey)
+	content := signinpages.New(signinpages.NewPageData{
+		CSRFToken:        csrfToken,
+		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
+		FormErrors:       nil,
+	})
 	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
