@@ -1,0 +1,49 @@
+# 日本語翻訳ファイル
+
+# 共通
+[default_title]
+other = "Wikino"
+
+[default_description]
+other = "Wikinoはオンラインで情報を共有・整理できるWikiアプリケーションです。"
+
+[flash_dismiss]
+other = "閉じる"
+
+[back_to_home]
+other = "ホームに戻る"
+
+# サインイン
+[sign_in_title]
+other = "ログイン"
+
+[sign_in_heading]
+other = "ログイン"
+
+[sign_in_email_label]
+other = "メールアドレス"
+
+[sign_in_password_label]
+other = "パスワード"
+
+[sign_in_submit_button]
+other = "ログイン"
+
+[sign_in_forgot_password]
+other = "パスワードをお忘れですか？"
+
+[sign_in_no_account]
+other = "アカウントをお持ちでない方"
+
+[sign_in_sign_up]
+other = "新規登録"
+
+# バリデーションエラー
+[validation_required]
+other = "入力してください"
+
+[validation_email_invalid]
+other = "有効なメールアドレスを入力してください"
+
+[validation_email_or_password_invalid]
+other = "メールアドレスまたはパスワードが正しくありません"

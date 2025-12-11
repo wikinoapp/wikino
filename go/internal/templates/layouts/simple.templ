@@ -1,0 +1,25 @@
+package layouts
+
+import (
+	"context"
+	"github.com/a-h/templ"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// Simple はシンプルなレイアウトです
+// ヘッダー、フラッシュメッセージ、コンテンツのみを含みます
+templ Simple(ctx context.Context, meta viewmodel.PageMeta, flash *session.FlashMessage, assetVersion string, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			@components.Head(meta, assetVersion)
+		</head>
+		<body class="min-h-screen flex items-center justify-center">
+			@components.Flash(ctx, flash)
+			@content
+		</body>
+	</html>
+}

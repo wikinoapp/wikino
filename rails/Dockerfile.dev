@@ -10,15 +10,27 @@ RUN \
   apt install -y --no-install-recommends \
   build-essential \
   curl \
+  # Claude Codeで使用
+  fzf \
   git \
   # PostgreSQLやNode.jsのインストールに必要
   gnupg \
+  # Claude Codeで使用
+  jq \
   libglib2.0-0 \
   libvips42 \
   libyaml-dev \
   # PostgreSQLのインストールに必要
   lsb-release \
+  # Claude Codeで使用
+  nano \
+  # Claude Codeで使用
+  ripgrep \
   sudo \
+  # Claude Codeで使用
+  tree \
+  # Claude Codeで使用
+  vim \
   zsh && \
   rm -rf /var/lib/apt/lists/*
 
@@ -52,6 +64,8 @@ ENV PATH=$NPM_CONFIG_PREFIX/bin:$PATH
 COPY --from=1password/op:2 /usr/local/bin/op /usr/local/bin/op
 
 RUN npm install -g pnpm@10.12.3
+RUN npm install -g @anthropic-ai/claude-code@latest
+RUN npm install -g @modelcontextprotocol/server-filesystem
 
 RUN gem install bundler -v 2.5.9
 

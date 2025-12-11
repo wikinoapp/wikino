@@ -24,12 +24,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # TODO: テンプレートが作成されたらコメントアウトを解除する
-      # - name: Check templ generate
-      #   run: |
-      #     make templ-generate
-      #     make goimports
-      #     git diff --exit-code internal/templates/
+      - name: Check templ generate
+        run: |
+          make templ-generate
+          make goimports
+          git diff --exit-code internal/templates/
 
       - name: Check go mod tidy
         run: |
