@@ -1,14 +1,20 @@
 package sign_in
 
 import (
-	"context"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
+// NewPageData はログインページに渡すデータ構造体です
+type NewPageData struct {
+	CSRFToken        string
+	TurnstileSiteKey string
+	FormErrors       *session.FormErrors
+}
+
 // New はログインページのコンテンツを表示します
-templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string, turnstileSiteKey string) {
+templ New(data NewPageData) {
 	<div class="flex flex-col gap-6 min-w-full md:min-w-md px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
@@ -30,7 +36,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 			</a>
 		</p>
 
-		@components.FormErrors(formErrors)
+		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
 			<div class="card-body px-4 py-6">
@@ -39,7 +45,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 					class="form grid gap-6"
 					method="POST"
 				>
-					<input type="hidden" name="csrf_token" value={ csrfToken }/>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
 						<label for="email">
@@ -47,7 +53,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 						</label>
 
 						<input
-							if formErrors != nil && formErrors.HasFieldError("email") {
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
 								aria-invalid="true"
 							} else {
 								aria-invalid="false"
@@ -62,8 +68,8 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 							type="email"
 						/>
 
-						if formErrors != nil && formErrors.HasFieldError("email") {
-							for _, errorMsg := range formErrors.GetFieldErrors("email") {
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
 								<p class="text-sm text-destructive">{ errorMsg }</p>
 							}
 						}
@@ -81,7 +87,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 						</div>
 
 						<input
-							if formErrors != nil && formErrors.HasFieldError("password") {
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
 								aria-invalid="true"
 							} else {
 								aria-invalid="false"
@@ -95,14 +101,14 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 							type="password"
 						/>
 
-						if formErrors != nil && formErrors.HasFieldError("password") {
-							for _, errorMsg := range formErrors.GetFieldErrors("password") {
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
 								<p class="text-sm text-destructive">{ errorMsg }</p>
 							}
 						}
 					</div>
 
-					@components.Turnstile(turnstileSiteKey)
+					@components.Turnstile(data.TurnstileSiteKey)
 
 					<button
 						class="btn rounded-full w-fit"
