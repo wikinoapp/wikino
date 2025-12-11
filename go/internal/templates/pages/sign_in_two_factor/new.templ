@@ -1,14 +1,19 @@
 package sign_in_two_factor
 
 import (
-	"context"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
+// NewPageData は2FAコード入力ページに渡すデータ構造体です
+type NewPageData struct {
+	CSRFToken  string
+	FormErrors *session.FormErrors
+}
+
 // New は2FAコード入力ページのコンテンツを表示します
-templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string) {
+templ New(data NewPageData) {
 	<div class="flex flex-col gap-6 min-w-full md:min-w-md px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
@@ -22,7 +27,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string)
 			</h1>
 		</div>
 
-		@components.FormErrors(formErrors)
+		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
 			<div class="card-body px-4 py-6">
@@ -36,7 +41,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string)
 						class="form grid gap-6"
 						method="POST"
 					>
-						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 						<div class="grid gap-2">
 							<label for="totp_code">
@@ -44,7 +49,7 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string)
 							</label>
 
 							<input
-								if formErrors != nil && formErrors.HasFieldError("totp_code") {
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
 									aria-invalid="true"
 								} else {
 									aria-invalid="false"
@@ -65,8 +70,8 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string)
 								{ templates.T(ctx, "sign_in_two_factor_code_hint") }
 							</p>
 
-							if formErrors != nil && formErrors.HasFieldError("totp_code") {
-								for _, errorMsg := range formErrors.GetFieldErrors("totp_code") {
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
+								for _, errorMsg := range data.FormErrors.GetFieldErrors("totp_code") {
 									<p class="text-sm text-destructive">{ errorMsg }</p>
 								}
 							}

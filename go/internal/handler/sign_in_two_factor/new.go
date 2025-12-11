@@ -29,7 +29,11 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitle(ctx, "sign_in_two_factor_title")
 
 	// テンプレートをレンダリング
-	content := twofactorpages.New(ctx, nil, csrfToken)
+	pageData := twofactorpages.NewPageData{
+		CSRFToken:  csrfToken,
+		FormErrors: nil,
+	}
+	content := twofactorpages.New(pageData)
 	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

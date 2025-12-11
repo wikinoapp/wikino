@@ -97,7 +97,11 @@ func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, fo
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_two_factor_title")
 
-	content := twofactorpages.New(ctx, formErrors, csrfToken)
+	pageData := twofactorpages.NewPageData{
+		CSRFToken:  csrfToken,
+		FormErrors: formErrors,
+	}
+	content := twofactorpages.New(pageData)
 	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
