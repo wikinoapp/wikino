@@ -10,6 +10,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mfridman/tparse v0.18.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
+	github.com/pquerna/otp v1.4.0
 	github.com/sqlc-dev/sqlc v1.29.0
 	golang.org/x/crypto v0.46.0
 	golang.org/x/text v0.32.0
@@ -23,6 +24,7 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect

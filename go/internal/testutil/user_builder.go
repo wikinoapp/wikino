@@ -101,6 +101,12 @@ func (b *UserBuilder) BuildWithPassword(passwordDigest string) string {
 // BuildWithTwoFactorAuth はユーザーと二要素認証設定を作成し、ユーザーIDを返します
 func (b *UserBuilder) BuildWithTwoFactorAuth(secret string, enabled bool) string {
 	b.t.Helper()
+	return b.BuildWithTwoFactorAuthAndRecoveryCodes(secret, enabled, []string{})
+}
+
+// BuildWithTwoFactorAuthAndRecoveryCodes はユーザーと二要素認証設定（リカバリーコード付き）を作成し、ユーザーIDを返します
+func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) string {
+	b.t.Helper()
 
 	userID := b.Build()
 
@@ -110,17 +116,36 @@ func (b *UserBuilder) BuildWithTwoFactorAuth(secret string, enabled bool) string
 		enabledAt = sql.NullTime{Time: now, Valid: true}
 	}
 
+	// PostgreSQLの配列形式に変換
+	recoveryCodesStr := formatPostgresArray(recoveryCodes)
+
 	_, err := b.tx.ExecContext(
 		context.Background(),
 		`INSERT INTO user_two_factor_auths (user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		userID, secret, enabled, enabledAt, "{}", now, now,
+		userID, secret, enabled, enabledAt, recoveryCodesStr, now, now,
 	)
 	if err != nil {
 		b.t.Fatalf("二要素認証設定作成に失敗: %v", err)
 	}
 
 	return userID
+}
+
+// formatPostgresArray はGoのスライスをPostgreSQLの配列形式に変換します
+func formatPostgresArray(arr []string) string {
+	if len(arr) == 0 {
+		return "{}"
+	}
+	result := "{"
+	for i, v := range arr {
+		if i > 0 {
+			result += ","
+		}
+		result += "\"" + v + "\""
+	}
+	result += "}"
+	return result
 }
 
 // QueriesWithTx はトランザクションを使用したQueriesを返します
