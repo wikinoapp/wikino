@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/session"
@@ -71,7 +72,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// セッションを作成
 	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
 		UserID:    pendingUserID,
-		IPAddress: getIPAddress(r),
+		IPAddress: clientip.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	})
 	if err != nil {
@@ -107,18 +108,4 @@ func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, for
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-}
-
-// getIPAddress はリクエストからIPアドレスを取得します
-func getIPAddress(r *http.Request) string {
-	// X-Forwarded-For ヘッダーがある場合はそちらを優先
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return xff
-	}
-	// X-Real-IP ヘッダーがある場合はそちらを使用
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
-	}
-	// どちらもない場合はRemoteAddrを使用
-	return r.RemoteAddr
 }
