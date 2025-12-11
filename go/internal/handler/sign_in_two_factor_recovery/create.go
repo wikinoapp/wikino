@@ -1,4 +1,4 @@
-package sign_in_two_factor
+package sign_in_two_factor_recovery
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は2FAコード検証処理を行います (POST /sign_in/two_factor)
+// Create はリカバリーコード検証処理を行います (POST /sign_in/two_factor/recovery)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -34,20 +34,20 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	totpCode := r.FormValue("totp_code")
+	recoveryCode := r.FormValue("recovery_code")
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	// リクエストのバリデーション
-	req := NewCreateRequest(totpCode)
+	req := NewCreateRequest(recoveryCode)
 	if formErrors := req.Validate(ctx); formErrors != nil {
-		h.renderTwoFactorForm(w, r, formErrors, csrfToken)
+		h.renderRecoveryForm(w, r, formErrors, csrfToken)
 		return
 	}
 
-	// TOTPコードを検証
-	err := h.verifyTwoFactorUC.VerifyTOTP(ctx, usecase.VerifyTOTPInput{
-		UserID:   pendingUserID,
-		TOTPCode: totpCode,
+	// リカバリーコードを検証
+	err := h.verifyTwoFactorUC.VerifyRecoveryCode(ctx, usecase.VerifyRecoveryCodeInput{
+		UserID:       pendingUserID,
+		RecoveryCode: recoveryCode,
 	})
 	if err != nil {
 		if errors.Is(err, usecase.ErrTwoFactorNotEnabled) {
@@ -57,14 +57,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/sign_in", http.StatusFound)
 			return
 		}
-		if errors.Is(err, usecase.ErrInvalidTOTPCode) {
-			// TOTPコードが無効
+		if errors.Is(err, usecase.ErrInvalidRecoveryCode) {
+			// リカバリーコードが無効
 			formErrors := session.NewFormErrors()
-			formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
-			h.renderTwoFactorForm(w, r, formErrors, csrfToken)
+			formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_recovery_invalid_code"))
+			h.renderRecoveryForm(w, r, formErrors, csrfToken)
 			return
 		}
-		slog.ErrorContext(ctx, "TOTP検証でエラー", "error", err, "user_id", pendingUserID)
+		slog.ErrorContext(ctx, "リカバリーコード検証でエラー", "error", err, "user_id", pendingUserID)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -91,18 +91,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-// renderTwoFactorForm は2FAフォームをエラー付きでレンダリングします
-func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string) {
+// renderRecoveryForm はリカバリーコードフォームをエラー付きでレンダリングします
+func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_two_factor_title")
+	meta.SetTitle(ctx, "sign_in_two_factor_recovery_title")
 
-	pageData := twofactorpages.NewPageData{
+	pageData := twofactorpages.RecoveryNewPageData{
 		CSRFToken:  csrfToken,
 		FormErrors: formErrors,
 	}
-	content := twofactorpages.New(pageData)
+	content := twofactorpages.RecoveryNew(pageData)
 	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

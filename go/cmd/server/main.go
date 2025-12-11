@@ -16,6 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -89,6 +90,13 @@ func main() {
 		verifyTwoFactorUC,
 		createUserSessionUC,
 	)
+	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
+		cfg,
+		sessionMgr,
+		userRepo,
+		verifyTwoFactorUC,
+		createUserSessionUC,
+	)
 
 	r := chi.NewRouter()
 
@@ -109,6 +117,8 @@ func main() {
 		r.Post("/user_session", userSessionHandler.Create)
 		r.Get("/sign_in/two_factor/new", signInTwoFactorHandler.New)
 		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
+		r.Get("/sign_in/two_factor/recovery/new", signInTwoFactorRecoveryHandler.New)
+		r.Post("/sign_in/two_factor/recovery", signInTwoFactorRecoveryHandler.Create)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
