@@ -1,0 +1,44 @@
+package components
+
+import (
+	"context"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// Flash はフラッシュメッセージを表示します
+templ Flash(ctx context.Context, flash *session.FlashMessage) {
+	if flash != nil {
+		<div id="toaster" class="toaster">
+			<div
+				class="toast"
+				role="status"
+				aria-atomic="true"
+				aria-hidden="false"
+				if flash.Type == session.FlashNotice {
+					data-category="success"
+				} else if flash.Type == session.FlashAlert {
+					data-category="error"
+				} else {
+					data-category="info"
+				}
+			>
+				<div class="toast-content">
+					if flash.Type == session.FlashNotice {
+						@templates.Icon("success", "fill-(--success)")
+					} else if flash.Type == session.FlashAlert {
+						@templates.Icon("error", "fill-(--error)")
+					} else {
+						@templates.Icon("info", "fill-(--info)")
+					}
+					<section>
+						<p class="whitespace-pre-line">{ flash.Message }</p>
+					</section>
+					<footer>
+						<button type="button" class="btn" data-toast-action>{ templates.T(ctx, "flash_dismiss") }</button>
+					</footer>
+				</div>
+			</div>
+		</div>
+	}
+}

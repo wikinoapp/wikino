@@ -1,0 +1,49 @@
+# English translation file
+
+# Common
+[default_title]
+other = "Wikino"
+
+[default_description]
+other = "Wikino is a wiki application for sharing and organizing information online."
+
+[flash_dismiss]
+other = "Dismiss"
+
+[back_to_home]
+other = "Back to Home"
+
+# Sign in
+[sign_in_title]
+other = "Sign in"
+
+[sign_in_heading]
+other = "Sign in"
+
+[sign_in_email_label]
+other = "Email address"
+
+[sign_in_password_label]
+other = "Password"
+
+[sign_in_submit_button]
+other = "Sign in"
+
+[sign_in_forgot_password]
+other = "Forgot password?"
+
+[sign_in_no_account]
+other = "Don't have an account?"
+
+[sign_in_sign_up]
+other = "Sign up"
+
+# Validation errors
+[validation_required]
+other = "This field is required"
+
+[validation_email_invalid]
+other = "Please enter a valid email address"
+
+[validation_email_or_password_invalid]
+other = "Invalid email or password"
