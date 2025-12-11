@@ -98,3 +98,9 @@ other = "認証コードが無効です"
 
 [validation_recovery_code_invalid]
 other = "リカバリーコードが無効です"
+
+[sign_in_two_factor_invalid_code]
+other = "認証コードが正しくありません"
+
+[sign_in_two_factor_recovery_invalid_code]
+other = "リカバリーコードが正しくありません"

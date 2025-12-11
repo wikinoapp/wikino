@@ -15,6 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -54,9 +55,11 @@ func main() {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -79,6 +82,13 @@ func main() {
 		createUserSessionUC,
 		turnstileClient,
 	)
+	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
+		cfg,
+		sessionMgr,
+		userRepo,
+		verifyTwoFactorUC,
+		createUserSessionUC,
+	)
 
 	r := chi.NewRouter()
 
@@ -97,6 +107,8 @@ func main() {
 		r.Use(authMiddleware.RequireNoAuth)
 		r.Get("/sign_in", signInHandler.New)
 		r.Post("/user_session", userSessionHandler.Create)
+		r.Get("/sign_in/two_factor/new", signInTwoFactorHandler.New)
+		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

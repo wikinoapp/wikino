@@ -16,6 +16,9 @@ import (
 // Rails版と同じキーを使用して、セッションを共有する
 const CookieName = "user_session_tokens"
 
+// PendingUserCookieName は2FA認証待ちユーザーIDを格納するCookieのキー名
+const PendingUserCookieName = "pending_user_id"
+
 // Manager はセッション管理を行う構造体
 type Manager struct {
 	userRepo        *repository.UserRepository
@@ -109,4 +112,44 @@ func GenerateSecureToken() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+// SetPendingUserCookie は2FA認証待ちユーザーIDをCookieに設定する
+func (m *Manager) SetPendingUserCookie(w http.ResponseWriter, userID string) {
+	cookie := &http.Cookie{
+		Name:     PendingUserCookieName,
+		Value:    userID,
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		// 2FA認証のために一時的に設定（10分間有効）
+		MaxAge: 10 * 60,
+	}
+	http.SetCookie(w, cookie)
+}
+
+// GetPendingUserID はCookieから2FA認証待ちユーザーIDを取得する
+func (m *Manager) GetPendingUserID(r *http.Request) string {
+	cookie, err := r.Cookie(PendingUserCookieName)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
+}
+
+// DeletePendingUserCookie は2FA認証待ちユーザーIDのCookieを削除する
+func (m *Manager) DeletePendingUserCookie(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:     PendingUserCookieName,
+		Value:    "",
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	}
+	http.SetCookie(w, cookie)
 }
