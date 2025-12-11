@@ -125,6 +125,7 @@ cat /workspace/rails/app/models/work.rb
   - ✅ `WIKINO_PORT`, `WIKINO_DOMAIN`, `WIKINO_RAILS_APP_URL`
   - ❌ `PORT`, `DOMAIN`, `RAILS_APP_URL`
 - 外部ライブラリが要求する環境変数はそのまま使用（例: `DATABASE_URL`, `REDIS_URL`）
+- **例外**: `APP_ENV` はAnnictなどの他プロジェクトでも使われている名前のため、`WIKINO_` プレフィックスなしで使用する
 
 環境変数の設定には 2 つの方法があります：
 
