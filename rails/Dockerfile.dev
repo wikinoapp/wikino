@@ -4,35 +4,35 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG USERNAME=developer
 
-RUN \
-  apt update && \
-  apt dist-upgrade -yq && \
-  apt install -y --no-install-recommends \
-  build-essential \
-  curl \
-  # Claude Codeで使用
-  fzf \
-  git \
-  # PostgreSQLやNode.jsのインストールに必要
-  gnupg \
-  # Claude Codeで使用
-  jq \
-  libglib2.0-0 \
-  libvips42 \
-  libyaml-dev \
-  # PostgreSQLのインストールに必要
-  lsb-release \
-  # Claude Codeで使用
-  nano \
-  # Claude Codeで使用
-  ripgrep \
-  sudo \
-  # Claude Codeで使用
-  tree \
-  # Claude Codeで使用
-  vim \
-  zsh && \
-  rm -rf /var/lib/apt/lists/*
+RUN <<EOF
+apt update
+apt dist-upgrade -yq
+
+PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
+  build-essential
+  curl
+  file           # Shrineによる画像アップロードに必要
+  fzf            # Claude Codeで使用
+  git
+  gnupg          # PostgreSQLやNode.jsのインストールに必要
+  imagemagick    # Shrineによる画像アップロードに必要
+  jq             # Claude Codeで使用
+  libglib2.0-0
+  libvips42
+  libyaml-dev    # psych gemのインストールに必要
+  lsb-release
+  nano           # Claude Codeで使用
+  ripgrep        # Claude Codeで使用
+  sudo
+  tree           # Claude Codeで使用
+  vim            # Claude Codeで使用
+  zsh
+PKGLIST
+)
+
+apt install -y --no-install-recommends $PACKAGES
+rm -rf /var/lib/apt/lists/*
+EOF
 
 # PostgreSQLのセットアップ
 RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg \
@@ -74,5 +74,8 @@ SHELL ["/bin/zsh", "-c"]
 ENV SHELL=/bin/zsh
 
 RUN touch /home/${USERNAME}/.zshrc
+
+RUN git config --global user.email "me@shimba.co" && \
+    git config --global user.name "Koji Shimba"
 
 CMD ["/bin/zsh"]
