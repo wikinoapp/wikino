@@ -34,7 +34,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		FormErrors: nil,
 	}
 	content := twofactorpages.New(pageData)
-	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
+	err := layouts.Simple(ctx, meta, nil, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -10,11 +10,23 @@ import (
 
 // PageMeta はページのメタ情報を保持します
 type PageMeta struct {
-	Title       string // ページタイトル（<title>タグ、og:title、twitter:title用）
-	Description string // ページ説明（description、og:description、twitter:description用）
-	OGType      string // og:typeの値（"website", "article"など）
-	OGURL       string // og:urlの値
-	OGImage     string // og:imageの値
+	Title        string // ページタイトル（<title>タグ、og:title、twitter:title用）
+	Description  string // ページ説明（description、og:description、twitter:description用）
+	OGType       string // og:typeの値（"website", "article"など）
+	OGURL        string // og:urlの値
+	OGImage      string // og:imageの値
+	OGLocale     string // og:localeの値（"ja_JP", "en_US"など）
+	AssetVersion string // CSSやJSのバージョン（キャッシュバスティング用）
+}
+
+// localeToOGLocale はlocale（"ja", "en"など）をOGPのlocale形式（"ja_JP", "en_US"など）に変換します
+func localeToOGLocale(locale string) string {
+	switch locale {
+	case i18n.LangEn:
+		return "en_US"
+	default:
+		return "ja_JP"
+	}
 }
 
 // DefaultPageMeta はデフォルトのメタ情報を返します
@@ -23,12 +35,15 @@ type PageMeta struct {
 func DefaultPageMeta(ctx context.Context, cfg *config.Config) PageMeta {
 	ogImageURL := cfg.AppURL() + "/static/images/og-image.png"
 	title := i18n.T(ctx, "default_title") + " | Wikino"
+	locale := i18n.GetLocale(ctx)
 	return PageMeta{
-		Title:       title,
-		Description: i18n.T(ctx, "default_description"),
-		OGType:      "website",
-		OGURL:       "",
-		OGImage:     ogImageURL,
+		Title:        title,
+		Description:  i18n.T(ctx, "default_description"),
+		OGType:       "website",
+		OGURL:        "",
+		OGImage:      ogImageURL,
+		OGLocale:     localeToOGLocale(locale),
+		AssetVersion: cfg.GetAssetVersion(),
 	}
 }
 
