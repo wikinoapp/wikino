@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import "basecoat-css";
+
+@theme {
+  --color-brand-50: #f9f7f7;
+  --color-brand-100: #f2efee;
+  --color-brand-200: #e6dfdd;
+  --color-brand-300: #d7cdca;
+  --color-brand-400: #bfafaa;
+  --color-brand-500: #a7928c;
+  --color-brand-600: #8f7973;
+  --color-brand-700: #77645e;
+  --color-brand-800: #645450;
+  --color-brand-900: #564a46;
+  --color-brand-950: #2c2523;
+
+  --z-index-*: initial;
+  --z-index-tooltip: 300;
+  --z-index-sidebar: 250;
+  --z-index-overlay: 240;
+  --z-index-sticky-bar: 200;
+
+  --screen-max-width: 1400px;
+  --content-screen-max-width-small: 650px;
+  --content-screen-max-width-medium: 800px;
+  --content-screen-max-width-large: 1200px;
+}
+
+/* タッチデバイスかどうかを判別するためのカスタムバリアント */
+/*
+  hover: none ... hoverがサポートされていないデバイスかどうか
+  pointer: coarse ... タッチスクリーンのようなポインターが粗いデバイスかどうか
+*/
+@custom-variant touch (@media (hover: none) and (pointer: coarse));
+/*
+  hover: hover ... hoverがサポートされているデバイスかどうか
+  pointer: fine ... マウスのような精密なポインターデバイスかどうか
+*/
+@custom-variant non-touch (@media (hover: hover) and (pointer: fine));
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+:root {
+  /* https://basecoatui.com/components/sidebar/ */
+  --sidebar-width: 200px;
+}
