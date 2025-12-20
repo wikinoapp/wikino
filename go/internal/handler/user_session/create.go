@@ -124,7 +124,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formE
 		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
 		FormErrors:       formErrors,
 	})
-	err := layouts.Simple(ctx, meta, nil, h.cfg.GetAssetVersion(), content).Render(ctx, w)
+	err := layouts.Simple(ctx, meta, nil, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

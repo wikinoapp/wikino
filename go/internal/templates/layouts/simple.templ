@@ -11,11 +11,11 @@ import (
 
 // Simple はシンプルなレイアウトです
 // ヘッダー、フラッシュメッセージ、コンテンツのみを含みます
-templ Simple(ctx context.Context, meta viewmodel.PageMeta, flash *session.FlashMessage, assetVersion string, content templ.Component) {
+templ Simple(ctx context.Context, meta viewmodel.PageMeta, flash *session.FlashMessage, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang={ templates.Locale(ctx) }>
 		<head>
-			@components.Head(meta, assetVersion)
+			@components.Head(meta)
 		</head>
 		<body class="min-h-screen flex items-center justify-center">
 			@components.Flash(ctx, flash)

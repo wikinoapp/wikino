@@ -14,6 +14,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
+	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -75,6 +76,7 @@ func main() {
 
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
+	manifestHandler := manifest.NewHandler(cfg)
 	signInHandler := sign_in.NewHandler(cfg)
 	userSessionHandler := user_session.NewHandler(
 		cfg,
@@ -103,6 +105,20 @@ func main() {
 
 	r := chi.NewRouter()
 
+	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
+	r.Use(middleware.MethodOverride)
+
+	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
+	// 注: RailsAppURLが設定されている場合のみ有効化
+	if cfg.RailsAppURL != "" {
+		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg)
+		if err != nil {
+			slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
+			os.Exit(1)
+		}
+		r.Use(reverseProxyMiddleware.Middleware)
+	}
+
 	// 共通ミドルウェア
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.RequestID)
@@ -112,6 +128,9 @@ func main() {
 
 	// ヘルスチェック（認証不要）
 	r.Get("/health", healthHandler.Show)
+
+	// Web App Manifest（認証不要）
+	r.Get("/manifest.json", manifestHandler.Show)
 
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
