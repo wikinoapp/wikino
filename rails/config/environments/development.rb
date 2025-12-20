@@ -49,7 +49,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
   # Set localhost to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = {host: ENV.fetch("WIKINO_HOST"), port: ENV.fetch("WIKINO_PORT")}
+  config.action_mailer.default_url_options = {host: ENV.fetch("WIKINO_DOMAIN"), port: ENV.fetch("WIKINO_PORT")}
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -97,7 +97,7 @@ Rails.application.configure do
   end
 
   config.hosts += [
-    ENV.fetch("WIKINO_HOST"),
-    "www.#{ENV.fetch("WIKINO_HOST")}"
+    ENV.fetch("WIKINO_DOMAIN"),
+    "www.#{ENV.fetch("WIKINO_DOMAIN")}"
   ]
 end
