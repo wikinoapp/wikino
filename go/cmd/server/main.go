@@ -126,6 +126,10 @@ func main() {
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
 
+	// 静的ファイルの配信 (Tailwind CLI + esbuild のビルド結果)
+	fileServer := http.FileServer(http.Dir("./static"))
+	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
+
 	// ヘルスチェック（認証不要）
 	r.Get("/health", healthHandler.Show)
 

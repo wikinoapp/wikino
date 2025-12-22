@@ -7,6 +7,6 @@
 /static/css/*
 !/static/css/.gitkeep
 /static/js/*
-!/static/js/.gitkeep
+!/static/js/vendor/
 /tmp
 /web/dist
