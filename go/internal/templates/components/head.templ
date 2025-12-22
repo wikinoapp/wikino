@@ -5,11 +5,15 @@ import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 // Head はHTMLのheadセクションの共通メタタグを出力します
 templ Head(meta viewmodel.PageMeta) {
 	<meta charset="UTF-8"/>
-	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 
 	<title>{ meta.Title }</title>
 
 	<meta name="description" content={ meta.Description }/>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+
+	// iOSのSafariで「ホームに追加」した時にフルスクリーン表示にする
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
 
 	<meta property="og:description" content={ meta.Description }/>
 	<meta property="og:image" content={ meta.OGImage }/>
@@ -20,29 +24,21 @@ templ Head(meta viewmodel.PageMeta) {
 	<meta property="og:url" content={ meta.OGURL }/>
 
 	<meta name="twitter:card" content="summary"/>
+	<meta name="twitter:site" content="@wikino_app"/>
 	<meta name="twitter:title" content={ meta.Title }/>
 	<meta name="twitter:description" content={ meta.Description }/>
 	<meta name="twitter:image" content={ meta.OGImage }/>
 
-	// iOSのSafariで「ホームに追加」した時にフルスクリーン表示にする
-	<meta name="apple-mobile-web-app-capable" content="yes"/>
-
-	// canonicalリンク
-	if meta.OGURL != "" {
-		<link rel="canonical" href={ meta.OGURL }/>
-	}
-
-	// ファビコンとアイコン
 	<link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png"/>
+	<link rel="canonical" href={ meta.OGURL }/>
 	<link rel="icon" href="/static/images/favicon.ico" sizes="any"/>
 	<link rel="icon" href="/static/images/icon.svg" type="image/svg+xml"/>
 	<link rel="manifest" href="/manifest.json"/>
-
-	// Cloudflare Turnstile プリコネクト
-	<link rel="preconnect" href="https://challenges.cloudflare.com"/>
+	<link rel="preconnect" href="https://challenges.cloudflare.com"/> // Cloudflare Turnstile
 
 	<link rel="stylesheet" href={ "/static/css/style.css?v=" + meta.AssetVersion }/>
 
+	<script type="module" src="/static/js/vendor/datastar-v1.0.0-RC.7.js"></script>
 	// ダークモード検出スクリプト
 	<script>
 		(() => {
@@ -53,7 +49,5 @@ templ Head(meta viewmodel.PageMeta) {
 			} catch (_) {}
 		})();
 	</script>
-
-	<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"></script>
 	<script type="module" src={ "/static/js/main.js?v=" + meta.AssetVersion }></script>
 }
