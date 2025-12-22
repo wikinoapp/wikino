@@ -8,6 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/redirect"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
@@ -29,6 +30,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 	turnstileToken := r.FormValue("cf-turnstile-response")
+	backURL := r.FormValue("back")
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -42,14 +44,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		slog.WarnContext(ctx, "Turnstile検証に失敗", "email", email)
 		formErrors := session.NewFormErrors()
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email)
+		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
 		return
 	}
 
 	// リクエストのバリデーション
 	req := NewCreateRequest(email, password)
 	if errors := req.Validate(ctx); errors != nil {
-		h.renderSignInForm(w, r, errors, csrfToken, email)
+		h.renderSignInForm(w, r, errors, csrfToken, email, backURL)
 		return
 	}
 
@@ -65,7 +67,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		// セキュリティ対策: 存在しないメールアドレスでも同じエラーメッセージを表示
 		formErrors := session.NewFormErrors()
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email)
+		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
 		return
 	}
 
@@ -81,7 +83,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		// パスワードが設定されていない場合
 		formErrors := session.NewFormErrors()
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email)
+		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
 		return
 	}
 
@@ -89,7 +91,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if !auth.VerifyPassword(userPassword.PasswordDigest, password) {
 		formErrors := session.NewFormErrors()
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email)
+		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
 		return
 	}
 
@@ -108,12 +110,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// セッションCookieを設定
 	h.sessionMgr.SetSessionCookie(w, output.Token)
 
-	// ホームにリダイレクト
-	http.Redirect(w, r, "/", http.StatusFound)
+	// フラッシュメッセージを設定
+	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_sign_in_success"))
+
+	// リダイレクト先を決定（backパラメータが有効な場合はそのURLへ、それ以外はホームへ）
+	redirectURL := redirect.GetSafeRedirectURL(backURL)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // renderSignInForm はログインフォームをエラー付きでレンダリングします
-func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string, email string) {
+func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string, email string, backURL string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -123,8 +129,13 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formE
 		CSRFToken:        csrfToken,
 		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
 		FormErrors:       formErrors,
+		BackURL:          backURL,
 	})
-	err := layouts.Simple(ctx, meta, nil, content).Render(ctx, w)
+
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	w.WriteHeader(http.StatusUnprocessableEntity)
+
+	err := layouts.Simple(meta, nil, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

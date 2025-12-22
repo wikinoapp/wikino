@@ -206,9 +206,9 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// フォームが再表示されることを検証（リダイレクトしない）
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
@@ -294,9 +294,9 @@ func TestCreate_WrongPassword(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// フォームが再表示されることを検証（リダイレクトしない）
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// セッションCookieが設定されていないことを確認
@@ -371,9 +371,9 @@ func TestCreate_UserNotFound(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// フォームが再表示されることを検証（リダイレクトしない）
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// セッションCookieが設定されていないことを確認
@@ -448,9 +448,9 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// フォームが再表示されることを検証（リダイレクトしない）
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// セッションCookieが設定されていないことを確認
@@ -459,5 +459,210 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 		if c.Name == session.CookieName {
 			t.Error("session cookie should not be set for Turnstile failure")
 		}
+	}
+}
+
+func TestCreate_WithBackParameter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		backURL          string
+		wantRedirectPath string
+	}{
+		{
+			name:             "有効なbackパラメータ",
+			backURL:          "/dashboard",
+			wantRedirectPath: "/dashboard",
+		},
+		{
+			name:             "クエリパラメータ付きのbackパラメータ",
+			backURL:          "/oauth/authorize?client_id=xxx",
+			wantRedirectPath: "/oauth/authorize?client_id=xxx",
+		},
+		{
+			name:             "backパラメータなし",
+			backURL:          "",
+			wantRedirectPath: "/",
+		},
+		{
+			name:             "危険なbackパラメータ（絶対URL）は無視される",
+			backURL:          "https://evil.com",
+			wantRedirectPath: "/",
+		},
+		{
+			name:             "危険なbackパラメータ（プロトコル相対URL）は無視される",
+			backURL:          "//evil.com",
+			wantRedirectPath: "/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// 各サブテストで独立したDBセットアップ
+			_, tx := testutil.SetupTestDB(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			// テスト用パスワードをハッシュ化
+			password := "testpassword123"
+			passwordDigest, err := auth.HashPassword(password)
+			if err != nil {
+				t.Fatalf("パスワードのハッシュ化に失敗: %v", err)
+			}
+
+			// テストユーザーを作成
+			_ = testutil.NewUserBuilder(t, tx).
+				WithEmail("back_test@example.com").
+				WithAtname("backtest").
+				BuildWithPassword(passwordDigest)
+
+			// 設定を作成
+			cfg := &config.Config{
+				Env:                "test",
+				Port:               "8080",
+				Domain:             "localhost",
+				CookieDomain:       "",
+				SessionSecure:      false,
+				SessionHTTPOnly:    true,
+				TurnstileSiteKey:   "",
+				TurnstileSecretKey: "",
+			}
+
+			// リポジトリを初期化
+			userRepo := repository.NewUserRepository(queries)
+			userPasswordRepo := repository.NewUserPasswordRepository(queries)
+			userSessionRepo := repository.NewUserSessionRepository(queries)
+
+			// ユースケースを初期化
+			createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+
+			// セッションマネージャーを初期化
+			sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+			flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+			// モックTurnstileを初期化（常に成功）
+			mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
+
+			// ハンドラーを初期化
+			handler := user_session.NewHandler(
+				cfg,
+				sessionMgr,
+				flashMgr,
+				userRepo,
+				userPasswordRepo,
+				userSessionRepo,
+				createUserSessionUC,
+				mockTurnstile,
+			)
+
+			// フォームデータを作成
+			form := url.Values{}
+			form.Set("email", "back_test@example.com")
+			form.Set("password", password)
+			form.Set("csrf_token", "test-csrf-token")
+			form.Set("cf-turnstile-response", "test-token")
+			form.Set("back", tt.backURL)
+
+			req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			// CSRFトークンをコンテキストに設定
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Create(rr, req)
+
+			// リダイレクトを検証
+			if rr.Code != http.StatusFound {
+				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+			}
+
+			// リダイレクト先を検証
+			location := rr.Header().Get("Location")
+			if location != tt.wantRedirectPath {
+				t.Errorf("wrong redirect location: got %v want %v", location, tt.wantRedirectPath)
+			}
+		})
+	}
+}
+
+func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTestDB(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// 設定を作成
+	cfg := &config.Config{
+		Env:                "test",
+		Port:               "8080",
+		Domain:             "localhost",
+		CookieDomain:       "",
+		SessionSecure:      false,
+		SessionHTTPOnly:    true,
+		TurnstileSiteKey:   "",
+		TurnstileSecretKey: "",
+	}
+
+	// リポジトリを初期化
+	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
+	userSessionRepo := repository.NewUserSessionRepository(queries)
+
+	// ユースケースを初期化
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+
+	// セッションマネージャーを初期化
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+	// モックTurnstileを初期化（常に成功）
+	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
+
+	// ハンドラーを初期化
+	handler := user_session.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		userPasswordRepo,
+		userSessionRepo,
+		createUserSessionUC,
+		mockTurnstile,
+	)
+
+	// 無効なメールアドレスでリクエスト（backパラメータ付き）
+	backURL := "/dashboard"
+	form := url.Values{}
+	form.Set("email", "invalid-email")
+	form.Set("password", "password123")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Set("cf-turnstile-response", "test-token")
+	form.Set("back", backURL)
+
+	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// CSRFトークンをコンテキストに設定
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	// backパラメータがフォームに保持されているか確認
+	body := rr.Body.String()
+	wantInBody := `name="back" value="/dashboard"`
+	if !strings.Contains(body, wantInBody) {
+		t.Errorf("backパラメータがフォームに保持されていません\nwant: %s", wantInBody)
 	}
 }

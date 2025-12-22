@@ -16,6 +16,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	// backパラメータを取得（ログイン後のリダイレクト先）
+	backURL := r.URL.Query().Get("back")
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_title")
@@ -25,8 +28,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		CSRFToken:        csrfToken,
 		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
 		FormErrors:       nil,
+		BackURL:          backURL,
 	})
-	err := layouts.Simple(ctx, meta, nil, content).Render(ctx, w)
+	err := layouts.Simple(meta, nil, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

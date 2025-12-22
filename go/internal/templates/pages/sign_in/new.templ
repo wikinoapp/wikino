@@ -11,14 +11,17 @@ type NewPageData struct {
 	CSRFToken        string
 	TurnstileSiteKey string
 	FormErrors       *session.FormErrors
+	BackURL          string
 }
 
 // New はログインページのコンテンツを表示します
 templ New(data NewPageData) {
 	<div class="flex flex-col gap-6 min-w-full md:min-w-md px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
-				@templates.Icon("logo")
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
 			</a>
 		</div>
 
@@ -28,104 +31,94 @@ templ New(data NewPageData) {
 			</h1>
 		</div>
 
-		<p class="text-center text-muted-foreground">
-			{ templates.T(ctx, "sign_in_no_account") }
-			{ " " }
-			<a href="/sign_up" class="link underline">
-				{ templates.T(ctx, "sign_in_sign_up") }
-			</a>
-		</p>
-
 		@components.FormErrors(data.FormErrors)
 
-		<div class="card">
-			<div class="card-body px-4 py-6">
-				<form
-					action="/user_session"
-					class="form grid gap-6"
-					method="POST"
-				>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<form
+			action="/user_session"
+			class="form grid gap-6"
+			data-on:submit__passive="$isSubmitting = true"
+			method="POST"
+		>
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<input type="hidden" name="back" value={ data.BackURL }/>
 
-					<div class="grid gap-2">
-						<label for="email">
-							{ templates.T(ctx, "sign_in_email_label") }
-						</label>
+			<div class="grid gap-2">
+				<label for="email">
+					{ templates.T(ctx, "sign_in_email_label") }
+				</label>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="email"
-							autofocus
-							class="input"
-							id="email"
-							name="email"
-							required
-							tabindex="1"
-							type="email"
-						/>
+				<input
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+						aria-invalid="true"
+					} else {
+						aria-invalid="false"
+					}
+					autocomplete="email"
+					autofocus
+					id="email"
+					name="email"
+					required
+					tabindex="1"
+					type="email"
+				/>
 
-						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
-								<p class="text-sm text-destructive">{ errorMsg }</p>
-							}
-						}
-					</div>
-
-					<div class="grid gap-2">
-						<div class="flex items-center gap-2">
-							<label for="password">
-								{ templates.T(ctx, "sign_in_password_label") }
-							</label>
-
-							<a href="/password_reset" class="ml-auto text-sm link underline" tabindex="4">
-								{ templates.T(ctx, "sign_in_forgot_password") }
-							</a>
-						</div>
-
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="current-password"
-							class="input"
-							id="password"
-							name="password"
-							required
-							tabindex="2"
-							type="password"
-						/>
-
-						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
-								<p class="text-sm text-destructive">{ errorMsg }</p>
-							}
-						}
-					</div>
-
-					@components.Turnstile(data.TurnstileSiteKey)
-
-					<button
-						class="btn rounded-full w-fit"
-						tabindex="3"
-						type="submit"
-					>
-						@templates.Icon("sign-in", "w-5 h-5")
-						{ templates.T(ctx, "sign_in_submit_button") }
-					</button>
-				</form>
+				if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+					for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
+						<p class="text-sm text-destructive">{ errorMsg }</p>
+					}
+				}
 			</div>
-		</div>
 
-		<div class="text-center">
-			<a href="/" class="link underline inline-flex items-center gap-1">
-				@templates.Icon("arrow-left", "w-4 h-4")
-				{ templates.T(ctx, "back_to_home") }
+			<div class="grid gap-2">
+				<div class="flex items-center gap-2">
+					<label for="password">
+						{ templates.T(ctx, "sign_in_password_label") }
+					</label>
+
+					<a href="/password_reset" class="ml-auto text-sm link" tabindex="4">
+						{ templates.T(ctx, "sign_in_forgot_password") }
+					</a>
+				</div>
+
+				<input
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+						aria-invalid="true"
+					} else {
+						aria-invalid="false"
+					}
+					autocomplete="current-password"
+					id="password"
+					name="password"
+					required
+					tabindex="2"
+					type="password"
+				/>
+
+				if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+					for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
+						<p class="text-sm text-destructive">{ errorMsg }</p>
+					}
+				}
+			</div>
+
+			@components.Turnstile(data.TurnstileSiteKey)
+
+			<button
+				class="btn rounded-full w-fit text-black"
+				data-attr:disabled="$isSubmitting == true"
+				tabindex="3"
+				type="submit"
+			>
+				@templates.Icon("arrow-right")
+				{ templates.T(ctx, "sign_in_submit_button") }
+			</button>
+		</form>
+
+		<div class="text-center text-muted-foreground">
+			{ templates.T(ctx, "sign_in_no_account") }
+			{ " " }
+			<a class="link" href="/sign_up">
+				{ templates.T(ctx, "sign_in_sign_up") }
 			</a>
 		</div>
 	</div>
