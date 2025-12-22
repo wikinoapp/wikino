@@ -52,3 +52,26 @@ func (f *FormErrors) GetFieldErrors(field string) []string {
 	}
 	return f.Fields[field]
 }
+
+// FieldError はフィールドエラーを表す構造体（テンプレート用）
+type FieldError struct {
+	Field   string
+	Message string
+}
+
+// FieldErrors はフィールドエラーを列挙可能な形式で取得します
+func (f *FormErrors) FieldErrors() []FieldError {
+	if f == nil || f.Fields == nil {
+		return nil
+	}
+	var errors []FieldError
+	for field, messages := range f.Fields {
+		for _, message := range messages {
+			errors = append(errors, FieldError{
+				Field:   field,
+				Message: message,
+			})
+		}
+	}
+	return errors
+}

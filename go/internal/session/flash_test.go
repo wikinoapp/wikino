@@ -8,16 +8,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
-func TestFlashManager_SetNotice(t *testing.T) {
+func TestFlashManager_SetSuccess(t *testing.T) {
 	t.Parallel()
 
 	fm := session.NewFlashManager(".example.com", true, true)
 
-	t.Run("noticeタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
+	t.Run("successタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
 		t.Parallel()
 
 		rr := httptest.NewRecorder()
-		fm.SetNotice(rr, "ログインしました")
+		fm.SetSuccess(rr, "ログインしました")
 
 		cookies := rr.Result().Cookies()
 		if len(cookies) != 1 {
@@ -29,7 +29,7 @@ func TestFlashManager_SetNotice(t *testing.T) {
 			t.Errorf("Cookie名が不正: got %s, want %s", cookie.Name, session.FlashCookieName)
 		}
 
-		// JSONフォーマットでnoticeタイプとメッセージが含まれていること
+		// JSONフォーマットでsuccessタイプとメッセージが含まれていること
 		if cookie.Value == "" {
 			t.Error("Cookie値が空です")
 		}
@@ -45,8 +45,8 @@ func TestFlashManager_SetNotice(t *testing.T) {
 			t.Fatal("フラッシュメッセージがnilです")
 		}
 
-		if flash.Type != session.FlashNotice {
-			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashNotice)
+		if flash.Type != session.FlashSuccess {
+			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashSuccess)
 		}
 
 		if flash.Message != "ログインしました" {
@@ -55,16 +55,16 @@ func TestFlashManager_SetNotice(t *testing.T) {
 	})
 }
 
-func TestFlashManager_SetAlert(t *testing.T) {
+func TestFlashManager_SetError(t *testing.T) {
 	t.Parallel()
 
 	fm := session.NewFlashManager(".example.com", true, true)
 
-	t.Run("alertタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
+	t.Run("errorタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
 		t.Parallel()
 
 		rr := httptest.NewRecorder()
-		fm.SetAlert(rr, "エラーが発生しました")
+		fm.SetError(rr, "エラーが発生しました")
 
 		cookies := rr.Result().Cookies()
 		if len(cookies) != 1 {
@@ -84,12 +84,90 @@ func TestFlashManager_SetAlert(t *testing.T) {
 			t.Fatal("フラッシュメッセージがnilです")
 		}
 
-		if flash.Type != session.FlashAlert {
-			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashAlert)
+		if flash.Type != session.FlashError {
+			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashError)
 		}
 
 		if flash.Message != "エラーが発生しました" {
 			t.Errorf("メッセージが不正: got %s, want エラーが発生しました", flash.Message)
+		}
+	})
+}
+
+func TestFlashManager_SetWarning(t *testing.T) {
+	t.Parallel()
+
+	fm := session.NewFlashManager(".example.com", true, true)
+
+	t.Run("warningタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
+		t.Parallel()
+
+		rr := httptest.NewRecorder()
+		fm.SetWarning(rr, "注意が必要です")
+
+		cookies := rr.Result().Cookies()
+		if len(cookies) != 1 {
+			t.Fatalf("Cookieの数が不正: got %d, want 1", len(cookies))
+		}
+
+		cookie := cookies[0]
+
+		// GetFlashで内容を検証
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.AddCookie(cookie)
+
+		rr2 := httptest.NewRecorder()
+		flash := fm.GetFlash(rr2, req)
+
+		if flash == nil {
+			t.Fatal("フラッシュメッセージがnilです")
+		}
+
+		if flash.Type != session.FlashWarning {
+			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashWarning)
+		}
+
+		if flash.Message != "注意が必要です" {
+			t.Errorf("メッセージが不正: got %s, want 注意が必要です", flash.Message)
+		}
+	})
+}
+
+func TestFlashManager_SetInfo(t *testing.T) {
+	t.Parallel()
+
+	fm := session.NewFlashManager(".example.com", true, true)
+
+	t.Run("infoタイプのフラッシュメッセージが設定されること", func(t *testing.T) {
+		t.Parallel()
+
+		rr := httptest.NewRecorder()
+		fm.SetInfo(rr, "お知らせがあります")
+
+		cookies := rr.Result().Cookies()
+		if len(cookies) != 1 {
+			t.Fatalf("Cookieの数が不正: got %d, want 1", len(cookies))
+		}
+
+		cookie := cookies[0]
+
+		// GetFlashで内容を検証
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.AddCookie(cookie)
+
+		rr2 := httptest.NewRecorder()
+		flash := fm.GetFlash(rr2, req)
+
+		if flash == nil {
+			t.Fatal("フラッシュメッセージがnilです")
+		}
+
+		if flash.Type != session.FlashInfo {
+			t.Errorf("タイプが不正: got %s, want %s", flash.Type, session.FlashInfo)
+		}
+
+		if flash.Message != "お知らせがあります" {
+			t.Errorf("メッセージが不正: got %s, want お知らせがあります", flash.Message)
 		}
 	})
 }
@@ -117,7 +195,7 @@ func TestFlashManager_GetFlash(t *testing.T) {
 
 		// フラッシュを設定
 		rr := httptest.NewRecorder()
-		fm.SetNotice(rr, "テストメッセージ")
+		fm.SetSuccess(rr, "テストメッセージ")
 		cookie := rr.Result().Cookies()[0]
 
 		// フラッシュを取得
@@ -180,7 +258,7 @@ func TestFlashManager_CookieAttributes(t *testing.T) {
 
 		fm := session.NewFlashManager(".example.com", true, true)
 		rr := httptest.NewRecorder()
-		fm.SetNotice(rr, "テスト")
+		fm.SetSuccess(rr, "テスト")
 
 		cookie := rr.Result().Cookies()[0]
 
@@ -195,7 +273,7 @@ func TestFlashManager_CookieAttributes(t *testing.T) {
 
 		fm := session.NewFlashManager(".example.com", true, true)
 		rr := httptest.NewRecorder()
-		fm.SetNotice(rr, "テスト")
+		fm.SetSuccess(rr, "テスト")
 
 		cookie := rr.Result().Cookies()[0]
 
