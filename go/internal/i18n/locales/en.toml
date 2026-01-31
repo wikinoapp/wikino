@@ -21,7 +21,7 @@ other = "Back to Home"
 other = "Sign in"
 
 [sign_in_heading]
-other = "Sign in"
+other = "Sign in to Wikino"
 
 [sign_in_email_label]
 other = "Email address"
@@ -33,7 +33,7 @@ other = "Password"
 other = "Sign in"
 
 [sign_in_forgot_password]
-other = "Forgot password?"
+other = "Forgot your password?"
 
 [sign_in_no_account]
 other = "Don't have an account?"

@@ -1,25 +1,14 @@
 package components
 
-import (
-	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/templates"
-)
+import "github.com/wikinoapp/wikino/go/internal/session"
 
-// FormErrors はフォームのエラーを表示します（グローバルエラー + フィールドエラー）
+// FormErrors はフォームのグローバルエラーを表示します
 templ FormErrors(formErrors *session.FormErrors) {
-	if formErrors != nil && formErrors.HasErrors() {
-		<div class="alert-destructive" role="alert">
-			<div class="font-bold">
-				{ templates.T(ctx, "label_error") }
+	if formErrors != nil && len(formErrors.Global) > 0 {
+		for _, errorMsg := range formErrors.Global {
+			<div class="alert-destructive">
+				<h2>{ errorMsg }</h2>
 			</div>
-			<ul class="list-inside list-disc mt-2">
-				for _, err := range formErrors.Global {
-					<li>{ err }</li>
-				}
-				for _, fieldErr := range formErrors.FieldErrors() {
-					<li>{ fieldErr.Message }</li>
-				}
-			</ul>
-		</div>
+		}
 	}
 }

@@ -21,7 +21,7 @@ other = "ホームに戻る"
 other = "ログイン"
 
 [sign_in_heading]
-other = "ログイン"
+other = "Wikinoにログイン"
 
 [sign_in_email_label]
 other = "メールアドレス"
@@ -30,13 +30,13 @@ other = "メールアドレス"
 other = "パスワード"
 
 [sign_in_submit_button]
-other = "ログイン"
+other = "ログインする"
 
 [sign_in_forgot_password]
-other = "パスワードをお忘れですか？"
+other = "パスワードを忘れた？"
 
 [sign_in_no_account]
-other = "アカウントをお持ちでない方"
+other = "アカウントをお持ちでない方は"
 
 [sign_in_sign_up]
 other = "新規登録"
