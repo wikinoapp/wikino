@@ -1,0 +1,1516 @@
+# 権限管理の改善
+
+## 実装状況サマリー（2025年8月30日）
+
+### 完了した主な変更
+
+1. **権限定義の簡素化**
+   - `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除
+   - 権限チェックロジックをPolicyクラスに一元化
+
+2. **Policyクラスの分離**
+   - `BaseSpacePolicy`を削除し、よりシンプルな階層構造に
+   - `SpaceOwnerPolicy`、`SpaceMemberPolicy`、`SpaceGuestPolicy`に分離
+   - 各ロールの権限が独立したクラスで管理される
+
+3. **Factory Pattern の導入**
+   - `SpaceMemberPolicyFactory`を`SpacePolicyFactory`にリネーム
+   - ロールに応じた適切なPolicyインスタンスを生成
+
+4. **PermissionResolverの削除**
+   - `SpacePolicyFactory`と機能が重複していたため削除
+   - よりシンプルな設計を実現
+
+5. **責務の明確化**
+   - `SpacePermissions`モジュール: Space関連の権限定義
+   - `TopicPermissions`モジュール: Topic/Page関連の権限定義
+   - 各Policyクラスが必要なモジュールのみをinclude
+
+## 現在の権限まわりの処理
+
+### アーキテクチャ概要
+
+権限管理は主に以下のクラスで構成されています：
+
+1. **`SpaceMemberPolicy`** - 権限チェックのメインクラス
+   - すべての権限判定ロジックを集約
+   - 各種アクション（ページ作成、更新、削除など）の可否を判定
+   - ユーザーとスペースメンバーの関連性を検証
+
+2. **`SpaceMemberRole`** - ロール定義
+   - `Owner` - スペースの管理者権限
+   - `Member` - 通常メンバー権限
+   - 各ロールが持つ権限（permissions）を定義
+
+3. **`SpaceMemberPermission`** - 権限種別の定義
+   - `CreateTopic` - トピック作成権限
+   - `CreatePage` - ページ作成権限
+   - `CreateDraftPage` - ドラフトページ作成権限
+   - `ExportSpace` - スペースエクスポート権限
+   - `UpdateSpace` - スペース更新権限
+   - `UpdateTopic` - トピック更新権限
+
+### 権限チェックのフロー
+
+1. **コントローラーでの権限チェック**
+
+   ```ruby
+   space_member_policy = SpaceMemberPolicy.new(
+     user_record: current_user_record,
+     space_member_record: current_space_member_record
+   )
+
+   unless space_member_policy.can_update_space?(space_record:)
+     # 権限がない場合の処理
+   end
+   ```
+
+2. **ロールベースの権限付与**
+   - `Owner`ロール：すべての権限を保有
+   - `Member`ロール：基本的な操作権限のみ（スペース管理権限なし）
+
+3. **権限チェックメソッド**
+   - `joined_space?` - スペースに参加しているか
+   - `can_update_space?` - スペース更新権限
+   - `can_create_topic?` - トピック作成権限
+   - `can_update_topic?` - トピック更新権限
+   - `can_create_page?` - ページ作成権限
+   - `can_update_page?` - ページ更新権限
+   - `can_show_page?` - ページ閲覧権限（公開トピックは誰でも閲覧可）
+   - `can_trash_page?` - ページ削除権限
+   - `can_export_space?` - エクスポート権限
+   - `can_upload_attachment?` - ファイルアップロード権限
+   - `can_view_attachment?` - ファイル閲覧権限
+   - `can_delete_attachment?` - ファイル削除権限
+   - `can_manage_attachments?` - ファイル管理権限
+
+### 特徴的な実装
+
+1. **公開トピックの扱い**
+   - 公開トピック内のページは非メンバーでも閲覧可能
+   - 公開トピックの添付ファイルも非メンバーが閲覧可能
+
+2. **権限の継承関係**
+   - スペースメンバーであることが基本条件
+   - 特定の権限（UpdateSpaceなど）が追加の操作を可能にする
+
+3. **添付ファイルの権限**
+   - アップロード者本人または管理者のみ削除可能
+   - 公開ページ参照のファイルは誰でも閲覧可能
+
+## 現在の課題
+
+- 権限チェックが各コントローラーに散在
+
+- ロールと権限の関係がハードコーディング
+
+- 細かい権限制御には対応していない（例：読み取り専用メンバー）
+
+- ~~`SpaceMemberRole#permissions` と `SpaceMemberPolicy` の責務が重複~~ **解決済み**
+  - ~~`SpaceMemberRole`で定義した権限と実際のチェックロジックが一致しない~~
+  - ~~例：`CreateTopic`権限は定義されているが、`can_create_topic?`では権限をチェックしていない~~
+  - ~~一部のメソッドは`permissions.include?`を使い、一部は独自ロジックのみで判定~~
+  - ~~権限の宣言的定義と実装が乖離しており、メンテナンス性に課題~~
+  - → `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除し、権限チェックをPolicyクラスに一元化
+
+- 権限（Permission）とビジネスルールが混在している
+  - UpdateTopicは「能力」を表す
+  - 「トピックに参加している」は「状態」を表す
+  - これらが AND 条件で結合されている
+
+- ロールの特権を表現できない
+  - 「Ownerは全トピックを編集可能」のようなルールが書きづらい
+  - 各メソッドに個別にロールチェックを追加する必要がある
+
+- SpaceとTopicの2層構造の権限管理が複雑
+  - SpaceMemberRecordとTopicMemberRecordの2つの権限状態が存在
+  - Space権限とTopic権限の優先順位が不明確
+  - 権限の継承関係（Space Owner→Topic全権限）が暗黙的
+
+## 要件
+
+### ロールの権限を明確に定義する
+
+- ~~各ロール（Owner、Member等）が持つ権限を一箇所で明確に定義したい~~ **達成**
+- ~~新しいロールや権限を追加する際の変更箇所を最小限にしたい~~ **達成**
+- ~~権限の定義と実際のチェックロジックを一致させたい~~ **達成**
+
+#### 達成条件
+
+- ~~ロールの権限定義を見れば、そのロールで何ができるかが明確にわかる~~ **達成**
+  - 各Policyクラス（`OwnerPolicy`、`MemberPolicy`）を見れば権限が明確
+- ~~ロール特有の特権（Ownerは全トピック編集可能など）を表現できる~~ **達成**
+  - `OwnerPolicy`でOwner特有の権限を明示的に実装
+
+### SpaceとTopicの2層構造の権限管理
+
+- WikinoはGitHubのようにSpace（Organization）とTopic（Repository）の2層構造
+- SpaceMemberRecordとTopicMemberRecordという2つの権限レイヤーが存在
+- Space権限とTopic権限の優先順位を明確にしたい
+- 権限の継承関係を明示的に表現したい
+- Public/Privateの可視性制御が必要
+
+#### 達成条件
+
+- Space OwnerがTopic全体で持つ特権が明確
+- Topic固有の権限（Topicモデレーター等）を追加可能
+- Space権限とTopic権限の組み合わせによる権限判定が理解しやすい
+- 新しい階層（Sub-topicなど）の追加が容易
+- PublicトピックとPrivateトピックの権限制御が明確
+
+### 権限チェックの一元化と保守性向上
+
+- 権限チェックロジックが各コントローラーに散在している問題を解決したい
+- 権限（Permission）とビジネスルール（トピック参加状態など）を明確に分離したい
+- ロールごとにPolicyクラスを分離し、単一責任の原則を守りたい
+
+#### 達成条件
+
+- 権限チェックロジックがPolicy層に集約される
+- 新しいロール追加時に既存コードへの影響が最小限
+- ロール特有のバグ修正が他のロールに影響しない
+- テストが書きやすく、メンテナンスしやすい構造
+
+### 段階的な移行とリスク軽減
+
+- 既存システムからの移行を安全に行いたい
+- 現在の権限システムとの互換性を保ちながら段階的に移行したい
+- GitHubモデルのベストプラクティスを取り入れたい
+
+#### 達成条件
+
+- 既存の`SpaceMemberPolicy`と新システムの並行稼働が可能
+- Factoryパターンによりインターフェースの変更なし
+- 将来的な権限レベルの細分化（Read/Write/Admin等）に対応可能
+- マイグレーション時の権限変換ルールが明確
+
+## 修正案
+
+### ロールごとにPolicyクラスを分離する
+
+現在の`SpaceMemberPolicy`が複数のロールの権限チェックを担当していることが複雑性の原因となっています。
+これを解決するため、ロールごとに独立したPolicyクラスを作成します。
+
+#### クラス構造
+
+```
+app/policies/
+├── application_policy.rb         # 基底クラス
+├── base_member_policy.rb         # メンバー共通の基底クラス
+├── owner_policy.rb               # Ownerロール専用
+├── member_policy.rb              # Memberロール専用
+├── guest_policy.rb               # 非メンバー（ゲスト）用
+└── space_member_policy_factory.rb # Policyクラスの生成
+```
+
+#### 実装例
+
+**1. 基底クラス（共通ロジック）**
+
+```ruby
+# app/policies/base_member_policy.rb
+class BaseMemberPolicy < ApplicationPolicy
+  def initialize(user_record:, space_member_record:)
+    @user_record = user_record
+    @space_member_record = space_member_record
+  end
+
+  def joined_space?
+    !space_member_record.nil?
+  end
+
+  def in_same_space?(space_id)
+    space_member_record&.space_id == space_id
+  end
+
+  def active?
+    space_member_record&.active?
+  end
+end
+```
+
+**2. Ownerロール専用Policy**
+
+```ruby
+# app/policies/owner_policy.rb
+class OwnerPolicy < BaseMemberPolicy
+  # Ownerは全トピックを編集可能
+  def can_update_topic?(topic_record:)
+    in_same_space?(topic_record.space_id)
+  end
+
+  # Ownerはスペース設定を変更可能
+  def can_update_space?(space_record:)
+    in_same_space?(space_record.id)
+  end
+
+  # Ownerは全ファイルを削除可能
+  def can_delete_attachment?(attachment_record:)
+    active? && in_same_space?(attachment_record.space_id)
+  end
+
+  # Ownerはファイル管理画面にアクセス可能
+  def can_manage_attachments?(space_record:)
+    active? && in_same_space?(space_record.id)
+  end
+
+  def can_export_space?(space_record:)
+    in_same_space?(space_record.id)
+  end
+end
+```
+
+**3. Memberロール専用Policy**
+
+```ruby
+# app/policies/member_policy.rb
+class MemberPolicy < BaseMemberPolicy
+  # Memberは参加しているトピックのみ編集可能
+  def can_update_topic?(topic_record:)
+    in_same_space?(topic_record.space_id) &&
+      space_member_record!.topic_records.where(id: topic_record.id).exists?
+  end
+
+  # Memberはスペース設定を変更不可
+  def can_update_space?(space_record:)
+    false
+  end
+
+  # Memberは自分がアップロードしたファイルのみ削除可能
+  def can_delete_attachment?(attachment_record:)
+    active? &&
+      in_same_space?(attachment_record.space_id) &&
+      space_member_record!.id == attachment_record.attached_space_member_id
+  end
+
+  # Memberはファイル管理画面にアクセス不可
+  def can_manage_attachments?(space_record:)
+    false
+  end
+
+  def can_export_space?(space_record:)
+    false
+  end
+end
+```
+
+**4. ゲスト（非メンバー）用Policy**
+
+```ruby
+# app/policies/guest_policy.rb
+class GuestPolicy < ApplicationPolicy
+  def initialize(user_record:)
+    @user_record = user_record
+  end
+
+  def can_show_page?(page_record:)
+    # 公開トピックのページのみ閲覧可能
+    page_record.topic_record!.visibility_public?
+  end
+
+  def can_view_attachment?(attachment_record:)
+    # 公開ページで使用されているファイルのみ閲覧可能
+    attachment_record.all_referencing_pages_public?
+  end
+
+  # その他の操作は全て不可
+  def can_update_topic?(topic_record:)
+    false
+  end
+
+  def can_update_space?(space_record:)
+    false
+  end
+end
+```
+
+**5. Factoryパターンで適切なPolicyを生成**
+
+```ruby
+# app/policies/space_member_policy_factory.rb
+class SpaceMemberPolicyFactory
+  def self.build(user_record:, space_member_record: nil)
+    # 非メンバーの場合
+    return GuestPolicy.new(user_record:) if space_member_record.nil?
+
+    # ロールに応じたPolicyを返す
+    case space_member_record.role
+    when "owner"
+      OwnerPolicy.new(user_record:, space_member_record:)
+    when "member"
+      MemberPolicy.new(user_record:, space_member_record:)
+    else
+      raise ArgumentError, "Unknown role: #{space_member_record.role}"
+    end
+  end
+end
+```
+
+#### コントローラーでの使用方法
+
+```ruby
+# 現在の実装
+space_member_policy = SpaceMemberPolicy.new(
+  user_record: current_user_record,
+  space_member_record: current_space_member_record
+)
+
+# 新しい実装
+space_member_policy = SpaceMemberPolicyFactory.build(
+  user_record: current_user_record,
+  space_member_record: current_space_member_record
+)
+
+# 使用方法は同じ
+unless space_member_policy.can_update_space?(space_record:)
+  # 権限がない場合の処理
+end
+```
+
+### メリット
+
+1. **単一責任の原則**
+   - 各ロールの権限ロジックが独立したクラスに分離
+   - ロール特有の振る舞いがそのクラス内に集約
+
+2. **オープン・クローズドの原則**
+   - 新しいロール追加時は新しいPolicyクラスを追加するだけ
+   - 既存のロールのコードを変更する必要なし
+
+3. **可読性の向上**
+   - `OwnerPolicy`を見ればOwnerができることが一目瞭然
+   - 条件分岐が減り、コードがシンプルに
+
+4. **テスタビリティの向上**
+   - ロールごとに独立してテスト可能
+   - モックやスタブが簡単
+
+5. **保守性の向上**
+   - ロール特有のバグ修正が他のロールに影響しない
+   - 権限の追加・変更が容易
+
+### 段階的な移行方法
+
+1. **Phase 1**: 新しいPolicyクラスを作成し、既存の`SpaceMemberPolicy`と並行稼働
+2. **Phase 2**: コントローラーを順次新しいFactoryパターンに移行
+3. **Phase 3**: 全コントローラー移行後、旧`SpaceMemberPolicy`を削除
+
+### 懸念事項と対策
+
+1. **共通ロジックの重複**
+   - `BaseMemberPolicy`に共通メソッドを定義して解決
+
+2. **Policyクラスの増加**
+   - ロールごとに明確に分離されるため、むしろ管理しやすくなる
+
+3. **既存コードへの影響**
+   - Factoryパターンにより、インターフェースは変わらないため影響最小限
+
+### SpaceとTopicの2層構造の権限管理
+
+Space（ワークスペース）とTopic（チャンネル）の2層構造の権限を適切に管理するための設計案です。
+
+#### 権限の階層構造
+
+```
+権限の優先順位：
+1. Space Owner     → Space内の全権限（全Topic含む）
+2. Topic Admin     → Topic内の全権限
+3. Topic Member    → Topic内の基本操作権限
+4. Space Member    → Space内の基本操作権限（Topic未参加）
+5. Guest          → 公開コンテンツのみ閲覧
+```
+
+#### クラス構造
+
+```
+app/policies/
+├── spaces/
+│   ├── space_owner_policy.rb
+│   ├── space_member_policy.rb
+│   └── space_guest_policy.rb
+├── topics/
+│   ├── topic_admin_policy.rb
+│   ├── topic_member_policy.rb
+│   └── topic_guest_policy.rb
+├── permission_resolver.rb       # 権限の優先順位を解決
+└── policy_factory.rb           # 適切なPolicyを生成
+```
+
+#### 実装例
+
+**1. 権限リゾルバー（優先順位の解決）**
+
+```ruby
+# app/policies/permission_resolver.rb
+class PermissionResolver
+  def initialize(user:, space:, topic: nil)
+    @user = user
+    @space = space
+    @topic = topic
+    @space_member = user&.space_members&.find_by(space:)
+    @topic_member = topic ? user&.topic_members&.find_by(topic:) : nil
+  end
+
+  def resolve
+    # 1. Space Ownerが最優先
+    if @space_member&.owner?
+      return SpaceOwnerPolicy.new(
+        space_member: @space_member,
+        topic_member: @topic_member
+      )
+    end
+
+    # 2. Topic権限をチェック
+    if @topic && @topic_member
+      return build_topic_policy
+    end
+
+    # 3. Space権限をチェック
+    if @space_member
+      return SpaceMemberPolicy.new(space_member: @space_member)
+    end
+
+    # 4. ゲスト権限
+    GuestPolicy.new(user: @user)
+  end
+
+  private
+
+  def build_topic_policy
+    case @topic_member.role
+    when "admin"
+      TopicAdminPolicy.new(
+        topic_member: @topic_member,
+        space_member: @space_member
+      )
+    when "member"
+      TopicMemberPolicy.new(
+        topic_member: @topic_member,
+        space_member: @space_member
+      )
+    else
+      TopicGuestPolicy.new(space_member: @space_member)
+    end
+  end
+end
+```
+
+**2. Space Ownerポリシー（最高権限）**
+
+```ruby
+# app/policies/spaces/space_owner_policy.rb
+class SpaceOwnerPolicy < BasePolicy
+  def initialize(space_member:, topic_member: nil)
+    @space_member = space_member
+    @topic_member = topic_member
+  end
+
+  # Space Ownerは全トピックで全権限
+  def can_update_topic?(topic:)
+    topic.space_id == @space_member.space_id
+  end
+
+  def can_manage_topic_members?(topic:)
+    topic.space_id == @space_member.space_id
+  end
+
+  def can_delete_any_page?(page:)
+    page.space_id == @space_member.space_id
+  end
+
+  # Space管理権限
+  def can_manage_space?
+    true
+  end
+
+  def can_invite_space_members?
+    true
+  end
+end
+```
+
+**3. Topic Memberポリシー（Topic参加者）**
+
+```ruby
+# app/policies/topics/topic_member_policy.rb
+class TopicMemberPolicy < BasePolicy
+  def initialize(topic_member:, space_member:)
+    @topic_member = topic_member
+    @space_member = space_member
+  end
+
+  # 参加しているTopicのページのみ編集可能
+  def can_update_page?(page:)
+    page.topic_id == @topic_member.topic_id &&
+      @topic_member.active?
+  end
+
+  # Topic設定は変更不可（Adminのみ）
+  def can_update_topic?(topic:)
+    false
+  end
+
+  # 他のメンバーを招待不可（Adminのみ）
+  def can_invite_to_topic?(topic:)
+    false
+  end
+
+  # Topicから離脱は可能
+  def can_leave_topic?
+    true
+  end
+end
+```
+
+**4. 複合権限チェック**
+
+```ruby
+# app/policies/composite_policy.rb
+class CompositePolicy
+  def initialize(policies:)
+    @policies = Array(policies)
+  end
+
+  # いずれかのPolicyで許可されていればtrue
+  def can_view_page?(page:)
+    @policies.any? { |policy| policy.can_view_page?(page:) }
+  end
+
+  # 全てのPolicyで許可されている場合のみtrue
+  def can_delete_page?(page:)
+    @policies.all? { |policy| policy.can_delete_page?(page:) }
+  end
+end
+```
+
+#### コントローラーでの使用例
+
+```ruby
+class Pages::UpdateController
+  def call
+    # 権限を解決
+    policy = PermissionResolver.new(
+      user: current_user,
+      space: @page.space,
+      topic: @page.topic
+    ).resolve
+
+    # 権限チェック
+    unless policy.can_update_page?(page: @page)
+      raise NotAuthorizedError
+    end
+
+    # ページ更新処理
+    @page.update!(page_params)
+  end
+end
+```
+
+#### Topic固有のロール追加例
+
+```ruby
+# app/models/topic_member_role.rb
+class TopicMemberRole < T::Enum
+  enums do
+    Admin = new("admin")        # Topic管理者
+    Moderator = new("moderator") # モデレーター（新規）
+    Member = new("member")       # 一般メンバー
+    ReadOnly = new("read_only")  # 読み取り専用（新規）
+  end
+end
+
+# app/policies/topics/topic_moderator_policy.rb
+class TopicModeratorPolicy < BasePolicy
+  # モデレーター固有の権限
+  def can_pin_page?(page:)
+    page.topic_id == @topic_member.topic_id
+  end
+
+  def can_delete_others_page?(page:)
+    page.topic_id == @topic_member.topic_id
+  end
+
+  def can_mute_member?(member:)
+    member.topic_id == @topic_member.topic_id
+  end
+end
+```
+
+### メリット
+
+1. **権限の優先順位が明確**
+   - Space Owner → Topic Admin → Topic Member の階層が明示的
+   - 上位権限の特権が保証される
+
+2. **柔軟な権限設定**
+   - Topic固有のロール（モデレーター等）を簡単に追加可能
+   - プライベートTopic、読み取り専用Topicなどの実装が容易
+
+3. **関心の分離**
+   - Space権限とTopic権限が独立して管理される
+   - 各レイヤーの権限ロジックが分離
+
+4. **拡張性**
+   - 新しい階層（Sub-topic、Thread等）の追加が簡単
+   - 既存の権限構造に影響を与えずに拡張可能
+
+5. **テスタビリティ**
+   - 各権限レイヤーを独立してテスト可能
+   - 権限の組み合わせテストも容易
+
+### GitHubモデルとの比較と実装案
+
+WikinoはSlackよりもGitHubに近い権限モデルを採用しています。
+
+#### モデル対応表
+
+| Wikino            | GitHub                  | 説明                                     |
+| ----------------- | ----------------------- | ---------------------------------------- |
+| Space             | Organization            | 最上位の組織単位                         |
+| Topic             | Repository              | プロジェクト単位、Public/Private設定可能 |
+| Page              | Issue/PR/Wiki           | 個別のコンテンツ                         |
+| SpaceMemberRecord | Organization Member     | 組織レベルのメンバーシップ               |
+| TopicMemberRecord | Repository Collaborator | リポジトリレベルのアクセス権             |
+
+#### GitHubライクな権限レベル
+
+**1. Topic（Repository）の可視性**
+
+```ruby
+# app/models/topic_visibility.rb
+class TopicVisibility < T::Enum
+  enums do
+    Public = new("public")      # 誰でも閲覧可能（GitHubのPublic Repo）
+    Internal = new("internal")  # ログインユーザーのみ閲覧可能
+    Private = new("private")    # メンバーのみアクセス可能（GitHubのPrivate Repo）
+  end
+end
+```
+
+**2. 権限レベルの細分化（GitHub風）**
+
+```ruby
+# app/models/topic_permission_level.rb
+class TopicPermissionLevel < T::Enum
+  enums do
+    Admin = new("admin")       # フルアクセス（Settings変更可能）
+    Maintain = new("maintain") # マージ、デプロイ権限相当
+    Write = new("write")       # ページ作成・編集権限
+    Triage = new("triage")     # ラベル付け、アサイン権限
+    Read = new("read")         # 読み取り専用
+  end
+
+  sig { returns(T::Boolean) }
+  def can_write?
+    [Admin, Maintain, Write].include?(self)
+  end
+
+  sig { returns(T::Boolean) }
+  def can_manage?
+    [Admin, Maintain].include?(self)
+  end
+end
+```
+
+**3. GitHubライクな権限リゾルバー**
+
+```ruby
+# app/policies/github_style_permission_resolver.rb
+class GithubStylePermissionResolver
+  def initialize(user:, space:, topic: nil)
+    @user = user
+    @space = space
+    @topic = topic
+    @space_member = user&.space_members&.find_by(space:)
+    @topic_member = topic ? user&.topic_members&.find_by(topic:) : nil
+  end
+
+  def resolve
+    # Publicトピックの特別処理（GitHubのPublic Repo相当）
+    if @topic&.public? && !authenticated?
+      return PublicTopicGuestPolicy.new(topic: @topic)
+    end
+
+    # Organization Owner（GitHub Org Owner相当）
+    if @space_member&.owner?
+      return OrganizationOwnerPolicy.new(
+        space_member: @space_member,
+        topic: @topic
+      )
+    end
+
+    # Private Topicで非Collaboratorはアクセス不可
+    if @topic&.private? && !@topic_member
+      return NoAccessPolicy.new
+    end
+
+    # Repository権限（GitHub Collaborator相当）
+    if @topic_member
+      return build_repository_policy
+    end
+
+    # Internal Topic（組織内部公開）
+    if @topic&.internal? && authenticated?
+      return InternalTopicViewerPolicy.new(user: @user, topic: @topic)
+    end
+
+    # Space Memberのデフォルト権限
+    if @space_member
+      return OrganizationMemberPolicy.new(space_member: @space_member)
+    end
+
+    # 未認証ユーザー
+    AnonymousPolicy.new
+  end
+
+  private
+
+  def build_repository_policy
+    case @topic_member.permission_level
+    when TopicPermissionLevel::Admin
+      RepositoryAdminPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Maintain
+      RepositoryMaintainerPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Write
+      RepositoryWriterPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Triage
+      RepositoryTriagerPolicy.new(topic_member: @topic_member)
+    when TopicPermissionLevel::Read
+      RepositoryReaderPolicy.new(topic_member: @topic_member)
+    end
+  end
+
+  def authenticated?
+    @user.present?
+  end
+end
+```
+
+**4. GitHub風のPolicy実装例**
+
+```ruby
+# app/policies/repository_admin_policy.rb
+class RepositoryAdminPolicy < BasePolicy
+  # GitHubのRepo Admin権限
+  def can_manage_settings?
+    true
+  end
+
+  def can_manage_collaborators?
+    true
+  end
+
+  def can_delete_repository?
+    true
+  end
+
+  def can_change_visibility?
+    true  # Public/Private切り替え
+  end
+
+  def can_create_protected_branch?
+    true
+  end
+end
+
+# app/policies/public_topic_guest_policy.rb
+class PublicTopicGuestPolicy < BasePolicy
+  # GitHubのPublic Repoを未認証で見る場合
+  def can_view_pages?
+    true
+  end
+
+  def can_clone_repository?
+    true  # Read-onlyクローン
+  end
+
+  def can_create_issue?
+    @topic.allow_public_issues?  # 設定次第
+  end
+
+  def can_fork?
+    false  # 認証が必要
+  end
+
+  def can_star?
+    false  # 認証が必要
+  end
+end
+
+# app/policies/organization_owner_policy.rb
+class OrganizationOwnerPolicy < BasePolicy
+  # GitHub Organization Ownerの権限
+  def can_manage_all_repositories?
+    true
+  end
+
+  def can_manage_billing?
+    true
+  end
+
+  def can_manage_teams?
+    true
+  end
+
+  def can_transfer_repository?(repository:)
+    repository.space_id == @space_member.space_id
+  end
+
+  def can_create_private_repository?
+    true
+  end
+end
+```
+
+**5. GitHub Teams相当の実装（将来拡張）**
+
+```ruby
+# app/models/space_team.rb
+class SpaceTeam < ApplicationRecord
+  belongs_to :space
+  has_many :team_members
+  has_many :team_topic_permissions
+
+  # GitHub Teamsのような権限グループ
+  enum :permission_level, {
+    member: 0,
+    maintainer: 1,
+    admin: 2
+  }
+end
+
+# app/policies/team_based_policy.rb
+class TeamBasedPolicy < BasePolicy
+  def initialize(user:, space:, topic:)
+    @user = user
+    @space = space
+    @topic = topic
+    @teams = user.space_teams.where(space: space)
+  end
+
+  def can_access_topic?
+    # チーム単位でのトピックアクセス権限
+    @teams.any? do |team|
+      team.team_topic_permissions.exists?(topic: @topic)
+    end
+  end
+end
+```
+
+#### WikinoにおけるPublic/Privateトピックの仕様
+
+**重要**: WikinoのPrivateトピックはGitHubのPrivate Repositoryとは異なる動作をします。
+
+**1. Publicトピック**
+
+```ruby
+# 誰でも閲覧可能（ログイン不要）
+topic.visibility_public?
+  → 非ログインユーザーでもページ閲覧可能
+  → 添付ファイルも閲覧可能
+  → 編集は不可（Spaceメンバーである必要がある）
+```
+
+**2. Privateトピック（Wikino独自仕様）**
+
+```ruby
+# Spaceメンバーなら誰でも閲覧可能
+topic.visibility_private?
+  → Space外のユーザーはアクセス不可
+  → Spaceメンバーなら自動的にアクセス可能（招待不要）
+  → TopicMemberRecordは編集権限の制御に使用
+```
+
+**GitHubとの違い**
+
+| 項目         | GitHub Private Repo                | Wikino Private Topic                  |
+| ------------ | ---------------------------------- | ------------------------------------- |
+| アクセス制御 | Collaboratorへの明示的な招待が必要 | Spaceメンバーなら自動的にアクセス可能 |
+| 権限管理     | Repository単位で個別管理           | Space単位で一括管理                   |
+| 閲覧権限     | Collaboratorのみ                   | Spaceメンバー全員                     |
+| 編集権限     | Collaboratorの権限レベルに依存     | TopicMemberRecordで制御               |
+
+**実装上の注意点**
+
+```ruby
+# GitHubスタイル（WikinoではNG）
+def can_view_private_topic?(topic:, user:)
+  topic.collaborators.include?(user)  # 個別招待が必要
+end
+
+# Wikinoスタイル（正しい実装）
+def can_view_private_topic?(topic:, user:)
+  user.space_members.exists?(space: topic.space)  # Spaceメンバーなら自動的にOK
+end
+```
+
+**TopicMemberRecordの役割**
+
+- **GitHubでは**: Collaboratorとしての基本的なアクセス権を付与
+- **Wikinoでは**: 主に編集権限の制御（閲覧はSpaceMemberで判定）
+
+```ruby
+# Wikinoの権限判定フロー
+def can_update_topic?(topic:, user:)
+  # 1. Space Ownerなら無条件でOK
+  return true if user.space_owner?(topic.space)
+
+  # 2. TopicMemberRecordで編集権限をチェック
+  topic_member = user.topic_members.find_by(topic:)
+  topic_member&.can_edit?  # 参加していて、かつ編集権限がある場合のみ
+end
+```
+
+**Internal追加の必要性について**
+
+現在のWikinoの仕様では：
+
+- **Public**: 社外公開（誰でも閲覧可能）
+- **Private**: Space内共有（≒社内共有）
+
+この2つで基本的なユースケースはカバーできるため、Internalの追加は必須ではありません。
+将来的に複数Space運用や、より細かい権限制御が必要になった場合に検討すべき拡張機能と位置づけられます。
+
+#### GitHubモデル採用のメリット
+
+1. **成熟した権限モデル**
+   - GitHubの権限モデルは長年の実績があり、多くの開発者に馴染みがある
+   - Public/Private/Internalの3段階の可視性は実用的
+
+2. **細かい権限制御**
+   - Read/Triage/Write/Maintain/Adminの5段階は多くのユースケースをカバー
+   - 各権限レベルの責務が明確
+
+3. **外部コラボレーション対応**
+   - PublicトピックでのIssue作成やPull Request（将来実装）が可能
+   - Fork機能（将来実装）による派生プロジェクトの作成
+
+4. **エンタープライズ対応**
+   - Teams機能による大規模組織での権限管理
+   - SAML/SSOとの統合が容易（将来実装）
+
+#### 実装における注意点
+
+1. **段階的な実装**
+   - まずはBasic権限（Owner/Member）から始める
+   - 必要に応じて細分化された権限レベルを追加
+
+2. **既存データとの互換性**
+   - 現在のOwner→Admin、Member→Writeへのマッピング
+   - マイグレーション時の権限変換ルール策定
+
+3. **UI/UXの考慮**
+   - GitHubライクな権限設定画面の実装
+   - 権限レベルの説明とヘルプの充実
+
+## 修正案を踏まえた修正方針 (決定方針)
+
+### 2025年8月30日更新
+
+#### 権限定義の簡素化
+
+`SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除し、権限チェックロジックをPolicyクラスに完全に一元化しました。
+
+**削除した理由：**
+
+- `SpaceMemberPermission`で定義された権限が実際には使用されていなかった
+- `SpaceMemberRole#permissions`メソッドがどこからも呼ばれていなかった
+- 権限の定義と実装が二重管理になっており、メンテナンス性に課題があった
+
+**新しい構造：**
+
+- `SpaceMemberRole`：ロールのEnum定義のみ（Owner、Member）
+- `OwnerPolicy`/`MemberPolicy`：各ロールの権限チェックロジックを実装
+- `SpaceMemberPolicyFactory`：ロールに応じた適切なPolicyを生成
+
+これにより、権限チェックのロジックが明確になり、新しいロールや権限の追加が容易になりました。
+
+## 修正案を踏まえた修正方針 (決定方針)
+
+### 採用する設計方針
+
+#### 1. ロールベースのPolicyクラス分離とFactoryパターンの採用
+
+現在の`SpaceMemberPolicy`が肥大化している問題を解決するため、ロールごとに独立したPolicyクラスに分離する設計を採用します。
+これにより単一責任の原則を守り、保守性を向上させます。
+
+**実装方針:**
+
+- 基底クラス`BaseMemberPolicy`に共通ロジックを集約
+- `OwnerPolicy`、`MemberPolicy`、`GuestPolicy`をロール別に実装
+- `SpaceMemberPolicyFactory`でインターフェースの互換性を維持
+- 既存コントローラーへの影響を最小化
+
+#### 2. Space-Topic 2層構造の権限管理の明確化
+
+WikinoのSpace（Organization相当）とTopic（Repository相当）の2層構造における権限の優先順位と継承関係を明確にします。
+
+**権限階層の定義:**
+
+1. Space Owner → Space内の全権限（全Topic含む）
+2. Topic権限 → TopicMemberRecordによる編集権限制御
+3. Space Member → Privateトピックの閲覧権限（Wikino独自仕様）
+4. Guest → Publicトピックのみ閲覧可能
+
+**重要な仕様決定:**
+
+- **PrivateトピックはSpaceメンバー全員が閲覧可能**（GitHubと異なる）
+- TopicMemberRecordは主に編集権限の制御に使用
+- Space Ownerは全トピックで特権を持つ
+
+#### 3. 権限とビジネスルールの分離
+
+現在混在している権限（Permission）とビジネスルール（参加状態など）を明確に分離します。
+
+**分離方針:**
+
+- 権限: ロールに紐づく能力（UpdateSpace、CreateTopicなど）
+- ビジネスルール: 状態や条件（トピック参加、アクティブ状態など）
+- Policyクラス内で両者を組み合わせて最終的な判定を行う
+
+### 段階的な移行計画
+
+#### Phase 1: 基盤整備（互換性維持）
+
+1. **新しいPolicyクラスの作成**
+   - `app/policies/base_member_policy.rb`
+   - `app/policies/owner_policy.rb`
+   - `app/policies/member_policy.rb`
+   - `app/policies/guest_policy.rb`
+   - `app/policies/space_member_policy_factory.rb`
+
+2. **既存`SpaceMemberPolicy`のリファクタリング**
+   - 新しいFactoryを通じて適切なPolicyに処理を委譲
+   - 既存のインターフェースは維持
+
+3. **テストの整備**
+   - 各Policyクラスの単体テスト作成
+   - 既存テストが通ることを確認
+
+#### Phase 2: 権限モデルの拡張
+
+1. **権限定義の明確化**
+   - `SpaceMemberPermission`を実際の権限チェックと一致させる
+   - ロール特有の特権を明示的に定義
+
+2. **Topic権限の整理**
+   - TopicMemberRecordの役割を編集権限制御に特化
+   - Space権限との関係を明確化
+
+3. **権限リゾルバーの導入**
+   - Space権限とTopic権限の優先順位を解決
+   - 複合的な権限チェックを一元管理
+
+#### Phase 3: コントローラーの移行
+
+1. **段階的なコントローラー更新**
+   - 重要度の低いコントローラーから順次移行
+   - Factoryパターンを通じた新Policy利用
+
+2. **権限チェックの標準化**
+   - コントローラー内の権限チェックパターンを統一
+   - 共通のbefore_actionやconcernの活用
+
+#### Phase 4: 最適化と削除
+
+1. **旧コードの削除**
+   - 全コントローラー移行後、旧`SpaceMemberPolicy`を削除
+   - 不要になった中間層のコードを整理
+
+2. **パフォーマンス最適化**
+   - N+1問題の解消
+   - 権限チェックのキャッシュ機構導入
+
+### 実装上の重要な考慮事項
+
+#### 1. Wikino固有の仕様への対応
+
+- **PrivateトピックはGitHubと異なり、Spaceメンバー全員が閲覧可能**
+- TopicMemberRecordは編集権限の制御が主目的
+- Space Ownerの特権は明示的に実装
+
+#### 2. 既存システムとの互換性
+
+- Factoryパターンにより既存のインターフェースを維持
+- 段階的移行により本番環境での安全な展開が可能
+- 既存のテストスイートを活用した品質保証
+
+#### 3. 将来の拡張性
+
+- 新しいロール（ReadOnly、Moderatorなど）の追加が容易
+- GitHubライクな権限レベル（Read/Write/Admin）への移行パスを確保
+- Teamsのような権限グループ機能の追加余地
+
+### 成功指標
+
+1. **コードの保守性向上**
+   - 各ロールの権限が独立したクラスで管理される
+   - 新しいロール追加時の変更箇所が最小限
+
+2. **権限の明確性**
+   - Space-Topic間の権限継承が明示的
+   - ロールと権限の対応が一目瞭然
+
+3. **システムの安定性**
+   - 既存機能への影響なし
+   - テストカバレッジの維持・向上
+
+## タスクリスト
+
+### Phase 1: 基盤整備
+
+- [x] 基底Policyクラスの作成
+  - `BaseMemberPolicy`の実装（共通メソッド: joined_space?, in_same_space?, active?）
+  - `ApplicationPolicy`の作成（全Policyの基底クラス）
+
+- [x] ロール別Policyクラスの実装
+  - `OwnerPolicy`の実装（全権限を持つ）
+  - `MemberPolicy`の実装（基本操作権限のみ）
+  - `GuestPolicy`の実装（公開コンテンツのみ閲覧）
+
+- [x] Factoryパターンの実装
+  - `SpaceMemberPolicyFactory`の作成
+  - ロールに応じた適切なPolicyインスタンスの返却
+
+- [x] テストの作成
+  - 各Policyクラスの単体テスト
+  - Factoryのテスト
+  - 既存テストの動作確認
+
+### Phase 1.5: Policyクラスのリネーム（Topic権限追加前の準備）
+
+- [x] SpaceプレフィクスへのPolicyクラスリネーム
+  - [x] `BaseMemberPolicy` → `BaseSpaceMemberPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`base_member_policy.rb` → `base_space_member_policy.rb`）
+    - [x] 継承元の更新（`SpaceOwnerPolicy`、`SpaceMemberPolicy`）
+  - [x] `OwnerPolicy` → `SpaceOwnerPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`owner_policy.rb` → `space_owner_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `MemberPolicy` → `SpaceMemberPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`member_policy.rb` → `space_member_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `GuestPolicy` → `SpaceGuestPolicy`へリネーム
+    - [x] クラス名変更
+    - [x] ファイル名変更（`guest_policy.rb` → `space_guest_policy.rb`）
+    - [x] Factoryクラスでの参照更新
+  - [x] `PermissionResolver`の更新
+    - [x] リネーム後のクラスへの参照更新
+  - [x] テストファイルのリネーム
+    - [x] `base_member_policy_spec.rb` → `base_space_member_policy_spec.rb`
+    - [x] `owner_policy_spec.rb` → `space_owner_policy_spec.rb`
+    - [x] `member_policy_spec.rb` → `space_member_policy_spec.rb`
+    - [x] `guest_policy_spec.rb` → `space_guest_policy_spec.rb`
+    - [x] 各テスト内のクラス参照更新
+  - [x] 型チェックとLinter実行
+  - [x] テスト実行と確認
+
+### Phase 2: 権限モデルの拡張
+
+- [x] 権限定義の整理
+  - ~~`SpaceMemberPermission`と実際の権限チェックメソッドの整合性確保~~
+    - `SpaceMemberPermission`と`SpaceMemberRole#permissions`を削除
+    - 権限チェックをPolicyクラスに一元化
+  - ~~ロール特有の特権の明文化~~
+    - `OwnerPolicy`と`MemberPolicy`で明確に定義
+
+- [x] Topic権限の明確化
+  - TopicMemberRecordの役割を編集権限に特化
+  - PrivateトピックのWikino独自仕様の文書化
+
+- [x] ~~権限リゾルバーの実装~~
+  - ~~`PermissionResolver`クラスの作成~~
+  - ~~Space Owner > Topic権限 > Space Member > Guestの優先順位実装~~
+  - **削除済み**: `PermissionResolver`は`SpacePolicyFactory`と重複していたため削除
+
+### Phase 3: コントローラーの段階的移行
+
+- [x] 移行対象コントローラーの優先順位付け
+  - リスクの低いコントローラーから開始
+  - 重要な機能は後回し
+
+#### 移行順序（優先度順）
+
+**優先度1: 低リスク（読み取り専用）**
+
+1. pages/show_controller.rb - ページ表示
+2. topics/show_controller.rb - トピック表示
+3. spaces/show_controller.rb - スペース表示
+4. links/index_controller.rb - リンク一覧
+5. backlinks/index_controller.rb - バックリンク
+6. page_locations/index_controller.rb - ページ位置
+7. trash/show_controller.rb - ゴミ箱表示
+
+**優先度2: 中リスク（添付ファイル）**
+
+8. attachments/show_controller.rb - ファイル表示
+9. attachments/create_controller.rb - アップロード
+10. attachments/presigns/create_controller.rb - presigned URL
+11. attachments/signed_urls/create_controller.rb - signed URL
+
+**優先度3: 中リスク（作成系）**
+
+12. pages/new_controller.rb - ページ作成画面
+13. topics/new_controller.rb - トピック作成画面
+14. topics/create_controller.rb - トピック作成実行
+
+**優先度4: 高リスク（更新系）**
+
+15. pages/edit_controller.rb - ページ編集画面
+16. pages/update_controller.rb - ページ更新
+17. draft_pages/update_controller.rb - ドラフト更新
+18. trashed_pages/create_controller.rb - ページ削除
+19. bulk_restored_pages/create_controller.rb - 一括復元
+
+**優先度5: 最高リスク（設定管理）**
+
+20-35. spaces/settings/_ - スペース設定関連
+36-40. topics/settings/_ - トピック設定関連
+
+- [x] コントローラーの更新
+  - SpaceMemberPolicyFactory経由での新Policy利用
+  - 権限チェックパターンの統一
+
+- [x] 旧コードの削除
+  - 旧`SpaceMemberPolicy`の削除
+  - 不要な中間層コードの整理
+
+### Phase 4: ~~PermissionResolverの活用~~ SpacePolicyFactoryへの統合
+
+**注記**: PermissionResolverは`SpacePolicyFactory`と機能が重複していたため削除しました。
+`SpacePolicyFactory`（旧`SpaceMemberPolicyFactory`）に統一することで、よりシンプルな設計になりました。
+
+#### Topic権限管理の本格導入
+
+- [x] TopicMemberRole enumの実装確認
+  - 現在のロール定義（Admin, Member等）の確認
+  - TopicMemberRecordとの関連付け確認
+
+  **確認結果:**
+  - `TopicMemberRole`はT::Enumとして実装済み（`app/models/topic_member_role.rb`）
+  - ロールは2種類：`Admin`と`Member`
+  - `TopicMemberRecord`でenumとして関連付け済み（Admin=0, Member=1）
+  - `PermissionResolver`でTopic Adminの判定に使用中
+  - 現状、Topic AdminはOwnerPolicyと同じ権限を持つ実装
+  - `can_delete_topic?`メソッドは未実装（今後の実装が必要）
+
+- [x] Topic権限判定メソッドの追加
+  - 各PolicyクラスにTopic関連メソッドを追加
+  - `can_update_page?`等のページ操作権限
+  - `can_manage_topic_members?`等のTopic管理権限
+  - `can_update_topic?` - トピックの基本情報更新権限（Topic Admin専用）
+  - `can_delete_topic?` - トピック削除権限（Topic Admin専用）
+
+  **実装結果:**
+  - `ApplicationPolicy`に抽象メソッドとして定義
+  - `OwnerPolicy`: 全トピックで削除・メンバー管理可能
+  - `MemberPolicy`: トピック削除・メンバー管理不可
+  - `GuestPolicy`: 全て不可
+  - 全メソッドのテストを作成済み
+
+- [x] ~~PermissionResolverのテスト作成~~
+  - ~~権限優先順位のテスト~~
+  - ~~Space Owner > Topic Admin > Topic Member > Space Member > Guestの動作確認~~
+  - ~~Topic指定有無による挙動の違いをテスト~~
+  - **削除済み**: PermissionResolverと共にテストも削除
+
+- [x] Topic Admin専用権限の実装
+  - TopicAdminPolicyクラスでの管理権限定義
+  - `can_update_topic?` メソッドの実装（基本情報更新）
+  - `can_delete_topic?` メソッドの実装（トピック削除）
+  - Space Ownerにも同等の権限を付与（権限の継承）
+
+### Phase 4.5: Space/Topic権限の責務分離
+
+#### 設計方針
+
+権限管理の責務を明確に分離し、より整理された設計を実現します：
+
+1. **Space関係の操作**: `space_*_policy` が担当
+   - Space設定の更新（`can_update_space?`）
+   - Spaceメンバー管理（`can_manage_space_members?`）
+   - Spaceエクスポート（`can_export_space?`）
+   - Space削除（`can_delete_space?`）
+
+2. **Topic/Page関係の操作**: `topic_*_policy` が担当
+   - Topic設定の更新（`can_update_topic?`）
+   - Topicメンバー管理（`can_manage_topic_members?`）
+   - Topic削除（`can_delete_topic?`）
+   - ページ作成・編集・削除（`can_create_page?`, `can_update_page?`, `can_delete_page?`）
+   - ドラフト操作（`can_create_draft_page?`, `can_update_draft_page?`）
+
+3. **共通メソッドの定義方法**
+   - `ApplicationPolicy`での`abstract!`定義を削除
+   - 代わりにモジュールで権限メソッドを定義し、必要なポリシーでinclude
+   - Space系とTopic系でそれぞれ異なるモジュールを定義
+
+#### 実装構造
+
+```ruby
+# app/policies/concerns/space_permissions.rb
+module SpacePermissions
+  extend T::Sig
+  extend T::Helpers
+
+  interface!
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_update_space?(space_record:); end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_manage_space_members?(space_record:); end
+
+  sig { abstract.params(space_record: SpaceRecord).returns(T::Boolean) }
+  def can_export_space?(space_record:); end
+end
+
+# app/policies/concerns/topic_permissions.rb
+module TopicPermissions
+  extend T::Sig
+  extend T::Helpers
+
+  interface!
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_update_topic?(topic_record:); end
+
+  sig { abstract.params(topic_record: TopicRecord).returns(T::Boolean) }
+  def can_delete_topic?(topic_record:); end
+
+  sig { abstract.params(page_record: PageRecord).returns(T::Boolean) }
+  def can_update_page?(page_record:); end
+
+  # ... 他のTopic/Page関連メソッド
+end
+
+# Space系ポリシーはSpacePermissionsをinclude
+class SpaceOwnerPolicy < BaseSpaceMemberPolicy
+  include SpacePermissions
+  # Space関連の権限実装
+end
+
+# Topic系ポリシーはTopicPermissionsをinclude
+class TopicAdminPolicy < ApplicationPolicy
+  include TopicPermissions
+  # Topic関連の権限実装
+end
+```
+
+#### 移行手順
+
+- [x] SpacePermissionsモジュールの作成
+  - Space操作に関する抽象メソッド定義
+  - Space系ポリシーでinclude
+
+- [x] TopicPermissionsモジュールの作成
+  - Topic/Page操作に関する抽象メソッド定義
+  - Topic系ポリシーでinclude
+
+- [x] ApplicationPolicyから抽象メソッドを削除
+  - 各ポリシーが必要なモジュールのみinclude
+
+- [x] 既存ポリシーのリファクタリング
+  - SpaceOwnerPolicy: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceRegularMemberPolicy（旧SpaceMemberPolicy）: SpacePermissionsをinclude、Topic関連メソッドを削除
+  - SpaceGuestPolicy: 責務の分離を実施
+
+- [x] Topicポリシーのリファクタリング
+  - TopicAdminPolicy: TopicPermissionsをinclude、Space権限から分離
+  - TopicMemberPolicy: 未実装（次フェーズ）
+  - TopicGuestPolicy: 未実装（次フェーズ）
+
+- [x] ~~PermissionResolverの更新~~
+  - ~~SpaceMemberPolicyをSpaceRegularMemberPolicyに変更~~
+  - ~~SpaceMemberPolicyFactoryも同様に更新~~
+  - **削除済み**: PermissionResolverを削除し、SpacePolicyFactoryに統一
+
+- [x] 移行戦略の決定
+  - ~~SpaceMemberPolicyFactoryとPermissionResolverの使い分け方針~~
+  - SpacePolicyFactoryに統一（PermissionResolverは削除済み）
+  - Topic関連の操作を行うコントローラーから優先的に移行
+  - Space単独の操作は既存のFactoryパターンを継続使用
+
+- [x] コントローラーヘルパーメソッドの作成
+  - `current_space_record`の取得メソッド
+  - `current_topic_record`の取得メソッド（該当する場合）
+  - SpacePolicyFactoryインスタンス生成のヘルパー
+
+#### Topic関連コントローラーの移行
+
+**Topic操作を含むコントローラー（SpacePolicyFactory対象）:**
+
+- [x] pages/show_controller.rb - ページ表示（Topic権限チェック）
+- [x] pages/edit_controller.rb - ページ編集（Topic編集権限）
+- [x] pages/update_controller.rb - ページ更新（Topic編集権限）
+- [x] pages/new_controller.rb - ページ作成（Topic参加チェック）
+- [x] draft_pages/update_controller.rb - ドラフト更新（Topic編集権限）
+- [x] trashed_pages/create_controller.rb - ページ削除（Topic権限）
+- [x] topics/settings/\* - Topic設定関連（Topic Admin権限）
+  - topics/settings/edit_controller.rb - トピック基本情報編集画面
+  - topics/settings/update_controller.rb - トピック基本情報更新（Topic Admin専用）
+  - topics/delete_controller.rb - トピック削除（Topic Admin専用）
+
+**Space単独操作のコントローラー（Factory継続使用）:**
+
+- spaces/settings/\* - Space設定関連
+- spaces/show_controller.rb - Space表示
+- attachments/\* - 添付ファイル関連（Space権限ベース）
+
+### Phase 5: 後方互換メソッドの削除
+
+**背景**: 現在、`SpaceGuestPolicy`、`SpaceOwnerPolicy`、`SpaceMemberPolicy`などのSpace系Policyクラスに、本来Topic層で管理すべき権限チェックメソッドが後方互換性のために残されています。これらは責務の分離を妨げているため、段階的に削除する必要があります。
+
+#### 削除対象メソッド
+
+Space系Policyクラスから削除すべきTopic関連メソッド：
+
+- `can_update_topic?(topic_record:)` - Topic更新権限
+- `can_delete_topic?(topic_record:)` - Topic削除権限
+- `can_manage_topic_members?(topic_record:)` - Topicメンバー管理権限
+- `can_create_page?(topic_record:)` - ページ作成権限
+- `can_update_page?(page_record:)` - ページ更新権限
+- `can_delete_page?(page_record:)` - ページ削除権限
+- `can_show_page?(page_record:)` - ページ閲覧権限
+- `can_trash_page?(page_record:)` - ページゴミ箱移動権限
+- `can_create_draft_page?(topic_record:)` - ドラフト作成権限
+- `can_update_draft_page?(page_record:)` - ドラフト更新権限
+
+#### 移行手順
+
+- [x] コントローラーの権限チェック方法を更新
+  - Topic関連の操作では`topic_policy_for`メソッドを使用してTopicPolicyを取得
+  - TopicPolicy経由で権限チェックを実施
+- [x] 既存コントローラーの段階的移行
+  - 各コントローラーで直接Space Policyのメソッドを呼んでいる箇所を特定
+  - Topic権限チェックをTopicPolicy経由に変更
+- [x] テストの更新
+  - Space PolicyのテストからTopic関連メソッドのテストを削除
+  - TopicPolicyのテストに移行
+- [x] 後方互換メソッドの削除
+  - 全コントローラー移行完了後、Space PolicyからTopic関連メソッドを削除
+  - インターフェースのクリーンアップ
+
+#### 最終的な責務分離
+
+**Space Policy (SpaceOwnerPolicy, SpaceMemberPolicy, SpaceGuestPolicy)**
+
+- Space設定の管理
+- Spaceメンバーの管理
+- Space全体の権限
+- Topic Policyへの委譲（`topic_policy_for`メソッド）
+
+**Topic Policy (TopicAdminPolicy, TopicMemberPolicy)**
+
+- Topic設定の管理
+- Topicメンバーの管理
+- ページの作成・編集・削除
+- Topic内のコンテンツ管理
+
+### Phase 6: 最適化
+
+- [ ] パフォーマンス最適化
+  - 権限チェックのメモ化
+  - データベースクエリの最適化

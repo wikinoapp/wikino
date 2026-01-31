@@ -1,0 +1,153 @@
+# トピックリンク表示機能仕様書
+
+## 概要
+
+スペースページ (`GET /s/:space_identifier`) に、トピックのリンクをカード形式で表示する機能を実装します。
+
+- **スペースメンバー**: ユーザーが参加しているトピックのみ表示
+- **ゲスト**: スペース内の公開トピックを表示
+
+## 要件
+
+### 表示場所
+
+- スペースページ (`GET /s/:space_identifier`)
+
+### リンク先
+
+- トピックページ (`GET /s/:space_identifier/topics/:topic_number`)
+
+### カード表示内容
+
+#### スペースメンバー向け表示
+
+1. トピックアイコン（`Icons::TopicComponent`）
+2. トピック名
+3. トピックの説明（description）※存在する場合
+4. アクションボタン（カードの右側に配置）
+   - トピックにページを作成するリンク
+     - リンク先: `GET /s/:space_identifier/topics/:topic_number/pages/new`
+     - アイコン: `pencil-simple-line`
+     - 権限チェック: トピックにページを作成する権限がない場合はリンクを非アクティブにする
+
+#### ゲスト向け表示
+
+1. トピックアイコン（`Icons::TopicComponent`）
+2. トピック名
+3. トピックの説明（description）※存在する場合
+
+### 表示順
+
+#### スペースメンバー向け
+
+- `topic_members.last_page_modified_at` の降順
+- トピック番号（`topics.number`）の降順
+
+#### ゲスト向け
+
+- トピックの作成日時（`topics.created_at`）の降順
+- トピック番号（`topics.number`）の降順
+
+## 実装タスクリスト
+
+### 1. データ取得層の実装
+
+- [x] スペースメンバー向け：ユーザーが参加しているトピックを取得するRepositoryメソッドの実装
+  - `TopicRepository#find_topics_by_space` メソッドを実装
+  - `space_member_record` を引数として受け取る設計
+  - ユーザーが参加している（`topic_members`テーブルにレコードがある）トピックのみを取得
+- [x] `last_page_modified_at` でソートする処理の実装
+  - `topic_members.last_page_modified_at` の降順でソート
+  - NULL値は最後に配置
+- [x] ゲスト向け：公開トピックを取得するRepositoryメソッドの実装
+  - `TopicRepository#find_public_topics_by_space` メソッドを実装
+  - 公開トピック（visibility: public）のみを取得
+  - トピックの作成日時でソート
+
+### 2. UIコンポーネントの実装
+
+- [x] 共通トピックカードコンポーネント (`CardLinks::TopicComponent`) の作成
+  - [x] トピックアイコンの表示
+  - [x] トピック名の表示
+  - [x] トピックの説明（description）の表示
+  - [x] トピックページへのリンク
+- [x] スペースメンバー向けアクション付きトピックカードコンポーネント (`CardLinks::TopicWithActionComponent`) の作成
+  - [x] ベースのトピックカードを内包
+  - [x] ページ作成リンク（権限がある場合のみ）
+- [x] トピックカードリストコンポーネント (`CardLists::TopicComponent`) の作成
+  - [x] カードの一覧表示
+  - [x] グリッドレイアウトの実装
+  - [x] ゲスト/メンバーに応じたカードコンポーネントの使い分け
+
+### 3. 権限チェックの実装
+
+- [x] トピックへのページ作成権限チェックメソッドの実装
+- [x] Policyクラスでの権限判定ロジック
+
+### 4. スペースページへの統合
+
+- [x] `Spaces::ShowView` にトピックカードリストを追加
+- [x] スペースコントローラーでトピックデータの取得処理を追加
+  - [x] スペースメンバーの場合は参加トピックを取得
+  - [x] ゲストの場合は公開トピックを取得
+
+### 5. スタイリング
+
+- [x] カードのデザイン実装（Tailwind CSS）
+  - [x] カードの最小高さを72pxに設定
+  - [x] ホバー時のボーダー表示
+  - [x] スペースメンバー向けのアクションボタンを右側に配置（背景色: stone-700）
+- [x] レスポンシブデザインの対応
+  - [x] モバイル: 2カラムグリッド
+  - [x] デスクトップ: 3カラムグリッド
+- [x] ホバー効果やトランジションの追加
+
+### 6. テスト
+
+- [x] Repositoryメソッドのテスト（スペースメンバー向け）
+  - ユーザーが参加しているトピックのみを取得することを確認
+  - `space_member_record`がnilの場合は空配列を返すことを確認
+  - `last_page_modified_at`でソートされることを確認
+  - 権限フラグが正しく設定されることを確認
+- [x] Repositoryメソッドのテスト（ゲスト向け）
+  - 公開トピックのみを取得することを確認
+  - 作成日時でソートされることを確認
+- [x] コンポーネントのテスト
+  - [x] 共通トピックカードコンポーネント
+  - [x] スペースメンバー向けアクション付きカードコンポーネント
+- [x] 権限チェックのテスト
+- [x] Request spec
+
+## 技術的考慮事項
+
+### パフォーマンス
+
+- N+1問題を避けるため、必要な関連データを `preload` または `eager_load` で取得
+- トピック数が多い場合のページネーション検討
+  - 参加するトピックはそこまで多くならないと思うので一旦検討しない
+
+### アクセシビリティ
+
+- 適切なARIA属性の設定
+- キーボードナビゲーション対応
+- スクリーンリーダー対応
+
+### セキュリティ
+
+- 権限チェックの確実な実施
+- XSS対策（Railsのデフォルト機能を活用）
+
+## 関連ファイル（想定）
+
+- `app/repositories/topic_repository.rb`
+- `app/components/card_links/topic_component.rb` （共通トピックカード）
+- `app/components/card_links/topic_with_action_component.rb` （スペースメンバー向けアクション付き）
+- `app/components/card_lists/topic_component.rb`
+- `app/views/spaces/show_view.rb`
+- `app/controllers/spaces/show_controller.rb`
+- `app/policies/topic_policy.rb`
+- `spec/repositories/topic_repository_spec.rb`
+- `spec/components/card_links/topic_component_spec.rb`
+- `spec/components/card_links/topic_with_action_component_spec.rb`
+- `spec/components/card_lists/topic_component_spec.rb`
+- `spec/system/spaces/topics_display_spec.rb`
