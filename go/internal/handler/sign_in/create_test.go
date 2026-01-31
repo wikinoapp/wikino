@@ -1,4 +1,4 @@
-package user_session_test
+package sign_in_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
@@ -76,7 +76,7 @@ func TestCreate_Success(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -94,7 +94,7 @@ func TestCreate_Success(t *testing.T) {
 	form.Set("csrf_token", "test-csrf-token")
 	form.Set("cf-turnstile-response", "test-token")
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定
@@ -178,7 +178,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -196,7 +196,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	form.Set("csrf_token", "test-csrf-token")
 	form.Set("cf-turnstile-response", "test-token")
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定
@@ -213,7 +213,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
-	if !strings.Contains(body, `action="/user_session"`) {
+	if !strings.Contains(body, `action="/sign_in"`) {
 		t.Error("login form not found in response")
 	}
 }
@@ -266,7 +266,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -284,7 +284,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 	form.Set("csrf_token", "test-csrf-token")
 	form.Set("cf-turnstile-response", "test-token")
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定
@@ -343,7 +343,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -361,7 +361,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 	form.Set("csrf_token", "test-csrf-token")
 	form.Set("cf-turnstile-response", "test-token")
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定
@@ -420,7 +420,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -438,7 +438,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	form.Set("csrf_token", "test-csrf-token")
 	form.Set("cf-turnstile-response", "invalid-token")
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定
@@ -546,7 +546,7 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 			// ハンドラーを初期化
-			handler := user_session.NewHandler(
+			handler := sign_in.NewHandler(
 				cfg,
 				sessionMgr,
 				flashMgr,
@@ -565,7 +565,7 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			form.Set("cf-turnstile-response", "test-token")
 			form.Set("back", tt.backURL)
 
-			req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+			req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			// CSRFトークンをコンテキストに設定
@@ -624,7 +624,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
-	handler := user_session.NewHandler(
+	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -644,7 +644,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	form.Set("cf-turnstile-response", "test-token")
 	form.Set("back", backURL)
 
-	req := httptest.NewRequest(http.MethodPost, "/user_session", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// CSRFトークンをコンテキストに設定

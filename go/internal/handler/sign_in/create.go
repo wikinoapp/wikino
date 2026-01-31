@@ -1,4 +1,4 @@
-package user_session
+package sign_in
 
 import (
 	"log/slog"
@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はログイン処理を行います (POST /user_session)
+// Create はログイン処理を行います (POST /sign_in)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

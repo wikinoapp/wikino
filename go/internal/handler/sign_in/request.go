@@ -1,4 +1,4 @@
-package user_session
+package sign_in
 
 import (
 	"context"

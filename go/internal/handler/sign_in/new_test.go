@@ -1,6 +1,7 @@
 package sign_in_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,10 +10,28 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
+
+// mockTurnstileVerifierForNew はNew用のTurnstile検証モック
+type mockTurnstileVerifierForNew struct {
+	valid bool
+	err   error
+}
+
+func (m *mockTurnstileVerifierForNew) Verify(ctx context.Context, token string) (bool, error) {
+	return m.valid, m.err
+}
 
 func TestNew(t *testing.T) {
 	t.Parallel()
+
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTestDB(t)
+	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
 	cfg := &config.Config{
@@ -26,7 +45,31 @@ func TestNew(t *testing.T) {
 		TurnstileSecretKey: "",
 	}
 
-	handler := sign_in.NewHandler(cfg)
+	// リポジトリを初期化
+	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
+	userSessionRepo := repository.NewUserSessionRepository(queries)
+
+	// ユースケースを初期化
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+
+	// セッションマネージャーを初期化
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+	// モックTurnstileを初期化
+	mockTurnstile := &mockTurnstileVerifierForNew{valid: true, err: nil}
+
+	handler := sign_in.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		userPasswordRepo,
+		userSessionRepo,
+		createUserSessionUC,
+		mockTurnstile,
+	)
 
 	// HTTPリクエストを作成
 	req := httptest.NewRequest(http.MethodGet, "/sign_in", nil)
@@ -48,7 +91,7 @@ func TestNew(t *testing.T) {
 	body := rr.Body.String()
 
 	// ログインフォームが含まれているか確認
-	if !strings.Contains(body, `action="/user_session"`) {
+	if !strings.Contains(body, `action="/sign_in"`) {
 		t.Error("login form action not found in response")
 	}
 
@@ -81,6 +124,10 @@ func TestNew(t *testing.T) {
 func TestNew_WithBackParameter(t *testing.T) {
 	t.Parallel()
 
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTestDB(t)
+	queries := testutil.QueriesWithTx(tx)
+
 	// 設定を作成
 	cfg := &config.Config{
 		Env:                "test",
@@ -93,7 +140,31 @@ func TestNew_WithBackParameter(t *testing.T) {
 		TurnstileSecretKey: "",
 	}
 
-	handler := sign_in.NewHandler(cfg)
+	// リポジトリを初期化
+	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
+	userSessionRepo := repository.NewUserSessionRepository(queries)
+
+	// ユースケースを初期化
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+
+	// セッションマネージャーを初期化
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+	// モックTurnstileを初期化
+	mockTurnstile := &mockTurnstileVerifierForNew{valid: true, err: nil}
+
+	handler := sign_in.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		userPasswordRepo,
+		userSessionRepo,
+		createUserSessionUC,
+		mockTurnstile,
+	)
 
 	tests := []struct {
 		name       string

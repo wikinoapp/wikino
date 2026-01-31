@@ -11,7 +11,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
-	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 func TestDelete_Success(t *testing.T) {
@@ -44,29 +43,18 @@ func TestDelete_Success(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
-
-	// ユースケースを初期化
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
 		userSessionRepo,
-		createUserSessionUC,
-		mockTurnstile,
 	)
 
 	// セッションCookieを設定したリクエストを作成
@@ -147,29 +135,18 @@ func TestDelete_NoSession(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
-
-	// ユースケースを初期化
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
 		userSessionRepo,
-		createUserSessionUC,
-		mockTurnstile,
 	)
 
 	// セッションCookieなしでリクエスト
@@ -222,29 +199,18 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
-
-	// ユースケースを初期化
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ハンドラーを初期化
 	handler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
 		userSessionRepo,
-		createUserSessionUC,
-		mockTurnstile,
 	)
 
 	// 存在しないセッショントークンでリクエスト
