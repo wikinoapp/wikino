@@ -106,6 +106,13 @@ cat /workspace/rails/app/models/work.rb
 - **Model と Repository は 1:1 の関係**: 各ドメインエンティティに対応する Repository を作成
 - **Domain/Infrastructure 層の統合**: データベース変更はほぼ起こらないため、シンプルさを優先
 
+### UsecaseとRepositoryの使い分け
+
+- **Usecase**: トランザクションを伴う永続化処理（作成・更新・削除）、複数Repositoryを跨ぐ操作
+- **Repository**: 読み取り専用の処理、単一エンティティの操作、トランザクション不要な処理
+
+**判断基準**: 読み取り専用の処理はRepositoryで完結させ、Usecaseを作成しない。
+
 📖 **詳細なアーキテクチャについては [@go/docs/architecture-guide.md](docs/architecture-guide.md) を参照してください。**
 
 ## 開発環境のセットアップ
@@ -435,6 +442,43 @@ make sqlc-generate
   - これにより、常にクリーンな状態でテストが実行されます
 - PostgreSQL 17.6 の `\restrict` コマンド対策として、自動的にクリーンアップ処理が実行されます
   - 参照: https://github.com/amacneil/dbmate/issues/678
+- **マイグレーション単体のテストは不要**: マイグレーションが正しく適用されているかは、リポジトリやユースケースのテストで間接的に検証されます。テーブルが正しく作成されていなければ、それらのテストが失敗するためです。
+
+#### カラム定義のガイドライン
+
+新しいテーブルやカラムを作成する際は、以下のルールに従ってください。
+
+**文字列型**:
+
+- ✅ **`VARCHAR`（長さ指定なし）を使用**: 長さ制限はアプリケーションコードでバリデーションする
+- ❌ **`VARCHAR(n)` は使用しない**: 既存テーブルとの互換性が必要な場合を除く
+
+```sql
+-- ✅ 良い例
+title VARCHAR NOT NULL,
+description VARCHAR,
+
+-- ❌ 悪い例
+title VARCHAR(510) NOT NULL,
+```
+
+**タイムスタンプ型**:
+
+- ✅ **`TIMESTAMP WITH TIME ZONE` を使用**: すべての時刻はUTCで保存される
+- ❌ **`TIMESTAMP WITHOUT TIME ZONE` は使用しない**: タイムゾーン情報が失われる
+
+```sql
+-- ✅ 良い例
+created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMP WITH TIME ZONE,
+
+-- ❌ 悪い例
+deleted_at TIMESTAMP WITHOUT TIME ZONE,
+```
+
+**既存テーブルとの違い**:
+
+既存の Rails 版で作成されたテーブルには `VARCHAR(n)` や `TIMESTAMP WITHOUT TIME ZONE` が使用されている場合がありますが、新規作成するテーブルでは上記のガイドラインに従ってください。
 
 ## Pull Request のガイドライン
 
@@ -829,6 +873,27 @@ Go 版 Wikino では、関心の分離を意識したアーキテクチャを採
 - **配置**: `internal/usecase` （フラット構造）
 - **責務**: トランザクション管理、複数リポジトリを跨ぐ処理
 - **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Usecase`
+- **単一責任**: 各 Usecase は **`Execute` メソッドのみ** を公開する（1 Usecase = 1 操作）
+
+**重要**: 1 つの Usecase に複数の公開メソッド（`Execute`, `ExecuteDelete` など）を持たせないでください。異なる操作が必要な場合は、別の Usecase として分離します。
+
+```go
+// ✅ 良い例: 各Usecaseが単一のExecuteメソッドを持つ
+type CreateUserUsecase struct { ... }
+func (uc *CreateUserUsecase) Execute(ctx, input) (*Result, error)
+
+type UpdateUserUsecase struct { ... }
+func (uc *UpdateUserUsecase) Execute(ctx, input) (*Result, error)
+
+type DeleteUserUsecase struct { ... }
+func (uc *DeleteUserUsecase) Execute(ctx, input) (*Result, error)
+
+// ❌ 悪い例: 1つのUsecaseに複数の公開メソッド
+type UserUsecase struct { ... }
+func (uc *UserUsecase) Create(ctx, input) (*Result, error)
+func (uc *UserUsecase) Update(ctx, input) (*Result, error)
+func (uc *UserUsecase) Delete(ctx, input) (*Result, error)
+```
 
 #### 詳細ドキュメント
 
