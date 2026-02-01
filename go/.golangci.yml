@@ -82,7 +82,7 @@ linters:
         # 他のPresentation層パッケージに依存しない
         viewmodel-layer:
           files:
-            - "**/internal/viewmodel/**/*.go"
+            - "**/internal/viewmodel/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "ViewModelはQueryに依存できません。"
@@ -108,7 +108,7 @@ linters:
         # 他のPresentation層パッケージ、Application層、Domain/Infrastructure層に依存しない
         middleware-layer:
           files:
-            - "**/internal/middleware/**/*.go"
+            - "**/internal/middleware/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "MiddlewareはQueryに依存できません。"
@@ -127,7 +127,7 @@ linters:
         # Presentation層に依存しない
         application-layer:
           files:
-            - "**/internal/usecase/**/*.go"
+            - "**/internal/usecase/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "Application層はQueryに直接依存できません。Repositoryを経由してください。"
@@ -144,7 +144,7 @@ linters:
         # データアクセス層、上位層に依存しない
         model-layer:
           files:
-            - "**/internal/model/**/*.go"
+            - "**/internal/model/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "ModelはQueryに依存できません。"
@@ -165,7 +165,7 @@ linters:
         # 上位層に依存しない
         repository-layer:
           files:
-            - "**/internal/repository/**/*.go"
+            - "**/internal/repository/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/usecase
               desc: "RepositoryはApplication層に依存できません。"
@@ -182,7 +182,7 @@ linters:
         # 上位層に依存しない
         query-layer:
           files:
-            - "**/internal/query/**/*.go"
+            - "**/internal/query/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/repository
               desc: "QueryはRepositoryに依存できません。"
