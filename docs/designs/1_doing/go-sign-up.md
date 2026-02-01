@@ -508,7 +508,7 @@ func ValidateAtname(atname string) error {
 各タスクには想定サイズを明記してください
 -->
 
-- [ ] **1-1**: [Go] EmailConfirmationRepository の実装
+- [x] **1-1**: [Go] EmailConfirmationRepository の実装
 
   - `internal/repository/email_confirmation_repository.go` の作成
   - `internal/model/email_confirmation.go` の作成
