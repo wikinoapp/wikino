@@ -1,0 +1,98 @@
+package testutil
+
+import (
+	"context"
+	"database/sql"
+	"testing"
+	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+)
+
+// EmailConfirmationBuilder はメール確認テストデータのビルダー
+type EmailConfirmationBuilder struct {
+	t  *testing.T
+	tx *sql.Tx
+
+	email     string
+	event     model.EmailConfirmationEvent
+	code      string
+	startedAt time.Time
+}
+
+// NewEmailConfirmationBuilder は EmailConfirmationBuilder を生成します
+func NewEmailConfirmationBuilder(t *testing.T, tx *sql.Tx) *EmailConfirmationBuilder {
+	t.Helper()
+	return &EmailConfirmationBuilder{
+		t:         t,
+		tx:        tx,
+		email:     "test@example.com",
+		event:     model.EmailConfirmationEventSignUp,
+		code:      "ABC123",
+		startedAt: time.Now(),
+	}
+}
+
+// WithEmail はメールアドレスを設定します
+func (b *EmailConfirmationBuilder) WithEmail(email string) *EmailConfirmationBuilder {
+	b.email = email
+	return b
+}
+
+// WithEvent はイベント種別を設定します
+func (b *EmailConfirmationBuilder) WithEvent(event model.EmailConfirmationEvent) *EmailConfirmationBuilder {
+	b.event = event
+	return b
+}
+
+// WithCode は確認コードを設定します
+func (b *EmailConfirmationBuilder) WithCode(code string) *EmailConfirmationBuilder {
+	b.code = code
+	return b
+}
+
+// WithStartedAt は開始日時を設定します
+func (b *EmailConfirmationBuilder) WithStartedAt(startedAt time.Time) *EmailConfirmationBuilder {
+	b.startedAt = startedAt
+	return b
+}
+
+// Build はメール確認情報を作成し、IDを返します
+func (b *EmailConfirmationBuilder) Build() string {
+	b.t.Helper()
+
+	now := time.Now()
+	var id string
+	err := b.tx.QueryRowContext(
+		context.Background(),
+		`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 RETURNING id`,
+		b.email, int32(b.event), b.code, b.startedAt, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
+	}
+
+	return id
+}
+
+// BuildSucceeded は確認完了状態のメール確認情報を作成し、IDを返します
+func (b *EmailConfirmationBuilder) BuildSucceeded() string {
+	b.t.Helper()
+
+	now := time.Now()
+	var id string
+	err := b.tx.QueryRowContext(
+		context.Background(),
+		`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 RETURNING id`,
+		b.email, int32(b.event), b.code, b.startedAt, now, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
+	}
+
+	return id
+}
