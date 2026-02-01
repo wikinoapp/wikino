@@ -20,6 +20,11 @@ func NewUserPasswordRepository(q *query.Queries) *UserPasswordRepository {
 	return &UserPasswordRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *UserPasswordRepository) WithTx(tx *sql.Tx) *UserPasswordRepository {
+	return &UserPasswordRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByUserID はユーザーIDでパスワード情報を取得する
 func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID string) (*model.UserPassword, error) {
 	row, err := r.q.GetUserPasswordByUserID(ctx, userID)

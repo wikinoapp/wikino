@@ -16,7 +16,11 @@ import (
 
 func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
-	uc := NewCreateAccountUsecase(db)
+	q := query.New(db)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
+	userRepo := repository.NewUserRepository(q)
+	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// メール確認完了済みのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
@@ -43,8 +47,6 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 	}
 
 	// ユーザーが作成されたことを確認
-	q := query.New(db)
-	userRepo := repository.NewUserRepository(q)
 	user, err := userRepo.FindByID(context.Background(), output.UserID)
 	if err != nil {
 		t.Fatalf("FindByID() error = %v", err)
@@ -66,7 +68,6 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 	}
 
 	// パスワードが正しくハッシュ化されて保存されたことを確認
-	userPasswordRepo := repository.NewUserPasswordRepository(q)
 	userPassword, err := userPasswordRepo.FindByUserID(context.Background(), output.UserID)
 	if err != nil {
 		t.Fatalf("FindByUserID() error = %v", err)
@@ -82,7 +83,11 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 
 func TestCreateAccountUsecase_Execute_EmailNotConfirmed(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
-	uc := NewCreateAccountUsecase(db)
+	q := query.New(db)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
+	userRepo := repository.NewUserRepository(q)
+	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// メール確認が未完了のテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
@@ -108,7 +113,11 @@ func TestCreateAccountUsecase_Execute_EmailNotConfirmed(t *testing.T) {
 
 func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
-	uc := NewCreateAccountUsecase(db)
+	q := query.New(db)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
+	userRepo := repository.NewUserRepository(q)
+	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// 存在しないEmailConfirmationIDでアカウント作成を試みる
 	_, err := uc.Execute(context.Background(), CreateAccountInput{
@@ -126,7 +135,11 @@ func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
 
 func TestCreateAccountUsecase_Execute_AtnameAlreadyTaken(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
-	uc := NewCreateAccountUsecase(db)
+	q := query.New(db)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
+	userRepo := repository.NewUserRepository(q)
+	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// 既存のユーザーを作成
 	testutil.NewUserBuilderDB(t, db).
@@ -158,7 +171,11 @@ func TestCreateAccountUsecase_Execute_AtnameAlreadyTaken(t *testing.T) {
 
 func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
-	uc := NewCreateAccountUsecase(db)
+	q := query.New(db)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
+	userRepo := repository.NewUserRepository(q)
+	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// メール確認完了済みのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
@@ -182,8 +199,6 @@ func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
 	}
 
 	// ユーザーが英語ロケールで作成されたことを確認
-	q := query.New(db)
-	userRepo := repository.NewUserRepository(q)
 	user, err := userRepo.FindByID(context.Background(), output.UserID)
 	if err != nil {
 		t.Fatalf("FindByID() error = %v", err)

@@ -21,6 +21,11 @@ func NewUserRepository(q *query.Queries) *UserRepository {
 	return &UserRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *UserRepository) WithTx(tx *sql.Tx) *UserRepository {
+	return &UserRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByID はIDでユーザーを取得する
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
 	row, err := r.q.GetUserByID(ctx, id)

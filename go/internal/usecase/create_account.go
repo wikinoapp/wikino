@@ -10,19 +10,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
 // CreateAccountUsecase はアカウント作成ユースケース
 type CreateAccountUsecase struct {
-	db *sql.DB
+	db                    *sql.DB
+	emailConfirmationRepo *repository.EmailConfirmationRepository
+	userRepo              *repository.UserRepository
+	userPasswordRepo      *repository.UserPasswordRepository
 }
 
 // NewCreateAccountUsecase は CreateAccountUsecase を生成する
-func NewCreateAccountUsecase(db *sql.DB) *CreateAccountUsecase {
+func NewCreateAccountUsecase(
+	db *sql.DB,
+	emailConfirmationRepo *repository.EmailConfirmationRepository,
+	userRepo *repository.UserRepository,
+	userPasswordRepo *repository.UserPasswordRepository,
+) *CreateAccountUsecase {
 	return &CreateAccountUsecase{
-		db: db,
+		db:                    db,
+		emailConfirmationRepo: emailConfirmationRepo,
+		userRepo:              userRepo,
+		userPasswordRepo:      userPasswordRepo,
 	}
 }
 
@@ -60,11 +70,10 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 		_ = tx.Rollback()
 	}()
 
-	// トランザクション内でクエリを実行するためのQueriesを生成
-	q := query.New(tx)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	userRepo := repository.NewUserRepository(q)
-	userPasswordRepo := repository.NewUserPasswordRepository(q)
+	// トランザクション内で操作するためのリポジトリを取得
+	emailConfirmationRepo := uc.emailConfirmationRepo.WithTx(tx)
+	userRepo := uc.userRepo.WithTx(tx)
+	userPasswordRepo := uc.userPasswordRepo.WithTx(tx)
 
 	// メール確認が完了しているかチェック
 	confirmation, err := emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)

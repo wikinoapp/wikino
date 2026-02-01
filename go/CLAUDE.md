@@ -874,8 +874,41 @@ Go 版 Wikino では、関心の分離を意識したアーキテクチャを採
 - **責務**: トランザクション管理、複数リポジトリを跨ぐ処理
 - **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Usecase`
 - **単一責任**: 各 Usecase は **`Execute` メソッドのみ** を公開する（1 Usecase = 1 操作）
+- **トランザクション管理**: Repository の `WithTx` メソッドを使用してトランザクション内で操作する
 
 **重要**: 1 つの Usecase に複数の公開メソッド（`Execute`, `ExecuteDelete` など）を持たせないでください。異なる操作が必要な場合は、別の Usecase として分離します。
+
+**トランザクション管理**: Usecase でトランザクションを使用する場合、Repository をコンストラクタで受け取り、Execute 内で `WithTx(tx)` を呼び出します：
+
+```go
+// ✅ 良い例: Repository の WithTx パターン
+type CreateAccountUsecase struct {
+    db       *sql.DB
+    userRepo *repository.UserRepository
+}
+
+func NewCreateAccountUsecase(db *sql.DB, userRepo *repository.UserRepository) *CreateAccountUsecase {
+    return &CreateAccountUsecase{db: db, userRepo: userRepo}
+}
+
+func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
+    tx, err := uc.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer func() { _ = tx.Rollback() }()
+
+    // トランザクション内で操作するためのリポジトリを取得
+    userRepo := uc.userRepo.WithTx(tx)
+
+    // userRepo を使用して操作...
+
+    if err := tx.Commit(); err != nil {
+        return nil, err
+    }
+    return &CreateAccountOutput{}, nil
+}
+```
 
 ```go
 // ✅ 良い例: 各Usecaseが単一のExecuteメソッドを持つ
