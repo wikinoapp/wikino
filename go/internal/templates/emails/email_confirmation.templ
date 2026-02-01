@@ -1,0 +1,48 @@
+package emails
+
+// EmailConfirmationData はメール確認テンプレートのデータ
+type EmailConfirmationData struct {
+	Email   string
+	Code    string
+	AppURL  string
+	IsJapanese bool
+}
+
+// EmailConfirmation はメール確認のHTMLテンプレート
+templ EmailConfirmation(data EmailConfirmationData) {
+	if data.IsJapanese {
+		@emailConfirmationJa(data)
+	} else {
+		@emailConfirmationEn(data)
+	}
+}
+
+templ emailConfirmationJa(data EmailConfirmationData) {
+	{ data.Email } さん、こんにちは。<br/>
+	<br/>
+	確認用コードは下記になります。<br/>
+	<br/>
+	<strong>{ data.Code }</strong><br/>
+	<br/>
+	確認用コードの有効期間は15分です。<br/>
+	<br/>
+	もしこのメールに心当たりが無い場合は無視してください。<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}
+
+templ emailConfirmationEn(data EmailConfirmationData) {
+	Hello, { data.Email }.<br/>
+	<br/>
+	The confirmation code is as follows.<br/>
+	<br/>
+	<strong>{ data.Code }</strong><br/>
+	<br/>
+	The confirmation code is valid for 15 minutes.<br/>
+	<br/>
+	If this email does not concern you, please ignore it.<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

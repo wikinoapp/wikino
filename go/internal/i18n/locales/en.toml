@@ -115,3 +115,7 @@ other = "Signed in successfully."
 # Sign out
 [signed_out_successfully]
 other = "Signed out successfully."
+
+# Email confirmation
+[email_confirmation_subject]
+other = "[Wikino] Confirmation Code"
