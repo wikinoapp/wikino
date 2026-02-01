@@ -528,7 +528,7 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 6 ファイル（実装 4 + テスト 2）
   - **想定行数**: 約 400 行（実装 200 行 + テスト 200 行）
 
-- [ ] **2-2**: [Go] VerifyEmailConfirmationUsecase の実装
+- [x] **2-2**: [Go] VerifyEmailConfirmationUsecase の実装
 
   - `internal/usecase/verify_email_confirmation.go` の作成
   - 確認コード検証ロジック
