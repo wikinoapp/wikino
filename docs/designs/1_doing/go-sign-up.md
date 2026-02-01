@@ -536,7 +536,7 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
   - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
 
-- [ ] **2-3**: [Go] CreateAccountUsecase の実装
+- [x] **2-3**: [Go] CreateAccountUsecase の実装
 
   - `internal/usecase/create_account.go` の作成
   - ユーザー作成ロジック（トランザクション管理）

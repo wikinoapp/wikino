@@ -43,3 +43,32 @@ func SetupTestDB(t *testing.T) (*sql.DB, *sql.Tx) {
 
 	return db, tx
 }
+
+// SetupTestDBWithoutTx はトランザクションを使わないテスト用のデータベース接続をセットアップします
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+// 注意: テストデータはテスト終了時に自動削除されないため、ユニークなデータを使用してください
+func SetupTestDBWithoutTx(t *testing.T) *sql.DB {
+	t.Helper()
+
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://postgres:postgres@postgresql:5432/wikino_test?sslmode=disable"
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		t.Fatalf("データベース接続に失敗: %v", err)
+	}
+
+	// 接続確認
+	if err := db.Ping(); err != nil {
+		t.Fatalf("データベースへのpingに失敗: %v", err)
+	}
+
+	// テスト終了時にDB接続クローズ
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+
+	return db
+}

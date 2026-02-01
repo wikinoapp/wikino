@@ -57,6 +57,37 @@ func (r *UserRepository) FindByAtname(ctx context.Context, atname string) (*mode
 	return r.toModel(row), nil
 }
 
+// CreateUserInput はユーザー作成の入力パラメータ
+type CreateUserInput struct {
+	Email       string
+	Atname      string
+	Name        string
+	Description string
+	Locale      model.Locale
+	TimeZone    string
+	JoinedAt    time.Time
+}
+
+// Create は新しいユーザーを作成する
+func (r *UserRepository) Create(ctx context.Context, input CreateUserInput) (*model.User, error) {
+	now := time.Now()
+	row, err := r.q.CreateUser(ctx, query.CreateUserParams{
+		Email:       input.Email,
+		Atname:      input.Atname,
+		Name:        input.Name,
+		Description: input.Description,
+		Locale:      int32(input.Locale),
+		TimeZone:    input.TimeZone,
+		JoinedAt:    input.JoinedAt,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModel は query.User を model.User に変換する
 func (r *UserRepository) toModel(row query.User) *model.User {
 	var discardedAt *time.Time
