@@ -519,7 +519,7 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 2: ユースケース層の実装
 
-- [ ] **2-1**: [Go] SendEmailConfirmationUsecase の実装
+- [x] **2-1**: [Go] SendEmailConfirmationUsecase の実装
 
   - `internal/usecase/send_email_confirmation.go` の作成
   - 確認コード生成ロジック

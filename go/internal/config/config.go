@@ -45,6 +45,10 @@ type Config struct {
 
 	// アセットバージョン（CDNキャッシュ対策用）
 	AssetVersion string
+
+	// Resend（メール送信）
+	ResendAPIKey    string
+	ResendFromEmail string
 }
 
 // Load は環境変数から設定を読み込みます
@@ -120,6 +124,10 @@ func Load() (*Config, error) {
 
 	// アセットバージョン（Gitコミットハッシュ）を設定
 	cfg.AssetVersion = getGitCommitHash()
+
+	// Resend（メール送信）設定（オプショナル - テスト環境ではモックを使用）
+	cfg.ResendAPIKey = os.Getenv("WIKINO_RESEND_API_KEY")
+	cfg.ResendFromEmail = os.Getenv("WIKINO_RESEND_FROM_EMAIL")
 
 	return cfg, nil
 }

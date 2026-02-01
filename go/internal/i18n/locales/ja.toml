@@ -115,3 +115,7 @@ other = "ログインしました"
 # ログアウト
 [signed_out_successfully]
 other = "ログアウトしました"
+
+# メール確認
+[email_confirmation_subject]
+other = "[Wikino] 確認用コード"
