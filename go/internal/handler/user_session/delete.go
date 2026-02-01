@@ -25,7 +25,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	h.sessionMgr.DeleteSessionCookie(w)
 
 	// フラッシュメッセージを設定
-	h.flashMgr.SetNotice(w, i18n.T(ctx, "signed_out_successfully"))
+	h.flashMgr.SetSuccess(w, i18n.T(ctx, "signed_out_successfully"))
 
 	// ルートにリダイレクト
 	http.Redirect(w, r, "/", http.StatusFound)

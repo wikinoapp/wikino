@@ -7,7 +7,7 @@ templ FormErrors(formErrors *session.FormErrors) {
 	if formErrors != nil && len(formErrors.Global) > 0 {
 		for _, errorMsg := range formErrors.Global {
 			<div class="alert-destructive">
-				<p>{ errorMsg }</p>
+				<h2>{ errorMsg }</h2>
 			</div>
 		}
 	}

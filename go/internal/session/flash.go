@@ -13,10 +13,14 @@ const FlashCookieName = "wikino_flash"
 type FlashType string
 
 const (
-	// FlashNotice は成功・情報メッセージ
-	FlashNotice FlashType = "notice"
-	// FlashAlert は警告・エラーメッセージ
-	FlashAlert FlashType = "alert"
+	// FlashSuccess は成功メッセージ
+	FlashSuccess FlashType = "success"
+	// FlashError はエラーメッセージ
+	FlashError FlashType = "error"
+	// FlashWarning は警告メッセージ
+	FlashWarning FlashType = "warning"
+	// FlashInfo は情報メッセージ
+	FlashInfo FlashType = "info"
 )
 
 // FlashMessage はフラッシュメッセージを表す構造体
@@ -41,14 +45,24 @@ func NewFlashManager(cookieDomain string, sessionSecure, sessionHTTPOnly bool) *
 	}
 }
 
-// SetNotice は成功メッセージを設定する
-func (f *FlashManager) SetNotice(w http.ResponseWriter, message string) {
-	f.setFlash(w, FlashNotice, message)
+// SetSuccess は成功メッセージを設定する
+func (f *FlashManager) SetSuccess(w http.ResponseWriter, message string) {
+	f.setFlash(w, FlashSuccess, message)
 }
 
-// SetAlert は警告メッセージを設定する
-func (f *FlashManager) SetAlert(w http.ResponseWriter, message string) {
-	f.setFlash(w, FlashAlert, message)
+// SetError はエラーメッセージを設定する
+func (f *FlashManager) SetError(w http.ResponseWriter, message string) {
+	f.setFlash(w, FlashError, message)
+}
+
+// SetWarning は警告メッセージを設定する
+func (f *FlashManager) SetWarning(w http.ResponseWriter, message string) {
+	f.setFlash(w, FlashWarning, message)
+}
+
+// SetInfo は情報メッセージを設定する
+func (f *FlashManager) SetInfo(w http.ResponseWriter, message string) {
+	f.setFlash(w, FlashInfo, message)
 }
 
 // setFlash はフラッシュメッセージをCookieに設定する

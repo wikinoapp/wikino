@@ -1,10 +1,10 @@
-package user_session_test
+package sign_in_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 )
 
 func TestCreateRequest_Validate(t *testing.T) {
@@ -58,7 +58,7 @@ func TestCreateRequest_Validate(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			req := user_session.NewCreateRequest(tt.email, tt.password)
+			req := sign_in.NewCreateRequest(tt.email, tt.password)
 			errors := req.Validate(ctx)
 
 			if tt.wantErrors && errors == nil {

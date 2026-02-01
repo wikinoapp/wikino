@@ -10,6 +10,9 @@ other = "Wikino is a wiki application for sharing and organizing information onl
 [flash_dismiss]
 other = "Dismiss"
 
+[label_error]
+other = "Error"
+
 [back_to_home]
 other = "Back to Home"
 
@@ -18,7 +21,7 @@ other = "Back to Home"
 other = "Sign in"
 
 [sign_in_heading]
-other = "Sign in"
+other = "Sign in to Wikino"
 
 [sign_in_email_label]
 other = "Email address"
@@ -30,7 +33,7 @@ other = "Password"
 other = "Sign in"
 
 [sign_in_forgot_password]
-other = "Forgot password?"
+other = "Forgot your password?"
 
 [sign_in_no_account]
 other = "Don't have an account?"
@@ -104,6 +107,10 @@ other = "The authentication code is incorrect"
 
 [sign_in_two_factor_recovery_invalid_code]
 other = "The recovery code is incorrect"
+
+# Sign in success
+[flash_sign_in_success]
+other = "Signed in successfully."
 
 # Sign out
 [signed_out_successfully]

@@ -77,8 +77,7 @@ func main() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
-	signInHandler := sign_in.NewHandler(cfg)
-	userSessionHandler := user_session.NewHandler(
+	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
@@ -87,6 +86,12 @@ func main() {
 		userSessionRepo,
 		createUserSessionUC,
 		turnstileClient,
+	)
+	userSessionHandler := user_session.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userSessionRepo,
 	)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
@@ -126,6 +131,10 @@ func main() {
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
 
+	// 静的ファイルの配信 (Tailwind CLI + esbuild のビルド結果)
+	fileServer := http.FileServer(http.Dir("./static"))
+	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
+
 	// ヘルスチェック（認証不要）
 	r.Get("/health", healthHandler.Show)
 
@@ -136,7 +145,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
 		r.Get("/sign_in", signInHandler.New)
-		r.Post("/user_session", userSessionHandler.Create)
+		r.Post("/sign_in", signInHandler.Create)
 		r.Get("/sign_in/two_factor/new", signInTwoFactorHandler.New)
 		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
 		r.Get("/sign_in/two_factor/recovery/new", signInTwoFactorRecoveryHandler.New)
