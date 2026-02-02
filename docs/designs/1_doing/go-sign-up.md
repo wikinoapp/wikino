@@ -600,7 +600,7 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 6: 統合とルーティング
 
-- [ ] **6-1**: [Go] ルーティング設定とリバースプロキシミドルウェアの更新
+- [x] **6-1**: [Go] ルーティング設定とリバースプロキシミドルウェアの更新
 
   - ルーティング設定（`/sign_up`, `/email_confirmation/*`, `/accounts/*`）
   - リバースプロキシのホワイトリスト更新
