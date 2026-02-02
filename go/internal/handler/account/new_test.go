@@ -1,6 +1,9 @@
 package account_test
 
 import (
+	"crypto/rand"
+	"database/sql"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,13 +18,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
+
+// generateCode はユニークな確認コードを生成します
+func generateCode() string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	code := make([]byte, 6)
+	for i := range code {
+		n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		code[i] = charset[n.Int64()]
+	}
+	return string(code)
+}
 
 func TestNew(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTestDB(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -36,8 +51,19 @@ func TestNew(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	createAccountUC := usecase.NewCreateAccountUsecase(
+		&sql.DB{},
+		emailConfirmationRepo,
+		userRepo,
+		userPasswordRepo,
+	)
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	_ = db
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -48,7 +74,7 @@ func TestNew(t *testing.T) {
 	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
 		Email:     "test@example.com",
 		Event:     model.EmailConfirmationEventSignUp,
-		Code:      "ABC123",
+		Code:      generateCode(),
 		StartedAt: now,
 	})
 	if err != nil {
@@ -66,6 +92,8 @@ func TestNew(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
 	)
 
 	// HTTPリクエストを作成
@@ -148,8 +176,18 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	createAccountUC := usecase.NewCreateAccountUsecase(
+		&sql.DB{},
+		emailConfirmationRepo,
+		userRepo,
+		userPasswordRepo,
+	)
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -160,6 +198,8 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
 	)
 
 	// HTTPリクエストを作成（email_confirmation_id のCookieなし）
@@ -204,8 +244,18 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	createAccountUC := usecase.NewCreateAccountUsecase(
+		&sql.DB{},
+		emailConfirmationRepo,
+		userRepo,
+		userPasswordRepo,
+	)
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -216,6 +266,8 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
 	)
 
 	// HTTPリクエストを作成（存在しない email_confirmation_id）
@@ -266,8 +318,18 @@ func TestNew_EmailNotVerified(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	createAccountUC := usecase.NewCreateAccountUsecase(
+		&sql.DB{},
+		emailConfirmationRepo,
+		userRepo,
+		userPasswordRepo,
+	)
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -278,7 +340,7 @@ func TestNew_EmailNotVerified(t *testing.T) {
 	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
 		Email:     "test@example.com",
 		Event:     model.EmailConfirmationEventSignUp,
-		Code:      "ABC123",
+		Code:      generateCode(),
 		StartedAt: now,
 	})
 	if err != nil {
@@ -290,6 +352,8 @@ func TestNew_EmailNotVerified(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
 	)
 
 	// HTTPリクエストを作成
@@ -340,8 +404,18 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	createAccountUC := usecase.NewCreateAccountUsecase(
+		&sql.DB{},
+		emailConfirmationRepo,
+		userRepo,
+		userPasswordRepo,
+	)
+	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -352,7 +426,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
 		Email:     "test@example.com",
 		Event:     model.EmailConfirmationEventSignUp,
-		Code:      "ABC123",
+		Code:      generateCode(),
 		StartedAt: now,
 	})
 	if err != nil {
@@ -370,6 +444,8 @@ func TestNew_EnglishLocale(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
 	)
 
 	// HTTPリクエストを作成（英語ロケール）

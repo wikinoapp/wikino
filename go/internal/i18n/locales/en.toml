@@ -216,3 +216,26 @@ other = "Create account"
 
 [account_new_back_to_sign_up]
 other = "Back to sign up"
+
+# Account creation validation
+[validation_atname_required]
+other = "Please enter a username"
+
+[validation_atname_too_long]
+other = "Username must be 20 characters or less"
+
+[validation_atname_invalid_format]
+other = "Username can only contain letters, numbers, and underscores"
+
+[validation_atname_already_taken]
+other = "This username is already taken"
+
+[validation_password_required]
+other = "Please enter a password"
+
+[validation_password_too_short]
+other = "Password must be at least 8 characters"
+
+# Account creation success
+[flash_account_created]
+other = "Your account has been created"
