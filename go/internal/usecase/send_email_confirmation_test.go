@@ -2,38 +2,26 @@ package usecase
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/email"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// mockEmailSender はテスト用のメール送信モック
-type mockEmailSender struct {
-	mu       sync.Mutex
-	sentMail []email.SendInput
-	err      error
+// mockEnqueuer はテスト用のモック enqueuer
+type mockEnqueuer struct {
+	called bool
+	input  worker.EnqueueEmailConfirmationInput
 }
 
-func (m *mockEmailSender) Send(_ context.Context, input email.SendInput) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.err != nil {
-		return m.err
-	}
-	m.sentMail = append(m.sentMail, input)
+func (m *mockEnqueuer) EnqueueEmailConfirmation(_ context.Context, input worker.EnqueueEmailConfirmationInput) error {
+	m.called = true
+	m.input = input
 	return nil
-}
-
-func (m *mockEmailSender) getSentMail() []email.SendInput {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.sentMail
 }
 
 func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
@@ -48,8 +36,8 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	mockSender := &mockEmailSender{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, mockSender)
+	enqueuer := &mockEnqueuer{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := SendEmailConfirmationInput{
@@ -65,25 +53,6 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 
 	if output.EmailConfirmationID == "" {
 		t.Error("EmailConfirmationID が空です")
-	}
-
-	// メールが送信されたことを確認
-	sentMail := mockSender.getSentMail()
-	if len(sentMail) != 1 {
-		t.Errorf("送信されたメール数 = %d, want 1", len(sentMail))
-	}
-
-	if sentMail[0].To != "test@example.com" {
-		t.Errorf("送信先 = %s, want test@example.com", sentMail[0].To)
-	}
-
-	if sentMail[0].Subject != "[Wikino] 確認用コード" {
-		t.Errorf("件名 = %s, want [Wikino] 確認用コード", sentMail[0].Subject)
-	}
-
-	// メール本文に日本語のテキストが含まれていることを確認
-	if !contains(sentMail[0].HTML, "こんにちは") {
-		t.Error("メール本文に日本語の挨拶が含まれていません")
 	}
 
 	// DBに保存されたことを確認
@@ -103,6 +72,17 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	if len(confirmation.Code) != 6 {
 		t.Errorf("Code length = %d, want 6", len(confirmation.Code))
 	}
+
+	// エンキューが呼ばれたことを確認
+	if !enqueuer.called {
+		t.Error("EnqueueEmailConfirmation が呼ばれていません")
+	}
+	if enqueuer.input.Email != "test@example.com" {
+		t.Errorf("enqueued Email = %s, want test@example.com", enqueuer.input.Email)
+	}
+	if enqueuer.input.Locale != "ja" {
+		t.Errorf("enqueued Locale = %s, want ja", enqueuer.input.Locale)
+	}
 }
 
 func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
@@ -117,8 +97,8 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	mockSender := &mockEmailSender{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, mockSender)
+	enqueuer := &mockEnqueuer{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
 
 	ctx := i18n.SetLocale(context.Background(), "en")
 	input := SendEmailConfirmationInput{
@@ -136,19 +116,24 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 		t.Error("EmailConfirmationID が空です")
 	}
 
-	// メールが送信されたことを確認
-	sentMail := mockSender.getSentMail()
-	if len(sentMail) != 1 {
-		t.Errorf("送信されたメール数 = %d, want 1", len(sentMail))
+	// DBに保存されたことを確認
+	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
+	if err != nil {
+		t.Fatalf("FindByID() error = %v", err)
+	}
+	if confirmation == nil {
+		t.Fatal("メール確認情報がDBに保存されていません")
+	}
+	if confirmation.Email != "english@example.com" {
+		t.Errorf("Email = %s, want english@example.com", confirmation.Email)
 	}
 
-	if sentMail[0].Subject != "[Wikino] Confirmation Code" {
-		t.Errorf("件名 = %s, want [Wikino] Confirmation Code", sentMail[0].Subject)
+	// エンキューが呼ばれたことを確認
+	if !enqueuer.called {
+		t.Error("EnqueueEmailConfirmation が呼ばれていません")
 	}
-
-	// メール本文に英語のテキストが含まれていることを確認
-	if !contains(sentMail[0].HTML, "Hello") {
-		t.Error("メール本文に英語の挨拶が含まれていません")
+	if enqueuer.input.Locale != "en" {
+		t.Errorf("enqueued Locale = %s, want en", enqueuer.input.Locale)
 	}
 }
 
@@ -164,8 +149,8 @@ func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	mockSender := &mockEmailSender{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, mockSender)
+	enqueuer := &mockEnqueuer{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := SendEmailConfirmationInput{
@@ -186,6 +171,11 @@ func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 	}
 	if confirmation.Event != model.EmailConfirmationEventPasswordReset {
 		t.Errorf("Event = %d, want %d", confirmation.Event, model.EmailConfirmationEventPasswordReset)
+	}
+
+	// エンキューが呼ばれたことを確認
+	if !enqueuer.called {
+		t.Error("EnqueueEmailConfirmation が呼ばれていません")
 	}
 }
 

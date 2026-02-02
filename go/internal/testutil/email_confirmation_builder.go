@@ -14,10 +14,11 @@ type EmailConfirmationBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	email     string
-	event     model.EmailConfirmationEvent
-	code      string
-	startedAt time.Time
+	email       string
+	event       model.EmailConfirmationEvent
+	code        string
+	startedAt   time.Time
+	succeededAt *time.Time
 }
 
 // NewEmailConfirmationBuilder は EmailConfirmationBuilder を生成します
@@ -57,19 +58,37 @@ func (b *EmailConfirmationBuilder) WithStartedAt(startedAt time.Time) *EmailConf
 	return b
 }
 
+// WithSucceededAt は確認完了日時を設定します
+func (b *EmailConfirmationBuilder) WithSucceededAt(succeededAt time.Time) *EmailConfirmationBuilder {
+	b.succeededAt = &succeededAt
+	return b
+}
+
 // Build はメール確認情報を作成し、IDを返します
 func (b *EmailConfirmationBuilder) Build() string {
 	b.t.Helper()
 
 	now := time.Now()
 	var id string
-	err := b.tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		b.email, int32(b.event), b.code, b.startedAt, now, now,
-	).Scan(&id)
+	var err error
+
+	if b.succeededAt != nil {
+		err = b.tx.QueryRowContext(
+			context.Background(),
+			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			 RETURNING id`,
+			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now,
+		).Scan(&id)
+	} else {
+		err = b.tx.QueryRowContext(
+			context.Background(),
+			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6)
+			 RETURNING id`,
+			b.email, int32(b.event), b.code, b.startedAt, now, now,
+		).Scan(&id)
+	}
 	if err != nil {
 		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
 	}
@@ -103,10 +122,11 @@ type EmailConfirmationBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
-	email     string
-	event     model.EmailConfirmationEvent
-	code      string
-	startedAt time.Time
+	email       string
+	event       model.EmailConfirmationEvent
+	code        string
+	startedAt   time.Time
+	succeededAt *time.Time
 }
 
 // NewEmailConfirmationBuilderDB は EmailConfirmationBuilderDB を生成します
@@ -146,19 +166,37 @@ func (b *EmailConfirmationBuilderDB) WithStartedAt(startedAt time.Time) *EmailCo
 	return b
 }
 
+// WithSucceededAt は確認完了日時を設定します
+func (b *EmailConfirmationBuilderDB) WithSucceededAt(succeededAt time.Time) *EmailConfirmationBuilderDB {
+	b.succeededAt = &succeededAt
+	return b
+}
+
 // Build はメール確認情報を作成し、IDを返します
 func (b *EmailConfirmationBuilderDB) Build() string {
 	b.t.Helper()
 
 	now := time.Now()
 	var id string
-	err := b.db.QueryRowContext(
-		context.Background(),
-		`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		b.email, int32(b.event), b.code, b.startedAt, now, now,
-	).Scan(&id)
+	var err error
+
+	if b.succeededAt != nil {
+		err = b.db.QueryRowContext(
+			context.Background(),
+			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			 RETURNING id`,
+			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now,
+		).Scan(&id)
+	} else {
+		err = b.db.QueryRowContext(
+			context.Background(),
+			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6)
+			 RETURNING id`,
+			b.email, int32(b.event), b.code, b.startedAt, now, now,
+		).Scan(&id)
+	}
 	if err != nil {
 		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
 	}
