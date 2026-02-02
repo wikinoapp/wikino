@@ -16,11 +16,14 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -85,10 +88,14 @@ func main() {
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
+	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -134,6 +141,27 @@ func main() {
 		verifyTwoFactorUC,
 		createUserSessionUC,
 	)
+	signUpHandler := sign_up.NewHandler(
+		cfg,
+		sessionMgr,
+	)
+	emailConfirmationHandler := email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		sendEmailConfirmationUC,
+		verifyEmailConfirmationUC,
+		turnstileClient,
+	)
+	accountHandler := account.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		emailConfirmationRepo,
+		createAccountUC,
+		createUserSessionUC,
+	)
 
 	r := chi.NewRouter()
 
@@ -177,6 +205,12 @@ func main() {
 		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
 		r.Get("/sign_in/two_factor/recovery/new", signInTwoFactorRecoveryHandler.New)
 		r.Post("/sign_in/two_factor/recovery", signInTwoFactorRecoveryHandler.Create)
+		r.Get("/sign_up", signUpHandler.New)
+		r.Post("/email_confirmation", emailConfirmationHandler.Create)
+		r.Get("/email_confirmation/edit", emailConfirmationHandler.Edit)
+		r.Patch("/email_confirmation", emailConfirmationHandler.Update)
+		r.Get("/accounts/new", accountHandler.New)
+		r.Post("/accounts", accountHandler.Create)
 	})
 
 	// 認証済みユーザー専用ルート

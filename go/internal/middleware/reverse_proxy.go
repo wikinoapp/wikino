@@ -27,6 +27,9 @@ var goHandledPaths = []string{
 	"/health",                          // ヘルスチェックエンドポイント
 	"/manifest.json",                   // Web App Manifest
 	"/sign_in",                         // ログインページ・処理
+	"/sign_up",                         // サインアップページ
+	"/email_confirmation",              // メール確認コード送信・検証
+	"/accounts",                        // アカウント作成
 	"/user_session",                    // セッション作成・削除
 	"/sign_in/two_factor/new",          // 2FAコード入力フォーム
 	"/sign_in/two_factor/recovery/new", // リカバリーコード入力フォーム
