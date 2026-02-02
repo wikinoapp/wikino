@@ -607,7 +607,7 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
   - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
 
-- [ ] **6-2**: [Go] 国際化（I18n）メッセージの追加
+- [x] **6-2**: [Go] 国際化（I18n）メッセージの追加
 
   - `internal/i18n/locales/ja.toml` の更新
   - `internal/i18n/locales/en.toml` の更新
