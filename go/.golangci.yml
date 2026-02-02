@@ -199,6 +199,22 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "QueryはPresentation層に依存できません。"
 
+        # Worker層のルール: バックグラウンドジョブ処理（Application層）
+        # Presentation層（Handler等）に依存しない
+        # 例外: templatesへの依存はメールレンダリングのため許可
+        worker-layer:
+          files:
+            - "**/internal/worker/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "WorkerはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "WorkerはPresentation層に依存できません。"
+
     # staticcheck の設定
     staticcheck:
       # 有効化するチェック（デフォルトですべて有効）
