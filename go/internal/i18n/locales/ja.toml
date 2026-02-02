@@ -116,6 +116,103 @@ other = "ログインしました"
 [signed_out_successfully]
 other = "ログアウトしました"
 
+# サインアップ
+[sign_up_title]
+other = "新規登録"
+
+[sign_up_heading]
+other = "Wikinoに新規登録"
+
+[sign_up_email_label]
+other = "メールアドレス"
+
+[sign_up_submit_button]
+other = "確認コードを送信"
+
+[sign_up_have_account]
+other = "アカウントをお持ちの方は"
+
+[sign_up_sign_in]
+other = "ログイン"
+
 # メール確認
 [email_confirmation_subject]
 other = "[Wikino] 確認用コード"
+
+[flash_email_confirmation_sent]
+other = "確認コードを送信しました"
+
+[validation_email_already_registered]
+other = "このメールアドレスは既に登録されています"
+
+[validation_invalid_event]
+other = "無効なイベントタイプです"
+
+[validation_bot_detected]
+other = "しばらくしてからもう一度お試しください"
+
+# メール確認コード入力
+[email_confirmation_edit_title]
+other = "確認コードの入力"
+
+[email_confirmation_edit_heading]
+other = "確認コードを入力"
+
+[email_confirmation_edit_description]
+other = "メールアドレスに送信された6桁の確認コードを入力してください"
+
+[email_confirmation_edit_code_label]
+other = "確認コード"
+
+[email_confirmation_edit_code_hint]
+other = "6文字の英数字を入力してください"
+
+[email_confirmation_edit_submit_button]
+other = "確認する"
+
+[email_confirmation_edit_back_to_sign_up]
+other = "新規登録に戻る"
+
+# メール確認コードバリデーション
+[validation_confirmation_code_invalid_length]
+other = "確認コードは6文字で入力してください"
+
+[validation_confirmation_code_mismatch]
+other = "確認コードが正しくありません"
+
+[validation_confirmation_code_expired]
+other = "確認コードの有効期限が切れています。もう一度お試しください"
+
+[validation_confirmation_not_found]
+other = "確認情報が見つかりません。もう一度お試しください"
+
+# アカウント作成
+[account_new_title]
+other = "アカウント作成"
+
+[account_new_heading]
+other = "アカウントを作成"
+
+[account_new_email_label]
+other = "メールアドレス"
+
+[account_new_email_verified]
+other = "確認済み"
+
+[account_new_atname_label]
+other = "アットネーム"
+
+[account_new_atname_hint]
+other = "英数字とアンダースコアのみ使用できます（最大20文字）"
+
+[account_new_password_label]
+other = "パスワード"
+
+[account_new_password_hint]
+other = "8文字以上で入力してください"
+
+[account_new_submit_button]
+other = "アカウントを作成"
+
+[account_new_back_to_sign_up]
+other = "新規登録に戻る"
