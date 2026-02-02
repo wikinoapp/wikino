@@ -1,0 +1,106 @@
+package email_confirmation
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// EditPageData は確認コード入力ページに渡すデータ構造体です
+type EditPageData struct {
+	CSRFToken  string
+	FormErrors *session.FormErrors
+}
+
+// Edit は確認コード入力ページのコンテンツを表示します
+templ Edit(data EditPageData) {
+	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
+		<div class="text-center">
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
+			</a>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<h1 class="text-center text-3xl font-bold antialiased">
+				{ templates.T(ctx, "email_confirmation_edit_heading") }
+			</h1>
+		</div>
+
+		@components.FormErrors(data.FormErrors)
+
+		<div class="card">
+			<div class="card-body px-4 py-6">
+				<div class="flex flex-col gap-4">
+					<p class="text-muted-foreground">
+						{ templates.T(ctx, "email_confirmation_edit_description") }
+					</p>
+
+					<form
+						action="/email_confirmation"
+						class="form grid gap-6"
+						data-on:submit__passive="$isSubmitting = true"
+						method="POST"
+					>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<input type="hidden" name="_method" value="PATCH"/>
+
+						<div class="grid gap-2">
+							<label for="code">
+								{ templates.T(ctx, "email_confirmation_edit_code_label") }
+							</label>
+
+							<input
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("code") {
+									aria-invalid="true"
+								} else {
+									aria-invalid="false"
+								}
+								autocomplete="one-time-code"
+								autofocus
+								id="code"
+								maxlength="6"
+								name="code"
+								placeholder="ABCD12"
+								required
+								tabindex="1"
+								type="text"
+							/>
+
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "email_confirmation_edit_code_hint") }
+							</p>
+
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("code") {
+								for _, errorMsg := range data.FormErrors.GetFieldErrors("code") {
+									<p class="text-sm text-error">
+										{ errorMsg }
+									</p>
+								}
+							}
+						</div>
+
+						<button
+							class="btn-primary rounded-full w-fit"
+							data-attr:disabled="$isSubmitting == true"
+							tabindex="2"
+							type="submit"
+						>
+							@templates.Icon("arrow-right")
+							{ templates.T(ctx, "email_confirmation_edit_submit_button") }
+						</button>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="text-center">
+			<a href="/sign_up" class="link underline inline-flex items-center gap-1">
+				@templates.Icon("arrow-left", "w-4 h-4")
+				{ templates.T(ctx, "email_confirmation_edit_back_to_sign_up") }
+			</a>
+		</div>
+	</div>
+}

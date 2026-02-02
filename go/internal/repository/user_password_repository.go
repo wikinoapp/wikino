@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -19,6 +20,11 @@ func NewUserPasswordRepository(q *query.Queries) *UserPasswordRepository {
 	return &UserPasswordRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *UserPasswordRepository) WithTx(tx *sql.Tx) *UserPasswordRepository {
+	return &UserPasswordRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByUserID はユーザーIDでパスワード情報を取得する
 func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID string) (*model.UserPassword, error) {
 	row, err := r.q.GetUserPasswordByUserID(ctx, userID)
@@ -26,6 +32,27 @@ func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID string
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// CreateUserPasswordInput はユーザーパスワード作成の入力パラメータ
+type CreateUserPasswordInput struct {
+	UserID         string
+	PasswordDigest string
+}
+
+// Create は新しいユーザーパスワードを作成する
+func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPasswordInput) (*model.UserPassword, error) {
+	now := time.Now()
+	row, err := r.q.CreateUserPassword(ctx, query.CreateUserPasswordParams{
+		UserID:         input.UserID,
+		PasswordDigest: input.PasswordDigest,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
+	if err != nil {
 		return nil, err
 	}
 	return r.toModel(row), nil

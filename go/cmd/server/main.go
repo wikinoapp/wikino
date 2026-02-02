@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,9 +29,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// 設定を読み込む
 	cfg, err := config.Load()
 	if err != nil {
@@ -52,6 +59,26 @@ func main() {
 
 	// クエリを初期化
 	queries := query.New(db)
+
+	// River クライアントを初期化（バックグラウンドジョブ用）
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg)
+	if err != nil {
+		slog.Error("River クライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stopCancel()
+		if err := riverClient.Stop(stopCtx); err != nil {
+			slog.Error("River クライアントの停止に失敗しました", "error", err)
+		}
+	}()
+
+	// River クライアントを起動
+	if err := riverClient.Start(ctx); err != nil {
+		slog.Error("River クライアントの起動に失敗しました", "error", err)
+		os.Exit(1)
+	}
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
@@ -170,8 +197,27 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if err := srv.ListenAndServe(); err != nil {
+	// グレースフルシャットダウン
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		slog.Info("シャットダウンシグナルを受信しました")
+		cancel()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			slog.Error("サーバーのシャットダウンに失敗しました", "error", err)
+		}
+	}()
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("サーバーの起動に失敗しました", "error", err)
 		os.Exit(1)
 	}
+
+	slog.Info("サーバーを停止しました")
 }

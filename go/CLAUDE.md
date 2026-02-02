@@ -54,6 +54,7 @@ cat /workspace/rails/app/models/work.rb
   - sqlc: SQL クエリからタイプセーフな Go コードを生成
   - templ: 型安全な HTML テンプレートエンジン
   - resend-go/v2: メール送信ライブラリ（Resend API）
+  - river: バックグラウンドジョブキュー（PostgreSQL ベース）
 - PostgreSQL 17.0
 - Cloudflare Turnstile: Bot 対策サービス（ログイン・サインアップフォームなど）
 - pnpm
@@ -75,6 +76,7 @@ cat /workspace/rails/app/models/work.rb
 ┌─────────────────────────────────────────────────────────┐
 │ Application層                                           │
 │ - UseCase（ビジネスフロー、トランザクション管理）           │
+│ - Worker（バックグラウンドジョブ、非同期処理）             │
 └─────────────────────────────────────────────────────────┘
          ↓ 依存
 ┌─────────────────────────────────────────────────────────┐
@@ -91,6 +93,7 @@ cat /workspace/rails/app/models/work.rb
 - **internal/templates**: templ テンプレート（Presentation 層）
 - **internal/viewmodel**: プレゼンテーション層のデータ変換（Presentation 層）
 - **internal/usecase**: ビジネスロジック層（Application 層）
+- **internal/worker**: バックグラウンドジョブ処理（Application 層）
 - **internal/query**: sqlc 生成コード（Domain/Infrastructure 層）
 - **internal/repository**: Repository 層（Domain/Infrastructure 層）
 - **internal/model**: ドメインモデル（Domain/Infrastructure 層）
@@ -98,20 +101,26 @@ cat /workspace/rails/app/models/work.rb
 - **internal/i18n**: 国際化
 - **internal/image**: 画像 URL 生成
 - **internal/session**: セッション管理
+- **internal/email**: メール送信
 
 ### 重要な設計原則
 
 - **依存の方向**: Presentation 層 → Application 層 → Domain/Infrastructure 層
-- **Query への依存は Repository のみ**: Handler/UseCase が Query に直接依存することは禁止
+- **Query への依存は Repository のみ**: Handler/UseCase/Worker が Query に直接依存することは禁止
 - **Model と Repository は 1:1 の関係**: 各ドメインエンティティに対応する Repository を作成
 - **Domain/Infrastructure 層の統合**: データベース変更はほぼ起こらないため、シンプルさを優先
+- **Worker の templates 依存**: Worker は Application 層だが、メールレンダリングのため templates への依存を例外として許可
 
-### UsecaseとRepositoryの使い分け
+### Usecase、Worker、Repositoryの使い分け
 
 - **Usecase**: トランザクションを伴う永続化処理（作成・更新・削除）、複数Repositoryを跨ぐ操作
+- **Worker**: バックグラウンドで実行する非同期処理（メール送信、定期実行処理など）
 - **Repository**: 読み取り専用の処理、単一エンティティの操作、トランザクション不要な処理
 
-**判断基準**: 読み取り専用の処理はRepositoryで完結させ、Usecaseを作成しない。
+**判断基準**:
+
+- 読み取り専用の処理はRepositoryで完結させ、Usecaseを作成しない
+- 非同期で実行すべき処理（メール送信など）はWorkerで実行し、UsecaseはジョブをエンキューするのみとYAGNIする
 
 📖 **詳細なアーキテクチャについては [@go/docs/architecture-guide.md](docs/architecture-guide.md) を参照してください。**
 
@@ -854,7 +863,7 @@ r.Delete("/posts/{id}", h.DeletePost)
 
 📖 **[@go/docs/i18n-guide.md](docs/i18n-guide.md)** - 国際化（I18n）ガイド
 
-### ビューモデル・ユースケース
+### ビューモデル・ユースケース・ワーカー
 
 Go 版 Wikino では、関心の分離を意識したアーキテクチャを採用しています。
 
@@ -874,8 +883,80 @@ Go 版 Wikino では、関心の分離を意識したアーキテクチャを採
 - **責務**: トランザクション管理、複数リポジトリを跨ぐ処理
 - **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Usecase`
 - **単一責任**: 各 Usecase は **`Execute` メソッドのみ** を公開する（1 Usecase = 1 操作）
+- **トランザクション管理**: Repository の `WithTx` メソッドを使用してトランザクション内で操作する
 
 **重要**: 1 つの Usecase に複数の公開メソッド（`Execute`, `ExecuteDelete` など）を持たせないでください。異なる操作が必要な場合は、別の Usecase として分離します。
+
+#### ワーカー（Worker）
+
+バックグラウンドジョブを処理します。River（PostgreSQL ベースのジョブキュー）を使用します。
+
+- **配置**: `internal/worker`
+- **責務**: 非同期処理（メール送信、定期実行処理など）
+- **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Worker`
+- **ジョブ引数**: `{Action}{Entity}Args` 構造体で定義
+
+**Worker の依存関係**:
+
+- Worker は **UseCase を呼び出し可能**（定期実行処理などで永続化が必要な場合）
+- Worker は **templates に依存可能**（メールレンダリングのため、例外として許可）
+- Worker は **Presentation 層（Handler, Middleware, ViewModel）に依存不可**
+
+```go
+// ワーカーの実装例
+type SendEmailConfirmationArgs struct {
+    Email      string `json:"email"`
+    Code       string `json:"code"`
+    Subject    string `json:"subject"`
+    IsJapanese bool   `json:"is_japanese"`
+}
+
+func (SendEmailConfirmationArgs) Kind() string {
+    return "send_email_confirmation"
+}
+
+type SendEmailConfirmationWorker struct {
+    river.WorkerDefaults[SendEmailConfirmationArgs]
+    confirmationSender *email.ConfirmationSender
+}
+
+func (w *SendEmailConfirmationWorker) Work(ctx context.Context, job *river.Job[SendEmailConfirmationArgs]) error {
+    // ジョブの処理
+    return w.confirmationSender.Send(ctx, email.ConfirmationEmailInput{...})
+}
+```
+
+**トランザクション管理**: Usecase でトランザクションを使用する場合、Repository をコンストラクタで受け取り、Execute 内で `WithTx(tx)` を呼び出します：
+
+```go
+// ✅ 良い例: Repository の WithTx パターン
+type CreateAccountUsecase struct {
+    db       *sql.DB
+    userRepo *repository.UserRepository
+}
+
+func NewCreateAccountUsecase(db *sql.DB, userRepo *repository.UserRepository) *CreateAccountUsecase {
+    return &CreateAccountUsecase{db: db, userRepo: userRepo}
+}
+
+func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
+    tx, err := uc.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer func() { _ = tx.Rollback() }()
+
+    // トランザクション内で操作するためのリポジトリを取得
+    userRepo := uc.userRepo.WithTx(tx)
+
+    // userRepo を使用して操作...
+
+    if err := tx.Commit(); err != nil {
+        return nil, err
+    }
+    return &CreateAccountOutput{}, nil
+}
+```
 
 ```go
 // ✅ 良い例: 各Usecaseが単一のExecuteメソッドを持つ

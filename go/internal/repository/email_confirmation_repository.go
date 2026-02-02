@@ -20,6 +20,11 @@ func NewEmailConfirmationRepository(q *query.Queries) *EmailConfirmationReposito
 	return &EmailConfirmationRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *EmailConfirmationRepository) WithTx(tx *sql.Tx) *EmailConfirmationRepository {
+	return &EmailConfirmationRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByID はIDでメール確認情報を取得する
 func (r *EmailConfirmationRepository) FindByID(ctx context.Context, id string) (*model.EmailConfirmation, error) {
 	row, err := r.q.GetEmailConfirmationByID(ctx, id)

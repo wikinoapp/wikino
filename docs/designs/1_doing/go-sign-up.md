@@ -536,7 +536,7 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
   - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
 
-- [ ] **2-3**: [Go] CreateAccountUsecase の実装
+- [x] **2-3**: [Go] CreateAccountUsecase の実装
 
   - `internal/usecase/create_account.go` の作成
   - ユーザー作成ロジック（トランザクション管理）
@@ -546,7 +546,7 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 3: サインアップフォームの実装
 
-- [ ] **3-1**: [Go] サインアップフォームハンドラーの実装
+- [x] **3-1**: [Go] サインアップフォームハンドラーの実装
 
   - `internal/handler/sign_up/handler.go` の作成
   - `internal/handler/sign_up/new.go` の作成
@@ -556,7 +556,7 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 4: メール確認機能の実装
 
-- [ ] **4-1**: [Go] メール確認コード送信ハンドラーの実装
+- [x] **4-1**: [Go] メール確認コード送信ハンドラーの実装
 
   - `internal/handler/email_confirmation/handler.go` の作成
   - `internal/handler/email_confirmation/create.go` の作成
@@ -565,14 +565,14 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 6 ファイル（実装 4 + テスト 2）
   - **想定行数**: 約 500 行（実装 250 行 + テスト 250 行）
 
-- [ ] **4-2**: [Go] 確認コード入力フォームハンドラーの実装
+- [x] **4-2**: [Go] 確認コード入力フォームハンドラーの実装
 
   - `internal/handler/email_confirmation/edit.go` の作成
   - `internal/templates/pages/email_confirmation/edit.templ` の作成
   - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
   - **想定行数**: 約 250 行（実装 100 行 + テスト 150 行）
 
-- [ ] **4-3**: [Go] 確認コード検証ハンドラーの実装
+- [x] **4-3**: [Go] 確認コード検証ハンドラーの実装
 
   - `internal/handler/email_confirmation/update.go` の作成
   - `internal/handler/email_confirmation/request.go` の更新（UpdateRequest 追加）
@@ -581,7 +581,7 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 5: アカウント作成機能の実装
 
-- [ ] **5-1**: [Go] アカウント作成フォームハンドラーの実装
+- [x] **5-1**: [Go] アカウント作成フォームハンドラーの実装
 
   - `internal/handler/account/handler.go` の作成
   - `internal/handler/account/new.go` の作成
@@ -614,6 +614,27 @@ func ValidateAtname(atname string) error {
   - サインアップ関連のすべてのメッセージを追加
   - **想定ファイル数**: 約 2 ファイル（実装 2 + テスト 0）
   - **想定行数**: 約 100 行（実装 100 行 + テスト 0 行）
+
+### フェーズ 7: Rate Limiting の実装（後日対応）
+
+- [ ] **7-1**: [Go] PostgreSQL ベースの Rate Limiter の実装
+
+  - `internal/ratelimit/limiter.go` の作成
+  - `db/migrations/XXXXXX_create_rate_limits.sql` の作成
+  - `db/queries/rate_limits.sql` の作成
+  - PostgreSQL の UPSERT を使用したアトミックなカウント更新
+  - 古いレコードの定期削除（River ジョブまたはアプリ起動時）
+  - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
+  - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
+  - **備考**: Redis を使わず PostgreSQL で実装し、依存関係をシンプルに保つ
+
+- [ ] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
+
+  - `internal/handler/email_confirmation/create.go` の更新
+  - IP 単位: 5 回/時間
+  - メールアドレス単位: 3 回/時間
+  - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
+  - **想定行数**: 約 100 行（実装 30 行 + テスト 70 行）
 
 ### 実装しない機能（スコープ外）
 

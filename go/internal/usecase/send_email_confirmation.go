@@ -2,43 +2,41 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/email"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/templates/emails"
+	"github.com/wikinoapp/wikino/go/internal/worker"
 )
+
+// EmailConfirmationEnqueuer はメール確認送信ジョブをエンキューするインターフェース
+type EmailConfirmationEnqueuer interface {
+	EnqueueEmailConfirmation(ctx context.Context, input worker.EnqueueEmailConfirmationInput) error
+}
 
 // SendEmailConfirmationUsecase はメール確認コード送信ユースケース
 type SendEmailConfirmationUsecase struct {
 	cfg                   *config.Config
 	emailConfirmationRepo *repository.EmailConfirmationRepository
-	emailClient           EmailSender
-}
-
-// EmailSender はメール送信のインターフェース
-type EmailSender interface {
-	Send(ctx context.Context, input email.SendInput) error
+	enqueuer              EmailConfirmationEnqueuer
 }
 
 // NewSendEmailConfirmationUsecase は SendEmailConfirmationUsecase を生成する
 func NewSendEmailConfirmationUsecase(
 	cfg *config.Config,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
-	emailClient EmailSender,
+	enqueuer EmailConfirmationEnqueuer,
 ) *SendEmailConfirmationUsecase {
 	return &SendEmailConfirmationUsecase{
 		cfg:                   cfg,
 		emailConfirmationRepo: emailConfirmationRepo,
-		emailClient:           emailClient,
+		enqueuer:              enqueuer,
 	}
 }
 
@@ -54,7 +52,7 @@ type SendEmailConfirmationOutput struct {
 	EmailConfirmationID string
 }
 
-// Execute はメール確認コードを生成して送信する
+// Execute はメール確認コードを生成してメール送信ジョブをエンキューする
 func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendEmailConfirmationInput) (*SendEmailConfirmationOutput, error) {
 	// 確認コードを生成
 	code, err := generateConfirmationCode()
@@ -74,42 +72,23 @@ func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendE
 		return nil, fmt.Errorf("メール確認情報の作成に失敗しました: %w", err)
 	}
 
-	// メールを送信
-	if err := uc.sendConfirmationEmail(ctx, input.Email, code, input.Locale); err != nil {
-		return nil, fmt.Errorf("確認メールの送信に失敗しました: %w", err)
+	// メール送信ジョブをエンキュー
+	if err := uc.enqueuer.EnqueueEmailConfirmation(ctx, worker.EnqueueEmailConfirmationInput{
+		Email:  input.Email,
+		Code:   code,
+		AppURL: uc.cfg.AppURL(),
+		Locale: input.Locale,
+	}); err != nil {
+		// ジョブエンキューに失敗してもコードは有効なので、エラーログを出力して続行
+		slog.ErrorContext(ctx, "メール送信ジョブのエンキューに失敗しました",
+			"email", input.Email,
+			"error", err,
+		)
 	}
 
 	return &SendEmailConfirmationOutput{
 		EmailConfirmationID: confirmation.ID,
 	}, nil
-}
-
-// sendConfirmationEmail は確認メールを送信する
-func (uc *SendEmailConfirmationUsecase) sendConfirmationEmail(ctx context.Context, toEmail, code, locale string) error {
-	isJapanese := locale == "ja"
-
-	// メール本文をレンダリング
-	data := emails.EmailConfirmationData{
-		Email:      toEmail,
-		Code:       code,
-		AppURL:     uc.cfg.AppURL(),
-		IsJapanese: isJapanese,
-	}
-
-	var buf bytes.Buffer
-	if err := emails.EmailConfirmation(data).Render(ctx, &buf); err != nil {
-		return fmt.Errorf("メールテンプレートのレンダリングに失敗しました: %w", err)
-	}
-
-	// メール件名を取得
-	subject := i18n.T(ctx, "email_confirmation_subject")
-
-	// メールを送信
-	return uc.emailClient.Send(ctx, email.SendInput{
-		To:      toEmail,
-		Subject: subject,
-		HTML:    buf.String(),
-	})
 }
 
 // generateConfirmationCode は6文字のランダムな大文字英数字を生成する

@@ -49,6 +49,7 @@ type Config struct {
 	// Resend（メール送信）
 	ResendAPIKey    string
 	ResendFromEmail string
+	ResendFromName  string
 }
 
 // Load は環境変数から設定を読み込みます
@@ -128,6 +129,7 @@ func Load() (*Config, error) {
 	// Resend（メール送信）設定（オプショナル - テスト環境ではモックを使用）
 	cfg.ResendAPIKey = os.Getenv("WIKINO_RESEND_API_KEY")
 	cfg.ResendFromEmail = os.Getenv("WIKINO_RESEND_FROM_EMAIL")
+	cfg.ResendFromName = os.Getenv("WIKINO_RESEND_FROM_NAME")
 
 	return cfg, nil
 }

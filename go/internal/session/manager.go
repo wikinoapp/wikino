@@ -19,6 +19,9 @@ const CookieName = "user_session_tokens"
 // PendingUserCookieName は2FA認証待ちユーザーIDを格納するCookieのキー名
 const PendingUserCookieName = "pending_user_id"
 
+// EmailConfirmationCookieName はメール確認IDを格納するCookieのキー名
+const EmailConfirmationCookieName = "email_confirmation_id"
+
 // Manager はセッション管理を行う構造体
 type Manager struct {
 	userRepo        *repository.UserRepository
@@ -143,6 +146,46 @@ func (m *Manager) GetPendingUserID(r *http.Request) string {
 func (m *Manager) DeletePendingUserCookie(w http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     PendingUserCookieName,
+		Value:    "",
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	}
+	http.SetCookie(w, cookie)
+}
+
+// SetEmailConfirmationCookie はメール確認IDをCookieに設定する
+func (m *Manager) SetEmailConfirmationCookie(w http.ResponseWriter, emailConfirmationID string) {
+	cookie := &http.Cookie{
+		Name:     EmailConfirmationCookieName,
+		Value:    emailConfirmationID,
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		// 確認コードの有効期限に合わせて15分間有効
+		MaxAge: 15 * 60,
+	}
+	http.SetCookie(w, cookie)
+}
+
+// GetEmailConfirmationID はCookieからメール確認IDを取得する
+func (m *Manager) GetEmailConfirmationID(r *http.Request) string {
+	cookie, err := r.Cookie(EmailConfirmationCookieName)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
+}
+
+// DeleteEmailConfirmationCookie はメール確認IDのCookieを削除する
+func (m *Manager) DeleteEmailConfirmationCookie(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:     EmailConfirmationCookieName,
 		Value:    "",
 		Path:     "/",
 		Domain:   m.cfg.CookieDomain,
