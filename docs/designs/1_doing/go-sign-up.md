@@ -589,7 +589,7 @@ func ValidateAtname(atname string) error {
   - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
   - **想定行数**: 約 300 行（実装 180 行 + テスト 120 行）
 
-- [ ] **5-2**: [Go] アカウント作成ハンドラーの実装
+- [x] **5-2**: [Go] アカウント作成ハンドラーの実装
 
   - `internal/handler/account/create.go` の作成
   - `internal/handler/account/request.go` の作成

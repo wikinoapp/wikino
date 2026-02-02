@@ -216,3 +216,26 @@ other = "アカウントを作成"
 
 [account_new_back_to_sign_up]
 other = "新規登録に戻る"
+
+# アカウント作成バリデーション
+[validation_atname_required]
+other = "アットネームを入力してください"
+
+[validation_atname_too_long]
+other = "アットネームは20文字以内で入力してください"
+
+[validation_atname_invalid_format]
+other = "アットネームは英数字とアンダースコアのみ使用できます"
+
+[validation_atname_already_taken]
+other = "このアットネームは既に使用されています"
+
+[validation_password_required]
+other = "パスワードを入力してください"
+
+[validation_password_too_short]
+other = "パスワードは8文字以上で入力してください"
+
+# アカウント作成成功
+[flash_account_created]
+other = "アカウントを作成しました"
