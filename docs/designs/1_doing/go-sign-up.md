@@ -628,7 +628,7 @@ func ValidateAtname(atname string) error {
   - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
   - **備考**: Redis を使わず PostgreSQL で実装し、依存関係をシンプルに保つ
 
-- [ ] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
+- [x] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
 
   - `internal/handler/email_confirmation/create.go` の更新
   - IP 単位: 5 回/時間
