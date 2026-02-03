@@ -145,12 +145,12 @@ func TestCreate_Success(t *testing.T) {
 	if !inserter.called {
 		t.Error("Insert was not called")
 	}
-	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
 	}
-	if emailArgs.To != "newuser@example.com" {
-		t.Errorf("enqueued email = %s, want newuser@example.com", emailArgs.To)
+	if emailArgs.Email != "newuser@example.com" {
+		t.Errorf("enqueued email = %s, want newuser@example.com", emailArgs.Email)
 	}
 }
 

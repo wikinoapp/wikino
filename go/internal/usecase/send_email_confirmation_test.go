@@ -81,23 +81,22 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 		t.Error("Insert が呼ばれていません")
 	}
 
-	// SendEmailArgs の検証
-	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	// SendEmailConfirmationArgs の検証
+	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
 	}
-	if emailArgs.To != "test@example.com" {
-		t.Errorf("To = %s, want test@example.com", emailArgs.To)
+	if emailArgs.Email != "test@example.com" {
+		t.Errorf("Email = %s, want test@example.com", emailArgs.Email)
 	}
-	if emailArgs.HTMLBody == "" {
-		t.Error("HTMLBody が空です")
+	if emailArgs.Code != confirmation.Code {
+		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
 	}
-	if emailArgs.TextBody == "" {
-		t.Error("TextBody が空です")
+	if emailArgs.Locale != "ja" {
+		t.Errorf("Locale = %s, want ja", emailArgs.Locale)
 	}
-	// 日本語テンプレートが使用されていることを確認
-	if !contains(emailArgs.HTMLBody, "確認用コード") {
-		t.Error("HTMLBody に日本語テンプレートが使用されていません")
+	if emailArgs.AppURL == "" {
+		t.Error("AppURL が空です")
 	}
 }
 
@@ -149,17 +148,19 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 		t.Error("Insert が呼ばれていません")
 	}
 
-	// SendEmailArgs の検証（英語テンプレート）
-	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	// SendEmailConfirmationArgs の検証（英語）
+	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
 	}
-	if emailArgs.To != "english@example.com" {
-		t.Errorf("To = %s, want english@example.com", emailArgs.To)
+	if emailArgs.Email != "english@example.com" {
+		t.Errorf("Email = %s, want english@example.com", emailArgs.Email)
 	}
-	// 英語テンプレートが使用されていることを確認
-	if !contains(emailArgs.HTMLBody, "confirmation code") {
-		t.Error("HTMLBody に英語テンプレートが使用されていません")
+	if emailArgs.Code != confirmation.Code {
+		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
+	}
+	if emailArgs.Locale != "en" {
+		t.Errorf("Locale = %s, want en", emailArgs.Locale)
 	}
 }
 
