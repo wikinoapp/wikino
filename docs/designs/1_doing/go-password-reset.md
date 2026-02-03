@@ -56,7 +56,7 @@ Go 版 Wikino にパスワードリセット機能を実装します。ユーザ
 - **DB アクセス**: `sqlc`
 - **Bot 対策**: Cloudflare Turnstile
 - **メール送信**: `resend-go/v2`（Resend API）
-- **Rate Limiting**: Redis（`go-redis/redis/v9`）
+- **Rate Limiting**: PostgreSQL（スライディングウィンドウ方式、実装済み）
 
 ### データベース設計
 
@@ -415,14 +415,13 @@ func HashToken(token string) string {
 
 ### フェーズ 8: パスワードリセット機能の実装
 
-- [ ] **8-1**: Rate Limiting の実装
+- [x] **8-1**: Rate Limiting の実装（実装済み）
 
-  - `internal/ratelimit/limiter.go`
-  - Redis ベースの Rate Limiting（`go-redis/redis/v9`）
-  - IP 単位・メールアドレス単位のレート制限
-  - **参考ファイル**: `/annict/go/internal/ratelimit/limiter.go`
-  - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
-  - **想定行数**: 約 150 行（実装 60 行 + テスト 90 行）
+  - `internal/ratelimit/limiter.go` - PostgreSQL ベースのスライディングウィンドウ方式
+  - `db/migrations/20260202160000_create_rate_limits.sql` - マイグレーション
+  - `db/queries/rate_limits.sql` - sqlc クエリ定義
+  - IP 単位・メールアドレス単位のレート制限に対応
+  - **実装済みファイル**: `/workspace/go/internal/ratelimit/limiter.go`
 
 - [ ] **8-2**: パスワードリセットトークンのユーティリティ実装
 
@@ -526,4 +525,3 @@ func HashToken(token string) string {
 - **Rails 版 Wikino パスワードリセット実装**: `/workspace/rails/app/controllers/password_resets/`, `/workspace/rails/app/controllers/passwords/`
 - **Go CLAUDE.md**: `/workspace/go/CLAUDE.md`
 - [Resend API](https://resend.com/docs)
-- [go-redis](https://github.com/redis/go-redis)
