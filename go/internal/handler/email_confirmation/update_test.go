@@ -1,6 +1,7 @@
 package email_confirmation_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -8,16 +9,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
+
+// mockInserterForUpdate はテスト用のモック inserter
+type mockInserterForUpdate struct{}
+
+func (m *mockInserterForUpdate) Insert(_ context.Context, _ river.JobArgs) (*rivertype.JobInsertResult, error) {
+	return &rivertype.JobInsertResult{}, nil
+}
 
 func TestUpdate_Success(t *testing.T) {
 	t.Parallel()
@@ -49,9 +61,9 @@ func TestUpdate_Success(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -60,15 +72,20 @@ func TestUpdate_Success(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// フォームデータを作成
@@ -138,9 +155,9 @@ func TestUpdate_NoSession(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -149,15 +166,20 @@ func TestUpdate_NoSession(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// フォームデータを作成（Cookieなし）
@@ -217,9 +239,9 @@ func TestUpdate_EmptyCode(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -228,15 +250,20 @@ func TestUpdate_EmptyCode(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 空のコードでリクエスト
@@ -303,9 +330,9 @@ func TestUpdate_InvalidCodeLength(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -314,15 +341,20 @@ func TestUpdate_InvalidCodeLength(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 6文字未満のコードでリクエスト
@@ -389,9 +421,9 @@ func TestUpdate_CodeMismatch(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -400,15 +432,20 @@ func TestUpdate_CodeMismatch(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 間違ったコードでリクエスト
@@ -476,9 +513,9 @@ func TestUpdate_Expired(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -487,15 +524,20 @@ func TestUpdate_Expired(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// リクエスト
@@ -562,9 +604,9 @@ func TestUpdate_CaseInsensitiveCode(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -573,15 +615,20 @@ func TestUpdate_CaseInsensitiveCode(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 小文字でリクエスト
@@ -648,9 +695,9 @@ func TestUpdate_AlreadySucceeded(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	inserter := &mockInserterForUpdate{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -659,15 +706,20 @@ func TestUpdate_AlreadySucceeded(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// リクエスト

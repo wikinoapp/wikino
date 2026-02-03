@@ -92,6 +92,7 @@ func TestNew(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -198,6 +199,7 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -266,6 +268,7 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -352,6 +355,7 @@ func TestNew_EmailNotVerified(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -444,6 +448,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)

@@ -5,12 +5,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	emailconfirmationpages "github.com/wikinoapp/wikino/go/internal/templates/pages/email_confirmation"
-	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -37,42 +35,47 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// リクエストのバリデーション
-	req := NewUpdateRequest(code)
-	if formErrors := req.Validate(ctx); formErrors != nil {
-		h.renderEditForm(w, r, formErrors, csrfToken)
-		return
-	}
-
-	// 確認コードを検証
-	err := h.verifyEmailConfirmationUC.Execute(ctx, usecase.VerifyEmailConfirmationInput{
+	// バリデーション（形式チェック + 状態チェック）
+	result := h.updateValidator.Validate(ctx, UpdateValidatorInput{
 		EmailConfirmationID: emailConfirmationID,
 		Code:                code,
 	})
-	if err != nil {
-		formErrors := session.NewFormErrors()
 
+	// 形式バリデーションエラー（Err が nil でも FormErrors がある場合）
+	if result.FormErrors != nil && result.Err == nil {
+		h.renderEditForm(w, r, result.FormErrors, csrfToken)
+		return
+	}
+
+	if result.Err != nil {
 		switch {
-		case errors.Is(err, usecase.ErrEmailConfirmationNotFound):
+		case errors.Is(result.Err, ErrEmailConfirmationNotFound):
 			slog.WarnContext(ctx, "メール確認情報が見つからない", "email_confirmation_id", emailConfirmationID)
-			formErrors.AddGlobal(i18n.T(ctx, "validation_confirmation_not_found"))
-		case errors.Is(err, usecase.ErrEmailConfirmationAlreadySucceeded):
+			h.renderEditForm(w, r, result.FormErrors, csrfToken)
+			return
+		case errors.Is(result.Err, ErrEmailConfirmationAlreadySucceeded):
 			slog.WarnContext(ctx, "既に確認済み", "email_confirmation_id", emailConfirmationID)
 			http.Redirect(w, r, "/accounts/new", http.StatusFound)
 			return
-		case errors.Is(err, usecase.ErrEmailConfirmationExpired):
+		case errors.Is(result.Err, ErrEmailConfirmationExpired):
 			slog.WarnContext(ctx, "確認コードの有効期限切れ", "email_confirmation_id", emailConfirmationID)
-			formErrors.AddGlobal(i18n.T(ctx, "validation_confirmation_code_expired"))
-		case errors.Is(err, usecase.ErrEmailConfirmationCodeMismatch):
+			h.renderEditForm(w, r, result.FormErrors, csrfToken)
+			return
+		case errors.Is(result.Err, ErrEmailConfirmationCodeMismatch):
 			slog.WarnContext(ctx, "確認コードが一致しない", "email_confirmation_id", emailConfirmationID)
-			formErrors.AddField("code", i18n.T(ctx, "validation_confirmation_code_mismatch"))
+			h.renderEditForm(w, r, result.FormErrors, csrfToken)
+			return
 		default:
-			slog.ErrorContext(ctx, "確認コード検証でエラー", "error", err, "email_confirmation_id", emailConfirmationID)
+			slog.ErrorContext(ctx, "状態バリデーションでエラー", "error", result.Err, "email_confirmation_id", emailConfirmationID)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	}
 
-		h.renderEditForm(w, r, formErrors, csrfToken)
+	// メール確認を完了状態に更新
+	if err := h.markEmailAsConfirmedUC.Execute(ctx, emailConfirmationID); err != nil {
+		slog.ErrorContext(ctx, "メール確認の更新に失敗", "error", err, "email_confirmation_id", emailConfirmationID)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

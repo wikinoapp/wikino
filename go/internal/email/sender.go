@@ -16,6 +16,8 @@ import (
 type Sender interface {
 	// Send はメールを送信する
 	Send(ctx context.Context, input SendInput) error
+	// SendRaw はレンダリング済みの文字列でメールを送信する
+	SendRaw(ctx context.Context, input SendRawInput) error
 }
 
 // SendInput はメール送信の入力
@@ -24,6 +26,14 @@ type SendInput struct {
 	Subject  string          // 件名
 	HTMLBody templ.Component // メール本文（HTML形式）
 	TextBody templ.Component // メール本文（テキスト形式、nilの場合はHTMLのみ）
+}
+
+// SendRawInput はレンダリング済み文字列でのメール送信の入力
+type SendRawInput struct {
+	To       string // 送信先メールアドレス
+	Subject  string // 件名
+	HTMLBody string // メール本文（HTML形式、レンダリング済み）
+	TextBody string // メール本文（テキスト形式、空の場合はHTMLのみ）
 }
 
 // ResendSender はResend APIを使用してメールを送信する
@@ -87,16 +97,40 @@ func (s *ResendSender) Send(ctx context.Context, input SendInput) error {
 	return nil
 }
 
+// SendRaw はレンダリング済みの文字列でメールを送信する
+func (s *ResendSender) SendRaw(ctx context.Context, input SendRawInput) error {
+	params := &resend.SendEmailRequest{
+		From:    s.from(),
+		To:      []string{input.To},
+		Subject: input.Subject,
+		Html:    input.HTMLBody,
+	}
+
+	if input.TextBody != "" {
+		params.Text = input.TextBody
+	}
+
+	_, err := s.client.Emails.SendWithContext(ctx, params)
+	if err != nil {
+		return fmt.Errorf("メール送信に失敗しました: %w", err)
+	}
+
+	return nil
+}
+
 // NoopSender はメールを送信しないダミー実装（テスト用）
 type NoopSender struct {
 	// SentEmails は送信されたメールを記録する（テスト用）
 	SentEmails []SendInput
+	// SentRawEmails はレンダリング済みメールを記録する（テスト用）
+	SentRawEmails []SendRawInput
 }
 
 // NewNoopSender は新しいNoopSenderを作成する
 func NewNoopSender() *NoopSender {
 	return &NoopSender{
-		SentEmails: make([]SendInput, 0),
+		SentEmails:    make([]SendInput, 0),
+		SentRawEmails: make([]SendRawInput, 0),
 	}
 }
 
@@ -106,7 +140,14 @@ func (s *NoopSender) Send(_ context.Context, input SendInput) error {
 	return nil
 }
 
+// SendRaw はレンダリング済みメールを送信せず、記録のみ行う
+func (s *NoopSender) SendRaw(_ context.Context, input SendRawInput) error {
+	s.SentRawEmails = append(s.SentRawEmails, input)
+	return nil
+}
+
 // Reset は送信記録をクリアする
 func (s *NoopSender) Reset() {
 	s.SentEmails = make([]SendInput, 0)
+	s.SentRawEmails = make([]SendRawInput, 0)
 }

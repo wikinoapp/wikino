@@ -8,10 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -29,16 +33,16 @@ func (m *mockTurnstileVerifier) Verify(_ context.Context, _ string) (bool, error
 	return m.valid, m.err
 }
 
-// mockEnqueuer はテスト用のモック enqueuer
-type mockEnqueuer struct {
+// mockInserter はテスト用のモック inserter
+type mockInserter struct {
 	called bool
-	input  worker.EnqueueEmailConfirmationInput
+	args   river.JobArgs
 }
 
-func (m *mockEnqueuer) EnqueueEmailConfirmation(_ context.Context, input worker.EnqueueEmailConfirmationInput) error {
+func (m *mockInserter) Insert(_ context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
 	m.called = true
-	m.input = input
-	return nil
+	m.args = args
+	return &rivertype.JobInsertResult{}, nil
 }
 
 func TestCreate_Success(t *testing.T) {
@@ -66,8 +70,8 @@ func TestCreate_Success(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -76,8 +80,11 @@ func TestCreate_Success(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -85,9 +92,11 @@ func TestCreate_Success(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// フォームデータを作成
@@ -133,11 +142,15 @@ func TestCreate_Success(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !enqueuer.called {
-		t.Error("EnqueueEmailConfirmation was not called")
+	if !inserter.called {
+		t.Error("Insert was not called")
 	}
-	if enqueuer.input.Email != "newuser@example.com" {
-		t.Errorf("enqueued email = %s, want newuser@example.com", enqueuer.input.Email)
+	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	if !ok {
+		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
+	}
+	if emailArgs.To != "newuser@example.com" {
+		t.Errorf("enqueued email = %s, want newuser@example.com", emailArgs.To)
 	}
 }
 
@@ -166,8 +179,8 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -176,8 +189,11 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	// モックTurnstileを初期化（常に失敗）
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -185,9 +201,11 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// フォームデータを作成
@@ -222,8 +240,8 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	}
 
 	// エンキューが呼ばれていないことを確認
-	if enqueuer.called {
-		t.Error("EnqueueEmailConfirmation should not be called")
+	if inserter.called {
+		t.Error("Insert should not be called")
 	}
 }
 
@@ -252,8 +270,8 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -262,8 +280,11 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -271,9 +292,11 @@ func TestCreate_InvalidEmail(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 無効なメールアドレスでリクエスト
@@ -331,8 +354,8 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -341,8 +364,11 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -350,9 +376,11 @@ func TestCreate_EmptyEmail(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 空のメールアドレスでリクエスト
@@ -410,8 +438,8 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -420,8 +448,11 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -429,9 +460,11 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// 既に登録済みのメールアドレスでリクエスト
@@ -464,8 +497,8 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	}
 
 	// エンキューが呼ばれていないことを確認
-	if enqueuer.called {
-		t.Error("EnqueueEmailConfirmation should not be called for existing email")
+	if inserter.called {
+		t.Error("Insert should not be called for existing email")
 	}
 }
 
@@ -500,8 +533,8 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuer{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -510,8 +543,11 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// ユースケースを初期化（verifyEmailConfirmationUC）
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -519,9 +555,11 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		mockTurnstile,
+		limiter,
 	)
 
 	// password_reset イベントでは既存のメールアドレスでもOK
@@ -548,7 +586,223 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !enqueuer.called {
-		t.Error("EnqueueEmailConfirmation was not called")
+	if !inserter.called {
+		t.Error("Insert was not called")
+	}
+}
+
+func TestCreate_RateLimitExceeded_IP(t *testing.T) {
+	t.Parallel()
+
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTestDB(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// 設定を作成
+	cfg := &config.Config{
+		Env:                "test",
+		Port:               "8080",
+		Domain:             "localhost",
+		CookieDomain:       "",
+		SessionSecure:      false,
+		SessionHTTPOnly:    true,
+		TurnstileSiteKey:   "",
+		TurnstileSecretKey: "",
+	}
+
+	// リポジトリを初期化
+	userRepo := repository.NewUserRepository(queries)
+	userSessionRepo := repository.NewUserSessionRepository(queries)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+
+	// セッションマネージャーを初期化
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+	// モックTurnstileを初期化（常に成功）
+	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
+
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
+	// ハンドラーを初期化
+	handler := email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		emailConfirmationRepo,
+		sendEmailConfirmationUC,
+		markEmailAsConfirmedUC,
+		mockTurnstile,
+		limiter,
+	)
+
+	// 同じIPから5回リクエスト（制限内）
+	for i := 0; i < 5; i++ {
+		form := url.Values{}
+		form.Set("email", "user"+string(rune('a'+i))+"@example.com")
+		form.Set("event", "signup")
+		form.Set("csrf_token", "test-csrf-token")
+		form.Set("cf-turnstile-response", "test-token")
+
+		req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("X-Forwarded-For", "192.168.1.100")
+
+		ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+		ctx = i18n.SetLocale(ctx, "ja")
+		req = req.WithContext(ctx)
+
+		rr := httptest.NewRecorder()
+		handler.Create(rr, req)
+
+		if rr.Code != http.StatusFound {
+			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+		}
+	}
+
+	// 6回目のリクエストはRate Limitで拒否される
+	form := url.Values{}
+	form.Set("email", "userf@example.com")
+	form.Set("event", "signup")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Set("cf-turnstile-response", "test-token")
+
+	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-Forwarded-For", "192.168.1.100")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = i18n.SetLocale(ctx, "ja")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	// Rate Limit超過時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("6th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	// エラーメッセージが表示されているか確認
+	body := rr.Body.String()
+	if !strings.Contains(body, "リクエストが多すぎます") {
+		t.Error("rate limit exceeded message not found in response")
+	}
+}
+
+func TestCreate_RateLimitExceeded_Email(t *testing.T) {
+	t.Parallel()
+
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTestDB(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// 設定を作成
+	cfg := &config.Config{
+		Env:                "test",
+		Port:               "8080",
+		Domain:             "localhost",
+		CookieDomain:       "",
+		SessionSecure:      false,
+		SessionHTTPOnly:    true,
+		TurnstileSiteKey:   "",
+		TurnstileSecretKey: "",
+	}
+
+	// リポジトリを初期化
+	userRepo := repository.NewUserRepository(queries)
+	userSessionRepo := repository.NewUserSessionRepository(queries)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+
+	// ユースケースを初期化
+	inserter := &mockInserter{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+
+	// セッションマネージャーを初期化
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+
+	// モックTurnstileを初期化（常に成功）
+	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
+
+	// ユースケースを初期化
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
+
+	// ハンドラーを初期化
+	handler := email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		emailConfirmationRepo,
+		sendEmailConfirmationUC,
+		markEmailAsConfirmedUC,
+		mockTurnstile,
+		limiter,
+	)
+
+	// 同じメールアドレスで3回リクエスト（制限内、異なるIPから）
+	for i := 0; i < 3; i++ {
+		form := url.Values{}
+		form.Set("email", "sameuser@example.com")
+		form.Set("event", "signup")
+		form.Set("csrf_token", "test-csrf-token")
+		form.Set("cf-turnstile-response", "test-token")
+
+		req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("X-Forwarded-For", "192.168.1."+string(rune('1'+i)))
+
+		ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+		ctx = i18n.SetLocale(ctx, "ja")
+		req = req.WithContext(ctx)
+
+		rr := httptest.NewRecorder()
+		handler.Create(rr, req)
+
+		if rr.Code != http.StatusFound {
+			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+		}
+	}
+
+	// 4回目のリクエストはRate Limitで拒否される
+	form := url.Values{}
+	form.Set("email", "sameuser@example.com")
+	form.Set("event", "signup")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Set("cf-turnstile-response", "test-token")
+
+	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-Forwarded-For", "192.168.1.99")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = i18n.SetLocale(ctx, "ja")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	// Rate Limit超過時は 422 Unprocessable Entity を返す
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("4th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	// エラーメッセージが表示されているか確認
+	body := rr.Body.String()
+	if !strings.Contains(body, "リクエストが多すぎます") {
+		t.Error("rate limit exceeded message not found in response")
 	}
 }

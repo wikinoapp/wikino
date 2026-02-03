@@ -38,14 +38,16 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
+		consumeRecoveryCodeUC,
 		createUserSessionUC,
 	)
 
@@ -113,14 +115,16 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
+		consumeRecoveryCodeUC,
 		createUserSessionUC,
 	)
 

@@ -11,9 +11,10 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/email"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 )
 
 // Client は River クライアントのラッパー
@@ -53,10 +54,10 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 	// River ワーカーの登録
 	workers := river.NewWorkers()
 
-	// メール確認送信ワーカーを登録
+	// メール送信ワーカーを登録
 	if emailSender != nil {
-		river.AddWorker(workers, NewSendEmailConfirmationWorker(emailSender))
-		slog.InfoContext(ctx, "SendEmailConfirmationWorker を登録しました")
+		river.AddWorker(workers, NewSendEmailWorker(emailSender))
+		slog.InfoContext(ctx, "SendEmailWorker を登録しました")
 	}
 
 	// River クライアントの作成
@@ -99,35 +100,12 @@ func (c *Client) Client() *river.Client[pgx.Tx] {
 	return c.riverClient
 }
 
-// EnqueueEmailConfirmationInput はメール確認送信ジョブのエンキュー入力
-type EnqueueEmailConfirmationInput struct {
-	Email  string
-	Code   string
-	AppURL string
-	Locale string
-}
-
-// EnqueueEmailConfirmation はメール確認送信ジョブをエンキューします
-func (c *Client) EnqueueEmailConfirmation(ctx context.Context, input EnqueueEmailConfirmationInput) error {
-	// メール件名を取得
-	subject := i18n.T(ctx, "email_confirmation_subject")
-
-	_, err := c.riverClient.Insert(ctx, SendEmailConfirmationArgs{
-		Email:   input.Email,
-		Code:    input.Code,
-		AppURL:  input.AppURL,
-		Subject: subject,
-		Locale:  input.Locale,
-	}, &river.InsertOpts{
-		Queue: river.QueueDefault,
-	})
-	if err != nil {
-		return err
+// Insert はジョブをキューに追加します
+func (c *Client) Insert(ctx context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
+	// InsertOpts インターフェースを実装している場合は、そのオプションを使用
+	if optsProvider, ok := args.(interface{ InsertOpts() river.InsertOpts }); ok {
+		opts := optsProvider.InsertOpts()
+		return c.riverClient.Insert(ctx, args, &opts)
 	}
-
-	slog.InfoContext(ctx, "メール確認送信ジョブをエンキューしました",
-		"email", input.Email,
-	)
-
-	return nil
+	return c.riverClient.Insert(ctx, args, nil)
 }

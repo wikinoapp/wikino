@@ -13,7 +13,7 @@ type Handler struct {
 	cfg                 *config.Config
 	sessionMgr          *session.Manager
 	userRepo            *repository.UserRepository
-	verifyTwoFactorUC   *usecase.VerifyTwoFactorUsecase
+	createValidator     *CreateValidator
 	createUserSessionUC *usecase.CreateUserSessionUsecase
 }
 
@@ -22,14 +22,14 @@ func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
 	userRepo *repository.UserRepository,
-	verifyTwoFactorUC *usecase.VerifyTwoFactorUsecase,
+	createValidator *CreateValidator,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:                 cfg,
 		sessionMgr:          sessionMgr,
 		userRepo:            userRepo,
-		verifyTwoFactorUC:   verifyTwoFactorUC,
+		createValidator:     createValidator,
 		createUserSessionUC: createUserSessionUC,
 	}
 }

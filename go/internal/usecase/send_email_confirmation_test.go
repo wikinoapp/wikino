@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -12,16 +15,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// mockEnqueuer はテスト用のモック enqueuer
-type mockEnqueuer struct {
+// mockInserter はテスト用のモック inserter
+type mockInserter struct {
 	called bool
-	input  worker.EnqueueEmailConfirmationInput
+	args   river.JobArgs
 }
 
-func (m *mockEnqueuer) EnqueueEmailConfirmation(_ context.Context, input worker.EnqueueEmailConfirmationInput) error {
+func (m *mockInserter) Insert(_ context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
 	m.called = true
-	m.input = input
-	return nil
+	m.args = args
+	return &rivertype.JobInsertResult{}, nil
 }
 
 func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
@@ -36,8 +39,8 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	enqueuer := &mockEnqueuer{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := SendEmailConfirmationInput{
@@ -74,14 +77,27 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !enqueuer.called {
-		t.Error("EnqueueEmailConfirmation が呼ばれていません")
+	if !inserter.called {
+		t.Error("Insert が呼ばれていません")
 	}
-	if enqueuer.input.Email != "test@example.com" {
-		t.Errorf("enqueued Email = %s, want test@example.com", enqueuer.input.Email)
+
+	// SendEmailArgs の検証
+	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	if !ok {
+		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
 	}
-	if enqueuer.input.Locale != "ja" {
-		t.Errorf("enqueued Locale = %s, want ja", enqueuer.input.Locale)
+	if emailArgs.To != "test@example.com" {
+		t.Errorf("To = %s, want test@example.com", emailArgs.To)
+	}
+	if emailArgs.HTMLBody == "" {
+		t.Error("HTMLBody が空です")
+	}
+	if emailArgs.TextBody == "" {
+		t.Error("TextBody が空です")
+	}
+	// 日本語テンプレートが使用されていることを確認
+	if !contains(emailArgs.HTMLBody, "確認用コード") {
+		t.Error("HTMLBody に日本語テンプレートが使用されていません")
 	}
 }
 
@@ -97,8 +113,8 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	enqueuer := &mockEnqueuer{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "en")
 	input := SendEmailConfirmationInput{
@@ -129,11 +145,21 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !enqueuer.called {
-		t.Error("EnqueueEmailConfirmation が呼ばれていません")
+	if !inserter.called {
+		t.Error("Insert が呼ばれていません")
 	}
-	if enqueuer.input.Locale != "en" {
-		t.Errorf("enqueued Locale = %s, want en", enqueuer.input.Locale)
+
+	// SendEmailArgs の検証（英語テンプレート）
+	emailArgs, ok := inserter.args.(worker.SendEmailArgs)
+	if !ok {
+		t.Fatalf("args の型が SendEmailArgs ではありません: %T", inserter.args)
+	}
+	if emailArgs.To != "english@example.com" {
+		t.Errorf("To = %s, want english@example.com", emailArgs.To)
+	}
+	// 英語テンプレートが使用されていることを確認
+	if !contains(emailArgs.HTMLBody, "confirmation code") {
+		t.Error("HTMLBody に英語テンプレートが使用されていません")
 	}
 }
 
@@ -149,8 +175,8 @@ func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	enqueuer := &mockEnqueuer{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserter{}
+	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := SendEmailConfirmationInput{
@@ -174,8 +200,8 @@ func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !enqueuer.called {
-		t.Error("EnqueueEmailConfirmation が呼ばれていません")
+	if !inserter.called {
+		t.Error("Insert が呼ばれていません")
 	}
 }
 

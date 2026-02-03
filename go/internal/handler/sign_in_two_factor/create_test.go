@@ -39,14 +39,14 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 
@@ -94,14 +94,14 @@ func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 
@@ -163,14 +163,14 @@ func TestCreate_InvalidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 
@@ -232,14 +232,14 @@ func TestCreate_ValidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 

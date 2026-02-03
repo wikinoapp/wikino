@@ -28,6 +28,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
@@ -92,9 +93,9 @@ func main() {
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// セッションマネージャーを初期化
@@ -103,6 +104,9 @@ func main() {
 
 	// Turnstileクライアントを初期化
 	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
+
+	// Rate Limiterを初期化
+	rateLimiter := ratelimit.NewLimiter(queries)
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
@@ -127,18 +131,21 @@ func main() {
 		flashMgr,
 		userSessionRepo,
 	)
+	signInTwoFactorValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		signInTwoFactorValidator,
 		createUserSessionUC,
 	)
+	signInTwoFactorRecoveryValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		signInTwoFactorRecoveryValidator,
+		consumeRecoveryCodeUC,
 		createUserSessionUC,
 	)
 	signUpHandler := sign_up.NewHandler(
@@ -150,15 +157,18 @@ func main() {
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		turnstileClient,
+		rateLimiter,
 	)
 	accountHandler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)

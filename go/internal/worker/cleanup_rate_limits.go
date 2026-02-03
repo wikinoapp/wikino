@@ -21,6 +21,14 @@ func (CleanupRateLimitsArgs) Kind() string {
 	return "cleanup_rate_limits"
 }
 
+// InsertOpts はジョブのInsertオプションを返します
+func (CleanupRateLimitsArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{
+		Queue:       river.QueueDefault,
+		MaxAttempts: 3,
+	}
+}
+
 // CleanupRateLimitsWorker は古いRate Limitレコードを削除するワーカーです
 type CleanupRateLimitsWorker struct {
 	river.WorkerDefaults[CleanupRateLimitsArgs]

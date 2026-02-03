@@ -2,6 +2,7 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -9,34 +10,39 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/templates/emails/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// EmailConfirmationEnqueuer はメール確認送信ジョブをエンキューするインターフェース
-type EmailConfirmationEnqueuer interface {
-	EnqueueEmailConfirmation(ctx context.Context, input worker.EnqueueEmailConfirmationInput) error
+// JobInserter はジョブをキューに追加するインターフェース
+type JobInserter interface {
+	Insert(ctx context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error)
 }
 
 // SendEmailConfirmationUsecase はメール確認コード送信ユースケース
 type SendEmailConfirmationUsecase struct {
 	cfg                   *config.Config
 	emailConfirmationRepo *repository.EmailConfirmationRepository
-	enqueuer              EmailConfirmationEnqueuer
+	inserter              JobInserter
 }
 
 // NewSendEmailConfirmationUsecase は SendEmailConfirmationUsecase を生成する
 func NewSendEmailConfirmationUsecase(
 	cfg *config.Config,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
-	enqueuer EmailConfirmationEnqueuer,
+	inserter JobInserter,
 ) *SendEmailConfirmationUsecase {
 	return &SendEmailConfirmationUsecase{
 		cfg:                   cfg,
 		emailConfirmationRepo: emailConfirmationRepo,
-		enqueuer:              enqueuer,
+		inserter:              inserter,
 	}
 }
 
@@ -72,23 +78,76 @@ func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendE
 		return nil, fmt.Errorf("メール確認情報の作成に失敗しました: %w", err)
 	}
 
-	// メール送信ジョブをエンキュー
-	if err := uc.enqueuer.EnqueueEmailConfirmation(ctx, worker.EnqueueEmailConfirmationInput{
-		Email:  input.Email,
-		Code:   code,
-		AppURL: uc.cfg.AppURL(),
-		Locale: input.Locale,
-	}); err != nil {
+	// テンプレートをレンダリング
+	htmlBody, textBody, err := uc.renderEmailTemplates(ctx, input.Email, code, input.Locale)
+	if err != nil {
+		slog.ErrorContext(ctx, "メールテンプレートのレンダリングに失敗しました",
+			"email", input.Email,
+			"error", err,
+		)
+		// レンダリングに失敗してもコードは有効なので、処理を続行
+		return &SendEmailConfirmationOutput{
+			EmailConfirmationID: confirmation.ID,
+		}, nil
+	}
+
+	// メール件名を取得
+	subject := i18n.T(ctx, "email_confirmation_subject")
+
+	// メール送信ジョブをエンキュー（事前レンダリング済み文字列を渡す）
+	_, err = uc.inserter.Insert(ctx, worker.SendEmailArgs{
+		To:       input.Email,
+		Subject:  subject,
+		HTMLBody: htmlBody,
+		TextBody: textBody,
+	})
+	if err != nil {
 		// ジョブエンキューに失敗してもコードは有効なので、エラーログを出力して続行
 		slog.ErrorContext(ctx, "メール送信ジョブのエンキューに失敗しました",
 			"email", input.Email,
 			"error", err,
+		)
+	} else {
+		slog.InfoContext(ctx, "メール送信ジョブをエンキューしました",
+			"email", input.Email,
 		)
 	}
 
 	return &SendEmailConfirmationOutput{
 		EmailConfirmationID: confirmation.ID,
 	}, nil
+}
+
+// renderEmailTemplates はロケールに基づいてメールテンプレートをレンダリングする
+func (uc *SendEmailConfirmationUsecase) renderEmailTemplates(ctx context.Context, emailAddr, code, locale string) (htmlBody, textBody string, err error) {
+	data := email_confirmation.Data{
+		Email:  emailAddr,
+		Code:   code,
+		AppURL: uc.cfg.AppURL(),
+	}
+
+	// HTMLテンプレートをレンダリング
+	var htmlBuf bytes.Buffer
+	var textBuf bytes.Buffer
+
+	switch locale {
+	case "ja":
+		if err := email_confirmation.JaHTML(data).Render(ctx, &htmlBuf); err != nil {
+			return "", "", fmt.Errorf("HTMLテンプレートのレンダリングに失敗しました: %w", err)
+		}
+		if err := email_confirmation.JaText(data).Render(ctx, &textBuf); err != nil {
+			return "", "", fmt.Errorf("テキストテンプレートのレンダリングに失敗しました: %w", err)
+		}
+	default:
+		if err := email_confirmation.EnHTML(data).Render(ctx, &htmlBuf); err != nil {
+			return "", "", fmt.Errorf("HTMLテンプレートのレンダリングに失敗しました: %w", err)
+		}
+		if err := email_confirmation.EnText(data).Render(ctx, &textBuf); err != nil {
+			return "", "", fmt.Errorf("テキストテンプレートのレンダリングに失敗しました: %w", err)
+		}
+	}
+
+	return htmlBuf.String(), textBuf.String(), nil
 }
 
 // generateConfirmationCode は6文字のランダムな大文字英数字を生成する

@@ -39,28 +39,35 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// メール確認情報を取得
-	emailConfirmation, err := h.emailConfirmationRepo.FindByID(ctx, emailConfirmationID)
-	if err != nil {
-		slog.ErrorContext(ctx, "メール確認情報の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if emailConfirmation == nil {
+	// バリデーション（形式チェック + 状態チェック）
+	result := h.createValidator.Validate(ctx, CreateValidatorInput{
+		EmailConfirmationID: emailConfirmationID,
+		Atname:              atname,
+		Password:            password,
+	})
+
+	// メール確認情報が見つからない場合
+	if result.Err != nil && errors.Is(result.Err, ErrEmailConfirmationNotFound) {
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}
 
-	// メール確認が完了していない場合
-	if !emailConfirmation.IsSucceeded() {
+	// メール確認が未完了の場合
+	if result.Err != nil && errors.Is(result.Err, ErrEmailNotConfirmed) {
 		http.Redirect(w, r, "/email_confirmation/edit", http.StatusFound)
 		return
 	}
 
-	// リクエストのバリデーション
-	req := NewCreateRequest(atname, password)
-	if formErrors := req.Validate(ctx); formErrors != nil {
-		h.renderAccountForm(w, r, formErrors, csrfToken, emailConfirmation.Email, atname)
+	// フォームエラーの場合（形式バリデーションエラー、アットネーム重複）
+	if result.FormErrors != nil {
+		h.renderAccountForm(w, r, result.FormErrors, csrfToken, result.EmailConfirmation.Email, atname)
+		return
+	}
+
+	// システムエラーの場合
+	if result.Err != nil {
+		slog.ErrorContext(ctx, "バリデーションに失敗", "error", result.Err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -76,25 +83,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// アカウントを作成
 	output, err := h.createAccountUC.Execute(ctx, usecase.CreateAccountInput{
 		EmailConfirmationID: emailConfirmationID,
-		Email:               emailConfirmation.Email,
+		Email:               result.EmailConfirmation.Email,
 		Atname:              atname,
 		Password:            password,
 		Locale:              modelLocale,
 		TimeZone:            "Asia/Tokyo",
 	})
 	if err != nil {
-		// アットネーム重複エラーの場合
-		if errors.Is(err, usecase.ErrAtnameAlreadyTaken) {
-			formErrors := session.NewFormErrors()
-			formErrors.AddField("atname", i18n.T(ctx, "validation_atname_already_taken"))
-			h.renderAccountForm(w, r, formErrors, csrfToken, emailConfirmation.Email, atname)
-			return
-		}
-		// メール確認未完了エラーの場合
-		if errors.Is(err, usecase.ErrEmailNotConfirmed) {
-			http.Redirect(w, r, "/email_confirmation/edit", http.StatusFound)
-			return
-		}
 		slog.ErrorContext(ctx, "アカウント作成に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
