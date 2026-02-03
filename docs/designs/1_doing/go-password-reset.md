@@ -106,12 +106,14 @@ internal/
 │   │   ├── handler.go      # Handler構造体と依存性
 │   │   ├── new.go          # GET /password/reset
 │   │   ├── create.go       # POST /password/reset
-│   │   └── request.go      # CreateRequest バリデーション
+│   │   ├── validator.go    # バリデーション（形式チェック）
+│   │   └── validator_test.go
 │   └── password/
 │       ├── handler.go      # Handler構造体と依存性
 │       ├── edit.go         # GET /password/edit
 │       ├── update.go       # PATCH /password
-│       └── request.go      # UpdateRequest バリデーション
+│       ├── validator.go    # バリデーション（形式チェック + トークン検証）
+│       └── validator_test.go
 ├── usecase/
 │   ├── create_password_reset_token.go # パスワードリセットトークン作成
 │   └── update_password_reset.go       # パスワード更新（リセット経由）
@@ -147,15 +149,43 @@ type Handler struct {
 }
 ```
 
-**CreateRequest（password_reset/request.go）**
+**CreateValidator（password_reset/validator.go）**
 
 ```go
-type CreateRequest struct {
+// CreateValidator はパスワードリセット申請のバリデーションを行う
+type CreateValidator struct{}
+
+// NewCreateValidator は CreateValidator を生成する
+func NewCreateValidator() *CreateValidator {
+    return &CreateValidator{}
+}
+
+// CreateValidatorInput はバリデーションの入力パラメータ
+type CreateValidatorInput struct {
     Email string
 }
 
-func (r *CreateRequest) Validate(ctx context.Context) *session.FormErrors {
+// CreateValidatorResult はバリデーションの結果
+type CreateValidatorResult struct {
+    FormErrors *session.FormErrors
+}
+
+// Validate はバリデーションを行う
+func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+    formErrors := session.NewFormErrors()
+
     // メールアドレス必須チェック
+    if input.Email == "" {
+        formErrors.AddFieldError("email", templates.T(ctx, "error_required"))
+        return &CreateValidatorResult{FormErrors: formErrors}
+    }
+
+    // フォーマットチェック
+    if !emailRegex.MatchString(input.Email) {
+        formErrors.AddFieldError("email", templates.T(ctx, "error_invalid_email_format"))
+    }
+
+    return &CreateValidatorResult{FormErrors: formErrors}
 }
 ```
 
@@ -171,19 +201,59 @@ type Handler struct {
 }
 ```
 
-**UpdateRequest（password/request.go）**
+**UpdateValidator（password/validator.go）**
 
 ```go
-type UpdateRequest struct {
+// UpdateValidator はパスワード更新のバリデーションを行う
+type UpdateValidator struct{}
+
+// NewUpdateValidator は UpdateValidator を生成する
+func NewUpdateValidator() *UpdateValidator {
+    return &UpdateValidator{}
+}
+
+// UpdateValidatorInput はバリデーションの入力パラメータ
+type UpdateValidatorInput struct {
     Token                string
     Password             string
     PasswordConfirmation string
 }
 
-func (r *UpdateRequest) Validate(ctx context.Context) *session.FormErrors {
+// UpdateValidatorResult はバリデーションの結果
+type UpdateValidatorResult struct {
+    FormErrors *session.FormErrors
+}
+
+// Validate はバリデーションを行う
+func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInput) *UpdateValidatorResult {
+    formErrors := session.NewFormErrors()
+
     // トークン必須チェック
+    if input.Token == "" {
+        formErrors.AddFieldError("token", templates.T(ctx, "error_required"))
+    }
+
     // パスワード必須チェック
+    if input.Password == "" {
+        formErrors.AddFieldError("password", templates.T(ctx, "error_required"))
+    }
+
+    // パスワード確認必須チェック
+    if input.PasswordConfirmation == "" {
+        formErrors.AddFieldError("password_confirmation", templates.T(ctx, "error_required"))
+    }
+
+    // パスワード文字数チェック
+    if len(input.Password) > 0 && len(input.Password) < 8 {
+        formErrors.AddFieldError("password", templates.T(ctx, "error_password_too_short"))
+    }
+
     // パスワード確認一致チェック
+    if input.Password != "" && input.PasswordConfirmation != "" && input.Password != input.PasswordConfirmation {
+        formErrors.AddFieldError("password_confirmation", templates.T(ctx, "error_password_mismatch"))
+    }
+
+    return &UpdateValidatorResult{FormErrors: formErrors}
 }
 ```
 
