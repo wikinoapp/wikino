@@ -122,8 +122,7 @@ internal/
 ├── ratelimit/
 │   └── limiter.go          # Rate Limiting（Redis ベース）
 ├── email/
-│   ├── client.go           # メール送信クライアント（Resend）
-│   └── templates.go        # メールテンプレート
+│   └── sender.go           # メール送信（Sender インターフェース、ResendSender）
 ├── password_reset/
 │   └── token.go            # トークン生成・ハッシュ化ユーティリティ
 └── templates/
@@ -261,32 +260,65 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 
 ```go
 type CreatePasswordResetTokenUsecase struct {
-    db          *sql.DB
-    queries     *query.Queries
-    emailClient *email.Client
+    cfg                        *config.Config
+    db                         *sql.DB
+    passwordResetTokenRepo     *repository.PasswordResetTokenRepository
+    inserter                   JobInserter // river ジョブのエンキュー用
 }
 
-type CreatePasswordResetTokenResult struct {
-    Token  string // 平文トークン（メール送信用）
-    UserID string // ユーザーID
+// NewCreatePasswordResetTokenUsecase は CreatePasswordResetTokenUsecase を生成する
+func NewCreatePasswordResetTokenUsecase(
+    cfg *config.Config,
+    db *sql.DB,
+    passwordResetTokenRepo *repository.PasswordResetTokenRepository,
+    inserter JobInserter,
+) *CreatePasswordResetTokenUsecase
+
+// CreatePasswordResetTokenInput は入力パラメータ
+type CreatePasswordResetTokenInput struct {
+    UserID string
+    Email  string
+    Locale string
 }
 
-func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, userID string) (*CreatePasswordResetTokenResult, error)
+// CreatePasswordResetTokenOutput は出力パラメータ
+type CreatePasswordResetTokenOutput struct {
+    TokenID string
+}
+
+// Execute はパスワードリセットトークンを生成し、メール送信ジョブをエンキューする
+func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input CreatePasswordResetTokenInput) (*CreatePasswordResetTokenOutput, error)
 ```
 
 **UpdatePasswordResetUsecase（usecase/update_password_reset.go）**
 
 ```go
 type UpdatePasswordResetUsecase struct {
-    db      *sql.DB
-    queries *query.Queries
+    db                         *sql.DB
+    passwordResetTokenRepo     *repository.PasswordResetTokenRepository
+    userPasswordRepo           *repository.UserPasswordRepository
 }
 
-type UpdatePasswordResetResult struct {
+// NewUpdatePasswordResetUsecase は UpdatePasswordResetUsecase を生成する
+func NewUpdatePasswordResetUsecase(
+    db *sql.DB,
+    passwordResetTokenRepo *repository.PasswordResetTokenRepository,
+    userPasswordRepo *repository.UserPasswordRepository,
+) *UpdatePasswordResetUsecase
+
+// UpdatePasswordResetInput は入力パラメータ
+type UpdatePasswordResetInput struct {
+    Token       string
+    NewPassword string
+}
+
+// UpdatePasswordResetOutput は出力パラメータ
+type UpdatePasswordResetOutput struct {
     UserID string
 }
 
-func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, token, newPassword string) (*UpdatePasswordResetResult, error)
+// Execute はトークンを検証し、パスワードを更新する
+func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, input UpdatePasswordResetInput) (*UpdatePasswordResetOutput, error)
 ```
 
 ### パスワードリセットフロー
@@ -401,14 +433,12 @@ func HashToken(token string) string {
   - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
   - **想定行数**: 約 80 行（実装 30 行 + テスト 50 行）
 
-- [ ] **8-3**: メール送信クライアントの実装
+- [x] **8-3**: メール送信機能の実装（実装済み）
 
-  - `internal/email/client.go`
+  - `internal/email/sender.go` - `Sender` インターフェース、`ResendSender`、`NoopSender`
   - Resend API を使用したメール送信
-  - パスワードリセットメールのテンプレート
-  - **参考ファイル**: `/annict/go/internal/email/client.go`
-  - **想定ファイル数**: 約 3 ファイル（実装 2 + テスト 1）
-  - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
+  - メールテンプレートは `internal/templates/emails/` に配置
+  - **実装済みファイル**: `/workspace/go/internal/email/sender.go`
 
 - [ ] **8-4**: password_reset_tokens テーブルのマイグレーション
 
