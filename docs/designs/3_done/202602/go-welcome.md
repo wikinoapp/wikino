@@ -286,13 +286,13 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
 
 ### フェーズ 1: レイアウトとコンポーネントの実装
 
-- [ ] **1-1**: [Go] 素のレイアウト（plain.templ）の実装
+- [x] **1-1**: [Go] 素のレイアウト（plain.templ）の実装
   - `internal/templates/layouts/plain.templ`
   - `internal/templates/layouts/plain_templ.go`（自動生成）
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
   - **想定行数**: 約 30 行（実装 30 行 + テスト 0 行）
 
-- [ ] **1-2**: [Go] フッターコンポーネント（footer.templ）の実装
+- [x] **1-2**: [Go] フッターコンポーネント（footer.templ）の実装
   - `internal/templates/components/footer.templ`
   - `internal/templates/components/footer_templ.go`（自動生成）
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
@@ -300,14 +300,14 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
 
 ### フェーズ 2: トップページの実装
 
-- [ ] **2-1**: [Go] トップページテンプレートの実装
+- [x] **2-1**: [Go] トップページテンプレートの実装
   - `internal/templates/pages/welcome/show.templ`
   - `internal/templates/pages/welcome/show_templ.go`（自動生成）
   - Rails 版の `welcome/show_view.html.erb` を参考に実装
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
   - **想定行数**: 約 200 行（実装 200 行 + テスト 0 行）
 
-- [ ] **2-2**: [Go] トップページハンドラーの実装
+- [x] **2-2**: [Go] トップページハンドラーの実装
   - `internal/handler/welcome/handler.go`
   - `internal/handler/welcome/show.go`
   - `internal/handler/welcome/show_test.go`
@@ -316,13 +316,13 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
 
 ### フェーズ 3: ルーティングと国際化
 
-- [ ] **3-1**: [Go] ルーティング設定とリバースプロキシの更新
+- [x] **3-1**: [Go] ルーティング設定とリバースプロキシの更新
   - `cmd/server/main.go` にルーティング追加
   - `internal/middleware/reverse_proxy.go` のホワイトリスト更新
   - **想定ファイル数**: 約 2 ファイル（実装 2 + テスト 0）
   - **想定行数**: 約 20 行（実装 20 行 + テスト 0 行）
 
-- [ ] **3-2**: [Go] 国際化（I18n）の追加
+- [x] **3-2**: [Go] 国際化（I18n）の追加
   - トップページ関連の翻訳キーを追加
   - `internal/i18n/locales/ja.toml`
   - `internal/i18n/locales/en.toml`

@@ -155,7 +155,7 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
-	err := layouts.Simple(meta, nil, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -171,7 +171,7 @@ func (h *Handler) renderSentPage(w http.ResponseWriter, r *http.Request) {
 
 	content := passwordpages.ResetSent()
 
-	err := layouts.Simple(meta, nil, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

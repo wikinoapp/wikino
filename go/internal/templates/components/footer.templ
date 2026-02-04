@@ -1,0 +1,26 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// Footer は利用規約とプライバシーポリシーへのリンクを含むフッターです
+templ Footer() {
+	<footer class="mt-auto px-4 pt-12 pb-12 text-center flex items-center justify-center flex-wrap gap-4">
+		<ul class="flex items-center justify-center gap-4">
+			<li>
+				<a class="link-muted text-sm" href="/terms">
+					{ templates.T(ctx, "footer_terms") }
+				</a>
+			</li>
+			<li>
+				<a class="link-muted text-sm" href="/privacy">
+					{ templates.T(ctx, "footer_privacy") }
+				</a>
+			</li>
+		</ul>
+		<div class="text-sm text-muted-foreground">
+			&copy; 2025 Wikino
+		</div>
+	</footer>
+}

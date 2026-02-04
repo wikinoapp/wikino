@@ -36,7 +36,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		CSRFToken:  csrfToken,
 		FormErrors: nil,
 	})
-	err := layouts.Simple(meta, flash, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta, Flash: flash}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

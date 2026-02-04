@@ -27,6 +27,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
+	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -193,6 +194,7 @@ func main() {
 		passwordResetTokenRepo,
 		updatePasswordResetUC,
 	)
+	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
 
 	r := chi.NewRouter()
 
@@ -226,6 +228,12 @@ func main() {
 
 	// Web App Manifest（認証不要）
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.SetUser)
+		r.Get("/", welcomeHandler.Show)
+	})
 
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {

@@ -1,0 +1,34 @@
+package layouts
+
+import (
+	"github.com/a-h/templ"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// PlainLayoutData は素のレイアウトに渡すデータ構造体です
+type PlainLayoutData struct {
+	Meta  viewmodel.PageMeta
+	Flash *session.FlashMessage
+}
+
+// Plain は素のレイアウトです
+// ヘッダーなし、フッターあり、サイドバーなしの縦方向レイアウトです
+// トップページ、利用規約、プライバシーポリシーなどで使用します
+templ Plain(data PlainLayoutData, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			@components.Head(data.Meta)
+		</head>
+		<body class="min-h-screen flex flex-col">
+			@components.Flash(data.Flash)
+			<main class="flex-1">
+				@content
+			</main>
+			@components.Footer()
+		</body>
+	</html>
+}
