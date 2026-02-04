@@ -20,6 +20,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
+	"github.com/wikinoapp/wikino/go/internal/handler/password"
+	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -90,6 +92,7 @@ func main() {
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
+	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -97,6 +100,8 @@ func main() {
 	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
+	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -172,6 +177,22 @@ func main() {
 		createAccountUC,
 		createUserSessionUC,
 	)
+	passwordResetHandler := password_reset.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		rateLimiter,
+		turnstileClient,
+		createPasswordResetTokenUC,
+	)
+	passwordHandler := password.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		passwordResetTokenRepo,
+		updatePasswordResetUC,
+	)
 
 	r := chi.NewRouter()
 
@@ -221,6 +242,10 @@ func main() {
 		r.Patch("/email_confirmation", emailConfirmationHandler.Update)
 		r.Get("/accounts/new", accountHandler.New)
 		r.Post("/accounts", accountHandler.Create)
+		r.Get("/password/reset", passwordResetHandler.New)
+		r.Post("/password/reset", passwordResetHandler.Create)
+		r.Get("/password/edit", passwordHandler.Edit)
+		r.Patch("/password", passwordHandler.Update)
 	})
 
 	// 認証済みユーザー専用ルート

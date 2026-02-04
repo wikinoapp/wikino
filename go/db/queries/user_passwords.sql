@@ -12,3 +12,11 @@ INSERT INTO user_passwords (
 ) VALUES (
     $1, $2, $3, $4
 ) RETURNING *;
+
+-- name: UpdateUserPasswordDigest :exec
+-- ユーザーIDでパスワードダイジェストを更新する
+UPDATE user_passwords
+SET
+    password_digest = $2,
+    updated_at = $3
+WHERE user_id = $1;
