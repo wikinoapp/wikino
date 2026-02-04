@@ -137,7 +137,7 @@ func (h *Handler) renderAccountForm(w http.ResponseWriter, r *http.Request, form
 	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
-	err := layouts.Simple(meta, nil, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
