@@ -1,0 +1,221 @@
+package welcome
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// ShowPageData はトップページに渡すデータ構造体です
+type ShowPageData struct{}
+
+// Show はトップページのコンテンツを表示します
+templ Show(data ShowPageData) {
+	<div class="flex flex-col gap-10 px-4 pb-16 sm:gap-16">
+		// ヒーローセクション
+		<section class="flex flex-col gap-6 text-center">
+			<div class="flex flex-col gap-2">
+				<h1 class="text-4xl/8 leading-snug font-bold antialiased">
+					@templ.Raw(templates.T(ctx, "welcome_hero_title_html"))
+				</h1>
+
+				<p class="text-lg/8 text-muted-foreground antialiased">
+					@templ.Raw(templates.T(ctx, "welcome_hero_description_html"))
+				</p>
+			</div>
+
+			<p class="text-sm text-muted-foreground">
+				{ templates.T(ctx, "welcome_free_to_start") }
+			</p>
+
+			<div class="flex items-center justify-center gap-4">
+				<a href="/sign_up" class="btn rounded-full w-fit">
+					@templates.Icon("paper-plane-tilt", "fill-primary-foreground")
+					{ templates.T(ctx, "sign_up") }
+				</a>
+
+				<a href="/sign_in" class="btn-outline rounded-full w-fit">
+					@templates.Icon("sign-in", "")
+					{ templates.T(ctx, "sign_in") }
+				</a>
+			</div>
+
+			<div class="mx-auto max-w-3xl">
+				<img
+					src="/assets/welcome/screenshot.png"
+					alt={ templates.T(ctx, "welcome_screenshot_alt") }
+					class="w-full rounded-lg border border-border shadow-lg"
+					loading="lazy"
+				/>
+			</div>
+		</section>
+
+		// 機能紹介セクション
+		<section class="flex flex-col gap-6 sm:gap-10">
+			<h2 class="text-center text-xl/8 leading-snug font-bold antialiased">
+				{ templates.T(ctx, "welcome_features_title") }
+			</h2>
+
+			<div class="flex flex-col gap-8">
+				// Markdown機能
+				@featureItem(
+					templates.T(ctx, "welcome_feature_markdown_title"),
+					templates.T(ctx, "welcome_feature_markdown_description"),
+					"/assets/welcome/image_1.png",
+				)
+
+				// Wikilink機能
+				@featureItem(
+					templates.T(ctx, "welcome_feature_wikilink_title"),
+					templates.T(ctx, "welcome_feature_wikilink_description"),
+					"/assets/welcome/image_4.png",
+				)
+
+				// バックリンク機能
+				@featureItem(
+					templates.T(ctx, "welcome_feature_backlinks_title"),
+					templates.T(ctx, "welcome_feature_backlinks_description"),
+					"/assets/welcome/image_2.png",
+				)
+
+				// 公開・共有機能
+				@featureItemWithNote(
+					templates.T(ctx, "welcome_feature_publish_title"),
+					templates.T(ctx, "welcome_feature_publish_description"),
+					templates.T(ctx, "welcome_feature_publish_note"),
+					"/assets/welcome/image_3.png",
+				)
+			</div>
+		</section>
+
+		// CTAセクション
+		<section class="my-6 flex flex-col gap-6 sm:my-10">
+			<div class="text-center text-2xl/8 font-bold antialiased">
+				{ templates.T(ctx, "welcome_cta_title") }
+			</div>
+
+			<a href="/sign_up" class="btn rounded-full w-fit self-center">
+				@templates.Icon("paper-plane-tilt", "fill-primary-foreground")
+				{ templates.T(ctx, "sign_up") }
+			</a>
+		</section>
+
+		// 開発者・コミュニティセクション
+		<section class="mx-auto grid grid-cols-2 gap-8 sm:grid-cols-3">
+			// リソース
+			<nav class="flex flex-col gap-4">
+				<h6 class="font-bold uppercase">
+					{ templates.T(ctx, "welcome_footer_resources") }
+				</h6>
+
+				<a href="https://wikino.app/s/wikino" class="hover:underline">
+					{ templates.T(ctx, "welcome_footer_help_page") }
+				</a>
+
+				<a href="https://wikino.app/s/wikino/pages/29" class="hover:underline">
+					{ templates.T(ctx, "welcome_footer_release_notes") }
+				</a>
+
+				<a href="https://wikino.app/s/wikino/pages/3" class="hover:underline">
+					{ templates.T(ctx, "welcome_footer_about_developer") }
+				</a>
+			</nav>
+
+			// コミュニティ
+			<nav class="flex flex-col gap-4">
+				<h6 class="font-bold uppercase">
+					{ templates.T(ctx, "welcome_footer_community") }
+				</h6>
+
+				<a href="https://bsky.app/profile/wikino.app" class="hover:underline" target="_blank" rel="nofollow">
+					Bluesky
+				</a>
+
+				<a href="https://discord.gg/8qMetv8fUn" class="hover:underline" target="_blank" rel="nofollow">
+					Discord
+				</a>
+
+				<a href="https://github.com/wikinoapp/wikino" class="hover:underline" target="_blank" rel="nofollow">
+					GitHub
+				</a>
+
+				<a href="https://mastodon.social/@wikino" class="hover:underline" target="_blank" rel="nofollow">
+					Mastodon
+				</a>
+
+				<a href="https://mewst.com/@wikino" class="hover:underline" target="_blank" rel="nofollow">
+					Mewst
+				</a>
+
+				<a href="https://mixi.social/@wikino" class="hover:underline" target="_blank" rel="nofollow">
+					mixi2
+				</a>
+
+				<a href="https://www.threads.com/@wikino.app" class="hover:underline" target="_blank" rel="nofollow">
+					Threads
+				</a>
+
+				<a href="https://x.com/wikino_app" class="hover:underline" target="_blank" rel="nofollow">
+					X (Twitter)
+				</a>
+			</nav>
+
+			// オープンソース
+			<nav class="flex flex-col gap-4">
+				<h6 class="font-bold uppercase">
+					{ templates.T(ctx, "welcome_footer_open_source") }
+				</h6>
+
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "welcome_open_source_description") }
+				</p>
+			</nav>
+		</section>
+	</div>
+}
+
+// featureItem は機能紹介の1項目を表示するコンポーネントです
+templ featureItem(title string, description string, imagePath string) {
+	<div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+			<h3 class="text-lg/8 leading-snug font-bold antialiased">
+				{ title }
+			</h3>
+
+			<p>
+				{ description }
+			</p>
+		</div>
+
+		<img
+			src={ imagePath }
+			alt=""
+			class="w-full basis-full sm:basis-1/2 rounded-lg border border-border"
+			loading="lazy"
+		/>
+	</div>
+}
+
+// featureItemWithNote は注釈付きの機能紹介の1項目を表示するコンポーネントです
+templ featureItemWithNote(title string, description string, note string, imagePath string) {
+	<div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
+			<h3 class="text-lg/8 leading-snug font-bold antialiased">
+				{ title }
+			</h3>
+
+			<p>
+				{ description }
+			</p>
+
+			<p class="text-sm text-muted-foreground">
+				{ note }
+			</p>
+		</div>
+
+		<img
+			src={ imagePath }
+			alt=""
+			class="w-full basis-full sm:basis-1/2 rounded-lg border border-border"
+			loading="lazy"
+		/>
+	</div>
+}

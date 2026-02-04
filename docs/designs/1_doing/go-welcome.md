@@ -300,7 +300,7 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
 
 ### フェーズ 2: トップページの実装
 
-- [ ] **2-1**: [Go] トップページテンプレートの実装
+- [x] **2-1**: [Go] トップページテンプレートの実装
   - `internal/templates/pages/welcome/show.templ`
   - `internal/templates/pages/welcome/show_templ.go`（自動生成）
   - Rails 版の `welcome/show_view.html.erb` を参考に実装
