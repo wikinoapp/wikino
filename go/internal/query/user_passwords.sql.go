@@ -64,3 +64,23 @@ func (q *Queries) GetUserPasswordByUserID(ctx context.Context, userID string) (U
 	)
 	return i, err
 }
+
+const updateUserPasswordDigest = `-- name: UpdateUserPasswordDigest :exec
+UPDATE user_passwords
+SET
+    password_digest = $2,
+    updated_at = $3
+WHERE user_id = $1
+`
+
+type UpdateUserPasswordDigestParams struct {
+	UserID         string    `json:"user_id"`
+	PasswordDigest string    `json:"password_digest"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// ユーザーIDでパスワードダイジェストを更新する
+func (q *Queries) UpdateUserPasswordDigest(ctx context.Context, arg UpdateUserPasswordDigestParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserPasswordDigest, arg.UserID, arg.PasswordDigest, arg.UpdatedAt)
+	return err
+}

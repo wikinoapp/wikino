@@ -47,3 +47,39 @@ func TestUserPasswordRepository_FindByUserID(t *testing.T) {
 		}
 	})
 }
+
+func TestUserPasswordRepository_UpdatePasswordDigest(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTestDB(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewUserPasswordRepository(q)
+
+	// テストユーザーとパスワードを作成
+	oldPasswordDigest := "$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("update-password@example.com").
+		WithAtname("updatepassworduser").
+		BuildWithPassword(oldPasswordDigest)
+
+	t.Run("パスワードダイジェストを更新できる", func(t *testing.T) {
+		newPasswordDigest := "$2a$10$YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+
+		err := repo.UpdatePasswordDigest(context.Background(), userID, newPasswordDigest)
+		if err != nil {
+			t.Fatalf("UpdatePasswordDigest() error = %v", err)
+		}
+
+		// 更新後のパスワードを確認
+		password, err := repo.FindByUserID(context.Background(), userID)
+		if err != nil {
+			t.Fatalf("FindByUserID() error = %v", err)
+		}
+		if password == nil {
+			t.Fatal("FindByUserID() returned nil, want password")
+		}
+		if password.PasswordDigest != newPasswordDigest {
+			t.Errorf("password.PasswordDigest = %v, want %v", password.PasswordDigest, newPasswordDigest)
+		}
+	})
+}

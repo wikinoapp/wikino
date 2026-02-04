@@ -58,6 +58,16 @@ func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPas
 	return r.toModel(row), nil
 }
 
+// UpdatePasswordDigest はユーザーIDでパスワードダイジェストを更新する
+func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userID string, passwordDigest string) error {
+	now := time.Now()
+	return r.q.UpdateUserPasswordDigest(ctx, query.UpdateUserPasswordDigestParams{
+		UserID:         userID,
+		PasswordDigest: passwordDigest,
+		UpdatedAt:      now,
+	})
+}
+
 // toModel は query.UserPassword を model.UserPassword に変換する
 func (r *UserPasswordRepository) toModel(row query.UserPassword) *model.UserPassword {
 	return &model.UserPassword{
