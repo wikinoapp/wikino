@@ -329,3 +329,90 @@ other = "A system error occurred. Please try again later."
 # Password change success
 [flash_password_updated]
 other = "Your password has been updated"
+
+# Common buttons/links
+[sign_up]
+other = "Sign up"
+
+[sign_in]
+other = "Sign in"
+
+# Welcome page
+[welcome_title]
+other = "Wikino"
+
+[welcome_description]
+other = "Wikino is a web service where you can create and share wikis."
+
+[welcome_hero_title_html]
+other = "A Wiki app where you write in Markdown<br>and discover through links"
+
+[welcome_hero_description_html]
+other = "Wikino is a web service where you can create and share wikis."
+
+[welcome_free_to_start]
+other = "Free to get started"
+
+[welcome_screenshot_alt]
+other = "Screenshot of Wikino"
+
+[welcome_features_title]
+other = "Features"
+
+[welcome_feature_markdown_title]
+other = "Write simply in Markdown"
+
+[welcome_feature_markdown_description]
+other = "Write documents in Markdown format with a clean, plain text editor."
+
+[welcome_feature_wikilink_title]
+other = "Easily connect pages"
+
+[welcome_feature_wikilink_description]
+other = "Wrap a page title with our link syntax to create and link to that page."
+
+[welcome_feature_backlinks_title]
+other = "See the connections"
+
+[welcome_feature_backlinks_description]
+other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
+
+[welcome_feature_publish_title]
+other = "Publish and share your spaces"
+
+[welcome_feature_publish_description]
+other = "Make your spaces public and share them with others."
+
+[welcome_feature_publish_note]
+other = "* Private spaces are currently free but will become a paid feature in the future."
+
+[welcome_cta_title]
+other = "Get Started with Wikino"
+
+[welcome_footer_resources]
+other = "Resources"
+
+[welcome_footer_help_page]
+other = "Help Page"
+
+[welcome_footer_release_notes]
+other = "Release Notes"
+
+[welcome_footer_about_developer]
+other = "About the Developer"
+
+[welcome_footer_community]
+other = "Community"
+
+[welcome_footer_open_source]
+other = "Open Source"
+
+[welcome_open_source_description]
+other = "Wikino's source code is publicly available on GitHub."
+
+# Footer
+[footer_terms]
+other = "Terms of Service"
+
+[footer_privacy]
+other = "Privacy Policy"
