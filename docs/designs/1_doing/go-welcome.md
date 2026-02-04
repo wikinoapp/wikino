@@ -286,13 +286,13 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
 
 ### フェーズ 1: レイアウトとコンポーネントの実装
 
-- [ ] **1-1**: [Go] 素のレイアウト（plain.templ）の実装
+- [x] **1-1**: [Go] 素のレイアウト（plain.templ）の実装
   - `internal/templates/layouts/plain.templ`
   - `internal/templates/layouts/plain_templ.go`（自動生成）
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
   - **想定行数**: 約 30 行（実装 30 行 + テスト 0 行）
 
-- [ ] **1-2**: [Go] フッターコンポーネント（footer.templ）の実装
+- [x] **1-2**: [Go] フッターコンポーネント（footer.templ）の実装
   - `internal/templates/components/footer.templ`
   - `internal/templates/components/footer_templ.go`（自動生成）
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）

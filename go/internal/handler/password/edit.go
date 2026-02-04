@@ -69,7 +69,7 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token s
 	}
 
 	content := passwordPage.Edit(data)
-	if err := layouts.Simple(meta, nil, content).Render(ctx, w); err != nil {
+	if err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w); err != nil {
 		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗しました", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}

@@ -8,17 +8,23 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// SimpleLayoutData はシンプルレイアウトに渡すデータ構造体です
+type SimpleLayoutData struct {
+	Meta  viewmodel.PageMeta
+	Flash *session.FlashMessage
+}
+
 // Simple はシンプルなレイアウトです
 // ヘッダー、フラッシュメッセージ、コンテンツのみを含みます
-templ Simple(meta viewmodel.PageMeta, flash *session.FlashMessage, content templ.Component) {
+templ Simple(data SimpleLayoutData, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang={ templates.Locale(ctx) }>
 		<head>
-			@components.Head(meta)
+			@components.Head(data.Meta)
 		</head>
 
 		<body class="min-h-screen flex items-center justify-center">
-			@components.Flash(flash)
+			@components.Flash(data.Flash)
 			@content
 		</body>
 	</html>

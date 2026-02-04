@@ -110,7 +110,7 @@ func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, for
 		FormErrors: formErrors,
 	}
 	content := twofactorpages.RecoveryNew(pageData)
-	err := layouts.Simple(meta, nil, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
