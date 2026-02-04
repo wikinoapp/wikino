@@ -152,3 +152,73 @@ func formatPostgresArray(arr []string) string {
 func QueriesWithTx(tx *sql.Tx) *query.Queries {
 	return query.New(tx)
 }
+
+// UserBuilderDB はDBを直接使用するユーザーテストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type UserBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	email       string
+	atname      string
+	name        string
+	description string
+	locale      int32
+	timeZone    string
+	joinedAt    time.Time
+}
+
+// NewUserBuilderDB は UserBuilderDB を生成します
+func NewUserBuilderDB(t *testing.T, db *sql.DB) *UserBuilderDB {
+	t.Helper()
+	now := time.Now()
+	return &UserBuilderDB{
+		t:           t,
+		db:          db,
+		email:       "test@example.com",
+		atname:      "testuser",
+		name:        "Test User",
+		description: "Test description",
+		locale:      0, // ja
+		timeZone:    "Asia/Tokyo",
+		joinedAt:    now,
+	}
+}
+
+// WithEmail はメールアドレスを設定します
+func (b *UserBuilderDB) WithEmail(email string) *UserBuilderDB {
+	b.email = email
+	return b
+}
+
+// WithAtname はアットネームを設定します
+func (b *UserBuilderDB) WithAtname(atname string) *UserBuilderDB {
+	b.atname = atname
+	return b
+}
+
+// WithName は名前を設定します
+func (b *UserBuilderDB) WithName(name string) *UserBuilderDB {
+	b.name = name
+	return b
+}
+
+// Build はユーザーを作成し、IDを返します
+func (b *UserBuilderDB) Build() string {
+	b.t.Helper()
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO users (email, atname, name, description, locale, time_zone, joined_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		 RETURNING id`,
+		b.email, b.atname, b.name, b.description, b.locale, b.timeZone, b.joinedAt, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("ユーザー作成に失敗: %v", err)
+	}
+
+	return id
+}

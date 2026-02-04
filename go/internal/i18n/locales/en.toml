@@ -115,3 +115,130 @@ other = "Signed in successfully."
 # Sign out
 [signed_out_successfully]
 other = "Signed out successfully."
+
+# Sign up
+[sign_up_title]
+other = "Sign up"
+
+[sign_up_heading]
+other = "Sign up for Wikino"
+
+[sign_up_email_label]
+other = "Email address"
+
+[sign_up_submit_button]
+other = "Send confirmation code"
+
+[sign_up_have_account]
+other = "Already have an account?"
+
+[sign_up_sign_in]
+other = "Sign in"
+
+# Email confirmation
+[email_confirmation_subject]
+other = "[Wikino] Confirmation Code"
+
+[flash_email_confirmation_sent]
+other = "Confirmation code sent."
+
+[validation_email_already_registered]
+other = "This email address is already registered"
+
+[validation_invalid_event]
+other = "Invalid event type"
+
+[validation_bot_detected]
+other = "Please try again later"
+
+[validation_rate_limit_exceeded]
+other = "Too many requests. Please try again later"
+
+# Email confirmation code entry
+[email_confirmation_edit_title]
+other = "Enter confirmation code"
+
+[email_confirmation_edit_heading]
+other = "Enter confirmation code"
+
+[email_confirmation_edit_description]
+other = "Enter the 6-character confirmation code sent to your email address"
+
+[email_confirmation_edit_code_label]
+other = "Confirmation code"
+
+[email_confirmation_edit_code_hint]
+other = "Enter the 6-character code"
+
+[email_confirmation_edit_submit_button]
+other = "Verify"
+
+[email_confirmation_edit_back_to_sign_up]
+other = "Back to sign up"
+
+# Email confirmation code validation
+[validation_confirmation_code_invalid_length]
+other = "Confirmation code must be 6 characters"
+
+[validation_confirmation_code_mismatch]
+other = "The confirmation code is incorrect"
+
+[validation_confirmation_code_expired]
+other = "The confirmation code has expired. Please try again"
+
+[validation_confirmation_not_found]
+other = "Confirmation not found. Please try again"
+
+# Account creation
+[account_new_title]
+other = "Create Account"
+
+[account_new_heading]
+other = "Create your account"
+
+[account_new_email_label]
+other = "Email address"
+
+[account_new_email_verified]
+other = "Verified"
+
+[account_new_atname_label]
+other = "Username"
+
+[account_new_atname_hint]
+other = "Only letters, numbers, and underscores (max 20 characters)"
+
+[account_new_password_label]
+other = "Password"
+
+[account_new_password_hint]
+other = "Must be at least 8 characters"
+
+[account_new_submit_button]
+other = "Create account"
+
+[account_new_back_to_sign_up]
+other = "Back to sign up"
+
+# Account creation validation
+[validation_atname_required]
+other = "Please enter a username"
+
+[validation_atname_too_long]
+other = "Username must be 20 characters or less"
+
+[validation_atname_invalid_format]
+other = "Username can only contain letters, numbers, and underscores"
+
+[validation_atname_already_taken]
+other = "This username is already taken"
+
+[validation_password_required]
+other = "Please enter a password"
+
+[validation_password_too_short]
+other = "Password must be at least 8 characters"
+
+# Account creation success
+[flash_account_created]
+other = "Your account has been created"

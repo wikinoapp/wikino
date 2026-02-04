@@ -10,11 +10,12 @@ import (
 
 // Handler はリカバリーコードハンドラー
 type Handler struct {
-	cfg                 *config.Config
-	sessionMgr          *session.Manager
-	userRepo            *repository.UserRepository
-	verifyTwoFactorUC   *usecase.VerifyTwoFactorUsecase
-	createUserSessionUC *usecase.CreateUserSessionUsecase
+	cfg                   *config.Config
+	sessionMgr            *session.Manager
+	userRepo              *repository.UserRepository
+	createValidator       *CreateValidator
+	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase
+	createUserSessionUC   *usecase.CreateUserSessionUsecase
 }
 
 // NewHandler は新しいリカバリーコードハンドラーを作成します
@@ -22,14 +23,16 @@ func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
 	userRepo *repository.UserRepository,
-	verifyTwoFactorUC *usecase.VerifyTwoFactorUsecase,
+	createValidator *CreateValidator,
+	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 ) *Handler {
 	return &Handler{
-		cfg:                 cfg,
-		sessionMgr:          sessionMgr,
-		userRepo:            userRepo,
-		verifyTwoFactorUC:   verifyTwoFactorUC,
-		createUserSessionUC: createUserSessionUC,
+		cfg:                   cfg,
+		sessionMgr:            sessionMgr,
+		userRepo:              userRepo,
+		createValidator:       createValidator,
+		consumeRecoveryCodeUC: consumeRecoveryCodeUC,
+		createUserSessionUC:   createUserSessionUC,
 	}
 }

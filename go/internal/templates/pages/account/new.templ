@@ -1,0 +1,141 @@
+package account
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// NewPageData はアカウント作成ページに渡すデータ構造体です
+type NewPageData struct {
+	CSRFToken  string
+	FormErrors *session.FormErrors
+	Email      string
+	Atname     string
+}
+
+// New はアカウント作成ページのコンテンツを表示します
+templ New(data NewPageData) {
+	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
+		<div class="text-center">
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
+			</a>
+		</div>
+		<div class="flex flex-col gap-2">
+			<h1 class="text-center text-3xl font-bold antialiased">
+				{ templates.T(ctx, "account_new_heading") }
+			</h1>
+		</div>
+		@components.FormErrors(data.FormErrors)
+		<form
+			action="/accounts"
+			class="form grid gap-6"
+			data-on:submit__passive="$isSubmitting = true"
+			method="POST"
+		>
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<div class="grid gap-2">
+				<label for="email">
+					{ templates.T(ctx, "account_new_email_label") }
+				</label>
+				<input
+					class="bg-muted cursor-not-allowed"
+					disabled
+					id="email"
+					name="email"
+					readonly
+					tabindex="-1"
+					type="email"
+					value={ data.Email }
+				/>
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "account_new_email_verified") }
+				</p>
+			</div>
+			<div class="grid gap-2">
+				<label for="atname">
+					{ templates.T(ctx, "account_new_atname_label") }
+				</label>
+				<div class="flex items-center gap-2">
+					<span class="text-muted-foreground">&#64;</span>
+					<input
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
+						}
+						autocomplete="username"
+						autofocus
+						class="flex-1"
+						id="atname"
+						maxlength="20"
+						name="atname"
+						pattern="[A-Za-z0-9_]+"
+						placeholder="username"
+						required
+						tabindex="1"
+						type="text"
+						value={ data.Atname }
+					/>
+				</div>
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "account_new_atname_hint") }
+				</p>
+				if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
+					for _, errorMsg := range data.FormErrors.GetFieldErrors("atname") {
+						<p class="text-sm text-error">
+							{ errorMsg }
+						</p>
+					}
+				}
+			</div>
+			<div class="grid gap-2">
+				<label for="password">
+					{ templates.T(ctx, "account_new_password_label") }
+				</label>
+				<input
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+						aria-invalid="true"
+					} else {
+						aria-invalid="false"
+					}
+					autocomplete="new-password"
+					id="password"
+					minlength="8"
+					name="password"
+					required
+					tabindex="2"
+					type="password"
+				/>
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "account_new_password_hint") }
+				</p>
+				if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+					for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
+						<p class="text-sm text-error">
+							{ errorMsg }
+						</p>
+					}
+				}
+			</div>
+			<button
+				class="btn-primary rounded-full w-fit"
+				data-attr:disabled="$isSubmitting == true"
+				tabindex="3"
+				type="submit"
+			>
+				@templates.Icon("arrow-right")
+				{ templates.T(ctx, "account_new_submit_button") }
+			</button>
+		</form>
+		<div class="text-center">
+			<a href="/sign_up" class="link underline inline-flex items-center gap-1">
+				@templates.Icon("arrow-left", "w-4 h-4")
+				{ templates.T(ctx, "account_new_back_to_sign_up") }
+			</a>
+		</div>
+	</div>
+}

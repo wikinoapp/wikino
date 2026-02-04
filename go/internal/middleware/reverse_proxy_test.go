@@ -71,6 +71,31 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			path:     "/sign_in/two_factor/recovery",
 			expected: true,
 		},
+		{
+			name:     "サインアップページ",
+			path:     "/sign_up",
+			expected: true,
+		},
+		{
+			name:     "メール確認コード送信",
+			path:     "/email_confirmation",
+			expected: true,
+		},
+		{
+			name:     "メール確認コード入力フォーム",
+			path:     "/email_confirmation/edit",
+			expected: true,
+		},
+		{
+			name:     "アカウント作成フォーム",
+			path:     "/accounts/new",
+			expected: true,
+		},
+		{
+			name:     "アカウント作成",
+			path:     "/accounts",
+			expected: true,
+		},
 
 		// Rails版にプロキシするパス
 		{

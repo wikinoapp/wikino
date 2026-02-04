@@ -82,7 +82,7 @@ linters:
         # 他のPresentation層パッケージに依存しない
         viewmodel-layer:
           files:
-            - "**/internal/viewmodel/**/*.go"
+            - "**/internal/viewmodel/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "ViewModelはQueryに依存できません。"
@@ -104,11 +104,37 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
 
+        # 形式バリデーター層のルール: 入力値の形式チェック
+        # DBアクセス禁止（query, repository, model, usecase への依存禁止）
+        format-validator-layer:
+          files:
+            - "**/format_validator.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "FormatValidatorはQueryに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "FormatValidatorはRepositoryに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "FormatValidatorはModelに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "FormatValidatorはUseCaseに依存できません。形式バリデーションはDBアクセス不要です。"
+
+        # 状態バリデーター層のルール: DBの状態を使った検証
+        # Repository/Modelは許可、query/usecaseへの依存禁止
+        state-validator-layer:
+          files:
+            - "**/state_validator.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "StateValidatorはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "StateValidatorはUseCaseに依存できません。状態バリデーションはHandler層で行います。"
+
         # Middleware層のルール: 共通処理のみ
         # 他のPresentation層パッケージ、Application層、Domain/Infrastructure層に依存しない
         middleware-layer:
           files:
-            - "**/internal/middleware/**/*.go"
+            - "**/internal/middleware/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "MiddlewareはQueryに依存できません。"
@@ -127,7 +153,7 @@ linters:
         # Presentation層に依存しない
         application-layer:
           files:
-            - "**/internal/usecase/**/*.go"
+            - "**/internal/usecase/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "Application層はQueryに直接依存できません。Repositoryを経由してください。"
@@ -144,7 +170,7 @@ linters:
         # データアクセス層、上位層に依存しない
         model-layer:
           files:
-            - "**/internal/model/**/*.go"
+            - "**/internal/model/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "ModelはQueryに依存できません。"
@@ -165,7 +191,7 @@ linters:
         # 上位層に依存しない
         repository-layer:
           files:
-            - "**/internal/repository/**/*.go"
+            - "**/internal/repository/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/usecase
               desc: "RepositoryはApplication層に依存できません。"
@@ -182,7 +208,7 @@ linters:
         # 上位層に依存しない
         query-layer:
           files:
-            - "**/internal/query/**/*.go"
+            - "**/internal/query/*.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/repository
               desc: "QueryはRepositoryに依存できません。"
@@ -198,6 +224,22 @@ linters:
               desc: "QueryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "QueryはPresentation層に依存できません。"
+
+        # Worker層のルール: バックグラウンドジョブ処理（Application層）
+        # Presentation層（Handler等）に依存しない
+        # 例外: templatesへの依存はメールレンダリングのため許可
+        worker-layer:
+          files:
+            - "**/internal/worker/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "WorkerはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "WorkerはPresentation層に依存できません。"
 
     # staticcheck の設定
     staticcheck:

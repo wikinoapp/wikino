@@ -36,16 +36,16 @@ func TestNew_WithPendingUser(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// ユースケースとセッションマネージャーを作成
+	// バリデーターとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 
@@ -116,16 +116,16 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// ユースケースとセッションマネージャーを作成
+	// バリデーターとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		createValidator,
 		createUserSessionUC,
 	)
 

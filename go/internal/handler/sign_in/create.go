@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -48,52 +47,23 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// リクエストのバリデーション
-	req := NewCreateRequest(email, password)
-	if errors := req.Validate(ctx); errors != nil {
-		h.renderSignInForm(w, r, errors, csrfToken, email, backURL)
+	// バリデーション（形式チェック + DB検証）
+	result := h.validator.Validate(ctx, CreateValidatorInput{
+		Email:    email,
+		Password: password,
+	})
+	if result.FormErrors != nil && result.FormErrors.HasErrors() {
+		// バリデーションエラー
+		h.renderSignInForm(w, r, result.FormErrors, csrfToken, email, backURL)
 		return
 	}
-
-	// メールアドレスでユーザーを検索
-	user, err := h.userRepo.FindByEmail(ctx, email)
-	if err != nil {
-		slog.ErrorContext(ctx, "ユーザー検索でエラー", "error", err, "email", email)
+	if result.Err != nil {
+		// システムエラー
+		slog.ErrorContext(ctx, "バリデーションでエラー", "error", result.Err, "email", email)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	if user == nil {
-		// セキュリティ対策: 存在しないメールアドレスでも同じエラーメッセージを表示
-		formErrors := session.NewFormErrors()
-		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
-		return
-	}
-
-	// パスワードを取得
-	userPassword, err := h.userPasswordRepo.FindByUserID(ctx, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "パスワード取得でエラー", "error", err, "user_id", user.ID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if userPassword == nil {
-		// パスワードが設定されていない場合
-		formErrors := session.NewFormErrors()
-		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
-		return
-	}
-
-	// パスワードを検証
-	if !auth.VerifyPassword(userPassword.PasswordDigest, password) {
-		formErrors := session.NewFormErrors()
-		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
-		return
-	}
+	user := result.User
 
 	// セッションを作成
 	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{

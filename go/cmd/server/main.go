@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -13,22 +16,30 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
+	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// 設定を読み込む
 	cfg, err := config.Load()
 	if err != nil {
@@ -53,15 +64,39 @@ func main() {
 	// クエリを初期化
 	queries := query.New(db)
 
+	// River クライアントを初期化（バックグラウンドジョブ用）
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg)
+	if err != nil {
+		slog.Error("River クライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stopCancel()
+		if err := riverClient.Stop(stopCtx); err != nil {
+			slog.Error("River クライアントの停止に失敗しました", "error", err)
+		}
+	}()
+
+	// River クライアントを起動
+	if err := riverClient.Start(ctx); err != nil {
+		slog.Error("River クライアントの起動に失敗しました", "error", err)
+		os.Exit(1)
+	}
+
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-	verifyTwoFactorUC := usecase.NewVerifyTwoFactorUsecase(userTwoFactorAuthRepo)
+	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -69,6 +104,9 @@ func main() {
 
 	// Turnstileクライアントを初期化
 	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
+
+	// Rate Limiterを初期化
+	rateLimiter := ratelimit.NewLimiter(queries)
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
@@ -93,18 +131,45 @@ func main() {
 		flashMgr,
 		userSessionRepo,
 	)
+	signInTwoFactorValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		signInTwoFactorValidator,
 		createUserSessionUC,
 	)
+	signInTwoFactorRecoveryValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
 		userRepo,
-		verifyTwoFactorUC,
+		signInTwoFactorRecoveryValidator,
+		consumeRecoveryCodeUC,
+		createUserSessionUC,
+	)
+	signUpHandler := sign_up.NewHandler(
+		cfg,
+		sessionMgr,
+	)
+	emailConfirmationHandler := email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		userRepo,
+		emailConfirmationRepo,
+		sendEmailConfirmationUC,
+		markEmailAsConfirmedUC,
+		turnstileClient,
+		rateLimiter,
+	)
+	accountHandler := account.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		emailConfirmationRepo,
+		userRepo,
+		createAccountUC,
 		createUserSessionUC,
 	)
 
@@ -150,6 +215,12 @@ func main() {
 		r.Post("/sign_in/two_factor", signInTwoFactorHandler.Create)
 		r.Get("/sign_in/two_factor/recovery/new", signInTwoFactorRecoveryHandler.New)
 		r.Post("/sign_in/two_factor/recovery", signInTwoFactorRecoveryHandler.Create)
+		r.Get("/sign_up", signUpHandler.New)
+		r.Post("/email_confirmation", emailConfirmationHandler.Create)
+		r.Get("/email_confirmation/edit", emailConfirmationHandler.Edit)
+		r.Patch("/email_confirmation", emailConfirmationHandler.Update)
+		r.Get("/accounts/new", accountHandler.New)
+		r.Post("/accounts", accountHandler.Create)
 	})
 
 	// 認証済みユーザー専用ルート
@@ -170,8 +241,27 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if err := srv.ListenAndServe(); err != nil {
+	// グレースフルシャットダウン
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		slog.Info("シャットダウンシグナルを受信しました")
+		cancel()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			slog.Error("サーバーのシャットダウンに失敗しました", "error", err)
+		}
+	}()
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("サーバーの起動に失敗しました", "error", err)
 		os.Exit(1)
 	}
+
+	slog.Info("サーバーを停止しました")
 }
