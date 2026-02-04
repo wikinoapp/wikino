@@ -242,3 +242,90 @@ other = "Password must be at least 8 characters"
 # Account creation success
 [flash_account_created]
 other = "Your account has been created"
+
+# Password reset request
+[password_reset_title]
+other = "Password Reset"
+
+[password_reset_heading]
+other = "Reset your password"
+
+[password_reset_description]
+other = "Enter your registered email address and we'll send you a link to reset your password."
+
+[password_reset_email_label]
+other = "Email address"
+
+[password_reset_submit]
+other = "Send reset link"
+
+[password_reset_back_to_sign_in]
+other = "Back to sign in"
+
+# Password reset email sent
+[password_reset_sent_title]
+other = "Email Sent"
+
+[password_reset_sent_heading]
+other = "Check your email"
+
+[password_reset_sent_message]
+other = "We've sent you a password reset link"
+
+[password_reset_sent_instructions]
+other = "Click the link in the email to set a new password. The link expires in 1 hour."
+
+[password_reset_email_not_received_heading]
+other = "Didn't receive the email?"
+
+[password_reset_email_not_received_help]
+other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
+
+# Password change
+[password_edit_title]
+other = "Set New Password"
+
+[password_edit_heading]
+other = "Set a new password"
+
+[password_edit_description]
+other = "Enter your new password below."
+
+[password_edit_password_label]
+other = "New password"
+
+[password_edit_password_requirements]
+other = "Must be at least 8 characters"
+
+[password_edit_password_confirmation_label]
+other = "Confirm new password"
+
+[password_edit_submit]
+other = "Change password"
+
+# Password validation (additional)
+[validation_password_confirmation_required]
+other = "Please enter password confirmation"
+
+[validation_password_confirmation_mismatch]
+other = "Passwords do not match"
+
+# Token validation
+[validation_token_required]
+other = "Token is required"
+
+[validation_token_invalid]
+other = "Invalid link. Please request a new password reset."
+
+[validation_token_expired]
+other = "This link has expired. Please request a new password reset."
+
+[validation_token_used]
+other = "This link has already been used. Please request a new password reset."
+
+[validation_system_error]
+other = "A system error occurred. Please try again later."
+
+# Password change success
+[flash_password_updated]
+other = "Your password has been updated"
