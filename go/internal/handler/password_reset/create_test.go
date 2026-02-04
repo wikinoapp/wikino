@@ -267,7 +267,8 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 	}
 
 	// Rate Limiterを初期化（PostgreSQLベース）
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
@@ -364,7 +365,8 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 	}
 
 	// Rate Limiterを初期化（PostgreSQLベース）
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)

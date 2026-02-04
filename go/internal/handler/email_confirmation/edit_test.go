@@ -76,7 +76,8 @@ func TestEdit(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	handler := email_confirmation.NewHandler(
 		cfg,
@@ -184,7 +185,8 @@ func TestEdit_NoEmailConfirmationID(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	handler := email_confirmation.NewHandler(
 		cfg,
@@ -259,7 +261,8 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	handler := email_confirmation.NewHandler(
 		cfg,

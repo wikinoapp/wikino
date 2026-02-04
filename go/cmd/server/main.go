@@ -112,7 +112,8 @@ func main() {
 	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
 
 	// Rate Limiterを初期化
-	rateLimiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)

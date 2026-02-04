@@ -281,7 +281,7 @@ func (l *Limiter) Check(ctx context.Context, input CheckInput) (*CheckResult, er
 Go版/Rails版の両方を修正する場合は別タスクに分けてください
 -->
 
-- [ ] **1-1**: [Go] RateLimitRepository の作成と Limiter の修正
+- [x] **1-1**: [Go] RateLimitRepository の作成と Limiter の修正
 
   - `internal/repository/rate_limit_repository.go` を新規作成
   - `internal/repository/rate_limit_repository_test.go` を新規作成
@@ -292,7 +292,7 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 
 ### フェーズ 2: 呼び出し元の修正
 
-- [ ] **2-1**: [Go] Limiter 使用箇所の修正
+- [x] **2-1**: [Go] Limiter 使用箇所の修正
 
   - `ratelimit.NewLimiter()` の呼び出し箇所を修正
   - Repository を生成して渡すように変更
