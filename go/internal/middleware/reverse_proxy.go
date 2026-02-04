@@ -30,6 +30,7 @@ var (
 	// 完全一致でチェックするパス
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
 	goHandledExactPaths = []string{
+		"/",              // トップページ
 		"/manifest.json", // Web App Manifest
 	}
 
