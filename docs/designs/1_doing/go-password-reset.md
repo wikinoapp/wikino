@@ -423,12 +423,12 @@ func HashToken(token string) string {
   - IP 単位・メールアドレス単位のレート制限に対応
   - **実装済みファイル**: `/workspace/go/internal/ratelimit/limiter.go`
 
-- [ ] **8-2**: パスワードリセットトークンのユーティリティ実装
+- [x] **8-2**: パスワードリセットトークンのユーティリティ実装
 
   - `internal/password_reset/token.go`
   - トークン生成（32 バイト + Base64 URL-safe）
   - トークンハッシュ化（SHA256）
-  - **参考ファイル**: `/annict/go/internal/password_reset/token.go`
+  - **実装済みファイル**: `/workspace/go/internal/password_reset/token.go`
   - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
   - **想定行数**: 約 80 行（実装 30 行 + テスト 50 行）
 
