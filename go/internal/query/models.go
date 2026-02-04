@@ -200,6 +200,16 @@ type PageRevision struct {
 	Title         string    `json:"title"`
 }
 
+type PasswordResetToken struct {
+	ID          string       `json:"id"`
+	UserID      string       `json:"user_id"`
+	TokenDigest string       `json:"token_digest"`
+	ExpiresAt   time.Time    `json:"expires_at"`
+	UsedAt      sql.NullTime `json:"used_at"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+}
+
 type RateLimit struct {
 	ID          string    `json:"id"`
 	Key         string    `json:"key"`

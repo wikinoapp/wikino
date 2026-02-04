@@ -305,6 +305,21 @@ CREATE TABLE public.pages (
 
 
 --
+-- Name: password_reset_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.password_reset_tokens (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    token_digest character varying NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: rate_limits; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -679,6 +694,14 @@ ALTER TABLE ONLY public.pages
 
 
 --
+-- Name: password_reset_tokens password_reset_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.password_reset_tokens
+    ADD CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: rate_limits rate_limits_key_window_start_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -804,6 +827,20 @@ ALTER TABLE ONLY public.user_two_factor_auths
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_password_reset_tokens_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_password_reset_tokens_token_digest ON public.password_reset_tokens USING btree (token_digest);
+
+
+--
+-- Name: idx_password_reset_tokens_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_password_reset_tokens_user_id ON public.password_reset_tokens USING btree (user_id);
 
 
 --
@@ -1575,6 +1612,14 @@ ALTER TABLE ONLY public.user_two_factor_auths
 
 
 --
+-- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.password_reset_tokens
+    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: river_client_queue river_client_queue_river_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1619,4 +1664,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250920074019'),
     ('20250920082216'),
     ('20260202060000'),
-    ('20260202160000');
+    ('20260202160000'),
+    ('20260204160000');
