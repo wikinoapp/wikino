@@ -14,6 +14,7 @@ type Handler struct {
 	sessionMgr            *session.Manager
 	flashMgr              *session.FlashManager
 	emailConfirmationRepo *repository.EmailConfirmationRepository
+	createValidator       *CreateValidator
 	createAccountUC       *usecase.CreateAccountUsecase
 	createUserSessionUC   *usecase.CreateUserSessionUsecase
 }
@@ -24,6 +25,7 @@ func NewHandler(
 	sessionMgr *session.Manager,
 	flashMgr *session.FlashManager,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
+	userRepo *repository.UserRepository,
 	createAccountUC *usecase.CreateAccountUsecase,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 ) *Handler {
@@ -32,6 +34,7 @@ func NewHandler(
 		sessionMgr:            sessionMgr,
 		flashMgr:              flashMgr,
 		emailConfirmationRepo: emailConfirmationRepo,
+		createValidator:       NewCreateValidator(emailConfirmationRepo, userRepo),
 		createAccountUC:       createAccountUC,
 		createUserSessionUC:   createUserSessionUC,
 	}

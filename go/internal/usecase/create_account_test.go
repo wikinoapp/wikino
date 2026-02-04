@@ -133,42 +133,6 @@ func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
 	}
 }
 
-func TestCreateAccountUsecase_Execute_AtnameAlreadyTaken(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
-	q := query.New(db)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	userRepo := repository.NewUserRepository(q)
-	userPasswordRepo := repository.NewUserPasswordRepository(q)
-	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
-
-	// 既存のユーザーを作成
-	testutil.NewUserBuilderDB(t, db).
-		WithEmail("existing@example.com").
-		WithAtname("existinguser").
-		Build()
-
-	// メール確認完了済みのテストデータを作成
-	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
-		WithEmail("new@example.com").
-		WithEvent(model.EmailConfirmationEventSignUp).
-		WithCode("CA0003").
-		WithStartedAt(time.Now()).
-		BuildSucceeded()
-
-	// 既存のアットネームでアカウント作成を試みるとエラーになる
-	_, err := uc.Execute(context.Background(), CreateAccountInput{
-		EmailConfirmationID: ecID,
-		Email:               "new@example.com",
-		Atname:              "existinguser", // 既存のアットネーム
-		Password:            "password123",
-		Locale:              model.LocaleJa,
-		TimeZone:            "Asia/Tokyo",
-	})
-	if !errors.Is(err, ErrAtnameAlreadyTaken) {
-		t.Errorf("Execute() error = %v, want %v", err, ErrAtnameAlreadyTaken)
-	}
-}
-
 func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
 	db := testutil.SetupTestDBWithoutTx(t)
 	q := query.New(db)

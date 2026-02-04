@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -37,34 +36,30 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	totpCode := r.FormValue("totp_code")
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// リクエストのバリデーション
-	req := NewCreateRequest(totpCode)
-	if formErrors := req.Validate(ctx); formErrors != nil {
-		h.renderTwoFactorForm(w, r, formErrors, csrfToken)
-		return
-	}
-
-	// TOTPコードを検証
-	err := h.verifyTwoFactorUC.VerifyTOTP(ctx, usecase.VerifyTOTPInput{
+	// バリデーション（形式チェック + DB検証）
+	result := h.createValidator.Validate(ctx, CreateValidatorInput{
 		UserID:   pendingUserID,
 		TOTPCode: totpCode,
 	})
-	if err != nil {
-		if errors.Is(err, usecase.ErrTwoFactorNotEnabled) {
+	if result.FormErrors != nil && result.FormErrors.HasErrors() && result.Err == nil {
+		// 形式バリデーションエラー
+		h.renderTwoFactorForm(w, r, result.FormErrors, csrfToken)
+		return
+	}
+	if result.Err != nil {
+		if errors.Is(result.Err, ErrTwoFactorNotEnabled) {
 			// 2FAが有効でない場合はログインページにリダイレクト
 			slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
 			h.sessionMgr.DeletePendingUserCookie(w)
 			http.Redirect(w, r, "/sign_in", http.StatusFound)
 			return
 		}
-		if errors.Is(err, usecase.ErrInvalidTOTPCode) {
+		if errors.Is(result.Err, ErrInvalidTOTPCode) {
 			// TOTPコードが無効
-			formErrors := session.NewFormErrors()
-			formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
-			h.renderTwoFactorForm(w, r, formErrors, csrfToken)
+			h.renderTwoFactorForm(w, r, result.FormErrors, csrfToken)
 			return
 		}
-		slog.ErrorContext(ctx, "TOTP検証でエラー", "error", err, "user_id", pendingUserID)
+		slog.ErrorContext(ctx, "TOTP検証でエラー", "error", result.Err, "user_id", pendingUserID)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

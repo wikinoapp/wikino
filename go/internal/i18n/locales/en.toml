@@ -151,6 +151,9 @@ other = "Invalid event type"
 [validation_bot_detected]
 other = "Please try again later"
 
+[validation_rate_limit_exceeded]
+other = "Too many requests. Please try again later"
+
 # Email confirmation code entry
 [email_confirmation_edit_title]
 other = "Enter confirmation code"

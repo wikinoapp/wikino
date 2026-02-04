@@ -617,18 +617,18 @@ func ValidateAtname(atname string) error {
 
 ### フェーズ 7: Rate Limiting の実装（後日対応）
 
-- [ ] **7-1**: [Go] PostgreSQL ベースの Rate Limiter の実装
+- [x] **7-1**: [Go] PostgreSQL ベースの Rate Limiter の実装
 
   - `internal/ratelimit/limiter.go` の作成
-  - `db/migrations/XXXXXX_create_rate_limits.sql` の作成
+  - `db/migrations/20260202160000_create_rate_limits.sql` の作成
   - `db/queries/rate_limits.sql` の作成
   - PostgreSQL の UPSERT を使用したアトミックなカウント更新
-  - 古いレコードの定期削除（River ジョブまたはアプリ起動時）
+  - 古いレコードの定期削除（River ジョブ: `internal/worker/cleanup_rate_limits.go`）
   - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
   - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
   - **備考**: Redis を使わず PostgreSQL で実装し、依存関係をシンプルに保つ
 
-- [ ] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
+- [x] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
 
   - `internal/handler/email_confirmation/create.go` の更新
   - IP 単位: 5 回/時間

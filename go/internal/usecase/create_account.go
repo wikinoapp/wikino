@@ -55,8 +55,6 @@ type CreateAccountOutput struct {
 var (
 	// ErrEmailNotConfirmed はメール確認が完了していない場合のエラー
 	ErrEmailNotConfirmed = errors.New("メール確認が完了していません")
-	// ErrAtnameAlreadyTaken はアットネームが既に使用されている場合のエラー
-	ErrAtnameAlreadyTaken = errors.New("このアットネームは既に使用されています")
 )
 
 // Execute はアカウントを作成する
@@ -82,15 +80,6 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 	}
 	if confirmation == nil || !confirmation.IsSucceeded() {
 		return nil, ErrEmailNotConfirmed
-	}
-
-	// アットネームの重複チェック
-	existingUser, err := userRepo.FindByAtname(ctx, input.Atname)
-	if err != nil {
-		return nil, fmt.Errorf("ユーザーの検索に失敗しました: %w", err)
-	}
-	if existingUser != nil {
-		return nil, ErrAtnameAlreadyTaken
 	}
 
 	// パスワードをbcryptでハッシュ化

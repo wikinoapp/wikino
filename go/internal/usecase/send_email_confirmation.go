@@ -9,34 +9,37 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// EmailConfirmationEnqueuer はメール確認送信ジョブをエンキューするインターフェース
-type EmailConfirmationEnqueuer interface {
-	EnqueueEmailConfirmation(ctx context.Context, input worker.EnqueueEmailConfirmationInput) error
+// JobInserter はジョブをキューに追加するインターフェース
+type JobInserter interface {
+	Insert(ctx context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error)
 }
 
 // SendEmailConfirmationUsecase はメール確認コード送信ユースケース
 type SendEmailConfirmationUsecase struct {
 	cfg                   *config.Config
 	emailConfirmationRepo *repository.EmailConfirmationRepository
-	enqueuer              EmailConfirmationEnqueuer
+	inserter              JobInserter
 }
 
 // NewSendEmailConfirmationUsecase は SendEmailConfirmationUsecase を生成する
 func NewSendEmailConfirmationUsecase(
 	cfg *config.Config,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
-	enqueuer EmailConfirmationEnqueuer,
+	inserter JobInserter,
 ) *SendEmailConfirmationUsecase {
 	return &SendEmailConfirmationUsecase{
 		cfg:                   cfg,
 		emailConfirmationRepo: emailConfirmationRepo,
-		enqueuer:              enqueuer,
+		inserter:              inserter,
 	}
 }
 
@@ -72,17 +75,22 @@ func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendE
 		return nil, fmt.Errorf("メール確認情報の作成に失敗しました: %w", err)
 	}
 
-	// メール送信ジョブをエンキュー
-	if err := uc.enqueuer.EnqueueEmailConfirmation(ctx, worker.EnqueueEmailConfirmationInput{
+	// メール送信ジョブをエンキュー（テンプレートのレンダリングはWorkerで行う）
+	_, err = uc.inserter.Insert(ctx, worker.SendEmailConfirmationArgs{
 		Email:  input.Email,
 		Code:   code,
 		AppURL: uc.cfg.AppURL(),
 		Locale: input.Locale,
-	}); err != nil {
+	})
+	if err != nil {
 		// ジョブエンキューに失敗してもコードは有効なので、エラーログを出力して続行
 		slog.ErrorContext(ctx, "メール送信ジョブのエンキューに失敗しました",
 			"email", input.Email,
 			"error", err,
+		)
+	} else {
+		slog.InfoContext(ctx, "メール送信ジョブをエンキューしました",
+			"email", input.Email,
 		)
 	}
 

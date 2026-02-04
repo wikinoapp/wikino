@@ -151,6 +151,9 @@ other = "無効なイベントタイプです"
 [validation_bot_detected]
 other = "しばらくしてからもう一度お試しください"
 
+[validation_rate_limit_exceeded]
+other = "リクエストが多すぎます。しばらくしてからお試しください"
+
 # メール確認コード入力
 [email_confirmation_edit_title]
 other = "確認コードの入力"

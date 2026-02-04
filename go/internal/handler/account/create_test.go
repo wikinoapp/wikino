@@ -98,6 +98,7 @@ func TestCreate_Success(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -227,6 +228,7 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -330,6 +332,7 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -433,6 +436,7 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -551,6 +555,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -632,6 +637,7 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		emailConfirmationRepo,
+		userRepo,
 		createAccountUC,
 		createUserSessionUC,
 	)

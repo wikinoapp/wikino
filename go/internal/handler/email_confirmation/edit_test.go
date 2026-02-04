@@ -7,15 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
 // mockTurnstileVerifierForEdit はテスト用のTurnstile検証モック
@@ -28,11 +31,11 @@ func (m *mockTurnstileVerifierForEdit) Verify(_ context.Context, _ string) (bool
 	return m.valid, m.err
 }
 
-// mockEnqueuerForEdit はテスト用のモック enqueuer
-type mockEnqueuerForEdit struct{}
+// mockInserterForEdit はテスト用のモック inserter
+type mockInserterForEdit struct{}
 
-func (m *mockEnqueuerForEdit) EnqueueEmailConfirmation(_ context.Context, _ worker.EnqueueEmailConfirmationInput) error {
-	return nil
+func (m *mockInserterForEdit) Insert(_ context.Context, _ river.JobArgs) (*rivertype.JobInsertResult, error) {
+	return &rivertype.JobInsertResult{}, nil
 }
 
 func TestEdit(t *testing.T) {
@@ -64,22 +67,27 @@ func TestEdit(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuerForEdit{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserterForEdit{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// Turnstile検証器（モック）
 	turnstileVerifier := &mockTurnstileVerifierForEdit{valid: true}
 
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		turnstileVerifier,
+		limiter,
 	)
 
 	// HTTPリクエストを作成
@@ -167,22 +175,27 @@ func TestEdit_NoEmailConfirmationID(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuerForEdit{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserterForEdit{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// Turnstile検証器（モック）
 	turnstileVerifier := &mockTurnstileVerifierForEdit{valid: true}
 
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		turnstileVerifier,
+		limiter,
 	)
 
 	// HTTPリクエストを作成（email_confirmation_id のCookieなし）
@@ -237,22 +250,27 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ユースケースを初期化
-	enqueuer := &mockEnqueuerForEdit{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, enqueuer)
+	inserter := &mockInserterForEdit{}
+	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
 
 	// Turnstile検証器（モック）
 	turnstileVerifier := &mockTurnstileVerifierForEdit{valid: true}
 
-	verifyEmailConfirmationUC := usecase.NewVerifyEmailConfirmationUsecase(emailConfirmationRepo)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
+
+	// Rate Limiterを初期化
+	limiter := ratelimit.NewLimiter(queries)
 
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		userRepo,
+		emailConfirmationRepo,
 		sendEmailConfirmationUC,
-		verifyEmailConfirmationUC,
+		markEmailAsConfirmedUC,
 		turnstileVerifier,
+		limiter,
 	)
 
 	// HTTPリクエストを作成（英語ロケール）
