@@ -108,3 +108,9 @@ func UserFromContext(ctx context.Context) *model.User {
 	}
 	return user
 }
+
+// SetUserToContext はコンテキストにユーザー情報を設定する
+// テストでログイン状態をシミュレートするために使用する
+func SetUserToContext(ctx context.Context, user *model.User) context.Context {
+	return context.WithValue(ctx, userContextKey, user)
+}

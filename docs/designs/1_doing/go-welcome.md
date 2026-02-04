@@ -307,7 +307,7 @@ Go 版では、これらの画像を `static/` ディレクトリから配信し
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
   - **想定行数**: 約 200 行（実装 200 行 + テスト 0 行）
 
-- [ ] **2-2**: [Go] トップページハンドラーの実装
+- [x] **2-2**: [Go] トップページハンドラーの実装
   - `internal/handler/welcome/handler.go`
   - `internal/handler/welcome/show.go`
   - `internal/handler/welcome/show_test.go`
