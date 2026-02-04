@@ -241,6 +241,15 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
               desc: "WorkerはPresentation層に依存できません。"
 
+        # RateLimit層のルール: インフラストラクチャユーティリティ
+        # Queryに直接依存せず、Repositoryを経由する
+        ratelimit-layer:
+          files:
+            - "**/internal/ratelimit/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "RateLimitはQueryに直接依存できません。Repositoryを経由してください。"
+
     # staticcheck の設定
     staticcheck:
       # 有効化するチェック（デフォルトですべて有効）
