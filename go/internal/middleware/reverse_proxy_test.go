@@ -98,11 +98,14 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 		},
 
 		// Rails版にプロキシするパス
+		// トップページはGo版で未実装のため、Rails版にプロキシ
+		// Go版で実装後は goHandledExactPaths に "/" を追加する
 		{
-			name:     "ホームページ",
+			name:     "トップページ",
 			path:     "/",
 			expected: false,
 		},
+		// 完全一致の "/" がプレフィックス一致として動作しないことを確認
 		{
 			name:     "ユーザープロフィール",
 			path:     "/@username",
@@ -121,6 +124,16 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 		{
 			name:     "設定ページ",
 			path:     "/settings",
+			expected: false,
+		},
+		{
+			name:     "作品一覧ページ（/worksは/のプレフィックスだがRails版）",
+			path:     "/works",
+			expected: false,
+		},
+		{
+			name:     "タイムラインページ（/timelineは/のプレフィックスだがRails版）",
+			path:     "/timeline",
 			expected: false,
 		},
 	}

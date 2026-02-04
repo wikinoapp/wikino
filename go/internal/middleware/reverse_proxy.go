@@ -22,20 +22,35 @@ type ReverseProxyMiddleware struct {
 
 // Go版で処理するパス（ホワイトリスト）
 // これらのパスはRails版にプロキシせず、Go版のハンドラーで処理する
-var goHandledPaths = []string{
-	"/static",                          // 静的ファイル（CSS、JS、画像など）
-	"/health",                          // ヘルスチェックエンドポイント
-	"/manifest.json",                   // Web App Manifest
-	"/sign_in",                         // ログインページ・処理
-	"/sign_up",                         // サインアップページ
-	"/email_confirmation",              // メール確認コード送信・検証
-	"/accounts",                        // アカウント作成
-	"/user_session",                    // セッション作成・削除
-	"/sign_in/two_factor/new",          // 2FAコード入力フォーム
-	"/sign_in/two_factor/recovery/new", // リカバリーコード入力フォーム
-	"/sign_in/two_factor/recovery",     // リカバリーコード検証
-	"/sign_in/two_factor",              // 2FAコード検証
-}
+//
+// 2種類のマッチング方式：
+// - 完全一致（exactPaths）: パスが完全に一致する場合のみマッチ
+// - プレフィックス一致（prefixPaths）: パスが指定した文字列で始まる場合にマッチ
+var (
+	// 完全一致でチェックするパス
+	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
+	goHandledExactPaths = []string{
+		"/manifest.json", // Web App Manifest
+	}
+
+	// プレフィックス一致でチェックするパス
+	goHandledPrefixPaths = []string{
+		"/static",                          // 静的ファイル（CSS、JS、画像など）
+		"/health",                          // ヘルスチェックエンドポイント
+		"/sign_in",                         // ログインページ・処理
+		"/sign_up",                         // サインアップページ
+		"/email_confirmation",              // メール確認コード送信・検証
+		"/accounts",                        // アカウント作成
+		"/user_session",                    // セッション作成・削除
+		"/sign_in/two_factor/new",          // 2FAコード入力フォーム
+		"/sign_in/two_factor/recovery/new", // リカバリーコード入力フォーム
+		"/sign_in/two_factor/recovery",     // リカバリーコード検証
+		"/sign_in/two_factor",              // 2FAコード検証
+		"/password/reset",                  // パスワードリセット申請フォーム・処理
+		"/password/edit",                   // 新パスワード入力フォーム
+		"/password",                        // パスワード更新処理
+	}
+)
 
 // NewReverseProxyMiddleware は新しいReverseProxyMiddlewareを作成
 func NewReverseProxyMiddleware(railsURL string, cfg *config.Config) (*ReverseProxyMiddleware, error) {
@@ -167,11 +182,20 @@ func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 
 // isGoHandledPath はGo版で処理するパスかどうかを判定
 func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
-	for _, p := range goHandledPaths {
+	// 完全一致でチェック
+	for _, p := range goHandledExactPaths {
+		if path == p {
+			return true
+		}
+	}
+
+	// プレフィックス一致でチェック
+	for _, p := range goHandledPrefixPaths {
 		if strings.HasPrefix(path, p) {
 			return true
 		}
 	}
+
 	return false
 }
 

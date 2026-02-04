@@ -242,3 +242,90 @@ other = "パスワードは8文字以上で入力してください"
 # アカウント作成成功
 [flash_account_created]
 other = "アカウントを作成しました"
+
+# パスワードリセット申請
+[password_reset_title]
+other = "パスワードリセット"
+
+[password_reset_heading]
+other = "パスワードをリセット"
+
+[password_reset_description]
+other = "登録したメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。"
+
+[password_reset_email_label]
+other = "メールアドレス"
+
+[password_reset_submit]
+other = "リセットリンクを送信"
+
+[password_reset_back_to_sign_in]
+other = "ログインに戻る"
+
+# パスワードリセットメール送信完了
+[password_reset_sent_title]
+other = "メール送信完了"
+
+[password_reset_sent_heading]
+other = "メールを送信しました"
+
+[password_reset_sent_message]
+other = "パスワードリセット用のリンクを送信しました"
+
+[password_reset_sent_instructions]
+other = "メールに記載されたリンクをクリックして、新しいパスワードを設定してください。リンクの有効期限は1時間です。"
+
+[password_reset_email_not_received_heading]
+other = "メールが届かない場合"
+
+[password_reset_email_not_received_help]
+other = "迷惑メールフォルダをご確認ください。数分経ってもメールが届かない場合は、入力したメールアドレスが正しいかご確認のうえ、再度お試しください。"
+
+# パスワード変更
+[password_edit_title]
+other = "新しいパスワードを設定"
+
+[password_edit_heading]
+other = "新しいパスワードを設定"
+
+[password_edit_description]
+other = "新しいパスワードを入力してください。"
+
+[password_edit_password_label]
+other = "新しいパスワード"
+
+[password_edit_password_requirements]
+other = "8文字以上で入力してください"
+
+[password_edit_password_confirmation_label]
+other = "新しいパスワード（確認）"
+
+[password_edit_submit]
+other = "パスワードを変更"
+
+# パスワードバリデーション（追加）
+[validation_password_confirmation_required]
+other = "パスワード（確認）を入力してください"
+
+[validation_password_confirmation_mismatch]
+other = "パスワードが一致しません"
+
+# トークンバリデーション
+[validation_token_required]
+other = "トークンが必要です"
+
+[validation_token_invalid]
+other = "無効なリンクです。パスワードリセットを再度お試しください。"
+
+[validation_token_expired]
+other = "リンクの有効期限が切れています。パスワードリセットを再度お試しください。"
+
+[validation_token_used]
+other = "このリンクは既に使用されています。パスワードリセットを再度お試しください。"
+
+[validation_system_error]
+other = "システムエラーが発生しました。しばらく経ってから再度お試しください。"
+
+# パスワード変更成功
+[flash_password_updated]
+other = "パスワードを変更しました"

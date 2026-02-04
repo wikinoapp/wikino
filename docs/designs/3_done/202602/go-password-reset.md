@@ -204,11 +204,16 @@ type Handler struct {
 
 ```go
 // UpdateValidator はパスワード更新のバリデーションを行う
-type UpdateValidator struct{}
+// 形式バリデーションとトークン検証（DB検索）を統合
+type UpdateValidator struct {
+    passwordResetTokenRepo *repository.PasswordResetTokenRepository
+}
 
 // NewUpdateValidator は UpdateValidator を生成する
-func NewUpdateValidator() *UpdateValidator {
-    return &UpdateValidator{}
+func NewUpdateValidator(passwordResetTokenRepo *repository.PasswordResetTokenRepository) *UpdateValidator {
+    return &UpdateValidator{
+        passwordResetTokenRepo: passwordResetTokenRepo,
+    }
 }
 
 // UpdateValidatorInput はバリデーションの入力パラメータ
@@ -220,6 +225,8 @@ type UpdateValidatorInput struct {
 
 // UpdateValidatorResult はバリデーションの結果
 type UpdateValidatorResult struct {
+    TokenID    string               // 検証成功時のトークンID（UseCaseに渡す）
+    UserID     string               // 検証成功時のユーザーID（UseCaseに渡す）
     FormErrors *session.FormErrors
 }
 
@@ -227,6 +234,7 @@ type UpdateValidatorResult struct {
 func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInput) *UpdateValidatorResult {
     formErrors := session.NewFormErrors()
 
+    // 形式バリデーション
     // トークン必須チェック
     if input.Token == "" {
         formErrors.AddFieldError("token", templates.T(ctx, "error_required"))
@@ -252,7 +260,35 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
         formErrors.AddFieldError("password_confirmation", templates.T(ctx, "error_password_mismatch"))
     }
 
-    return &UpdateValidatorResult{FormErrors: formErrors}
+    if formErrors.HasErrors() {
+        return &UpdateValidatorResult{FormErrors: formErrors}
+    }
+
+    // トークン検証（状態バリデーション）
+    tokenDigest := password_reset.HashToken(input.Token)
+    token, err := v.passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)
+    if err != nil {
+        // DBエラーはログに記録し、ユーザーにはシステムエラーを表示
+        formErrors.AddGlobalError(templates.T(ctx, "error_system"))
+        return &UpdateValidatorResult{FormErrors: formErrors}
+    }
+    if token == nil {
+        formErrors.AddGlobalError(templates.T(ctx, "error_token_invalid"))
+        return &UpdateValidatorResult{FormErrors: formErrors}
+    }
+    if token.IsUsed() {
+        formErrors.AddGlobalError(templates.T(ctx, "error_token_used"))
+        return &UpdateValidatorResult{FormErrors: formErrors}
+    }
+    if token.IsExpired() {
+        formErrors.AddGlobalError(templates.T(ctx, "error_token_expired"))
+        return &UpdateValidatorResult{FormErrors: formErrors}
+    }
+
+    return &UpdateValidatorResult{
+        TokenID: token.ID,
+        UserID:  token.UserID,
+    }
 }
 ```
 
@@ -307,8 +343,10 @@ func NewUpdatePasswordResetUsecase(
 ) *UpdatePasswordResetUsecase
 
 // UpdatePasswordResetInput は入力パラメータ
+// トークン検証は validator.go で行い、検証済みの TokenID と UserID を受け取る
 type UpdatePasswordResetInput struct {
-    Token       string
+    TokenID     string  // validator.go で検証済みのトークンID
+    UserID      string  // validator.go で検証済みのユーザーID
     NewPassword string
 }
 
@@ -317,7 +355,8 @@ type UpdatePasswordResetOutput struct {
     UserID string
 }
 
-// Execute はトークンを検証し、パスワードを更新する
+// Execute はパスワードを更新し、トークンを使用済みにマークする
+// トークン検証は validator.go で行うため、UseCase では永続化のみ行う
 func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, input UpdatePasswordResetInput) (*UpdatePasswordResetOutput, error)
 ```
 
@@ -358,15 +397,20 @@ func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, input UpdateP
 
 4. ユーザーがフォーム送信 (PATCH /password)
    ├── CSRF トークン検証
-   ├── フォームバリデーション
-   │   ├── トークン: 必須
-   │   ├── パスワード: 必須、8文字以上
-   │   └── パスワード確認: 必須、パスワードと一致
-   ├── パスワード強度チェック
-   ├── トークン検証（再度）
-   ├── パスワードを bcrypt でハッシュ化
-   ├── ユーザーのパスワードを更新
-   ├── トークンを使用済みにマーク
+   ├── validator.go でバリデーション
+   │   ├── 形式バリデーション
+   │   │   ├── トークン: 必須
+   │   │   ├── パスワード: 必須、8文字以上
+   │   │   └── パスワード確認: 必須、パスワードと一致
+   │   └── トークン検証（状態バリデーション）
+   │       ├── トークンをハッシュ化して DB から検索
+   │       ├── トークンの存在チェック
+   │       ├── トークンの使用済みチェック
+   │       └── トークンの有効期限チェック
+   ├── UseCase で永続化（検証済みの TokenID, UserID を受け取る）
+   │   ├── パスワードを bcrypt でハッシュ化
+   │   ├── ユーザーのパスワードを更新
+   │   └── トークンを使用済みにマーク
    ├── フラッシュメッセージ設定
    └── /sign_in にリダイレクト
 ```
@@ -439,79 +483,93 @@ func HashToken(token string) string {
   - メールテンプレートは `internal/templates/emails/` に配置
   - **実装済みファイル**: `/workspace/go/internal/email/sender.go`
 
-- [ ] **8-4**: password_reset_tokens テーブルのマイグレーション
+- [x] **8-4**: password_reset_tokens テーブルのマイグレーション
 
-  - `db/migrations/YYYYMMDDHHMMSS_create_password_reset_tokens.sql`
-  - sqlc クエリ定義の追加
+  - `db/migrations/20260204160000_create_password_reset_tokens.sql`
+  - `db/queries/password_reset_tokens.sql`
+  - `internal/model/password_reset_token.go`
   - `internal/repository/password_reset_token_repository.go`
-  - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
-  - **想定行数**: 約 150 行（実装 100 行 + テスト 50 行）
+  - `internal/repository/password_reset_token_repository_test.go`
+  - `internal/testutil/password_reset_token_builder.go`
+  - **実装済みファイル数**: 6 ファイル（実装 5 + テスト 1）
 
-- [ ] **8-5**: パスワードリセットトークン作成ユースケースの実装
+- [x] **8-5**: パスワードリセットトークン作成ユースケースの実装
 
   - `internal/usecase/create_password_reset_token.go`
+  - `internal/usecase/create_password_reset_token_test.go`
+  - `internal/worker/send_password_reset.go`（ワーカー引数定義）
   - 既存の未使用トークンを削除
   - 新しいトークンを生成・保存
-  - パスワードリセットメールを送信
-  - **参考ファイル**: `/annict/go/internal/usecase/create_password_reset_token.go`
-  - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
-  - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
+  - パスワードリセットメールを送信（ジョブをエンキュー）
+  - **実装済みファイル数**: 3 ファイル（実装 2 + テスト 1）
 
-- [ ] **8-6**: パスワード更新ユースケースの実装
+- [x] **8-6**: パスワード更新ユースケースの実装
 
   - `internal/usecase/update_password_reset.go`
+  - `internal/usecase/update_password_reset_test.go`
+  - `db/queries/user_passwords.sql`（UpdateUserPasswordDigest クエリ追加）
+  - `internal/repository/user_password_repository.go`（UpdatePasswordDigest メソッド追加）
+  - `internal/testutil/user_password_builder.go`
   - トークン検証（有効期限、使用済みチェック）
   - パスワードを bcrypt でハッシュ化して更新
   - トークンを使用済みにマーク
-  - **参考ファイル**: `/annict/go/internal/usecase/update_password_reset.go`
-  - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
-  - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
+  - **実装済みファイル数**: 5 ファイル（実装 4 + テスト 1）
 
-- [ ] **8-7**: パスワードリセット申請フォームテンプレートの実装
+- [x] **8-7**: パスワードリセット申請フォームテンプレートの実装
 
   - `internal/templates/pages/password/reset.templ`
   - `internal/templates/pages/password/reset_sent.templ`
   - **参考ファイル**: `/annict/go/internal/templates/pages/password/reset.templ`
   - **想定ファイル数**: 約 2 ファイル（実装 2 + テスト 0）
   - **想定行数**: 約 100 行（実装 100 行 + テスト 0 行）
+  - **実装済みファイル**: `/workspace/go/internal/templates/pages/password/reset.templ`, `/workspace/go/internal/templates/pages/password/reset_sent.templ`
 
-- [ ] **8-8**: 新パスワード入力フォームテンプレートの実装
+- [x] **8-8**: 新パスワード入力フォームテンプレートの実装
 
   - `internal/templates/pages/password/edit.templ`
   - **参考ファイル**: `/annict/go/internal/templates/pages/password/edit.templ`
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
   - **想定行数**: 約 80 行（実装 80 行 + テスト 0 行）
+  - **実装済みファイル**: `/workspace/go/internal/templates/pages/password/edit.templ`
 
-- [ ] **8-9**: パスワードリセット申請ハンドラーの実装
+- [x] **8-9**: パスワードリセット申請ハンドラーの実装
 
   - `internal/handler/password_reset/handler.go`
   - `internal/handler/password_reset/new.go`
   - `internal/handler/password_reset/create.go`
-  - `internal/handler/password_reset/request.go`
+  - `internal/handler/password_reset/validator.go`
+  - `internal/handler/password_reset/validator_test.go`
+  - `internal/handler/password_reset/new_test.go`
+  - `internal/handler/password_reset/create_test.go`
   - Turnstile 検証、Rate Limiting を実装
   - **参考ファイル**: `/annict/go/internal/handler/password_reset/`
-  - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 4）
-  - **想定行数**: 約 500 行（実装 200 行 + テスト 300 行）
+  - **実装済みファイル数**: 7 ファイル（実装 4 + テスト 3）
 
-- [ ] **8-10**: パスワード更新ハンドラーの実装
+- [x] **8-10**: パスワード更新ハンドラーの実装
 
   - `internal/handler/password/handler.go`
   - `internal/handler/password/edit.go`
   - `internal/handler/password/update.go`
-  - `internal/handler/password/request.go`
-  - パスワード強度チェック、トークン検証を実装
+  - `internal/handler/password/validator.go`
+  - `internal/handler/password/validator_test.go`
+  - `internal/handler/password/edit_test.go`
+  - `internal/handler/password/update_test.go`
+  - **validator.go でのトークン検証**（UseCase から分離）:
+    - トークン存在チェック（平文トークンをハッシュ化して DB 検索）
+    - トークン使用済みチェック（`IsUsed()`）
+    - トークン有効期限チェック（`IsExpired()`）
+    - 検証成功時は TokenID と UserID を返し、UseCase に渡す
+  - パスワード形式バリデーション（必須、8 文字以上、確認一致）
   - **参考ファイル**: `/annict/go/internal/handler/password/`
-  - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 4）
-  - **想定行数**: 約 500 行（実装 200 行 + テスト 300 行）
+  - **実装済みファイル数**: 7 ファイル（実装 4 + テスト 3）
 
-- [ ] **8-11**: ルーティング設定とリバースプロキシの更新
+- [x] **8-11**: ルーティング設定とリバースプロキシの更新
 
   - `/password/reset`, `/password/edit`, `/password` のルーティング追加
   - リバースプロキシのホワイトリスト更新
-  - **想定ファイル数**: 約 2 ファイル（実装 2 + テスト 0）
-  - **想定行数**: 約 50 行（実装 50 行 + テスト 0 行）
+  - **実装済みファイル**: `cmd/server/main.go`, `internal/middleware/reverse_proxy.go`
 
-- [ ] **8-12**: 国際化（I18n）の追加
+- [x] **8-12**: 国際化（I18n）の追加
 
   - パスワードリセット関連の翻訳キーを追加
   - `internal/i18n/locales/ja.toml`
