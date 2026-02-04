@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -17,7 +18,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:check_allowed",
@@ -76,7 +78,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:check_exceeded",
@@ -113,7 +116,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input1 := CheckInput{
 			Key:    "test:key1",
@@ -152,7 +156,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "",
@@ -171,7 +176,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:invalid_limit",
@@ -190,7 +196,8 @@ func TestLimiter_Check(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:invalid_window",
@@ -213,7 +220,8 @@ func TestLimiter_Allow(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:allow_ok",
@@ -232,7 +240,8 @@ func TestLimiter_Allow(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		input := CheckInput{
 			Key:    "test:allow_exceeded",
@@ -262,7 +271,8 @@ func TestLimiter_CleanupOldRecords(t *testing.T) {
 
 		_, tx := testutil.SetupTestDB(t)
 		q := query.New(tx)
-		limiter := NewLimiter(q)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
 
 		// レコードを作成
 		input := CheckInput{
@@ -279,6 +289,39 @@ func TestLimiter_CleanupOldRecords(t *testing.T) {
 		err = limiter.CleanupOldRecords(context.Background(), 2*time.Hour)
 		if err != nil {
 			t.Errorf("クリーンアップでエラー: %v", err)
+		}
+	})
+}
+
+func TestLimiter_WithTx(t *testing.T) {
+	t.Parallel()
+
+	t.Run("トランザクション付きLimiterが正常に動作する", func(t *testing.T) {
+		t.Parallel()
+
+		db, tx := testutil.SetupTestDB(t)
+		q := query.New(db)
+		repo := repository.NewRateLimitRepository(q)
+		limiter := NewLimiter(repo)
+
+		// WithTxでトランザクション付きLimiterを作成
+		limiterWithTx := limiter.WithTx(tx)
+
+		input := CheckInput{
+			Key:    "test:with_tx",
+			Limit:  3,
+			Window: time.Hour,
+		}
+
+		result, err := limiterWithTx.Check(context.Background(), input)
+		if err != nil {
+			t.Fatalf("WithTxでのチェックでエラー: %v", err)
+		}
+		if !result.Allowed {
+			t.Error("リクエストが許可されるべき")
+		}
+		if result.Count != 1 {
+			t.Errorf("カウントが1であるべき: got %d", result.Count)
 		}
 	})
 }

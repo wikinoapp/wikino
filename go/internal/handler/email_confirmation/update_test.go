@@ -73,7 +73,8 @@ func TestUpdate_Success(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -167,7 +168,8 @@ func TestUpdate_NoSession(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -251,7 +253,8 @@ func TestUpdate_EmptyCode(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -342,7 +345,8 @@ func TestUpdate_InvalidCodeLength(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -433,7 +437,8 @@ func TestUpdate_CodeMismatch(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -525,7 +530,8 @@ func TestUpdate_Expired(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -616,7 +622,8 @@ func TestUpdate_CaseInsensitiveCode(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -707,7 +714,8 @@ func TestUpdate_AlreadySucceeded(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(

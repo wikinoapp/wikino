@@ -84,7 +84,8 @@ func TestCreate_Success(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -193,7 +194,8 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -284,7 +286,8 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -368,7 +371,8 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -452,7 +456,8 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -547,7 +552,8 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -630,7 +636,8 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
@@ -738,7 +745,8 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 
 	// Rate Limiterを初期化
-	limiter := ratelimit.NewLimiter(queries)
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(

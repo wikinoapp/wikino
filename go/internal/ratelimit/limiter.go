@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
 // ErrRateLimitExceeded はRate Limitを超えた場合のエラー
@@ -16,17 +16,17 @@ var ErrRateLimitExceeded = errors.New("rate limit exceeded")
 
 // Limiter はPostgreSQLベースのRate Limiter
 type Limiter struct {
-	q *query.Queries
+	repo *repository.RateLimitRepository
 }
 
 // NewLimiter は新しいLimiterを作成する
-func NewLimiter(q *query.Queries) *Limiter {
-	return &Limiter{q: q}
+func NewLimiter(repo *repository.RateLimitRepository) *Limiter {
+	return &Limiter{repo: repo}
 }
 
 // WithTx はトランザクションを使用する新しいLimiterを返す
 func (l *Limiter) WithTx(tx *sql.Tx) *Limiter {
-	return &Limiter{q: l.q.WithTx(tx)}
+	return &Limiter{repo: l.repo.WithTx(tx)}
 }
 
 // CheckInput はRate Limitチェックの入力パラメータ
@@ -69,8 +69,8 @@ func (l *Limiter) Check(ctx context.Context, input CheckInput) (*CheckResult, er
 	windowStart := now.Truncate(input.Window)
 	resetAt := windowStart.Add(input.Window)
 
-	// カウンターをインクリメント（UPSERT）
-	result, err := l.q.IncrementRateLimit(ctx, query.IncrementRateLimitParams{
+	// カウンターをインクリメント（Repository経由）
+	result, err := l.repo.Increment(ctx, repository.IncrementInput{
 		Key:         input.Key,
 		WindowStart: windowStart,
 	})
@@ -109,7 +109,7 @@ func (l *Limiter) Allow(ctx context.Context, input CheckInput) error {
 // retentionは保持期間（この期間より古いレコードが削除される）
 func (l *Limiter) CleanupOldRecords(ctx context.Context, retention time.Duration) error {
 	cutoff := time.Now().UTC().Add(-retention)
-	return l.q.DeleteOldRateLimits(ctx, cutoff)
+	return l.repo.DeleteOldRecords(ctx, cutoff)
 }
 
 // IPKey はIPアドレス用のキーを生成する
