@@ -5,12 +5,20 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 )
 
 // CSRFCookieName はCSRFトークンを保存するクッキー名
 const CSRFCookieName = "wikino_csrf_token"
+
+// csrfSkipPaths はCSRF検証をスキップするパス
+// Rails版のページからのリクエストはRails独自のCSRFトークンを使用しているため、
+// Go版のCSRF検証を適用できない
+var csrfSkipPaths = []string{
+	"/user_session", // Rails版からのログアウトリクエスト対応
+}
 
 // csrfTokenContextKey はコンテキストにCSRFトークンを保存するためのキー
 type csrfTokenContextKey struct{}
@@ -44,6 +52,14 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 			ctx = SetCSRFTokenToContext(ctx, token)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
+		}
+
+		// スキップパスに一致する場合はCSRF検証をスキップ
+		for _, path := range csrfSkipPaths {
+			if strings.HasPrefix(r.URL.Path, path) {
+				next.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		// POST/PATCH/PUT/DELETEリクエストはCSRFトークンを検証

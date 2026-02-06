@@ -605,6 +605,99 @@ func TestCSRFMiddleware_POST_EmptyFormToken(t *testing.T) {
 	}
 }
 
+func TestCSRFMiddleware_SkipPaths(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	handlerCalled := false
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	// CSRFトークンなしでDELETE /user_sessionにリクエスト
+	req := httptest.NewRequest("DELETE", "/user_session", nil)
+	rr := httptest.NewRecorder()
+
+	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("スキップパスで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	if !handlerCalled {
+		t.Error("スキップパスでハンドラーが呼び出されませんでした")
+	}
+}
+
+func TestCSRFMiddleware_SkipPaths_POST(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	handlerCalled := false
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	// CSRFトークンなしでPOST /user_sessionにリクエスト
+	req := httptest.NewRequest("POST", "/user_session", nil)
+	rr := httptest.NewRecorder()
+
+	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("スキップパスで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	if !handlerCalled {
+		t.Error("スキップパスでハンドラーが呼び出されませんでした")
+	}
+}
+
+func TestCSRFMiddleware_NonSkipPath_StillProtected(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	// スキップパス以外はCSRFトークンなしで403になることを確認
+	req := httptest.NewRequest("DELETE", "/other_path", nil)
+	rr := httptest.NewRecorder()
+
+	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("スキップパス以外で403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+	}
+}
+
 func TestCSRFMiddleware_POST_EmptyCookieToken(t *testing.T) {
 	t.Parallel()
 
