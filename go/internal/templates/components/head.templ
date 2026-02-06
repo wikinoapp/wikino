@@ -41,13 +41,13 @@ templ Head(meta viewmodel.PageMeta) {
 	<script type="module" src="/static/js/vendor/datastar-v1.0.0-RC.7.js"></script>
 	// ダークモード検出スクリプト
 	<script>
-		(() => {
-			try {
-				if (matchMedia("(prefers-color-scheme: dark)").matches) {
-					document.documentElement.classList.add("dark");
-				}
-			} catch (_) {}
-		})();
+		// (() => {
+		// 	try {
+		// 		if (matchMedia("(prefers-color-scheme: dark)").matches) {
+		// 			document.documentElement.classList.add("dark");
+		// 		}
+		// 	} catch (_) {}
+		// })();
 	</script>
 	<script type="module" src={ "/static/js/main.js?v=" + meta.AssetVersion }></script>
 }

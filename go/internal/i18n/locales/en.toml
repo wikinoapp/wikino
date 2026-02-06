@@ -123,6 +123,9 @@ other = "Sign up"
 [sign_up_heading]
 other = "Sign up for Wikino"
 
+[sign_up_email_instruction]
+other = "We'll send a confirmation code to the email address you enter to verify it"
+
 [sign_up_email_label]
 other = "Email address"
 
@@ -345,13 +348,11 @@ other = "Wikino"
 other = "Wikino is a web service where you can create and share wikis."
 
 [welcome_hero_title_html]
-other = "A Wiki app where you write in Markdown<br>and discover through links"
+other = "A Wiki app to discover through links"
 
 [welcome_hero_description_html]
 other = "Wikino is a web service where you can create and share wikis."
 
-[welcome_free_to_start]
-other = "Free to get started"
 
 [welcome_screenshot_alt]
 other = "Screenshot of Wikino"
@@ -378,10 +379,10 @@ other = "See the connections"
 other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
 
 [welcome_feature_publish_title]
-other = "Publish and share your spaces"
+other = "Publish and share your pages"
 
 [welcome_feature_publish_description]
-other = "Make your spaces public and share them with others."
+other = "Make your pages public and share them with others."
 
 [welcome_feature_publish_note]
 other = "* Private spaces are currently free but will become a paid feature in the future."

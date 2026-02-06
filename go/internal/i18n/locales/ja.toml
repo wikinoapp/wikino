@@ -123,6 +123,9 @@ other = "新規登録"
 [sign_up_heading]
 other = "Wikinoに新規登録"
 
+[sign_up_email_instruction]
+other = "メールアドレスの確認のため、\n入力したメールアドレス宛てに確認コードをお送りします"
+
 [sign_up_email_label]
 other = "メールアドレス"
 
@@ -206,7 +209,7 @@ other = "確認済み"
 other = "アットネーム"
 
 [account_new_atname_hint]
-other = "英数字とアンダースコアのみ使用できます（最大20文字）"
+other = "20文字以内、半角英数字とアンダースコアのみ使用可能です"
 
 [account_new_password_label]
 other = "パスワード"
@@ -332,26 +335,24 @@ other = "パスワードを変更しました"
 
 # 共通ボタン・リンク
 [sign_up]
-other = "アカウント作成"
+other = "無料で始める"
 
 [sign_in]
 other = "ログイン"
 
 # トップページ
 [welcome_title]
-other = "Wikino"
+other = "Wikino | リンクで見つかるWikiのアプリ"
 
 [welcome_description]
-other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです"
+other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
-other = "Markdownで書き、<br>リンクで見つかるWikiアプリ"
+other = "リンクで見つかるWikiのアプリ"
 
 [welcome_hero_description_html]
-other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるWebサービスです"
+other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
-[welcome_free_to_start]
-other = "無料で始められます"
 
 [welcome_screenshot_alt]
 other = "Wikinoのスクリーンショット"
@@ -363,34 +364,34 @@ other = "特徴"
 other = "Markdownでシンプルに書ける"
 
 [welcome_feature_markdown_description]
-other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます。"
+other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます"
 
 [welcome_feature_wikilink_title]
 other = "ページ同士を簡単につなげる"
 
 [welcome_feature_wikilink_description]
-other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます。"
+other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます"
 
 [welcome_feature_backlinks_title]
 other = "つながりが見える"
 
 [welcome_feature_backlinks_description]
-other = "ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移でき、関連ページを見つけることができます。"
+other = "ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移でき、関連ページを見つけることができます"
 
 [welcome_feature_publish_title]
-other = "スペースを公開して共有できる"
+other = "ページを公開して共有できる"
 
 [welcome_feature_publish_description]
-other = "作成したスペースを公開して、他の人と共有することができます。"
+other = "作成したページを公開して、他の人と共有することができます"
 
 [welcome_feature_publish_note]
-other = "※ 非公開機能は現在無料で使えますが、今後提供する有料プラン限定の機能になる予定です"
+other = "※ 非公開機能は現在無料で使えますが、今後提供する有料プラン限定の機能になる予定です。公開機能はずっと無料です"
 
 [welcome_cta_title]
 other = "Wikinoを始めよう"
 
 [welcome_footer_resources]
-other = "Resources"
+other = "リソース"
 
 [welcome_footer_help_page]
 other = "ヘルプページ"
@@ -402,13 +403,13 @@ other = "リリースノート"
 other = "開発者について"
 
 [welcome_footer_community]
-other = "Community"
+other = "コミュニティ"
 
 [welcome_footer_open_source]
-other = "Open Source"
+other = "オープンソース"
 
 [welcome_open_source_description]
-other = "WikinoのソースコードはGitHubで公開されています。"
+other = "WikinoのソースコードはGitHubで公開されています"
 
 # フッター
 [footer_terms]

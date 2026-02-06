@@ -53,7 +53,7 @@ func TestShow_未ログイン時にトップページが表示される(t *testi
 	}
 
 	// 機能紹介セクションの画像が含まれているか確認
-	if !strings.Contains(body, "/assets/welcome/image_1.png") {
+	if !strings.Contains(body, "/static/images/welcome/feature_1.png") {
 		t.Error("feature image not found in response")
 	}
 }
