@@ -378,9 +378,8 @@ end
 
 > **Note**: 開発環境の基本的なセットアップ手順は [/CLAUDE.md](../CLAUDE.md#開発環境のセットアップ) を参照してください。
 
-- Dev Container を使って開発します
 - Claude Code はコンテナ内で実行されているため、ホスト側のコマンドの実行は不要です
-- 共通インフラ（PostgreSQL）は `/docker-compose.yml` で管理されており、ホスト側で起動済みのはずです
+- 共通インフラ（PostgreSQL）は `/workspace/docker-compose.yml` で管理されており、ホスト側で起動済みのはずです
 
 ### 環境変数の設定
 
@@ -397,7 +396,7 @@ end
 docker compose up
 
 # 特定のサービスのログを確認
-docker compose logs -f rails-app
+docker compose logs -f app
 ```
 
 ### コンテナ内で実行するコマンド (Claude Code が実行できるコマンド)
