@@ -87,7 +87,7 @@ other = "リカバリーコード"
 other = "リカバリーコードを入力してください"
 
 [sign_in_two_factor_recovery_code_usage]
-other = "認証アプリにアクセスできない場合は、事前に保存したリカバリーコードを使用してログインできます"
+other = "認証アプリにアクセスできない場合は、\n事前に保存したリカバリーコードを使用してログインできます"
 
 [sign_in_two_factor_recovery_code_label]
 other = "リカバリーコード"
@@ -276,13 +276,17 @@ other = "メールを送信しました"
 other = "パスワードリセット用のリンクを送信しました"
 
 [password_reset_sent_instructions]
-other = "メールに記載されたリンクをクリックして、新しいパスワードを設定してください。リンクの有効期限は1時間です。"
+other = "メールに記載されたリンクをクリックして、新しいパスワードを設定してください。リンクの有効期限は1時間です"
 
 [password_reset_email_not_received_heading]
 other = "メールが届かない場合"
 
 [password_reset_email_not_received_help]
-other = "迷惑メールフォルダをご確認ください。数分経ってもメールが届かない場合は、入力したメールアドレスが正しいかご確認のうえ、再度お試しください。"
+other = "迷惑メールフォルダをご確認ください。数分経ってもメールが届かない場合は、入力したメールアドレスが正しいかご確認のうえ、再度お試しください"
+
+# パスワードリセットメール
+[password_reset_email_subject]
+other = "[Wikino] パスワードリセット"
 
 # パスワード変更
 [password_edit_title]
@@ -292,7 +296,7 @@ other = "新しいパスワードを設定"
 other = "新しいパスワードを設定"
 
 [password_edit_description]
-other = "新しいパスワードを入力してください。"
+other = "新しいパスワードを入力してください"
 
 [password_edit_password_label]
 other = "新しいパスワード"
@@ -318,16 +322,16 @@ other = "パスワードが一致しません"
 other = "トークンが必要です"
 
 [validation_token_invalid]
-other = "無効なリンクです。パスワードリセットを再度お試しください。"
+other = "無効なリンクです。パスワードリセットを再度お試しください"
 
 [validation_token_expired]
-other = "リンクの有効期限が切れています。パスワードリセットを再度お試しください。"
+other = "リンクの有効期限が切れています。パスワードリセットを再度お試しください"
 
 [validation_token_used]
-other = "このリンクは既に使用されています。パスワードリセットを再度お試しください。"
+other = "このリンクは既に使用されています。パスワードリセットを再度お試しください"
 
 [validation_system_error]
-other = "システムエラーが発生しました。しばらく経ってから再度お試しください。"
+other = "システムエラーが発生しました。しばらく経ってから再度お試しください"
 
 # パスワード変更成功
 [flash_password_updated]
