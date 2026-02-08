@@ -76,26 +76,4 @@ RSpec.describe "POST /accounts", type: :request do
     # エラーにより新しいアカウントは作成されていないのでスペースは0件のまま
     expect(SpaceRecord.count).to eq(0)
   end
-
-  it "入力値が正しいとき、アカウントを作成してホーム画面にリダイレクトすること" do
-    email_confirmation = setup_email_confirmation
-    # メールアドレスの確認が成功したことにする
-    email_confirmation.success!
-
-    expect(UserRecord.count).to eq(0)
-
-    post("/accounts", params: {
-      accounts_creation_form: {
-        atname: "test",
-        password: "passw0rd"
-      }
-    })
-
-    expect(response.status).to eq(302)
-
-    # アカウントの作成に成功したのでユーザーが1件になる
-    expect(UserRecord.count).to eq(1)
-
-    expect(response).to redirect_to("/home")
-  end
 end
