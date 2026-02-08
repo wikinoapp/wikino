@@ -90,7 +90,7 @@ func Flash(flash *session.FlashMessage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templates.Icon("info", "fill-(--info)").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.Icon("info-regular", "fill-info").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

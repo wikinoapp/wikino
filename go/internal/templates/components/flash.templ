@@ -32,7 +32,7 @@ templ Flash(flash *session.FlashMessage) {
 					} else if flash.Type == session.FlashWarning {
 						@templates.Icon("warning", "fill-(--warning)")
 					} else {
-						@templates.Icon("info", "fill-(--info)")
+						@templates.Icon("info-regular", "fill-info")
 					}
 					<section>
 						<p class="whitespace-pre-line">{ flash.Message }</p>

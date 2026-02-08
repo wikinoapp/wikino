@@ -36,62 +36,66 @@ templ Reset(data ResetPageData) {
 
 		@components.FormErrors(data.FormErrors)
 
-		<form
-			action="/password/reset"
-			class="form grid gap-6"
-			data-on:submit__passive="$isSubmitting = true"
-			method="POST"
-		>
-			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<div class="card">
+			<div class="card-body px-4">
+				<form
+					action="/password/reset"
+					class="form grid gap-6"
+					data-on:submit__passive="$isSubmitting = true"
+					method="POST"
+				>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-			<div class="grid gap-2">
-				<label for="email">
-					{ templates.T(ctx, "password_reset_email_label") }
-				</label>
+					<div class="grid gap-2">
+						<label for="email">
+							{ templates.T(ctx, "password_reset_email_label") }
+						</label>
 
-				<input
-					if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-						aria-invalid="true"
-					} else {
-						aria-invalid="false"
-					}
-					autocomplete="email"
-					autofocus
-					id="email"
-					name="email"
-					required
-					tabindex="1"
-					type="email"
-					value={ data.Email }
-				/>
+						<input
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+								aria-invalid="true"
+							} else {
+								aria-invalid="false"
+							}
+							autocomplete="email"
+							autofocus
+							id="email"
+							name="email"
+							required
+							tabindex="1"
+							type="email"
+							value={ data.Email }
+						/>
 
-				if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-					for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
-						<p class="text-sm text-error">
-							{ errorMsg }
-						</p>
-					}
-				}
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
+								<p class="text-sm text-error">
+									{ errorMsg }
+								</p>
+							}
+						}
+					</div>
+
+					@components.Turnstile(data.TurnstileSiteKey)
+
+					<button
+						class="btn-primary rounded-full w-fit"
+						data-attr:disabled="$isSubmitting == true"
+						tabindex="2"
+						type="submit"
+					>
+						@templates.Icon("paper-plane-tilt-regular")
+						{ templates.T(ctx, "password_reset_submit") }
+					</button>
+				</form>
 			</div>
+		</div>
 
-			@components.Turnstile(data.TurnstileSiteKey)
-
-			<button
-				class="btn-primary rounded-full w-fit"
-				data-attr:disabled="$isSubmitting == true"
-				tabindex="2"
-				type="submit"
-			>
-				@templates.Icon("paper-plane-tilt")
-				{ templates.T(ctx, "password_reset_submit") }
-			</button>
-
-			<div class="text-center">
-				<a href="/sign_in" class="link inline-flex items-center gap-2">
-					@templates.Icon("arrow-left", "w-[18px] h-[18px]")
-					{ templates.T(ctx, "password_reset_back_to_sign_in") }
-				</a>
-			</div>
-		</form>
+		<div class="text-center">
+			<a href="/sign_in" class="link inline-flex items-center gap-2">
+				@templates.Icon("arrow-left", "w-[18px] h-[18px]")
+				{ templates.T(ctx, "password_reset_back_to_sign_in") }
+			</a>
+		</div>
 	</div>
 }

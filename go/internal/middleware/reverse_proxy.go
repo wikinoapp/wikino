@@ -256,7 +256,7 @@ func render502ErrorHTML() string {
     <div class="container">
         <div class="icon">⚠️</div>
         <h1>サービス接続エラー</h1>
-        <p>申し訳ございません。現在サービスに接続できません。<br>しばらくしてから再度お試しください。</p>
+        <p>申し訳ございません。現在サービスに接続できません。<br>しばらくしてから再度お試しください</p>
         <a href="/">トップページに戻る</a>
     </div>
 </body>
