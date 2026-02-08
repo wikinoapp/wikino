@@ -303,7 +303,7 @@ Go版の `markEmailAsConfirmedUC` が、Rails版の `Emails::ConfirmService` と
 
 ### フェーズ 2: サインイン・サインアップ関連の削除
 
-- [ ] **2-1**: [Rails] サインイン関連のコントローラー・ビューの削除
+- [x] **2-1**: [Rails] サインイン関連のコントローラー・ビューの削除
   - コントローラー削除（6ファイル）: `sign_in/show`, `sign_in/two_factors/new`, `sign_in/two_factors/create`, `sign_in/two_factors/recoveries/new`, `sign_in/two_factors/recoveries/create`, `sign_up/show`
   - ビュー削除（8ファイル）: `sign_in/show_view.{rb,html.erb}`, `sign_in/two_factors/new_view.{rb,html.erb}`, `sign_in/two_factors/recoveries/new_view.{rb,html.erb}`, `sign_up/show_view.{rb,html.erb}`
   - テスト削除（6ファイル）: `sign_in/show_spec`, `sign_in/two_factors/new_spec`, `sign_in/two_factors/create_spec`, `sign_in/two_factors/recoveries/new_spec`, `sign_in/two_factors/recoveries/create_spec`, `sign_up/show_spec`

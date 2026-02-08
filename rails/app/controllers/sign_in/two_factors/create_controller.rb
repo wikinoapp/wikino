@@ -23,10 +23,7 @@ module SignIn
         )
 
         if form.invalid?
-          return render_component(
-            SignIn::TwoFactors::NewView.new(form:),
-            status: :unprocessable_entity
-          )
+          return head(:unprocessable_entity)
         end
 
         result = UserSessions::CreateService.new.call(

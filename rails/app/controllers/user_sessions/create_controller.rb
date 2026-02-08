@@ -14,7 +14,7 @@ module UserSessions
       form = UserSessions::CreationForm.new(form_params)
 
       if form.invalid?
-        return render_component(SignIn::ShowView.new(form:), status: :unprocessable_entity)
+        return head(:unprocessable_entity)
       end
 
       user_record = form.user_record.not_nil!
