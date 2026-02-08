@@ -40,7 +40,7 @@
           </div>
 
           <div class="flex items-center justify-center gap-4">
-            <%= link_to sign_up_path, class: "btn rounded-full w-fit self-center" do %>
+            <%= link_to "/sign_up", class: "btn rounded-full w-fit self-center" do %>
               <%= render BaseUI::IconComponent.new(
                 name: "paper-plane-tilt",
                 size: "18px",
@@ -50,7 +50,7 @@
               <%= t("nouns.sign_up") %>
             <% end %>
 
-          <%= link_to sign_in_path, class: "btn-link rounded-full w-fit self-center" do %>
+          <%= link_to "/sign_in", class: "btn-link rounded-full w-fit self-center" do %>
             <%= render BaseUI::IconComponent.new(
               name: "sign-in-regular",
               size: "18px",
@@ -155,7 +155,7 @@
             <%= t("messages.welcome.start_cta") %>
           </div>
 
-          <%= link_to sign_up_path, class: "btn rounded-full w-fit self-center" do %>
+          <%= link_to "/sign_up", class: "btn rounded-full w-fit self-center" do %>
             <%= render BaseUI::IconComponent.new(
               name: "paper-plane-tilt",
               size: "18px",

@@ -50,11 +50,11 @@ module EmailConfirmations
     private def success_path(email_confirmation)
       case email_confirmation.deserialized_event
       when EmailConfirmationEvent::SignUp
-        new_account_path
+        "/accounts/new"
       when EmailConfirmationEvent::EmailUpdate
         settings_email_path
       when EmailConfirmationEvent::PasswordReset
-        edit_password_path
+        "/password/edit"
       end
     end
   end

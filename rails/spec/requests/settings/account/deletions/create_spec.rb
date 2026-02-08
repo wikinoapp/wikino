@@ -53,7 +53,7 @@ RSpec.describe "POST /settings/account/deletion", type: :request do
     }
 
     expect(response.status).to eq(302)
-    expect(response).to redirect_to(root_path)
+    expect(response).to redirect_to("/")
     expect(flash[:notice]).to eq("アカウントを削除しました")
 
     # ユーザーがdiscardされていることを確認

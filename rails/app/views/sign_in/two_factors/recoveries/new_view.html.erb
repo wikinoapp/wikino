@@ -1,7 +1,7 @@
 <%= render Layouts::SimpleComponent.new(current_page_name:) do %>
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
-      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+      <%= link_to "/", class: "inline-block bg-brand-100 rounded-lg" do %>
         <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
@@ -56,7 +56,7 @@
     <% end %>
 
     <div class="text-center">
-      <%= link_to root_path, class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
+      <%= link_to "/", class: "btn btn-outline btn-sm border-gray-500 text-gray-500 rounded-full group" do %>
         <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-gray-500 group-hover:fill-primary-foreground") %>
 
         <%= t("verbs.back_to_home") %>

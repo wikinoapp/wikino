@@ -42,7 +42,7 @@ RSpec.describe "POST /password_reset", type: :request do
     }
 
     expect(response.status).to eq(302)
-    expect(response).to redirect_to(edit_email_confirmation_path)
+    expect(response).to redirect_to("/email_confirmation/edit")
     expect(flash[:notice]).to eq("確認用のメールを送信しました")
 
     expect(EmailConfirmationRecord.count).to eq(1)
