@@ -1,0 +1,18 @@
+package password_reset
+
+// JaHTML は日本語HTMLテンプレート
+templ JaHTML(data Data) {
+	{ data.Email } さん、こんにちは。<br/>
+	<br/>
+	パスワードリセットのリクエストを受け付けました。<br/>
+	下記のリンクをクリックして、新しいパスワードを設定してください。<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.ResetURL) }>パスワードを変更する</a><br/>
+	<br/>
+	このリンクの有効期間は1時間です。<br/>
+	<br/>
+	もしこのメールに心当たりが無い場合は無視してください。<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

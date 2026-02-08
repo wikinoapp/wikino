@@ -1,0 +1,18 @@
+package password_reset
+
+// EnHTML は英語HTMLテンプレート
+templ EnHTML(data Data) {
+	Hello, { data.Email }.<br/>
+	<br/>
+	We received a request to reset your password.<br/>
+	Click the link below to set a new password.<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.ResetURL) }>Change password</a><br/>
+	<br/>
+	This link is valid for 1 hour.<br/>
+	<br/>
+	If this email does not concern you, please ignore it.<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

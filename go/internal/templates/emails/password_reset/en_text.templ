@@ -1,0 +1,18 @@
+package password_reset
+
+// EnText は英語テキストテンプレート
+templ EnText(data Data) {
+	Hello, { data.Email }.
+
+We received a request to reset your password.
+Click the link below to set a new password.
+
+{ data.ResetURL }
+
+This link is valid for 1 hour.
+
+If this email does not concern you, please ignore it.
+
+Wikino
+{ data.AppURL }
+}
