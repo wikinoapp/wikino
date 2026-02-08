@@ -310,7 +310,7 @@ Go版の `markEmailAsConfirmedUC` が、Rails版の `Emails::ConfirmService` と
   - **想定ファイル数**: 約 20 ファイル（実装 14 + テスト 6）
   - **想定行数**: 約 300 行（実装 200 行 + テスト 100 行）※すべて削除行
 
-- [ ] **2-2**: [Rails] サインイン関連のフォーム・サービスの削除
+- [x] **2-2**: [Rails] サインイン関連のフォーム・サービスの削除
   - フォーム削除（3ファイル）: `user_sessions/creation_form`, `user_sessions/two_factor_verification_form`, `user_sessions/two_factor_recovery_form`
   - サービス削除（2ファイル）: `user_sessions/create_service`, `user_sessions/create_with_recovery_code_service`
   - RBI 削除（3ファイル）: `user_sessions/creation_form.rbi`, `user_sessions/two_factor_verification_form.rbi`, `user_sessions/two_factor_recovery_form.rbi`

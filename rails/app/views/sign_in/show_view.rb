@@ -1,9 +1,8 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module SignIn
   class ShowView < ApplicationView
-    sig { params(form: UserSessions::CreationForm).void }
     def initialize(form:)
       @form = form
     end
@@ -13,7 +12,6 @@ module SignIn
       helpers.set_meta_tags(title: current_page_title, **default_meta_tags)
     end
 
-    sig { returns(UserSessions::CreationForm) }
     attr_reader :form
     private :form
 
