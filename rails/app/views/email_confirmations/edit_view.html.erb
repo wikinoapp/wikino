@@ -22,7 +22,7 @@
           class: "form grid gap-6",
           method: :patch,
           model: form,
-          url: "/email_confirmation#{params[:after] ? "?after=#{params[:after]}" : ""}"
+          url: "/email_confirmation#{params[:after] ? "?after=#{ERB::Util.url_encode(params[:after])}" : ""}"
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 

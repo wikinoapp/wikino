@@ -24,7 +24,7 @@
           <%= form_with(
             class: "form grid gap-6",
             model: form,
-            url: sign_in_two_factor_recovery_path
+            url: "/sign_in/two_factor/recovery"
           ) do |f| %>
             <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
