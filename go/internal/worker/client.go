@@ -59,10 +59,10 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 		river.AddWorker(workers, NewSendEmailWorker(emailSender))
 		slog.InfoContext(ctx, "SendEmailWorker を登録しました")
 
-		river.AddWorker(workers, NewSendEmailConfirmationWorker(cfg, emailSender))
+		river.AddWorker(workers, NewSendEmailConfirmationWorker(emailSender))
 		slog.InfoContext(ctx, "SendEmailConfirmationWorker を登録しました")
 
-		river.AddWorker(workers, NewSendPasswordResetWorker(cfg, emailSender))
+		river.AddWorker(workers, NewSendPasswordResetWorker(emailSender))
 		slog.InfoContext(ctx, "SendPasswordResetWorker を登録しました")
 	}
 

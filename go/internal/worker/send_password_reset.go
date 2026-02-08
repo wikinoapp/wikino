@@ -8,7 +8,6 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/email"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/templates/emails/password_reset"
@@ -38,14 +37,12 @@ func (SendPasswordResetArgs) InsertOpts() river.InsertOpts {
 // SendPasswordResetWorker はパスワードリセットメール送信ワーカーです
 type SendPasswordResetWorker struct {
 	river.WorkerDefaults[SendPasswordResetArgs]
-	cfg    *config.Config
 	sender email.Sender
 }
 
 // NewSendPasswordResetWorker は新しいSendPasswordResetWorkerを作成します
-func NewSendPasswordResetWorker(cfg *config.Config, sender email.Sender) *SendPasswordResetWorker {
+func NewSendPasswordResetWorker(sender email.Sender) *SendPasswordResetWorker {
 	return &SendPasswordResetWorker{
-		cfg:    cfg,
 		sender: sender,
 	}
 }

@@ -39,15 +39,15 @@ templ Head(meta viewmodel.PageMeta) {
 	<link rel="stylesheet" href={ "/static/css/style.css?v=" + meta.AssetVersion }/>
 
 	<script type="module" src="/static/js/vendor/datastar-v1.0.0-RC.7.js"></script>
-	// TODO: ダークモード対応時にコメントアウトを解除する
-	<script>
-		// (() => {
-		// 	try {
-		// 		if (matchMedia("(prefers-color-scheme: dark)").matches) {
-		// 			document.documentElement.classList.add("dark");
-		// 		}
-		// 	} catch (_) {}
-		// })();
-	</script>
+	// TODO: ダークモード対応時に以下のスクリプトを有効化する
+	// <script>
+	//     (() => {
+	//         try {
+	//             if (matchMedia("(prefers-color-scheme: dark)").matches) {
+	//                 document.documentElement.classList.add("dark");
+	//             }
+	//         } catch (_) {}
+	//     })();
+	// </script>
 	<script type="module" src={ "/static/js/main.js?v=" + meta.AssetVersion }></script>
 }

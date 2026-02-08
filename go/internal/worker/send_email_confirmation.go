@@ -8,7 +8,6 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/email"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/templates/emails/email_confirmation"
@@ -38,14 +37,12 @@ func (SendEmailConfirmationArgs) InsertOpts() river.InsertOpts {
 // SendEmailConfirmationWorker はメール確認コード送信ワーカーです
 type SendEmailConfirmationWorker struct {
 	river.WorkerDefaults[SendEmailConfirmationArgs]
-	cfg    *config.Config
 	sender email.Sender
 }
 
 // NewSendEmailConfirmationWorker は新しいSendEmailConfirmationWorkerを作成します
-func NewSendEmailConfirmationWorker(cfg *config.Config, sender email.Sender) *SendEmailConfirmationWorker {
+func NewSendEmailConfirmationWorker(sender email.Sender) *SendEmailConfirmationWorker {
 	return &SendEmailConfirmationWorker{
-		cfg:    cfg,
 		sender: sender,
 	}
 }
