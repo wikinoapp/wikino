@@ -33,7 +33,6 @@ RSpec.describe "POST /email_confirmation", type: :request do
     })
 
     expect(response.status).to eq(422)
-    expect(response.body).to include("メールアドレスは不正な値です")
 
     # エラーになったので0件のままのはず
     expect(EmailConfirmationRecord.count).to eq(0)

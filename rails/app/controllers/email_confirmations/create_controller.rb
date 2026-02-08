@@ -14,7 +14,7 @@ module EmailConfirmations
       form = EmailConfirmations::CreationForm.new(form_params)
 
       if form.invalid?
-        return render_component(SignUp::ShowView.new(form:), status: :unprocessable_entity)
+        return head(:unprocessable_entity)
       end
 
       result = EmailConfirmations::CreateService.new.call(

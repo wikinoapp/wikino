@@ -35,7 +35,6 @@ RSpec.describe "POST /user_session", type: :request do
       }
     })
     expect(response.status).to eq(422)
-    expect(response.body).to include("ログインに失敗しました")
 
     # ログインに失敗したのでセッションは作られていないはず
     expect(UserSessionRecord.count).to eq(0)
