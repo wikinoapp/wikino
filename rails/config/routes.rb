@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   match "/_test/attachments/presign",                                      via: :post,   as: :test_attachment_presign,                      to: "test/attachments/presigns/create#call" if Rails.env.test?
   match "/_test/attachments/signed_urls",                                  via: :post,   as: :test_attachment_signed_urls,                   to: "test/attachments/signed_urls/create#call" if Rails.env.test?
   match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments/uploads/create#call" if Rails.env.test?
+  match "/_test/sign_in",                                                  via: :get,    as: :test_sign_in,                                to: "test/sign_in/create#call" if Rails.env.test?
 
   # Go移行済みエンドポイント（テスト用）
   # テストのsign_inヘルパー等が依存するため、テスト環境でのみルートを維持する。
