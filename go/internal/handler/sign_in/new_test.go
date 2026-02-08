@@ -49,6 +49,7 @@ func TestNew(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -67,6 +68,7 @@ func TestNew(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -144,6 +146,7 @@ func TestNew_WithBackParameter(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -162,6 +165,7 @@ func TestNew_WithBackParameter(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)

@@ -9,48 +9,54 @@ type ShowPageData struct{}
 
 // Show はトップページのコンテンツを表示します
 templ Show(data ShowPageData) {
-	<div class="flex flex-col gap-10 px-4 pb-16 sm:gap-16">
+	<div class="flex flex-col gap-16 py-8 md:py-16">
 		// ヒーローセクション
-		<section class="flex flex-col gap-6 text-center">
-			<div class="flex flex-col gap-2">
-				<h1 class="text-4xl/8 leading-snug font-bold antialiased">
-					@templ.Raw(templates.T(ctx, "welcome_hero_title_html"))
-				</h1>
+		<section class="max-w-5xl w-full mx-auto flex flex-col gap-12 text-center px-4">
+			<div class="flex flex-col gap-8">
+				<div class="flex flex-col gap-6">
+					<div class="flex items-center justify-center">
+						<div class="bg-primary rounded-xl">
+							@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
+						</div>
+					</div>
 
-				<p class="text-lg/8 text-muted-foreground antialiased">
-					@templ.Raw(templates.T(ctx, "welcome_hero_description_html"))
-				</p>
+					<div class="flex flex-col gap-2">
+						<h1 class="text-4xl/8 leading-snug font-bold antialiased">
+							@templ.Raw(templates.T(ctx, "welcome_hero_title_html"))
+						</h1>
+
+						<p class="text-lg/8 text-muted-foreground antialiased">
+							@templ.Raw(templates.T(ctx, "welcome_hero_description_html"))
+						</p>
+					</div>
+				</div>
+
+				<div class="flex items-center justify-center gap-4">
+					<a href="/sign_up" class="btn rounded-full">
+						@templates.Icon("rocket-launch-regular", "fill-primary-foreground")
+						{ templates.T(ctx, "sign_up") }
+					</a>
+
+					<a href="/sign_in" class="btn-secondary rounded-full">
+						@templates.Icon("sign-in-regular", "fill-secondary-foreground")
+						{ templates.T(ctx, "sign_in") }
+					</a>
+				</div>
 			</div>
 
-			<p class="text-sm text-muted-foreground">
-				{ templates.T(ctx, "welcome_free_to_start") }
-			</p>
-
-			<div class="flex items-center justify-center gap-4">
-				<a href="/sign_up" class="btn rounded-full w-fit">
-					@templates.Icon("paper-plane-tilt", "fill-primary-foreground")
-					{ templates.T(ctx, "sign_up") }
-				</a>
-
-				<a href="/sign_in" class="btn-outline rounded-full w-fit">
-					@templates.Icon("sign-in", "")
-					{ templates.T(ctx, "sign_in") }
-				</a>
-			</div>
-
-			<div class="mx-auto max-w-3xl">
+			<div class="mx-auto max-w-5xl">
 				<img
-					src="/assets/welcome/screenshot.png"
+					src="/static/images/welcome/hero.png"
 					alt={ templates.T(ctx, "welcome_screenshot_alt") }
-					class="w-full rounded-lg border border-border shadow-lg"
+					class="w-full rounded-lg ring ring-brand-200 shadow-xl"
 					loading="lazy"
 				/>
 			</div>
 		</section>
 
 		// 機能紹介セクション
-		<section class="flex flex-col gap-6 sm:gap-10">
-			<h2 class="text-center text-xl/8 leading-snug font-bold antialiased">
+		<section class="max-w-5xl w-full mx-auto flex flex-col gap-12 px-4">
+			<h2 class="text-center text-2xl/8 leading-snug font-bold antialiased">
 				{ templates.T(ctx, "welcome_features_title") }
 			</h2>
 
@@ -59,21 +65,24 @@ templ Show(data ShowPageData) {
 				@featureItem(
 					templates.T(ctx, "welcome_feature_markdown_title"),
 					templates.T(ctx, "welcome_feature_markdown_description"),
-					"/assets/welcome/image_1.png",
+					"markdown-logo-regular",
+					"/static/images/welcome/feature_1.png",
 				)
 
 				// Wikilink機能
 				@featureItem(
 					templates.T(ctx, "welcome_feature_wikilink_title"),
 					templates.T(ctx, "welcome_feature_wikilink_description"),
-					"/assets/welcome/image_4.png",
+					"link-regular",
+					"/static/images/welcome/feature_2.png",
 				)
 
 				// バックリンク機能
 				@featureItem(
 					templates.T(ctx, "welcome_feature_backlinks_title"),
 					templates.T(ctx, "welcome_feature_backlinks_description"),
-					"/assets/welcome/image_2.png",
+					"share-network-regular",
+					"/static/images/welcome/feature_3.png",
 				)
 
 				// 公開・共有機能
@@ -81,114 +90,128 @@ templ Show(data ShowPageData) {
 					templates.T(ctx, "welcome_feature_publish_title"),
 					templates.T(ctx, "welcome_feature_publish_description"),
 					templates.T(ctx, "welcome_feature_publish_note"),
-					"/assets/welcome/image_3.png",
+					"/static/images/welcome/feature_4.png",
 				)
 			</div>
 		</section>
 
 		// CTAセクション
-		<section class="my-6 flex flex-col gap-6 sm:my-10">
+		<section class="flex flex-col gap-6 bg-brand-300 py-24">
 			<div class="text-center text-2xl/8 font-bold antialiased">
 				{ templates.T(ctx, "welcome_cta_title") }
 			</div>
 
-			<a href="/sign_up" class="btn rounded-full w-fit self-center">
-				@templates.Icon("paper-plane-tilt", "fill-primary-foreground")
+			<a href="/sign_up" class="btn rounded-full self-center">
+				@templates.Icon("rocket-launch-regular", "fill-primary-foreground")
 				{ templates.T(ctx, "sign_up") }
 			</a>
 		</section>
 
-		// 開発者・コミュニティセクション
-		<section class="mx-auto grid grid-cols-2 gap-8 sm:grid-cols-3">
+		// リソース・コミュニティセクション
+		<section class="max-w-5xl w-full mx-auto flex flex-col gap-10 px-4">
 			// リソース
 			<nav class="flex flex-col gap-4">
-				<h6 class="font-bold uppercase">
+				<h3 class="text-lg/8 leading-snug font-bold antialiased">
 					{ templates.T(ctx, "welcome_footer_resources") }
-				</h6>
+				</h3>
 
-				<a href="https://wikino.app/s/wikino" class="hover:underline">
-					{ templates.T(ctx, "welcome_footer_help_page") }
-				</a>
+				<div class="flex flex-wrap gap-4">
+					<a href="https://wikino.app/s/wikino/topics/1" class="link-foreground" target="_blank">
+						{ templates.T(ctx, "welcome_footer_help_page") }
+					</a>
 
-				<a href="https://wikino.app/s/wikino/pages/29" class="hover:underline">
-					{ templates.T(ctx, "welcome_footer_release_notes") }
-				</a>
+					<a href="https://wikino.app/s/wikino/pages/29" class="link-foreground" target="_blank">
+						{ templates.T(ctx, "welcome_footer_release_notes") }
+					</a>
 
-				<a href="https://wikino.app/s/wikino/pages/3" class="hover:underline">
-					{ templates.T(ctx, "welcome_footer_about_developer") }
-				</a>
+					<a href="https://wikino.app/s/wikino/pages/3" class="link-foreground" target="_blank">
+						{ templates.T(ctx, "welcome_footer_about_developer") }
+					</a>
+				</div>
 			</nav>
 
 			// コミュニティ
 			<nav class="flex flex-col gap-4">
-				<h6 class="font-bold uppercase">
+				<h3 class="text-lg/8 leading-snug font-bold antialiased">
 					{ templates.T(ctx, "welcome_footer_community") }
-				</h6>
+				</h3>
 
-				<a href="https://bsky.app/profile/wikino.app" class="hover:underline" target="_blank" rel="nofollow">
-					Bluesky
-				</a>
+				<div class="flex flex-wrap gap-4">
+					<a href="https://bsky.app/profile/wikino.app" class="link-foreground" target="_blank" rel="nofollow">
+						Bluesky
+					</a>
 
-				<a href="https://discord.gg/8qMetv8fUn" class="hover:underline" target="_blank" rel="nofollow">
-					Discord
-				</a>
+					<a href="https://discord.gg/8qMetv8fUn" class="link-foreground" target="_blank" rel="nofollow">
+						Discord
+					</a>
 
-				<a href="https://github.com/wikinoapp/wikino" class="hover:underline" target="_blank" rel="nofollow">
-					GitHub
-				</a>
+					<a href="https://mastodon.social/@wikino" class="link-foreground" target="_blank" rel="nofollow">
+						Mastodon
+					</a>
 
-				<a href="https://mastodon.social/@wikino" class="hover:underline" target="_blank" rel="nofollow">
-					Mastodon
-				</a>
+					<a href="https://mewst.com/@wikino" class="link-foreground" target="_blank" rel="nofollow">
+						Mewst
+					</a>
 
-				<a href="https://mewst.com/@wikino" class="hover:underline" target="_blank" rel="nofollow">
-					Mewst
-				</a>
+					<a href="https://mixi.social/@wikino" class="link-foreground" target="_blank" rel="nofollow">
+						mixi2
+					</a>
 
-				<a href="https://mixi.social/@wikino" class="hover:underline" target="_blank" rel="nofollow">
-					mixi2
-				</a>
+					<a href="https://www.threads.com/@wikino.app" class="link-foreground" target="_blank" rel="nofollow">
+						Threads
+					</a>
 
-				<a href="https://www.threads.com/@wikino.app" class="hover:underline" target="_blank" rel="nofollow">
-					Threads
-				</a>
-
-				<a href="https://x.com/wikino_app" class="hover:underline" target="_blank" rel="nofollow">
-					X (Twitter)
-				</a>
+					<a href="https://x.com/wikino_app" class="link-foreground" target="_blank" rel="nofollow">
+						X (Twitter)
+					</a>
+				</div>
 			</nav>
 
 			// オープンソース
 			<nav class="flex flex-col gap-4">
-				<h6 class="font-bold uppercase">
+				<h3 class="text-lg/8 leading-snug font-bold antialiased">
 					{ templates.T(ctx, "welcome_footer_open_source") }
-				</h6>
+				</h3>
 
-				<p class="text-sm text-muted-foreground">
-					{ templates.T(ctx, "welcome_open_source_description") }
-				</p>
+				<div class="space-y-2">
+					<p class="text-muted-foreground">
+						{ templates.T(ctx, "welcome_open_source_description") }
+					</p>
+
+					<a href="https://github.com/wikinoapp/wikino" class="link-foreground inline-flex" target="_blank" rel="nofollow">
+						wikinoapp/wikino
+					</a>
+				</div>
 			</nav>
 		</section>
 	</div>
 }
 
 // featureItem は機能紹介の1項目を表示するコンポーネントです
-templ featureItem(title string, description string, imagePath string) {
-	<div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+templ featureItem(title string, description string, iconName string, imagePath string) {
+	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
 		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
-			<h3 class="text-lg/8 leading-snug font-bold antialiased">
-				{ title }
-			</h3>
+			<div class="flex items-start space-x-4">
+				<div class="bg-brand-200 rounded-xl flex items-center justify-center w-10 h-10 flex-shrink-0">
+					@templates.Icon(iconName, "fill-brand-800 w-[24px] h-[24px]")
+				</div>
 
-			<p>
-				{ description }
-			</p>
+				<div class="flex flex-col gap-2">
+					<h3 class="text-lg/8 leading-snug font-bold antialiased">
+						{ title }
+					</h3>
+
+					<p>
+						{ description }
+					</p>
+				</div>
+			</div>
 		</div>
 
 		<img
 			src={ imagePath }
 			alt=""
-			class="w-full basis-full sm:basis-1/2 rounded-lg border border-border"
+			class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-brand-200 shadow object-contain"
 			loading="lazy"
 		/>
 	</div>
@@ -196,25 +219,33 @@ templ featureItem(title string, description string, imagePath string) {
 
 // featureItemWithNote は注釈付きの機能紹介の1項目を表示するコンポーネントです
 templ featureItemWithNote(title string, description string, note string, imagePath string) {
-	<div class="flex flex-wrap-reverse gap-4 sm:flex-nowrap">
+	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
 		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
-			<h3 class="text-lg/8 leading-snug font-bold antialiased">
-				{ title }
-			</h3>
+			<div class="flex items-start space-x-4">
+				<div class="bg-brand-200 rounded-xl flex items-center justify-center w-10 h-10 flex-shrink-0">
+					@templates.Icon("globe-regular", "fill-brand-800 w-[24px] h-[24px]")
+				</div>
 
-			<p>
-				{ description }
-			</p>
+				<div class="flex flex-col gap-2">
+					<h3 class="text-lg/8 leading-snug font-bold antialiased">
+						{ title }
+					</h3>
 
-			<p class="text-sm text-muted-foreground">
-				{ note }
-			</p>
+					<p>
+						{ description }
+					</p>
+
+					<p class="text-sm text-muted-foreground">
+						{ note }
+					</p>
+				</div>
+			</div>
 		</div>
 
 		<img
 			src={ imagePath }
 			alt=""
-			class="w-full basis-full sm:basis-1/2 rounded-lg border border-border"
+			class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-brand-200 shadow object-contain"
 			loading="lazy"
 		/>
 	</div>

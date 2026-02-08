@@ -78,7 +78,7 @@ module ControllerConcerns
 
     sig(:final) { returns(T.nilable(String)) }
     private def user_session_token
-      cookies.signed[UserSession::TOKENS_COOKIE_KEY]
+      cookies[UserSession::TOKENS_COOKIE_KEY]
     end
 
     sig(:final) { returns(T::Boolean) }
@@ -101,7 +101,7 @@ module ControllerConcerns
 
     sig(:final) { params(token: String).void }
     private def store_user_session_token(token:)
-      cookies.signed.permanent[UserSession::TOKENS_COOKIE_KEY] = {
+      cookies.permanent[UserSession::TOKENS_COOKIE_KEY] = {
         value: token,
         httponly: true,
         same_site: :lax,

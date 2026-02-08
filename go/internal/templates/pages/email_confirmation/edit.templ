@@ -27,72 +27,70 @@ templ Edit(data EditPageData) {
 			<h1 class="text-center text-3xl font-bold antialiased">
 				{ templates.T(ctx, "email_confirmation_edit_heading") }
 			</h1>
+
+			<p class="text-center text-sm text-muted-foreground whitespace-pre-line">
+				{ templates.T(ctx, "email_confirmation_edit_description") }
+			</p>
 		</div>
 
 		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
-			<div class="card-body px-4 py-6">
-				<div class="flex flex-col gap-4">
-					<p class="text-muted-foreground">
-						{ templates.T(ctx, "email_confirmation_edit_description") }
-					</p>
+			<div class="card-body px-4">
+				<form
+					action="/email_confirmation"
+					class="form grid gap-6"
+					data-on:submit__passive="$isSubmitting = true"
+					method="POST"
+				>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<input type="hidden" name="_method" value="PATCH"/>
 
-					<form
-						action="/email_confirmation"
-						class="form grid gap-6"
-						data-on:submit__passive="$isSubmitting = true"
-						method="POST"
-					>
-						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-						<input type="hidden" name="_method" value="PATCH"/>
+					<div class="grid gap-2">
+						<label for="code">
+							{ templates.T(ctx, "email_confirmation_edit_code_label") }
+						</label>
 
-						<div class="grid gap-2">
-							<label for="code">
-								{ templates.T(ctx, "email_confirmation_edit_code_label") }
-							</label>
-
-							<input
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("code") {
-									aria-invalid="true"
-								} else {
-									aria-invalid="false"
-								}
-								autocomplete="one-time-code"
-								autofocus
-								id="code"
-								maxlength="6"
-								name="code"
-								placeholder="ABCD12"
-								required
-								tabindex="1"
-								type="text"
-							/>
-
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "email_confirmation_edit_code_hint") }
-							</p>
-
+						<input
 							if data.FormErrors != nil && data.FormErrors.HasFieldError("code") {
-								for _, errorMsg := range data.FormErrors.GetFieldErrors("code") {
-									<p class="text-sm text-error">
-										{ errorMsg }
-									</p>
-								}
+								aria-invalid="true"
+							} else {
+								aria-invalid="false"
 							}
-						</div>
+							autocomplete="one-time-code"
+							autofocus
+							id="code"
+							maxlength="6"
+							name="code"
+							placeholder="ABCD12"
+							required
+							tabindex="1"
+							type="text"
+						/>
 
-						<button
-							class="btn-primary rounded-full w-fit"
-							data-attr:disabled="$isSubmitting == true"
-							tabindex="2"
-							type="submit"
-						>
-							@templates.Icon("arrow-right")
-							{ templates.T(ctx, "email_confirmation_edit_submit_button") }
-						</button>
-					</form>
-				</div>
+						<p class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "email_confirmation_edit_code_hint") }
+						</p>
+
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("code") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("code") {
+								<p class="text-sm text-error">
+									{ errorMsg }
+								</p>
+							}
+						}
+					</div>
+
+					<button
+						class="btn-primary rounded-full w-fit"
+						data-attr:disabled="$isSubmitting == true"
+						tabindex="2"
+						type="submit"
+					>
+						@templates.Icon("arrow-right")
+						{ templates.T(ctx, "email_confirmation_edit_submit_button") }
+					</button>
+				</form>
 			</div>
 		</div>
 

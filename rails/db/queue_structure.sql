@@ -1,3 +1,8 @@
+\restrict CF5GXxLQa1adW7atb5WXGJA0mtJbQ5AIiajGtZn7BNjBTBdPfbqSdTS46H9e0dR
+
+-- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
+-- Dumped by pg_dump version 17.7 (Debian 17.7-3.pgdg13+1)
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -825,6 +830,8 @@ ALTER TABLE ONLY public.solid_queue_scheduled_executions
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict CF5GXxLQa1adW7atb5WXGJA0mtJbQ5AIiajGtZn7BNjBTBdPfbqSdTS46H9e0dR
 
 SET search_path TO "$user", public;
 

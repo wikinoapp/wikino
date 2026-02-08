@@ -11,13 +11,14 @@ import (
 
 // Handler はログインハンドラー
 type Handler struct {
-	cfg                 *config.Config
-	sessionMgr          *session.Manager
-	flashMgr            *session.FlashManager
-	userSessionRepo     *repository.UserSessionRepository
-	createUserSessionUC *usecase.CreateUserSessionUsecase
-	turnstileVerifier   turnstile.Verifier
-	validator           *CreateValidator
+	cfg                   *config.Config
+	sessionMgr            *session.Manager
+	flashMgr              *session.FlashManager
+	userSessionRepo       *repository.UserSessionRepository
+	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
+	createUserSessionUC   *usecase.CreateUserSessionUsecase
+	turnstileVerifier     turnstile.Verifier
+	validator             *CreateValidator
 }
 
 // NewHandler は新しいログインハンドラーを作成します
@@ -28,16 +29,18 @@ func NewHandler(
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
 	userSessionRepo *repository.UserSessionRepository,
+	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 	turnstileVerifier turnstile.Verifier,
 ) *Handler {
 	return &Handler{
-		cfg:                 cfg,
-		sessionMgr:          sessionMgr,
-		flashMgr:            flashMgr,
-		userSessionRepo:     userSessionRepo,
-		createUserSessionUC: createUserSessionUC,
-		turnstileVerifier:   turnstileVerifier,
-		validator:           NewCreateValidator(userRepo, userPasswordRepo),
+		cfg:                   cfg,
+		sessionMgr:            sessionMgr,
+		flashMgr:              flashMgr,
+		userSessionRepo:       userSessionRepo,
+		userTwoFactorAuthRepo: userTwoFactorAuthRepo,
+		createUserSessionUC:   createUserSessionUC,
+		turnstileVerifier:     turnstileVerifier,
+		validator:             NewCreateValidator(userRepo, userPasswordRepo),
 	}
 }

@@ -13,11 +13,14 @@ WikinoはWikiアプリケーションです。
 
 ```
 /workspace/
-├── go/          # Go版の実装（段階的に機能を移行中）
-├── rails/       # Rails版の実装（既存の本番システム）
-├── caddy/       # リバースプロキシ設定
-├── .github/     # 共通のCI/CD設定
-└── CLAUDE.md    # このファイル（プロジェクト全体のガイド）
+├── go/                  # Go版の実装（段階的に機能を移行中）
+├── rails/               # Rails版の実装（既存の本番システム）
+├── caddy/               # リバースプロキシ設定
+├── .github/             # 共通のCI/CD設定
+├── Dockerfile.dev       # 統合開発コンテナのDockerfile
+├── docker-compose.yml   # Docker Compose設定
+├── mise.toml            # 開発ツールバージョン管理（Go, Ruby）
+└── CLAUDE.md            # このファイル（プロジェクト全体のガイド）
 ```
 
 各サブプロジェクトには独自の CLAUDE.md ファイルがあり、それぞれの技術スタック、開発環境、コーディング規約などが記載されています：

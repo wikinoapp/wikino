@@ -129,6 +129,7 @@ func main() {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		turnstileClient,
 	)
@@ -199,11 +200,11 @@ func main() {
 
 	r := chi.NewRouter()
 
-	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
-	r.Use(middleware.MethodOverride)
-
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
 	// 注: RailsAppURLが設定されている場合のみ有効化
+	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
+	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
+	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
 	if cfg.RailsAppURL != "" {
 		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg)
 		if err != nil {
@@ -212,6 +213,9 @@ func main() {
 		}
 		r.Use(reverseProxyMiddleware.Middleware)
 	}
+
+	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
+	r.Use(middleware.MethodOverride)
 
 	// 共通ミドルウェア
 	r.Use(chimiddleware.Logger)

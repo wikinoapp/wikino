@@ -58,7 +58,7 @@ func ResetSent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templates.Icon("check-circle", "fill-(--info)").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templates.Icon("check-circle-regular", "fill-success").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -92,7 +92,7 @@ func ResetSent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templates.Icon("info", "fill-(--info)").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templates.Icon("info-regular", "fill-info").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

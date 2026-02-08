@@ -202,7 +202,7 @@ func Head(meta viewmodel.PageMeta) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"><script type=\"module\" src=\"/static/js/vendor/datastar-v1.0.0-RC.7.js\"></script><script>\n\t\t(() => {\n\t\t\ttry {\n\t\t\t\tif (matchMedia(\"(prefers-color-scheme: dark)\").matches) {\n\t\t\t\t\tdocument.documentElement.classList.add(\"dark\");\n\t\t\t\t}\n\t\t\t} catch (_) {}\n\t\t})();\n\t</script><script type=\"module\" src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"><script type=\"module\" src=\"/static/js/vendor/datastar-v1.0.0-RC.7.js\"></script><script type=\"module\" src=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

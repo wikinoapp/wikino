@@ -64,6 +64,7 @@ func TestCreate_Success(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -83,6 +84,7 @@ func TestCreate_Success(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -166,6 +168,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -185,6 +188,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -254,6 +258,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -273,6 +278,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -331,6 +337,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -350,6 +357,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -408,6 +416,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -427,6 +436,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)
@@ -534,6 +544,7 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			userRepo := repository.NewUserRepository(queries)
 			userPasswordRepo := repository.NewUserPasswordRepository(queries)
 			userSessionRepo := repository.NewUserSessionRepository(queries)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 			// ユースケースを初期化
 			createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -553,6 +564,7 @@ func TestCreate_WithBackParameter(t *testing.T) {
 				userRepo,
 				userPasswordRepo,
 				userSessionRepo,
+				userTwoFactorAuthRepo,
 				createUserSessionUC,
 				mockTurnstile,
 			)
@@ -612,6 +624,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -631,6 +644,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 		userRepo,
 		userPasswordRepo,
 		userSessionRepo,
+		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
 	)

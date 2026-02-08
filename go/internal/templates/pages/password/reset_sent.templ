@@ -23,7 +23,7 @@ templ ResetSent() {
 
 		<div class="flex flex-col gap-4">
 			<div class="alert">
-				@templates.Icon("check-circle", "fill-(--info)")
+				@templates.Icon("check-circle-regular", "fill-success")
 				<h2>
 					{ templates.T(ctx, "password_reset_sent_message") }
 				</h2>
@@ -33,7 +33,7 @@ templ ResetSent() {
 			</div>
 
 			<div class="alert">
-				@templates.Icon("info", "fill-(--info)")
+				@templates.Icon("info-regular", "fill-info")
 				<h2>
 					{ templates.T(ctx, "password_reset_email_not_received_heading") }
 				</h2>

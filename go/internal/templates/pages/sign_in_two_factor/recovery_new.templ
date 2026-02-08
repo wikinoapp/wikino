@@ -16,8 +16,10 @@ type RecoveryNewPageData struct {
 templ RecoveryNew(data RecoveryNewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
-				@templates.Icon("logo")
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
 			</a>
 		</div>
 
@@ -25,72 +27,65 @@ templ RecoveryNew(data RecoveryNewPageData) {
 			<h1 class="text-center text-3xl font-bold antialiased">
 				{ templates.T(ctx, "sign_in_two_factor_recovery_heading") }
 			</h1>
+
+			<p class="text-center text-sm text-muted-foreground whitespace-pre-line">
+				{ templates.T(ctx, "sign_in_two_factor_recovery_code_usage") }
+			</p>
 		</div>
 
 		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
-			<div class="card-body px-4 py-6">
-				<div class="flex flex-col gap-4">
-					<div class="text-muted-foreground">
-						<p>
-							{ templates.T(ctx, "sign_in_two_factor_recovery_enter_code") }
+			<div class="card-body px-4">
+				<form
+					action="/sign_in/two_factor/recovery"
+					class="form grid gap-6"
+					method="POST"
+				>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+					<div class="grid gap-2">
+						<label for="recovery_code">
+							{ templates.T(ctx, "sign_in_two_factor_recovery_code_label") }
+						</label>
+
+						<input
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
+								aria-invalid="true"
+							} else {
+								aria-invalid="false"
+							}
+							autocomplete="off"
+							autofocus
+							class="input"
+							id="recovery_code"
+							maxlength="8"
+							name="recovery_code"
+							placeholder="code1234"
+							required
+							tabindex="1"
+							type="text"
+						/>
+
+						<p class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "sign_in_two_factor_recovery_code_hint") }
 						</p>
-						<p>
-							{ templates.T(ctx, "sign_in_two_factor_recovery_code_usage") }
-						</p>
+
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("recovery_code") {
+								<p class="text-sm text-destructive">{ errorMsg }</p>
+							}
+						}
 					</div>
 
-					<form
-						action="/sign_in/two_factor/recovery"
-						class="form grid gap-6"
-						method="POST"
+					<button
+						class="btn rounded-full w-fit"
+						tabindex="2"
+						type="submit"
 					>
-						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-
-						<div class="grid gap-2">
-							<label for="recovery_code">
-								{ templates.T(ctx, "sign_in_two_factor_recovery_code_label") }
-							</label>
-
-							<input
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
-									aria-invalid="true"
-								} else {
-									aria-invalid="false"
-								}
-								autocomplete="off"
-								autofocus
-								class="input"
-								id="recovery_code"
-								maxlength="8"
-								name="recovery_code"
-								placeholder="code1234"
-								required
-								tabindex="1"
-								type="text"
-							/>
-
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "sign_in_two_factor_recovery_code_hint") }
-							</p>
-
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("recovery_code") {
-								for _, errorMsg := range data.FormErrors.GetFieldErrors("recovery_code") {
-									<p class="text-sm text-destructive">{ errorMsg }</p>
-								}
-							}
-						</div>
-
-						<button
-							class="btn rounded-full w-fit"
-							tabindex="2"
-							type="submit"
-						>
-							{ templates.T(ctx, "sign_in_two_factor_submit_button") }
-						</button>
-					</form>
-				</div>
+						{ templates.T(ctx, "sign_in_two_factor_submit_button") }
+					</button>
+				</form>
 			</div>
 		</div>
 

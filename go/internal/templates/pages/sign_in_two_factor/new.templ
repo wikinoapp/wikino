@@ -16,8 +16,10 @@ type NewPageData struct {
 templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block bg-brand-100 rounded-lg p-2">
-				@templates.Icon("logo")
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
 			</a>
 		</div>
 
@@ -25,80 +27,76 @@ templ New(data NewPageData) {
 			<h1 class="text-center text-3xl font-bold antialiased">
 				{ templates.T(ctx, "sign_in_two_factor_heading") }
 			</h1>
+
+			<p class="text-center text-sm text-muted-foreground whitespace-pre-line">
+				{ templates.T(ctx, "sign_in_two_factor_enter_code") }
+			</p>
 		</div>
 
 		@components.FormErrors(data.FormErrors)
 
 		<div class="card">
-			<div class="card-body px-4 py-6">
-				<div class="flex flex-col gap-4">
-					<p class="text-muted-foreground">
-						{ templates.T(ctx, "sign_in_two_factor_enter_code") }
-					</p>
+			<div class="card-body px-4">
+				<form
+					action="/sign_in/two_factor"
+					class="form grid gap-6"
+					method="POST"
+				>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-					<form
-						action="/sign_in/two_factor"
-						class="form grid gap-6"
-						method="POST"
-					>
-						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="grid gap-2">
+						<label for="totp_code">
+							{ templates.T(ctx, "sign_in_two_factor_code_label") }
+						</label>
 
-						<div class="grid gap-2">
-							<label for="totp_code">
-								{ templates.T(ctx, "sign_in_two_factor_code_label") }
-							</label>
-
-							<input
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
-									aria-invalid="true"
-								} else {
-									aria-invalid="false"
-								}
-								autocomplete="one-time-code"
-								autofocus
-								class="input"
-								id="totp_code"
-								maxlength="6"
-								name="totp_code"
-								placeholder="000000"
-								required
-								tabindex="1"
-								type="text"
-							/>
-
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "sign_in_two_factor_code_hint") }
-							</p>
-
+						<input
 							if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
-								for _, errorMsg := range data.FormErrors.GetFieldErrors("totp_code") {
-									<p class="text-sm text-destructive">{ errorMsg }</p>
-								}
+								aria-invalid="true"
+							} else {
+								aria-invalid="false"
 							}
-						</div>
+							autocomplete="one-time-code"
+							autofocus
+							class="input"
+							id="totp_code"
+							maxlength="6"
+							name="totp_code"
+							placeholder="000000"
+							required
+							tabindex="1"
+							type="text"
+						/>
 
-						<button
-							class="btn rounded-full w-fit"
-							tabindex="2"
-							type="submit"
-						>
-							{ templates.T(ctx, "sign_in_two_factor_submit_button") }
-						</button>
-					</form>
-
-					<hr/>
-
-					<div class="flex flex-col gap-2 text-sm">
-						<p class="text-muted-foreground">
-							{ templates.T(ctx, "sign_in_two_factor_recovery_description") }
+						<p class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "sign_in_two_factor_code_hint") }
 						</p>
 
-						<a href="/sign_in/two_factor/recovery/new" class="link underline">
-							{ templates.T(ctx, "sign_in_two_factor_recovery_link") }
-						</a>
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("totp_code") {
+								<p class="text-sm text-destructive">{ errorMsg }</p>
+							}
+						}
 					</div>
-				</div>
+
+					<button
+						class="btn rounded-full w-fit"
+						tabindex="2"
+						type="submit"
+					>
+						{ templates.T(ctx, "sign_in_two_factor_submit_button") }
+					</button>
+				</form>
 			</div>
+		</div>
+
+		<div class="flex flex-col gap-2 text-sm">
+			<p class="text-muted-foreground">
+				{ templates.T(ctx, "sign_in_two_factor_recovery_description") }
+			</p>
+
+			<a href="/sign_in/two_factor/recovery/new" class="link underline">
+				{ templates.T(ctx, "sign_in_two_factor_recovery_link") }
+			</a>
 		</div>
 
 		<div class="text-center">
