@@ -1,7 +1,7 @@
 <%= render ::Layouts::SimpleComponent.new(current_page_name:) do %>
   <div class="flex flex-col gap-8 px-4 py-12">
     <div class="text-center">
-      <%= link_to root_path, class: "inline-block bg-brand-100 rounded-lg" do %>
+      <%= link_to "/", class: "inline-block bg-brand-100 rounded-lg" do %>
         <%= render BaseUI::IconComponent.new(name: "logo", size: "80px", class_name: "fill-black") %>
       <% end %>
     </div>
@@ -21,7 +21,7 @@
         <%= form_with(
           class: "form grid gap-6",
           model: form,
-          url: password_reset_path
+          url: "/password_reset"
         ) do |f| %>
           <%= render BaseUI::FormErrorsComponent.new(errors: f.object.errors) %>
 
@@ -47,7 +47,7 @@
     <div class="text-center">
       <%= render BaseUI::LinkComponent.new(
         variant: BaseUI::LinkComponent::Variant::Underline,
-        options: {href: root_path}
+        options: {href: "/"}
       ) do %>
         <%= render BaseUI::IconComponent.new(name: "arrow-left-regular", size: "18px", class_name: "fill-primary-background") %>
 

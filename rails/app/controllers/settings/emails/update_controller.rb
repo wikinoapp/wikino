@@ -32,7 +32,7 @@ module Settings
 
         session[:email_confirmation_id] = result.email_confirmation.id
         flash[:notice] = t("messages.email_confirmations.confirmation_mail_sent")
-        redirect_to edit_email_confirmation_path
+        redirect_to "/email_confirmation/edit"
       end
 
       sig { returns(ActionController::Parameters) }

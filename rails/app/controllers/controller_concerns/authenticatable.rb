@@ -96,7 +96,7 @@ module ControllerConcerns
     private def request_authentication
       sign_out
       session[:return_to_after_authenticating] = request.url
-      redirect_to sign_in_path
+      redirect_to "/sign_in"
     end
 
     sig(:final) { params(token: String).void }

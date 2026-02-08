@@ -6,7 +6,7 @@ module RequestHelpers
 
   def sign_in(user_record:, password: "passw0rd")
     post(
-      user_session_path,
+      "/user_session",
       params: {
         user_sessions_creation_form: {
           email: user_record.email,
@@ -39,7 +39,7 @@ module RequestHelpers
     correct_code = totp.now
 
     post(
-      sign_in_two_factor_path,
+      "/sign_in/two_factor",
       params: {
         user_sessions_two_factor_verification_form: {
           totp_code: correct_code

@@ -30,7 +30,7 @@ module Passwords
       reset_session
 
       flash[:notice] = t("messages.passwords.reset_successfully_html")
-      redirect_to sign_in_path
+      redirect_to "/sign_in"
     end
 
     sig { returns(ActionController::Parameters) }

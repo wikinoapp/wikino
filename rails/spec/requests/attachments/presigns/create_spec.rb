@@ -15,7 +15,7 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
         checksum: "test_checksum"
       }
 
-    expect(response).to redirect_to(sign_in_path)
+    expect(response).to redirect_to("/sign_in")
   end
 
   it "スペースメンバーでない場合、403エラーを返すこと" do

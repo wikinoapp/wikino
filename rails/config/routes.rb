@@ -13,21 +13,36 @@ Rails.application.routes.draw do
   match "/_test/attachments/presign",                                      via: :post,   as: :test_attachment_presign,                      to: "test/attachments/presigns/create#call" if Rails.env.test?
   match "/_test/attachments/signed_urls",                                  via: :post,   as: :test_attachment_signed_urls,                   to: "test/attachments/signed_urls/create#call" if Rails.env.test?
   match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments/uploads/create#call" if Rails.env.test?
+
+  # Go移行済みエンドポイント（テスト用）
+  # テストのsign_inヘルパー等が依存するため、テスト環境でのみルートを維持する。
+  # コントローラー・テストの削除（フェーズ2〜5）に合わせて段階的に削除する。
+  if Rails.env.test?
+    match "/accounts",                                                       via: :post,                                                      to: "accounts/create#call"
+    match "/accounts/new",                                                   via: :get,                                                       to: "accounts/new#call"
+    match "/email_confirmation",                                             via: :patch,                                                     to: "email_confirmations/update#call"
+    match "/email_confirmation",                                             via: :post,                                                      to: "email_confirmations/create#call"
+    match "/email_confirmation/edit",                                        via: :get,                                                       to: "email_confirmations/edit#call"
+    match "/manifest",                                                       via: :get,                                                       to: "manifests/show#call"
+    match "/password_reset",                                                 via: :get,                                                       to: "password_resets/new#call"
+    match "/password_reset",                                                 via: :post,                                                      to: "password_resets/create#call"
+    match "/password",                                                       via: :patch,                                                     to: "passwords/update#call"
+    match "/password/edit",                                                  via: :get,                                                       to: "passwords/edit#call"
+    match "/sign_in",                                                        via: :get,                                                       to: "sign_in/show#call"
+    match "/sign_in/two_factor/new",                                         via: :get,                                                       to: "sign_in/two_factors/new#call"
+    match "/sign_in/two_factor",                                             via: :post,                                                      to: "sign_in/two_factors/create#call"
+    match "/sign_in/two_factor/recovery/new",                                via: :get,                                                       to: "sign_in/two_factors/recoveries/new#call"
+    match "/sign_in/two_factor/recovery",                                    via: :post,                                                      to: "sign_in/two_factors/recoveries/create#call"
+    match "/sign_up",                                                        via: :get,                                                       to: "sign_up/show#call"
+    match "/user_session",                                                   via: :delete,                                                    to: "user_sessions/destroy#call"
+    match "/user_session",                                                   via: :post,                                                      to: "user_sessions/create#call"
+    root to: "welcome/show#call"
+  end
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
-  match "/accounts",                                                       via: :post,   as: :account_list,                                 to: "accounts/create#call"
-  match "/accounts/new",                                                   via: :get,    as: :new_account,                                  to: "accounts/new#call"
   match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
   match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
-  match "/email_confirmation",                                             via: :patch,  as: :email_confirmation,                           to: "email_confirmations/update#call"
-  match "/email_confirmation",                                             via: :post,                                                      to: "email_confirmations/create#call"
-  match "/email_confirmation/edit",                                        via: :get,    as: :edit_email_confirmation,                      to: "email_confirmations/edit#call"
   match "/home",                                                           via: :get,    as: :home,                                         to: "home/show#call"
   match "/joined_topics",                                                  via: :get,    as: :joined_topic_list,                            to: "joined_topics/index#call"
-  match "/manifest",                                                       via: :get,    as: :manifest,                                     to: "manifests/show#call"
-  match "/password_reset",                                                 via: :get,    as: :password_reset,                               to: "password_resets/new#call"
-  match "/password_reset",                                                 via: :post,                                                      to: "password_resets/create#call"
-  match "/password",                                                       via: :patch,  as: :password,                                     to: "passwords/update#call"
-  match "/password/edit",                                                  via: :get,    as: :edit_password,                                to: "passwords/edit#call"
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")
   match "/s/:space_identifier",                                            via: :get,    as: :space,                                        to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                                         to: "atom/show#call"
@@ -77,18 +92,8 @@ Rails.application.routes.draw do
   match "/settings/two_factor_auth/new",                                   via: :get,    as: :settings_new_two_factor_auth,                 to: "settings/two_factor_auths/new#call"
   match "/settings/two_factor_auth/recovery_codes",                        via: :get,    as: :settings_two_factor_auth_recovery_code_list,  to: "settings/two_factor_auths/recovery_codes/show#call"
   match "/settings/two_factor_auth/recovery_codes",                        via: :post,                                                      to: "settings/two_factor_auths/recovery_codes/create#call"
-  match "/sign_in",                                                        via: :get,    as: :sign_in,                                      to: "sign_in/show#call"
-  match "/sign_in/two_factor/new",                                         via: :get,    as: :sign_in_new_two_factor,                       to: "sign_in/two_factors/new#call"
-  match "/sign_in/two_factor",                                             via: :post,   as: :sign_in_two_factor,                           to: "sign_in/two_factors/create#call"
-  match "/sign_in/two_factor/recovery/new",                                via: :get,    as: :sign_in_two_factor_new_recovery,              to: "sign_in/two_factors/recoveries/new#call"
-  match "/sign_in/two_factor/recovery",                                    via: :post,   as: :sign_in_two_factor_recovery,                  to: "sign_in/two_factors/recoveries/create#call"
-  match "/sign_up",                                                        via: :get,    as: :sign_up,                                      to: "sign_up/show#call"
   match "/spaces",                                                         via: :post,   as: :space_list,                                   to: "spaces/create#call"
   match "/spaces/new",                                                     via: :get,    as: :new_space,                                    to: "spaces/new#call"
   match "/terms",                                                          via: :get,    as: :terms,                                        to: redirect("https://wikino.app/s/wikino/pages/41")
-  match "/user_session",                                                   via: :delete, as: :user_session,                                 to: "user_sessions/destroy#call"
-  match "/user_session",                                                   via: :post,                                                      to: "user_sessions/create#call"
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
-
-  root "welcome/show#call"
 end

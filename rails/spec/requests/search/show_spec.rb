@@ -16,9 +16,9 @@ RSpec.describe "GET /search", type: :request do
   end
 
   it "ログインしていない場合、ログインページにリダイレクトされること" do
-    delete user_session_path
+    delete "/user_session"
     get search_path
-    expect(response).to redirect_to(sign_in_path)
+    expect(response).to redirect_to("/sign_in")
   end
 
   it "検索キーワードがない場合、検索フォームのみが表示されること" do

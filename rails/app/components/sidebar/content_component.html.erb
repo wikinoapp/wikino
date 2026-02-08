@@ -37,7 +37,7 @@
         ) %>
       <% else %>
         <%= render Sidebar::ItemLinkComponent.new(
-          path: root_path,
+          path: "/",
           title: t("nouns.home"),
           default_icon_name: "house-regular",
           active_icon_name: "house-fill",
@@ -45,7 +45,7 @@
         ) %>
 
         <%= render Sidebar::ItemLinkComponent.new(
-          path: sign_in_path,
+          path: "/sign_in",
           title: t("nouns.sign_in"),
           default_icon_name: "sign-in-regular",
           active_icon_name: "sign-in-regular",

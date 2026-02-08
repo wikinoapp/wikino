@@ -10,9 +10,6 @@ module GeneratedPathHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def account_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def atom_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -34,16 +31,7 @@ module GeneratedPathHelpersModule
   def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def edit_email_confirmation_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def edit_page_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def edit_password_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def email_confirmation_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def home_path(*args); end
@@ -55,13 +43,7 @@ module GeneratedPathHelpersModule
   def letter_opener_web_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def manifest_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def mission_control_jobs_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_account_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_page_path(*args); end
@@ -83,12 +65,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def page_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def password_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def password_reset_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end
@@ -116,9 +92,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def rails_mailers_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def root_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def search_path(*args); end
@@ -149,24 +122,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def settings_two_factor_auth_recovery_codes_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_new_two_factor_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_new_recovery_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_recovery_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_up_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_list_path(*args); end
@@ -239,7 +194,4 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def turbo_resume_historical_location_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_session_path(*args); end
 end
