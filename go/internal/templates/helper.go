@@ -58,7 +58,7 @@ func Icon(name string, class ...string) templ.Component {
 	svg, ok := icons[name]
 	if !ok {
 		// デフォルトとしてinfoアイコンを使用
-		svg = icons["info"]
+		svg = icons["info-regular"]
 	}
 
 	// クラス名が指定されている場合は、SVGタグに追加

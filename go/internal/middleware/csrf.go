@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
-	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 )
@@ -56,7 +55,7 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 
 		// スキップパスに一致する場合はCSRF検証をスキップ
 		for _, path := range csrfSkipPaths {
-			if strings.HasPrefix(r.URL.Path, path) {
+			if r.URL.Path == path {
 				next.ServeHTTP(w, r)
 				return
 			}

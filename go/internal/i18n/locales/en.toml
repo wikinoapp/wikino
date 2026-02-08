@@ -83,9 +83,6 @@ other = "Two-factor recovery"
 [sign_in_two_factor_recovery_heading]
 other = "Recovery code"
 
-[sign_in_two_factor_recovery_enter_code]
-other = "Enter your recovery code"
-
 [sign_in_two_factor_recovery_code_usage]
 other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
 
@@ -124,6 +121,7 @@ other = "Sign up"
 other = "Sign up for Wikino"
 
 [sign_up_email_instruction]
+description = "Description for email input field on sign up"
 other = "We'll send a confirmation code to the email address you enter to verify it"
 
 [sign_up_email_label]
@@ -286,6 +284,7 @@ other = "Check your spam folder. If you still don't see it after a few minutes, 
 
 # Password reset email
 [password_reset_email_subject]
+description = "Password reset email subject line"
 other = "[Wikino] Password Reset"
 
 # Password change
