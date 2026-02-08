@@ -19,6 +19,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// backパラメータを取得（ログイン後のリダイレクト先）
 	backURL := r.URL.Query().Get("back")
 
+	// フラッシュメッセージを取得
+	flash := h.flashMgr.GetFlash(w, r)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_title")
@@ -30,7 +33,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		FormErrors:       nil,
 		BackURL:          backURL,
 	})
-	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta, Flash: flash}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

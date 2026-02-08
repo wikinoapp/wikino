@@ -65,6 +65,20 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	user := result.User
 
+	// 二要素認証が有効かチェック
+	twoFactorAuth, err := h.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, user.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "二要素認証設定の取得でエラー", "error", err, "user_id", user.ID)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if twoFactorAuth != nil {
+		// 二要素認証が有効な場合はペンディングユーザーIDをCookieに設定し、2FAページにリダイレクト
+		h.sessionMgr.SetPendingUserCookie(w, user.ID)
+		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)
+		return
+	}
+
 	// セッションを作成
 	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
 		UserID:    user.ID,
