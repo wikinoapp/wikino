@@ -1,0 +1,286 @@
+# golangci-lint v2 の設定ファイル
+# https://golangci-lint.run/usage/configuration/
+
+version: "2"
+
+run:
+  # タイムアウト（デフォルト: 1m）
+  timeout: 5m
+  # テストファイルを含める
+  tests: true
+  # ビルドタグ
+  build-tags: []
+
+linters:
+  # 有効化するリンター
+  enable:
+    - govet         # Go標準静的解析
+    - staticcheck   # 高度な静的解析
+    - gosec         # セキュリティチェック
+    - depguard      # 依存関係のルール強制
+    - errcheck      # エラーチェック漏れ
+    - ineffassign   # 無駄な代入
+    - unused        # 未使用コード
+
+  # リンター除外ルール（v2形式）
+  exclusions:
+    rules:
+      # テストファイルでは gosec と depguard を無効化
+      - path: '(.+)_test\.go'
+        linters:
+          - gosec
+          - depguard
+      # templ 自動生成ファイルは一部のリンターから除外（depguard は有効化）
+      - path: '(.+)_templ\.go'
+        linters:
+          - govet
+          - staticcheck
+          - gosec
+          - errcheck
+          - ineffassign
+          - unused
+    # 除外するディレクトリ
+    paths:
+      - bin/.*
+      - vendor/.*
+      - static/.*
+      - node_modules/.*
+
+  # リンター固有の設定（v2形式）
+  settings:
+    # gosec の設定
+    gosec:
+      # 除外する脆弱性ルール（必要に応じて調整）
+      excludes: []
+      # セキュリティの重要度（low, medium, high）
+      severity: medium
+      confidence: medium
+
+    # depguard の設定
+    depguard:
+      rules:
+        # Templates層のルール: ViewModelを通じてデータを表示
+        # 直接のデータアクセスとビジネスロジックに依存しない
+        templates-layer:
+          files:
+            - "**/internal/templates/**/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "TemplatesはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "TemplatesはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "TemplatesはModelに直接依存できません。ViewModelを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "TemplatesはUseCaseに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "TemplatesはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "TemplatesはMiddlewareに依存できません。"
+
+        # ViewModel層のルール: データ変換のみ
+        # 他のPresentation層パッケージに依存しない
+        viewmodel-layer:
+          files:
+            - "**/internal/viewmodel/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "ViewModelはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "ViewModelはRepositoryに依存できません。ModelからViewModelへの変換を行ってください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "ViewModelはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "ViewModelはMiddlewareに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "ViewModelはTemplatesに依存できません。"
+
+        # Handler層のルール: HTTPリクエスト処理
+        # QueryへのアクセスはRepositoryを経由
+        handler-layer:
+          files:
+            - "**/internal/handler/**/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
+
+        # 形式バリデーター層のルール: 入力値の形式チェック
+        # DBアクセス禁止（query, repository, model, usecase への依存禁止）
+        format-validator-layer:
+          files:
+            - "**/format_validator.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "FormatValidatorはQueryに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "FormatValidatorはRepositoryに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "FormatValidatorはModelに依存できません。形式バリデーションはDBアクセス不要です。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "FormatValidatorはUseCaseに依存できません。形式バリデーションはDBアクセス不要です。"
+
+        # 状態バリデーター層のルール: DBの状態を使った検証
+        # Repository/Modelは許可、query/usecaseへの依存禁止
+        state-validator-layer:
+          files:
+            - "**/state_validator.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "StateValidatorはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "StateValidatorはUseCaseに依存できません。状態バリデーションはHandler層で行います。"
+
+        # Middleware層のルール: 共通処理のみ
+        # 他のPresentation層パッケージ、Application層、Domain/Infrastructure層に依存しない
+        middleware-layer:
+          files:
+            - "**/internal/middleware/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "MiddlewareはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "MiddlewareはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "MiddlewareはUseCaseに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "MiddlewareはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "MiddlewareはViewModelに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "MiddlewareはTemplatesに依存できません。"
+
+        # Application層のルール（UseCase）
+        # Presentation層に依存しない
+        application-layer:
+          files:
+            - "**/internal/usecase/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "Application層はQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "Application層はPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "Application層はPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "Application層はPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "Application層はPresentation層に依存できません。"
+
+        # Model層のルール: 純粋なドメインエンティティ
+        # データアクセス層、上位層に依存しない
+        model-layer:
+          files:
+            - "**/internal/model/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "ModelはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "ModelはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "ModelはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "ModelはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "ModelはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "ModelはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "ModelはPresentation層に依存できません。"
+
+        # Repository層のルール: データアクセス層
+        # 上位層に依存しない
+        repository-layer:
+          files:
+            - "**/internal/repository/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "RepositoryはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "RepositoryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "RepositoryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "RepositoryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "RepositoryはPresentation層に依存できません。"
+
+        # Query層のルール: sqlc生成コード
+        # 上位層に依存しない
+        query-layer:
+          files:
+            - "**/internal/query/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "QueryはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "QueryはModelに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "QueryはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "QueryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "QueryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "QueryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "QueryはPresentation層に依存できません。"
+
+        # Worker層のルール: バックグラウンドジョブ処理（Application層）
+        # Presentation層（Handler等）に依存しない
+        # 例外: templatesへの依存はメールレンダリングのため許可
+        worker-layer:
+          files:
+            - "**/internal/worker/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "WorkerはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "WorkerはPresentation層に依存できません。"
+
+        # RateLimit層のルール: インフラストラクチャユーティリティ
+        # Queryに直接依存せず、Repositoryを経由する
+        ratelimit-layer:
+          files:
+            - "**/internal/ratelimit/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "RateLimitはQueryに直接依存できません。Repositoryを経由してください。"
+
+    # staticcheck の設定
+    staticcheck:
+      # 有効化するチェック（デフォルトですべて有効）
+      checks: ["all", "-ST1003"] # ST1003: パッケージ名のアンダースコア警告を除外（ディレクトリ構造に由来）
+
+# フォーマッター固有の設定（v2形式）
+formatters:
+  # 有効化するフォーマッター
+  enable:
+    - gofmt         # Go標準フォーマッター
+    - goimports     # import文の整理
+
+  # フォーマッター除外パス
+  exclusions:
+    paths:
+      - bin/.*
+      - vendor/.*
+      - static/.*
+      - node_modules/.*
+      - '(.+)_templ\.go'  # templ 自動生成ファイル
+
+  settings:
+    # goimports の設定
+    goimports:
+      # ローカルパッケージのプレフィックス
+      local-prefixes:
+        - github.com/wikinoapp/wikino/go
+
+# 出力設定（v2形式）
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true

@@ -1,0 +1,28 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "db/queries/"
+    schema: "db/schema.sql"
+    gen:
+      go:
+        package: "query"
+        out: "internal/query"
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_exact_table_names: false
+        emit_empty_slices: true
+        overrides:
+          # UUID型をstringとして扱う
+          - db_type: "uuid"
+            go_type: "string"
+          # citext型をstringとして扱う（public.citext）
+          - db_type: "public.citext"
+            go_type: "string"
+          # timestamp without time zoneをtime.Timeとして扱う
+          - db_type: "timestamp without time zone"
+            go_type: "time.Time"
+          # timestamp(6) without time zoneをtime.Timeとして扱う
+          - db_type: "pg_catalog.timestamp"
+            go_type: "time.Time"

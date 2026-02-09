@@ -1,0 +1,17 @@
+package email_confirmation
+
+// EnHTML は英語HTMLテンプレート
+templ EnHTML(data Data) {
+	Hello, { data.Email }.<br/>
+	<br/>
+	The confirmation code is as follows.<br/>
+	<br/>
+	<strong>{ data.Code }</strong><br/>
+	<br/>
+	The confirmation code is valid for 15 minutes.<br/>
+	<br/>
+	If this email does not concern you, please ignore it.<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

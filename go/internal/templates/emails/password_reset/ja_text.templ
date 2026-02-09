@@ -1,0 +1,18 @@
+package password_reset
+
+// JaText は日本語テキストテンプレート
+templ JaText(data Data) {
+	{ data.Email } さん、こんにちは。
+
+パスワードリセットのリクエストを受け付けました。
+下記のリンクをクリックして、新しいパスワードを設定してください。
+
+{ data.ResetURL }
+
+このリンクの有効期間は1時間です。
+
+もしこのメールに心当たりが無い場合は無視してください。
+
+Wikino
+{ data.AppURL }
+}

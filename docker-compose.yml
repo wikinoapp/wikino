@@ -1,17 +1,51 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    depends_on:
+      - caddy
+      - postgresql
+    volumes:
+      - .:/workspace
+      - op-config:/home/developer/.config/op
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/go/.cache/go-build
+      - app-gems-data:/mise/installs/ruby/3.4.4/lib/ruby/gems/3.4.0
+    ports:
+      - "4200:8080" # Go
+      - "4201:3000" # Rails
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    environment:
+      - BINDING=0.0.0.0
+      - OP_SERVICE_ACCOUNT_TOKEN=${OP_SERVICE_ACCOUNT_TOKEN:-}
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "4203:8080"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+
   postgresql:
     image: postgres:17.0
     ports:
-      - "35432:5432"
+      - "4204:5432"
     volumes:
-      - postgresql17_data:/var/lib/postgresql/data:delegated
+      - postgresql17-data:/var/lib/postgresql/data:delegated
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
   chrome:
     image: selenium/standalone-chromium:136.0.7103.113
     ports:
-      - "34444:4444"
+      - "4205:4444"
 
 volumes:
-  postgresql17_data:
+  app-gems-data:
+  go-build-cache:
+  go-mod-cache:
+  op-config:
+  postgresql17-data:
