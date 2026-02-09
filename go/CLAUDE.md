@@ -1033,7 +1033,9 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 ### 基本方針
 
 - **実データベースを使用**: 基本的にデータベースをモックせず、実際の PostgreSQL データベースを使用してテストを実行
+- **DB接続プールの共有**: `TestMain` パターンでパッケージ単位でDB接続を1回だけ確立し、全テストで共有
 - **トランザクションでの分離**: 各テストはトランザクション内で実行し、テスト終了時に自動ロールバックすることでデータをクリーンアップ
+- **テスト用bcryptコストの低減**: テスト時はbcryptコストを最小値（4）に設定し、パスワードハッシュの計算を高速化
 - **テストヘルパーの活用**: `internal/testutil` パッケージのヘルパー関数とビルダーパターンを使用してテストデータを作成
 - **自動スキーマセットアップ**: `make test` を実行すると、テスト用データベースが自動的にリセットされ、`db/schema.sql` が適用されます（常にクリーンな状態でテストが実行される）
 
@@ -1043,21 +1045,151 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 - **テスト関数**: `Test` で始まる名前（例: `TestPopularWorks`）
 - **ベンチマーク関数**: `Benchmark` で始まる名前（例: `BenchmarkPopularWorks`）
 
+### DB接続の共有化（TestMainパターン）
+
+各テストパッケージでは `TestMain` を使用し、DB接続を1回だけ確立してパッケージ内の全テストで共有します。
+
+**セットアップの流れ**:
+
+```
+TestMain: sql.Open → Ping → bcryptコスト設定
+テスト1: Begin → テスト実行 → Rollback
+テスト2: Begin → テスト実行 → Rollback
+TestMain: Close
+```
+
+**新規テストパッケージの作成手順**:
+
+1. `main_test.go` を作成し、`TestMain` で `testutil.SetupTestMain` を呼び出す
+2. 各テスト関数では `testutil.SetupTx(t)` でトランザクションを取得
+3. Usecaseなどトランザクション管理を自前で行うテストでは `testutil.GetTestDB()` を使用
+
+```go
+// main_test.go
+package handler_test
+
+import (
+    "os"
+    "testing"
+
+    "github.com/wikinoapp/wikino/go/internal/testutil"
+)
+
+func TestMain(m *testing.M) {
+    os.Exit(testutil.SetupTestMain(m))
+}
+```
+
+```go
+// create_test.go
+func TestCreate_Success(t *testing.T) {
+    t.Parallel()
+
+    db, tx := testutil.SetupTx(t)
+    // 以降は既存のテストコードと同じ
+}
+```
+
+**`SetupTestMain` が行う初期化**:
+
+- テスト用にbcryptコストを下げる（DefaultCost 10 → MinCost 4 で約64倍高速化）
+- DB接続プールを1回だけ確立し、パッケージ内の全テストで共有
+
 ### テストのベストプラクティス
 
 - **実データベースを使用**: モックではなく実際の PostgreSQL データベースでテスト
-- **トランザクション分離**: `testutil.SetupTestDB(t)` でテスト用 DB とトランザクションをセットアップ
+- **TestMainパターン**: 各テストパッケージに `main_test.go` を作成し、`testutil.SetupTestMain(m)` でDB接続を共有
+- **トランザクション分離**: `testutil.SetupTx(t)` でテスト用トランザクションをセットアップ
 - **テーブル駆動テスト**: 複数のテストケースを効率的に実行
 - **並行テスト**: `t.Parallel()` で並行実行可能なテストを高速化（トランザクション分離により安全）
 - **テストヘルパー**: 共通のセットアップコードをヘルパー関数に抽出
 - **エラーケースを必ずテスト**: 正常系だけでなく異常系も網羅
 
+### テーブル駆動テストの書き方
+
+複数のテストケースを効率的に実行するために、テーブル駆動テストを使用します。
+
+**基本パターン**:
+
+```go
+func TestCreateAccount(t *testing.T) {
+    t.Parallel()
+
+    db, tx := testutil.SetupTx(t)
+    ctx := context.Background()
+
+    // テスト対象のセットアップ（共通部分）
+    userRepo := repository.NewUserRepository(db).WithTx(tx)
+    profileRepo := repository.NewProfileRepository(db).WithTx(tx)
+    uc := usecase.NewCreateAccountUsecase(db, userRepo, profileRepo)
+
+    // テストケースの定義
+    tests := []struct {
+        name    string
+        input   usecase.CreateAccountInput
+        wantErr bool
+    }{
+        {
+            name: "正常系: 有効な入力でアカウントを作成できる",
+            input: usecase.CreateAccountInput{
+                Email:    "test@example.com",
+                Atname:   "testuser",
+                Password: "password123",
+            },
+            wantErr: false,
+        },
+        {
+            name: "正常系: 日本語パスワードでアカウントを作成できる",
+            input: usecase.CreateAccountInput{
+                Email:    "japanese@example.com",
+                Atname:   "japaneseuser",
+                Password: "パスワード123",
+            },
+            wantErr: false,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result, err := uc.Execute(ctx, tt.input)
+
+            if tt.wantErr {
+                if err == nil {
+                    t.Error("expected error but got nil")
+                }
+                return
+            }
+
+            if err != nil {
+                t.Fatalf("unexpected error: %v", err)
+            }
+
+            if result == nil {
+                t.Fatal("result should not be nil")
+            }
+        })
+    }
+}
+```
+
+**テーブル駆動テストを使用する場面**:
+
+- 同じロジックに対して複数の入力パターンをテストする場合
+- 正常系と異常系を網羅的にテストする場合
+- バリデーションルールを複数テストする場合
+
+**テーブル駆動テストを使用しない場面**:
+
+- テストケースごとに異なるセットアップが必要な場合
+- 各テストの検証ロジックが大きく異なる場合
+- 単一のシンプルなテストケースの場合
+
 ### 実データベーステストの例
 
 ```go
 func TestPopularWorks(t *testing.T) {
-    // テストDBとトランザクションをセットアップ
-    db, tx := testutil.SetupTestDB(t)
+    // 共有DB接続プールからトランザクションをセットアップ
+    db, tx := testutil.SetupTx(t)
 
     // テストデータを作成（ビルダーパターン）
     workID := testutil.NewWorkBuilder(t, tx).
@@ -1093,10 +1225,17 @@ func TestPopularWorks(t *testing.T) {
 
 `internal/testutil` パッケージには以下のヘルパーが用意されています：
 
-- **`SetupTestDB(t)`**: テスト用データベース接続とトランザクションのセットアップ
+**DB接続・トランザクション**:
+
+- **`SetupTestMain(m)`**: `TestMain` 内で呼び出し、パッケージ共有のDB接続を初期化。bcryptコストの低減も行う
+- **`SetupTx(t)`**: 共有DB接続プールからトランザクションを取得。テスト終了時に自動ロールバック
+- **`GetTestDB()`**: 共有DB接続プールへの参照を取得。Usecaseなどトランザクション管理を自前で行うテストで使用
+
+**テストデータビルダー**:
+
+- **`NewUserBuilder(t, tx)`**: ユーザーデータのビルダー
 - **`NewWorkBuilder(t, tx)`**: 作品データのビルダー
 - **`NewEpisodeBuilder(t, tx, workID)`**: エピソードデータのビルダー
-- **`NewUserBuilder(t, tx)`**: ユーザーデータのビルダー
 - **`NewWorkImageBuilder(t, tx, workID)`**: 作品画像データのビルダー
 - **`CreateTestWork(t, tx, title)`**: 簡易的な作品作成ヘルパー
 
@@ -1169,6 +1308,20 @@ make test-pkg PKG=internal/handler/password_reset
 - **環境変数の自動設定**: 1Password CLI を経由して自動的に環境変数が設定される
 - **DB セットアップの自動化**: テスト実行前に自動的にテスト用 DB がセットアップされる
 - **エラーハンドリング**: PKG や RUN 変数が指定されていない場合、使用例を表示
+
+### 新規テスト作成時のガイドライン
+
+新しいテストパッケージを作成する際は、以下の手順に従ってください：
+
+1. **`main_test.go` を作成**: パッケージに `main_test.go` を追加し、`testutil.SetupTestMain(m)` を呼び出す
+2. **`SetupTx(t)` を使用**: トランザクション内で実行するテストでは `testutil.SetupTx(t)` を使用
+3. **`GetTestDB()` を使用**: Usecaseなどトランザクション管理を自前で行うテストでは `testutil.GetTestDB()` を使用
+**`SetupTx` と `GetTestDB` の使い分け**:
+
+| ヘルパー | 用途 | トランザクション |
+|---------|------|--------------|
+| `SetupTx(t)` | Handler、Repository、Validatorのテスト | 自動（テスト終了時にロールバック） |
+| `GetTestDB()` | Usecaseのテスト（自前でトランザクション管理） | 手動（Usecase内で管理） |
 
 ### テンプレートレンダリングのテスト
 

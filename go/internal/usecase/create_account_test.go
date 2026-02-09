@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)
@@ -82,7 +82,7 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 }
 
 func TestCreateAccountUsecase_Execute_EmailNotConfirmed(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)
@@ -112,7 +112,7 @@ func TestCreateAccountUsecase_Execute_EmailNotConfirmed(t *testing.T) {
 }
 
 func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)
@@ -134,7 +134,7 @@ func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
 }
 
 func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)

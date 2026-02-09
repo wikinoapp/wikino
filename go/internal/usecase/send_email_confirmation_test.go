@@ -30,7 +30,7 @@ func (m *mockInserter) Insert(_ context.Context, args river.JobArgs) (*rivertype
 func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 
 	cfg := &config.Config{
@@ -103,7 +103,7 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 
 	cfg := &config.Config{
@@ -167,7 +167,7 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 
 	cfg := &config.Config{

@@ -13,7 +13,7 @@ import (
 func TestMarkEmailAsConfirmedUsecase_Execute_Success(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	uc := NewMarkEmailAsConfirmedUsecase(repo)

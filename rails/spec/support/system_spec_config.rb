@@ -5,18 +5,7 @@ module SystemSpecHelpers
   extend T::Sig
 
   def sign_in(user_record:, password: "passw0rd")
-    visit "/sign_in"
-
-    within("form.form") do
-      email_field = find('input[type="email"]')
-      password_field = find('input[type="password"]')
-
-      email_field.set(user_record.email)
-      password_field.set(password)
-
-      find('button[type="submit"]').click
-    end
-
+    visit "/_test/sign_in?user_id=#{user_record.id}"
     expect(page).to have_current_path("/home")
   end
 end

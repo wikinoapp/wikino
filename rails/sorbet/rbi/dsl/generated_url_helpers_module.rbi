@@ -10,9 +10,6 @@ module GeneratedUrlHelpersModule
   include ::ActionDispatch::Routing::PolymorphicRoutes
 
   sig { params(args: T.untyped).returns(String) }
-  def account_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def atom_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -34,16 +31,7 @@ module GeneratedUrlHelpersModule
   def draft_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def edit_email_confirmation_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def edit_page_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def edit_password_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def email_confirmation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def home_url(*args); end
@@ -55,13 +43,7 @@ module GeneratedUrlHelpersModule
   def letter_opener_web_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def manifest_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def mission_control_jobs_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_account_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_page_url(*args); end
@@ -83,12 +65,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def page_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def password_reset_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def password_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
@@ -116,9 +92,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def rails_mailers_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def root_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def search_url(*args); end
@@ -149,24 +122,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def settings_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_new_two_factor_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_new_recovery_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_recovery_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_two_factor_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_in_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def sign_up_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_list_url(*args); end
@@ -239,7 +194,4 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def turbo_resume_historical_location_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def user_session_url(*args); end
 end

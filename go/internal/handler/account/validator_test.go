@@ -20,7 +20,7 @@ import (
 func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
@@ -159,7 +159,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
@@ -301,7 +301,7 @@ func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
 func TestCreateValidator_Validate_Success(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
@@ -350,7 +350,7 @@ func TestCreateValidator_Validate_Success(t *testing.T) {
 func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
@@ -380,7 +380,7 @@ func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
@@ -422,7 +422,7 @@ func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 func TestCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 	t.Parallel()
 
-	db, tx := testutil.SetupTestDB(t)
+	db, tx := testutil.SetupTx(t)
 	queries := query.New(db).WithTx(tx)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)

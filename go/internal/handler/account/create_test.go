@@ -38,7 +38,7 @@ func TestCreate_Success(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ（Usecaseが独自のトランザクションを管理するため）
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成
@@ -169,7 +169,7 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成
@@ -273,7 +273,7 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成
@@ -377,7 +377,7 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成
@@ -481,7 +481,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成
@@ -600,7 +600,7 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 	t.Parallel()
 
 	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	// 設定を作成

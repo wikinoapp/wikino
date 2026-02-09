@@ -35,7 +35,7 @@ module Settings
           sign_out
 
           flash[:notice] = t("messages.settings.account.deletions.deleted")
-          redirect_to root_path
+          redirect_to "/"
         end
 
         sig { returns(ActionController::Parameters) }

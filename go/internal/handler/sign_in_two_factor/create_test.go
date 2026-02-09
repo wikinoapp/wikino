@@ -22,7 +22,7 @@ import (
 func TestCreate_WithoutPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -77,7 +77,7 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -139,7 +139,7 @@ func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 func TestCreate_InvalidTOTPCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// ユーザーと2FA設定を作成
 	secret := "JBSWY3DPEHPK3PXP" // テスト用の固定シークレット
@@ -208,7 +208,7 @@ func TestCreate_InvalidTOTPCode(t *testing.T) {
 func TestCreate_ValidTOTPCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// ユーザーと2FA設定を作成
 	secret := "JBSWY3DPEHPK3PXP" // テスト用の固定シークレット

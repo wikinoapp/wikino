@@ -11,7 +11,7 @@ import (
 func TestUserRepository_FindByID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserRepository(q)
 
@@ -54,7 +54,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 func TestUserRepository_FindByEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserRepository(q)
 
@@ -91,7 +91,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 func TestUserRepository_FindByAtname(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserRepository(q)
 
@@ -128,7 +128,7 @@ func TestUserRepository_FindByAtname(t *testing.T) {
 func TestUserRepository_toModel(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserRepository(q)
 

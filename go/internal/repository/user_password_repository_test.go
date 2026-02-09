@@ -10,7 +10,7 @@ import (
 func TestUserPasswordRepository_FindByUserID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserPasswordRepository(q)
 
@@ -51,7 +51,7 @@ func TestUserPasswordRepository_FindByUserID(t *testing.T) {
 func TestUserPasswordRepository_UpdatePasswordDigest(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserPasswordRepository(q)
 

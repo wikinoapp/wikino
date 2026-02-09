@@ -10,7 +10,7 @@ import (
 func TestUserTwoFactorAuthRepository_FindByUserID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserTwoFactorAuthRepository(q)
 
@@ -53,7 +53,7 @@ func TestUserTwoFactorAuthRepository_FindByUserID(t *testing.T) {
 func TestUserTwoFactorAuthRepository_FindEnabledByUserID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserTwoFactorAuthRepository(q)
 
@@ -99,7 +99,7 @@ func TestUserTwoFactorAuthRepository_FindEnabledByUserID(t *testing.T) {
 func TestUserTwoFactorAuthRepository_UpdateRecoveryCodes(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserTwoFactorAuthRepository(q)
 

@@ -11,7 +11,7 @@ import (
 func TestUserSessionRepository_Create(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserSessionRepository(q)
 
@@ -56,7 +56,7 @@ func TestUserSessionRepository_Create(t *testing.T) {
 func TestUserSessionRepository_FindByToken(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserSessionRepository(q)
 
@@ -106,7 +106,7 @@ func TestUserSessionRepository_FindByToken(t *testing.T) {
 func TestUserSessionRepository_FindByID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserSessionRepository(q)
 
@@ -156,7 +156,7 @@ func TestUserSessionRepository_FindByID(t *testing.T) {
 func TestUserSessionRepository_Delete(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserSessionRepository(q)
 
@@ -199,7 +199,7 @@ func TestUserSessionRepository_Delete(t *testing.T) {
 func TestUserSessionRepository_DeleteByToken(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserSessionRepository(q)
 

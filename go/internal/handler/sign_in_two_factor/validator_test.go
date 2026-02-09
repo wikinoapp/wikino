@@ -92,7 +92,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 			validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
@@ -123,7 +123,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Run("有効なTOTPコードで検証に成功する", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
@@ -155,7 +155,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Run("無効なTOTPコードで検証に失敗する", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
@@ -185,7 +185,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Run("2FAが有効でないユーザーの場合はエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
@@ -218,7 +218,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Run("2FAが設定されていないユーザーの場合はエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)

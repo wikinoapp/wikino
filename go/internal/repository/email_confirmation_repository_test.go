@@ -12,7 +12,7 @@ import (
 func TestEmailConfirmationRepository_Create(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewEmailConfirmationRepository(q)
 
@@ -50,7 +50,7 @@ func TestEmailConfirmationRepository_Create(t *testing.T) {
 func TestEmailConfirmationRepository_FindByID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewEmailConfirmationRepository(q)
 
@@ -93,7 +93,7 @@ func TestEmailConfirmationRepository_FindByID(t *testing.T) {
 func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewEmailConfirmationRepository(q)
 
@@ -187,7 +187,7 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 func TestEmailConfirmationRepository_Succeed(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewEmailConfirmationRepository(q)
 

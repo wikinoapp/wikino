@@ -51,7 +51,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			userRepo := repository.NewUserRepository(q)
 			validator := email_confirmation.NewCreateValidator(userRepo)
@@ -76,7 +76,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 func TestCreateValidator_Validate_SignUp_NewEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
 	validator := email_confirmation.NewCreateValidator(userRepo)
@@ -99,7 +99,7 @@ func TestCreateValidator_Validate_SignUp_NewEmail(t *testing.T) {
 func TestCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
 	validator := email_confirmation.NewCreateValidator(userRepo)
@@ -131,7 +131,7 @@ func TestCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
 func TestCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
 	validator := email_confirmation.NewCreateValidator(userRepo)
@@ -160,7 +160,7 @@ func TestCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
 func TestCreateValidator_Validate_EmailUpdate_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
 	validator := email_confirmation.NewCreateValidator(userRepo)
@@ -226,7 +226,7 @@ func TestUpdateValidator_Validate_FormatValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			repo := repository.NewEmailConfirmationRepository(q)
 			validator := email_confirmation.NewUpdateValidator(repo)
@@ -251,7 +251,7 @@ func TestUpdateValidator_Validate_FormatValidation(t *testing.T) {
 func TestUpdateValidator_Validate_Success(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -284,7 +284,7 @@ func TestUpdateValidator_Validate_Success(t *testing.T) {
 func TestUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -312,7 +312,7 @@ func TestUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
 func TestUpdateValidator_Validate_NotFound(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -335,7 +335,7 @@ func TestUpdateValidator_Validate_NotFound(t *testing.T) {
 func TestUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -371,7 +371,7 @@ func TestUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
 func TestUpdateValidator_Validate_Expired(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -402,7 +402,7 @@ func TestUpdateValidator_Validate_Expired(t *testing.T) {
 func TestUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)
@@ -437,7 +437,7 @@ func TestUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 func TestUpdateValidator_Validate_PasswordResetEvent(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
 	validator := email_confirmation.NewUpdateValidator(repo)

@@ -88,8 +88,6 @@ jobs:
         run: make db-setup-test
 
       - name: Run tests
-        env:
-          CI: true
         run: make test
 
   build:

@@ -11,7 +11,7 @@ import (
 func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userSessionRepo := repository.NewUserSessionRepository(q)
 	uc := NewCreateUserSessionUsecase(userSessionRepo)
@@ -123,7 +123,7 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 func TestCreateUserSessionUsecase_Execute_InvalidUserID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userSessionRepo := repository.NewUserSessionRepository(q)
 	uc := NewCreateUserSessionUsecase(userSessionRepo)

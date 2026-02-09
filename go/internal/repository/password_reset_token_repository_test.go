@@ -12,7 +12,7 @@ import (
 func TestPasswordResetTokenRepository_Create(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewPasswordResetTokenRepository(q)
 
@@ -52,7 +52,7 @@ func TestPasswordResetTokenRepository_Create(t *testing.T) {
 func TestPasswordResetTokenRepository_FindByTokenDigest(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewPasswordResetTokenRepository(q)
 
@@ -98,7 +98,7 @@ func TestPasswordResetTokenRepository_FindByTokenDigest(t *testing.T) {
 func TestPasswordResetTokenRepository_MarkAsUsed(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewPasswordResetTokenRepository(q)
 
@@ -137,7 +137,7 @@ func TestPasswordResetTokenRepository_MarkAsUsed(t *testing.T) {
 func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := NewPasswordResetTokenRepository(q)
 

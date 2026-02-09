@@ -50,7 +50,7 @@ func TestGenerateSecureToken(t *testing.T) {
 func TestManager_GetCurrentUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	userRepo := repository.NewUserRepository(queries)

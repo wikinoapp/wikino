@@ -14,7 +14,7 @@ import (
 )
 
 func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 
 	// テストユーザーを作成

@@ -5,6 +5,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// BcryptCost はbcryptのコスト値。テスト時はSetupTestMainでTestBcryptCostに変更される。
+var BcryptCost = bcrypt.DefaultCost // 10
+
+// TestBcryptCost はテスト用の低コスト値
+const TestBcryptCost = bcrypt.MinCost // 4
+
 // VerifyPassword はパスワードがハッシュと一致するかを検証します。
 // Rails版の has_secure_password (bcrypt) との互換性を保ちます。
 func VerifyPassword(hashedPassword, plainPassword string) bool {
@@ -13,9 +19,9 @@ func VerifyPassword(hashedPassword, plainPassword string) bool {
 }
 
 // HashPassword はパスワードをbcryptでハッシュ化します。
-// デフォルトコストを使用します（bcrypt.DefaultCost = 10）。
+// BcryptCost変数で指定されたコストを使用します。
 func HashPassword(plainPassword string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(plainPassword), BcryptCost)
 	if err != nil {
 		return "", err
 	}
