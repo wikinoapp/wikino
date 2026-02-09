@@ -320,7 +320,7 @@ Go版の `markEmailAsConfirmedUC` が、Rails版の `Emails::ConfirmService` と
 
 ### フェーズ 3: セッション・ウェルカム・マニフェスト関連の削除
 
-- [ ] **3-1**: [Rails] ウェルカム・セッション・マニフェスト関連の削除
+- [x] **3-1**: [Rails] ウェルカム・セッション・マニフェスト関連の削除
   - コントローラー削除（3ファイル）: `welcome/show`, `user_sessions/create`, `user_sessions/destroy`
   - コントローラー削除（1ファイル）: `manifests/show`
   - ビュー削除（3ファイル）: `welcome/show_view.{rb,html.erb}`, `manifests/show/call.json.erb`
@@ -331,32 +331,35 @@ Go版の `markEmailAsConfirmedUC` が、Rails版の `Emails::ConfirmService` と
 
 ### フェーズ 4: メール確認関連の削除
 
-- [ ] **4-1**: [Rails] メール確認関連のコントローラー・ビュー・フォーム・サービスの削除
+- [x] **4-1**: [Rails] メール確認関連のコントローラー・ビュー・フォーム・サービスの削除
   - コントローラー削除（3ファイル）: `email_confirmations/create`, `email_confirmations/edit`, `email_confirmations/update`
-  - コントローラーコンサーン削除（1ファイル）: `email_confirmation_findable`
+  - コントローラーコンサーン: `email_confirmation_findable` → フェーズ5で削除（accounts, passwords コントローラーが依存）
   - ビュー削除（2ファイル）: `email_confirmations/edit_view.{rb,html.erb}`
-  - フォーム削除（2ファイル）: `email_confirmations/creation_form`, `email_confirmations/check_form`
+  - フォーム削除（1ファイル）: `email_confirmations/check_form`（`creation_form` はフェーズ5で削除）
   - サービス削除（1ファイル）: `emails/confirm_service`
-  - RBI 削除（3ファイル）: `email_confirmations/creation_form.rbi`, `email_confirmations/check_form.rbi`, `email_confirmation_findable.rbi`
+  - RBI 削除（1ファイル）: `email_confirmations/check_form.rbi`（他はフェーズ5で削除）
   - テスト削除（3ファイル）: `email_confirmations/create_spec`, `edit_spec`, `update_spec`
+  - テスト修正（2ファイル）: `accounts/create_spec`, `accounts/new_spec`（削除したコントローラーへの依存をFactoryBot + テスト用エンドポイントに置換）
+  - ルート削除: `config/routes.rb` からメール確認関連の3ルートを削除
   - `make sorbet-update` を実行
   - **想定ファイル数**: 約 15 ファイル（実装 12 + テスト 3）
   - **想定行数**: 約 300 行（実装 250 行 + テスト 50 行）※すべて削除行
 
 ### フェーズ 5: アカウント・パスワード関連の削除
 
-- [ ] **5-1**: [Rails] アカウント作成関連の削除
+- [x] **5-1**: [Rails] アカウント作成関連の削除
   - コントローラー削除（2ファイル）: `accounts/new`, `accounts/create`
   - ビュー削除（2ファイル）: `accounts/new_view.{rb,html.erb}`
   - フォーム削除（1ファイル）: `accounts/creation_form`
   - サービス削除（1ファイル）: `accounts/create_service`
   - RBI 削除（1ファイル）: `accounts/creation_form.rbi`
   - テスト削除（3ファイル）: `accounts/new_spec`, `accounts/create_spec`, `accounts/creation_form_spec`
+  - ルート削除: `config/routes.rb` からアカウント関連の2ルートを削除
   - `make sorbet-update` を実行
   - **想定ファイル数**: 約 10 ファイル（実装 7 + テスト 3）
   - **想定行数**: 約 250 行（実装 200 行 + テスト 50 行）※すべて削除行
 
-- [ ] **5-2**: [Rails] パスワードリセット・変更関連の削除
+- [x] **5-2**: [Rails] パスワードリセット・変更関連の削除
   - コントローラー削除（4ファイル）: `password_resets/new`, `password_resets/create`, `passwords/edit`, `passwords/update`
   - ビュー削除（4ファイル）: `password_resets/new_view.{rb,html.erb}`, `passwords/edit_view.{rb,html.erb}`
   - フォーム削除（1ファイル）: `password_resets/creation_form`
