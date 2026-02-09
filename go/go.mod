@@ -3,7 +3,7 @@ module github.com/wikinoapp/wikino/go
 go 1.25.5
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/a-h/templ v0.3.960
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
