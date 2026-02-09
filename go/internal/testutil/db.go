@@ -43,7 +43,7 @@ func SetupTestMain(m *testing.M) int {
 		slog.Error("テスト用DB接続に失敗", "error", err)
 		return 1
 	}
-	defer testDB.Close()
+	defer func() { _ = testDB.Close() }()
 
 	if err := testDB.Ping(); err != nil {
 		slog.Error("テスト用DBへのpingに失敗", "error", err)
@@ -83,4 +83,3 @@ func SetupTx(t *testing.T) (*sql.DB, *sql.Tx) {
 
 	return testDB, tx
 }
-
