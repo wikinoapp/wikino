@@ -42,7 +42,7 @@ func TestEdit(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -151,7 +151,7 @@ func TestEdit_NoEmailConfirmationID(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -227,7 +227,7 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成

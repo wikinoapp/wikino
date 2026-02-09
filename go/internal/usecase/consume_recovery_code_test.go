@@ -14,7 +14,7 @@ func TestConsumeRecoveryCodeUsecase_Execute(t *testing.T) {
 	t.Run("リカバリーコードが正常に消費される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		uc := NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
@@ -58,7 +58,7 @@ func TestConsumeRecoveryCodeUsecase_Execute(t *testing.T) {
 	t.Run("残りのリカバリーコードは保持される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 		uc := NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)

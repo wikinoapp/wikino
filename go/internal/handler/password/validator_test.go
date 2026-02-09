@@ -105,7 +105,7 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// テストユーザーを作成

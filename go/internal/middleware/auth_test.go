@@ -17,7 +17,7 @@ import (
 func setupAuthTest(t *testing.T) (*Auth, *testutil.SessionBuilder, string) {
 	t.Helper()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// テストデータを作成
 	userID := testutil.NewUserBuilder(t, tx).Build()

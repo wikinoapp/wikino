@@ -16,7 +16,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("許可範囲内のリクエストは許可される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -76,7 +76,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("制限を超えたリクエストは拒否される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -114,7 +114,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("異なるキーは別々にカウントされる", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -154,7 +154,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("空のキーはエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -174,7 +174,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("無効なLimitはエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -194,7 +194,7 @@ func TestLimiter_Check(t *testing.T) {
 	t.Run("無効なWindowはエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -218,7 +218,7 @@ func TestLimiter_Allow(t *testing.T) {
 	t.Run("許可範囲内のリクエストはnilを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -238,7 +238,7 @@ func TestLimiter_Allow(t *testing.T) {
 	t.Run("制限を超えたリクエストはErrRateLimitExceededを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -269,7 +269,7 @@ func TestLimiter_CleanupOldRecords(t *testing.T) {
 	t.Run("古いレコードが削除される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)
@@ -299,7 +299,7 @@ func TestLimiter_WithTx(t *testing.T) {
 	t.Run("トランザクション付きLimiterが正常に動作する", func(t *testing.T) {
 		t.Parallel()
 
-		db, tx := testutil.SetupTestDB(t)
+		db, tx := testutil.SetupTx(t)
 		q := query.New(db)
 		repo := repository.NewRateLimitRepository(q)
 		limiter := NewLimiter(repo)

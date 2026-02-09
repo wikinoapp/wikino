@@ -8,14 +8,14 @@ RSpec.describe "Global Hotkey", type: :system do
     user_record = create(:user_record, :with_password)
     sign_in(user_record:)
 
-    visit "/"
+    visit "/home"
 
     # sキーを押すと検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
     expect(page).to have_current_path(search_path)
 
     # ホームページに戻る
-    visit "/"
+    visit "/home"
 
     # /キーを押すと検索ページに遷移
     page.driver.browser.action.send_keys("/").perform

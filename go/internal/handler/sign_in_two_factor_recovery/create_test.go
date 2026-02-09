@@ -20,7 +20,7 @@ import (
 func TestCreate_WithoutPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -77,7 +77,7 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -155,7 +155,7 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -219,7 +219,7 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// ユーザーと2FA設定を作成（リカバリーコード付き）
 	secret := "JBSWY3DPEHPK3PXP"
@@ -291,7 +291,7 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 func TestCreate_ValidRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// ユーザーと2FA設定を作成（リカバリーコード付き）
 	secret := "JBSWY3DPEHPK3PXP"
@@ -410,7 +410,7 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// 2FAが無効なユーザーを作成
 	secret := "JBSWY3DPEHPK3PXP"
