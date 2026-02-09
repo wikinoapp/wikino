@@ -14,27 +14,6 @@ Rails.application.routes.draw do
   match "/_test/attachments/signed_urls",                                  via: :post,   as: :test_attachment_signed_urls,                   to: "test/attachments/signed_urls/create#call" if Rails.env.test?
   match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments/uploads/create#call" if Rails.env.test?
   match "/_test/sign_in",                                                  via: :get,    as: :test_sign_in,                                to: "test/sign_in/create#call" if Rails.env.test?
-
-  # Go移行済みエンドポイント（テスト用）
-  # テストのsign_inヘルパー等が依存するため、テスト環境でのみルートを維持する。
-  # コントローラー・テストの削除（フェーズ2〜5）に合わせて段階的に削除する。
-  if Rails.env.test?
-    match "/accounts",                                                       via: :post,                                                      to: "accounts/create#call"
-    match "/accounts/new",                                                   via: :get,                                                       to: "accounts/new#call"
-    match "/email_confirmation",                                             via: :patch,                                                     to: "email_confirmations/update#call"
-    match "/email_confirmation",                                             via: :post,                                                      to: "email_confirmations/create#call"
-    match "/email_confirmation/edit",                                        via: :get,                                                       to: "email_confirmations/edit#call"
-    match "/manifest",                                                       via: :get,                                                       to: "manifests/show#call"
-    match "/password_reset",                                                 via: :get,                                                       to: "password_resets/new#call"
-    match "/password_reset",                                                 via: :post,                                                      to: "password_resets/create#call"
-    match "/password",                                                       via: :patch,                                                     to: "passwords/update#call"
-    match "/password/edit",                                                  via: :get,                                                       to: "passwords/edit#call"
-    match "/sign_in",                                                        via: :get,                                                       to: "sign_in/show#call"
-    match "/sign_in/two_factor",                                             via: :post,                                                      to: "sign_in/two_factors/create#call"
-    match "/user_session",                                                   via: :delete,                                                    to: "user_sessions/destroy#call"
-    match "/user_session",                                                   via: :post,                                                      to: "user_sessions/create#call"
-    root to: "welcome/show#call"
-  end
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
   match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
   match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
