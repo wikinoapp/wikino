@@ -17,7 +17,7 @@ func TestDelete_Success(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// テストユーザーを作成
@@ -120,7 +120,7 @@ func TestDelete_NoSession(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -184,7 +184,7 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成

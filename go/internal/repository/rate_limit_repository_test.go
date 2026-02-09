@@ -15,7 +15,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 	t.Run("新規レコードが作成される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := NewRateLimitRepository(q)
 
@@ -36,7 +36,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 	t.Run("既存レコードがインクリメントされる", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := NewRateLimitRepository(q)
 
@@ -76,7 +76,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 	t.Run("異なるキーは別々にカウントされる", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := NewRateLimitRepository(q)
 
@@ -111,7 +111,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 	t.Run("異なるウィンドウは別々にカウントされる", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := NewRateLimitRepository(q)
 
@@ -152,7 +152,7 @@ func TestRateLimitRepository_DeleteOldRecords(t *testing.T) {
 	t.Run("古いレコードが削除される", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTestDB(t)
+		_, tx := testutil.SetupTx(t)
 		q := query.New(tx)
 		repo := NewRateLimitRepository(q)
 
@@ -181,7 +181,7 @@ func TestRateLimitRepository_WithTx(t *testing.T) {
 	t.Run("トランザクション付きリポジトリが正常に動作する", func(t *testing.T) {
 		t.Parallel()
 
-		db, tx := testutil.SetupTestDB(t)
+		db, tx := testutil.SetupTx(t)
 		q := query.New(db)
 		repo := NewRateLimitRepository(q)
 

@@ -80,7 +80,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 		t.Run("有効な認証情報の場合、ユーザーを返す", func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
 
 			// テスト用パスワードをハッシュ化
@@ -125,7 +125,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 		t.Run("ユーザーが見つからない場合、エラーを返す", func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
 
 			userRepo := repository.NewUserRepository(queries)
@@ -154,7 +154,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 		t.Run("パスワードが正しくない場合、エラーを返す", func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
 
 			// テスト用パスワードをハッシュ化
@@ -196,7 +196,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 		t.Run("パスワードが設定されていない場合、エラーを返す", func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
 
 			// パスワードなしでテストユーザーを作成

@@ -35,7 +35,7 @@ func TestUpdate_Success(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// メール確認情報を作成
@@ -137,7 +137,7 @@ func TestUpdate_NoSession(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -215,7 +215,7 @@ func TestUpdate_EmptyCode(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// メール確認情報を作成
@@ -307,7 +307,7 @@ func TestUpdate_InvalidCodeLength(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// メール確認情報を作成
@@ -399,7 +399,7 @@ func TestUpdate_CodeMismatch(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// メール確認情報を作成
@@ -491,7 +491,7 @@ func TestUpdate_Expired(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 有効期限切れのメール確認情報を作成
@@ -584,7 +584,7 @@ func TestUpdate_CaseInsensitiveCode(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// メール確認情報を作成（大文字）
@@ -675,7 +675,7 @@ func TestUpdate_AlreadySucceeded(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 既に確認済みのメール確認情報を作成

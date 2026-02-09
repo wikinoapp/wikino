@@ -49,7 +49,7 @@ func TestCreate_Success(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -159,7 +159,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -251,7 +251,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -336,7 +336,7 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -415,7 +415,7 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 既存のユーザーを作成
@@ -511,7 +511,7 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 既存のユーザーを作成
@@ -601,7 +601,7 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -710,7 +710,7 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成

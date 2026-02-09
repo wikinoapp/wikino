@@ -18,7 +18,7 @@ import (
 func TestNew_WithPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// テスト用のクエリとリポジトリを作成
 	q := testutil.QueriesWithTx(tx)
@@ -95,7 +95,7 @@ func TestNew_WithPendingUser(t *testing.T) {
 func TestNew_WithoutPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 
 	// テスト用のクエリとリポジトリを作成
 	q := testutil.QueriesWithTx(tx)

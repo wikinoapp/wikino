@@ -32,7 +32,7 @@ func TestCreate_Success(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// テスト用パスワードをハッシュ化
@@ -149,7 +149,7 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -226,7 +226,7 @@ func TestCreate_WrongPassword(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// テスト用パスワードをハッシュ化
@@ -318,7 +318,7 @@ func TestCreate_UserNotFound(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -397,7 +397,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成
@@ -512,7 +512,7 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			t.Parallel()
 
 			// 各サブテストで独立したDBセットアップ
-			_, tx := testutil.SetupTestDB(t)
+			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
 
 			// テスト用パスワードをハッシュ化
@@ -605,7 +605,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTestDB(t)
+	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	// 設定を作成

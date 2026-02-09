@@ -14,7 +14,7 @@ import (
 )
 
 func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 
 	// テストユーザーを作成
@@ -73,7 +73,7 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 }
 
 func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 
 	// テストユーザーを作成
@@ -125,7 +125,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *
 }
 
 func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 
 	// テストユーザーを作成
@@ -170,7 +170,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 }
 
 func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T) {
-	db := testutil.SetupTestDBWithoutTx(t)
+	db := testutil.GetTestDB()
 	q := query.New(db)
 
 	// テストユーザーを作成
