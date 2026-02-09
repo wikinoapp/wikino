@@ -3,14 +3,14 @@ module github.com/wikinoapp/wikino/go
 go 1.25.5
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/a-h/templ v0.3.960
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/lib/pq v1.10.9
 	github.com/mfridman/tparse v0.18.0
-	github.com/nicksnyder/go-i18n/v2 v2.6.0
+	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/pquerna/otp v1.4.0
 	github.com/resend/resend-go/v2 v2.28.0
 	github.com/riverqueue/river v0.30.2
