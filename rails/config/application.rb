@@ -59,5 +59,8 @@ module Wikino
     config.mission_control.jobs.http_basic_auth_enabled = false
 
     config.wikino = config_for(:wikino)
+
+    require_relative "../lib/maintenance_middleware"
+    config.middleware.insert_before 0, MaintenanceMiddleware
   end
 end

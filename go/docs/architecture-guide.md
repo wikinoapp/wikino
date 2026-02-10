@@ -184,7 +184,7 @@ Presentation層 → Application層 → Domain/Infrastructure層
 - **Templates**: `ViewModel` を通じてデータを表示。データアクセス（`repository`, `query`）、ビジネスロジック（`usecase`）、`Model` への直接依存は禁止。
 - **ViewModel**: `Model` → `ViewModel` の変換のみ。`repository`, `query` に依存しない
 - **Handler**: `query` への直接アクセス禁止。データアクセスは `repository` を経由
-- **Middleware**: 共通処理のみ。`query`, `repository`, `usecase`、他のPresentation層パッケージに依存しない
+- **Middleware**: 共通処理のみ。`query`, `repository`, `usecase`、`handler`, `viewmodel` に依存しない。エラーページやメンテナンスページのレンダリングのため `templates` への依存は許可
 
 **依存関係の図解**:
 
@@ -195,7 +195,7 @@ ViewModel → Model (OK: ドメインデータを表示用に変換)
               ↓
 Handler → UseCase, Repository, ViewModel
   ↑
-Middleware (独立、他のPresentation層パッケージに依存しない)
+Middleware → Templates (OK: エラーページ等のレンダリング)
 ```
 
 **重要**: Templates は ViewModel に依存できますが、Model に直接依存することは禁止です。必ず ViewModel を経由してください。

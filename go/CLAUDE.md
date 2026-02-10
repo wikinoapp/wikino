@@ -55,7 +55,7 @@ cat /workspace/rails/app/models/work.rb
   - templ: 型安全な HTML テンプレートエンジン
   - resend-go/v2: メール送信ライブラリ（Resend API）
   - river: バックグラウンドジョブキュー（PostgreSQL ベース）
-- PostgreSQL 17.0
+- PostgreSQL 18.1
 - Cloudflare Turnstile: Bot 対策サービス（ログイン・サインアップフォームなど）
 - pnpm
   - @tailwindcss/cli: Tailwind CSS v4 CLI ツール
@@ -449,7 +449,7 @@ make sqlc-generate
   - テスト用 DB (`wikino_test`) を完全にリセット（`DROP SCHEMA public CASCADE`）
   - `db/schema.sql` を適用して最新のスキーマを再作成
   - これにより、常にクリーンな状態でテストが実行されます
-- PostgreSQL 17.6 の `\restrict` コマンド対策として、自動的にクリーンアップ処理が実行されます
+- PostgreSQL 17.6以降の `\restrict` コマンド対策として、自動的にクリーンアップ処理が実行されます
   - 参照: https://github.com/amacneil/dbmate/issues/678
 - **マイグレーション単体のテストは不要**: マイグレーションが正しく適用されているかは、リポジトリやユースケースのテストで間接的に検証されます。テーブルが正しく作成されていなければ、それらのテストが失敗するためです。
 

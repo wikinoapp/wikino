@@ -130,8 +130,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/usecase
               desc: "StateValidatorはUseCaseに依存できません。状態バリデーションはHandler層で行います。"
 
-        # Middleware層のルール: 共通処理のみ
-        # 他のPresentation層パッケージ、Application層、Domain/Infrastructure層に依存しない
+        # Middleware層のルール
+        # エラーページ・メンテナンスページ等のレンダリングのためTemplatesへの依存は許可
         middleware-layer:
           files:
             - "**/internal/middleware/*.go"
@@ -146,8 +146,6 @@ linters:
               desc: "MiddlewareはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
               desc: "MiddlewareはViewModelに依存できません。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/templates
-              desc: "MiddlewareはTemplatesに依存できません。"
 
         # Application層のルール（UseCase）
         # Presentation層に依存しない

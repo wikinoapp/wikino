@@ -30,11 +30,11 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
 
   postgresql:
-    image: postgres:17.0
+    image: postgres:18.1
     ports:
       - "4204:5432"
     volumes:
-      - postgresql17-data:/var/lib/postgresql/data:delegated
+      - postgresql18-data:/var/lib/postgresql:delegated
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
@@ -48,4 +48,4 @@ volumes:
   go-build-cache:
   go-mod-cache:
   op-config:
-  postgresql17-data:
+  postgresql18-data:
