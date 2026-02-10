@@ -206,7 +206,7 @@ RSpec.describe MaintenanceMiddleware do
         html = body.first
         expect(html).to include("Wikino")
         expect(html).to include("メンテナンス中")
-        expect(html).to include("しばらくしてから再度アクセス")
+        expect(html).to include("ご不便をおかけして申し訳ありません")
       end
     end
   end
