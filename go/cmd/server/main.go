@@ -214,6 +214,10 @@ func main() {
 		r.Use(reverseProxyMiddleware.Middleware)
 	}
 
+	// メンテナンスモードミドルウェア
+	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg)
+	r.Use(maintenanceMW.Middleware)
+
 	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
 	r.Use(middleware.MethodOverride)
 
