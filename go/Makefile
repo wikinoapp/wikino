@@ -93,7 +93,7 @@ clean: ## ビルド成果物をクリーン
 .PHONY: db-migrate
 db-migrate: ## データベースマイグレーションを実行
 	APP_ENV=dev op run --env-file=".env" -- dbmate up
-	# PostgreSQL 17.6のpg_dumpが生成するランダムな\restrict行を削除
+	# PostgreSQL 17.6以降のpg_dumpが生成するランダムな\restrict行を削除
 	# https://github.com/amacneil/dbmate/issues/678
 	@sed -i '/^\\restrict /d;/^\\unrestrict /d' db/schema.sql
 
@@ -120,7 +120,7 @@ db-new: ## 新しいマイグレーションファイルを作成（使用法: m
 .PHONY: db-dump
 db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
 	APP_ENV=dev op run --env-file=".env" -- dbmate dump
-	# PostgreSQL 17.6のpg_dumpが生成するランダムな\restrict行を削除
+	# PostgreSQL 17.6以降のpg_dumpが生成するランダムな\restrict行を削除
 	# https://github.com/amacneil/dbmate/issues/678
 	@sed -i '/^\\restrict /d;/^\\unrestrict /d' db/schema.sql
 
