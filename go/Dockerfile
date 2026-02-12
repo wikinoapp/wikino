@@ -75,6 +75,3 @@ ENV TZ=UTC
 
 # ポートを公開（Dokku が自動的にマッピング）
 EXPOSE 8080
-
-# サーバーを起動
-CMD ["/app/bin/server"]
