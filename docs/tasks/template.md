@@ -3,7 +3,7 @@
 <!--
 このテンプレートの使い方:
 1. このファイルを `docs/tasks/` ディレクトリにコピー
-   例: cp docs/tasks/template.md docs/tasks/new-feature.md
+   例: cp docs/tasks/template.md docs/tasks/2_todo/new-feature.md
 2. [機能名] などのプレースホルダーを実際の内容に置き換え
 3. 各セクションのガイドラインに従って記述
 4. コメント（ `\<!-- ... --\>` ）はガイドラインとして残してください
