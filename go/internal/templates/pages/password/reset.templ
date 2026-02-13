@@ -1,0 +1,101 @@
+package password
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// ResetPageData はパスワードリセット申請ページに渡すデータ構造体です
+type ResetPageData struct {
+	CSRFToken        string
+	TurnstileSiteKey string
+	FormErrors       *session.FormErrors
+	Email            string
+}
+
+// Reset はパスワードリセット申請フォームを表示します
+templ Reset(data ResetPageData) {
+	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
+		<div class="text-center">
+			<a href="/" class="inline-block">
+				<div class="bg-brand-100 rounded-xl">
+					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				</div>
+			</a>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<h1 class="text-center text-3xl font-bold antialiased">
+				{ templates.T(ctx, "password_reset_heading") }
+			</h1>
+			<p class="text-center text-sm text-muted-foreground">
+				{ templates.T(ctx, "password_reset_description") }
+			</p>
+		</div>
+
+		@components.FormErrors(data.FormErrors)
+
+		<div class="card">
+			<div class="card-body px-4">
+				<form
+					action="/password/reset"
+					class="form grid gap-6"
+					data-on:submit__passive="$isSubmitting = true"
+					method="POST"
+				>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+					<div class="grid gap-2">
+						<label for="email">
+							{ templates.T(ctx, "password_reset_email_label") }
+						</label>
+
+						<input
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+								aria-invalid="true"
+							} else {
+								aria-invalid="false"
+							}
+							autocomplete="email"
+							autofocus
+							id="email"
+							name="email"
+							required
+							tabindex="1"
+							type="email"
+							value={ data.Email }
+						/>
+
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
+								<p class="text-sm text-error">
+									{ errorMsg }
+								</p>
+							}
+						}
+					</div>
+
+					@components.Turnstile(data.TurnstileSiteKey)
+
+					<button
+						class="btn-primary rounded-full w-fit"
+						data-attr:disabled="$isSubmitting == true"
+						tabindex="2"
+						type="submit"
+					>
+						@templates.Icon("paper-plane-tilt-regular")
+						{ templates.T(ctx, "password_reset_submit") }
+					</button>
+				</form>
+			</div>
+		</div>
+
+		<div class="text-center">
+			<a href="/sign_in" class="link inline-flex items-center gap-2">
+				@templates.Icon("arrow-left", "w-[18px] h-[18px]")
+				{ templates.T(ctx, "password_reset_back_to_sign_in") }
+			</a>
+		</div>
+	</div>
+}

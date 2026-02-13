@@ -1,0 +1,422 @@
+# English translation file
+
+# Common
+[default_title]
+other = "Wikino"
+
+[default_description]
+other = "Wikino is a wiki application for sharing and organizing information online."
+
+[flash_dismiss]
+other = "Dismiss"
+
+[label_error]
+other = "Error"
+
+[back_to_home]
+other = "Back to Home"
+
+# Sign in
+[sign_in_title]
+other = "Sign in"
+
+[sign_in_heading]
+other = "Sign in to Wikino"
+
+[sign_in_email_label]
+other = "Email address"
+
+[sign_in_password_label]
+other = "Password"
+
+[sign_in_submit_button]
+other = "Sign in"
+
+[sign_in_forgot_password]
+other = "Forgot your password?"
+
+[sign_in_no_account]
+other = "Don't have an account?"
+
+[sign_in_sign_up]
+other = "Sign up"
+
+# Validation errors
+[validation_required]
+other = "This field is required"
+
+[validation_email_invalid]
+other = "Please enter a valid email address"
+
+[validation_email_or_password_invalid]
+other = "Invalid email or password"
+
+# Two-factor authentication
+[sign_in_two_factor_title]
+other = "Two-factor authentication"
+
+[sign_in_two_factor_heading]
+other = "Two-factor authentication"
+
+[sign_in_two_factor_enter_code]
+other = "Enter the authentication code from your app"
+
+[sign_in_two_factor_code_label]
+other = "Authentication code"
+
+[sign_in_two_factor_code_hint]
+other = "Enter a 6-digit code"
+
+[sign_in_two_factor_submit_button]
+other = "Verify"
+
+[sign_in_two_factor_recovery_description]
+other = "If you lose your authenticator app, you can sign in using a recovery code"
+
+[sign_in_two_factor_recovery_link]
+other = "Use a recovery code"
+
+# Two-factor authentication recovery
+[sign_in_two_factor_recovery_title]
+other = "Two-factor recovery"
+
+[sign_in_two_factor_recovery_heading]
+other = "Recovery code"
+
+[sign_in_two_factor_recovery_code_usage]
+other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
+
+[sign_in_two_factor_recovery_code_label]
+other = "Recovery code"
+
+[sign_in_two_factor_recovery_code_hint]
+other = "Recovery codes are 8 alphanumeric characters"
+
+# Two-factor authentication validation errors
+[validation_totp_code_invalid]
+other = "Invalid authentication code"
+
+[validation_recovery_code_invalid]
+other = "Invalid recovery code"
+
+[sign_in_two_factor_invalid_code]
+other = "The authentication code is incorrect"
+
+[sign_in_two_factor_recovery_invalid_code]
+other = "The recovery code is incorrect"
+
+# Sign in success
+[flash_sign_in_success]
+other = "Signed in successfully."
+
+# Sign out
+[signed_out_successfully]
+other = "Signed out successfully."
+
+# Sign up
+[sign_up_title]
+other = "Sign up"
+
+[sign_up_heading]
+other = "Sign up for Wikino"
+
+[sign_up_email_instruction]
+description = "Description for email input field on sign up"
+other = "We'll send a confirmation code to the email address you enter to verify it"
+
+[sign_up_email_label]
+other = "Email address"
+
+[sign_up_submit_button]
+other = "Send confirmation code"
+
+[sign_up_have_account]
+other = "Already have an account?"
+
+[sign_up_sign_in]
+other = "Sign in"
+
+# Email confirmation
+[email_confirmation_subject]
+other = "[Wikino] Confirmation Code"
+
+[flash_email_confirmation_sent]
+other = "Confirmation code sent."
+
+[validation_email_already_registered]
+other = "This email address is already registered"
+
+[validation_invalid_event]
+other = "Invalid event type"
+
+[validation_bot_detected]
+other = "Please try again later"
+
+[validation_rate_limit_exceeded]
+other = "Too many requests. Please try again later"
+
+# Email confirmation code entry
+[email_confirmation_edit_title]
+other = "Enter confirmation code"
+
+[email_confirmation_edit_heading]
+other = "Enter confirmation code"
+
+[email_confirmation_edit_description]
+other = "Enter the 6-character confirmation code sent to your email address"
+
+[email_confirmation_edit_code_label]
+other = "Confirmation code"
+
+[email_confirmation_edit_code_hint]
+other = "Enter the 6-character code"
+
+[email_confirmation_edit_submit_button]
+other = "Verify"
+
+[email_confirmation_edit_back_to_sign_up]
+other = "Back to sign up"
+
+# Email confirmation code validation
+[validation_confirmation_code_invalid_length]
+other = "Confirmation code must be 6 characters"
+
+[validation_confirmation_code_mismatch]
+other = "The confirmation code is incorrect"
+
+[validation_confirmation_code_expired]
+other = "The confirmation code has expired. Please try again"
+
+[validation_confirmation_not_found]
+other = "Confirmation not found. Please try again"
+
+# Account creation
+[account_new_title]
+other = "Create Account"
+
+[account_new_heading]
+other = "Create your account"
+
+[account_new_email_label]
+other = "Email address"
+
+[account_new_email_verified]
+other = "Verified"
+
+[account_new_atname_label]
+other = "Username"
+
+[account_new_atname_hint]
+other = "Only letters, numbers, and underscores (max 20 characters)"
+
+[account_new_password_label]
+other = "Password"
+
+[account_new_password_hint]
+other = "Must be at least 8 characters"
+
+[account_new_submit_button]
+other = "Create account"
+
+[account_new_back_to_sign_up]
+other = "Back to sign up"
+
+# Account creation validation
+[validation_atname_required]
+other = "Please enter a username"
+
+[validation_atname_too_long]
+other = "Username must be 20 characters or less"
+
+[validation_atname_invalid_format]
+other = "Username can only contain letters, numbers, and underscores"
+
+[validation_atname_already_taken]
+other = "This username is already taken"
+
+[validation_password_required]
+other = "Please enter a password"
+
+[validation_password_too_short]
+other = "Password must be at least 8 characters"
+
+# Account creation success
+[flash_account_created]
+other = "Your account has been created"
+
+# Password reset request
+[password_reset_title]
+other = "Password Reset"
+
+[password_reset_heading]
+other = "Reset your password"
+
+[password_reset_description]
+other = "Enter your registered email address and we'll send you a link to reset your password."
+
+[password_reset_email_label]
+other = "Email address"
+
+[password_reset_submit]
+other = "Send reset link"
+
+[password_reset_back_to_sign_in]
+other = "Back to sign in"
+
+# Password reset email sent
+[password_reset_sent_title]
+other = "Email Sent"
+
+[password_reset_sent_heading]
+other = "Check your email"
+
+[password_reset_sent_message]
+other = "We've sent you a password reset link"
+
+[password_reset_sent_instructions]
+other = "Click the link in the email to set a new password. The link expires in 1 hour."
+
+[password_reset_email_not_received_heading]
+other = "Didn't receive the email?"
+
+[password_reset_email_not_received_help]
+other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
+
+# Password reset email
+[password_reset_email_subject]
+description = "Password reset email subject line"
+other = "[Wikino] Password Reset"
+
+# Password change
+[password_edit_title]
+other = "Set New Password"
+
+[password_edit_heading]
+other = "Set a new password"
+
+[password_edit_description]
+other = "Enter your new password below."
+
+[password_edit_password_label]
+other = "New password"
+
+[password_edit_password_requirements]
+other = "Must be at least 8 characters"
+
+[password_edit_password_confirmation_label]
+other = "Confirm new password"
+
+[password_edit_submit]
+other = "Change password"
+
+# Password validation (additional)
+[validation_password_confirmation_required]
+other = "Please enter password confirmation"
+
+[validation_password_confirmation_mismatch]
+other = "Passwords do not match"
+
+# Token validation
+[validation_token_required]
+other = "Token is required"
+
+[validation_token_invalid]
+other = "Invalid link. Please request a new password reset."
+
+[validation_token_expired]
+other = "This link has expired. Please request a new password reset."
+
+[validation_token_used]
+other = "This link has already been used. Please request a new password reset."
+
+[validation_system_error]
+other = "A system error occurred. Please try again later."
+
+# Password change success
+[flash_password_updated]
+other = "Your password has been updated"
+
+# Common buttons/links
+[sign_up]
+other = "Sign up"
+
+[sign_in]
+other = "Sign in"
+
+# Welcome page
+[welcome_title]
+other = "Wikino"
+
+[welcome_description]
+other = "Wikino is a web service where you can create and share wikis."
+
+[welcome_hero_title_html]
+other = "A Wiki app to discover through links"
+
+[welcome_hero_description_html]
+other = "Wikino is a web service where you can create and share wikis."
+
+
+[welcome_screenshot_alt]
+other = "Screenshot of Wikino"
+
+[welcome_features_title]
+other = "Features"
+
+[welcome_feature_markdown_title]
+other = "Write simply in Markdown"
+
+[welcome_feature_markdown_description]
+other = "Write documents in Markdown format with a clean, plain text editor."
+
+[welcome_feature_wikilink_title]
+other = "Easily connect pages"
+
+[welcome_feature_wikilink_description]
+other = "Wrap a page title with our link syntax to create and link to that page."
+
+[welcome_feature_backlinks_title]
+other = "See the connections"
+
+[welcome_feature_backlinks_description]
+other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
+
+[welcome_feature_publish_title]
+other = "Publish and share your pages"
+
+[welcome_feature_publish_description]
+other = "Make your pages public and share them with others."
+
+[welcome_feature_publish_note]
+other = "* Private spaces are currently free but will become a paid feature in the future."
+
+[welcome_cta_title]
+other = "Get Started with Wikino"
+
+[welcome_footer_resources]
+other = "Resources"
+
+[welcome_footer_help_page]
+other = "Help Page"
+
+[welcome_footer_release_notes]
+other = "Release Notes"
+
+[welcome_footer_about_developer]
+other = "About the Developer"
+
+[welcome_footer_community]
+other = "Community"
+
+[welcome_footer_open_source]
+other = "Open Source"
+
+[welcome_open_source_description]
+other = "Wikino's source code is publicly available on GitHub."
+
+# Footer
+[footer_terms]
+other = "Terms of Service"
+
+[footer_privacy]
+other = "Privacy Policy"

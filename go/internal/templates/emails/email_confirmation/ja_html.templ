@@ -1,0 +1,24 @@
+package email_confirmation
+
+// Data はメール確認テンプレートのデータ
+type Data struct {
+	Email  string
+	Code   string
+	AppURL string
+}
+
+// JaHTML は日本語HTMLテンプレート
+templ JaHTML(data Data) {
+	{ data.Email } さん、こんにちは。<br/>
+	<br/>
+	確認用コードは下記になります。<br/>
+	<br/>
+	<strong>{ data.Code }</strong><br/>
+	<br/>
+	確認用コードの有効期間は15分です。<br/>
+	<br/>
+	もしこのメールに心当たりが無い場合は無視してください。<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

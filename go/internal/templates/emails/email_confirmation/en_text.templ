@@ -1,0 +1,17 @@
+package email_confirmation
+
+// EnText は英語テキストテンプレート
+templ EnText(data Data) {
+	Hello, { data.Email }.
+
+The confirmation code is as follows.
+
+{ data.Code }
+
+The confirmation code is valid for 15 minutes.
+
+If this email does not concern you, please ignore it.
+
+Wikino
+{ data.AppURL }
+}
