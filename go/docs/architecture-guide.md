@@ -155,6 +155,7 @@ internal/query/queries/
 - **internal/model**: ドメインモデル
   - ページに依存しない汎用的なドメインエンティティ（`Work`, `Cast`, `Staff`など）
   - Presentation層に依存しない（`image.Helper`などに依存しない）
+  - IDフィールドには `string` ではなく専用のドメインID型（`id.go` に定義）を使用する
 - **internal/repository**: Repository層
   - Query結果をModelに変換する
   - 複数のクエリを組み合わせてModelを構築
