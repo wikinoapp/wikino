@@ -287,7 +287,7 @@ func TestPageRepository_FindByTopicAndTitle(t *testing.T) {
 		Build()
 
 	t.Run("トピックIDとタイトルでページを取得できる", func(t *testing.T) {
-		page, err := repo.FindByTopicAndTitle(context.Background(), topicID, "My Page")
+		page, err := repo.FindByTopicAndTitle(context.Background(), topicID, "My Page", spaceID)
 		if err != nil {
 			t.Fatalf("FindByTopicAndTitle() error = %v", err)
 		}
@@ -300,7 +300,7 @@ func TestPageRepository_FindByTopicAndTitle(t *testing.T) {
 	})
 
 	t.Run("存在しないタイトルはnilを返す", func(t *testing.T) {
-		page, err := repo.FindByTopicAndTitle(context.Background(), topicID, "Not Exist")
+		page, err := repo.FindByTopicAndTitle(context.Background(), topicID, "Not Exist", spaceID)
 		if err != nil {
 			t.Fatalf("FindByTopicAndTitle() error = %v", err)
 		}

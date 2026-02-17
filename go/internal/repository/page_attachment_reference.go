@@ -37,13 +37,13 @@ func (r *PageAttachmentReferenceRepository) ListByPageID(ctx context.Context, pa
 }
 
 // CreateBatch は複数の添付ファイル参照を一括作成する
-func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pageID model.PageID, attachmentIDs []string) ([]*model.PageAttachmentReference, error) {
+func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pageID model.PageID, attachmentIDs []model.AttachmentID) ([]*model.PageAttachmentReference, error) {
 	now := time.Now()
 	refs := make([]*model.PageAttachmentReference, 0, len(attachmentIDs))
 
 	for _, attachmentID := range attachmentIDs {
 		row, err := r.q.CreatePageAttachmentReference(ctx, query.CreatePageAttachmentReferenceParams{
-			AttachmentID: attachmentID,
+			AttachmentID: string(attachmentID),
 			PageID:       string(pageID),
 			CreatedAt:    now,
 			UpdatedAt:    now,
@@ -57,19 +57,24 @@ func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pag
 	return refs, nil
 }
 
-// DeleteByPageAndAttachmentIDs はページIDと添付ファイルIDリストに該当する参照を削除する
-func (r *PageAttachmentReferenceRepository) DeleteByPageAndAttachmentIDs(ctx context.Context, pageID model.PageID, attachmentIDs []string) error {
+// DeleteByPageAndAttachmentIDs はページIDと添付ファイルIDリストに該当する参照を削除する（スペースIDでスコープ）
+func (r *PageAttachmentReferenceRepository) DeleteByPageAndAttachmentIDs(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, attachmentIDs []model.AttachmentID) error {
+	strIDs := make([]string, len(attachmentIDs))
+	for i, id := range attachmentIDs {
+		strIDs[i] = string(id)
+	}
 	return r.q.DeletePageAttachmentReferencesByPageAndAttachmentIDs(ctx, query.DeletePageAttachmentReferencesByPageAndAttachmentIDsParams{
 		PageID:  string(pageID),
-		Column2: attachmentIDs,
+		SpaceID: string(spaceID),
+		Column3: strIDs,
 	})
 }
 
 // toModel は query.PageAttachmentReference を model.PageAttachmentReference に変換する
 func (r *PageAttachmentReferenceRepository) toModel(row query.PageAttachmentReference) *model.PageAttachmentReference {
 	return &model.PageAttachmentReference{
-		ID:           row.ID,
-		AttachmentID: row.AttachmentID,
+		ID:           model.PageAttachmentReferenceID(row.ID),
+		AttachmentID: model.AttachmentID(row.AttachmentID),
 		PageID:       model.PageID(row.PageID),
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,

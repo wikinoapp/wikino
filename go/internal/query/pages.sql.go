@@ -152,17 +152,19 @@ const findPageByTopicAndTitle = `-- name: FindPageByTopicAndTitle :one
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE topic_id = $1
   AND title = $2
+  AND space_id = $3
   AND discarded_at IS NULL
 `
 
 type FindPageByTopicAndTitleParams struct {
 	TopicID string      `json:"topic_id"`
 	Title   interface{} `json:"title"`
+	SpaceID string      `json:"space_id"`
 }
 
 // 指定トピック内で指定タイトルのページを取得する（廃棄されていないページのみ。Wikiリンクのページ存在確認用）
 func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTopicAndTitleParams) (Page, error) {
-	row := q.db.QueryRowContext(ctx, findPageByTopicAndTitle, arg.TopicID, arg.Title)
+	row := q.db.QueryRowContext(ctx, findPageByTopicAndTitle, arg.TopicID, arg.Title, arg.SpaceID)
 	var i Page
 	err := row.Scan(
 		&i.ID,

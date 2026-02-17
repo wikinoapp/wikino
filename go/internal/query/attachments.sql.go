@@ -7,6 +7,8 @@ package query
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const existsAttachmentByIDAndSpace = `-- name: ExistsAttachmentByIDAndSpace :one
@@ -53,4 +55,47 @@ func (q *Queries) FindAttachmentByIDAndSpace(ctx context.Context, arg FindAttach
 	var i FindAttachmentByIDAndSpaceRow
 	err := row.Scan(&i.ID, &i.SpaceID, &i.Filename)
 	return i, err
+}
+
+const findAttachmentsByIDsAndSpace = `-- name: FindAttachmentsByIDsAndSpace :many
+SELECT a.id, a.space_id, asb.filename
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = ANY($1::uuid[]) AND a.space_id = $2
+`
+
+type FindAttachmentsByIDsAndSpaceParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+}
+
+type FindAttachmentsByIDsAndSpaceRow struct {
+	ID       string `json:"id"`
+	SpaceID  string `json:"space_id"`
+	Filename string `json:"filename"`
+}
+
+// IDリストとスペースIDで添付ファイルを一括取得する（バッチレンダリング用）
+func (q *Queries) FindAttachmentsByIDsAndSpace(ctx context.Context, arg FindAttachmentsByIDsAndSpaceParams) ([]FindAttachmentsByIDsAndSpaceRow, error) {
+	rows, err := q.db.QueryContext(ctx, findAttachmentsByIDsAndSpace, pq.Array(arg.Column1), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindAttachmentsByIDsAndSpaceRow{}
+	for rows.Next() {
+		var i FindAttachmentsByIDsAndSpaceRow
+		if err := rows.Scan(&i.ID, &i.SpaceID, &i.Filename); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

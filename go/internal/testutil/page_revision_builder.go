@@ -71,7 +71,7 @@ func (b *PageRevisionBuilder) WithBodyHTML(bodyHTML string) *PageRevisionBuilder
 }
 
 // Build はページリビジョンを作成し、IDを返します
-func (b *PageRevisionBuilder) Build() string {
+func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	b.t.Helper()
 
 	if b.spaceID == "" {
@@ -97,5 +97,5 @@ func (b *PageRevisionBuilder) Build() string {
 		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)
 	}
 
-	return id
+	return model.PageRevisionID(id)
 }

@@ -56,7 +56,7 @@ func (r *PageRevisionRepository) Create(ctx context.Context, input CreatePageRev
 // toModel は query.PageRevision を model.PageRevision に変換する
 func (r *PageRevisionRepository) toModel(row query.PageRevision) *model.PageRevision {
 	return &model.PageRevision{
-		ID:            row.ID,
+		ID:            model.PageRevisionID(row.ID),
 		SpaceID:       model.SpaceID(row.SpaceID),
 		SpaceMemberID: model.SpaceMemberID(row.SpaceMemberID),
 		PageID:        model.PageID(row.PageID),

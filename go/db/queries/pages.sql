@@ -40,6 +40,7 @@ RETURNING *;
 SELECT * FROM pages
 WHERE topic_id = $1
   AND title = $2
+  AND space_id = $3
   AND discarded_at IS NULL;
 
 -- name: CreateLinkedPage :one

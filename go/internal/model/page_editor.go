@@ -6,7 +6,7 @@ import (
 
 // PageEditor はページの編集者のドメインモデル
 type PageEditor struct {
-	ID                 string
+	ID                 PageEditorID
 	SpaceID            SpaceID
 	PageID             PageID
 	SpaceMemberID      SpaceMemberID

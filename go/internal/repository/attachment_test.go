@@ -11,7 +11,7 @@ import (
 )
 
 // createTestAttachmentForRepo はテスト用の添付ファイルを作成し、IDを返す
-func createTestAttachmentForRepo(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) string {
+func createTestAttachmentForRepo(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) model.AttachmentID {
 	t.Helper()
 
 	now := time.Now()
@@ -52,7 +52,7 @@ func createTestAttachmentForRepo(t *testing.T, tx *sql.Tx, spaceID model.SpaceID
 		t.Fatalf("attachment作成に失敗: %v", err)
 	}
 
-	return attachmentID
+	return model.AttachmentID(attachmentID)
 }
 
 func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
@@ -89,7 +89,7 @@ func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
 	})
 
 	t.Run("存在しないIDはfalseを返す", func(t *testing.T) {
-		exists, err := repo.ExistsByIDAndSpace(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
+		exists, err := repo.ExistsByIDAndSpace(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"), spaceID)
 		if err != nil {
 			t.Fatalf("ExistsByIDAndSpace() error = %v", err)
 		}
@@ -156,7 +156,7 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 	})
 
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
-		attachment, err := repo.FindByIDAndSpace(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
+		attachment, err := repo.FindByIDAndSpace(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"), spaceID)
 		if err != nil {
 			t.Fatalf("FindByIDAndSpace() error = %v", err)
 		}

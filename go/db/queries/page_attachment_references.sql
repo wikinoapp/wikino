@@ -11,6 +11,10 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: DeletePageAttachmentReferencesByPageAndAttachmentIDs :exec
--- ページIDと添付ファイルIDリストに該当する添付ファイル参照を削除する
-DELETE FROM page_attachment_references
-WHERE page_id = $1 AND attachment_id = ANY($2::uuid[]);
+-- ページIDと添付ファイルIDリストに該当する添付ファイル参照を削除する（スペースIDでスコープ）
+DELETE FROM page_attachment_references par
+USING pages p
+WHERE par.page_id = p.id
+  AND par.page_id = $1
+  AND p.space_id = $2
+  AND par.attachment_id = ANY($3::uuid[]);

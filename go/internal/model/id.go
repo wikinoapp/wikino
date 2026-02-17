@@ -18,6 +18,18 @@ type TopicMemberID string
 // DraftPageID は下書きページのID型
 type DraftPageID string
 
+// PageRevisionID はページリビジョンのID型
+type PageRevisionID string
+
+// PageEditorID はページ編集者のID型
+type PageEditorID string
+
+// PageAttachmentReferenceID はページ添付ファイル参照のID型
+type PageAttachmentReferenceID string
+
+// AttachmentID は添付ファイルのID型
+type AttachmentID string
+
 // String はSpaceIDを文字列に変換する
 func (id SpaceID) String() string { return string(id) }
 
@@ -35,6 +47,18 @@ func (id TopicMemberID) String() string { return string(id) }
 
 // String はDraftPageIDを文字列に変換する
 func (id DraftPageID) String() string { return string(id) }
+
+// String はPageRevisionIDを文字列に変換する
+func (id PageRevisionID) String() string { return string(id) }
+
+// String はPageEditorIDを文字列に変換する
+func (id PageEditorID) String() string { return string(id) }
+
+// String はPageAttachmentReferenceIDを文字列に変換する
+func (id PageAttachmentReferenceID) String() string { return string(id) }
+
+// String はAttachmentIDを文字列に変換する
+func (id AttachmentID) String() string { return string(id) }
 
 // PageIDsToStrings はPageIDスライスをstringスライスに変換する
 func PageIDsToStrings(ids []PageID) []string {

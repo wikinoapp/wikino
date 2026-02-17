@@ -64,7 +64,7 @@ func (r *PageEditorRepository) FindOrCreate(ctx context.Context, input FindOrCre
 
 // UpdateLastPageModifiedAtInput はページ編集者のlast_page_modified_at更新の入力パラメータ
 type UpdateLastPageModifiedAtInput struct {
-	ID                 string
+	ID                 model.PageEditorID
 	SpaceID            model.SpaceID
 	LastPageModifiedAt time.Time
 }
@@ -72,7 +72,7 @@ type UpdateLastPageModifiedAtInput struct {
 // UpdateLastPageModifiedAt はページ編集者のlast_page_modified_atを更新する
 func (r *PageEditorRepository) UpdateLastPageModifiedAt(ctx context.Context, input UpdateLastPageModifiedAtInput) (*model.PageEditor, error) {
 	row, err := r.q.UpdatePageEditorLastPageModifiedAt(ctx, query.UpdatePageEditorLastPageModifiedAtParams{
-		ID:                 input.ID,
+		ID:                 string(input.ID),
 		LastPageModifiedAt: input.LastPageModifiedAt,
 		UpdatedAt:          time.Now(),
 		SpaceID:            string(input.SpaceID),
@@ -86,7 +86,7 @@ func (r *PageEditorRepository) UpdateLastPageModifiedAt(ctx context.Context, inp
 // toModel は query.PageEditor を model.PageEditor に変換する
 func (r *PageEditorRepository) toModel(row query.PageEditor) *model.PageEditor {
 	return &model.PageEditor{
-		ID:                 row.ID,
+		ID:                 model.PageEditorID(row.ID),
 		SpaceID:            model.SpaceID(row.SpaceID),
 		PageID:             model.PageID(row.PageID),
 		SpaceMemberID:      model.SpaceMemberID(row.SpaceMemberID),

@@ -45,18 +45,23 @@ func (q *Queries) CreatePageAttachmentReference(ctx context.Context, arg CreateP
 }
 
 const deletePageAttachmentReferencesByPageAndAttachmentIDs = `-- name: DeletePageAttachmentReferencesByPageAndAttachmentIDs :exec
-DELETE FROM page_attachment_references
-WHERE page_id = $1 AND attachment_id = ANY($2::uuid[])
+DELETE FROM page_attachment_references par
+USING pages p
+WHERE par.page_id = p.id
+  AND par.page_id = $1
+  AND p.space_id = $2
+  AND par.attachment_id = ANY($3::uuid[])
 `
 
 type DeletePageAttachmentReferencesByPageAndAttachmentIDsParams struct {
 	PageID  string   `json:"page_id"`
-	Column2 []string `json:"column_2"`
+	SpaceID string   `json:"space_id"`
+	Column3 []string `json:"column_3"`
 }
 
-// ページIDと添付ファイルIDリストに該当する添付ファイル参照を削除する
+// ページIDと添付ファイルIDリストに該当する添付ファイル参照を削除する（スペースIDでスコープ）
 func (q *Queries) DeletePageAttachmentReferencesByPageAndAttachmentIDs(ctx context.Context, arg DeletePageAttachmentReferencesByPageAndAttachmentIDsParams) error {
-	_, err := q.db.ExecContext(ctx, deletePageAttachmentReferencesByPageAndAttachmentIDs, arg.PageID, pq.Array(arg.Column2))
+	_, err := q.db.ExecContext(ctx, deletePageAttachmentReferencesByPageAndAttachmentIDs, arg.PageID, arg.SpaceID, pq.Array(arg.Column3))
 	return err
 }
 

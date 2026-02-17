@@ -6,7 +6,7 @@ import (
 
 // PageRevision は公開されたページのスナップショットのドメインモデル
 type PageRevision struct {
-	ID            string
+	ID            PageRevisionID
 	SpaceID       SpaceID
 	SpaceMemberID SpaceMemberID
 	PageID        PageID

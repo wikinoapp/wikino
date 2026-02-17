@@ -115,11 +115,12 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 	return r.toModel(row), nil
 }
 
-// FindByTopicAndTitle は指定トピック内で指定タイトルのページを取得する（廃棄されていないページのみ）
-func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.TopicID, title string) (*model.Page, error) {
+// FindByTopicAndTitle は指定トピック内で指定タイトルのページを取得する（廃棄されていないページのみ、スペースIDでスコープ）
+func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.TopicID, title string, spaceID model.SpaceID) (*model.Page, error) {
 	row, err := r.q.FindPageByTopicAndTitle(ctx, query.FindPageByTopicAndTitleParams{
 		TopicID: string(topicID),
 		Title:   title,
+		SpaceID: string(spaceID),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

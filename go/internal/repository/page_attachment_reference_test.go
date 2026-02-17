@@ -11,7 +11,7 @@ import (
 )
 
 // createTestAttachment はテスト用の添付ファイルを作成し、IDを返す
-func createTestAttachment(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) string {
+func createTestAttachment(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) model.AttachmentID {
 	t.Helper()
 
 	now := time.Now()
@@ -55,7 +55,7 @@ func createTestAttachment(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, space
 		t.Fatalf("attachment作成に失敗: %v", err)
 	}
 
-	return attachmentID
+	return model.AttachmentID(attachmentID)
 }
 
 func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
@@ -96,7 +96,7 @@ func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
 	attachmentID2 := createTestAttachment(t, tx, spaceID, spaceMemberID)
 
 	// テストデータを作成
-	_, err := repo.CreateBatch(context.Background(), pageID, []string{attachmentID1, attachmentID2})
+	_, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2})
 	if err != nil {
 		t.Fatalf("CreateBatch() error = %v", err)
 	}
@@ -167,7 +167,7 @@ func TestPageAttachmentReferenceRepository_CreateBatch(t *testing.T) {
 		attachmentID1 := createTestAttachment(t, tx, spaceID, spaceMemberID)
 		attachmentID2 := createTestAttachment(t, tx, spaceID, spaceMemberID)
 
-		refs, err := repo.CreateBatch(context.Background(), pageID, []string{attachmentID1, attachmentID2})
+		refs, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2})
 		if err != nil {
 			t.Fatalf("CreateBatch() error = %v", err)
 		}
@@ -197,7 +197,7 @@ func TestPageAttachmentReferenceRepository_CreateBatch(t *testing.T) {
 	})
 
 	t.Run("空のattachmentIDsリストの場合は空スライスを返す", func(t *testing.T) {
-		refs, err := repo.CreateBatch(context.Background(), pageID, []string{})
+		refs, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{})
 		if err != nil {
 			t.Fatalf("CreateBatch() error = %v", err)
 		}
@@ -246,13 +246,13 @@ func TestPageAttachmentReferenceRepository_DeleteByPageAndAttachmentIDs(t *testi
 	attachmentID3 := createTestAttachment(t, tx, spaceID, spaceMemberID)
 
 	// テストデータを作成
-	_, err := repo.CreateBatch(context.Background(), pageID, []string{attachmentID1, attachmentID2, attachmentID3})
+	_, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2, attachmentID3})
 	if err != nil {
 		t.Fatalf("CreateBatch() error = %v", err)
 	}
 
 	t.Run("指定した添付ファイルIDの参照のみ削除される", func(t *testing.T) {
-		err := repo.DeleteByPageAndAttachmentIDs(context.Background(), pageID, []string{attachmentID1, attachmentID2})
+		err := repo.DeleteByPageAndAttachmentIDs(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 		if err != nil {
 			t.Fatalf("DeleteByPageAndAttachmentIDs() error = %v", err)
 		}
