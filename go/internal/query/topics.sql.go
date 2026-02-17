@@ -122,13 +122,18 @@ func (q *Queries) ListActiveTopicsBySpace(ctx context.Context, spaceID string) (
 const listTopicsJoinedBySpaceMember = `-- name: ListTopicsJoinedBySpaceMember :many
 SELECT t.id, t.space_id, t.number, t.name, t.description, t.visibility, t.discarded_at, t.created_at, t.updated_at FROM topics t
 INNER JOIN topic_members tm ON t.id = tm.topic_id
-WHERE tm.space_member_id = $1 AND t.discarded_at IS NULL
+WHERE tm.space_member_id = $1 AND t.space_id = $2 AND t.discarded_at IS NULL
 ORDER BY t.number
 `
 
+type ListTopicsJoinedBySpaceMemberParams struct {
+	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
+}
+
 // スペースメンバーが参加しているトピック一覧を取得する（編集画面のトピックセレクター用）
-func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, spaceMemberID string) ([]Topic, error) {
-	rows, err := q.db.QueryContext(ctx, listTopicsJoinedBySpaceMember, spaceMemberID)
+func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTopicsJoinedBySpaceMemberParams) ([]Topic, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicsJoinedBySpaceMember, arg.SpaceMemberID, arg.SpaceID)
 	if err != nil {
 		return nil, err
 	}

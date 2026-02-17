@@ -62,8 +62,11 @@ func (r *TopicRepository) FindBySpaceAndNames(ctx context.Context, spaceID model
 }
 
 // ListJoinedBySpaceMember はスペースメンバーが参加しているトピック一覧を取得する（編集画面のトピックセレクター用）
-func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID) ([]*model.Topic, error) {
-	rows, err := r.q.ListTopicsJoinedBySpaceMember(ctx, string(spaceMemberID))
+func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) ([]*model.Topic, error) {
+	rows, err := r.q.ListTopicsJoinedBySpaceMember(ctx, query.ListTopicsJoinedBySpaceMemberParams{
+		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
+	})
 	if err != nil {
 		return nil, err
 	}

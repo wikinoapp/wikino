@@ -272,7 +272,7 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 	}
 
 	t.Run("参加しているトピック一覧をナンバー順で取得できる", func(t *testing.T) {
-		topics, err := repo.ListJoinedBySpaceMember(context.Background(), spaceMemberID)
+		topics, err := repo.ListJoinedBySpaceMember(context.Background(), spaceMemberID, spaceID)
 		if err != nil {
 			t.Fatalf("ListJoinedBySpaceMember() error = %v", err)
 		}
@@ -288,7 +288,7 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 	})
 
 	t.Run("トピックに参加していないスペースメンバーは空のスライスを返す", func(t *testing.T) {
-		topics, err := repo.ListJoinedBySpaceMember(context.Background(), "00000000-0000-0000-0000-000000000000")
+		topics, err := repo.ListJoinedBySpaceMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
 			t.Fatalf("ListJoinedBySpaceMember() error = %v", err)
 		}
