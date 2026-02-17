@@ -23,7 +23,7 @@ var (
 	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^/)]+)\)`)
 
 	// 1行目のHTML img形式: <img src="/attachments/id">（大文字小文字不問）
-	featuredHTMLImgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']/attachments/([^"']+)["'][^>]*>`)
+	featuredHTMLImgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']/attachments/([^/"']+)["'][^>]*>`)
 )
 
 // ExtractAttachmentIDs はbodyHTMLから添付ファイルIDを抽出する。

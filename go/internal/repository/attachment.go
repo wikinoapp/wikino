@@ -47,11 +47,7 @@ func (r *AttachmentRepository) FindByIDsAndSpace(ctx context.Context, ids []mode
 	}
 	attachments := make([]*model.Attachment, len(rows))
 	for i, row := range rows {
-		attachments[i] = &model.Attachment{
-			ID:       model.AttachmentID(row.ID),
-			SpaceID:  model.SpaceID(row.SpaceID),
-			Filename: row.Filename,
-		}
+		attachments[i] = r.toModel(query.FindAttachmentByIDAndSpaceRow(row))
 	}
 	return attachments, nil
 }
@@ -68,9 +64,14 @@ func (r *AttachmentRepository) FindByIDAndSpace(ctx context.Context, id model.At
 		}
 		return nil, err
 	}
+	return r.toModel(row), nil
+}
+
+// toModel はクエリ結果をモデルに変換する
+func (r *AttachmentRepository) toModel(row query.FindAttachmentByIDAndSpaceRow) *model.Attachment {
 	return &model.Attachment{
 		ID:       model.AttachmentID(row.ID),
 		SpaceID:  model.SpaceID(row.SpaceID),
 		Filename: row.Filename,
-	}, nil
+	}
 }
