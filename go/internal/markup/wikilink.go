@@ -2,6 +2,7 @@ package markup
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -231,7 +232,7 @@ func findPageLocation(key WikilinkKey, locations []PageLocation) *PageLocation {
 
 // buildWikilinkNode はWikiリンクの<a>要素ノードを構築する
 func buildWikilinkNode(spaceIdentifier string, pl *PageLocation) *html.Node {
-	href := fmt.Sprintf("/s/%s/pages/%d", spaceIdentifier, pl.PageNumber)
+	href := fmt.Sprintf("/s/%s/pages/%d", url.PathEscape(spaceIdentifier), pl.PageNumber)
 
 	aNode := &html.Node{
 		Type:     html.ElementNode,

@@ -20,7 +20,7 @@ var (
 	extractMarkdownLinkRegex = regexp.MustCompile(`\[[^\]]+\]\(/attachments/([^/)]+)\)`)
 
 	// 1行目のMarkdown画像形式: ![alt](/attachments/id)
-	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^)]+)\)`)
+	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^/)]+)\)`)
 
 	// 1行目のHTML img形式: <img src="/attachments/id">（大文字小文字不問）
 	featuredHTMLImgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']/attachments/([^"']+)["'][^>]*>`)

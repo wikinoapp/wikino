@@ -263,6 +263,11 @@ func replaceWithInlineVideo(aNode *html.Node, attachmentID string) {
 			{Key: "target", Val: "_blank"},
 		},
 	}
+	fallbackText := &html.Node{
+		Type: html.TextNode,
+		Data: attachmentID,
+	}
+	fallbackA.AppendChild(fallbackText)
 	videoNode.AppendChild(fallbackA)
 
 	parent := aNode.Parent

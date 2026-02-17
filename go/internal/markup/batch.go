@@ -166,6 +166,10 @@ func newMapAttachmentFinder(attachments []*model.Attachment) *mapAttachmentFinde
 	return &mapAttachmentFinder{attachments: m}
 }
 
-func (f *mapAttachmentFinder) FindByIDAndSpace(_ context.Context, id model.AttachmentID, _ model.SpaceID) (*model.Attachment, error) {
-	return f.attachments[id], nil
+func (f *mapAttachmentFinder) FindByIDAndSpace(_ context.Context, id model.AttachmentID, spaceID model.SpaceID) (*model.Attachment, error) {
+	att := f.attachments[id]
+	if att != nil && att.SpaceID != spaceID {
+		return nil, nil
+	}
+	return att, nil
 }
