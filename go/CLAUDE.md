@@ -108,8 +108,57 @@ cat /workspace/rails/app/models/work.rb
 - **依存の方向**: Presentation 層 → Application 層 → Domain/Infrastructure 層
 - **Query への依存は Repository のみ**: Handler/UseCase/Worker が Query に直接依存することは禁止
 - **Model と Repository は 1:1 の関係**: 各ドメインエンティティに対応する Repository を作成
+- **ドメインID型の使用**: モデルのIDフィールドには `string` ではなく専用のドメインID型を使用する
 - **Domain/Infrastructure 層の統合**: データベース変更はほぼ起こらないため、シンプルさを優先
 - **Worker の templates 依存**: Worker は Application 層だが、メールレンダリングのため templates への依存を例外として許可
+
+### ドメインID型
+
+モデルのIDフィールドには `string` ではなく、`internal/model/id.go` に定義された専用のドメインID型（`type SpaceID string` 等）を使用します。これにより、異なるエンティティのIDを取り違える問題をコンパイル時に検出できます。
+
+**基本ルール**:
+
+- ✅ **モデルのIDフィールドには専用型を使用**: `ID SpaceID`、`ID PageID` など
+- ✅ **外部キーにも専用型を使用**: `UserID model.UserID`、`SpaceID model.SpaceID` など
+- ✅ **新しいモデルを追加する場合は対応するID型も追加**: `id.go` に型と `String()` メソッドを定義
+- ❌ **IDフィールドに `string` を使用しない**
+
+**実装パターン**:
+
+```go
+// internal/model/id.go - 型定義
+type SpaceID string
+func (id SpaceID) String() string { return string(id) }
+
+// internal/model/space.go - モデルでの使用
+type Space struct {
+    ID   SpaceID
+    Name string
+}
+
+// internal/repository/space.go - リポジトリでの変換（sqlcのstringから専用型へ）
+func toModel(row query.GetSpaceRow) *model.Space {
+    return &model.Space{
+        ID:   model.SpaceID(row.ID),
+        Name: row.Name,
+    }
+}
+
+// internal/testutil/space_builder.go - テストビルダーの戻り値
+func (b *SpaceBuilder) Build() model.SpaceID {
+    // ...
+    return model.SpaceID(id)
+}
+```
+
+**スライス変換ヘルパー**:
+
+IDのスライスと `[]string` の相互変換が必要な場合（例: PostgreSQL の配列型との変換）は、`id.go` にヘルパー関数を定義します：
+
+```go
+func PageIDsToStrings(ids []PageID) []string { ... }
+func StringsToPageIDs(ss []string) []PageID { ... }
+```
 
 ### Usecase、Worker、Repositoryの使い分け
 
@@ -1006,10 +1055,34 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 - **CSRF 対策**: すべてのフォーム送信に CSRF トークンを含める
 - **XSS 対策**: templ の自動エスケープを活用、ユーザー入力を信頼しない
 - **SQL インジェクション対策**: sqlc のプリペアドステートメントを使用
+- **スペースIDによるクエリスコープ**: スペース内リソースへのクエリには必ず `space_id` を条件に含める
 - **パスワード管理**: bcrypt でハッシュ化、平文はログに出力しない
 - **認証・認可**: ログインチェックとリソース所有者チェックを実施
 - **エラーメッセージ**: 詳細な情報を漏らさない、ログに記録
 - **Bot 対策**: Cloudflare Turnstile でログイン・サインアップフォームを保護
+
+### スペースIDによるクエリスコープ
+
+Wikino ではスペースがデータの分離境界です。スペース内のリソース（pages, topics, draft_pages, page_editors, attachments など）に対する SELECT / UPDATE / DELETE クエリには、**必ず `space_id` を WHERE 条件に含めてください**。
+
+これは防御的プログラミングの一環であり、ハンドラーやユースケースでの認可チェックに加え、クエリレベルでもスペースをまたいだデータアクセスを防止します。
+
+```sql
+-- ✅ 良い例: space_id を条件に含めている
+UPDATE pages SET title = $2 WHERE id = $1 AND space_id = $3;
+DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
+
+-- ✅ 良い例: テーブル自体に space_id がない場合は JOIN で検証
+SELECT par.* FROM page_attachment_references par
+INNER JOIN pages p ON par.page_id = p.id
+WHERE par.page_id = $1 AND p.space_id = $2;
+
+-- ❌ 悪い例: space_id なしで ID のみで操作している
+UPDATE pages SET title = $2 WHERE id = $1;
+DELETE FROM draft_pages WHERE id = $1;
+```
+
+**対象**: `space_id` カラムを持つテーブル、またはスペース内リソースを参照するテーブルへのクエリすべて
 
 ### セキュリティチェックリスト
 
@@ -1018,6 +1091,7 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 - [ ] フォーム送信に CSRF トークンを含めているか
 - [ ] ユーザー入力をバリデーションしているか
 - [ ] SQL クエリはプリペアドステートメントを使用しているか
+- [ ] スペース内リソースへのクエリに `space_id` を条件として含めているか
 - [ ] パスワードは bcrypt でハッシュ化されているか
 - [ ] 認証・認可チェックを行っているか
 - [ ] エラーメッセージは適切か

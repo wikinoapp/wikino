@@ -104,31 +104,16 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
 
-        # 形式バリデーター層のルール: 入力値の形式チェック
-        # DBアクセス禁止（query, repository, model, usecase への依存禁止）
-        format-validator-layer:
-          files:
-            - "**/format_validator.go"
-          deny:
-            - pkg: github.com/wikinoapp/wikino/go/internal/query
-              desc: "FormatValidatorはQueryに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/repository
-              desc: "FormatValidatorはRepositoryに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/model
-              desc: "FormatValidatorはModelに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
-              desc: "FormatValidatorはUseCaseに依存できません。形式バリデーションはDBアクセス不要です。"
-
-        # 状態バリデーター層のルール: DBの状態を使った検証
+        # バリデーター層のルール: 形式チェック + DBの状態を使った検証
         # Repository/Modelは許可、query/usecaseへの依存禁止
-        state-validator-layer:
+        validator-layer:
           files:
-            - "**/state_validator.go"
+            - "**/validator.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
-              desc: "StateValidatorはQueryに直接依存できません。Repositoryを経由してください。"
+              desc: "ValidatorはQueryに直接依存できません。Repositoryを経由してください。"
             - pkg: github.com/wikinoapp/wikino/go/internal/usecase
-              desc: "StateValidatorはUseCaseに依存できません。状態バリデーションはHandler層で行います。"
+              desc: "ValidatorはUseCaseに依存できません。バリデーションはHandler層で行います。"
 
         # Middleware層のルール
         # エラーページ・メンテナンスページ等のレンダリングのためTemplatesへの依存は許可
@@ -184,6 +169,48 @@ linters:
               desc: "ModelはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "ModelはPresentation層に依存できません。"
+
+        # Policy層のルール: 権限判定ロジック
+        # Modelのみに依存し、データアクセス層と上位層に依存しない
+        policy-layer:
+          files:
+            - "**/internal/policy/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "PolicyはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "PolicyはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "PolicyはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "PolicyはPresentation層に依存できません。"
+
+        # Markup層のルール: マークアップ処理ユーティリティ
+        # データアクセス層と上位層に依存しない（インターフェースで抽象化）
+        markup-layer:
+          files:
+            - "**/internal/markup/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "MarkupはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "MarkupはRepositoryに依存できません。インターフェースを使用してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "MarkupはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "MarkupはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "MarkupはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "MarkupはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "MarkupはPresentation層に依存できません。"
 
         # Repository層のルール: データアクセス層
         # 上位層に依存しない
