@@ -185,6 +185,27 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "ModelはPresentation層に依存できません。"
 
+        # Policy層のルール: 権限判定ロジック
+        # Modelのみに依存し、データアクセス層と上位層に依存しない
+        policy-layer:
+          files:
+            - "**/internal/policy/*.go"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "PolicyはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "PolicyはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "PolicyはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "PolicyはPresentation層に依存できません。"
+
         # Markup層のルール: マークアップ処理ユーティリティ
         # データアクセス層と上位層に依存しない（インターフェースで抽象化）
         markup-layer:
