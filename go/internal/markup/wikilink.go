@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
@@ -40,7 +41,7 @@ type PageLocation struct {
 	// TopicName は解決されたトピック名
 	TopicName string
 	// PageID はページID
-	PageID string
+	PageID model.PageID
 	// PageNumber はページ番号（URLで使用）
 	PageNumber int
 	// PageTitle はページタイトル（リンクテキストで使用）

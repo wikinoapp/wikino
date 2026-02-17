@@ -73,7 +73,7 @@ func TestRenderHTML_WithWikilinks(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},
@@ -120,7 +120,7 @@ func TestRenderHTML_MixedContent(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},
@@ -222,14 +222,14 @@ func TestRenderHTMLBatch_WithWikilinks(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},
 			{
 				Key:        WikilinkKey{Raw: "topic2/ページB", TopicName: "topic2", PageTitle: "ページB"},
 				TopicName:  "topic2",
-				PageID:     "page-2",
+				PageID:     model.PageID("page-2"),
 				PageNumber: 2,
 				PageTitle:  "ページB",
 			},
@@ -453,7 +453,7 @@ func TestRenderHTMLBatch_MixedContent(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},

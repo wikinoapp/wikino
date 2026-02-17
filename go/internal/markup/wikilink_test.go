@@ -2,6 +2,8 @@ package markup
 
 import (
 	"testing"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 func TestScanWikilinks_SinglePageName(t *testing.T) {
@@ -161,7 +163,7 @@ func TestReplaceWikilinks_ExistingPage(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 42,
 			PageTitle:  "ページ1",
 		},
@@ -197,7 +199,7 @@ func TestReplaceWikilinks_TopicAndPageName(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "トピックB/ページ2", TopicName: "トピックB", PageTitle: "ページ2"},
 			TopicName:  "トピックB",
-			PageID:     "page-id-2",
+			PageID:     model.PageID("page-id-2"),
 			PageNumber: 99,
 			PageTitle:  "ページ2",
 		},
@@ -219,14 +221,14 @@ func TestReplaceWikilinks_MultipleLinks(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
 		{
 			Key:        WikilinkKey{Raw: "トピックB/ページ2", TopicName: "トピックB", PageTitle: "ページ2"},
 			TopicName:  "トピックB",
-			PageID:     "page-id-2",
+			PageID:     model.PageID("page-id-2"),
 			PageNumber: 2,
 			PageTitle:  "ページ2",
 		},
@@ -248,7 +250,7 @@ func TestReplaceWikilinks_SkipInsideCodeTag(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -270,7 +272,7 @@ func TestReplaceWikilinks_SkipInsidePreTag(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -291,7 +293,7 @@ func TestReplaceWikilinks_SkipInsideATag(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -312,7 +314,7 @@ func TestReplaceWikilinks_SkipInsideScriptTag(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -333,7 +335,7 @@ func TestReplaceWikilinks_SkipInsideStyleTag(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -354,21 +356,21 @@ func TestReplaceWikilinks_MixedSkipAndReplace(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
 		{
 			Key:        WikilinkKey{Raw: "ページ2", TopicName: "トピックA", PageTitle: "ページ2"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-2",
+			PageID:     model.PageID("page-id-2"),
 			PageNumber: 2,
 			PageTitle:  "ページ2",
 		},
 		{
 			Key:        WikilinkKey{Raw: "ページ3", TopicName: "トピックA", PageTitle: "ページ3"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-3",
+			PageID:     model.PageID("page-id-3"),
 			PageNumber: 3,
 			PageTitle:  "ページ3",
 		},
@@ -414,7 +416,7 @@ func TestReplaceWikilinks_HTMLEscaping(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ<script>", TopicName: "トピックA", PageTitle: "ページ<script>"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ<script>",
 		},
@@ -437,7 +439,7 @@ func TestReplaceWikilinks_SpecialCharacters(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "日記 (2025)", TopicName: "トピックA", PageTitle: "日記 (2025)"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 5,
 			PageTitle:  "日記 (2025)",
 		},
@@ -459,7 +461,7 @@ func TestReplaceWikilinks_SkipInsideNestedCodeInPre(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},
@@ -537,7 +539,7 @@ func TestReplaceWikilinks_HTMLEntityAmpersand(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "A & B", TopicName: "トピックA", PageTitle: "A & B"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 10,
 			PageTitle:  "A & B",
 		},
@@ -560,7 +562,7 @@ func TestReplaceWikilinks_HTMLEntityQuot(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: `ページ"名前"`, TopicName: "トピックA", PageTitle: `ページ"名前"`},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 11,
 			PageTitle:  `ページ"名前"`,
 		},
@@ -587,7 +589,7 @@ func TestReplaceWikilinks_HTMLNumericEntityBrackets(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ名", TopicName: "トピックA", PageTitle: "ページ名"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 12,
 			PageTitle:  "ページ名",
 		},
@@ -611,7 +613,7 @@ func TestReplaceWikilinks_HTMLEntityArrow(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "A -> B", TopicName: "トピックA", PageTitle: "A -> B"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 13,
 			PageTitle:  "A -> B",
 		},
@@ -633,7 +635,7 @@ func TestReplaceWikilinks_SpaceIdentifierEscaping(t *testing.T) {
 		{
 			Key:        WikilinkKey{Raw: "ページ1", TopicName: "トピックA", PageTitle: "ページ1"},
 			TopicName:  "トピックA",
-			PageID:     "page-id-1",
+			PageID:     model.PageID("page-id-1"),
 			PageNumber: 1,
 			PageTitle:  "ページ1",
 		},

@@ -16,7 +16,7 @@ func TestRenderHTML_TaskListWithWikilinks(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "設計メモ", TopicName: "開発", PageTitle: "設計メモ"},
 				TopicName:  "開発",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "設計メモ",
 			},
@@ -55,14 +55,14 @@ func TestRenderHTML_MultipleParagraphsWithWikilinksAndAttachments(t *testing.T) 
 			{
 				Key:        WikilinkKey{Raw: "API設計", TopicName: "開発", PageTitle: "API設計"},
 				TopicName:  "開発",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 10,
 				PageTitle:  "API設計",
 			},
 			{
 				Key:        WikilinkKey{Raw: "設計/DB設計", TopicName: "設計", PageTitle: "DB設計"},
 				TopicName:  "設計",
-				PageID:     "page-2",
+				PageID:     model.PageID("page-2"),
 				PageNumber: 20,
 				PageTitle:  "DB設計",
 			},
@@ -119,7 +119,7 @@ func TestRenderHTML_WikilinkInCodeBlockNotConverted(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},
@@ -201,14 +201,14 @@ func TestRenderHTML_SpecialCharactersInWikilinkTitle(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "日記 (2025)", TopicName: "topic1", PageTitle: "日記 (2025)"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 5,
 				PageTitle:  "日記 (2025)",
 			},
 			{
 				Key:        WikilinkKey{Raw: "Notebook -> List", TopicName: "topic1", PageTitle: "Notebook -> List"},
 				TopicName:  "topic1",
-				PageID:     "page-2",
+				PageID:     model.PageID("page-2"),
 				PageNumber: 6,
 				PageTitle:  "Notebook -> List",
 			},
@@ -290,14 +290,14 @@ func TestRenderHTML_ComplexDocument(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "要件定義", TopicName: "プロジェクト", PageTitle: "要件定義"},
 				TopicName:  "プロジェクト",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "要件定義",
 			},
 			{
 				Key:        WikilinkKey{Raw: "設計/テーブル設計", TopicName: "設計", PageTitle: "テーブル設計"},
 				TopicName:  "設計",
-				PageID:     "page-2",
+				PageID:     model.PageID("page-2"),
 				PageNumber: 2,
 				PageTitle:  "テーブル設計",
 			},
@@ -400,14 +400,14 @@ func TestRenderHTML_MultipleWikilinksOnSameLine(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "ページA",
 			},
 			{
 				Key:        WikilinkKey{Raw: "topic2/ページB", TopicName: "topic2", PageTitle: "ページB"},
 				TopicName:  "topic2",
-				PageID:     "page-2",
+				PageID:     model.PageID("page-2"),
 				PageNumber: 2,
 				PageTitle:  "ページB",
 			},
@@ -444,7 +444,7 @@ func TestRenderHTML_GFMTableWithWikilink(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "詳細ページ", TopicName: "topic1", PageTitle: "詳細ページ"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 3,
 				PageTitle:  "詳細ページ",
 			},
@@ -476,7 +476,7 @@ func TestRenderHTML_MixedExistentAndNonExistentWikilinks(t *testing.T) {
 			{
 				Key:        WikilinkKey{Raw: "存在するページ", TopicName: "topic1", PageTitle: "存在するページ"},
 				TopicName:  "topic1",
-				PageID:     "page-1",
+				PageID:     model.PageID("page-1"),
 				PageNumber: 1,
 				PageTitle:  "存在するページ",
 			},
