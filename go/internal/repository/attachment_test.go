@@ -2,58 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"testing"
-	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
-
-// createTestAttachmentForRepo はテスト用の添付ファイルを作成し、IDを返す
-func createTestAttachmentForRepo(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) model.AttachmentID {
-	t.Helper()
-
-	now := time.Now()
-
-	var blobID string
-	err := tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		"test-key-"+now.Format("20060102150405.000000000"), "photo.jpg", "image/jpeg", "local", 2048, now,
-	).Scan(&blobID)
-	if err != nil {
-		t.Fatalf("active_storage_blob作成に失敗: %v", err)
-	}
-
-	var attachmentStorageID string
-	err = tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
-		 VALUES ($1, $2, $3, $4, $5)
-		 RETURNING id`,
-		"file", "Space", string(spaceID), blobID, now,
-	).Scan(&attachmentStorageID)
-	if err != nil {
-		t.Fatalf("active_storage_attachment作成に失敗: %v", err)
-	}
-
-	var attachmentID string
-	err = tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		string(spaceID), attachmentStorageID, string(spaceMemberID), now, now, now,
-	).Scan(&attachmentID)
-	if err != nil {
-		t.Fatalf("attachment作成に失敗: %v", err)
-	}
-
-	return model.AttachmentID(attachmentID)
-}
 
 func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
 	t.Parallel()
@@ -76,7 +29,7 @@ func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	attachmentID := createTestAttachmentForRepo(t, tx, spaceID, spaceMemberID)
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).WithFilename("photo.jpg").WithContentType("image/jpeg").Build()
 
 	t.Run("存在する添付ファイルはtrueを返す", func(t *testing.T) {
 		exists, err := repo.ExistsByIDAndSpace(context.Background(), attachmentID, spaceID)
@@ -134,7 +87,7 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	attachmentID := createTestAttachmentForRepo(t, tx, spaceID, spaceMemberID)
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).WithFilename("photo.jpg").WithContentType("image/jpeg").Build()
 
 	t.Run("存在する添付ファイルを取得できる", func(t *testing.T) {
 		attachment, err := repo.FindByIDAndSpace(context.Background(), attachmentID, spaceID)
@@ -176,6 +129,65 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 		}
 		if attachment != nil {
 			t.Errorf("FindByIDAndSpace() = %v, want nil", attachment)
+		}
+	})
+}
+
+func TestAttachmentRepository_FindByIDsAndSpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("attach-findids@example.com").
+		WithAtname("attachfindids").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("attach-findids-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	attachmentID1 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).WithFilename("file1.png").Build()
+	attachmentID2 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).WithFilename("file2.jpg").Build()
+
+	t.Run("IDリストに含まれる添付ファイルを一括取得できる", func(t *testing.T) {
+		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{attachmentID1, attachmentID2}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+		}
+		if len(attachments) != 2 {
+			t.Fatalf("len(attachments) = %v, want 2", len(attachments))
+		}
+	})
+
+	t.Run("空のIDリストは空のスライスを返す", func(t *testing.T) {
+		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+		}
+		if len(attachments) != 0 {
+			t.Errorf("len(attachments) = %v, want 0", len(attachments))
+		}
+	})
+
+	t.Run("異なるスペースIDの添付ファイルは取得されない", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("attach-findids-other").
+			Build()
+
+		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{attachmentID1, attachmentID2}, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+		}
+		if len(attachments) != 0 {
+			t.Errorf("len(attachments) = %v, want 0", len(attachments))
 		}
 	})
 }

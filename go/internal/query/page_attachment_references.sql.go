@@ -14,7 +14,10 @@ import (
 
 const createPageAttachmentReference = `-- name: CreatePageAttachmentReference :one
 INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4)
+SELECT $1, $2, $3, $4
+FROM pages p
+INNER JOIN attachments a ON a.space_id = p.space_id
+WHERE p.id = $2 AND a.id = $1 AND p.space_id = $5
 RETURNING id, attachment_id, page_id, created_at, updated_at
 `
 
@@ -23,15 +26,17 @@ type CreatePageAttachmentReferenceParams struct {
 	PageID       string    `json:"page_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	SpaceID      string    `json:"space_id"`
 }
 
-// 添付ファイル参照を作成する
+// 添付ファイル参照を作成する（スペースIDでページと添付ファイルの所属を検証）
 func (q *Queries) CreatePageAttachmentReference(ctx context.Context, arg CreatePageAttachmentReferenceParams) (PageAttachmentReference, error) {
 	row := q.db.QueryRowContext(ctx, createPageAttachmentReference,
 		arg.AttachmentID,
 		arg.PageID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.SpaceID,
 	)
 	var i PageAttachmentReference
 	err := row.Scan(

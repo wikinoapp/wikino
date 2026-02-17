@@ -36,8 +36,8 @@ func (r *PageAttachmentReferenceRepository) ListByPageID(ctx context.Context, pa
 	return r.toModels(rows), nil
 }
 
-// CreateBatch は複数の添付ファイル参照を一括作成する
-func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pageID model.PageID, attachmentIDs []model.AttachmentID) ([]*model.PageAttachmentReference, error) {
+// CreateBatch は複数の添付ファイル参照を一括作成する（スペースIDでスコープ）
+func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, attachmentIDs []model.AttachmentID) ([]*model.PageAttachmentReference, error) {
 	now := time.Now()
 	refs := make([]*model.PageAttachmentReference, 0, len(attachmentIDs))
 
@@ -47,6 +47,7 @@ func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pag
 			PageID:       string(pageID),
 			CreatedAt:    now,
 			UpdatedAt:    now,
+			SpaceID:      string(spaceID),
 		})
 		if err != nil {
 			return nil, err

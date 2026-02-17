@@ -5,9 +5,12 @@ INNER JOIN pages p ON par.page_id = p.id
 WHERE par.page_id = $1 AND p.space_id = $2;
 
 -- name: CreatePageAttachmentReference :one
--- 添付ファイル参照を作成する
+-- 添付ファイル参照を作成する（スペースIDでページと添付ファイルの所属を検証）
 INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4)
+SELECT $1, $2, $3, $4
+FROM pages p
+INNER JOIN attachments a ON a.space_id = p.space_id
+WHERE p.id = $2 AND a.id = $1 AND p.space_id = $5
 RETURNING *;
 
 -- name: DeletePageAttachmentReferencesByPageAndAttachmentIDs :exec

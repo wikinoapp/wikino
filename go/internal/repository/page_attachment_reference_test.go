@@ -2,61 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"testing"
-	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
-
-// createTestAttachment はテスト用の添付ファイルを作成し、IDを返す
-func createTestAttachment(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) model.AttachmentID {
-	t.Helper()
-
-	now := time.Now()
-
-	// active_storage_blobを作成
-	var blobID string
-	err := tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		"test-key-"+now.Format("20060102150405.000000000"), "test.png", "image/png", "local", 1024, now,
-	).Scan(&blobID)
-	if err != nil {
-		t.Fatalf("active_storage_blob作成に失敗: %v", err)
-	}
-
-	// active_storage_attachmentを作成
-	var attachmentStorageID string
-	err = tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
-		 VALUES ($1, $2, $3, $4, $5)
-		 RETURNING id`,
-		"file", "Space", string(spaceID), blobID, now,
-	).Scan(&attachmentStorageID)
-	if err != nil {
-		t.Fatalf("active_storage_attachment作成に失敗: %v", err)
-	}
-
-	// attachmentを作成
-	var attachmentID string
-	err = tx.QueryRowContext(
-		context.Background(),
-		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id`,
-		string(spaceID), attachmentStorageID, string(spaceMemberID), now, now, now,
-	).Scan(&attachmentID)
-	if err != nil {
-		t.Fatalf("attachment作成に失敗: %v", err)
-	}
-
-	return model.AttachmentID(attachmentID)
-}
 
 func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
 	t.Parallel()
@@ -92,11 +42,11 @@ func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
-	attachmentID1 := createTestAttachment(t, tx, spaceID, spaceMemberID)
-	attachmentID2 := createTestAttachment(t, tx, spaceID, spaceMemberID)
+	attachmentID1 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+	attachmentID2 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
 
 	// テストデータを作成
-	_, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2})
+	_, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 	if err != nil {
 		t.Fatalf("CreateBatch() error = %v", err)
 	}
@@ -164,10 +114,10 @@ func TestPageAttachmentReferenceRepository_CreateBatch(t *testing.T) {
 		Build()
 
 	t.Run("複数の添付ファイル参照を一括作成できる", func(t *testing.T) {
-		attachmentID1 := createTestAttachment(t, tx, spaceID, spaceMemberID)
-		attachmentID2 := createTestAttachment(t, tx, spaceID, spaceMemberID)
+		attachmentID1 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+		attachmentID2 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
 
-		refs, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2})
+		refs, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 		if err != nil {
 			t.Fatalf("CreateBatch() error = %v", err)
 		}
@@ -197,7 +147,7 @@ func TestPageAttachmentReferenceRepository_CreateBatch(t *testing.T) {
 	})
 
 	t.Run("空のattachmentIDsリストの場合は空スライスを返す", func(t *testing.T) {
-		refs, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{})
+		refs, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{})
 		if err != nil {
 			t.Fatalf("CreateBatch() error = %v", err)
 		}
@@ -241,12 +191,12 @@ func TestPageAttachmentReferenceRepository_DeleteByPageAndAttachmentIDs(t *testi
 		WithTitle("Test Page").
 		Build()
 
-	attachmentID1 := createTestAttachment(t, tx, spaceID, spaceMemberID)
-	attachmentID2 := createTestAttachment(t, tx, spaceID, spaceMemberID)
-	attachmentID3 := createTestAttachment(t, tx, spaceID, spaceMemberID)
+	attachmentID1 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+	attachmentID2 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+	attachmentID3 := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
 
 	// テストデータを作成
-	_, err := repo.CreateBatch(context.Background(), pageID, []model.AttachmentID{attachmentID1, attachmentID2, attachmentID3})
+	_, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2, attachmentID3})
 	if err != nil {
 		t.Fatalf("CreateBatch() error = %v", err)
 	}
