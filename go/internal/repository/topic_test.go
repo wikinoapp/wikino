@@ -105,17 +105,12 @@ func TestTopicRepository_ListActiveBySpace(t *testing.T) {
 		WithName("Second").
 		Build()
 
-	// 削除済みトピック（discarded_atを設定）
-	now := time.Now()
-	_, err := tx.ExecContext(
-		context.Background(),
-		`INSERT INTO topics (space_id, number, name, description, visibility, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		spaceID, 3, "Discarded", "", 0, now, now, now,
-	)
-	if err != nil {
-		t.Fatalf("削除済みトピック作成に失敗: %v", err)
-	}
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
 
 	t.Run("アクティブなトピック一覧をナンバー順で取得できる", func(t *testing.T) {
 		topics, err := repo.ListActiveBySpace(context.Background(), spaceID)

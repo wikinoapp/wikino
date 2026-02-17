@@ -19,6 +19,7 @@ type TopicBuilder struct {
 	name        string
 	description string
 	visibility  int32
+	discardedAt *time.Time
 }
 
 // NewTopicBuilder は TopicBuilder を生成します
@@ -64,6 +65,13 @@ func (b *TopicBuilder) WithVisibility(visibility int32) *TopicBuilder {
 	return b
 }
 
+// WithDiscarded は廃棄済み状態に設定します
+func (b *TopicBuilder) WithDiscarded() *TopicBuilder {
+	now := time.Now()
+	b.discardedAt = &now
+	return b
+}
+
 // Build はトピックを作成し、IDを返します
 func (b *TopicBuilder) Build() model.TopicID {
 	b.t.Helper()
@@ -76,10 +84,10 @@ func (b *TopicBuilder) Build() model.TopicID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topics (space_id, number, name, description, visibility, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO topics (space_id, number, name, description, visibility, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, b.number, b.name, b.description, b.visibility, now, now,
+		b.spaceID, b.number, b.name, b.description, b.visibility, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピック作成に失敗: %v", err)

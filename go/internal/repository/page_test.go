@@ -83,16 +83,13 @@ func TestPageRepository_FindBySpaceAndNumber(t *testing.T) {
 	})
 
 	t.Run("廃棄されたページは取得できない", func(t *testing.T) {
-		now := time.Now()
-		_, err := tx.ExecContext(
-			context.Background(),
-			`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, '{}', $7, $7, $7, $7, $7)`,
-			spaceID, topicID, 99, "Discarded Page", "body", "<p>body</p>", now,
-		)
-		if err != nil {
-			t.Fatalf("廃棄済みページ作成に失敗: %v", err)
-		}
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(99).
+			WithTitle("Discarded Page").
+			WithDiscarded().
+			Build()
 
 		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, 99)
 		if err != nil {

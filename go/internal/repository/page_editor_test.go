@@ -139,3 +139,75 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestPageEditorRepository_UpdateLastPageModifiedAt(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageEditorRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("pageeditor-update@example.com").
+		WithAtname("pageeditorupdate").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("pageeditor-update-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	now := time.Now()
+
+	// まずPageEditorを作成
+	editor, err := repo.FindOrCreate(context.Background(), FindOrCreateInput{
+		SpaceID:            spaceID,
+		PageID:             pageID,
+		SpaceMemberID:      spaceMemberID,
+		LastPageModifiedAt: now,
+	})
+	if err != nil {
+		t.Fatalf("FindOrCreate() error = %v", err)
+	}
+
+	t.Run("LastPageModifiedAtを更新できる", func(t *testing.T) {
+		newTime := now.Add(time.Hour).Truncate(time.Microsecond)
+		updated, err := repo.UpdateLastPageModifiedAt(context.Background(), UpdateLastPageModifiedAtInput{
+			ID:                 editor.ID,
+			SpaceID:            spaceID,
+			LastPageModifiedAt: newTime,
+		})
+		if err != nil {
+			t.Fatalf("UpdateLastPageModifiedAt() error = %v", err)
+		}
+		if updated == nil {
+			t.Fatal("UpdateLastPageModifiedAt() returned nil, want page editor")
+		}
+		if updated.ID != editor.ID {
+			t.Errorf("updated.ID = %v, want %v", updated.ID, editor.ID)
+		}
+		if !updated.LastPageModifiedAt.Equal(newTime) {
+			t.Errorf("updated.LastPageModifiedAt = %v, want %v", updated.LastPageModifiedAt, newTime)
+		}
+		if !updated.UpdatedAt.After(editor.UpdatedAt) {
+			t.Error("updated.UpdatedAt should be after original UpdatedAt")
+		}
+	})
+}

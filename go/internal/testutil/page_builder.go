@@ -25,6 +25,7 @@ type PageBuilder struct {
 	linkedPageIDs []string
 	modifiedAt    time.Time
 	publishedAt   *time.Time
+	discardedAt   *time.Time
 }
 
 // NewPageBuilder は PageBuilder を生成します
@@ -105,6 +106,13 @@ func (b *PageBuilder) WithUnpublished() *PageBuilder {
 	return b
 }
 
+// WithDiscarded は廃棄済み状態に設定します
+func (b *PageBuilder) WithDiscarded() *PageBuilder {
+	now := time.Now()
+	b.discardedAt = &now
+	return b
+}
+
 // Build はページを作成し、IDを返します
 func (b *PageBuilder) Build() model.PageID {
 	b.t.Helper()
@@ -120,11 +128,11 @@ func (b *PageBuilder) Build() model.PageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 RETURNING id`,
 		b.spaceID, b.topicID, b.number, b.title, b.body, b.bodyHTML,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページ作成に失敗: %v", err)
