@@ -81,17 +81,18 @@ func (q *Queries) DeleteDraftPage(ctx context.Context, arg DeleteDraftPageParams
 }
 
 const findDraftPageByPageAndMember = `-- name: FindDraftPageByPageAndMember :one
-SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at FROM draft_pages WHERE page_id = $1 AND space_member_id = $2
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `
 
 type FindDraftPageByPageAndMemberParams struct {
 	PageID        string `json:"page_id"`
 	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
 }
 
 // ページIDとスペースメンバーIDで下書きを取得する
 func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraftPageByPageAndMemberParams) (DraftPage, error) {
-	row := q.db.QueryRowContext(ctx, findDraftPageByPageAndMember, arg.PageID, arg.SpaceMemberID)
+	row := q.db.QueryRowContext(ctx, findDraftPageByPageAndMember, arg.PageID, arg.SpaceMemberID, arg.SpaceID)
 	var i DraftPage
 	err := row.Scan(
 		&i.ID,

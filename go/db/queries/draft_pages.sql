@@ -1,6 +1,6 @@
 -- name: FindDraftPageByPageAndMember :one
 -- ページIDとスペースメンバーIDで下書きを取得する
-SELECT * FROM draft_pages WHERE page_id = $1 AND space_member_id = $2;
+SELECT * FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3;
 
 -- name: CreateDraftPage :one
 -- 下書きを作成する

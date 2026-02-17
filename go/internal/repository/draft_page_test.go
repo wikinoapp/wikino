@@ -54,7 +54,7 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 		Build()
 
 	t.Run("ページIDとスペースメンバーIDで下書きを取得できる", func(t *testing.T) {
-		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID)
+		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
 			t.Fatalf("FindByPageAndMember() error = %v", err)
 		}
@@ -88,7 +88,7 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 	})
 
 	t.Run("存在しないページIDはnilを返す", func(t *testing.T) {
-		draft, err := repo.FindByPageAndMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceMemberID)
+		draft, err := repo.FindByPageAndMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceMemberID, spaceID)
 		if err != nil {
 			t.Fatalf("FindByPageAndMember() error = %v", err)
 		}
@@ -98,7 +98,7 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 	})
 
 	t.Run("存在しないスペースメンバーIDはnilを返す", func(t *testing.T) {
-		draft, err := repo.FindByPageAndMember(context.Background(), pageID, "00000000-0000-0000-0000-000000000000")
+		draft, err := repo.FindByPageAndMember(context.Background(), pageID, "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
 			t.Fatalf("FindByPageAndMember() error = %v", err)
 		}
@@ -337,7 +337,7 @@ func TestDraftPageRepository_Delete(t *testing.T) {
 		}
 
 		// 削除後に取得できないことを確認
-		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID)
+		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
 			t.Fatalf("FindByPageAndMember() error = %v", err)
 		}

@@ -26,10 +26,11 @@ func (r *DraftPageRepository) WithTx(tx *sql.Tx) *DraftPageRepository {
 }
 
 // FindByPageAndMember はページIDとスペースメンバーIDで下書きを取得する
-func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID model.PageID, spaceMemberID model.SpaceMemberID) (*model.DraftPage, error) {
+func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID model.PageID, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByPageAndMember(ctx, query.FindDraftPageByPageAndMemberParams{
 		PageID:        string(pageID),
 		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
