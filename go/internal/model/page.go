@@ -21,5 +21,5 @@ type Page struct {
 	UpdatedAt                 time.Time
 	PinnedAt                  *time.Time
 	DiscardedAt               *time.Time
-	FeaturedImageAttachmentID *string
+	FeaturedImageAttachmentID *AttachmentID
 }

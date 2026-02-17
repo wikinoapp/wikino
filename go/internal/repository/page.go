@@ -77,7 +77,7 @@ type UpdatePageInput struct {
 	LinkedPageIDs             []model.PageID
 	ModifiedAt                time.Time
 	PublishedAt               *time.Time
-	FeaturedImageAttachmentID *string
+	FeaturedImageAttachmentID *model.AttachmentID
 }
 
 // Update はページを更新する
@@ -89,7 +89,7 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 
 	var featuredImageAttachmentID uuid.NullUUID
 	if input.FeaturedImageAttachmentID != nil {
-		parsed, err := uuid.Parse(*input.FeaturedImageAttachmentID)
+		parsed, err := uuid.Parse(string(*input.FeaturedImageAttachmentID))
 		if err != nil {
 			return nil, err
 		}
@@ -188,10 +188,10 @@ func (r *PageRepository) toModel(row query.Page) *model.Page {
 		discardedAt = &row.DiscardedAt.Time
 	}
 
-	var featuredImageAttachmentID *string
+	var featuredImageAttachmentID *model.AttachmentID
 	if row.FeaturedImageAttachmentID.Valid {
-		s := row.FeaturedImageAttachmentID.UUID.String()
-		featuredImageAttachmentID = &s
+		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+		featuredImageAttachmentID = &id
 	}
 
 	return &model.Page{
