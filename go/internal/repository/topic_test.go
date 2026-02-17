@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -252,18 +251,13 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 		WithName("Not Joined Topic").
 		Build()
 
-	// topic_membersにレコードを直接挿入
-	now := time.Now()
+	// トピックメンバーをビルダーで作成
 	for _, topicID := range []model.TopicID{topicID1, topicID2} {
-		_, err := tx.ExecContext(
-			context.Background(),
-			`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			string(spaceID), string(topicID), string(spaceMemberID), 0, now, now, now,
-		)
-		if err != nil {
-			t.Fatalf("topic_member作成に失敗: %v", err)
-		}
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
 	}
 
 	t.Run("参加しているトピック一覧をナンバー順で取得できる", func(t *testing.T) {

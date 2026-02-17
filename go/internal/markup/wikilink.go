@@ -2,6 +2,7 @@ package markup
 
 import (
 	"fmt"
+	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
@@ -95,6 +96,7 @@ func ReplaceWikilinks(bodyHTML string, currentTopicName string, spaceIdentifier 
 
 	container, err := parseHTMLFragmentWithContainer(bodyHTML)
 	if err != nil {
+		slog.Warn("Wikiリンク変換時のHTMLパースに失敗", "error", err)
 		return bodyHTML
 	}
 
