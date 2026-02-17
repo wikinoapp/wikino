@@ -3,6 +3,7 @@ package markup
 
 import (
 	"bytes"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -68,6 +69,7 @@ func RenderMarkdown(text string) string {
 	// Markdown → HTML変換
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(processed), &buf); err != nil {
+		slog.Warn("Markdown変換に失敗", "error", err)
 		return ""
 	}
 

@@ -1,6 +1,7 @@
 package markup
 
 import (
+	"log/slog"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -36,6 +37,7 @@ func renderContainerChildren(container *html.Node) string {
 	var b strings.Builder
 	for c := container.FirstChild; c != nil; c = c.NextSibling {
 		if err := html.Render(&b, c); err != nil {
+			slog.Warn("HTMLノードのレンダリングに失敗", "error", err)
 			continue
 		}
 	}
