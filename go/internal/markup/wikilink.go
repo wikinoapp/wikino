@@ -7,9 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // wikilinkRegex はWikiリンク記法 [[...]] を検出する正規表現
