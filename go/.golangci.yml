@@ -104,31 +104,16 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
 
-        # 形式バリデーター層のルール: 入力値の形式チェック
-        # DBアクセス禁止（query, repository, model, usecase への依存禁止）
-        format-validator-layer:
-          files:
-            - "**/format_validator.go"
-          deny:
-            - pkg: github.com/wikinoapp/wikino/go/internal/query
-              desc: "FormatValidatorはQueryに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/repository
-              desc: "FormatValidatorはRepositoryに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/model
-              desc: "FormatValidatorはModelに依存できません。形式バリデーションはDBアクセス不要です。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
-              desc: "FormatValidatorはUseCaseに依存できません。形式バリデーションはDBアクセス不要です。"
-
-        # 状態バリデーター層のルール: DBの状態を使った検証
+        # バリデーター層のルール: 形式チェック + DBの状態を使った検証
         # Repository/Modelは許可、query/usecaseへの依存禁止
-        state-validator-layer:
+        validator-layer:
           files:
-            - "**/state_validator.go"
+            - "**/validator.go"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
-              desc: "StateValidatorはQueryに直接依存できません。Repositoryを経由してください。"
+              desc: "ValidatorはQueryに直接依存できません。Repositoryを経由してください。"
             - pkg: github.com/wikinoapp/wikino/go/internal/usecase
-              desc: "StateValidatorはUseCaseに依存できません。状態バリデーションはHandler層で行います。"
+              desc: "ValidatorはUseCaseに依存できません。バリデーションはHandler層で行います。"
 
         # Middleware層のルール
         # エラーページ・メンテナンスページ等のレンダリングのためTemplatesへの依存は許可
