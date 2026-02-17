@@ -12,17 +12,18 @@ import (
 )
 
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
-SELECT id, space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at FROM topic_members WHERE space_member_id = $1 AND topic_id = $2
+SELECT id, space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `
 
 type FindTopicMemberBySpaceMemberAndTopicParams struct {
 	SpaceMemberID string `json:"space_member_id"`
 	TopicID       string `json:"topic_id"`
+	SpaceID       string `json:"space_id"`
 }
 
 // スペースメンバーIDとトピックIDでトピックメンバーを取得する
 func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg FindTopicMemberBySpaceMemberAndTopicParams) (TopicMember, error) {
-	row := q.db.QueryRowContext(ctx, findTopicMemberBySpaceMemberAndTopic, arg.SpaceMemberID, arg.TopicID)
+	row := q.db.QueryRowContext(ctx, findTopicMemberBySpaceMemberAndTopic, arg.SpaceMemberID, arg.TopicID, arg.SpaceID)
 	var i TopicMember
 	err := row.Scan(
 		&i.ID,
@@ -39,7 +40,7 @@ func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg 
 }
 
 const updateTopicMemberLastPageModifiedAt = `-- name: UpdateTopicMemberLastPageModifiedAt :exec
-UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4
+UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4 AND space_id = $5
 `
 
 type UpdateTopicMemberLastPageModifiedAtParams struct {
@@ -47,6 +48,7 @@ type UpdateTopicMemberLastPageModifiedAtParams struct {
 	UpdatedAt          time.Time    `json:"updated_at"`
 	TopicID            string       `json:"topic_id"`
 	SpaceMemberID      string       `json:"space_member_id"`
+	SpaceID            string       `json:"space_id"`
 }
 
 // トピックメンバーのlast_page_modified_atを更新する（ページ公開時に使用）
@@ -56,6 +58,7 @@ func (q *Queries) UpdateTopicMemberLastPageModifiedAt(ctx context.Context, arg U
 		arg.UpdatedAt,
 		arg.TopicID,
 		arg.SpaceMemberID,
+		arg.SpaceID,
 	)
 	return err
 }

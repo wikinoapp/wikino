@@ -38,6 +38,7 @@ func (r *PageEditorRepository) FindOrCreate(ctx context.Context, input FindOrCre
 	row, err := r.q.FindPageEditorByPageAndSpaceMember(ctx, query.FindPageEditorByPageAndSpaceMemberParams{
 		PageID:        string(input.PageID),
 		SpaceMemberID: string(input.SpaceMemberID),
+		SpaceID:       string(input.SpaceID),
 	})
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {

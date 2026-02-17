@@ -1,6 +1,6 @@
 -- name: FindPageEditorByPageAndSpaceMember :one
 -- ページIDとスペースメンバーIDでページ編集者を取得する
-SELECT * FROM page_editors WHERE page_id = $1 AND space_member_id = $2;
+SELECT * FROM page_editors WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3;
 
 -- name: CreatePageEditor :one
 -- ページ編集者を作成する

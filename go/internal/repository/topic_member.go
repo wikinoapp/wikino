@@ -26,10 +26,11 @@ func (r *TopicMemberRepository) WithTx(tx *sql.Tx) *TopicMemberRepository {
 }
 
 // FindBySpaceMemberAndTopic はスペースメンバーIDとトピックIDでトピックメンバーを取得する
-func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, spaceMemberID model.SpaceMemberID, topicID model.TopicID) (*model.TopicMember, error) {
+func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, topicID model.TopicID) (*model.TopicMember, error) {
 	row, err := r.q.FindTopicMemberBySpaceMemberAndTopic(ctx, query.FindTopicMemberBySpaceMemberAndTopicParams{
 		SpaceMemberID: string(spaceMemberID),
 		TopicID:       string(topicID),
+		SpaceID:       string(spaceID),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -41,12 +42,13 @@ func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, s
 }
 
 // UpdateLastPageModifiedAt はトピックメンバーのlast_page_modified_atを更新する
-func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, topicID model.TopicID, spaceMemberID model.SpaceMemberID, modifiedAt time.Time) error {
+func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID, spaceMemberID model.SpaceMemberID, modifiedAt time.Time) error {
 	return r.q.UpdateTopicMemberLastPageModifiedAt(ctx, query.UpdateTopicMemberLastPageModifiedAtParams{
 		LastPageModifiedAt: sql.NullTime{Time: modifiedAt, Valid: true},
 		UpdatedAt:          time.Now(),
 		TopicID:            string(topicID),
 		SpaceMemberID:      string(spaceMemberID),
+		SpaceID:            string(spaceID),
 	})
 }
 

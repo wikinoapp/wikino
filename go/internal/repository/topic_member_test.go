@@ -48,7 +48,7 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 		Build()
 
 	t.Run("トピックメンバーを取得できる", func(t *testing.T) {
-		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceMemberID, topicID)
+		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, topicID)
 		if err != nil {
 			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
 		}
@@ -76,7 +76,7 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 	})
 
 	t.Run("存在しないスペースメンバーIDはnilを返す", func(t *testing.T) {
-		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), "00000000-0000-0000-0000-000000000000", topicID)
+		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, "00000000-0000-0000-0000-000000000000", topicID)
 		if err != nil {
 			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
 		}
@@ -86,7 +86,7 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 	})
 
 	t.Run("存在しないトピックIDはnilを返す", func(t *testing.T) {
-		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceMemberID, "00000000-0000-0000-0000-000000000000")
+		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, "00000000-0000-0000-0000-000000000000")
 		if err != nil {
 			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
 		}
@@ -136,13 +136,13 @@ func TestTopicMemberRepository_UpdateLastPageModifiedAt(t *testing.T) {
 
 	t.Run("last_page_modified_atを更新できる", func(t *testing.T) {
 		modifiedAt := time.Now().Truncate(time.Microsecond)
-		err := repo.UpdateLastPageModifiedAt(context.Background(), topicID, spaceMemberID, modifiedAt)
+		err := repo.UpdateLastPageModifiedAt(context.Background(), spaceID, topicID, spaceMemberID, modifiedAt)
 		if err != nil {
 			t.Fatalf("UpdateLastPageModifiedAt() error = %v", err)
 		}
 
 		// 更新後の値を確認
-		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceMemberID, topicID)
+		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, topicID)
 		if err != nil {
 			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
 		}

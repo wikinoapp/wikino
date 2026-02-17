@@ -49,17 +49,18 @@ func (q *Queries) CreatePageEditor(ctx context.Context, arg CreatePageEditorPara
 }
 
 const findPageEditorByPageAndSpaceMember = `-- name: FindPageEditorByPageAndSpaceMember :one
-SELECT id, space_id, page_id, space_member_id, last_page_modified_at, created_at, updated_at FROM page_editors WHERE page_id = $1 AND space_member_id = $2
+SELECT id, space_id, page_id, space_member_id, last_page_modified_at, created_at, updated_at FROM page_editors WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `
 
 type FindPageEditorByPageAndSpaceMemberParams struct {
 	PageID        string `json:"page_id"`
 	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
 }
 
 // ページIDとスペースメンバーIDでページ編集者を取得する
 func (q *Queries) FindPageEditorByPageAndSpaceMember(ctx context.Context, arg FindPageEditorByPageAndSpaceMemberParams) (PageEditor, error) {
-	row := q.db.QueryRowContext(ctx, findPageEditorByPageAndSpaceMember, arg.PageID, arg.SpaceMemberID)
+	row := q.db.QueryRowContext(ctx, findPageEditorByPageAndSpaceMember, arg.PageID, arg.SpaceMemberID, arg.SpaceID)
 	var i PageEditor
 	err := row.Scan(
 		&i.ID,
