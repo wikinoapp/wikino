@@ -25,6 +25,21 @@ func (r *TopicRepository) WithTx(tx *sql.Tx) *TopicRepository {
 	return &TopicRepository{q: r.q.WithTx(tx)}
 }
 
+// FindBySpaceAndID はスペースIDとIDでトピックを取得する（削除されていないトピックのみ）
+func (r *TopicRepository) FindBySpaceAndID(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID) (*model.Topic, error) {
+	row, err := r.q.FindTopicBySpaceAndID(ctx, query.FindTopicBySpaceAndIDParams{
+		SpaceID: string(spaceID),
+		ID:      string(topicID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindBySpaceAndNumber はスペースIDとナンバーでトピックを取得する（削除されていないトピックのみ）
 func (r *TopicRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number int32) (*model.Topic, error) {
 	row, err := r.q.FindTopicBySpaceAndNumber(ctx, query.FindTopicBySpaceAndNumberParams{

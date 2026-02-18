@@ -26,11 +26,11 @@ templ Flash(flash *session.FlashMessage) {
 			>
 				<div class="toast-content">
 					if flash.Type == session.FlashSuccess {
-						@templates.Icon("success", "fill-(--success)")
+						@templates.Icon("check-circle-regular", "fill-(--success)")
 					} else if flash.Type == session.FlashError {
-						@templates.Icon("error", "fill-(--error)")
+						@templates.Icon("warning-regular", "fill-(--error)")
 					} else if flash.Type == session.FlashWarning {
-						@templates.Icon("warning", "fill-(--warning)")
+						@templates.Icon("warning-circle-regular", "fill-(--warning)")
 					} else {
 						@templates.Icon("info-regular", "fill-info")
 					}

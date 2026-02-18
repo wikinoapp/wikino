@@ -142,7 +142,7 @@ templ New(data NewPageData) {
 						tabindex="3"
 						type="submit"
 					>
-						@templates.Icon("arrow-right")
+						@templates.Icon("arrow-right-regular")
 						{ templates.T(ctx, "account_new_submit_button") }
 					</button>
 				</form>
@@ -152,7 +152,7 @@ templ New(data NewPageData) {
 
 		<div class="text-center">
 			<a href="/sign_up" class="link underline inline-flex items-center gap-1">
-				@templates.Icon("arrow-left", "w-4 h-4")
+				@templates.Icon("arrow-left-regular", "w-4 h-4")
 				{ templates.T(ctx, "account_new_back_to_sign_up") }
 			</a>
 		</div>

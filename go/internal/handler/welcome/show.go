@@ -30,13 +30,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	flash := h.flashMgr.GetFlash(w, r)
 
 	// テンプレートをレンダリング
-	layoutData := layouts.PlainLayoutData{
+	layoutData := layouts.DefaultLayoutData{
 		Meta:  meta,
 		Flash: flash,
 	}
 	pageData := welcome.ShowPageData{}
 
-	if err := layouts.Plain(layoutData, welcome.Show(pageData)).Render(ctx, w); err != nil {
+	if err := layouts.Default(layoutData, welcome.Show(pageData)).Render(ctx, w); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

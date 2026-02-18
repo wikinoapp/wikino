@@ -75,17 +75,17 @@ func Flash(flash *session.FlashMessage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if flash.Type == session.FlashSuccess {
-				templ_7745c5c3_Err = templates.Icon("success", "fill-(--success)").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.Icon("check-circle-regular", "fill-(--success)").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else if flash.Type == session.FlashError {
-				templ_7745c5c3_Err = templates.Icon("error", "fill-(--error)").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.Icon("warning-regular", "fill-(--error)").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else if flash.Type == session.FlashWarning {
-				templ_7745c5c3_Err = templates.Icon("warning", "fill-(--warning)").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.Icon("warning-circle-regular", "fill-(--warning)").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
