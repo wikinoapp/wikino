@@ -7,7 +7,7 @@ import (
 // BreadcrumbItem はパンくずリストの1項目を表します
 type BreadcrumbItem struct {
 	Label string
-	URL   string
+	Path  templates.Path
 	Icon  string
 }
 
@@ -38,8 +38,8 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 					</li>
 				}
 				<li class="inline-flex items-center gap-1.5">
-					if item.URL != "" {
-						<a class="link-muted inline-flex items-center gap-1" href={ templ.SafeURL(item.URL) }>
+					if item.Path != "" {
+						<a class="link-muted inline-flex items-center gap-1" href={ templ.SafeURL(item.Path) }>
 							if item.Icon != "" {
 								@templates.Icon(item.Icon, "size-4 fill-gray-600")
 							}

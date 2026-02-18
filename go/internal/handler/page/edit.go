@@ -96,7 +96,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var topicName string
-	var topicPath string
+	var topicPath templates.Path
 	var topicIcon string
 	if topic != nil {
 		topicName = topic.Name

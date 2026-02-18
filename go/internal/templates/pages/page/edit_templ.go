@@ -24,7 +24,7 @@ type EditPageData struct {
 	SpaceIdentifier string
 	SpaceName       string
 	TopicName       string
-	TopicPath       string
+	TopicPath       templates.Path
 	TopicIcon       string
 }
 
@@ -54,11 +54,11 @@ func Edit(data EditPageData) templ.Component {
 			Items: []components.BreadcrumbItem{
 				{
 					Label: data.SpaceName,
-					URL:   fmt.Sprintf("/s/%s", data.SpaceIdentifier),
+					Path:  templates.SpacePath(data.SpaceIdentifier),
 				},
 				{
 					Label: data.TopicName,
-					URL:   data.TopicPath,
+					Path:  data.TopicPath,
 					Icon:  data.TopicIcon,
 				},
 			},

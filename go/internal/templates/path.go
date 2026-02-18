@@ -1,17 +1,16 @@
 package templates
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/a-h/templ"
-)
+// Path はURLのパスを表す型です
+type Path string
 
 // SpacePath はスペースのパスを生成します
-func SpacePath(identifier string) templ.SafeURL {
-	return templ.SafeURL("/s/" + identifier)
+func SpacePath(identifier string) Path {
+	return Path("/s/" + identifier)
 }
 
 // TopicPath はトピックのパスを生成します
-func TopicPath(spaceIdentifier string, topicNumber int32) string {
-	return fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber)
+func TopicPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
