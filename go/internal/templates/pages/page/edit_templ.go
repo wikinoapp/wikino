@@ -24,7 +24,7 @@ type EditPageData struct {
 	SpaceIdentifier string
 	SpaceName       string
 	TopicName       string
-	TopicURL        string
+	TopicPath       string
 	TopicIcon       string
 }
 
@@ -58,7 +58,7 @@ func Edit(data EditPageData) templ.Component {
 				},
 				{
 					Label: data.TopicName,
-					URL:   data.TopicURL,
+					URL:   data.TopicPath,
 					Icon:  data.TopicIcon,
 				},
 			},

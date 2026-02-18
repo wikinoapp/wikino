@@ -96,11 +96,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var topicName string
-	var topicURL string
+	var topicPath string
 	var topicIcon string
 	if topic != nil {
 		topicName = topic.Name
-		topicURL = templates.TopicURL(space.Identifier, topic.Number)
+		topicPath = templates.TopicPath(space.Identifier, topic.Number)
 		topicIcon = model.TopicVisibilityIcon(topic.Visibility)
 	}
 
@@ -150,7 +150,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		SpaceIdentifier: space.Identifier,
 		SpaceName:       space.Name,
 		TopicName:       topicName,
-		TopicURL:        topicURL,
+		TopicPath:       topicPath,
 		TopicIcon:       topicIcon,
 	})
 
