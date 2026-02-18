@@ -96,11 +96,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var topicName string
 	var topicPath templates.Path
-	var topicIcon templates.IconName
+	var topicIconName templates.IconName
 	if topic != nil {
 		topicName = topic.Name
 		topicPath = templates.TopicPath(space.Identifier, topic.Number)
-		topicIcon = templates.TopicVisibilityIconName(topic.Visibility)
+		topicIconName = templates.TopicVisibilityIconName(topic.Visibility)
 	}
 
 	// DraftPageを取得（存在すればその内容を表示）
@@ -150,7 +150,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		SpaceName:       space.Name,
 		TopicName:       topicName,
 		TopicPath:       topicPath,
-		TopicIcon:       topicIcon,
+		TopicIconName:   topicIconName,
 	})
 
 	layoutData := layouts.DefaultLayoutData{

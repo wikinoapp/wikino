@@ -25,7 +25,7 @@ type EditPageData struct {
 	SpaceName       string
 	TopicName       string
 	TopicPath       templates.Path
-	TopicIcon       templates.IconName
+	TopicIconName   templates.IconName
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -57,9 +57,9 @@ func Edit(data EditPageData) templ.Component {
 					Path:  templates.SpacePath(data.SpaceIdentifier),
 				},
 				{
-					Label: data.TopicName,
-					Path:  data.TopicPath,
-					Icon:  data.TopicIcon,
+					Label:    data.TopicName,
+					Path:     data.TopicPath,
+					IconName: data.TopicIconName,
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)

@@ -8,7 +8,7 @@ import (
 type BreadcrumbItem struct {
 	Label string
 	Path  templates.Path
-	Icon  templates.IconName
+	IconName templates.IconName
 }
 
 // TopNavData はトップナビゲーションに渡すデータ構造体です
@@ -40,14 +40,14 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 				<li class="inline-flex items-center gap-1.5">
 					if item.Path != "" {
 						<a class="link-muted inline-flex items-center gap-1" href={ templ.SafeURL(item.Path) }>
-							if item.Icon != "" {
-								@templates.Icon(item.Icon, "size-4 fill-gray-600")
+							if item.IconName != "" {
+								@templates.Icon(item.IconName, "size-4 fill-gray-600")
 							}
 							{ item.Label }
 						</a>
 					} else {
-						if item.Icon != "" {
-							@templates.Icon(item.Icon, "size-4 fill-gray-600")
+						if item.IconName != "" {
+							@templates.Icon(item.IconName, "size-4 fill-gray-600")
 						}
 						{ item.Label }
 					}

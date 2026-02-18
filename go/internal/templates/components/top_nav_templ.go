@@ -13,9 +13,9 @@ import (
 
 // BreadcrumbItem はパンくずリストの1項目を表します
 type BreadcrumbItem struct {
-	Label string
-	Path  templates.Path
-	Icon  templates.IconName
+	Label    string
+	Path     templates.Path
+	IconName templates.IconName
 }
 
 // TopNavData はトップナビゲーションに渡すデータ構造体です
@@ -139,8 +139,8 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				if item.Icon != "" {
-					templ_7745c5c3_Err = templates.Icon(item.Icon, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+				if item.IconName != "" {
+					templ_7745c5c3_Err = templates.Icon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -159,8 +159,8 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				if item.Icon != "" {
-					templ_7745c5c3_Err = templates.Icon(item.Icon, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+				if item.IconName != "" {
+					templ_7745c5c3_Err = templates.Icon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
