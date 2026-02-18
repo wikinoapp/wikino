@@ -26,6 +26,10 @@ templ Edit(data EditPageData) {
 	@components.TopNav(components.TopNavData{
 		Items: []components.BreadcrumbItem{
 			{
+				Label: templates.T(ctx, "breadcrumb_home"),
+				Path:  templates.HomePath(),
+			},
+			{
 				Label: data.SpaceName,
 				Path:  templates.SpacePath(data.SpaceIdentifier),
 			},

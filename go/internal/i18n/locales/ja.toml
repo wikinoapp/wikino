@@ -419,6 +419,10 @@ other = "WikinoのソースコードはGitHubで公開されています"
 description = "トップナビゲーションのパンくずリストのaria-label"
 other = "パンくずリスト"
 
+[breadcrumb_home]
+description = "パンくずリストのホームリンクのラベル"
+other = "ホーム"
+
 # スペースレイアウト
 [space_layout_breadcrumb_label]
 description = "スペースレイアウトのパンくずリストのaria-label"

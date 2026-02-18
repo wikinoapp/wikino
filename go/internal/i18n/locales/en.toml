@@ -419,6 +419,10 @@ other = "Wikino's source code is publicly available on GitHub."
 description = "Aria label for the top navigation breadcrumb"
 other = "Breadcrumb"
 
+[breadcrumb_home]
+description = "Label for the home link in the breadcrumb"
+other = "Home"
+
 # Space layout
 [space_layout_breadcrumb_label]
 description = "Aria label for the space layout breadcrumb navigation"
