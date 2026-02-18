@@ -423,11 +423,6 @@ other = "Breadcrumb"
 description = "Label for the home link in the breadcrumb"
 other = "Home"
 
-# Space layout
-[space_layout_breadcrumb_label]
-description = "Aria label for the space layout breadcrumb navigation"
-other = "Breadcrumb"
-
 # Footer
 [footer_terms]
 other = "Terms of Service"
@@ -437,22 +432,29 @@ other = "Privacy Policy"
 
 # Page edit
 [page_edit_title]
+description = "Page edit screen title"
 other = "Edit Page"
 
 [page_edit_title_label]
+description = "Label for the page title input field"
 other = "Title"
 
 [page_edit_title_placeholder]
+description = "Placeholder for the page title input field"
 other = "Page title"
 
 [page_edit_body_label]
+description = "Label for the page body input field"
 other = "Body"
 
 [page_edit_body_placeholder]
+description = "Placeholder for the page body input field"
 other = "Write something..."
 
 [page_edit_publish_button]
+description = "Label for the publish button"
 other = "Publish"
 
 [page_edit_cancel]
+description = "Label for the cancel link"
 other = "Cancel"

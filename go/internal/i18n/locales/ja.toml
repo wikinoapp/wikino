@@ -423,11 +423,6 @@ other = "パンくずリスト"
 description = "パンくずリストのホームリンクのラベル"
 other = "ホーム"
 
-# スペースレイアウト
-[space_layout_breadcrumb_label]
-description = "スペースレイアウトのパンくずリストのaria-label"
-other = "パンくずリスト"
-
 # フッター
 [footer_terms]
 other = "利用規約"
@@ -437,22 +432,29 @@ other = "プライバシーポリシー"
 
 # ページ編集
 [page_edit_title]
+description = "ページ編集画面のタイトル"
 other = "ページを編集"
 
 [page_edit_title_label]
+description = "ページタイトル入力フィールドのラベル"
 other = "タイトル"
 
 [page_edit_title_placeholder]
+description = "ページタイトル入力フィールドのプレースホルダー"
 other = "ページタイトル"
 
 [page_edit_body_label]
+description = "ページ本文入力フィールドのラベル"
 other = "本文"
 
 [page_edit_body_placeholder]
+description = "ページ本文入力フィールドのプレースホルダー"
 other = "本文を入力..."
 
 [page_edit_publish_button]
+description = "ページ公開ボタンのラベル"
 other = "公開する"
 
 [page_edit_cancel]
+description = "ページ編集キャンセルリンクのラベル"
 other = "キャンセル"
