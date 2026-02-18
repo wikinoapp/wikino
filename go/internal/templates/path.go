@@ -19,3 +19,13 @@ func HomePath() Path {
 func TopicPath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
+
+// PagePath はページのパスを生成します
+func PagePath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d", spaceIdentifier, pageNumber))
+}
+
+// GoPagePath はGo版のページのパスを生成します
+func GoPagePath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/go/s/%s/pages/%d", spaceIdentifier, pageNumber))
+}

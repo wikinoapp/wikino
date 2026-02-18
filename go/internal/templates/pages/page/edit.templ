@@ -1,8 +1,6 @@
 package page
 
 import (
-	"fmt"
-
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
@@ -43,7 +41,7 @@ templ Edit(data EditPageData) {
 
 	<div class="mx-auto w-full max-w-(--content-screen-max-width-medium) p-4">
 		<form
-			action={ templ.SafeURL(fmt.Sprintf("/go/s/%s/pages/%d", data.SpaceIdentifier, data.PageNumber)) }
+			action={ templ.SafeURL(string(templates.GoPagePath(data.SpaceIdentifier, data.PageNumber))) }
 			class="form grid gap-6"
 			method="POST"
 		>
@@ -92,7 +90,7 @@ templ Edit(data EditPageData) {
 
 				<a
 					class="link-muted text-sm"
-					href={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d", data.SpaceIdentifier, data.PageNumber)) }
+					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, data.PageNumber))) }
 				>
 					{ templates.T(ctx, "page_edit_cancel") }
 				</a>
