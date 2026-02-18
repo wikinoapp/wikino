@@ -14,16 +14,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PlainLayoutData は素のレイアウトに渡すデータ構造体です
-type PlainLayoutData struct {
+// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+type DefaultLayoutData struct {
 	Meta  viewmodel.PageMeta
 	Flash *session.FlashMessage
 }
 
-// Plain は素のレイアウトです
+// Default はデフォルトのレイアウトです
 // ヘッダーなし、フッターあり、サイドバーなしの縦方向レイアウトです
-// トップページ、利用規約、プライバシーポリシーなどで使用します
-func Plain(data PlainLayoutData, content templ.Component) templ.Component {
+func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -51,7 +50,7 @@ func Plain(data PlainLayoutData, content templ.Component) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Locale(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/plain.templ`, Line: 22, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 21, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {

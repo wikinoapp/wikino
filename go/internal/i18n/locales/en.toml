@@ -414,9 +414,41 @@ other = "Open Source"
 [welcome_open_source_description]
 other = "Wikino's source code is publicly available on GitHub."
 
+# Top navigation
+[top_nav_breadcrumb_label]
+description = "Aria label for the top navigation breadcrumb"
+other = "Breadcrumb"
+
+# Space layout
+[space_layout_breadcrumb_label]
+description = "Aria label for the space layout breadcrumb navigation"
+other = "Breadcrumb"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"
 
 [footer_privacy]
 other = "Privacy Policy"
+
+# Page edit
+[page_edit_title]
+other = "Edit Page"
+
+[page_edit_title_label]
+other = "Title"
+
+[page_edit_title_placeholder]
+other = "Page title"
+
+[page_edit_body_label]
+other = "Body"
+
+[page_edit_body_placeholder]
+other = "Write something..."
+
+[page_edit_publish_button]
+other = "Publish"
+
+[page_edit_cancel]
+other = "Cancel"

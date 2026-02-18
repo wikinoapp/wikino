@@ -8,16 +8,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PlainLayoutData は素のレイアウトに渡すデータ構造体です
-type PlainLayoutData struct {
+// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+type DefaultLayoutData struct {
 	Meta  viewmodel.PageMeta
 	Flash *session.FlashMessage
 }
 
-// Plain は素のレイアウトです
+// Default はデフォルトのレイアウトです
 // ヘッダーなし、フッターあり、サイドバーなしの縦方向レイアウトです
-// トップページ、利用規約、プライバシーポリシーなどで使用します
-templ Plain(data PlainLayoutData, content templ.Component) {
+templ Default(data DefaultLayoutData, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang={ templates.Locale(ctx) }>
 		<head>
