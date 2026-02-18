@@ -1,0 +1,98 @@
+package page
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// EditPageData はページ編集画面に渡すデータ構造体です
+type EditPageData struct {
+	CSRFToken       string
+	Title           string
+	Body            string
+	AutofocusTitle  bool
+	PageNumber      int32
+	SpaceIdentifier string
+	SpaceName       string
+	TopicName       string
+	TopicURL        string
+	TopicIcon       string
+}
+
+// Edit はページ編集画面のコンテンツを表示します
+templ Edit(data EditPageData) {
+	@components.TopNav(components.TopNavData{
+		Items: []components.BreadcrumbItem{
+			{
+				Label: data.SpaceName,
+				URL:   fmt.Sprintf("/s/%s", data.SpaceIdentifier),
+			},
+			{
+				Label: data.TopicName,
+				URL:   data.TopicURL,
+				Icon:  data.TopicIcon,
+			},
+		},
+	})
+
+	<div class="mx-auto w-full max-w-(--content-screen-max-width-medium) p-4">
+		<form
+			action={ templ.SafeURL(fmt.Sprintf("/go/s/%s/pages/%d", data.SpaceIdentifier, data.PageNumber)) }
+			class="form grid gap-6"
+			method="POST"
+		>
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<input type="hidden" name="_method" value="PATCH"/>
+
+			<div class="grid gap-2">
+				<label for="page_title">
+					{ templates.T(ctx, "page_edit_title_label") }
+				</label>
+				<input
+					class="text-lg font-bold"
+					id="page_title"
+					name="title"
+					type="text"
+					value={ data.Title }
+					placeholder={ templates.T(ctx, "page_edit_title_placeholder") }
+					if data.AutofocusTitle {
+						autofocus
+					}
+				/>
+			</div>
+
+			<div class="grid gap-2">
+				<label for="page_body">
+					{ templates.T(ctx, "page_edit_body_label") }
+				</label>
+				<textarea
+					class="min-h-[400px] font-mono text-sm"
+					id="page_body"
+					name="body"
+					placeholder={ templates.T(ctx, "page_edit_body_placeholder") }
+					if !data.AutofocusTitle {
+						autofocus
+					}
+				>{ data.Body }</textarea>
+			</div>
+
+			<div class="flex items-center gap-4">
+				<button
+					class="btn-primary"
+					type="submit"
+				>
+					{ templates.T(ctx, "page_edit_publish_button") }
+				</button>
+
+				<a
+					class="link-muted text-sm"
+					href={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d", data.SpaceIdentifier, data.PageNumber)) }
+				>
+					{ templates.T(ctx, "page_edit_cancel") }
+				</a>
+			</div>
+		</form>
+	</div>
+}

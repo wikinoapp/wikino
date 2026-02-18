@@ -20,6 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
+	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -94,6 +95,12 @@ func main() {
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -197,6 +204,16 @@ func main() {
 		updatePasswordResetUC,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
+	pageHandler := page.NewHandler(
+		cfg,
+		flashMgr,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		draftPageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
 
 	r := chi.NewRouter()
 
@@ -269,6 +286,9 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
 		r.Delete("/user_session", userSessionHandler.Delete)
+
+		// ページ編集（/goプレフィックス付き）
+		r.Get("/go/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

@@ -11,6 +11,33 @@ import (
 	"github.com/lib/pq"
 )
 
+const findTopicBySpaceAndID = `-- name: FindTopicBySpaceAndID :one
+SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND id = $2 AND discarded_at IS NULL
+`
+
+type FindTopicBySpaceAndIDParams struct {
+	SpaceID string `json:"space_id"`
+	ID      string `json:"id"`
+}
+
+// スペースIDとIDでトピックを取得する（削除されていないトピックのみ）
+func (q *Queries) FindTopicBySpaceAndID(ctx context.Context, arg FindTopicBySpaceAndIDParams) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, findTopicBySpaceAndID, arg.SpaceID, arg.ID)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Number,
+		&i.Name,
+		&i.Description,
+		&i.Visibility,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const findTopicBySpaceAndNumber = `-- name: FindTopicBySpaceAndNumber :one
 SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL
 `

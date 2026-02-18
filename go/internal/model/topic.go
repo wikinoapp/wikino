@@ -14,6 +14,14 @@ const (
 	TopicVisibilityPrivate TopicVisibility = 1
 )
 
+// TopicVisibilityIcon はトピックの公開範囲に対応するアイコン名を返します
+func TopicVisibilityIcon(v TopicVisibility) string {
+	if v == TopicVisibilityPublic {
+		return "globe-regular"
+	}
+	return "lock-regular"
+}
+
 // Topic はトピックのドメインモデル
 type Topic struct {
 	ID          TopicID
