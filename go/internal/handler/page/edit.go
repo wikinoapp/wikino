@@ -94,14 +94,15 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var topicName string
-	var topicPath templates.Path
-	var topicIconName templates.IconName
-	if topic != nil {
-		topicName = topic.Name
-		topicPath = templates.TopicPath(space.Identifier, topic.Number)
-		topicIconName = templates.TopicVisibilityIconName(topic.Visibility)
+	if topic == nil {
+		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+
+	topicName := topic.Name
+	topicPath := templates.TopicPath(space.Identifier, topic.Number)
+	topicIconName := templates.IconName(viewmodel.TopicVisibilityIconName(topic.Visibility))
 
 	// DraftPageを取得（存在すればその内容を表示）
 	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
