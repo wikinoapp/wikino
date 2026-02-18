@@ -97,11 +97,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var topicName string
 	var topicPath templates.Path
-	var topicIcon string
+	var topicIcon templates.IconName
 	if topic != nil {
 		topicName = topic.Name
 		topicPath = templates.TopicPath(space.Identifier, topic.Number)
-		topicIcon = model.TopicVisibilityIcon(topic.Visibility)
+		topicIcon = templates.IconName(model.TopicVisibilityIcon(topic.Visibility))
 	}
 
 	// DraftPageを取得（存在すればその内容を表示）

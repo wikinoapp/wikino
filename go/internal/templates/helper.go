@@ -32,9 +32,12 @@ func Deref[T any](v *T) T {
 	return zero
 }
 
+// IconName はアイコン名を表す型です
+type IconName string
+
 // Icon はアイコン名からSVGを返す（templ.Component対応）
 // 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")
-func Icon(name string, class ...string) templ.Component {
+func Icon(name IconName, class ...string) templ.Component {
 	svg, ok := phosphorIcons[name]
 	if !ok {
 		svg, ok = customIcons[name]

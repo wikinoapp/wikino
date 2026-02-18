@@ -15,7 +15,7 @@ import (
 type BreadcrumbItem struct {
 	Label string
 	Path  templates.Path
-	Icon  string
+	Icon  templates.IconName
 }
 
 // TopNavData はトップナビゲーションに渡すデータ構造体です

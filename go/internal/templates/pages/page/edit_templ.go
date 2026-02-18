@@ -25,7 +25,7 @@ type EditPageData struct {
 	SpaceName       string
 	TopicName       string
 	TopicPath       templates.Path
-	TopicIcon       string
+	TopicIcon       templates.IconName
 }
 
 // Edit はページ編集画面のコンテンツを表示します
