@@ -107,6 +107,7 @@ func TestEdit(t *testing.T) {
 	// コンテキストを設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -315,6 +316,9 @@ func TestEdit_AutofocusTitle(t *testing.T) {
 	// タイトルが空のとき、タイトル入力欄にautofocusが設定されていることを確認
 	if !strings.Contains(body, `id="page_title"`) {
 		t.Error("page title input not found")
+	}
+	if !strings.Contains(body, "autofocus") {
+		t.Error("autofocus attribute not found in page_title input")
 	}
 }
 
