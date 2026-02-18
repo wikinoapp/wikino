@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -101,7 +100,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	if topic != nil {
 		topicName = topic.Name
 		topicPath = templates.TopicPath(space.Identifier, topic.Number)
-		topicIcon = templates.IconName(model.TopicVisibilityIcon(topic.Visibility))
+		topicIcon = templates.TopicVisibilityIconName(topic.Visibility)
 	}
 
 	// DraftPageを取得（存在すればその内容を表示）

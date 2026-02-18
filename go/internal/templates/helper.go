@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // ========================================
@@ -34,6 +35,14 @@ func Deref[T any](v *T) T {
 
 // IconName はアイコン名を表す型です
 type IconName string
+
+// TopicVisibilityIconName はトピックの公開範囲に対応するアイコン名を返します
+func TopicVisibilityIconName(v model.TopicVisibility) IconName {
+	if v == model.TopicVisibilityPublic {
+		return "globe-regular"
+	}
+	return "lock-regular"
+}
 
 // Icon はアイコン名からSVGを返す（templ.Component対応）
 // 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")
