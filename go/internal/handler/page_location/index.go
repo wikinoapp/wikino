@@ -11,6 +11,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 )
 
+// writeJSONError はJSON形式のエラーレスポンスを返す
+func writeJSONError(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": message}) //nolint:errcheck
+}
+
 // pageLocationItem はページロケーション検索結果の1件を表す
 type pageLocationItem struct {
 	Key string `json:"key"`
@@ -28,7 +35,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	// 認証済みユーザーを取得
 	user := middleware.UserFromContext(ctx)
 	if user == nil {
-		http.NotFound(w, r)
+		writeJSONError(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -39,11 +46,11 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
 	if err != nil {
 		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	if space == nil {
-		http.NotFound(w, r)
+		writeJSONError(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -51,11 +58,11 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
 	if err != nil {
 		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	if spaceMember == nil {
-		http.NotFound(w, r)
+		writeJSONError(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
@@ -66,7 +73,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	locations, err := h.pageRepo.SearchPageLocations(ctx, space.ID, q)
 	if err != nil {
 		slog.ErrorContext(ctx, "ページロケーションの検索に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

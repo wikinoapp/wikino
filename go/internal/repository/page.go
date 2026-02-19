@@ -163,13 +163,21 @@ type PageLocation struct {
 	PageTitle string
 }
 
+// escapeLikePattern はPostgreSQLのLIKE特殊文字（\, %, _）をエスケープする
+func escapeLikePattern(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
+}
+
 // SearchPageLocations はスペース内のページをタイトルで検索する（Wikiリンク補完用）
 func (r *PageRepository) SearchPageLocations(ctx context.Context, spaceID model.SpaceID, q string) ([]PageLocation, error) {
 	// 検索キーワードをスペースで分割し、各ワードをILIKEパターンに変換
 	words := strings.Fields(q)
 	patterns := make([]string, len(words))
 	for i, word := range words {
-		patterns[i] = fmt.Sprintf("%%%s%%", word)
+		patterns[i] = fmt.Sprintf("%%%s%%", escapeLikePattern(word))
 	}
 
 	rows, err := r.q.SearchPageLocations(ctx, query.SearchPageLocationsParams{
