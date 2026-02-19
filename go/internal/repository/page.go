@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -153,6 +155,60 @@ func (r *PageRepository) CreateLinkedPage(ctx context.Context, input CreateLinke
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// PageLocation はページロケーション検索の結果
+type PageLocation struct {
+	TopicName string
+	PageTitle string
+}
+
+// escapeLikePattern はPostgreSQLのLIKE特殊文字（\, %, _）をエスケープする
+func escapeLikePattern(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
+}
+
+// SearchPageLocations はスペース内のページをタイトルで検索する（Wikiリンク補完用）
+func (r *PageRepository) SearchPageLocations(ctx context.Context, spaceID model.SpaceID, q string) ([]PageLocation, error) {
+	// 検索キーワードをスペースで分割し、各ワードをILIKEパターンに変換
+	words := strings.Fields(q)
+	patterns := make([]string, len(words))
+	for i, word := range words {
+		patterns[i] = fmt.Sprintf("%%%s%%", escapeLikePattern(word))
+	}
+
+	rows, err := r.q.SearchPageLocations(ctx, query.SearchPageLocationsParams{
+		SpaceID: string(spaceID),
+		Column2: patterns,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	locations := make([]PageLocation, 0, len(rows))
+	for _, row := range rows {
+		var title string
+		if row.Title != nil {
+			switch v := row.Title.(type) {
+			case string:
+				title = v
+			case []byte:
+				title = string(v)
+			}
+		}
+		if title == "" {
+			continue
+		}
+		locations = append(locations, PageLocation{
+			TopicName: row.TopicName,
+			PageTitle: title,
+		})
+	}
+
+	return locations, nil
 }
 
 // toModel は query.Page を model.Page に変換する

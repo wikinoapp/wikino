@@ -43,6 +43,20 @@ WHERE topic_id = $1
   AND space_id = $3
   AND discarded_at IS NULL;
 
+-- name: SearchPageLocations :many
+-- ページロケーションを検索する（Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ）
+SELECT p.title, t.name AS topic_name
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.discarded_at IS NULL
+WHERE p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND p.published_at IS NOT NULL
+  AND p.title IS NOT NULL
+  AND p.title ILIKE ALL($2::text[])
+ORDER BY p.modified_at DESC
+LIMIT 10;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
