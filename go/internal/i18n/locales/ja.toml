@@ -423,6 +423,19 @@ other = "パンくずリスト"
 description = "パンくずリストのホームリンクのラベル"
 other = "ホーム"
 
+# サイドバー
+[sidebar_toggle_label]
+description = "サイドバーの開閉ボタンのaria-label"
+other = "サイドバーの開閉"
+
+[sidebar_nav_label]
+description = "サイドバーナビゲーションのaria-label"
+other = "サイドバー"
+
+[sidebar_home]
+description = "サイドバーのホームリンク"
+other = "ホーム"
+
 # フッター
 [footer_terms]
 other = "利用規約"

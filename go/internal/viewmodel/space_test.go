@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-func TestNewSpaceHeader(t *testing.T) {
+func TestNewSpace(t *testing.T) {
 	t.Parallel()
 
 	space := &model.Space{
@@ -17,13 +17,13 @@ func TestNewSpaceHeader(t *testing.T) {
 		Plan:       model.PlanFree,
 	}
 
-	header := viewmodel.NewSpaceHeader(space)
+	vm := viewmodel.NewSpace(space)
 
-	if header.Name != "マイスペース" {
-		t.Errorf("Name = %q, want %q", header.Name, "マイスペース")
+	if vm.Name != "マイスペース" {
+		t.Errorf("Name = %q, want %q", vm.Name, "マイスペース")
 	}
 
-	if header.Identifier != "my-space" {
-		t.Errorf("Identifier = %q, want %q", header.Identifier, "my-space")
+	if vm.Identifier != "my-space" {
+		t.Errorf("Identifier = %q, want %q", vm.Identifier, "my-space")
 	}
 }

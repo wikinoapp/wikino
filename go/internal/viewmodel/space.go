@@ -2,15 +2,15 @@ package viewmodel
 
 import "github.com/wikinoapp/wikino/go/internal/model"
 
-// SpaceHeader はレイアウトのヘッダーに表示するスペース情報です
-type SpaceHeader struct {
+// Space はテンプレートで表示するスペース情報です
+type Space struct {
 	Name       string
 	Identifier string
 }
 
-// NewSpaceHeader はモデルからSpaceHeaderを生成します
-func NewSpaceHeader(space *model.Space) SpaceHeader {
-	return SpaceHeader{
+// NewSpace はモデルからSpaceを生成します
+func NewSpace(space *model.Space) Space {
+	return Space{
 		Name:       space.Name,
 		Identifier: space.Identifier,
 	}

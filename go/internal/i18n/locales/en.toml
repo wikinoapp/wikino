@@ -423,6 +423,19 @@ other = "Breadcrumb"
 description = "Label for the home link in the breadcrumb"
 other = "Home"
 
+# Sidebar
+[sidebar_toggle_label]
+description = "Aria label for the sidebar toggle button"
+other = "Toggle sidebar"
+
+[sidebar_nav_label]
+description = "Aria label for the sidebar navigation"
+other = "Sidebar"
+
+[sidebar_home]
+description = "Home link in the sidebar"
+other = "Home"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"

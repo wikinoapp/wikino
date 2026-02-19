@@ -3,98 +3,103 @@ package page
 import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken       string
-	Title           string
-	Body            string
-	AutofocusTitle  bool
-	PageNumber      int32
-	SpaceIdentifier string
-	SpaceName       string
-	TopicName       string
-	TopicPath       templates.Path
-	TopicIconName   templates.IconName
+	CSRFToken string
+	Page      viewmodel.Page
+	Space     viewmodel.Space
+	Topic     viewmodel.Topic
 }
 
 // Edit はページ編集画面のコンテンツを表示します
 templ Edit(data EditPageData) {
-	@components.TopNav(components.TopNavData{
-		Items: []components.BreadcrumbItem{
-			{
-				Label: templates.T(ctx, "breadcrumb_home"),
-				Path:  templates.HomePath(),
-			},
-			{
-				Label: data.SpaceName,
-				Path:  templates.SpacePath(data.SpaceIdentifier),
-			},
-			{
-				Label: data.TopicName,
-				Path:  data.TopicPath,
-				IconName: data.TopicIconName,
-			},
-		},
-	})
+	<div class="py-2">
+		<div class="flex flex-col gap-2">
+			@components.TopNav(components.TopNavData{
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier),
+					},
+					{
+						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
+						IconName: data.Topic.IconName,
+					},
+				},
+			})
 
-	<div class="mx-auto w-full max-w-(--content-screen-max-width-medium) p-4">
-		<form
-			action={ templ.SafeURL(string(templates.GoPagePath(data.SpaceIdentifier, data.PageNumber))) }
-			class="form grid gap-6"
-			method="POST"
-		>
-			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-			<input type="hidden" name="_method" value="PATCH"/>
+			<div class="max-w-3xl w-full px-4 mx-auto">
+				<div class="card">
+					<div class="card-body px-4">
+						<form
+							action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier, data.Page.Number))) }
+							class="form grid gap-6"
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<input type="hidden" name="_method" value="PATCH"/>
 
-			<div class="grid gap-2">
-				<label for="page_title">
-					{ templates.T(ctx, "page_edit_title_label") }
-				</label>
-				<input
-					class="text-lg font-bold"
-					id="page_title"
-					name="title"
-					type="text"
-					value={ data.Title }
-					placeholder={ templates.T(ctx, "page_edit_title_placeholder") }
-					if data.AutofocusTitle {
-						autofocus
-					}
-				/>
+							<div class="grid gap-2">
+								<label for="page_title">
+									{ templates.T(ctx, "page_edit_title_label") }
+								</label>
+
+								<input
+									id="page_title"
+									name="title"
+									type="text"
+									value={ data.Page.Title }
+									if data.Page.AutofocusTitle() {
+										autofocus
+									}
+								/>
+							</div>
+
+							<div class="grid gap-2">
+								<label for="page_body">
+									{ templates.T(ctx, "page_edit_body_label") }
+								</label>
+
+								<textarea
+									class="min-h-[400px] font-mono text-sm"
+									id="page_body"
+									name="body"
+									if !data.Page.AutofocusTitle() {
+										autofocus
+									}
+								>{ data.Page.Body }</textarea>
+							</div>
+
+							<div class="flex items-center gap-2">
+								<button
+									class="btn-primary rounded-full w-fit"
+									data-attr:disabled="$isSubmitting == true"
+									type="submit"
+								>
+									@templates.Icon("floppy-disk-regular")
+									{ templates.T(ctx, "page_edit_publish_button") }
+								</button>
+
+								<a
+									class="btn-ghost rounded-full w-fit"
+									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, data.Page.Number))) }
+								>
+									{ templates.T(ctx, "page_edit_cancel") }
+								</a>
+							</div>
+						</form>
+					</div>
+				</div>
 			</div>
-
-			<div class="grid gap-2">
-				<label for="page_body">
-					{ templates.T(ctx, "page_edit_body_label") }
-				</label>
-				<textarea
-					class="min-h-[400px] font-mono text-sm"
-					id="page_body"
-					name="body"
-					placeholder={ templates.T(ctx, "page_edit_body_placeholder") }
-					if !data.AutofocusTitle {
-						autofocus
-					}
-				>{ data.Body }</textarea>
-			</div>
-
-			<div class="flex items-center gap-4">
-				<button
-					class="btn-primary"
-					type="submit"
-				>
-					{ templates.T(ctx, "page_edit_publish_button") }
-				</button>
-
-				<a
-					class="link-muted text-sm"
-					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, data.PageNumber))) }
-				>
-					{ templates.T(ctx, "page_edit_cancel") }
-				</a>
-			</div>
-		</form>
+		</div>
 	</div>
 }

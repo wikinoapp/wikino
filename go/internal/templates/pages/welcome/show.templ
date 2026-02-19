@@ -2,6 +2,7 @@ package welcome
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // ShowPageData はトップページに渡すデータ構造体です
@@ -188,7 +189,7 @@ templ Show(data ShowPageData) {
 }
 
 // featureItem は機能紹介の1項目を表示するコンポーネントです
-templ featureItem(title string, description string, iconName templates.IconName, imagePath string) {
+templ featureItem(title string, description string, iconName viewmodel.IconName, imagePath string) {
 	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
 		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
 			<div class="flex items-start space-x-4">
