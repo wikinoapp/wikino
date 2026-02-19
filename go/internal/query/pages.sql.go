@@ -242,6 +242,54 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 	return items, nil
 }
 
+const searchPageLocations = `-- name: SearchPageLocations :many
+SELECT p.title, t.name AS topic_name
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.discarded_at IS NULL
+WHERE p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND p.published_at IS NOT NULL
+  AND p.title IS NOT NULL
+  AND p.title ILIKE ALL($2::text[])
+ORDER BY p.modified_at DESC
+LIMIT 10
+`
+
+type SearchPageLocationsParams struct {
+	SpaceID string   `json:"space_id"`
+	Column2 []string `json:"column_2"`
+}
+
+type SearchPageLocationsRow struct {
+	Title     interface{} `json:"title"`
+	TopicName string      `json:"topic_name"`
+}
+
+// ページロケーションを検索する（Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ）
+func (q *Queries) SearchPageLocations(ctx context.Context, arg SearchPageLocationsParams) ([]SearchPageLocationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchPageLocations, arg.SpaceID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchPageLocationsRow{}
+	for rows.Next() {
+		var i SearchPageLocationsRow
+		if err := rows.Scan(&i.Title, &i.TopicName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePage = `-- name: UpdatePage :one
 UPDATE pages
 SET topic_id = $2,

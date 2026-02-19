@@ -21,6 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -214,6 +215,11 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 	)
+	pageLocationHandler := page_location.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+	)
 
 	r := chi.NewRouter()
 
@@ -289,6 +295,9 @@ func main() {
 
 		// ページ編集（/goプレフィックス付き）
 		r.Get("/go/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
+
+		// ページロケーション検索API（Wikiリンク補完用、/goプレフィックス付き）
+		r.Get("/go/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
