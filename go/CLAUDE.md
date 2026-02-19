@@ -818,6 +818,55 @@ templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string,
 - **可読性**: 呼び出し側でフィールド名が明確になる
 - **Go の慣習**: 引数が多い関数には構造体を使用するのが Go の標準的なパターン
 
+#### テンプレートデータ構造体と ViewModel の関係
+
+テンプレートに渡すデータ構造体（`EditPageData` など）では、モデルのフィールドを個別のプリミティブ値として展開せず、ViewModel を構成要素として使用する。
+
+- ✅ **ViewModel を構成要素にする**: `Page viewmodel.Page`
+- ❌ **モデルのフィールドを個別に並べない**: `Title string`, `Body string`, `PageNumber int32`
+
+モデルからテンプレート表示用データへの変換ロジック（フォールバック、デフォルト値の決定など）は ViewModel のコンストラクタに配置し、ハンドラーには書かない。派生的な判定（例: タイトルが空ならオートフォーカス）は ViewModel のメソッドとして提供する。
+
+**良い例**:
+
+```go
+// テンプレートデータ構造体にViewModelを使用
+type EditPageData struct {
+    CSRFToken string
+    Page      viewmodel.Page
+    Space     viewmodel.Space
+}
+
+// ハンドラーではViewModelのコンストラクタを呼ぶだけ
+pageVM := viewmodel.NewPageForEdit(pg, draftPage)
+```
+
+**悪い例**:
+
+```go
+// ❌ モデルのフィールドを個別に展開している
+type EditPageData struct {
+    CSRFToken      string
+    Title          string
+    Body           string
+    AutofocusTitle bool
+    PageNumber     int32
+}
+
+// ❌ ハンドラーで変換・判定ロジックを書いている
+var title string
+if draftPage != nil {
+    if draftPage.Title != nil {
+        title = *draftPage.Title
+    }
+} else {
+    if pg.Title != nil {
+        title = *pg.Title
+    }
+}
+autofocusTitle := title == ""
+```
+
 #### 詳細ドキュメント
 
 テンプレートの詳しい書き方、レイアウトの継承、コンポーネントの再利用、テストの書き方などは以下のドキュメントを参照してください：
