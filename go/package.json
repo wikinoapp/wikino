@@ -20,7 +20,7 @@
   },
   "packageManager": "pnpm@10.25.0",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.13",
+    "@tailwindcss/cli": "^4.2.0",
     "basecoat-css": "^0.3.11",
     "concurrently": "^9.1.2",
     "esbuild": "^0.27.3",
