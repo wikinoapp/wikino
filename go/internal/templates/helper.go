@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // ========================================
@@ -32,12 +33,17 @@ func Deref[T any](v *T) T {
 	return zero
 }
 
-// IconName はアイコン名を表す型です
-type IconName string
+// BoolToString は bool 値を "true" または "false" の文字列に変換します
+func BoolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
 
 // Icon はアイコン名からSVGを返す（templ.Component対応）
 // 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")
-func Icon(name IconName, class ...string) templ.Component {
+func Icon(name viewmodel.IconName, class ...string) templ.Component {
 	svg, ok := phosphorIcons[name]
 	if !ok {
 		svg, ok = customIcons[name]

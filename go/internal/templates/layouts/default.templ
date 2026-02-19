@@ -10,12 +10,14 @@ import (
 
 // DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
 type DefaultLayoutData struct {
-	Meta  viewmodel.PageMeta
-	Flash *session.FlashMessage
+	Meta                viewmodel.PageMeta
+	Flash               *session.FlashMessage
+	HideFooter          bool
+	HideSidebar         bool
+	DefaultSidebarClosed bool
 }
 
 // Default はデフォルトのレイアウトです
-// ヘッダーなし、フッターあり、サイドバーなしの縦方向レイアウトです
 templ Default(data DefaultLayoutData, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang={ templates.Locale(ctx) }>
@@ -26,12 +28,18 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 		<body class="bg-background">
 			@components.Flash(data.Flash)
 
+			if !data.HideSidebar {
+				@components.Sidebar(data.DefaultSidebarClosed)
+			}
+
 			<div class="flex-1 flex flex-col min-h-screen">
 				<main>
 					@content
 				</main>
 
-				@components.Footer()
+				if !data.HideFooter {
+					@components.Footer()
+				}
 			</div>
 		</body>
 	</html>

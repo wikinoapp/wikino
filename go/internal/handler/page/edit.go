@@ -9,7 +9,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -100,9 +99,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicName := topic.Name
-	topicPath := templates.TopicPath(space.Identifier, topic.Number)
-	topicIconName := templates.IconName(viewmodel.TopicVisibilityIconName(topic.Visibility))
+	topicVM := viewmodel.NewTopic(topic)
 
 	// DraftPageを取得（存在すればその内容を表示）
 	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
@@ -112,23 +109,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// フォームに表示するデータを決定
-	var title string
-	var body string
-	if draftPage != nil {
-		if draftPage.Title != nil {
-			title = *draftPage.Title
-		}
-		body = draftPage.Body
-	} else {
-		if pg.Title != nil {
-			title = *pg.Title
-		}
-		body = pg.Body
-	}
-
-	// オートフォーカス判定
-	autofocusTitle := title == ""
+	// 編集画面用のページViewModelを生成
+	pageVM := viewmodel.NewPageForEdit(pg, draftPage)
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -141,22 +123,20 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	flash := h.flashMgr.GetFlash(w, r)
 
 	// テンプレートをレンダリング
+	spaceVM := viewmodel.NewSpace(space)
+
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:       csrfToken,
-		Title:           title,
-		Body:            body,
-		AutofocusTitle:  autofocusTitle,
-		PageNumber:      pg.Number,
-		SpaceIdentifier: space.Identifier,
-		SpaceName:       space.Name,
-		TopicName:       topicName,
-		TopicPath:       topicPath,
-		TopicIconName:   topicIconName,
+		CSRFToken: csrfToken,
+		Page:      pageVM,
+		Space:     spaceVM,
+		Topic:     topicVM,
 	})
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta:                 meta,
+		Flash:                flash,
+		HideFooter:           true,
+		DefaultSidebarClosed: true,
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

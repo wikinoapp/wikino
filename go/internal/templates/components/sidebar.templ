@@ -1,0 +1,26 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// Sidebar はサイドバーを表示します
+// basecoat-css のサイドバーコンポーネントを使用しています
+// https://basecoatui.com/components/sidebar/
+// defaultClosed が true の場合、サイドバーは閉じた状態で表示されます
+templ Sidebar(defaultClosed bool) {
+	<aside class="sidebar" data-side="left" data-initial-open={ templates.BoolToString(!defaultClosed) } aria-hidden={ templates.BoolToString(defaultClosed) }>
+		<nav aria-label={ templates.T(ctx, "sidebar_nav_label") }>
+			<section class="scrollbar">
+				<ul>
+					<li>
+						<a href={ templ.SafeURL(string(templates.HomePath())) }>
+							@templates.Icon("house-regular", "size-4")
+							{ templates.T(ctx, "sidebar_home") }
+						</a>
+					</li>
+				</ul>
+			</section>
+		</nav>
+	</aside>
+}
