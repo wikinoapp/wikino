@@ -7,9 +7,10 @@ import (
 
 // BreadcrumbItem はパンくずリストの1項目を表します
 type BreadcrumbItem struct {
-	Label    string
-	Path     templates.Path
-	IconName viewmodel.IconName
+	Label     string
+	Path      templates.Path
+	IconName  viewmodel.IconName
+	AriaLabel string // アイコンのみ（Label が空）の場合に使用する aria-label
 }
 
 // TopNavData はトップナビゲーションに渡すデータ構造体です
@@ -62,7 +63,7 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 				<li class="inline-flex items-center gap-1.5">
 					if item.Path != "" {
 						if item.Label == "" && item.IconName != "" {
-							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) }>
+							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
 								@templates.Icon(item.IconName, "size-4 fill-gray-600")
 							</a>
 						} else {

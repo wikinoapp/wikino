@@ -21,8 +21,9 @@ templ Edit(data EditPageData) {
 			@components.TopNav(components.TopNavData{
 				Items: []components.BreadcrumbItem{
 					{
-						Path:     templates.HomePath(),
-						IconName: "house-regular",
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
 					},
 					{
 						Label: data.Space.Name,

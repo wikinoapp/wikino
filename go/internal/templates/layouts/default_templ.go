@@ -19,8 +19,8 @@ type DefaultLayoutData struct {
 	Meta                 viewmodel.PageMeta
 	Flash                *session.FlashMessage
 	HideFooter           bool
-	HideSidebar          bool
-	DefaultSidebarClosed bool
+	HideSidebar          bool // trueの場合、サイドバーを完全に非表示にする（DefaultSidebarClosedは無視される）
+	DefaultSidebarClosed bool // trueの場合、サイドバーを閉じた状態で初期表示する
 }
 
 // Default はデフォルトのレイアウトです
