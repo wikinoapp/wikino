@@ -21,7 +21,8 @@ module Rails
     sig { returns(ActiveSupport::ErrorReporter) }
     def error; end
 
-    sig { returns(ActiveSupport::Logger) }
+    # @version >= 7.1.0.rc1
+    sig { returns(ActiveSupport::BroadcastLogger) }
     def logger; end
 
     sig { returns(Pathname) }
