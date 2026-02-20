@@ -248,7 +248,8 @@ func resolveAndCreateLinkedPages(
 	return linkedPageIDs, pageLocations, nil
 }
 
-// findOrCreateLinkedPage はWikiリンクのリンク先ページを取得するか、存在しなければ作成する
+// findOrCreateLinkedPage はWikiリンクのリンク先ページを取得するか、存在しなければ作成する。
+// ページ番号のユニーク制約（space_id + number）違反時はリトライする。
 func findOrCreateLinkedPage(
 	ctx context.Context,
 	pageRepo *repository.PageRepository,
@@ -256,30 +257,38 @@ func findOrCreateLinkedPage(
 	topicID model.TopicID,
 	title string,
 ) (*model.Page, error) {
-	page, err := pageRepo.FindByTopicAndTitle(ctx, topicID, title, spaceID)
-	if err != nil {
-		return nil, err
-	}
-	if page != nil {
+	for i := 0; i < findOrCreateRetryLimit; i++ {
+		page, err := pageRepo.FindByTopicAndTitle(ctx, topicID, title, spaceID)
+		if err != nil {
+			return nil, err
+		}
+		if page != nil {
+			return page, nil
+		}
+
+		nextNumber, err := pageRepo.NextPageNumber(ctx, spaceID)
+		if err != nil {
+			return nil, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
+		}
+
+		page, err = pageRepo.CreateLinkedPage(ctx, repository.CreateLinkedPageInput{
+			SpaceID: spaceID,
+			TopicID: topicID,
+			Number:  nextNumber,
+			Title:   title,
+		})
+		if err != nil {
+			if isUniqueViolation(err) {
+				slog.WarnContext(ctx, "リンク先ページのユニーク制約違反によりリトライ", "attempt", i+1, "title", title)
+				continue
+			}
+			return nil, fmt.Errorf("リンク先ページの作成に失敗しました: %w", err)
+		}
+
 		return page, nil
 	}
 
-	nextNumber, err := pageRepo.NextPageNumber(ctx, spaceID)
-	if err != nil {
-		return nil, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
-	}
-
-	page, err = pageRepo.CreateLinkedPage(ctx, repository.CreateLinkedPageInput{
-		SpaceID: spaceID,
-		TopicID: topicID,
-		Number:  nextNumber,
-		Title:   title,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("リンク先ページの作成に失敗しました: %w", err)
-	}
-
-	return page, nil
+	return nil, fmt.Errorf("リンク先ページの作成が%d回のリトライ後も失敗しました", findOrCreateRetryLimit)
 }
 
 // uniqueTopicNames はWikiリンクキーからユニークなトピック名を抽出する
