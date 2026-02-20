@@ -242,6 +242,18 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 	return items, nil
 }
 
+const getNextPageNumber = `-- name: GetNextPageNumber :one
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1
+`
+
+// スペース内の次のページ番号を取得する
+func (q *Queries) GetNextPageNumber(ctx context.Context, spaceID string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNextPageNumber, spaceID)
+	var next_number int32
+	err := row.Scan(&next_number)
+	return next_number, err
+}
+
 const searchPageLocations = `-- name: SearchPageLocations :many
 SELECT p.title, t.name AS topic_name
 FROM pages p

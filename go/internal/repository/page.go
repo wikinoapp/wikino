@@ -133,6 +133,11 @@ func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.
 	return r.toModel(row), nil
 }
 
+// NextPageNumber はスペース内の次のページ番号を取得する
+func (r *PageRepository) NextPageNumber(ctx context.Context, spaceID model.SpaceID) (int32, error) {
+	return r.q.GetNextPageNumber(ctx, string(spaceID))
+}
+
 // CreateLinkedPageInput はWikiリンクから参照されるページ作成の入力パラメータ
 type CreateLinkedPageInput struct {
 	SpaceID model.SpaceID

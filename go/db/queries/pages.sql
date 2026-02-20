@@ -57,6 +57,10 @@ WHERE p.space_id = $1
 ORDER BY p.modified_at DESC
 LIMIT 10;
 
+-- name: GetNextPageNumber :one
+-- スペース内の次のページ番号を取得する
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
