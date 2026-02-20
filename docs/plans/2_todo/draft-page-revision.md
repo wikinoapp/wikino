@@ -160,6 +160,19 @@ type DraftPageRevision struct {
 - 自動保存ではDraftPageRevisionは作成されない
 - AIがMCP経由で下書きを編集した場合、編集後に自動的にDraftPageRevisionが作成される（AIが何を変更したかを下書きの編集履歴で差分として確認できる）
 
+### Usecase命名の方針
+
+UI上の用語「下書き保存」はユーザー向けの表現としてそのまま使用するが、内部的なUsecase名は操作の本質に合わせて `CreateDraftPageRevisionUsecase` とする。
+
+**背景**: 「下書き保存」という名前は「下書きを保存する」と読めるが、自動保存もDraftPageを更新（＝下書きを保存）している。「下書き保存」操作の本質はDraftPageRevisionの作成（スナップショットの作成）であるため、Usecase名はそれを反映する。
+
+| 層 | 名称 | 理由 |
+|----|------|------|
+| UI | 下書き保存 | ユーザーは自動保存を意識しないため、「保存ボタン＝下書き保存」は自然 |
+| Usecase | `CreateDraftPageRevisionUsecase` | 操作の本質（DraftPageRevisionの作成）を反映 |
+
+参考: 自動保存のUsecaseは `AutoSaveDraftPageUsecase`（`auto_save_draft_page.go`）。
+
 ## 採用しなかった方針
 
 <!--
