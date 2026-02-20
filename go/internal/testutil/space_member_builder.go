@@ -84,3 +84,68 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 
 	return model.SpaceMemberID(id)
 }
+
+// SpaceMemberBuilderDB はDBを直接使用するスペースメンバーテストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type SpaceMemberBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	spaceID  string
+	userID   string
+	role     int32
+	joinedAt time.Time
+	active   bool
+}
+
+// NewSpaceMemberBuilderDB は SpaceMemberBuilderDB を生成します
+func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
+	t.Helper()
+	now := time.Now()
+	return &SpaceMemberBuilderDB{
+		t:        t,
+		db:       db,
+		role:     0,
+		joinedAt: now,
+		active:   true,
+	}
+}
+
+// WithSpaceID はスペースIDを設定します
+func (b *SpaceMemberBuilderDB) WithSpaceID(spaceID model.SpaceID) *SpaceMemberBuilderDB {
+	b.spaceID = string(spaceID)
+	return b
+}
+
+// WithUserID はユーザーIDを設定します
+func (b *SpaceMemberBuilderDB) WithUserID(userID string) *SpaceMemberBuilderDB {
+	b.userID = userID
+	return b
+}
+
+// Build はスペースメンバーを作成し、IDを返します
+func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
+	b.t.Helper()
+
+	if b.spaceID == "" {
+		b.t.Fatal("SpaceMemberBuilderDB: spaceIDが設定されていません。WithSpaceID()を呼んでください")
+	}
+	if b.userID == "" {
+		b.t.Fatal("SpaceMemberBuilderDB: userIDが設定されていません。WithUserID()を呼んでください")
+	}
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 RETURNING id`,
+		b.spaceID, b.userID, b.role, b.joinedAt, b.active, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
+	}
+
+	return model.SpaceMemberID(id)
+}
