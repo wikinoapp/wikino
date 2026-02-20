@@ -140,3 +140,102 @@ func (b *PageBuilder) Build() model.PageID {
 
 	return model.PageID(id)
 }
+
+// PageBuilderDB はDBを直接使用するページテストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type PageBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	spaceID       string
+	topicID       string
+	number        int32
+	title         *string
+	body          string
+	bodyHTML      string
+	linkedPageIDs []string
+	modifiedAt    time.Time
+	publishedAt   *time.Time
+}
+
+// NewPageBuilderDB は PageBuilderDB を生成します
+func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
+	t.Helper()
+	now := time.Now()
+	title := "Test Page"
+	return &PageBuilderDB{
+		t:             t,
+		db:            db,
+		number:        1,
+		title:         &title,
+		body:          "Test body",
+		bodyHTML:      "<p>Test body</p>",
+		linkedPageIDs: []string{},
+		modifiedAt:    now,
+		publishedAt:   &now,
+	}
+}
+
+// WithSpaceID はスペースIDを設定します
+func (b *PageBuilderDB) WithSpaceID(spaceID model.SpaceID) *PageBuilderDB {
+	b.spaceID = string(spaceID)
+	return b
+}
+
+// WithTopicID はトピックIDを設定します
+func (b *PageBuilderDB) WithTopicID(topicID model.TopicID) *PageBuilderDB {
+	b.topicID = string(topicID)
+	return b
+}
+
+// WithNumber はページ番号を設定します
+func (b *PageBuilderDB) WithNumber(number int32) *PageBuilderDB {
+	b.number = number
+	return b
+}
+
+// WithTitle はタイトルを設定します
+func (b *PageBuilderDB) WithTitle(title string) *PageBuilderDB {
+	b.title = &title
+	return b
+}
+
+// WithPublishedAt は公開日時を設定します
+func (b *PageBuilderDB) WithPublishedAt(publishedAt time.Time) *PageBuilderDB {
+	b.publishedAt = &publishedAt
+	return b
+}
+
+// WithUnpublished は非公開状態に設定します
+func (b *PageBuilderDB) WithUnpublished() *PageBuilderDB {
+	b.publishedAt = nil
+	return b
+}
+
+// Build はページを作成し、IDを返します
+func (b *PageBuilderDB) Build() model.PageID {
+	b.t.Helper()
+
+	if b.spaceID == "" {
+		b.t.Fatal("PageBuilderDB: spaceIDが設定されていません。WithSpaceID()を呼んでください")
+	}
+	if b.topicID == "" {
+		b.t.Fatal("PageBuilderDB: topicIDが設定されていません。WithTopicID()を呼んでください")
+	}
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		 RETURNING id`,
+		b.spaceID, b.topicID, b.number, b.title, b.body, b.bodyHTML,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("ページ作成に失敗: %v", err)
+	}
+
+	return model.PageID(id)
+}

@@ -71,3 +71,61 @@ func (b *SpaceBuilder) Build() model.SpaceID {
 
 	return model.SpaceID(id)
 }
+
+// SpaceBuilderDB はDBを直接使用するスペーステストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type SpaceBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	identifier string
+	name       string
+	plan       int32
+	joinedAt   time.Time
+}
+
+// NewSpaceBuilderDB は SpaceBuilderDB を生成します
+func NewSpaceBuilderDB(t *testing.T, db *sql.DB) *SpaceBuilderDB {
+	t.Helper()
+	now := time.Now()
+	return &SpaceBuilderDB{
+		t:          t,
+		db:         db,
+		identifier: "test-space",
+		name:       "Test Space",
+		plan:       1,
+		joinedAt:   now,
+	}
+}
+
+// WithIdentifier は識別子を設定します
+func (b *SpaceBuilderDB) WithIdentifier(identifier string) *SpaceBuilderDB {
+	b.identifier = identifier
+	return b
+}
+
+// WithName は名前を設定します
+func (b *SpaceBuilderDB) WithName(name string) *SpaceBuilderDB {
+	b.name = name
+	return b
+}
+
+// Build はスペースを作成し、IDを返します
+func (b *SpaceBuilderDB) Build() model.SpaceID {
+	b.t.Helper()
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO spaces (identifier, name, plan, joined_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 RETURNING id`,
+		b.identifier, b.name, b.plan, b.joinedAt, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("スペース作成に失敗: %v", err)
+	}
+
+	return model.SpaceID(id)
+}
