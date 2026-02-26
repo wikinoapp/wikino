@@ -27,8 +27,10 @@ jobs:
       - name: Check templ generate
         run: |
           make templ-generate
-          make goimports
           git diff --exit-code internal/templates/
+
+      - name: Check goimports
+        run: make goimports-check
 
       - name: Check go mod tidy
         run: |
@@ -89,6 +91,8 @@ jobs:
 
       - name: Run tests
         run: make test
+        env:
+          CI: true
 
   build:
     name: Build
