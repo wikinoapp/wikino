@@ -266,11 +266,11 @@ viewmodel/topic.go → templates (Path, TopicPath を使用) ← 循環!
 
 ### 変更対象ファイル一覧
 
-| ファイル | 変更内容 |
-|---------|---------|
-| `internal/viewmodel/topic.go` | `Topic` 構造体、`NewTopic` コンストラクタを追加。`TopicVisibilityIconName` を非公開化 |
-| `internal/viewmodel/topic_test.go` | `NewTopic` のテストを追加 |
-| `internal/handler/page/edit.go` | `viewmodel.NewTopic` を使用するように変更 |
+| ファイル                                   | 変更内容                                                                                                                   |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `internal/viewmodel/topic.go`              | `Topic` 構造体、`NewTopic` コンストラクタを追加。`TopicVisibilityIconName` を非公開化                                      |
+| `internal/viewmodel/topic_test.go`         | `NewTopic` のテストを追加                                                                                                  |
+| `internal/handler/page/edit.go`            | `viewmodel.NewTopic` を使用するように変更                                                                                  |
 | `internal/templates/pages/page/edit.templ` | `EditPageData` の Topic 関連フィールドを `viewmodel.Topic` に統合。パンくずリストで `templates.TopicPath()` を直接呼び出し |
 
 ## 採用しなかった方針
@@ -343,7 +343,6 @@ ViewModel の `Path` フィールドに `string` 型でパスを保持し、`fmt
 -->
 
 - [x] **1-1**: [Go] viewmodel.Topic 構造体の導入とハンドラー・テンプレートの更新
-
   - `viewmodel/topic.go` に `Topic` 構造体と `NewTopic` コンストラクタを追加
   - `TopicVisibilityIconName` を非公開関数 `topicVisibilityIconName` に変更
   - `viewmodel/topic_test.go` に `NewTopic` のテストを追加

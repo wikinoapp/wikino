@@ -203,14 +203,14 @@ CREATE TABLE public.user_passwords (
 
 ### API 設計（ルーティング）
 
-| URL                       | メソッド | ハンドラー                    | 説明                           |
-| ------------------------- | -------- | ----------------------------- | ------------------------------ |
-| `/sign_up`                | GET      | `sign_up.New`                 | サインアップフォーム表示（メール入力） |
-| `/email_confirmation`     | POST     | `email_confirmation.Create`   | メール確認コード送信           |
-| `/email_confirmation/edit`| GET      | `email_confirmation.Edit`     | 確認コード入力フォーム表示     |
-| `/email_confirmation`     | PATCH    | `email_confirmation.Update`   | 確認コード検証                 |
-| `/accounts/new`           | GET      | `account.New`                 | アカウント作成フォーム表示     |
-| `/accounts`               | POST     | `account.Create`              | アカウント作成（ユーザー登録完了） |
+| URL                        | メソッド | ハンドラー                  | 説明                                   |
+| -------------------------- | -------- | --------------------------- | -------------------------------------- |
+| `/sign_up`                 | GET      | `sign_up.New`               | サインアップフォーム表示（メール入力） |
+| `/email_confirmation`      | POST     | `email_confirmation.Create` | メール確認コード送信                   |
+| `/email_confirmation/edit` | GET      | `email_confirmation.Edit`   | 確認コード入力フォーム表示             |
+| `/email_confirmation`      | PATCH    | `email_confirmation.Update` | 確認コード検証                         |
+| `/accounts/new`            | GET      | `account.New`               | アカウント作成フォーム表示             |
+| `/accounts`                | POST     | `account.Create`            | アカウント作成（ユーザー登録完了）     |
 
 ### コード設計
 
@@ -509,7 +509,6 @@ func ValidateAtname(atname string) error {
 -->
 
 - [x] **1-1**: [Go] EmailConfirmationRepository の実装
-
   - `internal/repository/email_confirmation_repository.go` の作成
   - `internal/model/email_confirmation.go` の作成
   - `db/queries/email_confirmations.sql` の作成
@@ -520,7 +519,6 @@ func ValidateAtname(atname string) error {
 ### フェーズ 2: ユースケース層の実装
 
 - [x] **2-1**: [Go] SendEmailConfirmationUsecase の実装
-
   - `internal/usecase/send_email_confirmation.go` の作成
   - 確認コード生成ロジック
   - メール送信処理（Resend API）
@@ -529,7 +527,6 @@ func ValidateAtname(atname string) error {
   - **想定行数**: 約 400 行（実装 200 行 + テスト 200 行）
 
 - [x] **2-2**: [Go] VerifyEmailConfirmationUsecase の実装
-
   - `internal/usecase/verify_email_confirmation.go` の作成
   - 確認コード検証ロジック
   - 有効期限チェック
@@ -537,7 +534,6 @@ func ValidateAtname(atname string) error {
   - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
 
 - [x] **2-3**: [Go] CreateAccountUsecase の実装
-
   - `internal/usecase/create_account.go` の作成
   - ユーザー作成ロジック（トランザクション管理）
   - パスワードハッシュ化
@@ -547,7 +543,6 @@ func ValidateAtname(atname string) error {
 ### フェーズ 3: サインアップフォームの実装
 
 - [x] **3-1**: [Go] サインアップフォームハンドラーの実装
-
   - `internal/handler/sign_up/handler.go` の作成
   - `internal/handler/sign_up/new.go` の作成
   - `internal/templates/pages/sign_up/new.templ` の作成
@@ -557,7 +552,6 @@ func ValidateAtname(atname string) error {
 ### フェーズ 4: メール確認機能の実装
 
 - [x] **4-1**: [Go] メール確認コード送信ハンドラーの実装
-
   - `internal/handler/email_confirmation/handler.go` の作成
   - `internal/handler/email_confirmation/create.go` の作成
   - `internal/handler/email_confirmation/request.go` の作成（CreateRequest）
@@ -566,14 +560,12 @@ func ValidateAtname(atname string) error {
   - **想定行数**: 約 500 行（実装 250 行 + テスト 250 行）
 
 - [x] **4-2**: [Go] 確認コード入力フォームハンドラーの実装
-
   - `internal/handler/email_confirmation/edit.go` の作成
   - `internal/templates/pages/email_confirmation/edit.templ` の作成
   - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
   - **想定行数**: 約 250 行（実装 100 行 + テスト 150 行）
 
 - [x] **4-3**: [Go] 確認コード検証ハンドラーの実装
-
   - `internal/handler/email_confirmation/update.go` の作成
   - `internal/handler/email_confirmation/request.go` の更新（UpdateRequest 追加）
   - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
@@ -582,7 +574,6 @@ func ValidateAtname(atname string) error {
 ### フェーズ 5: アカウント作成機能の実装
 
 - [x] **5-1**: [Go] アカウント作成フォームハンドラーの実装
-
   - `internal/handler/account/handler.go` の作成
   - `internal/handler/account/new.go` の作成
   - `internal/templates/pages/account/new.templ` の作成
@@ -590,7 +581,6 @@ func ValidateAtname(atname string) error {
   - **想定行数**: 約 300 行（実装 180 行 + テスト 120 行）
 
 - [x] **5-2**: [Go] アカウント作成ハンドラーの実装
-
   - `internal/handler/account/create.go` の作成
   - `internal/handler/account/request.go` の作成
   - アットネーム・パスワードバリデーション
@@ -601,14 +591,12 @@ func ValidateAtname(atname string) error {
 ### フェーズ 6: 統合とルーティング
 
 - [x] **6-1**: [Go] ルーティング設定とリバースプロキシミドルウェアの更新
-
   - ルーティング設定（`/sign_up`, `/email_confirmation/*`, `/accounts/*`）
   - リバースプロキシのホワイトリスト更新
   - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
   - **想定行数**: 約 200 行（実装 80 行 + テスト 120 行）
 
 - [x] **6-2**: [Go] 国際化（I18n）メッセージの追加
-
   - `internal/i18n/locales/ja.toml` の更新
   - `internal/i18n/locales/en.toml` の更新
   - サインアップ関連のすべてのメッセージを追加
@@ -618,7 +606,6 @@ func ValidateAtname(atname string) error {
 ### フェーズ 7: Rate Limiting の実装（後日対応）
 
 - [x] **7-1**: [Go] PostgreSQL ベースの Rate Limiter の実装
-
   - `internal/ratelimit/limiter.go` の作成
   - `db/migrations/20260202160000_create_rate_limits.sql` の作成
   - `db/queries/rate_limits.sql` の作成
@@ -629,7 +616,6 @@ func ValidateAtname(atname string) error {
   - **備考**: Redis を使わず PostgreSQL で実装し、依存関係をシンプルに保つ
 
 - [x] **7-2**: [Go] メール確認コード送信ハンドラーに Rate Limiting を追加
-
   - `internal/handler/email_confirmation/create.go` の更新
   - IP 単位: 5 回/時間
   - メールアドレス単位: 3 回/時間

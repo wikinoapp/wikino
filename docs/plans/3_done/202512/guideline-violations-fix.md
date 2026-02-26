@@ -43,11 +43,11 @@ Go版Wikinoプロジェクトにおいて、CLAUDE.mdおよびgo/CLAUDE.mdに記
 
 **違反箇所**:
 
-| ファイル | 現在の引数パターン |
-|---------|-------------------|
-| `/workspace/go/internal/templates/pages/sign_in/new.templ` | `ctx context.Context, formErrors *session.FormErrors, csrfToken string, turnstileSiteKey string` |
-| `/workspace/go/internal/templates/pages/sign_in_two_factor/new.templ` | `ctx context.Context, formErrors *session.FormErrors, csrfToken string` |
-| `/workspace/go/internal/templates/pages/sign_in_two_factor/recovery_new.templ` | `ctx context.Context, formErrors *session.FormErrors, csrfToken string` |
+| ファイル                                                                       | 現在の引数パターン                                                                               |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `/workspace/go/internal/templates/pages/sign_in/new.templ`                     | `ctx context.Context, formErrors *session.FormErrors, csrfToken string, turnstileSiteKey string` |
+| `/workspace/go/internal/templates/pages/sign_in_two_factor/new.templ`          | `ctx context.Context, formErrors *session.FormErrors, csrfToken string`                          |
+| `/workspace/go/internal/templates/pages/sign_in_two_factor/recovery_new.templ` | `ctx context.Context, formErrors *session.FormErrors, csrfToken string`                          |
 
 **理由**:
 
@@ -103,7 +103,6 @@ Go版Wikinoプロジェクトにおいて、CLAUDE.mdおよびgo/CLAUDE.mdに記
 ### フェーズ 1: templテンプレート引数パターンの修正
 
 - [x] **1-1**: sign_in/new.templ を構造体ベースに変更
-
   - `NewPageData`構造体を定義（CSRFToken, TurnstileSiteKey, FormErrors, Email）
   - テンプレート関数のシグネチャを `New(data NewPageData)` に変更
   - `context.Context`引数を削除（templが暗黙的に提供）
@@ -113,7 +112,6 @@ Go版Wikinoプロジェクトにおいて、CLAUDE.mdおよびgo/CLAUDE.mdに記
   - **想定行数**: 約 20 行
 
 - [x] **1-2**: sign_in_two_factor/new.templ を構造体ベースに変更
-
   - `NewPageData`構造体を定義（CSRFToken, FormErrors）
   - テンプレート関数のシグネチャを `New(data NewPageData)` に変更
   - `context.Context`引数を削除
@@ -123,7 +121,6 @@ Go版Wikinoプロジェクトにおいて、CLAUDE.mdおよびgo/CLAUDE.mdに記
   - **想定行数**: 約 15 行
 
 - [x] **1-3**: sign_in_two_factor/recovery_new.templ を構造体ベースに変更
-
   - `RecoveryNewPageData`構造体を定義（CSRFToken, FormErrors）
   - テンプレート関数のシグネチャを `RecoveryNew(data RecoveryNewPageData)` に変更
   - `context.Context`引数を削除
@@ -135,7 +132,6 @@ Go版Wikinoプロジェクトにおいて、CLAUDE.mdおよびgo/CLAUDE.mdに記
 ### フェーズ 2: 検証
 
 - [ ] **2-1**: ローカル環境での動作確認
-
   - ログインページ（`/sign_in`）が正常に表示されることを確認
   - 2FAページ（`/sign_in/two_factor/new`）が正常に表示されることを確認
   - **想定ファイル数**: 0 ファイル
