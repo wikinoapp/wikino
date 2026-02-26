@@ -108,6 +108,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
+          package-manager-cache: false
       - name: Install pnpm
         run: |
           npm install --global pnpm@10.12.3
@@ -155,6 +156,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
+          package-manager-cache: false
       - name: Install pnpm
         run: |
           npm install --global pnpm@10.12.3
