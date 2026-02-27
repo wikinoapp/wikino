@@ -127,3 +127,20 @@ db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
 .PHONY: sqlc-generate
 sqlc-generate: ## SQLクエリからGoコードを生成
 	sqlc generate
+
+# E2Eテストコマンド
+
+.PHONY: e2e
+e2e: db-setup-test ## E2Eテストを実行（使用例: make e2e）
+	@pnpm build:js
+	@bash scripts/run-e2e.sh ""
+
+.PHONY: e2e-file
+e2e-file: db-setup-test ## 特定のE2Eテストファイルを実行（使用例: make e2e-file FILE=tests/tab-indent.spec.ts）
+	@if [ -z "$(FILE)" ]; then \
+		echo "エラー: FILE変数を指定してください"; \
+		echo "使用例: make e2e-file FILE=tests/tab-indent.spec.ts"; \
+		exit 1; \
+	fi
+	@pnpm build:js
+	@bash scripts/run-e2e.sh "$(FILE)"
