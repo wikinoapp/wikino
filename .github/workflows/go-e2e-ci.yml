@@ -17,7 +17,6 @@ jobs:
     env:
       APP_ENV: test
       DATABASE_URL: postgres://postgres@localhost:5432/wikino_test?sslmode=disable
-      WIKINO_DATABASE_E2E_URL: postgres://postgres@localhost:5432/wikino_test?sslmode=disable
       WIKINO_PORT: "4201"
       WIKINO_DOMAIN: "localhost"
       WIKINO_COOKIE_DOMAIN: "localhost"
