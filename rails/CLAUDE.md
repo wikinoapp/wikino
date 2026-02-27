@@ -67,6 +67,8 @@ WikinoはWikiアプリケーションです。
 
 ## Railsクラス設計と依存関係
 
+📖 **詳細については [@rails/docs/architecture-guide.md](docs/architecture-guide.md) を参照してください。**
+
 ### クラス間の依存関係ルール
 
 | クラス     | 依存可能な先                                   |
@@ -83,32 +85,6 @@ WikinoはWikiアプリケーションです。
 | Service    | Job, Mailer, Record                            |
 | Validator  | Record                                         |
 | View       | Component, Form, Model                         |
-
-### ServiceとJobの依存関係について
-
-ServiceとJobの間には相互依存が存在しますが、以下のルールで循環依存を回避します：
-
-- **Service → Job**: `perform_later`メソッドによるキューへの追加のみ許可
-- **Job → Service**: ジョブ実行時のService呼び出しは許可
-- **重要**: ServiceからJobインスタンスの直接実行（`perform`メソッド）は禁止
-
-```ruby
-# ✅ 良い例：Serviceからジョブをキューに追加
-class Users::CreateService
-  def call
-    user = UserRecord.create!(...)
-    Users::SendWelcomeEmailJob.perform_later(user.id)  # キューに追加のみ
-  end
-end
-
-# ❌ 悪い例：Serviceからジョブを直接実行
-class Users::CreateService
-  def call
-    user = UserRecord.create!(...)
-    Users::SendWelcomeEmailJob.new.perform(user.id)  # 直接実行は禁止
-  end
-end
-```
 
 ### 命名規則
 
@@ -253,6 +229,8 @@ sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
 
 ### RSpec
 
+📖 **詳細については [@rails/docs/testing-guide.md](docs/testing-guide.md) を参照してください。**
+
 ```ruby
 # ❌ context, let, described_classは使用しない
 context "when xxx" do
@@ -332,6 +310,8 @@ const response = await post("/api/endpoint", {
 **重要**: Railsアプリケーション内でのHTTPリクエストには、`fetch`ではなく`@rails/request.js`パッケージを使用すること。CSRFトークンの管理が自動化され、Railsとの統合がよりシームレスになります。
 
 ## サービスクラスのルール
+
+📖 **詳細については [@rails/docs/architecture-guide.md](docs/architecture-guide.md) を参照してください。**
 
 ### サービスクラスを使用する場合
 
@@ -567,6 +547,8 @@ bin/check
 
 ## セキュリティガイドライン
 
+📖 **詳細については [@rails/docs/security-guide.md](docs/security-guide.md) を参照してください。**
+
 Web アプリケーションのセキュリティは**最優先事項**です。
 
 ### 基本対策
@@ -579,10 +561,6 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 
 ## 重要な原則
 
-- ネストしたトランザクションを避ける
-- レコードのコールバックを避ける
-- View/Componentでのデータベースアクセスを防ぐ
-- 問題が解決されるなら、レイヤーを跨いだ依存も許可
 - 説明的な命名規則
 - コメントは日本語で記載
 - 1行100文字以内
@@ -592,3 +570,6 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 
 - **プロジェクト全体のガイド**: [/CLAUDE.md](../CLAUDE.md) - モノレポ構造、共通インフラ、Rails から Go への移行について
 - **Go 版のガイド**: [/go/CLAUDE.md](../go/CLAUDE.md) - Go 版の技術スタック、開発環境、コーディング規約
+- [@rails/docs/architecture-guide.md](docs/architecture-guide.md) - アーキテクチャガイド（クラス設計と依存関係、サービスクラスのルール）
+- [@rails/docs/testing-guide.md](docs/testing-guide.md) - テストガイド（RSpec のコーディング規約）
+- [@rails/docs/security-guide.md](docs/security-guide.md) - セキュリティガイドライン

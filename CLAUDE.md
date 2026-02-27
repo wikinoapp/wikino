@@ -181,6 +181,17 @@ docker compose up
   - コーディング規約（Ruby、ActiveRecord、マイグレーション、型定義、RSpec、I18n、JavaScript/TypeScript）
   - サービスクラスのルール
   - セキュリティガイドライン
+- [@rails/docs/architecture-guide.md](/workspace/rails/docs/architecture-guide.md) - アーキテクチャガイド
+  - クラス間の依存関係ルール
+  - サービスクラスのルール（使い分け、トランザクション処理）
+- [@rails/docs/testing-guide.md](/workspace/rails/docs/testing-guide.md) - テストガイド
+  - RSpec のコーディング規約
+  - システムテストの待機処理
+- [@rails/docs/security-guide.md](/workspace/rails/docs/security-guide.md) - セキュリティガイドライン
+  - CSRF対策
+  - XSS対策
+  - SQLインジェクション対策
+  - 認証・Strong Parameters
 
 ## 開発ワークフロー
 
