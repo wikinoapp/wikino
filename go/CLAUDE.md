@@ -288,21 +288,21 @@ go install github.com/新しいツール/cmd/ツール名
 
 #### 例: golangci-lint の追加
 
-golangci-lint v2.6.2 を追加する例：
+golangci-lint v2.7.2 を追加する例：
 
 ```sh
 # 1. tools.go に追加（既に追加済み）
 # _ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
 # 2. 特定のバージョンを取得
-go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.2
+go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2
 
 # 3. インストール
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
 # 4. バージョン確認
 golangci-lint version
-# => golangci-lint has version 2.6.2 built with go1.25.4 ...
+# => golangci-lint has version 2.7.2 built with go1.25.4 ...
 ```
 
 ### ホスト側で実行するコマンド (Claude Code による実行は不要)
@@ -425,11 +425,14 @@ make lint
 # 関数シグネチャの変更やインポートエラーを早期に検出
 go build ./...
 
-# 5. テストを実行
+# 5. JS/TSファイルを編集した場合は、Oxfmtでフォーマット
+make -C /workspace fmt
+
+# 6. テストを実行
 APP_ENV=test make test
 
 # すべてを一度に実行するワンライナー:
-make templ-generate && go mod tidy && make fmt && make lint && go build ./... && APP_ENV=test make test
+make templ-generate && go mod tidy && make fmt && make lint && go build ./... && make -C /workspace fmt && APP_ENV=test make test
 ```
 
 #### golangci-lint の使い方
@@ -705,7 +708,7 @@ HTTP リクエストを処理するハンドラーは、統一された規則に
 - **統一された命名規則**: ファイル名とメソッド名に一貫性を持たせる
 - **例外なくディレクトリ化**: 単独のエンドポイントでも必ずディレクトリを作成（例: `health/`, `home/`）
 
-#### 標準ファイル名（10 種類のみ）
+#### 標準ファイル名（9 種類のみ）
 
 リソースディレクトリ内には、以下の標準的なファイル名**のみ**を使用します：
 
@@ -1439,12 +1442,12 @@ make test-pkg PKG=internal/handler/password_reset
 1. **`main_test.go` を作成**: パッケージに `main_test.go` を追加し、`testutil.SetupTestMain(m)` を呼び出す
 2. **`SetupTx(t)` を使用**: トランザクション内で実行するテストでは `testutil.SetupTx(t)` を使用
 3. **`GetTestDB()` を使用**: Usecaseなどトランザクション管理を自前で行うテストでは `testutil.GetTestDB()` を使用
-**`SetupTx` と `GetTestDB` の使い分け**:
+   **`SetupTx` と `GetTestDB` の使い分け**:
 
-| ヘルパー | 用途 | トランザクション |
-|---------|------|--------------|
-| `SetupTx(t)` | Handler、Repository、Validatorのテスト | 自動（テスト終了時にロールバック） |
-| `GetTestDB()` | Usecaseのテスト（自前でトランザクション管理） | 手動（Usecase内で管理） |
+| ヘルパー      | 用途                                          | トランザクション                   |
+| ------------- | --------------------------------------------- | ---------------------------------- |
+| `SetupTx(t)`  | Handler、Repository、Validatorのテスト        | 自動（テスト終了時にロールバック） |
+| `GetTestDB()` | Usecaseのテスト（自前でトランザクション管理） | 手動（Usecase内で管理）            |
 
 ### テンプレートレンダリングのテスト
 

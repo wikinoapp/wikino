@@ -17,6 +17,10 @@
 **仕様書との関係**:
 - 新しい機能の場合: タスク完了後に `docs/specs/` に仕様書を作成する
 - 既存機能の変更の場合: 「仕様書」セクションに対応する仕様書へのリンクを記載し、タスク完了後に仕様書を更新する
+
+**公開時の注意事項**:
+- 開発用ドメイン名を記載する場合は `example.dev` を使用してください（実際のドメイン名は記載しない）
+- 環境変数の値はサンプル値のみ記載し、実際の値は含めないでください
 -->
 
 ## 仕様書
@@ -74,14 +78,14 @@
 ## 実装ガイドラインの参照
 
 <!--
-**重要**: 設計を行う前に、対象プラットフォームのガイドラインを必ず確認してください。
+**重要**: 作業計画書を作成する前に、対象プラットフォームのガイドラインを必ず確認してください。
 特に以下の点に注意してください：
 - ディレクトリ構造・ファイル名の命名規則
 - コーディング規約
 - アーキテクチャパターン
 
 ガイドラインに沿わない設計は、実装時にそのまま実装されてしまうため、
-設計の段階でガイドラインに準拠していることを確認してください。
+作業計画書作成の段階でガイドラインに準拠していることを確認してください。
 -->
 
 ### Go版の実装の場合
@@ -89,18 +93,21 @@
 以下のガイドラインに従って設計・実装を行ってください：
 
 - [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - 全体的なコーディング規約
-- [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン（**ファイル名は標準の8種類のみ**）
 - [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド
-- [@go/docs/validation-guide.md](/workspace/go/docs/validation-guide.md) - バリデーションガイド
+- [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン（**ファイル名は標準の9種類のみ**）
 - [@go/docs/i18n-guide.md](/workspace/go/docs/i18n-guide.md) - 国際化ガイド
 - [@go/docs/security-guide.md](/workspace/go/docs/security-guide.md) - セキュリティガイドライン
 - [@go/docs/templ-guide.md](/workspace/go/docs/templ-guide.md) - templテンプレートガイド
+- [@go/docs/validation-guide.md](/workspace/go/docs/validation-guide.md) - バリデーションガイド
 
 ### Rails版の実装の場合
 
 以下のガイドラインに従って設計・実装を行ってください：
 
 - [@rails/CLAUDE.md](/workspace/rails/CLAUDE.md) - 全体的なコーディング規約
+- [@rails/docs/architecture-guide.md](/workspace/rails/docs/architecture-guide.md) - アーキテクチャガイド（クラス設計と依存関係、サービスクラスのルール）
+- [@rails/docs/testing-guide.md](/workspace/rails/docs/testing-guide.md) - テストガイド（RSpec のコーディング規約）
+- [@rails/docs/security-guide.md](/workspace/rails/docs/security-guide.md) - セキュリティガイドライン
 
 ## 設計
 
@@ -120,6 +127,8 @@
 - 設計に固執して実装の質を下げるよりも、実装で得た知見を設計に反映する方が重要
 - 変更した場合は「採用しなかった方針」セクションに変更前の方針と変更理由を記録する
 -->
+
+[必要に応じて設計の詳細を記述]
 
 ## 採用しなかった方針
 
@@ -174,7 +183,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 -->
 
 - [ ] **1-1**: [Go] [タスク名]
-
   - [サブタスク 1]
   - [サブタスク 2]
   - **想定ファイル数**: 約 N ファイル（実装 N + テスト N）
@@ -189,7 +197,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 ### フェーズ 2: [フェーズ名]
 
 - [ ] **2-1**: [Go] [タスク名]
-
   - [サブタスク 1]
   - [サブタスク 2]
   - **想定ファイル数**: 約 N ファイル（実装 N + テスト N）
@@ -202,7 +209,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 ### フェーズ 3: [フェーズ名]
 
 - [ ] **3-1**: [Go] [タスク名]
-
   - **想定ファイル数**: 約 N ファイル（実装 N + テスト N）
   - **想定行数**: 約 N 行（実装 N 行 + テスト N 行）
 

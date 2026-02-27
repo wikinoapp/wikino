@@ -194,29 +194,29 @@ func Icon(name string, class ...string) templ.Component {
 
 **Phosphor Icons（15個）**:
 
-| アイコン名 | 用途 |
-|---|---|
-| `arrow-arc-left-regular` | 戻るボタン |
-| `arrow-left` | 左矢印 |
-| `arrow-right` | 右矢印 |
-| `check-circle-regular` | チェックマーク |
-| `error` | エラー表示（Phosphor の warning-diamond） |
-| `globe-regular` | グローバル/言語 |
-| `info-regular` | 情報表示 |
-| `link-regular` | リンク |
-| `markdown-logo-regular` | Markdownロゴ |
-| `paper-plane-tilt-regular` | 送信 |
-| `rocket-launch-regular` | ロケット |
-| `share-network-regular` | 共有 |
-| `sign-in-regular` | サインイン |
-| `success` | 成功表示（Phosphor の check-circle） |
-| `warning` | 警告表示 |
+| アイコン名                 | 用途                                      |
+| -------------------------- | ----------------------------------------- |
+| `arrow-arc-left-regular`   | 戻るボタン                                |
+| `arrow-left`               | 左矢印                                    |
+| `arrow-right`              | 右矢印                                    |
+| `check-circle-regular`     | チェックマーク                            |
+| `error`                    | エラー表示（Phosphor の warning-diamond） |
+| `globe-regular`            | グローバル/言語                           |
+| `info-regular`             | 情報表示                                  |
+| `link-regular`             | リンク                                    |
+| `markdown-logo-regular`    | Markdownロゴ                              |
+| `paper-plane-tilt-regular` | 送信                                      |
+| `rocket-launch-regular`    | ロケット                                  |
+| `share-network-regular`    | 共有                                      |
+| `sign-in-regular`          | サインイン                                |
+| `success`                  | 成功表示（Phosphor の check-circle）      |
+| `warning`                  | 警告表示                                  |
 
 **カスタムアイコン（2個）**:
 
-| アイコン名 | 出典 | 用途 |
-|---|---|---|
-| `logo` | Wikino独自 | Wikinoロゴ |
+| アイコン名    | 出典                             | 用途                   |
+| ------------- | -------------------------------- | ---------------------- |
+| `logo`        | Wikino独自                       | Wikinoロゴ             |
 | `caret-right` | Phosphor Icons（Boldバリアント） | パンくずリストの区切り |
 
 **注**: `caret-right` は Phosphor Icons の Bold バリアントのため、`icons_phosphor.go` に含める。`icons_custom.go` には `logo` のみとなる。
@@ -295,7 +295,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 -->
 
 - [x] **1-1**: [Go] アイコンSVGデータをライブラリごとに別ファイルに分離
-
   - `internal/templates/icons_phosphor.go` を新規作成し、Phosphor Icons のSVGデータを移動
   - `internal/templates/icons_custom.go` を新規作成し、カスタムアイコンのSVGデータを移動
   - `internal/templates/helper.go` の `Icon()` 関数から内部マップを削除し、新しいマップを参照するように変更

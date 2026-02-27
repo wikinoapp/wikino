@@ -2,6 +2,13 @@ name: Rails CI
 
 on:
   push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "rails/**"
+      - ".github/workflows/rails-ci.yml"
+  pull_request:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
@@ -96,28 +103,6 @@ jobs:
           working-directory: rails
       - run: bin/erb_lint --lint-all
 
-  prettier:
-    name: Prettier
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rails
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 20.16.0
-      - name: Install pnpm
-        run: |
-          npm install --global pnpm@10.12.3
-      - name: Install npm packages
-        run: |
-          pnpm install
-      - name: Prettier check
-        run: |
-          pnpm prettier . --check
-
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
@@ -130,6 +115,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
+          package-manager-cache: false
       - name: Install pnpm
         run: |
           npm install --global pnpm@10.12.3
@@ -177,6 +163,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
+          package-manager-cache: false
       - name: Install pnpm
         run: |
           npm install --global pnpm@10.12.3
@@ -202,4 +189,4 @@ jobs:
         if: failure()
         with:
           name: capybara-screenshots
-          path: "**/tmp/capybara/"
+          path: "rails/**/tmp/capybara/"

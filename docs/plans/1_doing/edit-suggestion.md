@@ -26,7 +26,7 @@
 - 新しい機能の場合: タスク完了後に作成予定の仕様書のパスを記載してください
 -->
 
-- [編集提案 仕様書](../specs/edit_suggestion/overview.md)（タスク完了後に作成予定）
+- [編集提案 仕様書](../specs/suggestion/overview.md)（タスク完了後に作成予定）
 
 ## 概要
 
@@ -132,9 +132,93 @@
   - コード設計（パッケージ構成、主要な構造体など）
 -->
 
+### 命名
+
+- **モデル名（英語）**: Suggestion, SuggestionPage, SuggestionPageRevision, SuggestionComment
+- **テーブル名**: `suggestions`, `suggestion_pages`, `suggestion_page_revisions`, `suggestion_comments`
+- **日本語UI表示名**: 編集提案
+
+Google Docsの「Suggestions」と同じ用語を採用した。日本語名は「提案」だと一般名詞すぎて固有名詞感がないため、「編集提案」を維持する。
+
 ### 関連モデル
 
 編集提案機能は、ページのリビジョン管理システム（Page, PageRevision, DraftPage）を基盤として構築する。ページモデルの詳細（データモデル、編集フロー、データ構造、データフローなど）は [ページ編集画面のGo移行](page-edit-go-migration.md) の「設計」セクションを参照。
+
+### Gitモデルとの対応
+
+編集提案機能はGitHubのPull Requestモデルを参考に設計する。Gitの概念とWikinoのモデルの対応は以下の通り:
+
+| Git                   | Wikino                 | 説明                                     |
+| --------------------- | ---------------------- | ---------------------------------------- |
+| remote main branch    | Page                   | 公開済みのページ（最新の正式な内容）     |
+| local working tree    | DraftPage              | スペースメンバーごとの個人の下書き       |
+| remote feature branch | SuggestionPage         | 編集提案に紐づくページの変更内容（共有） |
+| commits on branch     | SuggestionPageRevision | 編集提案ページへの変更履歴               |
+| Pull Request          | Suggestion             | 変更のレビュー・反映を管理する単位       |
+
+**重要な設計判断**: SuggestionPageがGitの「リモートフィーチャーブランチ」に相当するリソースとして機能する。これにより、複数のスペースメンバーが同じ編集提案に対して変更を加えることが可能になる。DraftPageはあくまで個人のワーキングツリーであり、編集提案の共有リソースとは分離する。
+
+### 編集提案の共同編集
+
+編集提案は複数のスペースメンバーが共同で作成・編集できる設計とする。
+
+#### DraftPageと編集提案の連携
+
+編集提案のページを編集する際は、既存のDraftPageの仕組みを再利用する。`draft_pages` テーブルに `suggestion_page_id`（nullable FK → `suggestion_pages`）を追加し、DraftPageが「どのブランチをチェックアウトしているか」を表現する。
+
+| `suggestion_page_id` | DraftPageの役割      | 自動保存先 | 内容の初期化元                         |
+| -------------------- | -------------------- | ---------- | -------------------------------------- |
+| NULL                 | 通常のページ編集     | DraftPage  | Pageの現在のコンテンツ                 |
+| NOT NULL             | 編集提案のページ編集 | DraftPage  | SuggestionPageRevisionの最新リビジョン |
+
+DraftPageのユニーク制約は `[space_member_id, page_id]` のままとする（`suggestion_page_id` を含めない）。これにより、同一ページに対して通常編集と編集提案の編集を同時に持つことはできない。Gitの「ワーキングツリーは同時に1つのブランチしかチェックアウトできない」のと同じ制約であり、概念モデルがシンプルに保たれる。
+
+#### 通常編集 → 編集提案の編集への切り替え
+
+編集提案からページを編集しようとしたとき、既に通常編集のDraftPage（`suggestion_page_id` がNULL）が存在する場合は確認画面を表示する:
+
+- **編集提案の内容で編集を続ける**: 既存のDraftPageの内容を破棄し、SuggestionPageRevisionの最新リビジョンの内容でDraftPageを初期化する。`suggestion_page_id` を設定する
+- **もとの下書きを保持する**: 編集提案の編集を開始しない。既存のDraftPageはそのまま
+
+#### 編集提案の編集 → 通常編集への切り替え
+
+編集提案のページ編集が完了（SuggestionPageRevisionを作成）した後、DraftPageを削除するか `suggestion_page_id` をNULLにクリアする。次回の通常編集時にはPageの内容から新しいDraftPageが作られる。
+
+#### 編集提案ページ編集時のページ編集画面
+
+DraftPageが編集提案にリンクされている場合（`suggestion_page_id` がNOT NULL）、ページ編集画面の表示が変わる:
+
+- 「この下書きへの保存は編集提案 #12345 に反映されます」というメッセージを表示
+- 「公開する」ボタンは非表示にする（編集提案にリンク中は直接公開できない）
+- 代わりに「編集提案を更新」ボタンを表示 → SuggestionPageRevision作成
+- 「下書き保存」ボタンは通常通り表示 → DraftPageRevision作成（編集提案の文脈での下書き保存）
+
+#### 初期リリースの範囲
+
+初期リリースでは以下のフローで運用する:
+
+1. 提案者が自分のDraftPageから編集提案を作成する
+2. レビュアーはコメントでフィードバックする
+3. 提案者（またはスペースメンバー）が編集提案詳細画面からページの編集を開始する
+4. ページ編集画面でDraftPageに自動保存されつつ編集し、「編集提案を更新」でSuggestionPageRevisionを作成する
+
+#### 将来の拡張
+
+- Botメンバーによる編集: API経由でSuggestionPageRevisionを直接作成し、AIによる編集提案の更新を可能にする
+- 同時編集: CRDTの導入後、複数のスペースメンバーが同じ編集提案ページをリアルタイムで同時編集できるようにする
+
+### 未決定事項
+
+#### ベースページの乖離（マージコンフリクト）
+
+編集提案作成後にベースとなるPageが更新された場合の扱い。`suggestion_pages.page_revision_id` でベースとなるリビジョンを記録しているため、ベースが古くなったことは検出できる。
+
+- 初期リリースでは「ベースが変わっていても強制的に上書き反映」とする
+- 将来的にはコンフリクト検出・手動解決のUIを追加する可能性がある
+
+#### 同一編集提案ページの同時編集
+
+同じ編集提案のページを複数のスペースメンバーが同時に編集した場合の競合。通常のページの同時編集と同じ問題であり、将来的にはCRDTで解決する計画。初期は「最後に保存した人が勝つ（last-write-wins）」とする。
 
 ### ステータス
 
@@ -147,34 +231,43 @@
 
 ### テーブル設計
 
-- 編集提案テーブル (`edit_suggestions`)
+- 編集提案テーブル (`suggestions`)
   - id, space_id, topic_id, created_space_member_id, title, description, status, applied_at, created_at, updated_at
   - インデックス: status, [topic_id, status]
-- 編集提案ページリビジョンテーブル (`edit_suggestion_page_revisions`)
-  - id, space_id, edit_suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
-  - インデックス: [edit_suggestion_page_id, created_at]
-- 編集提案ページテーブル (`edit_suggestion_pages`)
-  - id, space_id, edit_suggestion_id, page_id, page_revision_id, latest_revision_id, created_at, updated_at
+- 編集提案ページリビジョンテーブル (`suggestion_page_revisions`)
+  - id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
+  - インデックス: [suggestion_page_id, created_at]
+- 編集提案ページテーブル (`suggestion_pages`)
+  - id, space_id, suggestion_id, page_id, page_revision_id, latest_revision_id, created_at, updated_at
   - page_id, page_revision_idはoptional（新規ページ作成の場合）
-  - ユニークインデックス: [edit_suggestion_id, page_id]
-- 編集提案コメントテーブル (`edit_suggestion_comments`)
-  - id, space_id, edit_suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
+  - ユニークインデックス: [suggestion_id, page_id]
+- 編集提案コメントテーブル (`suggestion_comments`)
+  - id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
+
+#### 既存テーブルの変更
+
+- 下書きページテーブル (`draft_pages`) にカラムを追加
+  - `suggestion_page_id` (nullable, FK → `suggestion_pages`): 編集提案のページ編集時にリンクする。NULLなら通常のページ編集、NOT NULLなら編集提案のページ編集
+  - ユニーク制約 `[space_member_id, page_id]` は変更しない
 
 ### UI設計
 
 トピック詳細画面:
+
 - トピック画面上部に「ページ」と「編集提案」のタブを表示
 - GitHubのCode/Pull requestsタブと同様のUI
 - デフォルトは「ページ」が選択されており、トピック内のページが一覧で表示される (現在のトピック詳細画面と同じ)
 - 「編集提案」を選択すると、編集提案一覧画面が表示される
 
 編集提案一覧画面:
+
 - スペースメンバーが作成した編集提案をリスト表示
 - GitHubのようにオープン/クローズで絞り込み可能
   - オープン表示：下書き・オープンステータスの編集提案
   - クローズ表示：反映済み・クローズステータスの編集提案
 
 編集提案詳細画面:
+
 - 「会話」「編集したページ」の2つのタブ
 - デフォルトは「会話」タブがアクティブ
 - 「会話」タブ：編集提案の概要とコメント表示
@@ -182,6 +275,7 @@
 - 「反映する」ボタン（権限がある場合）
 
 ページ編集画面:
+
 - エディタの下に「公開する」と「下書き保存」ボタンが表示されている
 - 「公開する」ボタンを押すと:
   - 新しいPageRevisionが作成されて編集内容が公開される
@@ -191,6 +285,7 @@
   - 下書き詳細画面にリダイレクトする
 
 下書き詳細画面 (`GET /s/:space_id/topics/:topic_id/draft`):
+
 - 特定のトピック内の下書きページが表示される
 - 上部: 下書きページのタイトル
   - タイトルの左にあるチェックボックスを選択すると上に「編集提案する...」というボタンが表示される
@@ -199,9 +294,11 @@
 - 下部：中部で編集履歴を選択すると差分が表示される
 
 下書き一覧画面 (`GET /drafts`):
+
 - 参加しているスペースのトピックごとに下書き保存しているページが一覧表示される
 
 編集提案作成画面:
+
 - トピック内の自分の下書きページが表示される
 - 編集提案したい下書きページを選択し、タイトルと概要を入力し「作成する」ボタンを押すと編集提案が作成される
 
@@ -227,6 +324,56 @@
 - トピック変更が必要な場合は、権限のあるユーザーが直接編集で対応すれば十分である
 
 将来的にトピック変更対応を追加することは可能だが、初期段階では内容変更に集中し、シンプルな設計を維持する。
+
+### DraftPageの変更を暗黙的に編集提案に反映する案
+
+DraftPageがスペースメンバーごとに作成される設計を活かし、「DraftPageが編集されたら暗黙的にSuggestionPageRevisionを自動作成する」という案を検討した。DraftPageと編集提案の間に明示的なリンクを持たず、DraftPageの更新をトリガーとして編集提案のリビジョンを作成する方式。
+
+**不採用の理由**:
+
+- DraftPageの更新が通常の編集フロー用なのか編集提案フロー用なのかを区別できない。明示的なリンク（`suggestion_page_id`）がないため、「この下書きの変更はどこに反映されるのか」が不明確になる
+- 代わりに、`draft_pages` テーブルに `suggestion_page_id`（nullable FK）を追加し、DraftPageが「どのブランチをチェックアウトしているか」を明示する方式を採用した（設計セクションの「DraftPageと編集提案の連携」を参照）
+
+### suggestion_pages と draft_pages の中間テーブルを設ける案
+
+`suggestion_pages` と `draft_pages` の間に多対多の中間テーブルを設け、スペースメンバーごとにレコードを作成する案を検討した。
+
+**不採用の理由**:
+
+- DraftPageから見ると、同時に複数の編集提案にリンクされるケースは実運用で起きづらい（下書きを保存したときに「どの編集提案に反映されるのか」が曖昧になるため）。実質的にDraftPage側は1対1の関係になる
+- 1対1であれば、中間テーブルを設けるよりも `draft_pages` に nullable FK（`suggestion_page_id`）を追加する方がシンプル
+- nullable FK方式でも、SuggestionPage側からは複数のDraftPage（異なるスペースメンバー）がリンクされる多対1の関係を表現できる
+
+### DraftPageのユニーク制約を拡張する案
+
+`draft_pages` のユニーク制約を `[space_member_id, page_id]` から `[space_member_id, page_id, suggestion_page_id]` に変更し、同一ページに対して通常編集と編集提案の編集を同時に持てるようにする案を検討した。
+
+**不採用の理由**:
+
+- 同一ページに対して複数のDraftPageが存在すると、ユーザーにとって「どの下書きがどの目的か」の管理が複雑になる
+- Gitでも1つのワーキングツリーは同時に1つのブランチしかチェックアウトできない。同じ制約をWikinoにも適用する方が概念モデルがシンプルになる
+- 編集提案の編集を始める際に確認画面を表示し、既存の下書きを保持するか編集提案の内容に切り替えるかをユーザーに選択してもらうことで、ユニーク制約を変更せずに対応できる
+
+### `edit_suggestions` というテーブル名
+
+当初テーブル名を `edit_suggestions` としていたが、`suggestions` にリネームした。
+
+**リネームの理由**:
+
+- `edit_suggestions` は正確だが冗長。関連テーブル名（`edit_suggestion_pages`, `edit_suggestion_page_revisions`）も長くなる
+- Google Docsが同種の機能に「Suggestions」という用語を使っており、英語圏でも通じやすい
+- Wikinoの文脈では「suggestions」= ページ編集の提案であることが明確なため、`edit_` プレフィックスがなくても曖昧にならない
+- 日本語名は「編集提案」を維持する。「提案」だけでは一般名詞すぎて固有名詞感がなく、会話の中で機能名として認識しづらいため
+
+### `suggested_pages` というテーブル名
+
+`suggestion_pages` を `suggested_pages`（形容詞+名詞）とする案を検討した。「提案されたページ」という意味では英語として自然に読める。
+
+**不採用の理由**:
+
+- `suggestion_comments`（suggestionに属するcomments）は所有関係を表す複合名詞であり、`suggested_comments`（提案されたコメント）とするのは意味的に不自然。プレフィックスの文法パターンが混在する
+- `suggestion_pages`、`suggestion_comments` はいずれも「suggestionに属するもの」という所有関係を表す複合名詞パターンで統一できる。`order_items`、`project_members` と同じ慣習
+- GitHubのAPIでも `pull_request_reviews`、`pull_request_comments` のように名詞の複合形が使われている
 
 ### 「編集リクエスト」という名称
 
@@ -315,5 +462,5 @@
 -->
 
 - [ ] **N-1**: 仕様書の作成・更新
-  - `docs/specs/edit_suggestion/overview.md` に仕様書を作成する
+  - `docs/specs/suggestion/overview.md` に仕様書を作成する
   - 作業計画書の概要・要件・設計・採用しなかった方針を仕様書に反映する

@@ -460,7 +460,6 @@ func HashToken(token string) string {
 ### フェーズ 8: パスワードリセット機能の実装
 
 - [x] **8-1**: Rate Limiting の実装（実装済み）
-
   - `internal/ratelimit/limiter.go` - PostgreSQL ベースのスライディングウィンドウ方式
   - `db/migrations/20260202160000_create_rate_limits.sql` - マイグレーション
   - `db/queries/rate_limits.sql` - sqlc クエリ定義
@@ -468,7 +467,6 @@ func HashToken(token string) string {
   - **実装済みファイル**: `/workspace/go/internal/ratelimit/limiter.go`
 
 - [x] **8-2**: パスワードリセットトークンのユーティリティ実装
-
   - `internal/password_reset/token.go`
   - トークン生成（32 バイト + Base64 URL-safe）
   - トークンハッシュ化（SHA256）
@@ -477,14 +475,12 @@ func HashToken(token string) string {
   - **想定行数**: 約 80 行（実装 30 行 + テスト 50 行）
 
 - [x] **8-3**: メール送信機能の実装（実装済み）
-
   - `internal/email/sender.go` - `Sender` インターフェース、`ResendSender`、`NoopSender`
   - Resend API を使用したメール送信
   - メールテンプレートは `internal/templates/emails/` に配置
   - **実装済みファイル**: `/workspace/go/internal/email/sender.go`
 
 - [x] **8-4**: password_reset_tokens テーブルのマイグレーション
-
   - `db/migrations/20260204160000_create_password_reset_tokens.sql`
   - `db/queries/password_reset_tokens.sql`
   - `internal/model/password_reset_token.go`
@@ -494,7 +490,6 @@ func HashToken(token string) string {
   - **実装済みファイル数**: 6 ファイル（実装 5 + テスト 1）
 
 - [x] **8-5**: パスワードリセットトークン作成ユースケースの実装
-
   - `internal/usecase/create_password_reset_token.go`
   - `internal/usecase/create_password_reset_token_test.go`
   - `internal/worker/send_password_reset.go`（ワーカー引数定義）
@@ -504,7 +499,6 @@ func HashToken(token string) string {
   - **実装済みファイル数**: 3 ファイル（実装 2 + テスト 1）
 
 - [x] **8-6**: パスワード更新ユースケースの実装
-
   - `internal/usecase/update_password_reset.go`
   - `internal/usecase/update_password_reset_test.go`
   - `db/queries/user_passwords.sql`（UpdateUserPasswordDigest クエリ追加）
@@ -516,7 +510,6 @@ func HashToken(token string) string {
   - **実装済みファイル数**: 5 ファイル（実装 4 + テスト 1）
 
 - [x] **8-7**: パスワードリセット申請フォームテンプレートの実装
-
   - `internal/templates/pages/password/reset.templ`
   - `internal/templates/pages/password/reset_sent.templ`
   - **参考ファイル**: `/annict/go/internal/templates/pages/password/reset.templ`
@@ -525,7 +518,6 @@ func HashToken(token string) string {
   - **実装済みファイル**: `/workspace/go/internal/templates/pages/password/reset.templ`, `/workspace/go/internal/templates/pages/password/reset_sent.templ`
 
 - [x] **8-8**: 新パスワード入力フォームテンプレートの実装
-
   - `internal/templates/pages/password/edit.templ`
   - **参考ファイル**: `/annict/go/internal/templates/pages/password/edit.templ`
   - **想定ファイル数**: 約 1 ファイル（実装 1 + テスト 0）
@@ -533,7 +525,6 @@ func HashToken(token string) string {
   - **実装済みファイル**: `/workspace/go/internal/templates/pages/password/edit.templ`
 
 - [x] **8-9**: パスワードリセット申請ハンドラーの実装
-
   - `internal/handler/password_reset/handler.go`
   - `internal/handler/password_reset/new.go`
   - `internal/handler/password_reset/create.go`
@@ -546,7 +537,6 @@ func HashToken(token string) string {
   - **実装済みファイル数**: 7 ファイル（実装 4 + テスト 3）
 
 - [x] **8-10**: パスワード更新ハンドラーの実装
-
   - `internal/handler/password/handler.go`
   - `internal/handler/password/edit.go`
   - `internal/handler/password/update.go`
@@ -564,13 +554,11 @@ func HashToken(token string) string {
   - **実装済みファイル数**: 7 ファイル（実装 4 + テスト 3）
 
 - [x] **8-11**: ルーティング設定とリバースプロキシの更新
-
   - `/password/reset`, `/password/edit`, `/password` のルーティング追加
   - リバースプロキシのホワイトリスト更新
   - **実装済みファイル**: `cmd/server/main.go`, `internal/middleware/reverse_proxy.go`
 
 - [x] **8-12**: 国際化（I18n）の追加
-
   - パスワードリセット関連の翻訳キーを追加
   - `internal/i18n/locales/ja.toml`
   - `internal/i18n/locales/en.toml`

@@ -552,4 +552,3 @@ templ WorkCard(ctx context.Context, work viewmodel.Work) {
 - [templ公式サイト](https://templ.guide/)
 - [templ GitHubリポジトリ](https://github.com/a-h/templ)
 - [templ Examples](https://github.com/a-h/templ/tree/main/examples)
-

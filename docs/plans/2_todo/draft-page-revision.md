@@ -119,15 +119,15 @@ DraftPageRevision（下書きのバージョン）を実装する。ユーザー
 
 下書きのバージョン。ユーザーが明示的に保存操作を行ったタイミング、またはAIが下書きを編集したタイミングで作成される。DraftPageに紐づき、下書き内の変更を段階的に確認するために使用する。
 
-| フィールド       | 型       | 説明                                   |
-| ---------------- | -------- | -------------------------------------- |
-| `id`             | `string` | 一意の識別子（ULID）                   |
-| `draftPageId` | `string` | 所属するDraftPageのID               |
-| `spaceMemberId`  | `string` | 作成したスペースメンバーのID           |
-| `title`          | `string` | バージョン作成時点のページタイトル     |
-| `body`           | `string` | バージョン作成時点のMarkdown本文       |
-| `bodyHtml`       | `string` | バージョン作成時点のHTML本文           |
-| `createdAt`      | `Date`   | 作成日時                               |
+| フィールド      | 型       | 説明                               |
+| --------------- | -------- | ---------------------------------- |
+| `id`            | `string` | 一意の識別子（ULID）               |
+| `draftPageId`   | `string` | 所属するDraftPageのID              |
+| `spaceMemberId` | `string` | 作成したスペースメンバーのID       |
+| `title`         | `string` | バージョン作成時点のページタイトル |
+| `body`          | `string` | バージョン作成時点のMarkdown本文   |
+| `bodyHtml`      | `string` | バージョン作成時点のHTML本文       |
+| `createdAt`     | `Date`   | 作成日時                           |
 
 DraftPageRevisionの設計意図:
 
@@ -166,10 +166,10 @@ UI上の用語「下書き保存」はユーザー向けの表現としてその
 
 **背景**: 「下書き保存」という名前は「下書きを保存する」と読めるが、自動保存もDraftPageを更新（＝下書きを保存）している。「下書き保存」操作の本質はDraftPageRevisionの作成（スナップショットの作成）であるため、Usecase名はそれを反映する。
 
-| 層 | 名称 | 理由 |
-|----|------|------|
-| UI | 下書き保存 | ユーザーは自動保存を意識しないため、「保存ボタン＝下書き保存」は自然 |
-| Usecase | `CreateDraftPageRevisionUsecase` | 操作の本質（DraftPageRevisionの作成）を反映 |
+| 層      | 名称                             | 理由                                                                 |
+| ------- | -------------------------------- | -------------------------------------------------------------------- |
+| UI      | 下書き保存                       | ユーザーは自動保存を意識しないため、「保存ボタン＝下書き保存」は自然 |
+| Usecase | `CreateDraftPageRevisionUsecase` | 操作の本質（DraftPageRevisionの作成）を反映                          |
 
 参考: 自動保存のUsecaseは `AutoSaveDraftPageUsecase`（`auto_save_draft_page.go`）。
 

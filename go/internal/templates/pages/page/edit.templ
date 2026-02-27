@@ -1,6 +1,9 @@
 package page
 
 import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -8,10 +11,11 @@ import (
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken string
-	Page      viewmodel.Page
-	Space     viewmodel.Space
-	Topic     viewmodel.Topic
+	CSRFToken  string
+	FormErrors *session.FormErrors
+	Page       viewmodel.Page
+	Space      viewmodel.Space
+	Topic      viewmodel.Topic
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -38,6 +42,8 @@ templ Edit(data EditPageData) {
 			})
 
 			<div class="max-w-3xl w-full px-4 mx-auto">
+				@components.FormErrors(data.FormErrors)
+
 				<div class="card">
 					<div class="card-body px-4">
 						<form
@@ -58,10 +64,22 @@ templ Edit(data EditPageData) {
 									name="title"
 									type="text"
 									value={ data.Page.Title }
+									if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+										aria-invalid="true"
+									} else {
+										aria-invalid="false"
+									}
 									if data.Page.AutofocusTitle() {
 										autofocus
 									}
 								/>
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+									for _, errorMsg := range data.FormErrors.GetFieldErrors("title") {
+										<p class="text-sm text-error">
+											@templ.Raw(errorMsg)
+										</p>
+									}
+								}
 							</div>
 
 							<div class="grid gap-2">
@@ -69,13 +87,23 @@ templ Edit(data EditPageData) {
 									{ templates.T(ctx, "page_edit_body_label") }
 								</label>
 
+								<div
+									data-markdown-editor
+									data-markdown-editor-textarea="#page_body"
+									data-markdown-editor-title="#page_title"
+									data-markdown-editor-saved-at="#page_saved_at"
+									data-markdown-editor-body={ data.Page.Body }
+									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
+									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier, data.Page.Number)) + "/draft_page" }
+									data-markdown-editor-csrf-token={ data.CSRFToken }
+									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
+									class="min-h-[400px] border rounded-md overflow-hidden"
+								></div>
 								<textarea
-									class="min-h-[400px] font-mono text-sm"
+									class="hidden"
 									id="page_body"
 									name="body"
-									if !data.Page.AutofocusTitle() {
-										autofocus
-									}
+									data-markdown-editor-target="textarea"
 								>{ data.Page.Body }</textarea>
 							</div>
 

@@ -1,0 +1,124 @@
+name: Go E2E
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "go/**"
+      - ".github/workflows/go-e2e-ci.yml"
+  pull_request:
+    paths:
+      - "go/**"
+      - ".github/workflows/go-e2e-ci.yml"
+
+env:
+  GO_VERSION: "1.25.5"
+  NODE_VERSION: "24.13.0"
+
+jobs:
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgres://postgres@localhost:5432/wikino_test?sslmode=disable
+      WIKINO_PORT: "4201"
+      WIKINO_DOMAIN: "localhost"
+      WIKINO_COOKIE_DOMAIN: "localhost"
+      WIKINO_SESSION_SECURE: "false"
+      WIKINO_SESSION_HTTPONLY: "true"
+      WIKINO_RAILS_APP_URL: "http://localhost:3000"
+      WIKINO_DISABLE_RATE_LIMIT: "true"
+
+    services:
+      postgresql:
+        image: postgres:18.1
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: wikino_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: go/e2e/pnpm-lock.yaml
+
+      - name: Get Go dependencies
+        working-directory: go
+        run: go mod download
+
+      - name: Setup test database
+        working-directory: go
+        run: make db-setup-test
+
+      - name: Build Go server
+        working-directory: go
+        run: make build
+
+      - name: Build frontend assets
+        working-directory: go
+        run: |
+          pnpm install
+          pnpm build
+
+      - name: Install E2E dependencies
+        working-directory: go/e2e
+        run: pnpm install
+
+      - name: Install Playwright browsers
+        working-directory: go/e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start Go server
+        working-directory: go
+        run: bin/server > /tmp/server.log 2>&1 &
+        env:
+          CI: true
+
+      - name: Wait for server to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:4201/health > /dev/null 2>&1; then
+              echo "Server is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start"
+          echo "--- Server logs ---"
+          cat /tmp/server.log
+          exit 1
+
+      - name: Run E2E tests
+        working-directory: go/e2e
+        run: pnpm exec playwright test
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: go/e2e/playwright-report/
+          retention-days: 30

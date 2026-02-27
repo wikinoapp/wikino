@@ -101,47 +101,47 @@
 
 `internal/model/id.go` に以下の型を追加する：
 
-| 型名 | 対象モデル | String()メソッド |
-|------|-----------|-----------------|
-| `UserID` | User | あり |
-| `PageEditorID` | PageEditor | あり |
-| `PageRevisionID` | PageRevision | あり |
-| `AttachmentID` | Attachment | あり |
-| `PageAttachmentReferenceID` | PageAttachmentReference | あり |
-| `EmailConfirmationID` | EmailConfirmation | あり |
-| `PasswordResetTokenID` | PasswordResetToken | あり |
-| `UserPasswordID` | UserPassword | あり |
-| `UserSessionID` | UserSession | あり |
-| `UserTwoFactorAuthID` | UserTwoFactorAuth | あり |
+| 型名                        | 対象モデル              | String()メソッド |
+| --------------------------- | ----------------------- | ---------------- |
+| `UserID`                    | User                    | あり             |
+| `PageEditorID`              | PageEditor              | あり             |
+| `PageRevisionID`            | PageRevision            | あり             |
+| `AttachmentID`              | Attachment              | あり             |
+| `PageAttachmentReferenceID` | PageAttachmentReference | あり             |
+| `EmailConfirmationID`       | EmailConfirmation       | あり             |
+| `PasswordResetTokenID`      | PasswordResetToken      | あり             |
+| `UserPasswordID`            | UserPassword            | あり             |
+| `UserSessionID`             | UserSession             | あり             |
+| `UserTwoFactorAuthID`       | UserTwoFactorAuth       | あり             |
 
 ### 変更対象のモデルフィールド
 
 **自身のIDフィールド**（`string` → 専用型）:
 
-| モデル | フィールド | 変更 |
-|--------|-----------|------|
-| User | ID | `string` → `UserID` |
-| PageEditor | ID | `string` → `PageEditorID` |
-| PageRevision | ID | `string` → `PageRevisionID` |
-| Attachment | ID | `string` → `AttachmentID` |
-| PageAttachmentReference | ID | `string` → `PageAttachmentReferenceID` |
-| EmailConfirmation | ID | `string` → `EmailConfirmationID` |
-| PasswordResetToken | ID | `string` → `PasswordResetTokenID` |
-| UserPassword | ID | `string` → `UserPasswordID` |
-| UserSession | ID | `string` → `UserSessionID` |
-| UserTwoFactorAuth | ID | `string` → `UserTwoFactorAuthID` |
+| モデル                  | フィールド | 変更                                   |
+| ----------------------- | ---------- | -------------------------------------- |
+| User                    | ID         | `string` → `UserID`                    |
+| PageEditor              | ID         | `string` → `PageEditorID`              |
+| PageRevision            | ID         | `string` → `PageRevisionID`            |
+| Attachment              | ID         | `string` → `AttachmentID`              |
+| PageAttachmentReference | ID         | `string` → `PageAttachmentReferenceID` |
+| EmailConfirmation       | ID         | `string` → `EmailConfirmationID`       |
+| PasswordResetToken      | ID         | `string` → `PasswordResetTokenID`      |
+| UserPassword            | ID         | `string` → `UserPasswordID`            |
+| UserSession             | ID         | `string` → `UserSessionID`             |
+| UserTwoFactorAuth       | ID         | `string` → `UserTwoFactorAuthID`       |
 
 **外部キーフィールド**（`string` → 専用型）:
 
-| モデル | フィールド | 変更 |
-|--------|-----------|------|
-| SpaceMember | UserID | `string` → `UserID` |
-| PasswordResetToken | UserID | `string` → `UserID` |
-| UserPassword | UserID | `string` → `UserID` |
-| UserSession | UserID | `string` → `UserID` |
-| UserTwoFactorAuth | UserID | `string` → `UserID` |
-| Page | FeaturedImageAttachmentID | `*string` → `*AttachmentID` |
-| PageAttachmentReference | AttachmentID | `string` → `AttachmentID` |
+| モデル                  | フィールド                | 変更                        |
+| ----------------------- | ------------------------- | --------------------------- |
+| SpaceMember             | UserID                    | `string` → `UserID`         |
+| PasswordResetToken      | UserID                    | `string` → `UserID`         |
+| UserPassword            | UserID                    | `string` → `UserID`         |
+| UserSession             | UserID                    | `string` → `UserID`         |
+| UserTwoFactorAuth       | UserID                    | `string` → `UserID`         |
+| Page                    | FeaturedImageAttachmentID | `*string` → `*AttachmentID` |
+| PageAttachmentReference | AttachmentID              | `string` → `AttachmentID`   |
 
 ### 変更パターン
 

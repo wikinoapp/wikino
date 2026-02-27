@@ -282,7 +282,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 -->
 
 - [x] **1-1**: [Go] RateLimitRepository の作成と Limiter の修正
-
   - `internal/repository/rate_limit_repository.go` を新規作成
   - `internal/repository/rate_limit_repository_test.go` を新規作成
   - `internal/ratelimit/limiter.go` を修正（Repository 経由に変更）
@@ -293,7 +292,6 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 ### フェーズ 2: 呼び出し元の修正
 
 - [x] **2-1**: [Go] Limiter 使用箇所の修正
-
   - `ratelimit.NewLimiter()` の呼び出し箇所を修正
   - Repository を生成して渡すように変更
   - **想定ファイル数**: 約 2-4 ファイル（実装のみ、呼び出し箇所の数による）
