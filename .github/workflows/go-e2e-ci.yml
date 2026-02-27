@@ -85,7 +85,7 @@ jobs:
 
       - name: Start Go server
         working-directory: go
-        run: bin/server &
+        run: bin/server > /tmp/server.log 2>&1 &
         env:
           CI: true
 
@@ -99,6 +99,8 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
+          echo "--- Server logs ---"
+          cat /tmp/server.log
           exit 1
 
       - name: Run E2E tests
