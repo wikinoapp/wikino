@@ -97,6 +97,7 @@ templ Edit(data EditPageData) {
 									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier, data.Page.Number)) + "/draft_page" }
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
+									data-markdown-editor-space-identifier={ data.Space.Identifier }
 									class="min-h-[400px] border rounded-md overflow-hidden"
 								></div>
 								<textarea

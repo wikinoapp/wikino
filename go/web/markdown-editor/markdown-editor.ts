@@ -37,6 +37,7 @@ interface EditorConfig {
   topicNumber: string;
   titleInput: HTMLInputElement;
   savedAtEl: HTMLElement | null;
+  spaceIdentifier: string;
 }
 
 function createEditor(config: EditorConfig): EditorView {
@@ -151,6 +152,7 @@ export function initializeEditors(): void {
     const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
     const csrfToken = container.dataset.markdownEditorCsrfToken || "";
     const topicNumber = container.dataset.markdownEditorTopicNumber || "";
+    const spaceIdentifier = container.dataset.markdownEditorSpaceIdentifier || "";
 
     const view = createEditor({
       container,
@@ -162,6 +164,7 @@ export function initializeEditors(): void {
       topicNumber,
       titleInput,
       savedAtEl,
+      spaceIdentifier,
     });
 
     (container as HTMLElement & { _editorView: EditorView })._editorView = view;
