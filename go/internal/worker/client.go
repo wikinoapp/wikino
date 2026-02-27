@@ -21,6 +21,7 @@ import (
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
 	pool        *pgxpool.Pool
+	hasWorkers  bool
 }
 
 // NewClient は新しい River クライアントを作成します
@@ -53,6 +54,7 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 
 	// River ワーカーの登録
 	workers := river.NewWorkers()
+	hasWorkers := false
 
 	// メール送信ワーカーを登録
 	if emailSender != nil {
@@ -64,6 +66,8 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 
 		river.AddWorker(workers, NewSendPasswordResetWorker(emailSender))
 		slog.InfoContext(ctx, "SendPasswordResetWorker を登録しました")
+
+		hasWorkers = true
 	}
 
 	// River クライアントの作成
@@ -82,17 +86,29 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 	return &Client{
 		riverClient: riverClient,
 		pool:        pool,
+		hasWorkers:  hasWorkers,
 	}, nil
 }
 
 // Start は River クライアントを起動します
+// ワーカーが未登録の場合はスキップします（River はワーカーが1つ以上必要なため）
 func (c *Client) Start(ctx context.Context) error {
+	if !c.hasWorkers {
+		slog.WarnContext(ctx, "ワーカーが未登録のため River クライアントの起動をスキップします")
+		return nil
+	}
+
 	slog.InfoContext(ctx, "River クライアントを起動します")
 	return c.riverClient.Start(ctx)
 }
 
 // Stop は River クライアントを停止します
 func (c *Client) Stop(ctx context.Context) error {
+	if !c.hasWorkers {
+		c.pool.Close()
+		return nil
+	}
+
 	slog.InfoContext(ctx, "River クライアントを停止します")
 	if err := c.riverClient.Stop(ctx); err != nil {
 		return err
