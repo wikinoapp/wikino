@@ -27,6 +27,7 @@ import { insertNewlineAndContinueList } from "./list-continuation";
 import { pasteHandler } from "./paste-handler";
 import { handleSubmitShortcut } from "./submit-handler";
 import { handleTab, handleShiftTab } from "./tab-handler";
+import { wikilinkCompletions } from "./wikilink-completions";
 
 const AUTOSAVE_DEBOUNCE_MS = 500;
 
@@ -60,7 +61,7 @@ function createEditor(config: EditorConfig): EditorView {
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       bracketMatching(),
       closeBrackets(),
-      autocompletion(),
+      autocompletion({ override: [wikilinkCompletions(config.spaceIdentifier)] }),
       rectangularSelection(),
       crosshairCursor(),
       highlightSelectionMatches(),
