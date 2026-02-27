@@ -5,19 +5,31 @@ export const fileDropHandler = ViewPlugin.fromClass(
     private view: EditorView;
     private dragCounter = 0;
     private dropZone: HTMLDivElement | null = null;
+    private boundHandlers: {
+      dragenter: (e: DragEvent) => void;
+      dragleave: (e: DragEvent) => void;
+      dragover: (e: DragEvent) => void;
+      drop: (e: DragEvent) => void;
+    };
 
     constructor(view: EditorView) {
       this.view = view;
+      this.boundHandlers = {
+        dragenter: this.handleDragEnter.bind(this),
+        dragleave: this.handleDragLeave.bind(this),
+        dragover: this.handleDragOver.bind(this),
+        drop: this.handleDrop.bind(this),
+      };
       this.setupEventListeners();
     }
 
     setupEventListeners() {
       const dom = this.view.dom;
 
-      dom.addEventListener("dragenter", this.handleDragEnter.bind(this));
-      dom.addEventListener("dragleave", this.handleDragLeave.bind(this));
-      dom.addEventListener("dragover", this.handleDragOver.bind(this));
-      dom.addEventListener("drop", this.handleDrop.bind(this));
+      dom.addEventListener("dragenter", this.boundHandlers.dragenter);
+      dom.addEventListener("dragleave", this.boundHandlers.dragleave);
+      dom.addEventListener("dragover", this.boundHandlers.dragover);
+      dom.addEventListener("drop", this.boundHandlers.drop);
     }
 
     handleDragEnter(e: DragEvent) {
@@ -96,6 +108,11 @@ export const fileDropHandler = ViewPlugin.fromClass(
 
     destroy() {
       this.hideDropZone();
+      const dom = this.view.dom;
+      dom.removeEventListener("dragenter", this.boundHandlers.dragenter);
+      dom.removeEventListener("dragleave", this.boundHandlers.dragleave);
+      dom.removeEventListener("dragover", this.boundHandlers.dragover);
+      dom.removeEventListener("drop", this.boundHandlers.drop);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

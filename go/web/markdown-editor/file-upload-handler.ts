@@ -75,7 +75,7 @@ const ALLOWED_FILE_TYPES = {
   ],
 } as const;
 
-const ALL_ALLOWED_TYPES: string[] = [
+export const ALL_ALLOWED_TYPES: string[] = [
   ...ALLOWED_FILE_TYPES.image,
   ...ALLOWED_FILE_TYPES.video,
   ...ALLOWED_FILE_TYPES.document,
