@@ -17,6 +17,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
@@ -102,6 +103,10 @@ func main() {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
+	pageEditorRepo := repository.NewPageEditorRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -111,6 +116,8 @@ func main() {
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -214,11 +221,20 @@ func main() {
 		draftPageRepo,
 		topicRepo,
 		topicMemberRepo,
+		publishPageUC,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
+	)
+	draftPageHandler := draft_page.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		autoSaveDraftPageUC,
 	)
 
 	r := chi.NewRouter()
@@ -293,8 +309,12 @@ func main() {
 		r.Use(authMiddleware.RequireAuth)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
-		// ページ編集（/goプレフィックス付き）
+		// ページ編集・公開（/goプレフィックス付き）
 		r.Get("/go/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
+		r.Patch("/go/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
+
+		// 下書きページ自動保存API（/goプレフィックス付き）
+		r.Patch("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
 
 		// ページロケーション検索API（Wikiリンク補完用、/goプレフィックス付き）
 		r.Get("/go/s/{space_identifier}/page_locations", pageLocationHandler.Index)
