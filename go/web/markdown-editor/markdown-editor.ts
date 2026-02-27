@@ -21,9 +21,12 @@ import {
 } from "@codemirror/view";
 import { EditorView } from "codemirror";
 
+import { fileDropHandler } from "./file-drop-handler";
+import { FileUploadHandler } from "./file-upload-handler";
 import { insertNewlineAndContinueList } from "./list-continuation";
-import { handleTab, handleShiftTab } from "./tab-handler";
+import { pasteHandler } from "./paste-handler";
 import { handleSubmitShortcut } from "./submit-handler";
+import { handleTab, handleShiftTab } from "./tab-handler";
 
 const AUTOSAVE_DEBOUNCE_MS = 500;
 
@@ -73,6 +76,10 @@ function createEditor(config: EditorConfig): EditorView {
         ...foldKeymap,
         ...completionKeymap,
       ]),
+      fileDropHandler,
+      EditorView.domEventHandlers({
+        paste: (event, view) => pasteHandler(view, event),
+      }),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           config.textarea.value = update.state.doc.toString();
@@ -166,6 +173,23 @@ export function initializeEditors(): void {
       savedAtEl,
       spaceIdentifier,
     });
+
+    const uploadHandler = new FileUploadHandler(view, spaceIdentifier, csrfToken);
+
+    view.dom.addEventListener("file-drop", ((e: CustomEvent) => {
+      const { files, position } = e.detail as { files: File[]; position: number };
+      uploadHandler.handleFileUpload(files, position);
+    }) as EventListener);
+
+    view.dom.addEventListener("media-paste", ((e: CustomEvent) => {
+      const { file, position } = e.detail as { file: File; position: number };
+      uploadHandler.handleFileUpload([file], position);
+    }) as EventListener);
+
+    view.dom.addEventListener("file-paste", ((e: CustomEvent) => {
+      const { file, position } = e.detail as { file: File; position: number };
+      uploadHandler.handleFileUpload([file], position);
+    }) as EventListener);
 
     (container as HTMLElement & { _editorView: EditorView })._editorView = view;
   });
