@@ -87,8 +87,7 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
   const markerStartPosition = listInfo.indent.length;
   const markerEndPosition = markerStartPosition + listInfo.marker.length + 1;
 
-  const listMarkerEndPosition =
-    listInfo.type === "task" ? markerEndPosition + 4 : markerEndPosition;
+  const listMarkerEndPosition = listInfo.type === "task" ? markerEndPosition + 4 : markerEndPosition;
 
   if (cursorPositionInLine < listMarkerEndPosition) {
     if (cursorPositionInLine === 0) {
@@ -120,8 +119,7 @@ export function insertNewlineAndContinueList(view: EditorView): boolean {
 
     if (indentLevel > 0) {
       const newIndent = " ".repeat((indentLevel - 1) * 2);
-      const newMarker =
-        listInfo.type === "ordered" ? "1" : listInfo.marker;
+      const newMarker = listInfo.type === "ordered" ? "1" : listInfo.marker;
       let newListText: string;
 
       if (listInfo.type === "task") {

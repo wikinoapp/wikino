@@ -102,9 +102,7 @@ test.describe("タブキーによるインデント機能", () => {
     expect(content).toBe("- a\n  - ");
   });
 
-  test("タスクリスト項目の先頭でタブキーを押すとネストされたタスクリスト項目になること", async ({
-    page,
-  }) => {
+  test("タスクリスト項目の先頭でタブキーを押すとネストされたタスクリスト項目になること", async ({ page }) => {
     await visitPageEditor(page);
     await clearEditor(page);
     await setEditorContent(page, "- [ ] タスク1\n- [ ] ");

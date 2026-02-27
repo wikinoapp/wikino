@@ -1,14 +1,5 @@
-import {
-  autocompletion,
-  completionKeymap,
-  closeBrackets,
-  closeBracketsKeymap,
-} from "@codemirror/autocomplete";
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-} from "@codemirror/commands";
+import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
   defaultHighlightStyle,
   syntaxHighlighting,
@@ -141,36 +132,25 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
 }
 
 export function initializeEditors(): void {
-  const containers = document.querySelectorAll<HTMLElement>(
-    "[data-markdown-editor]",
-  );
+  const containers = document.querySelectorAll<HTMLElement>("[data-markdown-editor]");
 
   containers.forEach((container) => {
-    const textareaSelector =
-      container.dataset.markdownEditorTextarea || "";
-    const textarea = document.querySelector<HTMLTextAreaElement>(
-      textareaSelector,
-    );
+    const textareaSelector = container.dataset.markdownEditorTextarea || "";
+    const textarea = document.querySelector<HTMLTextAreaElement>(textareaSelector);
     if (!textarea) return;
 
-    const titleSelector =
-      container.dataset.markdownEditorTitle || "";
-    const titleInput =
-      document.querySelector<HTMLInputElement>(titleSelector);
+    const titleSelector = container.dataset.markdownEditorTitle || "";
+    const titleInput = document.querySelector<HTMLInputElement>(titleSelector);
     if (!titleInput) return;
 
-    const savedAtSelector =
-      container.dataset.markdownEditorSavedAt || "";
-    const savedAtEl =
-      document.querySelector<HTMLElement>(savedAtSelector);
+    const savedAtSelector = container.dataset.markdownEditorSavedAt || "";
+    const savedAtEl = document.querySelector<HTMLElement>(savedAtSelector);
 
     const body = container.dataset.markdownEditorBody || "";
     const autofocus = container.dataset.markdownEditorAutofocus === "true";
-    const draftSaveUrl =
-      container.dataset.markdownEditorDraftSaveUrl || "";
+    const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
     const csrfToken = container.dataset.markdownEditorCsrfToken || "";
-    const topicNumber =
-      container.dataset.markdownEditorTopicNumber || "";
+    const topicNumber = container.dataset.markdownEditorTopicNumber || "";
 
     const view = createEditor({
       container,
@@ -184,7 +164,6 @@ export function initializeEditors(): void {
       savedAtEl,
     });
 
-    (container as HTMLElement & { _editorView: EditorView })._editorView =
-      view;
+    (container as HTMLElement & { _editorView: EditorView })._editorView = view;
   });
 }

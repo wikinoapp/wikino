@@ -68,9 +68,7 @@ test.describe("Enter押下時のリスト継続機能", () => {
     expect(cursor.column).toBe(2);
   });
 
-  test("順序付きリストの末尾でEnterを押すと番号がインクリメントされたマーカーが挿入されること", async ({
-    page,
-  }) => {
+  test("順序付きリストの末尾でEnterを押すと番号がインクリメントされたマーカーが挿入されること", async ({ page }) => {
     await visitPageEditor(page);
     await clearEditor(page);
     await setEditorContent(page, "1. aaa");
@@ -185,9 +183,7 @@ test.describe("Enter押下時のリスト継続機能", () => {
     expect(cursor.column).toBe(4);
   });
 
-  test("リスト項目のテキスト途中でEnterを押すとカーソル以降のテキストが次行に移動すること", async ({
-    page,
-  }) => {
+  test("リスト項目のテキスト途中でEnterを押すとカーソル以降のテキストが次行に移動すること", async ({ page }) => {
     await visitPageEditor(page);
     await clearEditor(page);
     await setEditorContent(page, "- abcdef");
@@ -202,9 +198,7 @@ test.describe("Enter押下時のリスト継続機能", () => {
     expect(cursor.column).toBe(2);
   });
 
-  test("タスクリスト項目のテキスト途中でEnterを押すとカーソル以降のテキストが次行に移動すること", async ({
-    page,
-  }) => {
+  test("タスクリスト項目のテキスト途中でEnterを押すとカーソル以降のテキストが次行に移動すること", async ({ page }) => {
     await visitPageEditor(page);
     await clearEditor(page);
     await setEditorContent(page, "- [ ] abcdef");

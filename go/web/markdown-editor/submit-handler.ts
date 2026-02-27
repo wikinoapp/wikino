@@ -8,9 +8,7 @@ export function handleSubmitShortcut(view: EditorView): boolean {
     return false;
   }
 
-  const submitButton = form.querySelector(
-    'button[type="submit"]',
-  ) as HTMLButtonElement;
+  const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
   if (submitButton && !submitButton.disabled) {
     submitButton.click();
     return true;

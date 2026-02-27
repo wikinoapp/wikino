@@ -47,18 +47,13 @@ export function handleTab(view: EditorView): boolean {
       if (listInfo) {
         let markerEndPosition: number;
         if (listInfo.type === "task") {
-          markerEndPosition =
-            listInfo.indent.length + listInfo.marker.length + 5;
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 5;
         } else {
-          markerEndPosition =
-            listInfo.indent.length + listInfo.marker.length + 1;
+          markerEndPosition = listInfo.indent.length + listInfo.marker.length + 1;
         }
 
         if (cursorPositionInLine === markerEndPosition) {
-          const originalMarker = lineText.substring(
-            listInfo.indent.length,
-            markerEndPosition,
-          );
+          const originalMarker = lineText.substring(listInfo.indent.length, markerEndPosition);
 
           if (listInfo.content === "") {
             return {
@@ -71,8 +66,7 @@ export function handleTab(view: EditorView): boolean {
             return {
               from: line.from,
               to: line.to,
-              insert:
-                listInfo.indent + INDENT_SIZE + originalMarker + content,
+              insert: listInfo.indent + INDENT_SIZE + originalMarker + content,
             };
           }
         }
@@ -100,26 +94,18 @@ export function handleTab(view: EditorView): boolean {
             if (listInfo && listInfo.content !== "") {
               let newMarkerLength: number;
               if (listInfo.type === "task") {
-                newMarkerLength =
-                  INDENT_SIZE.length + listInfo.marker.length + 5;
+                newMarkerLength = INDENT_SIZE.length + listInfo.marker.length + 5;
               } else {
-                newMarkerLength =
-                  INDENT_SIZE.length + listInfo.marker.length + 1;
+                newMarkerLength = INDENT_SIZE.length + listInfo.marker.length + 1;
               }
-              return EditorSelection.cursor(
-                change.from + listInfo.indent.length + newMarkerLength,
-              );
+              return EditorSelection.cursor(change.from + listInfo.indent.length + newMarkerLength);
             }
 
-            return EditorSelection.cursor(
-              change.from + change.insert.length,
-            );
+            return EditorSelection.cursor(change.from + change.insert.length);
           }
 
           if (change.insert.startsWith("\n")) {
-            return EditorSelection.cursor(
-              change.from + change.insert.length,
-            );
+            return EditorSelection.cursor(change.from + change.insert.length);
           }
 
           return EditorSelection.cursor(range.from + INDENT_SIZE.length);
@@ -134,14 +120,9 @@ export function handleTab(view: EditorView): boolean {
 
           const processedLines = endLine - startLine + 1;
 
-          const originalEndLineInfo = state.doc.line(
-            state.doc.lineAt(range.to).number,
-          );
+          const originalEndLineInfo = state.doc.line(state.doc.lineAt(range.to).number);
           let newTo;
-          if (
-            range.to === originalEndLineInfo.from &&
-            state.doc.lineAt(range.to).number > startLine
-          ) {
+          if (range.to === originalEndLineInfo.from && state.doc.lineAt(range.to).number > startLine) {
             newTo = range.to + processedLines * INDENT_SIZE.length;
           } else {
             newTo = range.to + processedLines * INDENT_SIZE.length;
