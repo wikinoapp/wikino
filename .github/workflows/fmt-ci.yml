@@ -12,6 +12,17 @@ on:
       - "**.yml"
       - "**.md"
       - "**.toml"
+  pull_request:
+    paths:
+      - "**.js"
+      - "**.ts"
+      - "**.tsx"
+      - "**.css"
+      - "**.json"
+      - "**.yaml"
+      - "**.yml"
+      - "**.md"
+      - "**.toml"
 
 jobs:
   oxfmt:

@@ -5,6 +5,10 @@ on:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
+  pull_request:
+    paths:
+      - "rails/**"
+      - ".github/workflows/rails-ci.yml"
 
 jobs:
   zeitwerk:
