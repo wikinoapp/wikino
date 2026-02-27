@@ -44,6 +44,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		repository.NewDraftPageRepository(queries),
 		repository.NewTopicRepository(queries),
 		repository.NewTopicMemberRepository(queries),
+		nil,
 	)
 }
 

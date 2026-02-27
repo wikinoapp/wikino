@@ -471,3 +471,33 @@ other = "Publish"
 [page_edit_cancel]
 description = "Label for the cancel link"
 other = "Cancel"
+
+# Page publish validation
+[validation_page_title_required]
+description = "Page title required error"
+other = "Please enter a title"
+
+[validation_page_title_too_long]
+description = "Page title too long error"
+other = "Title must be 200 characters or less"
+
+[validation_page_title_invalid_chars]
+description = "Page title invalid characters error"
+other = "Title contains invalid characters"
+
+[validation_page_title_invalid_format]
+description = "Page title invalid format error"
+other = "Title cannot start or end with a space or dot"
+
+[validation_page_title_reserved]
+description = "Page title reserved name error"
+other = "This title is not allowed"
+
+[validation_page_title_uniqueness_html]
+description = "Page title uniqueness error (HTML included)"
+other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existing page</a>"
+
+# Page publish success
+[flash_page_saved]
+description = "Page saved success message"
+other = "Page saved."

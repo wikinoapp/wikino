@@ -37,6 +37,15 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 	}
 }
 
+// NewPageFromFormInput はバリデーションエラー時にフォームの入力値を保持したPageを生成します
+func NewPageFromFormInput(title string, body string, number int32) Page {
+	return Page{
+		Title:  title,
+		Body:   body,
+		Number: number,
+	}
+}
+
 // AutofocusTitle はタイトル入力欄にオートフォーカスすべきかを返します
 func (p Page) AutofocusTitle() bool {
 	return p.Title == ""

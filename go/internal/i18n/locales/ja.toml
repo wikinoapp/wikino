@@ -471,3 +471,33 @@ other = "公開する"
 [page_edit_cancel]
 description = "ページ編集キャンセルリンクのラベル"
 other = "キャンセル"
+
+# ページ公開バリデーション
+[validation_page_title_required]
+description = "ページタイトル必須エラー"
+other = "タイトルを入力してください"
+
+[validation_page_title_too_long]
+description = "ページタイトル文字数超過エラー"
+other = "タイトルは200文字以内で入力してください"
+
+[validation_page_title_invalid_chars]
+description = "ページタイトル禁止文字エラー"
+other = "タイトルに使用できない文字が含まれています"
+
+[validation_page_title_invalid_format]
+description = "ページタイトル不正フォーマットエラー"
+other = "タイトルの先頭・末尾にスペースやドットは使用できません"
+
+[validation_page_title_reserved]
+description = "ページタイトル予約語エラー"
+other = "このタイトルは使用できません"
+
+[validation_page_title_uniqueness_html]
+description = "ページタイトル重複エラー（HTML含む）"
+other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既存のページを編集</a>"
+
+# ページ公開成功
+[flash_page_saved]
+description = "ページ保存成功メッセージ"
+other = "ページを保存しました"
