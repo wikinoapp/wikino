@@ -9,6 +9,14 @@ interface UploadPlaceholder {
 
 const placeholders = new Map<string, UploadPlaceholder>();
 
+function escapeHtmlAttr(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeMarkdownLinkText(str: string): string {
+  return str.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+}
+
 export function insertUploadPlaceholder(view: EditorView, fileName: string, position?: number): string {
   const id = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const placeholderText = `<!-- Uploading "${fileName}"... -->`;
@@ -52,14 +60,17 @@ export function replacePlaceholderWithUrl(
   const { position, length, fileName } = placeholder;
   let newText: string;
 
+  const safeAlt = escapeHtmlAttr(altText || fileName);
+
   if (fileType?.startsWith("image/")) {
     if (width) {
-      newText = `<img width="${width}" alt="${altText || fileName}" src="${url}">`;
+      newText = `<img width="${width}" alt="${safeAlt}" src="${url}">`;
     } else {
-      newText = `<img alt="${altText || fileName}" src="${url}">`;
+      newText = `<img alt="${safeAlt}" src="${url}">`;
     }
   } else {
-    newText = `[${altText || fileName}](${url})`;
+    const safeText = escapeMarkdownLinkText(altText || fileName);
+    newText = `[${safeText}](${url})`;
   }
 
   const currentText = view.state.doc.toString();
