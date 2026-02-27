@@ -425,11 +425,14 @@ make lint
 # 関数シグネチャの変更やインポートエラーを早期に検出
 go build ./...
 
-# 5. テストを実行
+# 5. JS/TSファイルを編集した場合は、Oxfmtでフォーマット
+make -C /workspace fmt
+
+# 6. テストを実行
 APP_ENV=test make test
 
 # すべてを一度に実行するワンライナー:
-make templ-generate && go mod tidy && make fmt && make lint && go build ./... && APP_ENV=test make test
+make templ-generate && go mod tidy && make fmt && make lint && go build ./... && make -C /workspace fmt && APP_ENV=test make test
 ```
 
 #### golangci-lint の使い方
