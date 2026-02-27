@@ -40,7 +40,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9.2.0
         with:
-          version: v2.6.2
+          version: v2.7.2
           working-directory: go
           args: --config=.golangci.yml ./...
 

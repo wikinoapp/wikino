@@ -7,3 +7,4 @@
 /docker-compose.override.yml
 /node_modules
 /tmp
+test-results/

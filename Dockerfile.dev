@@ -103,6 +103,9 @@ RUN chown -R ${USER_ID}:${GROUP_ID} /mise
 WORKDIR /workspace
 USER ${USERNAME}
 
+# --- .zshrc の作成 ---
+RUN touch ~/.zshrc
+
 # --- mise シェル設定 ---
 # Docker環境ではshims方式を使用（PATH="/mise/shims:..."で設定済み）
 # mise activateはshimsをバイパスしてグローバルデフォルトの直接パスをPATHに追加するため、

@@ -288,21 +288,21 @@ go install github.com/新しいツール/cmd/ツール名
 
 #### 例: golangci-lint の追加
 
-golangci-lint v2.6.2 を追加する例：
+golangci-lint v2.7.2 を追加する例：
 
 ```sh
 # 1. tools.go に追加（既に追加済み）
 # _ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
 # 2. 特定のバージョンを取得
-go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.2
+go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2
 
 # 3. インストール
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
 # 4. バージョン確認
 golangci-lint version
-# => golangci-lint has version 2.6.2 built with go1.25.4 ...
+# => golangci-lint has version 2.7.2 built with go1.25.4 ...
 ```
 
 ### ホスト側で実行するコマンド (Claude Code による実行は不要)
