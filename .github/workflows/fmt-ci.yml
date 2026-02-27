@@ -2,6 +2,9 @@ name: Formatter
 
 on:
   push:
+    branches:
+      - main
+      - develop
     paths:
       - "**.js"
       - "**.ts"
@@ -23,10 +26,6 @@ on:
       - "**.yml"
       - "**.md"
       - "**.toml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
 
 jobs:
   oxfmt:

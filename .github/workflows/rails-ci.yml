@@ -2,6 +2,9 @@ name: Rails CI
 
 on:
   push:
+    branches:
+      - main
+      - develop
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
@@ -9,10 +12,6 @@ on:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
 
 jobs:
   zeitwerk:

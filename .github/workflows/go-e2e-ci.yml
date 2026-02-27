@@ -2,6 +2,9 @@ name: Go E2E
 
 on:
   push:
+    branches:
+      - main
+      - develop
     paths:
       - "go/**"
       - ".github/workflows/go-e2e-ci.yml"
@@ -9,10 +12,6 @@ on:
     paths:
       - "go/**"
       - ".github/workflows/go-e2e-ci.yml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
 
 env:
   GO_VERSION: "1.25.5"
