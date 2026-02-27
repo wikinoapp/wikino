@@ -88,7 +88,7 @@ test.describe("Wikiリンク補完", () => {
     });
 
     // 最初の補完候補をクリックして選択
-    await page.locator(".cm-tooltip-autocomplete .cm-completion").first().click();
+    await page.locator(".cm-tooltip-autocomplete li[role='option']").first().click();
 
     // 補完候補が閉じること
     await expect(page.locator(".cm-tooltip-autocomplete")).toBeHidden();
