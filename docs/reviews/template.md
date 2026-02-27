@@ -95,7 +95,7 @@ git diff <base-branch>...<current-branch> --name-only
 - 自由記述の場合: 「回答」欄に記入
 -->
 
-### `path/to/file1.go`（例: 修正方針が明確な場合）
+### `path/to/file1.go`（例: 修正方針が明確な場合でも「対応方針」「回答」は必須）
 
 **ステータス**: 要修正
 
@@ -105,7 +105,7 @@ git diff <base-branch>...<current-branch> --name-only
 
 **問題点・改善提案**:
 
-- **[@CLAUDE.md#ログ出力]**: `log.Printf`を使用している箇所がある
+- **[@go/CLAUDE.md#ログ出力]**: `log.Printf`を使用している箇所がある
 
   ```go
   // 問題のあるコード
