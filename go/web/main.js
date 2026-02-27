@@ -1,3 +1,7 @@
 import "basecoat-css/all";
 
-console.log("Wikino Go initialized");
+import { initializeEditors } from "./markdown-editor/markdown-editor";
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeEditors();
+});
