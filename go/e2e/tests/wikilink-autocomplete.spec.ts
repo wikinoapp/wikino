@@ -51,8 +51,12 @@ test.describe("Wikiリンク補完", () => {
 
     await fillInEditor(page, "[[Page");
 
-    // 補完候補のドロップダウンが表示されるまで待つ
-    await expect(page.locator(".cm-tooltip-autocomplete")).toBeVisible({ timeout: 5000 });
+    // 補完候補アイテムが表示されるまで待つ
+    // CodeMirrorの非同期補完ではツールチップコンテナが先に表示され、
+    // APIレスポンス後に補完候補アイテムがレンダリングされるため、アイテム自体を待つ
+    await expect(page.locator(".cm-tooltip-autocomplete .cm-completionLabel").first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // 補完候補のテキストを取得して検証
     const labels = await page.locator(".cm-completionLabel").allTextContents();
@@ -65,7 +69,9 @@ test.describe("Wikiリンク補完", () => {
 
     await fillInEditor(page, "[[Page");
 
-    await expect(page.locator(".cm-tooltip-autocomplete")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".cm-tooltip-autocomplete .cm-completionLabel").first()).toBeVisible({
+      timeout: 5000,
+    });
 
     const labels = await page.locator(".cm-completionLabel").allTextContents();
     // トピック名/ページタイトル の形式であること
@@ -77,7 +83,9 @@ test.describe("Wikiリンク補完", () => {
 
     await fillInEditor(page, "[[Page");
 
-    await expect(page.locator(".cm-tooltip-autocomplete")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".cm-tooltip-autocomplete .cm-completionLabel").first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // 最初の補完候補をクリックして選択
     await page.locator(".cm-tooltip-autocomplete .cm-completion").first().click();
