@@ -104,20 +104,7 @@ export class FileUploadHandler {
       const placeholderId = insertUploadPlaceholder(this.editorView, file.name, position);
 
       try {
-        await this.validateFile(file);
-
-        let width: number | undefined;
-        let height: number | undefined;
-
-        if (file.type.startsWith("image/")) {
-          try {
-            const dimensions = await this.getImageDimensions(file);
-            width = dimensions.width;
-            height = dimensions.height;
-          } catch (error) {
-            console.warn("画像サイズの取得に失敗しました:", error);
-          }
-        }
+        const { width, height } = await this.validateFile(file);
 
         const checksum = await calculateFileChecksum(file);
         const presignData = await this.getPresignUrl(file, checksum);
@@ -200,7 +187,7 @@ export class FileUploadHandler {
     document.dispatchEvent(flashToastEvent);
   }
 
-  private async validateFile(file: File): Promise<void> {
+  private async validateFile(file: File): Promise<{ width?: number; height?: number }> {
     if (!ALL_ALLOWED_TYPES.includes(file.type)) {
       throw new UploadError("このファイル形式はアップロードできません");
     }
@@ -228,6 +215,7 @@ export class FileUploadHandler {
             `画像のサイズが大きすぎます。${MAX_IMAGE_DIMENSION}×${MAX_IMAGE_DIMENSION}ピクセル以下にしてください`,
           );
         }
+        return dimensions;
       } catch (error) {
         if (error instanceof UploadError) {
           throw error;
@@ -235,6 +223,8 @@ export class FileUploadHandler {
         console.warn("画像の次元取得に失敗しました:", error);
       }
     }
+
+    return {};
   }
 
   private async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
