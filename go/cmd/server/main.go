@@ -22,6 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
@@ -236,6 +237,13 @@ func main() {
 		topicMemberRepo,
 		autoSaveDraftPageUC,
 	)
+	pageLinkListHandler := page_link_list.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		draftPageRepo,
+		topicMemberRepo,
+	)
 
 	r := chi.NewRouter()
 
@@ -315,6 +323,9 @@ func main() {
 
 		// 下書きページ自動保存API（/goプレフィックス付き）
 		r.Patch("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
+
+		// ページリンク一覧SSE（Datastar、/goプレフィックス付き）
+		r.Get("/go/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
 
 		// ページロケーション検索API（Wikiリンク補完用、/goプレフィックス付き）
 		r.Get("/go/s/{space_identifier}/page_locations", pageLocationHandler.Index)

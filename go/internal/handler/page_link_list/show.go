@@ -1,4 +1,4 @@
-package page
+package page_link_list
 
 import (
 	"log/slog"
@@ -6,23 +6,23 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar-go/datastar"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
-	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit はページ編集フォームを表示します (GET /go/s/{space_identifier}/pages/{page_number}/edit)
-func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
+// Show はリンク一覧をSSEフラグメントとして返します (GET /go/s/{space_identifier}/pages/{page_number}/link_list)
+func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// 認証済みユーザーを取得
 	user := middleware.UserFromContext(ctx)
 	if user == nil {
-		http.Redirect(w, r, "/sign_in", http.StatusFound)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -86,23 +86,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// トピックを取得（パンくずリスト用）
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if topic == nil {
-		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicVM := viewmodel.NewTopic(topic)
-
-	// DraftPageを取得（存在すればその内容を表示）
+	// DraftPageを取得してリンク先ページIDを決定
 	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
 	if err != nil {
 		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
@@ -110,10 +94,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 編集画面用のページViewModelを生成
-	pageVM := viewmodel.NewPageForEdit(pg, draftPage)
-
-	// リンク一覧を取得（DraftPage存在時はDraftPageのLinkedPageIDs、なければPageのLinkedPageIDs）
 	var linkedPageIDs []model.PageID
 	if draftPage != nil {
 		linkedPageIDs = draftPage.LinkedPageIDs
@@ -132,38 +112,10 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		linkListVM = viewmodel.NewLinkList(linkedPages, spaceIdentifier)
 	}
 
-	// CSRFトークンを取得
-	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
-	// ページメタ情報を設定
-	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "page_edit_title")
-
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
-	// テンプレートをレンダリング
-	spaceVM := viewmodel.NewSpace(space)
-
-	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken: csrfToken,
-		Page:      pageVM,
-		Space:     spaceVM,
-		Topic:     topicVM,
-		LinkList:  linkListVM,
-	})
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta:                 meta,
-		Flash:                flash,
-		HideFooter:           true,
-		DefaultSidebarClosed: true,
-	}
-
-	err = layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// SSEフラグメントとしてリンク一覧を送信
+	sse := datastar.NewSSE(w, r)
+	if err := sse.PatchElementTempl(components.LinkList(linkListVM), datastar.WithSelectorID("page-link-list"), datastar.WithModeInner()); err != nil {
+		slog.ErrorContext(ctx, "リンク一覧のSSE送信に失敗", "error", err)
 		return
 	}
 }

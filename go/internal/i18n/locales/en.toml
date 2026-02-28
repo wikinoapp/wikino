@@ -472,6 +472,14 @@ other = "Publish"
 description = "Label for the cancel link"
 other = "Cancel"
 
+[page_edit_links_heading]
+description = "Heading for the link list on the page edit screen"
+other = "Links"
+
+[page_edit_links_untitled]
+description = "Display text for an untitled linked page"
+other = "Untitled"
+
 # Page publish validation
 [validation_page_title_required]
 description = "Page title required error"

@@ -16,6 +16,7 @@ type EditPageData struct {
 	Page       viewmodel.Page
 	Space      viewmodel.Space
 	Topic      viewmodel.Topic
+	LinkList   viewmodel.LinkList
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -127,6 +128,14 @@ templ Edit(data EditPageData) {
 							</div>
 						</form>
 					</div>
+				</div>
+
+				<div
+					id="page-link-list"
+					class="mt-6"
+					data-on-draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier, data.Page.Number))) }
+				>
+					@components.LinkList(data.LinkList)
 				</div>
 			</div>
 		</div>

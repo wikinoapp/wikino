@@ -134,6 +134,7 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
         });
         config.savedAtEl.textContent = timeStr;
       }
+      window.dispatchEvent(new CustomEvent("draft-autosaved"));
     }
   } catch {
     // 自動保存の失敗は静かに無視する
