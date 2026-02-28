@@ -360,7 +360,7 @@ Go版/Rails版の両方を修正する場合は別タスクに分けてくださ
 
 ### フェーズ 2: スキルの検証
 
-- [ ] **2-1**: [Go] リンク一覧表示の Datastar 化で検証
+- [x] **2-1**: [Go] リンク一覧表示の Datastar 化で検証
   - タスク 8b-1 で実装した plain JS（`fetch` + `innerHTML`）によるリンク一覧更新を、Datastar + Go SDK パターンにリファクタリング
   - ハンドラーで `datastar.NewSSE(w, r)` + `sse.PatchElementTempl()` を使用する形に変更
   - `shimbaco-skills:datastar` スキルを使って実装し、スキルの有用性を検証
