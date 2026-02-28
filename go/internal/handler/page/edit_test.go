@@ -486,6 +486,82 @@ func TestEdit_InvalidPageNumber(t *testing.T) {
 	}
 }
 
+func TestEdit_LinkListAutoReload(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// テストデータを作成
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("linklist-reload@example.com").
+		WithAtname("linklistreload").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("linklist-reload-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Link Reload Test").
+		WithBody("Some content").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-reload-space/pages/1/edit", map[string]string{
+		"space_identifier": "linklist-reload-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// リンク一覧セクションのコンテナが存在すること
+	if !strings.Contains(body, `id="page-link-list"`) {
+		t.Error("page-link-list container not found in response")
+	}
+
+	// Datastarのdata-on:draft-autosaved__window属性が含まれていること
+	// この属性により、下書き保存後にリンク一覧がSSEで自動再読み込みされる
+	if !strings.Contains(body, "data-on:draft-autosaved__window") {
+		t.Error("data-on:draft-autosaved__window attribute not found - link list auto-reload will not work")
+	}
+
+	// SSEエンドポイントのURLが正しいこと
+	if !strings.Contains(body, "/go/s/linklist-reload-space/pages/1/link_list") {
+		t.Error("link_list SSE endpoint URL not found in response")
+	}
+
+	// @get()アクションでSSEエンドポイントが呼び出されること
+	if !strings.Contains(body, "@get(") {
+		t.Error("@get() action not found - SSE request will not be triggered")
+	}
+}
+
 func TestEdit_EnglishLocale(t *testing.T) {
 	t.Parallel()
 
