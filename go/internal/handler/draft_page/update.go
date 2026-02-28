@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -72,7 +73,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, int32(pageNumber))
+	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
 	if err != nil {
 		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
 		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)

@@ -18,7 +18,7 @@ type PageBuilder struct {
 
 	spaceID       string
 	topicID       string
-	number        int32
+	number        model.PageNumber
 	title         *string
 	body          string
 	bodyHTML      string
@@ -59,7 +59,7 @@ func (b *PageBuilder) WithTopicID(topicID model.TopicID) *PageBuilder {
 }
 
 // WithNumber はページ番号を設定します
-func (b *PageBuilder) WithNumber(number int32) *PageBuilder {
+func (b *PageBuilder) WithNumber(number model.PageNumber) *PageBuilder {
 	b.number = number
 	return b
 }
@@ -131,7 +131,7 @@ func (b *PageBuilder) Build() model.PageID {
 		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.number, b.title, b.body, b.bodyHTML,
+		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
 		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {
@@ -149,7 +149,7 @@ type PageBuilderDB struct {
 
 	spaceID       string
 	topicID       string
-	number        int32
+	number        model.PageNumber
 	title         *string
 	body          string
 	bodyHTML      string
@@ -189,7 +189,7 @@ func (b *PageBuilderDB) WithTopicID(topicID model.TopicID) *PageBuilderDB {
 }
 
 // WithNumber はページ番号を設定します
-func (b *PageBuilderDB) WithNumber(number int32) *PageBuilderDB {
+func (b *PageBuilderDB) WithNumber(number model.PageNumber) *PageBuilderDB {
 	b.number = number
 	return b
 }
@@ -230,7 +230,7 @@ func (b *PageBuilderDB) Build() model.PageID {
 		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.number, b.title, b.body, b.bodyHTML,
+		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
 		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, now, now,
 	).Scan(&id)
 	if err != nil {

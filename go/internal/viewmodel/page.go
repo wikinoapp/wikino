@@ -22,7 +22,7 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 		return Page{
 			Title:  title,
 			Body:   draftPage.Body,
-			Number: pg.Number,
+			Number: int32(pg.Number),
 		}
 	}
 
@@ -33,16 +33,16 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 	return Page{
 		Title:  title,
 		Body:   pg.Body,
-		Number: pg.Number,
+		Number: int32(pg.Number),
 	}
 }
 
 // NewPageFromFormInput はバリデーションエラー時にフォームの入力値を保持したPageを生成します
-func NewPageFromFormInput(title string, body string, number int32) Page {
+func NewPageFromFormInput(title string, body string, number model.PageNumber) Page {
 	return Page{
 		Title:  title,
 		Body:   body,
-		Number: number,
+		Number: int32(number),
 	}
 }
 
