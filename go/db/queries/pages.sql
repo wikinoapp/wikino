@@ -101,6 +101,31 @@ WHERE $1::varchar = ANY(linked_page_ids)
   AND published_at IS NOT NULL
   AND discarded_at IS NULL;
 
+-- name: FindBacklinkedPagesForTargets :many
+-- 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
+SELECT p.*, t.target_id
+FROM unnest($1::uuid[]) AS t(target_id)
+CROSS JOIN LATERAL (
+  SELECT *
+  FROM pages
+  WHERE t.target_id::varchar = ANY(linked_page_ids)
+    AND space_id = $2
+    AND published_at IS NOT NULL
+    AND discarded_at IS NULL
+  ORDER BY modified_at DESC, id DESC
+  LIMIT $3
+) p;
+
+-- name: CountBacklinkedPagesForTargets :many
+-- 複数ターゲットページのバックリンク件数を一括取得する
+SELECT t.target_id, COUNT(p.id) AS count
+FROM unnest($1::uuid[]) AS t(target_id)
+LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = $2
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+GROUP BY t.target_id;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)

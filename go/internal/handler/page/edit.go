@@ -123,15 +123,34 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var linkListVM viewmodel.LinkList
 	if len(linkedPageIDs) > 0 {
-		linkedPages, err := h.pageRepo.FindByIDs(ctx, linkedPageIDs, space.ID)
+		paginatedLinks, err := h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, viewmodel.LinkLimit)
 		if err != nil {
 			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+
+		backlinkPaginatedMap, err := h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
+		if err != nil {
+			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(backlinkPaginatedMap))
+		for pageID, paginated := range backlinkPaginatedMap {
+			backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+				Pages:      paginated.Pages,
+				Pagination: viewmodel.NewPagination(1, paginated.TotalCount, int(viewmodel.BacklinkLimit)),
+			})
+		}
+
 		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
-			Pages:           linkedPages,
+			Pages:           paginatedLinks.Pages,
+			BacklinkMap:     backlinkMap,
+			Pagination:      viewmodel.NewPagination(1, paginatedLinks.TotalCount, int(viewmodel.LinkLimit)),
 			SpaceIdentifier: spaceIdentifier,
+			PageNumber:      int32(pg.Number),
 		})
 	}
 

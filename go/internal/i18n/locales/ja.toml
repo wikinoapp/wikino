@@ -480,6 +480,10 @@ other = "リンク"
 description = "タイトルなしのリンク先ページの表示テキスト"
 other = "タイトルなし"
 
+[page_edit_links_load_more]
+description = "リンク一覧の「もっと見る」ボタン"
+other = "もっと見る"
+
 # ページ公開バリデーション
 [validation_page_title_required]
 description = "ページタイトル必須エラー"

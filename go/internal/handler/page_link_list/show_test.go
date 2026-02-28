@@ -381,6 +381,110 @@ func TestShow_正常系_下書きのリンクが優先される(t *testing.T) {
 	}
 }
 
+func TestShow_正常系_ページネーションパラメータが反映される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("linklist-page@example.com").
+		WithAtname("linklistpage").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("linklist-page").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		WithRole(0).
+		Build()
+
+	// リンク先ページを2件作成
+	linkedPage1ID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Link Page 1").
+		Build()
+
+	linkedPage2ID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Link Page 2").
+		Build()
+
+	// リンク元ページを作成（2件のリンク先）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Source Page").
+		WithLinkedPageIDs([]model.PageID{linkedPage1ID, linkedPage2ID}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// page=1で全リンクが含まれる
+	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-page/pages/1/link_list?page=1", map[string]string{
+		"space_identifier": "linklist-page",
+		"page_number":      "1",
+	})
+	req.URL.RawQuery = "page=1"
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "Link Page 1") {
+		t.Error("page=1 should contain 'Link Page 1'")
+	}
+	if !strings.Contains(body, "Link Page 2") {
+		t.Error("page=1 should contain 'Link Page 2'")
+	}
+
+	// page=999（存在しないページ）ではリンク先が含まれない
+	req2 := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-page/pages/1/link_list?page=999", map[string]string{
+		"space_identifier": "linklist-page",
+		"page_number":      "1",
+	})
+	req2.URL.RawQuery = "page=999"
+	ctx2 := middleware.SetUserToContext(req2.Context(), &model.User{ID: userID})
+	req2 = req2.WithContext(ctx2)
+
+	rr2 := httptest.NewRecorder()
+	handler.Show(rr2, req2)
+
+	if rr2.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr2.Code, http.StatusOK)
+	}
+
+	body2 := rr2.Body.String()
+	if strings.Contains(body2, "Link Page 1") {
+		t.Error("page=999 should not contain 'Link Page 1'")
+	}
+	if strings.Contains(body2, "Link Page 2") {
+		t.Error("page=999 should not contain 'Link Page 2'")
+	}
+}
+
 func TestShow_正常系_下書きにリンクを追加するとSSEレスポンスに反映される(t *testing.T) {
 	t.Parallel()
 

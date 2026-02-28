@@ -1,0 +1,28 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// BacklinkList はバックリンク一覧を表示します。バックリンクが空の場合は何も表示しません。
+templ BacklinkList(data viewmodel.BacklinkList, spaceIdentifier string) {
+	if len(data.Items) > 0 {
+		<div class="flex flex-wrap gap-1">
+			for _, item := range data.Items {
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, item.Page.Number))) }
+					class="badge badge-outline hover:bg-accent transition-colors text-xs"
+				>
+					if item.Page.Title != "" {
+						{ item.Page.Title }
+					} else {
+						<span class="text-muted-foreground italic">
+							{ templates.T(ctx, "page_edit_links_untitled") }
+						</span>
+					}
+				</a>
+			}
+		</div>
+	}
+}

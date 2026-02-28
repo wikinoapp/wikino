@@ -36,6 +36,50 @@ func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedP
 	return count, err
 }
 
+const countBacklinkedPagesForTargets = `-- name: CountBacklinkedPagesForTargets :many
+SELECT t.target_id, COUNT(p.id) AS count
+FROM unnest($1::uuid[]) AS t(target_id)
+LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = $2
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+GROUP BY t.target_id
+`
+
+type CountBacklinkedPagesForTargetsParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+}
+
+type CountBacklinkedPagesForTargetsRow struct {
+	TargetID interface{} `json:"target_id"`
+	Count    int64       `json:"count"`
+}
+
+// 複数ターゲットページのバックリンク件数を一括取得する
+func (q *Queries) CountBacklinkedPagesForTargets(ctx context.Context, arg CountBacklinkedPagesForTargetsParams) ([]CountBacklinkedPagesForTargetsRow, error) {
+	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountBacklinkedPagesForTargetsRow{}
+	for rows.Next() {
+		var i CountBacklinkedPagesForTargetsRow
+		if err := rows.Scan(&i.TargetID, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countLinkedPages = `-- name: CountLinkedPages :one
 SELECT COUNT(*)
 FROM pages
@@ -144,6 +188,89 @@ func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBackl
 			&i.PinnedAt,
 			&i.DiscardedAt,
 			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findBacklinkedPagesForTargets = `-- name: FindBacklinkedPagesForTargets :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id, t.target_id
+FROM unnest($1::uuid[]) AS t(target_id)
+CROSS JOIN LATERAL (
+  SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
+  FROM pages
+  WHERE t.target_id::varchar = ANY(linked_page_ids)
+    AND space_id = $2
+    AND published_at IS NOT NULL
+    AND discarded_at IS NULL
+  ORDER BY modified_at DESC, id DESC
+  LIMIT $3
+) p
+`
+
+type FindBacklinkedPagesForTargetsParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+	Limit   int32    `json:"limit"`
+}
+
+type FindBacklinkedPagesForTargetsRow struct {
+	ID                        string        `json:"id"`
+	SpaceID                   string        `json:"space_id"`
+	TopicID                   string        `json:"topic_id"`
+	Number                    int32         `json:"number"`
+	Title                     interface{}   `json:"title"`
+	Body                      string        `json:"body"`
+	BodyHtml                  string        `json:"body_html"`
+	LinkedPageIds             []string      `json:"linked_page_ids"`
+	ModifiedAt                time.Time     `json:"modified_at"`
+	PublishedAt               sql.NullTime  `json:"published_at"`
+	TrashedAt                 sql.NullTime  `json:"trashed_at"`
+	CreatedAt                 time.Time     `json:"created_at"`
+	UpdatedAt                 time.Time     `json:"updated_at"`
+	PinnedAt                  sql.NullTime  `json:"pinned_at"`
+	DiscardedAt               sql.NullTime  `json:"discarded_at"`
+	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
+	TargetID                  interface{}   `json:"target_id"`
+}
+
+// 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
+func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBacklinkedPagesForTargetsParams) ([]FindBacklinkedPagesForTargetsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindBacklinkedPagesForTargetsRow{}
+	for rows.Next() {
+		var i FindBacklinkedPagesForTargetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+			&i.TargetID,
 		); err != nil {
 			return nil, err
 		}

@@ -4,6 +4,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
+const (
+	// LinkLimit はリンク一覧の1ページあたりの表示件数です
+	LinkLimit int32 = 15
+	// BacklinkLimit はバックリンクの1ページあたりの表示件数です
+	BacklinkLimit int32 = 14
+)
+
 // LinkListItem はリンク一覧の個別リンク情報です
 type LinkListItem struct {
 	Page         Page
@@ -15,6 +22,7 @@ type LinkList struct {
 	Items           []LinkListItem
 	Pagination      Pagination
 	SpaceIdentifier string
+	PageNumber      int32
 }
 
 // NewLinkListInput はNewLinkListの入力パラメータです
@@ -23,6 +31,7 @@ type NewLinkListInput struct {
 	BacklinkMap     map[model.PageID]BacklinkList
 	Pagination      Pagination
 	SpaceIdentifier string
+	PageNumber      int32
 }
 
 // NewLinkList はリンク先ページの一覧からLinkListを生成します
@@ -41,5 +50,6 @@ func NewLinkList(input NewLinkListInput) LinkList {
 		Items:           items,
 		Pagination:      input.Pagination,
 		SpaceIdentifier: input.SpaceIdentifier,
+		PageNumber:      input.PageNumber,
 	}
 }

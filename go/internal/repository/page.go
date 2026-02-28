@@ -98,6 +98,135 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 	}, nil
 }
 
+// FindBacklinksForPages は複数ページのバックリンクを一括取得する（N+1回避）
+func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, limit int32) (map[model.PageID]*PaginatedPages, error) {
+	if len(targetPages) == 0 {
+		return nil, nil
+	}
+
+	targetIDs := make([]string, len(targetPages))
+	for i, pg := range targetPages {
+		targetIDs[i] = string(pg.ID)
+	}
+
+	// バックリンクページを一括取得
+	rows, err := r.q.FindBacklinkedPagesForTargets(ctx, query.FindBacklinkedPagesForTargetsParams{
+		Column1: targetIDs,
+		SpaceID: string(spaceID),
+		Limit:   limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// バックリンク件数を一括取得
+	countRows, err := r.q.CountBacklinkedPagesForTargets(ctx, query.CountBacklinkedPagesForTargetsParams{
+		Column1: targetIDs,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 件数マップを構築
+	countMap := make(map[model.PageID]int64, len(countRows))
+	for _, row := range countRows {
+		var targetID string
+		switch v := row.TargetID.(type) {
+		case string:
+			targetID = v
+		case []byte:
+			targetID = string(v)
+		}
+		countMap[model.PageID(targetID)] = row.Count
+	}
+
+	// ターゲットIDごとにバックリンクページをグループ化
+	result := make(map[model.PageID]*PaginatedPages, len(targetPages))
+	for _, pg := range targetPages {
+		result[pg.ID] = &PaginatedPages{
+			Pages:      []*model.Page{},
+			TotalCount: countMap[pg.ID],
+		}
+	}
+
+	for _, row := range rows {
+		var targetID string
+		switch v := row.TargetID.(type) {
+		case string:
+			targetID = v
+		case []byte:
+			targetID = string(v)
+		}
+		pageID := model.PageID(targetID)
+		page := r.toModelFromTargetRow(row)
+		if entry, ok := result[pageID]; ok {
+			entry.Pages = append(entry.Pages, page)
+		}
+	}
+
+	return result, nil
+}
+
+// toModelFromTargetRow は FindBacklinkedPagesForTargetsRow を model.Page に変換する
+func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTargetsRow) *model.Page {
+	var title *string
+	if row.Title != nil {
+		switch v := row.Title.(type) {
+		case string:
+			title = &v
+		case []byte:
+			s := string(v)
+			title = &s
+		}
+	}
+
+	var publishedAt *time.Time
+	if row.PublishedAt.Valid {
+		publishedAt = &row.PublishedAt.Time
+	}
+
+	var trashedAt *time.Time
+	if row.TrashedAt.Valid {
+		trashedAt = &row.TrashedAt.Time
+	}
+
+	var pinnedAt *time.Time
+	if row.PinnedAt.Valid {
+		pinnedAt = &row.PinnedAt.Time
+	}
+
+	var discardedAt *time.Time
+	if row.DiscardedAt.Valid {
+		discardedAt = &row.DiscardedAt.Time
+	}
+
+	var featuredImageAttachmentID *model.AttachmentID
+	if row.FeaturedImageAttachmentID.Valid {
+		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+		featuredImageAttachmentID = &id
+	}
+
+	return &model.Page{
+		ID:                        model.PageID(row.ID),
+		SpaceID:                   model.SpaceID(row.SpaceID),
+		TopicID:                   model.TopicID(row.TopicID),
+		Number:                    model.PageNumber(row.Number),
+		Title:                     title,
+		Body:                      row.Body,
+		BodyHTML:                  row.BodyHtml,
+		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
+		ModifiedAt:                row.ModifiedAt,
+		PublishedAt:               publishedAt,
+		TrashedAt:                 trashedAt,
+		CreatedAt:                 row.CreatedAt,
+		UpdatedAt:                 row.UpdatedAt,
+		PinnedAt:                  pinnedAt,
+		DiscardedAt:               discardedAt,
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+	}
+}
+
 // FindByIDs はIDリストに含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ）
 func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.FindPagesByIDs(ctx, query.FindPagesByIDsParams{

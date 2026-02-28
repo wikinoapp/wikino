@@ -601,6 +601,153 @@ func TestPageRepository_Update(t *testing.T) {
 	})
 }
 
+func TestPageRepository_FindBacklinksForPages(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-backlinks-batch").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// ターゲットページ2つ
+	targetPage1ID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Target 1").
+		Build()
+
+	targetPage2ID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Target 2").
+		Build()
+
+	// targetPage1をリンクしているページ3件
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(10).
+		WithTitle("Linker1-Old").
+		WithLinkedPageIDs([]model.PageID{targetPage1ID}).
+		WithModifiedAt(baseTime).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(11).
+		WithTitle("Linker1-Mid").
+		WithLinkedPageIDs([]model.PageID{targetPage1ID}).
+		WithModifiedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(12).
+		WithTitle("Linker1-New").
+		WithLinkedPageIDs([]model.PageID{targetPage1ID}).
+		WithModifiedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// targetPage2をリンクしているページ1件
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(20).
+		WithTitle("Linker2-Only").
+		WithLinkedPageIDs([]model.PageID{targetPage2ID}).
+		WithModifiedAt(baseTime).
+		Build()
+
+	targetPage1 := &model.Page{ID: targetPage1ID}
+	targetPage2 := &model.Page{ID: targetPage2ID}
+
+	t.Run("複数ターゲットのバックリンクを一括取得できる", func(t *testing.T) {
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1, targetPage2}, spaceID, 100)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+
+		// targetPage1のバックリンクは3件
+		if len(result[targetPage1ID].Pages) != 3 {
+			t.Errorf("targetPage1 backlinks = %d, want 3", len(result[targetPage1ID].Pages))
+		}
+		if result[targetPage1ID].TotalCount != 3 {
+			t.Errorf("targetPage1 TotalCount = %d, want 3", result[targetPage1ID].TotalCount)
+		}
+
+		// targetPage2のバックリンクは1件
+		if len(result[targetPage2ID].Pages) != 1 {
+			t.Errorf("targetPage2 backlinks = %d, want 1", len(result[targetPage2ID].Pages))
+		}
+		if result[targetPage2ID].TotalCount != 1 {
+			t.Errorf("targetPage2 TotalCount = %d, want 1", result[targetPage2ID].TotalCount)
+		}
+	})
+
+	t.Run("limitで取得件数を制限できる", func(t *testing.T) {
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1}, spaceID, 2)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+
+		// limitが2なのでページは2件のみ
+		if len(result[targetPage1ID].Pages) != 2 {
+			t.Errorf("targetPage1 backlinks = %d, want 2", len(result[targetPage1ID].Pages))
+		}
+		// TotalCountは全件数の3
+		if result[targetPage1ID].TotalCount != 3 {
+			t.Errorf("targetPage1 TotalCount = %d, want 3", result[targetPage1ID].TotalCount)
+		}
+	})
+
+	t.Run("バックリンクがないターゲットは空の結果を返す", func(t *testing.T) {
+		isolatedPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(50).
+			WithTitle("Isolated").
+			Build()
+		isolatedPage := &model.Page{ID: isolatedPageID}
+
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{isolatedPage}, spaceID, 100)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+
+		if len(result[isolatedPageID].Pages) != 0 {
+			t.Errorf("isolated backlinks = %d, want 0", len(result[isolatedPageID].Pages))
+		}
+		if result[isolatedPageID].TotalCount != 0 {
+			t.Errorf("isolated TotalCount = %d, want 0", result[isolatedPageID].TotalCount)
+		}
+	})
+
+	t.Run("空のターゲットリストはnilを返す", func(t *testing.T) {
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{}, spaceID, 100)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+		if result != nil {
+			t.Errorf("result = %v, want nil", result)
+		}
+	})
+}
+
 func TestPageRepository_CreateLinkedPage(t *testing.T) {
 	t.Parallel()
 

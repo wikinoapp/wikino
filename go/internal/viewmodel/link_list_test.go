@@ -152,6 +152,7 @@ func TestNewLinkList_WithPagination(t *testing.T) {
 		Pages:           pages,
 		Pagination:      pagination,
 		SpaceIdentifier: "test-space",
+		PageNumber:      42,
 	})
 
 	if got.Pagination.Current != 1 {
@@ -165,5 +166,8 @@ func TestNewLinkList_WithPagination(t *testing.T) {
 	}
 	if got.Pagination.HasPrevious {
 		t.Error("Pagination.HasPrevious = true, want false")
+	}
+	if got.PageNumber != 42 {
+		t.Errorf("PageNumber = %d, want 42", got.PageNumber)
 	}
 }
