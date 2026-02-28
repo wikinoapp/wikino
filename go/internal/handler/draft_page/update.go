@@ -92,7 +92,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicPolicy := policy.NewTopicPolicy(spaceMember.Role, space.ID, topicMember, spaceMember.Active)
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
 	if !topicPolicy.CanUpdatePage(pg) {
 		writeJSONError(w, "Not Found", http.StatusNotFound)
 		return
