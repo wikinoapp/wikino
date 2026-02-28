@@ -15,6 +15,7 @@ type LinkList struct {
 	Items           []LinkListItem
 	Pagination      Pagination
 	SpaceIdentifier string
+	PageNumber      int32
 }
 
 // NewLinkListInput はNewLinkListの入力パラメータです
@@ -23,6 +24,7 @@ type NewLinkListInput struct {
 	BacklinkMap     map[model.PageID]BacklinkList
 	Pagination      Pagination
 	SpaceIdentifier string
+	PageNumber      int32
 }
 
 // NewLinkList はリンク先ページの一覧からLinkListを生成します
@@ -41,5 +43,6 @@ func NewLinkList(input NewLinkListInput) LinkList {
 		Items:           items,
 		Pagination:      input.Pagination,
 		SpaceIdentifier: input.SpaceIdentifier,
+		PageNumber:      input.PageNumber,
 	}
 }
