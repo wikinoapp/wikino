@@ -35,11 +35,12 @@ templ LinkList(data viewmodel.LinkList) {
 							</div>
 						</a>
 
-						if len(item.BacklinkList.Items) > 0 {
-							<div class="md:col-span-2 flex items-center">
-								@BacklinkList(item.BacklinkList, data.SpaceIdentifier)
-							</div>
-						}
+						<div
+							id={ fmt.Sprintf("page-backlink-list-%d", item.Page.Number) }
+							class="md:col-span-2 flex items-center"
+						>
+							@BacklinkList(item.BacklinkList)
+						</div>
 					</div>
 				}
 			</div>
