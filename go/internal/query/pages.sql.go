@@ -14,6 +14,50 @@ import (
 	"github.com/lib/pq"
 )
 
+const countBacklinkedPages = `-- name: CountBacklinkedPages :one
+SELECT COUNT(*)
+FROM pages
+WHERE $1::varchar = ANY(linked_page_ids)
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+`
+
+type CountBacklinkedPagesParams struct {
+	Column1 string `json:"column_1"`
+	SpaceID string `json:"space_id"`
+}
+
+// バックリンクページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedPagesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countBacklinkedPages, arg.Column1, arg.SpaceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countLinkedPages = `-- name: CountLinkedPages :one
+SELECT COUNT(*)
+FROM pages
+WHERE id = ANY($1::uuid[])
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+`
+
+type CountLinkedPagesParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+}
+
+// リンク先ページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLinkedPages, pq.Array(arg.Column1), arg.SpaceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLinkedPage = `-- name: CreateLinkedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, '', '', '{}', $5, $5, $5, $5)
@@ -76,6 +120,134 @@ type FindBacklinkedPagesByPageIDParams struct {
 // linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ。バックリンク一覧表示用）
 func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBacklinkedPagesByPageIDParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesByPageID, arg.Column1, arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findBacklinkedPagesPaginated = `-- name: FindBacklinkedPagesPaginated :many
+SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+WHERE $1::varchar = ANY(linked_page_ids)
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4
+`
+
+type FindBacklinkedPagesPaginatedParams struct {
+	Column1 string `json:"column_1"`
+	SpaceID string `json:"space_id"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+// バックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBacklinkedPagesPaginatedParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesPaginated,
+		arg.Column1,
+		arg.SpaceID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findLinkedPagesPaginated = `-- name: FindLinkedPagesPaginated :many
+SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+WHERE id = ANY($1::uuid[])
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4
+`
+
+type FindLinkedPagesPaginatedParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+	Limit   int32    `json:"limit"`
+	Offset  int32    `json:"offset"`
+}
+
+// リンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPagesPaginatedParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findLinkedPagesPaginated,
+		pq.Array(arg.Column1),
+		arg.SpaceID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

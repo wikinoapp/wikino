@@ -61,6 +61,46 @@ LIMIT 10;
 -- スペース内の次のページ番号を取得する
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1;
 
+-- name: FindLinkedPagesPaginated :many
+-- リンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+SELECT * FROM pages
+WHERE id = ANY($1::uuid[])
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4;
+
+-- name: CountLinkedPages :one
+-- リンク先ページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+SELECT COUNT(*)
+FROM pages
+WHERE id = ANY($1::uuid[])
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL;
+
+-- name: FindBacklinkedPagesPaginated :many
+-- バックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+SELECT * FROM pages
+WHERE $1::varchar = ANY(linked_page_ids)
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4;
+
+-- name: CountBacklinkedPages :one
+-- バックリンクページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+SELECT COUNT(*)
+FROM pages
+WHERE $1::varchar = ANY(linked_page_ids)
+  AND space_id = $2
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)

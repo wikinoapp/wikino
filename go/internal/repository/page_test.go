@@ -101,6 +101,242 @@ func TestPageRepository_FindBySpaceAndNumber(t *testing.T) {
 	})
 }
 
+func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-linked-paginated").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	// 3つの公開ページを作成（modified_atで降順にソートされることを検証するため異なる日時を設定）
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	pageID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Old Page").
+		WithModifiedAt(baseTime).
+		Build()
+
+	pageID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Middle Page").
+		WithModifiedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	pageID3 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("New Page").
+		WithModifiedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// 非公開ページ
+	unpublishedID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Unpublished").
+		WithUnpublished().
+		Build()
+
+	allIDs := []model.PageID{pageID1, pageID2, pageID3, unpublishedID}
+
+	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 1, 2)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		// modified_at DESC でソートされるため、新しい順
+		if *result.Pages[0].Title != "New Page" {
+			t.Errorf("pages[0].Title = %v, want 'New Page'", *result.Pages[0].Title)
+		}
+		if *result.Pages[1].Title != "Middle Page" {
+			t.Errorf("pages[1].Title = %v, want 'Middle Page'", *result.Pages[1].Title)
+		}
+		// 公開済み3件（非公開は除外）
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 2, 2)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if *result.Pages[0].Title != "Old Page" {
+			t.Errorf("pages[0].Title = %v, want 'Old Page'", *result.Pages[0].Title)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("非公開ページは件数に含まれない", func(t *testing.T) {
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 1, 100)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 3 {
+			t.Errorf("len(pages) = %d, want 3", len(result.Pages))
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("空のIDリストは空の結果を返す", func(t *testing.T) {
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{}, spaceID, 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+	})
+}
+
+func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-backlink-paginated").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	// 被リンクページ
+	targetPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Target Page").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// targetPageIDをリンクしているページ3件
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linker Old").
+		WithLinkedPageIDs([]model.PageID{targetPageID}).
+		WithModifiedAt(baseTime).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Linker Middle").
+		WithLinkedPageIDs([]model.PageID{targetPageID}).
+		WithModifiedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Linker New").
+		WithLinkedPageIDs([]model.PageID{targetPageID}).
+		WithModifiedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// targetPageIDをリンクしていないページ
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("No Link").
+		Build()
+
+	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 1, 2)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		// modified_at DESC でソートされるため、新しい順
+		if *result.Pages[0].Title != "Linker New" {
+			t.Errorf("pages[0].Title = %v, want 'Linker New'", *result.Pages[0].Title)
+		}
+		if *result.Pages[1].Title != "Linker Middle" {
+			t.Errorf("pages[1].Title = %v, want 'Linker Middle'", *result.Pages[1].Title)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 2, 2)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if *result.Pages[0].Title != "Linker Old" {
+			t.Errorf("pages[0].Title = %v, want 'Linker Old'", *result.Pages[0].Title)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("バックリンクがないページは空の結果を返す", func(t *testing.T) {
+		isolatedPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(10).
+			WithTitle("Isolated").
+			Build()
+
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, 1, 14)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+		if result.TotalCount != 0 {
+			t.Errorf("TotalCount = %d, want 0", result.TotalCount)
+		}
+	})
+}
+
 func TestPageRepository_FindByIDs(t *testing.T) {
 	t.Parallel()
 

@@ -44,6 +44,60 @@ func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model
 	return r.toModel(row), nil
 }
 
+// FindLinkedPagesPaginated はリンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+	totalCount, err := r.q.CountLinkedPages(ctx, query.CountLinkedPagesParams{
+		Column1: model.PageIDsToStrings(pageIDs),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.q.FindLinkedPagesPaginated(ctx, query.FindLinkedPagesPaginatedParams{
+		Column1: model.PageIDsToStrings(pageIDs),
+		SpaceID: string(spaceID),
+		Limit:   limit,
+		Offset:  offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
+}
+
+// FindBacklinkedPagesPaginated はバックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+	totalCount, err := r.q.CountBacklinkedPages(ctx, query.CountBacklinkedPagesParams{
+		Column1: string(pageID),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.q.FindBacklinkedPagesPaginated(ctx, query.FindBacklinkedPagesPaginatedParams{
+		Column1: string(pageID),
+		SpaceID: string(spaceID),
+		Limit:   limit,
+		Offset:  offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
+}
+
 // FindByIDs はIDリストに含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ）
 func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.FindPagesByIDs(ctx, query.FindPagesByIDsParams{

@@ -94,6 +94,12 @@ func (b *PageBuilder) WithLinkedPageIDs(ids []model.PageID) *PageBuilder {
 	return b
 }
 
+// WithModifiedAt は更新日時を設定します
+func (b *PageBuilder) WithModifiedAt(modifiedAt time.Time) *PageBuilder {
+	b.modifiedAt = modifiedAt
+	return b
+}
+
 // WithPublishedAt は公開日時を設定します
 func (b *PageBuilder) WithPublishedAt(publishedAt time.Time) *PageBuilder {
 	b.publishedAt = &publishedAt
