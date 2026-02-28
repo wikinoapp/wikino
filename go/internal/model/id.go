@@ -27,6 +27,9 @@ type PageEditorID string
 // PageAttachmentReferenceID はページ添付ファイル参照のID型
 type PageAttachmentReferenceID string
 
+// UserID はユーザーのID型
+type UserID string
+
 // AttachmentID は添付ファイルのID型
 type AttachmentID string
 
@@ -56,6 +59,9 @@ func (id PageEditorID) String() string { return string(id) }
 
 // String はPageAttachmentReferenceIDを文字列に変換する
 func (id PageAttachmentReferenceID) String() string { return string(id) }
+
+// String はUserIDを文字列に変換する
+func (id UserID) String() string { return string(id) }
 
 // String はAttachmentIDを文字列に変換する
 func (id AttachmentID) String() string { return string(id) }

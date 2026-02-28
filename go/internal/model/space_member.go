@@ -18,7 +18,7 @@ const (
 type SpaceMember struct {
 	ID       SpaceMemberID
 	SpaceID  SpaceID
-	UserID   string
+	UserID   UserID
 	Role     SpaceMemberRole
 	JoinedAt time.Time
 	Active   bool

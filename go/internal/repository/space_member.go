@@ -25,10 +25,10 @@ func (r *SpaceMemberRepository) WithTx(tx *sql.Tx) *SpaceMemberRepository {
 }
 
 // FindActiveBySpaceAndUser はスペースIDとユーザーIDでアクティブなスペースメンバーを取得する
-func (r *SpaceMemberRepository) FindActiveBySpaceAndUser(ctx context.Context, spaceID model.SpaceID, userID string) (*model.SpaceMember, error) {
+func (r *SpaceMemberRepository) FindActiveBySpaceAndUser(ctx context.Context, spaceID model.SpaceID, userID model.UserID) (*model.SpaceMember, error) {
 	row, err := r.q.FindActiveSpaceMemberBySpaceAndUser(ctx, query.FindActiveSpaceMemberBySpaceAndUserParams{
 		SpaceID: string(spaceID),
-		UserID:  userID,
+		UserID:  string(userID),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,7 +44,7 @@ func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMembe
 	return &model.SpaceMember{
 		ID:       model.SpaceMemberID(row.ID),
 		SpaceID:  model.SpaceID(row.SpaceID),
-		UserID:   row.UserID,
+		UserID:   model.UserID(row.UserID),
 		Role:     model.SpaceMemberRole(row.Role),
 		JoinedAt: row.JoinedAt,
 		Active:   row.Active,
