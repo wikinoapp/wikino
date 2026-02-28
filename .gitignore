@@ -6,5 +6,6 @@
 /compose-up.sh
 /docker-compose.override.yml
 /node_modules
+/shimbaco-skills
 /tmp
 test-results/

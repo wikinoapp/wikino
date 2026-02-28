@@ -22,6 +22,7 @@
     "rails/sorbet/",
     "go/internal/query/*.go",
     "go/internal/templates/*_templ.go",
-    "go/static/"
+    "go/static/",
+    "shimbaco-skills/"
   ]
 }
