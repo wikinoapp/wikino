@@ -99,7 +99,6 @@ templ Edit(data EditPageData) {
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 									data-markdown-editor-space-identifier={ data.Space.Identifier }
-									data-markdown-editor-link-list="#page-link-list"
 									class="min-h-[400px] border rounded-md overflow-hidden"
 								></div>
 								<textarea
@@ -131,7 +130,11 @@ templ Edit(data EditPageData) {
 					</div>
 				</div>
 
-				<div id="page-link-list" class="mt-6">
+				<div
+					id="page-link-list"
+					class="mt-6"
+					data-on-draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier, data.Page.Number))) }
+				>
 					@components.LinkList(data.LinkList)
 				</div>
 			</div>

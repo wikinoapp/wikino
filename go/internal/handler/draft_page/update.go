@@ -1,7 +1,6 @@
 package draft_page
 
 import (
-	"bytes"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -12,15 +11,12 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // updateResponse は下書き自動保存のJSONレスポンス
 type updateResponse struct {
-	ModifiedAt   time.Time `json:"modified_at"`
-	LinkListHTML string    `json:"link_list_html"`
+	ModifiedAt time.Time `json:"modified_at"`
 }
 
 // writeJSONError はJSON形式のエラーレスポンスを返す
@@ -147,30 +143,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// リンク一覧HTMLフラグメントを生成
-	var linkListHTML string
-	if output.DraftPage != nil && len(output.DraftPage.LinkedPageIDs) > 0 {
-		linkedPages, err := h.pageRepo.FindByIDs(ctx, output.DraftPage.LinkedPageIDs, space.ID)
-		if err != nil {
-			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
-			writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		linkListVM := viewmodel.NewLinkList(linkedPages, spaceIdentifier)
-
-		var buf bytes.Buffer
-		if err := components.LinkList(linkListVM).Render(ctx, &buf); err != nil {
-			slog.ErrorContext(ctx, "リンク一覧のレンダリングに失敗", "error", err)
-			writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		linkListHTML = buf.String()
-	}
-
 	// JSONレスポンスを返す
 	resp := updateResponse{
-		ModifiedAt:   output.ModifiedAt,
-		LinkListHTML: linkListHTML,
+		ModifiedAt: output.ModifiedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

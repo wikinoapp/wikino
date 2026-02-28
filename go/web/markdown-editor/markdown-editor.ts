@@ -41,7 +41,6 @@ interface EditorConfig {
   topicNumber: string;
   titleInput: HTMLInputElement;
   savedAtEl: HTMLElement | null;
-  linkListEl: HTMLElement | null;
   spaceIdentifier: string;
 }
 
@@ -135,9 +134,7 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
         });
         config.savedAtEl.textContent = timeStr;
       }
-      if (config.linkListEl && data.link_list_html !== undefined) {
-        config.linkListEl.innerHTML = data.link_list_html;
-      }
+      window.dispatchEvent(new CustomEvent("draft-autosaved"));
     }
   } catch {
     // 自動保存の失敗は静かに無視する
@@ -159,9 +156,6 @@ export function initializeEditors(): void {
     const savedAtSelector = container.dataset.markdownEditorSavedAt || "";
     const savedAtEl = document.querySelector<HTMLElement>(savedAtSelector);
 
-    const linkListSelector = container.dataset.markdownEditorLinkList || "";
-    const linkListEl = linkListSelector ? document.querySelector<HTMLElement>(linkListSelector) : null;
-
     const body = container.dataset.markdownEditorBody || "";
     const autofocus = container.dataset.markdownEditorAutofocus === "true";
     const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
@@ -179,7 +173,6 @@ export function initializeEditors(): void {
       topicNumber,
       titleInput,
       savedAtEl,
-      linkListEl,
       spaceIdentifier,
     });
 
