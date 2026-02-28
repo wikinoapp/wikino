@@ -129,7 +129,10 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		linkListVM = viewmodel.NewLinkList(linkedPages, spaceIdentifier)
+		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+			Pages:           linkedPages,
+			SpaceIdentifier: spaceIdentifier,
+		})
 	}
 
 	// CSRFトークンを取得

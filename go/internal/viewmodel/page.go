@@ -50,3 +50,15 @@ func NewPageFromFormInput(title string, body string, number model.PageNumber) Pa
 func (p Page) AutofocusTitle() bool {
 	return p.Title == ""
 }
+
+// newPageFromModel はmodel.PageからPageビューモデルを生成します
+func newPageFromModel(pg *model.Page) Page {
+	var title string
+	if pg.Title != nil {
+		title = *pg.Title
+	}
+	return Page{
+		Title:  title,
+		Number: int32(pg.Number),
+	}
+}
