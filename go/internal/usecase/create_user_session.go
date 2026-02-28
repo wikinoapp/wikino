@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
@@ -26,7 +27,7 @@ func NewCreateUserSessionUsecase(
 
 // CreateUserSessionInput はセッション作成の入力パラメータ
 type CreateUserSessionInput struct {
-	UserID    string
+	UserID    model.UserID
 	IPAddress string
 	UserAgent string
 }

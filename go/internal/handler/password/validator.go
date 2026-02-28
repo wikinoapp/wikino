@@ -42,7 +42,7 @@ type UpdateValidatorResult struct {
 	// TokenID は検証成功時のトークンID（UseCaseに渡す）
 	TokenID string
 	// UserID は検証成功時のユーザーID（UseCaseに渡す）
-	UserID string
+	UserID model.UserID
 	// FormErrors はフォームエラー
 	FormErrors *session.FormErrors
 	// Err はシステムエラー

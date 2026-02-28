@@ -7,7 +7,7 @@ import (
 // UserTwoFactorAuth はユーザーの二要素認証設定のドメインモデル
 type UserTwoFactorAuth struct {
 	ID            string
-	UserID        string
+	UserID        UserID
 	Secret        string
 	Enabled       bool
 	EnabledAt     *time.Time

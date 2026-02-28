@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"testing"
 	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // UserPasswordBuilder はユーザーパスワードテストデータのビルダー
@@ -12,7 +14,7 @@ type UserPasswordBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	userID         string
+	userID         model.UserID
 	passwordDigest string
 }
 
@@ -27,7 +29,7 @@ func NewUserPasswordBuilder(t *testing.T, tx *sql.Tx) *UserPasswordBuilder {
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *UserPasswordBuilder) WithUserID(userID string) *UserPasswordBuilder {
+func (b *UserPasswordBuilder) WithUserID(userID model.UserID) *UserPasswordBuilder {
 	b.userID = userID
 	return b
 }
@@ -53,7 +55,7 @@ func (b *UserPasswordBuilder) Build() string {
 		`INSERT INTO user_passwords (user_id, password_digest, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4)
 		 RETURNING id`,
-		b.userID, b.passwordDigest, now, now,
+		string(b.userID), b.passwordDigest, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ユーザーパスワード作成に失敗: %v", err)
@@ -68,7 +70,7 @@ type UserPasswordBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
-	userID         string
+	userID         model.UserID
 	passwordDigest string
 }
 
@@ -83,7 +85,7 @@ func NewUserPasswordBuilderDB(t *testing.T, db *sql.DB) *UserPasswordBuilderDB {
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *UserPasswordBuilderDB) WithUserID(userID string) *UserPasswordBuilderDB {
+func (b *UserPasswordBuilderDB) WithUserID(userID model.UserID) *UserPasswordBuilderDB {
 	b.userID = userID
 	return b
 }
@@ -109,7 +111,7 @@ func (b *UserPasswordBuilderDB) Build() string {
 		`INSERT INTO user_passwords (user_id, password_digest, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4)
 		 RETURNING id`,
-		b.userID, b.passwordDigest, now, now,
+		string(b.userID), b.passwordDigest, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ユーザーパスワード作成に失敗: %v", err)

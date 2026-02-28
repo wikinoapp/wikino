@@ -14,7 +14,7 @@ type PasswordResetTokenBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	userID      string
+	userID      model.UserID
 	tokenDigest string
 	expiresAt   time.Time
 	usedAt      *time.Time
@@ -32,7 +32,7 @@ func NewPasswordResetTokenBuilder(t *testing.T, tx *sql.Tx) *PasswordResetTokenB
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *PasswordResetTokenBuilder) WithUserID(userID string) *PasswordResetTokenBuilder {
+func (b *PasswordResetTokenBuilder) WithUserID(userID model.UserID) *PasswordResetTokenBuilder {
 	b.userID = userID
 	return b
 }
@@ -73,7 +73,7 @@ func (b *PasswordResetTokenBuilder) Build() string {
 			`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, used_at, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5, $6)
 			 RETURNING id`,
-			b.userID, b.tokenDigest, b.expiresAt, b.usedAt, now, now,
+			string(b.userID), b.tokenDigest, b.expiresAt, b.usedAt, now, now,
 		).Scan(&id)
 	} else {
 		err = b.tx.QueryRowContext(
@@ -81,7 +81,7 @@ func (b *PasswordResetTokenBuilder) Build() string {
 			`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5)
 			 RETURNING id`,
-			b.userID, b.tokenDigest, b.expiresAt, now, now,
+			string(b.userID), b.tokenDigest, b.expiresAt, now, now,
 		).Scan(&id)
 	}
 	if err != nil {
@@ -106,7 +106,7 @@ func (b *PasswordResetTokenBuilder) BuildUsed() string {
 		`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, used_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
-		b.userID, b.tokenDigest, b.expiresAt, now, now, now,
+		string(b.userID), b.tokenDigest, b.expiresAt, now, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("パスワードリセットトークン作成に失敗: %v", err)
@@ -121,7 +121,7 @@ type PasswordResetTokenBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
-	userID      string
+	userID      model.UserID
 	tokenDigest string
 	expiresAt   time.Time
 	usedAt      *time.Time
@@ -139,7 +139,7 @@ func NewPasswordResetTokenBuilderDB(t *testing.T, db *sql.DB) *PasswordResetToke
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *PasswordResetTokenBuilderDB) WithUserID(userID string) *PasswordResetTokenBuilderDB {
+func (b *PasswordResetTokenBuilderDB) WithUserID(userID model.UserID) *PasswordResetTokenBuilderDB {
 	b.userID = userID
 	return b
 }
@@ -180,7 +180,7 @@ func (b *PasswordResetTokenBuilderDB) Build() string {
 			`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, used_at, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5, $6)
 			 RETURNING id`,
-			b.userID, b.tokenDigest, b.expiresAt, b.usedAt, now, now,
+			string(b.userID), b.tokenDigest, b.expiresAt, b.usedAt, now, now,
 		).Scan(&id)
 	} else {
 		err = b.db.QueryRowContext(
@@ -188,7 +188,7 @@ func (b *PasswordResetTokenBuilderDB) Build() string {
 			`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5)
 			 RETURNING id`,
-			b.userID, b.tokenDigest, b.expiresAt, now, now,
+			string(b.userID), b.tokenDigest, b.expiresAt, now, now,
 		).Scan(&id)
 	}
 	if err != nil {
@@ -213,7 +213,7 @@ func (b *PasswordResetTokenBuilderDB) BuildUsed() string {
 		`INSERT INTO password_reset_tokens (user_id, token_digest, expires_at, used_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
-		b.userID, b.tokenDigest, b.expiresAt, now, now, now,
+		string(b.userID), b.tokenDigest, b.expiresAt, now, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("パスワードリセットトークン作成に失敗: %v", err)

@@ -48,7 +48,7 @@ type CreateAccountInput struct {
 
 // CreateAccountOutput はアカウント作成の出力パラメータ
 type CreateAccountOutput struct {
-	UserID string
+	UserID model.UserID
 }
 
 // エラー定義

@@ -39,7 +39,7 @@ func NewCreatePasswordResetTokenUsecase(
 
 // CreatePasswordResetTokenInput はパスワードリセットトークン作成の入力パラメータ
 type CreatePasswordResetTokenInput struct {
-	UserID string
+	UserID model.UserID
 	Email  string
 	Locale string
 }

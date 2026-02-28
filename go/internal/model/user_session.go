@@ -7,7 +7,7 @@ import (
 // UserSession はユーザーセッションのドメインモデル
 type UserSession struct {
 	ID         string
-	UserID     string
+	UserID     UserID
 	Token      string
 	IPAddress  string
 	UserAgent  string

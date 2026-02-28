@@ -26,8 +26,8 @@ func (r *UserPasswordRepository) WithTx(tx *sql.Tx) *UserPasswordRepository {
 }
 
 // FindByUserID はユーザーIDでパスワード情報を取得する
-func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID string) (*model.UserPassword, error) {
-	row, err := r.q.GetUserPasswordByUserID(ctx, userID)
+func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID model.UserID) (*model.UserPassword, error) {
+	row, err := r.q.GetUserPasswordByUserID(ctx, string(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -39,7 +39,7 @@ func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID string
 
 // CreateUserPasswordInput はユーザーパスワード作成の入力パラメータ
 type CreateUserPasswordInput struct {
-	UserID         string
+	UserID         model.UserID
 	PasswordDigest string
 }
 
@@ -47,7 +47,7 @@ type CreateUserPasswordInput struct {
 func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPasswordInput) (*model.UserPassword, error) {
 	now := time.Now()
 	row, err := r.q.CreateUserPassword(ctx, query.CreateUserPasswordParams{
-		UserID:         input.UserID,
+		UserID:         string(input.UserID),
 		PasswordDigest: input.PasswordDigest,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -59,10 +59,10 @@ func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPas
 }
 
 // UpdatePasswordDigest はユーザーIDでパスワードダイジェストを更新する
-func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userID string, passwordDigest string) error {
+func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userID model.UserID, passwordDigest string) error {
 	now := time.Now()
 	return r.q.UpdateUserPasswordDigest(ctx, query.UpdateUserPasswordDigestParams{
-		UserID:         userID,
+		UserID:         string(userID),
 		PasswordDigest: passwordDigest,
 		UpdatedAt:      now,
 	})
@@ -72,7 +72,7 @@ func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userI
 func (r *UserPasswordRepository) toModel(row query.UserPassword) *model.UserPassword {
 	return &model.UserPassword{
 		ID:             row.ID,
-		UserID:         row.UserID,
+		UserID:         model.UserID(row.UserID),
 		PasswordDigest: row.PasswordDigest,
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,

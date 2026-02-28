@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
@@ -59,7 +60,7 @@ func (b *UserBuilder) WithName(name string) *UserBuilder {
 }
 
 // Build はユーザーを作成し、IDを返します
-func (b *UserBuilder) Build() string {
+func (b *UserBuilder) Build() model.UserID {
 	b.t.Helper()
 
 	now := time.Now()
@@ -75,11 +76,11 @@ func (b *UserBuilder) Build() string {
 		b.t.Fatalf("ユーザー作成に失敗: %v", err)
 	}
 
-	return id
+	return model.UserID(id)
 }
 
 // BuildWithPassword はユーザーとパスワードを作成し、ユーザーIDを返します
-func (b *UserBuilder) BuildWithPassword(passwordDigest string) string {
+func (b *UserBuilder) BuildWithPassword(passwordDigest string) model.UserID {
 	b.t.Helper()
 
 	userID := b.Build()
@@ -89,7 +90,7 @@ func (b *UserBuilder) BuildWithPassword(passwordDigest string) string {
 		context.Background(),
 		`INSERT INTO user_passwords (user_id, password_digest, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4)`,
-		userID, passwordDigest, now, now,
+		string(userID), passwordDigest, now, now,
 	)
 	if err != nil {
 		b.t.Fatalf("ユーザーパスワード作成に失敗: %v", err)
@@ -99,13 +100,13 @@ func (b *UserBuilder) BuildWithPassword(passwordDigest string) string {
 }
 
 // BuildWithTwoFactorAuth はユーザーと二要素認証設定を作成し、ユーザーIDを返します
-func (b *UserBuilder) BuildWithTwoFactorAuth(secret string, enabled bool) string {
+func (b *UserBuilder) BuildWithTwoFactorAuth(secret string, enabled bool) model.UserID {
 	b.t.Helper()
 	return b.BuildWithTwoFactorAuthAndRecoveryCodes(secret, enabled, []string{})
 }
 
 // BuildWithTwoFactorAuthAndRecoveryCodes はユーザーと二要素認証設定（リカバリーコード付き）を作成し、ユーザーIDを返します
-func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) string {
+func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) model.UserID {
 	b.t.Helper()
 
 	userID := b.Build()
@@ -123,7 +124,7 @@ func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enab
 		context.Background(),
 		`INSERT INTO user_two_factor_auths (user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		userID, secret, enabled, enabledAt, recoveryCodesStr, now, now,
+		string(userID), secret, enabled, enabledAt, recoveryCodesStr, now, now,
 	)
 	if err != nil {
 		b.t.Fatalf("二要素認証設定作成に失敗: %v", err)
@@ -204,7 +205,7 @@ func (b *UserBuilderDB) WithName(name string) *UserBuilderDB {
 }
 
 // Build はユーザーを作成し、IDを返します
-func (b *UserBuilderDB) Build() string {
+func (b *UserBuilderDB) Build() model.UserID {
 	b.t.Helper()
 
 	now := time.Now()
@@ -220,5 +221,5 @@ func (b *UserBuilderDB) Build() string {
 		b.t.Fatalf("ユーザー作成に失敗: %v", err)
 	}
 
-	return id
+	return model.UserID(id)
 }
