@@ -56,6 +56,8 @@ cat /workspace/rails/app/models/work.rb
   - resend-go/v2: メール送信ライブラリ（Resend API）
   - river: バックグラウンドジョブキュー（PostgreSQL ベース）
 - PostgreSQL 18.1
+- Datastar v1.0.0-RC.7: ハイパーメディアフレームワーク（SSE + フラグメント更新によるサーバードリブン UI）
+  - datastar-go/v1.1.0: Datastar Go SDK（SSE レスポンス生成）
 - Cloudflare Turnstile: Bot 対策サービス（ログイン・サインアップフォームなど）
 - pnpm
   - @tailwindcss/cli: Tailwind CSS v4 CLI ツール
@@ -875,6 +877,40 @@ autofocusTitle := title == ""
 テンプレートの詳しい書き方、レイアウトの継承、コンポーネントの再利用、テストの書き方などは以下のドキュメントを参照してください：
 
 📖 **[@go/docs/templ-guide.md](docs/templ-guide.md)** - templ テンプレートガイド
+
+### Datastar（サーバードリブン UI）
+
+Go 版では [Datastar](https://data-star.dev/) を使用して、SSE（Server-Sent Events）ベースのサーバードリブン UI を実装しています。ページの部分更新やリアルタイムな DOM 操作を、サーバー側から HTML フラグメントを送信することで実現します。
+
+#### 基本情報
+
+- **バージョン**: Datastar v1.0.0-RC.7、Go SDK v1.1.0
+- **JS ファイル**: `static/js/vendor/datastar-v1.0.0-RC.7.js`（`<head>` で読み込み済み）
+- **Go SDK**: `github.com/starfederation/datastar-go/datastar`
+- **スキル**: Datastar の実装時は `shimbaco-skills:datastar` スキルを使用すること（リファレンスとソースコードが含まれている）
+
+#### 属性名の構文（重要）
+
+Datastar の `data-*` 属性では、プラグイン名とキーの区切りに**コロン（`:`）**を使用します。ハイフン（`-`）ではありません。
+
+```html
+<!-- ✅ 正しい: コロンで区切る -->
+<div data-on:click="@get('/endpoint')"></div>
+<div data-on:draft-autosaved__window="@get('/endpoint')"></div>
+
+<!-- ❌ 間違い: ハイフンで区切ると別のプラグインとして解釈される -->
+<div data-on-click="@get('/endpoint')"></div>
+<div data-on-draft-autosaved__window="@get('/endpoint')"></div>
+```
+
+- `data-on:event-name` → `on` プラグインでイベント `event-name` をリッスン
+- `data-on-intersect` → `on-intersect` プラグイン（別のプラグイン）
+
+#### 詳細ドキュメント
+
+Datastar の詳しい属性・アクション・SSE イベントの仕様、Go SDK の使い方については以下を参照してください：
+
+📖 **`shimbaco-skills:datastar` スキル** - Datastar リファレンスと Go SDK 統合パターン
 
 ### バリデーション
 

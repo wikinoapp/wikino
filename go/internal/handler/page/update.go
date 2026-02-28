@@ -65,7 +65,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, int32(pageNumber))
+	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
 	if err != nil {
 		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -84,7 +84,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicPolicy := policy.NewTopicPolicy(spaceMember.Role, space.ID, topicMember, spaceMember.Active)
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
 	if !topicPolicy.CanUpdatePage(pg) {
 		http.NotFound(w, r)
 		return

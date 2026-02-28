@@ -17,7 +17,7 @@ const (
 
 // User はユーザーのドメインモデル
 type User struct {
-	ID          string
+	ID          UserID
 	Email       string
 	Atname      string
 	Name        string

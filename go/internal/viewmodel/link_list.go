@@ -26,7 +26,7 @@ func NewLinkList(pages []*model.Page, spaceIdentifier string) LinkList {
 		}
 		items = append(items, LinkListItem{
 			Title:  title,
-			Number: pg.Number,
+			Number: int32(pg.Number),
 		})
 	}
 	return LinkList{

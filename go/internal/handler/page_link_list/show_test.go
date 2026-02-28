@@ -380,3 +380,108 @@ func TestShow_正常系_下書きのリンクが優先される(t *testing.T) {
 		t.Error("response should not contain original linked page title 'Original Link'")
 	}
 }
+
+func TestShow_正常系_下書きにリンクを追加するとSSEレスポンスに反映される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("linklist-add@example.com").
+		WithAtname("linklistadd").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("linklist-add").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		WithRole(0).
+		Build()
+
+	// リンク先ページを作成（ユーザーが [[Linked Target]] と入力する対象）
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linked Target").
+		Build()
+
+	// リンク元ページ（リンクなしの状態）
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Source Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// 1. リンクなしの状態でSSEエンドポイントを呼び出す
+	req1 := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-add/pages/1/link_list", map[string]string{
+		"space_identifier": "linklist-add",
+		"page_number":      "1",
+	})
+	ctx1 := middleware.SetUserToContext(req1.Context(), &model.User{ID: userID})
+	req1 = req1.WithContext(ctx1)
+	rr1 := httptest.NewRecorder()
+	handler.Show(rr1, req1)
+
+	if rr1.Code != http.StatusOK {
+		t.Fatalf("first request: wrong status code: got %v want %v", rr1.Code, http.StatusOK)
+	}
+
+	body1 := rr1.Body.String()
+	if strings.Contains(body1, "Linked Target") {
+		t.Error("first request: should not contain 'Linked Target' before draft is saved")
+	}
+
+	// 2. ユーザーが [[Linked Target]] と入力し、下書きが保存された状態をシミュレート
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Source Page").
+		WithBody("Some text with [[Linked Target]] link").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+
+	// 3. 下書き保存後にSSEエンドポイントを呼び出す（draft-autosavedイベント後の@get()に相当）
+	req2 := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-add/pages/1/link_list", map[string]string{
+		"space_identifier": "linklist-add",
+		"page_number":      "1",
+	})
+	ctx2 := middleware.SetUserToContext(req2.Context(), &model.User{ID: userID})
+	req2 = req2.WithContext(ctx2)
+	rr2 := httptest.NewRecorder()
+	handler.Show(rr2, req2)
+
+	if rr2.Code != http.StatusOK {
+		t.Fatalf("second request: wrong status code: got %v want %v", rr2.Code, http.StatusOK)
+	}
+
+	// SSEレスポンスのContent-Typeを確認
+	contentType := rr2.Header().Get("Content-Type")
+	if !strings.Contains(contentType, "text/event-stream") {
+		t.Errorf("second request: wrong content type: got %v, want text/event-stream", contentType)
+	}
+
+	// 下書き保存後にリンク先が含まれること
+	body2 := rr2.Body.String()
+	if !strings.Contains(body2, "Linked Target") {
+		t.Error("second request: should contain 'Linked Target' after draft with wikilink is saved")
+	}
+}

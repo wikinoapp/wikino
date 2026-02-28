@@ -15,7 +15,7 @@ type SpaceMemberBuilder struct {
 	tx *sql.Tx
 
 	spaceID  string
-	userID   string
+	userID   model.UserID
 	role     int32
 	joinedAt time.Time
 	active   bool
@@ -41,7 +41,7 @@ func (b *SpaceMemberBuilder) WithSpaceID(spaceID model.SpaceID) *SpaceMemberBuil
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *SpaceMemberBuilder) WithUserID(userID string) *SpaceMemberBuilder {
+func (b *SpaceMemberBuilder) WithUserID(userID model.UserID) *SpaceMemberBuilder {
 	b.userID = userID
 	return b
 }
@@ -76,7 +76,7 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.userID, b.role, b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), b.role, b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -92,7 +92,7 @@ type SpaceMemberBuilderDB struct {
 	db *sql.DB
 
 	spaceID  string
-	userID   string
+	userID   model.UserID
 	role     int32
 	joinedAt time.Time
 	active   bool
@@ -118,7 +118,7 @@ func (b *SpaceMemberBuilderDB) WithSpaceID(spaceID model.SpaceID) *SpaceMemberBu
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *SpaceMemberBuilderDB) WithUserID(userID string) *SpaceMemberBuilderDB {
+func (b *SpaceMemberBuilderDB) WithUserID(userID model.UserID) *SpaceMemberBuilderDB {
 	b.userID = userID
 	return b
 }
@@ -141,7 +141,7 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.userID, b.role, b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), b.role, b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)

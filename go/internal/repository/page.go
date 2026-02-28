@@ -30,10 +30,10 @@ func (r *PageRepository) WithTx(tx *sql.Tx) *PageRepository {
 }
 
 // FindBySpaceAndNumber はスペースIDとページ番号でページを取得する（廃棄されていないページのみ）
-func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number int32) (*model.Page, error) {
+func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number model.PageNumber) (*model.Page, error) {
 	row, err := r.q.FindPageBySpaceAndNumber(ctx, query.FindPageBySpaceAndNumberParams{
 		SpaceID: string(spaceID),
-		Number:  number,
+		Number:  int32(number),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -134,15 +134,19 @@ func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.
 }
 
 // NextPageNumber はスペース内の次のページ番号を取得する
-func (r *PageRepository) NextPageNumber(ctx context.Context, spaceID model.SpaceID) (int32, error) {
-	return r.q.GetNextPageNumber(ctx, string(spaceID))
+func (r *PageRepository) NextPageNumber(ctx context.Context, spaceID model.SpaceID) (model.PageNumber, error) {
+	n, err := r.q.GetNextPageNumber(ctx, string(spaceID))
+	if err != nil {
+		return 0, err
+	}
+	return model.PageNumber(n), nil
 }
 
 // CreateLinkedPageInput はWikiリンクから参照されるページ作成の入力パラメータ
 type CreateLinkedPageInput struct {
 	SpaceID model.SpaceID
 	TopicID model.TopicID
-	Number  int32
+	Number  model.PageNumber
 	Title   string
 }
 
@@ -152,7 +156,7 @@ func (r *PageRepository) CreateLinkedPage(ctx context.Context, input CreateLinke
 	row, err := r.q.CreateLinkedPage(ctx, query.CreateLinkedPageParams{
 		SpaceID:    string(input.SpaceID),
 		TopicID:    string(input.TopicID),
-		Number:     input.Number,
+		Number:     int32(input.Number),
 		Title:      input.Title,
 		ModifiedAt: now,
 	})
@@ -259,7 +263,7 @@ func (r *PageRepository) toModel(row query.Page) *model.Page {
 		ID:                        model.PageID(row.ID),
 		SpaceID:                   model.SpaceID(row.SpaceID),
 		TopicID:                   model.TopicID(row.TopicID),
-		Number:                    row.Number,
+		Number:                    model.PageNumber(row.Number),
 		Title:                     title,
 		Body:                      row.Body,
 		BodyHTML:                  row.BodyHtml,

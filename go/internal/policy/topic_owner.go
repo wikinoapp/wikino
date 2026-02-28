@@ -7,14 +7,14 @@ import (
 // topicOwnerPolicy はスペースオーナー用のポリシー
 // スペースオーナーは同じスペース内の全トピックのページを編集可能
 type topicOwnerPolicy struct {
-	spaceID model.SpaceID
-	active  bool
+	spaceID           model.SpaceID
+	spaceMemberActive bool
 }
 
 func (p *topicOwnerPolicy) CanUpdatePage(page *model.Page) bool {
-	return p.active && p.spaceID == page.SpaceID
+	return p.spaceMemberActive && p.spaceID == page.SpaceID
 }
 
 func (p *topicOwnerPolicy) CanUpdateDraftPage(draftPage *model.DraftPage) bool {
-	return p.active && p.spaceID == draftPage.SpaceID
+	return p.spaceMemberActive && p.spaceID == draftPage.SpaceID
 }

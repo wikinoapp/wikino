@@ -38,7 +38,7 @@ func NewCreateValidator(
 
 // CreateValidatorInput はバリデーションの入力パラメータ
 type CreateValidatorInput struct {
-	UserID       string
+	UserID       model.UserID
 	RecoveryCode string
 }
 

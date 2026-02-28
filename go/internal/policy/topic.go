@@ -11,11 +11,10 @@ type TopicPolicy interface {
 	CanUpdateDraftPage(draftPage *model.DraftPage) bool
 }
 
-// NewTopicPolicy はスペースメンバーのロールとトピックメンバー情報から適切なポリシーを生成する
-// spaceMemberActive はスペースメンバーが有効かどうかを示す（SpaceMember.Active に対応）
-func NewTopicPolicy(spaceMemberRole model.SpaceMemberRole, spaceID model.SpaceID, topicMember *model.TopicMember, spaceMemberActive bool) TopicPolicy {
-	if spaceMemberRole == model.SpaceMemberRoleOwner {
-		return &topicOwnerPolicy{spaceID: spaceID, active: spaceMemberActive}
+// NewTopicPolicy はスペースメンバー・トピックメンバー情報から適切なポリシーを生成する
+func NewTopicPolicy(spaceMember *model.SpaceMember, topicMember *model.TopicMember) TopicPolicy {
+	if spaceMember.Role == model.SpaceMemberRoleOwner {
+		return &topicOwnerPolicy{spaceID: spaceMember.SpaceID, spaceMemberActive: spaceMember.Active}
 	}
 
 	if topicMember == nil {
@@ -23,8 +22,8 @@ func NewTopicPolicy(spaceMemberRole model.SpaceMemberRole, spaceID model.SpaceID
 	}
 
 	if topicMember.Role == model.TopicMemberRoleAdmin {
-		return &topicAdminPolicy{topicID: topicMember.TopicID, active: spaceMemberActive}
+		return &topicAdminPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 	}
 
-	return &topicMemberPolicy{topicID: topicMember.TopicID, active: spaceMemberActive}
+	return &topicMemberPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 }

@@ -9,7 +9,7 @@ type Page struct {
 	ID                        PageID
 	SpaceID                   SpaceID
 	TopicID                   TopicID
-	Number                    int32
+	Number                    PageNumber
 	Title                     *string
 	Body                      string
 	BodyHTML                  string

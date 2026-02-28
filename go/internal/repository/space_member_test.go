@@ -34,7 +34,7 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		Build()
 
 	t.Run("アクティブなスペースメンバーを取得できる", func(t *testing.T) {
-		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, userID)
+		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, model.UserID(userID))
 		if err != nil {
 			t.Fatalf("FindActiveBySpaceAndUser() error = %v", err)
 		}
@@ -47,7 +47,7 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		if member.SpaceID != spaceID {
 			t.Errorf("member.SpaceID = %v, want %v", member.SpaceID, spaceID)
 		}
-		if member.UserID != userID {
+		if member.UserID != model.UserID(userID) {
 			t.Errorf("member.UserID = %v, want %v", member.UserID, userID)
 		}
 		if member.Role != model.SpaceMemberRoleOwner {
@@ -59,7 +59,7 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 	})
 
 	t.Run("存在しないスペースIDはnilを返す", func(t *testing.T) {
-		member, err := repo.FindActiveBySpaceAndUser(context.Background(), "00000000-0000-0000-0000-000000000000", userID)
+		member, err := repo.FindActiveBySpaceAndUser(context.Background(), "00000000-0000-0000-0000-000000000000", model.UserID(userID))
 		if err != nil {
 			t.Fatalf("FindActiveBySpaceAndUser() error = %v", err)
 		}
@@ -69,7 +69,7 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 	})
 
 	t.Run("存在しないユーザーIDはnilを返す", func(t *testing.T) {
-		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, "00000000-0000-0000-0000-000000000000")
+		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, model.UserID("00000000-0000-0000-0000-000000000000"))
 		if err != nil {
 			t.Fatalf("FindActiveBySpaceAndUser() error = %v", err)
 		}
@@ -92,7 +92,7 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 			WithActive(false).
 			Build()
 
-		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, inactiveUserID)
+		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, model.UserID(inactiveUserID))
 		if err != nil {
 			t.Fatalf("FindActiveBySpaceAndUser() error = %v", err)
 		}

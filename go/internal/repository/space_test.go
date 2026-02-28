@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -53,6 +54,50 @@ func TestSpaceRepository_FindByIdentifier(t *testing.T) {
 		}
 		if space != nil {
 			t.Errorf("FindByIdentifier() = %v, want nil", space)
+		}
+	})
+
+	t.Run("削除済みスペースはnilを返す", func(t *testing.T) {
+		discardedSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("discarded-space").
+			WithName("Discarded Space").
+			Build()
+
+		now := time.Now()
+		_, err := tx.ExecContext(
+			context.Background(),
+			`UPDATE spaces SET discarded_at = $1 WHERE id = $2`,
+			now, string(discardedSpaceID),
+		)
+		if err != nil {
+			t.Fatalf("削除済みスペースの更新に失敗: %v", err)
+		}
+
+		space, err := repo.FindByIdentifier(context.Background(), "discarded-space")
+		if err != nil {
+			t.Fatalf("FindByIdentifier() error = %v", err)
+		}
+		if space != nil {
+			t.Errorf("FindByIdentifier() = %v, want nil for discarded space", space)
+		}
+	})
+
+	t.Run("Planが正しく変換される", func(t *testing.T) {
+		testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("free-plan-space").
+			WithName("Free Plan Space").
+			WithPlan(int32(model.PlanFree)).
+			Build()
+
+		space, err := repo.FindByIdentifier(context.Background(), "free-plan-space")
+		if err != nil {
+			t.Fatalf("FindByIdentifier() error = %v", err)
+		}
+		if space == nil {
+			t.Fatal("FindByIdentifier() returned nil, want space")
+		}
+		if space.Plan != model.PlanFree {
+			t.Errorf("space.Plan = %v, want PlanFree", space.Plan)
 		}
 	})
 }

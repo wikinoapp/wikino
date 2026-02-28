@@ -133,7 +133,7 @@ templ Edit(data EditPageData) {
 				<div
 					id="page-link-list"
 					class="mt-6"
-					data-on-draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier, data.Page.Number))) }
+					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier, data.Page.Number))) }
 				>
 					@components.LinkList(data.LinkList)
 				</div>
