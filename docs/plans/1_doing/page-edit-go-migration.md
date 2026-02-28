@@ -1567,7 +1567,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
       - `internal/handler/draft_page/update.go` を更新（auto-save後にリンク先ページを取得し、templコンポーネントをバッファにレンダリングしてHTMLフラグメントをJSONレスポンスに含める）
       - `web/markdown-editor/markdown-editor.ts` を更新（`link_list_html`をDOM更新）
       - 想定ファイル数: 2 ファイル
-    - [ ] **8b-1d**: Datastar Go SDKの追加とリンク一覧SSEエンドポイントの作成
+    - [x] **8b-1d**: Datastar Go SDKの追加とリンク一覧SSEエンドポイントの作成
       - `go get github.com/starfederation/datastar-go/datastar` でDatastar Go SDKを追加
       - `internal/handler/page_link_list/handler.go` を新規作成（Handler構造体: spaceRepo, spaceMemberRepo, pageRepo, draftPageRepo, topicMemberRepo）
       - `internal/handler/page_link_list/show.go` を新規作成（`Show` メソッド: 認証・認可チェック後、DraftPageのLinkedPageIDsからリンク一覧を取得し、`datastar.NewSSE(w, r)` + `sse.PatchElementTempl(components.LinkList(linkListVM), datastar.WithSelectorID("page-link-list"), datastar.WithModeInner())` でSSEレスポンスを返す）
@@ -1575,7 +1575,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
       - `cmd/server/main.go` にルーティング登録: `r.Get("/go/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)`
       - 想定ファイル数: 4 ファイル（新規2 + 更新2）
       - 想定行数: 実装 ~80 行
-    - [ ] **8b-1e**: リンク一覧更新のDatastar化（plain JS→Datastar SSE）
+    - [x] **8b-1e**: リンク一覧更新のDatastar化（plain JS→Datastar SSE）
       - `internal/templates/pages/page/edit.templ` を更新: `data-markdown-editor-link-list` 属性を削除、`#page-link-list` divに `data-on:draft-autosaved__window="@get('/go/s/.../link_list')"` を追加
       - `web/markdown-editor/markdown-editor.ts` を更新: `linkListEl`関連コード（EditorConfig、初期化、innerHTML更新）を削除し、auto-save成功時に `window.dispatchEvent(new CustomEvent('draft-autosaved'))` を追加
       - `internal/handler/draft_page/update.go` を更新: `updateResponse` から `LinkListHTML` フィールドを削除、リンク一覧HTML生成コード（150-168行目）を削除、不要なimport（`bytes`, `components`, `viewmodel`）を削除
