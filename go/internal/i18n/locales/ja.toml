@@ -472,6 +472,14 @@ other = "公開する"
 description = "ページ編集キャンセルリンクのラベル"
 other = "キャンセル"
 
+[page_edit_links_heading]
+description = "ページ編集画面のリンク一覧の見出し"
+other = "リンク"
+
+[page_edit_links_untitled]
+description = "タイトルなしのリンク先ページの表示テキスト"
+other = "タイトルなし"
+
 # ページ公開バリデーション
 [validation_page_title_required]
 description = "ページタイトル必須エラー"

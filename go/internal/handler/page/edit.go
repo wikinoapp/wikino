@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
@@ -112,6 +113,25 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// 編集画面用のページViewModelを生成
 	pageVM := viewmodel.NewPageForEdit(pg, draftPage)
 
+	// リンク一覧を取得（DraftPage存在時はDraftPageのLinkedPageIDs、なければPageのLinkedPageIDs）
+	var linkedPageIDs []model.PageID
+	if draftPage != nil {
+		linkedPageIDs = draftPage.LinkedPageIDs
+	} else {
+		linkedPageIDs = pg.LinkedPageIDs
+	}
+
+	var linkListVM viewmodel.LinkList
+	if len(linkedPageIDs) > 0 {
+		linkedPages, err := h.pageRepo.FindByIDs(ctx, linkedPageIDs, space.ID)
+		if err != nil {
+			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		linkListVM = viewmodel.NewLinkList(linkedPages, spaceIdentifier)
+	}
+
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
@@ -130,6 +150,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		Page:      pageVM,
 		Space:     spaceVM,
 		Topic:     topicVM,
+		LinkList:  linkListVM,
 	})
 
 	layoutData := layouts.DefaultLayoutData{
