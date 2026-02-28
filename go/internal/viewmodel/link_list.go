@@ -4,6 +4,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
+const (
+	// LinkLimit はリンク一覧の1ページあたりの表示件数です
+	LinkLimit int32 = 15
+	// BacklinkLimit はバックリンクの1ページあたりの表示件数です
+	BacklinkLimit int32 = 14
+)
+
 // LinkListItem はリンク一覧の個別リンク情報です
 type LinkListItem struct {
 	Page         Page

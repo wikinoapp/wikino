@@ -121,36 +121,34 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		linkedPageIDs = pg.LinkedPageIDs
 	}
 
-	const linkLimit int32 = 15
-	const backlinkLimit int32 = 14
-
 	var linkListVM viewmodel.LinkList
 	if len(linkedPageIDs) > 0 {
-		paginatedLinks, err := h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, linkLimit)
+		paginatedLinks, err := h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, viewmodel.LinkLimit)
 		if err != nil {
 			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(paginatedLinks.Pages))
-		for _, linkedPage := range paginatedLinks.Pages {
-			paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, space.ID, 1, backlinkLimit)
-			if err != nil {
-				slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err, "page_id", linkedPage.ID)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			backlinkMap[linkedPage.ID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-				Pages:      paginatedBacklinks.Pages,
-				Pagination: viewmodel.NewPagination(1, paginatedBacklinks.TotalCount, int(backlinkLimit)),
+		backlinkPaginatedMap, err := h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
+		if err != nil {
+			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(backlinkPaginatedMap))
+		for pageID, paginated := range backlinkPaginatedMap {
+			backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+				Pages:      paginated.Pages,
+				Pagination: viewmodel.NewPagination(1, paginated.TotalCount, int(viewmodel.BacklinkLimit)),
 			})
 		}
 
 		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
 			Pages:           paginatedLinks.Pages,
 			BacklinkMap:     backlinkMap,
-			Pagination:      viewmodel.NewPagination(1, paginatedLinks.TotalCount, int(linkLimit)),
+			Pagination:      viewmodel.NewPagination(1, paginatedLinks.TotalCount, int(viewmodel.LinkLimit)),
 			SpaceIdentifier: spaceIdentifier,
 			PageNumber:      int32(pg.Number),
 		})
