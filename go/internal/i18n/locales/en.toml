@@ -480,6 +480,10 @@ other = "Links"
 description = "Display text for an untitled linked page"
 other = "Untitled"
 
+[page_edit_links_load_more]
+description = "Load more button for link list"
+other = "More"
+
 # Page publish validation
 [validation_page_title_required]
 description = "Page title required error"
