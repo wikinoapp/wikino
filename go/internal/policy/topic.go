@@ -14,7 +14,7 @@ type TopicPolicy interface {
 // NewTopicPolicy はスペースメンバー・トピックメンバー情報から適切なポリシーを生成する
 func NewTopicPolicy(spaceMember *model.SpaceMember, topicMember *model.TopicMember) TopicPolicy {
 	if spaceMember.Role == model.SpaceMemberRoleOwner {
-		return &topicOwnerPolicy{spaceID: spaceMember.SpaceID, active: spaceMember.Active}
+		return &topicOwnerPolicy{spaceID: spaceMember.SpaceID, spaceMemberActive: spaceMember.Active}
 	}
 
 	if topicMember == nil {
@@ -22,8 +22,8 @@ func NewTopicPolicy(spaceMember *model.SpaceMember, topicMember *model.TopicMemb
 	}
 
 	if topicMember.Role == model.TopicMemberRoleAdmin {
-		return &topicAdminPolicy{topicID: topicMember.TopicID, active: spaceMember.Active}
+		return &topicAdminPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 	}
 
-	return &topicMemberPolicy{topicID: topicMember.TopicID, active: spaceMember.Active}
+	return &topicMemberPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 }
