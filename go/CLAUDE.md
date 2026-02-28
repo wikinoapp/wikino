@@ -425,7 +425,7 @@ make lint
 # 関数シグネチャの変更やインポートエラーを早期に検出
 go build ./...
 
-# 5. JS/TSファイルを編集した場合は、Oxfmtでフォーマット
+# 5. JS/TS/Markdownファイルを編集・作成した場合は、Oxfmtでフォーマット
 make -C /workspace fmt
 
 # 6. テストを実行
