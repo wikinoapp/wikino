@@ -65,7 +65,10 @@ func TestNewLinkList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := viewmodel.NewLinkList(tt.pages, tt.spaceIdentifier)
+			got := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+				Pages:           tt.pages,
+				SpaceIdentifier: tt.spaceIdentifier,
+			})
 
 			if len(got.Items) != tt.wantItemCount {
 				t.Errorf("len(Items) = %d, want %d", len(got.Items), tt.wantItemCount)
@@ -76,13 +79,91 @@ func TestNewLinkList(t *testing.T) {
 			}
 
 			for i, item := range got.Items {
-				if i < len(tt.wantTitles) && item.Title != tt.wantTitles[i] {
-					t.Errorf("Items[%d].Title = %q, want %q", i, item.Title, tt.wantTitles[i])
+				if i < len(tt.wantTitles) && item.Page.Title != tt.wantTitles[i] {
+					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.Page.Title, tt.wantTitles[i])
 				}
-				if i < len(tt.wantNumbers) && item.Number != tt.wantNumbers[i] {
-					t.Errorf("Items[%d].Number = %d, want %d", i, item.Number, tt.wantNumbers[i])
+				if i < len(tt.wantNumbers) && item.Page.Number != tt.wantNumbers[i] {
+					t.Errorf("Items[%d].Page.Number = %d, want %d", i, item.Page.Number, tt.wantNumbers[i])
 				}
 			}
 		})
+	}
+}
+
+func TestNewLinkList_WithBacklinkMap(t *testing.T) {
+	t.Parallel()
+
+	strPtr := func(s string) *string { return &s }
+
+	page1ID := model.PageID("page-1")
+	page2ID := model.PageID("page-2")
+
+	pages := []*model.Page{
+		{ID: page1ID, Number: 1, Title: strPtr("ページ1")},
+		{ID: page2ID, Number: 2, Title: strPtr("ページ2")},
+	}
+
+	backlinkMap := map[model.PageID]viewmodel.BacklinkList{
+		page1ID: {
+			Items: []viewmodel.BacklinkListItem{
+				{Page: viewmodel.Page{Title: "バックリンク1", Number: 10}},
+			},
+		},
+	}
+
+	got := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+		Pages:           pages,
+		BacklinkMap:     backlinkMap,
+		SpaceIdentifier: "test-space",
+	})
+
+	if len(got.Items) != 2 {
+		t.Fatalf("len(Items) = %d, want 2", len(got.Items))
+	}
+
+	// page1にはバックリンクが設定される
+	if len(got.Items[0].BacklinkList.Items) != 1 {
+		t.Errorf("Items[0].BacklinkList.Items の件数 = %d, want 1", len(got.Items[0].BacklinkList.Items))
+	}
+
+	// page2にはバックリンクがない
+	if len(got.Items[1].BacklinkList.Items) != 0 {
+		t.Errorf("Items[1].BacklinkList.Items の件数 = %d, want 0", len(got.Items[1].BacklinkList.Items))
+	}
+}
+
+func TestNewLinkList_WithPagination(t *testing.T) {
+	t.Parallel()
+
+	strPtr := func(s string) *string { return &s }
+
+	pages := []*model.Page{
+		{Number: 1, Title: strPtr("ページ1")},
+	}
+
+	pagination := viewmodel.Pagination{
+		Current:     1,
+		Total:       3,
+		HasNext:     true,
+		HasPrevious: false,
+	}
+
+	got := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+		Pages:           pages,
+		Pagination:      pagination,
+		SpaceIdentifier: "test-space",
+	})
+
+	if got.Pagination.Current != 1 {
+		t.Errorf("Pagination.Current = %d, want 1", got.Pagination.Current)
+	}
+	if got.Pagination.Total != 3 {
+		t.Errorf("Pagination.Total = %d, want 3", got.Pagination.Total)
+	}
+	if !got.Pagination.HasNext {
+		t.Error("Pagination.HasNext = false, want true")
+	}
+	if got.Pagination.HasPrevious {
+		t.Error("Pagination.HasPrevious = true, want false")
 	}
 }

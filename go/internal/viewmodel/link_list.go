@@ -6,31 +6,40 @@ import (
 
 // LinkListItem はリンク一覧の個別リンク情報です
 type LinkListItem struct {
-	Title  string
-	Number int32
+	Page         Page
+	BacklinkList BacklinkList
 }
 
 // LinkList はリンク一覧の表示データです
 type LinkList struct {
 	Items           []LinkListItem
+	Pagination      Pagination
+	SpaceIdentifier string
+}
+
+// NewLinkListInput はNewLinkListの入力パラメータです
+type NewLinkListInput struct {
+	Pages           []*model.Page
+	BacklinkMap     map[model.PageID]BacklinkList
+	Pagination      Pagination
 	SpaceIdentifier string
 }
 
 // NewLinkList はリンク先ページの一覧からLinkListを生成します
-func NewLinkList(pages []*model.Page, spaceIdentifier string) LinkList {
-	items := make([]LinkListItem, 0, len(pages))
-	for _, pg := range pages {
-		var title string
-		if pg.Title != nil {
-			title = *pg.Title
+func NewLinkList(input NewLinkListInput) LinkList {
+	items := make([]LinkListItem, 0, len(input.Pages))
+	for _, pg := range input.Pages {
+		item := LinkListItem{
+			Page: newPageFromModel(pg),
 		}
-		items = append(items, LinkListItem{
-			Title:  title,
-			Number: int32(pg.Number),
-		})
+		if input.BacklinkMap != nil {
+			item.BacklinkList = input.BacklinkMap[pg.ID]
+		}
+		items = append(items, item)
 	}
 	return LinkList{
 		Items:           items,
-		SpaceIdentifier: spaceIdentifier,
+		Pagination:      input.Pagination,
+		SpaceIdentifier: input.SpaceIdentifier,
 	}
 }

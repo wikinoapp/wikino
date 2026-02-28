@@ -109,7 +109,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		linkListVM = viewmodel.NewLinkList(linkedPages, spaceIdentifier)
+		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+			Pages:           linkedPages,
+			SpaceIdentifier: spaceIdentifier,
+		})
 	}
 
 	// SSEフラグメントとしてリンク一覧を送信
