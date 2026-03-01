@@ -23,7 +23,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
-	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
@@ -236,14 +235,8 @@ func main() {
 		pageRepo,
 		topicRepo,
 		topicMemberRepo,
-		autoSaveDraftPageUC,
-	)
-	pageLinkListHandler := page_link_list.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
 		draftPageRepo,
-		topicMemberRepo,
+		autoSaveDraftPageUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
 		spaceRepo,
@@ -328,11 +321,9 @@ func main() {
 		r.Get("/go/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 		r.Patch("/go/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
 
-		// 下書きページ自動保存API（/goプレフィックス付き）
+		// 下書きページSSE・自動保存API（/goプレフィックス付き）
+		r.Get("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
 		r.Patch("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
-
-		// ページリンク一覧SSE（Datastar、/goプレフィックス付き）
-		r.Get("/go/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
 
 		// バックリンク一覧SSE（Datastar、/goプレフィックス付き）
 		r.Get("/go/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)

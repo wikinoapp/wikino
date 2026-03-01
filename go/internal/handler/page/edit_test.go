@@ -552,8 +552,8 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 	}
 
 	// SSEエンドポイントのURLが正しいこと
-	if !strings.Contains(body, "/go/s/linklist-reload-space/pages/1/link_list") {
-		t.Error("link_list SSE endpoint URL not found in response")
+	if !strings.Contains(body, "/go/s/linklist-reload-space/pages/1/draft_page") {
+		t.Error("draft_page SSE endpoint URL not found in response")
 	}
 
 	// @get()アクションでSSEエンドポイントが呼び出されること

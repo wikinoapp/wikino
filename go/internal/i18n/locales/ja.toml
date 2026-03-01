@@ -484,6 +484,10 @@ other = "タイトルなし"
 description = "リンク一覧の「もっと見る」ボタン"
 other = "もっと見る"
 
+[page_edit_draft_saved_time]
+description = "自動保存時刻の表示"
+other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
+
 # ページ公開バリデーション
 [validation_page_title_required]
 description = "ページタイトル必須エラー"

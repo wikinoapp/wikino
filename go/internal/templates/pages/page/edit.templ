@@ -92,7 +92,6 @@ templ Edit(data EditPageData) {
 									data-markdown-editor
 									data-markdown-editor-textarea="#page_body"
 									data-markdown-editor-title="#page_title"
-									data-markdown-editor-saved-at="#page_saved_at"
 									data-markdown-editor-body={ data.Page.Body }
 									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
 									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number)) + "/draft_page" }
@@ -125,6 +124,8 @@ templ Edit(data EditPageData) {
 								>
 									{ templates.T(ctx, "page_edit_cancel") }
 								</a>
+
+								<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground ml-auto"></div>
 							</div>
 						</form>
 					</div>
@@ -133,7 +134,7 @@ templ Edit(data EditPageData) {
 				<div
 					id="page-link-list"
 					class="mt-6"
-					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier.String(), data.Page.Number))) }
+					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 				>
 					@components.LinkList(data.LinkList)
 				</div>

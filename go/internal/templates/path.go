@@ -30,9 +30,9 @@ func GoPagePath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/go/s/%s/pages/%d", spaceIdentifier, pageNumber))
 }
 
-// GoPageLinkListPath はGo版のページリンク一覧のパスを生成します
-func GoPageLinkListPath(spaceIdentifier string, pageNumber int32) Path {
-	return Path(fmt.Sprintf("/go/s/%s/pages/%d/link_list", spaceIdentifier, pageNumber))
+// GoPageDraftPagePath はGo版の下書きページのパスを生成します
+func GoPageDraftPagePath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/go/s/%s/pages/%d/draft_page", spaceIdentifier, pageNumber))
 }
 
 // GoPageBacklinkListPath はGo版のバックリンク一覧のパスを生成します
