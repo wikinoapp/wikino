@@ -1609,6 +1609,16 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - 修正: Rails版と同様に `flex items-center justify-between` で左右に分割する構造に変更する。左側にボタングループ（保存・キャンセル）、右側に自動保存時刻を配置する
   - 依存: 5-1
 
+- [x] **9-2a**: [Go] ページ編集画面の「公開する」ボタンを「更新する」に変更する
+  - ボタンの文言を「公開する」から「更新する」に変更する（トピックの公開/非公開との混同を避けるため）
+  - 翻訳キーを `page_edit_publish_button` から `page_edit_update_button` にリネームする
+  - 日本語: 「更新する」、英語: 「Update」
+  - アイコンを `floppy-disk-regular` から `arrow-clockwise-regular`（Phosphor Icons）に変更する
+  - `icons_phosphor.go` に `arrow-clockwise-regular` のSVGを追加する
+  - 想定ファイル数: 実装 4 ファイル（`edit.templ` 1 + `icons_phosphor.go` 1 + `ja.toml` 1 + `en.toml` 1）
+  - 想定行数: 実装 ~10 行
+  - 依存: 9-2
+
 - [ ] **9-3**: [Go] 下書き表示中のアラートメッセージを追加する
   - 現状: Rails版ではDraftPageが存在する場合に「現在下書きを表示しています」という警告アラートがフォーム上部に表示されるが、Go版にはこの表示がない
   - 修正:
