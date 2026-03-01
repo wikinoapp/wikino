@@ -143,7 +143,6 @@ templ Edit(data EditPageData) {
 				<div
 					id="page-backlink-list"
 					class="mt-6"
-					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 				>
 					@components.PageBacklinkList(data.BacklinkList)
 				</div>
