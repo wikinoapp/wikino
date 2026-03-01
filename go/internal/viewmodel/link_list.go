@@ -13,7 +13,7 @@ const (
 
 // LinkListItem はリンク一覧の個別リンク情報です
 type LinkListItem struct {
-	Page         Page
+	CardLinkPage CardLinkPage
 	BacklinkList BacklinkList
 }
 
@@ -28,6 +28,7 @@ type LinkList struct {
 // NewLinkListInput はNewLinkListの入力パラメータです
 type NewLinkListInput struct {
 	Pages           []*model.Page
+	TopicMap        map[model.TopicID]*model.Topic
 	BacklinkMap     map[model.PageID]BacklinkList
 	Pagination      Pagination
 	SpaceIdentifier model.SpaceIdentifier
@@ -39,7 +40,7 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	items := make([]LinkListItem, 0, len(input.Pages))
 	for _, pg := range input.Pages {
 		item := LinkListItem{
-			Page: newPageFromModel(pg),
+			CardLinkPage: NewCardLinkPage(pg, input.TopicMap),
 		}
 		if input.BacklinkMap != nil {
 			item.BacklinkList = input.BacklinkMap[pg.ID]

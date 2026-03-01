@@ -122,8 +122,32 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// バックリンクページからTopicIDを収集してトピックを一括取得
+	topicIDSet := make(map[model.TopicID]struct{})
+	for _, p := range paginatedBacklinks.Pages {
+		topicIDSet[p.TopicID] = struct{}{}
+	}
+
+	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
+	for id := range topicIDSet {
+		topicIDs = append(topicIDs, id)
+	}
+
+	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
+	for _, t := range topics {
+		topicMap[t.ID] = t
+	}
+
 	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
 		Pages:            paginatedBacklinks.Pages,
+		TopicMap:         topicMap,
 		Pagination:       viewmodel.NewPagination(int(currentPage), paginatedBacklinks.TotalCount, int(viewmodel.BacklinkLimit)),
 		SpaceIdentifier:  spaceIdentifier,
 		PageNumber:       int32(pageNumber),

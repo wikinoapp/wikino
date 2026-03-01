@@ -15,22 +15,7 @@ templ PageBacklinkList(data viewmodel.BacklinkList) {
 
 			<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
 				for _, item := range data.Items {
-					<a
-						href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.Page.Number))) }
-						class="card hover:bg-accent transition-colors"
-					>
-						<div class="card-body px-4 py-3">
-							<span class="text-sm font-medium">
-								if item.Page.Title != "" {
-									{ item.Page.Title }
-								} else {
-									<span class="text-muted-foreground italic">
-										{ templates.T(ctx, "page_edit_links_untitled") }
-									</span>
-								}
-							</span>
-						</div>
-					</a>
+					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier.String())
 				}
 			</div>
 		</div>

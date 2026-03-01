@@ -80,6 +80,15 @@ func (s SpaceIdentifier) String() string { return string(s) }
 // String はPageNumberを文字列に変換する
 func (n PageNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
+// TopicIDsToStrings はTopicIDスライスをstringスライスに変換する
+func TopicIDsToStrings(ids []TopicID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = string(id)
+	}
+	return s
+}
+
 // PageIDsToStrings はPageIDスライスをstringスライスに変換する
 func PageIDsToStrings(ids []PageID) []string {
 	s := make([]string, len(ids))

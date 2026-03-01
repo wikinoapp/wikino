@@ -79,11 +79,11 @@ func TestNewLinkList(t *testing.T) {
 			}
 
 			for i, item := range got.Items {
-				if i < len(tt.wantTitles) && item.Page.Title != tt.wantTitles[i] {
-					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.Page.Title, tt.wantTitles[i])
+				if i < len(tt.wantTitles) && item.CardLinkPage.Title != tt.wantTitles[i] {
+					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
 				}
-				if i < len(tt.wantNumbers) && item.Page.Number != tt.wantNumbers[i] {
-					t.Errorf("Items[%d].Page.Number = %d, want %d", i, item.Page.Number, tt.wantNumbers[i])
+				if i < len(tt.wantNumbers) && item.CardLinkPage.Number != tt.wantNumbers[i] {
+					t.Errorf("Items[%d].Page.Number = %d, want %d", i, item.CardLinkPage.Number, tt.wantNumbers[i])
 				}
 			}
 		})
@@ -106,7 +106,7 @@ func TestNewLinkList_WithBacklinkMap(t *testing.T) {
 	backlinkMap := map[model.PageID]viewmodel.BacklinkList{
 		page1ID: {
 			Items: []viewmodel.BacklinkListItem{
-				{Page: viewmodel.Page{Title: "バックリンク1", Number: 10}},
+				{CardLinkPage: viewmodel.CardLinkPage{Title: "バックリンク1", Number: 10}},
 			},
 		},
 	}

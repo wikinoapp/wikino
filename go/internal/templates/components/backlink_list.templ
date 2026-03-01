@@ -13,11 +13,11 @@ templ BacklinkList(data viewmodel.BacklinkList) {
 		<div class="flex flex-wrap gap-1">
 			for _, item := range data.Items {
 				<a
-					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.Page.Number))) }
+					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.CardLinkPage.Number))) }
 					class="badge badge-outline hover:bg-accent transition-colors text-xs"
 				>
-					if item.Page.Title != "" {
-						{ item.Page.Title }
+					if item.CardLinkPage.Title != "" {
+						{ item.CardLinkPage.Title }
 					} else {
 						<span class="text-muted-foreground italic">
 							{ templates.T(ctx, "page_edit_links_untitled") }

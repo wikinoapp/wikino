@@ -1,0 +1,58 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
+templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier string) {
+	<a
+		href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, page.Number))) }
+		if page.Pinned {
+			class="card relative min-h-[96px] transition duration-200 ease-in-out hover:border-primary"
+		} else {
+			class="card min-h-[96px] transition duration-200 ease-in-out hover:border-primary"
+		}
+	>
+		<div class="card-body px-3 py-2">
+			if page.Pinned {
+				@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800")
+			}
+
+			<div class="flex h-full gap-3">
+				<div class="flex flex-1 flex-col gap-1">
+					if page.TopicName != "" {
+						<div class="flex items-center gap-0.5">
+							@templates.Icon(page.TopicIcon, "size-3 fill-gray-500")
+							<span class="text-xs text-gray-500">
+								{ page.TopicName }
+							</span>
+						</div>
+					}
+
+					<div class="line-clamp-3 text-sm font-bold">
+						if page.Title != "" {
+							{ page.Title }
+						} else {
+							<span class="text-muted-foreground italic">
+								{ templates.T(ctx, "page_edit_links_untitled") }
+							</span>
+						}
+					</div>
+				</div>
+
+				if page.CardImageURL != "" {
+					<div class="shrink-0 self-center">
+						<img
+							src={ page.CardImageURL }
+							alt=""
+							class="rounded object-cover h-16 w-16 md:h-18 md:w-18"
+							loading="lazy"
+						/>
+					</div>
+				}
+			</div>
+		</div>
+	</a>
+}

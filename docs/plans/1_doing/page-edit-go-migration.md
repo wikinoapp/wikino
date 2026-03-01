@@ -1633,7 +1633,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - タイムゾーン情報の取得: 認証ミドルウェアまたはハンドラーでユーザーの `time_zone` を取得し、`DraftSavedTime` の呼び出し元（`internal/handler/draft_page/show.go` および `internal/handler/page/edit.go`）で渡す
   - 依存: 6-2, 8b-1d
 
-- [ ] **9-5**: [Go] リンク一覧・バックリンク一覧のカードUIをRails版に合わせる
+- [x] **9-5**: [Go] リンク一覧・バックリンク一覧のカードUIをRails版に合わせる
   - 現状: Go版のリンク先ページカードはタイトルのみを表示しており、Rails版に比べて情報量が少ない
   - Rails版（`CardLinks::PageComponent`）では以下の情報を表示している:
     - トピックアイコン + トピック名（`text-xs text-gray-500`）

@@ -55,8 +55,8 @@ func TestNewBacklinkList(t *testing.T) {
 			}
 
 			for i, item := range got.Items {
-				if i < len(tt.wantTitles) && item.Page.Title != tt.wantTitles[i] {
-					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.Page.Title, tt.wantTitles[i])
+				if i < len(tt.wantTitles) && item.CardLinkPage.Title != tt.wantTitles[i] {
+					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
 				}
 			}
 		})

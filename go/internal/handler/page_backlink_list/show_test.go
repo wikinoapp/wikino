@@ -25,6 +25,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_backlink_list.Hand
 		repository.NewSpaceRepository(queries),
 		repository.NewSpaceMemberRepository(queries),
 		repository.NewPageRepository(queries),
+		repository.NewTopicRepository(queries),
 		repository.NewTopicMemberRepository(queries),
 	)
 }
