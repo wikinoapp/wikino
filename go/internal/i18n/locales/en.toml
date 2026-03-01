@@ -464,9 +464,9 @@ other = "Body"
 description = "Placeholder for the page body input field"
 other = "Write something..."
 
-[page_edit_update_button]
-description = "Label for the update button"
-other = "Update"
+[page_edit_publish_to_topic_button]
+description = "Label for the publish to topic button"
+other = "Publish to topic"
 
 [page_edit_cancel]
 description = "Label for the cancel link"
