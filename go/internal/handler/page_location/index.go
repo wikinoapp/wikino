@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // writeJSONError はJSON形式のエラーレスポンスを返す
@@ -40,7 +41,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URLパラメータを取得
-	spaceIdentifier := chi.URLParam(r, "space_identifier")
+	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 
 	// スペースを取得
 	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)

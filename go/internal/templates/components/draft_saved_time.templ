@@ -1,0 +1,14 @@
+package components
+
+import (
+	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// DraftSavedTime は下書きの自動保存時刻を表示します
+templ DraftSavedTime(modifiedAt time.Time) {
+	<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground">
+		@templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": modifiedAt.Format("15:04")}))
+	</div>
+}

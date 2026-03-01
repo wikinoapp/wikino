@@ -2,7 +2,6 @@ package draft_page_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -32,6 +31,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 		repository.NewPageRepository(queries),
 		repository.NewTopicRepository(queries),
 		repository.NewTopicMemberRepository(queries),
+		repository.NewDraftPageRepository(queries),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,
 			repository.NewDraftPageRepository(queries),
@@ -55,10 +55,6 @@ func newRequestWithChiParams(t *testing.T, path string, params map[string]string
 	}
 
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-}
-
-type errorResponse struct {
-	Error string `json:"error"`
 }
 
 func TestUpdate_NotLoggedIn(t *testing.T) {
@@ -86,13 +82,10 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
 	}
 
-	// JSONレスポンスを確認
-	var resp errorResponse
-	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-	if resp.Error != "Unauthorized" {
-		t.Errorf("wrong error message: got %v want Unauthorized", resp.Error)
+	// エラーメッセージを確認
+	body := strings.TrimSpace(rr.Body.String())
+	if body != "Unauthorized" {
+		t.Errorf("wrong error message: got %v want Unauthorized", body)
 	}
 }
 
@@ -422,7 +415,7 @@ func TestUpdate_ResponseContentType(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// 未認証リクエストでもContent-Typeがapplication/jsonであることを確認
+	// 未認証リクエストでもContent-Typeがtext/plainであることを確認
 	formData := url.Values{}
 	req := newRequestWithChiParams(t, "/go/s/my-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "my-space",
@@ -433,7 +426,7 @@ func TestUpdate_ResponseContentType(t *testing.T) {
 	handler.Update(rr, req)
 
 	contentType := rr.Header().Get("Content-Type")
-	if contentType != "application/json" {
-		t.Errorf("wrong content type: got %v want application/json", contentType)
+	if !strings.Contains(contentType, "text/plain") {
+		t.Errorf("wrong content type: got %v want text/plain", contentType)
 	}
 }

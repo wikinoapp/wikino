@@ -1,4 +1,4 @@
-package page_link_list
+package draft_page
 
 import (
 	"log/slog"
@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はリンク一覧をSSEフラグメントとして返します (GET /go/s/{space_identifier}/pages/{page_number}/link_list)
+// Show は下書き保存時刻とリンク一覧をSSEフラグメントとして返します (GET /go/s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -27,7 +27,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URLパラメータを取得
-	spaceIdentifier := chi.URLParam(r, "space_identifier")
+	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 	pageNumberStr := chi.URLParam(r, "page_number")
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
@@ -86,7 +86,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DraftPageを取得してリンク先ページIDを決定
+	// DraftPageを取得
 	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
 	if err != nil {
 		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
@@ -94,6 +94,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// リンク先ページIDを決定
 	var linkedPageIDs []model.PageID
 	if draftPage != nil {
 		linkedPageIDs = draftPage.LinkedPageIDs
@@ -127,7 +128,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(backlinkPaginatedMap))
 		for pageID, paginated := range backlinkPaginatedMap {
-			// リンク先ページのページ番号を取得
 			var linkedPageNumber int32
 			for _, p := range paginatedLinks.Pages {
 				if p.ID == pageID {
@@ -153,8 +153,18 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// SSEフラグメントとしてリンク一覧を送信
+	// SSEフラグメントを送信
 	sse := datastar.NewSSE(w, r)
+
+	// 保存時刻フラグメントを送信（下書きが存在する場合のみ）
+	if draftPage != nil {
+		if err := sse.PatchElementTempl(components.DraftSavedTime(draftPage.ModifiedAt), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
+			slog.ErrorContext(ctx, "保存時刻のSSE送信に失敗", "error", err)
+			return
+		}
+	}
+
+	// リンク一覧フラグメントを送信
 	if err := sse.PatchElementTempl(components.LinkList(linkListVM), datastar.WithSelectorID("page-link-list"), datastar.WithModeInner()); err != nil {
 		slog.ErrorContext(ctx, "リンク一覧のSSE送信に失敗", "error", err)
 		return

@@ -32,11 +32,11 @@ templ Edit(data EditPageData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
 					},
 					{
 						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
 						IconName: data.Topic.IconName,
 					},
 				},
@@ -48,7 +48,7 @@ templ Edit(data EditPageData) {
 				<div class="card">
 					<div class="card-body px-4">
 						<form
-							action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier, data.Page.Number))) }
+							action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 							class="form grid gap-6"
 							method="POST"
 						>
@@ -92,13 +92,12 @@ templ Edit(data EditPageData) {
 									data-markdown-editor
 									data-markdown-editor-textarea="#page_body"
 									data-markdown-editor-title="#page_title"
-									data-markdown-editor-saved-at="#page_saved_at"
 									data-markdown-editor-body={ data.Page.Body }
 									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier, data.Page.Number)) + "/draft_page" }
+									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number)) + "/draft_page" }
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
-									data-markdown-editor-space-identifier={ data.Space.Identifier }
+									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
 									class="min-h-[400px] border rounded-md overflow-hidden"
 								></div>
 								<textarea
@@ -121,10 +120,12 @@ templ Edit(data EditPageData) {
 
 								<a
 									class="btn-ghost rounded-full w-fit"
-									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, data.Page.Number))) }
+									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 								>
 									{ templates.T(ctx, "page_edit_cancel") }
 								</a>
+
+								<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground ml-auto"></div>
 							</div>
 						</form>
 					</div>
@@ -133,7 +134,7 @@ templ Edit(data EditPageData) {
 				<div
 					id="page-link-list"
 					class="mt-6"
-					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageLinkListPath(data.Space.Identifier, data.Page.Number))) }
+					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 				>
 					@components.LinkList(data.LinkList)
 				</div>

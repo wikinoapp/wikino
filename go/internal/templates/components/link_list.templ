@@ -19,7 +19,7 @@ templ LinkList(data viewmodel.LinkList) {
 				for _, item := range data.Items {
 					<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
 						<a
-							href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, item.Page.Number))) }
+							href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.Page.Number))) }
 							class="card hover:bg-accent transition-colors"
 						>
 							<div class="card-body px-4 py-3">
@@ -57,7 +57,7 @@ templ linkListLoadMore(data viewmodel.LinkList) {
 	<button
 		type="button"
 		class="card hover:bg-accent transition-colors w-full cursor-pointer"
-		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.GoPageLinkListPath(data.SpaceIdentifier, data.PageNumber)), data.Pagination.Current+1) }
+		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.GoPageDraftPagePath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1) }
 	>
 		<div class="card-body flex items-center justify-center gap-1 px-4 py-3">
 			@templates.Icon("caret-down-regular", "size-4")

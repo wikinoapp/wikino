@@ -15,7 +15,7 @@ func TestNewLinkList(t *testing.T) {
 	tests := []struct {
 		name            string
 		pages           []*model.Page
-		spaceIdentifier string
+		spaceIdentifier model.SpaceIdentifier
 		wantItemCount   int
 		wantTitles      []string
 		wantNumbers     []int32

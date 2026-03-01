@@ -13,6 +13,7 @@ type Handler struct {
 	pageRepo            *repository.PageRepository
 	topicRepo           *repository.TopicRepository
 	topicMemberRepo     *repository.TopicMemberRepository
+	draftPageRepo       *repository.DraftPageRepository
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase
 }
 
@@ -23,6 +24,7 @@ func NewHandler(
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
+	draftPageRepo *repository.DraftPageRepository,
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase,
 ) *Handler {
 	return &Handler{
@@ -31,6 +33,7 @@ func NewHandler(
 		pageRepo:            pageRepo,
 		topicRepo:           topicRepo,
 		topicMemberRepo:     topicMemberRepo,
+		draftPageRepo:       draftPageRepo,
 		autoSaveDraftPageUC: autoSaveDraftPageUC,
 	}
 }

@@ -40,7 +40,6 @@ interface EditorConfig {
   csrfToken: string;
   topicNumber: string;
   titleInput: HTMLInputElement;
-  savedAtEl: HTMLElement | null;
   spaceIdentifier: string;
 }
 
@@ -125,15 +124,6 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      if (config.savedAtEl && data.modified_at) {
-        const date = new Date(data.modified_at);
-        const timeStr = date.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        config.savedAtEl.textContent = timeStr;
-      }
       window.dispatchEvent(new CustomEvent("draft-autosaved"));
     }
   } catch {
@@ -153,9 +143,6 @@ export function initializeEditors(): void {
     const titleInput = document.querySelector<HTMLInputElement>(titleSelector);
     if (!titleInput) return;
 
-    const savedAtSelector = container.dataset.markdownEditorSavedAt || "";
-    const savedAtEl = document.querySelector<HTMLElement>(savedAtSelector);
-
     const body = container.dataset.markdownEditorBody || "";
     const autofocus = container.dataset.markdownEditorAutofocus === "true";
     const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
@@ -172,7 +159,6 @@ export function initializeEditors(): void {
       csrfToken,
       topicNumber,
       titleInput,
-      savedAtEl,
       spaceIdentifier,
     });
 

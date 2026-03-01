@@ -28,7 +28,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URLパラメータを取得
-	spaceIdentifier := chi.URLParam(r, "space_identifier")
+	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 	pageNumberStr := chi.URLParam(r, "page_number")
 	linkedPageNumberStr := chi.URLParam(r, "linked_page_number")
 

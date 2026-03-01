@@ -46,7 +46,7 @@ type UpdateValidatorInput struct {
 	PageID          model.PageID
 	TopicID         model.TopicID
 	SpaceID         model.SpaceID
-	SpaceIdentifier string
+	SpaceIdentifier model.SpaceIdentifier
 }
 
 // UpdateValidatorResult はバリデーションの結果

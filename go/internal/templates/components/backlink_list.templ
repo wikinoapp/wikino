@@ -13,7 +13,7 @@ templ BacklinkList(data viewmodel.BacklinkList) {
 		<div class="flex flex-wrap gap-1">
 			for _, item := range data.Items {
 				<a
-					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, item.Page.Number))) }
+					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.Page.Number))) }
 					class="badge badge-outline hover:bg-accent transition-colors text-xs"
 				>
 					if item.Page.Title != "" {
@@ -37,7 +37,7 @@ templ backlinkListLoadMore(data viewmodel.BacklinkList) {
 	<button
 		type="button"
 		class="badge badge-outline hover:bg-accent transition-colors text-xs cursor-pointer"
-		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.GoPageBacklinkListPath(data.SpaceIdentifier, data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1) }
+		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.GoPageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1) }
 	>
 		@templates.Icon("caret-down-regular", "size-3")
 		{ templates.T(ctx, "page_edit_links_load_more") }
