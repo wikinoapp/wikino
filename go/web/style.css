@@ -118,6 +118,10 @@
   --bottom-nav-max-height: 54px;
 }
 
+.cm-editor {
+  height: 100%;
+}
+
 .dark {
   /* Basecoatの変数上書き */
   --background: var(--color-brand-950);
