@@ -48,7 +48,7 @@ type AutoSaveDraftPageInput struct {
 	TopicID          model.TopicID
 	Title            *string
 	Body             string
-	SpaceIdentifier  string
+	SpaceIdentifier  model.SpaceIdentifier
 	CurrentTopicName string
 }
 

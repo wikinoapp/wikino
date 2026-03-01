@@ -58,7 +58,7 @@ type PublishPageInput struct {
 	DraftPageID      model.DraftPageID
 	Title            *string
 	Body             string
-	SpaceIdentifier  string
+	SpaceIdentifier  model.SpaceIdentifier
 	CurrentTopicName string
 }
 

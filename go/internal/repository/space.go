@@ -26,8 +26,8 @@ func (r *SpaceRepository) WithTx(tx *sql.Tx) *SpaceRepository {
 }
 
 // FindByIdentifier は識別子でスペースを取得する（削除されていないスペースのみ）
-func (r *SpaceRepository) FindByIdentifier(ctx context.Context, identifier string) (*model.Space, error) {
-	row, err := r.q.GetSpaceByIdentifier(ctx, identifier)
+func (r *SpaceRepository) FindByIdentifier(ctx context.Context, identifier model.SpaceIdentifier) (*model.Space, error) {
+	row, err := r.q.GetSpaceByIdentifier(ctx, string(identifier))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -46,7 +46,7 @@ func (r *SpaceRepository) toModel(row query.Space) *model.Space {
 
 	return &model.Space{
 		ID:          model.SpaceID(row.ID),
-		Identifier:  row.Identifier,
+		Identifier:  model.SpaceIdentifier(row.Identifier),
 		Name:        row.Name,
 		Plan:        model.Plan(row.Plan),
 		JoinedAt:    row.JoinedAt,

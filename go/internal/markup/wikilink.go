@@ -91,7 +91,7 @@ func ScanWikilinks(body string, currentTopicName string) []WikilinkKey {
 // <a>, <code>, <pre>, <script>, <style>タグ内のWikiリンクは変換しない。
 // ページが存在する場合は <a href="/s/{spaceIdentifier}/pages/{pageNumber}">ページタイトル</a> に変換し、
 // 存在しない場合はプレーンテキストのまま残す。
-func ReplaceWikilinks(bodyHTML string, currentTopicName string, spaceIdentifier string, pageLocations []PageLocation) string {
+func ReplaceWikilinks(bodyHTML string, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation) string {
 	if !strings.Contains(bodyHTML, "[[") {
 		return bodyHTML
 	}
@@ -113,7 +113,7 @@ func ReplaceWikilinks(bodyHTML string, currentTopicName string, spaceIdentifier 
 
 // processWikilinkNodes はDOMツリーを再帰的に走査し、
 // テキストノード内のWikiリンクを<a>要素に変換する。変更があればtrueを返す。
-func processWikilinkNodes(n *html.Node, currentTopicName string, spaceIdentifier string, pageLocations []PageLocation, inSkip bool) bool {
+func processWikilinkNodes(n *html.Node, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation, inSkip bool) bool {
 	if n.Type == html.ElementNode && skipElements[n.DataAtom] {
 		inSkip = true
 	}
@@ -136,7 +136,7 @@ func processWikilinkNodes(n *html.Node, currentTopicName string, spaceIdentifier
 
 // replaceWikilinksInTextNode はテキストノード内のWikiリンクを検出して<a>要素に置換する。
 // テキストを分割し、Wikiリンク部分を<a>ノードに、それ以外をテキストノードに変換する。
-func replaceWikilinksInTextNode(textNode *html.Node, currentTopicName string, spaceIdentifier string, pageLocations []PageLocation) bool {
+func replaceWikilinksInTextNode(textNode *html.Node, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation) bool {
 	text := textNode.Data
 	matches := wikilinkRegex.FindAllStringSubmatchIndex(text, -1)
 	if len(matches) == 0 {
@@ -235,8 +235,8 @@ func findPageLocation(key WikilinkKey, locations []PageLocation) *PageLocation {
 }
 
 // buildWikilinkNode はWikiリンクの<a>要素ノードを構築する
-func buildWikilinkNode(spaceIdentifier string, pl *PageLocation) *html.Node {
-	href := fmt.Sprintf("/s/%s/pages/%d", url.PathEscape(spaceIdentifier), pl.PageNumber)
+func buildWikilinkNode(spaceIdentifier model.SpaceIdentifier, pl *PageLocation) *html.Node {
+	href := fmt.Sprintf("/s/%s/pages/%d", url.PathEscape(string(spaceIdentifier)), pl.PageNumber)
 
 	aNode := &html.Node{
 		Type:     html.ElementNode,

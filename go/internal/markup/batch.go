@@ -32,7 +32,7 @@ func RenderHTML(
 	body string,
 	currentTopicName string,
 	spaceID model.SpaceID,
-	spaceIdentifier string,
+	spaceIdentifier model.SpaceIdentifier,
 	resolver PageLocationResolver,
 	batchFinder BatchAttachmentFinder,
 ) (string, error) {
@@ -62,7 +62,7 @@ func RenderHTMLBatch(
 	ctx context.Context,
 	inputs []BatchRenderInput,
 	spaceID model.SpaceID,
-	spaceIdentifier string,
+	spaceIdentifier model.SpaceIdentifier,
 	resolver PageLocationResolver,
 	batchFinder BatchAttachmentFinder,
 ) ([]string, error) {

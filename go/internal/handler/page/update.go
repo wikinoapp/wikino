@@ -31,7 +31,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URLパラメータを取得
-	spaceIdentifier := chi.URLParam(r, "space_identifier")
+	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 	pageNumberStr := chi.URLParam(r, "page_number")
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
@@ -162,7 +162,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_saved"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", spaceIdentifier, pg.Number)
+	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), pg.Number)
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
 }
 
@@ -170,7 +170,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) renderEditWithErrors(
 	w http.ResponseWriter,
 	r *http.Request,
-	spaceIdentifier string,
+	spaceIdentifier model.SpaceIdentifier,
 	space *model.Space,
 	pg *model.Page,
 	title string,

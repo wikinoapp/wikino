@@ -35,6 +35,9 @@ type UserID string
 // AttachmentID は添付ファイルのID型
 type AttachmentID string
 
+// SpaceIdentifier はスペース識別子の型
+type SpaceIdentifier string
+
 // PageNumber はページ番号の型
 type PageNumber int32
 
@@ -70,6 +73,9 @@ func (id UserID) String() string { return string(id) }
 
 // String はAttachmentIDを文字列に変換する
 func (id AttachmentID) String() string { return string(id) }
+
+// String はSpaceIdentifierを文字列に変換する
+func (s SpaceIdentifier) String() string { return string(s) }
 
 // String はPageNumberを文字列に変換する
 func (n PageNumber) String() string { return strconv.FormatInt(int64(n), 10) }

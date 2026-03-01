@@ -19,7 +19,7 @@ const (
 // Space はスペースのドメインモデル
 type Space struct {
 	ID          SpaceID
-	Identifier  string
+	Identifier  SpaceIdentifier
 	Name        string
 	Plan        Plan
 	JoinedAt    time.Time

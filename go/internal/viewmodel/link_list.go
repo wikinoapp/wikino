@@ -21,7 +21,7 @@ type LinkListItem struct {
 type LinkList struct {
 	Items           []LinkListItem
 	Pagination      Pagination
-	SpaceIdentifier string
+	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 }
 
@@ -30,7 +30,7 @@ type NewLinkListInput struct {
 	Pages           []*model.Page
 	BacklinkMap     map[model.PageID]BacklinkList
 	Pagination      Pagination
-	SpaceIdentifier string
+	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 }
 

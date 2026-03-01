@@ -1,8 +1,6 @@
 package templates
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Path はURLのパスを表す型です
 type Path string

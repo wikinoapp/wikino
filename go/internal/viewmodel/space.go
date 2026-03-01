@@ -5,7 +5,7 @@ import "github.com/wikinoapp/wikino/go/internal/model"
 // Space はテンプレートで表示するスペース情報です
 type Space struct {
 	Name       string
-	Identifier string
+	Identifier model.SpaceIdentifier
 }
 
 // NewSpace はモデルからSpaceを生成します
