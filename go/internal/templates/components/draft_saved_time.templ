@@ -1,14 +1,30 @@
 package components
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
+// formatTimeInZone はUTC時刻をユーザーのタイムゾーンに変換してフォーマットします
+func formatTimeInZone(modifiedAt time.Time, timeZone string) string {
+	if timeZone == "" {
+		return modifiedAt.Format("15:04")
+	}
+
+	loc, err := time.LoadLocation(timeZone)
+	if err != nil {
+		slog.Warn("タイムゾーンの読み込みに失敗", "time_zone", timeZone, "error", err)
+		return modifiedAt.Format("15:04")
+	}
+
+	return modifiedAt.In(loc).Format("15:04")
+}
+
 // DraftSavedTime は下書きの自動保存時刻を表示します
-templ DraftSavedTime(modifiedAt time.Time) {
+templ DraftSavedTime(modifiedAt time.Time, timeZone string) {
 	<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground">
-		@templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": modifiedAt.Format("15:04")}))
+		@templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": formatTimeInZone(modifiedAt, timeZone)}))
 	</div>
 }

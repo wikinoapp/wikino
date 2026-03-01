@@ -88,6 +88,21 @@ func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemb
 	return r.toModels(rows), nil
 }
 
+// FindByIDsAndSpace はIDリストとスペースIDでトピックを一括取得する
+func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.TopicID, spaceID model.SpaceID) ([]*model.Topic, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	rows, err := r.q.FindTopicsByIDsAndSpace(ctx, query.FindTopicsByIDsAndSpaceParams{
+		SpaceID: string(spaceID),
+		Column2: model.TopicIDsToStrings(ids),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
 // toModel は query.Topic を model.Topic に変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

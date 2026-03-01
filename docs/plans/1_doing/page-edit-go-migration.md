@@ -1598,18 +1598,27 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
 
 ### フェーズ 9: 動作確認で見つかった修正
 
-- [ ] **9-1**: [Go] CodeMirrorエディタが親コンテナの高さを埋めるようにする
+- [x] **9-1**: [Go] CodeMirrorエディタが親コンテナの高さを埋めるようにする
   - 現状: `edit.templ` で本文欄のコンテナに `min-h-[400px]` を指定しているが、CodeMirrorエディタ自体は1行分の高さしか持たず、残りが空白になっている
   - 原因: CodeMirrorの `.cm-editor` 要素が親コンテナの高さに追従するためのCSSが不足している
   - 修正: `static/css/style.css` に `.cm-editor { height: 100%; }` を追加し、エディタが `min-h-[400px]` のコンテナを埋めるようにする
   - 依存: 8-2
 
-- [ ] **9-2**: [Go] 「自動保存」表示を右端に配置する
+- [x] **9-2**: [Go] 「自動保存」表示を右端に配置する
   - 現状: `edit.templ` の112-130行目で、保存ボタン・キャンセルリンク・自動保存時刻がフラットに `flex` コンテナに並んでおり、`ml-auto` で右寄せしている
   - 修正: Rails版と同様に `flex items-center justify-between` で左右に分割する構造に変更する。左側にボタングループ（保存・キャンセル）、右側に自動保存時刻を配置する
   - 依存: 5-1
 
-- [ ] **9-3**: [Go] 下書き表示中のアラートメッセージを追加する
+- [x] **9-2a**: [Go] ページ編集画面の「公開する」ボタンを「トピックに公開」に変更する
+  - ボタンの文言を「公開する」から「トピックに公開」に変更する（トピックの公開/非公開との混同を避けるため）
+  - 翻訳キーを `page_edit_publish_button` から `page_edit_publish_to_topic_button` にリネームする
+  - 日本語: 「トピックに公開」、英語: 「Publish to topic」
+  - アイコンを `floppy-disk-regular` から `paper-plane-tilt-regular`（Phosphor Icons）に変更する
+  - 想定ファイル数: 実装 3 ファイル（`edit.templ` 1 + `ja.toml` 1 + `en.toml` 1）
+  - 想定行数: 実装 ~6 行
+  - 依存: 9-2
+
+- [x] **9-3**: [Go] 下書き表示中のアラートメッセージを追加する
   - 現状: Rails版ではDraftPageが存在する場合に「現在下書きを表示しています」という警告アラートがフォーム上部に表示されるが、Go版にはこの表示がない
   - 修正:
     - `EditPageData` にドラフト表示中かどうかの判定フィールドを追加する（ViewModelのメソッドまたはフラグ）
@@ -1617,14 +1626,14 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
     - 翻訳ファイル（`ja.toml`, `en.toml`）にメッセージキーを追加する
   - 依存: 5-1, 6-2
 
-- [ ] **9-4**: [Go] 自動保存時刻のタイムゾーン対応
+- [x] **9-4**: [Go] 自動保存時刻のタイムゾーン対応
   - 現状: `DraftSavedTime` コンポーネント（`internal/templates/components/draft_saved_time.templ`）で `modifiedAt.Format("15:04")` としてUTC時刻をそのまま表示している
   - 修正: ユーザーの `users.time_zone` カラム（例: `"Asia/Tokyo"`）の値を使い、ユーザーのタイムゾーンに変換した時刻を表示する
   - `DraftSavedTime` コンポーネントにタイムゾーン文字列を渡し、`time.LoadLocation` で変換してからフォーマットする
   - タイムゾーン情報の取得: 認証ミドルウェアまたはハンドラーでユーザーの `time_zone` を取得し、`DraftSavedTime` の呼び出し元（`internal/handler/draft_page/show.go` および `internal/handler/page/edit.go`）で渡す
   - 依存: 6-2, 8b-1d
 
-- [ ] **9-5**: [Go] リンク一覧・バックリンク一覧のカードUIをRails版に合わせる
+- [x] **9-5**: [Go] リンク一覧・バックリンク一覧のカードUIをRails版に合わせる
   - 現状: Go版のリンク先ページカードはタイトルのみを表示しており、Rails版に比べて情報量が少ない
   - Rails版（`CardLinks::PageComponent`）では以下の情報を表示している:
     - トピックアイコン + トピック名（`text-xs text-gray-500`）

@@ -6,6 +6,7 @@ package components
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/a-h/templ"
@@ -13,8 +14,23 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
+// formatTimeInZone はUTC時刻をユーザーのタイムゾーンに変換してフォーマットします
+func formatTimeInZone(modifiedAt time.Time, timeZone string) string {
+	if timeZone == "" {
+		return modifiedAt.Format("15:04")
+	}
+
+	loc, err := time.LoadLocation(timeZone)
+	if err != nil {
+		slog.Warn("タイムゾーンの読み込みに失敗", "time_zone", timeZone, "error", err)
+		return modifiedAt.Format("15:04")
+	}
+
+	return modifiedAt.In(loc).Format("15:04")
+}
+
 // DraftSavedTime は下書きの自動保存時刻を表示します
-func DraftSavedTime(modifiedAt time.Time) templ.Component {
+func DraftSavedTime(modifiedAt time.Time, timeZone string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -39,7 +55,7 @@ func DraftSavedTime(modifiedAt time.Time) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": modifiedAt.Format("15:04")})).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": formatTimeInZone(modifiedAt, timeZone)})).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -65,6 +65,49 @@ func (q *Queries) FindTopicBySpaceAndNumber(ctx context.Context, arg FindTopicBy
 	return i, err
 }
 
+const findTopicsByIDsAndSpace = `-- name: FindTopicsByIDsAndSpace :many
+SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND id = ANY($2::uuid[]) AND discarded_at IS NULL
+`
+
+type FindTopicsByIDsAndSpaceParams struct {
+	SpaceID string   `json:"space_id"`
+	Column2 []string `json:"column_2"`
+}
+
+// スペースIDとIDリストでトピックを一括取得する（削除されていないトピックのみ）
+func (q *Queries) FindTopicsByIDsAndSpace(ctx context.Context, arg FindTopicsByIDsAndSpaceParams) ([]Topic, error) {
+	rows, err := q.db.QueryContext(ctx, findTopicsByIDsAndSpace, arg.SpaceID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Topic{}
+	for rows.Next() {
+		var i Topic
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.Number,
+			&i.Name,
+			&i.Description,
+			&i.Visibility,
+			&i.DiscardedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findTopicsBySpaceAndNames = `-- name: FindTopicsBySpaceAndNames :many
 SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND name = ANY($2::varchar[]) AND discarded_at IS NULL
 `

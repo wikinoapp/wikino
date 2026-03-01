@@ -10,6 +10,7 @@ type Handler struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	pageRepo        *repository.PageRepository
+	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
@@ -18,12 +19,14 @@ func NewHandler(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
+	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 ) *Handler {
 	return &Handler{
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		pageRepo:        pageRepo,
+		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
 	}
 }

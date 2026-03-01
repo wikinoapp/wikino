@@ -14,6 +14,10 @@ SELECT * FROM topics WHERE space_id = $1 AND name = ANY($2::varchar[]) AND disca
 -- スペースIDとIDでトピックを取得する（削除されていないトピックのみ）
 SELECT * FROM topics WHERE space_id = $1 AND id = $2 AND discarded_at IS NULL;
 
+-- name: FindTopicsByIDsAndSpace :many
+-- スペースIDとIDリストでトピックを一括取得する（削除されていないトピックのみ）
+SELECT * FROM topics WHERE space_id = $1 AND id = ANY($2::uuid[]) AND discarded_at IS NULL;
+
 -- name: ListTopicsJoinedBySpaceMember :many
 -- スペースメンバーが参加しているトピック一覧を取得する（編集画面のトピックセレクター用）
 SELECT t.* FROM topics t

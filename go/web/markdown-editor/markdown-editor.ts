@@ -64,6 +64,7 @@ function createEditor(config: EditorConfig): EditorView {
       rectangularSelection(),
       crosshairCursor(),
       highlightSelectionMatches(),
+      EditorView.lineWrapping,
       keymap.of([
         { key: "Enter", run: insertNewlineAndContinueList },
         { key: "Tab", run: handleTab },

@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
+	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
@@ -110,22 +111,69 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var linkListVM viewmodel.LinkList
+	// リンク先ページとバックリンクのデータを取得
+	var paginatedLinks *repository.PaginatedPages
+	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
 	if len(linkedPageIDs) > 0 {
-		paginatedLinks, err := h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, currentPage, viewmodel.LinkLimit)
+		paginatedLinks, err = h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, currentPage, viewmodel.LinkLimit)
 		if err != nil {
 			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		backlinkPaginatedMap, err := h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
+		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
 		if err != nil {
 			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	}
 
+	// ページレベルのバックリンク一覧を取得（公開済みページのLinkedPageIDsに基づく）
+	backlinkPages, err := h.pageRepo.FindBacklinkedByPageID(ctx, pg.ID, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// すべてのページからTopicIDを収集してトピックを一括取得
+	topicIDSet := make(map[model.TopicID]struct{})
+	if paginatedLinks != nil {
+		for _, p := range paginatedLinks.Pages {
+			topicIDSet[p.TopicID] = struct{}{}
+		}
+	}
+	for _, paginated := range backlinkPaginatedMap {
+		for _, p := range paginated.Pages {
+			topicIDSet[p.TopicID] = struct{}{}
+		}
+	}
+	for _, p := range backlinkPages {
+		topicIDSet[p.TopicID] = struct{}{}
+	}
+
+	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
+	for id := range topicIDSet {
+		topicIDs = append(topicIDs, id)
+	}
+
+	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
+	for _, t := range topics {
+		topicMap[t.ID] = t
+	}
+
+	// ViewModelを構築
+	var linkListVM viewmodel.LinkList
+	if paginatedLinks != nil && len(paginatedLinks.Pages) > 0 {
 		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(backlinkPaginatedMap))
 		for pageID, paginated := range backlinkPaginatedMap {
 			var linkedPageNumber int32
@@ -137,6 +185,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			}
 			backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
 				Pages:            paginated.Pages,
+				TopicMap:         topicMap,
 				Pagination:       viewmodel.NewPagination(1, paginated.TotalCount, int(viewmodel.BacklinkLimit)),
 				SpaceIdentifier:  spaceIdentifier,
 				PageNumber:       int32(pg.Number),
@@ -146,6 +195,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
 			Pages:           paginatedLinks.Pages,
+			TopicMap:        topicMap,
 			BacklinkMap:     backlinkMap,
 			Pagination:      viewmodel.NewPagination(int(currentPage), paginatedLinks.TotalCount, int(viewmodel.LinkLimit)),
 			SpaceIdentifier: spaceIdentifier,
@@ -153,16 +203,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// ページレベルのバックリンク一覧を取得（公開済みページのLinkedPageIDsに基づく）
-	backlinkPages, err := h.pageRepo.FindBacklinkedByPageID(ctx, pg.ID, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
 		Pages:           backlinkPages,
+		TopicMap:        topicMap,
 		SpaceIdentifier: spaceIdentifier,
 	})
 
@@ -171,7 +214,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// 保存時刻フラグメントを送信（下書きが存在する場合のみ）
 	if draftPage != nil {
-		if err := sse.PatchElementTempl(components.DraftSavedTime(draftPage.ModifiedAt), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
+		if err := sse.PatchElementTempl(components.DraftSavedTime(draftPage.ModifiedAt, user.TimeZone), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
 			slog.ErrorContext(ctx, "保存時刻のSSE送信に失敗", "error", err)
 			return
 		}

@@ -6,7 +6,7 @@ import (
 
 // BacklinkListItem はバックリンクの個別項目です
 type BacklinkListItem struct {
-	Page Page
+	CardLinkPage CardLinkPage
 }
 
 // BacklinkList はバックリンク一覧の表示データです
@@ -21,6 +21,7 @@ type BacklinkList struct {
 // NewBacklinkListInput はNewBacklinkListの入力パラメータです
 type NewBacklinkListInput struct {
 	Pages            []*model.Page
+	TopicMap         map[model.TopicID]*model.Topic
 	Pagination       Pagination
 	SpaceIdentifier  model.SpaceIdentifier
 	PageNumber       int32
@@ -32,7 +33,7 @@ func NewBacklinkList(input NewBacklinkListInput) BacklinkList {
 	items := make([]BacklinkListItem, 0, len(input.Pages))
 	for _, pg := range input.Pages {
 		items = append(items, BacklinkListItem{
-			Page: newPageFromModel(pg),
+			CardLinkPage: NewCardLinkPage(pg, input.TopicMap),
 		})
 	}
 	return BacklinkList{

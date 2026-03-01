@@ -242,6 +242,7 @@ func main() {
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
+		topicRepo,
 		topicMemberRepo,
 	)
 

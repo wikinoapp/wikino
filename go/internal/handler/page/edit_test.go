@@ -152,7 +152,7 @@ func TestEdit(t *testing.T) {
 	}
 
 	// 公開ボタンが含まれているか確認
-	if !strings.Contains(body, "公開する") {
+	if !strings.Contains(body, "トピックに公開") {
 		t.Error("Japanese publish button not found in response")
 	}
 
@@ -169,6 +169,11 @@ func TestEdit(t *testing.T) {
 	// パンくずリストにスペースへのリンクが含まれているか確認
 	if !strings.Contains(body, "/s/my-space") {
 		t.Error("space link not found in breadcrumb")
+	}
+
+	// 下書きがない場合、下書きアラートが表示されないことを確認
+	if strings.Contains(body, "現在下書きを表示しています") {
+		t.Error("draft alert should not be shown when no draft exists")
 	}
 
 	// パンくずリストにトピックへのリンクが含まれているか確認
@@ -259,6 +264,11 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	}
 	if strings.Contains(body, "Original body") {
 		t.Error("original body should not be shown when draft exists")
+	}
+
+	// 下書きアラートが表示されていることを確認
+	if !strings.Contains(body, "現在下書きを表示しています") {
+		t.Error("draft alert message not found in response")
 	}
 }
 

@@ -44,107 +44,117 @@ templ Edit(data EditPageData) {
 			})
 
 			<div class="max-w-3xl w-full px-4 mx-auto">
-				@components.FormErrors(data.FormErrors)
+				<div class="flex flex-col gap-4">
+					@components.FormErrors(data.FormErrors)
 
-				<div class="card">
-					<div class="card-body px-4">
-						<form
-							action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number))) }
-							class="form grid gap-6"
-							method="POST"
-						>
-							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-							<input type="hidden" name="_method" value="PATCH"/>
+					if data.Page.ShowingDraft {
+						<div class="alert">
+							@templates.Icon("warning-circle-regular", "fill-info")
+							<h2>
+								{ templates.T(ctx, "page_edit_current_page_is_draft") }
+							</h2>
+						</div>
+					}
 
-							<div class="grid gap-2">
-								<label for="page_title">
-									{ templates.T(ctx, "page_edit_title_label") }
-								</label>
+					<div class="card">
+						<div class="card-body px-4">
+							<form
+								action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number))) }
+								class="form grid gap-6"
+								method="POST"
+							>
+								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+								<input type="hidden" name="_method" value="PATCH"/>
 
-								<input
-									id="page_title"
-									name="title"
-									type="text"
-									value={ data.Page.Title }
+								<div class="grid gap-2">
+									<label for="page_title">
+										{ templates.T(ctx, "page_edit_title_label") }
+									</label>
+
+									<input
+										id="page_title"
+										name="title"
+										type="text"
+										value={ data.Page.Title }
+										if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+											aria-invalid="true"
+										} else {
+											aria-invalid="false"
+										}
+										if data.Page.AutofocusTitle() {
+											autofocus
+										}
+									/>
 									if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
-										aria-invalid="true"
-									} else {
-										aria-invalid="false"
+										for _, errorMsg := range data.FormErrors.GetFieldErrors("title") {
+											<p class="text-sm text-error">
+												@templ.Raw(errorMsg)
+											</p>
+										}
 									}
-									if data.Page.AutofocusTitle() {
-										autofocus
-									}
-								/>
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
-									for _, errorMsg := range data.FormErrors.GetFieldErrors("title") {
-										<p class="text-sm text-error">
-											@templ.Raw(errorMsg)
-										</p>
-									}
-								}
-							</div>
+								</div>
 
-							<div class="grid gap-2">
-								<label for="page_body">
-									{ templates.T(ctx, "page_edit_body_label") }
-								</label>
+								<div class="grid gap-2">
+									<label for="page_body">
+										{ templates.T(ctx, "page_edit_body_label") }
+									</label>
 
-								<div
-									data-markdown-editor
-									data-markdown-editor-textarea="#page_body"
-									data-markdown-editor-title="#page_title"
-									data-markdown-editor-body={ data.Page.Body }
-									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
-									data-markdown-editor-csrf-token={ data.CSRFToken }
-									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
-									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
-									class="min-h-[400px] border rounded-md overflow-hidden"
-								></div>
-								<textarea
-									class="hidden"
-									id="page_body"
-									name="body"
-									data-markdown-editor-target="textarea"
-								>{ data.Page.Body }</textarea>
-							</div>
+									<div
+										data-markdown-editor
+										data-markdown-editor-textarea="#page_body"
+										data-markdown-editor-title="#page_title"
+										data-markdown-editor-body={ data.Page.Body }
+										data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
+										data-markdown-editor-draft-save-url={ string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
+										data-markdown-editor-csrf-token={ data.CSRFToken }
+										data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
+										data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
+									></div>
+									<textarea
+										class="hidden"
+										id="page_body"
+										name="body"
+										data-markdown-editor-target="textarea"
+									>{ data.Page.Body }</textarea>
+								</div>
 
-							<div class="flex items-center gap-2">
-								<button
-									class="btn-primary rounded-full w-fit"
-									data-attr:disabled="$isSubmitting == true"
-									type="submit"
-								>
-									@templates.Icon("floppy-disk-regular")
-									{ templates.T(ctx, "page_edit_publish_button") }
-								</button>
+								<div class="flex items-center justify-between gap-2">
+									<div class="flex gap-2">
+										<button
+											class="btn-primary rounded-full w-fit"
+											data-attr:disabled="$isSubmitting == true"
+											type="submit"
+										>
+											@templates.Icon("paper-plane-tilt-regular")
+											{ templates.T(ctx, "page_edit_publish_to_topic_button") }
+										</button>
 
-								<a
-									class="btn-ghost rounded-full w-fit"
-									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
-								>
-									{ templates.T(ctx, "page_edit_cancel") }
-								</a>
+										<a
+											class="btn-ghost rounded-full w-fit"
+											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+										>
+											{ templates.T(ctx, "page_edit_cancel") }
+										</a>
+									</div>
 
-								<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground ml-auto"></div>
-							</div>
-						</form>
+									<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+								</div>
+							</form>
+						</div>
 					</div>
-				</div>
 
-				<div
-					id="page-link-list"
-					class="mt-6"
-					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
-				>
-					@components.LinkList(data.LinkList)
-				</div>
+					<div
+						id="page-link-list"
+						data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
+					>
+						@components.LinkList(data.LinkList)
+					</div>
 
-				<div
-					id="page-backlink-list"
-					class="mt-6"
-				>
-					@components.PageBacklinkList(data.BacklinkList)
+					<div
+						id="page-backlink-list"
+					>
+						@components.PageBacklinkList(data.BacklinkList)
+					</div>
 				</div>
 			</div>
 		</div>

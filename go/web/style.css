@@ -137,3 +137,28 @@
   --info: var(--color-blue-400);
   --info-foreground: var(--color-black);
 }
+
+/*
+  ============================================================================
+  CodeMirror
+  ============================================================================
+*/
+.cm-editor {
+  @apply border-input max-h-[calc(100vh-400px)] rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
+}
+
+.cm-editor.cm-focused {
+  @apply border-ring ring-ring/50 ring-[3px] outline-2 outline-gray-300 outline-solid;
+}
+
+.cm-editor .cm-gutters {
+  @apply bg-card;
+}
+
+.cm-editor .cm-lineNumbers {
+  @apply bg-card;
+}
+
+.cm-editor .cm-content {
+  @apply py-2;
+}

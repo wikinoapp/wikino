@@ -464,13 +464,17 @@ other = "Body"
 description = "Placeholder for the page body input field"
 other = "Write something..."
 
-[page_edit_publish_button]
-description = "Label for the publish button"
-other = "Publish"
+[page_edit_publish_to_topic_button]
+description = "Label for the publish to topic button"
+other = "Publish to topic"
 
 [page_edit_cancel]
 description = "Label for the cancel link"
 other = "Cancel"
+
+[page_edit_current_page_is_draft]
+description = "Alert message when viewing a draft"
+other = "You are currently viewing a draft."
 
 [page_edit_links_heading]
 description = "Heading for the link list on the page edit screen"

@@ -6,9 +6,10 @@ import (
 
 // Page はテンプレートで表示するページ情報です
 type Page struct {
-	Title  string
-	Body   string
-	Number int32
+	Title        string
+	Body         string
+	Number       int32
+	ShowingDraft bool
 }
 
 // NewPageForEdit は編集画面用のPageを生成します。
@@ -20,9 +21,10 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 			title = *draftPage.Title
 		}
 		return Page{
-			Title:  title,
-			Body:   draftPage.Body,
-			Number: int32(pg.Number),
+			Title:        title,
+			Body:         draftPage.Body,
+			Number:       int32(pg.Number),
+			ShowingDraft: true,
 		}
 	}
 
@@ -51,14 +53,35 @@ func (p Page) AutofocusTitle() bool {
 	return p.Title == ""
 }
 
-// newPageFromModel はmodel.PageからPageビューモデルを生成します
-func newPageFromModel(pg *model.Page) Page {
+// CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードの表示データです
+type CardLinkPage struct {
+	Title        string
+	Number       int32
+	TopicName    string
+	TopicIcon    IconName
+	Pinned       bool
+	CardImageURL string
+}
+
+// NewCardLinkPage はmodel.Pageとトピック情報からカード用のビューモデルを生成します
+func NewCardLinkPage(pg *model.Page, topicMap map[model.TopicID]*model.Topic) CardLinkPage {
 	var title string
 	if pg.Title != nil {
 		title = *pg.Title
 	}
-	return Page{
-		Title:  title,
-		Number: int32(pg.Number),
+
+	var topicName string
+	var topicIcon IconName
+	if topic, ok := topicMap[pg.TopicID]; ok {
+		topicName = topic.Name
+		topicIcon = topicVisibilityIconName(topic.Visibility)
+	}
+
+	return CardLinkPage{
+		Title:     title,
+		Number:    int32(pg.Number),
+		TopicName: topicName,
+		TopicIcon: topicIcon,
+		Pinned:    pg.PinnedAt != nil,
 	}
 }
