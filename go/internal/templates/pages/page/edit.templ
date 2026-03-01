@@ -94,7 +94,7 @@ templ Edit(data EditPageData) {
 									data-markdown-editor-title="#page_title"
 									data-markdown-editor-body={ data.Page.Body }
 									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number)) + "/draft_page" }
+									data-markdown-editor-draft-save-url={ string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
