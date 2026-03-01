@@ -1596,9 +1596,53 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - 想定行数: 実装 ~120 行, テスト ~80 行
   - 依存: 2-1, 5-1, 8b-1e
 
-### フェーズ 9: `/go` プレフィックスの除去とリバースプロキシの更新
+### フェーズ 9: 動作確認で見つかった修正
 
-- [ ] **9-1**: [Go] `/go` プレフィックスの除去とリバースプロキシ設定の追加
+- [ ] **9-1**: [Go] CodeMirrorエディタが親コンテナの高さを埋めるようにする
+  - 現状: `edit.templ` で本文欄のコンテナに `min-h-[400px]` を指定しているが、CodeMirrorエディタ自体は1行分の高さしか持たず、残りが空白になっている
+  - 原因: CodeMirrorの `.cm-editor` 要素が親コンテナの高さに追従するためのCSSが不足している
+  - 修正: `static/css/style.css` に `.cm-editor { height: 100%; }` を追加し、エディタが `min-h-[400px]` のコンテナを埋めるようにする
+  - 依存: 8-2
+
+- [ ] **9-2**: [Go] 「自動保存」表示を右端に配置する
+  - 現状: `edit.templ` の112-130行目で、保存ボタン・キャンセルリンク・自動保存時刻がフラットに `flex` コンテナに並んでおり、`ml-auto` で右寄せしている
+  - 修正: Rails版と同様に `flex items-center justify-between` で左右に分割する構造に変更する。左側にボタングループ（保存・キャンセル）、右側に自動保存時刻を配置する
+  - 依存: 5-1
+
+- [ ] **9-3**: [Go] 下書き表示中のアラートメッセージを追加する
+  - 現状: Rails版ではDraftPageが存在する場合に「現在下書きを表示しています」という警告アラートがフォーム上部に表示されるが、Go版にはこの表示がない
+  - 修正:
+    - `EditPageData` にドラフト表示中かどうかの判定フィールドを追加する（ViewModelのメソッドまたはフラグ）
+    - `edit.templ` のフォーム上部に、Rails版と同様の警告アラート（アイコン + メッセージ）を追加する
+    - 翻訳ファイル（`ja.toml`, `en.toml`）にメッセージキーを追加する
+  - 依存: 5-1, 6-2
+
+- [ ] **9-4**: [Go] 自動保存時刻のタイムゾーン対応
+  - 現状: `DraftSavedTime` コンポーネント（`internal/templates/components/draft_saved_time.templ`）で `modifiedAt.Format("15:04")` としてUTC時刻をそのまま表示している
+  - 修正: ユーザーの `users.time_zone` カラム（例: `"Asia/Tokyo"`）の値を使い、ユーザーのタイムゾーンに変換した時刻を表示する
+  - `DraftSavedTime` コンポーネントにタイムゾーン文字列を渡し、`time.LoadLocation` で変換してからフォーマットする
+  - タイムゾーン情報の取得: 認証ミドルウェアまたはハンドラーでユーザーの `time_zone` を取得し、`DraftSavedTime` の呼び出し元（`internal/handler/draft_page/show.go` および `internal/handler/page/edit.go`）で渡す
+  - 依存: 6-2, 8b-1d
+
+- [ ] **9-5**: [Go] リンク一覧・バックリンク一覧のカードUIをRails版に合わせる
+  - 現状: Go版のリンク先ページカードはタイトルのみを表示しており、Rails版に比べて情報量が少ない
+  - Rails版（`CardLinks::PageComponent`）では以下の情報を表示している:
+    - トピックアイコン + トピック名（`text-xs text-gray-500`）
+    - ページタイトル（`line-clamp-3 text-sm font-bold`）
+    - ページカード画像（存在する場合、右側に `h-16 w-16 md:h-18 md:w-18` で表示）
+    - ピン留めアイコン（ピン留めされている場合、右上に表示）
+    - ホバー時にボーダー表示（`hover:border hover:border-primary`）
+  - 修正内容:
+    - リンク一覧・バックリンク一覧で使用する共通のページカードコンポーネント（`components/card_link_page.templ`）を新規作成し、Rails版の`CardLinks::PageComponent`と同等のUI（トピック名・画像・ピンアイコン）を実装する
+    - `viewmodel/link_list.go` と `viewmodel/backlink_list.go` のViewModelにトピック名・トピックアイコン名・ページカード画像URL・ピン留め状態のフィールドを追加する
+    - リポジトリの取得クエリを更新し、トピック情報・画像情報・ピン留め状態を取得する
+    - `link_list.templ` と `page_backlink_list.templ` のカード表示部分を新しい共通コンポーネントに置き換える
+    - リンク一覧のグリッドに `items-stretch` を追加してRails版と同じ高さ揃えにする
+  - 依存: 8b-1, 8b-2
+
+### フェーズ 10: `/go` プレフィックスの除去とリバースプロキシの更新
+
+- [ ] **10-1**: [Go] `/go` プレフィックスの除去とリバースプロキシ設定の追加
   - `cmd/server/main.go` のルーティングから `/go` プレフィックスを除去し、本番用のパスに変更:
     - `GET /go/s/:space_identifier/pages/:page_number/edit` → `GET /s/:space_identifier/pages/:page_number/edit`
     - `PATCH /go/s/:space_identifier/pages/:page_number/draft_page` → `PATCH /s/:space_identifier/pages/:page_number/draft_page`
@@ -1613,9 +1657,9 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - 想定行数: 実装 ~50 行（変更）, テスト ~80 行
   - 依存: 5-1, 5-4, 6-2, 7-2, 8-2, 8-4, 8-5, 8b-2
 
-### フェーズ 10: Rails版の実装の削除
+### フェーズ 11: Rails版の実装の削除
 
-- [ ] **10-1**: [Rails] ページ編集・公開関連のコントローラー・サービス・フォーム・ビューの削除
+- [ ] **11-1**: [Rails] ページ編集・公開関連のコントローラー・サービス・フォーム・ビューの削除
   - `app/controllers/pages/edit_controller.rb`, `app/controllers/pages/update_controller.rb` を削除
   - `app/controllers/draft_pages/update_controller.rb` を削除
   - `app/controllers/page_locations/index_controller.rb` を削除
@@ -1627,7 +1671,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - ページ表示関連（`ShowController`等）の削除は [ページ表示画面のGo移行](../2_todo/page-show-go-migration.md) で行う
   - 想定ファイル数: 実装 8 ファイル削除, テスト 3 ファイル削除
   - 想定行数: 実装 ~-500 行, テスト ~-300 行
-  - 依存: 9-1
+  - 依存: 10-1
 
 ### フェーズ N: 仕様書への反映
 
