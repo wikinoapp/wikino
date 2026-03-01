@@ -484,6 +484,10 @@ other = "Untitled"
 description = "Load more button for link list"
 other = "More"
 
+[page_edit_backlinks_heading]
+description = "Heading for the backlink list on the page edit screen"
+other = "Backlinks"
+
 [page_edit_draft_saved_time]
 description = "Auto-saved time display"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"

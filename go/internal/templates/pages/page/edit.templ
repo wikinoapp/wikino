@@ -11,12 +11,13 @@ import (
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken  string
-	FormErrors *session.FormErrors
-	Page       viewmodel.Page
-	Space      viewmodel.Space
-	Topic      viewmodel.Topic
-	LinkList   viewmodel.LinkList
+	CSRFToken    string
+	FormErrors   *session.FormErrors
+	Page         viewmodel.Page
+	Space        viewmodel.Space
+	Topic        viewmodel.Topic
+	LinkList     viewmodel.LinkList
+	BacklinkList viewmodel.BacklinkList
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -94,7 +95,7 @@ templ Edit(data EditPageData) {
 									data-markdown-editor-title="#page_title"
 									data-markdown-editor-body={ data.Page.Body }
 									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number)) + "/draft_page" }
+									data-markdown-editor-draft-save-url={ string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
@@ -137,6 +138,13 @@ templ Edit(data EditPageData) {
 					data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 				>
 					@components.LinkList(data.LinkList)
+				</div>
+
+				<div
+					id="page-backlink-list"
+					class="mt-6"
+				>
+					@components.PageBacklinkList(data.BacklinkList)
 				</div>
 			</div>
 		</div>

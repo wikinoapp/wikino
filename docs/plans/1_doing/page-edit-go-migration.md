@@ -1583,7 +1583,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
       - 想定ファイル数: 3 ファイル（更新3）
       - 想定行数: 実装 ~30 行（変更・削除が中心）
 
-- [ ] **8b-2**: [Go] ページ編集画面のバックリンク一覧表示の追加
+- [x] **8b-2**: [Go] ページ編集画面のバックリンク一覧表示の追加
   - `internal/handler/page/edit.go` を更新（バックリンク一覧のデータ取得を追加）
   - `internal/templates/pages/page/edit.templ` を更新（フッターにバックリンク一覧セクションを追加）
   - `internal/templates/components/backlink_list.templ` を追加（バックリンク一覧コンポーネント。ページタイトルとリンクを表示）
