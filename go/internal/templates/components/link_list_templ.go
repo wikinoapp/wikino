@@ -59,7 +59,7 @@ func LinkList(data viewmodel.LinkList) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = CardLinkPage(item.CardLinkPage, data.SpaceIdentifier.String()).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = CardLinkPage(item.CardLinkPage, data.SpaceIdentifier).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -18,7 +18,7 @@ templ LinkList(data viewmodel.LinkList) {
 			<div class="flex flex-col gap-3">
 				for _, item := range data.Items {
 					<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-						@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier.String())
+						@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 
 						<div
 							id={ fmt.Sprintf("page-backlink-list-%d", item.CardLinkPage.Number) }
