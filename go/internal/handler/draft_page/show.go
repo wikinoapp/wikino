@@ -153,6 +153,19 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// ページレベルのバックリンク一覧を取得（公開済みページのLinkedPageIDsに基づく）
+	backlinkPages, err := h.pageRepo.FindBacklinkedByPageID(ctx, pg.ID, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+		Pages:           backlinkPages,
+		SpaceIdentifier: spaceIdentifier,
+	})
+
 	// SSEフラグメントを送信
 	sse := datastar.NewSSE(w, r)
 
@@ -167,6 +180,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// リンク一覧フラグメントを送信
 	if err := sse.PatchElementTempl(components.LinkList(linkListVM), datastar.WithSelectorID("page-link-list"), datastar.WithModeInner()); err != nil {
 		slog.ErrorContext(ctx, "リンク一覧のSSE送信に失敗", "error", err)
+		return
+	}
+
+	// バックリンク一覧フラグメントを送信
+	if err := sse.PatchElementTempl(components.PageBacklinkList(backlinkListVM), datastar.WithSelectorID("page-backlink-list"), datastar.WithModeInner()); err != nil {
+		slog.ErrorContext(ctx, "バックリンク一覧のSSE送信に失敗", "error", err)
 		return
 	}
 }

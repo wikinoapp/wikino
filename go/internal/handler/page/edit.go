@@ -154,6 +154,19 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// ページレベルのバックリンク一覧を取得（公開済みページのLinkedPageIDsに基づく）
+	backlinkPages, err := h.pageRepo.FindBacklinkedByPageID(ctx, pg.ID, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+		Pages:           backlinkPages,
+		SpaceIdentifier: spaceIdentifier,
+	})
+
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
@@ -168,11 +181,12 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(space)
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken: csrfToken,
-		Page:      pageVM,
-		Space:     spaceVM,
-		Topic:     topicVM,
-		LinkList:  linkListVM,
+		CSRFToken:    csrfToken,
+		Page:         pageVM,
+		Space:        spaceVM,
+		Topic:        topicVM,
+		LinkList:     linkListVM,
+		BacklinkList: backlinkListVM,
 	})
 
 	layoutData := layouts.DefaultLayoutData{
