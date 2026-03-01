@@ -171,7 +171,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// 保存時刻フラグメントを送信（下書きが存在する場合のみ）
 	if draftPage != nil {
-		if err := sse.PatchElementTempl(components.DraftSavedTime(draftPage.ModifiedAt), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
+		if err := sse.PatchElementTempl(components.DraftSavedTime(draftPage.ModifiedAt, user.TimeZone), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
 			slog.ErrorContext(ctx, "保存時刻のSSE送信に失敗", "error", err)
 			return
 		}

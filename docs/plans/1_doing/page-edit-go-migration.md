@@ -1626,7 +1626,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
     - 翻訳ファイル（`ja.toml`, `en.toml`）にメッセージキーを追加する
   - 依存: 5-1, 6-2
 
-- [ ] **9-4**: [Go] 自動保存時刻のタイムゾーン対応
+- [x] **9-4**: [Go] 自動保存時刻のタイムゾーン対応
   - 現状: `DraftSavedTime` コンポーネント（`internal/templates/components/draft_saved_time.templ`）で `modifiedAt.Format("15:04")` としてUTC時刻をそのまま表示している
   - 修正: ユーザーの `users.time_zone` カラム（例: `"Asia/Tokyo"`）の値を使い、ユーザーのタイムゾーンに変換した時刻を表示する
   - `DraftSavedTime` コンポーネントにタイムゾーン文字列を渡し、`time.LoadLocation` で変換してからフォーマットする
