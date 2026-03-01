@@ -6,9 +6,10 @@ import (
 
 // Page はテンプレートで表示するページ情報です
 type Page struct {
-	Title  string
-	Body   string
-	Number int32
+	Title        string
+	Body         string
+	Number       int32
+	ShowingDraft bool
 }
 
 // NewPageForEdit は編集画面用のPageを生成します。
@@ -20,9 +21,10 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 			title = *draftPage.Title
 		}
 		return Page{
-			Title:  title,
-			Body:   draftPage.Body,
-			Number: int32(pg.Number),
+			Title:        title,
+			Body:         draftPage.Body,
+			Number:       int32(pg.Number),
+			ShowingDraft: true,
 		}
 	}
 

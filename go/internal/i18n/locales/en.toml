@@ -472,6 +472,10 @@ other = "Publish to topic"
 description = "Label for the cancel link"
 other = "Cancel"
 
+[page_edit_current_page_is_draft]
+description = "Alert message when viewing a draft"
+other = "You are currently viewing a draft."
+
 [page_edit_links_heading]
 description = "Heading for the link list on the page edit screen"
 other = "Links"

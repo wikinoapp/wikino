@@ -46,6 +46,15 @@ templ Edit(data EditPageData) {
 			<div class="max-w-3xl w-full px-4 mx-auto">
 				@components.FormErrors(data.FormErrors)
 
+				if data.Page.ShowingDraft {
+					<div class="alert">
+						@templates.Icon("warning-circle-regular", "fill-amber-600")
+						<h2>
+							{ templates.T(ctx, "page_edit_current_page_is_draft") }
+						</h2>
+					</div>
+				}
+
 				<div class="card">
 					<div class="card-body px-4">
 						<form

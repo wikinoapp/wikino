@@ -472,6 +472,10 @@ other = "トピックに公開"
 description = "ページ編集キャンセルリンクのラベル"
 other = "キャンセル"
 
+[page_edit_current_page_is_draft]
+description = "下書きを表示中のアラートメッセージ"
+other = "現在下書きを表示しています"
+
 [page_edit_links_heading]
 description = "ページ編集画面のリンク一覧の見出し"
 other = "リンク"
