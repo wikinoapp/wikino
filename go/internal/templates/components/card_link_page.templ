@@ -10,12 +10,12 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier string) {
 	<a
 		href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, page.Number))) }
 		if page.Pinned {
-			class="card relative min-h-[96px] transition duration-200 ease-in-out hover:border-primary"
+			class="card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		} else {
-			class="card min-h-[96px] transition duration-200 ease-in-out hover:border-primary"
+			class="card min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		}
 	>
-		<div class="card-body px-3 py-2">
+		<div class="card-body">
 			if page.Pinned {
 				@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800")
 			}

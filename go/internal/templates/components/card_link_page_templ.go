@@ -52,17 +52,17 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier string) templ.Com
 			return templ_7745c5c3_Err
 		}
 		if page.Pinned {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " class=\"card relative min-h-[96px] transition duration-200 ease-in-out hover:border-primary\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " class=\"card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " class=\"card min-h-[96px] transition duration-200 ease-in-out hover:border-primary\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " class=\"card min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "><div class=\"card-body px-3 py-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
