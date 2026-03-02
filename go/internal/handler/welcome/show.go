@@ -5,6 +5,8 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	"github.com/wikinoapp/wikino/go/internal/templates/pages/welcome"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -33,6 +35,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	layoutData := layouts.DefaultLayoutData{
 		Meta:  meta,
 		Flash: flash,
+		Sidebar: components.SidebarData{
+			DefaultClosed:   true,
+			CurrentPageName: templates.PageNameWelcome,
+		},
 	}
 	pageData := welcome.ShowPageData{}
 

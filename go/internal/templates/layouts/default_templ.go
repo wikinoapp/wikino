@@ -16,11 +16,11 @@ import (
 
 // DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
 type DefaultLayoutData struct {
-	Meta                 viewmodel.PageMeta
-	Flash                *session.FlashMessage
-	HideFooter           bool
-	HideSidebar          bool // trueの場合、サイドバーを完全に非表示にする（DefaultSidebarClosedは無視される）
-	DefaultSidebarClosed bool // trueの場合、サイドバーを閉じた状態で初期表示する
+	Meta        viewmodel.PageMeta
+	Flash       *session.FlashMessage
+	HideFooter  bool
+	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
+	Sidebar     components.SidebarData
 }
 
 // Default はデフォルトのレイアウトです
@@ -75,7 +75,7 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if !data.HideSidebar {
-			templ_7745c5c3_Err = components.Sidebar(data.DefaultSidebarClosed).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.Sidebar(data.Sidebar).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

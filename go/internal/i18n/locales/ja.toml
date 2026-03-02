@@ -436,6 +436,30 @@ other = "サイドバー"
 description = "サイドバーのホームリンク"
 other = "ホーム"
 
+[sidebar_search]
+description = "サイドバーの検索リンク"
+other = "検索"
+
+[sidebar_profile]
+description = "サイドバーのプロフィールリンク"
+other = "プロフィール"
+
+[sidebar_sign_in]
+description = "サイドバーのログインリンク"
+other = "ログイン"
+
+[sidebar_joined_topics_heading]
+description = "サイドバーの参加中トピック一覧の見出し"
+other = "参加中のトピック"
+
+[sidebar_joined_topics_empty]
+description = "サイドバーの参加中トピックが0件のときのメッセージ"
+other = "参加中のトピックはありません"
+
+[sidebar_joined_topics_create_page]
+description = "サイドバーのトピック上のページ作成リンクのツールチップ"
+other = "ページを作成する"
+
 # フッター
 [footer_terms]
 other = "利用規約"

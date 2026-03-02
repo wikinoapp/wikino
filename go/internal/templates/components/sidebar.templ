@@ -2,25 +2,119 @@ package components
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
+
+// SidebarData はサイドバーに渡すデータ構造体です
+type SidebarData struct {
+	DefaultClosed   bool
+	CurrentPageName templates.PageName
+	SignedIn        bool
+	UserAtname      string
+	SpaceIdentifier string
+}
+
+// searchPath はスペース内のときスペースフィルター付き検索パスを返します
+func (d SidebarData) searchPath() templates.Path {
+	if d.SpaceIdentifier != "" {
+		return templates.SearchPathWithSpaceFilter(d.SpaceIdentifier)
+	}
+	return templates.SearchPath()
+}
 
 // Sidebar はサイドバーを表示します
 // basecoat-css のサイドバーコンポーネントを使用しています
 // https://basecoatui.com/components/sidebar/
-// defaultClosed が true の場合、サイドバーは閉じた状態で表示されます
-templ Sidebar(defaultClosed bool) {
-	<aside class="sidebar" data-side="left" data-initial-open={ templates.BoolToString(!defaultClosed) } aria-hidden={ templates.BoolToString(defaultClosed) }>
+templ Sidebar(data SidebarData) {
+	<aside
+			class="sidebar"
+			data-side="left"
+			data-initial-open={ templates.BoolToString(!data.DefaultClosed) }
+			aria-hidden={ templates.BoolToString(data.DefaultClosed) }
+	>
 		<nav aria-label={ templates.T(ctx, "sidebar_nav_label") }>
-			<section class="scrollbar">
-				<ul>
-					<li>
-						<a href={ templ.SafeURL(string(templates.HomePath())) }>
-							@templates.Icon("house-regular", "size-4")
-							{ templates.T(ctx, "sidebar_home") }
-						</a>
-					</li>
+			<section class="scrollbar gap-4 py-4">
+				<ul class="px-2">
+					if data.SignedIn {
+						@sidebarNavItem(sidebarNavItemData{
+							Path:        templates.HomePath(),
+							Label:       templates.T(ctx, "sidebar_home"),
+							DefaultIcon: "house-regular",
+							ActiveIcon:  "house-fill",
+							Active:      data.CurrentPageName == templates.PageNameHome,
+						})
+						@sidebarNavItem(sidebarNavItemData{
+							Path:        data.searchPath(),
+							Label:       templates.T(ctx, "sidebar_search"),
+							DefaultIcon: "magnifying-glass-regular",
+							ActiveIcon:  "magnifying-glass-fill",
+							Active:      data.CurrentPageName == templates.PageNameSearch,
+						})
+						@sidebarNavItem(sidebarNavItemData{
+							Path:        templates.ProfilePath(data.UserAtname),
+							Label:       templates.T(ctx, "sidebar_profile"),
+							DefaultIcon: "user-circle-regular",
+							ActiveIcon:  "user-circle-fill",
+							Active:      data.CurrentPageName == templates.PageNameProfile,
+						})
+					} else {
+						@sidebarNavItem(sidebarNavItemData{
+							Path:        templates.Path("/"),
+							Label:       templates.T(ctx, "sidebar_home"),
+							DefaultIcon: "house-regular",
+							ActiveIcon:  "house-fill",
+							Active:      data.CurrentPageName == templates.PageNameWelcome,
+						})
+						@sidebarNavItem(sidebarNavItemData{
+							Path:        templates.SignInPath(),
+							Label:       templates.T(ctx, "sidebar_sign_in"),
+							DefaultIcon: "sign-in-regular",
+							ActiveIcon:  "sign-in-regular",
+							Active:      false,
+						})
+					}
 				</ul>
+
+				if data.SignedIn {
+					<hr class="border-gray-300">
+
+					<div id="sidebar-joined-topics" data-on-intersect="@get('/sidebar/joined_topics')">
+						@sidebarJoinedTopicsSkeleton()
+					</div>
+				}
 			</section>
 		</nav>
 	</aside>
+}
+
+// sidebarJoinedTopicsSkeleton はトピック一覧読み込み中のスケルトンを表示します
+templ sidebarJoinedTopicsSkeleton() {
+	<div class="flex flex-col gap-2 px-4 py-2">
+		<div class="bg-accent animate-pulse h-4 w-full rounded"></div>
+		<div class="bg-accent animate-pulse h-4 w-3/4 rounded"></div>
+		<div class="bg-accent animate-pulse h-4 w-5/6 rounded"></div>
+	</div>
+}
+
+// sidebarNavItemData はサイドバーのナビゲーションリンクのデータです
+type sidebarNavItemData struct {
+	Path        templates.Path
+	Label       string
+	DefaultIcon viewmodel.IconName
+	ActiveIcon  viewmodel.IconName
+	Active      bool
+}
+
+// sidebarNavItem はサイドバーのナビゲーションリンクを表示します
+templ sidebarNavItem(data sidebarNavItemData) {
+	<li>
+		<a href={ templ.SafeURL(string(data.Path)) }>
+			if data.Active {
+				@templates.Icon(data.ActiveIcon, "size-4")
+			} else {
+				@templates.Icon(data.DefaultIcon, "size-4")
+			}
+			{ data.Label }
+		</a>
+	</li>
 }

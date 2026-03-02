@@ -436,6 +436,30 @@ other = "Sidebar"
 description = "Home link in the sidebar"
 other = "Home"
 
+[sidebar_search]
+description = "Search link in the sidebar"
+other = "Search"
+
+[sidebar_profile]
+description = "Profile link in the sidebar"
+other = "Profile"
+
+[sidebar_sign_in]
+description = "Sign in link in the sidebar"
+other = "Sign in"
+
+[sidebar_joined_topics_heading]
+description = "Heading for the joined topics list in the sidebar"
+other = "Joined Topics"
+
+[sidebar_joined_topics_empty]
+description = "Message when there are no joined topics in the sidebar"
+other = "No joined topics"
+
+[sidebar_joined_topics_create_page]
+description = "Tooltip for the create page link on a topic in the sidebar"
+other = "Create page"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"
