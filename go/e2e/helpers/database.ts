@@ -1,4 +1,6 @@
 import pg from "pg";
+import * as fs from "fs";
+import * as path from "path";
 
 function getDatabaseURL(): string {
   const url = process.env.DATABASE_URL;
@@ -176,6 +178,26 @@ export async function createTestPage(
   );
 
   return { id: result.rows[0].id, number };
+}
+
+export interface SharedTestData {
+  user: TestUser;
+  space: TestSpace;
+  spaceMemberId: string;
+}
+
+const sharedTestDataPath = path.join(__dirname, "../playwright/.auth/test-data.json");
+
+export function saveSharedTestData(data: SharedTestData): void {
+  const dir = path.dirname(sharedTestDataPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(sharedTestDataPath, JSON.stringify(data));
+}
+
+export function loadSharedTestData(): SharedTestData {
+  return JSON.parse(fs.readFileSync(sharedTestDataPath, "utf-8"));
 }
 
 /**

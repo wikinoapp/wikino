@@ -1,28 +1,26 @@
 import { test, expect } from "@playwright/test";
 import {
-  createTestUser,
-  createTestSpace,
-  createTestSpaceMember,
   createTestTopic,
   createTestTopicMember,
   createTestPage,
-  cleanupTestData,
+  loadSharedTestData,
   type TestUser,
   type TestSpace,
   type TestTopic,
 } from "../helpers/database";
-import { signIn } from "../helpers/auth";
 import { fillInEditor } from "../helpers/editor";
 
 let user: TestUser;
 let space: TestSpace;
-let topic: TestTopic;
 let spaceMemberId: string;
+let topic: TestTopic;
 
 test.beforeAll(async () => {
-  user = await createTestUser();
-  space = await createTestSpace();
-  spaceMemberId = await createTestSpaceMember(space.id, user.id);
+  const shared = loadSharedTestData();
+  user = shared.user;
+  space = shared.space;
+  spaceMemberId = shared.spaceMemberId;
+
   topic = await createTestTopic(space.id, { name: "TestTopic" });
   await createTestTopicMember(space.id, topic.id, spaceMemberId);
 
@@ -31,16 +29,11 @@ test.beforeAll(async () => {
   await createTestPage(space.id, topic.id, { title: "Page Beta" });
 });
 
-test.afterAll(async () => {
-  await cleanupTestData([user.id]);
-});
-
 async function visitPageEditor(pwPage: import("@playwright/test").Page) {
   const editTopic = await createTestTopic(space.id);
   await createTestTopicMember(space.id, editTopic.id, spaceMemberId);
   const page_ = await createTestPage(space.id, editTopic.id);
 
-  await signIn(pwPage, user);
   await pwPage.goto(`/s/${space.identifier}/pages/${page_.number}/edit`);
   await pwPage.waitForSelector(".cm-content");
 }
