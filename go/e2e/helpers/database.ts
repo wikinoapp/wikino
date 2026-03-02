@@ -12,7 +12,10 @@ let pool: pg.Pool | null = null;
 
 function getPool(): pg.Pool {
   if (!pool) {
-    pool = new pg.Pool({ connectionString: getDatabaseURL() });
+    pool = new pg.Pool({
+      connectionString: getDatabaseURL(),
+      allowExitOnIdle: true,
+    });
   }
   return pool;
 }
