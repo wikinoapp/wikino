@@ -35,6 +35,12 @@ type UserID string
 // AttachmentID は添付ファイルのID型
 type AttachmentID string
 
+// FeatureFlagID はフィーチャーフラグのID型
+type FeatureFlagID string
+
+// FeatureFlagName はフィーチャーフラグ名の型
+type FeatureFlagName string
+
 // SpaceIdentifier はスペース識別子の型
 type SpaceIdentifier string
 
@@ -73,6 +79,12 @@ func (id UserID) String() string { return string(id) }
 
 // String はAttachmentIDを文字列に変換する
 func (id AttachmentID) String() string { return string(id) }
+
+// String はFeatureFlagIDを文字列に変換する
+func (id FeatureFlagID) String() string { return string(id) }
+
+// String はFeatureFlagNameを文字列に変換する
+func (n FeatureFlagName) String() string { return string(n) }
 
 // String はSpaceIdentifierを文字列に変換する
 func (s SpaceIdentifier) String() string { return string(s) }

@@ -21,7 +21,7 @@ func TestNewTopic(t *testing.T) {
 			name: "公開トピック",
 			topic: &model.Topic{
 				ID:         "topic-1",
-				SpaceID:    "space-1",
+				Space:      &model.Space{ID: "space-1"},
 				Number:     1,
 				Name:       "一般",
 				Visibility: model.TopicVisibilityPublic,
@@ -34,7 +34,7 @@ func TestNewTopic(t *testing.T) {
 			name: "非公開トピック",
 			topic: &model.Topic{
 				ID:         "topic-2",
-				SpaceID:    "space-1",
+				Space:      &model.Space{ID: "space-1"},
 				Number:     2,
 				Name:       "秘密",
 				Visibility: model.TopicVisibilityPrivate,
