@@ -111,6 +111,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: go/e2e
+        timeout-minutes: 10
         run: pnpm exec playwright test
         env:
           CI: true
