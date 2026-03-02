@@ -151,6 +151,13 @@ type ExportStatus struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type FeatureFlag struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Page struct {
 	ID                        string        `json:"id"`
 	SpaceID                   string        `json:"space_id"`
