@@ -108,6 +108,54 @@ func (r *TopicRepository) toModel(row query.Topic) *model.Topic { ... }
 func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic { ... }
 ```
 
+#### ドメインID型
+
+モデルのIDフィールドには `string` ではなく、`internal/model/id.go` に定義された専用のドメインID型（`type SpaceID string` 等）を使用します。これにより、異なるエンティティのIDを取り違える問題をコンパイル時に検出できます。
+
+**基本ルール**:
+
+- ✅ **モデルのIDフィールドには専用型を使用**: `ID SpaceID`、`ID PageID` など
+- ✅ **外部キーにも専用型を使用**: `UserID model.UserID`、`SpaceID model.SpaceID` など
+- ✅ **新しいモデルを追加する場合は対応するID型も追加**: `id.go` に型と `String()` メソッドを定義
+- ❌ **IDフィールドに `string` を使用しない**
+
+**実装パターン**:
+
+```go
+// internal/model/id.go - 型定義
+type SpaceID string
+func (id SpaceID) String() string { return string(id) }
+
+// internal/model/space.go - モデルでの使用
+type Space struct {
+    ID   SpaceID
+    Name string
+}
+
+// internal/repository/space.go - リポジトリでの変換（sqlcのstringから専用型へ）
+func toModel(row query.GetSpaceRow) *model.Space {
+    return &model.Space{
+        ID:   model.SpaceID(row.ID),
+        Name: row.Name,
+    }
+}
+
+// internal/testutil/space_builder.go - テストビルダーの戻り値
+func (b *SpaceBuilder) Build() model.SpaceID {
+    // ...
+    return model.SpaceID(id)
+}
+```
+
+**スライス変換ヘルパー**:
+
+IDのスライスと `[]string` の相互変換が必要な場合（例: PostgreSQL の配列型との変換）は、`id.go` にヘルパー関数を定義します：
+
+```go
+func PageIDsToStrings(ids []PageID) []string { ... }
+func StringsToPageIDs(ss []string) []PageID { ... }
+```
+
 #### Queryファイルの命名
 
 Queryファイルは用途に応じて2つのパターンがあります：
@@ -891,6 +939,44 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 - **検索性**: ファイル名のプレフィックスでグルーピングされるため、エディタで検索しやすい
 - **シンプルさ**: ディレクトリ階層が深くならず、import パスがシンプル
 - **スケーラビリティ**: ファイル数が増えても管理しやすい
+
+## ワーカー（Worker）
+
+バックグラウンドジョブを処理します。River（PostgreSQL ベースのジョブキュー）を使用します。
+
+- **配置**: `internal/worker`
+- **責務**: 非同期処理（メール送信、定期実行処理など）
+- **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Worker`
+- **ジョブ引数**: `{Action}{Entity}Args` 構造体で定義
+
+**Worker の依存関係**:
+
+- Worker は **UseCase を呼び出し可能**（定期実行処理などで永続化が必要な場合）
+- Worker は **templates に依存可能**（メールレンダリングのため、例外として許可）
+- Worker は **Presentation 層（Handler, Middleware, ViewModel）に依存不可**
+
+```go
+// ワーカーの実装例
+type SendEmailConfirmationArgs struct {
+    Email      string `json:"email"`
+    Code       string `json:"code"`
+    Subject    string `json:"subject"`
+    IsJapanese bool   `json:"is_japanese"`
+}
+
+func (SendEmailConfirmationArgs) Kind() string {
+    return "send_email_confirmation"
+}
+
+type SendEmailConfirmationWorker struct {
+    river.WorkerDefaults[SendEmailConfirmationArgs]
+    confirmationSender *email.ConfirmationSender
+}
+
+func (w *SendEmailConfirmationWorker) Work(ctx context.Context, job *river.Job[SendEmailConfirmationArgs]) error {
+    return w.confirmationSender.Send(ctx, email.ConfirmationEmailInput{...})
+}
+```
 
 ## ベストプラクティス
 

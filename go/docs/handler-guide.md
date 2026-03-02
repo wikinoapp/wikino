@@ -371,7 +371,7 @@ r.Post("/sign_in", signInHandler.Create)
 
 - **標準的な HTTP メソッドを使用**: GET/POST/PATCH/DELETE
 - **更新処理は PATCH を使用**: 部分更新を表現し、Rails との整合性も保つ
-- **Method Override パターン**: HTML フォームから PATCH/DELETE を実現（詳細は [@go/CLAUDE.md](../CLAUDE.md#httpメソッドとルーティング) を参照）
+- **Method Override パターン**: HTML フォームから PATCH/DELETE を実現（詳細は [HTTPメソッドとルーティング](#httpメソッドとルーティング) を参照）
 
 ## 実装例
 
@@ -534,6 +534,43 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 
     return &CreateValidatorResult{FormErrors: formErrors}
 }
+```
+
+## HTTP メソッドとルーティング
+
+HTML フォームと Web API（JSON）で同じルーティングを使用するため、**Method Override パターン**を採用します。
+
+### 基本方針
+
+- **Web API（JSON）**: 標準的な HTTP メソッド（GET/POST/PATCH/DELETE）を使用
+- **HTML フォーム**: POST に`_method`パラメータを追加して PATCH/DELETE を実現
+- **ルーティング**: HTML と API で同じ URL・HTTP メソッドを共有
+- **更新処理**: PATCH を使用（部分更新を表現、Rails との整合性も保つ）
+
+### 実装方法
+
+**ミドルウェア**: `internal/middleware/method_override.go`
+
+```go
+r.Use(authMiddleware.MethodOverride) // POSTリクエストの_methodパラメータを読み取り、HTTPメソッドを上書き
+```
+
+**HTML フォームの例**:
+
+```html
+<!-- PATCH /password として処理される -->
+<form method="POST" action="/password">
+  <input type="hidden" name="_method" value="PATCH" />
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+</form>
+```
+
+**ルーティング**:
+
+```go
+r.Patch("/password", h.UpdatePassword)
+r.Patch("/users/{id}", h.PartialUpdateUser)
+r.Delete("/posts/{id}", h.DeletePost)
 ```
 
 ## 設計思想

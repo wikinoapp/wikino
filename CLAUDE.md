@@ -103,7 +103,7 @@ docker compose up
 
 各サブプロジェクトの詳細なセットアップ手順は、それぞれの CLAUDE.md ファイルを参照してください：
 
-- Go 版: `go/CLAUDE.md`の「開発環境のセットアップ」セクション
+- Go 版: `go/docs/development-guide.md`の「環境変数の設定」セクション
 - Rails 版: `rails/CLAUDE.md`の「開発環境のセットアップ」セクション
 
 ### 環境変数の設定
@@ -139,20 +139,19 @@ docker compose up
 
 ### Go版ガイドライン
 
-- [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - Go版の開発ガイド
-  - コーディング規約（インデント、フォーマット、コメント）
-  - ログ出力（log/slog）
-  - HTTPハンドラー（標準ファイル名、メソッド名）
-  - templテンプレート（引数パターン）
-  - バリデーション方針
-  - HTTPメソッドとルーティング
-  - 国際化（I18n）
-  - ビューモデル・ユースケース
-  - セキュリティガイドライン
-  - テスト戦略
+- [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - Go版の開発ガイド（技術スタック、プロジェクト構造、開発コマンド）
 - [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド
   - 3層アーキテクチャの依存関係ルール
-  - Usecase、Repositoryの使い分け
+  - Usecase、Repository、Workerの使い分け
+  - ドメインID型
+- [@go/docs/coding-guide.md](/workspace/go/docs/coding-guide.md) - コーディング規約
+  - コメントのガイドライン
+  - ログ出力（log/slog）
+- [@go/docs/testing-guide.md](/workspace/go/docs/testing-guide.md) - テストガイド
+  - テスト戦略、TestMainパターン
+  - テストヘルパー
+- [@go/docs/development-guide.md](/workspace/go/docs/development-guide.md) - 開発環境ガイド
+  - 環境変数、DBマイグレーション、golangci-lint
 - [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン
   - ディレクトリ構造
   - 標準ファイル名（9種類のみ）
@@ -306,7 +305,7 @@ make -C /workspace fmt
 
 詳細な例については、各サブプロジェクトの CLAUDE.md を参照してください：
 
-- Go 版: `go/CLAUDE.md` の「コメントのガイドライン」セクション
+- Go 版: `go/docs/coding-guide.md` の「コメントのガイドライン」セクション
 - Rails 版: `rails/CLAUDE.md` の「コメントのガイドライン」セクション
 
 ### Pull Request のガイドライン
