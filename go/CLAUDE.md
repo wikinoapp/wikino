@@ -162,6 +162,61 @@ func PageIDsToStrings(ids []PageID) []string { ... }
 func StringsToPageIDs(ss []string) []PageID { ... }
 ```
 
+### モデルの重複を避ける
+
+ドメインモデルは**クエリの結果や状態ごとに新しいモデルを作らず、既存のモデルを再利用**します。関連エンティティのデータが必要な場合は、ポインタ型のフィールドでモデル間の参照を表現します。
+
+**基本ルール**:
+
+- ✅ **既存モデルを再利用**: クエリ結果に合わせた専用モデル（`JoinedTopic`、`TopicWithSpace` など）を作らない
+- ✅ **関連エンティティはポインタで参照**: `Space *Space` のようにポインタ型で関連を表現する
+- ✅ **Repositoryの変換メソッドで対応**: クエリ結果ごとに異なる変換メソッドを用意し、同じモデルに変換する
+- ❌ **状態やクエリ結果ごとにモデルを増やさない**
+
+**良い例**:
+
+```go
+// ✅ 既存の Topic モデルに Space への参照を持たせる
+type Topic struct {
+    ID     TopicID
+    Space  *Space  // 関連エンティティへのポインタ参照
+    Number int32
+    Name   string
+}
+
+// ✅ クエリ結果ごとに変換メソッドを用意し、同じモデルに変換する
+func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
+    return &model.Topic{
+        ID:    model.TopicID(row.ID),
+        Space: &model.Space{ID: model.SpaceID(row.SpaceID)},
+        Name:  row.Name,
+    }
+}
+
+func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic {
+    // 同じ model.Topic に変換するが、Space のフィールドをより多く設定する
+}
+```
+
+**悪い例**:
+
+```go
+// ❌ クエリ結果に合わせた専用モデルを作る
+type JoinedTopic struct {
+    TopicID         TopicID
+    TopicName       string
+    SpaceID         SpaceID
+    SpaceIdentifier SpaceIdentifier
+    SpaceName       string
+}
+```
+
+**理由**:
+
+- **モデルの増殖を防止**: クエリのバリエーションごとにモデルが増えるのを防ぐ
+- **変更の影響を局所化**: フィールドの変更が1つのモデルに集約される
+- **ドメイン概念との一致**: `JoinedTopic` はDBの都合であり、ドメインとしては「Spaceのデータを持ったTopic」に過ぎない
+
 ### Usecase、Worker、Repositoryの使い分け
 
 - **Usecase**: トランザクションを伴う永続化処理（作成・更新・削除）、複数Repositoryを跨ぐ操作
@@ -1026,6 +1081,16 @@ Go 版 Wikino では、関心の分離を意識したアーキテクチャを採
 - **配置**: `internal/viewmodel`
 - **責務**: リポジトリ層のデータをテンプレート表示用に変換
 - **命名**: `NewWorkFromXXX`, `NewWorksFromXXX`
+- **設計方針**: 画面の要件に応じて必要な数だけ定義する（Modelとは異なり、重複を許容する）
+
+**ModelとViewModelの設計方針の違い**:
+
+| 層        | 方針                                   | 理由                                 |
+| --------- | -------------------------------------- | ------------------------------------ |
+| Model     | ドメイン概念と1:1、重複しない          | ドメインの真実を1箇所に集約するため  |
+| ViewModel | 画面の要件に応じて必要な数だけ定義する | 画面ごとに必要な表示項目が異なるため |
+
+ViewModelは「画面に何を表示するか」を表現するものなので、画面ごとに異なるViewModelを定義するのは自然です。1つのViewModelを無理に共有すると、ある画面のUI変更が他の画面に波及するリスクがあります。ただし、表示項目が同じであれば再利用しても構いません。
 
 #### ユースケース（Use Case）
 

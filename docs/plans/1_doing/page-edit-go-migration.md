@@ -506,7 +506,7 @@ DraftPage 更新
 
 Rails版のURL構造を踏襲する。ページのURL階層にトピックは含めない（トピックはページの分類であり、URLの階層構造には反映しない）。
 
-> **Note**: 開発中はGo版とRails版の両方にアクセスできるよう、Go版のエンドポイントには一時的に `/go` プレフィックスを付与する（例: `GET /go/s/:space_identifier/pages/:page_number/edit`）。フェーズ 9 でプレフィックスを除去し、リバースプロキシの設定を更新してGo版に切り替える。
+> **Note**: 開発中はGo版とRails版の両方にアクセスできるよう、Go版のエンドポイントには一時的に `/go` プレフィックスを付与する（例: `GET /go/s/:space_identifier/pages/:page_number/edit`）。フェーズ 10 でプレフィックスを除去し、フィーチャーフラグ（`go_page_edit`）を使って段階的にGo版に切り替える。フィーチャーフラグが有効なユーザーのみGo版で処理し、それ以外のユーザーはRails版にプロキシする。全ユーザーへの展開完了後、フェーズ 10-2 でリバースプロキシのホワイトリストに移行し、Rails版のコードを削除する。
 
 - `GET /s/:space_identifier/pages/:page_number` - ページ表示（本タスクのスコープ外、Rails版にルーティング）
 - `GET /go/s/:space_identifier/pages/:page_number/edit` - ページ編集画面
@@ -1649,9 +1649,9 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
     - リンク一覧のグリッドに `items-stretch` を追加してRails版と同じ高さ揃えにする
   - 依存: 8b-1, 8b-2
 
-### フェーズ 10: `/go` プレフィックスの除去とリバースプロキシの更新
+### フェーズ 10: `/go` プレフィックスの除去とフィーチャーフラグによる段階的ロールアウト
 
-- [ ] **10-1**: [Go] `/go` プレフィックスの除去とリバースプロキシ設定の追加
+- [x] **10-1**: [Go] `/go` プレフィックスの除去とフィーチャーフラグによるルーティング制御
   - `cmd/server/main.go` のルーティングから `/go` プレフィックスを除去し、本番用のパスに変更:
     - `GET /go/s/:space_identifier/pages/:page_number/edit` → `GET /s/:space_identifier/pages/:page_number/edit`
     - `PATCH /go/s/:space_identifier/pages/:page_number/draft_page` → `PATCH /s/:space_identifier/pages/:page_number/draft_page`
@@ -1659,16 +1659,196 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
     - `GET /go/s/:space_identifier/page_locations?q=:keyword` → `GET /s/:space_identifier/page_locations?q=:keyword`
     - `GET /go/s/:space_identifier/pages/:page_number/link_list` → `GET /s/:space_identifier/pages/:page_number/link_list`
   - フロントエンドのAPI呼び出しURL（自動保存、Wikiリンク補完）から `/go` プレフィックスを除去
-  - `internal/middleware/reverse_proxy.go` のホワイトリストにページ編集・自動保存・公開・ページロケーション検索のパスパターンを追加
-  - ページ表示（`GET /s/:space_identifier/pages/:page_number`）は含めない（引き続きRails版にルーティング）
-  - この変更により、ページ編集関連のリクエストがRails版ではなくGo版で処理されるようになる
-  - 想定ファイル数: 実装 ~5 ファイル（ルーティング 1 + リバースプロキシ 1 + テンプレート 1 + フロントエンド 2）, テスト 1 ファイル
-  - 想定行数: 実装 ~50 行（変更）, テスト ~80 行
+  - `internal/model/feature_flag.go` に `FeatureFlagGoPageEdit FeatureFlagName = "go_page_edit"` 定数を追加
+  - `internal/middleware/reverse_proxy.go` の `featureFlaggedPattern` 構造体に `methods` フィールドを追加し、HTTPメソッドによるフィルタリングを可能にする:
+    ```go
+    type featureFlaggedPattern struct {
+        pattern *regexp.Regexp
+        flag    model.FeatureFlagName
+        methods []string // nilまたは空なら全メソッドにマッチ
+    }
+    ```
+  - `getFeatureFlagForPath` メソッドを `getFeatureFlagForRequest` に変更し、HTTPメソッドも考慮するようにする（`r.URL.Path` と `r.Method` の両方でマッチング）
+  - `featureFlaggedPatterns` にページ編集関連のURLパターンを追加（ホワイトリストではなくフィーチャーフラグで制御）:
+    ```go
+    var featureFlaggedPatterns = []featureFlaggedPattern{
+        {pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`), flag: model.FeatureFlagGoPageEdit},
+        {pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`), flag: model.FeatureFlagGoPageEdit},
+        {pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), flag: model.FeatureFlagGoPageEdit, methods: []string{"PATCH"}},
+        {pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`), flag: model.FeatureFlagGoPageEdit},
+        {pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`), flag: model.FeatureFlagGoPageEdit},
+    }
+    ```
+  - ページ公開（`PATCH /s/:space_identifier/pages/:page_number`）は `methods: []string{"PATCH"}` を指定し、ページ表示の `GET` リクエストはマッチしないようにする。ページ表示（`GET /s/:space_identifier/pages/:page_number`）は引き続きRails版にルーティングされる
+  - **動作**: フィーチャーフラグ `go_page_edit` が有効なユーザーのみGo版で処理し、それ以外のユーザーはRails版にプロキシする。ミドルウェアの3段階ルーティング（①Goホワイトリスト → ②フィーチャーフラグ判定 → ③Railsプロキシ）を活用する
+  - 想定ファイル数: 実装 ~6 ファイル（ルーティング 1 + リバースプロキシ 1 + モデル 1 + テンプレート 1 + フロントエンド 2）, テスト 1 ファイル
+  - 想定行数: 実装 ~80 行（変更）, テスト ~120 行
   - 依存: 5-1, 5-4, 6-2, 7-2, 8-2, 8-4, 8-5, 8b-2
 
-### フェーズ 11: Rails版の実装の削除
+### フェーズ 11: サイドバーの実装
 
-- [ ] **11-1**: [Rails] ページ編集・公開関連のコントローラー・サービス・フォーム・ビューの削除
+#### 概要
+
+サイドバーのコンテンツを Rails 版 (`Sidebar::ContentComponent`) を参考に Go 版で実装する。
+
+**表示する項目**:
+
+- ナビゲーションリンク（ホーム、検索、プロフィール）
+- 参加中のトピック一覧（Datastar SSE で非同期取得）
+
+**表示しない項目**:
+
+- ヘルプページ・ロードマップ・コミュニティへのリンク
+- Copyright 表記
+
+**サイドバーの開閉状態**:
+
+- クッキー (`wikino_sidebar_open`) に保持し、次回アクセス時に復元する
+- デフォルト（クッキーなし）は閉じた状態
+- モバイル表示時はクッキーの値に関わらず常に閉じた状態で表示する
+
+#### タスク
+
+- [x] **11-1**: [Go] サイドバーの開閉状態をクッキーで永続化する
+  - サイドバーの開閉トグル時にクッキー `wikino_sidebar_open` を設定する JavaScript を実装する
+    - クッキーの値: `"true"` / `"false"`
+    - `Path=/`, `SameSite=Lax`, `Max-Age=1年`
+    - `HttpOnly` は付けない（JavaScript から読み書きするため）
+  - サーバー側でクッキーを読み取り、`DefaultLayoutData.DefaultSidebarClosed` に反映する
+    - クッキーが存在しない場合は閉じた状態（`DefaultSidebarClosed = true`）
+    - クッキーが `"true"` の場合は開いた状態（`DefaultSidebarClosed = false`）
+  - モバイル表示時（basecoat の sidebar コンポーネントのブレイクポイント以下）はクッキーの値に関わらず常に閉じた状態にする
+    - `data-initial-open` をレスポンシブに制御する方法を検討する（JavaScript で画面幅を判定、または CSS メディアクエリと連携）
+  - 想定ファイル数: 実装 2-3 ファイル（JS 1 + テンプレート変更 1 + ミドルウェアまたはヘルパー 1）
+  - 想定行数: 実装 ~60 行
+
+- [x] **11-2**: [Go] サイドバーにナビゲーションリンク（ホーム・検索・プロフィール）を追加する
+  - 既存の `components/sidebar.templ` を拡充し、以下のリンクを追加する
+    - ホーム: `/home` （アイコン: `house-regular` / `house-fill`）
+    - 検索: 検索パスへのリンク（アイコン: `magnifying-glass-regular` / `magnifying-glass-fill`）
+    - プロフィール: `/@{atname}` （アイコン: `user-circle-regular` / `user-circle-fill`）
+  - ログイン中のユーザー情報（atname）をサイドバーに渡す必要がある
+    - `Sidebar` テンプレートの引数にユーザー情報を追加する（データ構造体を使用）
+  - アクティブ状態の判定: 現在のページに応じてアイコンを切り替える
+  - 未ログイン時はホームとサインインリンクのみ表示する（Rails 版と同様）
+  - ナビゲーションリンクとトピック一覧の間にセパレーター（`<hr>`）を表示する
+  - I18n: `sidebar_search`, `sidebar_profile` などの翻訳キーを追加する
+  - 想定ファイル数: 実装 3-4 ファイル（テンプレート 1 + レイアウト変更 1 + I18n 2）
+  - 想定行数: 実装 ~100 行
+  - 依存: 11-1
+
+- [x] **11-3**: [Go] 参加中のトピック一覧を取得する SQL クエリとリポジトリメソッドを実装する
+  - sqlc クエリを追加: ユーザーが参加しているトピック一覧を取得する
+    - `topic_members` → `topics` → `spaces` を JOIN
+    - `space_members` で `active = true` のスペースに限定
+    - `topics.discarded_at IS NULL` で論理削除されたトピックを除外
+    - `topic_members.last_page_modified_at DESC NULLS LAST, topics.number DESC` でソート
+    - LIMIT 10
+  - 取得するカラム: `topic.id`, `topic.number`, `topic.name`, `space.id`, `space.identifier`, `space.name`
+  - `TopicRepository` にメソッドを追加: `ListJoinedByUser(ctx, userID, limit) ([]JoinedTopic, error)`
+  - `JoinedTopic` モデルまたは ViewModel を定義（トピック情報 + スペース情報を含む）
+  - テストを作成: トピックに参加しているユーザーのデータを作成し、正しく取得できることを確認
+  - 想定ファイル数: 実装 4 ファイル（SQL 1 + リポジトリ 1 + モデル/ViewModel 1 + sqlc 生成 1）, テスト 1 ファイル
+  - 想定行数: 実装 ~80 行, テスト ~80 行
+
+- [x] **11-4**: [Go] 参加中のトピック一覧を Datastar SSE で非同期表示する
+  - サイドバーのテンプレートに Datastar の `data-on-intersect` 属性を使用し、サイドバーが画面に表示されたタイミングで SSE リクエストを発行する
+    - `data-on-intersect="@get('/sidebar/joined_topics')"` のようなパターン
+    - 初期表示時はスケルトンローダー（またはプレースホルダー）を表示する
+  - SSE ハンドラーを実装: `internal/handler/sidebar_joined_topic/`
+    - `handler.go`: Handler 構造体（TopicRepository への依存）
+    - `index.go`: `Index` メソッド — SSE レスポンスで参加中のトピック一覧の HTML フラグメントを返す
+    - 認証済みユーザーのみ（未ログイン時は空のフラグメントを返す）
+  - テンプレートコンポーネント: `components/sidebar_joined_topics.templ`
+    - 「参加中のトピック」の見出し
+    - 各トピックへのリンク（`/s/{space_identifier}/topics/{topic_number}`）
+    - トピック名とスペース名を表示
+    - トピックがない場合の空状態メッセージ
+  - ルーティング: `GET /sidebar/joined_topics` を追加
+  - I18n: `sidebar_joined_topics_heading`, `sidebar_joined_topics_empty` の翻訳キーを追加
+  - 想定ファイル数: 実装 5-6 ファイル（ハンドラー 2 + テンプレート 1 + ルーティング変更 1 + I18n 2）, テスト 1 ファイル
+  - 想定行数: 実装 ~150 行, テスト ~80 行
+  - 依存: 11-2, 11-3
+
+### フェーズ 11a: サイドバーの下書き一覧
+
+#### 概要
+
+サイドバーにログインユーザーの下書きページ一覧（最新 5 件）を表示する。複数のページを横断しながら編集する際に、下書き中のページ間をすばやく移動できるようにする。
+
+Wikiリンク記法によるページ自動作成後に元の編集画面に戻る動線が現状ないため、サイドバーに下書き一覧を表示することで解決する。
+
+**表示する情報**:
+
+- 下書きページのタイトル（`draft_pages.title` を優先、なければ `pages.title` にフォールバック）
+- トピック名
+- 最終更新日時（`draft_pages.modified_at`）
+
+**表示件数**: 最新 5 件（`modified_at DESC` でソート）
+
+**リンク先**: 各下書きのページ編集画面（`/s/{space_identifier}/pages/{page_number}/edit`）
+
+**「すべて見る」リンク**: 将来的に下書き一覧画面（`/drafts`）が実装された際にリンクを追加する。下書き一覧画面は [編集提案機能](edit-suggestion.md) の前提タスクとして別途実装予定。
+
+**非同期取得**: フェーズ 11-4 の参加中トピック一覧と同様に、Datastar SSE で非同期に取得・表示する。
+
+#### タスク
+
+- [ ] **11a-1**: [Go] ユーザーの下書きページ一覧を取得する SQL クエリとリポジトリメソッドを実装する
+  - sqlc クエリを追加: ログインユーザーの下書きページ一覧を取得する
+    - `draft_pages` → `pages` → `topics` → `spaces` → `space_members` を JOIN
+    - `space_members.user_id = $1` でユーザーに絞り込み
+    - `space_members.active = true` のスペースに限定
+    - `pages.discarded_at IS NULL` で論理削除されたページを除外
+    - `topics.discarded_at IS NULL` で論理削除されたトピックを除外
+    - `draft_pages.modified_at DESC` でソート
+    - LIMIT 5
+  - 取得するカラム: `draft_page.id`, `draft_page.title`, `draft_page.modified_at`, `page.id`, `page.title`, `page.number`, `topic.name`, `space.identifier`
+  - `DraftPageRepository` にメソッドを追加: `ListByUser(ctx, userID, limit) ([]DraftPageSummary, error)`
+  - `DraftPageSummary` モデルを定義（下書きタイトル、ページ情報、トピック名、スペース情報を含む）
+  - テストを作成: 下書きを持つユーザーのデータを作成し、正しく取得できることを確認
+  - 想定ファイル数: 実装 3-4 ファイル（SQL 1 + リポジトリ 1 + モデル 1 + sqlc 生成 1）, テスト 1 ファイル
+  - 想定行数: 実装 ~80 行, テスト ~100 行
+
+- [ ] **11a-2**: [Go] 下書き一覧を Datastar SSE でサイドバーに非同期表示する
+  - サイドバーのテンプレートに Datastar の `data-on-intersect` 属性を使用し、サイドバーが画面に表示されたタイミングで SSE リクエストを発行する
+    - `data-on-intersect="@get('/sidebar/draft_pages')"` のようなパターン
+    - 初期表示時はスケルトンローダー（またはプレースホルダー）を表示する
+  - SSE ハンドラーを実装: `internal/handler/sidebar_draft_page/`
+    - `handler.go`: Handler 構造体（DraftPageRepository への依存）
+    - `index.go`: `Index` メソッド — SSE レスポンスで下書き一覧の HTML フラグメントを返す
+    - 認証済みユーザーのみ（未ログイン時は空のフラグメントを返す）
+  - テンプレートコンポーネント: `components/sidebar_draft_pages.templ`
+    - 「下書き」の見出し
+    - 各下書きページへのリンク（`/s/{space_identifier}/pages/{page_number}/edit`）
+    - 下書きタイトル（またはページタイトル）とトピック名を表示
+    - 下書きがない場合の空状態メッセージ
+  - ルーティング: `GET /sidebar/draft_pages` を追加
+  - I18n: `sidebar_draft_pages_heading`, `sidebar_draft_pages_empty` の翻訳キーを追加
+  - 想定ファイル数: 実装 5-6 ファイル（ハンドラー 2 + テンプレート 1 + ルーティング変更 1 + I18n 2）, テスト 1 ファイル
+  - 想定行数: 実装 ~150 行, テスト ~80 行
+  - 依存: 11-2, 11a-1
+
+### フェーズ 12: 動作確認
+
+- [ ] **12-1**: 「トピックに公開」ができるかどうか
+- [ ] **12-2**: エディタの動作確認（詳細は後で詳細化する）
+- [ ] **12-3**: リンク一覧・バックリンク一覧の表示確認（詳細は後で詳細化する）
+
+### フェーズ 13: フィーチャーフラグからホワイトリストへの移行（全ユーザー展開）
+
+- [ ] **13-1**: [Go] フィーチャーフラグからホワイトリストへの移行（全ユーザー展開）
+  - フィーチャーフラグによる段階的ロールアウトで問題がないことを確認した後に実施
+  - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンを削除
+  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加（全ユーザーがGo版を使用）
+  - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除（不要になるため）
+  - 想定ファイル数: 実装 2 ファイル（リバースプロキシ 1 + モデル 1）, テスト 1 ファイル
+  - 想定行数: 実装 ~30 行（変更）, テスト ~50 行
+  - 依存: 10-1
+
+### フェーズ 14: Rails版の実装の削除
+
+- [ ] **14-1**: [Rails] ページ編集・公開関連のコントローラー・サービス・フォーム・ビューの削除
   - `app/controllers/pages/edit_controller.rb`, `app/controllers/pages/update_controller.rb` を削除
   - `app/controllers/draft_pages/update_controller.rb` を削除
   - `app/controllers/page_locations/index_controller.rb` を削除
@@ -1680,7 +1860,7 @@ CodeMirrorエディタと下書き自動保存の動作確認ができた後、D
   - ページ表示関連（`ShowController`等）の削除は [ページ表示画面のGo移行](../2_todo/page-show-go-migration.md) で行う
   - 想定ファイル数: 実装 8 ファイル削除, テスト 3 ファイル削除
   - 想定行数: 実装 ~-500 行, テスト ~-300 行
-  - 依存: 10-1
+  - 依存: 13-1
 
 ### フェーズ N: 仕様書への反映
 

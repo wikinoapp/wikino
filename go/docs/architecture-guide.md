@@ -75,6 +75,39 @@ ModelとRepositoryのファイル名・構造体名は統一します：
 - **構造体名**: パスカルケース（`SpaceMember`, `SpaceMemberRepository`）
 - **ModelとRepositoryは同じ名前**: `model/space_member.go` ↔ `repository/space_member.go`
 
+#### モデルの重複を避ける
+
+クエリの結果や状態ごとに新しいモデルを作らず、既存のモデルを再利用します。関連エンティティのデータが必要な場合は、ポインタ型のフィールドでモデル間の参照を表現します。
+
+```go
+// ✅ 良い例: 既存の Topic モデルに Space への参照を持たせる
+type Topic struct {
+    ID     TopicID
+    Space  *Space  // 関連エンティティへのポインタ参照
+    Number int32
+    Name   string
+}
+
+// ❌ 悪い例: クエリ結果に合わせた専用モデルを作る
+type JoinedTopic struct {
+    TopicID         TopicID
+    TopicName       string
+    SpaceID         SpaceID
+    SpaceIdentifier SpaceIdentifier
+    SpaceName       string
+}
+```
+
+Repositoryではクエリ結果ごとに変換メソッドを用意し、同じモデルに変換します：
+
+```go
+// 単純なクエリ結果 → Topic（Space は ID のみ）
+func (r *TopicRepository) toModel(row query.Topic) *model.Topic { ... }
+
+// JOINクエリ結果 → Topic（Space のフィールドをより多く設定）
+func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic { ... }
+```
+
 #### Queryファイルの命名
 
 Queryファイルは用途に応じて2つのパターンがあります：
@@ -264,6 +297,52 @@ Model (独立、他に依存しない)
 - リポジトリ層のデータ構造をテンプレート表示用の構造に変換
 - 画像URL生成、日付フォーマットなどの表示ロジック
 - 複数のリポジトリ結果を組み合わせた表示用データの作成
+
+### 設計方針: 画面の要件に応じて定義する
+
+ViewModelはModelとは異なり、**画面の要件に応じて必要な数だけ定義**します。
+
+**ModelとViewModelの設計方針の違い**:
+
+| 層        | 方針                                   | 理由                                 |
+| --------- | -------------------------------------- | ------------------------------------ |
+| Model     | ドメイン概念と1:1、重複しない          | ドメインの真実を1箇所に集約するため  |
+| ViewModel | 画面の要件に応じて必要な数だけ定義する | 画面ごとに必要な表示項目が異なるため |
+
+**理由**:
+
+- **責務が異なる**: Modelはドメインの概念を表現し、ViewModelは「画面に何を表示するか」を表現する。画面ごとに必要な情報が異なるのは自然
+- **変更の理由が異なる**: Modelはドメインルールの変更で変わるが、ViewModelはUIの変更で変わる。1つのViewModelを複数画面で共有すると、ある画面のUI変更が他の画面に波及するリスクがある
+- **フィールドの肥大化を防ぐ**: 無理に共有すると「このフィールドはどの画面で使うのか」が分かりにくくなる
+
+**ただし**: 表示項目が同じであれば再利用しても構いません。重複を避けること自体が目的ではなく、「画面の要件に合ったViewModelを定義する」のが原則です。
+
+```go
+// ✅ 良い例: 画面ごとに異なるViewModelを定義
+// サイドバー用（シンプル）
+type TopicForSidebar struct {
+    Name   string
+    Number int32
+    Space  SpaceForSidebar
+}
+
+// 詳細ページ用（詳細な情報を含む）
+type TopicForDetail struct {
+    Name        string
+    Number      int32
+    Description string
+    MemberCount int32
+    IconName    IconName
+}
+
+// ✅ 良い例: 表示項目が同じなら共有しても良い
+// 複数の画面で同じ表示をする場合は1つのViewModelを再利用
+type Topic struct {
+    Name     string
+    Number   int32
+    IconName IconName
+}
+```
 
 ### 命名規則
 
