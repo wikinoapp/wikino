@@ -26,6 +26,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
+	"github.com/wikinoapp/wikino/go/internal/handler/sidebar_joined_topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -108,6 +109,7 @@ func main() {
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -245,6 +247,7 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 	)
+	sidebarJoinedTopicHandler := sidebar_joined_topic.NewHandler(topicRepo)
 
 	r := chi.NewRouter()
 
@@ -254,7 +257,7 @@ func main() {
 	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
 	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
 	if cfg.RailsAppURL != "" {
-		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg)
+		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
 		if err != nil {
 			slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
 			os.Exit(1)
@@ -290,6 +293,9 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
 		r.Get("/", welcomeHandler.Show)
+
+		// サイドバーSSE（未認証でも空フラグメントを返す）
+		r.Get("/sidebar/joined_topics", sidebarJoinedTopicHandler.Index)
 	})
 
 	// 未認証ユーザー専用ルート
@@ -318,19 +324,19 @@ func main() {
 		r.Use(authMiddleware.RequireAuth)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
-		// ページ編集・公開（/goプレフィックス付き）
-		r.Get("/go/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
-		r.Patch("/go/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
+		// ページ編集・公開
+		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
+		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
 
-		// 下書きページSSE・自動保存API（/goプレフィックス付き）
-		r.Get("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
-		r.Patch("/go/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
+		// 下書きページSSE・自動保存API
+		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
+		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
 
-		// バックリンク一覧SSE（Datastar、/goプレフィックス付き）
-		r.Get("/go/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
+		// バックリンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
 
-		// ページロケーション検索API（Wikiリンク補完用、/goプレフィックス付き）
-		r.Get("/go/s/{space_identifier}/page_locations", pageLocationHandler.Index)
+		// ページロケーション検索API（Wikiリンク補完用）
+		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

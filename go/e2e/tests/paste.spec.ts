@@ -39,7 +39,7 @@ async function visitPageEditor(pwPage: import("@playwright/test").Page): Promise
   const page_ = await createTestPage(space.id, topic.id);
 
   await signIn(pwPage, user);
-  await pwPage.goto(`/go/s/${space.identifier}/pages/${page_.number}/edit`);
+  await pwPage.goto(`/s/${space.identifier}/pages/${page_.number}/edit`);
   await pwPage.waitForSelector(".cm-content");
   return page_;
 }

@@ -29,7 +29,7 @@ type pageLocationsResponse struct {
 	PageLocations []pageLocationItem `json:"page_locations"`
 }
 
-// Index はページロケーションを検索します (GET /go/s/{space_identifier}/page_locations)
+// Index はページロケーションを検索します (GET /s/{space_identifier}/page_locations)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

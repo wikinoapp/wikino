@@ -26,7 +26,7 @@ export function wikilinkCompletions(spaceIdentifier: string) {
 }
 
 async function fetchPageLocations(spaceIdentifier: string, keyword: string): Promise<PageLocation[]> {
-  const response = await fetch(`/go/s/${spaceIdentifier}/page_locations?q=${encodeURIComponent(keyword)}`);
+  const response = await fetch(`/s/${spaceIdentifier}/page_locations?q=${encodeURIComponent(keyword)}`);
   const data = await response.json();
   return data.page_locations;
 }

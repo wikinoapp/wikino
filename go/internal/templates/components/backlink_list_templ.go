@@ -135,9 +135,9 @@ func backlinkListLoadMore(data viewmodel.BacklinkList) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("@get('%s?page=%d')", string(templates.GoPageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1))
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("@get('%s?page=%d')", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 40, Col: 191}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 40, Col: 189}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {

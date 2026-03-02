@@ -99,7 +99,7 @@ func TestEdit(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	// リクエストを作成
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/my-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/my-space/pages/1/edit", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "1",
 	})
@@ -122,7 +122,7 @@ func TestEdit(t *testing.T) {
 	body := rr.Body.String()
 
 	// フォームアクションが含まれているか確認
-	if !strings.Contains(body, `/go/s/my-space/pages/1`) {
+	if !strings.Contains(body, `/s/my-space/pages/1`) {
 		t.Error("form action not found in response")
 	}
 
@@ -233,7 +233,7 @@ func TestEdit_WithDraftPage(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/draft-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/draft-space/pages/1/edit", map[string]string{
 		"space_identifier": "draft-space",
 		"page_number":      "1",
 	})
@@ -307,7 +307,7 @@ func TestEdit_AutofocusTitle(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/autofocus-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/autofocus-space/pages/1/edit", map[string]string{
 		"space_identifier": "autofocus-space",
 		"page_number":      "1",
 	})
@@ -341,7 +341,7 @@ func TestEdit_NotLoggedIn(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/my-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/my-space/pages/1/edit", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "1",
 	})
@@ -374,7 +374,7 @@ func TestEdit_SpaceNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/nonexistent/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/nonexistent/pages/1/edit", map[string]string{
 		"space_identifier": "nonexistent",
 		"page_number":      "1",
 	})
@@ -415,7 +415,7 @@ func TestEdit_NotSpaceMember(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/private-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/private-space/pages/1/edit", map[string]string{
 		"space_identifier": "private-space",
 		"page_number":      "1",
 	})
@@ -451,7 +451,7 @@ func TestEdit_PageNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/page-missing-space/pages/999/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/page-missing-space/pages/999/edit", map[string]string{
 		"space_identifier": "page-missing-space",
 		"page_number":      "999",
 	})
@@ -480,7 +480,7 @@ func TestEdit_InvalidPageNumber(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/my-space/pages/abc/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/my-space/pages/abc/edit", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "abc",
 	})
@@ -532,7 +532,7 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/linklist-reload-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/linklist-reload-space/pages/1/edit", map[string]string{
 		"space_identifier": "linklist-reload-space",
 		"page_number":      "1",
 	})
@@ -562,7 +562,7 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 	}
 
 	// SSEエンドポイントのURLが正しいこと
-	if !strings.Contains(body, "/go/s/linklist-reload-space/pages/1/draft_page") {
+	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
 		t.Error("draft_page SSE endpoint URL not found in response")
 	}
 
@@ -606,7 +606,7 @@ func TestEdit_EnglishLocale(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/en-space/pages/1/edit", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/en-space/pages/1/edit", map[string]string{
 		"space_identifier": "en-space",
 		"page_number":      "1",
 	})

@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はバックリンク一覧をSSEフラグメントとして返します (GET /go/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list)
+// Show はバックリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
