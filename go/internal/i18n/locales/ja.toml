@@ -462,7 +462,7 @@ other = "ページを作成する"
 
 [sidebar_draft_pages_heading]
 description = "サイドバーの下書きページ一覧の見出し"
-other = "下書きページ"
+other = "下書きのページ"
 
 [sidebar_draft_pages_empty]
 description = "サイドバーの下書きページが0件のときのメッセージ"
