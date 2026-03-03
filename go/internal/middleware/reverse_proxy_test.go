@@ -3,9 +3,15 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
 func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
@@ -15,7 +21,7 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg)
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
 	}
@@ -165,7 +171,7 @@ func TestReverseProxyMiddleware_Middleware_GoPath(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
-	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
 	}
@@ -208,7 +214,7 @@ func TestReverseProxyMiddleware_Middleware_RailsPath(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
-	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
 	}
@@ -250,7 +256,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
-	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
 	}
@@ -300,7 +306,7 @@ func TestReverseProxyMiddleware_ErrorHandling(t *testing.T) {
 	}
 
 	// 存在しないURLにプロキシ
-	m, err := NewReverseProxyMiddleware("http://localhost:99999", cfg)
+	m, err := NewReverseProxyMiddleware("http://localhost:99999", cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
 	}
@@ -336,6 +342,289 @@ func containsStringHelper(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
+	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	// テスト用のパターンを一時的に設定
+	originalPatterns := featureFlaggedPatterns
+	featureFlaggedPatterns = []featureFlaggedPattern{
+		{
+			pattern: regexp.MustCompile(`^/@[^/]+/[^/]+/pages/[^/]+$`),
+			flag:    "go_page_show",
+		},
+		{
+			pattern: regexp.MustCompile(`^/settings$`),
+			flag:    "go_settings",
+		},
+		{
+			pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`),
+			flag:    "go_page_edit",
+		},
+		{
+			pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`),
+			flag:    "go_page_edit",
+			methods: []string{"PATCH"},
+		},
+	}
+	defer func() { featureFlaggedPatterns = originalPatterns }()
+
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		expected model.FeatureFlagName
+	}{
+		{
+			name:     "マッチするパス（ページ表示）",
+			method:   http.MethodGet,
+			path:     "/@username/space_atname/pages/abc123",
+			expected: "go_page_show",
+		},
+		{
+			name:     "マッチするパス（設定）",
+			method:   http.MethodGet,
+			path:     "/settings",
+			expected: "go_settings",
+		},
+		{
+			name:     "マッチしないパス",
+			method:   http.MethodGet,
+			path:     "/timeline",
+			expected: "",
+		},
+		{
+			name:     "部分一致しないパス",
+			method:   http.MethodGet,
+			path:     "/settings/profile",
+			expected: "",
+		},
+		{
+			name:     "ページ編集画面（GET）",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/edit",
+			expected: "go_page_edit",
+		},
+		{
+			name:     "ページ更新（PATCH）",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1",
+			expected: "go_page_edit",
+		},
+		{
+			name:     "ページ表示（GET）はmethodsフィルタによりマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			result := m.getFeatureFlagForRequest(req)
+			if result != tc.expected {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
+	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
+
+	_, tx := testutil.SetupTx(t)
+
+	// テスト用ユーザーを作成
+	userID := testutil.NewUserBuilder(t, tx).Build()
+
+	// テスト用セッションを作成
+	sessionToken := testutil.NewSessionBuilder(t, tx).
+		WithUserID(userID).
+		WithToken("test-feature-flag-token").
+		BuildAndGetToken()
+
+	// フィーチャーフラグを作成
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(userID).
+		WithName("go_settings").
+		Build()
+
+	// テスト用のパターンを一時的に設定
+	originalPatterns := featureFlaggedPatterns
+	featureFlaggedPatterns = []featureFlaggedPattern{
+		{
+			pattern: regexp.MustCompile(`^/settings$`),
+			flag:    "go_settings",
+		},
+	}
+	defer func() { featureFlaggedPatterns = originalPatterns }()
+
+	// Rails版をモックするテストサーバー
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Rails response"))
+	}))
+	defer railsServer.Close()
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	// FeatureFlagRepositoryをトランザクション内で作成
+	queries := query.New(testutil.GetTestDB())
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries).WithTx(tx)
+
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, featureFlagRepo)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	// Go版のハンドラー
+	goHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Go response"))
+	})
+
+	handler := m.Middleware(goHandler)
+
+	t.Run("フラグが有効なユーザーはGo版で処理される", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  session.CookieName,
+			Value: sessionToken,
+		})
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Go-Handled") != "true" {
+			t.Error("フラグが有効なユーザーのリクエストがGo版で処理されなかった")
+		}
+		if rr.Body.String() != "Go response" {
+			t.Errorf("レスポンスが期待と異なる: got %q want %q", rr.Body.String(), "Go response")
+		}
+	})
+
+	t.Run("フラグが無効なユーザーはRails版に転送される", func(t *testing.T) {
+		// フラグが設定されていない別のユーザーを作成
+		otherUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("other@example.com").
+			WithAtname("other_user").
+			Build()
+		otherToken := testutil.NewSessionBuilder(t, tx).
+			WithUserID(otherUserID).
+			WithToken("other-session-token").
+			BuildAndGetToken()
+
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  session.CookieName,
+			Value: otherToken,
+		})
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Rails-Handled") != "true" {
+			t.Error("フラグが無効なユーザーのリクエストがRails版に転送されなかった")
+		}
+		if rr.Body.String() != "Rails response" {
+			t.Errorf("レスポンスが期待と異なる: got %q want %q", rr.Body.String(), "Rails response")
+		}
+	})
+
+	t.Run("Cookieがない場合はRails版に転送される", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Rails-Handled") != "true" {
+			t.Error("Cookieがないリクエストがrails版に転送されなかった")
+		}
+	})
+
+	t.Run("空のCookie値の場合はRails版に転送される", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  session.CookieName,
+			Value: "",
+		})
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Rails-Handled") != "true" {
+			t.Error("空のCookieのリクエストがRails版に転送されなかった")
+		}
+	})
+}
+
+func TestReverseProxyMiddleware_Middleware_FeatureFlag_NilRepo(t *testing.T) {
+	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
+
+	// テスト用のパターンを一時的に設定
+	originalPatterns := featureFlaggedPatterns
+	featureFlaggedPatterns = []featureFlaggedPattern{
+		{
+			pattern: regexp.MustCompile(`^/settings$`),
+			flag:    "go_settings",
+		},
+	}
+	defer func() { featureFlaggedPatterns = originalPatterns }()
+
+	// Rails版をモックするテストサーバー
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Rails response"))
+	}))
+	defer railsServer.Close()
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	// featureFlagRepoをnilで作成
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	goHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Go response"))
+	})
+
+	handler := m.Middleware(goHandler)
+
+	// featureFlagRepoがnilの場合、フラグパターンにマッチしてもRails版に転送される
+	req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  session.CookieName,
+		Value: "some-token",
+	})
+	rr := httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	if rr.Header().Get("X-Rails-Handled") != "true" {
+		t.Error("featureFlagRepoがnilの場合、リクエストがRails版に転送されるべき")
+	}
 }
 
 func TestRender502ErrorHTML(t *testing.T) {

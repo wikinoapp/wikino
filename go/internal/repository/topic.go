@@ -103,6 +103,18 @@ func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.Top
 	return r.toModels(rows), nil
 }
 
+// ListJoinedByUser はユーザーが参加しているトピック一覧を取得する（サイドバー表示用）
+func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.Topic, error) {
+	rows, err := r.q.ListJoinedTopicsByUser(ctx, query.ListJoinedTopicsByUserParams{
+		UserID: string(userID),
+		Limit:  limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toTopicsFromJoinedRows(rows), nil
+}
+
 // toModel は query.Topic を model.Topic に変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time
@@ -112,7 +124,7 @@ func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 
 	return &model.Topic{
 		ID:          model.TopicID(row.ID),
-		SpaceID:     model.SpaceID(row.SpaceID),
+		Space:       &model.Space{ID: model.SpaceID(row.SpaceID)},
 		Number:      row.Number,
 		Name:        row.Name,
 		Description: row.Description,
@@ -126,6 +138,25 @@ func (r *TopicRepository) toModels(rows []query.Topic) []*model.Topic {
 	topics := make([]*model.Topic, len(rows))
 	for i, row := range rows {
 		topics[i] = r.toModel(row)
+	}
+	return topics
+}
+
+// toTopicsFromJoinedRows は query.ListJoinedTopicsByUserRow のスライスを model.Topic のスライスに変換する
+func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic {
+	topics := make([]*model.Topic, len(rows))
+	for i, row := range rows {
+		topics[i] = &model.Topic{
+			ID:         model.TopicID(row.TopicID),
+			Number:     row.TopicNumber,
+			Name:       row.TopicName,
+			Visibility: model.TopicVisibility(row.TopicVisibility),
+			Space: &model.Space{
+				ID:         model.SpaceID(row.SpaceID),
+				Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+				Name:       row.SpaceName,
+			},
+		}
 	}
 	return topics
 }

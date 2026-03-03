@@ -93,7 +93,7 @@ func TestIndex(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	// 「Hello」で検索
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/search-space/page_locations?q=Hello", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/search-space/page_locations?q=Hello", map[string]string{
 		"space_identifier": "search-space",
 	})
 	req.URL.RawQuery = "q=Hello"
@@ -169,7 +169,7 @@ func TestIndex_MultipleWords(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	// 「Hello World」で検索（両方の単語を含むページのみ）
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/multi-space/page_locations?q=Hello+World", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/multi-space/page_locations?q=Hello+World", map[string]string{
 		"space_identifier": "multi-space",
 	})
 	req.URL.RawQuery = "q=Hello+World"
@@ -229,7 +229,7 @@ func TestIndex_EmptyQuery(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	// 空のクエリで検索
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/empty-space/page_locations", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/empty-space/page_locations", map[string]string{
 		"space_identifier": "empty-space",
 	})
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
@@ -300,7 +300,7 @@ func TestIndex_ExcludesUnpublishedPages(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/unpub-space/page_locations?q=Page", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/unpub-space/page_locations?q=Page", map[string]string{
 		"space_identifier": "unpub-space",
 	})
 	req.URL.RawQuery = "q=Page"
@@ -337,7 +337,7 @@ func TestIndex_NotLoggedIn(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/some-space/page_locations", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/some-space/page_locations", map[string]string{
 		"space_identifier": "some-space",
 	})
 
@@ -373,7 +373,7 @@ func TestIndex_NotSpaceMember(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/private-pl-space/page_locations", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/private-pl-space/page_locations", map[string]string{
 		"space_identifier": "private-pl-space",
 	})
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: outsiderID})
@@ -400,7 +400,7 @@ func TestIndex_SpaceNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	req := newRequestWithChiParams(t, http.MethodGet, "/go/s/nonexistent/page_locations", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/nonexistent/page_locations", map[string]string{
 		"space_identifier": "nonexistent",
 	})
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})

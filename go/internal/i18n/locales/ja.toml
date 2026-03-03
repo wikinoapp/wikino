@@ -436,6 +436,46 @@ other = "サイドバー"
 description = "サイドバーのホームリンク"
 other = "ホーム"
 
+[sidebar_search]
+description = "サイドバーの検索リンク"
+other = "検索"
+
+[sidebar_profile]
+description = "サイドバーのプロフィールリンク"
+other = "プロフィール"
+
+[sidebar_sign_in]
+description = "サイドバーのログインリンク"
+other = "ログイン"
+
+[sidebar_joined_topics_heading]
+description = "サイドバーの参加中トピック一覧の見出し"
+other = "参加中のトピック"
+
+[sidebar_joined_topics_empty]
+description = "サイドバーの参加中トピックが0件のときのメッセージ"
+other = "参加中のトピックはありません"
+
+[sidebar_joined_topics_create_page]
+description = "サイドバーのトピック上のページ作成リンクのツールチップ"
+other = "ページを作成する"
+
+[sidebar_draft_pages_heading]
+description = "サイドバーの下書きページ一覧の見出し"
+other = "下書きページ"
+
+[sidebar_draft_pages_empty]
+description = "サイドバーの下書きページが0件のときのメッセージ"
+other = "下書きはありません"
+
+[sidebar_draft_pages_untitled]
+description = "サイドバーの下書きページにタイトルがないときの表示"
+other = "タイトルなし"
+
+[sidebar_draft_pages_edit_page]
+description = "サイドバーの下書きページの編集リンクのタイトル"
+other = "編集する"
+
 # フッター
 [footer_terms]
 other = "利用規約"
@@ -483,6 +523,10 @@ other = "リンク"
 [page_edit_links_untitled]
 description = "タイトルなしのリンク先ページの表示テキスト"
 other = "タイトルなし"
+
+[page_edit_links_edit_page]
+description = "リンク先ページの編集リンクのタイトル"
+other = "編集する"
 
 [page_edit_links_load_more]
 description = "リンク一覧の「もっと見る」ボタン"

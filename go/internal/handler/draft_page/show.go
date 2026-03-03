@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show は下書き保存時刻とリンク一覧をSSEフラグメントとして返します (GET /go/s/{space_identifier}/pages/{page_number}/draft_page)
+// Show は下書き保存時刻とリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

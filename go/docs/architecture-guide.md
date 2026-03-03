@@ -75,6 +75,87 @@ ModelとRepositoryのファイル名・構造体名は統一します：
 - **構造体名**: パスカルケース（`SpaceMember`, `SpaceMemberRepository`）
 - **ModelとRepositoryは同じ名前**: `model/space_member.go` ↔ `repository/space_member.go`
 
+#### モデルの重複を避ける
+
+クエリの結果や状態ごとに新しいモデルを作らず、既存のモデルを再利用します。関連エンティティのデータが必要な場合は、ポインタ型のフィールドでモデル間の参照を表現します。
+
+```go
+// ✅ 良い例: 既存の Topic モデルに Space への参照を持たせる
+type Topic struct {
+    ID     TopicID
+    Space  *Space  // 関連エンティティへのポインタ参照
+    Number int32
+    Name   string
+}
+
+// ❌ 悪い例: クエリ結果に合わせた専用モデルを作る
+type JoinedTopic struct {
+    TopicID         TopicID
+    TopicName       string
+    SpaceID         SpaceID
+    SpaceIdentifier SpaceIdentifier
+    SpaceName       string
+}
+```
+
+Repositoryではクエリ結果ごとに変換メソッドを用意し、同じモデルに変換します：
+
+```go
+// 単純なクエリ結果 → Topic（Space は ID のみ）
+func (r *TopicRepository) toModel(row query.Topic) *model.Topic { ... }
+
+// JOINクエリ結果 → Topic（Space のフィールドをより多く設定）
+func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic { ... }
+```
+
+#### ドメインID型
+
+モデルのIDフィールドには `string` ではなく、`internal/model/id.go` に定義された専用のドメインID型（`type SpaceID string` 等）を使用します。これにより、異なるエンティティのIDを取り違える問題をコンパイル時に検出できます。
+
+**基本ルール**:
+
+- ✅ **モデルのIDフィールドには専用型を使用**: `ID SpaceID`、`ID PageID` など
+- ✅ **外部キーにも専用型を使用**: `UserID model.UserID`、`SpaceID model.SpaceID` など
+- ✅ **新しいモデルを追加する場合は対応するID型も追加**: `id.go` に型と `String()` メソッドを定義
+- ❌ **IDフィールドに `string` を使用しない**
+
+**実装パターン**:
+
+```go
+// internal/model/id.go - 型定義
+type SpaceID string
+func (id SpaceID) String() string { return string(id) }
+
+// internal/model/space.go - モデルでの使用
+type Space struct {
+    ID   SpaceID
+    Name string
+}
+
+// internal/repository/space.go - リポジトリでの変換（sqlcのstringから専用型へ）
+func toModel(row query.GetSpaceRow) *model.Space {
+    return &model.Space{
+        ID:   model.SpaceID(row.ID),
+        Name: row.Name,
+    }
+}
+
+// internal/testutil/space_builder.go - テストビルダーの戻り値
+func (b *SpaceBuilder) Build() model.SpaceID {
+    // ...
+    return model.SpaceID(id)
+}
+```
+
+**スライス変換ヘルパー**:
+
+IDのスライスと `[]string` の相互変換が必要な場合（例: PostgreSQL の配列型との変換）は、`id.go` にヘルパー関数を定義します：
+
+```go
+func PageIDsToStrings(ids []PageID) []string { ... }
+func StringsToPageIDs(ss []string) []PageID { ... }
+```
+
 #### Queryファイルの命名
 
 Queryファイルは用途に応じて2つのパターンがあります：
@@ -264,6 +345,52 @@ Model (独立、他に依存しない)
 - リポジトリ層のデータ構造をテンプレート表示用の構造に変換
 - 画像URL生成、日付フォーマットなどの表示ロジック
 - 複数のリポジトリ結果を組み合わせた表示用データの作成
+
+### 設計方針: 画面の要件に応じて定義する
+
+ViewModelはModelとは異なり、**画面の要件に応じて必要な数だけ定義**します。
+
+**ModelとViewModelの設計方針の違い**:
+
+| 層        | 方針                                   | 理由                                 |
+| --------- | -------------------------------------- | ------------------------------------ |
+| Model     | ドメイン概念と1:1、重複しない          | ドメインの真実を1箇所に集約するため  |
+| ViewModel | 画面の要件に応じて必要な数だけ定義する | 画面ごとに必要な表示項目が異なるため |
+
+**理由**:
+
+- **責務が異なる**: Modelはドメインの概念を表現し、ViewModelは「画面に何を表示するか」を表現する。画面ごとに必要な情報が異なるのは自然
+- **変更の理由が異なる**: Modelはドメインルールの変更で変わるが、ViewModelはUIの変更で変わる。1つのViewModelを複数画面で共有すると、ある画面のUI変更が他の画面に波及するリスクがある
+- **フィールドの肥大化を防ぐ**: 無理に共有すると「このフィールドはどの画面で使うのか」が分かりにくくなる
+
+**ただし**: 表示項目が同じであれば再利用しても構いません。重複を避けること自体が目的ではなく、「画面の要件に合ったViewModelを定義する」のが原則です。
+
+```go
+// ✅ 良い例: 画面ごとに異なるViewModelを定義
+// サイドバー用（シンプル）
+type TopicForSidebar struct {
+    Name   string
+    Number int32
+    Space  SpaceForSidebar
+}
+
+// 詳細ページ用（詳細な情報を含む）
+type TopicForDetail struct {
+    Name        string
+    Number      int32
+    Description string
+    MemberCount int32
+    IconName    IconName
+}
+
+// ✅ 良い例: 表示項目が同じなら共有しても良い
+// 複数の画面で同じ表示をする場合は1つのViewModelを再利用
+type Topic struct {
+    Name     string
+    Number   int32
+    IconName IconName
+}
+```
 
 ### 命名規則
 
@@ -812,6 +939,44 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 - **検索性**: ファイル名のプレフィックスでグルーピングされるため、エディタで検索しやすい
 - **シンプルさ**: ディレクトリ階層が深くならず、import パスがシンプル
 - **スケーラビリティ**: ファイル数が増えても管理しやすい
+
+## ワーカー（Worker）
+
+バックグラウンドジョブを処理します。River（PostgreSQL ベースのジョブキュー）を使用します。
+
+- **配置**: `internal/worker`
+- **責務**: 非同期処理（メール送信、定期実行処理など）
+- **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Worker`
+- **ジョブ引数**: `{Action}{Entity}Args` 構造体で定義
+
+**Worker の依存関係**:
+
+- Worker は **UseCase を呼び出し可能**（定期実行処理などで永続化が必要な場合）
+- Worker は **templates に依存可能**（メールレンダリングのため、例外として許可）
+- Worker は **Presentation 層（Handler, Middleware, ViewModel）に依存不可**
+
+```go
+// ワーカーの実装例
+type SendEmailConfirmationArgs struct {
+    Email      string `json:"email"`
+    Code       string `json:"code"`
+    Subject    string `json:"subject"`
+    IsJapanese bool   `json:"is_japanese"`
+}
+
+func (SendEmailConfirmationArgs) Kind() string {
+    return "send_email_confirmation"
+}
+
+type SendEmailConfirmationWorker struct {
+    river.WorkerDefaults[SendEmailConfirmationArgs]
+    confirmationSender *email.ConfirmationSender
+}
+
+func (w *SendEmailConfirmationWorker) Work(ctx context.Context, job *river.Job[SendEmailConfirmationArgs]) error {
+    return w.confirmationSender.Send(ctx, email.ConfirmationEmailInput{...})
+}
+```
 
 ## ベストプラクティス
 

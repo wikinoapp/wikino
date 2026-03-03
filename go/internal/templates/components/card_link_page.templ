@@ -8,52 +8,64 @@ import (
 
 // CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdentifier) {
-	<a
-		href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), page.Number))) }
+	<div
 		if page.Pinned {
-			class="card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
+			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		} else {
-			class="card min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
+			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		}
 	>
-		<div class="card-body">
-			if page.Pinned {
-				@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800")
-			}
+		<a
+			href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier.String(), page.Number))) }
+			class="absolute right-2 top-2 z-10 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100"
+			title={ templates.T(ctx, "page_edit_links_edit_page") }
+		>
+			@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
+		</a>
 
-			<div class="flex h-full gap-3">
-				<div class="flex flex-1 flex-col gap-1">
-					if page.TopicName != "" {
-						<div class="flex items-center gap-0.5">
-							@templates.Icon(page.TopicIcon, "size-3 fill-gray-500")
-							<span class="text-xs text-gray-500">
-								{ page.TopicName }
-							</span>
+		<a
+			href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), page.Number))) }
+			class="block h-full"
+		>
+			<div class="card-body">
+				if page.Pinned {
+					@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800")
+				}
+
+				<div class="flex h-full gap-3">
+					<div class="flex flex-1 flex-col gap-1">
+						if page.TopicName != "" {
+							<div class="flex items-center gap-0.5">
+								@templates.Icon(page.TopicIcon, "size-3 fill-gray-500")
+								<span class="text-xs text-gray-500">
+									{ page.TopicName }
+								</span>
+							</div>
+						}
+
+						<div class="line-clamp-3 text-sm font-bold">
+							if page.Title != "" {
+								{ page.Title }
+							} else {
+								<span class="text-muted-foreground italic">
+									{ templates.T(ctx, "page_edit_links_untitled") }
+								</span>
+							}
+						</div>
+					</div>
+
+					if page.CardImageURL != "" {
+						<div class="shrink-0 self-center">
+							<img
+								src={ page.CardImageURL }
+								alt=""
+								class="rounded object-cover h-16 w-16 md:h-18 md:w-18"
+								loading="lazy"
+							/>
 						</div>
 					}
-
-					<div class="line-clamp-3 text-sm font-bold">
-						if page.Title != "" {
-							{ page.Title }
-						} else {
-							<span class="text-muted-foreground italic">
-								{ templates.T(ctx, "page_edit_links_untitled") }
-							</span>
-						}
-					</div>
 				</div>
-
-				if page.CardImageURL != "" {
-					<div class="shrink-0 self-center">
-						<img
-							src={ page.CardImageURL }
-							alt=""
-							class="rounded object-cover h-16 w-16 md:h-18 md:w-18"
-							loading="lazy"
-						/>
-					</div>
-				}
 			</div>
-		</div>
-	</a>
+		</a>
+	</div>
 }

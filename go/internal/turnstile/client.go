@@ -25,6 +25,7 @@ type Verifier interface {
 
 // Client はTurnstile APIクライアント
 type Client struct {
+	enabled    bool
 	secretKey  string
 	httpClient *http.Client
 }
@@ -44,8 +45,9 @@ type verifyRequest struct {
 }
 
 // NewClient は新しいTurnstile APIクライアントを作成する
-func NewClient(secretKey string) *Client {
+func NewClient(enabled bool, secretKey string) *Client {
 	return &Client{
+		enabled:   enabled,
 		secretKey: secretKey,
 		httpClient: &http.Client{
 			Timeout: requestTimeout,
@@ -56,8 +58,8 @@ func NewClient(secretKey string) *Client {
 // Verify はTurnstileトークンを検証する
 // トークンが有効な場合はtrue、無効な場合はfalseを返す
 func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
-	// テスト環境用: SecretKeyが空の場合は常に検証成功を返す
-	if c.secretKey == "" {
+	// Turnstileが無効の場合は常に検証成功を返す
+	if !c.enabled {
 		return true, nil
 	}
 

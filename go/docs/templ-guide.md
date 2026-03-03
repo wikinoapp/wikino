@@ -327,6 +327,78 @@ templ WorkCard(ctx context.Context, work viewmodel.Work) {
 }
 ```
 
+## テンプレート関数の引数パターン
+
+テンプレート関数の引数は**構造体ベースのパターン**を使用します。
+
+**基本ルール**:
+
+- ✅ **構造体を使用**: テンプレートに渡すデータは専用の構造体にまとめる
+- ❌ **`context.Context` を明示的に渡さない**: templ は `ctx` を暗黙的に提供するため不要
+- ❌ **複数の引数を個別に渡さない**: 引数が増えるたびにシグネチャ変更が必要になる
+
+**良い例**:
+
+```templ
+type NewPageData struct {
+    CSRFToken        string
+    TurnstileSiteKey string
+    FormErrors       *session.FormErrors
+    Email            string
+}
+
+templ New(data NewPageData) {
+    <form>
+        <input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+        <label>{ templates.T(ctx, "email_label") }</label>
+    </form>
+}
+```
+
+**悪い例**:
+
+```templ
+// ❌ context.Contextを明示的に渡し、複数の引数を個別に渡している
+templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string, turnstileSiteKey string) {
+    // ...
+}
+```
+
+## テンプレートデータ構造体と ViewModel の関係
+
+テンプレートに渡すデータ構造体（`EditPageData` など）では、モデルのフィールドを個別のプリミティブ値として展開せず、ViewModel を構成要素として使用する。
+
+- ✅ **ViewModel を構成要素にする**: `Page viewmodel.Page`
+- ❌ **モデルのフィールドを個別に並べない**: `Title string`, `Body string`, `PageNumber int32`
+
+モデルからテンプレート表示用データへの変換ロジック（フォールバック、デフォルト値の決定など）は ViewModel のコンストラクタに配置し、ハンドラーには書かない。派生的な判定（例: タイトルが空ならオートフォーカス）は ViewModel のメソッドとして提供する。
+
+**良い例**:
+
+```go
+type EditPageData struct {
+    CSRFToken string
+    Page      viewmodel.Page
+    Space     viewmodel.Space
+}
+
+// ハンドラーではViewModelのコンストラクタを呼ぶだけ
+pageVM := viewmodel.NewPageForEdit(pg, draftPage)
+```
+
+**悪い例**:
+
+```go
+// ❌ モデルのフィールドを個別に展開している
+type EditPageData struct {
+    CSRFToken      string
+    Title          string
+    Body           string
+    AutofocusTitle bool
+    PageNumber     int32
+}
+```
+
 ## ヘルパー関数
 
 `internal/templates/helper.go` にテンプレートで使用するヘルパー関数を定義しています。

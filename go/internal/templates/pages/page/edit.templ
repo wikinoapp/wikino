@@ -59,7 +59,7 @@ templ Edit(data EditPageData) {
 					<div class="card">
 						<div class="card-body px-4">
 							<form
-								action={ templ.SafeURL(string(templates.GoPagePath(data.Space.Identifier.String(), data.Page.Number))) }
+								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 								class="form grid gap-6"
 								method="POST"
 							>
@@ -105,7 +105,7 @@ templ Edit(data EditPageData) {
 										data-markdown-editor-title="#page_title"
 										data-markdown-editor-body={ data.Page.Body }
 										data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-										data-markdown-editor-draft-save-url={ string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
+										data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
 										data-markdown-editor-csrf-token={ data.CSRFToken }
 										data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 										data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
@@ -145,7 +145,7 @@ templ Edit(data EditPageData) {
 
 					<div
 						id="page-link-list"
-						data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.GoPageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
+						data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
 					>
 						@components.LinkList(data.LinkList)
 					</div>

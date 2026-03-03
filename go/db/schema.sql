@@ -1,6 +1,6 @@
 
 -- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
--- Dumped by pg_dump version 18.1 (Debian 18.1-1.pgdg13+2)
+-- Dumped by pg_dump version 18.3 (Debian 18.3-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -232,6 +232,18 @@ CREATE TABLE public.exports (
     queued_by_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: feature_flags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.feature_flags (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -662,6 +674,22 @@ ALTER TABLE ONLY public.exports
 
 
 --
+-- Name: feature_flags feature_flags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feature_flags
+    ADD CONSTRAINT feature_flags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: feature_flags feature_flags_user_id_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feature_flags
+    ADD CONSTRAINT feature_flags_user_id_name_key UNIQUE (user_id, name);
+
+
+--
 -- Name: page_attachment_references page_attachment_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -827,6 +855,20 @@ ALTER TABLE ONLY public.user_two_factor_auths
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_feature_flags_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feature_flags_name ON public.feature_flags USING btree (name);
+
+
+--
+-- Name: idx_feature_flags_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feature_flags_user_id ON public.feature_flags USING btree (user_id);
 
 
 --
@@ -1348,6 +1390,14 @@ CREATE UNIQUE INDEX river_job_unique_idx ON public.river_job USING btree (unique
 
 
 --
+-- Name: feature_flags feature_flags_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feature_flags
+    ADD CONSTRAINT feature_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: attachments fk_rails_06223f0ea2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1665,4 +1715,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250920082216'),
     ('20260202060000'),
     ('20260202160000'),
-    ('20260204160000');
+    ('20260204160000'),
+    ('20260301154347');

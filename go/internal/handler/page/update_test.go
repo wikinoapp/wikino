@@ -65,7 +65,7 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	form.Set("body", "Updated body")
 	form.Set("csrf_token", "test-csrf-token")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/update-space/pages/1", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/update-space/pages/1", map[string]string{
 		"space_identifier": "update-space",
 		"page_number":      "1",
 	})
@@ -149,7 +149,7 @@ func TestUpdate_ValidationError_InvalidChars(t *testing.T) {
 	form.Set("title", "foo/bar")
 	form.Set("body", "body content")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/invalid-space/pages/1", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/invalid-space/pages/1", map[string]string{
 		"space_identifier": "invalid-space",
 		"page_number":      "1",
 	})
@@ -225,7 +225,7 @@ func TestUpdate_ValidationError_DuplicateTitle(t *testing.T) {
 	form.Set("title", "Existing Title")
 	form.Set("body", "body2")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/dup-space/pages/2", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/dup-space/pages/2", map[string]string{
 		"space_identifier": "dup-space",
 		"page_number":      "2",
 	})
@@ -247,7 +247,7 @@ func TestUpdate_ValidationError_DuplicateTitle(t *testing.T) {
 	body := rr.Body.String()
 
 	// 重複エラーメッセージ（HTMLリンク付き）が表示されること
-	if !strings.Contains(body, "/go/s/dup-space/pages/1/edit") {
+	if !strings.Contains(body, "/s/dup-space/pages/1/edit") {
 		t.Error("edit link for existing page not found in response")
 	}
 }
@@ -264,7 +264,7 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/my-space/pages/1", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/my-space/pages/1", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "1",
 	})
@@ -302,7 +302,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/nonexistent/pages/1", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/nonexistent/pages/1", map[string]string{
 		"space_identifier": "nonexistent",
 		"page_number":      "1",
 	})
@@ -344,7 +344,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
 
-	req := newRequestWithChiParams(t, http.MethodPost, "/go/s/nopg-space/pages/999", map[string]string{
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/nopg-space/pages/999", map[string]string{
 		"space_identifier": "nopg-space",
 		"page_number":      "999",
 	})

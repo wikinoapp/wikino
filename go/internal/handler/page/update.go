@@ -13,13 +13,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update はページを公開します (PATCH /go/s/{space_identifier}/pages/{page_number})
+// Update はページを公開します (PATCH /s/{space_identifier}/pages/{page_number})
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -212,10 +214,27 @@ func (h *Handler) renderEditWithErrors(
 		Topic:      topicVM,
 	})
 
+	currentUser := middleware.UserFromContext(ctx)
+	var userAtname string
+	var joinedTopics []viewmodel.TopicForSidebar
+	var draftPages []viewmodel.DraftPageForSidebar
+	if currentUser != nil {
+		userAtname = currentUser.Atname
+		joinedTopics, draftPages = h.sidebarContent(ctx, currentUser.ID)
+	}
+
 	layoutData := layouts.DefaultLayoutData{
-		Meta:                 meta,
-		HideFooter:           true,
-		DefaultSidebarClosed: true,
+		Meta:       meta,
+		HideFooter: true,
+		Sidebar: components.SidebarData{
+			DefaultClosed:   layouts.SidebarDefaultClosed(r),
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        currentUser != nil,
+			UserAtname:      userAtname,
+			SpaceIdentifier: string(spaceIdentifier),
+			JoinedTopics:    joinedTopics,
+			DraftPages:      draftPages,
+		},
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

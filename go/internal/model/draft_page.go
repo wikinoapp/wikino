@@ -18,4 +18,7 @@ type DraftPage struct {
 	ModifiedAt    time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+
+	Page  *Page
+	Topic *Topic
 }

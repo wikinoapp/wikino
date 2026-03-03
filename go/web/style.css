@@ -103,6 +103,9 @@
   --primary-foreground: var(--color-brand-100);
   --secondary: var(--color-brand-200);
   --secondary-foreground: var(--color-brand-950);
+  --accent: var(--color-brand-200);
+  --sidebar: var(--color-brand-50);
+  --sidebar-accent: var(--color-brand-100);
   --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */
 
   /* 独自の変数 */

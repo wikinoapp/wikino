@@ -11,12 +11,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit はページ編集フォームを表示します (GET /go/s/{space_identifier}/pages/{page_number}/edit)
+// Edit はページ編集フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -242,11 +244,22 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		BacklinkList: backlinkListVM,
 	})
 
+	// サイドバーコンテンツを取得
+	joinedTopics, draftPages := h.sidebarContent(ctx, user.ID)
+
 	layoutData := layouts.DefaultLayoutData{
-		Meta:                 meta,
-		Flash:                flash,
-		HideFooter:           true,
-		DefaultSidebarClosed: true,
+		Meta:       meta,
+		Flash:      flash,
+		HideFooter: true,
+		Sidebar: components.SidebarData{
+			DefaultClosed:   layouts.SidebarDefaultClosed(r),
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        true,
+			UserAtname:      user.Atname,
+			SpaceIdentifier: string(spaceIdentifier),
+			JoinedTopics:    joinedTopics,
+			DraftPages:      draftPages,
+		},
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

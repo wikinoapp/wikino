@@ -14,13 +14,16 @@
 
 - `CLAUDE.md`
 - `go/CLAUDE.md`
-- `rails/CLAUDE.md`
 - `go/docs/architecture-guide.md`
+- `go/docs/coding-guide.md`
+- `go/docs/development-guide.md`
 - `go/docs/handler-guide.md`
 - `go/docs/i18n-guide.md`
 - `go/docs/security-guide.md`
 - `go/docs/templ-guide.md`
+- `go/docs/testing-guide.md`
 - `go/docs/validation-guide.md`
+- `rails/CLAUDE.md`
 - `rails/docs/architecture-guide.md`
 - `rails/docs/security-guide.md`
 - `rails/docs/testing-guide.md`

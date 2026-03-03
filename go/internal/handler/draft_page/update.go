@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Update は下書きページを自動保存します (PATCH /go/s/{space_identifier}/pages/{page_number}/draft_page)
+// Update は下書きページを自動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

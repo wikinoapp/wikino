@@ -17,7 +17,7 @@ const (
 // Topic はトピックのドメインモデル
 type Topic struct {
 	ID          TopicID
-	SpaceID     SpaceID
+	Space       *Space
 	Number      int32
 	Name        string
 	Description string

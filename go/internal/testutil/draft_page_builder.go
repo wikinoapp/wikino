@@ -91,6 +91,12 @@ func (b *DraftPageBuilder) WithBodyHTML(bodyHTML string) *DraftPageBuilder {
 	return b
 }
 
+// WithModifiedAt は更新日時を設定します
+func (b *DraftPageBuilder) WithModifiedAt(modifiedAt time.Time) *DraftPageBuilder {
+	b.modifiedAt = modifiedAt
+	return b
+}
+
 // WithLinkedPageIDs はリンク先ページIDリストを設定します
 func (b *DraftPageBuilder) WithLinkedPageIDs(ids []model.PageID) *DraftPageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)

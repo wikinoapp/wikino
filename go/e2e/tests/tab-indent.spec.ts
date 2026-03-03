@@ -1,17 +1,13 @@
 import { test, expect } from "@playwright/test";
 import {
-  createTestUser,
-  createTestSpace,
-  createTestSpaceMember,
   createTestTopic,
   createTestTopicMember,
   createTestPage,
-  cleanupTestData,
+  loadSharedTestData,
   type TestUser,
   type TestSpace,
   type TestPage,
 } from "../helpers/database";
-import { signIn } from "../helpers/auth";
 import {
   clearEditor,
   setEditorContent,
@@ -29,32 +25,22 @@ import {
 
 let user: TestUser;
 let space: TestSpace;
+let spaceMemberId: string;
 let page_: TestPage;
 
 test.beforeAll(async () => {
-  user = await createTestUser();
-  space = await createTestSpace();
-  const spaceMemberId = await createTestSpaceMember(space.id, user.id);
-  const topic = await createTestTopic(space.id);
-  await createTestTopicMember(space.id, topic.id, spaceMemberId);
-});
-
-test.afterAll(async () => {
-  await cleanupTestData([user.id]);
+  const shared = loadSharedTestData();
+  user = shared.user;
+  space = shared.space;
+  spaceMemberId = shared.spaceMemberId;
 });
 
 async function visitPageEditor(pwPage: import("@playwright/test").Page) {
-  // テスト用ページを作成
   const topic = await createTestTopic(space.id);
-  const spaceMemberResult = await import("../helpers/database").then((db) =>
-    db.query("SELECT id FROM space_members WHERE space_id = $1 AND user_id = $2 LIMIT 1", [space.id, user.id]),
-  );
-  const spaceMemberId = spaceMemberResult.rows[0].id;
   await createTestTopicMember(space.id, topic.id, spaceMemberId);
   page_ = await createTestPage(space.id, topic.id);
 
-  await signIn(pwPage, user);
-  await pwPage.goto(`/go/s/${space.identifier}/pages/${page_.number}/edit`);
+  await pwPage.goto(`/s/${space.identifier}/pages/${page_.number}/edit`);
   await pwPage.waitForSelector(".cm-content");
 }
 

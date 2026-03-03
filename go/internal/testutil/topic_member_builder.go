@@ -86,11 +86,12 @@ type TopicMemberBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	spaceID       string
-	topicID       string
-	spaceMemberID string
-	role          int32
-	joinedAt      time.Time
+	spaceID            string
+	topicID            string
+	spaceMemberID      string
+	role               int32
+	joinedAt           time.Time
+	lastPageModifiedAt *time.Time
 }
 
 // NewTopicMemberBuilder は TopicMemberBuilder を生成します
@@ -128,6 +129,12 @@ func (b *TopicMemberBuilder) WithRole(role int32) *TopicMemberBuilder {
 	return b
 }
 
+// WithLastPageModifiedAt はlast_page_modified_atを設定します
+func (b *TopicMemberBuilder) WithLastPageModifiedAt(t time.Time) *TopicMemberBuilder {
+	b.lastPageModifiedAt = &t
+	return b
+}
+
 // Build はトピックメンバーを作成し、IDを返します
 func (b *TopicMemberBuilder) Build() model.TopicMemberID {
 	b.t.Helper()
@@ -146,10 +153,10 @@ func (b *TopicMemberBuilder) Build() model.TopicMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.spaceMemberID, b.role, b.joinedAt, now, now,
+		b.spaceID, b.topicID, b.spaceMemberID, b.role, b.joinedAt, b.lastPageModifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピックメンバー作成に失敗: %v", err)

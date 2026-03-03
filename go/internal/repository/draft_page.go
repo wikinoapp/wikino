@@ -115,6 +115,65 @@ func (r *DraftPageRepository) Delete(ctx context.Context, id model.DraftPageID, 
 	})
 }
 
+// ListByUser はユーザーの下書きページ一覧を取得する（サイドバー表示用）
+func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.DraftPage, error) {
+	rows, err := r.q.ListDraftPagesByUser(ctx, query.ListDraftPagesByUserParams{
+		UserID: string(userID),
+		Limit:  limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toDraftPagesFromJoinedRows(rows), nil
+}
+
+// toDraftPagesFromJoinedRows は query.ListDraftPagesByUserRow のスライスを model.DraftPage のスライスに変換する
+func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftPagesByUserRow) []*model.DraftPage {
+	drafts := make([]*model.DraftPage, len(rows))
+	for i, row := range rows {
+		var draftTitle *string
+		if row.DraftPageTitle != nil {
+			switch v := row.DraftPageTitle.(type) {
+			case string:
+				draftTitle = &v
+			case []byte:
+				s := string(v)
+				draftTitle = &s
+			}
+		}
+
+		var pageTitle *string
+		if row.PageTitle != nil {
+			switch v := row.PageTitle.(type) {
+			case string:
+				pageTitle = &v
+			case []byte:
+				s := string(v)
+				pageTitle = &s
+			}
+		}
+
+		drafts[i] = &model.DraftPage{
+			ID:         model.DraftPageID(row.DraftPageID),
+			Title:      draftTitle,
+			ModifiedAt: row.DraftPageModifiedAt,
+			Page: &model.Page{
+				ID:     model.PageID(row.PageID),
+				Title:  pageTitle,
+				Number: model.PageNumber(row.PageNumber),
+			},
+			Topic: &model.Topic{
+				Name:       row.TopicName,
+				Visibility: model.TopicVisibility(row.TopicVisibility),
+				Space: &model.Space{
+					Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+				},
+			},
+		}
+	}
+	return drafts
+}
+
 // toModel は query.DraftPage を model.DraftPage に変換する
 func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 	var title *string

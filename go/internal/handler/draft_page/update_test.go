@@ -70,7 +70,7 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/my-space/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/my-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "1",
 	}, formData)
@@ -107,7 +107,7 @@ func TestUpdate_InvalidPageNumber(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/my-space/pages/abc/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/my-space/pages/abc/draft_page", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "abc",
 	}, formData)
@@ -140,7 +140,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/nonexistent/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/nonexistent/pages/1/draft_page", map[string]string{
 		"space_identifier": "nonexistent",
 		"page_number":      "1",
 	}, formData)
@@ -184,7 +184,7 @@ func TestUpdate_NotSpaceMember(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/dp-private-space/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/dp-private-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-private-space",
 		"page_number":      "1",
 	}, formData)
@@ -224,7 +224,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/dp-page-missing/pages/999/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/dp-page-missing/pages/999/draft_page", map[string]string{
 		"space_identifier": "dp-page-missing",
 		"page_number":      "999",
 	}, formData)
@@ -278,7 +278,7 @@ func TestUpdate_TopicPolicyDenied(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/dp-policy-space/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/dp-policy-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-policy-space",
 		"page_number":      "1",
 	}, formData)
@@ -335,7 +335,7 @@ func TestUpdate_InvalidTopicNumber(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/dp-invalid-topic/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/dp-invalid-topic/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-invalid-topic",
 		"page_number":      "1",
 	}, formData)
@@ -392,7 +392,7 @@ func TestUpdate_TopicNotFound(t *testing.T) {
 		"pages_edit_form[title]":        {"Test"},
 		"pages_edit_form[body]":         {"body"},
 	}
-	req := newRequestWithChiParams(t, "/go/s/dp-topic-notfound/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/dp-topic-notfound/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-topic-notfound",
 		"page_number":      "1",
 	}, formData)
@@ -417,7 +417,7 @@ func TestUpdate_ResponseContentType(t *testing.T) {
 
 	// 未認証リクエストでもContent-Typeがtext/plainであることを確認
 	formData := url.Values{}
-	req := newRequestWithChiParams(t, "/go/s/my-space/pages/1/draft_page", map[string]string{
+	req := newRequestWithChiParams(t, "/s/my-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "my-space",
 		"page_number":      "1",
 	}, formData)

@@ -1,4 +1,6 @@
 import pg from "pg";
+import * as fs from "fs";
+import * as path from "path";
 
 function getDatabaseURL(): string {
   const url = process.env.DATABASE_URL;
@@ -12,7 +14,10 @@ let pool: pg.Pool | null = null;
 
 function getPool(): pg.Pool {
   if (!pool) {
-    pool = new pg.Pool({ connectionString: getDatabaseURL() });
+    pool = new pg.Pool({
+      connectionString: getDatabaseURL(),
+      allowExitOnIdle: true,
+    });
   }
   return pool;
 }
@@ -26,6 +31,20 @@ export async function closePool(): Promise<void> {
 
 export async function query(text: string, params?: unknown[]): Promise<pg.QueryResult> {
   return getPool().query(text, params);
+}
+
+async function queryWithRetry(text: string, params?: unknown[], maxRetries: number = 5): Promise<pg.QueryResult> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await getPool().query(text, params);
+    } catch (err: unknown) {
+      const isUniqueViolation = err instanceof Error && "code" in err && (err as { code: string }).code === "23505";
+      if (!isUniqueViolation || attempt === maxRetries - 1) {
+        throw err;
+      }
+    }
+  }
+  throw new Error("queryWithRetry: unreachable");
 }
 
 export interface TestUser {
@@ -116,18 +135,11 @@ export async function createTestTopic(spaceId: string, overrides: Partial<{ name
   const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const name = overrides.name || `E2Eテストトピック ${suffix.slice(0, 8)}`;
 
-  // space内のトピック番号を取得
-  const numberResult = await query(
-    `SELECT COALESCE(MAX(number), 0) + 1 as next_number FROM topics WHERE space_id = $1`,
-    [spaceId],
-  );
-  const number = numberResult.rows[0].next_number;
-
-  const result = await query(
+  const result = await queryWithRetry(
     `INSERT INTO topics (space_id, number, name, description, visibility, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+     VALUES ($1, (SELECT COALESCE(MAX(number), 0) + 1 FROM topics WHERE space_id = $1), $2, $3, $4, NOW(), NOW())
      RETURNING id`,
-    [spaceId, number, name, "", 0],
+    [spaceId, name, "", 0],
   );
 
   return { id: result.rows[0].id, name };
@@ -158,21 +170,43 @@ export async function createTestPage(
   const body = overrides.body || "";
   const bodyHtml = body ? `<p>${body}</p>` : "";
 
-  // space内のページ番号を取得
-  const numberResult = await query(
-    `SELECT COALESCE(MAX(number), 0) + 1 as next_number FROM pages WHERE space_id = $1`,
-    [spaceId],
-  );
-  const number = numberResult.rows[0].next_number;
-
-  const result = await query(
+  const result = await queryWithRetry(
     `INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW(), NOW())
-     RETURNING id`,
-    [spaceId, topicId, number, title, body, bodyHtml, "{}"],
+     VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM pages WHERE space_id = $1), $3, $4, $5, $6, NOW(), NOW(), NOW(), NOW())
+     RETURNING id, number`,
+    [spaceId, topicId, title, body, bodyHtml, "{}"],
   );
 
-  return { id: result.rows[0].id, number };
+  return { id: result.rows[0].id, number: result.rows[0].number };
+}
+
+export interface SharedTestData {
+  user: TestUser;
+  space: TestSpace;
+  spaceMemberId: string;
+}
+
+const sharedTestDataPath = path.join(__dirname, "../playwright/.auth/test-data.json");
+
+export function saveSharedTestData(data: SharedTestData): void {
+  const dir = path.dirname(sharedTestDataPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(sharedTestDataPath, JSON.stringify(data));
+}
+
+export function loadSharedTestData(): SharedTestData {
+  return JSON.parse(fs.readFileSync(sharedTestDataPath, "utf-8"));
+}
+
+export async function createTestFeatureFlag(userId: string, name: string): Promise<void> {
+  await query(
+    `INSERT INTO feature_flags (user_id, name, created_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (user_id, name) DO NOTHING`,
+    [userId, name],
+  );
 }
 
 /**
@@ -203,6 +237,7 @@ export async function cleanupTestData(userIds: string[]): Promise<void> {
   }
 
   // ユーザー関連データを削除
+  await query(`DELETE FROM feature_flags WHERE user_id = ANY($1)`, [userIds]);
   await query(`DELETE FROM user_sessions WHERE user_id = ANY($1)`, [userIds]);
   await query(`DELETE FROM user_passwords WHERE user_id = ANY($1)`, [userIds]);
   await query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);

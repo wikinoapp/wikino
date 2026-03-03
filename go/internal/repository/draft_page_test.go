@@ -346,3 +346,191 @@ func TestDraftPageRepository_Delete(t *testing.T) {
 		}
 	})
 }
+
+func TestDraftPageRepository_ListByUser(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-list@example.com").
+		WithAtname("draftlist").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-list-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	// 下書きを3件作成（modified_atの順序をテストするため時間をずらす）
+	now := time.Now()
+
+	pageID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Page 1").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID1).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 1").
+		WithModifiedAt(now.Add(-2 * time.Hour)).
+		Build()
+
+	pageID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Page 2").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID2).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 2").
+		WithModifiedAt(now).
+		Build()
+
+	pageID3 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Page 3").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID3).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 3").
+		WithModifiedAt(now.Add(-1 * time.Hour)).
+		Build()
+
+	t.Run("ユーザーの下書き一覧をmodified_at降順で取得できる", func(t *testing.T) {
+		drafts, err := repo.ListByUser(context.Background(), userID, 5)
+		if err != nil {
+			t.Fatalf("ListByUser() error = %v", err)
+		}
+		if len(drafts) != 3 {
+			t.Fatalf("ListByUser() returned %d drafts, want 3", len(drafts))
+		}
+
+		// modified_at DESC でソートされていることを確認
+		if drafts[0].Title == nil || *drafts[0].Title != "Draft 2" {
+			t.Errorf("drafts[0].Title = %v, want 'Draft 2'", drafts[0].Title)
+		}
+		if drafts[1].Title == nil || *drafts[1].Title != "Draft 3" {
+			t.Errorf("drafts[1].Title = %v, want 'Draft 3'", drafts[1].Title)
+		}
+		if drafts[2].Title == nil || *drafts[2].Title != "Draft 1" {
+			t.Errorf("drafts[2].Title = %v, want 'Draft 1'", drafts[2].Title)
+		}
+
+		// 関連エンティティの情報が正しいことを確認
+		if drafts[0].Page == nil {
+			t.Fatal("drafts[0].Page should not be nil")
+		}
+		if drafts[0].Page.Number != 2 {
+			t.Errorf("drafts[0].Page.Number = %v, want 2", drafts[0].Page.Number)
+		}
+		if drafts[0].Topic == nil {
+			t.Fatal("drafts[0].Topic should not be nil")
+		}
+		if drafts[0].Topic.Name != "General" {
+			t.Errorf("drafts[0].Topic.Name = %v, want 'General'", drafts[0].Topic.Name)
+		}
+		if drafts[0].Topic.Space == nil {
+			t.Fatal("drafts[0].Topic.Space should not be nil")
+		}
+		if string(drafts[0].Topic.Space.Identifier) != "draft-list-space" {
+			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-list-space'", drafts[0].Topic.Space.Identifier)
+		}
+	})
+
+	t.Run("LIMITが適用される", func(t *testing.T) {
+		drafts, err := repo.ListByUser(context.Background(), userID, 2)
+		if err != nil {
+			t.Fatalf("ListByUser() error = %v", err)
+		}
+		if len(drafts) != 2 {
+			t.Fatalf("ListByUser() returned %d drafts, want 2", len(drafts))
+		}
+	})
+
+	t.Run("下書きがないユーザーは空スライスを返す", func(t *testing.T) {
+		otherUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("draft-list-nodata@example.com").
+			WithAtname("draftlistnodata").
+			Build()
+
+		drafts, err := repo.ListByUser(context.Background(), otherUserID, 5)
+		if err != nil {
+			t.Fatalf("ListByUser() error = %v", err)
+		}
+		if len(drafts) != 0 {
+			t.Errorf("ListByUser() returned %d drafts, want 0", len(drafts))
+		}
+	})
+
+	t.Run("論理削除されたページの下書きは除外される", func(t *testing.T) {
+		otherUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("draft-list-discard@example.com").
+			WithAtname("draftlistdiscard").
+			Build()
+
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("draft-list-discard").
+			Build()
+
+		otherMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(otherSpaceID).
+			WithUserID(otherUserID).
+			Build()
+
+		otherTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(otherSpaceID).
+			WithNumber(1).
+			WithName("General").
+			Build()
+
+		discardedPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(otherSpaceID).
+			WithTopicID(otherTopicID).
+			WithNumber(1).
+			WithTitle("Discarded Page").
+			WithDiscarded().
+			Build()
+
+		testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(otherSpaceID).
+			WithPageID(discardedPageID).
+			WithSpaceMemberID(otherMemberID).
+			WithTopicID(otherTopicID).
+			WithTitle("Draft on discarded page").
+			Build()
+
+		drafts, err := repo.ListByUser(context.Background(), otherUserID, 5)
+		if err != nil {
+			t.Fatalf("ListByUser() error = %v", err)
+		}
+		if len(drafts) != 0 {
+			t.Errorf("ListByUser() returned %d drafts, want 0 (discarded page should be excluded)", len(drafts))
+		}
+	})
+}

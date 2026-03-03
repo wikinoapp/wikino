@@ -436,6 +436,46 @@ other = "Sidebar"
 description = "Home link in the sidebar"
 other = "Home"
 
+[sidebar_search]
+description = "Search link in the sidebar"
+other = "Search"
+
+[sidebar_profile]
+description = "Profile link in the sidebar"
+other = "Profile"
+
+[sidebar_sign_in]
+description = "Sign in link in the sidebar"
+other = "Sign in"
+
+[sidebar_joined_topics_heading]
+description = "Heading for the joined topics list in the sidebar"
+other = "Joined Topics"
+
+[sidebar_joined_topics_empty]
+description = "Message when there are no joined topics in the sidebar"
+other = "No joined topics"
+
+[sidebar_joined_topics_create_page]
+description = "Tooltip for the create page link on a topic in the sidebar"
+other = "Create page"
+
+[sidebar_draft_pages_heading]
+description = "Heading for the draft pages list in the sidebar"
+other = "Drafts"
+
+[sidebar_draft_pages_empty]
+description = "Message when there are no draft pages in the sidebar"
+other = "No drafts"
+
+[sidebar_draft_pages_untitled]
+description = "Display text for untitled draft pages in the sidebar"
+other = "Untitled"
+
+[sidebar_draft_pages_edit_page]
+description = "Title for edit link on draft page in the sidebar"
+other = "Edit page"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"
@@ -483,6 +523,10 @@ other = "Links"
 [page_edit_links_untitled]
 description = "Display text for an untitled linked page"
 other = "Untitled"
+
+[page_edit_links_edit_page]
+description = "Title for edit link on linked page card"
+other = "Edit page"
 
 [page_edit_links_load_more]
 description = "Load more button for link list"
