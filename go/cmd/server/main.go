@@ -26,7 +26,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
-	"github.com/wikinoapp/wikino/go/internal/handler/sidebar_joined_topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -127,7 +126,7 @@ func main() {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// Turnstileクライアントを初期化
-	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
+	turnstileClient := turnstile.NewClient(cfg.TurnstileEnabled, cfg.TurnstileSecretKey)
 
 	// Rate Limiterを初期化
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
@@ -247,8 +246,6 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 	)
-	sidebarJoinedTopicHandler := sidebar_joined_topic.NewHandler(topicRepo)
-
 	r := chi.NewRouter()
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
@@ -293,9 +290,6 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
 		r.Get("/", welcomeHandler.Show)
-
-		// サイドバーSSE（未認証でも空フラグメントを返す）
-		r.Get("/sidebar/joined_topics", sidebarJoinedTopicHandler.Index)
 	})
 
 	// 未認証ユーザー専用ルート

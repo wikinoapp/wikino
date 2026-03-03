@@ -244,6 +244,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		BacklinkList: backlinkListVM,
 	})
 
+	// サイドバーコンテンツを取得
+	joinedTopics, draftPages := h.sidebarContent(ctx, user.ID)
+
 	layoutData := layouts.DefaultLayoutData{
 		Meta:       meta,
 		Flash:      flash,
@@ -254,6 +257,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			SignedIn:        true,
 			UserAtname:      user.Atname,
 			SpaceIdentifier: string(spaceIdentifier),
+			JoinedTopics:    joinedTopics,
+			DraftPages:      draftPages,
 		},
 	}
 

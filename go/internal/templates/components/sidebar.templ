@@ -12,6 +12,8 @@ type SidebarData struct {
 	SignedIn        bool
 	UserAtname      string
 	SpaceIdentifier string
+	JoinedTopics    []viewmodel.TopicForSidebar
+	DraftPages      []viewmodel.DraftPageForSidebar
 }
 
 // searchPath はスペース内のときスペースフィルター付き検索パスを返します
@@ -76,25 +78,19 @@ templ Sidebar(data SidebarData) {
 				</ul>
 
 				if data.SignedIn {
-					<hr class="border-gray-300">
+					<hr class="border-gray-300 mx-2">
 
-					<div id="sidebar-joined-topics" data-on-intersect="@get('/sidebar/joined_topics')">
-						@sidebarJoinedTopicsSkeleton()
-					</div>
+					@SidebarDraftPages(data.DraftPages)
+
+					<hr class="border-gray-300 mx-2">
+
+					@SidebarJoinedTopics(data.JoinedTopics)
 				}
 			</section>
 		</nav>
 	</aside>
 }
 
-// sidebarJoinedTopicsSkeleton はトピック一覧読み込み中のスケルトンを表示します
-templ sidebarJoinedTopicsSkeleton() {
-	<div class="flex flex-col gap-2 px-4 py-2">
-		<div class="bg-accent animate-pulse h-4 w-full rounded"></div>
-		<div class="bg-accent animate-pulse h-4 w-3/4 rounded"></div>
-		<div class="bg-accent animate-pulse h-4 w-5/6 rounded"></div>
-	</div>
-}
 
 // sidebarNavItemData はサイドバーのナビゲーションリンクのデータです
 type sidebarNavItemData struct {

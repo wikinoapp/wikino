@@ -60,7 +60,17 @@ func PageBacklinkListPath(spaceIdentifier string, pageNumber int32, linkedPageNu
 	return Path(fmt.Sprintf("/s/%s/pages/%d/links/%d/backlink_list", spaceIdentifier, pageNumber, linkedPageNumber))
 }
 
+// PageEditPath はページ編集のパスを生成します
+func PageEditPath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/edit", spaceIdentifier, pageNumber))
+}
+
 // SidebarJoinedTopicsPath はサイドバーの参加中トピック一覧のパスを生成します
 func SidebarJoinedTopicsPath() Path {
 	return Path("/sidebar/joined_topics")
+}
+
+// SidebarDraftPagesPath はサイドバーの下書きページ一覧のパスを生成します
+func SidebarDraftPagesPath() Path {
+	return Path("/sidebar/draft_pages")
 }

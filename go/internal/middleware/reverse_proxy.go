@@ -78,7 +78,6 @@ var (
 		"/password/reset",                  // パスワードリセット申請フォーム・処理
 		"/password/edit",                   // 新パスワード入力フォーム
 		"/password",                        // パスワード更新処理
-		"/sidebar",                         // サイドバーSSEエンドポイント
 	}
 )
 

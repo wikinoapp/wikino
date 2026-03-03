@@ -5,41 +5,47 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SidebarJoinedTopics はサイドバーの参加中トピック一覧を表示します
-templ SidebarJoinedTopics(topics []viewmodel.TopicForSidebar) {
+// SidebarDraftPages はサイドバーの下書きページ一覧を表示します
+templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar) {
 	<div class="flex flex-col gap-2 px-2">
 		<p class="text-xs font-bold text-muted-foreground px-2">
-			{ templates.T(ctx, "sidebar_joined_topics_heading") }
+			{ templates.T(ctx, "sidebar_draft_pages_heading") }
 		</p>
 
-		if len(topics) > 0 {
+		if len(drafts) > 0 {
 			<div class="flex flex-col">
-				for _, topic := range topics {
+				for _, draft := range drafts {
 					<div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
 						<a
-							href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
+							href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
 							class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100"
-							title={ templates.T(ctx, "sidebar_joined_topics_create_page") }
+							title={ templates.T(ctx, "sidebar_draft_pages_edit_page") }
 						>
 							@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
 						</a>
 
 						<a
-							href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
+							href={ templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, draft.PageNumber))) }
 							class="flex w-full items-center gap-2 rounded-md p-2 text-foreground"
 						>
 							<div class="w-[16px] shrink-0">
-								@templates.Icon(topic.IconName, "size-[16px] fill-muted-foreground")
+								@templates.Icon(draft.IconName, "size-[16px] fill-muted-foreground")
 							</div>
 
 							<div class="flex flex-col pr-8">
 								<span class="line-clamp-1 text-xs text-muted-foreground">
-									{ topic.SpaceName }
+									{ draft.TopicName }
 								</span>
 
-								<span class="line-clamp-1 text-sm">
-									{ topic.Name }
-								</span>
+								if draft.Title != "" {
+									<span class="line-clamp-1 text-sm">
+										{ draft.Title }
+									</span>
+								} else {
+									<span class="line-clamp-1 text-sm text-muted-foreground">
+										{ templates.T(ctx, "sidebar_draft_pages_untitled") }
+									</span>
+								}
 							</div>
 						</a>
 					</div>
@@ -48,7 +54,7 @@ templ SidebarJoinedTopics(topics []viewmodel.TopicForSidebar) {
 		} else {
 			<div class="px-4 py-2">
 				<p class="text-xs text-muted-foreground">
-					{ templates.T(ctx, "sidebar_joined_topics_empty") }
+					{ templates.T(ctx, "sidebar_draft_pages_empty") }
 				</p>
 			</div>
 		}

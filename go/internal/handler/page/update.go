@@ -216,8 +216,11 @@ func (h *Handler) renderEditWithErrors(
 
 	currentUser := middleware.UserFromContext(ctx)
 	var userAtname string
+	var joinedTopics []viewmodel.TopicForSidebar
+	var draftPages []viewmodel.DraftPageForSidebar
 	if currentUser != nil {
 		userAtname = currentUser.Atname
+		joinedTopics, draftPages = h.sidebarContent(ctx, currentUser.ID)
 	}
 
 	layoutData := layouts.DefaultLayoutData{
@@ -229,6 +232,8 @@ func (h *Handler) renderEditWithErrors(
 			SignedIn:        currentUser != nil,
 			UserAtname:      userAtname,
 			SpaceIdentifier: string(spaceIdentifier),
+			JoinedTopics:    joinedTopics,
+			DraftPages:      draftPages,
 		},
 	}
 
