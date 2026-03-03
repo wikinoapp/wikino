@@ -88,6 +88,7 @@ WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
   AND published_at IS NOT NULL
   AND discarded_at IS NULL
+  AND NOT (id = ANY($5::uuid[]))
 ORDER BY modified_at DESC, id DESC
 LIMIT $3
 OFFSET $4;
@@ -99,7 +100,8 @@ FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
   AND published_at IS NOT NULL
-  AND discarded_at IS NULL;
+  AND discarded_at IS NULL
+  AND NOT (id = ANY($3::uuid[]));
 
 -- name: FindBacklinkedPagesForTargets :many
 -- 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
@@ -112,6 +114,7 @@ CROSS JOIN LATERAL (
     AND space_id = $2
     AND published_at IS NOT NULL
     AND discarded_at IS NULL
+    AND NOT (id = ANY($4::uuid[]))
   ORDER BY modified_at DESC, id DESC
   LIMIT $3
 ) p;
@@ -124,6 +127,7 @@ LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
   AND p.space_id = $2
   AND p.published_at IS NOT NULL
   AND p.discarded_at IS NULL
+  AND NOT (p.id = ANY($3::uuid[]))
 GROUP BY t.target_id;
 
 -- name: CreateLinkedPage :one

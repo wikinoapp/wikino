@@ -135,7 +135,14 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
+		// 編集中のページ自身とリンク先ページをバックリンクから除外する
+		excludePageIDs := make([]model.PageID, 0, 1+len(paginatedLinks.Pages))
+		excludePageIDs = append(excludePageIDs, pg.ID)
+		for _, p := range paginatedLinks.Pages {
+			excludePageIDs = append(excludePageIDs, p.ID)
+		}
+
+		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit, excludePageIDs)
 		if err != nil {
 			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

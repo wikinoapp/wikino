@@ -72,10 +72,11 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 }
 
 // FindBacklinkedPagesPaginated はバックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
-func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, page int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountBacklinkedPages(ctx, query.CountBacklinkedPagesParams{
 		Column1: string(pageID),
 		SpaceID: string(spaceID),
+		Column3: model.PageIDsToStrings(excludePageIDs),
 	})
 	if err != nil {
 		return nil, err
@@ -87,6 +88,7 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 		SpaceID: string(spaceID),
 		Limit:   limit,
 		Offset:  offset,
+		Column5: model.PageIDsToStrings(excludePageIDs),
 	})
 	if err != nil {
 		return nil, err
@@ -99,7 +101,7 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 }
 
 // FindBacklinksForPages は複数ページのバックリンクを一括取得する（N+1回避）
-func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, limit int32) (map[model.PageID]*PaginatedPages, error) {
+func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, limit int32, excludePageIDs []model.PageID) (map[model.PageID]*PaginatedPages, error) {
 	if len(targetPages) == 0 {
 		return nil, nil
 	}
@@ -109,11 +111,14 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 		targetIDs[i] = string(pg.ID)
 	}
 
+	excludeIDs := model.PageIDsToStrings(excludePageIDs)
+
 	// バックリンクページを一括取得
 	rows, err := r.q.FindBacklinkedPagesForTargets(ctx, query.FindBacklinkedPagesForTargetsParams{
 		Column1: targetIDs,
 		SpaceID: string(spaceID),
 		Limit:   limit,
+		Column4: excludeIDs,
 	})
 	if err != nil {
 		return nil, err
@@ -123,6 +128,7 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 	countRows, err := r.q.CountBacklinkedPagesForTargets(ctx, query.CountBacklinkedPagesForTargetsParams{
 		Column1: targetIDs,
 		SpaceID: string(spaceID),
+		Column3: excludeIDs,
 	})
 	if err != nil {
 		return nil, err

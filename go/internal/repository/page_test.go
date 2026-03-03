@@ -281,7 +281,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 		Build()
 
 	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 1, 2)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 1, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -301,7 +301,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 2, 2)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 2, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -324,7 +324,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithTitle("Isolated").
 			Build()
 
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, 1, 14)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, 1, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -677,7 +677,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	targetPage2 := &model.Page{ID: targetPage2ID}
 
 	t.Run("複数ターゲットのバックリンクを一括取得できる", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1, targetPage2}, spaceID, 100)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1, targetPage2}, spaceID, 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -700,7 +700,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	})
 
 	t.Run("limitで取得件数を制限できる", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1}, spaceID, 2)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1}, spaceID, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -724,7 +724,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 			Build()
 		isolatedPage := &model.Page{ID: isolatedPageID}
 
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{isolatedPage}, spaceID, 100)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{isolatedPage}, spaceID, 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -738,7 +738,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	})
 
 	t.Run("空のターゲットリストはnilを返す", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{}, spaceID, 100)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{}, spaceID, 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}

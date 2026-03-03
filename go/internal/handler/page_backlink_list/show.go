@@ -114,8 +114,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// バックリンクを取得
-	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, space.ID, currentPage, viewmodel.BacklinkLimit)
+	// バックリンクを取得（編集中のページ自身とリンク先ページを除外する）
+	excludePageIDs := []model.PageID{pg.ID, linkedPage.ID}
+	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, space.ID, currentPage, viewmodel.BacklinkLimit, excludePageIDs)
 	if err != nil {
 		slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

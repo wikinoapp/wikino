@@ -21,16 +21,18 @@ WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
   AND published_at IS NOT NULL
   AND discarded_at IS NULL
+  AND NOT (id = ANY($3::uuid[]))
 `
 
 type CountBacklinkedPagesParams struct {
-	Column1 string `json:"column_1"`
-	SpaceID string `json:"space_id"`
+	Column1 string   `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+	Column3 []string `json:"column_3"`
 }
 
 // バックリンクページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
 func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedPagesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countBacklinkedPages, arg.Column1, arg.SpaceID)
+	row := q.db.QueryRowContext(ctx, countBacklinkedPages, arg.Column1, arg.SpaceID, pq.Array(arg.Column3))
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -43,12 +45,14 @@ LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
   AND p.space_id = $2
   AND p.published_at IS NOT NULL
   AND p.discarded_at IS NULL
+  AND NOT (p.id = ANY($3::uuid[]))
 GROUP BY t.target_id
 `
 
 type CountBacklinkedPagesForTargetsParams struct {
 	Column1 []string `json:"column_1"`
 	SpaceID string   `json:"space_id"`
+	Column3 []string `json:"column_3"`
 }
 
 type CountBacklinkedPagesForTargetsRow struct {
@@ -58,7 +62,7 @@ type CountBacklinkedPagesForTargetsRow struct {
 
 // 複数ターゲットページのバックリンク件数を一括取得する
 func (q *Queries) CountBacklinkedPagesForTargets(ctx context.Context, arg CountBacklinkedPagesForTargetsParams) ([]CountBacklinkedPagesForTargetsRow, error) {
-	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID)
+	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID, pq.Array(arg.Column3))
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +216,7 @@ CROSS JOIN LATERAL (
     AND space_id = $2
     AND published_at IS NOT NULL
     AND discarded_at IS NULL
+    AND NOT (id = ANY($4::uuid[]))
   ORDER BY modified_at DESC, id DESC
   LIMIT $3
 ) p
@@ -221,6 +226,7 @@ type FindBacklinkedPagesForTargetsParams struct {
 	Column1 []string `json:"column_1"`
 	SpaceID string   `json:"space_id"`
 	Limit   int32    `json:"limit"`
+	Column4 []string `json:"column_4"`
 }
 
 type FindBacklinkedPagesForTargetsRow struct {
@@ -245,7 +251,12 @@ type FindBacklinkedPagesForTargetsRow struct {
 
 // 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
 func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBacklinkedPagesForTargetsParams) ([]FindBacklinkedPagesForTargetsRow, error) {
-	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesForTargets,
+		pq.Array(arg.Column1),
+		arg.SpaceID,
+		arg.Limit,
+		pq.Array(arg.Column4),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -291,16 +302,18 @@ WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
   AND published_at IS NOT NULL
   AND discarded_at IS NULL
+  AND NOT (id = ANY($5::uuid[]))
 ORDER BY modified_at DESC, id DESC
 LIMIT $3
 OFFSET $4
 `
 
 type FindBacklinkedPagesPaginatedParams struct {
-	Column1 string `json:"column_1"`
-	SpaceID string `json:"space_id"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Column1 string   `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+	Limit   int32    `json:"limit"`
+	Offset  int32    `json:"offset"`
+	Column5 []string `json:"column_5"`
 }
 
 // バックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
@@ -310,6 +323,7 @@ func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBack
 		arg.SpaceID,
 		arg.Limit,
 		arg.Offset,
+		pq.Array(arg.Column5),
 	)
 	if err != nil {
 		return nil, err
