@@ -22,7 +22,7 @@ templ LinkList(data viewmodel.LinkList) {
 
 						<div
 							id={ fmt.Sprintf("page-backlink-list-%d", item.CardLinkPage.Number) }
-							class="md:col-span-2 flex items-center"
+							class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-2 items-stretch"
 						>
 							@BacklinkList(item.BacklinkList)
 						</div>
