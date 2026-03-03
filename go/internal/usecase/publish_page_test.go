@@ -499,3 +499,73 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 		t.Errorf("FeaturedImageAttachmentID should be nil, got %v", *output.Page.FeaturedImageAttachmentID)
 	}
 }
+
+func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-nodraft").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-nodraft@example.com").
+		WithAtname("publishnodraft").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	title := "Updated Without Draft"
+	output, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		DraftPageID:      "", // 下書きなしで公開
+		Title:            &title,
+		Body:             "Published directly",
+		SpaceIdentifier:  "publish-nodraft",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+	if output == nil {
+		t.Fatal("output should not be nil")
+	}
+	if output.Page.Body != "Published directly" {
+		t.Errorf("Body = %q, want %q", output.Page.Body, "Published directly")
+	}
+	if output.Page.Title == nil || *output.Page.Title != "Updated Without Draft" {
+		t.Errorf("Title = %v, want %q", output.Page.Title, "Updated Without Draft")
+	}
+	if output.PublishedAt.IsZero() {
+		t.Error("PublishedAt should not be zero")
+	}
+}

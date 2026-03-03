@@ -185,10 +185,12 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// 12. DraftPageを削除
-	err = draftPageRepo.Delete(ctx, input.DraftPageID, input.SpaceID)
-	if err != nil {
-		return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)
+	// 12. DraftPageを削除（下書きが存在する場合のみ）
+	if input.DraftPageID != "" {
+		err = draftPageRepo.Delete(ctx, input.DraftPageID, input.SpaceID)
+		if err != nil {
+			return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
