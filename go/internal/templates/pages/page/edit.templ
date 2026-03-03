@@ -61,6 +61,7 @@ templ Edit(data EditPageData) {
 							<form
 								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 								class="form grid gap-6"
+								data-on:submit__passive="$isSubmitting = true"
 								method="POST"
 							>
 								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
