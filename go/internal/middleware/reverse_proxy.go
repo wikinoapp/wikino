@@ -253,12 +253,28 @@ func (m *ReverseProxyMiddleware) getFeatureFlagForRequest(r *http.Request) model
 }
 
 // containsMethod は指定されたHTTPメソッドがスライスに含まれるかを判定する
+//
+// HTMLフォームはGETとPOSTのみサポートするため、PATCH/PUT/DELETEリクエストは
+// POST + _methodパラメータとして送信される（Method Overrideパターン）。
+// このミドルウェアはMethod Overrideミドルウェアより前に実行されるため、
+// POSTリクエストもPATCH/PUT/DELETEパターンにマッチさせる必要がある。
 func containsMethod(methods []string, method string) bool {
 	for _, m := range methods {
 		if m == method {
 			return true
 		}
 	}
+
+	// POSTリクエストはMethod Override経由でPATCH/PUT/DELETEに変換される可能性がある
+	if method == http.MethodPost {
+		for _, m := range methods {
+			switch m {
+			case http.MethodPatch, http.MethodPut, http.MethodDelete:
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
