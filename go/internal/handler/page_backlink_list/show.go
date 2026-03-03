@@ -155,10 +155,19 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// SSEフラグメントとしてバックリンク一覧を送信
+	// カードをページネーションコンテナの前に追加し、コンテナ内のページネーション内容を更新する
 	selectorID := fmt.Sprintf("page-backlink-list-%d", linkedPageNumber)
 	sse := datastar.NewSSE(w, r)
-	if err := sse.PatchElementTempl(components.BacklinkList(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "バックリンク一覧のSSE送信に失敗", "error", err)
+
+	if len(backlinkListVM.Items) > 0 {
+		if err := sse.PatchElementTempl(components.BacklinkListCards(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeBefore()); err != nil {
+			slog.ErrorContext(ctx, "バックリンクカードのSSE送信に失敗", "error", err)
+			return
+		}
+	}
+
+	if err := sse.PatchElementTempl(components.BacklinkListPagination(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
+		slog.ErrorContext(ctx, "バックリンクページネーションのSSE送信に失敗", "error", err)
 		return
 	}
 }
