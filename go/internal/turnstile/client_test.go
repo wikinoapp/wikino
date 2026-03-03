@@ -31,7 +31,7 @@ func TestVerify_Success(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成（モックサーバーのURLを使用）
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	// siteverifyURLを書き換えることができないため、httpClientのTransportを使ってリダイレクト
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
@@ -63,7 +63,7 @@ func TestVerify_Failure(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
 	}
@@ -100,7 +100,7 @@ func TestVerify_FailureWithErrorCodes(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
 	}
@@ -125,7 +125,7 @@ func TestVerify_EmptyToken(t *testing.T) {
 	t.Parallel()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 
 	// Verifyメソッドをテスト（空トークン）
 	ctx := context.Background()
@@ -143,17 +143,17 @@ func TestVerify_EmptyToken(t *testing.T) {
 	}
 }
 
-func TestVerify_EmptySecretKey(t *testing.T) {
+func TestVerify_Disabled(t *testing.T) {
 	t.Parallel()
 
-	// SecretKeyが空のクライアントを作成（テスト環境用）
-	client := NewClient("")
+	// Turnstileが無効なクライアントを作成
+	client := NewClient(false, "test-secret-key")
 
 	// Verifyメソッドをテスト
 	ctx := context.Background()
 	success, err := client.Verify(ctx, "any-token")
 
-	// アサーション（SecretKeyが空の場合は常に成功を返す）
+	// アサーション（Turnstileが無効の場合は常に成功を返す）
 	if err != nil {
 		t.Errorf("Verify() error = %v, want nil", err)
 	}
@@ -176,7 +176,7 @@ func TestVerify_Timeout(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
 	}
@@ -209,7 +209,7 @@ func TestVerify_InvalidJSON(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
 	}
@@ -242,7 +242,7 @@ func TestVerify_NonOKStatusCode(t *testing.T) {
 	defer mockServer.Close()
 
 	// クライアントを作成
-	client := NewClient("test-secret-key")
+	client := NewClient(true, "test-secret-key")
 	client.httpClient.Transport = &mockTransport{
 		target: mockServer.URL,
 	}
@@ -266,10 +266,13 @@ func TestVerify_NonOKStatusCode(t *testing.T) {
 func TestNewClient(t *testing.T) {
 	t.Parallel()
 
-	client := NewClient("my-secret-key")
+	client := NewClient(true, "my-secret-key")
 
 	if client == nil {
 		t.Fatal("NewClient() returned nil")
+	}
+	if !client.enabled {
+		t.Error("client.enabled = false, want true")
 	}
 	if client.secretKey != "my-secret-key" {
 		t.Errorf("client.secretKey = %v, want my-secret-key", client.secretKey)

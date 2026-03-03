@@ -36,6 +36,7 @@ type Config struct {
 	RailsAppURL string
 
 	// Cloudflare Turnstile（Bot対策）
+	TurnstileEnabled   bool
 	TurnstileSiteKey   string
 	TurnstileSecretKey string
 
@@ -109,8 +110,10 @@ func Load() (*Config, error) {
 	// Rails版アプリのURL（オプショナル - リバースプロキシ機能で使用）
 	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")
 
-	// Cloudflare Turnstile（オプショナル - ログイン・サインアップフォームで使用）
-	// テスト環境では空文字列でも動作する（モック設定として使用）
+	// Cloudflare Turnstile（Bot対策 - ログイン・サインアップフォームで使用）
+	// WIKINO_TURNSTILE_ENABLED が "false" の場合はTurnstile検証を無効化する
+	// 未設定またはそれ以外の値の場合は有効（デフォルト: 有効）
+	cfg.TurnstileEnabled = os.Getenv("WIKINO_TURNSTILE_ENABLED") != "false"
 	cfg.TurnstileSiteKey = os.Getenv("WIKINO_TURNSTILE_SITE_KEY")
 	cfg.TurnstileSecretKey = os.Getenv("WIKINO_TURNSTILE_SECRET_KEY")
 
