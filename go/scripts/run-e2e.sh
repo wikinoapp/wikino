@@ -20,6 +20,8 @@ cleanup() {
     kill "$E2E_SERVER_PID" 2>/dev/null || true
     wait "$E2E_SERVER_PID" 2>/dev/null || true
   fi
+  # go runの子プロセスがポートを保持している場合に備えて確実に解放する
+  fuser -k "${E2E_PORT}/tcp" 2>/dev/null || true
 }
 
 trap cleanup EXIT

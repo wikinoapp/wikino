@@ -39,6 +39,7 @@ async function visitPageEditor(pwPage: import("@playwright/test").Page) {
 }
 
 test.describe("Wikiリンク補完", () => {
+  test.describe.configure({ mode: "serial" });
   test("[[を入力すると補完候補が表示されること", async ({ page }) => {
     await visitPageEditor(page);
 
