@@ -22,8 +22,8 @@ type EditPageData struct {
 
 // Edit はページ編集画面のコンテンツを表示します
 templ Edit(data EditPageData) {
-	<div class="pt-2 pb-4">
-		<div class="flex flex-col gap-2">
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
 			@components.TopNav(components.TopNavData{
 				Items: []components.BreadcrumbItem{
 					{
@@ -45,20 +45,18 @@ templ Edit(data EditPageData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-4">
-					<div class="px-4">
-						@components.FormErrors(data.FormErrors)
-					</div>
-
-					if data.Page.ShowingDraft {
-						<div class="px-4">
+					<div class="flex flex-col gap-4 px-4">
+						if data.Page.ShowingDraft {
 							<div class="alert">
 								@templates.Icon("warning-circle-regular", "fill-info")
 								<h2>
 									{ templates.T(ctx, "page_edit_current_page_is_draft") }
 								</h2>
 							</div>
-						</div>
-					}
+						}
+
+						@components.FormErrors(data.FormErrors)
+					</div>
 
 					<div class="px-0 md:px-4">
 						<div class="card !rounded-none md:!rounded-xl">
@@ -124,7 +122,7 @@ templ Edit(data EditPageData) {
 										>{ data.Page.Body }</textarea>
 									</div>
 
-									<div class="flex items-center justify-between gap-2">
+									<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
 										<div class="flex gap-2">
 											<button
 												class="btn-primary rounded-full w-fit"
@@ -134,16 +132,18 @@ templ Edit(data EditPageData) {
 												@templates.Icon("paper-plane-tilt-regular")
 												{ templates.T(ctx, "page_edit_publish_to_topic_button") }
 											</button>
+										</div>
 
+										<div class="flex flex-1 items-center md:justify-between gap-2">
 											<a
-												class="btn-ghost rounded-full w-fit"
+												class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 											>
 												{ templates.T(ctx, "page_edit_cancel") }
 											</a>
-										</div>
 
-										<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+										</div>
 									</div>
 								</form>
 							</div>
