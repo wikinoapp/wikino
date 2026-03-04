@@ -107,8 +107,9 @@
 
 ### 表示条件
 
-- 公開済み（`published_at IS NOT NULL`）かつ未削除（`discarded_at IS NULL`）のページのみ表示される
+- 未廃棄（`discarded_at IS NULL`）のページのみ表示される
 - 同一スペース内のページのみ表示される（`space_id` による絞り込み）
+- `published_at` によるフィルタリングは行わない（Wikiリンクで自動作成された未公開ページもリンク一覧に表示するため。Rails版の `available` スコープに準拠）
 
 ## 設計
 
@@ -202,7 +203,6 @@ SELECT id, space_id, topic_id, number, title, modified_at
 FROM pages
 WHERE id = ANY(@page_ids::uuid[])
   AND space_id = @space_id
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY modified_at DESC, id DESC
 LIMIT @page_limit OFFSET @page_offset;
@@ -215,7 +215,6 @@ SELECT id, space_id, topic_id, number, title, modified_at
 FROM pages
 WHERE @target_page_id::varchar = ANY(linked_page_ids)
   AND space_id = @space_id
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY modified_at DESC, id DESC
 LIMIT @page_limit OFFSET @page_offset;
