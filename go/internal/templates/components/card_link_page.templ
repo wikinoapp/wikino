@@ -10,14 +10,14 @@ import (
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdentifier) {
 	<div
 		if page.Primary {
-			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary border-l-2 border-l-brand-green-400"
+			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-brand-green-600 border-l-2 border-l-brand-green-400"
 		} else {
 			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		}
 	>
 		<a
 			href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier.String(), page.Number))) }
-			class="absolute right-2 top-2 z-10 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100"
+			class="absolute right-2 top-2 z-10 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-green-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100"
 			title={ templates.T(ctx, "page_edit_links_edit_page") }
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
