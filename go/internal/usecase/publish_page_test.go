@@ -331,6 +331,178 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 	}
 }
 
+func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-editor").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-editor@example.com").
+		WithAtname("publisheditor").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Editor Publish Test").
+		WithBody("See [[公開時自動作成ページ]]").
+		Build()
+
+	title := "Editor Publish Test"
+	output, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		DraftPageID:      draftPageID,
+		Title:            &title,
+		Body:             "See [[公開時自動作成ページ]]",
+		SpaceIdentifier:  "publish-editor",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+
+	// 自動作成されたページのIDを取得
+	if len(output.Page.LinkedPageIDs) == 0 {
+		t.Fatal("LinkedPageIDs should not be empty")
+	}
+	linkedPageID := output.Page.LinkedPageIDs[0]
+
+	// 自動作成されたページにpage_editorsが作成されていることを確認
+	editor, err := pageEditorRepo.FindByPageAndSpaceMember(context.Background(), repository.FindByPageAndSpaceMemberInput{
+		SpaceID:       spaceID,
+		PageID:        linkedPageID,
+		SpaceMemberID: spaceMemberID,
+	})
+	if err != nil {
+		t.Fatalf("自動作成ページのpage_editorsが見つかりません: %v", err)
+	}
+	if editor.PageID != linkedPageID {
+		t.Errorf("PageID = %v, want %v", editor.PageID, linkedPageID)
+	}
+	if editor.SpaceMemberID != spaceMemberID {
+		t.Errorf("SpaceMemberID = %v, want %v", editor.SpaceMemberID, spaceMemberID)
+	}
+}
+
+func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-discarded").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-discarded@example.com").
+		WithAtname("publishdiscarded").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	// 廃棄済みページを作成
+	discardedPageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("廃棄済みページ").
+		WithDiscarded().
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Discarded Link Test").
+		WithBody("See [[廃棄済みページ]]").
+		Build()
+
+	title := "Discarded Link Test"
+	output, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		DraftPageID:      draftPageID,
+		Title:            &title,
+		Body:             "See [[廃棄済みページ]]",
+		SpaceIdentifier:  "publish-discarded",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+
+	// LinkedPageIDsに廃棄済みページのIDが含まれることを確認
+	if len(output.Page.LinkedPageIDs) != 1 {
+		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.Page.LinkedPageIDs))
+	}
+	if output.Page.LinkedPageIDs[0] != discardedPageID {
+		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.Page.LinkedPageIDs[0], discardedPageID)
+	}
+}
+
 func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)

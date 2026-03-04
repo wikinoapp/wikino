@@ -94,7 +94,7 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	// 2. Wikiリンク解析・リンク先ページの自動作成
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.Body, input.CurrentTopicName, input.SpaceID, pageRepo, topicRepo,
+		ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo, topicRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)

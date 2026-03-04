@@ -19,6 +19,7 @@ type AutoSaveDraftPageUsecase struct {
 	db             *sql.DB
 	draftPageRepo  *repository.DraftPageRepository
 	pageRepo       *repository.PageRepository
+	pageEditorRepo *repository.PageEditorRepository
 	topicRepo      *repository.TopicRepository
 	attachmentRepo *repository.AttachmentRepository
 }
@@ -28,6 +29,7 @@ func NewAutoSaveDraftPageUsecase(
 	db *sql.DB,
 	draftPageRepo *repository.DraftPageRepository,
 	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
 	topicRepo *repository.TopicRepository,
 	attachmentRepo *repository.AttachmentRepository,
 ) *AutoSaveDraftPageUsecase {
@@ -35,6 +37,7 @@ func NewAutoSaveDraftPageUsecase(
 		db:             db,
 		draftPageRepo:  draftPageRepo,
 		pageRepo:       pageRepo,
+		pageEditorRepo: pageEditorRepo,
 		topicRepo:      topicRepo,
 		attachmentRepo: attachmentRepo,
 	}
@@ -75,6 +78,7 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	pageRepo := uc.pageRepo.WithTx(tx)
+	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
 	topicRepo := uc.topicRepo.WithTx(tx)
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 
@@ -89,7 +93,7 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 
 	// 3. Wikiリンク解析・リンク先ページの自動作成
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.Body, input.CurrentTopicName, input.SpaceID, pageRepo, topicRepo,
+		ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo, topicRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
@@ -190,7 +194,9 @@ func resolveAndCreateLinkedPages(
 	body string,
 	currentTopicName string,
 	spaceID model.SpaceID,
+	spaceMemberID model.SpaceMemberID,
 	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
 	topicRepo *repository.TopicRepository,
 ) ([]model.PageID, []markup.PageLocation, error) {
 	keys := markup.ScanWikilinks(body, currentTopicName)
@@ -209,6 +215,7 @@ func resolveAndCreateLinkedPages(
 		topicMap[t.Name] = t
 	}
 
+	now := time.Now()
 	var linkedPageIDs []model.PageID
 	var pageLocations []markup.PageLocation
 	seen := make(map[string]bool)
@@ -225,9 +232,22 @@ func resolveAndCreateLinkedPages(
 			continue
 		}
 
-		page, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, topic.ID, key.PageTitle)
+		page, created, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, topic.ID, key.PageTitle)
 		if err != nil {
 			return nil, nil, err
+		}
+
+		// Rails版と同様に、ページを新規作成した場合はpage_editorsレコードも作成する
+		if created {
+			_, err = pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
+				SpaceID:            spaceID,
+				PageID:             page.ID,
+				SpaceMemberID:      spaceMemberID,
+				LastPageModifiedAt: now,
+			})
+			if err != nil {
+				return nil, nil, fmt.Errorf("自動作成ページの編集者登録に失敗しました: %w", err)
+			}
 		}
 
 		linkedPageIDs = append(linkedPageIDs, page.ID)
@@ -250,25 +270,26 @@ func resolveAndCreateLinkedPages(
 
 // findOrCreateLinkedPage はWikiリンクのリンク先ページを取得するか、存在しなければ作成する。
 // ページ番号のユニーク制約（space_id + number）違反時はリトライする。
+// 戻り値のboolはページが新規作成された場合にtrueを返す。
 func findOrCreateLinkedPage(
 	ctx context.Context,
 	pageRepo *repository.PageRepository,
 	spaceID model.SpaceID,
 	topicID model.TopicID,
 	title string,
-) (*model.Page, error) {
+) (*model.Page, bool, error) {
 	for i := 0; i < findOrCreateRetryLimit; i++ {
 		page, err := pageRepo.FindByTopicAndTitle(ctx, topicID, title, spaceID)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if page != nil {
-			return page, nil
+			return page, false, nil
 		}
 
 		nextNumber, err := pageRepo.NextPageNumber(ctx, spaceID)
 		if err != nil {
-			return nil, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
+			return nil, false, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
 		}
 
 		page, err = pageRepo.CreateLinkedPage(ctx, repository.CreateLinkedPageInput{
@@ -282,13 +303,13 @@ func findOrCreateLinkedPage(
 				slog.WarnContext(ctx, "リンク先ページのユニーク制約違反によりリトライ", "attempt", i+1, "title", title)
 				continue
 			}
-			return nil, fmt.Errorf("リンク先ページの作成に失敗しました: %w", err)
+			return nil, false, fmt.Errorf("リンク先ページの作成に失敗しました: %w", err)
 		}
 
-		return page, nil
+		return page, true, nil
 	}
 
-	return nil, fmt.Errorf("リンク先ページの作成が%d回のリトライ後も失敗しました", findOrCreateRetryLimit)
+	return nil, false, fmt.Errorf("リンク先ページの作成が%d回のリトライ後も失敗しました", findOrCreateRetryLimit)
 }
 
 // uniqueTopicNames はWikiリンクキーからユニークなトピック名を抽出する
