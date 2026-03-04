@@ -55,9 +55,19 @@ func SignInPath() Path {
 	return Path("/sign_in")
 }
 
+// PageLinkListPath はリンク一覧のパスを生成します
+func PageLinkListPath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/link_list", spaceIdentifier, pageNumber))
+}
+
 // PageBacklinkListPath はバックリンク一覧のパスを生成します
 func PageBacklinkListPath(spaceIdentifier string, pageNumber int32, linkedPageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/links/%d/backlink_list", spaceIdentifier, pageNumber, linkedPageNumber))
+}
+
+// PageBacklinksPath はページレベルのバックリンク一覧のパスを生成します
+func PageBacklinksPath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/backlinks", spaceIdentifier, pageNumber))
 }
 
 // PageEditPath はページ編集のパスを生成します

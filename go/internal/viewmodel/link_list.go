@@ -8,7 +8,9 @@ const (
 	// LinkLimit はリンク一覧の1ページあたりの表示件数です
 	LinkLimit int32 = 15
 	// BacklinkLimit はバックリンクの1ページあたりの表示件数です
-	BacklinkLimit int32 = 14
+	BacklinkLimit int32 = 13
+	// PageBacklinkLimit はページレベルのバックリンク一覧の1ページあたりの表示件数です
+	PageBacklinkLimit int32 = 14
 )
 
 // LinkListItem はリンク一覧の個別リンク情報です
@@ -39,8 +41,10 @@ type NewLinkListInput struct {
 func NewLinkList(input NewLinkListInput) LinkList {
 	items := make([]LinkListItem, 0, len(input.Pages))
 	for _, pg := range input.Pages {
+		card := NewCardLinkPage(pg, input.TopicMap)
+		card.Primary = true
 		item := LinkListItem{
-			CardLinkPage: NewCardLinkPage(pg, input.TopicMap),
+			CardLinkPage: card,
 		}
 		if input.BacklinkMap != nil {
 			item.BacklinkList = input.BacklinkMap[pg.ID]

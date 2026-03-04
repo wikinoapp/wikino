@@ -37,15 +37,9 @@ templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar) {
 									{ draft.TopicName }
 								</span>
 
-								if draft.Title != "" {
-									<span class="line-clamp-1 text-sm">
-										{ draft.Title }
-									</span>
-								} else {
-									<span class="line-clamp-1 text-sm text-muted-foreground">
-										{ templates.T(ctx, "sidebar_draft_pages_untitled") }
-									</span>
-								}
+								<span class="line-clamp-1 text-sm">
+									{ draft.DisplayTitle(ctx) }
+								</span>
 							</div>
 						</a>
 					</div>

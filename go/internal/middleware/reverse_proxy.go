@@ -37,7 +37,9 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`), flag: model.FeatureFlagGoPageEdit},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), flag: model.FeatureFlagGoPageEdit, methods: []string{"PATCH"}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`), flag: model.FeatureFlagGoPageEdit},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`), flag: model.FeatureFlagGoPageEdit},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`), flag: model.FeatureFlagGoPageEdit},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`), flag: model.FeatureFlagGoPageEdit},
 }
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
@@ -253,12 +255,28 @@ func (m *ReverseProxyMiddleware) getFeatureFlagForRequest(r *http.Request) model
 }
 
 // containsMethod は指定されたHTTPメソッドがスライスに含まれるかを判定する
+//
+// HTMLフォームはGETとPOSTのみサポートするため、PATCH/PUT/DELETEリクエストは
+// POST + _methodパラメータとして送信される（Method Overrideパターン）。
+// このミドルウェアはMethod Overrideミドルウェアより前に実行されるため、
+// POSTリクエストもPATCH/PUT/DELETEパターンにマッチさせる必要がある。
 func containsMethod(methods []string, method string) bool {
 	for _, m := range methods {
 		if m == method {
 			return true
 		}
 	}
+
+	// POSTリクエストはMethod Override経由でPATCH/PUT/DELETEに変換される可能性がある
+	if method == http.MethodPost {
+		for _, m := range methods {
+			switch m {
+			case http.MethodPatch, http.MethodPut, http.MethodDelete:
+				return true
+			}
+		}
+	}
+
 	return false
 }
 

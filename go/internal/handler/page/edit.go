@@ -135,7 +135,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit)
+		excludePageIDs := viewmodel.BuildExcludePageIDs(pg.ID, paginatedLinks.Pages)
+
+		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit, excludePageIDs)
 		if err != nil {
 			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -143,35 +145,25 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// ページレベルのバックリンク一覧を取得（公開済みページのLinkedPageIDsに基づく）
-	backlinkPages, err := h.pageRepo.FindBacklinkedByPageID(ctx, pg.ID, space.ID)
+	// ページレベルのバックリンク一覧をページネーション付きで取得（公開済みページのLinkedPageIDsに基づく）
+	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, 1, viewmodel.PageBacklinkLimit, nil)
 	if err != nil {
 		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// すべてのページからTopicIDを収集してトピックを一括取得
-	topicIDSet := make(map[model.TopicID]struct{})
+	// トピックIDを収集してトピックを一括取得
+	var allPageSlices [][]*model.Page
 	if paginatedLinks != nil {
-		for _, p := range paginatedLinks.Pages {
-			topicIDSet[p.TopicID] = struct{}{}
-		}
+		allPageSlices = append(allPageSlices, paginatedLinks.Pages)
 	}
 	for _, paginated := range backlinkPaginatedMap {
-		for _, p := range paginated.Pages {
-			topicIDSet[p.TopicID] = struct{}{}
-		}
+		allPageSlices = append(allPageSlices, paginated.Pages)
 	}
-	for _, p := range backlinkPages {
-		topicIDSet[p.TopicID] = struct{}{}
-	}
+	allPageSlices = append(allPageSlices, paginatedBacklinks.Pages)
 
-	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
-	for id := range topicIDSet {
-		topicIDs = append(topicIDs, id)
-	}
-
+	topicIDs := viewmodel.CollectTopicIDsFromPages(allPageSlices...)
 	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
 	if err != nil {
 		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
@@ -179,48 +171,35 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
-	for _, t := range topics {
-		topicMap[t.ID] = t
-	}
-
 	// ViewModelを構築
-	var linkListVM viewmodel.LinkList
-	if paginatedLinks != nil && len(paginatedLinks.Pages) > 0 {
-		backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(backlinkPaginatedMap))
-		for pageID, paginated := range backlinkPaginatedMap {
-			var linkedPageNumber int32
-			for _, p := range paginatedLinks.Pages {
-				if p.ID == pageID {
-					linkedPageNumber = int32(p.Number)
-					break
-				}
-			}
-			backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-				Pages:            paginated.Pages,
-				TopicMap:         topicMap,
-				Pagination:       viewmodel.NewPagination(1, paginated.TotalCount, int(viewmodel.BacklinkLimit)),
-				SpaceIdentifier:  spaceIdentifier,
-				PageNumber:       int32(pg.Number),
-				LinkedPageNumber: linkedPageNumber,
-			})
-		}
-
-		linkListVM = viewmodel.NewLinkList(viewmodel.NewLinkListInput{
-			Pages:           paginatedLinks.Pages,
-			TopicMap:        topicMap,
-			BacklinkMap:     backlinkMap,
-			Pagination:      viewmodel.NewPagination(1, paginatedLinks.TotalCount, int(viewmodel.LinkLimit)),
-			SpaceIdentifier: spaceIdentifier,
-			PageNumber:      int32(pg.Number),
-		})
+	var linkedPages []*model.Page
+	var linkedTotalCount int64
+	if paginatedLinks != nil {
+		linkedPages = paginatedLinks.Pages
+		linkedTotalCount = paginatedLinks.TotalCount
 	}
 
-	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-		Pages:           backlinkPages,
-		TopicMap:        topicMap,
-		SpaceIdentifier: spaceIdentifier,
+	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(backlinkPaginatedMap))
+	for pageID, paginated := range backlinkPaginatedMap {
+		backlinksPerPage[pageID] = &viewmodel.PageSliceWithCount{
+			Pages:      paginated.Pages,
+			TotalCount: paginated.TotalCount,
+		}
+	}
+
+	editLinkData := viewmodel.BuildEditLinkData(viewmodel.BuildEditLinkDataInput{
+		LinkedPages:       linkedPages,
+		LinkedTotalCount:  linkedTotalCount,
+		BacklinksPerPage:  backlinksPerPage,
+		PageBacklinks:     paginatedBacklinks.Pages,
+		PageBacklinkCount: paginatedBacklinks.TotalCount,
+		Topics:            topics,
+		SpaceIdentifier:   spaceIdentifier,
+		PageNumber:        int32(pg.Number),
+		CurrentPage:       1,
 	})
+	linkListVM := editLinkData.LinkList
+	backlinkListVM := editLinkData.BacklinkList
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)

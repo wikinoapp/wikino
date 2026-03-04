@@ -17,7 +17,8 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -80,7 +81,8 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -153,7 +155,8 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -203,7 +206,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -262,7 +266,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -317,6 +322,145 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 	}
 	if output.DraftPage.LinkedPageIDs[0] != existingPageID {
 		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.DraftPage.LinkedPageIDs[0], existingPageID)
+	}
+}
+
+func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("auto-save-editor").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("auto-save-editor@example.com").
+		WithAtname("autosaveeditor").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	// Wikilinkを含む本文で自動保存
+	title := "Editor Test"
+	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[自動作成ページ]]",
+		SpaceIdentifier:  "auto-save-editor",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+
+	// 自動作成されたページのIDを取得
+	if len(output.DraftPage.LinkedPageIDs) == 0 {
+		t.Fatal("LinkedPageIDs should not be empty")
+	}
+	linkedPageID := output.DraftPage.LinkedPageIDs[0]
+
+	// 自動作成されたページにpage_editorsが作成されていることを確認
+	editor, err := pageEditorRepo.FindByPageAndSpaceMember(context.Background(), repository.FindByPageAndSpaceMemberInput{
+		SpaceID:       spaceID,
+		PageID:        linkedPageID,
+		SpaceMemberID: spaceMemberID,
+	})
+	if err != nil {
+		t.Fatalf("自動作成ページのpage_editorsが見つかりません: %v", err)
+	}
+	if editor.PageID != linkedPageID {
+		t.Errorf("PageID = %v, want %v", editor.PageID, linkedPageID)
+	}
+	if editor.SpaceMemberID != spaceMemberID {
+		t.Errorf("SpaceMemberID = %v, want %v", editor.SpaceMemberID, spaceMemberID)
+	}
+}
+
+func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("auto-save-discarded").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("auto-save-discarded@example.com").
+		WithAtname("autosavediscarded").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	// 廃棄済みページを作成
+	discardedPageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("廃棄済みページ").
+		WithDiscarded().
+		Build()
+
+	// 廃棄済みページと同名のWikilinkを含む本文で自動保存
+	title := "Discarded Link Test"
+	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[廃棄済みページ]]",
+		SpaceIdentifier:  "auto-save-discarded",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+
+	// LinkedPageIDsに廃棄済みページのIDが含まれることを確認
+	if len(output.DraftPage.LinkedPageIDs) != 1 {
+		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.DraftPage.LinkedPageIDs))
+	}
+	if output.DraftPage.LinkedPageIDs[0] != discardedPageID {
+		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.DraftPage.LinkedPageIDs[0], discardedPageID)
 	}
 }
 

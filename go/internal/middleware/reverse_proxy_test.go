@@ -422,6 +422,12 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			expected: "go_page_edit",
 		},
 		{
+			name:     "ページ更新（POST）はMethod Override前のためPATCHパターンにマッチする",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1",
+			expected: "go_page_edit",
+		},
+		{
 			name:     "ページ表示（GET）はmethodsフィルタによりマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",

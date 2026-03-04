@@ -1,7 +1,6 @@
-package page_backlink_list
+package page_backlinks
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -16,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はバックリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list)
+// Show はページレベルのバックリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -30,15 +29,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// URLパラメータを取得
 	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 	pageNumberStr := chi.URLParam(r, "page_number")
-	linkedPageNumberStr := chi.URLParam(r, "linked_page_number")
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	linkedPageNumber, err := strconv.ParseInt(linkedPageNumberStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -68,7 +60,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ページを取得（編集中のページ）
+	// ページを取得
 	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
 	if err != nil {
 		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
@@ -94,18 +86,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// リンク先ページ（バックリンクの対象）を取得
-	linkedPage, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(linkedPageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if linkedPage == nil {
-		http.NotFound(w, r)
-		return
-	}
-
 	// ページネーションパラメータを取得
 	currentPage := int32(1)
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
@@ -114,11 +94,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// バックリンクを取得（編集中のページ自身とリンク先ページを除外する）
-	excludePageIDs := []model.PageID{pg.ID, linkedPage.ID}
-	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, space.ID, currentPage, viewmodel.BacklinkLimit, excludePageIDs)
+	// ページレベルのバックリンクをページネーション付きで取得
+	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, currentPage, viewmodel.PageBacklinkLimit, nil)
 	if err != nil {
-		slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -147,27 +126,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-		Pages:            paginatedBacklinks.Pages,
-		TopicMap:         topicMap,
-		Pagination:       viewmodel.NewPagination(int(currentPage), paginatedBacklinks.TotalCount, int(viewmodel.BacklinkLimit)),
-		SpaceIdentifier:  spaceIdentifier,
-		PageNumber:       int32(pageNumber),
-		LinkedPageNumber: int32(linkedPageNumber),
+		Pages:           paginatedBacklinks.Pages,
+		TopicMap:        topicMap,
+		Pagination:      viewmodel.NewPagination(int(currentPage), paginatedBacklinks.TotalCount, int(viewmodel.PageBacklinkLimit)),
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pg.Number),
 	})
 
 	// SSEフラグメントとしてバックリンク一覧を送信
-	// カードをページネーションコンテナの前に追加し、コンテナ内のページネーション内容を更新する
-	selectorID := fmt.Sprintf("page-backlink-list-%d", linkedPageNumber)
+	selectorID := "page-backlink-list-pagination"
 	sse := datastar.NewSSE(w, r)
 
 	if len(backlinkListVM.Items) > 0 {
-		if err := sse.PatchElementTempl(components.BacklinkListCards(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeBefore()); err != nil {
+		if err := sse.PatchElementTempl(components.PageBacklinkListCards(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeBefore()); err != nil {
 			slog.ErrorContext(ctx, "バックリンクカードのSSE送信に失敗", "error", err)
 			return
 		}
 	}
 
-	if err := sse.PatchElementTempl(components.BacklinkListPagination(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
+	if err := sse.PatchElementTempl(components.PageBacklinkListPagination(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
 		slog.ErrorContext(ctx, "バックリンクページネーションのSSE送信に失敗", "error", err)
 		return
 	}

@@ -36,6 +36,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			db,
 			repository.NewDraftPageRepository(queries),
 			repository.NewPageRepository(queries),
+			repository.NewPageEditorRepository(queries),
 			repository.NewTopicRepository(queries),
 			repository.NewAttachmentRepository(queries),
 		),

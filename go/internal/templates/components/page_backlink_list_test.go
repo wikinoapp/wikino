@@ -110,13 +110,98 @@ func TestPageBacklinkList_UntitledPage(t *testing.T) {
 
 	html := buf.String()
 
-	// 「タイトルなし」が表示されること
-	if !strings.Contains(html, "タイトルなし") {
-		t.Error("タイトルが空のバックリンクに「タイトルなし」が表示されていない")
+	// 「無題」が表示されること
+	if !strings.Contains(html, "無題") {
+		t.Error("タイトルが空のバックリンクに「無題」が表示されていない")
 	}
 
 	// リンクのhrefが正しいこと
 	if !strings.Contains(html, "/s/my-space/pages/5") {
 		t.Error("タイトルなしバックリンクのリンク先が正しくない")
+	}
+}
+
+func TestPageBacklinkList_WithPagination(t *testing.T) {
+	t.Parallel()
+
+	title := "リンク元ページ"
+	pages := []*model.Page{
+		{
+			Number: 10,
+			Title:  &title,
+		},
+	}
+
+	data := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+		Pages:           pages,
+		Pagination:      viewmodel.NewPagination(1, 20, 15),
+		SpaceIdentifier: model.SpaceIdentifier("my-space"),
+		PageNumber:      1,
+	})
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, "ja")
+
+	var buf bytes.Buffer
+	err := components.PageBacklinkList(data).Render(ctx, &buf)
+	if err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	// 見出しが表示されること
+	if !strings.Contains(html, "バックリンク") {
+		t.Error("バックリンクの見出しが表示されていない")
+	}
+
+	// ページネーションコンテナが表示されること
+	if !strings.Contains(html, "page-backlink-list-pagination") {
+		t.Error("ページネーションコンテナが表示されていない")
+	}
+
+	// 「もっと見る」ボタンが表示されること（HasNext=true）
+	if !strings.Contains(html, "/s/my-space/pages/1/backlinks?page=2") {
+		t.Error("「もっと見る」ボタンのURLが正しくない")
+	}
+}
+
+func TestPageBacklinkList_WithoutPagination(t *testing.T) {
+	t.Parallel()
+
+	title := "リンク元ページ"
+	pages := []*model.Page{
+		{
+			Number: 10,
+			Title:  &title,
+		},
+	}
+
+	data := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+		Pages:           pages,
+		Pagination:      viewmodel.NewPagination(1, 1, 15),
+		SpaceIdentifier: model.SpaceIdentifier("my-space"),
+		PageNumber:      1,
+	})
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, "ja")
+
+	var buf bytes.Buffer
+	err := components.PageBacklinkList(data).Render(ctx, &buf)
+	if err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	// 見出しが表示されること
+	if !strings.Contains(html, "バックリンク") {
+		t.Error("バックリンクの見出しが表示されていない")
+	}
+
+	// 「もっと見る」ボタンが表示されないこと（HasNext=false）
+	if strings.Contains(html, "/backlinks?page=") {
+		t.Error("ページネーションが不要なとき「もっと見る」ボタンが表示されてはいけない")
 	}
 }

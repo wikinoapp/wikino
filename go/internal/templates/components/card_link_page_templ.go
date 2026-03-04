@@ -39,8 +39,8 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdenti
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if page.Pinned {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " class=\"group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary\"")
+		if page.Primary {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " class=\"group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-brand-green-600 border-l-2 border-l-brand-green-400\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -63,7 +63,7 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdenti
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"absolute right-2 top-2 z-10 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100\" title=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"absolute right-2 top-2 z-10 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-green-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100\" title=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

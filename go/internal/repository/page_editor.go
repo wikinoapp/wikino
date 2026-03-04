@@ -84,6 +84,26 @@ func (r *PageEditorRepository) UpdateLastPageModifiedAt(ctx context.Context, inp
 	return r.toModel(row), nil
 }
 
+// FindByPageAndSpaceMemberInput はページ編集者の検索入力パラメータ
+type FindByPageAndSpaceMemberInput struct {
+	SpaceID       model.SpaceID
+	PageID        model.PageID
+	SpaceMemberID model.SpaceMemberID
+}
+
+// FindByPageAndSpaceMember はページとスペースメンバーでページ編集者を検索する
+func (r *PageEditorRepository) FindByPageAndSpaceMember(ctx context.Context, input FindByPageAndSpaceMemberInput) (*model.PageEditor, error) {
+	row, err := r.q.FindPageEditorByPageAndSpaceMember(ctx, query.FindPageEditorByPageAndSpaceMemberParams{
+		PageID:        string(input.PageID),
+		SpaceMemberID: string(input.SpaceMemberID),
+		SpaceID:       string(input.SpaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModel は query.PageEditor を model.PageEditor に変換する
 func (r *PageEditorRepository) toModel(row query.PageEditor) *model.PageEditor {
 	return &model.PageEditor{

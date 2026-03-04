@@ -8,6 +8,11 @@ module Attachments
       include ControllerConcerns::Localizable
       include ControllerConcerns::SpaceAware
 
+      # Go版のページ編集画面からのリクエストはGo独自のCSRFトークンを使用しているため、
+      # Rails側のCSRF検証を適用できない。認証（require_authentication）と
+      # SameSite Cookieポリシーで保護する。
+      skip_forgery_protection
+
       around_action :set_locale
       before_action :require_authentication
 

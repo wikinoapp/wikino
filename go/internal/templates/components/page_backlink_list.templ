@@ -1,13 +1,15 @@
 package components
 
 import (
+	"fmt"
+
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PageBacklinkList はページレベルのバックリンク一覧を表示します。バックリンクが空の場合は何も表示しません。
+// PageBacklinkList はページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
 templ PageBacklinkList(data viewmodel.BacklinkList) {
-	if len(data.Items) > 0 {
+	if len(data.Items) > 0 || data.Pagination.HasNext {
 		<div class="flex flex-col gap-4">
 			<h2 class="text-xl/8 font-bold antialiased">
 				{ templates.T(ctx, "page_edit_backlinks_heading") }
@@ -17,7 +19,34 @@ templ PageBacklinkList(data viewmodel.BacklinkList) {
 				for _, item := range data.Items {
 					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 				}
+				<div
+					id="page-backlink-list-pagination"
+					class="contents"
+				>
+					if data.Pagination.HasNext {
+						@pageBacklinkListLoadMore(data)
+					}
+				</div>
 			</div>
 		</div>
 	}
+}
+
+// PageBacklinkListCards はバックリンクのカードのみを表示します。SSEのbeforeモードで使用します。
+templ PageBacklinkListCards(data viewmodel.BacklinkList) {
+	for _, item := range data.Items {
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+	}
+}
+
+// PageBacklinkListPagination はバックリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
+templ PageBacklinkListPagination(data viewmodel.BacklinkList) {
+	if data.Pagination.HasNext {
+		@pageBacklinkListLoadMore(data)
+	}
+}
+
+// pageBacklinkListLoadMore はページレベルのバックリンク一覧の「もっと見る」ボタンを表示します
+templ pageBacklinkListLoadMore(data viewmodel.BacklinkList) {
+	@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1))
 }

@@ -7,39 +7,37 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// BacklinkList はバックリンク一覧を表示します。バックリンクが空の場合は何も表示しません。
+// BacklinkList はバックリンク一覧を表示します。カードをgridの直接の子要素として展開し、
+// ページネーション用のコンテナを末尾に配置します。
 templ BacklinkList(data viewmodel.BacklinkList) {
-	if len(data.Items) > 0 {
-		<div class="flex flex-wrap gap-1">
-			for _, item := range data.Items {
-				<a
-					href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier.String(), item.CardLinkPage.Number))) }
-					class="badge badge-outline hover:bg-accent transition-colors text-xs"
-				>
-					if item.CardLinkPage.Title != "" {
-						{ item.CardLinkPage.Title }
-					} else {
-						<span class="text-muted-foreground italic">
-							{ templates.T(ctx, "page_edit_links_untitled") }
-						</span>
-					}
-				</a>
-			}
-			if data.Pagination.HasNext {
-				@backlinkListLoadMore(data)
-			}
-		</div>
+	for _, item := range data.Items {
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+	}
+	<div
+		id={ fmt.Sprintf("page-backlink-list-%d", data.LinkedPageNumber) }
+		class="contents"
+	>
+		if data.Pagination.HasNext {
+			@backlinkListLoadMore(data)
+		}
+	</div>
+}
+
+// BacklinkListCards はバックリンクのカードのみを表示します。SSEのbeforeモードで使用します。
+templ BacklinkListCards(data viewmodel.BacklinkList) {
+	for _, item := range data.Items {
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+	}
+}
+
+// BacklinkListPagination はバックリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
+templ BacklinkListPagination(data viewmodel.BacklinkList) {
+	if data.Pagination.HasNext {
+		@backlinkListLoadMore(data)
 	}
 }
 
 // backlinkListLoadMore はバックリンク一覧の「もっと見る」ボタンを表示します
 templ backlinkListLoadMore(data viewmodel.BacklinkList) {
-	<button
-		type="button"
-		class="badge badge-outline hover:bg-accent transition-colors text-xs cursor-pointer"
-		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1) }
-	>
-		@templates.Icon("caret-down-regular", "size-3")
-		{ templates.T(ctx, "page_edit_links_load_more") }
-	</button>
+	@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1))
 }
