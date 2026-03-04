@@ -3,20 +3,18 @@
 SELECT * FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL;
 
 -- name: FindPagesByIDs :many
--- IDリストに含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ。リンク一覧表示用）
+-- IDリストに含まれるページを取得する（同スペース・未廃棄のページのみ。リンク一覧表示用）
 SELECT * FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY number;
 
 -- name: FindBacklinkedPagesByPageID :many
--- linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ。バックリンク一覧表示用）
+-- linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・未廃棄のページのみ。バックリンク一覧表示用）
 SELECT * FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY number;
 
@@ -36,12 +34,11 @@ WHERE id = $1 AND space_id = $11
 RETURNING *;
 
 -- name: FindPageByTopicAndTitle :one
--- 指定トピック内で指定タイトルのページを取得する（廃棄されていないページのみ。Wikiリンクのページ存在確認用）
+-- 指定トピック内で指定タイトルのページを取得する（廃棄済みを含む。Wikiリンクのページ存在確認・タイトル一意性チェック用）
 SELECT * FROM pages
 WHERE topic_id = $1
   AND title = $2
-  AND space_id = $3
-  AND discarded_at IS NULL;
+  AND space_id = $3;
 
 -- name: SearchPageLocations :many
 -- ページロケーションを検索する（Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ）
@@ -62,31 +59,28 @@ LIMIT 10;
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1;
 
 -- name: FindLinkedPagesPaginated :many
--- リンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+-- リンク先ページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
 SELECT * FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY modified_at DESC, id DESC
 LIMIT $3
 OFFSET $4;
 
 -- name: CountLinkedPages :one
--- リンク先ページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+-- リンク先ページの総件数を取得する（同スペース・未廃棄のページのみ）
 SELECT COUNT(*)
 FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL;
 
 -- name: FindBacklinkedPagesPaginated :many
--- バックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+-- バックリンクページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
 SELECT * FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
   AND NOT (id = ANY($5::uuid[]))
 ORDER BY modified_at DESC, id DESC
@@ -94,12 +88,11 @@ LIMIT $3
 OFFSET $4;
 
 -- name: CountBacklinkedPages :one
--- バックリンクページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+-- バックリンクページの総件数を取得する（同スペース・未廃棄のページのみ）
 SELECT COUNT(*)
 FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
   AND NOT (id = ANY($3::uuid[]));
 
@@ -112,7 +105,6 @@ CROSS JOIN LATERAL (
   FROM pages
   WHERE t.target_id::varchar = ANY(linked_page_ids)
     AND space_id = $2
-    AND published_at IS NOT NULL
     AND discarded_at IS NULL
     AND NOT (id = ANY($4::uuid[]))
   ORDER BY modified_at DESC, id DESC
@@ -125,7 +117,6 @@ SELECT t.target_id, COUNT(p.id) AS count
 FROM unnest($1::uuid[]) AS t(target_id)
 LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
   AND p.space_id = $2
-  AND p.published_at IS NOT NULL
   AND p.discarded_at IS NULL
   AND NOT (p.id = ANY($3::uuid[]))
 GROUP BY t.target_id;
@@ -133,5 +124,5 @@ GROUP BY t.target_id;
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, '', '', '{}', $5, $5, $5, $5)
+VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
 RETURNING *;

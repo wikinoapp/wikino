@@ -19,7 +19,6 @@ SELECT COUNT(*)
 FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
   AND NOT (id = ANY($3::uuid[]))
 `
@@ -30,7 +29,7 @@ type CountBacklinkedPagesParams struct {
 	Column3 []string `json:"column_3"`
 }
 
-// バックリンクページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+// バックリンクページの総件数を取得する（同スペース・未廃棄のページのみ）
 func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedPagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countBacklinkedPages, arg.Column1, arg.SpaceID, pq.Array(arg.Column3))
 	var count int64
@@ -43,7 +42,6 @@ SELECT t.target_id, COUNT(p.id) AS count
 FROM unnest($1::uuid[]) AS t(target_id)
 LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
   AND p.space_id = $2
-  AND p.published_at IS NOT NULL
   AND p.discarded_at IS NULL
   AND NOT (p.id = ANY($3::uuid[]))
 GROUP BY t.target_id
@@ -89,7 +87,6 @@ SELECT COUNT(*)
 FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 `
 
@@ -98,7 +95,7 @@ type CountLinkedPagesParams struct {
 	SpaceID string   `json:"space_id"`
 }
 
-// リンク先ページの総件数を取得する（同スペース・公開済み・未廃棄のページのみ）
+// リンク先ページの総件数を取得する（同スペース・未廃棄のページのみ）
 func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countLinkedPages, pq.Array(arg.Column1), arg.SpaceID)
 	var count int64
@@ -108,7 +105,7 @@ func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesPara
 
 const createLinkedPage = `-- name: CreateLinkedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, '', '', '{}', $5, $5, $5, $5)
+VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
 RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
@@ -155,7 +152,6 @@ const findBacklinkedPagesByPageID = `-- name: FindBacklinkedPagesByPageID :many
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY number
 `
@@ -165,7 +161,7 @@ type FindBacklinkedPagesByPageIDParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ。バックリンク一覧表示用）
+// linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・未廃棄のページのみ。バックリンク一覧表示用）
 func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBacklinkedPagesByPageIDParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesByPageID, arg.Column1, arg.SpaceID)
 	if err != nil {
@@ -214,7 +210,6 @@ CROSS JOIN LATERAL (
   FROM pages
   WHERE t.target_id::varchar = ANY(linked_page_ids)
     AND space_id = $2
-    AND published_at IS NOT NULL
     AND discarded_at IS NULL
     AND NOT (id = ANY($4::uuid[]))
   ORDER BY modified_at DESC, id DESC
@@ -300,7 +295,6 @@ const findBacklinkedPagesPaginated = `-- name: FindBacklinkedPagesPaginated :man
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
   AND NOT (id = ANY($5::uuid[]))
 ORDER BY modified_at DESC, id DESC
@@ -316,7 +310,7 @@ type FindBacklinkedPagesPaginatedParams struct {
 	Column5 []string `json:"column_5"`
 }
 
-// バックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+// バックリンクページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
 func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBacklinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesPaginated,
 		arg.Column1,
@@ -367,7 +361,6 @@ const findLinkedPagesPaginated = `-- name: FindLinkedPagesPaginated :many
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY modified_at DESC, id DESC
 LIMIT $3
@@ -381,7 +374,7 @@ type FindLinkedPagesPaginatedParams struct {
 	Offset  int32    `json:"offset"`
 }
 
-// リンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
+// リンク先ページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
 func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findLinkedPagesPaginated,
 		pq.Array(arg.Column1),
@@ -466,7 +459,6 @@ SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, 
 WHERE topic_id = $1
   AND title = $2
   AND space_id = $3
-  AND discarded_at IS NULL
 `
 
 type FindPageByTopicAndTitleParams struct {
@@ -475,7 +467,7 @@ type FindPageByTopicAndTitleParams struct {
 	SpaceID string      `json:"space_id"`
 }
 
-// 指定トピック内で指定タイトルのページを取得する（廃棄されていないページのみ。Wikiリンクのページ存在確認用）
+// 指定トピック内で指定タイトルのページを取得する（廃棄済みを含む。Wikiリンクのページ存在確認・タイトル一意性チェック用）
 func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTopicAndTitleParams) (Page, error) {
 	row := q.db.QueryRowContext(ctx, findPageByTopicAndTitle, arg.TopicID, arg.Title, arg.SpaceID)
 	var i Page
@@ -504,7 +496,6 @@ const findPagesByIDs = `-- name: FindPagesByIDs :many
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
-  AND published_at IS NOT NULL
   AND discarded_at IS NULL
 ORDER BY number
 `
@@ -514,7 +505,7 @@ type FindPagesByIDsParams struct {
 	SpaceID string   `json:"space_id"`
 }
 
-// IDリストに含まれるページを取得する（同スペース・公開済み・未廃棄のページのみ。リンク一覧表示用）
+// IDリストに含まれるページを取得する（同スペース・未廃棄のページのみ。リンク一覧表示用）
 func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findPagesByIDs, pq.Array(arg.Column1), arg.SpaceID)
 	if err != nil {
