@@ -52,6 +52,38 @@ RSpec.describe "POST /s/:space_identifier/attachments/presign", type: :request d
     expect(json["errors"]).to be_present
   end
 
+  it "CSRF保護が有効でも、skip_forgery_protectionにより認証済みユーザーのリクエストが成功すること" do
+    ActionController::Base.allow_forgery_protection = true
+
+    user_record = FactoryBot.create(:user_record, :with_password)
+    space_record = FactoryBot.create(:space_record)
+    FactoryBot.create(:space_member_record, space_record:, user_record:)
+    sign_in(user_record:)
+
+    service_double = instance_double(Attachments::CreatePresignedUploadService)
+    result_double = instance_double(
+      Attachments::CreatePresignedUploadService::Result,
+      direct_upload_url: "https://example.com/upload",
+      direct_upload_headers: {"Content-Type" => "image/png"},
+      blob_signed_id: "test_signed_id",
+      attachment_id: SecureRandom.uuid
+    )
+    allow(Attachments::CreatePresignedUploadService).to receive(:new).and_return(service_double)
+    allow(service_double).to receive(:call).and_return(result_double)
+
+    post attachment_presign_path(space_identifier: space_record.identifier),
+      params: {
+        filename: "test.png",
+        content_type: "image/png",
+        byte_size: 1024,
+        checksum: "test_checksum"
+      }
+
+    expect(response).to have_http_status(:ok)
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
+
   # 実際のActiveStorageの動作はテスト環境でのセットアップが必要なため、
   # サービスクラスが呼び出されることだけを確認する
   it "正常なリクエストの場合、サービスクラスを呼び出すこと" do
