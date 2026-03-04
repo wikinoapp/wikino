@@ -20,20 +20,20 @@ type TopNavData struct {
 
 // TopNav はパンくずリストを含むトップナビゲーションを表示します
 templ TopNav(data TopNavData) {
-	<header class="flex items-center px-2">
-		<div class="basis-1/4">
+	<header class="flex items-center gap-2 px-2">
+		<div class="w-[32px] flex-none">
 			@sidebarToggleButton()
 		</div>
 
-		<div class="basis-2/4 flex">
+		<div class="flex-1">
 			if len(data.Items) > 0 {
-				<div class="mx-auto">
+				<div class="mx-auto w-fit">
 					@breadcrumbNav(data.Items)
 				</div>
 			}
 		</div>
 
-		<div class="basis-1/4">
+		<div class="w-[32px] flex-none">
 		</div>
 	</header>
 }
