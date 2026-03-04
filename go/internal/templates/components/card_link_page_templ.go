@@ -39,8 +39,8 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdenti
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if page.Pinned {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " class=\"group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary\"")
+		if page.Primary {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " class=\"group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary border-l-2 border-l-brand-green-400\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -23,6 +23,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_backlinks"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
@@ -118,7 +120,7 @@ func main() {
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
-	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, topicRepo, attachmentRepo)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// セッションマネージャーを初期化
@@ -246,6 +248,21 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 	)
+	pageBacklinksHandler := page_backlinks.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
+	pageLinkListHandler := page_link_list.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+	)
 	r := chi.NewRouter()
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
@@ -326,8 +343,14 @@ func main() {
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
 
+		// リンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
+
 		// バックリンク一覧SSE（Datastar）
 		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
+
+		// ページレベルのバックリンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

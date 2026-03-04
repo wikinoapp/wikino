@@ -22,7 +22,7 @@ type EditPageData struct {
 
 // Edit はページ編集画面のコンテンツを表示します
 templ Edit(data EditPageData) {
-	<div class="py-2">
+	<div class="pt-2 pb-4">
 		<div class="flex flex-col gap-2">
 			@components.TopNav(components.TopNavData{
 				Items: []components.BreadcrumbItem{

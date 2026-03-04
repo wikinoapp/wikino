@@ -61,6 +61,7 @@ type CardLinkPage struct {
 	TopicIcon    IconName
 	Pinned       bool
 	CardImageURL string
+	Primary      bool
 }
 
 // NewCardLinkPage はmodel.Pageとトピック情報からカード用のビューモデルを生成します

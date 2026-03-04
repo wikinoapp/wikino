@@ -9,8 +9,8 @@ import (
 // CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdentifier) {
 	<div
-		if page.Pinned {
-			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
+		if page.Primary {
+			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary border-l-2 border-l-brand-green-400"
 		} else {
 			class="group card relative min-h-[96px] transition px-3 py-2 duration-200 ease-in-out hover:border-primary"
 		}

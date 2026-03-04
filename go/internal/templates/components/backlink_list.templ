@@ -39,16 +39,5 @@ templ BacklinkListPagination(data viewmodel.BacklinkList) {
 
 // backlinkListLoadMore はバックリンク一覧の「もっと見る」ボタンを表示します
 templ backlinkListLoadMore(data viewmodel.BacklinkList) {
-	<button
-		type="button"
-		class="card hover:bg-accent transition-colors w-full cursor-pointer"
-		data-on:click={ fmt.Sprintf("@get('%s?page=%d')", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1) }
-	>
-		<div class="card-body flex items-center justify-center gap-1 px-4 py-3">
-			@templates.Icon("caret-down-regular", "size-4")
-			<span class="text-sm font-medium">
-				{ templates.T(ctx, "page_edit_links_load_more") }
-			</span>
-		</div>
-	</button>
+	@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1))
 }

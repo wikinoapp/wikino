@@ -37,7 +37,9 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`), flag: model.FeatureFlagGoPageEdit},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), flag: model.FeatureFlagGoPageEdit, methods: []string{"PATCH"}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`), flag: model.FeatureFlagGoPageEdit},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`), flag: model.FeatureFlagGoPageEdit},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`), flag: model.FeatureFlagGoPageEdit},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`), flag: model.FeatureFlagGoPageEdit},
 }
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア

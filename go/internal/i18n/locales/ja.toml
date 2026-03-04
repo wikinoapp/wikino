@@ -470,7 +470,7 @@ other = "下書きはありません"
 
 [sidebar_draft_pages_untitled]
 description = "サイドバーの下書きページにタイトルがないときの表示"
-other = "タイトルなし"
+other = "無題"
 
 [sidebar_draft_pages_edit_page]
 description = "サイドバーの下書きページの編集リンクのタイトル"
@@ -522,7 +522,7 @@ other = "リンク"
 
 [page_edit_links_untitled]
 description = "タイトルなしのリンク先ページの表示テキスト"
-other = "タイトルなし"
+other = "無題"
 
 [page_edit_links_edit_page]
 description = "リンク先ページの編集リンクのタイトル"
