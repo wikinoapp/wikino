@@ -5,6 +5,8 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	"github.com/wikinoapp/wikino/go/internal/templates/pages/welcome"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -30,13 +32,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	flash := h.flashMgr.GetFlash(w, r)
 
 	// テンプレートをレンダリング
-	layoutData := layouts.PlainLayoutData{
+	layoutData := layouts.DefaultLayoutData{
 		Meta:  meta,
 		Flash: flash,
+		Sidebar: components.SidebarData{
+			DefaultClosed:   true,
+			CurrentPageName: templates.PageNameWelcome,
+		},
 	}
 	pageData := welcome.ShowPageData{}
 
-	if err := layouts.Plain(layoutData, welcome.Show(pageData)).Render(ctx, w); err != nil {
+	if err := layouts.Default(layoutData, welcome.Show(pageData)).Render(ctx, w); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

@@ -10,7 +10,7 @@ const PasswordResetTokenExpirationDuration = 1 * time.Hour
 // PasswordResetToken はパスワードリセットトークンのドメインモデル
 type PasswordResetToken struct {
 	ID          string
-	UserID      string
+	UserID      UserID
 	TokenDigest string
 	ExpiresAt   time.Time
 	UsedAt      *time.Time

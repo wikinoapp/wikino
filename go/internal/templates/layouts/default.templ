@@ -1,0 +1,46 @@
+package layouts
+
+import (
+	"github.com/a-h/templ"
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+type DefaultLayoutData struct {
+	Meta        viewmodel.PageMeta
+	Flash       *session.FlashMessage
+	HideFooter  bool
+	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
+	Sidebar     components.SidebarData
+}
+
+// Default はデフォルトのレイアウトです
+templ Default(data DefaultLayoutData, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			@components.Head(data.Meta)
+		</head>
+
+		<body class="bg-background">
+			@components.Flash(data.Flash)
+
+			if !data.HideSidebar {
+				@components.Sidebar(data.Sidebar)
+			}
+
+			<div class="flex-1 flex flex-col min-h-screen">
+				<main>
+					@content
+				</main>
+
+				if !data.HideFooter {
+					@components.Footer()
+				}
+			</div>
+		</body>
+	</html>
+}

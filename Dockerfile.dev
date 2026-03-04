@@ -27,6 +27,8 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   libyaml-dev               # psych gemのインストールに必要 (Rails)
   lsb-release               # PostgreSQLのaptリポジトリ設定に必要
   nano                      # Claude Codeで使用
+  net-tools                 # netstat (ネットワークデバッグ用)
+  psmisc                    # fuser (プロセス特定用)
   ripgrep                   # Claude Codeで使用
   sudo
   tree                      # Claude Codeで使用
@@ -77,6 +79,13 @@ RUN curl -fsSL -o /usr/local/bin/dbmate \
       https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 && \
     chmod +x /usr/local/bin/dbmate
 
+# --- hivemind ---
+RUN curl -fsSL -L -o /tmp/hivemind.gz \
+      https://github.com/DarthSim/hivemind/releases/download/v1.1.0/hivemind-v1.1.0-linux-amd64.gz && \
+    gunzip /tmp/hivemind.gz && \
+    mv /tmp/hivemind /usr/local/bin/hivemind && \
+    chmod +x /usr/local/bin/hivemind
+
 # --- golangci-lint ---
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
       | sh -s -- -b /usr/local/bin v2.7.2
@@ -95,6 +104,9 @@ RUN chown -R ${USER_ID}:${GROUP_ID} /mise
 
 WORKDIR /workspace
 USER ${USERNAME}
+
+# --- .zshrc の作成 ---
+RUN touch ~/.zshrc
 
 # --- mise シェル設定 ---
 # Docker環境ではshims方式を使用（PATH="/mise/shims:..."で設定済み）

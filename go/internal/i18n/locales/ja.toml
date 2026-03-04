@@ -414,9 +414,158 @@ other = "オープンソース"
 [welcome_open_source_description]
 other = "WikinoのソースコードはGitHubで公開されています"
 
+# トップナビゲーション
+[top_nav_breadcrumb_label]
+description = "トップナビゲーションのパンくずリストのaria-label"
+other = "パンくずリスト"
+
+[breadcrumb_home]
+description = "パンくずリストのホームリンクのラベル"
+other = "ホーム"
+
+# サイドバー
+[sidebar_toggle_label]
+description = "サイドバーの開閉ボタンのaria-label"
+other = "サイドバーの開閉"
+
+[sidebar_nav_label]
+description = "サイドバーナビゲーションのaria-label"
+other = "サイドバー"
+
+[sidebar_home]
+description = "サイドバーのホームリンク"
+other = "ホーム"
+
+[sidebar_search]
+description = "サイドバーの検索リンク"
+other = "検索"
+
+[sidebar_profile]
+description = "サイドバーのプロフィールリンク"
+other = "プロフィール"
+
+[sidebar_sign_in]
+description = "サイドバーのログインリンク"
+other = "ログイン"
+
+[sidebar_joined_topics_heading]
+description = "サイドバーの参加中トピック一覧の見出し"
+other = "参加中のトピック"
+
+[sidebar_joined_topics_empty]
+description = "サイドバーの参加中トピックが0件のときのメッセージ"
+other = "参加中のトピックはありません"
+
+[sidebar_joined_topics_create_page]
+description = "サイドバーのトピック上のページ作成リンクのツールチップ"
+other = "ページを作成する"
+
+[sidebar_draft_pages_heading]
+description = "サイドバーの下書きページ一覧の見出し"
+other = "下書きのページ"
+
+[sidebar_draft_pages_empty]
+description = "サイドバーの下書きページが0件のときのメッセージ"
+other = "下書きはありません"
+
+[sidebar_draft_pages_untitled]
+description = "サイドバーの下書きページにタイトルがないときの表示"
+other = "無題"
+
+[sidebar_draft_pages_edit_page]
+description = "サイドバーの下書きページの編集リンクのタイトル"
+other = "編集する"
+
 # フッター
 [footer_terms]
 other = "利用規約"
 
 [footer_privacy]
 other = "プライバシーポリシー"
+
+# ページ編集
+[page_edit_title]
+description = "ページ編集画面のタイトル"
+other = "ページを編集"
+
+[page_edit_title_label]
+description = "ページタイトル入力フィールドのラベル"
+other = "タイトル"
+
+[page_edit_title_placeholder]
+description = "ページタイトル入力フィールドのプレースホルダー"
+other = "ページタイトル"
+
+[page_edit_body_label]
+description = "ページ本文入力フィールドのラベル"
+other = "本文"
+
+[page_edit_body_placeholder]
+description = "ページ本文入力フィールドのプレースホルダー"
+other = "本文を入力..."
+
+[page_edit_publish_to_topic_button]
+description = "トピックに公開ボタンのラベル"
+other = "トピックに公開"
+
+[page_edit_cancel]
+description = "ページ編集キャンセルリンクのラベル"
+other = "キャンセル"
+
+[page_edit_current_page_is_draft]
+description = "下書きを表示中のアラートメッセージ"
+other = "現在下書きを表示しています"
+
+[page_edit_links_heading]
+description = "ページ編集画面のリンク一覧の見出し"
+other = "リンク"
+
+[page_edit_links_untitled]
+description = "タイトルなしのリンク先ページの表示テキスト"
+other = "無題"
+
+[page_edit_links_edit_page]
+description = "リンク先ページの編集リンクのタイトル"
+other = "編集する"
+
+[page_edit_links_load_more]
+description = "リンク一覧の「もっと見る」ボタン"
+other = "もっと見る"
+
+[page_edit_backlinks_heading]
+description = "ページ編集画面のバックリンク一覧の見出し"
+other = "バックリンク"
+
+[page_edit_draft_saved_time]
+description = "自動保存時刻の表示"
+other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
+
+# ページ公開バリデーション
+[validation_page_title_required]
+description = "ページタイトル必須エラー"
+other = "タイトルを入力してください"
+
+[validation_page_title_too_long]
+description = "ページタイトル文字数超過エラー"
+other = "タイトルは200文字以内で入力してください"
+
+[validation_page_title_invalid_chars]
+description = "ページタイトル禁止文字エラー"
+other = "タイトルに使用できない文字が含まれています"
+
+[validation_page_title_invalid_format]
+description = "ページタイトル不正フォーマットエラー"
+other = "タイトルの先頭・末尾にスペースやドットは使用できません"
+
+[validation_page_title_reserved]
+description = "ページタイトル予約語エラー"
+other = "このタイトルは使用できません"
+
+[validation_page_title_uniqueness_html]
+description = "ページタイトル重複エラー（HTML含む）"
+other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既存のページを編集</a>"
+
+# ページ公開成功
+[flash_page_saved]
+description = "ページ保存成功メッセージ"
+other = "ページを保存しました"

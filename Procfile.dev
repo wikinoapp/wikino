@@ -1,0 +1,5 @@
+go-assets: cd go && pnpm watch
+go-server: cd go && air
+rails-css: cd rails && pnpm build:css --watch
+rails-js: cd rails && pnpm build --watch
+rails-server: cd rails && PORT=3000 make server

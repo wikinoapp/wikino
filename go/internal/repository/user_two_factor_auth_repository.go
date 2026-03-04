@@ -21,8 +21,8 @@ func NewUserTwoFactorAuthRepository(q *query.Queries) *UserTwoFactorAuthReposito
 }
 
 // FindByUserID はユーザーIDで二要素認証設定を取得する
-func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID string) (*model.UserTwoFactorAuth, error) {
-	row, err := r.q.GetUserTwoFactorAuthByUserID(ctx, userID)
+func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID model.UserID) (*model.UserTwoFactorAuth, error) {
+	row, err := r.q.GetUserTwoFactorAuthByUserID(ctx, string(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -33,8 +33,8 @@ func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID s
 }
 
 // FindEnabledByUserID はユーザーIDで有効な二要素認証設定を取得する
-func (r *UserTwoFactorAuthRepository) FindEnabledByUserID(ctx context.Context, userID string) (*model.UserTwoFactorAuth, error) {
-	row, err := r.q.GetEnabledUserTwoFactorAuthByUserID(ctx, userID)
+func (r *UserTwoFactorAuthRepository) FindEnabledByUserID(ctx context.Context, userID model.UserID) (*model.UserTwoFactorAuth, error) {
+	row, err := r.q.GetEnabledUserTwoFactorAuthByUserID(ctx, string(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -45,9 +45,9 @@ func (r *UserTwoFactorAuthRepository) FindEnabledByUserID(ctx context.Context, u
 }
 
 // UpdateRecoveryCodes はリカバリーコードを更新する
-func (r *UserTwoFactorAuthRepository) UpdateRecoveryCodes(ctx context.Context, userID string, recoveryCodes []string) error {
+func (r *UserTwoFactorAuthRepository) UpdateRecoveryCodes(ctx context.Context, userID model.UserID, recoveryCodes []string) error {
 	return r.q.UpdateUserTwoFactorAuthRecoveryCodes(ctx, query.UpdateUserTwoFactorAuthRecoveryCodesParams{
-		UserID:        userID,
+		UserID:        string(userID),
 		RecoveryCodes: recoveryCodes,
 		UpdatedAt:     time.Now(),
 	})
@@ -62,7 +62,7 @@ func (r *UserTwoFactorAuthRepository) toModel(row query.UserTwoFactorAuth) *mode
 
 	return &model.UserTwoFactorAuth{
 		ID:            row.ID,
-		UserID:        row.UserID,
+		UserID:        model.UserID(row.UserID),
 		Secret:        row.Secret,
 		Enabled:       row.Enabled,
 		EnabledAt:     enabledAt,

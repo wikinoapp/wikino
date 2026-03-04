@@ -15,6 +15,30 @@
   --color-brand-900: #564a46;
   --color-brand-950: #2c2523;
 
+  --color-brand-green-50: #f9fbfa;
+  --color-brand-green-100: #f2f7f5;
+  --color-brand-green-200: #e4ece8;
+  --color-brand-green-300: #cfddd6;
+  --color-brand-green-400: #98b3a7;
+  --color-brand-green-500: #7c9a8e; /* オリジナル */
+  --color-brand-green-600: #466858;
+  --color-brand-green-700: #315745;
+  --color-brand-green-800: #1a3c2c;
+  --color-brand-green-900: #0c2c20;
+  --color-brand-green-950: #00150f;
+
+  --color-brand-beige-50: #f9f7f7;
+  --color-brand-beige-100: #f2efee;
+  --color-brand-beige-200: #e6dfdd;
+  --color-brand-beige-300: #d7cdca;
+  --color-brand-beige-400: #bfafaa; /* オリジナル */
+  --color-brand-beige-500: #a7928c;
+  --color-brand-beige-600: #8f7973;
+  --color-brand-beige-700: #77645e;
+  --color-brand-beige-800: #645450;
+  --color-brand-beige-900: #564a46;
+  --color-brand-beige-950: #2c2523;
+
   --color-error-foreground: var(--error-foreground);
   --color-error: var(--error);
   --color-info-foreground: var(--info-foreground);
@@ -103,6 +127,9 @@
   --primary-foreground: var(--color-brand-100);
   --secondary: var(--color-brand-200);
   --secondary-foreground: var(--color-brand-950);
+  --accent: var(--color-brand-200);
+  --sidebar: var(--color-brand-50);
+  --sidebar-accent: var(--color-brand-100);
   --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */
 
   /* 独自の変数 */
@@ -136,4 +163,29 @@
   --warning-foreground: var(--color-black);
   --info: var(--color-blue-400);
   --info-foreground: var(--color-black);
+}
+
+/*
+  ============================================================================
+  CodeMirror
+  ============================================================================
+*/
+.cm-editor {
+  @apply border-input max-h-[calc(100vh-400px)] rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
+}
+
+.cm-editor.cm-focused {
+  @apply border-ring ring-ring/50 ring-[3px] outline-2 outline-gray-300 outline-solid;
+}
+
+.cm-editor .cm-gutters {
+  @apply bg-card;
+}
+
+.cm-editor .cm-lineNumbers {
+  @apply bg-card;
+}
+
+.cm-editor .cm-content {
+  @apply py-2;
 }
