@@ -76,6 +76,7 @@
 
 - 移動先のトピックは現在のトピックと異なる必要がある
 - 移動先のトピックは同一スペース内に存在する必要がある
+- 移動先のトピックに同名のページが存在しないこと（ページタイトルはトピック内で一意制約がある）
 
 ### 関連タスク・仕様
 
@@ -124,6 +125,181 @@
   - セキュリティ設計（認証・認可、トークン管理など）
   - コード設計（パッケージ構成、主要な構造体など）
 -->
+
+### URL 設計
+
+| HTTP メソッド | URL                                          | Handler          | 説明               |
+| ------------- | -------------------------------------------- | ---------------- | ------------------ |
+| GET           | /s/:space_identifier/pages/:page_number/move | page_move.New    | ページ移動フォーム |
+| POST          | /s/:space_identifier/pages/:page_number/move | page_move.Create | ページ移動実行     |
+
+### 権限設計
+
+ページ移動には2段階の権限チェックが必要:
+
+1. **移動元の権限**: 移動元トピックの `CanUpdatePage` が真であること
+   - ページ移動画面へのアクセス制御に使用
+2. **移動先の権限**: 移動先トピックの `CanCreatePage` が真であること
+   - フォームのセレクトボックスに表示するトピックの絞り込みに使用
+   - 移動実行時のサーバーサイドチェックにも使用
+
+移動先トピックのリスト:
+
+- **スペースオーナー**: スペース内の全アクティブトピック（`TopicRepository.ListActiveBySpace`）
+- **トピックメンバー**: 所属トピックのみ（`TopicRepository.ListJoinedBySpaceMember`）
+- いずれの場合も**現在のトピックを除外**して表示
+
+### バリデーション設計
+
+形式バリデーション:
+
+- 移動先トピックが選択されていること（必須）
+
+状態バリデーション:
+
+- 移動先トピックが同一スペース内に存在すること
+- 移動先トピックが現在のトピックと異なること
+- 移動先トピックにページ作成権限があること（`CanCreatePage`）
+- 移動先トピックに同名のページが存在しないこと（タイトルの一意制約）
+
+### コード設計
+
+#### Go 版
+
+**Handler** (`go/internal/handler/page_move/`):
+
+| ファイル     | 説明                                         |
+| ------------ | -------------------------------------------- |
+| handler.go   | Handler 構造体と依存性の定義                 |
+| new.go       | New メソッド（移動フォーム表示）             |
+| create.go    | Create メソッド（移動実行）                  |
+| validator.go | CreateValidator（形式 + 状態バリデーション） |
+
+Handler 構造体の依存性:
+
+- `cfg *config.Config`
+- `flashMgr *session.FlashManager`
+- `spaceRepo *repository.SpaceRepository`
+- `spaceMemberRepo *repository.SpaceMemberRepository`
+- `pageRepo *repository.PageRepository`
+- `topicRepo *repository.TopicRepository`
+- `topicMemberRepo *repository.TopicMemberRepository`
+- `movePageUC *usecase.MovePageUsecase`
+
+**Policy** (`go/internal/policy/topic.go`):
+
+`TopicPolicy` インターフェースに `CanCreatePage(topic *model.Topic) bool` を追加する。各ポリシーの実装:
+
+| ポリシー          | CanCreatePage の判定                             |
+| ----------------- | ------------------------------------------------ |
+| topicOwnerPolicy  | `spaceMemberActive && spaceID == topic.Space.ID` |
+| topicAdminPolicy  | `spaceMemberActive && topicID == topic.ID`       |
+| topicMemberPolicy | `spaceMemberActive && topicID == topic.ID`       |
+| topicGuestPolicy  | `false`（常に不可）                              |
+
+**Repository** (`go/internal/repository/page.go`):
+
+`PageRepository` に `MoveTopic` メソッドを追加。`topic_id` と `updated_at` のみを更新する専用 SQL クエリを作成する。
+
+```sql
+-- name: MovePageToTopic :one
+UPDATE pages
+SET topic_id = $2, updated_at = NOW()
+WHERE id = $1 AND space_id = $3
+RETURNING *;
+```
+
+**UseCase** (`go/internal/usecase/move_page.go`):
+
+```go
+type MovePageUsecase struct {
+    db       *sql.DB
+    pageRepo *repository.PageRepository
+}
+
+type MovePageInput struct {
+    PageID      model.PageID
+    SpaceID     model.SpaceID
+    DestTopicID model.TopicID
+}
+
+type MovePageOutput struct {
+    Page *model.Page
+}
+```
+
+処理内容:
+
+1. トランザクション開始
+2. `pageRepo.MoveTopic` で `topic_id` を更新
+3. コミット
+
+**Template** (`go/internal/templates/pages/page_move/new.templ`):
+
+移動フォームのテンプレート。構造体ベースのデータ受け渡しパターンを使用。
+
+```go
+type MovePageData struct {
+    CSRFToken       string
+    FormErrors      *session.FormErrors
+    Page            viewmodel.Page
+    Space           viewmodel.Space
+    CurrentTopic    viewmodel.Topic
+    AvailableTopics []viewmodel.TopicForSelect
+}
+```
+
+**ViewModel** (`go/internal/viewmodel/topic.go`):
+
+セレクトボックス用の ViewModel を追加:
+
+```go
+type TopicForSelect struct {
+    Name   string
+    Number int32
+}
+```
+
+**Routing**:
+
+- `cmd/server/main.go` に GET/POST `/s/{space_identifier}/pages/{page_number}/move` を登録
+- `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` に `^/s/[^/]+/pages/\d+/move$` パターンを追加（`FeatureFlagGoPageEdit` を再利用）
+
+**I18n** (`go/internal/i18n/locales/`):
+
+ja.toml / en.toml に以下を追加:
+
+- `page_move_title`: ページタイトル
+- `page_move_heading`: 見出し
+- `page_move_current_topic_label`: 現在のトピック
+- `page_move_destination_topic_label`: 移動先トピック
+- `page_move_submit`: 移動ボタン
+- `page_move_success`: 成功メッセージ
+- `page_move_error_same_topic`: 同一トピックエラー
+- `page_move_error_no_permission`: 権限エラー
+- `page_move_error_title_exists`: タイトル重複エラー
+- `page_move_select_topic_placeholder`: プレースホルダー
+
+#### Rails 版
+
+`Dropdowns::PageActionsComponent` に「移動」リンクを追加する。`page.can_update?` が真の場合にのみ表示する。
+
+リンク先は `/s/:space_identifier/pages/:page_number/move` で、Go 版のページ移動画面に遷移する。リバースプロキシの `FeatureFlagGoPageEdit` フラグが有効なユーザーのみ Go 版が表示される。
+
+### UI 設計
+
+ページ移動画面の構成:
+
+1. パンくずリスト（スペース > トピック）
+2. 見出し「ページの移動」
+3. ページタイトルの表示（読み取り専用）
+4. 現在のトピック名の表示（読み取り専用）
+5. 移動先トピックのセレクトボックス（現在のトピックを除外、権限のあるトピックのみ）
+6. 「移動する」ボタン
+
+成功時: フラッシュメッセージ「ページを移動しました」を表示し、ページ詳細画面にリダイレクト
+
+移動先トピックが存在しない場合（ユーザーが1つのトピックにしか所属していない場合）: セレクトボックスが空になり、ボタンは無効化。「移動先のトピックがありません」というメッセージを表示。
 
 ## 採用しなかった方針
 
@@ -184,9 +360,46 @@
   - `- [ ] **1-2**: [Rails] モデルへのコールバック追加`
 -->
 
-（タスクリストは未作成）
+### フェーズ 1: バックエンド基盤
 
-### フェーズ N: 仕様書への反映
+- [x] **1-1**: [Go] TopicPolicy に CanCreatePage を追加し、PageRepository に MoveTopic メソッドを追加
+  - `go/internal/policy/topic.go` に `CanCreatePage(topic *model.Topic) bool` を追加
+  - `go/internal/query/queries/pages.sql` に `MovePageToTopic` クエリを追加
+  - `go/internal/repository/page.go` に `MoveTopic` メソッドを追加
+  - sqlc コード生成を実行
+  - 想定ファイル数: 実装 4 ファイル / テスト 2 ファイル
+  - 想定行数: 実装 ~80 行 / テスト ~120 行
+
+- [x] **1-2**: [Go] MovePageUsecase の実装
+  - `go/internal/usecase/move_page.go` を作成
+  - トランザクション内で `pageRepo.MoveTopic` を呼び出す
+  - 依存: 1-1
+  - 想定ファイル数: 実装 1 ファイル / テスト 1 ファイル
+  - 想定行数: 実装 ~80 行 / テスト ~100 行
+
+### フェーズ 2: ページ移動画面
+
+- [x] **2-1**: [Go] ページ移動画面の実装（Handler・Template・ViewModel・Routing・I18n・Validator）
+  - `go/internal/handler/page_move/` ディレクトリを作成（handler.go, new.go, create.go, validator.go）
+  - `go/internal/templates/pages/page_move/new.templ` を作成
+  - `go/internal/viewmodel/topic.go` に `TopicForSelect` を追加
+  - `cmd/server/main.go` にルーティングを追加
+  - `go/internal/middleware/reverse_proxy.go` にパターンを追加
+  - `go/internal/i18n/locales/ja.toml`, `en.toml` に翻訳を追加
+  - 依存: 1-2
+  - 想定ファイル数: 実装 ~12 ファイル / テスト ~4 ファイル
+  - 想定行数: 実装 ~250 行 / テスト ~200 行
+
+### フェーズ 3: Rails 側の変更
+
+- [x] **3-1**: [Rails] PageActionsComponent に「移動」リンクを追加
+  - `rails/app/components/dropdowns/page_actions_component.html.erb` に移動リンクを追加
+  - `rails/config/locales/` に翻訳を追加（必要に応じて）
+  - 依存: 2-1
+  - 想定ファイル数: 実装 ~3 ファイル / テスト 0 ファイル
+  - 想定行数: 実装 ~10 行 / テスト 0 行
+
+### フェーズ 4: 仕様書への反映
 
 <!--
 **重要**: 実装完了後、必ず仕様書を作成・更新してください。
@@ -195,6 +408,6 @@
 - 概要・仕様・設計・採用しなかった方針を作業計画書から転記・整理する
 -->
 
-- [ ] **N-1**: 仕様書の作成・更新
+- [x] **4-1**: 仕様書の作成・更新
   - `docs/specs/page/move.md` に仕様書を作成する
   - 作業計画書の概要・要件・設計・採用しなかった方針を仕様書に反映する
