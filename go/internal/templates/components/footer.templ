@@ -17,8 +17,19 @@ templ Footer() {
 			@footerLink("/privacy", "footer_privacy")
 		</ul>
 
-		<div class="text-sm text-muted-foreground order-last md:order-first">
-			&copy; 2025-2026 Wikino
+		<div class="order-last md:order-first">
+			<div class="flex gap-1.5">
+				<div class="text-sm text-muted-foreground">
+					&copy; 2025-2026
+				</div>
+
+				<a
+					class="text-sm text-muted-foreground"
+					href="/"
+				>
+					Wikino
+				</a>
+			</div>
 		</div>
 	</footer>
 }
