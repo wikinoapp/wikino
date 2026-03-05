@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -35,16 +36,20 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	topicRepo := repository.NewTopicRepository(queries)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+
 	return page.NewHandler(
 		cfg,
 		flashMgr,
 		repository.NewSpaceRepository(queries),
 		repository.NewSpaceMemberRepository(queries),
 		repository.NewPageRepository(queries),
-		repository.NewDraftPageRepository(queries),
-		repository.NewTopicRepository(queries),
+		draftPageRepo,
+		topicRepo,
 		repository.NewTopicMemberRepository(queries),
 		nil,
+		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
 

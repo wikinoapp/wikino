@@ -117,6 +117,12 @@ RUN mise reshim
 # --- 1Password CLI ---
 COPY --from=1password/op:2 /usr/local/bin/op /usr/local/bin/op
 
+# --- Fresh Editor ---
+RUN curl -fsSL -L -o /tmp/fresh-editor.deb \
+      https://github.com/sinelaw/fresh/releases/download/v0.2.12/fresh-editor_0.2.12-1_amd64.deb && \
+    dpkg -i /tmp/fresh-editor.deb && \
+    rm /tmp/fresh-editor.deb
+
 # --- Claude Code ---
 RUN curl -fsSL https://claude.ai/install.sh | bash
 

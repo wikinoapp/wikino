@@ -26,6 +26,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlinks"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -40,6 +41,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/worker"
@@ -122,6 +124,7 @@ func main() {
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -216,6 +219,7 @@ func main() {
 		updatePasswordResetUC,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
+	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	pageHandler := page.NewHandler(
 		cfg,
 		flashMgr,
@@ -226,6 +230,7 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 		publishPageUC,
+		sidebarHelper,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		spaceRepo,
@@ -262,6 +267,17 @@ func main() {
 		topicRepo,
 		topicMemberRepo,
 		draftPageRepo,
+	)
+	pageMoveHandler := page_move.NewHandler(
+		cfg,
+		flashMgr,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		movePageUC,
+		sidebarHelper,
 	)
 	r := chi.NewRouter()
 
@@ -351,6 +367,10 @@ func main() {
 
 		// ページレベルのバックリンク一覧SSE（Datastar）
 		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
+
+		// ページ移動
+		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
+		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

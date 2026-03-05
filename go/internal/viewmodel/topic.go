@@ -20,6 +20,20 @@ func NewTopic(topic *model.Topic) Topic {
 	}
 }
 
+// TopicForSelect はセレクトボックス用のトピック情報です
+type TopicForSelect struct {
+	Name   string
+	Number int32
+}
+
+// NewTopicForSelect はモデルからTopicForSelectを生成します
+func NewTopicForSelect(topic *model.Topic) TopicForSelect {
+	return TopicForSelect{
+		Name:   topic.Name,
+		Number: topic.Number,
+	}
+}
+
 // topicVisibilityIconName はトピックの公開範囲に対応するアイコン名を返します
 func topicVisibilityIconName(v model.TopicVisibility) IconName {
 	if v == model.TopicVisibilityPublic {

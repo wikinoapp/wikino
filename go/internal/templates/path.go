@@ -75,6 +75,11 @@ func PageEditPath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/edit", spaceIdentifier, pageNumber))
 }
 
+// PageMovePath はページ移動のパスを生成します
+func PageMovePath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
+}
+
 // SidebarJoinedTopicsPath はサイドバーの参加中トピック一覧のパスを生成します
 func SidebarJoinedTopicsPath() Path {
 	return Path("/sidebar/joined_topics")

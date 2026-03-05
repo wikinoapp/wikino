@@ -7,6 +7,7 @@ import (
 
 // TopicPolicy はトピック内のリソースに対する権限を判定するインターフェース
 type TopicPolicy interface {
+	CanCreatePage(topic *model.Topic) bool
 	CanUpdatePage(page *model.Page) bool
 	CanUpdateDraftPage(draftPage *model.DraftPage) bool
 }

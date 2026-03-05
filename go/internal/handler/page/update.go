@@ -220,7 +220,7 @@ func (h *Handler) renderEditWithErrors(
 	var draftPages []viewmodel.DraftPageForSidebar
 	if currentUser != nil {
 		userAtname = currentUser.Atname
-		joinedTopics, draftPages = h.sidebarContent(ctx, currentUser.ID)
+		joinedTopics, draftPages = h.sidebarHelper.Content(ctx, currentUser.ID)
 	}
 
 	layoutData := layouts.DefaultLayoutData{

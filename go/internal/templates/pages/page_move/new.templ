@@ -1,0 +1,154 @@
+package page_move
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// MovePageData はページ移動画面に渡すデータ構造体です
+type MovePageData struct {
+	CSRFToken       string
+	FormErrors      *session.FormErrors
+	Page            viewmodel.PageForMove
+	Space           viewmodel.Space
+	CurrentTopic    viewmodel.Topic
+	AvailableTopics []viewmodel.TopicForSelect
+}
+
+// New はページ移動画面のコンテンツを表示します
+templ New(data MovePageData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
+					},
+					{
+						Label:    data.CurrentTopic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.CurrentTopic.Number),
+						IconName: data.CurrentTopic.IconName,
+					},
+				},
+			})
+
+			<div class="max-w-2xl w-full mx-auto">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title:    templates.T(ctx, "page_move_heading"),
+							Subtitle: templates.T(ctx, "page_move_subtitle"),
+						})
+					</div>
+
+					if data.FormErrors != nil && data.FormErrors.HasErrors() {
+						<div class="px-4">
+							@components.FormErrors(data.FormErrors)
+						</div>
+					}
+
+					<div class="px-4">
+						<div class="card">
+							<div class="card-body px-4">
+								<form
+									action={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d/move", data.Space.Identifier.String(), data.Page.Number)) }
+									class="form grid gap-6"
+									method="POST"
+								>
+									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+									<div class="grid gap-2">
+										<label>
+											{ templates.T(ctx, "page_move_page_title_label") }
+										</label>
+
+										<p class="text-sm text-muted-foreground">
+											{ data.Page.Title }
+										</p>
+									</div>
+
+									<div class="grid gap-2">
+										<label>
+											{ templates.T(ctx, "page_move_current_topic_label") }
+										</label>
+
+										<p class="text-sm text-muted-foreground">
+											{ data.CurrentTopic.Name }
+										</p>
+									</div>
+
+									<div class="grid gap-2">
+										<label for="dest_topic">
+											{ templates.T(ctx, "page_move_destination_topic_label") }
+										</label>
+
+										if len(data.AvailableTopics) > 0 {
+											<select
+												id="dest_topic"
+												name="dest_topic"
+												class="select"
+												if data.FormErrors != nil && data.FormErrors.HasFieldError("dest_topic") {
+													aria-invalid="true"
+												}
+											>
+												<option value="">
+													{ templates.T(ctx, "page_move_select_topic_placeholder") }
+												</option>
+												for _, topic := range data.AvailableTopics {
+													<option value={ fmt.Sprintf("%d", topic.Number) }>
+														{ topic.Name }
+													</option>
+												}
+											</select>
+											if data.FormErrors != nil && data.FormErrors.HasFieldError("dest_topic") {
+												for _, errorMsg := range data.FormErrors.GetFieldErrors("dest_topic") {
+													<p class="text-sm text-error">
+														{ errorMsg }
+													</p>
+												}
+											}
+										} else {
+											<p class="text-sm text-muted-foreground">
+												{ templates.T(ctx, "page_move_no_available_topics") }
+											</p>
+										}
+									</div>
+
+									<div class="flex gap-2">
+										<button
+											type="submit"
+											class="btn rounded-full w-fit"
+											if len(data.AvailableTopics) == 0 {
+												disabled
+											}
+										>
+											@templates.Icon("paper-plane-tilt-regular")
+											{ templates.T(ctx, "page_move_submit") }
+										</button>
+
+										<a
+											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+											class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
+										>
+											{ templates.T(ctx, "page_move_cancel") }
+										</a>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

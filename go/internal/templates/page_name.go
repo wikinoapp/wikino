@@ -9,4 +9,5 @@ const (
 	PageNameSearch   PageName = "search"
 	PageNameProfile  PageName = "profile"
 	PageNamePageEdit PageName = "page_edit"
+	PageNamePageMove PageName = "page_move"
 )
