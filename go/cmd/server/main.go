@@ -122,7 +122,9 @@ func main() {
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
@@ -245,6 +247,7 @@ func main() {
 		topicMemberRepo,
 		draftPageRepo,
 		autoSaveDraftPageUC,
+		manualSaveDraftPageUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
 		spaceRepo,
@@ -355,8 +358,9 @@ func main() {
 		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
 
-		// 下書きページSSE・自動保存API
+		// 下書きページSSE・自動保存・手動保存API
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
+		r.Post("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Create)
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
 
 		// リンク一覧SSE（Datastar）

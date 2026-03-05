@@ -536,6 +536,10 @@ other = "もっと見る"
 description = "ページ編集画面のバックリンク一覧の見出し"
 other = "バックリンク"
 
+[page_edit_save_draft_button]
+description = "下書き保存ボタンのラベル"
+other = "下書き保存"
+
 [page_edit_draft_saved_time]
 description = "自動保存時刻の表示"
 other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
