@@ -12,7 +12,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -216,78 +215,12 @@ func (h *Handler) renderEditWithErrors(
 		linkedPageIDs = pg.LinkedPageIDs
 	}
 
-	var paginatedLinks *repository.PaginatedPages
-	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
-	if len(linkedPageIDs) > 0 {
-		paginatedLinks, err = h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, viewmodel.LinkLimit)
-		if err != nil {
-			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		excludePageIDs := viewmodel.BuildExcludePageIDs(pg.ID, paginatedLinks.Pages)
-
-		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit, excludePageIDs)
-		if err != nil {
-			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, 1, viewmodel.PageBacklinkLimit, nil)
+	linkResult, err := h.fetchEditLinkData(ctx, linkedPageIDs, pg, space, spaceIdentifier)
 	if err != nil {
-		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	var allPageSlices [][]*model.Page
-	if paginatedLinks != nil {
-		allPageSlices = append(allPageSlices, paginatedLinks.Pages)
-	}
-	for _, paginated := range backlinkPaginatedMap {
-		allPageSlices = append(allPageSlices, paginated.Pages)
-	}
-	allPageSlices = append(allPageSlices, paginatedBacklinks.Pages)
-
-	topicIDs := viewmodel.CollectTopicIDsFromPages(allPageSlices...)
-	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	var linkedPages []*model.Page
-	var linkedTotalCount int64
-	if paginatedLinks != nil {
-		linkedPages = paginatedLinks.Pages
-		linkedTotalCount = paginatedLinks.TotalCount
-	}
-
-	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(backlinkPaginatedMap))
-	for pageID, paginated := range backlinkPaginatedMap {
-		backlinksPerPage[pageID] = &viewmodel.PageSliceWithCount{
-			Pages:      paginated.Pages,
-			TotalCount: paginated.TotalCount,
-		}
-	}
-
-	editLinkData := viewmodel.BuildEditLinkData(viewmodel.BuildEditLinkDataInput{
-		LinkedPages:       linkedPages,
-		LinkedTotalCount:  linkedTotalCount,
-		BacklinksPerPage:  backlinksPerPage,
-		PageBacklinks:     paginatedBacklinks.Pages,
-		PageBacklinkCount: paginatedBacklinks.TotalCount,
-		Topics:            topics,
-		SpaceIdentifier:   spaceIdentifier,
-		PageNumber:        int32(pg.Number),
-		CurrentPage:       1,
-	})
-	linkListVM := editLinkData.LinkList
-	backlinkListVM := editLinkData.BacklinkList
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -302,8 +235,8 @@ func (h *Handler) renderEditWithErrors(
 		Page:          pageVM,
 		Space:         spaceVM,
 		Topic:         topicVM,
-		LinkList:      linkListVM,
-		BacklinkList:  backlinkListVM,
+		LinkList:      linkResult.LinkList,
+		BacklinkList:  linkResult.BacklinkList,
 		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(pg.Number))),
 	})
 
