@@ -207,11 +207,12 @@ func (h *Handler) renderEditWithErrors(
 	meta.SetTitle(ctx, "page_edit_title")
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:  csrfToken,
-		FormErrors: formErrors,
-		Page:       pageVM,
-		Space:      spaceVM,
-		Topic:      topicVM,
+		CSRFToken:     csrfToken,
+		FormErrors:    formErrors,
+		Page:          pageVM,
+		Space:         spaceVM,
+		Topic:         topicVM,
+		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(pg.Number))),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)

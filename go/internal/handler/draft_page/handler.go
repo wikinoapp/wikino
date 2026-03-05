@@ -8,13 +8,14 @@ import (
 
 // Handler は下書きページハンドラー
 type Handler struct {
-	spaceRepo           *repository.SpaceRepository
-	spaceMemberRepo     *repository.SpaceMemberRepository
-	pageRepo            *repository.PageRepository
-	topicRepo           *repository.TopicRepository
-	topicMemberRepo     *repository.TopicMemberRepository
-	draftPageRepo       *repository.DraftPageRepository
-	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase
+	spaceRepo             *repository.SpaceRepository
+	spaceMemberRepo       *repository.SpaceMemberRepository
+	pageRepo              *repository.PageRepository
+	topicRepo             *repository.TopicRepository
+	topicMemberRepo       *repository.TopicMemberRepository
+	draftPageRepo         *repository.DraftPageRepository
+	autoSaveDraftPageUC   *usecase.AutoSaveDraftPageUsecase
+	manualSaveDraftPageUC *usecase.ManualSaveDraftPageUsecase
 }
 
 // NewHandler は新しい下書きページハンドラーを作成します
@@ -26,14 +27,16 @@ func NewHandler(
 	topicMemberRepo *repository.TopicMemberRepository,
 	draftPageRepo *repository.DraftPageRepository,
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase,
+	manualSaveDraftPageUC *usecase.ManualSaveDraftPageUsecase,
 ) *Handler {
 	return &Handler{
-		spaceRepo:           spaceRepo,
-		spaceMemberRepo:     spaceMemberRepo,
-		pageRepo:            pageRepo,
-		topicRepo:           topicRepo,
-		topicMemberRepo:     topicMemberRepo,
-		draftPageRepo:       draftPageRepo,
-		autoSaveDraftPageUC: autoSaveDraftPageUC,
+		spaceRepo:             spaceRepo,
+		spaceMemberRepo:       spaceMemberRepo,
+		pageRepo:              pageRepo,
+		topicRepo:             topicRepo,
+		topicMemberRepo:       topicMemberRepo,
+		draftPageRepo:         draftPageRepo,
+		autoSaveDraftPageUC:   autoSaveDraftPageUC,
+		manualSaveDraftPageUC: manualSaveDraftPageUC,
 	}
 }

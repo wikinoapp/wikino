@@ -215,12 +215,13 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(space)
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:    csrfToken,
-		Page:         pageVM,
-		Space:        spaceVM,
-		Topic:        topicVM,
-		LinkList:     linkListVM,
-		BacklinkList: backlinkListVM,
+		CSRFToken:     csrfToken,
+		Page:          pageVM,
+		Space:         spaceVM,
+		Topic:         topicVM,
+		LinkList:      linkListVM,
+		BacklinkList:  backlinkListVM,
+		ManualSaveURL: string(templates.PageDraftPagePath(space.Identifier.String(), int32(pg.Number))),
 	})
 
 	// サイドバーコンテンツを取得
