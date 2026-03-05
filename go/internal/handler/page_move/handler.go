@@ -1,5 +1,5 @@
-// Package page はページ関連のHTTPハンドラーを提供します
-package page
+// Package page_move はページ移動関連のHTTPハンドラーを提供します
+package page_move
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
@@ -9,31 +9,29 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はページハンドラー
+// Handler はページ移動ハンドラー
 type Handler struct {
 	cfg             *config.Config
 	flashMgr        *session.FlashManager
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	pageRepo        *repository.PageRepository
-	draftPageRepo   *repository.DraftPageRepository
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
-	publishPageUC   *usecase.PublishPageUsecase
+	movePageUC      *usecase.MovePageUsecase
 	sidebarHelper   *sidebar.Helper
 }
 
-// NewHandler は新しいページハンドラーを作成します
+// NewHandler は新しいページ移動ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
-	draftPageRepo *repository.DraftPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
-	publishPageUC *usecase.PublishPageUsecase,
+	movePageUC *usecase.MovePageUsecase,
 	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
@@ -42,10 +40,9 @@ func NewHandler(
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		pageRepo:        pageRepo,
-		draftPageRepo:   draftPageRepo,
 		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
-		publishPageUC:   publishPageUC,
+		movePageUC:      movePageUC,
 		sidebarHelper:   sidebarHelper,
 	}
 }

@@ -224,7 +224,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// サイドバーコンテンツを取得
-	joinedTopics, draftPages := h.sidebarContent(ctx, user.ID)
+	joinedTopics, draftPages := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
 		Meta:       meta,

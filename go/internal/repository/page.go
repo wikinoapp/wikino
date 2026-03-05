@@ -306,6 +306,26 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 	return r.toModel(row), nil
 }
 
+// MoveTopicInput はページ移動の入力パラメータ
+type MoveTopicInput struct {
+	ID      model.PageID
+	SpaceID model.SpaceID
+	TopicID model.TopicID
+}
+
+// MoveTopic はページのトピックを変更する
+func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*model.Page, error) {
+	row, err := r.q.MovePageToTopic(ctx, query.MovePageToTopicParams{
+		ID:      string(input.ID),
+		TopicID: string(input.TopicID),
+		SpaceID: string(input.SpaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindByTopicAndTitle は指定トピック内で指定タイトルのページを取得する（廃棄済みを含む、スペースIDでスコープ）
 func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.TopicID, title string, spaceID model.SpaceID) (*model.Page, error) {
 	row, err := r.q.FindPageByTopicAndTitle(ctx, query.FindPageByTopicAndTitleParams{

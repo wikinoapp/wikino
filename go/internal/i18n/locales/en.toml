@@ -569,3 +569,64 @@ other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existi
 [flash_page_saved]
 description = "Page saved success message"
 other = "Page saved."
+
+# Page move
+[page_move_title]
+description = "Page move screen title"
+other = "Move Page"
+
+[page_move_heading]
+description = "Page move screen heading"
+other = "Move Page"
+
+[page_move_subtitle]
+description = "Page move screen subtitle"
+other = "Move this page to a different topic."
+
+[page_move_page_title_label]
+description = "Label for the page being moved"
+other = "Page"
+
+[page_move_current_topic_label]
+description = "Current topic label"
+other = "Current topic"
+
+[page_move_destination_topic_label]
+description = "Destination topic label"
+other = "Destination topic"
+
+[page_move_select_topic_placeholder]
+description = "Placeholder for the destination topic selector"
+other = "Select a topic"
+
+[page_move_submit]
+description = "Page move button"
+other = "Move"
+
+[page_move_cancel]
+description = "Cancel link"
+other = "Cancel"
+
+[page_move_no_available_topics]
+description = "Message when no topics are available for move"
+other = "No topics available to move to."
+
+[page_move_success]
+description = "Page move success message"
+other = "Page moved."
+
+[page_move_error_topic_required]
+description = "Destination topic required error"
+other = "Please select a destination topic."
+
+[page_move_error_same_topic]
+description = "Same topic error"
+other = "Cannot move to the same topic."
+
+[page_move_error_no_permission]
+description = "No permission to destination topic error"
+other = "You do not have permission to create pages in the destination topic."
+
+[page_move_error_title_exists]
+description = "Title exists in destination topic error"
+other = "A page with the same title already exists in the destination topic."

@@ -569,3 +569,64 @@ other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既
 [flash_page_saved]
 description = "ページ保存成功メッセージ"
 other = "ページを保存しました"
+
+# ページ移動
+[page_move_title]
+description = "ページ移動画面のタイトル"
+other = "ページの移動"
+
+[page_move_heading]
+description = "ページ移動画面の見出し"
+other = "ページの移動"
+
+[page_move_subtitle]
+description = "ページ移動画面の説明文"
+other = "ページを別のトピックに移動します"
+
+[page_move_page_title_label]
+description = "移動対象ページタイトルのラベル"
+other = "ページ"
+
+[page_move_current_topic_label]
+description = "現在のトピックラベル"
+other = "現在のトピック"
+
+[page_move_destination_topic_label]
+description = "移動先トピックラベル"
+other = "移動先トピック"
+
+[page_move_select_topic_placeholder]
+description = "移動先トピックのプレースホルダー"
+other = "トピックを選択してください"
+
+[page_move_submit]
+description = "ページ移動ボタン"
+other = "移動する"
+
+[page_move_cancel]
+description = "キャンセルリンク"
+other = "キャンセル"
+
+[page_move_no_available_topics]
+description = "移動先トピックがない場合のメッセージ"
+other = "移動先として選択できるトピックがありません"
+
+[page_move_success]
+description = "ページ移動成功メッセージ"
+other = "ページを移動しました"
+
+[page_move_error_topic_required]
+description = "移動先トピック未選択エラー"
+other = "移動先トピックを選択してください"
+
+[page_move_error_same_topic]
+description = "同一トピックエラー"
+other = "現在のトピックと同じトピックには移動できません"
+
+[page_move_error_no_permission]
+description = "移動先トピック権限エラー"
+other = "移動先トピックへのページ作成権限がありません"
+
+[page_move_error_title_exists]
+description = "移動先トピックにタイトル重複エラー"
+other = "移動先トピックに同じタイトルのページが既に存在しています"

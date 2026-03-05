@@ -47,8 +47,49 @@ func newDraftPage(spaceID model.SpaceID, topicID model.TopicID) *model.DraftPage
 	}
 }
 
+func newTopic(spaceID model.SpaceID, topicID model.TopicID) *model.Topic {
+	return &model.Topic{
+		ID:    topicID,
+		Space: &model.Space{ID: spaceID},
+		Name:  "test-topic",
+	}
+}
+
 func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 	t.Parallel()
+
+	t.Run("同じスペースのトピックにページを作成可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		if !p.CanCreatePage(newTopic("space-1", "topic-1")) {
+			t.Error("スペースオーナーは同じスペースのトピックにページを作成できるべき")
+		}
+	})
+
+	t.Run("別スペースのトピックにはページを作成不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		if p.CanCreatePage(newTopic("space-2", "topic-1")) {
+			t.Error("スペースオーナーは別スペースのトピックにページを作成できないべき")
+		}
+	})
+
+	t.Run("非アクティブの場合はページを作成不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, false)
+		p := NewTopicPolicy(sm, nil)
+
+		if p.CanCreatePage(newTopic("space-1", "topic-1")) {
+			t.Error("非アクティブなスペースオーナーはページを作成できないべき")
+		}
+	})
 
 	t.Run("トピックメンバーでない場合も同じスペースのページを編集可能", func(t *testing.T) {
 		t.Parallel()
@@ -122,6 +163,36 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 	t.Parallel()
 
+	t.Run("所属トピックにページを作成可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		if !p.CanCreatePage(newTopic("space-1", "topic-1")) {
+			t.Error("トピックAdminは所属トピックにページを作成できるべき")
+		}
+	})
+
+	t.Run("別トピックにはページを作成不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		if p.CanCreatePage(newTopic("space-1", "topic-2")) {
+			t.Error("トピックAdminは別トピックにページを作成できないべき")
+		}
+	})
+
 	t.Run("所属トピックのページを編集可能", func(t *testing.T) {
 		t.Parallel()
 
@@ -179,6 +250,36 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 
 func TestNewTopicPolicy_TopicMember(t *testing.T) {
 	t.Parallel()
+
+	t.Run("所属トピックにページを作成可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		if !p.CanCreatePage(newTopic("space-1", "topic-1")) {
+			t.Error("トピックMemberは所属トピックにページを作成できるべき")
+		}
+	})
+
+	t.Run("別トピックにはページを作成不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		if p.CanCreatePage(newTopic("space-1", "topic-2")) {
+			t.Error("トピックMemberは別トピックにページを作成できないべき")
+		}
+	})
 
 	t.Run("所属トピックのページを編集可能", func(t *testing.T) {
 		t.Parallel()
@@ -241,6 +342,9 @@ func TestNewTopicPolicy_Guest(t *testing.T) {
 	sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
 	p := NewTopicPolicy(sm, nil)
 
+	if p.CanCreatePage(newTopic("space-1", "topic-1")) {
+		t.Error("非トピックメンバーはページを作成できないべき")
+	}
 	if p.CanUpdatePage(newPage("space-1", "topic-1")) {
 		t.Error("非トピックメンバーはページを編集できないべき")
 	}

@@ -121,6 +121,13 @@ LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
   AND NOT (p.id = ANY($3::uuid[]))
 GROUP BY t.target_id;
 
+-- name: MovePageToTopic :one
+-- ページのトピックを変更する（ページ移動）
+UPDATE pages
+SET topic_id = $2, updated_at = NOW()
+WHERE id = $1 AND space_id = $3
+RETURNING *;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)

@@ -53,6 +53,24 @@ func (p Page) AutofocusTitle() bool {
 	return p.Title == ""
 }
 
+// PageForMove はページ移動画面用のページ情報です
+type PageForMove struct {
+	Title  string
+	Number int32
+}
+
+// NewPageForMove はmodel.Pageからページ移動画面用のViewModelを生成します
+func NewPageForMove(pg *model.Page) PageForMove {
+	var title string
+	if pg.Title != nil {
+		title = *pg.Title
+	}
+	return PageForMove{
+		Title:  title,
+		Number: int32(pg.Number),
+	}
+}
+
 // CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードの表示データです
 type CardLinkPage struct {
 	Title        string

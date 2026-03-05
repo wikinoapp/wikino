@@ -558,6 +558,44 @@ func (q *Queries) GetNextPageNumber(ctx context.Context, spaceID string) (int32,
 	return next_number, err
 }
 
+const movePageToTopic = `-- name: MovePageToTopic :one
+UPDATE pages
+SET topic_id = $2, updated_at = NOW()
+WHERE id = $1 AND space_id = $3
+RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
+`
+
+type MovePageToTopicParams struct {
+	ID      string `json:"id"`
+	TopicID string `json:"topic_id"`
+	SpaceID string `json:"space_id"`
+}
+
+// ページのトピックを変更する（ページ移動）
+func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams) (Page, error) {
+	row := q.db.QueryRowContext(ctx, movePageToTopic, arg.ID, arg.TopicID, arg.SpaceID)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.Number,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.PublishedAt,
+		&i.TrashedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PinnedAt,
+		&i.DiscardedAt,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const searchPageLocations = `-- name: SearchPageLocations :many
 SELECT p.title, t.name AS topic_name
 FROM pages p

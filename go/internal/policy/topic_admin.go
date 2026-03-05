@@ -11,6 +11,10 @@ type topicAdminPolicy struct {
 	spaceMemberActive bool
 }
 
+func (p *topicAdminPolicy) CanCreatePage(topic *model.Topic) bool {
+	return p.spaceMemberActive && p.topicID == topic.ID
+}
+
 func (p *topicAdminPolicy) CanUpdatePage(page *model.Page) bool {
 	return p.spaceMemberActive && p.topicID == page.TopicID
 }
