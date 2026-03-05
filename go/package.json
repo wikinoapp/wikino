@@ -34,7 +34,7 @@
     "@codemirror/language": "^6.12.2",
     "@codemirror/search": "^6.6.0",
     "@codemirror/state": "^6.5.4",
-    "@codemirror/view": "^6.39.15",
+    "@codemirror/view": "^6.39.16",
     "@lezer/highlight": "^1.2.3",
     "codemirror": "^6.0.2",
     "spark-md5": "^3.0.2",
