@@ -172,6 +172,21 @@ CREATE TABLE public.attachments (
 
 
 --
+-- Name: draft_page_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.draft_page_revisions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    draft_page_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    title character varying NOT NULL,
+    body character varying NOT NULL,
+    body_html character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: draft_pages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -642,6 +657,14 @@ ALTER TABLE ONLY public.attachments
 
 
 --
+-- Name: draft_page_revisions draft_page_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_page_revisions
+    ADD CONSTRAINT draft_page_revisions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: draft_pages draft_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -855,6 +878,13 @@ ALTER TABLE ONLY public.user_two_factor_auths
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_draft_page_revisions_draft_page_id_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at ON public.draft_page_revisions USING btree (draft_page_id, created_at);
 
 
 --
@@ -1390,6 +1420,22 @@ CREATE UNIQUE INDEX river_job_unique_idx ON public.river_job USING btree (unique
 
 
 --
+-- Name: draft_page_revisions draft_page_revisions_draft_page_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_page_revisions
+    ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id);
+
+
+--
+-- Name: draft_page_revisions draft_page_revisions_space_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_page_revisions
+    ADD CONSTRAINT draft_page_revisions_space_member_id_fkey FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+
+
+--
 -- Name: feature_flags feature_flags_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1716,4 +1762,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260202060000'),
     ('20260202160000'),
     ('20260204160000'),
-    ('20260301154347');
+    ('20260301154347'),
+    ('20260305154013');
