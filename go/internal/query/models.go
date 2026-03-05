@@ -122,6 +122,17 @@ type DraftPage struct {
 	UpdatedAt     time.Time   `json:"updated_at"`
 }
 
+type DraftPageRevision struct {
+	ID            string    `json:"id"`
+	DraftPageID   string    `json:"draft_page_id"`
+	SpaceID       string    `json:"space_id"`
+	SpaceMemberID string    `json:"space_member_id"`
+	Title         string    `json:"title"`
+	Body          string    `json:"body"`
+	BodyHtml      string    `json:"body_html"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
 type EmailConfirmation struct {
 	ID          string       `json:"id"`
 	Email       string       `json:"email"`
