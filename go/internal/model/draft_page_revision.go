@@ -8,6 +8,7 @@ import (
 type DraftPageRevision struct {
 	ID            DraftPageRevisionID
 	DraftPageID   DraftPageID
+	SpaceID       SpaceID
 	SpaceMemberID SpaceMemberID
 	Title         string
 	Body          string

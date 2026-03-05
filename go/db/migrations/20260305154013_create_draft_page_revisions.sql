@@ -3,6 +3,7 @@
 CREATE TABLE draft_page_revisions (
     id UUID NOT NULL DEFAULT generate_ulid() PRIMARY KEY,
     draft_page_id UUID NOT NULL REFERENCES draft_pages(id),
+    space_id UUID NOT NULL REFERENCES spaces(id),
     space_member_id UUID NOT NULL REFERENCES space_members(id),
     title VARCHAR NOT NULL,
     body VARCHAR NOT NULL,

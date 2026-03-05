@@ -145,9 +145,9 @@ DraftPageRevisionの設計意図:
 
 ```go
 type DraftPageRevision struct {
-	ID            string
-	DraftPageID   string
-	SpaceMemberID string
+	ID            DraftPageRevisionID
+	DraftPageID   DraftPageID
+	SpaceMemberID SpaceMemberID
 	Title         string    // バージョン作成時点のページタイトル
 	Body          string    // バージョン作成時点のMarkdown本文
 	BodyHTML      string    // バージョン作成時点のHTML本文

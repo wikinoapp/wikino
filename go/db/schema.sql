@@ -178,6 +178,7 @@ CREATE TABLE public.attachments (
 CREATE TABLE public.draft_page_revisions (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     draft_page_id uuid NOT NULL,
+    space_id uuid NOT NULL,
     space_member_id uuid NOT NULL,
     title character varying NOT NULL,
     body character varying NOT NULL,
@@ -1425,6 +1426,14 @@ CREATE UNIQUE INDEX river_job_unique_idx ON public.river_job USING btree (unique
 
 ALTER TABLE ONLY public.draft_page_revisions
     ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id);
+
+
+--
+-- Name: draft_page_revisions draft_page_revisions_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_page_revisions
+    ADD CONSTRAINT draft_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
