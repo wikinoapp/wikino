@@ -9,20 +9,20 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-func TestCreateDraftPageRevisionUsecase_Execute(t *testing.T) {
+func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
-	uc := NewCreateDraftPageRevisionUsecase(db, draftPageRepo, draftPageRevisionRepo)
+	uc := NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
-		WithIdentifier("create-dpr").
+		WithIdentifier("manual-save").
 		Build()
 	userID := testutil.NewUserBuilderDB(t, db).
-		WithEmail("create-dpr@example.com").
-		WithAtname("createdpr").
+		WithEmail("manual-save@example.com").
+		WithAtname("manualsave").
 		Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -48,7 +48,7 @@ func TestCreateDraftPageRevisionUsecase_Execute(t *testing.T) {
 		WithBodyHTML("<p>下書き本文</p>").
 		Build()
 
-	output, err := uc.Execute(context.Background(), CreateDraftPageRevisionInput{
+	output, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
 		SpaceID:       spaceID,
 		PageID:        pageID,
 		SpaceMemberID: spaceMemberID,
@@ -79,20 +79,20 @@ func TestCreateDraftPageRevisionUsecase_Execute(t *testing.T) {
 	}
 }
 
-func TestCreateDraftPageRevisionUsecase_Execute_DraftPageNotFound(t *testing.T) {
+func TestManualSaveDraftPageUsecase_Execute_DraftPageNotFound(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
-	uc := NewCreateDraftPageRevisionUsecase(db, draftPageRepo, draftPageRevisionRepo)
+	uc := NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo)
 
 	// テストデータを作成（DraftPageは作成しない）
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
-		WithIdentifier("create-dpr-notfound").
+		WithIdentifier("manual-save-notfound").
 		Build()
 	userID := testutil.NewUserBuilderDB(t, db).
-		WithEmail("create-dpr-notfound@example.com").
-		WithAtname("createdprnotfound").
+		WithEmail("manual-save-notfound@example.com").
+		WithAtname("manualsavenotfound").
 		Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -109,7 +109,7 @@ func TestCreateDraftPageRevisionUsecase_Execute_DraftPageNotFound(t *testing.T) 
 		WithTitle("Test Page").
 		Build()
 
-	_, err := uc.Execute(context.Background(), CreateDraftPageRevisionInput{
+	_, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
 		SpaceID:       spaceID,
 		PageID:        pageID,
 		SpaceMemberID: spaceMemberID,

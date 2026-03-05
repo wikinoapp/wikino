@@ -16,40 +16,40 @@ var (
 	ErrDraftPageNotFound = errors.New("下書きページが見つかりません")
 )
 
-// CreateDraftPageRevisionUsecase は下書きページリビジョン作成ユースケース
-type CreateDraftPageRevisionUsecase struct {
+// ManualSaveDraftPageUsecase は下書きページの手動保存ユースケース
+type ManualSaveDraftPageUsecase struct {
 	db                    *sql.DB
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
 }
 
-// NewCreateDraftPageRevisionUsecase は CreateDraftPageRevisionUsecase を生成する
-func NewCreateDraftPageRevisionUsecase(
+// NewManualSaveDraftPageUsecase は ManualSaveDraftPageUsecase を生成する
+func NewManualSaveDraftPageUsecase(
 	db *sql.DB,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
-) *CreateDraftPageRevisionUsecase {
-	return &CreateDraftPageRevisionUsecase{
+) *ManualSaveDraftPageUsecase {
+	return &ManualSaveDraftPageUsecase{
 		db:                    db,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
 	}
 }
 
-// CreateDraftPageRevisionInput は下書きページリビジョン作成の入力パラメータ
-type CreateDraftPageRevisionInput struct {
+// ManualSaveDraftPageInput は下書きページの手動保存の入力パラメータ
+type ManualSaveDraftPageInput struct {
 	SpaceID       model.SpaceID
 	PageID        model.PageID
 	SpaceMemberID model.SpaceMemberID
 }
 
-// CreateDraftPageRevisionOutput は下書きページリビジョン作成の出力パラメータ
-type CreateDraftPageRevisionOutput struct {
+// ManualSaveDraftPageOutput は下書きページの手動保存の出力パラメータ
+type ManualSaveDraftPageOutput struct {
 	DraftPageRevision *model.DraftPageRevision
 }
 
 // Execute は下書きページの現在の内容でリビジョン（スナップショット）を作成する
-func (uc *CreateDraftPageRevisionUsecase) Execute(ctx context.Context, input CreateDraftPageRevisionInput) (*CreateDraftPageRevisionOutput, error) {
+func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -92,7 +92,7 @@ func (uc *CreateDraftPageRevisionUsecase) Execute(ctx context.Context, input Cre
 		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
 	}
 
-	return &CreateDraftPageRevisionOutput{
+	return &ManualSaveDraftPageOutput{
 		DraftPageRevision: revision,
 	}, nil
 }
