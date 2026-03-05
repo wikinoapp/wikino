@@ -47,7 +47,7 @@
 
 - [@docs/plans/2_todo/edit-suggestion.md](edit-suggestion.md) - 編集提案機能（本タスクが前提）
 - [@docs/plans/2_todo/page-move.md](page-move.md) - ページの移動機能（本タスクと並行可能）
-- [@docs/plans/2_todo/draft-page-revision.md](draft-page-revision.md) - DraftPageRevisionの実装（本タスクが前提）
+- [@docs/plans/2_todo/draft-update.md](../2_todo/draft-update.md) - 下書き機能のアップデート（本タスクが前提）
 - [@docs/plans/2_todo/title-change-link-rewrite.md](title-change-link-rewrite.md) - タイトル変更時のリンク自動書き換え（本タスクが前提）
 - [@docs/plans/2_todo/page-revision-history.md](page-revision-history.md) - 編集履歴画面・ロールバック（本タスクが前提）
 - [@docs/plans/2_todo/draft-page-discard.md](draft-page-discard.md) - 下書き破棄機能（本タスクが前提）
@@ -303,7 +303,7 @@ TopicMemberの設計意図:
 
 #### DraftPageRevision（UI表示: 下書きのバージョン / 下書きの編集履歴）【計画中】
 
-DraftPageRevisionの詳細（データモデル、テーブル設計、下書き保存フローなど）は [DraftPageRevisionの実装](draft-page-revision.md) の「設計」セクションを参照。
+DraftPageRevisionの詳細（データモデル、テーブル設計、下書き保存フローなど）は [下書き機能のアップデート](../2_todo/draft-update.md) の「設計」セクションを参照。
 
 ### ページの編集フロー
 
@@ -335,7 +335,7 @@ DraftPageRevisionの詳細（データモデル、テーブル設計、下書き
 
 #### 下書き保存する【計画中】
 
-下書き保存フローの詳細は [DraftPageRevisionの実装](draft-page-revision.md) の「設計」セクションを参照。
+下書き保存フローの詳細は [下書き機能のアップデート](../2_todo/draft-update.md) の「設計」セクションを参照。
 
 #### 公開する
 
@@ -439,7 +439,7 @@ type TopicMember struct {
 }
 
 // DraftPageRevision は計画中の機能
-// 詳細は docs/plans/2_todo/draft-page-revision.md を参照
+// 詳細は docs/plans/2_todo/draft-update.md を参照
 ```
 
 ### データフロー
@@ -1016,7 +1016,7 @@ Go版のTopicPolicyを単一の構造体（`TopicPolicy`）にロールの判定
 
 ### 自動保存のたびにDraftPageRevisionを作成する方式
 
-[DraftPageRevisionの実装](draft-page-revision.md) の「採用しなかった方針」セクションを参照。
+[下書き機能のアップデート](../2_todo/draft-update.md) の「採用しなかった方針」セクションを参照。
 
 ### UI上で「リビジョン」という表示名を使用すること
 
