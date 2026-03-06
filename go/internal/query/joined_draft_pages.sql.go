@@ -86,3 +86,83 @@ func (q *Queries) ListDraftPagesByUser(ctx context.Context, arg ListDraftPagesBy
 	}
 	return items, nil
 }
+
+const listDraftPagesByUserForIndex = `-- name: ListDraftPagesByUserForIndex :many
+SELECT
+  dp.id AS draft_page_id,
+  dp.title AS draft_page_title,
+  dp.modified_at AS draft_page_modified_at,
+  p.id AS page_id,
+  p.title AS page_title,
+  p.number AS page_number,
+  t.id AS topic_id,
+  t.name AS topic_name,
+  t.visibility AS topic_visibility,
+  s.id AS space_id,
+  s.identifier AS space_identifier,
+  s.name AS space_name
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
+INNER JOIN topics t ON dp.topic_id = t.id AND dp.space_id = t.space_id
+INNER JOIN spaces s ON dp.space_id = s.id
+INNER JOIN space_members sm ON dp.space_member_id = sm.id AND dp.space_id = sm.space_id
+WHERE sm.user_id = $1
+  AND sm.active = true
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND s.discarded_at IS NULL
+ORDER BY s.name, t.name, dp.modified_at DESC
+`
+
+type ListDraftPagesByUserForIndexRow struct {
+	DraftPageID         string      `json:"draft_page_id"`
+	DraftPageTitle      interface{} `json:"draft_page_title"`
+	DraftPageModifiedAt time.Time   `json:"draft_page_modified_at"`
+	PageID              string      `json:"page_id"`
+	PageTitle           interface{} `json:"page_title"`
+	PageNumber          int32       `json:"page_number"`
+	TopicID             string      `json:"topic_id"`
+	TopicName           string      `json:"topic_name"`
+	TopicVisibility     int32       `json:"topic_visibility"`
+	SpaceID             string      `json:"space_id"`
+	SpaceIdentifier     string      `json:"space_identifier"`
+	SpaceName           string      `json:"space_name"`
+}
+
+// ユーザーの下書きページ一覧を取得する（下書き一覧画面用）
+// スペース名・トピック名を含み、スペース名・トピック名の順にソート
+func (q *Queries) ListDraftPagesByUserForIndex(ctx context.Context, userID string) ([]ListDraftPagesByUserForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPagesByUserForIndex, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDraftPagesByUserForIndexRow{}
+	for rows.Next() {
+		var i ListDraftPagesByUserForIndexRow
+		if err := rows.Scan(
+			&i.DraftPageID,
+			&i.DraftPageTitle,
+			&i.DraftPageModifiedAt,
+			&i.PageID,
+			&i.PageTitle,
+			&i.PageNumber,
+			&i.TopicID,
+			&i.TopicName,
+			&i.TopicVisibility,
+			&i.SpaceID,
+			&i.SpaceIdentifier,
+			&i.SpaceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

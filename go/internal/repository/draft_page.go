@@ -127,6 +127,65 @@ func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserI
 	return r.toDraftPagesFromJoinedRows(rows), nil
 }
 
+// ListByUserForIndex はユーザーの下書きページ一覧を取得する（下書き一覧画面用）
+func (r *DraftPageRepository) ListByUserForIndex(ctx context.Context, userID model.UserID) ([]*model.DraftPage, error) {
+	rows, err := r.q.ListDraftPagesByUserForIndex(ctx, string(userID))
+	if err != nil {
+		return nil, err
+	}
+	return r.toDraftPagesFromIndexRows(rows), nil
+}
+
+// toDraftPagesFromIndexRows は query.ListDraftPagesByUserForIndexRow のスライスを model.DraftPage のスライスに変換する
+func (r *DraftPageRepository) toDraftPagesFromIndexRows(rows []query.ListDraftPagesByUserForIndexRow) []*model.DraftPage {
+	drafts := make([]*model.DraftPage, len(rows))
+	for i, row := range rows {
+		var draftTitle *string
+		if row.DraftPageTitle != nil {
+			switch v := row.DraftPageTitle.(type) {
+			case string:
+				draftTitle = &v
+			case []byte:
+				s := string(v)
+				draftTitle = &s
+			}
+		}
+
+		var pageTitle *string
+		if row.PageTitle != nil {
+			switch v := row.PageTitle.(type) {
+			case string:
+				pageTitle = &v
+			case []byte:
+				s := string(v)
+				pageTitle = &s
+			}
+		}
+
+		drafts[i] = &model.DraftPage{
+			ID:         model.DraftPageID(row.DraftPageID),
+			Title:      draftTitle,
+			ModifiedAt: row.DraftPageModifiedAt,
+			Page: &model.Page{
+				ID:     model.PageID(row.PageID),
+				Title:  pageTitle,
+				Number: model.PageNumber(row.PageNumber),
+			},
+			Topic: &model.Topic{
+				ID:         model.TopicID(row.TopicID),
+				Name:       row.TopicName,
+				Visibility: model.TopicVisibility(row.TopicVisibility),
+				Space: &model.Space{
+					ID:         model.SpaceID(row.SpaceID),
+					Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+					Name:       row.SpaceName,
+				},
+			},
+		}
+	}
+	return drafts
+}
+
 // toDraftPagesFromJoinedRows は query.ListDraftPagesByUserRow のスライスを model.DraftPage のスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftPagesByUserRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
