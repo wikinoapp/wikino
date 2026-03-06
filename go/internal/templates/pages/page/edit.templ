@@ -148,11 +148,11 @@ templ Edit(data EditPageData) {
 											</button>
 										</div>
 
-										<div class="flex flex-1 items-center justify-between gap-2 w-full">
+										<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
 											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
 
 											<a
-												class="btn-ghost rounded-full w-fit"
+												class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 											>
 												{ templates.T(ctx, "page_edit_cancel") }

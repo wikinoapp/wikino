@@ -364,7 +364,7 @@ func Edit(data EditPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</button></div><div class=\"flex flex-1 items-center justify-between gap-2 w-full\"><div id=\"page-draft-saved-at\" class=\"text-xs text-right text-muted-foreground\"></div><a class=\"btn-ghost rounded-full w-fit\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</button></div><div class=\"flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full\"><div id=\"page-draft-saved-at\" class=\"text-xs text-right text-muted-foreground\"></div><a class=\"btn-outline bg-card hover:bg-accent rounded-full w-fit\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
