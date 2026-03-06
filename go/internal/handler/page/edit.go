@@ -153,7 +153,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		Topic:         topicVM,
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPagePath(space.Identifier.String(), int32(pg.Number))),
+		ManualSaveURL: string(templates.PageDraftPageRevisionPath(space.Identifier.String(), int32(pg.Number))),
 	})
 
 	// サイドバーコンテンツを取得

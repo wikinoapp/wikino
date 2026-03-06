@@ -574,6 +574,11 @@ other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existi
 description = "Page saved success message"
 other = "Page saved."
 
+# Draft page save success
+[flash_draft_page_saved]
+description = "Draft page saved success message"
+other = "Draft saved."
+
 # Page move
 [page_move_title]
 description = "Page move screen title"
@@ -634,3 +639,27 @@ other = "You do not have permission to create pages in the destination topic."
 [page_move_error_title_exists]
 description = "Title exists in destination topic error"
 other = "A page with the same title already exists in the destination topic."
+
+[draft_page_index_title]
+description = "Draft page index page title"
+other = "Draft Pages"
+
+[draft_page_index_heading]
+description = "Draft page index page heading"
+other = "Draft Pages"
+
+[draft_page_index_empty]
+description = "Message when there are no drafts"
+other = "No drafts."
+
+[draft_page_index_column_title]
+description = "Draft page index table title column header"
+other = "Title"
+
+[draft_page_index_column_modified_at]
+description = "Draft page index table modified at column header"
+other = "Modified"
+
+[draft_page_index_untitled]
+description = "Untitled draft page"
+other = "Untitled"

@@ -42,11 +42,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			repository.NewTopicRepository(queries),
 			repository.NewAttachmentRepository(queries),
 		),
-		usecase.NewManualSaveDraftPageUsecase(
-			db,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(queries),
-		),
 	)
 }
 

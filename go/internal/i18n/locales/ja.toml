@@ -574,6 +574,11 @@ other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既
 description = "ページ保存成功メッセージ"
 other = "ページを保存しました"
 
+# 下書き保存成功
+[flash_draft_page_saved]
+description = "下書き保存成功メッセージ"
+other = "下書きを保存しました"
+
 # ページ移動
 [page_move_title]
 description = "ページ移動画面のタイトル"
@@ -634,3 +639,27 @@ other = "移動先トピックへのページ作成権限がありません"
 [page_move_error_title_exists]
 description = "移動先トピックにタイトル重複エラー"
 other = "移動先トピックに同じタイトルのページが既に存在しています"
+
+[draft_page_index_title]
+description = "下書き一覧ページのタイトル"
+other = "下書きのページ"
+
+[draft_page_index_heading]
+description = "下書き一覧ページの見出し"
+other = "下書きのページ"
+
+[draft_page_index_empty]
+description = "下書きがない場合のメッセージ"
+other = "下書きはありません"
+
+[draft_page_index_column_title]
+description = "下書き一覧テーブルのタイトル列ヘッダー"
+other = "タイトル"
+
+[draft_page_index_column_modified_at]
+description = "下書き一覧テーブルの更新日時列ヘッダー"
+other = "更新日時"
+
+[draft_page_index_untitled]
+description = "タイトル未設定の下書き"
+other = "無題"

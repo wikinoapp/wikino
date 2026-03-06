@@ -1,0 +1,100 @@
+package draft_page
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexData は下書き一覧画面に渡すデータ構造体です
+type IndexData struct {
+	Groups []viewmodel.DraftPageGroupForIndex
+}
+
+// Index は下書き一覧画面のコンテンツを表示します
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label: templates.T(ctx, "draft_page_index_heading"),
+					},
+				},
+			})
+
+			<div class="max-w-2xl w-full mx-auto">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title: templates.T(ctx, "draft_page_index_heading"),
+						})
+					</div>
+
+					if len(data.Groups) == 0 {
+						<div class="px-4">
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "draft_page_index_empty") }
+							</p>
+						</div>
+					} else {
+						<div class="px-4 flex flex-col gap-6">
+							for _, group := range data.Groups {
+								<div class="flex flex-col gap-2">
+									<h2 class="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+										@templates.Icon(group.TopicIconName, "size-4")
+										{ group.SpaceName } / { group.TopicName }
+									</h2>
+
+									<div class="card py-2 md:py-4">
+										<section class="px-2 md:px-4">
+											<div class="overflow-x-auto">
+												<table class="table">
+													<thead>
+														<tr>
+															<th class="w-full">
+																{ templates.T(ctx, "draft_page_index_column_title") }
+															</th>
+
+															<th>
+																{ templates.T(ctx, "draft_page_index_column_modified_at") }
+															</th>
+														</tr>
+													</thead>
+
+													<tbody>
+														for _, draft := range group.DraftPages {
+															<tr>
+																<td>
+																	<a
+																		href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+																		class="link-foreground"
+																	>
+																		{ draft.DisplayTitle(ctx) }
+																	</a>
+																</td>
+
+																<td class="text-muted-foreground whitespace-nowrap">
+																	{ draft.ModifiedAt }
+																</td>
+															</tr>
+														}
+													</tbody>
+												</table>
+											</div>
+										</section>
+									</div>
+								</div>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
