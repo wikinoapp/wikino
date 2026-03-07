@@ -190,7 +190,7 @@
 
 ### フェーズ 0: バグ修正
 
-- [ ] **0-1**: [Go] ページ公開時に下書きリビジョンを削除してから下書きを削除するよう修正
+- [x] **0-1**: [Go] ページ公開時に下書きリビジョンを削除してから下書きを削除するよう修正
   - **問題**: `PATCH /s/:space_id/pages/:page_id` でページを公開する際、`draft_page_revisions` テーブルが `draft_pages.id` を外部キー（`ON DELETE CASCADE` なし）で参照しているため、リビジョンが存在する下書きの削除が外部キー制約違反で失敗する
   - **原因**: `internal/usecase/publish_page.go` のステップ12で `draftPageRepo.Delete` を呼ぶ前に、関連する `draft_page_revisions` を削除していない
   - **対応**: `PublishPageUsecase` の下書き削除（ステップ12）の前に、`draft_page_revisions` の削除処理を追加する

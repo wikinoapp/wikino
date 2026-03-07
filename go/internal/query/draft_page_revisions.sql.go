@@ -50,3 +50,18 @@ func (q *Queries) CreateDraftPageRevision(ctx context.Context, arg CreateDraftPa
 	)
 	return i, err
 }
+
+const deleteDraftPageRevisionsByDraftPageID = `-- name: DeleteDraftPageRevisionsByDraftPageID :exec
+DELETE FROM draft_page_revisions WHERE draft_page_id = $1 AND space_id = $2
+`
+
+type DeleteDraftPageRevisionsByDraftPageIDParams struct {
+	DraftPageID string `json:"draft_page_id"`
+	SpaceID     string `json:"space_id"`
+}
+
+// 下書きページIDに紐づくリビジョンをすべて削除する
+func (q *Queries) DeleteDraftPageRevisionsByDraftPageID(ctx context.Context, arg DeleteDraftPageRevisionsByDraftPageIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteDraftPageRevisionsByDraftPageID, arg.DraftPageID, arg.SpaceID)
+	return err
+}

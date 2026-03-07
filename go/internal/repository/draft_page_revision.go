@@ -51,6 +51,14 @@ func (r *DraftPageRevisionRepository) Create(ctx context.Context, input CreateDr
 	return r.toModel(row), nil
 }
 
+// DeleteByDraftPageID は下書きページIDに紐づくリビジョンをすべて削除する
+func (r *DraftPageRevisionRepository) DeleteByDraftPageID(ctx context.Context, draftPageID model.DraftPageID, spaceID model.SpaceID) error {
+	return r.q.DeleteDraftPageRevisionsByDraftPageID(ctx, query.DeleteDraftPageRevisionsByDraftPageIDParams{
+		DraftPageID: string(draftPageID),
+		SpaceID:     string(spaceID),
+	})
+}
+
 // toModel は query.DraftPageRevision を model.DraftPageRevision に変換する
 func (r *DraftPageRevisionRepository) toModel(row query.DraftPageRevision) *model.DraftPageRevision {
 	return &model.DraftPageRevision{

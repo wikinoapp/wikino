@@ -17,11 +17,12 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -104,11 +105,12 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -185,11 +187,12 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -255,11 +258,12 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -338,11 +342,12 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -426,11 +431,12 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -510,11 +516,12 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -605,11 +612,12 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -679,11 +687,12 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -736,6 +745,94 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	}
 	if output.Page.Title == nil || *output.Page.Title != "Updated Without Draft" {
 		t.Errorf("Title = %v, want %q", output.Page.Title, "Updated Without Draft")
+	}
+	if output.PublishedAt.IsZero() {
+		t.Error("PublishedAt should not be zero")
+	}
+}
+
+func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-draftrev").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-draftrev@example.com").
+		WithAtname("publishdraftrev").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft With Revisions").
+		WithBody("Draft body with revisions").
+		Build()
+
+	// 下書きリビジョンを作成（外部キー制約の再現）
+	testutil.NewDraftPageRevisionBuilderDB(t, db).
+		WithDraftPageID(draftPageID).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewDraftPageRevisionBuilderDB(t, db).
+		WithDraftPageID(draftPageID).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	title := "Draft With Revisions"
+	output, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		DraftPageID:      draftPageID,
+		Title:            &title,
+		Body:             "Draft body with revisions",
+		SpaceIdentifier:  "publish-draftrev",
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil", err)
+	}
+	if output == nil {
+		t.Fatal("output should not be nil")
+	}
+	if output.Page.Body != "Draft body with revisions" {
+		t.Errorf("Body = %q, want %q", output.Page.Body, "Draft body with revisions")
 	}
 	if output.PublishedAt.IsZero() {
 		t.Error("PublishedAt should not be zero")
