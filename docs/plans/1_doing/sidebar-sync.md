@@ -262,7 +262,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
 
 ### フェーズ 2: 下書きページ一覧の追加
 
-- [ ] **2-1**: [Rails] DraftPageRepository にサイドバー用クエリメソッドを追加
+- [x] **2-1**: [Rails] DraftPageRepository にサイドバー用クエリメソッドを追加
   - `find_for_sidebar(user_record:, limit:)` メソッドを追加
   - `DraftPageRecord` を `space_record`, `page_record`, `topic_record` で preload
   - `modified_at DESC` でソート
