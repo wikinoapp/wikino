@@ -92,6 +92,39 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		}
 	})
 
+	t.Run("下書きページIDに紐づくリビジョンをすべて削除できる", func(t *testing.T) {
+		// リビジョンを2つ作成
+		_, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
+			DraftPageID:   draftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "Delete Test 1",
+			Body:          "delete body 1",
+			BodyHTML:      "<p>delete body 1</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() first revision error = %v", err)
+		}
+
+		_, err = repo.Create(context.Background(), CreateDraftPageRevisionInput{
+			DraftPageID:   draftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "Delete Test 2",
+			Body:          "delete body 2",
+			BodyHTML:      "<p>delete body 2</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() second revision error = %v", err)
+		}
+
+		// 削除
+		err = repo.DeleteByDraftPageID(context.Background(), draftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("DeleteByDraftPageID() error = %v", err)
+		}
+	})
+
 	t.Run("同じ下書きに対して複数のリビジョンを作成できる", func(t *testing.T) {
 		revision1, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
 			DraftPageID:   draftPageID,
