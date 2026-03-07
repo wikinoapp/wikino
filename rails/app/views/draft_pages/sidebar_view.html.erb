@@ -1,21 +1,21 @@
 <turbo-frame id="draft-pages">
   <div class="flex flex-col">
     <% @draft_pages.each do |draft_page| %>
-      <div class="group hover:bg-sidebar-accent relative flex items-center rounded-md transition duration-150 ease-in-out">
+      <div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
         <%= link_to edit_page_path(draft_page.space.identifier, draft_page.page.number), {
-          class: "absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md leading-none text-center hover:bg-brand-300/40 transition duration-150 ease-in-out z-10 non-touch:opacity-0 non-touch:group-hover:opacity-100",
+          class: "absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100",
           title: t("verbs.edit"),
           data: { turbo_frame: "_top" }
         } do %>
-          <%= render BaseUI::IconComponent.new(name: "pencil-simple-line-regular", size: "16px", class_name: "fill-muted-foreground") %>
+          <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px", class_name: "fill-muted-foreground") %>
         <% end %>
 
         <%= link_to page_path(draft_page.space.identifier, draft_page.page.number), {
-          class: "text-foreground flex items-center gap-2 p-2 rounded-md w-full",
+          class: "flex w-full items-center gap-2 rounded-md p-2 text-foreground",
           title: display_title(draft_page),
           data: { turbo_frame: "_top" }
         } do %>
-          <div class="w-[16px] shrink-0">
+          <div class="w-[16px] shrink-0 leading-none">
             <%= render Icons::TopicComponent.new(topic: draft_page.page.topic, size: "16px", class_name: "fill-muted-foreground") %>
           </div>
 

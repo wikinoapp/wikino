@@ -286,7 +286,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
 
 ### フェーズ 3: 既存セクションのスタイリング統一
 
-- [ ] **3-1**: [Rails] 参加中トピック一覧のスタイリングをGo版に合わせる
+- [x] **3-1**: [Rails] 参加中トピック一覧のスタイリングをGo版に合わせる
   - `JoinedTopics::IndexController` と `IndexView` を更新（variant 引数の削除対応）
   - `JoinedTopics::IndexView` のHTML構造をGo版に合わせる
   - アイコンサイズを `22px` → `16px` に変更
