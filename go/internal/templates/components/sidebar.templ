@@ -7,7 +7,6 @@ import (
 
 // SidebarData はサイドバーに渡すデータ構造体です
 type SidebarData struct {
-	DefaultClosed      bool
 	CurrentPageName    templates.PageName
 	SignedIn           bool
 	UserAtname         string
@@ -32,9 +31,19 @@ templ Sidebar(data SidebarData) {
 	<aside
 			class="sidebar"
 			data-side="left"
-			data-initial-open={ templates.BoolToString(!data.DefaultClosed) }
-			aria-hidden={ templates.BoolToString(data.DefaultClosed) }
+			id="sidebar"
+			data-initial-open="false"
+			aria-hidden="true"
 	>
+		<script>
+			(function() {
+				var s = document.getElementById("sidebar");
+				if (s && localStorage.getItem("wikinoSidebarOpen") === "true") {
+					s.setAttribute("data-initial-open", "true");
+					s.setAttribute("aria-hidden", "false");
+				}
+			})();
+		</script>
 		<nav aria-label={ templates.T(ctx, "sidebar_nav_label") }>
 			<section class="scrollbar gap-4 py-4">
 				<ul class="px-2">

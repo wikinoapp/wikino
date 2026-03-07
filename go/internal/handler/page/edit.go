@@ -164,7 +164,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		Flash:      flash,
 		HideFooter: true,
 		Sidebar: components.SidebarData{
-			DefaultClosed:     layouts.SidebarDefaultClosed(r),
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
