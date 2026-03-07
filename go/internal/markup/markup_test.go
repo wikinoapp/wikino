@@ -122,6 +122,11 @@ func TestRenderMarkdown_GFMExtensions(t *testing.T) {
 			input:    "| A | B |\n| --- | --- |\n| 1 | 2 |",
 			expected: `<table> <thead> <tr> <th>A</th> <th>B</th> </tr> </thead> <tbody> <tr> <td>1</td> <td>2</td> </tr> </tbody> </table>`,
 		},
+		{
+			name:     "テーブル配置指定",
+			input:    "| 左寄せ | 中央寄せ | 右寄せ |\n|:-------|:--------:|-------:|\n| 左     | 中央     | 右     |",
+			expected: `<table> <thead> <tr> <th align="left">左寄せ</th> <th align="center">中央寄せ</th> <th align="right">右寄せ</th> </tr> </thead> <tbody> <tr> <td align="left">左</td> <td align="center">中央</td> <td align="right">右</td> </tr> </tbody> </table>`,
+		},
 	}
 
 	for _, tt := range tests {

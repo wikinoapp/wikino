@@ -26,7 +26,12 @@ var zwnjBrRegex = regexp.MustCompile(`(?m)^<p>` + zwnj + `<br\s*/?>\n?`)
 
 var md = goldmark.New(
 	goldmark.WithExtensions(
-		extension.GFM,
+		extension.Linkify,
+		extension.NewTable(
+			extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute),
+		),
+		extension.Strikethrough,
+		extension.TaskList,
 	),
 	goldmark.WithParserOptions(
 		parser.WithAutoHeadingID(),
@@ -52,6 +57,9 @@ func newSanitizationPolicy() *bluemonday.Policy {
 
 	// img要素のwidth/height属性を許可（Rails版のsanitization_configに相当）
 	p.AllowAttrs("src", "alt", "title", "width", "height").OnElements("img")
+
+	// テーブルの配置指定（GFM）で生成されるalign属性を許可
+	p.AllowAttrs("align").OnElements("td", "th")
 
 	return p
 }
