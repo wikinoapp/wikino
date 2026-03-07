@@ -115,20 +115,21 @@ basecoat-cssがレスポンシブ対応（デスクトップ: 固定表示、モ
 
 サイドバーの開閉状態をlocalStorageに保存し、ページ遷移後も状態を維持する。Go版・Rails版の両方で同じ方式を採用する。
 
-**インラインスクリプト（レイアウトの `<head>` または `<aside>` 直後に配置）**: localStorageから初期状態を読み取り、FOUC（ちらつき）を防止する
+**インラインスクリプト（`<aside>` 開始タグ直後に配置）**: localStorageから初期状態を読み取り、FOUC（ちらつき）を防止する。`<aside>` にはデフォルトで `data-initial-open="false" aria-hidden="true"` を設定し、localStorageに `"true"` がある場合のみスクリプトで属性を上書きする。スクリプトは `<nav>` 等の可視コンテンツより前に配置することで、ブラウザがパースをブロックし、レンダリング前に属性が確定する。
 
 ```html
-<aside class="sidebar" data-side="left" id="sidebar">...</aside>
-<script>
-  (function () {
-    var s = document.getElementById("sidebar");
-    if (s) {
-      var open = localStorage.getItem("wikinoSidebarOpen") === "true";
-      s.setAttribute("data-initial-open", String(open));
-      s.setAttribute("aria-hidden", String(!open));
-    }
-  })();
-</script>
+<aside class="sidebar" data-side="left" id="sidebar" data-initial-open="false" aria-hidden="true">
+  <script>
+    (function () {
+      var s = document.getElementById("sidebar");
+      if (s && localStorage.getItem("wikinoSidebarOpen") === "true") {
+        s.setAttribute("data-initial-open", "true");
+        s.setAttribute("aria-hidden", "false");
+      }
+    })();
+  </script>
+  <nav>...</nav>
+</aside>
 ```
 
 **状態保存（バンドルJS）**: `basecoat:sidebar` イベントをリスンし、localStorageに状態を保存する
