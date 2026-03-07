@@ -36,6 +36,14 @@ window.Stimulus.register("markdown-editor", MarkdownEditorController);
 window.Stimulus.register("search-cursor", SearchCursorController);
 window.Stimulus.register("stuck", StuckController);
 
+// サイドバー開閉状態をlocalStorageに保存する
+document.addEventListener("basecoat:sidebar", () => {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+  const isOpen = sidebar.getAttribute("aria-hidden") === "false";
+  localStorage.setItem("wikinoSidebarOpen", String(isOpen));
+});
+
 // basecoat-cssのJSコンポーネントを動的に読み込む
 document.addEventListener("turbo:load", () => {
   const basecoatScripts = ["dropdown-menu", "sidebar"];
