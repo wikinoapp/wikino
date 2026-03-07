@@ -118,6 +118,7 @@ en:
     sidebar:
       draft_pages_empty: No drafts
       draft_pages_show_all: Show all
+      joined_topics_empty: No joined topics
     sign_in:
       dont_have_an_account: Don't have an account?
       forgot_password: Forgot password?
