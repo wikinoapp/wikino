@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :request do
+RSpec.describe "POST /rails/s/:space_identifier/pages/:page_number/backlinks", type: :request do
   it "トピックが削除されているとき、そのトピックに投稿されたページは表示されないこと" do
     space_record = create(:space_record)
     topic_record_1 = create(:topic_record, :public, space_record:)
@@ -16,14 +16,14 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
       linked_page_ids: [page_record.id]
     )
 
-    post "/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
+    post "/rails/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("テストページ")
 
     Topics::SoftDestroyService.new.call(topic_record: topic_record_2)
 
-    post "/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
+    post "/rails/s/#{space_record.identifier}/pages/#{page_record.number}/backlinks"
 
     expect(response.status).to eq(200)
     expect(response.body).not_to include("テストページ")
@@ -39,7 +39,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     create(:page_record, :published, space_record: space, topic_record: public_topic, title: "公開されているページ", linked_page_ids: [page.id])
     create(:page_record, :published, space_record: space, topic_record: private_topic, title: "公開されていないページ", linked_page_ids: [page.id])
 
-    post "/s/#{space.identifier}/pages/#{page.number}/backlinks"
+    post "/rails/s/#{space.identifier}/pages/#{page.number}/backlinks"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
@@ -52,7 +52,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
     private_topic = create(:topic_record, :private, space_record: space)
     page = create(:page_record, space_record: space, topic_record: private_topic)
 
-    post "/s/#{space.identifier}/pages/#{page.number}/backlinks"
+    post "/rails/s/#{space.identifier}/pages/#{page.number}/backlinks"
 
     expect(response.status).to eq(404)
   end
@@ -73,7 +73,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
 
     sign_in(user_record: user)
 
-    post "/s/#{space.identifier}/pages/#{page.number}/backlinks"
+    post "/rails/s/#{space.identifier}/pages/#{page.number}/backlinks"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
@@ -92,7 +92,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
 
     sign_in(user_record: user)
 
-    post "/s/#{space.identifier}/pages/#{page.number}/backlinks"
+    post "/rails/s/#{space.identifier}/pages/#{page.number}/backlinks"
 
     expect(response.status).to eq(404)
   end
@@ -116,7 +116,7 @@ RSpec.describe "POST /s/:space_identifier/pages/:page_number/backlinks", type: :
 
     sign_in(user_record: user)
 
-    post "/s/#{space.identifier}/pages/#{page.number}/backlinks"
+    post "/rails/s/#{space.identifier}/pages/#{page.number}/backlinks"
 
     expect(response.status).to eq(200)
     expect(response.body).to include("公開されているページ")
