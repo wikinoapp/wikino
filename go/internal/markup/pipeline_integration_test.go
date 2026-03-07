@@ -534,6 +534,52 @@ func TestRenderHTML_InlineImageWithSurroundingText(t *testing.T) {
 	}
 }
 
+func TestRenderHTML_HTMLImgWithCaption(t *testing.T) {
+	t.Parallel()
+
+	resolver := &mockPageLocationResolver{}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "600x400.png"},
+		},
+	}
+
+	tests := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "LF",
+			body: "<img width=\"600\" height=\"400\" alt=\"600x400.png\" src=\"/attachments/att-1\">\n*サンプル画像です*",
+		},
+		{
+			name: "CRLF",
+			body: "<img width=\"600\" height=\"400\" alt=\"600x400.png\" src=\"/attachments/att-1\">\r\n*サンプル画像です*",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := RenderHTML(context.Background(), tt.body, "topic1", "space-1", "my-space", resolver, finder)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if !strings.Contains(got, `data-attachment-id="att-1"`) {
+				t.Errorf("result should contain attachment, got: %s", got)
+			}
+			if !strings.Contains(got, "<em>サンプル画像です</em>") {
+				t.Errorf("emphasis should be converted to <em>, got: %s", got)
+			}
+			if !strings.Contains(got, "<br/>") {
+				t.Errorf("result should contain <br/> between image and caption, got: %s", got)
+			}
+		})
+	}
+}
+
 func TestRenderHTML_ImageWithCaption(t *testing.T) {
 	t.Parallel()
 

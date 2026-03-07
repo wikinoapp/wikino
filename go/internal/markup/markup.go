@@ -19,7 +19,7 @@ const zwnj = "\u200C"
 
 // 単独行のimgタグの直後にMarkdownインライン記法（イタリック等）が続くパターン。
 // goldmarkがimgタグをHTMLブロックとして解析しないよう、ZWNJを挿入する。
-var standaloneImgRegex = regexp.MustCompile(`(?m)^(<img[^>]*>)\n(\*[^*]+\*)$`)
+var standaloneImgRegex = regexp.MustCompile(`(?m)^(<img[^>]*>)[ \t]*\n(\*[^*]+\*)[ \t]*$`)
 
 // ZWNJを含む不要なHTML断片を除去するパターン
 var zwnjBrRegex = regexp.MustCompile(`(?m)^<p>` + zwnj + `<br\s*/?>\n?`)
@@ -62,6 +62,9 @@ func RenderMarkdown(text string) string {
 	if text == "" {
 		return ""
 	}
+
+	// CRLFをLFに正規化（ブラウザのtextareaはCRLFで送信する場合がある）
+	text = strings.ReplaceAll(text, "\r\n", "\n")
 
 	// 単独行のimgタグの前にZWNJを挿入してインラインHTMLとして処理させる
 	processed := standaloneImgRegex.ReplaceAllString(text, zwnj+"\n$1\n$2")
