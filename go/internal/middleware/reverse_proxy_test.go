@@ -633,6 +633,120 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag_NilRepo(t *testing.T) {
 	}
 }
 
+func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		expected bool
+	}{
+		// Go版で処理するパス
+		{
+			name:     "ページ編集画面",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/edit",
+			expected: true,
+		},
+		{
+			name:     "下書きページ表示",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/draft_page",
+			expected: true,
+		},
+		{
+			name:     "下書きページ更新",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1/draft_page",
+			expected: true,
+		},
+		{
+			name:     "下書きリビジョン更新",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1/draft_page_revision",
+			expected: true,
+		},
+		{
+			name:     "ページ更新（PATCH）",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1",
+			expected: true,
+		},
+		{
+			name:     "ページ更新（POST→PATCH、Method Override前）",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1",
+			expected: true,
+		},
+		{
+			name:     "ページロケーション一覧",
+			method:   http.MethodGet,
+			path:     "/s/my-space/page_locations",
+			expected: true,
+		},
+		{
+			name:     "リンク一覧",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/link_list",
+			expected: true,
+		},
+		{
+			name:     "バックリンク一覧（個別）",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/links/2/backlink_list",
+			expected: true,
+		},
+		{
+			name:     "バックリンク一覧",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/backlinks",
+			expected: true,
+		},
+		{
+			name:     "ページ移動",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/move",
+			expected: true,
+		},
+
+		// Rails版に転送するパス
+		{
+			name:     "ページ表示（GET）はRails版に転送",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1",
+			expected: false,
+		},
+		{
+			name:     "マッチしないパス",
+			method:   http.MethodGet,
+			path:     "/settings",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			result := m.isGoHandledByRegex(req)
+			if result != tc.expected {
+				t.Errorf("isGoHandledByRegex(%s %q) = %v, want %v", tc.method, tc.path, result, tc.expected)
+			}
+		})
+	}
+}
+
 func TestRender502ErrorHTML(t *testing.T) {
 	t.Parallel()
 

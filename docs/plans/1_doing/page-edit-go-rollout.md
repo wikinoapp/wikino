@@ -119,7 +119,9 @@
 ### フィーチャーフラグからホワイトリストへの移行
 
 - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンを削除
-- `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加（全ユーザーがGo版を使用）
+- `internal/middleware/reverse_proxy.go` に `goHandledRegexPatterns`（正規表現 + メソッドフィルタによるホワイトリスト）を追加し、ページ編集関連のパスを登録（全ユーザーがGo版を使用）
+- `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` に `/drafts`（下書き一覧）を追加
+- `/s/` をプレフィックス一致に追加するとGo未実装のページ表示（`GET /s/:space_id/pages/:page_id`）もGoに送られてしまうため、正規表現パターンで個別に指定する
 
 ### フィーチャーフラグの整理
 
@@ -128,6 +130,14 @@
 - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除し、ダミーの `FeatureFlagExample` 定数を追加（仕組みの参照用）
 - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンをすべて削除（スライスは空にする）
 - `e2e/tests/auth.setup.ts` から `createTestFeatureFlag` 呼び出しを削除（ページ編集がホワイトリストに移行するため不要）
+
+### Rails版バックリンクパスの競合解消
+
+Go版ホワイトリストに `^/s/[^/]+/pages/\d+/backlinks$` が全メソッド対象で登録されているため、Rails版ページ表示画面（`GET /s/:space_identifier/pages/:page_number` はRails処理）から `BacklinkListComponent` が発行するバックリンクページネーションリクエスト（`POST /s/:space_identifier/pages/:page_number/backlinks`）がGoに転送されてしまう。
+
+- `config/routes.rb` の `page_backlink_list` ルートのパスを `/rails/s/:space_identifier/pages/:page_number/backlinks` に変更する
+- `BacklinkListComponent` 等は `page_backlink_list_path` ヘルパーを使用しているため、ルート変更に自動的に追従する
+- Go版リバースプロキシは `/rails/` プレフィックスをホワイトリストに持たないため、自動的にRailsに転送される
 
 ### Rails版の削除対象
 
@@ -153,7 +163,11 @@
 - 該当がない場合は「なし」と記載
 -->
 
-なし
+### `/s/` プレフィックスによるホワイトリスト登録
+
+`goHandledPrefixPaths` に `/s/` を追加してスペース配下の全パスをGo版に送る方法を検討した。
+
+**不採用の理由**: `/s/:space_id/pages/:page_id` のGETリクエスト（ページ表示）はまだGo版で実装されていないため、`/s/` をプレフィックスに追加するとページ表示が壊れる。また、`PATCH /s/:space_id/pages/:page_id`（ページ更新）はGoで処理するがGETはRailsに転送する必要があり、プレフィックス一致ではメソッドの区別ができない。そのため、正規表現 + メソッドフィルタによる `goHandledRegexPatterns` を導入した。
 
 ## タスクリスト
 
@@ -202,15 +216,26 @@
 
 ### フェーズ 1: フィーチャーフラグからホワイトリストへの移行（全ユーザー展開）
 
-- [ ] **1-1**: [Go] ページ編集パスをホワイトリストに追加し、フィーチャーフラグを整理
+- [x] **1-1**: [Go] ページ編集パスをホワイトリストに追加し、フィーチャーフラグを整理
   - フィーチャーフラグによる段階的ロールアウトで問題がないことを確認した後に実施
-  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加
+  - `internal/middleware/reverse_proxy.go` に `goHandledRegexPatterns`（正規表現 + メソッドフィルタによるホワイトリスト）を追加し、ページ編集関連パスを登録
+  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` に `/drafts` を追加
   - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンをすべて削除（スライスは空にする）
   - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除し、ダミーの `FeatureFlagExample` 定数を追加
-  - `internal/middleware/reverse_proxy_test.go` のフィーチャーフラグ関連テストでダミーフラグを使用するよう更新
   - `e2e/tests/auth.setup.ts` から `createTestFeatureFlag` 呼び出しを削除
   - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
   - **想定行数**: 約 -50 行（パターン削除分）
+
+### フェーズ 1a: Rails版バックリンクパスの競合解消
+
+- [ ] **1a-1**: [Rails] バックリンク一覧のパスに `/rails` プレフィックスを追加
+  - Go版ホワイトリストに `^/s/[^/]+/pages/\d+/backlinks$` が登録されているため、Rails版ページ表示画面からのバックリンクページネーション（`POST /s/:space_identifier/pages/:page_number/backlinks`）がGoに転送されてしまう問題を解消する
+  - `config/routes.rb` の `page_backlink_list` ルートのパスを `/rails/s/:space_identifier/pages/:page_number/backlinks` に変更
+  - `BacklinkListComponent` が生成するパスは `page_backlink_list_path` ヘルパー経由のため、ルート変更で自動的に追従する
+  - Go版リバースプロキシは `/rails/` プレフィックスのパスをホワイトリストに持たないため、自動的にRailsに転送される
+  - **想定ファイル数**: 約 1 ファイル（実装 1）
+  - **想定行数**: 約 5 行（ルート定義の変更のみ）
+  - 依存: 1-1
 
 ### フェーズ 2: Rails版の実装の削除
 
