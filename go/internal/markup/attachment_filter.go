@@ -2,6 +2,7 @@ package markup
 
 import (
 	"context"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -25,7 +26,8 @@ var (
 	}
 
 	// 添付ファイルURLパターン（/attachments/{id}のみマッチ）
-	attachmentPathRegex = regexp.MustCompile(`^/attachments/([^/]+)$`)
+	// URLデコード後にバックスラッシュを含むIDは不正な入力として除外する
+	attachmentPathRegex = regexp.MustCompile(`^/attachments/([^/\\]+)$`)
 )
 
 // AttachmentFinder は添付ファイルの検索インターフェース。
@@ -288,8 +290,14 @@ func replaceWithAnchorDataAttrs(aNode *html.Node, attachmentID string) {
 
 // extractAttachmentID はURLから添付ファイルIDを抽出する。
 // /attachments/{id}パターンにマッチしない場合は空文字列を返す。
-func extractAttachmentID(url string) string {
-	match := attachmentPathRegex.FindStringSubmatch(url)
+// bluemondayがURL内の特殊文字（例: \）をパーセントエンコード（%5C）するため、
+// URLデコードしてから抽出する。
+func extractAttachmentID(rawURL string) string {
+	decoded, err := url.PathUnescape(rawURL)
+	if err == nil {
+		rawURL = decoded
+	}
+	match := attachmentPathRegex.FindStringSubmatch(rawURL)
 	if match == nil {
 		return ""
 	}

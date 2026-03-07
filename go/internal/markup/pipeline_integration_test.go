@@ -609,3 +609,27 @@ func TestRenderHTML_ImageWithCaption(t *testing.T) {
 		t.Errorf("result should contain <br/> between image and caption, got: %s", got)
 	}
 }
+
+func TestRenderHTML_ImgWithBackslashInSrc(t *testing.T) {
+	t.Parallel()
+
+	resolver := &mockPageLocationResolver{}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "photo.jpg"},
+		},
+	}
+
+	// src属性にバックスラッシュ付きの不正なHTMLが入力された場合、
+	// bluemondayが\を%5Cにエンコードするが、エラーにならずスキップされること
+	body := `<img src="/attachments/att-1\">`
+	got, err := RenderHTML(context.Background(), body, "topic1", "space-1", "my-space", resolver, finder)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 不正なIDは変換されないが、エラーにならないこと
+	if strings.Contains(got, `data-attachment-id`) {
+		t.Errorf("backslash URL should not be converted to attachment, got: %s", got)
+	}
+}

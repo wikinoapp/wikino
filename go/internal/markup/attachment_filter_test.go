@@ -637,6 +637,16 @@ func TestExtractAttachmentID(t *testing.T) {
 			url:  "/attachments/",
 			want: "",
 		},
+		{
+			name: "パーセントエンコードされたバックスラッシュ",
+			url:  "/attachments/att-1%5C",
+			want: "",
+		},
+		{
+			name: "バックスラッシュを含むURL",
+			url:  `/attachments/att-1\`,
+			want: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -648,6 +658,28 @@ func TestExtractAttachmentID(t *testing.T) {
 				t.Errorf("extractAttachmentID(%q) = %q, want %q", tt.url, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestFilterAttachments_PercentEncodedBackslash(t *testing.T) {
+	t.Parallel()
+
+	finder := newMockFinder(&model.Attachment{
+		ID:       "att-1",
+		SpaceID:  "space-1",
+		Filename: "photo.png",
+	})
+
+	// bluemondayがバックスラッシュを%5Cにエンコードしたケース
+	input := `<img src="/attachments/att-1%5C">`
+	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// バックスラッシュを含む不正なIDは変換されないこと
+	if strings.Contains(got, `data-attachment-id`) {
+		t.Errorf("percent-encoded backslash URL should not be converted\ngot: %s", got)
 	}
 }
 

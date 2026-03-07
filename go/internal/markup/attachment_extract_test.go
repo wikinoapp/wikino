@@ -222,6 +222,18 @@ func TestExtractAttachmentIDs_MarkdownLinkWithTitle(t *testing.T) {
 	}
 }
 
+func TestExtractAttachmentIDs_PercentEncodedBackslash(t *testing.T) {
+	t.Parallel()
+
+	// bluemondayがバックスラッシュを%5Cにエンコードしたケース
+	body := `<img src="/attachments/att-1%5C">`
+	got := ExtractAttachmentIDs(body)
+
+	if len(got) != 0 {
+		t.Errorf("percent-encoded backslash ID should be excluded, got: %v", got)
+	}
+}
+
 func TestExtractFeaturedImageID_MarkdownImageWithTitle(t *testing.T) {
 	t.Parallel()
 

@@ -1,6 +1,7 @@
 package markup
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -34,6 +35,14 @@ func ExtractAttachmentIDs(bodyHTML string) []string {
 	var ids []string
 
 	addID := func(id string) {
+		// bluemondayがURL内の特殊文字をパーセントエンコードするため、デコードする
+		if decoded, err := url.PathUnescape(id); err == nil {
+			id = decoded
+		}
+		// バックスラッシュを含むIDは不正な入力として除外する
+		if strings.ContainsRune(id, '\\') {
+			return
+		}
 		if id != "" && !seen[id] {
 			seen[id] = true
 			ids = append(ids, id)
