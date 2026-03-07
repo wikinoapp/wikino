@@ -14,7 +14,6 @@ import GlobalHotkeyController from "./controllers/global-hotkey-controller";
 import MarkdownEditorController from "./controllers/markdown-editor-controller";
 import MarkdownEditorFormController from "./controllers/markdown-editor-form-controller";
 import SearchCursorController from "./controllers/search-cursor-controller";
-import SidebarController from "./controllers/sidebar_controller";
 import StuckController from "./controllers/stuck-controller";
 
 declare global {
@@ -35,7 +34,6 @@ window.Stimulus.register("global-hotkey", GlobalHotkeyController);
 window.Stimulus.register("markdown-editor-form", MarkdownEditorFormController);
 window.Stimulus.register("markdown-editor", MarkdownEditorController);
 window.Stimulus.register("search-cursor", SearchCursorController);
-window.Stimulus.register("sidebar", SidebarController);
 window.Stimulus.register("stuck", StuckController);
 
 // basecoat-cssのJSコンポーネントを動的に読み込む
