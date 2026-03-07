@@ -2,15 +2,15 @@
 
 ## レビュー情報
 
-| 項目                       | 内容                                   |
-| -------------------------- | -------------------------------------- |
-| レビュー日                 | 2026-03-07                             |
-| 対象ブランチ               | sidebar-sync-1-3                       |
-| ベースブランチ             | sidebar-sync                           |
-| 作業計画書（指定があれば） | docs/plans/1_doing/sidebar-sync.md     |
-| 変更ファイル数             | 4 ファイル                             |
-| 変更行数（実装）           | +20 / -40 行                           |
-| 変更行数（テスト）         | +0 / -0 行                             |
+| 項目                       | 内容                               |
+| -------------------------- | ---------------------------------- |
+| レビュー日                 | 2026-03-07                         |
+| 対象ブランチ               | sidebar-sync-1-3                   |
+| ベースブランチ             | sidebar-sync                       |
+| 作業計画書（指定があれば） | docs/plans/1_doing/sidebar-sync.md |
+| 変更ファイル数             | 4 ファイル                         |
+| 変更行数（実装）           | +20 / -40 行                       |
+| 変更行数（テスト）         | +0 / -0 行                         |
 
 ## 参照するガイドライン
 
@@ -40,13 +40,13 @@
 
 | 要件                                                                     | 状態 |
 | ------------------------------------------------------------------------ | ---- |
-| `<aside>` 直後のインラインスクリプト追加（localStorage初期状態読み取り） | ✅    |
-| `basecoat:sidebar` イベントリスナー追加（localStorage状態保存）          | ✅    |
-| requestAnimationFrameでbasecoat-cssの属性更新後に保存                    | ✅    |
-| Stimulus `sidebar_controller.ts` 削除                                    | ✅    |
-| Stimulus登録の削除（application.tsから）                                 | ✅    |
-| 残存参照なし（`sidebar#`、`sidebar_controller` の参照が0件）             | ✅    |
-| Go版との実装一貫性（`wikinoSidebarOpen` キー名、ロジック）               | ✅    |
+| `<aside>` 直後のインラインスクリプト追加（localStorage初期状態読み取り） | ✅   |
+| `basecoat:sidebar` イベントリスナー追加（localStorage状態保存）          | ✅   |
+| requestAnimationFrameでbasecoat-cssの属性更新後に保存                    | ✅   |
+| Stimulus `sidebar_controller.ts` 削除                                    | ✅   |
+| Stimulus登録の削除（application.tsから）                                 | ✅   |
+| 残存参照なし（`sidebar#`、`sidebar_controller` の参照が0件）             | ✅   |
+| Go版との実装一貫性（`wikinoSidebarOpen` キー名、ロジック）               | ✅   |
 
 すべての要件が満たされており、設計との乖離はありません。
 
