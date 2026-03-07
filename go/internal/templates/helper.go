@@ -33,14 +33,6 @@ func Deref[T any](v *T) T {
 	return zero
 }
 
-// BoolToString は bool 値を "true" または "false" の文字列に変換します
-func BoolToString(b bool) string {
-	if b {
-		return "true"
-	}
-	return "false"
-}
-
 // Icon はアイコン名からSVGを返す（templ.Component対応）
 // 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")
 func Icon(name viewmodel.IconName, class ...string) templ.Component {
