@@ -68,17 +68,17 @@ RSpec.describe DraftPageRepository do
       active_space_record = FactoryBot.create(:space_record)
       inactive_space_record = FactoryBot.create(:space_record)
 
-      active_member = FactoryBot.create(:space_member_record, :member, user_record:, space_record: active_space_record, active: true)
-      inactive_member = FactoryBot.create(:space_member_record, :member, user_record:, space_record: inactive_space_record, active: false)
+      active_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record: active_space_record, active: true)
+      inactive_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record: inactive_space_record, active: false)
 
-      active_topic = FactoryBot.create(:topic_record, space_record: active_space_record)
-      inactive_topic = FactoryBot.create(:topic_record, space_record: inactive_space_record)
+      active_topic_record = FactoryBot.create(:topic_record, space_record: active_space_record)
+      inactive_topic_record = FactoryBot.create(:topic_record, space_record: inactive_space_record)
 
-      active_page = FactoryBot.create(:page_record, space_record: active_space_record, topic_record: active_topic, title: "Active")
-      inactive_page = FactoryBot.create(:page_record, space_record: inactive_space_record, topic_record: inactive_topic, title: "Inactive")
+      active_page_record = FactoryBot.create(:page_record, space_record: active_space_record, topic_record: active_topic_record, title: "Active")
+      inactive_page_record = FactoryBot.create(:page_record, space_record: inactive_space_record, topic_record: inactive_topic_record, title: "Inactive")
 
-      FactoryBot.create(:draft_page_record, space_record: active_space_record, topic_record: active_topic, page_record: active_page, space_member_record: active_member)
-      FactoryBot.create(:draft_page_record, space_record: inactive_space_record, topic_record: inactive_topic, page_record: inactive_page, space_member_record: inactive_member)
+      FactoryBot.create(:draft_page_record, space_record: active_space_record, topic_record: active_topic_record, page_record: active_page_record, space_member_record: active_member_record)
+      FactoryBot.create(:draft_page_record, space_record: inactive_space_record, topic_record: inactive_topic_record, page_record: inactive_page_record, space_member_record: inactive_member_record)
 
       repository = DraftPageRepository.new
       result = repository.find_for_sidebar(user_record:, limit: 5)
@@ -97,11 +97,11 @@ RSpec.describe DraftPageRepository do
 
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
-      my_page = FactoryBot.create(:page_record, space_record:, topic_record:, title: "My Page")
-      other_page = FactoryBot.create(:page_record, space_record:, topic_record:, title: "Other Page")
+      my_page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "My Page")
+      other_page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "Other Page")
 
-      FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record: my_page, space_member_record:)
-      FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record: other_page, space_member_record: other_space_member_record)
+      FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record: my_page_record, space_member_record:)
+      FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record: other_page_record, space_member_record: other_space_member_record)
 
       repository = DraftPageRepository.new
       result = repository.find_for_sidebar(user_record:, limit: 5)
