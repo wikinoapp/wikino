@@ -3,7 +3,7 @@
     <div>
       <% @draft_pages.each do |draft_page| %>
         <div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
-          <%= link_to edit_page_path(draft_page.space.identifier, draft_page.page.number), {
+          <%= link_to "/s/#{draft_page.space.identifier}/pages/#{draft_page.page.number}/edit", {
             class: "absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100",
             title: t("verbs.edit"),
             data: { turbo_frame: "_top" }
