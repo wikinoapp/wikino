@@ -31,6 +31,9 @@ module GeneratedPathHelpersModule
   def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def draft_page_sidebar_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def edit_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

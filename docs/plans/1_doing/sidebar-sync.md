@@ -270,7 +270,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
   - **想定ファイル数**: 約 2 ファイル（実装 1 + テスト 1）
   - **想定行数**: 約 80 行（実装 30 行 + テスト 50 行）
 
-- [ ] **2-2**: [Rails] サイドバー用下書きページ一覧のコントローラー・ビュー・コンポーネントを作成
+- [x] **2-2**: [Rails] サイドバー用下書きページ一覧のコントローラー・ビュー・コンポーネントを作成
   - `DraftPages::SidebarController` を新規作成
   - `DraftPages::SidebarView` を新規作成
   - `Sidebar::DraftPagesComponent` を新規作成（Turbo Frameで遅延読み込み）
