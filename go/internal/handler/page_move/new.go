@@ -164,7 +164,6 @@ func (h *Handler) renderMoveForm(
 		Meta:  meta,
 		Flash: flash,
 		Sidebar: components.SidebarData{
-			DefaultClosed:     layouts.SidebarDefaultClosed(r),
 			CurrentPageName:   templates.PageNamePageMove,
 			SignedIn:          true,
 			UserAtname:        user.Atname,

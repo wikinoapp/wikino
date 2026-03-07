@@ -1,0 +1,54 @@
+<turbo-frame id="draft-pages">
+  <div class="flex flex-col gap-2">
+    <div>
+      <% @draft_pages.each do |draft_page| %>
+        <div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
+          <%= link_to edit_page_path(draft_page.space.identifier, draft_page.page.number), {
+            class: "absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100",
+            title: t("verbs.edit"),
+            data: { turbo_frame: "_top" }
+          } do %>
+            <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px", class_name: "fill-muted-foreground") %>
+          <% end %>
+
+          <%= link_to page_path(draft_page.space.identifier, draft_page.page.number), {
+            class: "flex w-full items-center gap-2 rounded-md p-2 text-foreground",
+            title: display_title(draft_page),
+            data: { turbo_frame: "_top" }
+          } do %>
+            <div class="w-[16px] shrink-0 flex">
+              <%= render Icons::TopicComponent.new(topic: draft_page.page.topic, size: "16px", class_name: "fill-muted-foreground") %>
+            </div>
+
+            <div class="flex flex-col pr-8">
+              <div class="line-clamp-1 text-xs text-muted-foreground">
+                <%= draft_page.page.topic.name %>
+              </div>
+
+              <div class="line-clamp-1 text-sm">
+                <%= display_title(draft_page) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @has_more %>
+      <div class="px-2">
+        <%= link_to "/drafts", class: "link-muted text-xs flex items-center gap-1 w-fit", data: { turbo_frame: "_top" } do %>
+          <%= render BaseUI::IconComponent.new(name: "arrow-right-regular", size: "16px", class_name: "fill-muted-foreground") %>
+          <%= t("messages.sidebar.draft_pages_show_all") %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @draft_pages.empty? %>
+      <div class="px-4 py-2">
+        <p class="text-xs text-muted-foreground">
+          <%= t("messages.sidebar.draft_pages_empty") %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+</turbo-frame>

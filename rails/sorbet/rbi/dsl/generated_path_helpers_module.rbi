@@ -31,6 +31,9 @@ module GeneratedPathHelpersModule
   def draft_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def draft_page_sidebar_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def edit_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -44,6 +47,9 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def mission_control_jobs_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def move_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_page_path(*args); end

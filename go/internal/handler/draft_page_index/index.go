@@ -42,7 +42,6 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		Meta:  meta,
 		Flash: flash,
 		Sidebar: components.SidebarData{
-			DefaultClosed:     layouts.SidebarDefaultClosed(r),
 			CurrentPageName:   templates.PageNameDraftPageIndex,
 			SignedIn:          true,
 			UserAtname:        user.Atname,

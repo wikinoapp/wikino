@@ -1,6 +1,6 @@
 <div class="bg-card flex items-center gap-4 rounded-full border border-gray-400 px-4 py-1 md:hidden">
   <button
-    data-action="click->sidebar#open"
+    onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
     class="flex w-[48px] flex-col items-center gap-1"
     aria-label="<%= t('nouns.menu') %>"
   >

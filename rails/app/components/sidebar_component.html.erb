@@ -1,29 +1,95 @@
-<%# 固定サイドバー (xl以上) %>
-<aside class="z-sidebar fixed top-0 left-0 hidden h-screen xl:block xl:max-w-[230px]">
-  <%= render Sidebar::ContentComponent.new(
-    current_page_name:,
-    current_user:,
-    current_space:,
-    variant: :fixed
-  ) %>
-</aside>
+<aside class="sidebar" data-side="left" id="sidebar" data-initial-open="false" aria-hidden="true">
+  <script>
+    (function() {
+      var s = document.getElementById("sidebar");
+      if (s && localStorage.getItem("wikinoSidebarOpen") === "true") {
+        s.setAttribute("data-initial-open", "true");
+        s.setAttribute("aria-hidden", "false");
+      }
+    })();
+  </script>
+  <nav>
+    <section class="scrollbar !gap-4 py-4">
+      <ul class="px-2">
+        <% if signed_in? %>
+          <li>
+            <%= link_to home_path, title: t("nouns.home") do %>
+              <%= render BaseUI::IconComponent.new(
+                name: current_page_name == PageName::Home ? "house-fill" : "house-regular",
+                size: "16px",
+                class_name: "fill-gray-600"
+              ) %>
+              <%= t("nouns.home") %>
+            <% end %>
+          </li>
 
-<%# スライドサイドバー (xl未満) %>
-<aside
-  data-sidebar-target="panel"
-  class="z-sidebar fixed top-0 left-0 h-screen w-[230px] -translate-x-full transform bg-white transition-transform duration-300 ease-in-out xl:hidden"
->
-  <%= render Sidebar::ContentComponent.new(
-    current_page_name:,
-    current_user:,
-    current_space:,
-    variant: :slide
-  ) %>
-</aside>
+          <li>
+            <%= link_to search_path_with_space_filter, title: t("nouns.search") do %>
+              <%= render BaseUI::IconComponent.new(
+                name: current_page_name == PageName::Search ? "magnifying-glass-fill" : "magnifying-glass-regular",
+                size: "16px",
+                class_name: "fill-gray-600"
+              ) %>
+              <%= t("nouns.search") %>
+            <% end %>
+          </li>
 
-<%# オーバーレイ %>
-<div
-  data-sidebar-target="overlay"
-  data-action="click->sidebar#close"
-  class="z-overlay fixed inset-0 hidden bg-black/30 xl:hidden"
-></div>
+          <li>
+            <%= link_to profile_path(current_user.not_nil!.atname), title: t("nouns.profile") do %>
+              <%= render BaseUI::IconComponent.new(
+                name: current_page_name == PageName::Profile ? "user-circle-fill" : "user-circle-regular",
+                size: "16px",
+                class_name: "fill-gray-600"
+              ) %>
+              <%= t("nouns.profile") %>
+            <% end %>
+          </li>
+        <% else %>
+          <li>
+            <%= link_to "/", title: t("nouns.home") do %>
+              <%= render BaseUI::IconComponent.new(
+                name: current_page_name == PageName::Welcome ? "house-fill" : "house-regular",
+                size: "16px",
+                class_name: "fill-gray-600"
+              ) %>
+              <%= t("nouns.home") %>
+            <% end %>
+          </li>
+
+          <li>
+            <%= link_to "/sign_in", title: t("nouns.sign_in") do %>
+              <%= render BaseUI::IconComponent.new(
+                name: "sign-in-regular",
+                size: "16px",
+                class_name: "fill-gray-600"
+              ) %>
+              <%= t("nouns.sign_in") %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+
+      <% if signed_in? %>
+        <hr class="border-gray-300 mx-2">
+
+        <div class="flex flex-col gap-2 px-2">
+          <p class="text-xs font-bold text-muted-foreground px-2">
+            <%= t("nouns.draft_pages") %>
+          </p>
+
+          <%= render Sidebar::DraftPagesComponent.new %>
+        </div>
+
+        <hr class="border-gray-300 mx-2">
+
+        <div class="flex flex-col gap-2 px-2">
+          <p class="text-xs font-bold text-muted-foreground px-2">
+            <%= t("nouns.joined_topics") %>
+          </p>
+
+          <%= render Sidebar::JoinedTopicsComponent.new %>
+        </div>
+      <% end %>
+    </section>
+  </nav>
+</aside>

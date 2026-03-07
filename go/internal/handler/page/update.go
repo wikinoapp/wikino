@@ -253,7 +253,6 @@ func (h *Handler) renderEditWithErrors(
 		Meta:       meta,
 		HideFooter: true,
 		Sidebar: components.SidebarData{
-			DefaultClosed:     layouts.SidebarDefaultClosed(r),
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          currentUser != nil,
 			UserAtname:        userAtname,

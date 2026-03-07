@@ -198,9 +198,48 @@
   }
 }
 
+@layer components {
+  .link,
+  .link-muted,
+  .link-foreground {
+    @apply underline underline-offset-4 transition-colors duration-150;
+  }
+
+  .link {
+    @apply text-blue-600 hover:text-blue-700;
+    @apply dark:text-blue-400 dark:hover:text-blue-300;
+  }
+
+  .link-muted {
+    @apply text-muted-foreground/90 hover:text-muted-foreground;
+    @apply dark:text-muted-foreground/90 dark:hover:text-muted-foreground;
+  }
+
+  .link-foreground {
+    @apply text-foreground/90 hover:text-foreground;
+    @apply dark:text-foreground/90 dark:hover:text-foreground;
+  }
+
+  .link:focus-visible,
+  .link-muted:focus-visible,
+  .link-foreground:focus-visible {
+    @apply outline-none ring-2 ring-ring;
+  }
+}
+
 :root {
-  /* https://basecoatui.com/components/sidebar/ */
-  --sidebar-width: 200px;
+  /* Basecoatの変数上書き */
+  --background: var(--color-brand-100);
+  --foreground: var(--color-stone-900);
+  --primary: var(--color-brand-950);
+  --primary-foreground: var(--color-brand-100);
+  --secondary: var(--color-brand-200);
+  --secondary-foreground: var(--color-brand-950);
+  --accent: var(--color-brand-200);
+  --sidebar: var(--color-brand-50);
+  --sidebar-accent: var(--color-brand-100);
+  --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */
+  --bottom-nav-max-height: 54px;
 }
 
 /*
