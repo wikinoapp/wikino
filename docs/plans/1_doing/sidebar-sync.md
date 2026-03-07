@@ -252,7 +252,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
   - **想定ファイル数**: 約 8 ファイル（実装 8 + テスト 0）
   - **想定行数**: 約 200 行（実装 200 行 + テスト 0 行）
 
-- [ ] **1-3**: [Rails] サイドバー開閉状態のlocalStorage保存とStimulus削除
+- [x] **1-3**: [Rails] サイドバー開閉状態のlocalStorage保存とStimulus削除
   - レイアウトに `<aside>` 直後のインラインスクリプトを追加（localStorageから初期状態を読み取り `data-initial-open` / `aria-hidden` を設定）
   - `basecoat:sidebar` イベントリスナーを追加し、localStorageに状態を保存
   - 既存のサイドバートグルボタンを `onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"` に置き換え
