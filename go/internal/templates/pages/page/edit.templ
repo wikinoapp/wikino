@@ -11,13 +11,14 @@ import (
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken    string
-	FormErrors   *session.FormErrors
-	Page         viewmodel.Page
-	Space        viewmodel.Space
-	Topic        viewmodel.Topic
-	LinkList     viewmodel.LinkList
-	BacklinkList viewmodel.BacklinkList
+	CSRFToken      string
+	FormErrors     *session.FormErrors
+	Page           viewmodel.Page
+	Space          viewmodel.Space
+	Topic          viewmodel.Topic
+	LinkList       viewmodel.LinkList
+	BacklinkList   viewmodel.BacklinkList
+	ManualSaveURL  string
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -136,17 +137,26 @@ templ Edit(data EditPageData) {
 												@templates.Icon("paper-plane-tilt-regular")
 												{ templates.T(ctx, "page_edit_publish_to_topic_button") }
 											</button>
+
+											<button
+												class="btn-secondary rounded-full w-fit"
+												type="submit"
+												formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+											>
+												@templates.Icon("floppy-disk-regular")
+												{ templates.T(ctx, "page_edit_save_draft_button") }
+											</button>
 										</div>
 
-										<div class="flex flex-1 items-center md:justify-between gap-2">
+										<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
+											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+
 											<a
 												class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 											>
 												{ templates.T(ctx, "page_edit_cancel") }
 											</a>
-
-											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
 										</div>
 									</div>
 								</form>

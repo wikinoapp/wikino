@@ -35,6 +35,11 @@ func PageDraftPagePath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page", spaceIdentifier, pageNumber))
 }
 
+// PageDraftPageRevisionPath は下書きリビジョン手動保存のパスを生成します
+func PageDraftPageRevisionPath(spaceIdentifier string, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page_revision", spaceIdentifier, pageNumber))
+}
+
 // SearchPath は検索のパスを生成します
 func SearchPath() Path {
 	return Path("/search")
@@ -78,6 +83,11 @@ func PageEditPath(spaceIdentifier string, pageNumber int32) Path {
 // PageMovePath はページ移動のパスを生成します
 func PageMovePath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
+}
+
+// DraftsPath は下書き一覧のパスを生成します
+func DraftsPath() Path {
+	return Path("/drafts")
 }
 
 // SidebarJoinedTopicsPath はサイドバーの参加中トピック一覧のパスを生成します

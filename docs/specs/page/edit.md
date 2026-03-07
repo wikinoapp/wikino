@@ -41,14 +41,24 @@
 - 2-3段落程度で簡潔に
 -->
 
-ページ編集画面（Go版）では、スペースメンバーが既存のページのタイトルと本文を編集できる。エディタ部分はMarkdownエディタ（CodeMirror 6）を使用し、下書きの自動保存に対応している。
+ページ編集画面（Go版）では、スペースメンバーが既存のページのタイトルと本文を編集できる。エディタ部分はMarkdownエディタ（CodeMirror 6）を使用し、下書きの自動保存と手動保存（下書き保存）に対応している。
 
 編集画面のフッターには、そのページがリンクしている他ページの一覧（リンク一覧）が表示される。各リンク先ページには、そのリンク先にリンクしている他ページの一覧（バックリンク一覧）もネストして表示される。リンク一覧とバックリンク一覧はそれぞれオフセットベースのページネーションに対応しており、SSE（Server-Sent Events）を使用した非同期読み込みで表示される。
+
+**下書きの2種類の保存**:
+
+- **自動保存**: 本文の変更を検知して自動的にDraftPageを更新する。DraftPageRevisionは作成されない
+- **手動保存（下書き保存）**: ユーザーが「下書き保存」ボタンを押したときに実行される。DraftPageを更新し、その時点の内容でDraftPageRevision（スナップショット）を作成する
+
+**下書き一覧画面** (`GET /drafts`): 参加しているすべてのスペースのトピックごとに、下書き保存しているページを一覧表示する。
 
 **目的**:
 
 - ユーザーがページの内容を編集し、公開できる
 - リンク先ページとバックリンクを確認することで、ページ間の関係を把握しながら編集できる
+- 下書き内での段階的な差分確認を可能にする（DraftPageRevision間の差分表示）
+- AIによる編集内容を下書きの編集履歴で差分として確認できるようにする
+- 編集提案機能の前提となる（下書き一覧画面から編集提案を作成できるようにする）
 
 **背景**:
 
@@ -73,12 +83,28 @@
 
 ### 下書き自動保存
 
-- 本文が変更されると、500ms のデバウンス後に自動で下書きが保存される
+- 本文が変更されると、500ms のデバウンス後に自動で下書きが保存される（DraftPageが更新される）
+- 自動保存ではDraftPageRevisionは作成されない
 - 下書き保存は PATCH リクエストで行い、204 No Content を返す（レスポンスボディなし）
 - 保存成功後、JavaScript が `draft-autosaved` カスタムイベントを dispatch する
 - Datastar がイベントを検知し、GET SSE エンドポイントを呼び出す
 - SSE レスポンスで保存時刻フラグメントとリンク一覧フラグメントが返され、DOM が更新される
 - 保存失敗時はエラーを静かに無視する（ユーザーへの通知なし）
+
+### 下書き手動保存（下書き保存）
+
+- ユーザーが編集画面の「下書き保存」ボタンを押すと、フォームの内容でDraftPageが更新され、その時点の内容でDraftPageRevision（スナップショット）が作成される
+- 「下書き保存」ボタンは公開フォーム内に `formaction` 属性付きで配置されている。`formaction` によりsubmit先URLだけが変わり、フォーム内の `title`, `body` 等はそのまま送信される
+- 保存完了後、下書き一覧画面（`GET /drafts`）にリダイレクトする
+- AIがMCP経由で下書きを編集した場合も、編集後に自動的にDraftPageRevisionが作成される
+
+### 下書き一覧画面
+
+- エンドポイント: `GET /drafts`
+- ユーザーは参加しているすべてのスペースのトピックごとに下書きページを一覧表示できる
+- スペース・トピックでグルーピングされて表示される
+- 各下書きページにはタイトル（未設定の場合は「無題」）、ページ番号、更新日時が表示される
+- タイトルをクリックするとそのページの編集画面に遷移する
 
 ### 下書き保存時刻表示
 
@@ -128,17 +154,67 @@
 
 ### エンドポイント
 
-| メソッド | パス                                                                                    | ハンドラー                        | 説明                                 |
-| -------- | --------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------ |
-| GET      | `/go/s/{space_identifier}/pages/{page_number}/edit`                                     | `page.Handler.Edit`               | ページ編集フォームの表示             |
-| PATCH    | `/go/s/{space_identifier}/pages/{page_number}`                                          | `page.Handler.Update`             | ページの更新                         |
-| PATCH    | `/go/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Update`       | 下書きの自動保存（204 No Content）   |
-| GET      | `/go/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Show`         | 保存時刻 + リンク一覧のSSEレスポンス |
-| GET      | `/go/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list` | `page_backlink_list.Handler.Show` | バックリンク一覧のSSEレスポンス      |
+| メソッド | パス                                                                                    | ハンドラー                           | 説明                                 |
+| -------- | --------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------ |
+| GET      | `/go/s/{space_identifier}/pages/{page_number}/edit`                                     | `page.Handler.Edit`                  | ページ編集フォームの表示             |
+| PATCH    | `/go/s/{space_identifier}/pages/{page_number}`                                          | `page.Handler.Update`                | ページの更新（公開）                 |
+| PATCH    | `/go/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Update`          | 下書きの自動保存（204 No Content）   |
+| GET      | `/go/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Show`            | 保存時刻 + リンク一覧のSSEレスポンス |
+| PATCH    | `/go/s/{space_identifier}/pages/{page_number}/draft_page_revision`                      | `draft_page_revision.Handler.Update` | 下書きの手動保存（リダイレクト）     |
+| GET      | `/go/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list` | `page_backlink_list.Handler.Show`    | バックリンク一覧のSSEレスポンス      |
+| GET      | `/drafts`                                                                               | `draft_page_index.Handler.Index`     | 下書き一覧画面の表示                 |
 
-下書き保存（PATCH `draft_page`）とUI更新（GET `draft_page`）はエンドポイントを分離している。PATCH は保存のみに専念し 204 No Content を返す。保存成功後に JavaScript が `draft-autosaved` カスタムイベントを dispatch し、Datastar が GET SSE エンドポイントを呼び出して保存時刻とリンク一覧の HTML フラグメントで DOM を更新する。
+下書き自動保存（PATCH `draft_page`）とUI更新（GET `draft_page`）はエンドポイントを分離している。PATCH は保存のみに専念し 204 No Content を返す。保存成功後に JavaScript が `draft-autosaved` カスタムイベントを dispatch し、Datastar が GET SSE エンドポイントを呼び出して保存時刻とリンク一覧の HTML フラグメントで DOM を更新する。
+
+下書き手動保存（PATCH `draft_page_revision`）は、公開フォームの `formaction` 属性によりsubmit先だけを変更する。フォーム内の `title`, `body` 等はそのまま送信される。保存完了後は下書き一覧画面（`GET /drafts`）にリダイレクトする。
 
 バックリンク一覧のエンドポイントも SSE（Server-Sent Events）でレスポンスを返し、Datastar によるフラグメント更新で DOM を部分更新する。
+
+### DraftPageRevision データモデル
+
+下書きのバージョン（スナップショット）。ユーザーが明示的に「下書き保存」操作を行ったタイミング、またはAIが下書きを編集したタイミングで作成される。DraftPageに紐づき、下書き内の変更を段階的に確認するために使用する。
+
+```go
+type DraftPageRevision struct {
+	ID            DraftPageRevisionID
+	DraftPageID   DraftPageID
+	SpaceID       SpaceID
+	SpaceMemberID SpaceMemberID
+	Title         string    // バージョン作成時点のページタイトル
+	Body          string    // バージョン作成時点のMarkdown本文
+	BodyHTML      string    // バージョン作成時点のHTML本文
+	CreatedAt     time.Time
+}
+```
+
+### テーブル設計（draft_page_revisions）
+
+```sql
+CREATE TABLE draft_page_revisions (
+    id UUID NOT NULL DEFAULT generate_ulid() PRIMARY KEY,
+    draft_page_id UUID NOT NULL REFERENCES draft_pages(id),
+    space_id UUID NOT NULL REFERENCES spaces(id),
+    space_member_id UUID NOT NULL REFERENCES space_members(id),
+    title VARCHAR NOT NULL,
+    body VARCHAR NOT NULL,
+    body_html VARCHAR NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at
+    ON draft_page_revisions(draft_page_id, created_at);
+```
+
+### Usecase命名
+
+自動保存と手動保存（下書き保存）を対にした命名を採用している。
+
+| 操作     | Usecase                      | ファイル名                  |
+| -------- | ---------------------------- | --------------------------- |
+| 自動保存 | `AutoSaveDraftPageUsecase`   | `auto_save_draft_page.go`   |
+| 手動保存 | `ManualSaveDraftPageUsecase` | `manual_save_draft_page.go` |
+
+`ManualSaveDraftPageUsecase` は、フォームから受け取ったタイトル・本文でDraftPageをfind_or_createし更新した上で、DraftPageRevisionを作成する。
 
 ### ビューモデル
 
@@ -184,6 +260,27 @@ type BacklinkListItem struct {
     Page Page  // バックリンク元ページの表示情報
 }
 ```
+
+#### DraftPageGroupForIndex（下書き一覧用）
+
+```go
+type DraftPageForIndex struct {
+    title           string    // 非公開（DisplayTitleメソッド経由でアクセス）
+    PageNumber      int32
+    SpaceIdentifier string
+    ModifiedAt      string    // ユーザーのタイムゾーンでフォーマット済み
+}
+
+type DraftPageGroupForIndex struct {
+    SpaceName       string
+    SpaceIdentifier string
+    TopicName       string
+    TopicIconName   IconName
+    DraftPages      []DraftPageForIndex
+}
+```
+
+下書き一覧画面のデータはスペース名・トピック名順にソート済みのモデルから、スペース・トピック単位でグルーピングして生成する。
 
 ### ページネーション
 
@@ -256,37 +353,57 @@ PATCH と GET の責務を分離している理由は、自動保存が CodeMirr
 
 ```
 go/internal/
+├── model/
+│   ├── id.go                       # DraftPageRevisionID型
+│   └── draft_page_revision.go      # DraftPageRevisionモデル
 ├── viewmodel/
-│   ├── pagination.go       # Pagination構造体、NewPagination関数、定数（LinkLimit, BacklinkLimit）
-│   ├── link_list.go        # LinkList, LinkListItem構造体、NewLinkList関数
-│   └── backlink_list.go    # BacklinkList, BacklinkListItem構造体、NewBacklinkList関数
+│   ├── pagination.go               # Pagination構造体、NewPagination関数、定数
+│   ├── link_list.go                # LinkList, LinkListItem構造体
+│   ├── backlink_list.go            # BacklinkList, BacklinkListItem構造体
+│   └── draft_page_for_index.go     # DraftPageForIndex, DraftPageGroupForIndex構造体
+├── usecase/
+│   ├── auto_save_draft_page.go     # 下書き自動保存Usecase
+│   └── manual_save_draft_page.go   # 下書き手動保存Usecase（DraftPageRevision作成）
 ├── handler/
 │   ├── page/
-│   │   ├── handler.go      # Handler構造体
-│   │   └── edit.go         # ページ編集フォーム表示
+│   │   ├── handler.go              # Handler構造体
+│   │   └── edit.go                 # ページ編集フォーム表示
 │   ├── draft_page/
-│   │   ├── handler.go      # Handler構造体
-│   │   ├── show.go         # 保存時刻+リンク一覧SSEエンドポイント
-│   │   └── update.go       # 下書き自動保存（204 No Content）
+│   │   ├── handler.go              # Handler構造体
+│   │   ├── show.go                 # 保存時刻+リンク一覧SSEエンドポイント
+│   │   └── update.go               # 下書き自動保存（204 No Content）
+│   ├── draft_page_revision/
+│   │   ├── handler.go              # Handler構造体
+│   │   └── update.go               # 下書き手動保存（リダイレクト）
+│   ├── draft_page_index/
+│   │   ├── handler.go              # Handler構造体
+│   │   └── index.go                # 下書き一覧画面
 │   └── page_backlink_list/
-│       ├── handler.go      # Handler構造体
-│       └── show.go         # バックリンク一覧SSEエンドポイント
+│       ├── handler.go              # Handler構造体
+│       └── show.go                 # バックリンク一覧SSEエンドポイント
 ├── repository/
-│   ├── page.go             # FindLinkedPagesPaginated, FindBacklinkedPagesPaginated, FindBacklinksForPages
-│   └── pagination.go       # PaginatedPages構造体
+│   ├── page.go                     # FindLinkedPagesPaginated等
+│   ├── draft_page.go               # ListByUserForIndex等
+│   ├── draft_page_revision.go      # Create, WithTx
+│   └── pagination.go               # PaginatedPages構造体
 ├── templates/
-│   ├── path.go             # GoPageDraftPagePath, GoPageBacklinkListPath
+│   ├── path.go                     # PageDraftPageRevisionPath, DraftsPath等
 │   ├── components/
 │   │   ├── link_list.templ          # リンク一覧コンポーネント
 │   │   ├── backlink_list.templ      # バックリンク一覧コンポーネント
 │   │   └── draft_saved_time.templ   # 自動保存時刻コンポーネント
-│   └── pages/page/
-│       └── edit.templ               # ページ編集画面テンプレート
+│   └── pages/
+│       ├── page/
+│       │   └── edit.templ           # ページ編集画面テンプレート
+│       └── draft_page/
+│           └── index.templ          # 下書き一覧画面テンプレート
 ├── query/queries/
-│   └── pages.sql           # ページネーション付きクエリ
+│   ├── pages.sql                    # ページネーション付きクエリ
+│   ├── draft_page_revisions.sql     # DraftPageRevision Createクエリ
+│   └── joined_draft_pages.sql       # 下書き一覧用クエリ
 └── i18n/locales/
-    ├── ja.toml              # page_edit_draft_saved_time 翻訳
-    └── en.toml              # page_edit_draft_saved_time 翻訳
+    ├── ja.toml                      # 翻訳
+    └── en.toml                      # 翻訳
 ```
 
 ## 採用しなかった方針
@@ -298,6 +415,29 @@ go/internal/
 - 後から実装された場合は、該当項目を削除する
 - 該当がない場合も、セクション自体は残しておく（後から追加しやすくするため）
 -->
+
+### 自動保存のたびにDraftPageRevisionを作成する方式
+
+Jujutsu（jj-vcs）のように、下書きが自動保存されるたびに自動でDraftPageRevisionを作成する方式を検討した。しかし、以下の理由から、ユーザーの明示的な「下書き保存」操作でのみDraftPageRevisionを作成する方式を採用した。
+
+- 自動保存のたびにDraftPageRevisionを作成すると大量のレコードが生成される（将来的にCRDTによるリアルタイム保存を導入した場合、特に顕著になる）
+- ユーザーが意図したタイミングで下書き保存するほうが、各DraftPageRevision間の差分が意味のある単位になる
+
+AIによる編集時の自動作成は例外として許可した。AIの編集は1回の操作が明確な単位（1つの改善提案など）を持つため、自動作成しても不要なバージョンが増大しにくい。
+
+### 下書き一覧画面にチェックボックスを配置する案
+
+編集提案機能（edit-suggestion.md）の「採用しなかった方針」を参照。
+
+### 下書き詳細画面を本タスクに含める案
+
+下書き詳細画面（`GET /s/:space_id/topics/:topic_id/draft`）を本タスクのスコープに含めることを検討した。下書き詳細画面ではトピック内の下書きページの一覧、編集履歴（DraftPageRevision一覧）、差分表示が可能になる。
+
+**不採用の理由**:
+
+- 編集提案機能の前提として最低限必要なのは下書き一覧画面であり、下書き詳細画面は必須ではない
+- 下書き詳細画面は差分表示コンポーネントが前提となり、依存が増える
+- 下書き詳細画面は独立したタスクとして後から追加できる
 
 ### カーソルベースのページネーション
 

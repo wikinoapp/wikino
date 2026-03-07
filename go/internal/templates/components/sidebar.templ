@@ -7,13 +7,14 @@ import (
 
 // SidebarData はサイドバーに渡すデータ構造体です
 type SidebarData struct {
-	DefaultClosed   bool
-	CurrentPageName templates.PageName
-	SignedIn        bool
-	UserAtname      string
-	SpaceIdentifier string
-	JoinedTopics    []viewmodel.TopicForSidebar
-	DraftPages      []viewmodel.DraftPageForSidebar
+	DefaultClosed      bool
+	CurrentPageName    templates.PageName
+	SignedIn           bool
+	UserAtname         string
+	SpaceIdentifier    string
+	JoinedTopics       []viewmodel.TopicForSidebar
+	DraftPages         []viewmodel.DraftPageForSidebar
+	HasMoreDraftPages  bool
 }
 
 // searchPath はスペース内のときスペースフィルター付き検索パスを返します
@@ -80,7 +81,7 @@ templ Sidebar(data SidebarData) {
 				if data.SignedIn {
 					<hr class="border-gray-300 mx-2">
 
-					@SidebarDraftPages(data.DraftPages)
+					@SidebarDraftPages(data.DraftPages, data.HasMoreDraftPages)
 
 					<hr class="border-gray-300 mx-2">
 

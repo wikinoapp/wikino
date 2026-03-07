@@ -23,6 +23,9 @@ type DraftPageID string
 // PageRevisionID はページリビジョンのID型
 type PageRevisionID string
 
+// DraftPageRevisionID は下書きページリビジョンのID型
+type DraftPageRevisionID string
+
 // PageEditorID はページ編集者のID型
 type PageEditorID string
 
@@ -67,6 +70,9 @@ func (id DraftPageID) String() string { return string(id) }
 
 // String はPageRevisionIDを文字列に変換する
 func (id PageRevisionID) String() string { return string(id) }
+
+// String はDraftPageRevisionIDを文字列に変換する
+func (id DraftPageRevisionID) String() string { return string(id) }
 
 // String はPageEditorIDを文字列に変換する
 func (id PageEditorID) String() string { return string(id) }

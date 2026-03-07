@@ -347,6 +347,125 @@ func TestDraftPageRepository_Delete(t *testing.T) {
 	})
 }
 
+func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-index@example.com").
+		WithAtname("draftindex").
+		Build()
+
+	// スペースBを先に作成（名前順ソートでBが後に来ることを確認するため）
+	spaceB := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-idx-b").
+		WithName("Space B").
+		Build()
+	memberB := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceB).
+		WithUserID(userID).
+		Build()
+	topicB1 := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceB).
+		WithNumber(1).
+		WithName("Topic B1").
+		Build()
+	pageBID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceB).
+		WithTopicID(topicB1).
+		WithNumber(1).
+		WithTitle("Page B").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceB).
+		WithPageID(pageBID).
+		WithSpaceMemberID(memberB).
+		WithTopicID(topicB1).
+		WithTitle("Draft B").
+		Build()
+
+	// スペースA（名前順ソートでAが先に来る）
+	spaceA := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-idx-a").
+		WithName("Space A").
+		Build()
+	memberA := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceA).
+		WithUserID(userID).
+		Build()
+	topicA1 := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceA).
+		WithNumber(1).
+		WithName("Topic A1").
+		Build()
+	pageAID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceA).
+		WithTopicID(topicA1).
+		WithNumber(1).
+		WithTitle("Page A").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceA).
+		WithPageID(pageAID).
+		WithSpaceMemberID(memberA).
+		WithTopicID(topicA1).
+		WithTitle("Draft A").
+		Build()
+
+	t.Run("スペース名・トピック名の順にソートされた下書き一覧を取得できる", func(t *testing.T) {
+		drafts, err := repo.ListByUserForIndex(context.Background(), userID)
+		if err != nil {
+			t.Fatalf("ListByUserForIndex() error = %v", err)
+		}
+		if len(drafts) != 2 {
+			t.Fatalf("ListByUserForIndex() returned %d drafts, want 2", len(drafts))
+		}
+
+		// Space A が先、Space B が後
+		if drafts[0].Title == nil || *drafts[0].Title != "Draft A" {
+			t.Errorf("drafts[0].Title = %v, want 'Draft A'", drafts[0].Title)
+		}
+		if drafts[1].Title == nil || *drafts[1].Title != "Draft B" {
+			t.Errorf("drafts[1].Title = %v, want 'Draft B'", drafts[1].Title)
+		}
+
+		// スペース名・トピック名・IDが設定されていることを確認
+		if drafts[0].Topic == nil || drafts[0].Topic.Space == nil {
+			t.Fatal("drafts[0].Topic.Space should not be nil")
+		}
+		if drafts[0].Topic.Space.Name != "Space A" {
+			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Space A'", drafts[0].Topic.Space.Name)
+		}
+		if string(drafts[0].Topic.Space.ID) == "" {
+			t.Error("drafts[0].Topic.Space.ID should not be empty")
+		}
+		if drafts[0].Topic.Name != "Topic A1" {
+			t.Errorf("drafts[0].Topic.Name = %v, want 'Topic A1'", drafts[0].Topic.Name)
+		}
+		if string(drafts[0].Topic.ID) == "" {
+			t.Error("drafts[0].Topic.ID should not be empty")
+		}
+	})
+
+	t.Run("下書きがないユーザーは空スライスを返す", func(t *testing.T) {
+		otherUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("draft-index-none@example.com").
+			WithAtname("draftindexnone").
+			Build()
+
+		drafts, err := repo.ListByUserForIndex(context.Background(), otherUserID)
+		if err != nil {
+			t.Fatalf("ListByUserForIndex() error = %v", err)
+		}
+		if len(drafts) != 0 {
+			t.Errorf("ListByUserForIndex() returned %d drafts, want 0", len(drafts))
+		}
+	})
+}
+
 func TestDraftPageRepository_ListByUser(t *testing.T) {
 	t.Parallel()
 

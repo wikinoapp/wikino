@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -107,7 +108,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if validationResult.FormErrors.HasErrors() {
-		h.renderEditWithErrors(w, r, spaceIdentifier, space, pg, title, body, validationResult.FormErrors)
+		h.renderEditWithErrors(w, r, spaceIdentifier, space, pg, spaceMember, title, body, validationResult.FormErrors)
 		return
 	}
 
@@ -175,6 +176,7 @@ func (h *Handler) renderEditWithErrors(
 	spaceIdentifier model.SpaceIdentifier,
 	space *model.Space,
 	pg *model.Page,
+	spaceMember *model.SpaceMember,
 	title string,
 	body string,
 	formErrors *session.FormErrors,
@@ -199,6 +201,28 @@ func (h *Handler) renderEditWithErrors(
 	spaceVM := viewmodel.NewSpace(space)
 	topicVM := viewmodel.NewTopic(topic)
 
+	// リンク一覧を取得（DraftPage存在時はDraftPageのLinkedPageIDs、なければPageのLinkedPageIDs）
+	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
+	if err != nil {
+		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	var linkedPageIDs []model.PageID
+	if draftPage != nil {
+		linkedPageIDs = draftPage.LinkedPageIDs
+	} else {
+		linkedPageIDs = pg.LinkedPageIDs
+	}
+
+	linkResult, err := h.fetchEditLinkData(ctx, linkedPageIDs, pg, space, spaceIdentifier)
+	if err != nil {
+		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
@@ -207,33 +231,36 @@ func (h *Handler) renderEditWithErrors(
 	meta.SetTitle(ctx, "page_edit_title")
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:  csrfToken,
-		FormErrors: formErrors,
-		Page:       pageVM,
-		Space:      spaceVM,
-		Topic:      topicVM,
+		CSRFToken:     csrfToken,
+		FormErrors:    formErrors,
+		Page:          pageVM,
+		Space:         spaceVM,
+		Topic:         topicVM,
+		LinkList:      linkResult.LinkList,
+		BacklinkList:  linkResult.BacklinkList,
+		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(pg.Number))),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)
 	var userAtname string
-	var joinedTopics []viewmodel.TopicForSidebar
-	var draftPages []viewmodel.DraftPageForSidebar
+	var sidebarContent sidebar.SidebarContent
 	if currentUser != nil {
 		userAtname = currentUser.Atname
-		joinedTopics, draftPages = h.sidebarHelper.Content(ctx, currentUser.ID)
+		sidebarContent = h.sidebarHelper.Content(ctx, currentUser.ID)
 	}
 
 	layoutData := layouts.DefaultLayoutData{
 		Meta:       meta,
 		HideFooter: true,
 		Sidebar: components.SidebarData{
-			DefaultClosed:   layouts.SidebarDefaultClosed(r),
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        currentUser != nil,
-			UserAtname:      userAtname,
-			SpaceIdentifier: string(spaceIdentifier),
-			JoinedTopics:    joinedTopics,
-			DraftPages:      draftPages,
+			DefaultClosed:     layouts.SidebarDefaultClosed(r),
+			CurrentPageName:   templates.PageNamePageEdit,
+			SignedIn:          currentUser != nil,
+			UserAtname:        userAtname,
+			SpaceIdentifier:   string(spaceIdentifier),
+			JoinedTopics:      sidebarContent.JoinedTopics,
+			DraftPages:        sidebarContent.DraftPages,
+			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
 	}
 

@@ -53,7 +53,7 @@
 ### 関連タスク
 
 - [@docs/plans/2_todo/edit-suggestion.md](edit-suggestion.md) - 編集提案機能
-- [@docs/plans/2_todo/draft-screens.md](draft-screens.md) - 下書き詳細画面・下書き一覧画面
+- [@docs/plans/2_todo/draft-update.md](draft-update.md) - 下書き機能のアップデート
 
 ## 要件
 

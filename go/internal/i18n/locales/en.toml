@@ -476,6 +476,10 @@ other = "Untitled"
 description = "Title for edit link on draft page in the sidebar"
 other = "Edit page"
 
+[sidebar_draft_pages_show_all]
+description = "Link to show all drafts when there are more than displayed in the sidebar"
+other = "Show all"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"
@@ -536,6 +540,10 @@ other = "More"
 description = "Heading for the backlink list on the page edit screen"
 other = "Backlinks"
 
+[page_edit_save_draft_button]
+description = "Label for the save draft button"
+other = "Save Draft"
+
 [page_edit_draft_saved_time]
 description = "Auto-saved time display"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
@@ -569,6 +577,11 @@ other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existi
 [flash_page_saved]
 description = "Page saved success message"
 other = "Page saved."
+
+# Draft page save success
+[flash_draft_page_saved]
+description = "Draft page saved success message"
+other = "Draft saved."
 
 # Page move
 [page_move_title]
@@ -630,3 +643,27 @@ other = "You do not have permission to create pages in the destination topic."
 [page_move_error_title_exists]
 description = "Title exists in destination topic error"
 other = "A page with the same title already exists in the destination topic."
+
+[draft_page_index_title]
+description = "Draft page index page title"
+other = "Draft Pages"
+
+[draft_page_index_heading]
+description = "Draft page index page heading"
+other = "Draft Pages"
+
+[draft_page_index_empty]
+description = "Message when there are no drafts"
+other = "No drafts."
+
+[draft_page_index_column_title]
+description = "Draft page index table title column header"
+other = "Title"
+
+[draft_page_index_column_modified_at]
+description = "Draft page index table modified at column header"
+other = "Modified"
+
+[draft_page_index_untitled]
+description = "Untitled draft page"
+other = "Untitled"

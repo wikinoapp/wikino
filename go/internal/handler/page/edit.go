@@ -1,6 +1,8 @@
 package page
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -124,36 +126,99 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		linkedPageIDs = pg.LinkedPageIDs
 	}
 
-	// リンク先ページとバックリンクのデータを取得
+	linkResult, err := h.fetchEditLinkData(ctx, linkedPageIDs, pg, space, spaceIdentifier)
+	if err != nil {
+		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// CSRFトークンを取得
+	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
+
+	// ページメタ情報を設定
+	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
+	meta.SetTitle(ctx, "page_edit_title")
+
+	// フラッシュメッセージを取得
+	flash := h.flashMgr.GetFlash(w, r)
+
+	// テンプレートをレンダリング
+	spaceVM := viewmodel.NewSpace(space)
+
+	content := pagepages.Edit(pagepages.EditPageData{
+		CSRFToken:     csrfToken,
+		Page:          pageVM,
+		Space:         spaceVM,
+		Topic:         topicVM,
+		LinkList:      linkResult.LinkList,
+		BacklinkList:  linkResult.BacklinkList,
+		ManualSaveURL: string(templates.PageDraftPageRevisionPath(space.Identifier.String(), int32(pg.Number))),
+	})
+
+	// サイドバーコンテンツを取得
+	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
+
+	layoutData := layouts.DefaultLayoutData{
+		Meta:       meta,
+		Flash:      flash,
+		HideFooter: true,
+		Sidebar: components.SidebarData{
+			DefaultClosed:     layouts.SidebarDefaultClosed(r),
+			CurrentPageName:   templates.PageNamePageEdit,
+			SignedIn:          true,
+			UserAtname:        user.Atname,
+			SpaceIdentifier:   string(spaceIdentifier),
+			JoinedTopics:      sidebarContent.JoinedTopics,
+			DraftPages:        sidebarContent.DraftPages,
+			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
+		},
+	}
+
+	err = layouts.Default(layoutData, content).Render(ctx, w)
+	if err != nil {
+		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+// editLinkResult はリンク一覧・バックリンク一覧のViewModel
+type editLinkResult struct {
+	LinkList     viewmodel.LinkList
+	BacklinkList viewmodel.BacklinkList
+}
+
+// fetchEditLinkData はリンク一覧・バックリンク一覧のデータを取得してViewModelを構築します
+func (h *Handler) fetchEditLinkData(
+	ctx context.Context,
+	linkedPageIDs []model.PageID,
+	pg *model.Page,
+	space *model.Space,
+	spaceIdentifier model.SpaceIdentifier,
+) (*editLinkResult, error) {
 	var paginatedLinks *repository.PaginatedPages
 	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
 	if len(linkedPageIDs) > 0 {
+		var err error
 		paginatedLinks, err = h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, viewmodel.LinkLimit)
 		if err != nil {
-			slog.ErrorContext(ctx, "リンク先ページの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
 		}
 
 		excludePageIDs := viewmodel.BuildExcludePageIDs(pg.ID, paginatedLinks.Pages)
 
 		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit, excludePageIDs)
 		if err != nil {
-			slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
 		}
 	}
 
-	// ページレベルのバックリンク一覧をページネーション付きで取得（公開済みページのLinkedPageIDsに基づく）
 	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, 1, viewmodel.PageBacklinkLimit, nil)
 	if err != nil {
-		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
 	}
 
-	// トピックIDを収集してトピックを一括取得
 	var allPageSlices [][]*model.Page
 	if paginatedLinks != nil {
 		allPageSlices = append(allPageSlices, paginatedLinks.Pages)
@@ -166,12 +231,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	topicIDs := viewmodel.CollectTopicIDsFromPages(allPageSlices...)
 	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
 	if err != nil {
-		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("トピックの一括取得に失敗: %w", err)
 	}
 
-	// ViewModelを構築
 	var linkedPages []*model.Page
 	var linkedTotalCount int64
 	if paginatedLinks != nil {
@@ -198,53 +260,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		PageNumber:        int32(pg.Number),
 		CurrentPage:       1,
 	})
-	linkListVM := editLinkData.LinkList
-	backlinkListVM := editLinkData.BacklinkList
 
-	// CSRFトークンを取得
-	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
-	// ページメタ情報を設定
-	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "page_edit_title")
-
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
-	// テンプレートをレンダリング
-	spaceVM := viewmodel.NewSpace(space)
-
-	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:    csrfToken,
-		Page:         pageVM,
-		Space:        spaceVM,
-		Topic:        topicVM,
-		LinkList:     linkListVM,
-		BacklinkList: backlinkListVM,
-	})
-
-	// サイドバーコンテンツを取得
-	joinedTopics, draftPages := h.sidebarHelper.Content(ctx, user.ID)
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta:       meta,
-		Flash:      flash,
-		HideFooter: true,
-		Sidebar: components.SidebarData{
-			DefaultClosed:   layouts.SidebarDefaultClosed(r),
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        true,
-			UserAtname:      user.Atname,
-			SpaceIdentifier: string(spaceIdentifier),
-			JoinedTopics:    joinedTopics,
-			DraftPages:      draftPages,
-		},
-	}
-
-	err = layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	return &editLinkResult{
+		LinkList:     editLinkData.LinkList,
+		BacklinkList: editLinkData.BacklinkList,
+	}, nil
 }

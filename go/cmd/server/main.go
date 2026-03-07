@@ -18,6 +18,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
@@ -122,7 +124,9 @@ func main() {
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
@@ -237,6 +241,12 @@ func main() {
 		spaceMemberRepo,
 		pageRepo,
 	)
+	draftPageIndexHandler := draft_page_index.NewHandler(
+		cfg,
+		flashMgr,
+		draftPageRepo,
+		sidebarHelper,
+	)
 	draftPageHandler := draft_page.NewHandler(
 		spaceRepo,
 		spaceMemberRepo,
@@ -245,6 +255,15 @@ func main() {
 		topicMemberRepo,
 		draftPageRepo,
 		autoSaveDraftPageUC,
+	)
+	draftPageRevisionHandler := draft_page_revision.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		flashMgr,
+		manualSaveDraftPageUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
 		spaceRepo,
@@ -351,6 +370,9 @@ func main() {
 		r.Use(authMiddleware.RequireAuth)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
+		// 下書き一覧
+		r.Get("/drafts", draftPageIndexHandler.Index)
+
 		// ページ編集・公開
 		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
@@ -358,6 +380,9 @@ func main() {
 		// 下書きページSSE・自動保存API
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
+
+		// 下書きリビジョン手動保存
+		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
 
 		// リンク一覧SSE（Datastar）
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
