@@ -32,18 +32,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), flag: model.FeatureFlagGoPageEdit, methods: []string{"PATCH"}},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/drafts$`), flag: model.FeatureFlagGoPageEdit},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -83,6 +72,8 @@ var (
 		"/password/reset",                  // パスワードリセット申請フォーム・処理
 		"/password/edit",                   // 新パスワード入力フォーム
 		"/password",                        // パスワード更新処理
+		"/s/",                              // ページ編集関連（スペース配下のパス）
+		"/drafts",                          // 下書き一覧
 	}
 )
 
