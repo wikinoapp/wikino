@@ -30,16 +30,6 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 
 			if !data.HideSidebar {
 				@components.Sidebar(data.Sidebar)
-				<script>
-					(function() {
-						var s = document.getElementById("sidebar");
-						if (s) {
-							var open = localStorage.getItem("wikinoSidebarOpen") === "true";
-							s.setAttribute("data-initial-open", String(open));
-							s.setAttribute("aria-hidden", String(!open));
-						}
-					})();
-				</script>
 			}
 
 			<div class="flex-1 flex flex-col min-h-screen">
