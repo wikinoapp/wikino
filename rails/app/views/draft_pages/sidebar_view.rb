@@ -19,7 +19,7 @@ module DraftPages
 
     sig { params(draft_page: DraftPage).returns(String) }
     private def display_title(draft_page)
-      draft_page.page.title.presence || I18n.t("messages.pages.untitled")
+      draft_page.display_title
     end
   end
 end

@@ -10,7 +10,7 @@ RSpec.describe "GET /draft_pages/sidebar", type: :request do
     space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     page_record = FactoryBot.create(:page_record, space_record:, topic_record:, title: "My Draft Page")
-    FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record:, space_member_record:)
+    FactoryBot.create(:draft_page_record, space_record:, topic_record:, page_record:, space_member_record:, title: "My Draft Page")
 
     sign_in(user_record:)
 
