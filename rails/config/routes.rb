@@ -26,12 +26,8 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
   match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,                      to: "bulk_restored_pages/create#call"
-  match "/s/:space_identifier/page_locations",                             via: :get,    as: :page_location_list,                           to: "page_locations/index#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                         via: :get,    as: :page,                                         to: "pages/show#call",                             page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number",                         via: :patch,                                                     to: "pages/update#call",                           page_number: /\d+/
   match "/rails/s/:space_identifier/pages/:page_number/backlinks",         via: :post,   as: :page_backlink_list,                           to: "backlinks/index#call",                        page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/draft_page",              via: :patch,  as: :draft_page,                                   to: "draft_pages/update#call",                     page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/edit",                    via: :get,    as: :edit_page,                                    to: "pages/edit#call",                             page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/links",                   via: :post,   as: :page_link_list,                               to: "links/index#call",                            page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/move",                    via: :get,    as: :move_page,                                    to: "pages/show#call",                             page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/trash",                   via: :post,   as: :trashed_page,                                 to: "trashed_pages/create#call",                   page_number: /\d+/
