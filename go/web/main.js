@@ -2,20 +2,18 @@ import "basecoat-css/all";
 
 import { initializeEditors } from "./markdown-editor/markdown-editor";
 
-const SIDEBAR_COOKIE_NAME = "wikino_sidebar_open";
-const SIDEBAR_COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1年
+const SIDEBAR_STORAGE_KEY = "wikino_sidebar_open";
 
-function initSidebarCookiePersistence() {
-  const sidebar = document.querySelector(".sidebar");
-  if (!sidebar) return;
-
+function initSidebarLocalStoragePersistence() {
   document.addEventListener("basecoat:sidebar", () => {
+    const sidebar = document.querySelector(".sidebar");
+    if (!sidebar) return;
     const isOpen = sidebar.getAttribute("aria-hidden") === "false";
-    document.cookie = `${SIDEBAR_COOKIE_NAME}=${isOpen}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax`;
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isOpen));
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
-  initSidebarCookiePersistence();
+  initSidebarLocalStoragePersistence();
 });

@@ -36,7 +36,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Meta:  meta,
 		Flash: flash,
 		Sidebar: components.SidebarData{
-			DefaultClosed:   true,
 			CurrentPageName: templates.PageNameWelcome,
 		},
 	}

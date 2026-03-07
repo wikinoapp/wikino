@@ -231,7 +231,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
 
 ### フェーズ 1: Go版のlocalStorage移行 + basecoat-cssサイドバーへの移行
 
-- [ ] **1-1**: [Go] サイドバー開閉状態の保存をCookieからlocalStorageに移行する
+- [x] **1-1**: [Go] サイドバー開閉状態の保存をCookieからlocalStorageに移行する
   - `go/web/main.js`: Cookie保存ロジック（`initSidebarCookiePersistence`）をlocalStorage保存ロジックに置き換える
   - `go/internal/templates/layouts/sidebar.go`: 削除する（サーバーサイドでのCookie読み取りが不要になるため）
   - `go/internal/templates/components/sidebar.templ`: `SidebarData.DefaultClosed` フィールドを削除し、初期状態をインラインスクリプトに委譲する
