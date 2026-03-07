@@ -79,7 +79,7 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " <script>\n\t\t\t\t\t(function() {\n\t\t\t\t\t\tvar s = document.getElementById(\"sidebar\");\n\t\t\t\t\t\tif (s) {\n\t\t\t\t\t\t\tvar open = localStorage.getItem(\"wikino_sidebar_open\") === \"true\";\n\t\t\t\t\t\t\ts.setAttribute(\"data-initial-open\", String(open));\n\t\t\t\t\t\t\ts.setAttribute(\"aria-hidden\", String(!open));\n\t\t\t\t\t\t}\n\t\t\t\t\t})();\n\t\t\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " <script>\n\t\t\t\t\t(function() {\n\t\t\t\t\t\tvar s = document.getElementById(\"sidebar\");\n\t\t\t\t\t\tif (s) {\n\t\t\t\t\t\t\tvar open = localStorage.getItem(\"wikinoSidebarOpen\") === \"true\";\n\t\t\t\t\t\t\ts.setAttribute(\"data-initial-open\", String(open));\n\t\t\t\t\t\t\ts.setAttribute(\"aria-hidden\", String(!open));\n\t\t\t\t\t\t}\n\t\t\t\t\t})();\n\t\t\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

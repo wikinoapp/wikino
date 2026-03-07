@@ -34,7 +34,7 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 					(function() {
 						var s = document.getElementById("sidebar");
 						if (s) {
-							var open = localStorage.getItem("wikino_sidebar_open") === "true";
+							var open = localStorage.getItem("wikinoSidebarOpen") === "true";
 							s.setAttribute("data-initial-open", String(open));
 							s.setAttribute("aria-hidden", String(!open));
 						}
