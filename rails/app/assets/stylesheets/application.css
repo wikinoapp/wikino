@@ -199,7 +199,9 @@
 }
 
 :root {
-  /* https://basecoatui.com/components/sidebar/ */
+  /* Basecoatの変数上書き */
+  --background: var(--color-brand-100);
+  --foreground: var(--color-stone-900);
   --sidebar: var(--color-brand-50);
   --sidebar-accent: var(--color-brand-100);
   --sidebar-width: 200px;
