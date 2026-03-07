@@ -120,7 +120,14 @@
 
 - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンを削除
 - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加（全ユーザーがGo版を使用）
-- `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除（不要になるため）
+
+### フィーチャーフラグの整理
+
+フィーチャーフラグの仕組み自体は今後の機能移行でも使用するため残す。ページ編集用のフラグのみ削除し、仕組みが壊れないようダミーのフラグ定数を追加する。
+
+- `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除し、ダミーの `FeatureFlagExample` 定数を追加（仕組みの参照用）
+- `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンをすべて削除（スライスは空にする）
+- `e2e/tests/auth.setup.ts` から `createTestFeatureFlag` 呼び出しを削除（ページ編集がホワイトリストに移行するため不要）
 
 ### Rails版の削除対象
 
@@ -134,6 +141,7 @@
 
 - レコード（`PageRecord`, `DraftPageRecord`）やPageable concernは他機能で使用されているため削除しない
 - ページ表示関連（`ShowController`等）の削除は [ページ表示画面のGo移行](page-show-go-migration.md) で行う
+- フィーチャーフラグの仕組み（`featureFlagChecker` インターフェース、`FeatureFlagRepository`、`featureFlaggedPattern` 構造体、関連メソッド、テストビルダー、E2Eヘルパー等）は今後の機能移行で再利用するため削除しない
 
 ## 採用しなかった方針
 
@@ -182,13 +190,15 @@
 
 ### フェーズ 1: フィーチャーフラグからホワイトリストへの移行（全ユーザー展開）
 
-- [ ] **1-1**: [Go] フィーチャーフラグからホワイトリストへの移行
+- [ ] **1-1**: [Go] ページ編集パスをホワイトリストに追加し、フィーチャーフラグを整理
   - フィーチャーフラグによる段階的ロールアウトで問題がないことを確認した後に実施
-  - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンを削除
-  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加（全ユーザーがGo版を使用）
-  - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除（不要になるため）
-  - **想定ファイル数**: 約 3 ファイル（実装 2 + テスト 1）
-  - **想定行数**: 約 80 行（実装 ~30 行 + テスト ~50 行）
+  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加
+  - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンをすべて削除（スライスは空にする）
+  - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除し、ダミーの `FeatureFlagExample` 定数を追加
+  - `internal/middleware/reverse_proxy_test.go` のフィーチャーフラグ関連テストでダミーフラグを使用するよう更新
+  - `e2e/tests/auth.setup.ts` から `createTestFeatureFlag` 呼び出しを削除
+  - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
+  - **想定行数**: 約 -50 行（パターン削除分）
 
 ### フェーズ 2: Rails版の実装の削除
 
