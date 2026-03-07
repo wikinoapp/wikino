@@ -188,6 +188,18 @@
   - `- [ ] **1-2**: [Rails] モデルへのコールバック追加`
 -->
 
+### フェーズ 0: バグ修正
+
+- [ ] **0-1**: [Go] ページ公開時に下書きリビジョンを削除してから下書きを削除するよう修正
+  - **問題**: `PATCH /s/:space_id/pages/:page_id` でページを公開する際、`draft_page_revisions` テーブルが `draft_pages.id` を外部キー（`ON DELETE CASCADE` なし）で参照しているため、リビジョンが存在する下書きの削除が外部キー制約違反で失敗する
+  - **原因**: `internal/usecase/publish_page.go` のステップ12で `draftPageRepo.Delete` を呼ぶ前に、関連する `draft_page_revisions` を削除していない
+  - **対応**: `PublishPageUsecase` の下書き削除（ステップ12）の前に、`draft_page_revisions` の削除処理を追加する
+    - `db/queries/draft_page_revisions.sql` に `DeleteDraftPageRevisionsByDraftPageID` クエリを追加
+    - `internal/repository/` に DraftPageRevisionRepository を作成（または既存のリポジトリに追加）し、削除メソッドを実装
+    - `internal/usecase/publish_page.go` に DraftPageRevisionRepository を注入し、下書き削除前にリビジョンを削除
+  - **想定ファイル数**: 約 5 ファイル（実装 4 + テスト 1）
+  - **想定行数**: 約 80 行（実装 ~50 行 + テスト ~30 行）
+
 ### フェーズ 1: フィーチャーフラグからホワイトリストへの移行（全ユーザー展開）
 
 - [ ] **1-1**: [Go] ページ編集パスをホワイトリストに追加し、フィーチャーフラグを整理
