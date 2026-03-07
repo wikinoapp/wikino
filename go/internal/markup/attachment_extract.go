@@ -13,14 +13,14 @@ var (
 	extractAHrefRegex = regexp.MustCompile(`<a[^>]+href=["'](/attachments/([^/"']+))["'][^>]*>`)
 
 	// Markdown画像形式から添付ファイルIDを抽出: ![alt](/attachments/id) or ![alt](/attachments/id "title")
-	extractMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)[^)]*\)`)
+	extractMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
 	// Markdownリンク形式（画像含む）から添付ファイルIDを抽出: [text](/attachments/id)
 	// Go正規表現は後読み非対応のため、マッチ後に直前文字で画像形式を除外する
-	extractMarkdownLinkRegex = regexp.MustCompile(`\[[^\]]+\]\(/attachments/([^\s/)]+)[^)]*\)`)
+	extractMarkdownLinkRegex = regexp.MustCompile(`\[[^\]]+\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
 	// 1行目のMarkdown画像形式: ![alt](/attachments/id) or ![alt](/attachments/id "title")
-	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)[^)]*\)`)
+	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
 	// 1行目のHTML img形式: <img src="/attachments/id">（大文字小文字不問）
 	featuredHTMLImgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']/attachments/([^/"']+)["'][^>]*>`)

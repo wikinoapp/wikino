@@ -403,6 +403,21 @@ func TestWrapStandaloneImageLinks(t *testing.T) {
 			want:  "",
 		},
 		{
+			name:  "直後に<br>と<em>が続く場合はキャプション付きで<p>で囲む",
+			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"></a><br><em>キャプション</em>`,
+			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"/></a><br/><em>キャプション</em></p>`,
+		},
+		{
+			name:  "直後に<br>と<strong>が続く場合もキャプション付きで<p>で囲む",
+			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"></a><br><strong>キャプション</strong>`,
+			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"/></a><br/><strong>キャプション</strong></p>`,
+		},
+		{
+			name:  "空白テキストノードを挟んで<br>と<em>が続く場合もキャプション付きで<p>で囲む",
+			input: "<a class=\"wikino-attachment-image-link\" href=\"#\"><img src=\"\" alt=\"photo.jpg\"></a>\n<br>\n<em>キャプション</em>",
+			want:  "<p><a class=\"wikino-attachment-image-link\" href=\"#\"><img src=\"\" alt=\"photo.jpg\"/></a>\n<br/>\n<em>キャプション</em></p>",
+		},
+		{
 			name:  "複数のスタンドアロン画像リンクをそれぞれ<p>で囲む",
 			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="1.jpg"></a><a class="wikino-attachment-image-link" href="#"><img src="" alt="2.jpg"></a>`,
 			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="1.jpg"/></a></p><p><a class="wikino-attachment-image-link" href="#"><img src="" alt="2.jpg"/></a></p>`,

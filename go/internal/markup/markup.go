@@ -22,7 +22,7 @@ const zwnj = "\u200C"
 var standaloneImgRegex = regexp.MustCompile(`(?m)^(<img[^>]*>)\n(\*[^*]+\*)$`)
 
 // ZWNJを含む不要なHTML断片を除去するパターン
-var zwnjBrRegex = regexp.MustCompile(`(?m)^<p>` + zwnj + `<br />`)
+var zwnjBrRegex = regexp.MustCompile(`(?m)^<p>` + zwnj + `<br\s*/?>\n?`)
 
 var md = goldmark.New(
 	goldmark.WithExtensions(
