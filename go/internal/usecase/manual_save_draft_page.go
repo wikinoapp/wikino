@@ -3,17 +3,11 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-)
-
-// エラー定義
-var (
-	// ErrDraftPageNotFound は下書きページが見つからない場合のエラー
-	ErrDraftPageNotFound = errors.New("下書きページが見つかりません")
 )
 
 // ManualSaveDraftPageUsecase は下書きページの手動保存ユースケース
@@ -21,6 +15,10 @@ type ManualSaveDraftPageUsecase struct {
 	db                    *sql.DB
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	pageRepo              *repository.PageRepository
+	pageEditorRepo        *repository.PageEditorRepository
+	topicRepo             *repository.TopicRepository
+	attachmentRepo        *repository.AttachmentRepository
 }
 
 // NewManualSaveDraftPageUsecase は ManualSaveDraftPageUsecase を生成する
@@ -28,19 +26,32 @@ func NewManualSaveDraftPageUsecase(
 	db *sql.DB,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
+	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
+	topicRepo *repository.TopicRepository,
+	attachmentRepo *repository.AttachmentRepository,
 ) *ManualSaveDraftPageUsecase {
 	return &ManualSaveDraftPageUsecase{
 		db:                    db,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
+		pageRepo:              pageRepo,
+		pageEditorRepo:        pageEditorRepo,
+		topicRepo:             topicRepo,
+		attachmentRepo:        attachmentRepo,
 	}
 }
 
 // ManualSaveDraftPageInput は下書きページの手動保存の入力パラメータ
 type ManualSaveDraftPageInput struct {
-	SpaceID       model.SpaceID
-	PageID        model.PageID
-	SpaceMemberID model.SpaceMemberID
+	SpaceID          model.SpaceID
+	PageID           model.PageID
+	SpaceMemberID    model.SpaceMemberID
+	TopicID          model.TopicID
+	Title            *string
+	Body             string
+	SpaceIdentifier  model.SpaceIdentifier
+	CurrentTopicName string
 }
 
 // ManualSaveDraftPageOutput は下書きページの手動保存の出力パラメータ
@@ -48,8 +59,10 @@ type ManualSaveDraftPageOutput struct {
 	DraftPageRevision *model.DraftPageRevision
 }
 
-// Execute は下書きページの現在の内容でリビジョン（スナップショット）を作成する
+// Execute はフォームから受け取った内容でDraftPageを更新し、リビジョンを作成する
 func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
+	now := time.Now()
+
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -58,31 +71,33 @@ func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualS
 		_ = tx.Rollback()
 	}()
 
-	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	draftPageRevisionRepo := uc.draftPageRevisionRepo.WithTx(tx)
 
-	// DraftPageを取得
-	draftPage, err := draftPageRepo.FindByPageAndMember(ctx, input.PageID, input.SpaceMemberID, input.SpaceID)
+	// DraftPageのfind_or_create・Markdown処理・更新
+	result, err := saveDraftPageContent(ctx, saveDraftPageContentInput(input), now,
+		uc.draftPageRepo.WithTx(tx),
+		uc.pageRepo.WithTx(tx),
+		uc.pageEditorRepo.WithTx(tx),
+		uc.topicRepo.WithTx(tx),
+		uc.attachmentRepo.WithTx(tx),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("下書きページの取得に失敗しました: %w", err)
-	}
-	if draftPage == nil {
-		return nil, ErrDraftPageNotFound
+		return nil, err
 	}
 
-	// DraftPageの現在の内容でリビジョンを作成
+	// リビジョンを作成
 	var title string
-	if draftPage.Title != nil {
-		title = *draftPage.Title
+	if input.Title != nil {
+		title = *input.Title
 	}
 
 	revision, err := draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
-		DraftPageID:   draftPage.ID,
+		DraftPageID:   result.DraftPage.ID,
 		SpaceID:       input.SpaceID,
 		SpaceMemberID: input.SpaceMemberID,
 		Title:         title,
-		Body:          draftPage.Body,
-		BodyHTML:      draftPage.BodyHTML,
+		Body:          input.Body,
+		BodyHTML:      result.BodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("下書きページリビジョンの作成に失敗しました: %w", err)

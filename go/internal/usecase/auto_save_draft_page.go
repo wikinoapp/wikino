@@ -64,26 +64,45 @@ type AutoSaveDraftPageOutput struct {
 // findOrCreateRetryLimit はDraftPageのfind_or_create時のリトライ上限
 const findOrCreateRetryLimit = 3
 
-// Execute は下書きページを自動保存する
-func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveDraftPageInput) (*AutoSaveDraftPageOutput, error) {
-	now := time.Now()
+// saveDraftPageContentInput はDraftPageの内容保存に必要な共通パラメータ
+type saveDraftPageContentInput struct {
+	SpaceID          model.SpaceID
+	PageID           model.PageID
+	SpaceMemberID    model.SpaceMemberID
+	TopicID          model.TopicID
+	Title            *string
+	Body             string
+	SpaceIdentifier  model.SpaceIdentifier
+	CurrentTopicName string
+}
 
-	tx, err := uc.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
-	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
+// saveDraftPageContentOutput はDraftPageの内容保存の結果
+type saveDraftPageContentOutput struct {
+	DraftPage *model.DraftPage
+	BodyHTML  string
+}
 
-	draftPageRepo := uc.draftPageRepo.WithTx(tx)
-	pageRepo := uc.pageRepo.WithTx(tx)
-	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
-	topicRepo := uc.topicRepo.WithTx(tx)
-	attachmentRepo := uc.attachmentRepo.WithTx(tx)
-
+// saveDraftPageContent はDraftPageのfind_or_create・Markdown処理・更新を行う共通ロジック
+func saveDraftPageContent(
+	ctx context.Context,
+	input saveDraftPageContentInput,
+	now time.Time,
+	draftPageRepo *repository.DraftPageRepository,
+	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
+	topicRepo *repository.TopicRepository,
+	attachmentRepo *repository.AttachmentRepository,
+) (*saveDraftPageContentOutput, error) {
 	// 1. DraftPageをfind_or_createで取得・作成
-	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, input, now)
+	autoSaveInput := AutoSaveDraftPageInput{
+		SpaceID:       input.SpaceID,
+		PageID:        input.PageID,
+		SpaceMemberID: input.SpaceMemberID,
+		TopicID:       input.TopicID,
+		Title:         input.Title,
+		Body:          input.Body,
+	}
+	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, autoSaveInput, now)
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの取得・作成に失敗しました: %w", err)
 	}
@@ -128,12 +147,41 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 		return nil, fmt.Errorf("下書きページの更新に失敗しました: %w", err)
 	}
 
+	return &saveDraftPageContentOutput{
+		DraftPage: updatedDraftPage,
+		BodyHTML:  bodyHTML,
+	}, nil
+}
+
+// Execute は下書きページを自動保存する
+func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveDraftPageInput) (*AutoSaveDraftPageOutput, error) {
+	now := time.Now()
+
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	result, err := saveDraftPageContent(ctx, saveDraftPageContentInput(input), now,
+		uc.draftPageRepo.WithTx(tx),
+		uc.pageRepo.WithTx(tx),
+		uc.pageEditorRepo.WithTx(tx),
+		uc.topicRepo.WithTx(tx),
+		uc.attachmentRepo.WithTx(tx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
 	}
 
 	return &AutoSaveDraftPageOutput{
-		DraftPage:  updatedDraftPage,
+		DraftPage:  result.DraftPage,
 		ModifiedAt: now,
 	}, nil
 }
