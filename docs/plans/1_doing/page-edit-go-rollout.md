@@ -119,7 +119,9 @@
 ### フィーチャーフラグからホワイトリストへの移行
 
 - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンを削除
-- `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加（全ユーザーがGo版を使用）
+- `internal/middleware/reverse_proxy.go` に `goHandledRegexPatterns`（正規表現 + メソッドフィルタによるホワイトリスト）を追加し、ページ編集関連のパスを登録（全ユーザーがGo版を使用）
+- `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` に `/drafts`（下書き一覧）を追加
+- `/s/` をプレフィックス一致に追加するとGo未実装のページ表示（`GET /s/:space_id/pages/:page_id`）もGoに送られてしまうため、正規表現パターンで個別に指定する
 
 ### フィーチャーフラグの整理
 
@@ -153,7 +155,11 @@
 - 該当がない場合は「なし」と記載
 -->
 
-なし
+### `/s/` プレフィックスによるホワイトリスト登録
+
+`goHandledPrefixPaths` に `/s/` を追加してスペース配下の全パスをGo版に送る方法を検討した。
+
+**不採用の理由**: `/s/:space_id/pages/:page_id` のGETリクエスト（ページ表示）はまだGo版で実装されていないため、`/s/` をプレフィックスに追加するとページ表示が壊れる。また、`PATCH /s/:space_id/pages/:page_id`（ページ更新）はGoで処理するがGETはRailsに転送する必要があり、プレフィックス一致ではメソッドの区別ができない。そのため、正規表現 + メソッドフィルタによる `goHandledRegexPatterns` を導入した。
 
 ## タスクリスト
 
@@ -204,10 +210,10 @@
 
 - [x] **1-1**: [Go] ページ編集パスをホワイトリストに追加し、フィーチャーフラグを整理
   - フィーチャーフラグによる段階的ロールアウトで問題がないことを確認した後に実施
-  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` にページ編集関連のパスプレフィックスを追加
+  - `internal/middleware/reverse_proxy.go` に `goHandledRegexPatterns`（正規表現 + メソッドフィルタによるホワイトリスト）を追加し、ページ編集関連パスを登録
+  - `internal/middleware/reverse_proxy.go` の `goHandledPrefixPaths` に `/drafts` を追加
   - `internal/middleware/reverse_proxy.go` の `featureFlaggedPatterns` からページ編集関連のパターンをすべて削除（スライスは空にする）
   - `internal/model/feature_flag.go` の `FeatureFlagGoPageEdit` 定数を削除し、ダミーの `FeatureFlagExample` 定数を追加
-  - `internal/middleware/reverse_proxy_test.go` のフィーチャーフラグ関連テストでダミーフラグを使用するよう更新
   - `e2e/tests/auth.setup.ts` から `createTestFeatureFlag` 呼び出しを削除
   - **想定ファイル数**: 約 4 ファイル（実装 3 + テスト 1）
   - **想定行数**: 約 -50 行（パターン削除分）
