@@ -38,17 +38,19 @@ window.Stimulus.register("search-cursor", SearchCursorController);
 window.Stimulus.register("sidebar", SidebarController);
 window.Stimulus.register("stuck", StuckController);
 
-// basecoat-cssのドロップダウンメニューを動的に読み込む
+// basecoat-cssのJSコンポーネントを動的に読み込む
 document.addEventListener("turbo:load", () => {
-  // 既存のbasecoatスクリプトを削除
-  const existingScript = document.querySelector('script[src*="basecoat-css"][src*="dropdown-menu"]');
-  if (existingScript) {
-    existingScript.remove();
-  }
+  const basecoatScripts = ["dropdown-menu", "sidebar"];
 
-  // 新しいスクリプトタグを作成して追加
-  const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/basecoat-css@0.2.8/dist/js/dropdown-menu.min.js";
-  script.defer = true;
-  document.head.appendChild(script);
+  for (const name of basecoatScripts) {
+    const existingScript = document.querySelector(`script[src*="basecoat-css"][src*="${name}"]`);
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://cdn.jsdelivr.net/npm/basecoat-css@0.2.8/dist/js/${name}.min.js`;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
 });

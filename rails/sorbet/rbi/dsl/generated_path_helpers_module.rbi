@@ -46,6 +46,9 @@ module GeneratedPathHelpersModule
   def mission_control_jobs_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def move_page_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

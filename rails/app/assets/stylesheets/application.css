@@ -200,6 +200,8 @@
 
 :root {
   /* https://basecoatui.com/components/sidebar/ */
+  --sidebar: var(--color-brand-50);
+  --sidebar-accent: var(--color-brand-100);
   --sidebar-width: 200px;
 }
 
