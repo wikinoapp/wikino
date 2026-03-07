@@ -199,8 +199,17 @@
 }
 
 :root {
-  /* https://basecoatui.com/components/sidebar/ */
-  --sidebar-width: 200px;
+  /* Basecoatの変数上書き */
+  --background: var(--color-brand-100);
+  --foreground: var(--color-stone-900);
+  --primary: var(--color-brand-950);
+  --primary-foreground: var(--color-brand-100);
+  --secondary: var(--color-brand-200);
+  --secondary-foreground: var(--color-brand-950);
+  --accent: var(--color-brand-200);
+  --sidebar: var(--color-brand-50);
+  --sidebar-accent: var(--color-brand-100);
+  --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */
 }
 
 /*

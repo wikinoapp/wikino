@@ -241,7 +241,7 @@ Go版の既存実装ではCookie（`wikino_sidebar_open`）を使用していた
   - **想定ファイル数**: 約 6 ファイル（実装 6 + テスト 0）
   - **想定行数**: 約 60 行（実装 60 行 + テスト 0 行）
 
-- [ ] **1-2**: [Rails] basecoat-cssサイドバーのCSS変数・JSを追加し、サイドバーのHTML構造を移行する
+- [x] **1-2**: [Rails] basecoat-cssサイドバーのCSS変数・JSを追加し、サイドバーのHTML構造を移行する
   - `application.css` に `--sidebar`, `--sidebar-accent` 等のCSS変数を追加
   - `application.ts` にbasecoat-cssサイドバーJSの読み込みを追加
   - `SidebarComponent` を `<aside class="sidebar" data-side="left">` 構造に書き換え

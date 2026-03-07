@@ -46,6 +46,9 @@ module GeneratedUrlHelpersModule
   def mission_control_jobs_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def move_page_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def new_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

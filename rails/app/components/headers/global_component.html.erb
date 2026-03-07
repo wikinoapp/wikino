@@ -1,28 +1,21 @@
-<header>
-  <%# PCサイズ %>
-  <div class="mx-auto hidden min-h-auto w-full max-w-(--content-screen-max-width-medium) justify-between p-4 md:flex">
-    <div class="flex items-center gap-4">
-      <% if show_sidebar %>
-        <%# サイドバー開くボタン (md以上xl未満) %>
-        <button
-          data-action="click->sidebar#open"
-          class="hover:bg-brand-200/70 hidden cursor-pointer rounded-md p-2 transition-colors md:block xl:hidden"
-          aria-label="<%= t('nouns.menu') %>"
-        >
-          <%= render BaseUI::IconComponent.new(name: "sidebar-simple-regular", size: "24px", class_name: "fill-base-content") %>
-        </button>
-      <% end %>
+<header class="flex items-center gap-2 px-2">
+  <div class="w-[32px] flex-none">
+    <button
+      type="button"
+      onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+      class="btn-sm-icon-ghost rounded-full"
+      aria-label="<%= t('nouns.menu') %>"
+    >
+      <%= render BaseUI::IconComponent.new(name: "sidebar-simple-regular", size: "24px", class_name: "fill-base-content") %>
+    </button>
+  </div>
 
-      <%= render Links::BrandIconComponent.new(current_page_name:) %>
-
+  <div class="flex-1">
+    <div class="mx-auto w-fit">
       <%= breadcrumb %>
     </div>
   </div>
 
-  <%# モバイルサイズ %>
-  <% if breadcrumb? %>
-    <div class="flex items-center gap-4 px-4 pt-4 md:hidden">
-      <%= breadcrumb %>
-    </div>
-  <% end %>
+  <div class="w-[32px] flex-none">
+  </div>
 </header>
