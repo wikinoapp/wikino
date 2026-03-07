@@ -117,6 +117,9 @@ ja:
               (<span class="font-bold">%{space_name}</span>)
               を入力してください
       updated: スペースを更新しました
+    sidebar:
+      draft_pages_empty: 下書きはありません
+      draft_pages_show_all: すべてを表示
     sign_in:
       dont_have_an_account: アカウント持ってない？
       forgot_password: パスワード忘れた？

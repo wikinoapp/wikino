@@ -28,6 +28,9 @@ module GeneratedUrlHelpersModule
   def bulk_restored_page_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def draft_page_sidebar_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def draft_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
