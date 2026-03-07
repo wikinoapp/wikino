@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -242,24 +243,24 @@ func (h *Handler) renderEditWithErrors(
 
 	currentUser := middleware.UserFromContext(ctx)
 	var userAtname string
-	var joinedTopics []viewmodel.TopicForSidebar
-	var draftPages []viewmodel.DraftPageForSidebar
+	var sidebarContent sidebar.SidebarContent
 	if currentUser != nil {
 		userAtname = currentUser.Atname
-		joinedTopics, draftPages = h.sidebarHelper.Content(ctx, currentUser.ID)
+		sidebarContent = h.sidebarHelper.Content(ctx, currentUser.ID)
 	}
 
 	layoutData := layouts.DefaultLayoutData{
 		Meta:       meta,
 		HideFooter: true,
 		Sidebar: components.SidebarData{
-			DefaultClosed:   layouts.SidebarDefaultClosed(r),
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        currentUser != nil,
-			UserAtname:      userAtname,
-			SpaceIdentifier: string(spaceIdentifier),
-			JoinedTopics:    joinedTopics,
-			DraftPages:      draftPages,
+			DefaultClosed:     layouts.SidebarDefaultClosed(r),
+			CurrentPageName:   templates.PageNamePageEdit,
+			SignedIn:          currentUser != nil,
+			UserAtname:        userAtname,
+			SpaceIdentifier:   string(spaceIdentifier),
+			JoinedTopics:      sidebarContent.JoinedTopics,
+			DraftPages:        sidebarContent.DraftPages,
+			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
 	}
 

@@ -476,6 +476,10 @@ other = "無題"
 description = "サイドバーの下書きページの編集リンクのタイトル"
 other = "編集する"
 
+[sidebar_draft_pages_show_all]
+description = "サイドバーの下書きページ一覧で件数が多いときに表示するリンク"
+other = "すべてを表示"
+
 # フッター
 [footer_terms]
 other = "利用規約"

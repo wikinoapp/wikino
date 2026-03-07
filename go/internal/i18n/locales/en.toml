@@ -476,6 +476,10 @@ other = "Untitled"
 description = "Title for edit link on draft page in the sidebar"
 other = "Edit page"
 
+[sidebar_draft_pages_show_all]
+description = "Link to show all drafts when there are more than displayed in the sidebar"
+other = "Show all"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"

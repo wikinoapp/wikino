@@ -158,19 +158,20 @@ func (h *Handler) renderMoveForm(
 	})
 
 	// サイドバーコンテンツを取得
-	joinedTopics, draftPages := h.sidebarHelper.Content(ctx, user.ID)
+	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
 		Meta:  meta,
 		Flash: flash,
 		Sidebar: components.SidebarData{
-			DefaultClosed:   layouts.SidebarDefaultClosed(r),
-			CurrentPageName: templates.PageNamePageMove,
-			SignedIn:        true,
-			UserAtname:      user.Atname,
-			SpaceIdentifier: string(spaceIdentifier),
-			JoinedTopics:    joinedTopics,
-			DraftPages:      draftPages,
+			DefaultClosed:     layouts.SidebarDefaultClosed(r),
+			CurrentPageName:   templates.PageNamePageMove,
+			SignedIn:          true,
+			UserAtname:        user.Atname,
+			SpaceIdentifier:   string(spaceIdentifier),
+			JoinedTopics:      sidebarContent.JoinedTopics,
+			DraftPages:        sidebarContent.DraftPages,
+			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
 	}
 

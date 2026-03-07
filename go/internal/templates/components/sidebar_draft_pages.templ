@@ -6,7 +6,7 @@ import (
 )
 
 // SidebarDraftPages はサイドバーの下書きページ一覧を表示します
-templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar) {
+templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) {
 	<div class="flex flex-col gap-2 px-2">
 		<p class="text-xs font-bold text-muted-foreground px-2">
 			{ templates.T(ctx, "sidebar_draft_pages_heading") }
@@ -45,6 +45,18 @@ templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar) {
 					</div>
 				}
 			</div>
+
+			if hasMore {
+				<div class="px-2">
+					<a
+						href={ templ.SafeURL(string(templates.DraftsPath())) }
+						class="link-muted text-xs flex items-center gap-1 w-fit"
+					>
+						@templates.Icon("arrow-right-regular", "size-4 fill-muted-foreground")
+						{ templates.T(ctx, "sidebar_draft_pages_show_all") }
+					</a>
+				</div>
+			}
 		} else {
 			<div class="px-4 py-2">
 				<p class="text-xs text-muted-foreground">
