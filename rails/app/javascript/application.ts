@@ -37,11 +37,14 @@ window.Stimulus.register("search-cursor", SearchCursorController);
 window.Stimulus.register("stuck", StuckController);
 
 // サイドバー開閉状態をlocalStorageに保存する
+// basecoat-cssがaria-hiddenを更新した後に読み取るため、requestAnimationFrameで遅延させる
 document.addEventListener("basecoat:sidebar", () => {
-  const sidebar = document.querySelector(".sidebar");
-  if (!sidebar) return;
-  const isOpen = sidebar.getAttribute("aria-hidden") === "false";
-  localStorage.setItem("wikinoSidebarOpen", String(isOpen));
+  requestAnimationFrame(() => {
+    const sidebar = document.querySelector(".sidebar");
+    if (!sidebar) return;
+    const isOpen = sidebar.getAttribute("aria-hidden") === "false";
+    localStorage.setItem("wikinoSidebarOpen", String(isOpen));
+  });
 });
 
 // basecoat-cssのJSコンポーネントを動的に読み込む
