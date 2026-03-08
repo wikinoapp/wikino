@@ -356,7 +356,7 @@ Rails 版ではカーソルベースページネーション（`cursor_paginate`
 
 ### フェーズ 3: トピック詳細画面のハンドラーとテンプレート
 
-- [ ] **3-1**: [Go] トピック詳細画面用の ViewModel とテンプレート作成
+- [x] **3-1**: [Go] トピック詳細画面用の ViewModel とテンプレート作成
   - `TopicForShow` ViewModel の追加
   - トピック詳細画面のテンプレート作成（`templates/pages/topic/show.templ`）
   - 既存の `CardLinkPage` コンポーネントと `TopNav` コンポーネントを活用
