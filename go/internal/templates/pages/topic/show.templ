@@ -1,0 +1,146 @@
+package topic
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData はトピック詳細画面に渡すデータ構造体です
+type ShowData struct {
+	Topic       viewmodel.TopicForShow
+	Space       viewmodel.Space
+	PinnedPages []viewmodel.CardLinkPage
+	Pages       []viewmodel.CardLinkPage
+	Pagination  viewmodel.Pagination
+}
+
+// paginationPath はページネーション用のパスを生成します
+func (d ShowData) paginationPath(page int) string {
+	return fmt.Sprintf("/s/%s/topics/%d?page=%d", d.Space.Identifier, d.Topic.Number, page)
+}
+
+// Show はトピック詳細画面のコンテンツを表示します
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label:    data.Space.Name,
+						Path:     templates.SpacePath(data.Space.Identifier.String()),
+						IconName: "globe-regular",
+					},
+					{
+						Label:    data.Topic.Name,
+						IconName: data.Topic.IconName,
+					},
+				},
+			})
+
+			<div class="w-full mx-auto max-w-5xl">
+				<div class="flex flex-col gap-6">
+					<div class="px-4">
+						@showHeader(data)
+					</div>
+
+					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
+						<div class="flex flex-col gap-6 px-4">
+							if len(data.PinnedPages) > 0 {
+								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+									for _, page := range data.PinnedPages {
+										@components.CardLinkPage(page, data.Space.Identifier)
+									}
+								</div>
+							}
+
+							if len(data.Pages) > 0 {
+								<div class="flex flex-col gap-4">
+									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+										for _, page := range data.Pages {
+											@components.CardLinkPage(page, data.Space.Identifier)
+										}
+									</div>
+
+									@components.PaginationNav(
+										data.Pagination,
+										data.paginationPath(data.Pagination.Current-1),
+										data.paginationPath(data.Pagination.Current+1),
+									)
+								</div>
+							}
+						</div>
+					} else {
+						<div class="px-4">
+							@showEmptyState(data)
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// showHeader はトピック詳細画面のヘッダーを表示します
+templ showHeader(data ShowData) {
+	@components.MainTitle(components.MainTitleData{
+		Title:    data.Topic.Name,
+		Subtitle: data.Topic.Description,
+		Actions:  showActions(data),
+	})
+}
+
+// showActions はトピック詳細画面のアクションボタンを表示します
+templ showActions(data ShowData) {
+	if data.Topic.CanCreatePage {
+		<a
+			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="btn btn-sm rounded-full"
+		>
+			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+			{ templates.T(ctx, "topic_show_new_page") }
+		</a>
+	}
+
+	if data.Topic.CanUpdate {
+		<a
+			href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="btn btn-sm btn-outline rounded-full"
+		>
+			@templates.Icon("gear-regular", "size-[18px]")
+			{ templates.T(ctx, "topic_show_settings") }
+		</a>
+	}
+}
+
+// showEmptyState はトピック詳細画面の空状態を表示します
+templ showEmptyState(data ShowData) {
+	<div class="flex flex-col items-center gap-4 py-12 text-center">
+		@templates.Icon("file-regular", "size-[50px] fill-gray-400")
+
+		<h2 class="text-lg font-semibold text-muted-foreground">
+			{ templates.T(ctx, "topic_show_no_pages_message") }
+		</h2>
+
+		if data.Topic.CanCreatePage {
+			<div class="text-sm text-muted-foreground">
+				{ templates.T(ctx, "topic_show_no_pages_description") }
+			</div>
+
+			<a
+				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
+				class="btn btn-sm rounded-full"
+			>
+				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+				{ templates.T(ctx, "topic_show_new_page") }
+			</a>
+		}
+	</div>
+}

@@ -20,6 +20,11 @@ func TopicPath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
 
+// TopicSettingsPath はトピック設定のパスを生成します
+func TopicSettingsPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
+}
+
 // NewPagePath はページ新規作成のパスを生成します
 func NewPagePath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/pages/new", spaceIdentifier, topicNumber))
