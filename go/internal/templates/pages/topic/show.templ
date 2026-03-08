@@ -3,7 +3,6 @@ package topic
 import (
 	"fmt"
 
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -11,17 +10,16 @@ import (
 
 // ShowData はトピック詳細画面に渡すデータ構造体です
 type ShowData struct {
-	Topic           viewmodel.TopicForShow
-	Space           viewmodel.Space
-	PinnedPages     []viewmodel.CardLinkPage
-	Pages           []viewmodel.CardLinkPage
-	Pagination      viewmodel.Pagination
-	SpaceIdentifier model.SpaceIdentifier
+	Topic       viewmodel.TopicForShow
+	Space       viewmodel.Space
+	PinnedPages []viewmodel.CardLinkPage
+	Pages       []viewmodel.CardLinkPage
+	Pagination  viewmodel.Pagination
 }
 
 // paginationPath はページネーション用のパスを生成します
 func (d ShowData) paginationPath(page int) string {
-	return fmt.Sprintf("/s/%s/topics/%d?page=%d", d.SpaceIdentifier, d.Topic.Number, page)
+	return fmt.Sprintf("/s/%s/topics/%d?page=%d", d.Space.Identifier, d.Topic.Number, page)
 }
 
 // Show はトピック詳細画面のコンテンツを表示します
@@ -58,7 +56,7 @@ templ Show(data ShowData) {
 							if len(data.PinnedPages) > 0 {
 								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
 									for _, page := range data.PinnedPages {
-										@components.CardLinkPage(page, data.SpaceIdentifier)
+										@components.CardLinkPage(page, data.Space.Identifier)
 									}
 								</div>
 							}
@@ -67,7 +65,7 @@ templ Show(data ShowData) {
 								<div class="flex flex-col gap-4">
 									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
 										for _, page := range data.Pages {
-											@components.CardLinkPage(page, data.SpaceIdentifier)
+											@components.CardLinkPage(page, data.Space.Identifier)
 										}
 									</div>
 
@@ -103,7 +101,7 @@ templ showHeader(data ShowData) {
 templ showActions(data ShowData) {
 	if data.Topic.CanCreatePage {
 		<a
-			href={ templ.SafeURL(string(templates.NewPagePath(data.SpaceIdentifier.String(), data.Topic.Number))) }
+			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
 			class="btn btn-sm rounded-full"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
@@ -113,7 +111,7 @@ templ showActions(data ShowData) {
 
 	if data.Topic.CanUpdate {
 		<a
-			href={ templ.SafeURL(string(templates.TopicSettingsPath(data.SpaceIdentifier.String(), data.Topic.Number))) }
+			href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
 			class="btn btn-sm btn-outline rounded-full"
 		>
 			@templates.Icon("gear-regular", "size-[18px]")
@@ -137,7 +135,7 @@ templ showEmptyState(data ShowData) {
 			</div>
 
 			<a
-				href={ templ.SafeURL(string(templates.NewPagePath(data.SpaceIdentifier.String(), data.Topic.Number))) }
+				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
 				class="btn btn-sm rounded-full"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
