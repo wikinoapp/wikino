@@ -261,6 +261,11 @@ func (h *Handler) renderEditWithErrors(
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        currentUser != nil,
+			SpaceIdentifier: string(spaceIdentifier),
+		},
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

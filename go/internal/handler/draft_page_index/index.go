@@ -49,6 +49,10 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNameDraftPageIndex,
+			SignedIn:        true,
+		},
 	}
 
 	content := draftpagepages.Index(draftpagepages.IndexData{

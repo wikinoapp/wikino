@@ -1,0 +1,68 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// BottomNavData はモバイル用ボトムナビに渡すデータ構造体です
+type BottomNavData struct {
+	CurrentPageName templates.PageName
+	SignedIn        bool
+	SpaceIdentifier string
+}
+
+// searchPath はスペース内のときスペースフィルター付き検索パスを返します
+func (d BottomNavData) searchPath() templates.Path {
+	if d.SpaceIdentifier != "" {
+		return templates.SearchPathWithSpaceFilter(d.SpaceIdentifier)
+	}
+	return templates.SearchPath()
+}
+
+// homePath はログイン状態に応じたホームのパスを返します
+func (d BottomNavData) homePath() templates.Path {
+	if d.SignedIn {
+		return templates.HomePath()
+	}
+	return templates.Path("/")
+}
+
+// BottomNav はモバイル用ボトムナビゲーションを表示します
+// デスクトップでは非表示（md:hidden）、モバイルでのみ表示されます
+templ BottomNav(data BottomNavData) {
+	<div class="bg-card flex items-center gap-4 rounded-full border border-gray-400 px-4 py-1 md:hidden">
+		<button
+			onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+			class="flex w-[48px] flex-col items-center gap-1"
+			aria-label={ templates.T(ctx, "bottom_nav_menu") }
+		>
+			@templates.Icon("sidebar-simple-regular", "size-[26px] fill-base-content")
+			<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_menu") }</div>
+		</button>
+
+		<a href={ templ.SafeURL(string(data.homePath())) } class="flex w-[48px] flex-col items-center gap-1">
+			if data.CurrentPageName == templates.PageNameHome || data.CurrentPageName == templates.PageNameWelcome {
+				@templates.Icon("house-fill", "size-[26px] fill-base-content")
+			} else {
+				@templates.Icon("house-regular", "size-[26px] fill-base-content")
+			}
+			<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_home") }</div>
+		</a>
+
+		if data.SignedIn {
+			<a href={ templ.SafeURL(string(data.searchPath())) } class="flex w-[48px] flex-col items-center gap-1">
+				if data.CurrentPageName == templates.PageNameSearch {
+					@templates.Icon("magnifying-glass-fill", "size-[26px] fill-base-content")
+				} else {
+					@templates.Icon("magnifying-glass-regular", "size-[26px] fill-base-content")
+				}
+				<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_search") }</div>
+			</a>
+		} else {
+			<a href={ templ.SafeURL(string(templates.SignInPath())) } class="flex w-[48px] flex-col items-center gap-1">
+				@templates.Icon("sign-in-regular", "size-[26px] fill-base-content")
+				<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_sign_in") }</div>
+			</a>
+		}
+	</div>
+}

@@ -668,6 +668,23 @@ other = "Modified"
 description = "Untitled draft page"
 other = "Untitled"
 
+# Bottom navigation
+[bottom_nav_menu]
+description = "Menu button in the bottom navigation"
+other = "Menu"
+
+[bottom_nav_home]
+description = "Home button in the bottom navigation"
+other = "Home"
+
+[bottom_nav_search]
+description = "Search button in the bottom navigation"
+other = "Search"
+
+[bottom_nav_sign_in]
+description = "Sign in button in the bottom navigation"
+other = "Sign in"
+
 # Pagination
 [pagination_previous]
 description = "Link to the previous page in pagination"
