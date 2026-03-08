@@ -1,5 +1,5 @@
 <% if page.can_update? %>
-  <%= link_to edit_page_path(space.identifier, page.number), {
+  <%= link_to "/s/#{space.identifier}/pages/#{page.number}/edit", {
     class: "btn btn-sm rounded-full"
   } do %>
     <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "18px", class_name: "fill-primary-foreground") %>

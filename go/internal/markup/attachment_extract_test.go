@@ -194,6 +194,60 @@ func TestExtractAttachmentIDs_MarkdownImageAndLinkMixed(t *testing.T) {
 	}
 }
 
+func TestExtractAttachmentIDs_MarkdownImageWithTitle(t *testing.T) {
+	t.Parallel()
+
+	body := `![桜開花のお知らせ](/attachments/01990988-2b4a-8777-57f0-8cd72decd1fd "桜開花のお知らせ")`
+	got := ExtractAttachmentIDs(body)
+
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	if got[0] != "01990988-2b4a-8777-57f0-8cd72decd1fd" {
+		t.Errorf("got[0] = %q, want %q", got[0], "01990988-2b4a-8777-57f0-8cd72decd1fd")
+	}
+}
+
+func TestExtractAttachmentIDs_MarkdownLinkWithTitle(t *testing.T) {
+	t.Parallel()
+
+	body := `[ダウンロード](/attachments/abc-123-def "ファイル名")`
+	got := ExtractAttachmentIDs(body)
+
+	if len(got) != 1 {
+		t.Fatalf("len(got) = %d, want 1", len(got))
+	}
+	if got[0] != "abc-123-def" {
+		t.Errorf("got[0] = %q, want %q", got[0], "abc-123-def")
+	}
+}
+
+func TestExtractAttachmentIDs_PercentEncodedBackslash(t *testing.T) {
+	t.Parallel()
+
+	// bluemondayがバックスラッシュを%5Cにエンコードしたケース
+	body := `<img src="/attachments/att-1%5C">`
+	got := ExtractAttachmentIDs(body)
+
+	if len(got) != 0 {
+		t.Errorf("percent-encoded backslash ID should be excluded, got: %v", got)
+	}
+}
+
+func TestExtractFeaturedImageID_MarkdownImageWithTitle(t *testing.T) {
+	t.Parallel()
+
+	body := `![桜開花のお知らせ](/attachments/feat-title-id "タイトル")` + "\nテキスト"
+	got := ExtractFeaturedImageID(body)
+
+	if got == nil {
+		t.Fatal("got nil, want non-nil")
+	}
+	if *got != "feat-title-id" {
+		t.Errorf("got %q, want %q", *got, "feat-title-id")
+	}
+}
+
 func TestExtractFeaturedImageID_MarkdownImage(t *testing.T) {
 	t.Parallel()
 

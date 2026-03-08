@@ -127,7 +127,7 @@ func main() {
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
 	// セッションマネージャーを初期化

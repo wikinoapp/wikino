@@ -32,18 +32,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), flag: model.FeatureFlagGoPageEdit, methods: []string{"PATCH"}},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`), flag: model.FeatureFlagGoPageEdit},
-	{pattern: regexp.MustCompile(`^/drafts$`), flag: model.FeatureFlagGoPageEdit},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -56,9 +45,10 @@ type ReverseProxyMiddleware struct {
 // Go版で処理するパス（ホワイトリスト）
 // これらのパスはRails版にプロキシせず、Go版のハンドラーで処理する
 //
-// 2種類のマッチング方式：
+// 3種類のマッチング方式：
 // - 完全一致（exactPaths）: パスが完全に一致する場合のみマッチ
 // - プレフィックス一致（prefixPaths）: パスが指定した文字列で始まる場合にマッチ
+// - 正規表現（goHandledRegexPatterns）: 動的セグメントやメソッド制限が必要なパスに使用
 var (
 	// 完全一致でチェックするパス
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
@@ -83,8 +73,29 @@ var (
 		"/password/reset",                  // パスワードリセット申請フォーム・処理
 		"/password/edit",                   // 新パスワード入力フォーム
 		"/password",                        // パスワード更新処理
+		"/drafts",                          // 下書き一覧
 	}
 )
+
+// goHandledPattern はGo版で常に処理するURLパターンを定義（正規表現 + メソッドフィルタ）
+type goHandledPattern struct {
+	pattern *regexp.Regexp
+	methods []string // nilまたは空なら全メソッドにマッチ
+}
+
+// Go版で処理するURLパターン（正規表現マッチング）
+// プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
+var goHandledRegexPatterns = []goHandledPattern{
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
+}
 
 // NewReverseProxyMiddleware は新しいReverseProxyMiddlewareを作成
 // featureFlagRepoがnilの場合、フィーチャーフラグ判定はスキップされる
@@ -204,13 +215,19 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 // Middleware はHTTPミドルウェアを返す
 func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. 常にGoで処理するパス（既存の動作）
+		// 1. 常にGoで処理するパス（完全一致・プレフィックス一致）
 		if m.isGoHandledPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 2. フィーチャーフラグで制御するパス
+		// 2. 常にGoで処理するパス（正規表現 + メソッドフィルタ）
+		if m.isGoHandledByRegex(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// 3. フィーチャーフラグで制御するパス
 		if flagName := m.getFeatureFlagForRequest(r); flagName != "" {
 			if m.isFeatureFlagEnabled(r, flagName) {
 				next.ServeHTTP(w, r)
@@ -218,7 +235,7 @@ func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// 3. その他はすべてRailsにプロキシ（既存の動作）
+		// 4. その他はすべてRailsにプロキシ
 		m.proxy.ServeHTTP(w, r)
 	})
 }
@@ -239,6 +256,21 @@ func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
 		}
 	}
 
+	return false
+}
+
+// isGoHandledByRegex はGo版で処理するパスかどうかを正規表現パターンで判定する
+// メソッドフィルタが指定されている場合はHTTPメソッドも考慮する
+func (m *ReverseProxyMiddleware) isGoHandledByRegex(r *http.Request) bool {
+	for _, gp := range goHandledRegexPatterns {
+		if !gp.pattern.MatchString(r.URL.Path) {
+			continue
+		}
+		if len(gp.methods) > 0 && !containsMethod(gp.methods, r.Method) {
+			continue
+		}
+		return true
+	}
 	return false
 }
 

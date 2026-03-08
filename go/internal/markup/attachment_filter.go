@@ -2,6 +2,7 @@ package markup
 
 import (
 	"context"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -25,7 +26,8 @@ var (
 	}
 
 	// 添付ファイルURLパターン（/attachments/{id}のみマッチ）
-	attachmentPathRegex = regexp.MustCompile(`^/attachments/([^/]+)$`)
+	// URLデコード後にバックスラッシュを含むIDは不正な入力として除外する
+	attachmentPathRegex = regexp.MustCompile(`^/attachments/([^/\\]+)$`)
 )
 
 // AttachmentFinder は添付ファイルの検索インターフェース。
@@ -288,8 +290,14 @@ func replaceWithAnchorDataAttrs(aNode *html.Node, attachmentID string) {
 
 // extractAttachmentID はURLから添付ファイルIDを抽出する。
 // /attachments/{id}パターンにマッチしない場合は空文字列を返す。
-func extractAttachmentID(url string) string {
-	match := attachmentPathRegex.FindStringSubmatch(url)
+// bluemondayがURL内の特殊文字（例: \）をパーセントエンコード（%5C）するため、
+// URLデコードしてから抽出する。
+func extractAttachmentID(rawURL string) string {
+	decoded, err := url.PathUnescape(rawURL)
+	if err == nil {
+		rawURL = decoded
+	}
+	match := attachmentPathRegex.FindStringSubmatch(rawURL)
 	if match == nil {
 		return ""
 	}
@@ -319,15 +327,23 @@ func WrapStandaloneImageLinks(bodyHTML string) string {
 
 // wrapImageLinksInNode はノードの子要素を走査し、
 // スタンドアロンの画像リンクを<p>要素で囲む。
+// 画像リンクの直後に<br>+<em>（キャプション）が続く場合はまとめて<p>で囲む。
 func wrapImageLinksInNode(n *html.Node) bool {
 	modified := false
 
 	for c := n.FirstChild; c != nil; {
 		next := c.NextSibling
 
-		if isAttachmentImageLink(c) && !isParentParagraph(c) && !hasInlineNextSibling(c) {
-			wrapInParagraph(c)
-			modified = true
+		if isAttachmentImageLink(c) && !isParentParagraph(c) {
+			if captionSiblings := getImageCaptionSiblings(c); captionSiblings != nil {
+				lastSibling := captionSiblings[len(captionSiblings)-1]
+				next = lastSibling.NextSibling
+				wrapInParagraphWithSiblings(c, captionSiblings)
+				modified = true
+			} else if !hasInlineNextSibling(c) {
+				wrapInParagraph(c)
+				modified = true
+			}
 		} else if c.Type == html.ElementNode && c.DataAtom != atom.P {
 			if wrapImageLinksInNode(c) {
 				modified = true
@@ -368,6 +384,55 @@ func hasInlineNextSibling(n *html.Node) bool {
 		break
 	}
 	return false
+}
+
+// getImageCaptionSiblings は画像リンクの直後にキャプションパターン（<br> + <em>/<strong>）が
+// 続くかチェックし、キャプションを構成するノード群を返す。パターンが見つからない場合はnilを返す。
+func getImageCaptionSiblings(n *html.Node) []*html.Node {
+	var nodes []*html.Node
+	sibling := n.NextSibling
+
+	for sibling != nil && sibling.Type == html.TextNode && strings.TrimSpace(sibling.Data) == "" {
+		nodes = append(nodes, sibling)
+		sibling = sibling.NextSibling
+	}
+
+	if sibling == nil || sibling.Type != html.ElementNode || sibling.DataAtom != atom.Br {
+		return nil
+	}
+	nodes = append(nodes, sibling)
+	sibling = sibling.NextSibling
+
+	for sibling != nil && sibling.Type == html.TextNode && strings.TrimSpace(sibling.Data) == "" {
+		nodes = append(nodes, sibling)
+		sibling = sibling.NextSibling
+	}
+
+	if sibling == nil || sibling.Type != html.ElementNode {
+		return nil
+	}
+	if sibling.DataAtom != atom.Em && sibling.DataAtom != atom.Strong {
+		return nil
+	}
+	nodes = append(nodes, sibling)
+
+	return nodes
+}
+
+// wrapInParagraphWithSiblings はノードと後続のキャプションノード群をまとめて<p>要素で囲む
+func wrapInParagraphWithSiblings(n *html.Node, siblings []*html.Node) {
+	p := &html.Node{
+		Type:     html.ElementNode,
+		DataAtom: atom.P,
+		Data:     "p",
+	}
+	n.Parent.InsertBefore(p, n)
+	n.Parent.RemoveChild(n)
+	p.AppendChild(n)
+	for _, s := range siblings {
+		s.Parent.RemoveChild(s)
+		p.AppendChild(s)
+	}
 }
 
 // wrapInParagraph はノードを<p>要素で囲む

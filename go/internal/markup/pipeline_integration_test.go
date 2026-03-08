@@ -533,3 +533,103 @@ func TestRenderHTML_InlineImageWithSurroundingText(t *testing.T) {
 		t.Errorf("surrounding text should be preserved, got: %s", got)
 	}
 }
+
+func TestRenderHTML_HTMLImgWithCaption(t *testing.T) {
+	t.Parallel()
+
+	resolver := &mockPageLocationResolver{}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "600x400.png"},
+		},
+	}
+
+	tests := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "LF",
+			body: "<img width=\"600\" height=\"400\" alt=\"600x400.png\" src=\"/attachments/att-1\">\n*サンプル画像です*",
+		},
+		{
+			name: "CRLF",
+			body: "<img width=\"600\" height=\"400\" alt=\"600x400.png\" src=\"/attachments/att-1\">\r\n*サンプル画像です*",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := RenderHTML(context.Background(), tt.body, "topic1", "space-1", "my-space", resolver, finder)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if !strings.Contains(got, `data-attachment-id="att-1"`) {
+				t.Errorf("result should contain attachment, got: %s", got)
+			}
+			if !strings.Contains(got, "<em>サンプル画像です</em>") {
+				t.Errorf("emphasis should be converted to <em>, got: %s", got)
+			}
+			if !strings.Contains(got, "<br/>") {
+				t.Errorf("result should contain <br/> between image and caption, got: %s", got)
+			}
+		})
+	}
+}
+
+func TestRenderHTML_ImageWithCaption(t *testing.T) {
+	t.Parallel()
+
+	resolver := &mockPageLocationResolver{}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "photo.jpg"},
+		},
+	}
+
+	body := "![写真](/attachments/att-1)\n*キャプションテキスト*"
+	got, err := RenderHTML(context.Background(), body, "topic1", "space-1", "my-space", resolver, finder)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 画像リンクが変換されていること
+	if !strings.Contains(got, `data-attachment-id="att-1"`) {
+		t.Errorf("result should contain attachment, got: %s", got)
+	}
+	// 画像リンクとキャプションが同じ<p>でラップされていること
+	if !strings.Contains(got, "<em>キャプションテキスト</em></p>") {
+		t.Errorf("caption should be wrapped with image in <p>, got: %s", got)
+	}
+	// <br>が画像とキャプションの間にあること
+	if !strings.Contains(got, "<br/>") {
+		t.Errorf("result should contain <br/> between image and caption, got: %s", got)
+	}
+}
+
+func TestRenderHTML_ImgWithBackslashInSrc(t *testing.T) {
+	t.Parallel()
+
+	resolver := &mockPageLocationResolver{}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "photo.jpg"},
+		},
+	}
+
+	// src属性にバックスラッシュ付きの不正なHTMLが入力された場合、
+	// bluemondayが\を%5Cにエンコードするが、エラーにならずスキップされること
+	body := `<img src="/attachments/att-1\">`
+	got, err := RenderHTML(context.Background(), body, "topic1", "space-1", "my-space", resolver, finder)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 不正なIDは変換されないが、エラーにならないこと
+	if strings.Contains(got, `data-attachment-id`) {
+		t.Errorf("backslash URL should not be converted to attachment, got: %s", got)
+	}
+}

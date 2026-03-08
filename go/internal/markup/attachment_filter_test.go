@@ -403,6 +403,21 @@ func TestWrapStandaloneImageLinks(t *testing.T) {
 			want:  "",
 		},
 		{
+			name:  "直後に<br>と<em>が続く場合はキャプション付きで<p>で囲む",
+			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"></a><br><em>キャプション</em>`,
+			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"/></a><br/><em>キャプション</em></p>`,
+		},
+		{
+			name:  "直後に<br>と<strong>が続く場合もキャプション付きで<p>で囲む",
+			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"></a><br><strong>キャプション</strong>`,
+			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="photo.jpg"/></a><br/><strong>キャプション</strong></p>`,
+		},
+		{
+			name:  "空白テキストノードを挟んで<br>と<em>が続く場合もキャプション付きで<p>で囲む",
+			input: "<a class=\"wikino-attachment-image-link\" href=\"#\"><img src=\"\" alt=\"photo.jpg\"></a>\n<br>\n<em>キャプション</em>",
+			want:  "<p><a class=\"wikino-attachment-image-link\" href=\"#\"><img src=\"\" alt=\"photo.jpg\"/></a>\n<br/>\n<em>キャプション</em></p>",
+		},
+		{
 			name:  "複数のスタンドアロン画像リンクをそれぞれ<p>で囲む",
 			input: `<a class="wikino-attachment-image-link" href="#"><img src="" alt="1.jpg"></a><a class="wikino-attachment-image-link" href="#"><img src="" alt="2.jpg"></a>`,
 			want:  `<p><a class="wikino-attachment-image-link" href="#"><img src="" alt="1.jpg"/></a></p><p><a class="wikino-attachment-image-link" href="#"><img src="" alt="2.jpg"/></a></p>`,
@@ -622,6 +637,16 @@ func TestExtractAttachmentID(t *testing.T) {
 			url:  "/attachments/",
 			want: "",
 		},
+		{
+			name: "パーセントエンコードされたバックスラッシュ",
+			url:  "/attachments/att-1%5C",
+			want: "",
+		},
+		{
+			name: "バックスラッシュを含むURL",
+			url:  `/attachments/att-1\`,
+			want: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -633,6 +658,28 @@ func TestExtractAttachmentID(t *testing.T) {
 				t.Errorf("extractAttachmentID(%q) = %q, want %q", tt.url, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestFilterAttachments_PercentEncodedBackslash(t *testing.T) {
+	t.Parallel()
+
+	finder := newMockFinder(&model.Attachment{
+		ID:       "att-1",
+		SpaceID:  "space-1",
+		Filename: "photo.png",
+	})
+
+	// bluemondayがバックスラッシュを%5Cにエンコードしたケース
+	input := `<img src="/attachments/att-1%5C">`
+	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// バックスラッシュを含む不正なIDは変換されないこと
+	if strings.Contains(got, `data-attachment-id`) {
+		t.Errorf("percent-encoded backslash URL should not be converted\ngot: %s", got)
 	}
 }
 

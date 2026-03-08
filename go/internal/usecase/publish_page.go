@@ -18,6 +18,7 @@ type PublishPageUsecase struct {
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
 	draftPageRepo         *repository.DraftPageRepository
+	draftPageRevisionRepo *repository.DraftPageRevisionRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -31,6 +32,7 @@ func NewPublishPageUsecase(
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
 	draftPageRepo *repository.DraftPageRepository,
+	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -42,6 +44,7 @@ func NewPublishPageUsecase(
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
 		draftPageRepo:         draftPageRepo,
+		draftPageRevisionRepo: draftPageRevisionRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -84,6 +87,7 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
+	draftPageRevisionRepo := uc.draftPageRevisionRepo.WithTx(tx)
 	topicRepo := uc.topicRepo.WithTx(tx)
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
@@ -185,8 +189,13 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// 12. DraftPageを削除（下書きが存在する場合のみ）
+	// 12. DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
 	if input.DraftPageID != "" {
+		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, input.DraftPageID, input.SpaceID)
+		if err != nil {
+			return nil, fmt.Errorf("下書きページリビジョンの削除に失敗しました: %w", err)
+		}
+
 		err = draftPageRepo.Delete(ctx, input.DraftPageID, input.SpaceID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)

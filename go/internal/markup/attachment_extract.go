@@ -1,6 +1,7 @@
 package markup
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -12,15 +13,15 @@ var (
 	// HTML a要素のhref属性から添付ファイルIDを抽出
 	extractAHrefRegex = regexp.MustCompile(`<a[^>]+href=["'](/attachments/([^/"']+))["'][^>]*>`)
 
-	// Markdown画像形式から添付ファイルIDを抽出: ![alt](/attachments/id)
-	extractMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^/)]+)\)`)
+	// Markdown画像形式から添付ファイルIDを抽出: ![alt](/attachments/id) or ![alt](/attachments/id "title")
+	extractMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
 	// Markdownリンク形式（画像含む）から添付ファイルIDを抽出: [text](/attachments/id)
 	// Go正規表現は後読み非対応のため、マッチ後に直前文字で画像形式を除外する
-	extractMarkdownLinkRegex = regexp.MustCompile(`\[[^\]]+\]\(/attachments/([^/)]+)\)`)
+	extractMarkdownLinkRegex = regexp.MustCompile(`\[[^\]]+\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
-	// 1行目のMarkdown画像形式: ![alt](/attachments/id)
-	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^/)]+)\)`)
+	// 1行目のMarkdown画像形式: ![alt](/attachments/id) or ![alt](/attachments/id "title")
+	featuredMarkdownImgRegex = regexp.MustCompile(`!\[[^\]]*\]\(/attachments/([^\s/)]+)(\s[^)]*)?\)`)
 
 	// 1行目のHTML img形式: <img src="/attachments/id">（大文字小文字不問）
 	featuredHTMLImgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']/attachments/([^/"']+)["'][^>]*>`)
@@ -34,6 +35,14 @@ func ExtractAttachmentIDs(bodyHTML string) []string {
 	var ids []string
 
 	addID := func(id string) {
+		// bluemondayがURL内の特殊文字をパーセントエンコードするため、デコードする
+		if decoded, err := url.PathUnescape(id); err == nil {
+			id = decoded
+		}
+		// バックスラッシュを含むIDは不正な入力として除外する
+		if strings.ContainsRune(id, '\\') {
+			return
+		}
 		if id != "" && !seen[id] {
 			seen[id] = true
 			ids = append(ids, id)

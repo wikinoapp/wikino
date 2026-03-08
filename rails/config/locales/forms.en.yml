@@ -20,10 +20,6 @@ en:
         new_email: New email
       pages/bulk_restoring_form:
         page_ids: Selected pages
-      pages/edit_form:
-        topic_number: Topic
-        title: Title
-        body: Body
       password_resets/creation_form:
         password: New password
       profiles/edit_form:
@@ -86,8 +82,6 @@ en:
               incorrect_or_expired: is incorrect or expired
         pages/bulk_restoring_form:
           not_joined_topic_exists: Cannot be restored because it contains a page for a topic you have not participated in.
-        pages/edit_form:
-          uniqueness_html: has already existed. <a class="underline" href="%{edit_page_path}">Edit the existing page</a>
         two_factor_auths/creation_form:
           invalid_totp_code: Authentication code is incorrect
           unauthenticated: Password is incorrect

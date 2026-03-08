@@ -21,7 +21,6 @@ ja:
       trash:
         show: ゴミ箱
       pages:
-        edit: ページの編集
         show: "%{page_title} | %{space_name}"
       password_resets:
         new: パスワードを忘れた？
