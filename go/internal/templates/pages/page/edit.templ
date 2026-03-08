@@ -26,6 +26,7 @@ templ Edit(data EditPageData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
 			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
 				Items: []components.BreadcrumbItem{
 					{
 						Path:      templates.HomePath(),

@@ -15,7 +15,8 @@ type BreadcrumbItem struct {
 
 // TopNavData はトップナビゲーションに渡すデータ構造体です
 type TopNavData struct {
-	Items []BreadcrumbItem
+	Items         []BreadcrumbItem
+	MaxWidthClass string // パンくずリストのmax-widthクラス (例: "max-w-3xl")
 }
 
 // TopNav はパンくずリストを含むトップナビゲーションを表示します
@@ -27,9 +28,17 @@ templ TopNav(data TopNavData) {
 
 		<div class="flex-1">
 			if len(data.Items) > 0 {
-				<div class="mx-auto w-fit">
-					@breadcrumbNav(data.Items)
-				</div>
+				if data.MaxWidthClass != "" {
+					<div class={ data.MaxWidthClass, "mx-auto w-full px-4" }>
+						<div class="w-fit">
+							@breadcrumbNav(data.Items)
+						</div>
+					</div>
+				} else {
+					<div class="mx-auto w-fit">
+						@breadcrumbNav(data.Items)
+					</div>
+				}
 			}
 		</div>
 
