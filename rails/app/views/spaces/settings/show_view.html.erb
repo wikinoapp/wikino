@@ -2,7 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumb do %>
-        <%= render Breadcrumbs::SpaceComponent.new(space:) %>
+        <%= render Breadcrumbs::SpaceComponent.new(signed_in: current_user.present?, space:) %>
       <% end %>
     <% end %>
   <% end %>

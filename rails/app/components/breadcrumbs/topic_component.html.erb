@@ -1,4 +1,4 @@
-<%= render Breadcrumbs::SpaceComponent.new(space:) do |breadcrumb| %>
+<%= render Breadcrumbs::SpaceComponent.new(signed_in: signed_in?, space:) do |breadcrumb| %>
   <%= breadcrumb.with_item do %>
     <%= link_to(
       topic_path(space.identifier, topic.number),
