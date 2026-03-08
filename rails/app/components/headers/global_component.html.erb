@@ -1,5 +1,5 @@
 <header class="flex items-center gap-2 px-2">
-  <div class="w-[32px] flex-none">
+  <div class="flex-1">
     <button
       type="button"
       onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
@@ -10,12 +10,12 @@
     </button>
   </div>
 
-  <div class="flex-1">
-    <div class="mx-auto w-fit">
+  <div class="<%= max_width_class_name %> w-full px-4">
+    <div class="w-fit">
       <%= breadcrumb %>
     </div>
   </div>
 
-  <div class="w-[32px] flex-none">
+  <div class="flex-1">
   </div>
 </header>
