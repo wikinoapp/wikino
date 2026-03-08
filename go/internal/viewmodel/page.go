@@ -1,6 +1,8 @@
 package viewmodel
 
 import (
+	"fmt"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -96,11 +98,17 @@ func NewCardLinkPage(pg *model.Page, topicMap map[model.TopicID]*model.Topic) Ca
 		topicIcon = topicVisibilityIconName(topic.Visibility)
 	}
 
+	var cardImageURL string
+	if pg.FeaturedImageAttachmentID != nil {
+		cardImageURL = fmt.Sprintf("/attachments/%s", *pg.FeaturedImageAttachmentID)
+	}
+
 	return CardLinkPage{
-		Title:     title,
-		Number:    int32(pg.Number),
-		TopicName: topicName,
-		TopicIcon: topicIcon,
-		Pinned:    pg.PinnedAt != nil,
+		Title:        title,
+		Number:       int32(pg.Number),
+		TopicName:    topicName,
+		TopicIcon:    topicIcon,
+		Pinned:       pg.PinnedAt != nil,
+		CardImageURL: cardImageURL,
 	}
 }
