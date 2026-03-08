@@ -685,6 +685,27 @@ other = "検索"
 description = "ボトムナビのログインボタン"
 other = "ログイン"
 
+# トピック詳細
+[topic_show_title]
+description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
+other = "{{.TopicName}} | {{.SpaceName}}"
+
+[topic_show_no_pages_message]
+description = "トピック詳細画面でページがない場合のメッセージ"
+other = "ページはありません"
+
+[topic_show_no_pages_description]
+description = "トピック詳細画面でページがない場合の説明文"
+other = "最初の1ページ目を作成しましょう"
+
+[topic_show_new_page]
+description = "トピック詳細画面の新規ページ作成ボタン"
+other = "新規ページ"
+
+[topic_show_settings]
+description = "トピック詳細画面のトピック設定リンク"
+other = "トピック設定"
+
 # ページネーション
 [pagination_previous]
 description = "ページネーションの前のページへのリンク"
