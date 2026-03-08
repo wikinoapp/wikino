@@ -130,7 +130,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// 権限判定
 	canUpdate := canUpdateTopic(spaceMember, topicMember)
-	canCreatePage := canCreateTopicPage(spaceMember, topicMember, topic)
+	canCreatePage := canCreateTopicPage(spaceMember, topicMember)
 
 	topicVM := viewmodel.NewTopicForShow(topic, canUpdate, canCreatePage)
 	spaceVM := viewmodel.NewSpace(space)
@@ -210,7 +210,7 @@ func canUpdateTopic(spaceMember *model.SpaceMember, topicMember *model.TopicMemb
 
 // canCreateTopicPage はトピックにページを作成できるかを判定する
 // トピックメンバー（スペースオーナーを含む）のみ可能
-func canCreateTopicPage(spaceMember *model.SpaceMember, topicMember *model.TopicMember, topic *model.Topic) bool {
+func canCreateTopicPage(spaceMember *model.SpaceMember, topicMember *model.TopicMember) bool {
 	if spaceMember == nil {
 		return false
 	}
