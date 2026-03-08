@@ -667,3 +667,12 @@ other = "更新日時"
 [draft_page_index_untitled]
 description = "タイトル未設定の下書き"
 other = "無題"
+
+# ページネーション
+[pagination_previous]
+description = "ページネーションの前のページへのリンク"
+other = "前へ"
+
+[pagination_next]
+description = "ページネーションの次のページへのリンク"
+other = "次へ"

@@ -667,3 +667,12 @@ other = "Modified"
 [draft_page_index_untitled]
 description = "Untitled draft page"
 other = "Untitled"
+
+# Pagination
+[pagination_previous]
+description = "Link to the previous page in pagination"
+other = "Prev"
+
+[pagination_next]
+description = "Link to the next page in pagination"
+other = "Next"
