@@ -1,0 +1,96 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// BreadcrumbItem はパンくずリストの1項目を表します
+type BreadcrumbItem struct {
+	Label     string
+	Path      templates.Path
+	IconName  viewmodel.IconName
+	AriaLabel string // アイコンのみ（Label が空）の場合に使用する aria-label
+}
+
+// TopNavData はトップナビゲーションに渡すデータ構造体です
+type TopNavData struct {
+	Items         []BreadcrumbItem
+	MaxWidthClass string // パンくずリストのmax-widthクラス (例: "max-w-3xl")
+}
+
+// TopNav はパンくずリストを含むトップナビゲーションを表示します
+templ TopNav(data TopNavData) {
+	<header class="flex items-center gap-2 px-2">
+		<div class="flex-1">
+			@sidebarToggleButton()
+		</div>
+
+		if len(data.Items) > 0 {
+			if data.MaxWidthClass != "" {
+				<div class={ data.MaxWidthClass, "w-full px-4" }>
+					<div class="w-fit">
+						@breadcrumbNav(data.Items)
+					</div>
+				</div>
+			} else {
+				<div class="mx-auto w-fit">
+					@breadcrumbNav(data.Items)
+				</div>
+			}
+		}
+
+		<div class="flex-1">
+		</div>
+	</header>
+}
+
+// sidebarToggleButton はサイドバーの開閉を切り替えるボタンを表示します
+templ sidebarToggleButton() {
+	<button
+		type="button"
+		class="btn-sm-icon-ghost rounded-full"
+		aria-label={ templates.T(ctx, "sidebar_toggle_label") }
+		onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+	>
+		@templates.Icon("sidebar-simple-regular")
+	</button>
+}
+
+// breadcrumbNav はパンくずリストを表示します
+templ breadcrumbNav(items []BreadcrumbItem) {
+	<nav aria-label={ templates.T(ctx, "top_nav_breadcrumb_label") }>
+		<ol class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words">
+			for i, item := range items {
+				if i > 0 {
+					<li class="leading-none">
+						@templates.Icon("caret-right-regular", "size-3.5 fill-gray-500")
+					</li>
+				}
+				<li class="inline-flex items-center gap-1.5">
+					if item.Path != "" {
+						if item.Label == "" && item.IconName != "" {
+							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
+								@templates.Icon(item.IconName, "size-4 fill-gray-600")
+							</a>
+						} else {
+							<a class="hover:text-foreground transition-colors inline-flex items-center gap-1" href={ templ.SafeURL(item.Path) }>
+								if item.IconName != "" {
+									@templates.Icon(item.IconName, "size-4 fill-gray-600")
+								}
+								{ item.Label }
+							</a>
+						}
+					} else {
+						if item.IconName != "" {
+							@templates.Icon(item.IconName, "size-4 fill-gray-600")
+						}
+						if item.Label != "" {
+							{ item.Label }
+						}
+					}
+				</li>
+			}
+		</ol>
+	</nav>
+}

@@ -1,0 +1,56 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SidebarJoinedTopics はサイドバーの参加中トピック一覧を表示します
+templ SidebarJoinedTopics(topics []viewmodel.TopicForSidebar) {
+	<div class="flex flex-col gap-2 px-2">
+		<p class="text-xs font-bold text-muted-foreground px-2">
+			{ templates.T(ctx, "sidebar_joined_topics_heading") }
+		</p>
+
+		if len(topics) > 0 {
+			<div class="flex flex-col">
+				for _, topic := range topics {
+					<div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
+						<a
+							href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
+							class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-brand-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100"
+							title={ templates.T(ctx, "sidebar_joined_topics_create_page") }
+						>
+							@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
+						</a>
+
+						<a
+							href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
+							class="flex w-full items-center gap-2 rounded-md p-2 text-foreground"
+						>
+							<div class="w-[16px] shrink-0">
+								@templates.Icon(topic.IconName, "size-[16px] fill-muted-foreground")
+							</div>
+
+							<div class="flex flex-col pr-8">
+								<span class="line-clamp-1 text-xs text-muted-foreground">
+									{ topic.SpaceName }
+								</span>
+
+								<span class="line-clamp-1 text-sm">
+									{ topic.Name }
+								</span>
+							</div>
+						</a>
+					</div>
+				}
+			</div>
+		} else {
+			<div class="px-4 py-2">
+				<p class="text-xs text-muted-foreground">
+					{ templates.T(ctx, "sidebar_joined_topics_empty") }
+				</p>
+			</div>
+		}
+	</div>
+}

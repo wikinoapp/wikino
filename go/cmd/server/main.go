@@ -17,9 +17,18 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
+	"github.com/wikinoapp/wikino/go/internal/handler/page"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_backlinks"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -34,6 +43,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/worker"
@@ -94,6 +104,17 @@ func main() {
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
+	pageEditorRepo := repository.NewPageEditorRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -103,13 +124,18 @@ func main() {
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// Turnstileクライアントを初期化
-	turnstileClient := turnstile.NewClient(cfg.TurnstileSecretKey)
+	turnstileClient := turnstile.NewClient(cfg.TurnstileEnabled, cfg.TurnstileSecretKey)
 
 	// Rate Limiterを初期化
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
@@ -197,7 +223,81 @@ func main() {
 		updatePasswordResetUC,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
-
+	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	pageHandler := page.NewHandler(
+		cfg,
+		flashMgr,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		draftPageRepo,
+		topicRepo,
+		topicMemberRepo,
+		publishPageUC,
+		sidebarHelper,
+	)
+	pageLocationHandler := page_location.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+	)
+	draftPageIndexHandler := draft_page_index.NewHandler(
+		cfg,
+		flashMgr,
+		draftPageRepo,
+		sidebarHelper,
+	)
+	draftPageHandler := draft_page.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+		autoSaveDraftPageUC,
+	)
+	draftPageRevisionHandler := draft_page_revision.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		flashMgr,
+		manualSaveDraftPageUC,
+	)
+	pageBacklinkListHandler := page_backlink_list.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
+	pageBacklinksHandler := page_backlinks.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
+	pageLinkListHandler := page_link_list.NewHandler(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+	)
+	pageMoveHandler := page_move.NewHandler(
+		cfg,
+		flashMgr,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		movePageUC,
+		sidebarHelper,
+	)
 	r := chi.NewRouter()
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
@@ -206,7 +306,7 @@ func main() {
 	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
 	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
 	if cfg.RailsAppURL != "" {
-		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg)
+		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
 		if err != nil {
 			slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
 			os.Exit(1)
@@ -269,6 +369,36 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
 		r.Delete("/user_session", userSessionHandler.Delete)
+
+		// 下書き一覧
+		r.Get("/drafts", draftPageIndexHandler.Index)
+
+		// ページ編集・公開
+		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
+		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
+
+		// 下書きページSSE・自動保存API
+		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
+		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
+
+		// 下書きリビジョン手動保存
+		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
+
+		// リンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
+
+		// バックリンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
+
+		// ページレベルのバックリンク一覧SSE（Datastar）
+		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
+
+		// ページ移動
+		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
+		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
+
+		// ページロケーション検索API（Wikiリンク補完用）
+		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

@@ -1,4 +1,12 @@
 <%= render BaseUI::BreadcrumbComponent.new do |breadcrumb| %>
+  <% if signed_in? %>
+    <%= breadcrumb.with_item do %>
+      <%= link_to home_path, class: "hover:text-foreground transition-colors inline-flex items-center" do %>
+        <%= render BaseUI::IconComponent.new(name: "house-regular", class_name: "size-4 fill-gray-600") %>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <%= breadcrumb.with_item do %>
     <%= link_to space.name, space_path(space.identifier) %>
   <% end %>

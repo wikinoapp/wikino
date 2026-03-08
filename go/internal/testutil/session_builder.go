@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"testing"
 	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // SessionBuilder はセッションテストデータのビルダー
@@ -12,7 +14,7 @@ type SessionBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	userID     string
+	userID     model.UserID
 	token      string
 	ipAddress  string
 	userAgent  string
@@ -34,7 +36,7 @@ func NewSessionBuilder(t *testing.T, tx *sql.Tx) *SessionBuilder {
 }
 
 // WithUserID はユーザーIDを設定します
-func (b *SessionBuilder) WithUserID(userID string) *SessionBuilder {
+func (b *SessionBuilder) WithUserID(userID model.UserID) *SessionBuilder {
 	b.userID = userID
 	return b
 }
@@ -72,7 +74,7 @@ func (b *SessionBuilder) Build() string {
 		`INSERT INTO user_sessions (user_id, token, ip_address, user_agent, signed_in_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.userID, b.token, b.ipAddress, b.userAgent, b.signedInAt, now, now,
+		string(b.userID), b.token, b.ipAddress, b.userAgent, b.signedInAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("セッション作成に失敗: %v", err)

@@ -27,8 +27,8 @@ func (r *UserRepository) WithTx(tx *sql.Tx) *UserRepository {
 }
 
 // FindByID はIDでユーザーを取得する
-func (r *UserRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
-	row, err := r.q.GetUserByID(ctx, id)
+func (r *UserRepository) FindByID(ctx context.Context, id model.UserID) (*model.User, error) {
+	row, err := r.q.GetUserByID(ctx, string(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -101,7 +101,7 @@ func (r *UserRepository) toModel(row query.User) *model.User {
 	}
 
 	return &model.User{
-		ID:          row.ID,
+		ID:          model.UserID(row.ID),
 		Email:       row.Email,
 		Atname:      row.Atname,
 		Name:        row.Name,

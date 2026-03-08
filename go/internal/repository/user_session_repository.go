@@ -46,7 +46,7 @@ func (r *UserSessionRepository) FindByToken(ctx context.Context, token string) (
 
 // CreateInput はセッション作成の入力パラメータ
 type CreateInput struct {
-	UserID     string
+	UserID     model.UserID
 	Token      string
 	IPAddress  string
 	UserAgent  string
@@ -57,7 +57,7 @@ type CreateInput struct {
 func (r *UserSessionRepository) Create(ctx context.Context, input CreateInput) (*model.UserSession, error) {
 	now := time.Now()
 	row, err := r.q.CreateUserSession(ctx, query.CreateUserSessionParams{
-		UserID:     input.UserID,
+		UserID:     string(input.UserID),
 		Token:      input.Token,
 		IpAddress:  input.IPAddress,
 		UserAgent:  input.UserAgent,
@@ -85,7 +85,7 @@ func (r *UserSessionRepository) DeleteByToken(ctx context.Context, token string)
 func (r *UserSessionRepository) toModel(row query.UserSession) *model.UserSession {
 	return &model.UserSession{
 		ID:         row.ID,
-		UserID:     row.UserID,
+		UserID:     model.UserID(row.UserID),
 		Token:      row.Token,
 		IPAddress:  row.IpAddress,
 		UserAgent:  row.UserAgent,

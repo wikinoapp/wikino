@@ -2,7 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
       <%= header.with_breadcrumb do %>
-        <%= render Breadcrumbs::TopicComponent.new(topic:) do |breadcrumb| %>
+        <%= render Breadcrumbs::TopicComponent.new(signed_in: current_user.present?, topic:) do |breadcrumb| %>
           <%= breadcrumb.with_item do %>
             <%= link_to t("nouns.settings"), topic_settings_path(space.identifier, topic.number) %>
           <% end %>
@@ -49,6 +49,6 @@
   <% end %>
 
   <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in: true) %>
+    <%= render Footers::GlobalComponent.new %>
   <% end %>
 <% end %>

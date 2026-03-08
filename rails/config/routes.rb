@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
   match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
   match "/home",                                                           via: :get,    as: :home,                                         to: "home/show#call"
+  match "/draft_pages/sidebar",                                            via: :get,    as: :draft_page_sidebar,                           to: "draft_pages/sidebar#call"
   match "/joined_topics",                                                  via: :get,    as: :joined_topic_list,                            to: "joined_topics/index#call"
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")
   match "/s/:space_identifier",                                            via: :get,    as: :space,                                        to: "spaces/show#call"
@@ -25,13 +26,10 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
   match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,                      to: "bulk_restored_pages/create#call"
-  match "/s/:space_identifier/page_locations",                             via: :get,    as: :page_location_list,                           to: "page_locations/index#call",                   page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number",                         via: :get,    as: :page,                                         to: "pages/show#call",                             page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number",                         via: :patch,                                                     to: "pages/update#call",                           page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/backlinks",               via: :post,   as: :page_backlink_list,                           to: "backlinks/index#call",                        page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/draft_page",              via: :patch,  as: :draft_page,                                   to: "draft_pages/update#call",                     page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/edit",                    via: :get,    as: :edit_page,                                    to: "pages/edit#call",                             page_number: /\d+/
+  match "/rails/s/:space_identifier/pages/:page_number/backlinks",         via: :post,   as: :page_backlink_list,                           to: "backlinks/index#call",                        page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/links",                   via: :post,   as: :page_link_list,                               to: "links/index#call",                            page_number: /\d+/
+  match "/s/:space_identifier/pages/:page_number/move",                    via: :get,    as: :move_page,                                    to: "pages/show#call",                             page_number: /\d+/
   match "/s/:space_identifier/pages/:page_number/trash",                   via: :post,   as: :trashed_page,                                 to: "trashed_pages/create#call",                   page_number: /\d+/
   match "/s/:space_identifier/settings",                                   via: :get,    as: :space_settings,                               to: "spaces/settings/show#call"
   match "/s/:space_identifier/settings/deletion",                          via: :post,   as: :space_settings_deletion,                      to: "spaces/settings/deletions/create#call"

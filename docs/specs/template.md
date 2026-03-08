@@ -23,45 +23,14 @@
 - 実装が完了したら、仕様書を最新の状態に更新してください
 - 過去の状態はGit履歴で参照できるため、仕様書には常に現在の状態のみを記述します
 
-**タスクリストとの関係**:
-- 仕様の変更が必要な場合、「何をどう変えるか」は `docs/tasks/` のタスクリストに記述します
-- タスク完了後に、この仕様書を新しい状態に更新してください
+**作業計画書との関係**:
+- 新しい機能の場合: `docs/plans/` の作業計画書に概要・要件・設計を記述し、タスク完了後にこの仕様書を作成します
+- 既存機能の変更の場合: `docs/plans/` の作業計画書に変更内容を記述し、タスク完了後にこの仕様書を更新します
 
 **公開時の注意事項**:
 - 開発用ドメイン名を記載する場合は `example.dev` を使用してください（実際のドメイン名は記載しない）
 - 環境変数の値はサンプル値のみ記載し、実際の値は含めないでください
 -->
-
-## 実装ガイドラインの参照
-
-<!--
-**重要**: 仕様書を作成する前に、対象プラットフォームのガイドラインを必ず確認してください。
-特に以下の点に注意してください：
-- ディレクトリ構造・ファイル名の命名規則
-- コーディング規約
-- アーキテクチャパターン
-
-ガイドラインに沿わない設計は、実装時にそのまま実装されてしまうため、
-仕様書作成の段階でガイドラインに準拠していることを確認してください。
--->
-
-### Go版の実装の場合
-
-以下のガイドラインに従って設計・実装を行ってください：
-
-- [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - 全体的なコーディング規約
-- [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン（**ファイル名は標準の8種類のみ**）
-- [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド
-- [@go/docs/validation-guide.md](/workspace/go/docs/validation-guide.md) - バリデーションガイド
-- [@go/docs/i18n-guide.md](/workspace/go/docs/i18n-guide.md) - 国際化ガイド
-- [@go/docs/security-guide.md](/workspace/go/docs/security-guide.md) - セキュリティガイドライン
-- [@go/docs/templ-guide.md](/workspace/go/docs/templ-guide.md) - templテンプレートガイド
-
-### Rails版の実装の場合
-
-以下のガイドラインに従って設計・実装を行ってください：
-
-- [@rails/CLAUDE.md](/workspace/rails/CLAUDE.md) - 全体的なコーディング規約
 
 ## 概要
 

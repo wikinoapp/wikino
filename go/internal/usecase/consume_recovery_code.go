@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -23,7 +24,7 @@ func NewConsumeRecoveryCodeUsecase(
 
 // ConsumeRecoveryCodeInput はリカバリーコード消費の入力パラメータ
 type ConsumeRecoveryCodeInput struct {
-	UserID       string
+	UserID       model.UserID
 	RecoveryCode string
 	CurrentCodes []string
 }

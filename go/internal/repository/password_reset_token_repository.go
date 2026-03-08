@@ -39,7 +39,7 @@ func (r *PasswordResetTokenRepository) FindByTokenDigest(ctx context.Context, to
 
 // CreatePasswordResetTokenInput はパスワードリセットトークン作成の入力パラメータ
 type CreatePasswordResetTokenInput struct {
-	UserID      string
+	UserID      model.UserID
 	TokenDigest string
 	ExpiresAt   time.Time
 }
@@ -48,7 +48,7 @@ type CreatePasswordResetTokenInput struct {
 func (r *PasswordResetTokenRepository) Create(ctx context.Context, input CreatePasswordResetTokenInput) (*model.PasswordResetToken, error) {
 	now := time.Now()
 	row, err := r.q.CreatePasswordResetToken(ctx, query.CreatePasswordResetTokenParams{
-		UserID:      input.UserID,
+		UserID:      string(input.UserID),
 		TokenDigest: input.TokenDigest,
 		ExpiresAt:   input.ExpiresAt,
 		CreatedAt:   now,
@@ -71,8 +71,8 @@ func (r *PasswordResetTokenRepository) MarkAsUsed(ctx context.Context, id string
 }
 
 // DeleteUnusedByUserID はユーザーIDで未使用のパスワードリセットトークンを削除する
-func (r *PasswordResetTokenRepository) DeleteUnusedByUserID(ctx context.Context, userID string) error {
-	return r.q.DeleteUnusedPasswordResetTokensByUserID(ctx, userID)
+func (r *PasswordResetTokenRepository) DeleteUnusedByUserID(ctx context.Context, userID model.UserID) error {
+	return r.q.DeleteUnusedPasswordResetTokensByUserID(ctx, string(userID))
 }
 
 // toModel は query.PasswordResetToken を model.PasswordResetToken に変換する
@@ -83,7 +83,7 @@ func (r *PasswordResetTokenRepository) toModel(row query.PasswordResetToken) *mo
 	}
 	return &model.PasswordResetToken{
 		ID:          row.ID,
-		UserID:      row.UserID,
+		UserID:      model.UserID(row.UserID),
 		TokenDigest: row.TokenDigest,
 		ExpiresAt:   row.ExpiresAt,
 		UsedAt:      usedAt,

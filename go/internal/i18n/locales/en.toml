@@ -414,9 +414,256 @@ other = "Open Source"
 [welcome_open_source_description]
 other = "Wikino's source code is publicly available on GitHub."
 
+# Top navigation
+[top_nav_breadcrumb_label]
+description = "Aria label for the top navigation breadcrumb"
+other = "Breadcrumb"
+
+[breadcrumb_home]
+description = "Label for the home link in the breadcrumb"
+other = "Home"
+
+# Sidebar
+[sidebar_toggle_label]
+description = "Aria label for the sidebar toggle button"
+other = "Toggle sidebar"
+
+[sidebar_nav_label]
+description = "Aria label for the sidebar navigation"
+other = "Sidebar"
+
+[sidebar_home]
+description = "Home link in the sidebar"
+other = "Home"
+
+[sidebar_search]
+description = "Search link in the sidebar"
+other = "Search"
+
+[sidebar_profile]
+description = "Profile link in the sidebar"
+other = "Profile"
+
+[sidebar_sign_in]
+description = "Sign in link in the sidebar"
+other = "Sign in"
+
+[sidebar_joined_topics_heading]
+description = "Heading for the joined topics list in the sidebar"
+other = "Joined Topics"
+
+[sidebar_joined_topics_empty]
+description = "Message when there are no joined topics in the sidebar"
+other = "No joined topics"
+
+[sidebar_joined_topics_create_page]
+description = "Tooltip for the create page link on a topic in the sidebar"
+other = "Create page"
+
+[sidebar_draft_pages_heading]
+description = "Heading for the draft pages list in the sidebar"
+other = "Drafts"
+
+[sidebar_draft_pages_empty]
+description = "Message when there are no draft pages in the sidebar"
+other = "No drafts"
+
+[sidebar_draft_pages_untitled]
+description = "Display text for untitled draft pages in the sidebar"
+other = "Untitled"
+
+[sidebar_draft_pages_edit_page]
+description = "Title for edit link on draft page in the sidebar"
+other = "Edit page"
+
+[sidebar_draft_pages_show_all]
+description = "Link to show all drafts when there are more than displayed in the sidebar"
+other = "Show all"
+
 # Footer
 [footer_terms]
 other = "Terms of Service"
 
 [footer_privacy]
 other = "Privacy Policy"
+
+# Page edit
+[page_edit_title]
+description = "Page edit screen title"
+other = "Edit Page"
+
+[page_edit_title_label]
+description = "Label for the page title input field"
+other = "Title"
+
+[page_edit_title_placeholder]
+description = "Placeholder for the page title input field"
+other = "Page title"
+
+[page_edit_body_label]
+description = "Label for the page body input field"
+other = "Body"
+
+[page_edit_body_placeholder]
+description = "Placeholder for the page body input field"
+other = "Write something..."
+
+[page_edit_publish_to_topic_button]
+description = "Label for the publish to topic button"
+other = "Publish to topic"
+
+[page_edit_cancel]
+description = "Label for the cancel link"
+other = "Cancel"
+
+[page_edit_current_page_is_draft]
+description = "Alert message when viewing a draft"
+other = "You are currently viewing a draft."
+
+[page_edit_links_heading]
+description = "Heading for the link list on the page edit screen"
+other = "Links"
+
+[page_edit_links_untitled]
+description = "Display text for an untitled linked page"
+other = "Untitled"
+
+[page_edit_links_edit_page]
+description = "Title for edit link on linked page card"
+other = "Edit page"
+
+[page_edit_links_load_more]
+description = "Load more button for link list"
+other = "More"
+
+[page_edit_backlinks_heading]
+description = "Heading for the backlink list on the page edit screen"
+other = "Backlinks"
+
+[page_edit_save_draft_button]
+description = "Label for the save draft button"
+other = "Save Draft"
+
+[page_edit_draft_saved_time]
+description = "Auto-saved time display"
+other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
+
+# Page publish validation
+[validation_page_title_required]
+description = "Page title required error"
+other = "Please enter a title"
+
+[validation_page_title_too_long]
+description = "Page title too long error"
+other = "Title must be 200 characters or less"
+
+[validation_page_title_invalid_chars]
+description = "Page title invalid characters error"
+other = "Title contains invalid characters"
+
+[validation_page_title_invalid_format]
+description = "Page title invalid format error"
+other = "Title cannot start or end with a space or dot"
+
+[validation_page_title_reserved]
+description = "Page title reserved name error"
+other = "This title is not allowed"
+
+[validation_page_title_uniqueness_html]
+description = "Page title uniqueness error (HTML included)"
+other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existing page</a>"
+
+# Page publish success
+[flash_page_saved]
+description = "Page saved success message"
+other = "Page saved."
+
+# Draft page save success
+[flash_draft_page_saved]
+description = "Draft page saved success message"
+other = "Draft saved."
+
+# Page move
+[page_move_title]
+description = "Page move screen title"
+other = "Move Page"
+
+[page_move_heading]
+description = "Page move screen heading"
+other = "Move Page"
+
+[page_move_subtitle]
+description = "Page move screen subtitle"
+other = "Move this page to a different topic."
+
+[page_move_page_title_label]
+description = "Label for the page being moved"
+other = "Page"
+
+[page_move_current_topic_label]
+description = "Current topic label"
+other = "Current topic"
+
+[page_move_destination_topic_label]
+description = "Destination topic label"
+other = "Destination topic"
+
+[page_move_select_topic_placeholder]
+description = "Placeholder for the destination topic selector"
+other = "Select a topic"
+
+[page_move_submit]
+description = "Page move button"
+other = "Move"
+
+[page_move_cancel]
+description = "Cancel link"
+other = "Cancel"
+
+[page_move_no_available_topics]
+description = "Message when no topics are available for move"
+other = "No topics available to move to."
+
+[page_move_success]
+description = "Page move success message"
+other = "Page moved."
+
+[page_move_error_topic_required]
+description = "Destination topic required error"
+other = "Please select a destination topic."
+
+[page_move_error_same_topic]
+description = "Same topic error"
+other = "Cannot move to the same topic."
+
+[page_move_error_no_permission]
+description = "No permission to destination topic error"
+other = "You do not have permission to create pages in the destination topic."
+
+[page_move_error_title_exists]
+description = "Title exists in destination topic error"
+other = "A page with the same title already exists in the destination topic."
+
+[draft_page_index_title]
+description = "Draft page index page title"
+other = "Draft Pages"
+
+[draft_page_index_heading]
+description = "Draft page index page heading"
+other = "Draft Pages"
+
+[draft_page_index_empty]
+description = "Message when there are no drafts"
+other = "No drafts."
+
+[draft_page_index_column_title]
+description = "Draft page index table title column header"
+other = "Title"
+
+[draft_page_index_column_modified_at]
+description = "Draft page index table modified at column header"
+other = "Modified"
+
+[draft_page_index_untitled]
+description = "Untitled draft page"
+other = "Untitled"

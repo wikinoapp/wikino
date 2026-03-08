@@ -26,7 +26,7 @@ module Pages
         editor_record: space_member_record.not_nil!
       )
 
-      redirect_to edit_page_path(space_record.identifier, result.page_record.number)
+      redirect_to "/s/#{space_record.identifier}/pages/#{result.page_record.number}/edit"
     end
   end
 end

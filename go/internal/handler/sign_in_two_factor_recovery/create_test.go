@@ -267,7 +267,7 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	// ペンディングユーザーIDのCookieを追加
 	req.AddCookie(&http.Cookie{
 		Name:  session.PendingUserCookieName,
-		Value: userID,
+		Value: userID.String(),
 	})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
@@ -340,7 +340,7 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	// ペンディングユーザーIDのCookieを追加
 	req.AddCookie(&http.Cookie{
 		Name:  session.PendingUserCookieName,
-		Value: userID,
+		Value: userID.String(),
 	})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
@@ -456,7 +456,7 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 
 	req.AddCookie(&http.Cookie{
 		Name:  session.PendingUserCookieName,
-		Value: userID,
+		Value: userID.String(),
 	})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")

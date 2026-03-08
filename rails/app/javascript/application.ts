@@ -14,7 +14,6 @@ import GlobalHotkeyController from "./controllers/global-hotkey-controller";
 import MarkdownEditorController from "./controllers/markdown-editor-controller";
 import MarkdownEditorFormController from "./controllers/markdown-editor-form-controller";
 import SearchCursorController from "./controllers/search-cursor-controller";
-import SidebarController from "./controllers/sidebar_controller";
 import StuckController from "./controllers/stuck-controller";
 
 declare global {
@@ -35,20 +34,32 @@ window.Stimulus.register("global-hotkey", GlobalHotkeyController);
 window.Stimulus.register("markdown-editor-form", MarkdownEditorFormController);
 window.Stimulus.register("markdown-editor", MarkdownEditorController);
 window.Stimulus.register("search-cursor", SearchCursorController);
-window.Stimulus.register("sidebar", SidebarController);
 window.Stimulus.register("stuck", StuckController);
 
-// basecoat-cssのドロップダウンメニューを動的に読み込む
-document.addEventListener("turbo:load", () => {
-  // 既存のbasecoatスクリプトを削除
-  const existingScript = document.querySelector('script[src*="basecoat-css"][src*="dropdown-menu"]');
-  if (existingScript) {
-    existingScript.remove();
-  }
+// サイドバー開閉状態をlocalStorageに保存する
+// basecoat-cssがaria-hiddenを更新した後に読み取るため、requestAnimationFrameで遅延させる
+document.addEventListener("basecoat:sidebar", () => {
+  requestAnimationFrame(() => {
+    const sidebar = document.querySelector(".sidebar");
+    if (!sidebar) return;
+    const isOpen = sidebar.getAttribute("aria-hidden") === "false";
+    localStorage.setItem("wikinoSidebarOpen", String(isOpen));
+  });
+});
 
-  // 新しいスクリプトタグを作成して追加
-  const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/basecoat-css@0.2.8/dist/js/dropdown-menu.min.js";
-  script.defer = true;
-  document.head.appendChild(script);
+// basecoat-cssのJSコンポーネントを動的に読み込む
+document.addEventListener("turbo:load", () => {
+  const basecoatScripts = ["dropdown-menu", "sidebar"];
+
+  for (const name of basecoatScripts) {
+    const existingScript = document.querySelector(`script[src*="basecoat-css"][src*="${name}"]`);
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://cdn.jsdelivr.net/npm/basecoat-css@0.2.8/dist/js/${name}.min.js`;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
 });

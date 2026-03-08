@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -33,13 +34,13 @@ func NewUpdatePasswordResetUsecase(
 // トークンの検証（存在、有効期限、使用済み）はハンドラーの validator.go で行う
 type UpdatePasswordResetInput struct {
 	TokenID     string
-	UserID      string
+	UserID      model.UserID
 	NewPassword string
 }
 
 // UpdatePasswordResetOutput はパスワード更新（リセット経由）の出力パラメータ
 type UpdatePasswordResetOutput struct {
-	UserID string
+	UserID model.UserID
 }
 
 // Execute はパスワードを更新し、トークンを使用済みにマークする

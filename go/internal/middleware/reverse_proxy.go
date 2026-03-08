@@ -1,31 +1,54 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/session"
 )
+
+// featureFlagChecker はフィーチャーフラグの有効判定を行うインターフェース
+// repository.FeatureFlagRepository がこのインターフェースを満たす
+type featureFlagChecker interface {
+	IsEnabledBySessionToken(ctx context.Context, sessionToken string, name model.FeatureFlagName) (bool, error)
+}
+
+// featureFlaggedPattern はフィーチャーフラグで制御するURLパターンを定義
+type featureFlaggedPattern struct {
+	pattern *regexp.Regexp
+	flag    model.FeatureFlagName
+	methods []string // nilまたは空なら全メソッドにマッチ
+}
+
+// フィーチャーフラグで制御するURLパターンのリスト
+// パターンを追加するには、このスライスに要素を追加する
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
-	railsURL *url.URL
-	proxy    *httputil.ReverseProxy
-	cfg      *config.Config
+	railsURL        *url.URL
+	proxy           *httputil.ReverseProxy
+	cfg             *config.Config
+	featureFlagRepo featureFlagChecker
 }
 
 // Go版で処理するパス（ホワイトリスト）
 // これらのパスはRails版にプロキシせず、Go版のハンドラーで処理する
 //
-// 2種類のマッチング方式：
+// 3種類のマッチング方式：
 // - 完全一致（exactPaths）: パスが完全に一致する場合のみマッチ
 // - プレフィックス一致（prefixPaths）: パスが指定した文字列で始まる場合にマッチ
+// - 正規表現（goHandledRegexPatterns）: 動的セグメントやメソッド制限が必要なパスに使用
 var (
 	// 完全一致でチェックするパス
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
@@ -50,11 +73,33 @@ var (
 		"/password/reset",                  // パスワードリセット申請フォーム・処理
 		"/password/edit",                   // 新パスワード入力フォーム
 		"/password",                        // パスワード更新処理
+		"/drafts",                          // 下書き一覧
 	}
 )
 
+// goHandledPattern はGo版で常に処理するURLパターンを定義（正規表現 + メソッドフィルタ）
+type goHandledPattern struct {
+	pattern *regexp.Regexp
+	methods []string // nilまたは空なら全メソッドにマッチ
+}
+
+// Go版で処理するURLパターン（正規表現マッチング）
+// プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
+var goHandledRegexPatterns = []goHandledPattern{
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
+}
+
 // NewReverseProxyMiddleware は新しいReverseProxyMiddlewareを作成
-func NewReverseProxyMiddleware(railsURL string, cfg *config.Config) (*ReverseProxyMiddleware, error) {
+// featureFlagRepoがnilの場合、フィーチャーフラグ判定はスキップされる
+func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagRepo featureFlagChecker) (*ReverseProxyMiddleware, error) {
 	parsedURL, err := url.Parse(railsURL)
 	if err != nil {
 		return nil, err
@@ -160,23 +205,37 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config) (*ReversePro
 	}
 
 	return &ReverseProxyMiddleware{
-		railsURL: parsedURL,
-		proxy:    proxy,
-		cfg:      cfg,
+		railsURL:        parsedURL,
+		proxy:           proxy,
+		cfg:             cfg,
+		featureFlagRepo: featureFlagRepo,
 	}, nil
 }
 
 // Middleware はHTTPミドルウェアを返す
 func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Go版で処理するパスかどうかをチェック
+		// 1. 常にGoで処理するパス（完全一致・プレフィックス一致）
 		if m.isGoHandledPath(r.URL.Path) {
-			// Go版で処理する
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Rails版にプロキシ
+		// 2. 常にGoで処理するパス（正規表現 + メソッドフィルタ）
+		if m.isGoHandledByRegex(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// 3. フィーチャーフラグで制御するパス
+		if flagName := m.getFeatureFlagForRequest(r); flagName != "" {
+			if m.isFeatureFlagEnabled(r, flagName) {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		// 4. その他はすべてRailsにプロキシ
 		m.proxy.ServeHTTP(w, r)
 	})
 }
@@ -198,6 +257,88 @@ func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
 	}
 
 	return false
+}
+
+// isGoHandledByRegex はGo版で処理するパスかどうかを正規表現パターンで判定する
+// メソッドフィルタが指定されている場合はHTTPメソッドも考慮する
+func (m *ReverseProxyMiddleware) isGoHandledByRegex(r *http.Request) bool {
+	for _, gp := range goHandledRegexPatterns {
+		if !gp.pattern.MatchString(r.URL.Path) {
+			continue
+		}
+		if len(gp.methods) > 0 && !containsMethod(gp.methods, r.Method) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+// getFeatureFlagForRequest はHTTPリクエストのパスとメソッドに対応するフィーチャーフラグ名を返す
+// マッチするパターンがない場合は空文字列を返す
+func (m *ReverseProxyMiddleware) getFeatureFlagForRequest(r *http.Request) model.FeatureFlagName {
+	for _, fp := range featureFlaggedPatterns {
+		if !fp.pattern.MatchString(r.URL.Path) {
+			continue
+		}
+		if len(fp.methods) > 0 && !containsMethod(fp.methods, r.Method) {
+			continue
+		}
+		return fp.flag
+	}
+	return ""
+}
+
+// containsMethod は指定されたHTTPメソッドがスライスに含まれるかを判定する
+//
+// HTMLフォームはGETとPOSTのみサポートするため、PATCH/PUT/DELETEリクエストは
+// POST + _methodパラメータとして送信される（Method Overrideパターン）。
+// このミドルウェアはMethod Overrideミドルウェアより前に実行されるため、
+// POSTリクエストもPATCH/PUT/DELETEパターンにマッチさせる必要がある。
+func containsMethod(methods []string, method string) bool {
+	for _, m := range methods {
+		if m == method {
+			return true
+		}
+	}
+
+	// POSTリクエストはMethod Override経由でPATCH/PUT/DELETEに変換される可能性がある
+	if method == http.MethodPost {
+		for _, m := range methods {
+			switch m {
+			case http.MethodPatch, http.MethodPut, http.MethodDelete:
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// isFeatureFlagEnabled はリクエストのセッションCookieからユーザーを特定し、
+// フィーチャーフラグが有効かどうかを判定する
+// エラー時またはCookieなし時はfalseを返す（Rails版にフォールバック）
+func (m *ReverseProxyMiddleware) isFeatureFlagEnabled(r *http.Request, flagName model.FeatureFlagName) bool {
+	if m.featureFlagRepo == nil {
+		return false
+	}
+
+	cookie, err := r.Cookie(session.CookieName)
+	if err != nil || cookie.Value == "" {
+		return false
+	}
+
+	enabled, err := m.featureFlagRepo.IsEnabledBySessionToken(r.Context(), cookie.Value, flagName)
+	if err != nil {
+		slog.WarnContext(r.Context(), "フィーチャーフラグ判定でエラーが発生（Rails版にフォールバック）",
+			"error", err,
+			"flag", flagName,
+			"path", r.URL.Path,
+		)
+		return false
+	}
+
+	return enabled
 }
 
 // render502ErrorHTML は502エラーページのHTMLを返す

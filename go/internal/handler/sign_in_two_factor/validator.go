@@ -9,6 +9,7 @@ import (
 	"github.com/pquerna/otp/totp"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
@@ -40,7 +41,7 @@ func NewCreateValidator(
 
 // CreateValidatorInput はバリデーションの入力パラメータ
 type CreateValidatorInput struct {
-	UserID   string
+	UserID   model.UserID
 	TOTPCode string
 }
 

@@ -2,7 +2,7 @@
   <%= layout.with_header do %>
     <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space) do |header| %>
       <%= header.with_breadcrumb do %>
-        <%= render Breadcrumbs::TopicComponent.new(topic:) %>
+        <%= render Breadcrumbs::TopicComponent.new(signed_in: signed_in?, topic:) %>
       <% end %>
     <% end %>
   <% end %>
@@ -78,6 +78,6 @@
   <% end %>
 
   <%= layout.with_footer do %>
-    <%= render Footers::GlobalComponent.new(signed_in: signed_in?) %>
+    <%= render Footers::GlobalComponent.new %>
   <% end %>
 <% end %>

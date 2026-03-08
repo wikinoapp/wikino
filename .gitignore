@@ -1,8 +1,12 @@
 .DS_Store
 
 /.claude/*.local.json
+/.claude/skills
 /.env.op
 /.pnpm-store
 /compose-up.sh
 /docker-compose.override.yml
+/node_modules
+/shimbaco-skills
 /tmp
+test-results/

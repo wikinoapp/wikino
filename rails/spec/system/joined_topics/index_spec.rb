@@ -39,41 +39,11 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     expect(page).not_to have_content("リファクタリング")
 
     # トピックへのリンクが存在することを確認
-    within("turbo-frame#joined-topics-fixed") do
-      expect(page).to have_css("a.text-gray-700", count: 2)
+    within("turbo-frame#joined-topics") do
+      expect(page).to have_css("a.text-foreground", count: 2)
       # 新規ページ作成へのリンクが存在することを確認
       expect(page).to have_css("a[href*='pages/new']", count: 2)
     end
-  end
-
-  it "variant=fixedパラメータでfixed版のturbo-frameが表示されること" do
-    user_record = FactoryBot.create(:user_record, :with_password)
-    space_record = FactoryBot.create(:space_record, name: "テストスペース")
-    space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
-    topic_record = FactoryBot.create(:topic_record, space_record:, name: "テストトピック")
-    FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, space_record:)
-
-    sign_in(user_record:)
-
-    visit "/joined_topics?variant=fixed"
-
-    # turbo-frameのIDがfixedバリアントになっていることを確認
-    expect(page).to have_css("turbo-frame#joined-topics-fixed")
-  end
-
-  it "variant=defaultパラメータでdefault版のturbo-frameが表示されること" do
-    user_record = FactoryBot.create(:user_record, :with_password)
-    space_record = FactoryBot.create(:space_record, name: "テストスペース")
-    space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
-    topic_record = FactoryBot.create(:topic_record, space_record:, name: "テストトピック")
-    FactoryBot.create(:topic_member_record, space_member_record:, topic_record:, space_record:)
-
-    sign_in(user_record:)
-
-    visit "/joined_topics?variant=default"
-
-    # turbo-frameのIDがdefaultバリアントになっていることを確認
-    expect(page).to have_css("turbo-frame#joined-topics-default")
   end
 
   it "未ログインユーザーはアクセスできないこと" do
@@ -91,9 +61,9 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     visit "/joined_topics"
 
     # turbo-frameは存在するが、トピックが表示されないことを確認
-    expect(page).to have_css("turbo-frame#joined-topics-fixed")
+    expect(page).to have_css("turbo-frame#joined-topics")
     expect(page).to have_css(".flex.flex-col")
-    expect(page).not_to have_css("a.text-gray-700[data-turbo-frame='_top']")
+    expect(page).not_to have_css("a.text-foreground[data-turbo-frame='_top']")
   end
 
   it "10件を超えるトピックがある場合は最新の10件のみ表示されること" do
@@ -112,7 +82,7 @@ RSpec.describe "参加中のトピック一覧", type: :system do
     visit "/joined_topics"
 
     # トピックの要素が10件のみ表示されることを確認
-    topic_links = all("a.text-gray-700[data-turbo-frame='_top']")
+    topic_links = all("a.text-foreground[data-turbo-frame='_top']")
     expect(topic_links.count).to eq(10)
   end
 end

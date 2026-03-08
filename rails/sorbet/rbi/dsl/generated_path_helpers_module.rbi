@@ -28,10 +28,7 @@ module GeneratedPathHelpersModule
   def bulk_restored_page_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def draft_page_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def edit_page_path(*args); end
+  def draft_page_sidebar_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def home_path(*args); end
@@ -44,6 +41,9 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def mission_control_jobs_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def move_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_page_path(*args); end
@@ -59,9 +59,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def page_link_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_location_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def page_path(*args); end

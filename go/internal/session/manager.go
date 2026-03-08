@@ -118,10 +118,10 @@ func GenerateSecureToken() (string, error) {
 }
 
 // SetPendingUserCookie は2FA認証待ちユーザーIDをCookieに設定する
-func (m *Manager) SetPendingUserCookie(w http.ResponseWriter, userID string) {
+func (m *Manager) SetPendingUserCookie(w http.ResponseWriter, userID model.UserID) {
 	cookie := &http.Cookie{
 		Name:     PendingUserCookieName,
-		Value:    userID,
+		Value:    string(userID),
 		Path:     "/",
 		Domain:   m.cfg.CookieDomain,
 		Secure:   m.cfg.SessionSecure,
@@ -134,12 +134,12 @@ func (m *Manager) SetPendingUserCookie(w http.ResponseWriter, userID string) {
 }
 
 // GetPendingUserID はCookieから2FA認証待ちユーザーIDを取得する
-func (m *Manager) GetPendingUserID(r *http.Request) string {
+func (m *Manager) GetPendingUserID(r *http.Request) model.UserID {
 	cookie, err := r.Cookie(PendingUserCookieName)
 	if err != nil {
 		return ""
 	}
-	return cookie.Value
+	return model.UserID(cookie.Value)
 }
 
 // DeletePendingUserCookie は2FA認証待ちユーザーIDのCookieを削除する

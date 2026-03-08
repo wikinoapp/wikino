@@ -23,45 +23,14 @@
 - 実装が完了したら、仕様書を最新の状態に更新してください
 - 過去の状態はGit履歴で参照できるため、仕様書には常に現在の状態のみを記述します
 
-**タスクリストとの関係**:
-- 仕様の変更が必要な場合、「何をどう変えるか」は `docs/tasks/` のタスクリストに記述します
-- タスク完了後に、この仕様書を新しい状態に更新してください
+**作業計画書との関係**:
+- 新しい機能の場合: `docs/plans/` の作業計画書に概要・要件・設計を記述し、タスク完了後にこの仕様書を作成します
+- 既存機能の変更の場合: `docs/plans/` の作業計画書に変更内容を記述し、タスク完了後にこの仕様書を更新します
 
 **公開時の注意事項**:
 - 開発用ドメイン名を記載する場合は `example.dev` を使用してください（実際のドメイン名は記載しない）
 - 環境変数の値はサンプル値のみ記載し、実際の値は含めないでください
 -->
-
-## 実装ガイドラインの参照
-
-<!--
-**重要**: 仕様書を作成する前に、対象プラットフォームのガイドラインを必ず確認してください。
-特に以下の点に注意してください：
-- ディレクトリ構造・ファイル名の命名規則
-- コーディング規約
-- アーキテクチャパターン
-
-ガイドラインに沿わない設計は、実装時にそのまま実装されてしまうため、
-仕様書作成の段階でガイドラインに準拠していることを確認してください。
--->
-
-### Go版の実装の場合
-
-以下のガイドラインに従って設計・実装を行ってください：
-
-- [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - 全体的なコーディング規約
-- [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン（**ファイル名は標準の8種類のみ**）
-- [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド
-- [@go/docs/validation-guide.md](/workspace/go/docs/validation-guide.md) - バリデーションガイド
-- [@go/docs/i18n-guide.md](/workspace/go/docs/i18n-guide.md) - 国際化ガイド
-- [@go/docs/security-guide.md](/workspace/go/docs/security-guide.md) - セキュリティガイドライン
-- [@go/docs/templ-guide.md](/workspace/go/docs/templ-guide.md) - templテンプレートガイド
-
-### Rails版の実装の場合
-
-以下のガイドラインに従って設計・実装を行ってください：
-
-- [@rails/CLAUDE.md](/workspace/rails/CLAUDE.md) - 全体的なコーディング規約
 
 ## 概要
 
@@ -105,18 +74,49 @@
 
 ### 権限
 
-- ページの移動には、移動先トピックへのページ作成権限が必要である
+- ページの移動には、移動元トピックの `CanUpdatePage` 権限が必要である
+- 移動先トピックの `CanCreatePage` 権限が必要である
 - 権限のないトピックへの移動はシステムが拒否する
+
+### `CanCreatePage` の判定
+
+| ポリシー          | CanCreatePage の判定                             |
+| ----------------- | ------------------------------------------------ |
+| topicOwnerPolicy  | `spaceMemberActive && spaceID == topic.Space.ID` |
+| topicAdminPolicy  | `spaceMemberActive && topicID == topic.ID`       |
+| topicMemberPolicy | `spaceMemberActive && topicID == topic.ID`       |
+| topicGuestPolicy  | `false`（常に不可）                              |
+
+### 移動先トピックの選択肢
+
+- スペースオーナーの場合: スペース内の全アクティブトピック
+- トピックメンバーの場合: 所属トピックのみ
+- いずれの場合も現在のトピックを除外して表示する
 
 ### バリデーション
 
-- 移動先のトピックは現在のトピックと異なる必要がある
-- 移動先のトピックは同一スペース内に存在する必要がある
+形式バリデーション:
 
-### 関連仕様
+- 移動先トピックが選択されていること（必須）
 
-- [@docs/specs/page/overview.md](/workspace/docs/specs/page/overview.md) - ページのデータモデルと編集フロー
-- [@docs/specs/edit_suggestion/overview.md](/workspace/docs/specs/edit_suggestion/overview.md) - 編集提案機能（編集提案ではトピック変更は対象外）
+状態バリデーション:
+
+- 移動先トピックが同一スペース内に存在すること
+- 移動先トピックが現在のトピックと異なること
+- 移動先トピックにページ作成権限があること（`CanCreatePage`）
+- 移動先トピックに同名のページが存在しないこと（タイトルの一意制約）
+
+### UI
+
+- ページ移動画面は、パンくずリスト、見出し「ページの移動」、ページタイトル（読み取り専用）、現在のトピック名（読み取り専用）、移動先トピックのセレクトボックス、「移動する」ボタンで構成される
+- 成功時はフラッシュメッセージ「ページを移動しました」を表示し、ページ詳細画面にリダイレクトする
+- 移動先トピックが存在しない場合（ユーザーが1つのトピックにしか所属していない場合）は、セレクトボックスが空になり、ボタンは無効化される。「移動先のトピックがありません」というメッセージを表示する
+
+### Rails 版との連携
+
+- Rails 版の `Dropdowns::PageActionsComponent` に「移動」リンクが追加されている
+- `page.can_update?` が真の場合にのみ表示される
+- リンク先は Go 版のページ移動画面に遷移する
 
 ## 設計
 
@@ -132,6 +132,109 @@
   - コード設計（パッケージ構成、主要な構造体、インターフェースなど）
 - 該当がない場合も、セクション自体は残しておく（後から追加しやすくするため）
 -->
+
+### エンドポイント
+
+| メソッド | パス                                             | ハンドラー         | 説明               |
+| -------- | ------------------------------------------------ | ------------------ | ------------------ |
+| GET      | `/s/{space_identifier}/pages/{page_number}/move` | `page_move.New`    | ページ移動フォーム |
+| POST     | `/s/{space_identifier}/pages/{page_number}/move` | `page_move.Create` | ページ移動実行     |
+
+リバースプロキシの `FeatureFlagGoPageEdit` フラグで Go 版と Rails 版を切り替える。
+
+### コード設計
+
+#### Handler (`go/internal/handler/page_move/`)
+
+| ファイル     | 説明                                         |
+| ------------ | -------------------------------------------- |
+| handler.go   | Handler 構造体と依存性の定義                 |
+| new.go       | New メソッド（移動フォーム表示）             |
+| create.go    | Create メソッド（移動実行）                  |
+| validator.go | CreateValidator（形式 + 状態バリデーション） |
+
+Handler 構造体の依存性:
+
+- `cfg *config.Config`
+- `flashMgr *session.FlashManager`
+- `spaceRepo *repository.SpaceRepository`
+- `spaceMemberRepo *repository.SpaceMemberRepository`
+- `pageRepo *repository.PageRepository`
+- `topicRepo *repository.TopicRepository`
+- `topicMemberRepo *repository.TopicMemberRepository`
+- `movePageUC *usecase.MovePageUsecase`
+
+#### UseCase (`go/internal/usecase/move_page.go`)
+
+```go
+type MovePageUsecase struct {
+    db       *sql.DB
+    pageRepo *repository.PageRepository
+}
+
+type MovePageInput struct {
+    PageID      model.PageID
+    SpaceID     model.SpaceID
+    DestTopicID model.TopicID
+}
+
+type MovePageOutput struct {
+    Page *model.Page
+}
+```
+
+トランザクション内で `pageRepo.MoveTopic` を呼び出し、`topic_id` と `updated_at` を更新する。
+
+#### Repository (`go/internal/repository/page.go`)
+
+`PageRepository` に `MoveTopic` メソッドを追加。`topic_id` と `updated_at` のみを更新する専用 SQL クエリを使用する。
+
+```sql
+-- name: MovePageToTopic :one
+UPDATE pages
+SET topic_id = $2, updated_at = NOW()
+WHERE id = $1 AND space_id = $3
+RETURNING *;
+```
+
+#### ViewModel (`go/internal/viewmodel/topic.go`)
+
+セレクトボックス用の ViewModel:
+
+```go
+type TopicForSelect struct {
+    Name   string
+    Number int32
+}
+```
+
+#### Template (`go/internal/templates/pages/page_move/new.templ`)
+
+```go
+type MovePageData struct {
+    CSRFToken       string
+    FormErrors      *session.FormErrors
+    Page            viewmodel.Page
+    Space           viewmodel.Space
+    CurrentTopic    viewmodel.Topic
+    AvailableTopics []viewmodel.TopicForSelect
+}
+```
+
+### I18n
+
+ja.toml / en.toml に以下のキーを定義:
+
+- `page_move_title`: ページタイトル
+- `page_move_heading`: 見出し
+- `page_move_current_topic_label`: 現在のトピック
+- `page_move_destination_topic_label`: 移動先トピック
+- `page_move_submit`: 移動ボタン
+- `page_move_success`: 成功メッセージ
+- `page_move_error_same_topic`: 同一トピックエラー
+- `page_move_error_no_permission`: 権限エラー
+- `page_move_error_title_exists`: タイトル重複エラー
+- `page_move_select_topic_placeholder`: プレースホルダー
 
 ## 採用しなかった方針
 
@@ -164,3 +267,6 @@
 <!--
 参考にしたドキュメント、記事、OSSプロジェクトなど
 -->
+
+- [ページの移動 作業計画書](/workspace/docs/plans/1_doing/page-move.md)
+- [編集提案機能 作業計画書](/workspace/docs/plans/1_doing/edit-suggestion.md)

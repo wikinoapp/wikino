@@ -1,0 +1,43 @@
+package components
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// BacklinkList はバックリンク一覧を表示します。カードをgridの直接の子要素として展開し、
+// ページネーション用のコンテナを末尾に配置します。
+templ BacklinkList(data viewmodel.BacklinkList) {
+	for _, item := range data.Items {
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+	}
+	<div
+		id={ fmt.Sprintf("page-backlink-list-%d", data.LinkedPageNumber) }
+		class="contents"
+	>
+		if data.Pagination.HasNext {
+			@backlinkListLoadMore(data)
+		}
+	</div>
+}
+
+// BacklinkListCards はバックリンクのカードのみを表示します。SSEのbeforeモードで使用します。
+templ BacklinkListCards(data viewmodel.BacklinkList) {
+	for _, item := range data.Items {
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+	}
+}
+
+// BacklinkListPagination はバックリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
+templ BacklinkListPagination(data viewmodel.BacklinkList) {
+	if data.Pagination.HasNext {
+		@backlinkListLoadMore(data)
+	}
+}
+
+// backlinkListLoadMore はバックリンク一覧の「もっと見る」ボタンを表示します
+templ backlinkListLoadMore(data viewmodel.BacklinkList) {
+	@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1))
+}
