@@ -337,7 +337,7 @@ Rails 版ではカーソルベースページネーション（`cursor_paginate`
 
 ### フェーズ 2: オフセットベースページネーションの実装
 
-- [ ] **2-1**: [Go] オフセットベースページネーションのユーティリティ実装
+- [x] **2-1**: [Go] オフセットベースページネーションのユーティリティ実装
   - `Pagination` ViewModel の作成（`HasNext`、`HasPrevious`、`CurrentPage`、`TotalPages`）
   - ページネーションコンポーネント（templ）の作成
   - テスト
