@@ -365,7 +365,7 @@ Rails 版ではカーソルベースページネーション（`cursor_paginate`
   - **想定ファイル数**: 約 8 ファイル（実装 7 + テスト 1）
   - **想定行数**: 約 300 行（実装 250 行 + テスト 50 行）
 
-- [ ] **3-2**: [Go] トピック詳細画面のハンドラー実装
+- [x] **3-2**: [Go] トピック詳細画面のハンドラー実装
   - `internal/handler/topic/handler.go` - Handler 構造体
   - `internal/handler/topic/show.go` - Show ハンドラー（権限チェック含む）
   - `main.go` へのルーティング登録

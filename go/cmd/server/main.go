@@ -35,6 +35,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -298,6 +299,16 @@ func main() {
 		movePageUC,
 		sidebarHelper,
 	)
+	topicHandler := topichandler.NewHandler(
+		cfg,
+		flashMgr,
+		spaceRepo,
+		spaceMemberRepo,
+		topicRepo,
+		topicMemberRepo,
+		pageRepo,
+		sidebarHelper,
+	)
 	r := chi.NewRouter()
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
@@ -342,6 +353,9 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
 		r.Get("/", welcomeHandler.Show)
+
+		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
+		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
 	})
 
 	// 未認証ユーザー専用ルート

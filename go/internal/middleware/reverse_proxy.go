@@ -86,6 +86,7 @@ type goHandledPattern struct {
 // Go版で処理するURLパターン（正規表現マッチング）
 // プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
 var goHandledRegexPatterns = []goHandledPattern{
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
