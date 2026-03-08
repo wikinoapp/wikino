@@ -123,6 +123,8 @@ func TestNewCardLinkPage(t *testing.T) {
 		wantNumber       int32
 		wantCardImageURL string
 		wantPinned       bool
+		wantTopicName    string
+		wantTopicIcon    viewmodel.IconName
 	}{
 		{
 			name: "アイキャッチ画像ありのページ",
@@ -137,6 +139,8 @@ func TestNewCardLinkPage(t *testing.T) {
 			wantNumber:       1,
 			wantCardImageURL: "/attachments/550e8400-e29b-41d4-a716-446655440000",
 			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
 		},
 		{
 			name: "アイキャッチ画像なしのページ",
@@ -151,6 +155,8 @@ func TestNewCardLinkPage(t *testing.T) {
 			wantNumber:       2,
 			wantCardImageURL: "",
 			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
 		},
 		{
 			name: "タイトルがnilの場合は空文字になる",
@@ -164,6 +170,8 @@ func TestNewCardLinkPage(t *testing.T) {
 			wantNumber:       3,
 			wantCardImageURL: "",
 			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
 		},
 	}
 
@@ -184,6 +192,12 @@ func TestNewCardLinkPage(t *testing.T) {
 			}
 			if got.Pinned != tt.wantPinned {
 				t.Errorf("Pinned = %v, want %v", got.Pinned, tt.wantPinned)
+			}
+			if got.TopicName != tt.wantTopicName {
+				t.Errorf("TopicName = %q, want %q", got.TopicName, tt.wantTopicName)
+			}
+			if got.TopicIcon != tt.wantTopicIcon {
+				t.Errorf("TopicIcon = %q, want %q", got.TopicIcon, tt.wantTopicIcon)
 			}
 		})
 	}
