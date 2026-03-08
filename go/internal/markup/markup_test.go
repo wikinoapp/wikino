@@ -122,6 +122,11 @@ func TestRenderMarkdown_GFMExtensions(t *testing.T) {
 			input:    "| A | B |\n| --- | --- |\n| 1 | 2 |",
 			expected: `<table> <thead> <tr> <th>A</th> <th>B</th> </tr> </thead> <tbody> <tr> <td>1</td> <td>2</td> </tr> </tbody> </table>`,
 		},
+		{
+			name:     "テーブル配置指定",
+			input:    "| 左寄せ | 中央寄せ | 右寄せ |\n|:-------|:--------:|-------:|\n| 左     | 中央     | 右     |",
+			expected: `<table> <thead> <tr> <th align="left">左寄せ</th> <th align="center">中央寄せ</th> <th align="right">右寄せ</th> </tr> </thead> <tbody> <tr> <td align="left">左</td> <td align="center">中央</td> <td align="right">右</td> </tr> </tbody> </table>`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -237,23 +242,36 @@ func TestRenderMarkdown_ImgAttributes(t *testing.T) {
 func TestRenderMarkdown_StandaloneImgZWNJ(t *testing.T) {
 	t.Parallel()
 
-	// 単独行のimgタグの後にイタリック記法がある場合、正しく処理されること
-	input := "<img src=\"https://example.com/image.png\">\n*caption*"
-	got := RenderMarkdown(input)
-
-	// ZWNJが残っていないことを確認
-	if strings.Contains(got, zwnj) {
-		t.Errorf("RenderMarkdown(%q) should not contain ZWNJ, got: %s", input, got)
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "LF",
+			input: "<img src=\"https://example.com/image.png\">\n*caption*",
+		},
+		{
+			name:  "CRLF",
+			input: "<img src=\"https://example.com/image.png\">\r\n*caption*",
+		},
 	}
 
-	// imgタグが出力されていること
-	if !strings.Contains(got, "<img") {
-		t.Errorf("RenderMarkdown(%q) should contain <img>, got: %s", input, got)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	// イタリック記法が変換されていること
-	if !strings.Contains(got, "<em>") {
-		t.Errorf("RenderMarkdown(%q) should contain <em>, got: %s", input, got)
+			got := RenderMarkdown(tt.input)
+
+			if strings.Contains(got, zwnj) {
+				t.Errorf("should not contain ZWNJ, got: %s", got)
+			}
+			if !strings.Contains(got, "<img") {
+				t.Errorf("should contain <img>, got: %s", got)
+			}
+			if !strings.Contains(got, "<em>") {
+				t.Errorf("should contain <em>, got: %s", got)
+			}
+		})
 	}
 }
 
