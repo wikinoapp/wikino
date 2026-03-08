@@ -668,6 +668,23 @@ other = "更新日時"
 description = "タイトル未設定の下書き"
 other = "無題"
 
+# ボトムナビ
+[bottom_nav_menu]
+description = "ボトムナビのメニューボタン"
+other = "メニュー"
+
+[bottom_nav_home]
+description = "ボトムナビのホームボタン"
+other = "ホーム"
+
+[bottom_nav_search]
+description = "ボトムナビの検索ボタン"
+other = "検索"
+
+[bottom_nav_sign_in]
+description = "ボトムナビのログインボタン"
+other = "ログイン"
+
 # ページネーション
 [pagination_previous]
 description = "ページネーションの前のページへのリンク"

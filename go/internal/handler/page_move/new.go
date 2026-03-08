@@ -172,6 +172,11 @@ func (h *Handler) renderMoveForm(
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNamePageMove,
+			SignedIn:        true,
+			SpaceIdentifier: string(spaceIdentifier),
+		},
 	}
 
 	err := layouts.Default(layoutData, content).Render(ctx, w)

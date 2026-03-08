@@ -172,6 +172,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        true,
+			SpaceIdentifier: string(spaceIdentifier),
+		},
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

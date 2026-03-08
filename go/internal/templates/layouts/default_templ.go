@@ -21,6 +21,7 @@ type DefaultLayoutData struct {
 	HideFooter  bool
 	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
 	Sidebar     components.SidebarData
+	BottomNav   components.BottomNavData
 }
 
 // Default はデフォルトのレイアウトです
@@ -52,7 +53,7 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Locale(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 23, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 24, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -98,7 +99,15 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><div class=\"fixed bottom-2 left-1/2 z-50 flex w-full -translate-x-1/2 flex-col items-center px-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.BottomNav(data.BottomNav).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
