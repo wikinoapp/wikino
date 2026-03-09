@@ -20,10 +20,10 @@ require (
 	github.com/sqlc-dev/sqlc v1.30.0
 	github.com/starfederation/datastar-go v1.1.0
 	github.com/yuin/goldmark v1.7.16
-	golang.org/x/crypto v0.46.0
-	golang.org/x/net v0.48.0
-	golang.org/x/text v0.33.0
-	golang.org/x/tools v0.40.0
+	golang.org/x/crypto v0.47.0
+	golang.org/x/net v0.49.0
+	golang.org/x/text v0.34.0
+	golang.org/x/tools v0.41.0
 )
 
 require (
@@ -96,9 +96,9 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251203150158-8fff8a5912fc // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260109210033-bd525da824e2 // indirect
+	golang.org/x/term v0.39.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/grpc v1.75.0 // indirect
