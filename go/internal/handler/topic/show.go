@@ -112,25 +112,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// トピックマップを構築（CardLinkPage用）
-	topicMap := map[model.TopicID]*model.Topic{
-		topic.ID: topic,
-	}
+	// 権限判定
+	canUpdate := canUpdateTopic(spaceMember, topicMember)
+	canCreatePage := canCreateTopicPage(spaceMember, topicMember)
 
 	// ViewModelに変換
+	// トピック詳細画面ではトピック情報をカードに表示しないため、topicMapにnilを渡す
 	pinnedPageVMs := make([]viewmodel.CardLinkPage, len(pinnedPages))
 	for i, pg := range pinnedPages {
-		pinnedPageVMs[i] = viewmodel.NewCardLinkPage(pg, topicMap)
+		card := viewmodel.NewCardLinkPage(pg, nil)
+		card.CanEdit = canCreatePage
+		pinnedPageVMs[i] = card
 	}
 
 	pageVMs := make([]viewmodel.CardLinkPage, len(paginatedResult.Pages))
 	for i, pg := range paginatedResult.Pages {
-		pageVMs[i] = viewmodel.NewCardLinkPage(pg, topicMap)
+		card := viewmodel.NewCardLinkPage(pg, nil)
+		card.CanEdit = canCreatePage
+		pageVMs[i] = card
 	}
-
-	// 権限判定
-	canUpdate := canUpdateTopic(spaceMember, topicMember)
-	canCreatePage := canCreateTopicPage(spaceMember, topicMember)
 
 	topicVM := viewmodel.NewTopicForShow(topic, canUpdate, canCreatePage)
 	spaceVM := viewmodel.NewSpace(space)
