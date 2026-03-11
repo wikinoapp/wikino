@@ -124,20 +124,20 @@ templ showActions(data ShowData) {
 				@templates.Icon("dots-three-regular")
 			</button>
 
-			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
-	    	<div role="menu" id="topic-options-dropdown-menu" aria-labelledby="topic-options-dropdown-trigger">
-	        <div role="menuitem">
-	          <a
+				<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+				<div role="menu" id="topic-options-dropdown-menu" aria-labelledby="topic-options-dropdown-trigger">
+					<div role="menuitem">
+						<a
 							class="flex gap-2 items-center w-full"
 							href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
 						>
 							@templates.Icon("gear-regular", "size-[18px]")
 							{ templates.T(ctx, "topic_show_settings") }
 						</a>
-	        </div>
-		   	</div>
+					</div>
+				</div>
 			</div>
-    </div>
+		</div>
 	}
 }
 
