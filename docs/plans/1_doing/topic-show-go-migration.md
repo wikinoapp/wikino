@@ -374,6 +374,24 @@ Rails 版ではカーソルベースページネーション（`cursor_paginate`
   - **想定ファイル数**: 約 6 ファイル（実装 4 + テスト 2）
   - **想定行数**: 約 300 行（実装 200 行 + テスト 100 行）
 
+### フェーズ 3a: Rails 版の不要コード削除
+
+- [x] **3a-1**: [Rails] トピック詳細画面の不要コード削除
+  - Go 版への移行完了に伴い、Rails 版のトピック詳細画面専用コードを削除する
+  - 削除対象ファイル:
+    - `app/controllers/topics/show_controller.rb` - コントローラー
+    - `app/views/topics/show_view.rb` - ビュークラス
+    - `app/views/topics/show_view.html.erb` - ビューテンプレート
+    - `app/views/topics/show_view/header_component.rb` - ヘッダーコンポーネント
+    - `app/views/topics/show_view/header_component.html.erb` - ヘッダーテンプレート
+    - `spec/requests/topics/show_spec.rb` - リクエストテスト
+  - ルート定義（`config/routes.rb` の `topic` named route）は `topic_path` が他のコントローラー・コンポーネントで使用されているため維持する
+  - モデル、レコード、リポジトリ、ポリシー、共有コンポーネントは他機能で共用のため削除しない
+  - Sorbet 型定義の更新（`make sorbet-update`）
+  - Rails CI の確認（`bin/check`）
+  - **想定ファイル数**: 約 6 ファイル（削除のみ）
+  - **想定行数**: 約 -200 行（削除のみ）
+
 ### フェーズ 4: 仕様書への反映
 
 <!--
