@@ -17,23 +17,33 @@ templ PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPa
 			<ul class="flex flex-row items-center gap-1">
 				<li>
 					if pagination.HasPrevious {
-						<a href={ templ.SafeURL(previousPath) } class="btn btn-outline">
+						<a
+							class="btn-ghost"
+							href={ templ.SafeURL(previousPath) }
+						>
+							@templates.Icon("caret-left-regular")
 							{ templates.T(ctx, "pagination_previous") }
 						</a>
 					} else {
-						<button class="btn btn-outline" disabled>
+						<button class="btn-ghost" disabled>
+							@templates.Icon("caret-left-regular")
 							{ templates.T(ctx, "pagination_previous") }
 						</button>
 					}
 				</li>
 				<li>
 					if pagination.HasNext {
-						<a href={ templ.SafeURL(nextPath) } class="btn btn-outline">
+						<a
+							class="btn-ghost"
+							href={ templ.SafeURL(nextPath) }
+						>
 							{ templates.T(ctx, "pagination_next") }
+							@templates.Icon("caret-right-regular")
 						</a>
 					} else {
-						<button class="btn btn-outline" disabled>
+						<button class="btn-ghost" disabled>
 							{ templates.T(ctx, "pagination_next") }
+							@templates.Icon("caret-right-regular")
 						</button>
 					}
 				</li>
