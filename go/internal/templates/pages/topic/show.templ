@@ -27,6 +27,7 @@ templ Show(data ShowData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
 			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
 				Items: []components.BreadcrumbItem{
 					{
 						Path:      templates.HomePath(),
@@ -40,12 +41,13 @@ templ Show(data ShowData) {
 					},
 					{
 						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
 						IconName: data.Topic.IconName,
 					},
 				},
 			})
 
-			<div class="w-full mx-auto max-w-5xl">
+			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
 					<div class="px-4">
 						@showHeader(data)
@@ -110,33 +112,56 @@ templ showActions(data ShowData) {
 	}
 
 	if data.Topic.CanUpdate {
-		<a
-			href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
-			class="btn btn-sm btn-outline rounded-full"
-		>
-			@templates.Icon("gear-regular", "size-[18px]")
-			{ templates.T(ctx, "topic_show_settings") }
-		</a>
+		<div id="topic-options-dropdown" class="dropdown-menu">
+			<button
+				type="button"
+				id="topic-options-dropdown-trigger"
+				aria-haspopup="menu"
+				aria-controls="topic-options-dropdown-menu"
+				aria-expanded="false"
+				class="btn-sm-icon-outline border-primary rounded-full"
+			>
+				@templates.Icon("dots-three-regular")
+			</button>
+
+			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+				<div role="menu" id="topic-options-dropdown-menu" aria-labelledby="topic-options-dropdown-trigger">
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
+						>
+							@templates.Icon("gear-regular", "size-[18px]")
+							{ templates.T(ctx, "topic_show_settings") }
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
 	}
 }
 
 // showEmptyState はトピック詳細画面の空状態を表示します
 templ showEmptyState(data ShowData) {
 	<div class="flex flex-col items-center gap-4 py-12 text-center">
-		@templates.Icon("file-regular", "size-[50px] fill-gray-400")
+		@templates.Icon("file-dashed-regular", "size-[50px] fill-muted-foreground")
 
-		<h2 class="text-lg font-semibold text-muted-foreground">
-			{ templates.T(ctx, "topic_show_no_pages_message") }
-		</h2>
+		<div class="flex flex-col gap-2">
+			<h2 class="text-lg font-bold">
+				{ templates.T(ctx, "topic_show_no_pages_message") }
+			</h2>
+
+			if data.Topic.CanCreatePage {
+				<div class="text-muted-foreground">
+					{ templates.T(ctx, "topic_show_no_pages_description") }
+				</div>
+			}
+		</div>
 
 		if data.Topic.CanCreatePage {
-			<div class="text-sm text-muted-foreground">
-				{ templates.T(ctx, "topic_show_no_pages_description") }
-			</div>
-
 			<a
 				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
-				class="btn btn-sm rounded-full"
+				class="btn-sm rounded-full"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 				{ templates.T(ctx, "topic_show_new_page") }

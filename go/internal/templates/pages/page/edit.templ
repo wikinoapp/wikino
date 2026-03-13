@@ -165,7 +165,7 @@ templ Edit(data EditPageData) {
 						</div>
 					</div>
 
-					<div class="px-4">
+					<div class="flex flex-col gap-4 px-4">
 						<div
 							id="page-link-list"
 							data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }

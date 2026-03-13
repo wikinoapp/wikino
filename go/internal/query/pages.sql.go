@@ -10,7 +10,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -249,23 +248,23 @@ type FindBacklinkedPagesForTargetsParams struct {
 }
 
 type FindBacklinkedPagesForTargetsRow struct {
-	ID                        string        `json:"id"`
-	SpaceID                   string        `json:"space_id"`
-	TopicID                   string        `json:"topic_id"`
-	Number                    int32         `json:"number"`
-	Title                     interface{}   `json:"title"`
-	Body                      string        `json:"body"`
-	BodyHtml                  string        `json:"body_html"`
-	LinkedPageIds             []string      `json:"linked_page_ids"`
-	ModifiedAt                time.Time     `json:"modified_at"`
-	PublishedAt               sql.NullTime  `json:"published_at"`
-	TrashedAt                 sql.NullTime  `json:"trashed_at"`
-	CreatedAt                 time.Time     `json:"created_at"`
-	UpdatedAt                 time.Time     `json:"updated_at"`
-	PinnedAt                  sql.NullTime  `json:"pinned_at"`
-	DiscardedAt               sql.NullTime  `json:"discarded_at"`
-	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
-	TargetID                  interface{}   `json:"target_id"`
+	ID                        string       `json:"id"`
+	SpaceID                   string       `json:"space_id"`
+	TopicID                   string       `json:"topic_id"`
+	Number                    int32        `json:"number"`
+	Title                     interface{}  `json:"title"`
+	Body                      string       `json:"body"`
+	BodyHtml                  string       `json:"body_html"`
+	LinkedPageIds             []string     `json:"linked_page_ids"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	TrashedAt                 sql.NullTime `json:"trashed_at"`
+	CreatedAt                 time.Time    `json:"created_at"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	PinnedAt                  sql.NullTime `json:"pinned_at"`
+	DiscardedAt               sql.NullTime `json:"discarded_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
+	TargetID                  interface{}  `json:"target_id"`
 }
 
 // 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
@@ -807,17 +806,17 @@ RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_id
 `
 
 type UpdatePageParams struct {
-	ID                        string        `json:"id"`
-	TopicID                   string        `json:"topic_id"`
-	Title                     interface{}   `json:"title"`
-	Body                      string        `json:"body"`
-	BodyHtml                  string        `json:"body_html"`
-	LinkedPageIds             []string      `json:"linked_page_ids"`
-	ModifiedAt                time.Time     `json:"modified_at"`
-	PublishedAt               sql.NullTime  `json:"published_at"`
-	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
-	UpdatedAt                 time.Time     `json:"updated_at"`
-	SpaceID                   string        `json:"space_id"`
+	ID                        string       `json:"id"`
+	TopicID                   string       `json:"topic_id"`
+	Title                     interface{}  `json:"title"`
+	Body                      string       `json:"body"`
+	BodyHtml                  string       `json:"body_html"`
+	LinkedPageIds             []string     `json:"linked_page_ids"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	SpaceID                   string       `json:"space_id"`
 }
 
 // ページを更新する

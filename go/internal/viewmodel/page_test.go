@@ -125,6 +125,7 @@ func TestNewCardLinkPage(t *testing.T) {
 		wantPinned       bool
 		wantTopicName    string
 		wantTopicIcon    viewmodel.IconName
+		wantTopicNil     bool
 	}{
 		{
 			name: "アイキャッチ画像ありのページ",
@@ -173,6 +174,18 @@ func TestNewCardLinkPage(t *testing.T) {
 			wantTopicName:    "テストトピック",
 			wantTopicIcon:    "globe-regular",
 		},
+		{
+			name: "topicMapがnilの場合はTopicがnilになる",
+			page: &model.Page{
+				Number:  4,
+				Title:   strPtr("トピックなし"),
+				TopicID: topicID,
+			},
+			topicMap:     nil,
+			wantTitle:    "トピックなし",
+			wantNumber:   4,
+			wantTopicNil: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -193,11 +206,20 @@ func TestNewCardLinkPage(t *testing.T) {
 			if got.Pinned != tt.wantPinned {
 				t.Errorf("Pinned = %v, want %v", got.Pinned, tt.wantPinned)
 			}
-			if got.TopicName != tt.wantTopicName {
-				t.Errorf("TopicName = %q, want %q", got.TopicName, tt.wantTopicName)
-			}
-			if got.TopicIcon != tt.wantTopicIcon {
-				t.Errorf("TopicIcon = %q, want %q", got.TopicIcon, tt.wantTopicIcon)
+			if tt.wantTopicNil {
+				if got.Topic != nil {
+					t.Errorf("Topic = %v, want nil", got.Topic)
+				}
+			} else {
+				if got.Topic == nil {
+					t.Fatal("Topic is nil, want non-nil")
+				}
+				if got.Topic.Name != tt.wantTopicName {
+					t.Errorf("Topic.Name = %q, want %q", got.Topic.Name, tt.wantTopicName)
+				}
+				if got.Topic.IconName != tt.wantTopicIcon {
+					t.Errorf("Topic.IconName = %q, want %q", got.Topic.IconName, tt.wantTopicIcon)
+				}
 			}
 		})
 	}

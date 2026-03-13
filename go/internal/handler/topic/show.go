@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	topicpages "github.com/wikinoapp/wikino/go/internal/templates/pages/topic"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -33,61 +34,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if space == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// ログインユーザーのスペースメンバーを取得（未ログインならnil）
-	user := middleware.UserFromContext(ctx)
-	var spaceMember *model.SpaceMember
-	if user != nil {
-		spaceMember, err = h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-		if err != nil {
-			slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// トピックを取得
-	topic, err := h.topicRepo.FindBySpaceAndNumber(ctx, space.ID, int32(topicNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if topic == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// 権限チェック: 非公開トピックはトピックメンバーのみ閲覧可能
-	var topicMember *model.TopicMember
-	if spaceMember != nil {
-		topicMember, err = h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, topic.ID)
-		if err != nil {
-			slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		// スペースオーナーまたはトピックメンバーのみ閲覧可能
-		if spaceMember == nil || (spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil) {
-			http.NotFound(w, r)
-			return
-		}
-	}
-
 	// ページネーションパラメータを取得
 	var currentPage int32 = 1
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
@@ -96,51 +42,60 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// ピン留めページを取得
-	pinnedPages, err := h.pageRepo.FindPinnedByTopic(ctx, topic.ID, space.ID)
+	// ログインユーザーを取得
+	user := middleware.UserFromContext(ctx)
+	var userID *model.UserID
+	if user != nil {
+		userID = &user.ID
+	}
+
+	// UseCaseでデータを取得
+	output, err := h.getTopicDetailUsecase.Execute(ctx, usecase.GetTopicDetailInput{
+		SpaceIdentifier: spaceIdentifier,
+		TopicNumber:     int32(topicNumber),
+		UserID:          userID,
+		Page:            currentPage,
+		PageLimit:       topicShowPageLimit,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "ピン留めページの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "トピック詳細の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	// 通常ページをページネーションで取得
-	paginatedResult, err := h.pageRepo.FindRegularByTopicPaginated(ctx, topic.ID, space.ID, currentPage, topicShowPageLimit)
-	if err != nil {
-		slog.ErrorContext(ctx, "通常ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if output == nil {
+		http.NotFound(w, r)
 		return
-	}
-
-	// トピックマップを構築（CardLinkPage用）
-	topicMap := map[model.TopicID]*model.Topic{
-		topic.ID: topic,
-	}
-
-	// ViewModelに変換
-	pinnedPageVMs := make([]viewmodel.CardLinkPage, len(pinnedPages))
-	for i, pg := range pinnedPages {
-		pinnedPageVMs[i] = viewmodel.NewCardLinkPage(pg, topicMap)
-	}
-
-	pageVMs := make([]viewmodel.CardLinkPage, len(paginatedResult.Pages))
-	for i, pg := range paginatedResult.Pages {
-		pageVMs[i] = viewmodel.NewCardLinkPage(pg, topicMap)
 	}
 
 	// 権限判定
-	canUpdate := canUpdateTopic(spaceMember, topicMember)
-	canCreatePage := canCreateTopicPage(spaceMember, topicMember)
+	canUpdate := canUpdateTopic(output.SpaceMember, output.TopicMember)
+	canCreatePage := canCreateTopicPage(output.SpaceMember, output.TopicMember)
 
-	topicVM := viewmodel.NewTopicForShow(topic, canUpdate, canCreatePage)
-	spaceVM := viewmodel.NewSpace(space)
-	pagination := viewmodel.NewPagination(int(currentPage), paginatedResult.TotalCount, topicShowPageLimit)
+	// ViewModelに変換
+	// トピック詳細画面ではトピック情報をカードに表示しないため、topicMapにnilを渡す
+	pinnedPageVMs := make([]viewmodel.CardLinkPage, len(output.PinnedPages))
+	for i, pg := range output.PinnedPages {
+		card := viewmodel.NewCardLinkPage(pg, nil)
+		card.CanEdit = canCreatePage
+		pinnedPageVMs[i] = card
+	}
+
+	pageVMs := make([]viewmodel.CardLinkPage, len(output.Pages))
+	for i, pg := range output.Pages {
+		card := viewmodel.NewCardLinkPage(pg, nil)
+		card.CanEdit = canCreatePage
+		pageVMs[i] = card
+	}
+
+	topicVM := viewmodel.NewTopicForShow(output.Topic, canUpdate, canCreatePage)
+	spaceVM := viewmodel.NewSpace(output.Space)
+	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, topicShowPageLimit)
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.Title = i18n.T(ctx, "topic_show_title", map[string]any{
-		"TopicName": topic.Name,
-		"SpaceName": space.Name,
+		"TopicName": output.Topic.Name,
+		"SpaceName": output.Space.Name,
 	}) + " | Wikino"
 
 	// フラッシュメッセージを取得

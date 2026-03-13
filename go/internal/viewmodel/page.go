@@ -77,11 +77,11 @@ func NewPageForMove(pg *model.Page) PageForMove {
 type CardLinkPage struct {
 	Title        string
 	Number       int32
-	TopicName    string
-	TopicIcon    IconName
+	Topic        *Topic
 	Pinned       bool
 	CardImageURL string
 	Primary      bool
+	CanEdit      bool
 }
 
 // NewCardLinkPage はmodel.Pageとトピック情報からカード用のビューモデルを生成します
@@ -91,11 +91,10 @@ func NewCardLinkPage(pg *model.Page, topicMap map[model.TopicID]*model.Topic) Ca
 		title = *pg.Title
 	}
 
-	var topicName string
-	var topicIcon IconName
+	var topicVM *Topic
 	if topic, ok := topicMap[pg.TopicID]; ok {
-		topicName = topic.Name
-		topicIcon = topicVisibilityIconName(topic.Visibility)
+		t := NewTopic(topic)
+		topicVM = &t
 	}
 
 	var cardImageURL string
@@ -106,8 +105,7 @@ func NewCardLinkPage(pg *model.Page, topicMap map[model.TopicID]*model.Topic) Ca
 	return CardLinkPage{
 		Title:        title,
 		Number:       int32(pg.Number),
-		TopicName:    topicName,
-		TopicIcon:    topicIcon,
+		Topic:        topicVM,
 		Pinned:       pg.PinnedAt != nil,
 		CardImageURL: cardImageURL,
 	}

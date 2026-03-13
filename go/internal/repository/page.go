@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
@@ -247,8 +245,8 @@ func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTa
 	}
 
 	var featuredImageAttachmentID *model.AttachmentID
-	if row.FeaturedImageAttachmentID.Valid {
-		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
 		featuredImageAttachmentID = &id
 	}
 
@@ -317,13 +315,10 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 		publishedAt = sql.NullTime{Time: *input.PublishedAt, Valid: true}
 	}
 
-	var featuredImageAttachmentID uuid.NullUUID
+	var featuredImageAttachmentID *string
 	if input.FeaturedImageAttachmentID != nil {
-		parsed, err := uuid.Parse(string(*input.FeaturedImageAttachmentID))
-		if err != nil {
-			return nil, err
-		}
-		featuredImageAttachmentID = uuid.NullUUID{UUID: parsed, Valid: true}
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
 	}
 
 	row, err := r.q.UpdatePage(ctx, query.UpdatePageParams{
@@ -502,8 +497,8 @@ func (r *PageRepository) toModel(row query.Page) *model.Page {
 	}
 
 	var featuredImageAttachmentID *model.AttachmentID
-	if row.FeaturedImageAttachmentID.Valid {
-		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
 		featuredImageAttachmentID = &id
 	}
 

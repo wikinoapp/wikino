@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestNew_WithPendingUser(t *testing.T) {
@@ -38,14 +39,13 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -115,14 +115,13 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,

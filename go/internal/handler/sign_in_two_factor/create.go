@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	twofactorpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -37,7 +38,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	// バリデーション（形式チェック + DB検証）
-	result := h.createValidator.Validate(ctx, CreateValidatorInput{
+	result := h.createValidator.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 		UserID:   pendingUserID,
 		TOTPCode: totpCode,
 	})
@@ -47,14 +48,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if result.Err != nil {
-		if errors.Is(result.Err, ErrTwoFactorNotEnabled) {
+		if errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
 			// 2FAが有効でない場合はログインページにリダイレクト
 			slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
 			h.sessionMgr.DeletePendingUserCookie(w)
 			http.Redirect(w, r, "/sign_in", http.StatusFound)
 			return
 		}
-		if errors.Is(result.Err, ErrInvalidTOTPCode) {
+		if errors.Is(result.Err, validator.ErrInvalidTOTPCode) {
 			// TOTPコードが無効
 			h.renderTwoFactorForm(w, r, result.FormErrors, csrfToken)
 			return

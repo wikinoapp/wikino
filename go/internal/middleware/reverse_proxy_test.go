@@ -460,9 +460,16 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 		WithToken("test-feature-flag-token").
 		BuildAndGetToken()
 
-	// フィーチャーフラグを作成
+	// ユーザー単位フラグを作成
 	testutil.NewFeatureFlagBuilder(t, tx).
 		WithUserID(userID).
+		WithName("go_settings").
+		Build()
+
+	// デバイス単位フラグを作成
+	deviceToken := "test-device-token-12345"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(deviceToken).
 		WithName("go_settings").
 		Build()
 
@@ -506,7 +513,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 
 	handler := m.Middleware(goHandler)
 
-	t.Run("フラグが有効なユーザーはGo版で処理される", func(t *testing.T) {
+	t.Run("user_idフラグが有効なユーザーはGo版で処理される", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  session.CookieName,
@@ -518,6 +525,24 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 
 		if rr.Header().Get("X-Go-Handled") != "true" {
 			t.Error("フラグが有効なユーザーのリクエストがGo版で処理されなかった")
+		}
+		if rr.Body.String() != "Go response" {
+			t.Errorf("レスポンスが期待と異なる: got %q want %q", rr.Body.String(), "Go response")
+		}
+	})
+
+	t.Run("device_tokenフラグが有効なデバイスはGo版で処理される", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  DeviceTokenCookieName,
+			Value: deviceToken,
+		})
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Go-Handled") != "true" {
+			t.Error("device_tokenフラグが有効なリクエストがGo版で処理されなかった")
 		}
 		if rr.Body.String() != "Go response" {
 			t.Errorf("レスポンスが期待と異なる: got %q want %q", rr.Body.String(), "Go response")
@@ -552,7 +577,22 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 		}
 	})
 
-	t.Run("Cookieがない場合はRails版に転送される", func(t *testing.T) {
+	t.Run("フラグが無効なdevice_tokenはRails版に転送される", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  DeviceTokenCookieName,
+			Value: "unknown-device-token",
+		})
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Header().Get("X-Rails-Handled") != "true" {
+			t.Error("フラグが無効なdevice_tokenのリクエストがRails版に転送されなかった")
+		}
+	})
+
+	t.Run("両方のCookieがない場合はRails版に転送される", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
 		rr := httptest.NewRecorder()
 
@@ -567,6 +607,10 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  session.CookieName,
+			Value: "",
+		})
+		req.AddCookie(&http.Cookie{
+			Name:  DeviceTokenCookieName,
 			Value: "",
 		})
 		rr := httptest.NewRecorder()
@@ -745,6 +789,88 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReverseProxyMiddleware_ensureDeviceToken(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		Domain:        "wikino.app",
+		CookieDomain:  "wikino.app",
+		SessionSecure: true,
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	t.Run("device_token Cookieがない場合は自動生成される", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+
+		m.ensureDeviceToken(rr, req)
+
+		cookies := rr.Result().Cookies()
+		var deviceCookie *http.Cookie
+		for _, c := range cookies {
+			if c.Name == DeviceTokenCookieName {
+				deviceCookie = c
+				break
+			}
+		}
+
+		if deviceCookie == nil {
+			t.Fatal("device_token Cookieが設定されていない")
+		}
+
+		if deviceCookie.Value == "" {
+			t.Error("device_token Cookieの値が空")
+		}
+
+		if !deviceCookie.HttpOnly {
+			t.Error("HttpOnlyが設定されていない")
+		}
+
+		if !deviceCookie.Secure {
+			t.Error("Secureが設定されていない")
+		}
+
+		if deviceCookie.SameSite != http.SameSiteLaxMode {
+			t.Errorf("SameSite = %v, want %v", deviceCookie.SameSite, http.SameSiteLaxMode)
+		}
+
+		if deviceCookie.Domain != "wikino.app" {
+			t.Errorf("Domain = %q, want %q", deviceCookie.Domain, "wikino.app")
+		}
+
+		expectedMaxAge := 10 * 365 * 24 * 60 * 60
+		if deviceCookie.MaxAge != expectedMaxAge {
+			t.Errorf("MaxAge = %d, want %d", deviceCookie.MaxAge, expectedMaxAge)
+		}
+	})
+
+	t.Run("device_token Cookieが既に存在する場合は生成しない", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  DeviceTokenCookieName,
+			Value: "existing-token",
+		})
+		rr := httptest.NewRecorder()
+
+		m.ensureDeviceToken(rr, req)
+
+		cookies := rr.Result().Cookies()
+		for _, c := range cookies {
+			if c.Name == DeviceTokenCookieName {
+				t.Error("既存のdevice_token Cookieがあるのに新しいCookieが設定された")
+			}
+		}
+	})
 }
 
 func TestRender502ErrorHTML(t *testing.T) {

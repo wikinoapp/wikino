@@ -12,6 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	accountpages "github.com/wikinoapp/wikino/go/internal/templates/pages/account"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -40,20 +41,20 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// バリデーション（形式チェック + 状態チェック）
-	result := h.createValidator.Validate(ctx, CreateValidatorInput{
+	result := h.createValidator.Validate(ctx, validator.AccountCreateValidatorInput{
 		EmailConfirmationID: emailConfirmationID,
 		Atname:              atname,
 		Password:            password,
 	})
 
 	// メール確認情報が見つからない場合
-	if result.Err != nil && errors.Is(result.Err, ErrEmailConfirmationNotFound) {
+	if result.Err != nil && errors.Is(result.Err, validator.ErrEmailConfirmationNotFound) {
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}
 
 	// メール確認が未完了の場合
-	if result.Err != nil && errors.Is(result.Err, ErrEmailNotConfirmed) {
+	if result.Err != nil && errors.Is(result.Err, validator.ErrEmailNotConfirmed) {
 		http.Redirect(w, r, "/email_confirmation/edit", http.StatusFound)
 		return
 	}

@@ -1,7 +1,6 @@
 package page_move
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagemovepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page_move"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -40,78 +40,30 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
+	// UseCaseでデータを取得
+	output, err := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページ移動データの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if space == nil {
+	if output == nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+	if !topicPolicy.CanUpdatePage(output.Page) {
 		http.NotFound(w, r)
 		return
 	}
 
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// 移動元トピックの権限チェック（CanUpdatePage）
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
-		http.NotFound(w, r)
-		return
-	}
-
-	// 現在のトピックを取得
-	currentTopic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if currentTopic == nil {
-		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// 移動先候補のトピック一覧を取得
-	availableTopics, err := h.availableTopicsForMove(ctx, spaceMember, space, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "移動先トピック一覧の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	h.renderMoveForm(w, r, user, spaceIdentifier, space, pg, currentTopic, availableTopics, nil)
+	h.renderMoveForm(w, r, user, spaceIdentifier, output, nil)
 }
 
 // renderMoveForm はページ移動フォームをレンダリングします
@@ -120,10 +72,7 @@ func (h *Handler) renderMoveForm(
 	r *http.Request,
 	user *model.User,
 	spaceIdentifier model.SpaceIdentifier,
-	space *model.Space,
-	pg *model.Page,
-	currentTopic *model.Topic,
-	availableTopics []*model.Topic,
+	output *usecase.GetPageMoveDataOutput,
 	formErrors *session.FormErrors,
 ) {
 	ctx := r.Context()
@@ -138,13 +87,13 @@ func (h *Handler) renderMoveForm(
 	// フラッシュメッセージを取得
 	flash := h.flashMgr.GetFlash(w, r)
 
-	pageVM := viewmodel.NewPageForMove(pg)
-	spaceVM := viewmodel.NewSpace(space)
-	currentTopicVM := viewmodel.NewTopic(currentTopic)
+	pageVM := viewmodel.NewPageForMove(output.Page)
+	spaceVM := viewmodel.NewSpace(output.Space)
+	currentTopicVM := viewmodel.NewTopic(output.CurrentTopic)
 
 	// 移動先トピック一覧のViewModel
-	topicsForSelect := make([]viewmodel.TopicForSelect, len(availableTopics))
-	for i, t := range availableTopics {
+	topicsForSelect := make([]viewmodel.TopicForSelect, len(output.AvailableTopics))
+	for i, t := range output.AvailableTopics {
 		topicsForSelect[i] = viewmodel.NewTopicForSelect(t)
 	}
 
@@ -185,40 +134,4 @@ func (h *Handler) renderMoveForm(
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-}
-
-// availableTopicsForMove は移動先候補のトピック一覧を取得します。
-// スペースオーナーは全アクティブトピック、それ以外は所属トピックのみ返します。
-// 現在のトピックは除外します。
-// スペースオーナーは同スペース内の全トピックにCanCreatePageが真であり、
-// 非オーナーはListJoinedBySpaceMemberが所属トピックのみを返すため、
-// いずれの場合もリスト取得の段階で権限が暗黙的に満たされています。
-func (h *Handler) availableTopicsForMove(
-	ctx context.Context,
-	spaceMember *model.SpaceMember,
-	space *model.Space,
-	currentTopicID model.TopicID,
-) ([]*model.Topic, error) {
-	var topics []*model.Topic
-	var err error
-
-	if spaceMember.Role == model.SpaceMemberRoleOwner {
-		topics, err = h.topicRepo.ListActiveBySpace(ctx, space.ID)
-	} else {
-		topics, err = h.topicRepo.ListJoinedBySpaceMember(ctx, spaceMember.ID, space.ID)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	// 現在のトピックを除外
-	var filtered []*model.Topic
-	for _, t := range topics {
-		if t.ID == currentTopicID {
-			continue
-		}
-		filtered = append(filtered, t)
-	}
-
-	return filtered, nil
 }

@@ -3,49 +3,40 @@ package page
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はページハンドラー
 type Handler struct {
-	cfg             *config.Config
-	flashMgr        *session.FlashManager
-	spaceRepo       *repository.SpaceRepository
-	spaceMemberRepo *repository.SpaceMemberRepository
-	pageRepo        *repository.PageRepository
-	draftPageRepo   *repository.DraftPageRepository
-	topicRepo       *repository.TopicRepository
-	topicMemberRepo *repository.TopicMemberRepository
-	publishPageUC   *usecase.PublishPageUsecase
-	sidebarHelper   *sidebar.Helper
+	cfg               *config.Config
+	flashMgr          *session.FlashManager
+	getPageDetailUC   *usecase.GetPageDetailUsecase
+	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
+	publishPageUC     *usecase.PublishPageUsecase
+	sidebarHelper     *sidebar.Helper
+	updateValidator   *validator.PageUpdateValidator
 }
 
 // NewHandler は新しいページハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
-	spaceRepo *repository.SpaceRepository,
-	spaceMemberRepo *repository.SpaceMemberRepository,
-	pageRepo *repository.PageRepository,
-	draftPageRepo *repository.DraftPageRepository,
-	topicRepo *repository.TopicRepository,
-	topicMemberRepo *repository.TopicMemberRepository,
+	getPageDetailUC *usecase.GetPageDetailUsecase,
+	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
 	sidebarHelper *sidebar.Helper,
+	updateValidator *validator.PageUpdateValidator,
 ) *Handler {
 	return &Handler{
-		cfg:             cfg,
-		flashMgr:        flashMgr,
-		spaceRepo:       spaceRepo,
-		spaceMemberRepo: spaceMemberRepo,
-		pageRepo:        pageRepo,
-		draftPageRepo:   draftPageRepo,
-		topicRepo:       topicRepo,
-		topicMemberRepo: topicMemberRepo,
-		publishPageUC:   publishPageUC,
-		sidebarHelper:   sidebarHelper,
+		cfg:               cfg,
+		flashMgr:          flashMgr,
+		getPageDetailUC:   getPageDetailUC,
+		getEditLinkDataUC: getEditLinkDataUC,
+		publishPageUC:     publishPageUC,
+		sidebarHelper:     sidebarHelper,
+		updateValidator:   updateValidator,
 	}
 }

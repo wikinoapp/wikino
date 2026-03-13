@@ -18,7 +18,7 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 	q := query.New(db)
 
 	// テストユーザーを作成
-	userID := testutil.NewUserBuilderDB(t, db).
+	_ = testutil.NewUserBuilderDB(t, db).
 		WithEmail("reset-test@example.com").
 		WithAtname("reset_test_user").
 		Build()
@@ -28,13 +28,13 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
+	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, inserter)
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
-		UserID: userID,
 		Email:  "reset-test@example.com",
 		Locale: "ja",
 	}
@@ -94,13 +94,13 @@ func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *
 		Domain: "wikino.app",
 	}
 
+	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, inserter)
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
-		UserID: userID,
 		Email:  "delete-existing@example.com",
 		Locale: "ja",
 	}
@@ -129,7 +129,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 	q := query.New(db)
 
 	// テストユーザーを作成
-	userID := testutil.NewUserBuilderDB(t, db).
+	_ = testutil.NewUserBuilderDB(t, db).
 		WithEmail("english-reset@example.com").
 		WithAtname("english_reset_user").
 		Build()
@@ -139,13 +139,13 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 		Domain: "wikino.app",
 	}
 
+	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, inserter)
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "en")
 	input := CreatePasswordResetTokenInput{
-		UserID: userID,
 		Email:  "english-reset@example.com",
 		Locale: "en",
 	}
@@ -174,7 +174,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 	q := query.New(db)
 
 	// テストユーザーを作成
-	userID := testutil.NewUserBuilderDB(t, db).
+	_ = testutil.NewUserBuilderDB(t, db).
 		WithEmail("hash-test@example.com").
 		WithAtname("hash_test_user").
 		Build()
@@ -184,13 +184,13 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 		Domain: "wikino.app",
 	}
 
+	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, inserter)
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
-		UserID: userID,
 		Email:  "hash-test@example.com",
 		Locale: "ja",
 	}

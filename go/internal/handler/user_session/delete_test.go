@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 func TestDelete_Success(t *testing.T) {
@@ -41,9 +42,10 @@ func TestDelete_Success(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// リポジトリを初期化
+	// リポジトリとUseCaseを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -54,7 +56,7 @@ func TestDelete_Success(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userSessionRepo,
+		deleteUserSessionUC,
 	)
 
 	// セッションCookieを設定したリクエストを作成
@@ -133,9 +135,10 @@ func TestDelete_NoSession(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// リポジトリを初期化
+	// リポジトリとUseCaseを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -146,7 +149,7 @@ func TestDelete_NoSession(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userSessionRepo,
+		deleteUserSessionUC,
 	)
 
 	// セッションCookieなしでリクエスト
@@ -197,9 +200,10 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// リポジトリを初期化
+	// リポジトリとUseCaseを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
+	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -210,7 +214,7 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userSessionRepo,
+		deleteUserSessionUC,
 	)
 
 	// 存在しないセッショントークンでリクエスト

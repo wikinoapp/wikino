@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 )
 
 const isFeatureFlagEnabled = `-- name: IsFeatureFlagEnabled :one
@@ -17,8 +18,8 @@ SELECT EXISTS(
 `
 
 type IsFeatureFlagEnabledParams struct {
-	UserID string `json:"user_id"`
-	Name   string `json:"name"`
+	UserID *string `json:"user_id"`
+	Name   string  `json:"name"`
 }
 
 // 指定ユーザーに対してフィーチャーフラグが有効かどうかを返す
@@ -29,22 +30,28 @@ func (q *Queries) IsFeatureFlagEnabled(ctx context.Context, arg IsFeatureFlagEna
 	return exists, err
 }
 
-const isFeatureFlagEnabledBySessionToken = `-- name: IsFeatureFlagEnabledBySessionToken :one
+const isFeatureFlagEnabledForDevice = `-- name: IsFeatureFlagEnabledForDevice :one
 SELECT EXISTS(
     SELECT 1 FROM feature_flags ff
-    INNER JOIN user_sessions us ON ff.user_id = us.user_id
-    WHERE us.token = $1 AND ff.name = $2
+    WHERE ff.name = $3
+    AND (
+        (ff.device_token IS NOT NULL AND ff.device_token = $1)
+        OR (ff.user_id IS NOT NULL AND ff.user_id = (
+            SELECT us.user_id FROM user_sessions us WHERE us.token = $2
+        ))
+    )
 )
 `
 
-type IsFeatureFlagEnabledBySessionTokenParams struct {
-	Token string `json:"token"`
-	Name  string `json:"name"`
+type IsFeatureFlagEnabledForDeviceParams struct {
+	DeviceToken sql.NullString `json:"device_token"`
+	Token       string         `json:"token"`
+	Name        string         `json:"name"`
 }
 
-// セッショントークンからユーザーを特定し、フィーチャーフラグが有効かどうかを返す
-func (q *Queries) IsFeatureFlagEnabledBySessionToken(ctx context.Context, arg IsFeatureFlagEnabledBySessionTokenParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isFeatureFlagEnabledBySessionToken, arg.Token, arg.Name)
+// デバイストークンまたはセッショントークン経由のuser_idでフラグが有効かを判定する
+func (q *Queries) IsFeatureFlagEnabledForDevice(ctx context.Context, arg IsFeatureFlagEnabledForDeviceParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isFeatureFlagEnabledForDevice, arg.DeviceToken, arg.Token, arg.Name)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
