@@ -17,6 +17,12 @@ sql:
           # UUID型をstringとして扱う
           - db_type: "uuid"
             go_type: "string"
+          # nullable UUID型を*stringとして扱う
+          - db_type: "uuid"
+            go_type:
+              type: "string"
+              pointer: true
+            nullable: true
           # citext型をstringとして扱う（public.citext）
           - db_type: "public.citext"
             go_type: "string"
