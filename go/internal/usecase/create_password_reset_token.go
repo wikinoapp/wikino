@@ -18,6 +18,7 @@ import (
 type CreatePasswordResetTokenUsecase struct {
 	cfg                    *config.Config
 	db                     *sql.DB
+	userRepo               *repository.UserRepository
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository
 	inserter               JobInserter
 }
@@ -26,12 +27,14 @@ type CreatePasswordResetTokenUsecase struct {
 func NewCreatePasswordResetTokenUsecase(
 	cfg *config.Config,
 	db *sql.DB,
+	userRepo *repository.UserRepository,
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository,
 	inserter JobInserter,
 ) *CreatePasswordResetTokenUsecase {
 	return &CreatePasswordResetTokenUsecase{
 		cfg:                    cfg,
 		db:                     db,
+		userRepo:               userRepo,
 		passwordResetTokenRepo: passwordResetTokenRepo,
 		inserter:               inserter,
 	}
@@ -39,7 +42,6 @@ func NewCreatePasswordResetTokenUsecase(
 
 // CreatePasswordResetTokenInput はパスワードリセットトークン作成の入力パラメータ
 type CreatePasswordResetTokenInput struct {
-	UserID model.UserID
 	Email  string
 	Locale string
 }
@@ -49,8 +51,18 @@ type CreatePasswordResetTokenOutput struct {
 	TokenID string
 }
 
-// Execute はパスワードリセットトークンを生成し、メール送信ジョブをエンキューする
+// Execute はパスワードリセットトークンを生成し、メール送信ジョブをエンキューする。
+// ユーザーが存在しない場合は nil を返す（セキュリティ対策: ユーザーの存在を明かさない）。
 func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input CreatePasswordResetTokenInput) (*CreatePasswordResetTokenOutput, error) {
+	// ユーザーを検索
+	user, err := uc.userRepo.FindByEmail(ctx, input.Email)
+	if err != nil {
+		return nil, fmt.Errorf("ユーザーの検索に失敗しました: %w", err)
+	}
+	if user == nil {
+		return nil, nil
+	}
+
 	// トランザクションを開始
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -64,7 +76,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 	tokenRepo := uc.passwordResetTokenRepo.WithTx(tx)
 
 	// 既存の未使用トークンを削除
-	if err := tokenRepo.DeleteUnusedByUserID(ctx, input.UserID); err != nil {
+	if err := tokenRepo.DeleteUnusedByUserID(ctx, user.ID); err != nil {
 		return nil, fmt.Errorf("既存トークンの削除に失敗しました: %w", err)
 	}
 
@@ -80,7 +92,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 	// トークンをDBに保存
 	expiresAt := time.Now().Add(model.PasswordResetTokenExpirationDuration)
 	token, err := tokenRepo.Create(ctx, repository.CreatePasswordResetTokenInput{
-		UserID:      input.UserID,
+		UserID:      user.ID,
 		TokenDigest: tokenDigest,
 		ExpiresAt:   expiresAt,
 	})
@@ -98,7 +110,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 
 	// メール送信ジョブをエンキュー
 	_, err = uc.inserter.Insert(ctx, worker.SendPasswordResetArgs{
-		Email:    input.Email,
+		Email:    user.Email,
 		ResetURL: resetURL,
 		AppURL:   uc.cfg.AppURL(),
 		Locale:   input.Locale,

@@ -19,6 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -43,52 +44,25 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
+	// UseCaseでデータを取得
+	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if space == nil {
+	if output == nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// トピックメンバーを取得してTopicPolicyを生成
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+	if !topicPolicy.CanUpdatePage(output.Page) {
 		http.NotFound(w, r)
 		return
 	}
@@ -98,38 +72,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	body := r.FormValue("body")
 
 	// バリデーション
-	validator := NewUpdateValidator(h.pageRepo)
-	validationResult := validator.Validate(ctx, UpdateValidatorInput{
+	validationResult := h.updateValidator.Validate(ctx, validator.PageUpdateValidatorInput{
 		Title:           title,
-		PageID:          pg.ID,
-		TopicID:         pg.TopicID,
-		SpaceID:         space.ID,
+		PageID:          output.Page.ID,
+		TopicID:         output.Page.TopicID,
+		SpaceID:         output.Space.ID,
 		SpaceIdentifier: spaceIdentifier,
 	})
 
 	if validationResult.FormErrors.HasErrors() {
-		h.renderEditWithErrors(w, r, spaceIdentifier, space, pg, spaceMember, title, body, validationResult.FormErrors)
-		return
-	}
-
-	// トピックを取得（UseCase入力用）
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if topic == nil {
-		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// DraftPageを取得（存在する場合はIDが必要）
-	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.renderEditWithErrors(w, r, spaceIdentifier, output, title, body, validationResult.FormErrors)
 		return
 	}
 
@@ -141,19 +93,19 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// ページ公開ユースケースを実行
 	input := usecase.PublishPageInput{
-		SpaceID:          space.ID,
-		PageID:           pg.ID,
-		SpaceMemberID:    spaceMember.ID,
-		TopicID:          pg.TopicID,
+		SpaceID:          output.Space.ID,
+		PageID:           output.Page.ID,
+		SpaceMemberID:    output.SpaceMember.ID,
+		TopicID:          output.Page.TopicID,
 		Title:            titlePtr,
 		Body:             body,
 		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: topic.Name,
+		CurrentTopicName: output.Topic.Name,
 	}
 
 	// DraftPageが存在する場合はDraftPageIDを設定
-	if draftPage != nil {
-		input.DraftPageID = draftPage.ID
+	if output.DraftPage != nil {
+		input.DraftPageID = output.DraftPage.ID
 	}
 
 	_, err = h.publishPageUC.Execute(ctx, input)
@@ -165,7 +117,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_saved"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), pg.Number)
+	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), output.Page.Number)
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
 }
 
@@ -174,54 +126,35 @@ func (h *Handler) renderEditWithErrors(
 	w http.ResponseWriter,
 	r *http.Request,
 	spaceIdentifier model.SpaceIdentifier,
-	space *model.Space,
-	pg *model.Page,
-	spaceMember *model.SpaceMember,
+	output *usecase.GetPageDetailOutput,
 	title string,
 	body string,
 	formErrors *session.FormErrors,
 ) {
 	ctx := r.Context()
 
-	// トピックを取得（パンくずリスト用）
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if topic == nil {
-		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	// ViewModelを生成
-	pageVM := viewmodel.NewPageFromFormInput(title, body, pg.Number)
-	spaceVM := viewmodel.NewSpace(space)
-	topicVM := viewmodel.NewTopic(topic)
+	pageVM := viewmodel.NewPageFromFormInput(title, body, output.Page.Number)
+	spaceVM := viewmodel.NewSpace(output.Space)
+	topicVM := viewmodel.NewTopic(output.Topic)
 
-	// リンク一覧を取得（DraftPage存在時はDraftPageのLinkedPageIDs、なければPageのLinkedPageIDs）
-	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	var linkedPageIDs []model.PageID
-	if draftPage != nil {
-		linkedPageIDs = draftPage.LinkedPageIDs
-	} else {
-		linkedPageIDs = pg.LinkedPageIDs
-	}
-
-	linkResult, err := h.fetchEditLinkData(ctx, linkedPageIDs, pg, space, spaceIdentifier)
+	// リンクデータを取得
+	linkData, err := h.getEditLinkDataUC.Execute(ctx, usecase.GetEditLinkDataInput{
+		Page:              output.Page,
+		DraftPage:         output.DraftPage,
+		SpaceID:           output.Space.ID,
+		CurrentPage:       1,
+		LinkLimit:         viewmodel.LinkLimit,
+		BacklinkLimit:     viewmodel.BacklinkLimit,
+		PageBacklinkLimit: viewmodel.PageBacklinkLimit,
+	})
 	if err != nil {
 		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	linkResult := buildEditLinkResult(linkData, spaceIdentifier, 1, output.Page)
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -238,7 +171,7 @@ func (h *Handler) renderEditWithErrors(
 		Topic:         topicVM,
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(pg.Number))),
+		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(output.Page.Number))),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)
@@ -260,6 +193,11 @@ func (h *Handler) renderEditWithErrors(
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
+		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        currentUser != nil,
+			SpaceIdentifier: string(spaceIdentifier),
 		},
 	}
 

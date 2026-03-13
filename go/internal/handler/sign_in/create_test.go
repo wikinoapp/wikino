@@ -16,6 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // mockTurnstileVerifier はテスト用のTurnstile検証モック
@@ -76,17 +77,17 @@ func TestCreate_Success(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// フォームデータを作成
@@ -180,17 +181,17 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// 無効なメールアドレスでリクエスト
@@ -270,17 +271,17 @@ func TestCreate_WrongPassword(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// 間違ったパスワードでリクエスト
@@ -349,17 +350,17 @@ func TestCreate_UserNotFound(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// 存在しないユーザーでリクエスト
@@ -428,17 +429,17 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	// モックTurnstileを初期化（常に失敗）
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// リクエスト
@@ -556,17 +557,17 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			// モックTurnstileを初期化（常に成功）
 			mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+			// バリデーターを初期化
+			signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 			// ハンドラーを初期化
 			handler := sign_in.NewHandler(
 				cfg,
 				sessionMgr,
 				flashMgr,
-				userRepo,
-				userPasswordRepo,
-				userSessionRepo,
-				userTwoFactorAuthRepo,
 				createUserSessionUC,
 				mockTurnstile,
+				signInValidator,
 			)
 
 			// フォームデータを作成
@@ -636,17 +637,17 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	// ハンドラーを初期化
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// 無効なメールアドレスでリクエスト（backパラメータ付き）

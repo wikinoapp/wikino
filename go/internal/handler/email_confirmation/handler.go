@@ -4,10 +4,10 @@ package email_confirmation
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はメール確認ハンドラー
@@ -17,8 +17,8 @@ type Handler struct {
 	flashMgr                *session.FlashManager
 	sendEmailConfirmationUC *usecase.SendEmailConfirmationUsecase
 	markEmailAsConfirmedUC  *usecase.MarkEmailAsConfirmedUsecase
-	createValidator         *CreateValidator
-	updateValidator         *UpdateValidator
+	createValidator         *validator.EmailConfirmationCreateValidator
+	updateValidator         *validator.EmailConfirmationUpdateValidator
 	turnstileVerifier       turnstile.Verifier
 	limiter                 *ratelimit.Limiter
 }
@@ -28,10 +28,10 @@ func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
 	flashMgr *session.FlashManager,
-	userRepo *repository.UserRepository,
-	emailConfirmationRepo *repository.EmailConfirmationRepository,
 	sendEmailConfirmationUC *usecase.SendEmailConfirmationUsecase,
 	markEmailAsConfirmedUC *usecase.MarkEmailAsConfirmedUsecase,
+	createValidator *validator.EmailConfirmationCreateValidator,
+	updateValidator *validator.EmailConfirmationUpdateValidator,
 	turnstileVerifier turnstile.Verifier,
 	limiter *ratelimit.Limiter,
 ) *Handler {
@@ -41,8 +41,8 @@ func NewHandler(
 		flashMgr:                flashMgr,
 		sendEmailConfirmationUC: sendEmailConfirmationUC,
 		markEmailAsConfirmedUC:  markEmailAsConfirmedUC,
-		createValidator:         NewCreateValidator(userRepo),
-		updateValidator:         NewUpdateValidator(emailConfirmationRepo),
+		createValidator:         createValidator,
+		updateValidator:         updateValidator,
 		turnstileVerifier:       turnstileVerifier,
 		limiter:                 limiter,
 	}

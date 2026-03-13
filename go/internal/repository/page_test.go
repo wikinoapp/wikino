@@ -101,6 +101,244 @@ func TestPageRepository_FindBySpaceAndNumber(t *testing.T) {
 	})
 }
 
+func TestPageRepository_FindPinnedByTopic(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pinned-topic").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// ピン留めページ2件（pinned_at DESCでソートされることを検証）
+	pinnedID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Pinned Old").
+		WithPinnedAt(baseTime).
+		Build()
+
+	pinnedID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Pinned New").
+		WithPinnedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	// 通常ページ（ピン留めなし）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Regular Page").
+		Build()
+
+	// 非公開ページ（ピン留めあり）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Unpublished Pinned").
+		WithPinnedAt(baseTime.Add(2 * time.Hour)).
+		WithUnpublished().
+		Build()
+
+	// 廃棄済みページ（ピン留めあり）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("Discarded Pinned").
+		WithPinnedAt(baseTime.Add(3 * time.Hour)).
+		WithDiscarded().
+		Build()
+
+	// ゴミ箱ページ（ピン留めあり）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(6).
+		WithTitle("Trashed Pinned").
+		WithPinnedAt(baseTime.Add(4 * time.Hour)).
+		WithTrashed().
+		Build()
+
+	t.Run("ピン留めページをpinned_at DESCで取得できる", func(t *testing.T) {
+		pages, err := repo.FindPinnedByTopic(context.Background(), topicID, spaceID)
+		if err != nil {
+			t.Fatalf("FindPinnedByTopic() error = %v", err)
+		}
+		if len(pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(pages))
+		}
+		// pinned_at DESC でソートされるため、新しい順
+		if pages[0].ID != pinnedID2 {
+			t.Errorf("pages[0].ID = %v, want %v", pages[0].ID, pinnedID2)
+		}
+		if pages[1].ID != pinnedID1 {
+			t.Errorf("pages[1].ID = %v, want %v", pages[1].ID, pinnedID1)
+		}
+	})
+
+	t.Run("別トピックのピン留めページは取得されない", func(t *testing.T) {
+		otherTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(2).
+			WithName("Other").
+			Build()
+
+		pages, err := repo.FindPinnedByTopic(context.Background(), otherTopicID, spaceID)
+		if err != nil {
+			t.Fatalf("FindPinnedByTopic() error = %v", err)
+		}
+		if len(pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(pages))
+		}
+	})
+}
+
+func TestPageRepository_FindRegularByTopicPaginated(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-regular-topic").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// 通常ページ3件（modified_at DESCでソートされることを検証）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Regular Old").
+		WithModifiedAt(baseTime).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Regular Middle").
+		WithModifiedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Regular New").
+		WithModifiedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// ピン留めページ（通常ページには含まれない）
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Pinned Page").
+		WithPinnedAt(baseTime).
+		Build()
+
+	// 非公開ページ
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("Unpublished").
+		WithUnpublished().
+		Build()
+
+	// 廃棄済みページ
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(6).
+		WithTitle("Discarded").
+		WithDiscarded().
+		Build()
+
+	// ゴミ箱ページ
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(7).
+		WithTitle("Trashed").
+		WithTrashed().
+		Build()
+
+	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindRegularByTopicPaginated(context.Background(), topicID, spaceID, 1, 2)
+		if err != nil {
+			t.Fatalf("FindRegularByTopicPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		// modified_at DESC でソートされるため、新しい順
+		if *result.Pages[0].Title != "Regular New" {
+			t.Errorf("pages[0].Title = %v, want 'Regular New'", *result.Pages[0].Title)
+		}
+		if *result.Pages[1].Title != "Regular Middle" {
+			t.Errorf("pages[1].Title = %v, want 'Regular Middle'", *result.Pages[1].Title)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
+		result, err := repo.FindRegularByTopicPaginated(context.Background(), topicID, spaceID, 2, 2)
+		if err != nil {
+			t.Fatalf("FindRegularByTopicPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if *result.Pages[0].Title != "Regular Old" {
+			t.Errorf("pages[0].Title = %v, want 'Regular Old'", *result.Pages[0].Title)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("ピン留め・非公開・廃棄済み・ゴミ箱ページは含まれない", func(t *testing.T) {
+		result, err := repo.FindRegularByTopicPaginated(context.Background(), topicID, spaceID, 1, 100)
+		if err != nil {
+			t.Fatalf("FindRegularByTopicPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 3 {
+			t.Errorf("len(pages) = %d, want 3", len(result.Pages))
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+}
+
 func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	t.Parallel()
 

@@ -1,8 +1,6 @@
 package page
 
 import (
-	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,11 +10,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -41,97 +39,50 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
+	// UseCaseでデータを取得
+	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if space == nil {
+	if output == nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+	if !topicPolicy.CanUpdatePage(output.Page) {
 		http.NotFound(w, r)
 		return
 	}
 
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// トピックメンバーを取得してTopicPolicyを生成
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
-		http.NotFound(w, r)
-		return
-	}
-
-	// トピックを取得（パンくずリスト用）
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if topic == nil {
-		slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicVM := viewmodel.NewTopic(topic)
-
-	// DraftPageを取得（存在すればその内容を表示）
-	draftPage, err := h.draftPageRepo.FindByPageAndMember(ctx, pg.ID, spaceMember.ID, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "下書きの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// 編集画面用のページViewModelを生成
-	pageVM := viewmodel.NewPageForEdit(pg, draftPage)
-
-	// リンク一覧を取得（DraftPage存在時はDraftPageのLinkedPageIDs、なければPageのLinkedPageIDs）
-	var linkedPageIDs []model.PageID
-	if draftPage != nil {
-		linkedPageIDs = draftPage.LinkedPageIDs
-	} else {
-		linkedPageIDs = pg.LinkedPageIDs
-	}
-
-	linkResult, err := h.fetchEditLinkData(ctx, linkedPageIDs, pg, space, spaceIdentifier)
+	// 編集画面用のリンクデータを取得
+	linkData, err := h.getEditLinkDataUC.Execute(ctx, usecase.GetEditLinkDataInput{
+		Page:              output.Page,
+		DraftPage:         output.DraftPage,
+		SpaceID:           output.Space.ID,
+		CurrentPage:       1,
+		LinkLimit:         viewmodel.LinkLimit,
+		BacklinkLimit:     viewmodel.BacklinkLimit,
+		PageBacklinkLimit: viewmodel.PageBacklinkLimit,
+	})
 	if err != nil {
 		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	linkResult := buildEditLinkResult(linkData, spaceIdentifier, 1, output.Page)
+
+	// 編集画面用のページViewModelを生成
+	pageVM := viewmodel.NewPageForEdit(output.Page, output.DraftPage)
+	topicVM := viewmodel.NewTopic(output.Topic)
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -144,7 +95,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	flash := h.flashMgr.GetFlash(w, r)
 
 	// テンプレートをレンダリング
-	spaceVM := viewmodel.NewSpace(space)
+	spaceVM := viewmodel.NewSpace(output.Space)
 
 	content := pagepages.Edit(pagepages.EditPageData{
 		CSRFToken:     csrfToken,
@@ -153,7 +104,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		Topic:         topicVM,
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPageRevisionPath(space.Identifier.String(), int32(pg.Number))),
+		ManualSaveURL: string(templates.PageDraftPageRevisionPath(spaceIdentifier.String(), int32(output.Page.Number))),
 	})
 
 	// サイドバーコンテンツを取得
@@ -172,6 +123,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        true,
+			SpaceIdentifier: string(spaceIdentifier),
+		},
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)
@@ -188,80 +144,30 @@ type editLinkResult struct {
 	BacklinkList viewmodel.BacklinkList
 }
 
-// fetchEditLinkData はリンク一覧・バックリンク一覧のデータを取得してViewModelを構築します
-func (h *Handler) fetchEditLinkData(
-	ctx context.Context,
-	linkedPageIDs []model.PageID,
-	pg *model.Page,
-	space *model.Space,
-	spaceIdentifier model.SpaceIdentifier,
-) (*editLinkResult, error) {
-	var paginatedLinks *repository.PaginatedPages
-	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
-	if len(linkedPageIDs) > 0 {
-		var err error
-		paginatedLinks, err = h.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, space.ID, 1, viewmodel.LinkLimit)
-		if err != nil {
-			return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
-		}
-
-		excludePageIDs := viewmodel.BuildExcludePageIDs(pg.ID, paginatedLinks.Pages)
-
-		backlinkPaginatedMap, err = h.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, space.ID, viewmodel.BacklinkLimit, excludePageIDs)
-		if err != nil {
-			return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
-		}
-	}
-
-	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, 1, viewmodel.PageBacklinkLimit, nil)
-	if err != nil {
-		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
-	}
-
-	var allPageSlices [][]*model.Page
-	if paginatedLinks != nil {
-		allPageSlices = append(allPageSlices, paginatedLinks.Pages)
-	}
-	for _, paginated := range backlinkPaginatedMap {
-		allPageSlices = append(allPageSlices, paginated.Pages)
-	}
-	allPageSlices = append(allPageSlices, paginatedBacklinks.Pages)
-
-	topicIDs := viewmodel.CollectTopicIDsFromPages(allPageSlices...)
-	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
-	if err != nil {
-		return nil, fmt.Errorf("トピックの一括取得に失敗: %w", err)
-	}
-
-	var linkedPages []*model.Page
-	var linkedTotalCount int64
-	if paginatedLinks != nil {
-		linkedPages = paginatedLinks.Pages
-		linkedTotalCount = paginatedLinks.TotalCount
-	}
-
-	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(backlinkPaginatedMap))
-	for pageID, paginated := range backlinkPaginatedMap {
+// buildEditLinkResult はUseCaseのリンクデータ出力をViewModelに変換します
+func buildEditLinkResult(linkData *usecase.GetEditLinkDataOutput, spaceIdentifier model.SpaceIdentifier, currentPage int32, pg *model.Page) *editLinkResult {
+	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(linkData.BacklinksPerPage))
+	for pageID, backlinks := range linkData.BacklinksPerPage {
 		backlinksPerPage[pageID] = &viewmodel.PageSliceWithCount{
-			Pages:      paginated.Pages,
-			TotalCount: paginated.TotalCount,
+			Pages:      backlinks.Pages,
+			TotalCount: backlinks.TotalCount,
 		}
 	}
 
 	editLinkData := viewmodel.BuildEditLinkData(viewmodel.BuildEditLinkDataInput{
-		LinkedPages:       linkedPages,
-		LinkedTotalCount:  linkedTotalCount,
+		LinkedPages:       linkData.LinkedPages,
+		LinkedTotalCount:  linkData.LinkedTotalCount,
 		BacklinksPerPage:  backlinksPerPage,
-		PageBacklinks:     paginatedBacklinks.Pages,
-		PageBacklinkCount: paginatedBacklinks.TotalCount,
-		Topics:            topics,
+		PageBacklinks:     linkData.PageBacklinks,
+		PageBacklinkCount: linkData.PageBacklinkCount,
+		Topics:            linkData.LinkTopics,
 		SpaceIdentifier:   spaceIdentifier,
 		PageNumber:        int32(pg.Number),
-		CurrentPage:       1,
+		CurrentPage:       currentPage,
 	})
 
 	return &editLinkResult{
 		LinkList:     editLinkData.LinkList,
 		BacklinkList: editLinkData.BacklinkList,
-	}, nil
+	}
 }

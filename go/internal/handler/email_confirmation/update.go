@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	emailconfirmationpages "github.com/wikinoapp/wikino/go/internal/templates/pages/email_confirmation"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -36,7 +37,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	// バリデーション（形式チェック + 状態チェック）
-	result := h.updateValidator.Validate(ctx, UpdateValidatorInput{
+	result := h.updateValidator.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: emailConfirmationID,
 		Code:                code,
 	})
@@ -49,19 +50,19 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if result.Err != nil {
 		switch {
-		case errors.Is(result.Err, ErrEmailConfirmationNotFound):
+		case errors.Is(result.Err, validator.ErrEmailConfirmationNotFound):
 			slog.WarnContext(ctx, "メール確認情報が見つからない", "email_confirmation_id", emailConfirmationID)
 			h.renderEditForm(w, r, result.FormErrors, csrfToken)
 			return
-		case errors.Is(result.Err, ErrEmailConfirmationAlreadySucceeded):
+		case errors.Is(result.Err, validator.ErrEmailConfirmationAlreadySucceeded):
 			slog.WarnContext(ctx, "既に確認済み", "email_confirmation_id", emailConfirmationID)
 			http.Redirect(w, r, "/accounts/new", http.StatusFound)
 			return
-		case errors.Is(result.Err, ErrEmailConfirmationExpired):
+		case errors.Is(result.Err, validator.ErrEmailConfirmationExpired):
 			slog.WarnContext(ctx, "確認コードの有効期限切れ", "email_confirmation_id", emailConfirmationID)
 			h.renderEditForm(w, r, result.FormErrors, csrfToken)
 			return
-		case errors.Is(result.Err, ErrEmailConfirmationCodeMismatch):
+		case errors.Is(result.Err, validator.ErrEmailConfirmationCodeMismatch):
 			slog.WarnContext(ctx, "確認コードが一致しない", "email_confirmation_id", emailConfirmationID)
 			h.renderEditForm(w, r, result.FormErrors, csrfToken)
 			return

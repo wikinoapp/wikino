@@ -257,9 +257,11 @@ CREATE TABLE public.exports (
 
 CREATE TABLE public.feature_flags (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
-    user_id uuid NOT NULL,
+    user_id uuid,
     name character varying NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    device_token character varying,
+    CONSTRAINT chk_feature_flags_identifier CHECK (((device_token IS NOT NULL) OR (user_id IS NOT NULL)))
 );
 
 
@@ -513,6 +515,25 @@ CREATE TABLE public.spaces (
 
 
 --
+-- Name: suggestions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.suggestions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    topic_id uuid NOT NULL,
+    created_space_member_id uuid NOT NULL,
+    title character varying NOT NULL,
+    body character varying NOT NULL,
+    body_html character varying NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    applied_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: topic_members; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -698,6 +719,14 @@ ALTER TABLE ONLY public.exports
 
 
 --
+-- Name: feature_flags feature_flags_device_token_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feature_flags
+    ADD CONSTRAINT feature_flags_device_token_name_key UNIQUE (device_token, name);
+
+
+--
 -- Name: feature_flags feature_flags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -842,6 +871,14 @@ ALTER TABLE ONLY public.spaces
 
 
 --
+-- Name: suggestions suggestions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestions
+    ADD CONSTRAINT suggestions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: topic_members topic_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -889,6 +926,13 @@ CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at ON public.draft_p
 
 
 --
+-- Name: idx_feature_flags_device_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feature_flags_device_token ON public.feature_flags USING btree (device_token);
+
+
+--
 -- Name: idx_feature_flags_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -928,6 +972,27 @@ CREATE INDEX idx_rate_limits_key_window_start ON public.rate_limits USING btree 
 --
 
 CREATE INDEX idx_rate_limits_window_start ON public.rate_limits USING btree (window_start);
+
+
+--
+-- Name: idx_suggestions_created_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestions_created_space_member_id ON public.suggestions USING btree (created_space_member_id);
+
+
+--
+-- Name: idx_suggestions_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestions_space_id ON public.suggestions USING btree (space_id);
+
+
+--
+-- Name: idx_suggestions_topic_id_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestions_topic_id_status ON public.suggestions USING btree (topic_id, status);
 
 
 --
@@ -1733,6 +1798,30 @@ ALTER TABLE ONLY public.river_client_queue
 
 
 --
+-- Name: suggestions suggestions_created_space_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestions
+    ADD CONSTRAINT suggestions_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
+
+
+--
+-- Name: suggestions suggestions_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestions
+    ADD CONSTRAINT suggestions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: suggestions suggestions_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestions
+    ADD CONSTRAINT suggestions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -1772,4 +1861,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260202160000'),
     ('20260204160000'),
     ('20260301154347'),
-    ('20260305154013');
+    ('20260305154013'),
+    ('20260313062541'),
+    ('20260313091316');

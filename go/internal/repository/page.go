@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
@@ -42,6 +40,45 @@ func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// FindPinnedByTopic はトピック内のピン留めページを取得する（公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート）
+func (r *PageRepository) FindPinnedByTopic(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]*model.Page, error) {
+	rows, err := r.q.FindPinnedPagesByTopic(ctx, query.FindPinnedPagesByTopicParams{
+		TopicID: string(topicID),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// FindRegularByTopicPaginated はトピック内の通常ページをオフセットページネーションで取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+func (r *PageRepository) FindRegularByTopicPaginated(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+	totalCount, err := r.q.CountRegularPagesByTopic(ctx, query.CountRegularPagesByTopicParams{
+		TopicID: string(topicID),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.q.FindRegularPagesByTopicPaginated(ctx, query.FindRegularPagesByTopicPaginatedParams{
+		TopicID: string(topicID),
+		SpaceID: string(spaceID),
+		Limit:   limit,
+		Offset:  offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
 }
 
 // FindLinkedPagesPaginated はリンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
@@ -208,8 +245,8 @@ func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTa
 	}
 
 	var featuredImageAttachmentID *model.AttachmentID
-	if row.FeaturedImageAttachmentID.Valid {
-		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
 		featuredImageAttachmentID = &id
 	}
 
@@ -278,13 +315,10 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 		publishedAt = sql.NullTime{Time: *input.PublishedAt, Valid: true}
 	}
 
-	var featuredImageAttachmentID uuid.NullUUID
+	var featuredImageAttachmentID *string
 	if input.FeaturedImageAttachmentID != nil {
-		parsed, err := uuid.Parse(string(*input.FeaturedImageAttachmentID))
-		if err != nil {
-			return nil, err
-		}
-		featuredImageAttachmentID = uuid.NullUUID{UUID: parsed, Valid: true}
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
 	}
 
 	row, err := r.q.UpdatePage(ctx, query.UpdatePageParams{
@@ -463,8 +497,8 @@ func (r *PageRepository) toModel(row query.Page) *model.Page {
 	}
 
 	var featuredImageAttachmentID *model.AttachmentID
-	if row.FeaturedImageAttachmentID.Valid {
-		id := model.AttachmentID(row.FeaturedImageAttachmentID.UUID.String())
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
 		featuredImageAttachmentID = &id
 	}
 

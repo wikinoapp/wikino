@@ -10,6 +10,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // writeJSONError はJSON形式のエラーレスポンスを返す
@@ -43,44 +44,28 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	// URLパラメータを取得
 	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
-		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if space == nil {
-		writeJSONError(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// アクティブなスペースメンバーか確認
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		writeJSONError(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
 	// 検索キーワードを取得
 	q := r.URL.Query().Get("q")
 
-	// ページロケーションを検索
-	locations, err := h.pageRepo.SearchPageLocations(ctx, space.ID, q)
+	// UseCaseを実行
+	output, err := h.getPageLocationsUC.Execute(ctx, usecase.GetPageLocationsInput{
+		SpaceIdentifier: spaceIdentifier,
+		UserID:          user.ID,
+		Query:           q,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "ページロケーションの検索に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページロケーションの取得に失敗", "error", err)
 		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if output == nil {
+		writeJSONError(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
 	// レスポンスを構築
-	items := make([]pageLocationItem, len(locations))
-	for i, loc := range locations {
+	items := make([]pageLocationItem, len(output.Locations))
+	for i, loc := range output.Locations {
 		items[i] = pageLocationItem{
 			Key: fmt.Sprintf("%s/%s", loc.TopicName, loc.PageTitle),
 		}

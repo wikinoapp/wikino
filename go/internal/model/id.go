@@ -38,6 +38,9 @@ type UserID string
 // AttachmentID は添付ファイルのID型
 type AttachmentID string
 
+// SuggestionID は編集提案のID型
+type SuggestionID string
+
 // FeatureFlagID はフィーチャーフラグのID型
 type FeatureFlagID string
 
@@ -85,6 +88,9 @@ func (id UserID) String() string { return string(id) }
 
 // String はAttachmentIDを文字列に変換する
 func (id AttachmentID) String() string { return string(id) }
+
+// String はSuggestionIDを文字列に変換する
+func (id SuggestionID) String() string { return string(id) }
 
 // String はFeatureFlagIDを文字列に変換する
 func (id FeatureFlagID) String() string { return string(id) }

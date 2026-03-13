@@ -667,3 +667,50 @@ other = "Modified"
 [draft_page_index_untitled]
 description = "Untitled draft page"
 other = "Untitled"
+
+# Bottom navigation
+[bottom_nav_menu]
+description = "Menu button in the bottom navigation"
+other = "Menu"
+
+[bottom_nav_home]
+description = "Home button in the bottom navigation"
+other = "Home"
+
+[bottom_nav_search]
+description = "Search button in the bottom navigation"
+other = "Search"
+
+[bottom_nav_sign_in]
+description = "Sign in button in the bottom navigation"
+other = "Sign in"
+
+# Topic show
+[topic_show_title]
+description = "Topic show page title ({topic_name} | {space_name} format)"
+other = "{{.TopicName}} | {{.SpaceName}}"
+
+[topic_show_no_pages_message]
+description = "Message when there are no pages in the topic"
+other = "No pages"
+
+[topic_show_no_pages_description]
+description = "Description when there are no pages in the topic"
+other = "Create your first page."
+
+[topic_show_new_page]
+description = "New page button on the topic show page"
+other = "New page"
+
+[topic_show_settings]
+description = "Topic settings link on the topic show page"
+other = "Topic settings"
+
+# Pagination
+[pagination_previous]
+description = "Link to the previous page in pagination"
+other = "Prev"
+
+[pagination_next]
+description = "Link to the next page in pagination"
+other = "Next"

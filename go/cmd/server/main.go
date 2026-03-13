@@ -35,6 +35,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -46,6 +47,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
@@ -122,7 +124,7 @@ func main() {
 	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
 	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
-	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
+	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
@@ -148,36 +150,33 @@ func main() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		turnstileClient,
+		signInValidator,
 	)
+	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 	userSessionHandler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userSessionRepo,
+		deleteUserSessionUC,
 	)
-	signInTwoFactorValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	signInTwoFactorValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		signInTwoFactorValidator,
 		createUserSessionUC,
 	)
-	signInTwoFactorRecoveryValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	signInTwoFactorRecoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		signInTwoFactorRecoveryValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -186,116 +185,129 @@ func main() {
 		cfg,
 		sessionMgr,
 	)
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
 	emailConfirmationHandler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		turnstileClient,
 		rateLimiter,
 	)
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
 	accountHandler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
 	passwordResetHandler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		rateLimiter,
 		turnstileClient,
 		createPasswordResetTokenUC,
+		passwordResetCreateValidator,
 	)
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	passwordHandler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
+		getTokenDataUC,
 		updatePasswordResetUC,
+		passwordUpdateValidator,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	pageHandler := page.NewHandler(
-		cfg,
-		flashMgr,
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	getPageDetailUC := usecase.NewGetPageDetailUsecase(
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
 		draftPageRepo,
 		topicRepo,
 		topicMemberRepo,
+	)
+	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
+	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
+	getPageBacklinksUC := usecase.NewGetPageBacklinksUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getBacklinkListUC := usecase.NewGetBacklinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getLinkListUC := usecase.NewGetLinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	pageHandler := page.NewHandler(
+		cfg,
+		flashMgr,
+		getPageDetailUC,
+		getEditLinkDataUC,
 		publishPageUC,
 		sidebarHelper,
+		pageUpdateValidator,
 	)
 	pageLocationHandler := page_location.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
+		getPageLocationsUC,
+	)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(
+		draftPageRepo,
 	)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
 		flashMgr,
-		draftPageRepo,
+		getDraftPagesUC,
 		sidebarHelper,
 	)
-	draftPageHandler := draft_page.NewHandler(
+	getSaveDraftPageDataUC := usecase.NewGetSaveDraftPageDataUsecase(
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
 		topicRepo,
 		topicMemberRepo,
-		draftPageRepo,
+	)
+	draftPageHandler := draft_page.NewHandler(
+		getPageDetailUC,
+		getSaveDraftPageDataUC,
 		autoSaveDraftPageUC,
+		getEditLinkDataUC,
 	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getPageDetailUC,
 		flashMgr,
 		manualSaveDraftPageUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getBacklinkListUC,
 	)
 	pageBacklinksHandler := page_backlinks.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getPageBacklinksUC,
 	)
 	pageLinkListHandler := page_link_list.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
-		draftPageRepo,
+		getLinkListUC,
 	)
+	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	pageMoveHandler := page_move.NewHandler(
 		cfg,
 		flashMgr,
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getPageMoveDataUC,
 		movePageUC,
+		sidebarHelper,
+		pageMoveCreateValidator,
+	)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	topicHandler := topichandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicDetailUC,
 		sidebarHelper,
 	)
 	r := chi.NewRouter()
@@ -342,6 +354,9 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
 		r.Get("/", welcomeHandler.Show)
+
+		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
+		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
 	})
 
 	// 未認証ユーザー専用ルート

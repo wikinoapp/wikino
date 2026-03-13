@@ -10,31 +10,6 @@ type PageSliceWithCount struct {
 	TotalCount int64
 }
 
-// BuildExcludePageIDs は編集中のページ自身とリンク先ページからバックリンク除外用のPageIDスライスを構築します
-func BuildExcludePageIDs(currentPageID model.PageID, linkedPages []*model.Page) []model.PageID {
-	ids := make([]model.PageID, 0, 1+len(linkedPages))
-	ids = append(ids, currentPageID)
-	for _, p := range linkedPages {
-		ids = append(ids, p.ID)
-	}
-	return ids
-}
-
-// CollectTopicIDsFromPages は複数のページスライスからユニークなTopicIDを収集します
-func CollectTopicIDsFromPages(pageSlices ...[]*model.Page) []model.TopicID {
-	topicIDSet := make(map[model.TopicID]struct{})
-	for _, pages := range pageSlices {
-		for _, p := range pages {
-			topicIDSet[p.TopicID] = struct{}{}
-		}
-	}
-	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
-	for id := range topicIDSet {
-		topicIDs = append(topicIDs, id)
-	}
-	return topicIDs
-}
-
 // BuildEditLinkDataInput は BuildEditLinkData の入力パラメータです
 type BuildEditLinkDataInput struct {
 	LinkedPages       []*model.Page

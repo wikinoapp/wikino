@@ -32,8 +32,10 @@ type NewBacklinkListInput struct {
 func NewBacklinkList(input NewBacklinkListInput) BacklinkList {
 	items := make([]BacklinkListItem, 0, len(input.Pages))
 	for _, pg := range input.Pages {
+		card := NewCardLinkPage(pg, input.TopicMap)
+		card.CanEdit = true
 		items = append(items, BacklinkListItem{
-			CardLinkPage: NewCardLinkPage(pg, input.TopicMap),
+			CardLinkPage: card,
 		})
 	}
 	return BacklinkList{
