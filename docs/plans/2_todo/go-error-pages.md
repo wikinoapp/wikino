@@ -56,11 +56,14 @@ chi ルーターには `r.NotFound()` メソッドがあり、ルーティング
 
 ```
 go/internal/templates/pages/errors/
+├── maintenance.templ        # メンテナンスページ（maintenance/ から移動）
 └── not_found.templ          # 404エラーページテンプレート
 
 go/internal/handler/
 └── errors.go                # NotFound ヘルパー関数（全ハンドラーで共用）
 ```
+
+既存のメンテナンスページ（`pages/maintenance/maintenance.templ`）を `pages/errors/` に移動し、エラー系テンプレートを一箇所にまとめる。メンテナンスページも実質的には 503 エラーページであり、同じディレクトリに配置するのが自然。
 
 ### テンプレート設計
 
@@ -141,9 +144,19 @@ r.NotFound(handler.NotFound)
 
 ## タスクリスト
 
-### フェーズ 1: 404 エラーページの実装
+### フェーズ 1: メンテナンスページの移動
 
-- [ ] **1-1**: [Go] 404 エラーページテンプレートと共通ヘルパーの実装
+- [ ] **1-1**: [Go] メンテナンスページを `pages/errors/` に移動
+  - `go/internal/templates/pages/maintenance/maintenance.templ` を `go/internal/templates/pages/errors/maintenance.templ` に移動
+  - パッケージ名を `maintenance` から `errors` に変更
+  - `go/internal/middleware/maintenance.go` の import パスを更新
+  - 旧ディレクトリ `pages/maintenance/` を削除
+  - **想定ファイル数**: 約 3 ファイル（実装 3 + テスト 0）
+  - **想定行数**: 約 10 行（import パス変更のみ）
+
+### フェーズ 2: 404 エラーページの実装
+
+- [ ] **2-1**: [Go] 404 エラーページテンプレートと共通ヘルパーの実装
   - `go/internal/templates/pages/errors/not_found.templ` を作成
   - `go/internal/handler/errors.go` にヘルパー関数を作成
   - i18n 翻訳キーを `ja.toml`、`en.toml` に追加
@@ -151,16 +164,16 @@ r.NotFound(handler.NotFound)
   - **想定ファイル数**: 約 5 ファイル（実装 4 + テスト 1）
   - **想定行数**: 約 130 行（実装 100 行 + テスト 30 行）
 
-### フェーズ 2: 既存ハンドラーの `http.NotFound` 置き換え
+### フェーズ 3: 既存ハンドラーの `http.NotFound` 置き換え
 
-- [ ] **2-1**: [Go] 全ハンドラーの `http.NotFound(w, r)` を `handler.NotFound(w, r)` に置き換え
+- [ ] **3-1**: [Go] 全ハンドラーの `http.NotFound(w, r)` を `handler.NotFound(w, r)` に置き換え
   - 対象ハンドラーを一括置き換え
   - **想定ファイル数**: 約 15 ファイル（実装 15 + テスト 0）
   - **想定行数**: 約 50 行（実装のみ、各ファイル 1-3 行の変更）
 
-### フェーズ 3: 仕様書への反映
+### フェーズ 4: 仕様書への反映
 
-- [ ] **3-1**: 仕様書の作成・更新
+- [ ] **4-1**: 仕様書の作成・更新
   - `docs/specs/error-page/overview.md` に仕様書を作成する
   - 作業計画書の概要・要件・設計・採用しなかった方針を仕様書に反映する
 
