@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 func TestIndex_NotLoggedIn(t *testing.T) {
@@ -30,8 +31,9 @@ func TestIndex_NotLoggedIn(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, draftPageRepo, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	rr := httptest.NewRecorder()
@@ -66,8 +68,9 @@ func TestIndex_Empty(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, draftPageRepo, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	req.Header.Set("Accept-Language", "ja")
@@ -143,8 +146,9 @@ func TestIndex_WithDrafts(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, draftPageRepo, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	req.Header.Set("Accept-Language", "ja")

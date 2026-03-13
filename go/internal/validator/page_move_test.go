@@ -1,24 +1,24 @@
-package page_move_test
+package validator_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestCreateValidator_EmptyDestTopic(t *testing.T) {
+func TestPageMoveCreateValidator_EmptyDestTopic(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
-	validator := page_move.NewCreateValidator(nil, nil, nil)
-	result := validator.Validate(ctx, page_move.CreateValidatorInput{
+	v := validator.NewPageMoveCreateValidator(nil, nil, nil)
+	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "",
 	})
 
@@ -30,14 +30,14 @@ func TestCreateValidator_EmptyDestTopic(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_InvalidDestTopicNumber(t *testing.T) {
+func TestPageMoveCreateValidator_InvalidDestTopicNumber(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
-	validator := page_move.NewCreateValidator(nil, nil, nil)
-	result := validator.Validate(ctx, page_move.CreateValidatorInput{
+	v := validator.NewPageMoveCreateValidator(nil, nil, nil)
+	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "abc",
 	})
 
@@ -49,7 +49,7 @@ func TestCreateValidator_InvalidDestTopicNumber(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_SameTopic(t *testing.T) {
+func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -89,8 +89,8 @@ func TestCreateValidator_SameTopic(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
-	validator := page_move.NewCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := validator.Validate(ctx, page_move.CreateValidatorInput{
+	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "1",
 		PageID:          pageID,
 		PageTitle:       "Test Page",
@@ -107,7 +107,7 @@ func TestCreateValidator_SameTopic(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_TitleExistsInDestTopic(t *testing.T) {
+func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -164,8 +164,8 @@ func TestCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
-	validator := page_move.NewCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := validator.Validate(ctx, page_move.CreateValidatorInput{
+	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "2",
 		PageID:          pageID,
 		PageTitle:       "Duplicate Title",
@@ -182,7 +182,7 @@ func TestCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Success(t *testing.T) {
+func TestPageMoveCreateValidator_Success(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -232,8 +232,8 @@ func TestCreateValidator_Success(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
-	validator := page_move.NewCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := validator.Validate(ctx, page_move.CreateValidatorInput{
+	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "2",
 		PageID:          pageID,
 		PageTitle:       "Test Page",

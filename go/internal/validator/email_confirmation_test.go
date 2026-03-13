@@ -1,4 +1,4 @@
-package email_confirmation_test
+package validator_test
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // CreateValidator のテスト
 
-func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
+func TestEmailConfirmationCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -54,10 +54,10 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			userRepo := repository.NewUserRepository(q)
-			validator := email_confirmation.NewCreateValidator(userRepo)
+			v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 			ctx := i18n.SetLocale(context.Background(), "ja")
-			result := validator.Validate(ctx, email_confirmation.CreateValidatorInput{
+			result := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 				Email: tc.email,
 				Event: tc.event,
 			})
@@ -73,17 +73,17 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_SignUp_NewEmail(t *testing.T) {
+func TestEmailConfirmationCreateValidator_Validate_SignUp_NewEmail(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
-	validator := email_confirmation.NewCreateValidator(userRepo)
+	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 新規メールアドレスで signup イベント → 成功
-	result := validator.Validate(ctx, email_confirmation.CreateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "newuser@example.com",
 		Event: model.EmailConfirmationEventSignUp,
 	})
@@ -96,13 +96,13 @@ func TestCreateValidator_Validate_SignUp_NewEmail(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
+func TestEmailConfirmationCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
-	validator := email_confirmation.NewCreateValidator(userRepo)
+	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	// 既存ユーザーを作成
 	_ = testutil.NewUserBuilder(t, tx).
@@ -112,13 +112,13 @@ func TestCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 既存メールアドレスで signup イベント → エラー
-	result := validator.Validate(ctx, email_confirmation.CreateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "existing@example.com",
 		Event: model.EmailConfirmationEventSignUp,
 	})
 
-	if !errors.Is(result.Err, email_confirmation.ErrEmailAlreadyRegistered) {
-		t.Errorf("Validate() error = %v, want %v", result.Err, email_confirmation.ErrEmailAlreadyRegistered)
+	if !errors.Is(result.Err, validator.ErrEmailAlreadyRegistered) {
+		t.Errorf("Validate() error = %v, want %v", result.Err, validator.ErrEmailAlreadyRegistered)
 	}
 	if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 		t.Error("FormErrors should have errors")
@@ -128,13 +128,13 @@ func TestCreateValidator_Validate_SignUp_ExistingEmail(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
+func TestEmailConfirmationCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
-	validator := email_confirmation.NewCreateValidator(userRepo)
+	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	// 既存ユーザーを作成
 	_ = testutil.NewUserBuilder(t, tx).
@@ -144,7 +144,7 @@ func TestCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 既存メールアドレスで password_reset イベント → 成功（重複チェックをスキップ）
-	result := validator.Validate(ctx, email_confirmation.CreateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "resetuser@example.com",
 		Event: model.EmailConfirmationEventPasswordReset,
 	})
@@ -157,13 +157,13 @@ func TestCreateValidator_Validate_PasswordReset_ExistingEmail(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_EmailUpdate_ExistingEmail(t *testing.T) {
+func TestEmailConfirmationCreateValidator_Validate_EmailUpdate_ExistingEmail(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
-	validator := email_confirmation.NewCreateValidator(userRepo)
+	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	// 既存ユーザーを作成
 	_ = testutil.NewUserBuilder(t, tx).
@@ -173,7 +173,7 @@ func TestCreateValidator_Validate_EmailUpdate_ExistingEmail(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 既存メールアドレスで email_update イベント → 成功（重複チェックをスキップ）
-	result := validator.Validate(ctx, email_confirmation.CreateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "updateuser@example.com",
 		Event: model.EmailConfirmationEventEmailUpdate,
 	})
@@ -188,7 +188,7 @@ func TestCreateValidator_Validate_EmailUpdate_ExistingEmail(t *testing.T) {
 
 // UpdateValidator のテスト
 
-func TestUpdateValidator_Validate_FormatValidation(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -229,10 +229,10 @@ func TestUpdateValidator_Validate_FormatValidation(t *testing.T) {
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			repo := repository.NewEmailConfirmationRepository(q)
-			validator := email_confirmation.NewUpdateValidator(repo)
+			v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 			ctx := i18n.SetLocale(context.Background(), "ja")
-			result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+			result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 				EmailConfirmationID: "dummy-id",
 				Code:                tc.code,
 			})
@@ -248,13 +248,13 @@ func TestUpdateValidator_Validate_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_Success(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_Success(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// テストデータを作成（有効な確認コード）
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -265,7 +265,7 @@ func TestUpdateValidator_Validate_Success(t *testing.T) {
 		Build()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "ABC123",
 	})
@@ -281,13 +281,13 @@ func TestUpdateValidator_Validate_Success(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// テストデータを作成（大文字のコード）
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -299,7 +299,7 @@ func TestUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 小文字で入力しても検証が成功することを確認
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "xyz789",
 	})
@@ -309,36 +309,36 @@ func TestUpdateValidator_Validate_CaseInsensitive(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_NotFound(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_NotFound(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 存在しないIDで検証
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: "00000000-0000-0000-0000-000000000000",
 		Code:                "ABC123",
 	})
 
-	if !errors.Is(result.Err, email_confirmation.ErrEmailConfirmationNotFound) {
-		t.Errorf("Validate() error = %v, want %v", result.Err, email_confirmation.ErrEmailConfirmationNotFound)
+	if !errors.Is(result.Err, validator.ErrEmailConfirmationNotFound) {
+		t.Errorf("Validate() error = %v, want %v", result.Err, validator.ErrEmailConfirmationNotFound)
 	}
 	if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 		t.Error("FormErrors should have errors")
 	}
 }
 
-func TestUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// 既に確認済みのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -350,13 +350,13 @@ func TestUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 検証しようとするとエラーになる
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "DEF456",
 	})
 
-	if !errors.Is(result.Err, email_confirmation.ErrEmailConfirmationAlreadySucceeded) {
-		t.Errorf("Validate() error = %v, want %v", result.Err, email_confirmation.ErrEmailConfirmationAlreadySucceeded)
+	if !errors.Is(result.Err, validator.ErrEmailConfirmationAlreadySucceeded) {
+		t.Errorf("Validate() error = %v, want %v", result.Err, validator.ErrEmailConfirmationAlreadySucceeded)
 	}
 	// 既に確認済みの場合は FormErrors は nil（リダイレクトするため）
 	if result.FormErrors != nil {
@@ -368,13 +368,13 @@ func TestUpdateValidator_Validate_AlreadySucceeded(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_Expired(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_Expired(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// 16分前のテストデータを作成（15分で有効期限切れ）
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -386,26 +386,26 @@ func TestUpdateValidator_Validate_Expired(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 検証しようとするとエラーになる
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "GHI789",
 	})
 
-	if !errors.Is(result.Err, email_confirmation.ErrEmailConfirmationExpired) {
-		t.Errorf("Validate() error = %v, want %v", result.Err, email_confirmation.ErrEmailConfirmationExpired)
+	if !errors.Is(result.Err, validator.ErrEmailConfirmationExpired) {
+		t.Errorf("Validate() error = %v, want %v", result.Err, validator.ErrEmailConfirmationExpired)
 	}
 	if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 		t.Error("FormErrors should have errors")
 	}
 }
 
-func TestUpdateValidator_Validate_CodeMismatch(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// テストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -417,13 +417,13 @@ func TestUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 間違ったコードで検証
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "WRONG1",
 	})
 
-	if !errors.Is(result.Err, email_confirmation.ErrEmailConfirmationCodeMismatch) {
-		t.Errorf("Validate() error = %v, want %v", result.Err, email_confirmation.ErrEmailConfirmationCodeMismatch)
+	if !errors.Is(result.Err, validator.ErrEmailConfirmationCodeMismatch) {
+		t.Errorf("Validate() error = %v, want %v", result.Err, validator.ErrEmailConfirmationCodeMismatch)
 	}
 	if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 		t.Error("FormErrors should have errors")
@@ -434,13 +434,13 @@ func TestUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_PasswordResetEvent(t *testing.T) {
+func TestEmailConfirmationUpdateValidator_Validate_PasswordResetEvent(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	repo := repository.NewEmailConfirmationRepository(q)
-	validator := email_confirmation.NewUpdateValidator(repo)
+	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
 	// パスワードリセットイベントのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
@@ -452,7 +452,7 @@ func TestUpdateValidator_Validate_PasswordResetEvent(t *testing.T) {
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 確認コードを検証（イベント種別に関係なく検証できる）
-	result := validator.Validate(ctx, email_confirmation.UpdateValidatorInput{
+	result := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "MNO345",
 	})

@@ -1,4 +1,4 @@
-package sign_in_test
+package validator_test
 
 import (
 	"context"
@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
-	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestCreateValidator_Validate(t *testing.T) {
+func TestSignInCreateValidator_Validate(t *testing.T) {
 	t.Parallel()
 
 	t.Run("形式バリデーション", func(t *testing.T) {
@@ -56,8 +56,8 @@ func TestCreateValidator_Validate(t *testing.T) {
 
 				ctx := context.Background()
 				// DB不要なので nil を渡す（形式バリデーションのみ）
-				validator := sign_in.NewCreateValidator(nil, nil)
-				result := validator.Validate(ctx, sign_in.CreateValidatorInput{
+				v := validator.NewSignInCreateValidator(nil, nil, nil)
+				result := v.Validate(ctx, validator.SignInCreateValidatorInput{
 					Email:    tt.email,
 					Password: tt.password,
 				})
@@ -98,12 +98,13 @@ func TestCreateValidator_Validate(t *testing.T) {
 
 			userRepo := repository.NewUserRepository(queries)
 			userPasswordRepo := repository.NewUserPasswordRepository(queries)
-			validator := sign_in.NewCreateValidator(userRepo, userPasswordRepo)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+			v := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInCreateValidatorInput{
 				Email:    "test@example.com",
 				Password: password,
 			})
@@ -130,12 +131,13 @@ func TestCreateValidator_Validate(t *testing.T) {
 
 			userRepo := repository.NewUserRepository(queries)
 			userPasswordRepo := repository.NewUserPasswordRepository(queries)
-			validator := sign_in.NewCreateValidator(userRepo, userPasswordRepo)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+			v := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInCreateValidatorInput{
 				Email:    "nonexistent@example.com",
 				Password: "password123",
 			})
@@ -146,7 +148,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 				t.Error("expected form errors")
 			}
-			if !errors.Is(result.Err, sign_in.ErrUserNotFound) {
+			if !errors.Is(result.Err, validator.ErrUserNotFound) {
 				t.Errorf("expected ErrUserNotFound, got %v", result.Err)
 			}
 		})
@@ -172,12 +174,13 @@ func TestCreateValidator_Validate(t *testing.T) {
 
 			userRepo := repository.NewUserRepository(queries)
 			userPasswordRepo := repository.NewUserPasswordRepository(queries)
-			validator := sign_in.NewCreateValidator(userRepo, userPasswordRepo)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+			v := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInCreateValidatorInput{
 				Email:    "test@example.com",
 				Password: "wrongpassword",
 			})
@@ -188,7 +191,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 				t.Error("expected form errors")
 			}
-			if !errors.Is(result.Err, sign_in.ErrInvalidPassword) {
+			if !errors.Is(result.Err, validator.ErrInvalidPassword) {
 				t.Errorf("expected ErrInvalidPassword, got %v", result.Err)
 			}
 		})
@@ -207,12 +210,13 @@ func TestCreateValidator_Validate(t *testing.T) {
 
 			userRepo := repository.NewUserRepository(queries)
 			userPasswordRepo := repository.NewUserPasswordRepository(queries)
-			validator := sign_in.NewCreateValidator(userRepo, userPasswordRepo)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(queries)
+			v := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInCreateValidatorInput{
 				Email:    "nopassword@example.com",
 				Password: "password123",
 			})
@@ -223,7 +227,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 				t.Error("expected form errors")
 			}
-			if !errors.Is(result.Err, sign_in.ErrPasswordNotSet) {
+			if !errors.Is(result.Err, validator.ErrPasswordNotSet) {
 				t.Errorf("expected ErrPasswordNotSet, got %v", result.Err)
 			}
 		})

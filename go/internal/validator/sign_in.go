@@ -1,4 +1,5 @@
-package sign_in
+// Package validator はバリデーションを提供します
+package validator
 
 import (
 	"context"
@@ -22,38 +23,42 @@ var (
 	ErrInvalidPassword = errors.New("パスワードが正しくありません")
 )
 
-// CreateValidator はサインインのバリデーションを行う
-type CreateValidator struct {
-	userRepo         *repository.UserRepository
-	userPasswordRepo *repository.UserPasswordRepository
+// SignInCreateValidator はサインインのバリデーションを行う
+type SignInCreateValidator struct {
+	userRepo              *repository.UserRepository
+	userPasswordRepo      *repository.UserPasswordRepository
+	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewCreateValidator は CreateValidator を生成する
-func NewCreateValidator(
+// NewSignInCreateValidator は SignInCreateValidator を生成する
+func NewSignInCreateValidator(
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
-) *CreateValidator {
-	return &CreateValidator{
-		userRepo:         userRepo,
-		userPasswordRepo: userPasswordRepo,
+	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
+) *SignInCreateValidator {
+	return &SignInCreateValidator{
+		userRepo:              userRepo,
+		userPasswordRepo:      userPasswordRepo,
+		userTwoFactorAuthRepo: userTwoFactorAuthRepo,
 	}
 }
 
-// CreateValidatorInput はバリデーションの入力パラメータ
-type CreateValidatorInput struct {
+// SignInCreateValidatorInput はバリデーションの入力パラメータ
+type SignInCreateValidatorInput struct {
 	Email    string
 	Password string
 }
 
-// CreateValidatorResult はバリデーションの結果
-type CreateValidatorResult struct {
-	User       *model.User
-	FormErrors *session.FormErrors
-	Err        error
+// SignInCreateValidatorResult はバリデーションの結果
+type SignInCreateValidatorResult struct {
+	User              *model.User
+	UserTwoFactorAuth *model.UserTwoFactorAuth
+	FormErrors        *session.FormErrors
+	Err               error
 }
 
 // Validate はバリデーションを行う
-func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+func (v *SignInCreateValidator) Validate(ctx context.Context, input SignInCreateValidatorInput) *SignInCreateValidatorResult {
 	// 1. 形式バリデーション
 	formErrors := session.NewFormErrors()
 
@@ -68,18 +73,18 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &CreateValidatorResult{FormErrors: formErrors}
+		return &SignInCreateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	user, err := v.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &SignInCreateValidatorResult{Err: err}
 	}
 	if user == nil {
 		// セキュリティ対策: 存在しないメールアドレスでも同じエラーメッセージを表示
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		return &CreateValidatorResult{
+		return &SignInCreateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrUserNotFound,
 		}
@@ -88,12 +93,12 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	// パスワードを取得
 	userPassword, err := v.userPasswordRepo.FindByUserID(ctx, user.ID)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &SignInCreateValidatorResult{Err: err}
 	}
 	if userPassword == nil {
 		// パスワードが設定されていない場合も同じエラーメッセージを表示
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		return &CreateValidatorResult{
+		return &SignInCreateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrPasswordNotSet,
 		}
@@ -102,14 +107,20 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	// パスワードを検証
 	if !auth.VerifyPassword(userPassword.PasswordDigest, input.Password) {
 		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		return &CreateValidatorResult{
+		return &SignInCreateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrInvalidPassword,
 		}
 	}
 
+	// 二要素認証の有効化状態を取得
+	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, user.ID)
+	if err != nil {
+		return &SignInCreateValidatorResult{Err: err}
+	}
+
 	// 検証成功
-	return &CreateValidatorResult{User: user}
+	return &SignInCreateValidatorResult{User: user, UserTwoFactorAuth: twoFactorAuth}
 }
 
 // isValidEmail はメールアドレスの形式をチェックします

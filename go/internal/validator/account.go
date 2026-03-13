@@ -1,4 +1,4 @@
-package account
+package validator
 
 import (
 	"context"
@@ -13,8 +13,6 @@ import (
 
 // バリデーションのエラー定義
 var (
-	// ErrEmailConfirmationNotFound はメール確認情報が見つからない場合のエラー
-	ErrEmailConfirmationNotFound = errors.New("メール確認情報が見つかりません")
 	// ErrEmailNotConfirmed はメール確認が完了していない場合のエラー
 	ErrEmailNotConfirmed = errors.New("メール確認が完了していません")
 	// ErrAtnameAlreadyTaken はアットネームが既に使用されている場合のエラー
@@ -34,52 +32,52 @@ const (
 	PasswordMinLength = 8
 )
 
-// CreateValidator はアカウント作成のバリデーションを行う
-type CreateValidator struct {
+// AccountCreateValidator はアカウント作成のバリデーションを行う
+type AccountCreateValidator struct {
 	emailConfirmationRepo *repository.EmailConfirmationRepository
 	userRepo              *repository.UserRepository
 }
 
-// NewCreateValidator は CreateValidator を生成する
-func NewCreateValidator(
+// NewAccountCreateValidator は AccountCreateValidator を生成する
+func NewAccountCreateValidator(
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
 	userRepo *repository.UserRepository,
-) *CreateValidator {
-	return &CreateValidator{
+) *AccountCreateValidator {
+	return &AccountCreateValidator{
 		emailConfirmationRepo: emailConfirmationRepo,
 		userRepo:              userRepo,
 	}
 }
 
-// CreateValidatorInput はバリデーションの入力パラメータ
-type CreateValidatorInput struct {
+// AccountCreateValidatorInput はバリデーションの入力パラメータ
+type AccountCreateValidatorInput struct {
 	EmailConfirmationID string
 	Atname              string
 	Password            string
 }
 
-// CreateValidatorResult はバリデーションの結果
-type CreateValidatorResult struct {
+// AccountCreateValidatorResult はバリデーションの結果
+type AccountCreateValidatorResult struct {
 	EmailConfirmation *model.EmailConfirmation
 	FormErrors        *session.FormErrors
 	Err               error
 }
 
 // Validate はバリデーションを行う
-func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+func (v *AccountCreateValidator) Validate(ctx context.Context, input AccountCreateValidatorInput) *AccountCreateValidatorResult {
 	// 1. メール確認情報の取得と確認済みチェック（状態バリデーション）
 	// これは形式バリデーションより先に行う（EmailConfirmationがないとフォームを表示できないため）
 	emailConfirmation, err := v.emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &AccountCreateValidatorResult{Err: err}
 	}
 	if emailConfirmation == nil {
-		return &CreateValidatorResult{Err: ErrEmailConfirmationNotFound}
+		return &AccountCreateValidatorResult{Err: ErrEmailConfirmationNotFound}
 	}
 
 	// メール確認が完了しているかチェック
 	if !emailConfirmation.IsSucceeded() {
-		return &CreateValidatorResult{Err: ErrEmailNotConfirmed}
+		return &AccountCreateValidatorResult{Err: ErrEmailNotConfirmed}
 	}
 
 	// 2. 形式バリデーション
@@ -105,7 +103,7 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &CreateValidatorResult{
+		return &AccountCreateValidatorResult{
 			EmailConfirmation: emailConfirmation,
 			FormErrors:        formErrors,
 		}
@@ -114,11 +112,11 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	// 3. アットネームの重複チェック（状態バリデーション）
 	existingUser, err := v.userRepo.FindByAtname(ctx, input.Atname)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &AccountCreateValidatorResult{Err: err}
 	}
 	if existingUser != nil {
 		formErrors.AddField("atname", i18n.T(ctx, "validation_atname_already_taken"))
-		return &CreateValidatorResult{
+		return &AccountCreateValidatorResult{
 			EmailConfirmation: emailConfirmation,
 			FormErrors:        formErrors,
 			Err:               ErrAtnameAlreadyTaken,
@@ -126,5 +124,5 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	// 検証成功
-	return &CreateValidatorResult{EmailConfirmation: emailConfirmation}
+	return &AccountCreateValidatorResult{EmailConfirmation: emailConfirmation}
 }

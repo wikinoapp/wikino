@@ -1,4 +1,4 @@
-package sign_in_two_factor
+package validator
 
 import (
 	"context"
@@ -25,34 +25,34 @@ var (
 	ErrInvalidTOTPCode = errors.New("TOTPコードが無効です")
 )
 
-// CreateValidator は2FAコード検証のバリデーションを行う
-type CreateValidator struct {
+// SignInTwoFactorCreateValidator は2FAコード検証のバリデーションを行う
+type SignInTwoFactorCreateValidator struct {
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewCreateValidator は CreateValidator を生成する
-func NewCreateValidator(
+// NewSignInTwoFactorCreateValidator は SignInTwoFactorCreateValidator を生成する
+func NewSignInTwoFactorCreateValidator(
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
-) *CreateValidator {
-	return &CreateValidator{
+) *SignInTwoFactorCreateValidator {
+	return &SignInTwoFactorCreateValidator{
 		userTwoFactorAuthRepo: userTwoFactorAuthRepo,
 	}
 }
 
-// CreateValidatorInput はバリデーションの入力パラメータ
-type CreateValidatorInput struct {
+// SignInTwoFactorCreateValidatorInput はバリデーションの入力パラメータ
+type SignInTwoFactorCreateValidatorInput struct {
 	UserID   model.UserID
 	TOTPCode string
 }
 
-// CreateValidatorResult はバリデーションの結果
-type CreateValidatorResult struct {
+// SignInTwoFactorCreateValidatorResult はバリデーションの結果
+type SignInTwoFactorCreateValidatorResult struct {
 	FormErrors *session.FormErrors
 	Err        error
 }
 
 // Validate はバリデーションを行う
-func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input SignInTwoFactorCreateValidatorInput) *SignInTwoFactorCreateValidatorResult {
 	// 1. 形式バリデーション
 	formErrors := session.NewFormErrors()
 
@@ -63,16 +63,16 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &CreateValidatorResult{FormErrors: formErrors}
+		return &SignInTwoFactorCreateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &SignInTwoFactorCreateValidatorResult{Err: err}
 	}
 	if twoFactorAuth == nil {
-		return &CreateValidatorResult{Err: ErrTwoFactorNotEnabled}
+		return &SignInTwoFactorCreateValidatorResult{Err: ErrTwoFactorNotEnabled}
 	}
 
 	// TOTPコードを検証
@@ -85,14 +85,14 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 
 	if !valid {
 		formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
-		return &CreateValidatorResult{
+		return &SignInTwoFactorCreateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrInvalidTOTPCode,
 		}
 	}
 
 	// 検証成功
-	return &CreateValidatorResult{}
+	return &SignInTwoFactorCreateValidatorResult{}
 }
 
 // validateWithDrift は前後のタイムステップも考慮してTOTPコードを検証する

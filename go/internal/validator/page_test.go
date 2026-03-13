@@ -1,18 +1,18 @@
-package page_test
+package validator_test
 
 import (
 	"context"
 	"strings"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestUpdateValidator_FormatValidation(t *testing.T) {
+func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -141,17 +141,17 @@ func TestUpdateValidator_FormatValidation(t *testing.T) {
 	}
 
 	// 形式バリデーションのみテストするためnilのpageRepoを使用
-	validator := page.NewUpdateValidator(nil)
+	v := validator.NewPageUpdateValidator(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantError {
 				// 形式バリデーション成功時はDB検証に進むため、nil pageRepoではテストできない
-				// 正常系はTestUpdateValidator_Uniquenessでテストする
+				// 正常系はTestPageUpdateValidator_Uniquenessでテストする
 				t.Skip("format validation passes, requires DB for uniqueness check")
 			}
 
-			result := validator.Validate(ctx, page.UpdateValidatorInput{
+			result := v.Validate(ctx, validator.PageUpdateValidatorInput{
 				Title:           tt.title,
 				PageID:          "test-page-id",
 				TopicID:         "test-topic-id",
@@ -169,7 +169,7 @@ func TestUpdateValidator_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Uniqueness(t *testing.T) {
+func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -204,10 +204,10 @@ func TestUpdateValidator_Uniqueness(t *testing.T) {
 		Build()
 
 	pageRepo := repository.NewPageRepository(queries)
-	validator := page.NewUpdateValidator(pageRepo)
+	v := validator.NewPageUpdateValidator(pageRepo)
 
 	t.Run("同じタイトルの別ページが存在する場合はエラー", func(t *testing.T) {
-		result := validator.Validate(ctx, page.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Existing Page",
 			PageID:          anotherPageID,
 			TopicID:         topicID,
@@ -224,7 +224,7 @@ func TestUpdateValidator_Uniqueness(t *testing.T) {
 	})
 
 	t.Run("自分自身のタイトルは重複にならない", func(t *testing.T) {
-		result := validator.Validate(ctx, page.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Existing Page",
 			PageID:          existingPageID,
 			TopicID:         topicID,
@@ -238,7 +238,7 @@ func TestUpdateValidator_Uniqueness(t *testing.T) {
 	})
 
 	t.Run("重複しないタイトルの場合は正常", func(t *testing.T) {
-		result := validator.Validate(ctx, page.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Unique Title",
 			PageID:          model.PageID("any-page-id"),
 			TopicID:         topicID,

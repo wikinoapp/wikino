@@ -1,4 +1,4 @@
-package page
+package validator
 
 import (
 	"context"
@@ -28,20 +28,20 @@ var windowsReservedNames = map[string]bool{
 	"LPT5": true, "LPT6": true, "LPT7": true, "LPT8": true, "LPT9": true,
 }
 
-// UpdateValidator はページ更新のバリデーションを行う
-type UpdateValidator struct {
+// PageUpdateValidator はページ更新のバリデーションを行う
+type PageUpdateValidator struct {
 	pageRepo *repository.PageRepository
 }
 
-// NewUpdateValidator は UpdateValidator を生成する
-func NewUpdateValidator(pageRepo *repository.PageRepository) *UpdateValidator {
-	return &UpdateValidator{
+// NewPageUpdateValidator は PageUpdateValidator を生成する
+func NewPageUpdateValidator(pageRepo *repository.PageRepository) *PageUpdateValidator {
+	return &PageUpdateValidator{
 		pageRepo: pageRepo,
 	}
 }
 
-// UpdateValidatorInput はバリデーションの入力パラメータ
-type UpdateValidatorInput struct {
+// PageUpdateValidatorInput はバリデーションの入力パラメータ
+type PageUpdateValidatorInput struct {
 	Title           string
 	PageID          model.PageID
 	TopicID         model.TopicID
@@ -49,19 +49,19 @@ type UpdateValidatorInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 }
 
-// UpdateValidatorResult はバリデーションの結果
-type UpdateValidatorResult struct {
+// PageUpdateValidatorResult はバリデーションの結果
+type PageUpdateValidatorResult struct {
 	FormErrors *session.FormErrors
 }
 
 // Validate はバリデーションを行う
-func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInput) *UpdateValidatorResult {
+func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateValidatorInput) *PageUpdateValidatorResult {
 	formErrors := session.NewFormErrors()
 
 	// 必須チェック
 	if input.Title == "" {
 		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_required"))
-		return &UpdateValidatorResult{FormErrors: formErrors}
+		return &PageUpdateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 文字数チェック
@@ -87,14 +87,14 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &UpdateValidatorResult{FormErrors: formErrors}
+		return &PageUpdateValidatorResult{FormErrors: formErrors}
 	}
 
 	// タイトル一意性チェック（DB検証）
 	existingPage, err := v.pageRepo.FindByTopicAndTitle(ctx, input.TopicID, input.Title, input.SpaceID)
 	if err != nil {
 		formErrors.AddField("title", i18n.T(ctx, "validation_system_error"))
-		return &UpdateValidatorResult{FormErrors: formErrors}
+		return &PageUpdateValidatorResult{FormErrors: formErrors}
 	}
 
 	if existingPage != nil && existingPage.ID != input.PageID {
@@ -103,5 +103,5 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 		formErrors.AddField("title", fmt.Sprintf(errorMsg, editPath))
 	}
 
-	return &UpdateValidatorResult{FormErrors: formErrors}
+	return &PageUpdateValidatorResult{FormErrors: formErrors}
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
@@ -53,14 +54,12 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+
 	return topichandler.NewHandler(
 		cfg,
 		flashMgr,
-		spaceRepo,
-		spaceMemberRepo,
-		topicRepo,
-		topicMemberRepo,
-		pageRepo,
+		getTopicDetailUC,
 		sidebarHelper,
 	)
 }

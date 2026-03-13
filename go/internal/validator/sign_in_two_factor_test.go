@@ -1,4 +1,4 @@
-package sign_in_two_factor_test
+package validator_test
 
 import (
 	"context"
@@ -8,10 +8,10 @@ import (
 
 	"github.com/pquerna/otp/totp"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // テスト用のシークレットを生成する
@@ -37,7 +37,7 @@ func generateValidTOTPCode(t *testing.T, secret string) string {
 	return code
 }
 
-func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
+func TestSignInTwoFactorCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -95,13 +95,13 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-			validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+			v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
 			// ダミーのユーザーIDを使用（形式バリデーションのテストなのでDB検証には到達しない）
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in_two_factor.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 				UserID:   "dummy-user-id",
 				TOTPCode: tt.totpCode,
 			})
@@ -117,7 +117,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_StateValidation(t *testing.T) {
+func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Parallel()
 
 	t.Run("有効なTOTPコードで検証に成功する", func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
 		secret := generateTestSecret(t)
 		userID := testutil.NewUserBuilder(t, tx).
@@ -139,7 +139,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: code,
 		})
@@ -158,7 +158,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
 		secret := generateTestSecret(t)
 		userID := testutil.NewUserBuilder(t, tx).
@@ -169,12 +169,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: "000000", // 無効なコード
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor.ErrInvalidTOTPCode) {
+		if !errors.Is(result.Err, validator.ErrInvalidTOTPCode) {
 			t.Errorf("expected ErrInvalidTOTPCode, got %v", result.Err)
 		}
 		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
@@ -188,7 +188,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
 		secret := generateTestSecret(t)
 		userID := testutil.NewUserBuilder(t, tx).
@@ -201,12 +201,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: code,
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor.ErrTwoFactorNotEnabled) {
+		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
 			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
 		}
 		// 2FAが無効の場合はFormErrorsは設定されない（リダイレクト処理のため）
@@ -221,7 +221,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
 		userID := testutil.NewUserBuilder(t, tx).
 			WithEmail("totp-nosetup@example.com").
@@ -231,12 +231,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: "123456",
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor.ErrTwoFactorNotEnabled) {
+		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
 			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
 		}
 	})

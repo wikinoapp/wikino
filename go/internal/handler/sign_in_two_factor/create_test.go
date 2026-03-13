@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestCreate_WithoutPendingUser(t *testing.T) {
@@ -39,13 +40,12 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		createUserSessionUC,
 	)
@@ -94,13 +94,12 @@ func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		createUserSessionUC,
 	)
@@ -163,13 +162,12 @@ func TestCreate_InvalidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		createUserSessionUC,
 	)
@@ -232,13 +230,12 @@ func TestCreate_ValidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		createUserSessionUC,
 	)

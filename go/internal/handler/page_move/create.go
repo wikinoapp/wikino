@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Create はページ移動を実行します (POST /s/{space_identifier}/pages/{page_number}/move)
@@ -36,52 +37,25 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
+	// UseCaseでデータを取得
+	output, err := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページ移動データの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if space == nil {
+	if output == nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// 移動元トピックの権限チェック（CanUpdatePage）
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+	if !topicPolicy.CanUpdatePage(output.Page) {
 		http.NotFound(w, r)
 		return
 	}
@@ -91,19 +65,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// ページタイトルを取得
 	var pageTitle string
-	if pg.Title != nil {
-		pageTitle = *pg.Title
+	if output.Page.Title != nil {
+		pageTitle = *output.Page.Title
 	}
 
 	// バリデーション
-	validator := NewCreateValidator(h.pageRepo, h.topicRepo, h.topicMemberRepo)
-	validationResult := validator.Validate(ctx, CreateValidatorInput{
+	validationResult := h.createValidator.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: destTopicNumber,
-		PageID:          pg.ID,
+		PageID:          output.Page.ID,
 		PageTitle:       pageTitle,
-		CurrentTopicID:  pg.TopicID,
-		SpaceID:         space.ID,
-		SpaceMember:     spaceMember,
+		CurrentTopicID:  output.Page.TopicID,
+		SpaceID:         output.Space.ID,
+		SpaceMember:     output.SpaceMember,
 	})
 
 	if validationResult.Err != nil {
@@ -113,36 +86,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validationResult.FormErrors.HasErrors() {
-		// 現在のトピックを取得（フォーム再表示用）
-		currentTopic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-		if err != nil {
-			slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		if currentTopic == nil {
-			slog.ErrorContext(ctx, "ページのトピックが見つかりません", "page_id", pg.ID, "topic_id", pg.TopicID)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		// 移動先候補のトピック一覧を取得
-		availableTopics, err := h.availableTopicsForMove(ctx, spaceMember, space, pg.TopicID)
-		if err != nil {
-			slog.ErrorContext(ctx, "移動先トピック一覧の取得に失敗", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderMoveForm(w, r, user, spaceIdentifier, space, pg, currentTopic, availableTopics, validationResult.FormErrors)
+		h.renderMoveForm(w, r, user, spaceIdentifier, output, validationResult.FormErrors)
 		return
 	}
 
 	// ページ移動ユースケースを実行
 	_, err = h.movePageUC.Execute(ctx, usecase.MovePageInput{
-		PageID:      pg.ID,
-		SpaceID:     space.ID,
+		PageID:      output.Page.ID,
+		SpaceID:     output.Space.ID,
 		DestTopicID: validationResult.DestTopic.ID,
 	})
 	if err != nil {
@@ -153,6 +105,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "page_move_success"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), pg.Number)
+	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), output.Page.Number)
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
 }

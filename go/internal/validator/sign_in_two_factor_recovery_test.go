@@ -1,17 +1,17 @@
-package sign_in_two_factor_recovery_test
+package validator_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
+func TestSignInTwoFactorRecoveryCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -98,12 +98,12 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-			validator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+			v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, sign_in_two_factor_recovery.CreateValidatorInput{
+			result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 				UserID:       "dummy-user-id",
 				RecoveryCode: tc.recoveryCode,
 			})
@@ -121,7 +121,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_StateValidation(t *testing.T) {
+func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *testing.T) {
 	t.Parallel()
 
 	t.Run("有効なリカバリーコードで検証に成功する", func(t *testing.T) {
@@ -130,7 +130,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678", "abcd1234"}
@@ -142,7 +142,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor_recovery.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "code1234",
 		})
@@ -164,7 +164,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678"}
@@ -176,12 +176,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor_recovery.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "wrongcod", // 無効なコード
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor_recovery.ErrInvalidRecoveryCode) {
+		if !errors.Is(result.Err, validator.ErrInvalidRecoveryCode) {
 			t.Errorf("expected ErrInvalidRecoveryCode, got %v", result.Err)
 		}
 		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
@@ -195,7 +195,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234"}
@@ -207,12 +207,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor_recovery.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "code1234",
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor_recovery.ErrTwoFactorNotEnabled) {
+		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
 			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
 		}
 		// 2FAが無効の場合はFormErrorsは設定されない（リダイレクト処理のため）
@@ -227,7 +227,7 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
-		validator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		userID := testutil.NewUserBuilder(t, tx).
 			WithEmail("recovery-nosetup@example.com").
@@ -237,12 +237,12 @@ func TestCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, sign_in_two_factor_recovery.CreateValidatorInput{
+		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "anycode1",
 		})
 
-		if !errors.Is(result.Err, sign_in_two_factor_recovery.ErrTwoFactorNotEnabled) {
+		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
 			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
 		}
 	})

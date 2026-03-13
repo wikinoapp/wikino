@@ -1,4 +1,4 @@
-package account_test
+package validator_test
 
 import (
 	"context"
@@ -7,17 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // 形式バリデーションのテスト
 
-func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
+func TestAccountCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -40,7 +40,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	tests := []struct {
 		name          string
@@ -127,7 +127,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
-			result := validator.Validate(ctx, account.CreateValidatorInput{
+			result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 				EmailConfirmationID: emailConfirmation.ID,
 				Atname:              tt.atname,
 				Password:            tt.password,
@@ -156,7 +156,7 @@ func TestCreateValidator_Validate_FormatValidation(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
+func TestAccountCreateValidator_Validate_ErrorMessages(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -179,7 +179,7 @@ func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	tests := []struct {
 		name            string
@@ -269,7 +269,7 @@ func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
 				ctx = i18n.SetLocale(ctx, i18n.LangEn)
 			}
 
-			result := validator.Validate(ctx, account.CreateValidatorInput{
+			result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 				EmailConfirmationID: emailConfirmation.ID,
 				Atname:              tt.atname,
 				Password:            tt.password,
@@ -298,7 +298,7 @@ func TestCreateValidator_Validate_ErrorMessages(t *testing.T) {
 
 // 状態バリデーションのテスト
 
-func TestCreateValidator_Validate_Success(t *testing.T) {
+func TestAccountCreateValidator_Validate_Success(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -322,13 +322,13 @@ func TestCreateValidator_Validate_Success(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	// コンテキストを作成
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	// 新しいアットネームで検証
-	result := validator.Validate(ctx, account.CreateValidatorInput{
+	result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 		EmailConfirmationID: emailConfirmation.ID,
 		Atname:              "newuser",
 		Password:            "password123",
@@ -347,7 +347,7 @@ func TestCreateValidator_Validate_Success(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
+func TestAccountCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -355,13 +355,13 @@ func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	// コンテキストを作成
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	// 存在しないメール確認IDで検証（有効なUUID形式だが存在しないID）
-	result := validator.Validate(ctx, account.CreateValidatorInput{
+	result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 		EmailConfirmationID: "00000000-0000-0000-0000-000000000000",
 		Atname:              "newuser",
 		Password:            "password123",
@@ -369,7 +369,7 @@ func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 	if result.Err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(result.Err, account.ErrEmailConfirmationNotFound) {
+	if !errors.Is(result.Err, validator.ErrEmailConfirmationNotFound) {
 		t.Errorf("expected ErrEmailConfirmationNotFound, got: %v", result.Err)
 	}
 	if result.EmailConfirmation != nil {
@@ -377,7 +377,7 @@ func TestCreateValidator_Validate_EmailConfirmationNotFound(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
+func TestAccountCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -397,13 +397,13 @@ func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 		t.Fatalf("failed to create email confirmation: %v", err)
 	}
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	// コンテキストを作成
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	// 確認未完了のメール確認IDで検証
-	result := validator.Validate(ctx, account.CreateValidatorInput{
+	result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 		EmailConfirmationID: emailConfirmation.ID,
 		Atname:              "newuser",
 		Password:            "password123",
@@ -411,7 +411,7 @@ func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 	if result.Err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(result.Err, account.ErrEmailNotConfirmed) {
+	if !errors.Is(result.Err, validator.ErrEmailNotConfirmed) {
 		t.Errorf("expected ErrEmailNotConfirmed, got: %v", result.Err)
 	}
 	if result.EmailConfirmation != nil {
@@ -419,7 +419,7 @@ func TestCreateValidator_Validate_EmailNotConfirmed(t *testing.T) {
 	}
 }
 
-func TestCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
+func TestAccountCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -457,13 +457,13 @@ func TestCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 		t.Fatalf("failed to create existing user: %v", err)
 	}
 
-	validator := account.NewCreateValidator(emailConfirmationRepo, userRepo)
+	v := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	// コンテキストを作成
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	// 既存のアットネームで検証
-	result := validator.Validate(ctx, account.CreateValidatorInput{
+	result := v.Validate(ctx, validator.AccountCreateValidatorInput{
 		EmailConfirmationID: emailConfirmation.ID,
 		Atname:              "existinguser",
 		Password:            "password123",
@@ -471,7 +471,7 @@ func TestCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 	if result.Err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(result.Err, account.ErrAtnameAlreadyTaken) {
+	if !errors.Is(result.Err, validator.ErrAtnameAlreadyTaken) {
 		t.Errorf("expected ErrAtnameAlreadyTaken, got: %v", result.Err)
 	}
 	if result.FormErrors == nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signuppages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -101,7 +102,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	eventType := parseEmailConfirmationEvent(event)
 
 	// バリデーション（形式チェック + 状態チェック）
-	result := h.createValidator.Validate(ctx, CreateValidatorInput{
+	result := h.createValidator.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: email,
 		Event: eventType,
 	})

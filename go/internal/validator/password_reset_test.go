@@ -1,14 +1,15 @@
-package password_reset_test
+package validator_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestCreateValidator_Validate(t *testing.T) {
+func TestPasswordResetCreateValidator_Validate(t *testing.T) {
 	t.Parallel()
 
 	t.Run("形式バリデーション", func(t *testing.T) {
@@ -68,8 +69,8 @@ func TestCreateValidator_Validate(t *testing.T) {
 				ctx := context.Background()
 				ctx = i18n.SetLocale(ctx, "ja")
 
-				validator := password_reset.NewCreateValidator()
-				result := validator.Validate(ctx, password_reset.CreateValidatorInput{
+				v := validator.NewPasswordResetCreateValidator()
+				result := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
 					Email: tt.email,
 				})
 
@@ -90,7 +91,7 @@ func TestCreateValidator_Validate(t *testing.T) {
 	})
 }
 
-func TestCreateValidator_Validate_I18nMessages(t *testing.T) {
+func TestPasswordResetCreateValidator_Validate_I18nMessages(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -132,8 +133,8 @@ func TestCreateValidator_Validate_I18nMessages(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, tt.locale)
 
-			validator := password_reset.NewCreateValidator()
-			result := validator.Validate(ctx, password_reset.CreateValidatorInput{
+			v := validator.NewPasswordResetCreateValidator()
+			result := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
 				Email: tt.email,
 			})
 
@@ -149,7 +150,7 @@ func TestCreateValidator_Validate_I18nMessages(t *testing.T) {
 
 			found := false
 			for _, err := range errors {
-				if containsSubstring(err, tt.wantText) {
+				if strings.Contains(err, tt.wantText) {
 					found = true
 					break
 				}
@@ -159,17 +160,4 @@ func TestCreateValidator_Validate_I18nMessages(t *testing.T) {
 			}
 		})
 	}
-}
-
-func containsSubstring(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstringHelper(s, substr))
-}
-
-func containsSubstringHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

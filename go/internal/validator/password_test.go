@@ -1,30 +1,30 @@
-package password_test
+package validator_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
+func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name           string
-		input          password.UpdateValidatorInput
+		input          validator.PasswordUpdateValidatorInput
 		wantErrors     bool
 		wantFieldError string
 		wantGlobal     bool
 	}{
 		{
 			name: "パスワードが空",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "",
 				PasswordConfirmation: "password123",
@@ -34,7 +34,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 		},
 		{
 			name: "パスワード確認が空",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "password123",
 				PasswordConfirmation: "",
@@ -44,7 +44,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 		},
 		{
 			name: "パスワードが短すぎる",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "pass",
 				PasswordConfirmation: "pass",
@@ -54,7 +54,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 		},
 		{
 			name: "パスワードが一致しない",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "password123",
 				PasswordConfirmation: "different456",
@@ -64,7 +64,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 		},
 		{
 			name: "トークンが空",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "",
 				Password:             "password123",
 				PasswordConfirmation: "password123",
@@ -75,7 +75,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 	}
 
 	// DBアクセスなしでテスト（形式バリデーションのみ）
-	validator := password.NewUpdateValidator(nil)
+	v := validator.NewPasswordUpdateValidator(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := validator.Validate(ctx, tt.input)
+			result := v.Validate(ctx, tt.input)
 
 			if tt.wantErrors {
 				if result.FormErrors == nil || !result.FormErrors.HasErrors() {
@@ -101,7 +101,7 @@ func TestUpdateValidator_Validate_FormValidation(t *testing.T) {
 	}
 }
 
-func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
+func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 	t.Parallel()
 
 	// テスト用DBをセットアップ
@@ -141,13 +141,13 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		Build()
 
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
-	validator := password.NewUpdateValidator(passwordResetTokenRepo)
+	v := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 
 	t.Run("有効なトークン", func(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, password.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                validToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
@@ -168,7 +168,7 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, password.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                "non-existent-token",
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
@@ -186,7 +186,7 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, password.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                usedToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
@@ -204,7 +204,7 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := validator.Validate(ctx, password.UpdateValidatorInput{
+		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                expiredToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
@@ -219,19 +219,19 @@ func TestUpdateValidator_Validate_TokenValidation(t *testing.T) {
 	})
 }
 
-func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
+func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name     string
 		locale   string
-		input    password.UpdateValidatorInput
+		input    validator.PasswordUpdateValidatorInput
 		wantText string
 	}{
 		{
 			name:   "日本語: パスワード必須エラー",
 			locale: "ja",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "",
 				PasswordConfirmation: "password123",
@@ -241,7 +241,7 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 		{
 			name:   "英語: パスワード必須エラー",
 			locale: "en",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "",
 				PasswordConfirmation: "password123",
@@ -251,7 +251,7 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 		{
 			name:   "日本語: パスワード不一致エラー",
 			locale: "ja",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "password123",
 				PasswordConfirmation: "different456",
@@ -261,7 +261,7 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 		{
 			name:   "英語: パスワード不一致エラー",
 			locale: "en",
-			input: password.UpdateValidatorInput{
+			input: validator.PasswordUpdateValidatorInput{
 				Token:                "valid-token",
 				Password:             "password123",
 				PasswordConfirmation: "different456",
@@ -270,7 +270,7 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 		},
 	}
 
-	validator := password.NewUpdateValidator(nil)
+	v := validator.NewPasswordUpdateValidator(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -279,7 +279,7 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, tt.locale)
 
-			result := validator.Validate(ctx, tt.input)
+			result := v.Validate(ctx, tt.input)
 
 			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
 				t.Fatal("expected errors, but got none")
@@ -289,8 +289,8 @@ func TestUpdateValidator_Validate_I18nMessages(t *testing.T) {
 			found := false
 
 			// フィールドエラーをチェック
-			for _, errors := range result.FormErrors.Fields {
-				for _, err := range errors {
+			for _, errs := range result.FormErrors.Fields {
+				for _, err := range errs {
 					if containsSubstring(err, tt.wantText) {
 						found = true
 						break

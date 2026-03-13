@@ -2,25 +2,19 @@
 package page_location
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler はページロケーションハンドラー
 type Handler struct {
-	spaceRepo       *repository.SpaceRepository
-	spaceMemberRepo *repository.SpaceMemberRepository
-	pageRepo        *repository.PageRepository
+	getPageLocationsUC *usecase.GetPageLocationsUsecase
 }
 
 // NewHandler は新しいページロケーションハンドラーを作成します
 func NewHandler(
-	spaceRepo *repository.SpaceRepository,
-	spaceMemberRepo *repository.SpaceMemberRepository,
-	pageRepo *repository.PageRepository,
+	getPageLocationsUC *usecase.GetPageLocationsUsecase,
 ) *Handler {
 	return &Handler{
-		spaceRepo:       spaceRepo,
-		spaceMemberRepo: spaceMemberRepo,
-		pageRepo:        pageRepo,
+		getPageLocationsUC: getPageLocationsUC,
 	}
 }

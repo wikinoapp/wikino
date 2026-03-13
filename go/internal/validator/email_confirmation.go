@@ -1,9 +1,8 @@
-package email_confirmation
+package validator
 
 import (
 	"context"
 	"errors"
-	"net/mail"
 	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -14,7 +13,7 @@ import (
 
 // バリデーションのエラー定義
 var (
-	// ErrEmailConfirmationNotFound は確認情報が見つからない場合のエラー
+	// ErrEmailConfirmationNotFound はメール確認情報が見つからない場合のエラー
 	ErrEmailConfirmationNotFound = errors.New("メール確認情報が見つかりません")
 	// ErrEmailConfirmationAlreadySucceeded は既に確認済みの場合のエラー
 	ErrEmailConfirmationAlreadySucceeded = errors.New("このメール確認は既に完了しています")
@@ -26,30 +25,30 @@ var (
 	ErrEmailAlreadyRegistered = errors.New("このメールアドレスは既に登録されています")
 )
 
-// CreateValidator はメール確認コード送信のバリデーションを行う
-type CreateValidator struct {
+// EmailConfirmationCreateValidator はメール確認コード送信のバリデーションを行う
+type EmailConfirmationCreateValidator struct {
 	userRepo *repository.UserRepository
 }
 
-// NewCreateValidator は CreateValidator を生成する
-func NewCreateValidator(userRepo *repository.UserRepository) *CreateValidator {
-	return &CreateValidator{userRepo: userRepo}
+// NewEmailConfirmationCreateValidator は EmailConfirmationCreateValidator を生成する
+func NewEmailConfirmationCreateValidator(userRepo *repository.UserRepository) *EmailConfirmationCreateValidator {
+	return &EmailConfirmationCreateValidator{userRepo: userRepo}
 }
 
-// CreateValidatorInput はバリデーションの入力パラメータ
-type CreateValidatorInput struct {
+// EmailConfirmationCreateValidatorInput はバリデーションの入力パラメータ
+type EmailConfirmationCreateValidatorInput struct {
 	Email string
 	Event model.EmailConfirmationEvent
 }
 
-// CreateValidatorResult はバリデーションの結果
-type CreateValidatorResult struct {
+// EmailConfirmationCreateValidatorResult はバリデーションの結果
+type EmailConfirmationCreateValidatorResult struct {
 	FormErrors *session.FormErrors
 	Err        error
 }
 
 // Validate はバリデーションを行う
-func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+func (v *EmailConfirmationCreateValidator) Validate(ctx context.Context, input EmailConfirmationCreateValidatorInput) *EmailConfirmationCreateValidatorResult {
 	// 1. 形式バリデーション
 	formErrors := session.NewFormErrors()
 
@@ -60,55 +59,55 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &CreateValidatorResult{FormErrors: formErrors}
+		return &EmailConfirmationCreateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	// signup イベントの場合のみ、メールアドレス重複チェックを行う
 	if input.Event != model.EmailConfirmationEventSignUp {
-		return &CreateValidatorResult{}
+		return &EmailConfirmationCreateValidatorResult{}
 	}
 
 	user, err := v.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &EmailConfirmationCreateValidatorResult{Err: err}
 	}
 	if user != nil {
 		formErrors.AddField("email", i18n.T(ctx, "validation_email_already_registered"))
-		return &CreateValidatorResult{
+		return &EmailConfirmationCreateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrEmailAlreadyRegistered,
 		}
 	}
 
-	return &CreateValidatorResult{}
+	return &EmailConfirmationCreateValidatorResult{}
 }
 
-// UpdateValidator は確認コード検証のバリデーションを行う
-type UpdateValidator struct {
+// EmailConfirmationUpdateValidator は確認コード検証のバリデーションを行う
+type EmailConfirmationUpdateValidator struct {
 	emailConfirmationRepo *repository.EmailConfirmationRepository
 }
 
-// NewUpdateValidator は UpdateValidator を生成する
-func NewUpdateValidator(emailConfirmationRepo *repository.EmailConfirmationRepository) *UpdateValidator {
-	return &UpdateValidator{emailConfirmationRepo: emailConfirmationRepo}
+// NewEmailConfirmationUpdateValidator は EmailConfirmationUpdateValidator を生成する
+func NewEmailConfirmationUpdateValidator(emailConfirmationRepo *repository.EmailConfirmationRepository) *EmailConfirmationUpdateValidator {
+	return &EmailConfirmationUpdateValidator{emailConfirmationRepo: emailConfirmationRepo}
 }
 
-// UpdateValidatorInput はバリデーションの入力パラメータ
-type UpdateValidatorInput struct {
+// EmailConfirmationUpdateValidatorInput はバリデーションの入力パラメータ
+type EmailConfirmationUpdateValidatorInput struct {
 	EmailConfirmationID string
 	Code                string
 }
 
-// UpdateValidatorResult はバリデーションの結果
-type UpdateValidatorResult struct {
+// EmailConfirmationUpdateValidatorResult はバリデーションの結果
+type EmailConfirmationUpdateValidatorResult struct {
 	EmailConfirmation *model.EmailConfirmation
 	FormErrors        *session.FormErrors
 	Err               error
 }
 
 // Validate はバリデーションを行う
-func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInput) *UpdateValidatorResult {
+func (v *EmailConfirmationUpdateValidator) Validate(ctx context.Context, input EmailConfirmationUpdateValidatorInput) *EmailConfirmationUpdateValidatorResult {
 	// 1. 形式バリデーション
 	formErrors := session.NewFormErrors()
 
@@ -119,18 +118,18 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &UpdateValidatorResult{FormErrors: formErrors}
+		return &EmailConfirmationUpdateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	// ID でメール確認情報を取得
 	confirmation, err := v.emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)
 	if err != nil {
-		return &UpdateValidatorResult{Err: err}
+		return &EmailConfirmationUpdateValidatorResult{Err: err}
 	}
 	if confirmation == nil {
 		formErrors.AddGlobal(i18n.T(ctx, "validation_confirmation_not_found"))
-		return &UpdateValidatorResult{
+		return &EmailConfirmationUpdateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrEmailConfirmationNotFound,
 		}
@@ -138,7 +137,7 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 
 	// 既に確認済みの場合
 	if confirmation.IsSucceeded() {
-		return &UpdateValidatorResult{
+		return &EmailConfirmationUpdateValidatorResult{
 			EmailConfirmation: confirmation,
 			Err:               ErrEmailConfirmationAlreadySucceeded,
 		}
@@ -147,7 +146,7 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 	// 有効期限チェック（15分）
 	if confirmation.IsExpired() {
 		formErrors.AddGlobal(i18n.T(ctx, "validation_confirmation_code_expired"))
-		return &UpdateValidatorResult{
+		return &EmailConfirmationUpdateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrEmailConfirmationExpired,
 		}
@@ -156,18 +155,12 @@ func (v *UpdateValidator) Validate(ctx context.Context, input UpdateValidatorInp
 	// コードの一致チェック（大文字小文字を区別しない）
 	if !strings.EqualFold(confirmation.Code, input.Code) {
 		formErrors.AddField("code", i18n.T(ctx, "validation_confirmation_code_mismatch"))
-		return &UpdateValidatorResult{
+		return &EmailConfirmationUpdateValidatorResult{
 			FormErrors: formErrors,
 			Err:        ErrEmailConfirmationCodeMismatch,
 		}
 	}
 
 	// 検証成功
-	return &UpdateValidatorResult{EmailConfirmation: confirmation}
-}
-
-// isValidEmail はメールアドレスの形式をチェックします
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
+	return &EmailConfirmationUpdateValidatorResult{EmailConfirmation: confirmation}
 }

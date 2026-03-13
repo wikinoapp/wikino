@@ -21,6 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // generateUniqueCode はユニークな確認コードを生成します
@@ -93,12 +94,16 @@ func TestCreate_Success(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -223,12 +228,16 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -327,12 +336,16 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -431,12 +444,16 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -550,12 +567,16 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 		t.Fatalf("failed to succeed email confirmation: %v", err)
 	}
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -632,12 +653,16 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
+
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
+
 	handler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
+		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)

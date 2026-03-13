@@ -1,4 +1,4 @@
-package sign_in_two_factor_recovery
+package validator
 
 import (
 	"context"
@@ -16,41 +16,39 @@ var recoveryCodeRegex = regexp.MustCompile(`^[a-z0-9]{8}$`)
 
 // バリデーションのエラー定義
 var (
-	// ErrTwoFactorNotEnabled は2FAが有効でない場合のエラー
-	ErrTwoFactorNotEnabled = errors.New("2FAが有効ではありません")
 	// ErrInvalidRecoveryCode はリカバリーコードが無効な場合のエラー
 	ErrInvalidRecoveryCode = errors.New("リカバリーコードが無効です")
 )
 
-// CreateValidator はリカバリーコード認証のバリデーションを行う
-type CreateValidator struct {
+// SignInTwoFactorRecoveryCreateValidator はリカバリーコード認証のバリデーションを行う
+type SignInTwoFactorRecoveryCreateValidator struct {
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewCreateValidator は CreateValidator を生成する
-func NewCreateValidator(
+// NewSignInTwoFactorRecoveryCreateValidator は SignInTwoFactorRecoveryCreateValidator を生成する
+func NewSignInTwoFactorRecoveryCreateValidator(
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
-) *CreateValidator {
-	return &CreateValidator{
+) *SignInTwoFactorRecoveryCreateValidator {
+	return &SignInTwoFactorRecoveryCreateValidator{
 		userTwoFactorAuthRepo: userTwoFactorAuthRepo,
 	}
 }
 
-// CreateValidatorInput はバリデーションの入力パラメータ
-type CreateValidatorInput struct {
+// SignInTwoFactorRecoveryCreateValidatorInput はバリデーションの入力パラメータ
+type SignInTwoFactorRecoveryCreateValidatorInput struct {
 	UserID       model.UserID
 	RecoveryCode string
 }
 
-// CreateValidatorResult はバリデーションの結果
-type CreateValidatorResult struct {
+// SignInTwoFactorRecoveryCreateValidatorResult はバリデーションの結果
+type SignInTwoFactorRecoveryCreateValidatorResult struct {
 	TwoFactorAuth *model.UserTwoFactorAuth
 	FormErrors    *session.FormErrors
 	Err           error
 }
 
 // Validate はバリデーションを行う
-func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInput) *CreateValidatorResult {
+func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, input SignInTwoFactorRecoveryCreateValidatorInput) *SignInTwoFactorRecoveryCreateValidatorResult {
 	// 1. 形式バリデーション
 	formErrors := session.NewFormErrors()
 
@@ -61,22 +59,22 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	if formErrors.HasErrors() {
-		return &CreateValidatorResult{FormErrors: formErrors}
+		return &SignInTwoFactorRecoveryCreateValidatorResult{FormErrors: formErrors}
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
-		return &CreateValidatorResult{Err: err}
+		return &SignInTwoFactorRecoveryCreateValidatorResult{Err: err}
 	}
 	if twoFactorAuth == nil {
-		return &CreateValidatorResult{Err: ErrTwoFactorNotEnabled}
+		return &SignInTwoFactorRecoveryCreateValidatorResult{Err: ErrTwoFactorNotEnabled}
 	}
 
 	// リカバリーコードを検証
 	if !isValidRecoveryCode(twoFactorAuth, input.RecoveryCode) {
 		formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_recovery_invalid_code"))
-		return &CreateValidatorResult{
+		return &SignInTwoFactorRecoveryCreateValidatorResult{
 			TwoFactorAuth: twoFactorAuth,
 			FormErrors:    formErrors,
 			Err:           ErrInvalidRecoveryCode,
@@ -84,7 +82,7 @@ func (v *CreateValidator) Validate(ctx context.Context, input CreateValidatorInp
 	}
 
 	// 検証成功
-	return &CreateValidatorResult{
+	return &SignInTwoFactorRecoveryCreateValidatorResult{
 		TwoFactorAuth: twoFactorAuth,
 	}
 }
