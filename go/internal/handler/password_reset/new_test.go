@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestNew_Success(t *testing.T) {
@@ -42,15 +43,18 @@ func TestNew_Success(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	// バリデーターを初期化
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase
+		passwordResetCreateValidator,
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/reset", nil)
@@ -111,15 +115,18 @@ func TestNew_I18n_Japanese(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	// バリデーターを初期化
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase
+		passwordResetCreateValidator,
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/reset", nil)
@@ -179,15 +186,18 @@ func TestNew_I18n_English(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	// バリデーターを初期化
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase
+		passwordResetCreateValidator,
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/reset", nil)

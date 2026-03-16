@@ -12,6 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -48,7 +49,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// バリデーション（形式チェック + DB検証）
-	result := h.validator.Validate(ctx, CreateValidatorInput{
+	result := h.validator.Validate(ctx, validator.SignInCreateValidatorInput{
 		Email:    email,
 		Password: password,
 	})
@@ -66,13 +67,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	user := result.User
 
 	// 二要素認証が有効かチェック
-	twoFactorAuth, err := h.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "二要素認証設定の取得でエラー", "error", err, "user_id", user.ID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if twoFactorAuth != nil {
+	if result.UserTwoFactorAuth != nil {
 		// 二要素認証が有効な場合はペンディングユーザーIDをCookieに設定し、2FAページにリダイレクト
 		h.sessionMgr.SetPendingUserCookie(w, user.ID)
 		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)

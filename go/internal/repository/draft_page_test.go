@@ -347,6 +347,176 @@ func TestDraftPageRepository_Delete(t *testing.T) {
 	})
 }
 
+func TestDraftPageRepository_CreateWithSuggestionPageID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-create-sp@example.com").
+		WithAtname("draftcreatesp").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-create-sp").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTitle("Test Page").
+		WithBody("body").
+		WithBodyHTML("<p>body</p>").
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
+		Build()
+
+	t.Run("suggestion_page_idを指定して下書きを作成できる", func(t *testing.T) {
+		now := time.Now()
+		title := "Draft with suggestion"
+		draft, err := repo.Create(context.Background(), CreateDraftPageInput{
+			SpaceID:          spaceID,
+			PageID:           pageID,
+			SpaceMemberID:    spaceMemberID,
+			TopicID:          topicID,
+			SuggestionPageID: &suggestionPageID,
+			Title:            &title,
+			Body:             "body",
+			BodyHTML:         "<p>body</p>",
+			LinkedPageIDs:    []model.PageID{},
+			ModifiedAt:       now,
+		})
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+		if draft.SuggestionPageID == nil {
+			t.Fatal("draft.SuggestionPageID should not be nil")
+		}
+		if *draft.SuggestionPageID != suggestionPageID {
+			t.Errorf("draft.SuggestionPageID = %v, want %v", *draft.SuggestionPageID, suggestionPageID)
+		}
+	})
+}
+
+func TestDraftPageRepository_UpdateSuggestionPageID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-update-sp@example.com").
+		WithAtname("draftupdatesp").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-update-sp").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTitle("Test Page").
+		WithBody("body").
+		WithBodyHTML("<p>body</p>").
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		Build()
+
+	t.Run("suggestion_page_idを設定できる", func(t *testing.T) {
+		draft, err := repo.UpdateSuggestionPageID(context.Background(), draftPageID, spaceID, &suggestionPageID)
+		if err != nil {
+			t.Fatalf("UpdateSuggestionPageID() error = %v", err)
+		}
+		if draft.SuggestionPageID == nil {
+			t.Fatal("draft.SuggestionPageID should not be nil")
+		}
+		if *draft.SuggestionPageID != suggestionPageID {
+			t.Errorf("draft.SuggestionPageID = %v, want %v", *draft.SuggestionPageID, suggestionPageID)
+		}
+	})
+
+	t.Run("suggestion_page_idをクリアできる", func(t *testing.T) {
+		draft, err := repo.UpdateSuggestionPageID(context.Background(), draftPageID, spaceID, nil)
+		if err != nil {
+			t.Fatalf("UpdateSuggestionPageID() error = %v", err)
+		}
+		if draft.SuggestionPageID != nil {
+			t.Errorf("draft.SuggestionPageID = %v, want nil", *draft.SuggestionPageID)
+		}
+	})
+}
+
 func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 	t.Parallel()
 

@@ -25,23 +25,38 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 
 	db := testutil.GetTestDB()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	return draft_page.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
-		draftPageRepo,
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			topicRepo,
+			topicMemberRepo,
+		),
+		usecase.NewGetSaveDraftPageDataUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
+		),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
-			repository.NewPageRepository(queries),
+			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			repository.NewTopicRepository(queries),
+			topicRepo,
 			repository.NewAttachmentRepository(queries),
 		),
+		usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo),
 	)
 }
 

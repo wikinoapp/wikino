@@ -19,6 +19,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -36,20 +38,31 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+
+	getPageDetailUC := usecase.NewGetPageDetailUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		draftPageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
+	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 
 	return page.NewHandler(
 		cfg,
 		flashMgr,
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		draftPageRepo,
-		topicRepo,
-		repository.NewTopicMemberRepository(queries),
+		getPageDetailUC,
+		getEditLinkDataUC,
 		nil,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
+		validator.NewPageUpdateValidator(pageRepo),
 	)
 }
 

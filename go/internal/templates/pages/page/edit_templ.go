@@ -391,7 +391,7 @@ func Edit(data EditPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</a></div></div></form></div></div></div><div class=\"px-4\"><div id=\"page-link-list\" data-on:draft-autosaved__window=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</a></div></div></form></div></div></div><div class=\"flex flex-col gap-4 px-4\"><div id=\"page-link-list\" data-on:draft-autosaved__window=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

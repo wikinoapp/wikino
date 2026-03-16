@@ -35,52 +35,25 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
+	// UseCaseでデータを取得
+	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if space == nil {
+	if output == nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
 
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// トピックメンバーを取得してTopicPolicyを生成
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+	if !topicPolicy.CanUpdatePage(output.Page) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
@@ -88,18 +61,6 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	// フォームパラメータを取得
 	title := r.FormValue("title")
 	body := r.FormValue("body")
-
-	// トピックを取得
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if topic == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
 
 	// タイトルのポインタ変換
 	var titlePtr *string
@@ -109,14 +70,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// ユースケースを実行
 	_, err = h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
-		SpaceID:          space.ID,
-		PageID:           pg.ID,
-		SpaceMemberID:    spaceMember.ID,
-		TopicID:          topic.ID,
+		SpaceID:          output.Space.ID,
+		PageID:           output.Page.ID,
+		SpaceMemberID:    output.SpaceMember.ID,
+		TopicID:          output.Topic.ID,
 		Title:            titlePtr,
 		Body:             body,
 		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: topic.Name,
+		CurrentTopicName: output.Topic.Name,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "下書きの手動保存に失敗", "error", err)

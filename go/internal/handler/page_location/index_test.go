@@ -15,16 +15,20 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_location.Handler {
 	t.Helper()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
+
 	return page_location.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
+		getPageLocationsUC,
 	)
 }
 

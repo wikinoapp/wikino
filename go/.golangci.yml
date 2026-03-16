@@ -103,12 +103,14 @@ linters:
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "HandlerはRepositoryに直接依存できません。UseCaseまたはValidatorを経由してください。"
 
         # バリデーター層のルール: 形式チェック + DBの状態を使った検証
         # Repository/Modelは許可、query/usecaseへの依存禁止
         validator-layer:
           files:
-            - "**/internal/handler/**/validator.go"
+            - "**/internal/validator/**"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "ValidatorはQueryに直接依存できません。Repositoryを経由してください。"
@@ -140,6 +142,8 @@ linters:
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "Application層はQueryに直接依存できません。Repositoryを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "UseCaseはPolicyに直接依存できません。認可チェックはHandlerで行ってください。"
             - pkg: github.com/wikinoapp/wikino/go/internal/handler
               desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware

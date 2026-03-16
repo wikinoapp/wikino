@@ -2,31 +2,19 @@
 package page_backlinks
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler はページレベルのバックリンク一覧ハンドラー
 type Handler struct {
-	spaceRepo       *repository.SpaceRepository
-	spaceMemberRepo *repository.SpaceMemberRepository
-	pageRepo        *repository.PageRepository
-	topicRepo       *repository.TopicRepository
-	topicMemberRepo *repository.TopicMemberRepository
+	getPageBacklinksUC *usecase.GetPageBacklinksUsecase
 }
 
 // NewHandler は新しいページレベルのバックリンク一覧ハンドラーを作成します
 func NewHandler(
-	spaceRepo *repository.SpaceRepository,
-	spaceMemberRepo *repository.SpaceMemberRepository,
-	pageRepo *repository.PageRepository,
-	topicRepo *repository.TopicRepository,
-	topicMemberRepo *repository.TopicMemberRepository,
+	getPageBacklinksUC *usecase.GetPageBacklinksUsecase,
 ) *Handler {
 	return &Handler{
-		spaceRepo:       spaceRepo,
-		spaceMemberRepo: spaceMemberRepo,
-		pageRepo:        pageRepo,
-		topicRepo:       topicRepo,
-		topicMemberRepo: topicMemberRepo,
+		getPageBacklinksUC: getPageBacklinksUC,
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Update はパスワードを更新します (PATCH /password)
@@ -25,8 +26,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	passwordConfirmation := r.FormValue("password_confirmation")
 
 	// バリデーション
-	validator := NewUpdateValidator(h.passwordResetTokenRepo)
-	result := validator.Validate(ctx, UpdateValidatorInput{
+	result := h.updateValidator.Validate(ctx, validator.PasswordUpdateValidatorInput{
 		Token:                token,
 		Password:             password,
 		PasswordConfirmation: passwordConfirmation,
@@ -35,9 +35,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if result.FormErrors != nil && result.FormErrors.HasErrors() {
 		// トークンエラーの場合はトークンを空にして再表示
 		displayToken := token
-		if result.Err != nil && (errors.Is(result.Err, ErrTokenNotFound) ||
-			errors.Is(result.Err, ErrTokenUsed) ||
-			errors.Is(result.Err, ErrTokenExpired)) {
+		if result.Err != nil && (errors.Is(result.Err, validator.ErrTokenNotFound) ||
+			errors.Is(result.Err, validator.ErrTokenUsed) ||
+			errors.Is(result.Err, validator.ErrTokenExpired)) {
 			displayToken = ""
 		}
 		h.renderEditForm(w, r, displayToken, result.FormErrors)

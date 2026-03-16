@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	passwordpages "github.com/wikinoapp/wikino/go/internal/templates/pages/password"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -48,8 +49,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// フォームバリデーション
-	validator := NewCreateValidator()
-	result := validator.Validate(ctx, CreateValidatorInput{
+	result := h.createValidator.Validate(ctx, validator.PasswordResetCreateValidatorInput{
 		Email: email,
 	})
 	if result.FormErrors != nil && result.FormErrors.HasErrors() {
@@ -101,32 +101,22 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// ユーザーを検索（存在しない場合もエラーを返さない - セキュリティ対策）
-	user, err := h.userRepo.FindByEmail(ctx, email)
+	// ロケールを取得
+	locale := i18n.GetLocale(ctx)
+
+	// パスワードリセットトークンを生成（ユーザーが存在しない場合は内部で無視される）
+	output, err := h.createTokenUsecase.Execute(ctx, usecase.CreatePasswordResetTokenInput{
+		Email:  email,
+		Locale: locale,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "ユーザーの検索エラー", "error", err)
-	}
-
-	// ユーザーが存在する場合のみトークンを生成
-	if user != nil {
-		// ロケールを取得
-		locale := i18n.GetLocale(ctx)
-
-		_, err := h.createTokenUsecase.Execute(ctx, usecase.CreatePasswordResetTokenInput{
-			UserID: user.ID,
-			Email:  user.Email,
-			Locale: locale,
-		})
-		if err != nil {
-			slog.ErrorContext(ctx, "パスワードリセットトークンの生成エラー", "error", err, "user_id", user.ID)
-			// トークン生成に失敗してもセキュリティ上、成功ページを表示
-		} else {
-			slog.InfoContext(ctx, "パスワードリセット申請を受け付けました",
-				"user_id", user.ID,
-				"email", user.Email,
-				"ip_address", clientip.GetClientIP(r),
-			)
-		}
+		slog.ErrorContext(ctx, "パスワードリセットトークンの生成エラー", "error", err)
+		// トークン生成に失敗してもセキュリティ上、成功ページを表示
+	} else if output != nil {
+		slog.InfoContext(ctx, "パスワードリセット申請を受け付けました",
+			"email", email,
+			"ip_address", clientip.GetClientIP(r),
+		)
 	} else {
 		slog.InfoContext(ctx, "パスワードリセット申請（ユーザーが存在しない）",
 			"email", email,

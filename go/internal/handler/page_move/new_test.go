@@ -19,6 +19,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -36,19 +38,22 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+
+	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	return page_move.NewHandler(
 		cfg,
 		flashMgr,
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		topicRepo,
-		repository.NewTopicMemberRepository(queries),
+		getPageMoveDataUC,
 		nil,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
+		validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo),
 	)
 }
 

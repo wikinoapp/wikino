@@ -11,4 +11,5 @@ const (
 	PageNamePageEdit       PageName = "page_edit"
 	PageNamePageMove       PageName = "page_move"
 	PageNameDraftPageIndex PageName = "draft_page_index"
+	PageNameTopicShow      PageName = "topic_show"
 )

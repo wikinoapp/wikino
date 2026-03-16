@@ -97,6 +97,134 @@ func TestNewPageForEdit(t *testing.T) {
 	}
 }
 
+func TestNewCardLinkPage(t *testing.T) {
+	t.Parallel()
+
+	strPtr := func(s string) *string { return &s }
+	attachmentIDPtr := func(s string) *model.AttachmentID {
+		id := model.AttachmentID(s)
+		return &id
+	}
+
+	topicID := model.TopicID("topic-1")
+	topicMap := map[model.TopicID]*model.Topic{
+		topicID: {
+			ID:         topicID,
+			Name:       "テストトピック",
+			Visibility: model.TopicVisibilityPublic,
+		},
+	}
+
+	tests := []struct {
+		name             string
+		page             *model.Page
+		topicMap         map[model.TopicID]*model.Topic
+		wantTitle        string
+		wantNumber       int32
+		wantCardImageURL string
+		wantPinned       bool
+		wantTopicName    string
+		wantTopicIcon    viewmodel.IconName
+		wantTopicNil     bool
+	}{
+		{
+			name: "アイキャッチ画像ありのページ",
+			page: &model.Page{
+				Number:                    1,
+				Title:                     strPtr("画像付きページ"),
+				TopicID:                   topicID,
+				FeaturedImageAttachmentID: attachmentIDPtr("550e8400-e29b-41d4-a716-446655440000"),
+			},
+			topicMap:         topicMap,
+			wantTitle:        "画像付きページ",
+			wantNumber:       1,
+			wantCardImageURL: "/attachments/550e8400-e29b-41d4-a716-446655440000",
+			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
+		},
+		{
+			name: "アイキャッチ画像なしのページ",
+			page: &model.Page{
+				Number:                    2,
+				Title:                     strPtr("画像なしページ"),
+				TopicID:                   topicID,
+				FeaturedImageAttachmentID: nil,
+			},
+			topicMap:         topicMap,
+			wantTitle:        "画像なしページ",
+			wantNumber:       2,
+			wantCardImageURL: "",
+			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
+		},
+		{
+			name: "タイトルがnilの場合は空文字になる",
+			page: &model.Page{
+				Number:  3,
+				Title:   nil,
+				TopicID: topicID,
+			},
+			topicMap:         topicMap,
+			wantTitle:        "",
+			wantNumber:       3,
+			wantCardImageURL: "",
+			wantPinned:       false,
+			wantTopicName:    "テストトピック",
+			wantTopicIcon:    "globe-regular",
+		},
+		{
+			name: "topicMapがnilの場合はTopicがnilになる",
+			page: &model.Page{
+				Number:  4,
+				Title:   strPtr("トピックなし"),
+				TopicID: topicID,
+			},
+			topicMap:     nil,
+			wantTitle:    "トピックなし",
+			wantNumber:   4,
+			wantTopicNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := viewmodel.NewCardLinkPage(tt.page, tt.topicMap)
+
+			if got.Title != tt.wantTitle {
+				t.Errorf("Title = %q, want %q", got.Title, tt.wantTitle)
+			}
+			if got.Number != tt.wantNumber {
+				t.Errorf("Number = %d, want %d", got.Number, tt.wantNumber)
+			}
+			if got.CardImageURL != tt.wantCardImageURL {
+				t.Errorf("CardImageURL = %q, want %q", got.CardImageURL, tt.wantCardImageURL)
+			}
+			if got.Pinned != tt.wantPinned {
+				t.Errorf("Pinned = %v, want %v", got.Pinned, tt.wantPinned)
+			}
+			if tt.wantTopicNil {
+				if got.Topic != nil {
+					t.Errorf("Topic = %v, want nil", got.Topic)
+				}
+			} else {
+				if got.Topic == nil {
+					t.Fatal("Topic is nil, want non-nil")
+				}
+				if got.Topic.Name != tt.wantTopicName {
+					t.Errorf("Topic.Name = %q, want %q", got.Topic.Name, tt.wantTopicName)
+				}
+				if got.Topic.IconName != tt.wantTopicIcon {
+					t.Errorf("Topic.IconName = %q, want %q", got.Topic.IconName, tt.wantTopicIcon)
+				}
+			}
+		})
+	}
+}
+
 func TestPage_AutofocusTitle(t *testing.T) {
 	t.Parallel()
 

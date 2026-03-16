@@ -43,6 +43,7 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	for _, pg := range input.Pages {
 		card := NewCardLinkPage(pg, input.TopicMap)
 		card.Primary = true
+		card.CanEdit = true
 		item := LinkListItem{
 			CardLinkPage: card,
 		}

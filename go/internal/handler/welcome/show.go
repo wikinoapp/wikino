@@ -38,6 +38,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Sidebar: components.SidebarData{
 			CurrentPageName: templates.PageNameWelcome,
 		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNameWelcome,
+		},
 	}
 	pageData := welcome.ShowPageData{}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // mockTurnstileVerifierForNew はNew用のTurnstile検証モック
@@ -61,16 +62,16 @@ func TestNew(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifierForNew{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	// HTTPリクエストを作成
@@ -158,16 +159,16 @@ func TestNew_WithBackParameter(t *testing.T) {
 	// モックTurnstileを初期化
 	mockTurnstile := &mockTurnstileVerifierForNew{valid: true, err: nil}
 
+	// バリデーターを初期化
+	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
 	handler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
 		createUserSessionUC,
 		mockTurnstile,
+		signInValidator,
 	)
 
 	tests := []struct {

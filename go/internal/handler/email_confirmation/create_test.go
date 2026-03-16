@@ -20,6 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
@@ -87,15 +88,19 @@ func TestCreate_Success(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -197,15 +202,19 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -289,15 +298,19 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -374,15 +387,19 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -459,15 +476,19 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -555,15 +576,19 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -639,15 +664,19 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)
@@ -748,15 +777,19 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		mockTurnstile,
 		limiter,
 	)

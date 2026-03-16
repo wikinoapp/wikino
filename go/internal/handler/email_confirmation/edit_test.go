@@ -19,6 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // mockTurnstileVerifierForEdit はテスト用のTurnstile検証モック
@@ -79,14 +80,18 @@ func TestEdit(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		turnstileVerifier,
 		limiter,
 	)
@@ -188,14 +193,18 @@ func TestEdit_NoEmailConfirmationID(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		turnstileVerifier,
 		limiter,
 	)
@@ -264,14 +273,18 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
+	// バリデーターを初期化
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
 		sendEmailConfirmationUC,
 		markEmailAsConfirmedUC,
+		emailConfirmationCreateValidator,
+		emailConfirmationUpdateValidator,
 		turnstileVerifier,
 		limiter,
 	)

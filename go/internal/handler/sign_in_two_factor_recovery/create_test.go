@@ -15,6 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestCreate_WithoutPendingUser(t *testing.T) {
@@ -37,14 +38,13 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -94,14 +94,13 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -172,14 +171,13 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -244,14 +242,13 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -317,14 +314,13 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,
@@ -435,14 +431,13 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
 		createValidator,
 		consumeRecoveryCodeUC,
 		createUserSessionUC,

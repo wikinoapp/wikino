@@ -26,24 +26,32 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 
 	db := testutil.GetTestDB()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	flashMgr := session.NewFlashManager("", false, false)
 
 	return draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			topicRepo,
+			topicMemberRepo,
+		),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(queries),
-			repository.NewPageRepository(queries),
+			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			repository.NewTopicRepository(queries),
+			topicRepo,
 			repository.NewAttachmentRepository(queries),
 		),
 	)
@@ -184,21 +192,29 @@ func TestUpdate_Success(t *testing.T) {
 		WithBody("Draft body").
 		Build()
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	handler := draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(q),
-		repository.NewSpaceMemberRepository(q),
-		repository.NewPageRepository(q),
-		repository.NewTopicRepository(q),
-		repository.NewTopicMemberRepository(q),
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			topicRepo,
+			topicMemberRepo,
+		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
-			repository.NewPageRepository(q),
+			pageRepo,
 			repository.NewPageEditorRepository(q),
-			repository.NewTopicRepository(q),
+			topicRepo,
 			repository.NewAttachmentRepository(q),
 		),
 	)
@@ -262,21 +278,29 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	handler := draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(q),
-		repository.NewSpaceMemberRepository(q),
-		repository.NewPageRepository(q),
-		repository.NewTopicRepository(q),
-		repository.NewTopicMemberRepository(q),
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			topicRepo,
+			topicMemberRepo,
+		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
-			repository.NewPageRepository(q),
+			pageRepo,
 			repository.NewPageEditorRepository(q),
-			repository.NewTopicRepository(q),
+			topicRepo,
 			repository.NewAttachmentRepository(q),
 		),
 	)
