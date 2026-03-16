@@ -146,6 +146,24 @@ func PageIDsToStrings(ids []PageID) []string {
 	return s
 }
 
+// SpaceMemberIDsToStrings はSpaceMemberIDスライスをstringスライスに変換する
+func SpaceMemberIDsToStrings(ids []SpaceMemberID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = string(id)
+	}
+	return s
+}
+
+// UserIDsToStrings はUserIDスライスをstringスライスに変換する
+func UserIDsToStrings(ids []UserID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = string(id)
+	}
+	return s
+}
+
 // StringsToPageIDs はstringスライスをPageIDスライスに変換する
 func StringsToPageIDs(ss []string) []PageID {
 	ids := make([]PageID, len(ss))
