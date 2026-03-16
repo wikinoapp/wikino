@@ -243,15 +243,19 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 ### テーブル設計
 
 - 編集提案テーブル (`suggestions`)
-  - id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at
+  - id, space_id, topic_id, created_space_member_id, number, title, body, body_html, status, applied_at, created_at, updated_at
+  - numberはトピック内での連番（`pages.number` と同じパターン）。URLのキーとして使用する（例: `/s/{space}/topics/{topic}/suggestions/{number}`）
   - bodyはMarkdownで記述し、保存時にページと同じMarkdownパイプライン（Wikiリンク解決含む）でbody_htmlを生成する
-  - インデックス: status, [topic_id, status]
+  - ユニークインデックス: [topic_id, number]
+  - インデックス: [topic_id, status]
 - 編集提案ページリビジョンテーブル (`suggestion_page_revisions`)
   - id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
   - インデックス: [suggestion_page_id, created_at]
 - 編集提案ページテーブル (`suggestion_pages`)
-  - id, space_id, suggestion_id, page_id, page_revision_id, latest_revision_id, created_at, updated_at
-  - page_id, page_revision_idはoptional（新規ページ作成の場合）
+  - id, space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, created_at, updated_at
+  - `pages` や `draft_pages` と同じパターンで、コンテンツ（title, body, body_html）を直接保持する。変更履歴は `suggestion_page_revisions` に記録する
+  - page_idはNOT NULL（ページは事前に作成されているため）
+  - page_revision_idは編集提案作成時点のベースリビジョンを記録する（NOT NULL）。ベースページが更新されたかどうかの検出（マージコンフリクト検出）や、差分計算の基準として使用する
   - ユニークインデックス: [suggestion_id, page_id]
 - 編集提案コメントテーブル (`suggestion_comments`)
   - id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
@@ -516,9 +520,9 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 #### フェーズ 1b: suggestion_pagesテーブル
 
-- [ ] **1b-1**: [Go] suggestion_pagesテーブルのマイグレーションとモデル定義
+- [x] **1b-1**: [Go] suggestion_pagesテーブルのマイグレーションとモデル定義
   - `go/db/migrations/` に `suggestion_pages` テーブルのマイグレーション作成
-  - カラム: id (ULID), space_id, suggestion_id, page_id (nullable), page_revision_id (nullable), latest_revision_id (nullable), created_at, updated_at
+  - カラム: id (ULID), space_id, suggestion_id, page_id, page_revision_id (nullable), latest_revision_id (nullable), created_at, updated_at
   - ユニークインデックス: `[suggestion_id, page_id]`
   - インデックス: `[space_id]`
   - `internal/model/id.go` に `SuggestionPageID` 型を追加
@@ -526,7 +530,25 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 0
   - **想定行数**: 実装 約70行
 
-- [ ] **1b-2**: [Go] suggestion_pagesテーブルのsqlcクエリとリポジトリ
+- [x] **1b-1a**: [Go] suggestionsテーブルにnumberカラムを追加
+  - `go/db/migrations/` に `suggestions` テーブルへの `number` (INTEGER NOT NULL) カラム追加マイグレーション作成
+  - ユニークインデックス: `[topic_id, number]` を追加
+  - `internal/model/suggestion.go` の `Suggestion` モデルに `Number int32` フィールドを追加
+  - suggestionsのsqlcクエリを更新（numberを含むselect、Createでnumber生成）
+  - `internal/repository/suggestion.go` の `toModel` を更新
+  - **想定ファイル数**: 実装 4, テスト 0
+  - **想定行数**: 実装 約40行
+
+- [x] **1b-1b**: [Go] suggestion_pagesテーブルのスキーマ変更（コンテンツカラム追加・不要カラム削除）
+  - `go/db/migrations/` に `suggestion_pages` テーブルの変更マイグレーション作成
+  - `title` (VARCHAR, nullable), `body` (VARCHAR NOT NULL DEFAULT ''), `body_html` (VARCHAR NOT NULL DEFAULT '') カラムを追加（`pages`・`draft_pages` と同じパターン）
+  - `page_revision_id` を NOT NULL に変更（ベースリビジョンとして常に値を持つ）
+  - `latest_revision_id` カラムを削除（コンテンツを直接保持するパターンに変更したため不要）
+  - `internal/model/suggestion_page.go` の `SuggestionPage` モデルを更新（`Title`, `Body`, `BodyHTML` フィールド追加、`LatestRevisionID` フィールド削除、`PageRevisionID` をポインタ型から値型に変更）
+  - **想定ファイル数**: 実装 2, テスト 0
+  - **想定行数**: 実装 約40行
+
+- [x] **1b-2**: [Go] suggestion_pagesテーブルのsqlcクエリとリポジトリ
   - `internal/query/queries/suggestion_pages.sql` にCRUDクエリを作成
   - `internal/repository/suggestion_page.go` に `SuggestionPageRepository` を作成
   - **想定ファイル数**: 実装 2, テスト 1
@@ -534,16 +556,16 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 #### フェーズ 1c: suggestion_page_revisionsテーブル
 
-- [ ] **1c-1**: [Go] suggestion_page_revisionsテーブルのマイグレーションとモデル定義
+- [x] **1c-1**: [Go] suggestion_page_revisionsテーブルのマイグレーションとモデル定義
   - `go/db/migrations/` に `suggestion_page_revisions` テーブルのマイグレーション作成
   - カラム: id (ULID), space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
   - インデックス: `[suggestion_page_id, created_at]`, `[space_id]`
-  - `internal/model/id.go` に `SuggestionPageRevisionID` 型を追加
+  - `internal/model/id.go` に `SuggestionPageRevisionID` 型を追加（1b-1 で追加済みの場合はスキップ）
   - `internal/model/suggestion_page_revision.go` に `SuggestionPageRevision` モデルを定義
   - **想定ファイル数**: 実装 3, テスト 0
-  - **想定行数**: 実装 約60行
+  - **想定行数**: 実装 約70行
 
-- [ ] **1c-2**: [Go] suggestion_page_revisionsテーブルのsqlcクエリとリポジトリ
+- [x] **1c-2**: [Go] suggestion_page_revisionsテーブルのsqlcクエリとリポジトリ
   - `internal/query/queries/suggestion_page_revisions.sql` にCRUDクエリを作成
   - `internal/repository/suggestion_page_revision.go` に `SuggestionPageRevisionRepository` を作成
   - **想定ファイル数**: 実装 2, テスト 1
@@ -551,7 +573,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 #### フェーズ 1d: suggestion_commentsテーブル
 
-- [ ] **1d-1**: [Go] suggestion_commentsテーブルのマイグレーションとモデル定義
+- [x] **1d-1**: [Go] suggestion_commentsテーブルのマイグレーションとモデル定義
   - `go/db/migrations/` に `suggestion_comments` テーブルのマイグレーション作成
   - カラム: id (ULID), space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
   - インデックス: `[suggestion_id, created_at]`, `[space_id]`
@@ -560,7 +582,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 0
   - **想定行数**: 実装 約50行
 
-- [ ] **1d-2**: [Go] suggestion_commentsテーブルのsqlcクエリとリポジトリ
+- [x] **1d-2**: [Go] suggestion_commentsテーブルのsqlcクエリとリポジトリ
   - `internal/query/queries/suggestion_comments.sql` にCRUDクエリを作成
   - `internal/repository/suggestion_comment.go` に `SuggestionCommentRepository` を作成
   - **想定ファイル数**: 実装 2, テスト 1
@@ -568,7 +590,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 #### フェーズ 1e: draft_pagesテーブルの変更
 
-- [ ] **1e-1**: [Go] draft_pagesテーブルへのsuggestion_page_idカラム追加
+- [x] **1e-1**: [Go] draft_pagesテーブルへのsuggestion_page_idカラム追加
   - `go/db/migrations/` に `draft_pages` テーブルへの `suggestion_page_id` (nullable FK → `suggestion_pages`) カラム追加マイグレーション作成
   - `internal/model/draft_page.go` に `SuggestionPageID *SuggestionPageID` フィールドを追加
   - sqlcクエリの更新（suggestion_page_idを含むselect/update）

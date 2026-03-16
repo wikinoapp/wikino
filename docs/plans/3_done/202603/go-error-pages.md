@@ -146,7 +146,7 @@ r.NotFound(handler.NotFound)
 
 ### フェーズ 1: メンテナンスページの移動
 
-- [ ] **1-1**: [Go] メンテナンスページを `pages/errors/` に移動
+- [x] **1-1**: [Go] メンテナンスページを `pages/errors/` に移動
   - `go/internal/templates/pages/maintenance/maintenance.templ` を `go/internal/templates/pages/errors/maintenance.templ` に移動
   - パッケージ名を `maintenance` から `errors` に変更
   - `go/internal/middleware/maintenance.go` の import パスを更新
@@ -156,7 +156,7 @@ r.NotFound(handler.NotFound)
 
 ### フェーズ 2: 404 エラーページの実装
 
-- [ ] **2-1**: [Go] 404 エラーページテンプレートと共通ヘルパーの実装
+- [x] **2-1**: [Go] 404 エラーページテンプレートと共通ヘルパーの実装
   - `go/internal/templates/pages/errors/not_found.templ` を作成
   - `go/internal/handler/errors.go` にヘルパー関数を作成
   - i18n 翻訳キーを `ja.toml`、`en.toml` に追加
@@ -166,14 +166,14 @@ r.NotFound(handler.NotFound)
 
 ### フェーズ 3: 既存ハンドラーの `http.NotFound` 置き換え
 
-- [ ] **3-1**: [Go] 全ハンドラーの `http.NotFound(w, r)` を `handler.NotFound(w, r)` に置き換え
+- [x] **3-1**: [Go] 全ハンドラーの `http.NotFound(w, r)` を `handler.NotFound(w, r)` に置き換え
   - 対象ハンドラーを一括置き換え
   - **想定ファイル数**: 約 15 ファイル（実装 15 + テスト 0）
   - **想定行数**: 約 50 行（実装のみ、各ファイル 1-3 行の変更）
 
 ### フェーズ 4: 仕様書への反映
 
-- [ ] **4-1**: 仕様書の作成・更新
+- [x] **4-1**: 仕様書の作成・更新
   - `docs/specs/error-page/overview.md` に仕様書を作成する
   - 作業計画書の概要・要件・設計・採用しなかった方針を仕様書に反映する
 
