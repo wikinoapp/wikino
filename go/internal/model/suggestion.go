@@ -24,6 +24,7 @@ type Suggestion struct {
 	SpaceID              SpaceID
 	TopicID              TopicID
 	CreatedSpaceMemberID SpaceMemberID
+	Number               SuggestionNumber
 	Title                string
 	Body                 string
 	BodyHTML             string

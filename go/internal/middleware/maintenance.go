@@ -6,7 +6,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/templates/pages/maintenance"
+	errpages "github.com/wikinoapp/wikino/go/internal/templates/pages/errors"
 )
 
 // MaintenanceMiddleware はメンテナンスモード時にアクセスを制限するミドルウェア
@@ -44,7 +44,7 @@ func (m *MaintenanceMiddleware) Middleware(next http.Handler) http.Handler {
 		w.WriteHeader(http.StatusServiceUnavailable)
 
 		// テンプレートのレンダリングエラーはレスポンス書き込み後なので無視
-		_ = maintenance.Page().Render(r.Context(), w)
+		_ = errpages.MaintenancePage().Render(r.Context(), w)
 	})
 }
 

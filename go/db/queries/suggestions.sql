@@ -1,7 +1,7 @@
 -- name: CreateSuggestion :one
 -- 編集提案を作成する
-INSERT INTO suggestions (space_id, topic_id, created_space_member_id, title, body, body_html, status, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: FindSuggestionByID :one
@@ -26,3 +26,7 @@ RETURNING *;
 SELECT COUNT(*)
 FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[]);
+
+-- name: GetNextSuggestionNumber :one
+-- トピック内の次の編集提案番号を取得する
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE topic_id = $1;

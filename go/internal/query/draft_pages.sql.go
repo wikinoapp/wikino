@@ -13,23 +13,24 @@ import (
 )
 
 const createDraftPage = `-- name: CreateDraftPage :one
-INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id
 `
 
 type CreateDraftPageParams struct {
-	SpaceID       string      `json:"space_id"`
-	PageID        string      `json:"page_id"`
-	SpaceMemberID string      `json:"space_member_id"`
-	TopicID       string      `json:"topic_id"`
-	Title         interface{} `json:"title"`
-	Body          string      `json:"body"`
-	BodyHtml      string      `json:"body_html"`
-	LinkedPageIds []string    `json:"linked_page_ids"`
-	ModifiedAt    time.Time   `json:"modified_at"`
-	CreatedAt     time.Time   `json:"created_at"`
-	UpdatedAt     time.Time   `json:"updated_at"`
+	SpaceID          string      `json:"space_id"`
+	PageID           string      `json:"page_id"`
+	SpaceMemberID    string      `json:"space_member_id"`
+	TopicID          string      `json:"topic_id"`
+	SuggestionPageID *string     `json:"suggestion_page_id"`
+	Title            interface{} `json:"title"`
+	Body             string      `json:"body"`
+	BodyHtml         string      `json:"body_html"`
+	LinkedPageIds    []string    `json:"linked_page_ids"`
+	ModifiedAt       time.Time   `json:"modified_at"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
 // 下書きを作成する
@@ -39,6 +40,7 @@ func (q *Queries) CreateDraftPage(ctx context.Context, arg CreateDraftPageParams
 		arg.PageID,
 		arg.SpaceMemberID,
 		arg.TopicID,
+		arg.SuggestionPageID,
 		arg.Title,
 		arg.Body,
 		arg.BodyHtml,
@@ -61,6 +63,7 @@ func (q *Queries) CreateDraftPage(ctx context.Context, arg CreateDraftPageParams
 		&i.ModifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SuggestionPageID,
 	)
 	return i, err
 }
@@ -81,7 +84,7 @@ func (q *Queries) DeleteDraftPage(ctx context.Context, arg DeleteDraftPageParams
 }
 
 const findDraftPageByPageAndMember = `-- name: FindDraftPageByPageAndMember :one
-SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `
 
 type FindDraftPageByPageAndMemberParams struct {
@@ -107,6 +110,7 @@ func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraf
 		&i.ModifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SuggestionPageID,
 	)
 	return i, err
 }
@@ -121,7 +125,7 @@ SET topic_id = $2,
     modified_at = $7,
     updated_at = $8
 WHERE id = $1 AND space_id = $9
-RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id
 `
 
 type UpdateDraftPageParams struct {
@@ -163,6 +167,49 @@ func (q *Queries) UpdateDraftPage(ctx context.Context, arg UpdateDraftPageParams
 		&i.ModifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SuggestionPageID,
+	)
+	return i, err
+}
+
+const updateDraftPageSuggestionPageID = `-- name: UpdateDraftPageSuggestionPageID :one
+UPDATE draft_pages
+SET suggestion_page_id = $2,
+    updated_at = $3
+WHERE id = $1 AND space_id = $4
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id
+`
+
+type UpdateDraftPageSuggestionPageIDParams struct {
+	ID               string    `json:"id"`
+	SuggestionPageID *string   `json:"suggestion_page_id"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	SpaceID          string    `json:"space_id"`
+}
+
+// 下書きの編集提案ページIDを更新する
+func (q *Queries) UpdateDraftPageSuggestionPageID(ctx context.Context, arg UpdateDraftPageSuggestionPageIDParams) (DraftPage, error) {
+	row := q.db.QueryRowContext(ctx, updateDraftPageSuggestionPageID,
+		arg.ID,
+		arg.SuggestionPageID,
+		arg.UpdatedAt,
+		arg.SpaceID,
+	)
+	var i DraftPage
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.PageID,
+		&i.SpaceMemberID,
+		&i.TopicID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SuggestionPageID,
 	)
 	return i, err
 }

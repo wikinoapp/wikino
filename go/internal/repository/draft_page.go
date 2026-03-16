@@ -43,32 +43,41 @@ func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID mo
 
 // CreateDraftPageInput は下書き作成の入力パラメータ
 type CreateDraftPageInput struct {
-	SpaceID       model.SpaceID
-	PageID        model.PageID
-	SpaceMemberID model.SpaceMemberID
-	TopicID       model.TopicID
-	Title         *string
-	Body          string
-	BodyHTML      string
-	LinkedPageIDs []model.PageID
-	ModifiedAt    time.Time
+	SpaceID          model.SpaceID
+	PageID           model.PageID
+	SpaceMemberID    model.SpaceMemberID
+	TopicID          model.TopicID
+	SuggestionPageID *model.SuggestionPageID
+	Title            *string
+	Body             string
+	BodyHTML         string
+	LinkedPageIDs    []model.PageID
+	ModifiedAt       time.Time
 }
 
 // Create は下書きを作成する
 func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageInput) (*model.DraftPage, error) {
 	now := time.Now()
+
+	var suggestionPageID *string
+	if input.SuggestionPageID != nil {
+		s := string(*input.SuggestionPageID)
+		suggestionPageID = &s
+	}
+
 	row, err := r.q.CreateDraftPage(ctx, query.CreateDraftPageParams{
-		SpaceID:       string(input.SpaceID),
-		PageID:        string(input.PageID),
-		SpaceMemberID: string(input.SpaceMemberID),
-		TopicID:       string(input.TopicID),
-		Title:         input.Title,
-		Body:          input.Body,
-		BodyHtml:      input.BodyHTML,
-		LinkedPageIds: model.PageIDsToStrings(input.LinkedPageIDs),
-		ModifiedAt:    input.ModifiedAt,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		SpaceID:          string(input.SpaceID),
+		PageID:           string(input.PageID),
+		SpaceMemberID:    string(input.SpaceMemberID),
+		TopicID:          string(input.TopicID),
+		SuggestionPageID: suggestionPageID,
+		Title:            input.Title,
+		Body:             input.Body,
+		BodyHtml:         input.BodyHTML,
+		LinkedPageIds:    model.PageIDsToStrings(input.LinkedPageIDs),
+		ModifiedAt:       input.ModifiedAt,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	})
 	if err != nil {
 		return nil, err
@@ -113,6 +122,26 @@ func (r *DraftPageRepository) Delete(ctx context.Context, id model.DraftPageID, 
 		ID:      string(id),
 		SpaceID: string(spaceID),
 	})
+}
+
+// UpdateSuggestionPageID は下書きの編集提案ページIDを更新する
+func (r *DraftPageRepository) UpdateSuggestionPageID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID, suggestionPageID *model.SuggestionPageID) (*model.DraftPage, error) {
+	var spID *string
+	if suggestionPageID != nil {
+		s := string(*suggestionPageID)
+		spID = &s
+	}
+
+	row, err := r.q.UpdateDraftPageSuggestionPageID(ctx, query.UpdateDraftPageSuggestionPageIDParams{
+		ID:               string(id),
+		SuggestionPageID: spID,
+		UpdatedAt:        time.Now(),
+		SpaceID:          string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
 }
 
 // ListByUser はユーザーの下書きページ一覧を取得する（サイドバー表示用）
@@ -246,18 +275,25 @@ func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 		}
 	}
 
+	var suggestionPageID *model.SuggestionPageID
+	if row.SuggestionPageID != nil {
+		id := model.SuggestionPageID(*row.SuggestionPageID)
+		suggestionPageID = &id
+	}
+
 	return &model.DraftPage{
-		ID:            model.DraftPageID(row.ID),
-		SpaceID:       model.SpaceID(row.SpaceID),
-		PageID:        model.PageID(row.PageID),
-		SpaceMemberID: model.SpaceMemberID(row.SpaceMemberID),
-		TopicID:       model.TopicID(row.TopicID),
-		Title:         title,
-		Body:          row.Body,
-		BodyHTML:      row.BodyHtml,
-		LinkedPageIDs: model.StringsToPageIDs(row.LinkedPageIds),
-		ModifiedAt:    row.ModifiedAt,
-		CreatedAt:     row.CreatedAt,
-		UpdatedAt:     row.UpdatedAt,
+		ID:               model.DraftPageID(row.ID),
+		SpaceID:          model.SpaceID(row.SpaceID),
+		PageID:           model.PageID(row.PageID),
+		SpaceMemberID:    model.SpaceMemberID(row.SpaceMemberID),
+		TopicID:          model.TopicID(row.TopicID),
+		SuggestionPageID: suggestionPageID,
+		Title:            title,
+		Body:             row.Body,
+		BodyHTML:         row.BodyHtml,
+		LinkedPageIDs:    model.StringsToPageIDs(row.LinkedPageIds),
+		ModifiedAt:       row.ModifiedAt,
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        row.UpdatedAt,
 	}
 }

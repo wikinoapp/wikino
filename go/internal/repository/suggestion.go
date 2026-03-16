@@ -30,6 +30,7 @@ type CreateSuggestionInput struct {
 	SpaceID              model.SpaceID
 	TopicID              model.TopicID
 	CreatedSpaceMemberID model.SpaceMemberID
+	Number               model.SuggestionNumber
 	Title                string
 	Body                 string
 	BodyHTML             string
@@ -43,6 +44,7 @@ func (r *SuggestionRepository) Create(ctx context.Context, input CreateSuggestio
 		SpaceID:              string(input.SpaceID),
 		TopicID:              string(input.TopicID),
 		CreatedSpaceMemberID: string(input.CreatedSpaceMemberID),
+		Number:               int32(input.Number),
 		Title:                input.Title,
 		Body:                 input.Body,
 		BodyHtml:             input.BodyHTML,
@@ -132,6 +134,15 @@ func (r *SuggestionRepository) CountByTopicAndStatuses(ctx context.Context, topi
 	})
 }
 
+// GetNextNumber はトピック内の次の編集提案番号を取得する
+func (r *SuggestionRepository) GetNextNumber(ctx context.Context, topicID model.TopicID) (model.SuggestionNumber, error) {
+	n, err := r.q.GetNextSuggestionNumber(ctx, string(topicID))
+	if err != nil {
+		return 0, err
+	}
+	return model.SuggestionNumber(n), nil
+}
+
 // toModel は query.Suggestion を model.Suggestion に変換する
 func (r *SuggestionRepository) toModel(row query.Suggestion) *model.Suggestion {
 	var appliedAt *time.Time
@@ -144,6 +155,7 @@ func (r *SuggestionRepository) toModel(row query.Suggestion) *model.Suggestion {
 		SpaceID:              model.SpaceID(row.SpaceID),
 		TopicID:              model.TopicID(row.TopicID),
 		CreatedSpaceMemberID: model.SpaceMemberID(row.CreatedSpaceMemberID),
+		Number:               model.SuggestionNumber(row.Number),
 		Title:                row.Title,
 		Body:                 row.Body,
 		BodyHTML:             row.BodyHtml,

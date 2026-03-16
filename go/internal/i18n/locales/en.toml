@@ -714,3 +714,16 @@ other = "Prev"
 [pagination_next]
 description = "Link to the next page in pagination"
 other = "Next"
+
+# 404 error page
+[error_not_found_title]
+description = "404 error page title"
+other = "Page Not Found | Wikino"
+
+[error_not_found_message]
+description = "404 error page message"
+other = "The page you are looking for could not be found"
+
+[error_not_found_back_to_top]
+description = "404 error page link to top page"
+other = "Back to top page"

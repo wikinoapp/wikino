@@ -203,7 +203,8 @@ CREATE TABLE public.draft_pages (
     linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    suggestion_page_id uuid
 );
 
 
@@ -515,6 +516,57 @@ CREATE TABLE public.spaces (
 
 
 --
+-- Name: suggestion_comments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.suggestion_comments (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    suggestion_id uuid NOT NULL,
+    created_space_member_id uuid NOT NULL,
+    body character varying DEFAULT ''::character varying NOT NULL,
+    body_html character varying DEFAULT ''::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: suggestion_page_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.suggestion_page_revisions (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    suggestion_page_id uuid NOT NULL,
+    editor_space_member_id uuid NOT NULL,
+    title character varying,
+    body character varying DEFAULT ''::character varying NOT NULL,
+    body_html character varying DEFAULT ''::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: suggestion_pages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.suggestion_pages (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    suggestion_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    page_revision_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    title character varying,
+    body character varying DEFAULT ''::character varying NOT NULL,
+    body_html character varying DEFAULT ''::character varying NOT NULL
+);
+
+
+--
 -- Name: suggestions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -529,7 +581,8 @@ CREATE TABLE public.suggestions (
     status integer DEFAULT 0 NOT NULL,
     applied_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    number integer DEFAULT 0 NOT NULL
 );
 
 
@@ -871,6 +924,30 @@ ALTER TABLE ONLY public.spaces
 
 
 --
+-- Name: suggestion_comments suggestion_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_comments
+    ADD CONSTRAINT suggestion_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: suggestion_page_revisions suggestion_page_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_page_revisions
+    ADD CONSTRAINT suggestion_page_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: suggestion_pages suggestion_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT suggestion_pages_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: suggestions suggestions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -975,6 +1052,48 @@ CREATE INDEX idx_rate_limits_window_start ON public.rate_limits USING btree (win
 
 
 --
+-- Name: idx_suggestion_comments_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_comments_space_id ON public.suggestion_comments USING btree (space_id);
+
+
+--
+-- Name: idx_suggestion_comments_suggestion_id_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_comments_suggestion_id_created_at ON public.suggestion_comments USING btree (suggestion_id, created_at);
+
+
+--
+-- Name: idx_suggestion_page_revisions_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_page_revisions_space_id ON public.suggestion_page_revisions USING btree (space_id);
+
+
+--
+-- Name: idx_suggestion_page_revisions_suggestion_page_id_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_page_revisions_suggestion_page_id_created_at ON public.suggestion_page_revisions USING btree (suggestion_page_id, created_at);
+
+
+--
+-- Name: idx_suggestion_pages_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_pages_space_id ON public.suggestion_pages USING btree (space_id);
+
+
+--
+-- Name: idx_suggestion_pages_suggestion_id_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_suggestion_pages_suggestion_id_page_id ON public.suggestion_pages USING btree (suggestion_id, page_id);
+
+
+--
 -- Name: idx_suggestions_created_space_member_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -986,6 +1105,13 @@ CREATE INDEX idx_suggestions_created_space_member_id ON public.suggestions USING
 --
 
 CREATE INDEX idx_suggestions_space_id ON public.suggestions USING btree (space_id);
+
+
+--
+-- Name: idx_suggestions_topic_id_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_suggestions_topic_id_number ON public.suggestions USING btree (topic_id, number);
 
 
 --
@@ -1091,6 +1217,13 @@ CREATE INDEX index_draft_pages_on_space_member_id ON public.draft_pages USING bt
 --
 
 CREATE UNIQUE INDEX index_draft_pages_on_space_member_id_and_page_id ON public.draft_pages USING btree (space_member_id, page_id);
+
+
+--
+-- Name: index_draft_pages_on_suggestion_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_pages_on_suggestion_page_id ON public.draft_pages USING btree (suggestion_page_id) WHERE (suggestion_page_id IS NOT NULL);
 
 
 --
@@ -1510,6 +1643,14 @@ ALTER TABLE ONLY public.draft_page_revisions
 
 
 --
+-- Name: draft_pages draft_pages_suggestion_page_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT draft_pages_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id);
+
+
+--
 -- Name: feature_flags feature_flags_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1798,6 +1939,86 @@ ALTER TABLE ONLY public.river_client_queue
 
 
 --
+-- Name: suggestion_comments suggestion_comments_created_space_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_comments
+    ADD CONSTRAINT suggestion_comments_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
+
+
+--
+-- Name: suggestion_comments suggestion_comments_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_comments
+    ADD CONSTRAINT suggestion_comments_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: suggestion_comments suggestion_comments_suggestion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_comments
+    ADD CONSTRAINT suggestion_comments_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id);
+
+
+--
+-- Name: suggestion_page_revisions suggestion_page_revisions_editor_space_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_page_revisions
+    ADD CONSTRAINT suggestion_page_revisions_editor_space_member_id_fkey FOREIGN KEY (editor_space_member_id) REFERENCES public.space_members(id);
+
+
+--
+-- Name: suggestion_page_revisions suggestion_page_revisions_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_page_revisions
+    ADD CONSTRAINT suggestion_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: suggestion_page_revisions suggestion_page_revisions_suggestion_page_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_page_revisions
+    ADD CONSTRAINT suggestion_page_revisions_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id);
+
+
+--
+-- Name: suggestion_pages suggestion_pages_page_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT suggestion_pages_page_id_fkey FOREIGN KEY (page_id) REFERENCES public.pages(id);
+
+
+--
+-- Name: suggestion_pages suggestion_pages_page_revision_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT suggestion_pages_page_revision_id_fkey FOREIGN KEY (page_revision_id) REFERENCES public.page_revisions(id);
+
+
+--
+-- Name: suggestion_pages suggestion_pages_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT suggestion_pages_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+
+
+--
+-- Name: suggestion_pages suggestion_pages_suggestion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT suggestion_pages_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id);
+
+
+--
 -- Name: suggestions suggestions_created_space_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1863,4 +2084,10 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260301154347'),
     ('20260305154013'),
     ('20260313062541'),
-    ('20260313091316');
+    ('20260313091316'),
+    ('20260316032157'),
+    ('20260316081143'),
+    ('20260316082820'),
+    ('20260316084613'),
+    ('20260316090550'),
+    ('20260316092918');

@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
@@ -311,6 +312,9 @@ func main() {
 		sidebarHelper,
 	)
 	r := chi.NewRouter()
+
+	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
+	r.NotFound(handler.NotFound)
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
 	// 注: RailsAppURLが設定されている場合のみ有効化
