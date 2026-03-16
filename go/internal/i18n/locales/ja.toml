@@ -714,3 +714,16 @@ other = "前へ"
 [pagination_next]
 description = "ページネーションの次のページへのリンク"
 other = "次へ"
+
+# 404エラーページ
+[error_not_found_title]
+description = "404エラーページのタイトル"
+other = "ページが見つかりませんでした | Wikino"
+
+[error_not_found_message]
+description = "404エラーページのメッセージ"
+other = "お探しのページは見つかりませんでした"
+
+[error_not_found_back_to_top]
+description = "404エラーページのトップページリンク"
+other = "トップページに戻る"

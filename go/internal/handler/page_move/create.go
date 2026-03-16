@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -33,7 +34,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		http.NotFound(w, r)
+		handler.NotFound(w, r)
 		return
 	}
 
@@ -49,14 +50,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		http.NotFound(w, r)
+		handler.NotFound(w, r)
 		return
 	}
 
 	// 認可チェック
 	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
 	if !topicPolicy.CanUpdatePage(output.Page) {
-		http.NotFound(w, r)
+		handler.NotFound(w, r)
 		return
 	}
 

@@ -1,11 +1,11 @@
-package maintenance
+package errors
 
-// Page はメンテナンスページを表示するテンプレート。
+// MaintenancePage はメンテナンスページを表示するテンプレート。
 // 503 Service Unavailable と共に表示される。
 // メンテナンス中は他のシステムコンポーネント（セッション、DB等）が
 // 利用できない可能性があるため、レイアウトテンプレートを使用せず
 // 外部依存のない完全なHTMLドキュメントとして生成する。
-templ Page() {
+templ MaintenancePage() {
 	<!DOCTYPE html>
 	<html lang="ja">
 		<head>
