@@ -10,33 +10,47 @@ import (
 
 // GetSuggestionListUsecase は編集提案一覧取得ユースケース
 type GetSuggestionListUsecase struct {
-	suggestionRepo  *repository.SuggestionRepository
+	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
+	topicRepo       *repository.TopicRepository
+	topicMemberRepo *repository.TopicMemberRepository
+	suggestionRepo  *repository.SuggestionRepository
 	userRepo        *repository.UserRepository
 }
 
 // NewGetSuggestionListUsecase は GetSuggestionListUsecase を生成する
 func NewGetSuggestionListUsecase(
-	suggestionRepo *repository.SuggestionRepository,
+	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
+	suggestionRepo *repository.SuggestionRepository,
 	userRepo *repository.UserRepository,
 ) *GetSuggestionListUsecase {
 	return &GetSuggestionListUsecase{
-		suggestionRepo:  suggestionRepo,
+		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
+		topicRepo:       topicRepo,
+		topicMemberRepo: topicMemberRepo,
+		suggestionRepo:  suggestionRepo,
 		userRepo:        userRepo,
 	}
 }
 
 // GetSuggestionListInput は編集提案一覧取得の入力パラメータ
 type GetSuggestionListInput struct {
-	TopicID  model.TopicID
-	SpaceID  model.SpaceID
-	Statuses []model.SuggestionStatus
+	SpaceIdentifier model.SpaceIdentifier
+	TopicNumber     int32
+	UserID          *model.UserID
+	Statuses        []model.SuggestionStatus
 }
 
 // GetSuggestionListOutput は編集提案一覧取得の出力
 type GetSuggestionListOutput struct {
+	Space       *model.Space
+	SpaceMember *model.SpaceMember
+	Topic       *model.Topic
+	TopicMember *model.TopicMember
 	Suggestions []*model.Suggestion
 	UserMap     map[model.SpaceMemberID]*model.User
 	OpenCount   int64
@@ -45,14 +59,57 @@ type GetSuggestionListOutput struct {
 
 // Execute は編集提案一覧を取得する
 func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSuggestionListInput) (*GetSuggestionListOutput, error) {
+	// スペースを取得
+	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+	}
+	if space == nil {
+		return nil, nil
+	}
+
+	// ログインユーザーのスペースメンバーを取得（未ログインならnil）
+	var spaceMember *model.SpaceMember
+	if input.UserID != nil {
+		spaceMember, err = uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *input.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+		}
+	}
+
+	// トピックを取得
+	topic, err := uc.topicRepo.FindBySpaceAndNumber(ctx, space.ID, input.TopicNumber)
+	if err != nil {
+		return nil, fmt.Errorf("トピックの取得に失敗: %w", err)
+	}
+	if topic == nil {
+		return nil, nil
+	}
+
+	// トピックメンバーを取得
+	var topicMember *model.TopicMember
+	if spaceMember != nil {
+		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, topic.ID)
+		if err != nil {
+			return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
+		}
+	}
+
+	// 権限チェック: 非公開トピックはスペースオーナーまたはトピックメンバーのみ閲覧可能
+	if topic.Visibility == model.TopicVisibilityPrivate {
+		if spaceMember == nil || (spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil) {
+			return nil, nil
+		}
+	}
+
 	// 指定ステータスの編集提案を取得
-	suggestions, err := uc.suggestionRepo.ListByTopicAndStatuses(ctx, input.TopicID, input.SpaceID, input.Statuses)
+	suggestions, err := uc.suggestionRepo.ListByTopicAndStatuses(ctx, topic.ID, space.ID, input.Statuses)
 	if err != nil {
 		return nil, fmt.Errorf("編集提案一覧の取得に失敗: %w", err)
 	}
 
 	// オープン件数を取得（下書き・オープン）
-	openCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, input.TopicID, input.SpaceID, []model.SuggestionStatus{
+	openCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, []model.SuggestionStatus{
 		model.SuggestionStatusDraft,
 		model.SuggestionStatusOpen,
 	})
@@ -61,7 +118,7 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 	}
 
 	// クローズ件数を取得（反映済み・クローズ）
-	closedCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, input.TopicID, input.SpaceID, []model.SuggestionStatus{
+	closedCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, []model.SuggestionStatus{
 		model.SuggestionStatusApplied,
 		model.SuggestionStatusClosed,
 	})
@@ -70,12 +127,16 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 	}
 
 	// 作成者情報を取得
-	userMap, err := uc.buildUserMap(ctx, suggestions, input.SpaceID)
+	userMap, err := uc.buildUserMap(ctx, suggestions, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("作成者情報の取得に失敗: %w", err)
 	}
 
 	return &GetSuggestionListOutput{
+		Space:       space,
+		SpaceMember: spaceMember,
+		Topic:       topic,
+		TopicMember: topicMember,
 		Suggestions: suggestions,
 		UserMap:     userMap,
 		OpenCount:   openCount,

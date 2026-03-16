@@ -727,3 +727,36 @@ other = "The page you are looking for could not be found"
 [error_not_found_back_to_top]
 description = "404 error page link to top page"
 other = "Back to top page"
+
+# Suggestions
+[suggestion_index_title]
+description = "Suggestion list page title"
+other = "Suggestions - {{.TopicName}} - {{.SpaceName}}"
+
+[suggestion_index_heading]
+description = "Suggestion list heading"
+other = "Suggestions"
+
+[suggestion_index_breadcrumb]
+description = "Suggestion list breadcrumb"
+other = "Suggestions"
+
+[suggestion_index_open_tab]
+description = "Suggestion list open tab"
+other = "Open"
+
+[suggestion_index_closed_tab]
+description = "Suggestion list closed tab"
+other = "Closed"
+
+[suggestion_index_opened_by]
+description = "Suggestion author display"
+other = "by"
+
+[suggestion_index_no_open]
+description = "Message when no open suggestions"
+other = "No open suggestions"
+
+[suggestion_index_no_closed]
+description = "Message when no closed suggestions"
+other = "No closed suggestions"

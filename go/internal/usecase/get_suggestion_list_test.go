@@ -14,10 +14,13 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	suggestionRepo := repository.NewSuggestionRepository(q)
+	spaceRepo := repository.NewSpaceRepository(q)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	suggestionRepo := repository.NewSuggestionRepository(q)
 	userRepo := repository.NewUserRepository(q)
-	uc := NewGetSuggestionListUsecase(suggestionRepo, spaceMemberRepo, userRepo)
+	uc := NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 
 	// テストデータのセットアップ
 	userID := testutil.NewUserBuilder(t, tx).
@@ -42,9 +45,9 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 
 	t.Run("編集提案がない場合は空のスライスが返る", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
-			TopicID:  topicID,
-			SpaceID:  spaceID,
-			Statuses: []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -60,6 +63,12 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		}
 		if output.ClosedCount != 0 {
 			t.Errorf("ClosedCount = %d, want 0", output.ClosedCount)
+		}
+		if output.Space == nil {
+			t.Error("Space should not be nil")
+		}
+		if output.Topic == nil {
+			t.Error("Topic should not be nil")
 		}
 	})
 
@@ -90,9 +99,9 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 
 		// オープン表示（下書き・オープン）
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
-			TopicID:  topicID,
-			SpaceID:  spaceID,
-			Statuses: []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -110,9 +119,9 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 
 	t.Run("作成者のユーザー情報がUserMapに含まれる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
-			TopicID:  topicID,
-			SpaceID:  spaceID,
-			Statuses: []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -124,6 +133,34 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		}
 		if user.Name != "提案太郎" {
 			t.Errorf("user.Name = %q, want %q", user.Name, "提案太郎")
+		}
+	})
+
+	t.Run("存在しないスペースの場合はnilが返る", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
+			SpaceIdentifier: "nonexistent",
+			TopicNumber:     1,
+			Statuses:        []model.SuggestionStatus{model.SuggestionStatusOpen},
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output != nil {
+			t.Error("output should be nil for nonexistent space")
+		}
+	})
+
+	t.Run("存在しないトピックの場合はnilが返る", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     999,
+			Statuses:        []model.SuggestionStatus{model.SuggestionStatusOpen},
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output != nil {
+			t.Error("output should be nil for nonexistent topic")
 		}
 	})
 }

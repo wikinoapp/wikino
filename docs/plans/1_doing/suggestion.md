@@ -606,7 +606,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 2, テスト 1
   - **想定行数**: 実装 約120行, テスト 約100行
 
-- [ ] **2-2**: [Go] 編集提案一覧のハンドラーとテンプレート
+- [x] **2-2**: [Go] 編集提案一覧のハンドラーとテンプレート
   - `internal/handler/suggestion/handler.go` に Handler 構造体を定義
   - `internal/handler/suggestion/index.go` に `Index` メソッドを実装（GET /s/{space}/topics/{topic}/suggestions）
   - `internal/templates/pages/suggestion/index.templ` に一覧テンプレートを作成（オープン/クローズのタブ切り替え）
