@@ -36,6 +36,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -118,6 +119,7 @@ func main() {
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
+	suggestionRepo := repository.NewSuggestionRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -311,6 +313,12 @@ func main() {
 		getTopicDetailUC,
 		sidebarHelper,
 	)
+	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
+	suggestionHandler := suggestionhandler.NewHandler(
+		cfg,
+		getSuggestionListUC,
+		sidebarHelper,
+	)
 	r := chi.NewRouter()
 
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
@@ -361,6 +369,9 @@ func main() {
 
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
+
+		// 編集提案一覧画面（公開トピックは未ログインでも閲覧可能）
+		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
 	})
 
 	// 未認証ユーザー専用ルート

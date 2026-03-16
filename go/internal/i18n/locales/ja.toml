@@ -727,3 +727,36 @@ other = "お探しのページは見つかりませんでした"
 [error_not_found_back_to_top]
 description = "404エラーページのトップページリンク"
 other = "トップページに戻る"
+
+# 編集提案一覧
+[suggestion_index_title]
+description = "編集提案一覧のページタイトル"
+other = "編集提案 - {{.TopicName}} - {{.SpaceName}}"
+
+[suggestion_index_heading]
+description = "編集提案一覧の見出し"
+other = "編集提案"
+
+[suggestion_index_breadcrumb]
+description = "編集提案一覧のパンくずリスト"
+other = "編集提案"
+
+[suggestion_index_open_tab]
+description = "編集提案一覧のオープンタブ"
+other = "オープン"
+
+[suggestion_index_closed_tab]
+description = "編集提案一覧のクローズタブ"
+other = "クローズ"
+
+[suggestion_index_opened_by]
+description = "編集提案の作成者表示"
+other = "作成:"
+
+[suggestion_index_no_open]
+description = "オープンの編集提案がない場合のメッセージ"
+other = "オープンの編集提案はありません"
+
+[suggestion_index_no_closed]
+description = "クローズの編集提案がない場合のメッセージ"
+other = "クローズの編集提案はありません"

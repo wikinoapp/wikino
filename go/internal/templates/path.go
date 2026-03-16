@@ -90,6 +90,11 @@ func PageMovePath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
 }
 
+// SuggestionListPath は編集提案一覧のパスを生成します
+func SuggestionListPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))
+}
+
 // DraftsPath は下書き一覧のパスを生成します
 func DraftsPath() Path {
 	return Path("/drafts")
