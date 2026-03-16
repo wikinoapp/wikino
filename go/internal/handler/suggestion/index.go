@@ -37,14 +37,6 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	tab := r.URL.Query().Get("tab")
 	showClosed := tab == "closed"
 
-	// フィルタするステータスを決定
-	var statuses []model.SuggestionStatus
-	if showClosed {
-		statuses = []model.SuggestionStatus{model.SuggestionStatusApplied, model.SuggestionStatusClosed}
-	} else {
-		statuses = []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen}
-	}
-
 	// ログインユーザーを取得
 	user := middleware.UserFromContext(ctx)
 	var userID *model.UserID
@@ -57,7 +49,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		SpaceIdentifier: spaceIdentifier,
 		TopicNumber:     int32(topicNumber),
 		UserID:          userID,
-		Statuses:        statuses,
+		ShowClosed:      showClosed,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案一覧の取得に失敗", "error", err)

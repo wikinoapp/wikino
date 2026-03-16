@@ -42,7 +42,7 @@ type GetSuggestionListInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
 	UserID          *model.UserID
-	Statuses        []model.SuggestionStatus
+	ShowClosed      bool
 }
 
 // GetSuggestionListOutput は編集提案一覧取得の出力
@@ -102,26 +102,32 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 		}
 	}
 
-	// 指定ステータスの編集提案を取得
-	suggestions, err := uc.suggestionRepo.ListByTopicAndStatuses(ctx, topic.ID, space.ID, input.Statuses)
+	// ステータスのグルーピング
+	openStatuses := []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen}
+	closedStatuses := []model.SuggestionStatus{model.SuggestionStatusApplied, model.SuggestionStatusClosed}
+
+	// 表示対象のステータスを決定
+	var listStatuses []model.SuggestionStatus
+	if input.ShowClosed {
+		listStatuses = closedStatuses
+	} else {
+		listStatuses = openStatuses
+	}
+
+	// 編集提案を取得
+	suggestions, err := uc.suggestionRepo.ListByTopicAndStatuses(ctx, topic.ID, space.ID, listStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("編集提案一覧の取得に失敗: %w", err)
 	}
 
 	// オープン件数を取得（下書き・オープン）
-	openCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, []model.SuggestionStatus{
-		model.SuggestionStatusDraft,
-		model.SuggestionStatusOpen,
-	})
+	openCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, openStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("オープン件数の取得に失敗: %w", err)
 	}
 
 	// クローズ件数を取得（反映済み・クローズ）
-	closedCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, []model.SuggestionStatus{
-		model.SuggestionStatusApplied,
-		model.SuggestionStatusClosed,
-	})
+	closedCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, closedStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("クローズ件数の取得に失敗: %w", err)
 	}

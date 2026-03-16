@@ -47,7 +47,6 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "sug-list-space",
 			TopicNumber:     1,
-			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -101,7 +100,6 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "sug-list-space",
 			TopicNumber:     1,
-			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -121,7 +119,6 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "sug-list-space",
 			TopicNumber:     1,
-			Statuses:        []model.SuggestionStatus{model.SuggestionStatusDraft, model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -140,7 +137,6 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "nonexistent",
 			TopicNumber:     1,
-			Statuses:        []model.SuggestionStatus{model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -154,7 +150,6 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "sug-list-space",
 			TopicNumber:     999,
-			Statuses:        []model.SuggestionStatus{model.SuggestionStatusOpen},
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)

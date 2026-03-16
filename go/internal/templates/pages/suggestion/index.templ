@@ -20,10 +20,11 @@ type IndexData struct {
 
 // suggestionsPath は編集提案一覧のパスを生成します
 func (d IndexData) suggestionsPath(tab string) string {
+	base := string(templates.SuggestionListPath(d.Space.Identifier.String(), d.Topic.Number))
 	if tab == "" {
-		return fmt.Sprintf("/s/%s/topics/%d/suggestions", d.Space.Identifier, d.Topic.Number)
+		return base
 	}
-	return fmt.Sprintf("/s/%s/topics/%d/suggestions?tab=%s", d.Space.Identifier, d.Topic.Number, tab)
+	return base + "?tab=" + tab
 }
 
 // Index は編集提案一覧画面のコンテンツを表示します
