@@ -8,6 +8,8 @@ package query
 import (
 	"context"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -66,6 +68,46 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const findUsersByIDs = `-- name: FindUsersByIDs :many
+SELECT id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at FROM users WHERE id = ANY($1::uuid[])
+`
+
+// IDリストでユーザーを一括取得する
+func (q *Queries) FindUsersByIDs(ctx context.Context, dollar_1 []string) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, findUsersByIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Atname,
+			&i.Name,
+			&i.Description,
+			&i.Locale,
+			&i.TimeZone,
+			&i.JoinedAt,
+			&i.DiscardedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByAtname = `-- name: GetUserByAtname :one

@@ -62,6 +62,22 @@ func (r *UserRepository) FindByAtname(ctx context.Context, atname string) (*mode
 	return r.toModel(row), nil
 }
 
+// FindByIDs はIDリストでユーザーを一括取得する
+func (r *UserRepository) FindByIDs(ctx context.Context, ids []model.UserID) ([]*model.User, error) {
+	if len(ids) == 0 {
+		return []*model.User{}, nil
+	}
+	rows, err := r.q.FindUsersByIDs(ctx, model.UserIDsToStrings(ids))
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*model.User, len(rows))
+	for i, row := range rows {
+		users[i] = r.toModel(row)
+	}
+	return users, nil
+}
+
 // CreateUserInput はユーザー作成の入力パラメータ
 type CreateUserInput struct {
 	Email       string

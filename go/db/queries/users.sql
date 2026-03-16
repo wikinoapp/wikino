@@ -10,6 +10,10 @@ SELECT * FROM users WHERE email = $1 AND discarded_at IS NULL;
 -- ユーザーをアットネーム（@ユーザー名）で取得する（削除されていないユーザーのみ）
 SELECT * FROM users WHERE atname = $1 AND discarded_at IS NULL;
 
+-- name: FindUsersByIDs :many
+-- IDリストでユーザーを一括取得する
+SELECT * FROM users WHERE id = ANY($1::uuid[]);
+
 -- name: CreateUser :one
 -- 新しいユーザーを作成する
 INSERT INTO users (
