@@ -600,7 +600,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 ### フェーズ 2: 編集提案一覧画面
 
-- [ ] **2-1**: [Go] 編集提案一覧のUseCase・ViewModel
+- [x] **2-1**: [Go] 編集提案一覧のUseCase・ViewModel
   - `internal/usecase/get_suggestion_list.go` に `GetSuggestionListUsecase` を作成（トピック内の編集提案一覧取得、オープン/クローズのフィルタリング）
   - `internal/viewmodel/suggestion.go` に `SuggestionForList` ViewModel を作成（タイトル、ステータス、作成者名、作成日時）
   - **想定ファイル数**: 実装 2, テスト 1
