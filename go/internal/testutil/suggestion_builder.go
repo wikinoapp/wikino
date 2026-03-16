@@ -94,13 +94,24 @@ func (b *SuggestionBuilder) Build() model.SuggestionID {
 	}
 
 	now := time.Now()
-	var id string
+
+	var nextNumber int32
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		`SELECT COALESCE(MAX(number), 0) + 1 FROM suggestions WHERE topic_id = $1`,
+		b.topicID,
+	).Scan(&nextNumber)
+	if err != nil {
+		b.t.Fatalf("次の編集提案番号の取得に失敗: %v", err)
+	}
+
+	var id string
+	err = b.tx.QueryRowContext(
+		context.Background(),
+		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, applied_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.createdSpaceMemberID, b.title, b.body, b.bodyHTML, b.status, b.appliedAt, now, now,
+		b.spaceID, b.topicID, b.createdSpaceMemberID, nextNumber, b.title, b.body, b.bodyHTML, b.status, b.appliedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案作成に失敗: %v", err)

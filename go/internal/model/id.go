@@ -41,6 +41,15 @@ type AttachmentID string
 // SuggestionID は編集提案のID型
 type SuggestionID string
 
+// SuggestionPageID は編集提案ページのID型
+type SuggestionPageID string
+
+// SuggestionPageRevisionID は編集提案ページリビジョンのID型
+type SuggestionPageRevisionID string
+
+// SuggestionCommentID は編集提案コメントのID型
+type SuggestionCommentID string
+
 // FeatureFlagID はフィーチャーフラグのID型
 type FeatureFlagID string
 
@@ -52,6 +61,9 @@ type SpaceIdentifier string
 
 // PageNumber はページ番号の型
 type PageNumber int32
+
+// SuggestionNumber は編集提案番号の型
+type SuggestionNumber int32
 
 // String はSpaceIDを文字列に変換する
 func (id SpaceID) String() string { return string(id) }
@@ -92,6 +104,15 @@ func (id AttachmentID) String() string { return string(id) }
 // String はSuggestionIDを文字列に変換する
 func (id SuggestionID) String() string { return string(id) }
 
+// String はSuggestionPageIDを文字列に変換する
+func (id SuggestionPageID) String() string { return string(id) }
+
+// String はSuggestionPageRevisionIDを文字列に変換する
+func (id SuggestionPageRevisionID) String() string { return string(id) }
+
+// String はSuggestionCommentIDを文字列に変換する
+func (id SuggestionCommentID) String() string { return string(id) }
+
 // String はFeatureFlagIDを文字列に変換する
 func (id FeatureFlagID) String() string { return string(id) }
 
@@ -103,6 +124,9 @@ func (s SpaceIdentifier) String() string { return string(s) }
 
 // String はPageNumberを文字列に変換する
 func (n PageNumber) String() string { return strconv.FormatInt(int64(n), 10) }
+
+// String はSuggestionNumberを文字列に変換する
+func (n SuggestionNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
 // TopicIDsToStrings はTopicIDスライスをstringスライスに変換する
 func TopicIDsToStrings(ids []TopicID) []string {

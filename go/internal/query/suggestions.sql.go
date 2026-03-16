@@ -34,15 +34,16 @@ func (q *Queries) CountSuggestionsByTopicAndStatuses(ctx context.Context, arg Co
 }
 
 const createSuggestion = `-- name: CreateSuggestion :one
-INSERT INTO suggestions (space_id, topic_id, created_space_member_id, title, body, body_html, status, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at
+INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
 `
 
 type CreateSuggestionParams struct {
 	SpaceID              string    `json:"space_id"`
 	TopicID              string    `json:"topic_id"`
 	CreatedSpaceMemberID string    `json:"created_space_member_id"`
+	Number               int32     `json:"number"`
 	Title                string    `json:"title"`
 	Body                 string    `json:"body"`
 	BodyHtml             string    `json:"body_html"`
@@ -57,6 +58,7 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 		arg.SpaceID,
 		arg.TopicID,
 		arg.CreatedSpaceMemberID,
+		arg.Number,
 		arg.Title,
 		arg.Body,
 		arg.BodyHtml,
@@ -77,12 +79,13 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 		&i.AppliedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Number,
 	)
 	return i, err
 }
 
 const findSuggestionByID = `-- name: FindSuggestionByID :one
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at FROM suggestions WHERE id = $1 AND space_id = $2
+SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE id = $1 AND space_id = $2
 `
 
 type FindSuggestionByIDParams struct {
@@ -106,12 +109,25 @@ func (q *Queries) FindSuggestionByID(ctx context.Context, arg FindSuggestionByID
 		&i.AppliedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Number,
 	)
 	return i, err
 }
 
+const getNextSuggestionNumber = `-- name: GetNextSuggestionNumber :one
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE topic_id = $1
+`
+
+// トピック内の次の編集提案番号を取得する
+func (q *Queries) GetNextSuggestionNumber(ctx context.Context, topicID string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNextSuggestionNumber, topicID)
+	var next_number int32
+	err := row.Scan(&next_number)
+	return next_number, err
+}
+
 const listSuggestionsByTopicAndStatuses = `-- name: ListSuggestionsByTopicAndStatuses :many
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at FROM suggestions
+SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[])
 ORDER BY created_at DESC
 `
@@ -144,6 +160,7 @@ func (q *Queries) ListSuggestionsByTopicAndStatuses(ctx context.Context, arg Lis
 			&i.AppliedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Number,
 		); err != nil {
 			return nil, err
 		}
@@ -162,7 +179,7 @@ const updateSuggestionStatus = `-- name: UpdateSuggestionStatus :one
 UPDATE suggestions
 SET status = $2, applied_at = $3, updated_at = $4
 WHERE id = $1 AND space_id = $5
-RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
 `
 
 type UpdateSuggestionStatusParams struct {
@@ -195,6 +212,7 @@ func (q *Queries) UpdateSuggestionStatus(ctx context.Context, arg UpdateSuggesti
 		&i.AppliedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Number,
 	)
 	return i, err
 }
