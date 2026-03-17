@@ -13,4 +13,6 @@ const (
 	PageNameDraftPageIndex  PageName = "draft_page_index"
 	PageNameTopicShow       PageName = "topic_show"
 	PageNameSuggestionIndex PageName = "suggestion_index"
+	PageNameSuggestionShow  PageName = "suggestion_show"
+	PageNameSuggestionNew   PageName = "suggestion_new"
 )

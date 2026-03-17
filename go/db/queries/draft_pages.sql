@@ -29,6 +29,25 @@ SET suggestion_page_id = $2,
 WHERE id = $1 AND space_id = $4
 RETURNING *;
 
+-- name: FindDraftPageByID :one
+-- IDで下書きを取得する（スペースIDでスコープ）
+SELECT * FROM draft_pages WHERE id = $1 AND space_id = $2;
+
 -- name: DeleteDraftPage :exec
 -- 下書きを削除する
 DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
+
+-- name: ListDraftPagesByMemberAndTopic :many
+-- スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
+SELECT
+  dp.*,
+  p.title AS page_title,
+  p.number AS page_number
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
+WHERE dp.space_member_id = $1
+  AND dp.topic_id = $2
+  AND dp.space_id = $3
+  AND dp.suggestion_page_id IS NULL
+  AND p.discarded_at IS NULL
+ORDER BY dp.modified_at DESC;

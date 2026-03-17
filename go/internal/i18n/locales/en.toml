@@ -706,6 +706,14 @@ other = "New page"
 description = "Topic settings link on the topic show page"
 other = "Topic settings"
 
+[topic_show_tab_pages]
+description = "Pages tab label on the topic show page"
+other = "Pages"
+
+[topic_show_tab_suggestions]
+description = "Suggestions tab label on the topic show page"
+other = "Suggestions"
+
 # Pagination
 [pagination_previous]
 description = "Link to the previous page in pagination"
@@ -760,3 +768,127 @@ other = "No open suggestions"
 [suggestion_index_no_closed]
 description = "Message when no closed suggestions"
 other = "No closed suggestions"
+
+# Suggestion validation
+
+[validation_suggestion_title_required]
+description = "Suggestion title required error"
+other = "Please enter a title"
+
+[validation_suggestion_title_too_long]
+description = "Suggestion title too long error"
+other = "Title must be 200 characters or less"
+
+[validation_suggestion_draft_pages_required]
+description = "Draft pages not selected error"
+other = "Please select at least one draft page"
+
+[validation_suggestion_draft_page_not_found]
+description = "Draft page not found error"
+other = "Selected draft page was not found"
+
+# Suggestion creation
+
+[suggestion_new_title]
+description = "Suggestion creation page title"
+other = "Create Suggestion"
+
+[suggestion_new_heading]
+description = "Suggestion creation heading"
+other = "Create Suggestion"
+
+[suggestion_new_breadcrumb]
+description = "Suggestion creation breadcrumb (link to suggestion list)"
+other = "Suggestions"
+
+[suggestion_new_title_label]
+description = "Suggestion title label"
+other = "Title"
+
+[suggestion_new_title_placeholder]
+description = "Suggestion title placeholder"
+other = "Briefly describe your changes"
+
+[suggestion_new_body_label]
+description = "Suggestion body label"
+other = "Description (optional)"
+
+[suggestion_new_body_placeholder]
+description = "Suggestion body placeholder"
+other = "Describe the reason and context for your changes"
+
+[suggestion_new_draft_pages_label]
+description = "Draft pages selection label"
+other = "Select draft pages"
+
+[suggestion_new_no_draft_pages]
+description = "Message when no draft pages available"
+other = "No draft pages in this topic"
+
+[suggestion_new_submit]
+description = "Suggestion creation submit button"
+other = "Create Suggestion"
+
+[suggestion_create_success]
+description = "Suggestion creation success message"
+other = "Suggestion has been created"
+
+# Suggestion detail
+
+[suggestion_show_title]
+description = "Suggestion detail page title"
+other = "{{.SuggestionTitle}} - {{.TopicName}} - {{.SpaceName}}"
+
+[suggestion_show_breadcrumb]
+description = "Suggestion detail breadcrumb (link to suggestion list)"
+other = "Suggestions"
+
+[suggestion_show_status_draft]
+description = "Suggestion status: draft"
+other = "Draft"
+
+[suggestion_show_status_open]
+description = "Suggestion status: open"
+other = "Open"
+
+[suggestion_show_status_applied]
+description = "Suggestion status: applied"
+other = "Applied"
+
+[suggestion_show_status_closed]
+description = "Suggestion status: closed"
+other = "Closed"
+
+[suggestion_show_conversation_tab]
+description = "Suggestion detail conversation tab"
+other = "Conversation"
+
+[suggestion_show_changed_pages_tab]
+description = "Suggestion detail changed pages tab"
+other = "Changed pages"
+
+# Suggestion comments
+
+[validation_suggestion_comment_body_required]
+description = "Suggestion comment body required error"
+other = "Please enter a comment"
+
+[validation_suggestion_comment_body_too_long]
+description = "Suggestion comment body too long error"
+other = "Comment must be 10000 characters or less"
+
+[suggestion_comment_body_label]
+description = "Suggestion comment body label"
+other = "Comment"
+
+[suggestion_comment_body_placeholder]
+description = "Suggestion comment body placeholder"
+other = "Write a comment"
+
+[suggestion_comment_submit]
+description = "Suggestion comment submit button"
+other = "Comment"
+
+[suggestion_comment_create_success]
+description = "Suggestion comment creation success message"
+other = "Comment has been posted"

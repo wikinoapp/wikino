@@ -114,13 +114,74 @@ func (q *Queries) FindSuggestionByID(ctx context.Context, arg FindSuggestionByID
 	return i, err
 }
 
-const getNextSuggestionNumber = `-- name: GetNextSuggestionNumber :one
-SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE topic_id = $1
+const findSuggestionBySpaceAndNumber = `-- name: FindSuggestionBySpaceAndNumber :one
+SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE space_id = $1 AND number = $2
 `
 
-// トピック内の次の編集提案番号を取得する
-func (q *Queries) GetNextSuggestionNumber(ctx context.Context, topicID string) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getNextSuggestionNumber, topicID)
+type FindSuggestionBySpaceAndNumberParams struct {
+	SpaceID string `json:"space_id"`
+	Number  int32  `json:"number"`
+}
+
+// スペースIDと番号で編集提案を取得する
+func (q *Queries) FindSuggestionBySpaceAndNumber(ctx context.Context, arg FindSuggestionBySpaceAndNumberParams) (Suggestion, error) {
+	row := q.db.QueryRowContext(ctx, findSuggestionBySpaceAndNumber, arg.SpaceID, arg.Number)
+	var i Suggestion
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.CreatedSpaceMemberID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		&i.Status,
+		&i.AppliedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+	)
+	return i, err
+}
+
+const findSuggestionByTopicAndNumber = `-- name: FindSuggestionByTopicAndNumber :one
+SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3
+`
+
+type FindSuggestionByTopicAndNumberParams struct {
+	TopicID string `json:"topic_id"`
+	Number  int32  `json:"number"`
+	SpaceID string `json:"space_id"`
+}
+
+// トピックIDと番号で編集提案を取得する（スペースIDでスコープ）
+func (q *Queries) FindSuggestionByTopicAndNumber(ctx context.Context, arg FindSuggestionByTopicAndNumberParams) (Suggestion, error) {
+	row := q.db.QueryRowContext(ctx, findSuggestionByTopicAndNumber, arg.TopicID, arg.Number, arg.SpaceID)
+	var i Suggestion
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.CreatedSpaceMemberID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		&i.Status,
+		&i.AppliedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+	)
+	return i, err
+}
+
+const getNextSuggestionNumber = `-- name: GetNextSuggestionNumber :one
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE space_id = $1
+`
+
+// スペース内の次の編集提案番号を取得する
+func (q *Queries) GetNextSuggestionNumber(ctx context.Context, spaceID string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNextSuggestionNumber, spaceID)
 	var next_number int32
 	err := row.Scan(&next_number)
 	return next_number, err

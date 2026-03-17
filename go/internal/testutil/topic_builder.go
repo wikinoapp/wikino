@@ -140,6 +140,12 @@ func (b *TopicBuilderDB) WithName(name string) *TopicBuilderDB {
 	return b
 }
 
+// WithVisibility は公開設定を設定します
+func (b *TopicBuilderDB) WithVisibility(visibility int32) *TopicBuilderDB {
+	b.visibility = visibility
+	return b
+}
+
 // Build はトピックを作成し、IDを返します
 func (b *TopicBuilderDB) Build() model.TopicID {
 	b.t.Helper()

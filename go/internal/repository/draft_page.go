@@ -25,6 +25,21 @@ func (r *DraftPageRepository) WithTx(tx *sql.Tx) *DraftPageRepository {
 	return &DraftPageRepository{q: r.q.WithTx(tx)}
 }
 
+// FindByID はIDで下書きを取得する（スペースIDでスコープ）
+func (r *DraftPageRepository) FindByID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
+	row, err := r.q.FindDraftPageByID(ctx, query.FindDraftPageByIDParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindByPageAndMember はページIDとスペースメンバーIDで下書きを取得する
 func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID model.PageID, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByPageAndMember(ctx, query.FindDraftPageByPageAndMemberParams{
@@ -256,6 +271,68 @@ func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftP
 				Space: &model.Space{
 					Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
 				},
+			},
+		}
+	}
+	return drafts
+}
+
+// ListByMemberAndTopic はスペースメンバーとトピックに紐づく下書きページ一覧を取得する（編集提案作成画面用）
+func (r *DraftPageRepository) ListByMemberAndTopic(ctx context.Context, spaceMemberID model.SpaceMemberID, topicID model.TopicID, spaceID model.SpaceID) ([]*model.DraftPage, error) {
+	rows, err := r.q.ListDraftPagesByMemberAndTopic(ctx, query.ListDraftPagesByMemberAndTopicParams{
+		SpaceMemberID: string(spaceMemberID),
+		TopicID:       string(topicID),
+		SpaceID:       string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toDraftPagesFromMemberTopicRows(rows), nil
+}
+
+// toDraftPagesFromMemberTopicRows は query.ListDraftPagesByMemberAndTopicRow のスライスを model.DraftPage のスライスに変換する
+func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListDraftPagesByMemberAndTopicRow) []*model.DraftPage {
+	drafts := make([]*model.DraftPage, len(rows))
+	for i, row := range rows {
+		var draftTitle *string
+		if row.Title != nil {
+			switch v := row.Title.(type) {
+			case string:
+				draftTitle = &v
+			case []byte:
+				s := string(v)
+				draftTitle = &s
+			}
+		}
+
+		var pageTitle *string
+		if row.PageTitle != nil {
+			switch v := row.PageTitle.(type) {
+			case string:
+				pageTitle = &v
+			case []byte:
+				s := string(v)
+				pageTitle = &s
+			}
+		}
+
+		drafts[i] = &model.DraftPage{
+			ID:            model.DraftPageID(row.ID),
+			SpaceID:       model.SpaceID(row.SpaceID),
+			PageID:        model.PageID(row.PageID),
+			SpaceMemberID: model.SpaceMemberID(row.SpaceMemberID),
+			TopicID:       model.TopicID(row.TopicID),
+			Title:         draftTitle,
+			Body:          row.Body,
+			BodyHTML:      row.BodyHtml,
+			LinkedPageIDs: model.StringsToPageIDs(row.LinkedPageIds),
+			ModifiedAt:    row.ModifiedAt,
+			CreatedAt:     row.CreatedAt,
+			UpdatedAt:     row.UpdatedAt,
+			Page: &model.Page{
+				ID:     model.PageID(row.PageID),
+				Title:  pageTitle,
+				Number: model.PageNumber(row.PageNumber),
 			},
 		}
 	}

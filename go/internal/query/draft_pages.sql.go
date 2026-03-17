@@ -83,6 +83,37 @@ func (q *Queries) DeleteDraftPage(ctx context.Context, arg DeleteDraftPageParams
 	return err
 }
 
+const findDraftPageByID = `-- name: FindDraftPageByID :one
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id FROM draft_pages WHERE id = $1 AND space_id = $2
+`
+
+type FindDraftPageByIDParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// IDで下書きを取得する（スペースIDでスコープ）
+func (q *Queries) FindDraftPageByID(ctx context.Context, arg FindDraftPageByIDParams) (DraftPage, error) {
+	row := q.db.QueryRowContext(ctx, findDraftPageByID, arg.ID, arg.SpaceID)
+	var i DraftPage
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.PageID,
+		&i.SpaceMemberID,
+		&i.TopicID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SuggestionPageID,
+	)
+	return i, err
+}
+
 const findDraftPageByPageAndMember = `-- name: FindDraftPageByPageAndMember :one
 SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `
@@ -113,6 +144,85 @@ func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraf
 		&i.SuggestionPageID,
 	)
 	return i, err
+}
+
+const listDraftPagesByMemberAndTopic = `-- name: ListDraftPagesByMemberAndTopic :many
+SELECT
+  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.body_html, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id,
+  p.title AS page_title,
+  p.number AS page_number
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
+WHERE dp.space_member_id = $1
+  AND dp.topic_id = $2
+  AND dp.space_id = $3
+  AND dp.suggestion_page_id IS NULL
+  AND p.discarded_at IS NULL
+ORDER BY dp.modified_at DESC
+`
+
+type ListDraftPagesByMemberAndTopicParams struct {
+	SpaceMemberID string `json:"space_member_id"`
+	TopicID       string `json:"topic_id"`
+	SpaceID       string `json:"space_id"`
+}
+
+type ListDraftPagesByMemberAndTopicRow struct {
+	ID               string      `json:"id"`
+	SpaceID          string      `json:"space_id"`
+	PageID           string      `json:"page_id"`
+	SpaceMemberID    string      `json:"space_member_id"`
+	TopicID          string      `json:"topic_id"`
+	Title            interface{} `json:"title"`
+	Body             string      `json:"body"`
+	BodyHtml         string      `json:"body_html"`
+	LinkedPageIds    []string    `json:"linked_page_ids"`
+	ModifiedAt       time.Time   `json:"modified_at"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	SuggestionPageID *string     `json:"suggestion_page_id"`
+	PageTitle        interface{} `json:"page_title"`
+	PageNumber       int32       `json:"page_number"`
+}
+
+// スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
+func (q *Queries) ListDraftPagesByMemberAndTopic(ctx context.Context, arg ListDraftPagesByMemberAndTopicParams) ([]ListDraftPagesByMemberAndTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPagesByMemberAndTopic, arg.SpaceMemberID, arg.TopicID, arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDraftPagesByMemberAndTopicRow{}
+	for rows.Next() {
+		var i ListDraftPagesByMemberAndTopicRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.PageID,
+			&i.SpaceMemberID,
+			&i.TopicID,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SuggestionPageID,
+			&i.PageTitle,
+			&i.PageNumber,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateDraftPage = `-- name: UpdateDraftPage :one

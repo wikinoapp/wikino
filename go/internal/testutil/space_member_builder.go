@@ -123,6 +123,12 @@ func (b *SpaceMemberBuilderDB) WithUserID(userID model.UserID) *SpaceMemberBuild
 	return b
 }
 
+// WithRole はロールを設定します
+func (b *SpaceMemberBuilderDB) WithRole(role int32) *SpaceMemberBuilderDB {
+	b.role = role
+	return b
+}
+
 // Build はスペースメンバーを作成し、IDを返します
 func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	b.t.Helper()

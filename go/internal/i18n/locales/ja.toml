@@ -706,6 +706,14 @@ other = "新規ページ"
 description = "トピック詳細画面のトピック設定リンク"
 other = "トピック設定"
 
+[topic_show_tab_pages]
+description = "トピック詳細画面の「ページ」タブラベル"
+other = "ページ"
+
+[topic_show_tab_suggestions]
+description = "トピック詳細画面の「編集提案」タブラベル"
+other = "編集提案"
+
 # ページネーション
 [pagination_previous]
 description = "ページネーションの前のページへのリンク"
@@ -760,3 +768,127 @@ other = "オープンの編集提案はありません"
 [suggestion_index_no_closed]
 description = "クローズの編集提案がない場合のメッセージ"
 other = "クローズの編集提案はありません"
+
+# 編集提案バリデーション
+
+[validation_suggestion_title_required]
+description = "編集提案タイトル必須エラー"
+other = "タイトルを入力してください"
+
+[validation_suggestion_title_too_long]
+description = "編集提案タイトル文字数超過エラー"
+other = "タイトルは200文字以内で入力してください"
+
+[validation_suggestion_draft_pages_required]
+description = "下書きページ未選択エラー"
+other = "下書きページを選択してください"
+
+[validation_suggestion_draft_page_not_found]
+description = "下書きページが見つからないエラー"
+other = "選択された下書きページが見つかりません"
+
+# 編集提案作成
+
+[suggestion_new_title]
+description = "編集提案作成のページタイトル"
+other = "編集提案を作成"
+
+[suggestion_new_heading]
+description = "編集提案作成の見出し"
+other = "編集提案を作成"
+
+[suggestion_new_breadcrumb]
+description = "編集提案作成画面のパンくずリスト（編集提案一覧へのリンク）"
+other = "編集提案"
+
+[suggestion_new_title_label]
+description = "編集提案タイトルのラベル"
+other = "タイトル"
+
+[suggestion_new_title_placeholder]
+description = "編集提案タイトルのプレースホルダー"
+other = "変更内容を簡潔に記述してください"
+
+[suggestion_new_body_label]
+description = "編集提案概要のラベル"
+other = "概要（任意）"
+
+[suggestion_new_body_placeholder]
+description = "編集提案概要のプレースホルダー"
+other = "変更の理由や背景を記述してください"
+
+[suggestion_new_draft_pages_label]
+description = "下書きページ選択のラベル"
+other = "下書きページを選択"
+
+[suggestion_new_no_draft_pages]
+description = "下書きページがない場合のメッセージ"
+other = "このトピックには下書きページがありません"
+
+[suggestion_new_submit]
+description = "編集提案作成の送信ボタン"
+other = "編集提案を作成する"
+
+[suggestion_create_success]
+description = "編集提案作成成功メッセージ"
+other = "編集提案を作成しました"
+
+# 編集提案詳細
+
+[suggestion_show_title]
+description = "編集提案詳細のページタイトル"
+other = "{{.SuggestionTitle}} - {{.TopicName}} - {{.SpaceName}}"
+
+[suggestion_show_breadcrumb]
+description = "編集提案詳細のパンくずリスト（編集提案一覧へのリンク）"
+other = "編集提案"
+
+[suggestion_show_status_draft]
+description = "編集提案のステータス: 下書き"
+other = "下書き"
+
+[suggestion_show_status_open]
+description = "編集提案のステータス: オープン"
+other = "オープン"
+
+[suggestion_show_status_applied]
+description = "編集提案のステータス: 反映済み"
+other = "反映済み"
+
+[suggestion_show_status_closed]
+description = "編集提案のステータス: クローズ"
+other = "クローズ"
+
+[suggestion_show_conversation_tab]
+description = "編集提案詳細の会話タブ"
+other = "会話"
+
+[suggestion_show_changed_pages_tab]
+description = "編集提案詳細の編集したページタブ"
+other = "編集したページ"
+
+# 編集提案コメント
+
+[validation_suggestion_comment_body_required]
+description = "編集提案コメント本文必須エラー"
+other = "コメントを入力してください"
+
+[validation_suggestion_comment_body_too_long]
+description = "編集提案コメント本文文字数超過エラー"
+other = "コメントは10000文字以内で入力してください"
+
+[suggestion_comment_body_label]
+description = "編集提案コメント本文のラベル"
+other = "コメント"
+
+[suggestion_comment_body_placeholder]
+description = "編集提案コメント本文のプレースホルダー"
+other = "コメントを入力してください"
+
+[suggestion_comment_submit]
+description = "編集提案コメント送信ボタン"
+other = "コメントする"
+
+[suggestion_comment_create_success]
+description = "編集提案コメント作成成功メッセージ"
+other = "コメントを投稿しました"

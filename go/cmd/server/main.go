@@ -37,6 +37,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -120,6 +121,9 @@ func main() {
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
+	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 
 	// ユースケースを初期化
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
@@ -306,7 +310,7 @@ func main() {
 		sidebarHelper,
 		pageMoveCreateValidator,
 	)
-	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
 	topicHandler := topichandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -314,10 +318,27 @@ func main() {
 		sidebarHelper,
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
+	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
+	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo)
+	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
 	suggestionHandler := suggestionhandler.NewHandler(
 		cfg,
+		flashMgr,
 		getSuggestionListUC,
+		getSuggestionDetailUC,
+		getSuggestionNewUC,
+		createSuggestionUC,
 		sidebarHelper,
+		suggestionCreateValidator,
+	)
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
+	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
+	suggestionCommentHandler := suggestioncommenthandler.NewHandler(
+		flashMgr,
+		getSuggestionDetailUC,
+		createSuggestionCommentUC,
+		suggestionCommentCreateValidator,
 	)
 	r := chi.NewRouter()
 
@@ -370,8 +391,9 @@ func main() {
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
 
-		// 編集提案一覧画面（公開トピックは未ログインでも閲覧可能）
+		// 編集提案（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Show)
 	})
 
 	// 未認証ユーザー専用ルート
@@ -426,6 +448,13 @@ func main() {
 		// ページ移動
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
+
+		// 編集提案作成
+		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)
+		r.Post("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Create)
+
+		// 編集提案コメント
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/comments", suggestionCommentHandler.Create)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

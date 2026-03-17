@@ -10,11 +10,12 @@ import (
 
 // ShowData はトピック詳細画面に渡すデータ構造体です
 type ShowData struct {
-	Topic       viewmodel.TopicForShow
-	Space       viewmodel.Space
-	PinnedPages []viewmodel.CardLinkPage
-	Pages       []viewmodel.CardLinkPage
-	Pagination  viewmodel.Pagination
+	Topic             viewmodel.TopicForShow
+	Space             viewmodel.Space
+	PinnedPages       []viewmodel.CardLinkPage
+	Pages             []viewmodel.CardLinkPage
+	Pagination        viewmodel.Pagination
+	SuggestionEnabled bool
 }
 
 // paginationPath はページネーション用のパスを生成します
@@ -52,6 +53,12 @@ templ Show(data ShowData) {
 					<div class="px-4">
 						@showHeader(data)
 					</div>
+
+					if data.SuggestionEnabled {
+						<div class="px-4">
+							@showTabs(data)
+						</div>
+					}
 
 					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
 						<div class="flex flex-col gap-6 px-4">
@@ -139,6 +146,26 @@ templ showActions(data ShowData) {
 			</div>
 		</div>
 	}
+}
+
+// showTabs はトピック詳細画面の「ページ」「編集提案」タブを表示します
+templ showTabs(data ShowData) {
+	<div class="flex gap-4 border-b border-border">
+		<a
+			href={ templ.SafeURL(string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground"
+		>
+			@templates.Icon("file-text-regular", "size-4")
+			{ templates.T(ctx, "topic_show_tab_pages") }
+		</a>
+		<a
+			href={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+		>
+			@templates.Icon("git-pull-request-regular", "size-4")
+			{ templates.T(ctx, "topic_show_tab_suggestions") }
+		</a>
+	</div>
 }
 
 // showEmptyState はトピック詳細画面の空状態を表示します

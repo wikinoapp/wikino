@@ -152,10 +152,6 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 
 // buildUserMap は編集提案の作成者のユーザー情報をマップで返す
 func (uc *GetSuggestionListUsecase) buildUserMap(ctx context.Context, suggestions []*model.Suggestion, spaceID model.SpaceID) (map[model.SpaceMemberID]*model.User, error) {
-	if len(suggestions) == 0 {
-		return map[model.SpaceMemberID]*model.User{}, nil
-	}
-
 	// SpaceMemberIDを収集（重複排除）
 	memberIDSet := make(map[model.SpaceMemberID]struct{})
 	for _, s := range suggestions {
@@ -166,38 +162,5 @@ func (uc *GetSuggestionListUsecase) buildUserMap(ctx context.Context, suggestion
 		memberIDs = append(memberIDs, id)
 	}
 
-	// SpaceMemberを一括取得
-	members, err := uc.spaceMemberRepo.FindByIDs(ctx, memberIDs, spaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	// UserIDを収集
-	userIDs := make([]model.UserID, 0, len(members))
-	memberToUser := make(map[model.SpaceMemberID]model.UserID, len(members))
-	for _, m := range members {
-		userIDs = append(userIDs, m.UserID)
-		memberToUser[m.ID] = m.UserID
-	}
-
-	// Userを一括取得
-	users, err := uc.userRepo.FindByIDs(ctx, userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	userByID := make(map[model.UserID]*model.User, len(users))
-	for _, u := range users {
-		userByID[u.ID] = u
-	}
-
-	// SpaceMemberID → User のマップを構築
-	result := make(map[model.SpaceMemberID]*model.User, len(memberIDs))
-	for memberID, userID := range memberToUser {
-		if u, ok := userByID[userID]; ok {
-			result[memberID] = u
-		}
-	}
-
-	return result, nil
+	return buildUserMapBySpaceMemberIDs(ctx, uc.spaceMemberRepo, uc.userRepo, memberIDs, spaceID)
 }

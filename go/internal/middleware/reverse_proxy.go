@@ -38,6 +38,7 @@ type featureFlaggedPattern struct {
 // パターンを追加するには、このスライスに要素を追加する
 var featureFlaggedPatterns = []featureFlaggedPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`), flag: model.FeatureFlagSuggestion},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`), flag: model.FeatureFlagSuggestion},
 }
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア

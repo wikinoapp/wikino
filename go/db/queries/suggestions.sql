@@ -27,6 +27,14 @@ SELECT COUNT(*)
 FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[]);
 
+-- name: FindSuggestionByTopicAndNumber :one
+-- トピックIDと番号で編集提案を取得する（スペースIDでスコープ）
+SELECT * FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3;
+
+-- name: FindSuggestionBySpaceAndNumber :one
+-- スペースIDと番号で編集提案を取得する
+SELECT * FROM suggestions WHERE space_id = $1 AND number = $2;
+
 -- name: GetNextSuggestionNumber :one
--- トピック内の次の編集提案番号を取得する
-SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE topic_id = $1;
+-- スペース内の次の編集提案番号を取得する
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE space_id = $1;
