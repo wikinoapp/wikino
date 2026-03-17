@@ -171,6 +171,33 @@ func (q *Queries) CreateLinkedPage(ctx context.Context, arg CreateLinkedPagePara
 	return i, err
 }
 
+const discardPageByID = `-- name: DiscardPageByID :exec
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = $1,
+    updated_at = $2
+WHERE id = $3
+  AND space_id = $4
+`
+
+type DiscardPageByIDParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+}
+
+// 指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+func (q *Queries) DiscardPageByID(ctx context.Context, arg DiscardPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, discardPageByID,
+		arg.DiscardedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+	)
+	return err
+}
+
 const findBacklinkedPagesByPageID = `-- name: FindBacklinkedPagesByPageID :many
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)

@@ -163,6 +163,15 @@ WHERE topic_id = $1
   AND discarded_at IS NULL
   AND trashed_at IS NULL;
 
+-- name: DiscardPageByID :exec
+-- 指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = @discarded_at,
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)

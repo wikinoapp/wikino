@@ -94,14 +94,15 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// ページ公開ユースケースを実行
 	input := usecase.PublishPageInput{
-		SpaceID:          output.Space.ID,
-		PageID:           output.Page.ID,
-		SpaceMemberID:    output.SpaceMember.ID,
-		TopicID:          output.Page.TopicID,
-		Title:            titlePtr,
-		Body:             body,
-		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: output.Topic.Name,
+		SpaceID:                      output.Space.ID,
+		PageID:                       output.Page.ID,
+		SpaceMemberID:                output.SpaceMember.ID,
+		TopicID:                      output.Page.TopicID,
+		Title:                        titlePtr,
+		Body:                         body,
+		SpaceIdentifier:              spaceIdentifier,
+		CurrentTopicName:             output.Topic.Name,
+		UnpublishedConflictingPageID: validationResult.UnpublishedConflictingPageID,
 	}
 
 	// DraftPageが存在する場合はDraftPageIDを設定

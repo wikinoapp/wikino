@@ -54,15 +54,16 @@ func NewPublishPageUsecase(
 
 // PublishPageInput はページ公開の入力パラメータ
 type PublishPageInput struct {
-	SpaceID          model.SpaceID
-	PageID           model.PageID
-	SpaceMemberID    model.SpaceMemberID
-	TopicID          model.TopicID
-	DraftPageID      model.DraftPageID
-	Title            *string
-	Body             string
-	SpaceIdentifier  model.SpaceIdentifier
-	CurrentTopicName string
+	SpaceID                      model.SpaceID
+	PageID                       model.PageID
+	SpaceMemberID                model.SpaceMemberID
+	TopicID                      model.TopicID
+	DraftPageID                  model.DraftPageID
+	Title                        *string
+	Body                         string
+	SpaceIdentifier              model.SpaceIdentifier
+	CurrentTopicName             string
+	UnpublishedConflictingPageID *model.PageID
 }
 
 // PublishPageOutput はページ公開の出力パラメータ
@@ -129,7 +130,15 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	// 7. スタンドアロン画像のラッピング
 	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
 
-	// 8. Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
+	// 8. 競合する未公開ページが存在する場合、論理削除する
+	if input.UnpublishedConflictingPageID != nil {
+		err := pageRepo.DiscardByID(ctx, *input.UnpublishedConflictingPageID, input.SpaceID, now)
+		if err != nil {
+			return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
+		}
+	}
+
+	// 9. Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
 	var title string
 	if input.Title != nil {
 		title = *input.Title
@@ -150,7 +159,7 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
 	}
 
-	// 9. PageRevisionを作成（スナップショット）
+	// 10. PageRevisionを作成（スナップショット）
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
 		SpaceID:       input.SpaceID,
 		SpaceMemberID: input.SpaceMemberID,
@@ -163,7 +172,7 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("ページリビジョンの作成に失敗しました: %w", err)
 	}
 
-	// 10. PageEditorを追加・更新
+	// 11. PageEditorを追加・更新
 	pageEditor, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
 		SpaceID:            input.SpaceID,
 		PageID:             input.PageID,
@@ -183,13 +192,13 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("ページ編集者の更新に失敗しました: %w", err)
 	}
 
-	// 11. TopicMemberのlast_page_modified_atを更新
+	// 12. TopicMemberのlast_page_modified_atを更新
 	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, input.SpaceID, input.TopicID, input.SpaceMemberID, now)
 	if err != nil {
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// 12. DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
+	// 13. DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
 	if input.DraftPageID != "" {
 		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, input.DraftPageID, input.SpaceID)
 		if err != nil {
