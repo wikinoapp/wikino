@@ -51,7 +51,8 @@ type PageUpdateValidatorInput struct {
 
 // PageUpdateValidatorResult はバリデーションの結果
 type PageUpdateValidatorResult struct {
-	FormErrors *session.FormErrors
+	FormErrors                   *session.FormErrors
+	UnpublishedConflictingPageID *model.PageID
 }
 
 // Validate はバリデーションを行う
@@ -98,6 +99,14 @@ func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateVali
 	}
 
 	if existingPage != nil && existingPage.ID != input.PageID {
+		if existingPage.PublishedAt == nil && existingPage.Body == "" {
+			// 未公開かつ本文が空のページとの競合 → エラーにせず、結果に格納
+			return &PageUpdateValidatorResult{
+				FormErrors:                   formErrors,
+				UnpublishedConflictingPageID: &existingPage.ID,
+			}
+		}
+
 		editPath := fmt.Sprintf("/s/%s/pages/%d/edit", input.SpaceIdentifier, existingPage.Number)
 		errorMsg := templates.T(ctx, "validation_page_title_uniqueness_html")
 		formErrors.AddField("title", fmt.Sprintf(errorMsg, editPath))

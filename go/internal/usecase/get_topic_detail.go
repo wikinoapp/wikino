@@ -15,6 +15,7 @@ type GetTopicDetailUsecase struct {
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
 	pageRepo        *repository.PageRepository
+	featureFlagRepo *repository.FeatureFlagRepository
 }
 
 // NewGetTopicDetailUsecase は GetTopicDetailUsecase を生成する
@@ -24,6 +25,7 @@ func NewGetTopicDetailUsecase(
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	pageRepo *repository.PageRepository,
+	featureFlagRepo *repository.FeatureFlagRepository,
 ) *GetTopicDetailUsecase {
 	return &GetTopicDetailUsecase{
 		spaceRepo:       spaceRepo,
@@ -31,6 +33,7 @@ func NewGetTopicDetailUsecase(
 		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
 		pageRepo:        pageRepo,
+		featureFlagRepo: featureFlagRepo,
 	}
 }
 
@@ -45,13 +48,14 @@ type GetTopicDetailInput struct {
 
 // GetTopicDetailOutput はトピック詳細取得の出力
 type GetTopicDetailOutput struct {
-	Space       *model.Space
-	SpaceMember *model.SpaceMember
-	Topic       *model.Topic
-	TopicMember *model.TopicMember
-	PinnedPages []*model.Page
-	Pages       []*model.Page
-	TotalCount  int64
+	Space             *model.Space
+	SpaceMember       *model.SpaceMember
+	Topic             *model.Topic
+	TopicMember       *model.TopicMember
+	PinnedPages       []*model.Page
+	Pages             []*model.Page
+	TotalCount        int64
+	SuggestionEnabled bool
 }
 
 // Execute はトピック詳細画面に必要なデータを取得する
@@ -111,13 +115,24 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 		return nil, fmt.Errorf("通常ページの取得に失敗: %w", err)
 	}
 
+	// 編集提案のフィーチャーフラグを確認
+	var suggestionEnabled bool
+	if input.UserID != nil {
+		enabled, err := uc.featureFlagRepo.IsEnabled(ctx, *input.UserID, model.FeatureFlagSuggestion)
+		if err != nil {
+			return nil, fmt.Errorf("フィーチャーフラグの確認に失敗: %w", err)
+		}
+		suggestionEnabled = enabled
+	}
+
 	return &GetTopicDetailOutput{
-		Space:       space,
-		SpaceMember: spaceMember,
-		Topic:       topic,
-		TopicMember: topicMember,
-		PinnedPages: pinnedPages,
-		Pages:       paginatedResult.Pages,
-		TotalCount:  paginatedResult.TotalCount,
+		Space:             space,
+		SpaceMember:       spaceMember,
+		Topic:             topic,
+		TopicMember:       topicMember,
+		PinnedPages:       pinnedPages,
+		Pages:             paginatedResult.Pages,
+		TotalCount:        paginatedResult.TotalCount,
+		SuggestionEnabled: suggestionEnabled,
 	}, nil
 }

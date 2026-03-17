@@ -214,7 +214,7 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 - **フラグ名**: `go_suggestion`
 - **制御方式**: リバースプロキシミドルウェアの `featureFlaggedPatterns` にURLパターンを追加し、フラグが有効な場合のみ Go 版で処理する
-- **対象URLパターン**: `/s/{space}/topics/{topic}/suggestions` 配下のすべてのパス
+- **対象URLパターン**: `/s/{space}/topics/{topic}/suggestions` 配下（一覧・作成）と `/s/{space}/suggestions/{number}` 配下（詳細・更新・コメント）
 - **フラグ無効時の挙動**: Rails 版にプロキシされる（Rails 版に該当機能がないため 404 になる。編集提案は Go 版の新機能であり、Rails 版への移行ではないため問題ない）
 - **クリーンアップ**: 機能が安定し全ユーザーに公開した後、フラグを削除し `goHandledPrefixPaths` または `goHandledRegexPatterns` に移動する
 
@@ -226,6 +226,13 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 - 初期リリースでは「ベースが変わっていても強制的に上書き反映」とする
 - 将来的にはコンフリクト検出・手動解決のUIを追加する可能性がある
+
+#### ページ移動時の編集提案の扱い
+
+編集提案で参照されているページのトピックが変更された場合の扱い。編集提案の `topic_id` は作成時のトピックを指し続けるため、ページが別トピックに移動すると不整合が生じる。
+
+- 初期リリースでは「オープンな編集提案で参照されているページは移動をブロックする」方針を予定
+- 詳細な設計は別途作業計画書で対応する（フェーズ N+2）
 
 #### 同一編集提案ページの同時編集
 
@@ -244,9 +251,9 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 - 編集提案テーブル (`suggestions`)
   - id, space_id, topic_id, created_space_member_id, number, title, body, body_html, status, applied_at, created_at, updated_at
-  - numberはトピック内での連番（`pages.number` と同じパターン）。URLのキーとして使用する（例: `/s/{space}/topics/{topic}/suggestions/{number}`）
+  - numberはスペース内での連番（`pages.number` と同じパターン）。URLのキーとして使用する（例: `/s/{space}/suggestions/{number}`）。編集提案詳細のURLにはトピックを含めない（ページ詳細のURLと同じ方針）
   - bodyはMarkdownで記述し、保存時にページと同じMarkdownパイプライン（Wikiリンク解決含む）でbody_htmlを生成する
-  - ユニークインデックス: [topic_id, number]
+  - ユニークインデックス: [space_id, number]
   - インデックス: [topic_id, status]
 - 編集提案ページリビジョンテーブル (`suggestion_page_revisions`)
   - id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
@@ -430,6 +437,17 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 - `[[編集提案のタイトル]]` でリンクできてしまうが、リンク先が編集提案の説明文ページになるのは意味的に不自然
 - 編集提案の説明文は「変更に関するメタデータ」であり、Wikiのコンテンツではない。GitHubのPR descriptionが「ファイル」ではないのと同じ
 - Wikiリンク記法のサポートはMarkdownレンダリングパイプラインの機能であり、ページモデルに依存しない。`suggestions.body` を保存時にページと同じMarkdownパイプライン（Wikiリンク解決含む）で処理すれば、ページモデルを変更せずに目的を達成できる
+
+### 編集提案番号をトピック内で採番する案
+
+当初、編集提案の番号をトピック内で一意になるように採番していた（ユニークインデックス: `[topic_id, number]`）。その後、スペース内で一意になるように変更した（ユニークインデックス: `[space_id, number]`）。
+
+**不採用の理由**:
+
+- ページの番号がスペース内で一意に採番される設計と合わせることで、URLの形式に統一感が出る（`/s/{space}/pages/{number}` と `/s/{space}/suggestions/{number}`）
+- 編集提案を将来的に別のトピックに移動する場合でも、URLが変わらない
+- スペース内で番号が一意になるため、「提案 #5」のように番号だけで曖昧さなく参照できる（GitHubのIssue/PRがリポジトリ単位で採番されるのと同じ）
+- 編集提案詳細のURLからトピックを省略でき、URLが簡潔になる
 
 ## 依存タスク
 
@@ -615,7 +633,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 5, テスト 1
   - **想定行数**: 実装 約200行, テスト 約100行
 
-- [ ] **2-3**: [Go] トピック詳細画面に「編集提案」タブを追加
+- [x] **2-3**: [Go] トピック詳細画面に「編集提案」タブを追加
   - `internal/templates/pages/topic/show.templ` に「ページ」「編集提案」のタブUIを追加
   - `internal/templates/components/` にタブコンポーネントを作成（必要に応じて）
   - タブクリック時に編集提案一覧画面（`/s/{space}/topics/{topic}/suggestions`）にナビゲーション
@@ -626,13 +644,13 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 ### フェーズ 3: 編集提案作成
 
-- [ ] **3-1**: [Go] 編集提案作成のValidator・UseCase
+- [x] **3-1**: [Go] 編集提案作成のValidator・UseCase
   - `internal/validator/suggestion.go` に `SuggestionCreateValidator` を作成（タイトル必須、長さ制限、選択された下書きページの存在確認）
   - `internal/usecase/create_suggestion.go` に `CreateSuggestionUsecase` を作成（トランザクション: Suggestion作成 → 選択された下書きページからSuggestionPage・SuggestionPageRevision作成）
   - **想定ファイル数**: 実装 2, テスト 2
   - **想定行数**: 実装 約200行, テスト 約250行
 
-- [ ] **3-2**: [Go] 編集提案作成のハンドラーとテンプレート
+- [x] **3-2**: [Go] 編集提案作成のハンドラーとテンプレート
   - `internal/handler/suggestion/new.go` に `New` メソッドを実装（GET /s/{space}/topics/{topic}/suggestions/new）
   - `internal/handler/suggestion/create.go` に `Create` メソッドを実装（POST /s/{space}/topics/{topic}/suggestions）
   - `internal/usecase/get_suggestion_new.go` に作成画面用データ取得UseCase（トピック内の自分の下書きページ一覧）
@@ -643,27 +661,48 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 ### フェーズ 4: 編集提案詳細画面（会話タブ）
 
-- [ ] **4-1**: [Go] 編集提案詳細のUseCase・ViewModel
+- [x] **4-1**: [Go] 編集提案詳細のUseCase・ViewModel
   - `internal/usecase/get_suggestion_detail.go` に `GetSuggestionDetailUsecase` を作成（編集提案 + コメント一覧 + 編集ページ一覧取得）
   - `internal/viewmodel/suggestion.go` に `SuggestionForDetail`, `SuggestionCommentForList` ViewModel を追加
   - **想定ファイル数**: 実装 2, テスト 1
   - **想定行数**: 実装 約150行, テスト 約120行
 
-- [ ] **4-2**: [Go] 編集提案詳細のハンドラーとテンプレート
-  - `internal/handler/suggestion/show.go` に `Show` メソッドを実装（GET /s/{space}/topics/{topic}/suggestions/{suggestion_id}）
+- [x] **4-2**: [Go] 編集提案詳細のハンドラーとテンプレート
+  - `internal/handler/suggestion/show.go` に `Show` メソッドを実装（GET /s/{space}/topics/{topic}/suggestions/{number}。URLはフェーズ4aで変更予定）
   - `internal/templates/pages/suggestion/show.templ` に詳細テンプレート（「会話」「編集したページ」のタブ、ステータスバッジ、概要表示）
   - `cmd/server/main.go` にルーティング登録
   - 翻訳ファイルにメッセージ追加
   - **想定ファイル数**: 実装 4, テスト 1
   - **想定行数**: 実装 約200行, テスト 約100行
 
+### フェーズ 4a: 編集提案番号のスペーススコープ化とURL変更
+
+- [x] **4a-1**: [Go] 編集提案番号をスペース内で一意にするマイグレーションとリポジトリ変更
+  - `go/db/migrations/` にマイグレーション作成: ユニークインデックスを `[topic_id, number]` から `[space_id, number]` に変更
+  - `internal/query/queries/suggestions.sql` の `GetNextSuggestionNumber` を `topic_id` → `space_id` ベースに変更
+  - `internal/repository/suggestion.go` の `GetNextNumber` の引数を `topicID` → `spaceID` に変更
+  - `internal/usecase/create_suggestion.go` の `GetNextNumber` 呼び出しを更新
+  - 関連テストの更新
+  - **想定ファイル数**: 実装 4, テスト 2
+  - **想定行数**: 実装 約40行, テスト 約30行
+
+- [x] **4a-2**: [Go] 編集提案詳細URLから `topics/{topic}` を削除
+  - ルーティングを `GET /s/{space}/topics/{topic}/suggestions/{number}` → `GET /s/{space}/suggestions/{number}` に変更
+  - `internal/templates/path.go` の `SuggestionShowPath` を更新
+  - `internal/handler/suggestion/show.go` の URLパラメータ取得を更新（トピックはUseCaseで逆引き）
+  - `internal/usecase/get_suggestion_detail.go` に `FindBySpaceAndNumber` ベースの取得ロジックを追加
+  - `internal/repository/suggestion.go` に `FindBySpaceAndNumber` メソッドを追加
+  - 一覧画面のリンク、テスト、フィーチャーフラグのURLパターンを更新
+  - **想定ファイル数**: 実装 6, テスト 2
+  - **想定行数**: 実装 約100行, テスト 約80行
+
 ### フェーズ 5: コメント機能
 
-- [ ] **5-1**: [Go] コメント作成のValidator・UseCase・ハンドラー
+- [x] **5-1**: [Go] コメント作成のValidator・UseCase・ハンドラー
   - `internal/validator/suggestion_comment.go` に `SuggestionCommentCreateValidator` を作成（本文必須、長さ制限）
   - `internal/usecase/create_suggestion_comment.go` に `CreateSuggestionCommentUsecase` を作成
   - `internal/handler/suggestion_comment/handler.go` に Handler 構造体を定義
-  - `internal/handler/suggestion_comment/create.go` に `Create` メソッドを実装（POST /s/{space}/topics/{topic}/suggestions/{suggestion_id}/comments）
+  - `internal/handler/suggestion_comment/create.go` に `Create` メソッドを実装（POST /s/{space}/suggestions/{suggestion_number}/comments）
   - `internal/templates/pages/suggestion/` にコメントフォーム・コメント一覧の部分テンプレートを追加
   - `cmd/server/main.go` にルーティング登録
   - 翻訳ファイルにメッセージ追加
@@ -697,7 +736,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 - [ ] **7-2**: [Go] 編集提案反映のハンドラーとPolicy
   - `internal/policy/suggestion.go` に `SuggestionPolicy` を作成（反映権限: スペースオーナーまたはトピック管理者）
-  - `internal/handler/suggestion/update.go` に `Update` メソッドを実装（PATCH /s/{space}/topics/{topic}/suggestions/{suggestion_id}）
+  - `internal/handler/suggestion/update.go` に `Update` メソッドを実装（PATCH /s/{space}/suggestions/{suggestion_number}）
   - 反映ボタンと確認UIをテンプレートに追加
   - `cmd/server/main.go` にルーティング登録
   - 翻訳ファイルにメッセージ追加
@@ -780,3 +819,10 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 - [ ] **N-1**: 仕様書の作成・更新
   - `docs/specs/suggestion/overview.md` に仕様書を作成する
   - 作業計画書の概要・要件・設計・採用しなかった方針を仕様書に反映する
+
+### フェーズ N+2: ページ移動時の編集提案の制限
+
+- [ ] **N-2**: ページ移動と編集提案の整合性に関する作業計画書を作成
+  - `docs/plans/` に作業計画書を作成する
+  - オープンな編集提案で参照されているページの移動を制限するルールを設計する
+  - 編集提案の `topic_id` はページ移動後もそのまま維持する方針（編集提案は作成時のトピックに所属し続ける）

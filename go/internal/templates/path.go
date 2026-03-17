@@ -95,6 +95,21 @@ func SuggestionListPath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))
 }
 
+// SuggestionShowPath は編集提案詳細のパスを生成します
+func SuggestionShowPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionNewPath は編集提案作成のパスを生成します
+func SuggestionNewPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions/new", spaceIdentifier, topicNumber))
+}
+
+// SuggestionCommentsPath は編集提案コメント作成のパスを生成します
+func SuggestionCommentsPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments", spaceIdentifier, suggestionNumber))
+}
+
 // DraftsPath は下書き一覧のパスを生成します
 func DraftsPath() Path {
 	return Path("/drafts")

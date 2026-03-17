@@ -251,3 +251,120 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 		}
 	})
 }
+
+func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	// テストデータを作成
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("unpub-conflict").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+
+	// リネーム対象のページ
+	renamingPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Original Title").
+		Build()
+
+	pageRepo := repository.NewPageRepository(queries)
+	v := validator.NewPageUpdateValidator(pageRepo)
+
+	t.Run("未公開かつ本文が空のページと競合する場合はエラーにならず競合ページIDが返る", func(t *testing.T) {
+		// 未公開かつ本文が空のページを作成
+		unpublishedPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(10).
+			WithTitle("Target Title").
+			WithBody("").
+			WithBodyHTML("").
+			WithUnpublished().
+			Build()
+
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+			Title:           "Target Title",
+			PageID:          renamingPageID,
+			TopicID:         topicID,
+			SpaceID:         spaceID,
+			SpaceIdentifier: "unpub-conflict",
+		})
+
+		if result.FormErrors.HasErrors() {
+			t.Errorf("unexpected errors: %v", result.FormErrors)
+		}
+		if result.UnpublishedConflictingPageID == nil {
+			t.Fatal("UnpublishedConflictingPageID should not be nil")
+		}
+		if *result.UnpublishedConflictingPageID != unpublishedPageID {
+			t.Errorf("UnpublishedConflictingPageID = %v, want %v", *result.UnpublishedConflictingPageID, unpublishedPageID)
+		}
+	})
+
+	t.Run("未公開だが本文がある場合は従来どおりエラー", func(t *testing.T) {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(11).
+			WithTitle("Has Body").
+			WithBody("some content").
+			WithUnpublished().
+			Build()
+
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+			Title:           "Has Body",
+			PageID:          renamingPageID,
+			TopicID:         topicID,
+			SpaceID:         spaceID,
+			SpaceIdentifier: "unpub-conflict",
+		})
+
+		if !result.FormErrors.HasErrors() {
+			t.Error("expected error but got none")
+		}
+		if !result.FormErrors.HasFieldError("title") {
+			t.Error("expected title field error")
+		}
+		if result.UnpublishedConflictingPageID != nil {
+			t.Error("UnpublishedConflictingPageID should be nil for non-empty body")
+		}
+	})
+
+	t.Run("公開済みページとの競合は従来どおりエラー", func(t *testing.T) {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(12).
+			WithTitle("Published Page").
+			Build()
+
+		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+			Title:           "Published Page",
+			PageID:          renamingPageID,
+			TopicID:         topicID,
+			SpaceID:         spaceID,
+			SpaceIdentifier: "unpub-conflict",
+		})
+
+		if !result.FormErrors.HasErrors() {
+			t.Error("expected error but got none")
+		}
+		if !result.FormErrors.HasFieldError("title") {
+			t.Error("expected title field error")
+		}
+		if result.UnpublishedConflictingPageID != nil {
+			t.Error("UnpublishedConflictingPageID should be nil for published page")
+		}
+	})
+}

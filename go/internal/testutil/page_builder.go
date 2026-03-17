@@ -222,6 +222,12 @@ func (b *PageBuilderDB) WithTitle(title string) *PageBuilderDB {
 	return b
 }
 
+// WithBody は本文を設定します
+func (b *PageBuilderDB) WithBody(body string) *PageBuilderDB {
+	b.body = body
+	return b
+}
+
 // WithPublishedAt は公開日時を設定します
 func (b *PageBuilderDB) WithPublishedAt(publishedAt time.Time) *PageBuilderDB {
 	b.publishedAt = &publishedAt

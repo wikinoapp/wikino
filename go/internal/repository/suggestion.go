@@ -73,6 +73,37 @@ func (r *SuggestionRepository) FindByID(ctx context.Context, id model.Suggestion
 	return r.toModel(row), nil
 }
 
+// FindByTopicAndNumber はトピックIDと番号で編集提案を取得する（スペースIDでスコープ）
+func (r *SuggestionRepository) FindByTopicAndNumber(ctx context.Context, topicID model.TopicID, number model.SuggestionNumber, spaceID model.SpaceID) (*model.Suggestion, error) {
+	row, err := r.q.FindSuggestionByTopicAndNumber(ctx, query.FindSuggestionByTopicAndNumberParams{
+		TopicID: string(topicID),
+		Number:  int32(number),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// FindBySpaceAndNumber はスペースIDと番号で編集提案を取得する
+func (r *SuggestionRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number model.SuggestionNumber) (*model.Suggestion, error) {
+	row, err := r.q.FindSuggestionBySpaceAndNumber(ctx, query.FindSuggestionBySpaceAndNumberParams{
+		SpaceID: string(spaceID),
+		Number:  int32(number),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // ListByTopicAndStatuses はトピックIDとステータスリストで編集提案一覧を取得する
 func (r *SuggestionRepository) ListByTopicAndStatuses(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, statuses []model.SuggestionStatus) ([]*model.Suggestion, error) {
 	statusInts := make([]int32, len(statuses))
@@ -134,9 +165,9 @@ func (r *SuggestionRepository) CountByTopicAndStatuses(ctx context.Context, topi
 	})
 }
 
-// GetNextNumber はトピック内の次の編集提案番号を取得する
-func (r *SuggestionRepository) GetNextNumber(ctx context.Context, topicID model.TopicID) (model.SuggestionNumber, error) {
-	n, err := r.q.GetNextSuggestionNumber(ctx, string(topicID))
+// GetNextNumber はスペース内の次の編集提案番号を取得する
+func (r *SuggestionRepository) GetNextNumber(ctx context.Context, spaceID model.SpaceID) (model.SuggestionNumber, error) {
+	n, err := r.q.GetNextSuggestionNumber(ctx, string(spaceID))
 	if err != nil {
 		return 0, err
 	}

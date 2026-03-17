@@ -116,3 +116,90 @@ func (b *SuggestionPageBuilder) Build() model.SuggestionPageID {
 
 	return model.SuggestionPageID(id)
 }
+
+// SuggestionPageBuilderDB はDBを直接使用する編集提案ページテストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type SuggestionPageBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	spaceID        string
+	suggestionID   string
+	pageID         string
+	pageRevisionID string
+	title          *string
+	body           string
+	bodyHTML       string
+}
+
+// NewSuggestionPageBuilderDB は SuggestionPageBuilderDB を生成します
+func NewSuggestionPageBuilderDB(t *testing.T, db *sql.DB) *SuggestionPageBuilderDB {
+	t.Helper()
+	title := "テスト提案ページ"
+	return &SuggestionPageBuilderDB{
+		t:        t,
+		db:       db,
+		title:    &title,
+		body:     "テスト本文",
+		bodyHTML: "<p>テスト本文</p>",
+	}
+}
+
+// WithSpaceID はスペースIDを設定します
+func (b *SuggestionPageBuilderDB) WithSpaceID(spaceID model.SpaceID) *SuggestionPageBuilderDB {
+	b.spaceID = string(spaceID)
+	return b
+}
+
+// WithSuggestionID は編集提案IDを設定します
+func (b *SuggestionPageBuilderDB) WithSuggestionID(suggestionID model.SuggestionID) *SuggestionPageBuilderDB {
+	b.suggestionID = string(suggestionID)
+	return b
+}
+
+// WithPageID はページIDを設定します
+func (b *SuggestionPageBuilderDB) WithPageID(pageID model.PageID) *SuggestionPageBuilderDB {
+	b.pageID = string(pageID)
+	return b
+}
+
+// WithPageRevisionID はページリビジョンIDを設定します
+func (b *SuggestionPageBuilderDB) WithPageRevisionID(pageRevisionID model.PageRevisionID) *SuggestionPageBuilderDB {
+	b.pageRevisionID = string(pageRevisionID)
+	return b
+}
+
+// Build は編集提案ページを作成し、IDを返します
+func (b *SuggestionPageBuilderDB) Build() model.SuggestionPageID {
+	b.t.Helper()
+
+	if b.spaceID == "" {
+		b.t.Fatal("SuggestionPageBuilderDB: spaceIDが設定されていません。WithSpaceID()を呼んでください")
+	}
+	if b.suggestionID == "" {
+		b.t.Fatal("SuggestionPageBuilderDB: suggestionIDが設定されていません。WithSuggestionID()を呼んでください")
+	}
+	if b.pageID == "" {
+		b.t.Fatal("SuggestionPageBuilderDB: pageIDが設定されていません。WithPageID()を呼んでください")
+	}
+
+	if b.pageRevisionID == "" {
+		b.t.Fatal("SuggestionPageBuilderDB: pageRevisionIDが設定されていません。WithPageRevisionID()を呼んでください")
+	}
+	pageRevisionID := b.pageRevisionID
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		 RETURNING id`,
+		b.spaceID, b.suggestionID, b.pageID, pageRevisionID, b.title, b.body, b.bodyHTML, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("編集提案ページ作成に失敗: %v", err)
+	}
+
+	return model.SuggestionPageID(id)
+}

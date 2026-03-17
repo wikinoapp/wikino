@@ -1108,10 +1108,10 @@ CREATE INDEX idx_suggestions_space_id ON public.suggestions USING btree (space_i
 
 
 --
--- Name: idx_suggestions_topic_id_number; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_suggestions_space_id_number; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_suggestions_topic_id_number ON public.suggestions USING btree (topic_id, number);
+CREATE UNIQUE INDEX idx_suggestions_space_id_number ON public.suggestions USING btree (space_id, number);
 
 
 --
@@ -2090,4 +2090,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260316082820'),
     ('20260316084613'),
     ('20260316090550'),
-    ('20260316092918');
+    ('20260316092918'),
+    ('20260317100418');

@@ -104,11 +104,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// テンプレートをレンダリング
 	content := topicpages.Show(topicpages.ShowData{
-		Topic:       topicVM,
-		Space:       spaceVM,
-		PinnedPages: pinnedPageVMs,
-		Pages:       pageVMs,
-		Pagination:  pagination,
+		Topic:             topicVM,
+		Space:             spaceVM,
+		PinnedPages:       pinnedPageVMs,
+		Pages:             pageVMs,
+		Pagination:        pagination,
+		SuggestionEnabled: output.SuggestionEnabled,
 	})
 
 	signedIn := user != nil

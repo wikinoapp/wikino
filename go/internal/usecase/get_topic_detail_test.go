@@ -19,7 +19,8 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
-	uc := NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	featureFlagRepo := repository.NewFeatureFlagRepository(q)
+	uc := NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
 
 	// テストデータを作成
 	ownerID := testutil.NewUserBuilder(t, tx).
@@ -149,7 +150,8 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
-	uc := NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	featureFlagRepo := repository.NewFeatureFlagRepository(q)
+	uc := NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
 
 	ownerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gtd-priv-owner@example.com").

@@ -360,6 +360,16 @@ func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*
 	return r.toModel(row), nil
 }
 
+// DiscardByID は指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+func (r *PageRepository) DiscardByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, discardedAt time.Time) error {
+	return r.q.DiscardPageByID(ctx, query.DiscardPageByIDParams{
+		ID:          string(pageID),
+		SpaceID:     string(spaceID),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   discardedAt,
+	})
+}
+
 // FindByTopicAndTitle は指定トピック内で指定タイトルのページを取得する（廃棄済みを含む、スペースIDでスコープ）
 func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.TopicID, title string, spaceID model.SpaceID) (*model.Page, error) {
 	row, err := r.q.FindPageByTopicAndTitle(ctx, query.FindPageByTopicAndTitleParams{

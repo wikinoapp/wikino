@@ -51,10 +51,11 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
-	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
 
 	return topichandler.NewHandler(
 		cfg,
@@ -404,5 +405,105 @@ func TestShow_正常系_ページ一覧が表示される(t *testing.T) {
 	}
 	if !strings.Contains(body, "ピン留めページ") {
 		t.Error("response should contain pinned page title")
+	}
+}
+
+func TestShow_フィーチャーフラグ有効時に編集提案タブが表示される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-flag@example.com").
+		WithAtname("tsflag").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-flag").
+		WithName("Flag Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0). // owner
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("フラグテスト").
+		WithVisibility(0). // public
+		Build()
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(userID).
+		WithName(string(model.FeatureFlagSuggestion)).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-flag/topics/1", map[string]string{
+		"space_identifier": "ts-flag",
+		"topic_number":     "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "tsflag"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "/s/ts-flag/topics/1/suggestions") {
+		t.Error("response should contain suggestions tab link")
+	}
+}
+
+func TestShow_フィーチャーフラグ無効時に編集提案タブが表示されない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-noflag@example.com").
+		WithAtname("tsnoflag").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-noflag").
+		WithName("No Flag Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0). // owner
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("フラグなしテスト").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-noflag/topics/1", map[string]string{
+		"space_identifier": "ts-noflag",
+		"topic_number":     "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "tsnoflag"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if strings.Contains(body, "/s/ts-noflag/topics/1/suggestions") {
+		t.Error("response should not contain suggestions tab link when feature flag is disabled")
 	}
 }

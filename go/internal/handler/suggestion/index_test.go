@@ -2,6 +2,7 @@ package suggestion_test
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,9 +16,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // newIndexRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
@@ -35,7 +38,7 @@ func newIndexRequest(t *testing.T, path string, params map[string]string) *http.
 }
 
 // setupHandler はテスト用の編集提案ハンドラーを作成するヘルパーです
-func setupHandler(t *testing.T, queries *query.Queries) *suggestionhandler.Handler {
+func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionhandler.Handler {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -47,25 +50,41 @@ func setupHandler(t *testing.T, queries *query.Queries) *suggestionhandler.Handl
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	flashMgr := session.NewFlashManager("localhost", false, false)
+
+	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
+	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
+	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo)
+	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
 
 	return suggestionhandler.NewHandler(
 		cfg,
+		flashMgr,
 		getSuggestionListUC,
+		getSuggestionDetailUC,
+		getSuggestionNewUC,
+		createSuggestionUC,
 		sidebarHelper,
+		suggestionCreateValidator,
 	)
 }
 
 func TestIndex_存在しないスペースで404が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/nonexistent/topics/1/suggestions", map[string]string{
 		"space_identifier": "nonexistent",
@@ -83,9 +102,9 @@ func TestIndex_存在しないスペースで404が返る(t *testing.T) {
 func TestIndex_不正なトピック番号で404が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/test-space/topics/abc/suggestions", map[string]string{
 		"space_identifier": "test-space",
@@ -103,14 +122,14 @@ func TestIndex_不正なトピック番号で404が返る(t *testing.T) {
 func TestIndex_存在しないトピックで404が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("si-noexist").
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/si-noexist/topics/999/suggestions", map[string]string{
 		"space_identifier": "si-noexist",
@@ -128,7 +147,7 @@ func TestIndex_存在しないトピックで404が返る(t *testing.T) {
 func TestIndex_公開トピックの編集提案一覧を未ログインで閲覧できる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -158,7 +177,7 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/si-pub-space/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-pub-space",
@@ -184,7 +203,7 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 func TestIndex_非公開トピックを未ログインで閲覧すると404が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
@@ -196,7 +215,7 @@ func TestIndex_非公開トピックを未ログインで閲覧すると404が�
 		WithVisibility(1). // private
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/si-priv1/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-priv1",
@@ -214,7 +233,7 @@ func TestIndex_非公開トピックを未ログインで閲覧すると404が�
 func TestIndex_クローズタブで反映済みとクローズの提案が表示される(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -250,7 +269,7 @@ func TestIndex_クローズタブで反映済みとクローズの提案が表�
 		WithStatus(model.SuggestionStatusClosed).
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/si-closed-sp/topics/1/suggestions?tab=closed", map[string]string{
 		"space_identifier": "si-closed-sp",
@@ -276,7 +295,7 @@ func TestIndex_クローズタブで反映済みとクローズの提案が表�
 func TestIndex_非公開トピックをスペースオーナーが閲覧できる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	ownerID := testutil.NewUserBuilder(t, tx).
@@ -298,7 +317,7 @@ func TestIndex_非公開トピックをスペースオーナーが閲覧でき�
 		WithVisibility(1). // private
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	req := newIndexRequest(t, "/s/si-priv2/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-priv2",
