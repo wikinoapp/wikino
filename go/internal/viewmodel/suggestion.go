@@ -134,6 +134,53 @@ func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageFo
 	return items
 }
 
+// SuggestionPageDiff は編集提案ページの差分表示データです
+type SuggestionPageDiff struct {
+	PageTitle      string
+	OldTitle       string
+	NewTitle       string
+	HasTitleChange bool
+	BodyBlocks     []DiffBlock
+}
+
+// NewSuggestionPageDiffsInput はNewSuggestionPageDiffsの入力パラメータです
+type NewSuggestionPageDiffsInput struct {
+	SuggestionPages []*model.SuggestionPage
+	BaseRevisions   map[model.SuggestionPageID]*model.PageRevision
+}
+
+// NewSuggestionPageDiffs は編集提案ページとベースリビジョンから差分表示用ViewModelのスライスを生成します
+func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageDiff {
+	diffs := make([]SuggestionPageDiff, len(input.SuggestionPages))
+	for i, sp := range input.SuggestionPages {
+		var oldTitle, oldBody string
+		baseRev := input.BaseRevisions[sp.ID]
+		if baseRev != nil {
+			oldTitle = baseRev.Title
+			oldBody = baseRev.Body
+		}
+
+		newTitle := oldTitle
+		if sp.Title != nil {
+			newTitle = *sp.Title
+		}
+
+		pageTitle := newTitle
+		if pageTitle == "" {
+			pageTitle = oldTitle
+		}
+
+		diffs[i] = SuggestionPageDiff{
+			PageTitle:      pageTitle,
+			OldTitle:       oldTitle,
+			NewTitle:       newTitle,
+			HasTitleChange: oldTitle != newTitle,
+			BodyBlocks:     ComputeDiffBlocks(oldBody, sp.Body, 3),
+		}
+	}
+	return diffs
+}
+
 // DraftPageForSuggestionNew は編集提案作成画面で選択可能な下書きページの表示データです
 type DraftPageForSuggestionNew struct {
 	ID         model.DraftPageID

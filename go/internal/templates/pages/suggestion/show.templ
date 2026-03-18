@@ -9,6 +9,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// SuggestionShowTab は編集提案詳細画面のタブを表します
+type SuggestionShowTab string
+
+const (
+	// SuggestionShowTabConversation は会話タブです
+	SuggestionShowTabConversation SuggestionShowTab = "conversation"
+	// SuggestionShowTabDiff は編集したページタブです
+	SuggestionShowTabDiff SuggestionShowTab = "diff"
+)
+
 // ShowData は編集提案詳細画面に渡すデータ構造体です
 type ShowData struct {
 	CSRFToken       string
@@ -17,7 +27,9 @@ type ShowData struct {
 	Suggestion      viewmodel.SuggestionForDetail
 	Comments        []viewmodel.SuggestionCommentForList
 	SuggestionPages []viewmodel.SuggestionPageForList
+	PageDiffs       []viewmodel.SuggestionPageDiff
 	IsSpaceMember   bool
+	ActiveTab       SuggestionShowTab
 }
 
 // Show は編集提案詳細画面のコンテンツを表示します
@@ -75,24 +87,30 @@ templ Show(data ShowData) {
 						@showTabs(data)
 					</div>
 
-					if data.Suggestion.BodyHTML != "" {
+					if data.ActiveTab == SuggestionShowTabDiff {
 						<div class="px-4">
-							<div class="prose prose-sm max-w-none">
-								@templ.Raw(data.Suggestion.BodyHTML)
+							@diffTab(DiffTabData{PageDiffs: data.PageDiffs})
+						</div>
+					} else {
+						if data.Suggestion.BodyHTML != "" {
+							<div class="px-4">
+								<div class="prose prose-sm max-w-none">
+									@templ.Raw(data.Suggestion.BodyHTML)
+								</div>
 							</div>
-						</div>
-					}
+						}
 
-					if len(data.Comments) > 0 {
-						<div class="px-4">
-							@showComments(data)
-						</div>
-					}
+						if len(data.Comments) > 0 {
+							<div class="px-4">
+								@showComments(data)
+							</div>
+						}
 
-					if data.IsSpaceMember {
-						<div class="px-4">
-							@showCommentForm(data)
-						</div>
+						if data.IsSpaceMember {
+							<div class="px-4">
+								@showCommentForm(data)
+							</div>
+						}
 					}
 				</div>
 			</div>
@@ -128,17 +146,40 @@ templ showStatusBadge(status model.SuggestionStatus) {
 // showTabs は「会話」「編集したページ」のタブを表示します
 templ showTabs(data ShowData) {
 	<div class="flex gap-4 border-b border-border">
-		<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
-			@templates.Icon("comment-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_conversation_tab") }
-		</span>
-		<span class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground">
-			@templates.Icon("file-lines-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
-			<span class="text-xs">
-				{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
+		if data.ActiveTab == SuggestionShowTabConversation {
+			<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
+				@templates.Icon("comment-regular", "size-4")
+				{ templates.T(ctx, "suggestion_show_conversation_tab") }
 			</span>
-		</span>
+		} else {
+			<a
+				href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+			>
+				@templates.Icon("comment-regular", "size-4")
+				{ templates.T(ctx, "suggestion_show_conversation_tab") }
+			</a>
+		}
+		if data.ActiveTab == SuggestionShowTabDiff {
+			<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
+				@templates.Icon("file-lines-regular", "size-4")
+				{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
+				<span class="text-xs">
+					{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
+				</span>
+			</span>
+		} else {
+			<a
+				href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)) + "?tab=diff") }
+				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+			>
+				@templates.Icon("file-lines-regular", "size-4")
+				{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
+				<span class="text-xs">
+					{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
+				</span>
+			</a>
+		}
 	</div>
 }
 

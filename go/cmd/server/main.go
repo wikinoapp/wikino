@@ -321,12 +321,14 @@ func main() {
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo)
+	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
 	suggestionHandler := suggestionhandler.NewHandler(
 		cfg,
 		flashMgr,
 		getSuggestionListUC,
 		getSuggestionDetailUC,
+		getSuggestionDiffUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
 		sidebarHelper,

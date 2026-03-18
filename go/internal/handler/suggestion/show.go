@@ -33,6 +33,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// タブの判定
+	activeTab := suggestionpages.SuggestionShowTabConversation
+	if r.URL.Query().Get("tab") == "diff" {
+		activeTab = suggestionpages.SuggestionShowTabDiff
+	}
+
 	// ログインユーザーを取得
 	user := middleware.UserFromContext(ctx)
 	var userID *model.UserID
@@ -69,6 +75,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
+	// 差分タブの場合はベースリビジョンを取得して差分を計算
+	var pageDiffsVM []viewmodel.SuggestionPageDiff
+	if activeTab == suggestionpages.SuggestionShowTabDiff {
+		diffOutput, err := h.getSuggestionDiffUsecase.Execute(ctx, usecase.GetSuggestionDiffInput{
+			SpaceID:         output.Space.ID,
+			SuggestionPages: output.SuggestionPages,
+		})
+		if err != nil {
+			slog.ErrorContext(ctx, "編集提案の差分取得に失敗", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		pageDiffsVM = viewmodel.NewSuggestionPageDiffs(viewmodel.NewSuggestionPageDiffsInput{
+			SuggestionPages: output.SuggestionPages,
+			BaseRevisions:   diffOutput.BaseRevisions,
+		})
+	}
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.Title = i18n.T(ctx, "suggestion_show_title", map[string]any{
@@ -88,7 +113,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Suggestion:      suggestionVM,
 		Comments:        commentsVM,
 		SuggestionPages: suggestionPagesVM,
+		PageDiffs:       pageDiffsVM,
 		IsSpaceMember:   output.SpaceMember != nil,
+		ActiveTab:       activeTab,
 	})
 
 	signedIn := user != nil

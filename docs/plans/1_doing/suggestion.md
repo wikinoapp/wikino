@@ -718,7 +718,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 1
   - **想定行数**: 実装 約200行, テスト 約100行
 
-- [ ] **6-2**: [Go] 「編集したページ」タブの実装
+- [x] **6-2**: [Go] 「編集したページ」タブの実装
   - `internal/usecase/get_suggestion_diff.go` に差分取得UseCase（各SuggestionPageの最新リビジョンとベースページの差分を計算）
   - `internal/templates/pages/suggestion/diff.templ` に差分表示テンプレートを作成
   - `internal/handler/suggestion/show.go` を更新し、タブに応じた表示を切り替え
