@@ -16,6 +16,7 @@ require (
 	github.com/riverqueue/river v0.30.2
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.30.2
 	github.com/riverqueue/river/rivertype v0.30.2
+	github.com/sergi/go-diff v1.4.0
 	github.com/sqlc-dev/sqlc v1.30.0
 	github.com/starfederation/datastar-go v1.1.0
 	github.com/yuin/goldmark v1.7.16
