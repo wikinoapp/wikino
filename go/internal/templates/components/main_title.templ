@@ -12,7 +12,7 @@ type MainTitleData struct {
 // MainTitle はページのメインタイトルと区切り線を表示します
 templ MainTitle(data MainTitleData) {
 	<div class="flex flex-col gap-4">
-		<div class="flex flex-wrap items-center justify-between gap-2">
+		<div class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
 			<div class="flex flex-col gap-2">
 				<h1 class="flex items-center gap-2 text-2xl font-bold antialiased">
 					{ data.Title }
@@ -23,13 +23,12 @@ templ MainTitle(data MainTitleData) {
 					</div>
 				}
 			</div>
+
 			if data.Actions != nil {
 				<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
 					@data.Actions
 				</div>
 			}
 		</div>
-
-		<hr class="border-gray-300"/>
 	</div>
 }

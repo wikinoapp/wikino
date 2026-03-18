@@ -36,117 +36,120 @@ templ New(data NewData) {
 						Path:     templates.SpacePath(data.Space.Identifier.String()),
 						IconName: "globe-regular",
 					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-					{
-						Label: templates.T(ctx, "suggestion_new_breadcrumb"),
-						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
-					},
-					{
-						Label: templates.T(ctx, "suggestion_new_heading"),
-					},
 				},
 			})
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
-					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title: templates.T(ctx, "suggestion_new_heading"),
-						})
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
+							@components.MainTitle(components.MainTitleData{
+								Title: templates.T(ctx, "suggestion_new_heading"),
+							})
+						</div>
+
+						<div class="px-4">
+							@components.TopicTabs(components.TopicTabsData{
+								PagesPath:       string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+								SuggestionsPath: string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
+								ActiveTab:       components.TopicTabSuggestions,
+							})
+						</div>
 					</div>
 
-					<div class="px-4">
-						@components.FormErrors(data.FormErrors)
+					@components.FormErrors(data.FormErrors)
 
-						<form
-							method="POST"
-							action={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))) }
-							class="flex flex-col gap-6"
-						>
-							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="px-0 md:px-4">
+						<div class="card !rounded-none md:!rounded-xl">
+							<div class="card-body px-4">
+								<form
+									method="POST"
+									action={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))) }
+									class="flex flex-col gap-6"
+								>
+									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-							<div class="flex flex-col gap-2">
-								<label for="title" class="text-sm font-medium">
-									{ templates.T(ctx, "suggestion_new_title_label") }
-								</label>
-								<input
-									type="text"
-									id="title"
-									name="title"
-									value={ data.Title }
-									class={ "input", templ.KV("border-destructive", data.FormErrors != nil && data.FormErrors.HasFieldError("title")) }
-									placeholder={ templates.T(ctx, "suggestion_new_title_placeholder") }
-								/>
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
-									for _, errMsg := range data.FormErrors.GetFieldErrors("title") {
-										<p class="text-sm text-destructive">{ errMsg }</p>
-									}
-								}
-							</div>
-
-							<div class="flex flex-col gap-2">
-								<label for="body" class="text-sm font-medium">
-									{ templates.T(ctx, "suggestion_new_body_label") }
-								</label>
-								<textarea
-									id="body"
-									name="body"
-									rows="4"
-									class="textarea"
-									placeholder={ templates.T(ctx, "suggestion_new_body_placeholder") }
-								>{ data.Body }</textarea>
-							</div>
-
-							<div class="flex flex-col gap-2">
-								<label class="text-sm font-medium">
-									{ templates.T(ctx, "suggestion_new_draft_pages_label") }
-								</label>
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("draft_page_ids") {
-									for _, errMsg := range data.FormErrors.GetFieldErrors("draft_page_ids") {
-										<p class="text-sm text-destructive">{ errMsg }</p>
-									}
-								}
-								if len(data.DraftPages) > 0 {
-									<div class="flex flex-col gap-2 border border-border rounded-lg p-4">
-										for _, dp := range data.DraftPages {
-											<label class="flex items-center gap-3 cursor-pointer">
-												<input
-													type="checkbox"
-													name="draft_page_ids"
-													value={ string(dp.ID) }
-													class="checkbox"
-													if isSelected(data.SelectedDraftIDs, string(dp.ID)) {
-														checked
-													}
-												/>
-												<span class="text-sm">{ dp.DisplayTitle(ctx) }</span>
-											</label>
+									<div class="flex flex-col gap-2">
+										<label for="title" class="text-sm font-medium">
+											{ templates.T(ctx, "suggestion_new_title_label") }
+										</label>
+										<input
+											type="text"
+											id="title"
+											name="title"
+											value={ data.Title }
+											class={ "input", templ.KV("border-destructive", data.FormErrors != nil && data.FormErrors.HasFieldError("title")) }
+											placeholder={ templates.T(ctx, "suggestion_new_title_placeholder") }
+										/>
+										if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+											for _, errMsg := range data.FormErrors.GetFieldErrors("title") {
+												<p class="text-sm text-destructive">{ errMsg }</p>
+											}
 										}
 									</div>
-								} else {
-									<p class="text-sm text-muted-foreground">
-										{ templates.T(ctx, "suggestion_new_no_draft_pages") }
-									</p>
-								}
-							</div>
 
-							<div class="flex justify-end">
-								<button
-									type="submit"
-									class="btn btn-primary"
-									if len(data.DraftPages) == 0 {
-										disabled
-									}
-								>
-									{ templates.T(ctx, "suggestion_new_submit") }
-								</button>
+									<div class="flex flex-col gap-2">
+										<label for="body" class="text-sm font-medium">
+											{ templates.T(ctx, "suggestion_new_body_label") }
+										</label>
+										<textarea
+											id="body"
+											name="body"
+											rows="4"
+											class="textarea"
+											placeholder={ templates.T(ctx, "suggestion_new_body_placeholder") }
+										>{ data.Body }</textarea>
+									</div>
+
+									<div class="flex flex-col gap-2">
+										<label class="text-sm font-medium">
+											{ templates.T(ctx, "suggestion_new_draft_pages_label") }
+										</label>
+										if data.FormErrors != nil && data.FormErrors.HasFieldError("draft_page_ids") {
+											for _, errMsg := range data.FormErrors.GetFieldErrors("draft_page_ids") {
+												<p class="text-sm text-destructive">{ errMsg }</p>
+											}
+										}
+										if len(data.DraftPages) > 0 {
+											<div class="flex flex-col gap-2 border border-border rounded-lg p-4">
+												for _, dp := range data.DraftPages {
+													<label class="flex items-center gap-3 cursor-pointer">
+														<input
+															type="checkbox"
+															name="draft_page_ids"
+															value={ string(dp.ID) }
+															class="checkbox"
+															if isSelected(data.SelectedDraftIDs, string(dp.ID)) {
+																checked
+															}
+														/>
+														<span class="text-sm">{ dp.DisplayTitle(ctx) }</span>
+													</label>
+												}
+											</div>
+										} else {
+											<p class="text-sm text-muted-foreground">
+												{ templates.T(ctx, "suggestion_new_no_draft_pages") }
+											</p>
+										}
+									</div>
+
+									<div class="flex justify-end">
+										<button
+											type="submit"
+											class="btn btn-primary"
+											if len(data.DraftPages) == 0 {
+												disabled
+											}
+										>
+											{ templates.T(ctx, "suggestion_new_submit") }
+										</button>
+									</div>
+								</form>
 							</div>
-						</form>
+						</div>
 					</div>
+
 				</div>
 			</div>
 		</div>

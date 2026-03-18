@@ -44,38 +44,44 @@ templ Index(data IndexData) {
 						Path:     templates.SpacePath(data.Space.Identifier.String()),
 						IconName: "globe-regular",
 					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-					{
-						Label: templates.T(ctx, "suggestion_index_breadcrumb"),
-					},
 				},
 			})
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
-					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title: templates.T(ctx, "suggestion_index_heading"),
-						})
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
+							@components.MainTitle(components.MainTitleData{
+								Title: data.Topic.Name,
+							})
+						</div>
+
+						<div class="px-4">
+							@components.TopicTabs(components.TopicTabsData{
+								PagesPath:       string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+								SuggestionsPath: data.suggestionsPath(""),
+								ActiveTab:       components.TopicTabSuggestions,
+							})
+						</div>
 					</div>
 
-					<div class="px-4">
-						@indexTabs(data)
-					</div>
+					<div class="flex flex-col gap-2">
+						<div class="px-4">
+							@indexTabs(data)
+						</div>
 
-					if len(data.Suggestions) > 0 {
 						<div class="px-4">
-							@indexList(data)
+							if len(data.Suggestions) > 0 {
+								<div class="card">
+									<div class="card-body px-4">
+										@indexList(data)
+									</div>
+								</div>
+							} else {
+								@indexEmptyState(data)
+							}
 						</div>
-					} else {
-						<div class="px-4">
-							@indexEmptyState(data)
-						</div>
-					}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -84,63 +90,64 @@ templ Index(data IndexData) {
 
 // indexTabs はオープン/クローズのタブ切り替えを表示します
 templ indexTabs(data IndexData) {
-	<div class="flex gap-4 border-b border-border">
-		if !data.ShowClosed {
+	<div class="tabs">
+		<nav class="bg-card" role="tablist" aria-orientation="horizontal">
 			<a
+				role="tab"
 				href={ templ.SafeURL(data.suggestionsPath("")) }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground"
+				if !data.ShowClosed {
+					aria-selected="true"
+				} else {
+					aria-selected="false"
+				}
 			>
 				@templates.Icon("git-pull-request-regular", "size-4")
 				{ fmt.Sprintf("%d", data.OpenCount) }
 				{ templates.T(ctx, "suggestion_index_open_tab") }
 			</a>
 			<a
+				role="tab"
 				href={ templ.SafeURL(data.suggestionsPath("closed")) }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+				if data.ShowClosed {
+					aria-selected="true"
+				} else {
+					aria-selected="false"
+				}
 			>
 				@templates.Icon("check-regular", "size-4")
 				{ fmt.Sprintf("%d", data.ClosedCount) }
 				{ templates.T(ctx, "suggestion_index_closed_tab") }
 			</a>
-		} else {
-			<a
-				href={ templ.SafeURL(data.suggestionsPath("")) }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
-			>
-				@templates.Icon("git-pull-request-regular", "size-4")
-				{ fmt.Sprintf("%d", data.OpenCount) }
-				{ templates.T(ctx, "suggestion_index_open_tab") }
-			</a>
-			<a
-				href={ templ.SafeURL(data.suggestionsPath("closed")) }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground"
-			>
-				@templates.Icon("check-regular", "size-4")
-				{ fmt.Sprintf("%d", data.ClosedCount) }
-				{ templates.T(ctx, "suggestion_index_closed_tab") }
-			</a>
-		}
+		</nav>
 	</div>
 }
 
 // indexList は編集提案のリストを表示します
 templ indexList(data IndexData) {
-	<div class="flex flex-col divide-y divide-border">
-		for _, s := range data.Suggestions {
-			<a
-				href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), s.Number))) }
-				class="flex flex-col gap-1 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-md"
-			>
-				<div class="font-semibold">
-					{ s.Title }
-				</div>
-				<div class="text-sm text-muted-foreground">
-					{ fmt.Sprintf("#%d", s.Number) }
-					{ templates.T(ctx, "suggestion_index_opened_by") }
-					{ s.CreatorName }
-				</div>
-			</a>
-		}
+	<div class="overflow-x-auto">
+		<table class="table">
+			<tbody>
+				for _, s := range data.Suggestions {
+					<tr>
+						<td>
+							<a
+								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), s.Number))) }
+								class="flex flex-col gap-1"
+							>
+								<div class="font-medium">
+									{ s.Title }
+								</div>
+								<div class="text-sm text-muted-foreground">
+									{ fmt.Sprintf("#%d", s.Number) }
+									{ templates.T(ctx, "suggestion_index_opened_by") }
+									{ s.CreatorName }
+								</div>
+							</a>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
 	</div>
 }
 
