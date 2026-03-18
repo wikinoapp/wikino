@@ -711,7 +711,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 ### フェーズ 6: 差分表示（「編集したページ」タブ）
 
-- [ ] **6-1**: [Go] 差分表示コンポーネントの実装
+- [x] **6-1**: [Go] 差分表示コンポーネントの実装
   - テキストの差分計算ライブラリの導入（`github.com/sergi/go-diff` 等）
   - `internal/viewmodel/diff.go` に差分表示用ViewModel（DiffLine, DiffBlock等）を定義
   - `internal/templates/components/diff.templ` に差分表示コンポーネントを作成（追加行・削除行・変更行のスタイリング）

@@ -892,3 +892,8 @@ other = "コメントする"
 [suggestion_comment_create_success]
 description = "編集提案コメント作成成功メッセージ"
 other = "コメントを投稿しました"
+
+# 差分表示
+[diff_no_changes]
+description = "差分がない場合のメッセージ"
+other = "変更はありません"

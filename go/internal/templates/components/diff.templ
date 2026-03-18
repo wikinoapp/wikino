@@ -1,0 +1,94 @@
+package components
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DiffViewData は差分表示コンポーネントに渡すデータ構造体です
+type DiffViewData struct {
+	Title  string
+	Blocks []viewmodel.DiffBlock
+}
+
+// DiffView は差分表示コンポーネントを表示します
+templ DiffView(data DiffViewData) {
+	<div class="flex flex-col gap-4">
+		if data.Title != "" {
+			<h3 class="text-sm font-semibold">{ data.Title }</h3>
+		}
+		if len(data.Blocks) == 0 {
+			<p class="text-sm text-muted-foreground">
+				{ templates.T(ctx, "diff_no_changes") }
+			</p>
+		} else {
+			for _, block := range data.Blocks {
+				@diffBlock(block)
+			}
+		}
+	</div>
+}
+
+// diffBlock は1つの差分ブロックを表示します
+templ diffBlock(block viewmodel.DiffBlock) {
+	<div class="overflow-x-auto rounded-md border border-border">
+		<table class="w-full text-sm font-mono border-collapse">
+			<tbody>
+				for _, line := range block.Lines {
+					@diffLine(line)
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// diffLine は差分の1行を表示します
+templ diffLine(line viewmodel.DiffLine) {
+	switch line.Type {
+		case viewmodel.DiffLineEqual:
+			<tr class="bg-background">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border">
+					{ fmt.Sprintf("%d", line.OldNumber) }
+				</td>
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border">
+					{ fmt.Sprintf("%d", line.NewNumber) }
+				</td>
+				<td class="select-none w-[1%] px-1 py-0 text-center text-muted-foreground/50 align-top">
+					{ " " }
+				</td>
+				<td class="px-2 py-0 whitespace-pre-wrap break-all">
+					{ line.Content }
+				</td>
+			</tr>
+		case viewmodel.DiffLineDelete:
+			<tr class="bg-red-50 dark:bg-red-950/30">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-red-400 align-top border-r border-red-200 dark:border-red-900">
+					{ fmt.Sprintf("%d", line.OldNumber) }
+				</td>
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-red-200 dark:border-red-900">
+				</td>
+				<td class="select-none w-[1%] px-1 py-0 text-center text-red-500 font-bold align-top">
+					{ "-" }
+				</td>
+				<td class="px-2 py-0 whitespace-pre-wrap break-all text-red-700 dark:text-red-300">
+					{ line.Content }
+				</td>
+			</tr>
+		case viewmodel.DiffLineInsert:
+			<tr class="bg-green-50 dark:bg-green-950/30">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-green-200 dark:border-green-900">
+				</td>
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-green-400 align-top border-r border-green-200 dark:border-green-900">
+					{ fmt.Sprintf("%d", line.NewNumber) }
+				</td>
+				<td class="select-none w-[1%] px-1 py-0 text-center text-green-500 font-bold align-top">
+					{ "+" }
+				</td>
+				<td class="px-2 py-0 whitespace-pre-wrap break-all text-green-700 dark:text-green-300">
+					{ line.Content }
+				</td>
+			</tr>
+	}
+}

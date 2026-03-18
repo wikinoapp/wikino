@@ -892,3 +892,8 @@ other = "Comment"
 [suggestion_comment_create_success]
 description = "Suggestion comment creation success message"
 other = "Comment has been posted"
+
+# Diff view
+[diff_no_changes]
+description = "Message when there are no changes"
+other = "No changes"
