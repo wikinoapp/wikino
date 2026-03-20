@@ -58,10 +58,10 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
+		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
-		db, suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		db, suggestionRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo,
 	)
 
@@ -332,6 +332,62 @@ func TestCreate_スペースオーナーが反映できる(t *testing.T) {
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/apply-ok-sp/suggestions/1" {
+		t.Errorf("wrong redirect location: got %q", loc)
+	}
+}
+
+func TestCreate_クローズ済みの編集提案はエラーリダイレクトされる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	db := testutil.GetTestDB()
+
+	ownerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("apply-closed@example.com").
+		WithAtname("applyclosed").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("apply-closed-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(ownerID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusClosed).
+		Build()
+
+	handler := setupHandler(t, queries, db)
+
+	form := url.Values{}
+	form.Set("csrf_token", "test-csrf-token")
+
+	req := newPostRequest(t, "/s/apply-closed-sp/suggestions/1/apply", map[string]string{
+		"space_identifier":  "apply-closed-sp",
+		"suggestion_number": "1",
+	}, form)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "applyclosed"})
+	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+	}
+	loc := rr.Header().Get("Location")
+	if loc != "/s/apply-closed-sp/suggestions/1" {
 		t.Errorf("wrong redirect location: got %q", loc)
 	}
 }

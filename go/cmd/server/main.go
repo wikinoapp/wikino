@@ -325,7 +325,7 @@ func main() {
 		sidebarHelper,
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
+	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo, draftPageRepo)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
@@ -346,7 +346,7 @@ func main() {
 		getSuggestionDiffUC,
 		sidebarHelper,
 	)
-	applySuggestionUC := usecase.NewApplySuggestionUsecase(db, suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	applySuggestionUC := usecase.NewApplySuggestionUsecase(db, suggestionRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
 	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,

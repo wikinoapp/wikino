@@ -257,7 +257,7 @@
 
 #### `apply_suggestion.go`
 
-- [ ] **1-2**: [Go] `apply_suggestion.go` のリファクタリング
+- [x] **1-2**: [Go] `apply_suggestion.go` のリファクタリング
   - `ApplySuggestionInput` に `Suggestion`, `SuggestionPages`, `Pages` を追加
   - UseCase内の `FindByID`, `ListBySuggestionID`, `FindByIDs` とステータス検証を削除
   - Pagesの取得をValidatorまたは読み取りUseCaseで事前に行う

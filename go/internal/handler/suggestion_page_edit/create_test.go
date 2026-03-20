@@ -56,7 +56,7 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
+		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(
 		db, suggestionPageRepo, draftPageRepo, pageRepo,
