@@ -1,6 +1,7 @@
 package suggestion_page
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -94,6 +95,12 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		SpaceID:          detailOutput.Space.ID,
 	})
 	if validationResult.Err != nil {
+		if errors.Is(validationResult.Err, validator.ErrDraftPageNotFound) ||
+			errors.Is(validationResult.Err, validator.ErrDraftPageNotLinked) {
+			slog.WarnContext(ctx, "編集提案ページ更新の前提条件を満たしていない", "error", validationResult.Err)
+			handler.NotFound(w, r)
+			return
+		}
 		slog.ErrorContext(ctx, "編集提案ページ更新のバリデーションに失敗", "error", validationResult.Err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
