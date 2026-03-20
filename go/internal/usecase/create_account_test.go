@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -15,12 +14,14 @@ import (
 )
 
 func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)
 	userPasswordRepo := repository.NewUserPasswordRepository(q)
-	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
+	uc := NewCreateAccountUsecase(db, userRepo, userPasswordRepo)
 
 	// メール確認完了済みのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
@@ -30,14 +31,19 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 		WithStartedAt(time.Now()).
 		BuildSucceeded()
 
+	// メール確認情報を取得（Validatorが事前に取得・検証済みの想定）
+	emailConfirmation, err := emailConfirmationRepo.FindByID(context.Background(), ecID)
+	if err != nil {
+		t.Fatalf("FindByID() error = %v", err)
+	}
+
 	// アカウントを作成
 	output, err := uc.Execute(context.Background(), CreateAccountInput{
-		EmailConfirmationID: ecID,
-		Email:               "create-success@example.com",
-		Atname:              "createsuccessuser",
-		Password:            "password123",
-		Locale:              model.LocaleJa,
-		TimeZone:            "Asia/Tokyo",
+		EmailConfirmation: emailConfirmation,
+		Atname:            "createsuccessuser",
+		Password:          "password123",
+		Locale:            model.LocaleJa,
+		TimeZone:          "Asia/Tokyo",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -81,65 +87,15 @@ func TestCreateAccountUsecase_Execute_Success(t *testing.T) {
 	}
 }
 
-func TestCreateAccountUsecase_Execute_EmailNotConfirmed(t *testing.T) {
-	db := testutil.GetTestDB()
-	q := query.New(db)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	userRepo := repository.NewUserRepository(q)
-	userPasswordRepo := repository.NewUserPasswordRepository(q)
-	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
-
-	// メール確認が未完了のテストデータを作成
-	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
-		WithEmail("not-confirmed@example.com").
-		WithEvent(model.EmailConfirmationEventSignUp).
-		WithCode("CA0002").
-		WithStartedAt(time.Now()).
-		Build() // BuildSucceeded()ではなくBuild()を使用
-
-	// アカウント作成を試みるとエラーになる
-	_, err := uc.Execute(context.Background(), CreateAccountInput{
-		EmailConfirmationID: ecID,
-		Email:               "not-confirmed@example.com",
-		Atname:              "notconfirmeduser",
-		Password:            "password123",
-		Locale:              model.LocaleJa,
-		TimeZone:            "Asia/Tokyo",
-	})
-	if !errors.Is(err, ErrEmailNotConfirmed) {
-		t.Errorf("Execute() error = %v, want %v", err, ErrEmailNotConfirmed)
-	}
-}
-
-func TestCreateAccountUsecase_Execute_EmailConfirmationNotFound(t *testing.T) {
-	db := testutil.GetTestDB()
-	q := query.New(db)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	userRepo := repository.NewUserRepository(q)
-	userPasswordRepo := repository.NewUserPasswordRepository(q)
-	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
-
-	// 存在しないEmailConfirmationIDでアカウント作成を試みる
-	_, err := uc.Execute(context.Background(), CreateAccountInput{
-		EmailConfirmationID: "00000000-0000-0000-0000-000000000000",
-		Email:               "notfound@example.com",
-		Atname:              "notfounduser",
-		Password:            "password123",
-		Locale:              model.LocaleJa,
-		TimeZone:            "Asia/Tokyo",
-	})
-	if !errors.Is(err, ErrEmailNotConfirmed) {
-		t.Errorf("Execute() error = %v, want %v", err, ErrEmailNotConfirmed)
-	}
-}
-
 func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	userRepo := repository.NewUserRepository(q)
 	userPasswordRepo := repository.NewUserPasswordRepository(q)
-	uc := NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
+	uc := NewCreateAccountUsecase(db, userRepo, userPasswordRepo)
 
 	// メール確認完了済みのテストデータを作成
 	ecID := testutil.NewEmailConfirmationBuilderDB(t, db).
@@ -149,14 +105,19 @@ func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
 		WithStartedAt(time.Now()).
 		BuildSucceeded()
 
+	// メール確認情報を取得（Validatorが事前に取得・検証済みの想定）
+	emailConfirmation, err := emailConfirmationRepo.FindByID(context.Background(), ecID)
+	if err != nil {
+		t.Fatalf("FindByID() error = %v", err)
+	}
+
 	// 英語ロケールでアカウントを作成
 	output, err := uc.Execute(context.Background(), CreateAccountInput{
-		EmailConfirmationID: ecID,
-		Email:               "english-user@example.com",
-		Atname:              "englishuser",
-		Password:            "password123",
-		Locale:              model.LocaleEn,
-		TimeZone:            "America/New_York",
+		EmailConfirmation: emailConfirmation,
+		Atname:            "englishuser",
+		Password:          "password123",
+		Locale:            model.LocaleEn,
+		TimeZone:          "America/New_York",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -176,6 +137,8 @@ func TestCreateAccountUsecase_Execute_EnglishLocale(t *testing.T) {
 }
 
 func TestHashPassword(t *testing.T) {
+	t.Parallel()
+
 	password := "testpassword123"
 
 	hash, err := hashPassword(password)

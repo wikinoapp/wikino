@@ -59,7 +59,6 @@ func TestNew(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		&sql.DB{},
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -189,7 +188,6 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		&sql.DB{},
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -262,7 +260,6 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		&sql.DB{},
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -341,7 +338,6 @@ func TestNew_EmailNotVerified(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		&sql.DB{},
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -432,7 +428,6 @@ func TestNew_EnglishLocale(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		&sql.DB{},
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
