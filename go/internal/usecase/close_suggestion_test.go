@@ -62,4 +62,28 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 			t.Errorf("suggestion status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusClosed)
 		}
 	})
+
+	t.Run("異常系: 存在しない編集提案IDを渡すとエラーになる", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("close-sugg-2").
+			Build()
+
+		suggestion := &model.Suggestion{
+			ID:      model.SuggestionID("non-existent-id"),
+			SpaceID: spaceID,
+			Status:  model.SuggestionStatusOpen,
+		}
+
+		output, err := uc.Execute(context.Background(), CloseSuggestionInput{
+			Suggestion: suggestion,
+		})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+		if output != nil {
+			t.Errorf("output should be nil, got %v", output)
+		}
+	})
 }

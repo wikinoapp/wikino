@@ -56,6 +56,9 @@ func (uc *CloseSuggestionUsecase) Execute(ctx context.Context, input CloseSugges
 	if err != nil {
 		return nil, fmt.Errorf("編集提案のステータス更新に失敗しました: %w", err)
 	}
+	if updatedSuggestion == nil {
+		return nil, fmt.Errorf("編集提案が見つかりません: %s", input.Suggestion.ID)
+	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
