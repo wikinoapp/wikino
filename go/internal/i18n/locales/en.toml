@@ -893,7 +893,72 @@ other = "Comment"
 description = "Suggestion comment creation success message"
 other = "Comment has been posted"
 
+# Suggestion apply
+
+[suggestion_apply_button]
+description = "Suggestion apply button"
+other = "Apply"
+
+[suggestion_apply_success]
+description = "Suggestion apply success message"
+other = "Suggestion has been applied"
+
+[suggestion_apply_error]
+description = "Suggestion apply error message"
+other = "Failed to apply suggestion"
+
+# Suggestion close
+
+[suggestion_close_button]
+description = "Suggestion close button"
+other = "Close"
+
+[suggestion_close_success]
+description = "Suggestion close success message"
+other = "Suggestion has been closed"
+
+[suggestion_close_error]
+description = "Suggestion close error message"
+other = "Failed to close suggestion"
+
 # Diff view
 [diff_no_changes]
 description = "Message when there are no changes"
 other = "No changes"
+
+[suggestion_diff_title_change]
+description = "Suggestion title change label"
+other = "Title change"
+
+# Suggestion page edit
+[suggestion_page_edit_button]
+description = "Edit button on suggestion changes page"
+other = "Edit"
+
+[suggestion_page_edit_confirm_title]
+description = "Suggestion page edit confirmation page title"
+other = "Draft confirmation"
+
+[suggestion_page_edit_confirm_heading]
+description = "Suggestion page edit confirmation heading"
+other = "This page has an existing draft"
+
+[suggestion_page_edit_confirm_message]
+description = "Suggestion page edit confirmation message (normal draft)"
+other = "This page has a saved draft. Choose whether to overwrite it with the suggestion content and start editing, or keep your existing draft."
+
+[suggestion_page_edit_confirm_heading_other_suggestion]
+description = "Suggestion page edit confirmation heading (other suggestion draft)"
+other = "This page has a draft from another suggestion"
+
+[suggestion_page_edit_confirm_message_other_suggestion]
+description = "Suggestion page edit confirmation message (other suggestion draft)"
+other = "This page has a draft being edited in another suggestion. Choose whether to overwrite it with the suggestion content and start editing, or keep your existing draft."
+
+[suggestion_page_edit_overwrite_button]
+description = "Button to overwrite with suggestion content"
+other = "Continue with suggestion content"
+
+[suggestion_page_edit_keep_draft_button]
+description = "Button to keep existing draft"
+other = "Keep existing draft"

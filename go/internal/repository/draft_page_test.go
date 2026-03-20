@@ -517,6 +517,199 @@ func TestDraftPageRepository_UpdateSuggestionPageID(t *testing.T) {
 	})
 }
 
+func TestDraftPageRepository_CreateWithFeaturedImageAttachmentID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-create-fimg@example.com").
+		WithAtname("draftcreatefimg").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-create-fimg").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	t.Run("featured_image_attachment_idを指定して下書きを作成できる", func(t *testing.T) {
+		now := time.Now()
+		title := "Draft with featured image"
+		draft, err := repo.Create(context.Background(), CreateDraftPageInput{
+			SpaceID:                   spaceID,
+			PageID:                    pageID,
+			SpaceMemberID:             spaceMemberID,
+			TopicID:                   topicID,
+			Title:                     &title,
+			Body:                      "body",
+			BodyHTML:                  "<p>body</p>",
+			LinkedPageIDs:             []model.PageID{},
+			FeaturedImageAttachmentID: &attachmentID,
+			ModifiedAt:                now,
+		})
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+		if draft.FeaturedImageAttachmentID == nil {
+			t.Fatal("draft.FeaturedImageAttachmentID should not be nil")
+		}
+		if *draft.FeaturedImageAttachmentID != attachmentID {
+			t.Errorf("draft.FeaturedImageAttachmentID = %v, want %v", *draft.FeaturedImageAttachmentID, attachmentID)
+		}
+	})
+
+	t.Run("featured_image_attachment_idがnilの下書きを作成できる", func(t *testing.T) {
+		pageID2 := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Page 2").
+			Build()
+
+		now := time.Now()
+		title := "Draft without featured image"
+		draft, err := repo.Create(context.Background(), CreateDraftPageInput{
+			SpaceID:                   spaceID,
+			PageID:                    pageID2,
+			SpaceMemberID:             spaceMemberID,
+			TopicID:                   topicID,
+			Title:                     &title,
+			Body:                      "body",
+			BodyHTML:                  "<p>body</p>",
+			LinkedPageIDs:             []model.PageID{},
+			FeaturedImageAttachmentID: nil,
+			ModifiedAt:                now,
+		})
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+		if draft.FeaturedImageAttachmentID != nil {
+			t.Errorf("draft.FeaturedImageAttachmentID = %v, want nil", *draft.FeaturedImageAttachmentID)
+		}
+	})
+}
+
+func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-update-fimg@example.com").
+		WithAtname("draftupdatefimg").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-update-fimg").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Before Update").
+		WithBody("old body").
+		WithBodyHTML("<p>old body</p>").
+		Build()
+
+	t.Run("featured_image_attachment_idを設定して下書きを更新できる", func(t *testing.T) {
+		now := time.Now()
+		newTitle := "After Update"
+		draft, err := repo.Update(context.Background(), UpdateDraftPageInput{
+			ID:                        draftPageID,
+			SpaceID:                   spaceID,
+			TopicID:                   topicID,
+			Title:                     &newTitle,
+			Body:                      "new body",
+			BodyHTML:                  "<p>new body</p>",
+			LinkedPageIDs:             []model.PageID{},
+			FeaturedImageAttachmentID: &attachmentID,
+			ModifiedAt:                now,
+		})
+		if err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+		if draft.FeaturedImageAttachmentID == nil {
+			t.Fatal("draft.FeaturedImageAttachmentID should not be nil")
+		}
+		if *draft.FeaturedImageAttachmentID != attachmentID {
+			t.Errorf("draft.FeaturedImageAttachmentID = %v, want %v", *draft.FeaturedImageAttachmentID, attachmentID)
+		}
+	})
+
+	t.Run("featured_image_attachment_idをnilにクリアできる", func(t *testing.T) {
+		now := time.Now()
+		title := "Cleared"
+		draft, err := repo.Update(context.Background(), UpdateDraftPageInput{
+			ID:                        draftPageID,
+			SpaceID:                   spaceID,
+			TopicID:                   topicID,
+			Title:                     &title,
+			Body:                      "body",
+			BodyHTML:                  "<p>body</p>",
+			LinkedPageIDs:             []model.PageID{},
+			FeaturedImageAttachmentID: nil,
+			ModifiedAt:                now,
+		})
+		if err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+		if draft.FeaturedImageAttachmentID != nil {
+			t.Errorf("draft.FeaturedImageAttachmentID = %v, want nil", *draft.FeaturedImageAttachmentID)
+		}
+	})
+}
+
 func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 	t.Parallel()
 

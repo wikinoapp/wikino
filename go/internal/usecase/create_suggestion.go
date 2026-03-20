@@ -19,6 +19,7 @@ type CreateSuggestionUsecase struct {
 	pageRevisionRepo           *repository.PageRevisionRepository
 	topicRepo                  *repository.TopicRepository
 	pageRepo                   *repository.PageRepository
+	draftPageRepo              *repository.DraftPageRepository
 }
 
 // NewCreateSuggestionUsecase は CreateSuggestionUsecase を生成する
@@ -30,6 +31,7 @@ func NewCreateSuggestionUsecase(
 	pageRevisionRepo *repository.PageRevisionRepository,
 	topicRepo *repository.TopicRepository,
 	pageRepo *repository.PageRepository,
+	draftPageRepo *repository.DraftPageRepository,
 ) *CreateSuggestionUsecase {
 	return &CreateSuggestionUsecase{
 		db:                         db,
@@ -39,6 +41,7 @@ func NewCreateSuggestionUsecase(
 		pageRevisionRepo:           pageRevisionRepo,
 		topicRepo:                  topicRepo,
 		pageRepo:                   pageRepo,
+		draftPageRepo:              draftPageRepo,
 	}
 }
 
@@ -75,6 +78,7 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
 	topicRepo := uc.topicRepo.WithTx(tx)
 	pageRepo := uc.pageRepo.WithTx(tx)
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 
 	// 1. スペース内の次の編集提案番号を取得
 	nextNumber, err := suggestionRepo.GetNextNumber(ctx, input.SpaceID)
@@ -125,13 +129,15 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 
 		// SuggestionPageを作成
 		suggestionPage, err := suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{
-			SpaceID:        input.SpaceID,
-			SuggestionID:   suggestion.ID,
-			PageID:         draftPage.PageID,
-			PageRevisionID: latestRevision.ID,
-			Title:          draftPage.Title,
-			Body:           draftPage.Body,
-			BodyHTML:       draftPage.BodyHTML,
+			SpaceID:                   input.SpaceID,
+			SuggestionID:              suggestion.ID,
+			PageID:                    draftPage.PageID,
+			PageRevisionID:            latestRevision.ID,
+			Title:                     draftPage.Title,
+			Body:                      draftPage.Body,
+			BodyHTML:                  draftPage.BodyHTML,
+			LinkedPageIDs:             draftPage.LinkedPageIDs,
+			FeaturedImageAttachmentID: draftPage.FeaturedImageAttachmentID,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("編集提案ページの作成に失敗しました: %w", err)
@@ -148,6 +154,14 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 		})
 		if err != nil {
 			return nil, fmt.Errorf("編集提案ページリビジョンの作成に失敗しました: %w", err)
+		}
+
+		// DraftPageのsuggestion_page_idを設定し、編集提案モードにリンクする
+		if draftPage.ID != "" {
+			_, err = draftPageRepo.UpdateSuggestionPageID(ctx, draftPage.ID, input.SpaceID, &suggestionPage.ID)
+			if err != nil {
+				return nil, fmt.Errorf("下書きページのsuggestion_page_id設定に失敗しました: %w", err)
+			}
 		}
 	}
 

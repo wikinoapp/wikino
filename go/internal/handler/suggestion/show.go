@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -80,6 +81,14 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	// 反映・クローズ権限をチェック（オープンステータスかつ権限がある場合のみ）
+	var canApply, canClose bool
+	if output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen {
+		topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+		canApply = topicPolicy.CanApplySuggestion(output.Suggestion)
+		canClose = topicPolicy.CanCloseSuggestion(output.Suggestion)
+	}
+
 	// テンプレートをレンダリング
 	content := suggestionpages.Show(suggestionpages.ShowData{
 		CSRFToken:       csrfToken,
@@ -89,6 +98,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Comments:        commentsVM,
 		SuggestionPages: suggestionPagesVM,
 		IsSpaceMember:   output.SpaceMember != nil,
+		CanApply:        canApply,
+		CanClose:        canClose,
 	})
 
 	signedIn := user != nil

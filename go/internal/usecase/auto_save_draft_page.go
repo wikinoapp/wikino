@@ -132,16 +132,23 @@ func saveDraftPageContent(
 	// 6. スタンドアロン画像のラッピング
 	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
 
-	// 7. DraftPageを更新
+	// 7. アイキャッチ画像の抽出
+	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, input.SpaceID, attachmentRepo)
+	if err != nil {
+		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
+	}
+
+	// 8. DraftPageを更新
 	updatedDraftPage, err := draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
-		ID:            draftPage.ID,
-		SpaceID:       input.SpaceID,
-		TopicID:       input.TopicID,
-		Title:         input.Title,
-		Body:          input.Body,
-		BodyHTML:      bodyHTML,
-		LinkedPageIDs: linkedPageIDs,
-		ModifiedAt:    now,
+		ID:                        draftPage.ID,
+		SpaceID:                   input.SpaceID,
+		TopicID:                   input.TopicID,
+		Title:                     input.Title,
+		Body:                      input.Body,
+		BodyHTML:                  bodyHTML,
+		LinkedPageIDs:             linkedPageIDs,
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		ModifiedAt:                now,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの更新に失敗しました: %w", err)

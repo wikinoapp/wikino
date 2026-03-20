@@ -10,6 +10,8 @@ type TopicPolicy interface {
 	CanCreatePage(topic *model.Topic) bool
 	CanUpdatePage(page *model.Page) bool
 	CanUpdateDraftPage(draftPage *model.DraftPage) bool
+	CanApplySuggestion(suggestion *model.Suggestion) bool
+	CanCloseSuggestion(suggestion *model.Suggestion) bool
 }
 
 // NewTopicPolicy はスペースメンバー・トピックメンバー情報から適切なポリシーを生成する
@@ -19,12 +21,12 @@ func NewTopicPolicy(spaceMember *model.SpaceMember, topicMember *model.TopicMemb
 	}
 
 	if topicMember == nil {
-		return &topicGuestPolicy{}
+		return &topicGuestPolicy{spaceMemberID: spaceMember.ID, spaceMemberActive: spaceMember.Active}
 	}
 
 	if topicMember.Role == model.TopicMemberRoleAdmin {
-		return &topicAdminPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
+		return &topicAdminPolicy{spaceMemberID: spaceMember.ID, topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 	}
 
-	return &topicMemberPolicy{topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
+	return &topicMemberPolicy{spaceMemberID: spaceMember.ID, topicID: topicMember.TopicID, spaceMemberActive: spaceMember.Active}
 }

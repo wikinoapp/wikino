@@ -54,6 +54,21 @@ func (r *PageRevisionRepository) Create(ctx context.Context, input CreatePageRev
 	return r.toModel(row), nil
 }
 
+// FindByID はIDでページリビジョンを取得する（スペースIDでスコープ）
+func (r *PageRevisionRepository) FindByID(ctx context.Context, id model.PageRevisionID, spaceID model.SpaceID) (*model.PageRevision, error) {
+	row, err := r.q.FindPageRevisionByID(ctx, query.FindPageRevisionByIDParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindLatestByPageID はページの最新リビジョンを取得する（スペースIDでスコープ）
 func (r *PageRevisionRepository) FindLatestByPageID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID) (*model.PageRevision, error) {
 	row, err := r.q.FindLatestPageRevisionByPage(ctx, query.FindLatestPageRevisionByPageParams{

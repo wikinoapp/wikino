@@ -58,16 +58,17 @@ func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID mo
 
 // CreateDraftPageInput は下書き作成の入力パラメータ
 type CreateDraftPageInput struct {
-	SpaceID          model.SpaceID
-	PageID           model.PageID
-	SpaceMemberID    model.SpaceMemberID
-	TopicID          model.TopicID
-	SuggestionPageID *model.SuggestionPageID
-	Title            *string
-	Body             string
-	BodyHTML         string
-	LinkedPageIDs    []model.PageID
-	ModifiedAt       time.Time
+	SpaceID                   model.SpaceID
+	PageID                    model.PageID
+	SpaceMemberID             model.SpaceMemberID
+	TopicID                   model.TopicID
+	SuggestionPageID          *model.SuggestionPageID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	LinkedPageIDs             []model.PageID
+	FeaturedImageAttachmentID *model.AttachmentID
+	ModifiedAt                time.Time
 }
 
 // Create は下書きを作成する
@@ -80,19 +81,26 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 		suggestionPageID = &s
 	}
 
+	var featuredImageAttachmentID *string
+	if input.FeaturedImageAttachmentID != nil {
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
+	}
+
 	row, err := r.q.CreateDraftPage(ctx, query.CreateDraftPageParams{
-		SpaceID:          string(input.SpaceID),
-		PageID:           string(input.PageID),
-		SpaceMemberID:    string(input.SpaceMemberID),
-		TopicID:          string(input.TopicID),
-		SuggestionPageID: suggestionPageID,
-		Title:            input.Title,
-		Body:             input.Body,
-		BodyHtml:         input.BodyHTML,
-		LinkedPageIds:    model.PageIDsToStrings(input.LinkedPageIDs),
-		ModifiedAt:       input.ModifiedAt,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		SpaceID:                   string(input.SpaceID),
+		PageID:                    string(input.PageID),
+		SpaceMemberID:             string(input.SpaceMemberID),
+		TopicID:                   string(input.TopicID),
+		SuggestionPageID:          suggestionPageID,
+		Title:                     input.Title,
+		Body:                      input.Body,
+		BodyHtml:                  input.BodyHTML,
+		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		ModifiedAt:                input.ModifiedAt,
+		CreatedAt:                 now,
+		UpdatedAt:                 now,
 	})
 	if err != nil {
 		return nil, err
@@ -102,28 +110,36 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 
 // UpdateDraftPageInput は下書き更新の入力パラメータ
 type UpdateDraftPageInput struct {
-	ID            model.DraftPageID
-	SpaceID       model.SpaceID
-	TopicID       model.TopicID
-	Title         *string
-	Body          string
-	BodyHTML      string
-	LinkedPageIDs []model.PageID
-	ModifiedAt    time.Time
+	ID                        model.DraftPageID
+	SpaceID                   model.SpaceID
+	TopicID                   model.TopicID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	LinkedPageIDs             []model.PageID
+	FeaturedImageAttachmentID *model.AttachmentID
+	ModifiedAt                time.Time
 }
 
 // Update は下書きを更新する
 func (r *DraftPageRepository) Update(ctx context.Context, input UpdateDraftPageInput) (*model.DraftPage, error) {
+	var featuredImageAttachmentID *string
+	if input.FeaturedImageAttachmentID != nil {
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
+	}
+
 	row, err := r.q.UpdateDraftPage(ctx, query.UpdateDraftPageParams{
-		ID:            string(input.ID),
-		TopicID:       string(input.TopicID),
-		Title:         input.Title,
-		Body:          input.Body,
-		BodyHtml:      input.BodyHTML,
-		LinkedPageIds: model.PageIDsToStrings(input.LinkedPageIDs),
-		ModifiedAt:    input.ModifiedAt,
-		UpdatedAt:     time.Now(),
-		SpaceID:       string(input.SpaceID),
+		ID:                        string(input.ID),
+		TopicID:                   string(input.TopicID),
+		Title:                     input.Title,
+		Body:                      input.Body,
+		BodyHtml:                  input.BodyHTML,
+		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		ModifiedAt:                input.ModifiedAt,
+		UpdatedAt:                 time.Now(),
+		SpaceID:                   string(input.SpaceID),
 	})
 	if err != nil {
 		return nil, err
@@ -358,19 +374,26 @@ func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 		suggestionPageID = &id
 	}
 
+	var featuredImageAttachmentID *model.AttachmentID
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &id
+	}
+
 	return &model.DraftPage{
-		ID:               model.DraftPageID(row.ID),
-		SpaceID:          model.SpaceID(row.SpaceID),
-		PageID:           model.PageID(row.PageID),
-		SpaceMemberID:    model.SpaceMemberID(row.SpaceMemberID),
-		TopicID:          model.TopicID(row.TopicID),
-		SuggestionPageID: suggestionPageID,
-		Title:            title,
-		Body:             row.Body,
-		BodyHTML:         row.BodyHtml,
-		LinkedPageIDs:    model.StringsToPageIDs(row.LinkedPageIds),
-		ModifiedAt:       row.ModifiedAt,
-		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        row.UpdatedAt,
+		ID:                        model.DraftPageID(row.ID),
+		SpaceID:                   model.SpaceID(row.SpaceID),
+		PageID:                    model.PageID(row.PageID),
+		SpaceMemberID:             model.SpaceMemberID(row.SpaceMemberID),
+		TopicID:                   model.TopicID(row.TopicID),
+		SuggestionPageID:          suggestionPageID,
+		Title:                     title,
+		Body:                      row.Body,
+		BodyHTML:                  row.BodyHtml,
+		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		ModifiedAt:                row.ModifiedAt,
+		CreatedAt:                 row.CreatedAt,
+		UpdatedAt:                 row.UpdatedAt,
 	}
 }

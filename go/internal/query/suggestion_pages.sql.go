@@ -9,24 +9,28 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const createSuggestionPage = `-- name: CreateSuggestionPage :one
-INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html
+INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
 `
 
 type CreateSuggestionPageParams struct {
-	SpaceID        string         `json:"space_id"`
-	SuggestionID   string         `json:"suggestion_id"`
-	PageID         string         `json:"page_id"`
-	PageRevisionID string         `json:"page_revision_id"`
-	Title          sql.NullString `json:"title"`
-	Body           string         `json:"body"`
-	BodyHtml       string         `json:"body_html"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
+	SpaceID                   string         `json:"space_id"`
+	SuggestionID              string         `json:"suggestion_id"`
+	PageID                    string         `json:"page_id"`
+	PageRevisionID            string         `json:"page_revision_id"`
+	Title                     sql.NullString `json:"title"`
+	Body                      string         `json:"body"`
+	BodyHtml                  string         `json:"body_html"`
+	LinkedPageIds             []string       `json:"linked_page_ids"`
+	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
+	CreatedAt                 time.Time      `json:"created_at"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
 }
 
 // 編集提案ページを作成する
@@ -39,6 +43,8 @@ func (q *Queries) CreateSuggestionPage(ctx context.Context, arg CreateSuggestion
 		arg.Title,
 		arg.Body,
 		arg.BodyHtml,
+		pq.Array(arg.LinkedPageIds),
+		arg.FeaturedImageAttachmentID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -54,12 +60,14 @@ func (q *Queries) CreateSuggestionPage(ctx context.Context, arg CreateSuggestion
 		&i.Title,
 		&i.Body,
 		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
 }
 
 const findSuggestionPageByID = `-- name: FindSuggestionPageByID :one
-SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html FROM suggestion_pages WHERE id = $1 AND space_id = $2
+SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages WHERE id = $1 AND space_id = $2
 `
 
 type FindSuggestionPageByIDParams struct {
@@ -82,12 +90,14 @@ func (q *Queries) FindSuggestionPageByID(ctx context.Context, arg FindSuggestion
 		&i.Title,
 		&i.Body,
 		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
 }
 
 const listSuggestionPagesBySuggestionID = `-- name: ListSuggestionPagesBySuggestionID :many
-SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html FROM suggestion_pages
+SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages
 WHERE suggestion_id = $1 AND space_id = $2
 ORDER BY created_at ASC
 `
@@ -118,6 +128,8 @@ func (q *Queries) ListSuggestionPagesBySuggestionID(ctx context.Context, arg Lis
 			&i.Title,
 			&i.Body,
 			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.FeaturedImageAttachmentID,
 		); err != nil {
 			return nil, err
 		}
@@ -134,18 +146,20 @@ func (q *Queries) ListSuggestionPagesBySuggestionID(ctx context.Context, arg Lis
 
 const updateSuggestionPageContent = `-- name: UpdateSuggestionPageContent :one
 UPDATE suggestion_pages
-SET title = $2, body = $3, body_html = $4, updated_at = $5
-WHERE id = $1 AND space_id = $6
-RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html
+SET title = $2, body = $3, body_html = $4, linked_page_ids = $5, featured_image_attachment_id = $6, updated_at = $7
+WHERE id = $1 AND space_id = $8
+RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
 `
 
 type UpdateSuggestionPageContentParams struct {
-	ID        string         `json:"id"`
-	Title     sql.NullString `json:"title"`
-	Body      string         `json:"body"`
-	BodyHtml  string         `json:"body_html"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	SpaceID   string         `json:"space_id"`
+	ID                        string         `json:"id"`
+	Title                     sql.NullString `json:"title"`
+	Body                      string         `json:"body"`
+	BodyHtml                  string         `json:"body_html"`
+	LinkedPageIds             []string       `json:"linked_page_ids"`
+	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
+	SpaceID                   string         `json:"space_id"`
 }
 
 // 編集提案ページのコンテンツを更新する（スペースIDでスコープ）
@@ -155,6 +169,8 @@ func (q *Queries) UpdateSuggestionPageContent(ctx context.Context, arg UpdateSug
 		arg.Title,
 		arg.Body,
 		arg.BodyHtml,
+		pq.Array(arg.LinkedPageIds),
+		arg.FeaturedImageAttachmentID,
 		arg.UpdatedAt,
 		arg.SpaceID,
 	)
@@ -170,6 +186,8 @@ func (q *Queries) UpdateSuggestionPageContent(ctx context.Context, arg UpdateSug
 		&i.Title,
 		&i.Body,
 		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
 }

@@ -893,7 +893,72 @@ other = "コメントする"
 description = "編集提案コメント作成成功メッセージ"
 other = "コメントを投稿しました"
 
+# 編集提案反映
+
+[suggestion_apply_button]
+description = "編集提案反映ボタン"
+other = "反映する"
+
+[suggestion_apply_success]
+description = "編集提案反映成功メッセージ"
+other = "編集提案を反映しました"
+
+[suggestion_apply_error]
+description = "編集提案反映エラーメッセージ"
+other = "編集提案の反映に失敗しました"
+
+# 編集提案クローズ
+
+[suggestion_close_button]
+description = "編集提案クローズボタン"
+other = "クローズする"
+
+[suggestion_close_success]
+description = "編集提案クローズ成功メッセージ"
+other = "編集提案をクローズしました"
+
+[suggestion_close_error]
+description = "編集提案クローズエラーメッセージ"
+other = "編集提案のクローズに失敗しました"
+
 # 差分表示
 [diff_no_changes]
 description = "差分がない場合のメッセージ"
 other = "変更はありません"
+
+[suggestion_diff_title_change]
+description = "編集提案のタイトル変更ラベル"
+other = "タイトルの変更"
+
+# 編集提案ページ編集
+[suggestion_page_edit_button]
+description = "編集提案の変更差分画面の編集ボタン"
+other = "編集する"
+
+[suggestion_page_edit_confirm_title]
+description = "編集提案ページ編集の確認画面タイトル"
+other = "下書きの確認"
+
+[suggestion_page_edit_confirm_heading]
+description = "編集提案ページ編集の確認画面見出し"
+other = "このページには既存の下書きがあります"
+
+[suggestion_page_edit_confirm_message]
+description = "編集提案ページ編集の確認画面メッセージ（通常の下書き）"
+other = "このページには保存済みの下書きがあります。編集提案の内容で上書きして編集を開始するか、もとの下書きを保持するかを選択してください。"
+
+[suggestion_page_edit_confirm_heading_other_suggestion]
+description = "編集提案ページ編集の確認画面見出し（別の編集提案の下書き）"
+other = "このページには別の編集提案の下書きがあります"
+
+[suggestion_page_edit_confirm_message_other_suggestion]
+description = "編集提案ページ編集の確認画面メッセージ（別の編集提案の下書き）"
+other = "このページには別の編集提案で編集中の下書きがあります。編集提案の内容で上書きして編集を開始するか、もとの下書きを保持するかを選択してください。"
+
+[suggestion_page_edit_overwrite_button]
+description = "編集提案の内容で上書きして編集するボタン"
+other = "編集提案の内容で編集を続ける"
+
+[suggestion_page_edit_keep_draft_button]
+description = "もとの下書きを保持するボタン"
+other = "もとの下書きを保持する"

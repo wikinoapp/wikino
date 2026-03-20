@@ -198,9 +198,9 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 初期リリースでは以下のフローで運用する:
 
-1. 提案者が自分のDraftPageから編集提案を作成する
+1. 提案者が自分のDraftPageから編集提案を作成する（作成時にDraftPageの `suggestion_page_id` が自動設定される）
 2. レビュアーはコメントでフィードバックする
-3. 提案者（またはスペースメンバー）が編集提案詳細画面からページの編集を開始する
+3. 提案者（またはスペースメンバー）が変更差分画面の各ページの「編集する」ボタンからページの編集を開始する
 4. ページ編集画面でDraftPageに自動保存されつつ編集し、「編集提案を更新」でSuggestionPageRevisionを作成する
 
 #### 将来の拡張
@@ -208,13 +208,29 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 - Botメンバーによる編集: API経由でSuggestionPageRevisionを直接作成し、AIによる編集提案の更新を可能にする
 - 同時編集: CRDTの導入後、複数のスペースメンバーが同じ編集提案ページをリアルタイムで同時編集できるようにする
 
+### URL設計
+
+編集提案のステータス変更（反映・クローズ）は、編集提案の内容更新（タイトル・本文の変更）とは別のエンドポイントとして設計する。
+
+| 操作         | HTTPメソッド | URL                                         | ハンドラー                     |
+| ------------ | ------------ | ------------------------------------------- | ------------------------------ |
+| 一覧         | GET          | `/s/{space}/topics/{topic}/suggestions`     | `suggestion/index.go`          |
+| 作成フォーム | GET          | `/s/{space}/topics/{topic}/suggestions/new` | `suggestion/new.go`            |
+| 作成         | POST         | `/s/{space}/topics/{topic}/suggestions`     | `suggestion/create.go`         |
+| 詳細         | GET          | `/s/{space}/suggestions/{number}`           | `suggestion/show.go`           |
+| 反映         | POST         | `/s/{space}/suggestions/{number}/apply`     | `suggestion_apply/create.go`   |
+| クローズ     | POST         | `/s/{space}/suggestions/{number}/close`     | `suggestion_close/create.go`   |
+| コメント作成 | POST         | `/s/{space}/suggestions/{number}/comments`  | `suggestion_comment/create.go` |
+
+反映・クローズを独立したリソース（`suggestion_apply`、`suggestion_close`）として切り出すことで、将来 `PATCH /s/{space}/suggestions/{number}` で編集提案のタイトル・本文を更新するエンドポイントを追加する際に競合しない。
+
 ### フィーチャーフラグ
 
 編集提案機能はフィーチャーフラグで制御し、フラグが有効なユーザー/デバイスのみがアクセスできるようにする。これにより、実装途中でも develop ブランチにマージでき、段階的に機能を公開できる。
 
 - **フラグ名**: `go_suggestion`
 - **制御方式**: リバースプロキシミドルウェアの `featureFlaggedPatterns` にURLパターンを追加し、フラグが有効な場合のみ Go 版で処理する
-- **対象URLパターン**: `/s/{space}/topics/{topic}/suggestions` 配下（一覧・作成）と `/s/{space}/suggestions/{number}` 配下（詳細・更新・コメント）
+- **対象URLパターン**: `/s/{space}/topics/{topic}/suggestions` 配下（一覧・作成）と `/s/{space}/suggestions/{number}` 配下（詳細・反映・クローズ・コメント）
 - **フラグ無効時の挙動**: Rails 版にプロキシされる（Rails 版に該当機能がないため 404 になる。編集提案は Go 版の新機能であり、Rails 版への移行ではないため問題ない）
 - **クリーンアップ**: 機能が安定し全ユーザーに公開した後、フラグを削除し `goHandledPrefixPaths` または `goHandledRegexPatterns` に移動する
 
@@ -247,6 +263,15 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 3. **反映済み** - トピックに反映された編集提案
 4. **クローズ** - 反映されずに閉じられた編集提案
 
+#### ステータス変更のべき等性
+
+反映・クローズのリクエストは**べき等**に振る舞う。既に目的のステータスになっている場合はエラーを返さず、何もせずに成功レスポンスを返す。
+
+- 反映済みの編集提案に対する反映リクエスト → 何もせず成功（リダイレクト）
+- クローズ済みの編集提案に対するクローズリクエスト → 何もせず成功（リダイレクト）
+
+ユーザーの意図は「この編集提案を反映したい」であり、既に反映済みなら目的は達成されている。エラーを返しても混乱を招くだけであり、2人が同時に反映ボタンを押した場合も両方に成功レスポンスを返す方がUXとして自然である。
+
 ### テーブル設計
 
 - 編集提案テーブル (`suggestions`)
@@ -259,10 +284,12 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
   - id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
   - インデックス: [suggestion_page_id, created_at]
 - 編集提案ページテーブル (`suggestion_pages`)
-  - id, space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, created_at, updated_at
+  - id, space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, created_at, updated_at
   - `pages` や `draft_pages` と同じパターンで、コンテンツ（title, body, body_html）を直接保持する。変更履歴は `suggestion_page_revisions` に記録する
   - page_idはNOT NULL（ページは事前に作成されているため）
   - page_revision_idは編集提案作成時点のベースリビジョンを記録する（NOT NULL）。ベースページが更新されたかどうかの検出（マージコンフリクト検出）や、差分計算の基準として使用する
+  - linked_page_idsはbody内のWikiリンクから解決されたページIDの配列。編集提案作成時にDraftPageからコピーし、反映時にそのまま `pages.linked_page_ids` に反映する。反映時のMarkdownパイプライン再実行を避けるため、write time（編集提案作成時）に計算して保存する
+  - featured_image_attachment_idはbody内の最初の画像から抽出されたアイキャッチ画像の添付ファイルID。編集提案作成時に `extractFeaturedImageAttachmentID()` で計算し、反映時にそのまま `pages.featured_image_attachment_id` に反映する
   - ユニークインデックス: [suggestion_id, page_id]
 - 編集提案コメントテーブル (`suggestion_comments`)
   - id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
@@ -371,6 +398,17 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 - 同一ページに対して複数のDraftPageが存在すると、ユーザーにとって「どの下書きがどの目的か」の管理が複雑になる
 - Gitでも1つのワーキングツリーは同時に1つのブランチしかチェックアウトできない。同じ制約をWikinoにも適用する方が概念モデルがシンプルになる
 - 編集提案の編集を始める際に確認画面を表示し、既存の下書きを保持するか編集提案の内容に切り替えるかをユーザーに選択してもらうことで、ユニーク制約を変更せずに対応できる
+- PostgreSQLではNULLは一意制約で「異なる値」として扱われるため、通常編集（`suggestion_page_id = NULL`）のDraftPageが無制限に作れてしまう。部分ユニークインデックスが必要になりスキーマが複雑化する
+- 下書き一覧画面で同じページが複数表示され、「この下書きはどの編集提案のものか」をユーザーが管理する負担が増える
+- ページ編集画面での自動保存先がどのDraftPageになるのかが曖昧になる
+
+**Botのユースケースについての検討**:
+
+将来的にBot（AIエージェント等）が編集提案を作成する場合、同じBotメンバーが複数の編集提案で同一ページを編集すると確認画面（API経由ではエラー）が頻発する懸念がある。しかし、以下の理由から現時点ではユニーク制約を維持する:
+
+- 同一ページを複数の編集提案で同時に編集するケースは、人間・Botともにまれである
+- Botが既存の編集提案を更新する場合はSuggestionPageRevisionを直接作成するAPIを将来提供する計画がある。ただし、編集提案の新規作成時はDraftPageを経由する可能性があり、詳細な設計は将来の拡張時に検討する
+- 実際にユーザーフィードバックで問題が判明した場合に再検討する
 
 ### `edit_suggestions` というテーブル名
 
@@ -448,6 +486,19 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 - 編集提案を将来的に別のトピックに移動する場合でも、URLが変わらない
 - スペース内で番号が一意になるため、「提案 #5」のように番号だけで曖昧さなく参照できる（GitHubのIssue/PRがリポジトリ単位で採番されるのと同じ）
 - 編集提案詳細のURLからトピックを省略でき、URLが簡潔になる
+
+### PATCHエンドポイントで反映・クローズをアクション分岐する案
+
+`PATCH /s/{space}/suggestions/{number}` の1つのエンドポイントで、リクエストボディの `action` パラメータにより反映（apply）・クローズ（close）・内容更新を分岐する案を検討した。
+
+**不採用の理由**:
+
+- 1つのエンドポイントに複数の責務が混在し、ハンドラーの見通しが悪くなる
+- ハンドラーガイドの「標準ファイル名8種類のみ」の原則に沿わない。`update.go` 内で分岐するとファイルが肥大化する
+- 反映・クローズ・内容更新はそれぞれ必要な権限やバリデーションが異なるため、独立したエンドポイントの方が責務が明確になる
+- 将来 `PATCH` で編集提案のタイトル・本文を更新したい場合に、反映・クローズのロジックと競合する
+
+代わりに、反映は `POST /s/{space}/suggestions/{number}/apply`（`suggestion_apply/create.go`）、クローズは `POST /s/{space}/suggestions/{number}/close`（`suggestion_close/create.go`）として独立したリソースに切り出す方針とした。
 
 ## 依存タスク
 
@@ -718,7 +769,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 1
   - **想定行数**: 実装 約200行, テスト 約100行
 
-- [ ] **6-2**: [Go] 「編集したページ」タブの実装
+- [x] **6-2**: [Go] 「編集したページ」タブの実装
   - `internal/usecase/get_suggestion_diff.go` に差分取得UseCase（各SuggestionPageの最新リビジョンとベースページの差分を計算）
   - `internal/templates/pages/suggestion/diff.templ` に差分表示テンプレートを作成
   - `internal/handler/suggestion/show.go` を更新し、タブに応じた表示を切り替え
@@ -727,42 +778,97 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 
 ### フェーズ 7: 編集提案の反映（マージ）
 
-- [ ] **7-1**: [Go] 編集提案反映のUseCase
+- [x] **7-1**: [Go] 編集提案反映のUseCase
   - `internal/usecase/apply_suggestion.go` に `ApplySuggestionUsecase` を作成
   - トランザクション内で: 各SuggestionPageの最新リビジョンの内容でPageを更新 → PageRevision作成 → Suggestionのステータスを「反映済み」に変更 → applied_atを設定
   - 新規ページ作成の場合はPage作成処理も含む
   - **想定ファイル数**: 実装 1, テスト 1
   - **想定行数**: 実装 約200行, テスト 約250行
 
-- [ ] **7-2**: [Go] 編集提案反映のハンドラーとPolicy
-  - `internal/policy/suggestion.go` に `SuggestionPolicy` を作成（反映権限: スペースオーナーまたはトピック管理者）
-  - `internal/handler/suggestion/update.go` に `Update` メソッドを実装（PATCH /s/{space}/suggestions/{suggestion_number}）
-  - 反映ボタンと確認UIをテンプレートに追加
+- [x] **7-1a**: [Go] suggestion_pagesテーブルにlinked_page_idsとfeatured_image_attachment_idカラムを追加
+  - **背景**: 編集提案反映時（`apply_suggestion.go`）にMarkdownパイプラインの再実行を避けるため、write time（編集提案作成時）にこれらの値を計算して `suggestion_pages` に保存し、反映時にはそのまま `pages` にコピーする設計とする
+  - `go/db/migrations/` に `suggestion_pages` テーブルへのカラム追加マイグレーション作成
+    - `linked_page_ids` (VARCHAR[] NOT NULL DEFAULT '{}')：`pages.linked_page_ids` と同じ型
+    - `featured_image_attachment_id` (UUID nullable)：`pages.featured_image_attachment_id` と同じ型
+  - `internal/model/suggestion_page.go` に `LinkedPageIDs []PageID` と `FeaturedImageAttachmentID *AttachmentID` フィールドを追加
+  - `internal/query/queries/suggestion_pages.sql` のクエリを更新（新カラムを含むSELECT/INSERT/UPDATE）
+  - `internal/repository/suggestion_page.go` の `toModel` を更新
+  - `make sqlc-generate` でコード生成
+  - テストビルダー（`internal/testutil/suggestion_page_builder.go`）を更新
+  - **想定ファイル数**: 実装 5, テスト 0
+  - **想定行数**: 実装 約60行
+
+- [x] **7-1b**: [Go] draft_pagesテーブルにfeatured_image_attachment_idカラムを追加
+  - **背景**: `linked_page_ids` は既に `draft_pages` に保存されているが、`featured_image_attachment_id` は保存されていない。編集提案作成時にDraftPageから両方のフィールドを同じパターンでコピーできるよう、`draft_pages` にも `featured_image_attachment_id` を追加する
+  - `go/db/migrations/` に `draft_pages` テーブルへの `featured_image_attachment_id` (UUID nullable) カラム追加マイグレーション作成
+  - `internal/model/draft_page.go` に `FeaturedImageAttachmentID *AttachmentID` フィールドを追加
+  - `internal/query/queries/draft_pages.sql` のクエリを更新（新カラムを含むSELECT/INSERT/UPDATE）
+  - `internal/repository/draft_page.go` の `toModel` を更新
+  - DraftPage保存時に `featured_image_attachment_id` を計算・保存するよう更新（`linked_page_ids` と同じタイミング）
+  - `make sqlc-generate` でコード生成
+  - テストビルダー（`internal/testutil/draft_page_builder.go`）を更新
+  - **想定ファイル数**: 実装 6, テスト 1
+  - **想定行数**: 実装 約80行, テスト 約50行
+
+- [x] **7-1c**: [Go] 編集提案作成時にlinked_page_idsとfeatured_image_attachment_idを保存
+  - `internal/usecase/create_suggestion.go` を更新: DraftPageからSuggestionPage作成時に `linked_page_ids` と `featured_image_attachment_id` の両方をDraftPageからコピー
+  - `internal/usecase/apply_suggestion.go` を更新: `page.LinkedPageIDs` の代わりに `sp.LinkedPageIDs` を使用し、`sp.FeaturedImageAttachmentID` を `UpdatePageInput` に渡す
+  - `internal/usecase/apply_suggestion.go` を更新: 編集提案反映時に `syncAttachmentReferences` を呼び出して `page_attachment_references` テーブルを更新する（`attachmentRepo` と `pageAttachmentRefRepo` の依存を追加）
+  - 関連テストの更新
+  - **想定ファイル数**: 実装 2, テスト 2
+  - **想定行数**: 実装 約60行, テスト 約100行
+
+- [x] **7-2**: [Go] 編集提案反映のハンドラーとPolicy
+  - `internal/policy/topic.go` の `TopicPolicy` インターフェースに `CanApplySuggestion` メソッドを追加（反映権限: スペースオーナーまたはトピック管理者）
+  - 各ポリシー実装（`topic_owner.go`, `topic_admin.go`, `topic_member.go`, `topic_guest.go`）に `CanApplySuggestion` を実装
+  - `internal/handler/suggestion_apply/handler.go` に Handler 構造体を定義
+  - `internal/handler/suggestion_apply/create.go` に `Create` メソッドを実装（POST /s/{space}/suggestions/{suggestion_number}/apply）
+  - 反映ボタンをテンプレートに追加（オープンステータスかつ反映権限がある場合のみ表示）
   - `cmd/server/main.go` にルーティング登録
-  - 翻訳ファイルにメッセージ追加
-  - **想定ファイル数**: 実装 4, テスト 2
-  - **想定行数**: 実装 約180行, テスト 約200行
+  - 翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 5, テスト 2
+  - **想定行数**: 実装 約200行, テスト 約200行
 
 ### フェーズ 8: 編集提案のクローズ
 
-- [ ] **8-1**: [Go] 編集提案クローズのUseCase・ハンドラー
+- [x] **8-1**: [Go] 編集提案クローズのUseCase・ハンドラー
   - `internal/usecase/close_suggestion.go` に `CloseSuggestionUsecase` を作成（ステータスを「クローズ」に変更）
-  - `internal/handler/suggestion/` にクローズ用ハンドラーを追加（`update.go` 内でアクション分岐、またはDELETEを活用）
+  - `internal/handler/suggestion_close/handler.go` に Handler 構造体を定義
+  - `internal/handler/suggestion_close/create.go` に `Create` メソッドを実装（POST /s/{space}/suggestions/{suggestion_number}/close）
   - クローズボタンをテンプレートに追加（権限: 作成者またはスペースオーナー/トピック管理者）
-  - `internal/policy/suggestion.go` にクローズ権限判定を追加
+  - `internal/policy/topic.go` の `TopicPolicy` インターフェースに `CanCloseSuggestion` メソッドを追加（各ポリシー実装に権限判定を追加）
   - 翻訳ファイルにメッセージ追加
-  - **想定ファイル数**: 実装 3, テスト 2
-  - **想定行数**: 実装 約120行, テスト 約150行
+  - **想定ファイル数**: 実装 4, テスト 2
+  - **想定行数**: 実装 約140行, テスト 約150行
+
+### フェーズ 8a: 編集提案作成時のDraftPageリンク
+
+- [x] **8a-1**: [Go] 編集提案作成時にDraftPageの `suggestion_page_id` を設定
+  - `internal/usecase/create_suggestion.go` を更新: 各DraftPageからSuggestionPage作成後、DraftPageの `suggestion_page_id` に作成したSuggestionPageのIDを設定
+  - 作成者が編集提案作成後すぐに編集提案モードで編集を継続できるようにする
+  - 関連テストの更新
+  - **想定ファイル数**: 実装 1, テスト 1
+  - **想定行数**: 実装 約20行, テスト 約50行
 
 ### フェーズ 9: 編集提案ページの編集
 
-- [ ] **9-1**: [Go] 編集提案ページ編集開始のUseCase・ハンドラー
-  - 編集提案詳細画面から「編集する」ボタンで編集開始
-  - `internal/usecase/start_suggestion_page_edit.go` に UseCase を作成（DraftPageの `suggestion_page_id` を設定し、SuggestionPageRevisionの最新内容でDraftPageを初期化）
-  - 既存DraftPageがある場合の確認画面テンプレートを作成
+- [x] **9-1**: [Go] 編集提案ページ編集開始のUseCase・ハンドラー
+  - 変更差分画面（`GET /s/{space}/suggestions/{number}/changes`）の各ページごとに「編集する」ボタンを配置し、ボタン押下で編集開始
+  - `internal/usecase/start_suggestion_page_edit.go` に UseCase を作成（DraftPageの `suggestion_page_id` を設定し、SuggestionPageの最新内容でDraftPageを初期化）
+  - 既存の通常編集DraftPage（`suggestion_page_id` がNULL）がある場合の確認画面テンプレートを作成
   - 通常編集 → 編集提案編集の切り替えフロー実装
+  - 編集提案作成者の場合はタスク8a-1で `suggestion_page_id` が設定済みのため、そのままページ編集画面にリダイレクト
+  - ハンドラー: `suggestion_page_edit/create.go`（POST: 編集開始）、`suggestion_page_edit/show.go`（GET: 確認画面表示）
+  - URL: `POST /s/{space}/suggestions/{number}/page_edits`、`GET /s/{space}/suggestions/{number}/page_edits/{suggestion_page_id}`
   - **想定ファイル数**: 実装 4, テスト 2
   - **想定行数**: 実装 約200行, テスト 約200行
+
+- [x] **9-1a**: [Go] 編集提案ページ編集の確認画面で下書きの種類を区別するメッセージ表示
+  - 確認画面（`suggestion_page_edit/show.go`、`show.templ`）で、既存の下書きが「通常の下書き」なのか「別の編集提案の下書き」なのかを区別してメッセージを表示する
+  - UseCase（`start_suggestion_page_edit.go`）の出力に下書きの種類（通常/別の編集提案）を含める
+  - 翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 4, テスト 1
+  - **想定行数**: 実装 約40行, テスト 約30行
 
 - [ ] **9-2**: [Go] ページ編集画面の編集提案モード対応
   - ページ編集画面（`internal/handler/page/edit.go`）で `DraftPage.SuggestionPageID` がNOT NULLの場合の表示切り替え

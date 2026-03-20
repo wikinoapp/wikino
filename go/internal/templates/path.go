@@ -1,6 +1,9 @@
 package templates
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
 
 // Path はURLのパスを表す型です
 type Path string
@@ -105,9 +108,34 @@ func SuggestionNewPath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions/new", spaceIdentifier, topicNumber))
 }
 
+// SuggestionChangesPath は編集提案の変更差分のパスを生成します
+func SuggestionChangesPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/changes", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionApplyPath は編集提案反映のパスを生成します
+func SuggestionApplyPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/apply", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionClosePath は編集提案クローズのパスを生成します
+func SuggestionClosePath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/close", spaceIdentifier, suggestionNumber))
+}
+
 // SuggestionCommentsPath は編集提案コメント作成のパスを生成します
 func SuggestionCommentsPath(spaceIdentifier string, suggestionNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionPageEditsPath は編集提案ページの編集開始のパスを生成します
+func SuggestionPageEditsPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionPageEditShowPath は編集提案ページ編集の確認画面のパスを生成します
+func SuggestionPageEditShowPath(spaceIdentifier string, suggestionNumber int32, suggestionPageID string) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
 }
 
 // DraftsPath は下書き一覧のパスを生成します

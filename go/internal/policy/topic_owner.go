@@ -22,3 +22,11 @@ func (p *topicOwnerPolicy) CanUpdatePage(page *model.Page) bool {
 func (p *topicOwnerPolicy) CanUpdateDraftPage(draftPage *model.DraftPage) bool {
 	return p.spaceMemberActive && p.spaceID == draftPage.SpaceID
 }
+
+func (p *topicOwnerPolicy) CanApplySuggestion(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID
+}
+
+func (p *topicOwnerPolicy) CanCloseSuggestion(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID
+}

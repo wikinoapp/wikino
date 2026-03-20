@@ -27,13 +27,15 @@ func (r *SuggestionPageRepository) WithTx(tx *sql.Tx) *SuggestionPageRepository 
 
 // CreateSuggestionPageInput は編集提案ページ作成の入力パラメータ
 type CreateSuggestionPageInput struct {
-	SpaceID        model.SpaceID
-	SuggestionID   model.SuggestionID
-	PageID         model.PageID
-	PageRevisionID model.PageRevisionID
-	Title          *string
-	Body           string
-	BodyHTML       string
+	SpaceID                   model.SpaceID
+	SuggestionID              model.SuggestionID
+	PageID                    model.PageID
+	PageRevisionID            model.PageRevisionID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	LinkedPageIDs             []model.PageID
+	FeaturedImageAttachmentID *model.AttachmentID
 }
 
 // Create は編集提案ページを作成する
@@ -45,16 +47,24 @@ func (r *SuggestionPageRepository) Create(ctx context.Context, input CreateSugge
 		title = sql.NullString{String: *input.Title, Valid: true}
 	}
 
+	var featuredImageAttachmentID *string
+	if input.FeaturedImageAttachmentID != nil {
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
+	}
+
 	row, err := r.q.CreateSuggestionPage(ctx, query.CreateSuggestionPageParams{
-		SpaceID:        string(input.SpaceID),
-		SuggestionID:   string(input.SuggestionID),
-		PageID:         string(input.PageID),
-		PageRevisionID: string(input.PageRevisionID),
-		Title:          title,
-		Body:           input.Body,
-		BodyHtml:       input.BodyHTML,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		SpaceID:                   string(input.SpaceID),
+		SuggestionID:              string(input.SuggestionID),
+		PageID:                    string(input.PageID),
+		PageRevisionID:            string(input.PageRevisionID),
+		Title:                     title,
+		Body:                      input.Body,
+		BodyHtml:                  input.BodyHTML,
+		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		CreatedAt:                 now,
+		UpdatedAt:                 now,
 	})
 	if err != nil {
 		return nil, err
@@ -91,11 +101,13 @@ func (r *SuggestionPageRepository) ListBySuggestionID(ctx context.Context, sugge
 
 // UpdateSuggestionPageContentInput は編集提案ページコンテンツ更新の入力パラメータ
 type UpdateSuggestionPageContentInput struct {
-	ID       model.SuggestionPageID
-	SpaceID  model.SpaceID
-	Title    *string
-	Body     string
-	BodyHTML string
+	ID                        model.SuggestionPageID
+	SpaceID                   model.SpaceID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	LinkedPageIDs             []model.PageID
+	FeaturedImageAttachmentID *model.AttachmentID
 }
 
 // UpdateContent は編集提案ページのコンテンツを更新する
@@ -105,13 +117,21 @@ func (r *SuggestionPageRepository) UpdateContent(ctx context.Context, input Upda
 		title = sql.NullString{String: *input.Title, Valid: true}
 	}
 
+	var featuredImageAttachmentID *string
+	if input.FeaturedImageAttachmentID != nil {
+		s := string(*input.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &s
+	}
+
 	row, err := r.q.UpdateSuggestionPageContent(ctx, query.UpdateSuggestionPageContentParams{
-		ID:        string(input.ID),
-		Title:     title,
-		Body:      input.Body,
-		BodyHtml:  input.BodyHTML,
-		UpdatedAt: time.Now(),
-		SpaceID:   string(input.SpaceID),
+		ID:                        string(input.ID),
+		Title:                     title,
+		Body:                      input.Body,
+		BodyHtml:                  input.BodyHTML,
+		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		UpdatedAt:                 time.Now(),
+		SpaceID:                   string(input.SpaceID),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -129,17 +149,25 @@ func (r *SuggestionPageRepository) toModel(row query.SuggestionPage) *model.Sugg
 		title = &row.Title.String
 	}
 
+	var featuredImageAttachmentID *model.AttachmentID
+	if row.FeaturedImageAttachmentID != nil {
+		id := model.AttachmentID(*row.FeaturedImageAttachmentID)
+		featuredImageAttachmentID = &id
+	}
+
 	return &model.SuggestionPage{
-		ID:             model.SuggestionPageID(row.ID),
-		SpaceID:        model.SpaceID(row.SpaceID),
-		SuggestionID:   model.SuggestionID(row.SuggestionID),
-		PageID:         model.PageID(row.PageID),
-		PageRevisionID: model.PageRevisionID(row.PageRevisionID),
-		Title:          title,
-		Body:           row.Body,
-		BodyHTML:       row.BodyHtml,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
+		ID:                        model.SuggestionPageID(row.ID),
+		SpaceID:                   model.SpaceID(row.SpaceID),
+		SuggestionID:              model.SuggestionID(row.SuggestionID),
+		PageID:                    model.PageID(row.PageID),
+		PageRevisionID:            model.PageRevisionID(row.PageRevisionID),
+		Title:                     title,
+		Body:                      row.Body,
+		BodyHTML:                  row.BodyHtml,
+		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		CreatedAt:                 row.CreatedAt,
+		UpdatedAt:                 row.UpdatedAt,
 	}
 }
 
