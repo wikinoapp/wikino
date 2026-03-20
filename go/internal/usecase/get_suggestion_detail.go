@@ -17,6 +17,7 @@ type GetSuggestionDetailUsecase struct {
 	suggestionRepo        *repository.SuggestionRepository
 	suggestionPageRepo    *repository.SuggestionPageRepository
 	suggestionCommentRepo *repository.SuggestionCommentRepository
+	pageRepo              *repository.PageRepository
 	userRepo              *repository.UserRepository
 }
 
@@ -29,6 +30,7 @@ func NewGetSuggestionDetailUsecase(
 	suggestionRepo *repository.SuggestionRepository,
 	suggestionPageRepo *repository.SuggestionPageRepository,
 	suggestionCommentRepo *repository.SuggestionCommentRepository,
+	pageRepo *repository.PageRepository,
 	userRepo *repository.UserRepository,
 ) *GetSuggestionDetailUsecase {
 	return &GetSuggestionDetailUsecase{
@@ -39,6 +41,7 @@ func NewGetSuggestionDetailUsecase(
 		suggestionRepo:        suggestionRepo,
 		suggestionPageRepo:    suggestionPageRepo,
 		suggestionCommentRepo: suggestionCommentRepo,
+		pageRepo:              pageRepo,
 		userRepo:              userRepo,
 	}
 }
@@ -58,6 +61,7 @@ type GetSuggestionDetailOutput struct {
 	TopicMember     *model.TopicMember
 	Suggestion      *model.Suggestion
 	SuggestionPages []*model.SuggestionPage
+	Pages           []*model.Page
 	Comments        []*model.SuggestionComment
 	UserMap         map[model.SpaceMemberID]*model.User
 }
@@ -122,6 +126,19 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		return nil, fmt.Errorf("編集提案ページ一覧の取得に失敗: %w", err)
 	}
 
+	// 編集提案ページに対応する元ページを取得
+	var pages []*model.Page
+	if len(suggestionPages) > 0 {
+		pageIDs := make([]model.PageID, len(suggestionPages))
+		for i, sp := range suggestionPages {
+			pageIDs[i] = sp.PageID
+		}
+		pages, err = uc.pageRepo.FindByIDs(ctx, pageIDs, space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("ページの取得に失敗: %w", err)
+		}
+	}
+
 	// コメント一覧を取得
 	comments, err := uc.suggestionCommentRepo.ListBySuggestionID(ctx, suggestion.ID, space.ID)
 	if err != nil {
@@ -141,6 +158,7 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		TopicMember:     topicMember,
 		Suggestion:      suggestion,
 		SuggestionPages: suggestionPages,
+		Pages:           pages,
 		Comments:        comments,
 		UserMap:         userMap,
 	}, nil

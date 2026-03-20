@@ -51,9 +51,10 @@ func setupHandler(t *testing.T, queries *query.Queries) *suggestioncommenthandle
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
 
+	pageRepo := repository.NewPageRepository(queries)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
+		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
 	commentCreateValidator := validator.NewSuggestionCommentCreateValidator()

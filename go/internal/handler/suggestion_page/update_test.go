@@ -52,9 +52,10 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 	userRepo := repository.NewUserRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 
+	pageRepo := repository.NewPageRepository(queries)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
+		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
 		db, suggestionPageRepo, suggestionPageRevisionRepo,

@@ -22,7 +22,8 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(q)
 	userRepo := repository.NewUserRepository(q)
-	uc := NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
+	pageRepo := repository.NewPageRepository(q)
+	uc := NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 
 	// テストデータのセットアップ
 	userID := testutil.NewUserBuilder(t, tx).
@@ -118,6 +119,22 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 		}
 		if output.SuggestionPages[0].Title == nil || *output.SuggestionPages[0].Title != "変更後タイトル" {
 			t.Errorf("SuggestionPages[0].Title = %v, want %q", output.SuggestionPages[0].Title, "変更後タイトル")
+		}
+	})
+
+	t.Run("編集提案ページに対応する元ページが取得できる", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetSuggestionDetailInput{
+			SpaceIdentifier:  "sug-detail-space",
+			SuggestionNumber: 1,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if len(output.Pages) != 1 {
+			t.Fatalf("len(Pages) = %d, want 1", len(output.Pages))
+		}
+		if output.Pages[0].ID != pageID {
+			t.Errorf("Pages[0].ID = %q, want %q", output.Pages[0].ID, pageID)
 		}
 	})
 
@@ -226,7 +243,8 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(q)
 	userRepo := repository.NewUserRepository(q)
-	uc := NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
+	pageRepo := repository.NewPageRepository(q)
+	uc := NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 
 	// オーナーユーザー
 	ownerUserID := testutil.NewUserBuilder(t, tx).
