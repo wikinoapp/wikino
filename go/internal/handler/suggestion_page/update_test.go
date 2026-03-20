@@ -1,4 +1,4 @@
-package suggestion_page_revision_test
+package suggestion_page_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	suggestionpagerevisionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_revision"
+	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -21,10 +21,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-func newPostRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
+func newPatchRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
-	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPatch, path, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	rctx := chi.NewRouteContext()
@@ -35,7 +35,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionpagerevisionhandler.Handler {
+func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionpagehandler.Handler {
 	t.Helper()
 
 	flashMgr := session.NewFlashManager("localhost", false, false)
@@ -50,24 +50,23 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	pageRepo := repository.NewPageRepository(queries)
 
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
 	)
 	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
-		db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo,
+		db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo,
 	)
 
-	return suggestionpagerevisionhandler.NewHandler(
+	return suggestionpagehandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,
 		updateSuggestionPageUC,
 	)
 }
 
-func TestCreate_未ログインでサインインにリダイレクトされる(t *testing.T) {
+func TestUpdate_未ログインでサインインにリダイレクトされる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -77,15 +76,15 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
-	form.Set("page_number", "1")
 
-	req := newPostRequest(t, "/s/test/suggestions/1/page_revisions", map[string]string{
-		"space_identifier":  "test",
-		"suggestion_number": "1",
+	req := newPatchRequest(t, "/s/test/suggestions/1/suggestion_pages/test-sp-id", map[string]string{
+		"space_identifier":   "test",
+		"suggestion_number":  "1",
+		"suggestion_page_id": "test-sp-id",
 	}, form)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
@@ -95,7 +94,7 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	}
 }
 
-func TestCreate_スペースメンバーでないユーザーは403が返る(t *testing.T) {
+func TestUpdate_スペースメンバーでないユーザーは403が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -103,16 +102,16 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	db := testutil.GetTestDB()
 
 	ownerID := testutil.NewUserBuilder(t, tx).
-		WithEmail("spr-forbid-owner@example.com").
-		WithAtname("sprforbidowner").
+		WithEmail("sp-forbid-owner@example.com").
+		WithAtname("spforbidowner").
 		Build()
 	nonMemberID := testutil.NewUserBuilder(t, tx).
-		WithEmail("spr-forbid-nonmem@example.com").
-		WithAtname("sprforbidnonm").
+		WithEmail("sp-forbid-nonmem@example.com").
+		WithAtname("spforbidnonm").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("spr-forbid-sp").
+		WithIdentifier("sp-forbid-sp").
 		Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -123,48 +122,65 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 		WithNumber(1).
 		WithVisibility(0).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
+		Build()
+
 	handler := setupHandler(t, queries, db)
 
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
-	form.Set("page_number", "1")
 
-	req := newPostRequest(t, "/s/spr-forbid-sp/suggestions/1/page_revisions", map[string]string{
-		"space_identifier":  "spr-forbid-sp",
-		"suggestion_number": "1",
+	req := newPatchRequest(t, "/s/sp-forbid-sp/suggestions/1/suggestion_pages/"+string(suggestionPageID), map[string]string{
+		"space_identifier":   "sp-forbid-sp",
+		"suggestion_number":  "1",
+		"suggestion_page_id": string(suggestionPageID),
 	}, form)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: nonMemberID, Atname: "sprforbidnonm"})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: nonMemberID, Atname: "spforbidnonm"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	handler.Update(rr, req)
 
 	if rr.Code != http.StatusForbidden {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
 	}
 }
 
-func TestCreate_正常に編集提案ページが更新される(t *testing.T) {
+func TestUpdate_正常に編集提案ページが更新される(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
 	queries := query.New(db)
 
 	userID := testutil.NewUserBuilderDB(t, db).
-		WithEmail("spr-create-ok@example.com").
-		WithAtname("sprcreateok").
+		WithEmail("sp-update-ok@example.com").
+		WithAtname("spupdateok").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
-		WithIdentifier("spr-create-sp").
+		WithIdentifier("sp-update-sp").
 		Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -215,23 +231,23 @@ func TestCreate_正常に編集提案ページが更新される(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
-	form.Set("page_number", "3")
 
-	req := newPostRequest(t, "/s/spr-create-sp/suggestions/1/page_revisions", map[string]string{
-		"space_identifier":  "spr-create-sp",
-		"suggestion_number": "1",
+	req := newPatchRequest(t, "/s/sp-update-sp/suggestions/1/suggestion_pages/"+string(suggestionPageID), map[string]string{
+		"space_identifier":   "sp-update-sp",
+		"suggestion_number":  "1",
+		"suggestion_page_id": string(suggestionPageID),
 	}, form)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "sprcreateok"})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spupdateok"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
 	}
-	expectedLoc := "/s/spr-create-sp/suggestions/1/changes"
+	expectedLoc := "/s/sp-update-sp/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
 		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
 	}
@@ -256,18 +272,24 @@ func TestCreate_正常に編集提案ページが更新される(t *testing.T) {
 		t.Error("SuggestionPageRevisionが作成されていません")
 	}
 
-	// DraftPageのsuggestion_page_idがクリアされたことを確認
+	// DraftPageのsuggestion_page_idがクリアされていないことを確認
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	dp, err := draftPageRepo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 	if err != nil {
 		t.Fatalf("DraftPageの取得に失敗: %v", err)
 	}
-	if dp != nil && dp.SuggestionPageID != nil {
-		t.Errorf("DraftPage.SuggestionPageID should be nil, got %v", *dp.SuggestionPageID)
+	if dp == nil {
+		t.Fatal("DraftPageが見つかりません")
+	}
+	if dp.SuggestionPageID == nil {
+		t.Error("DraftPage.SuggestionPageID should not be nil")
+	}
+	if dp.SuggestionPageID != nil && *dp.SuggestionPageID != suggestionPageID {
+		t.Errorf("DraftPage.SuggestionPageID = %q, want %q", *dp.SuggestionPageID, suggestionPageID)
 	}
 }
 
-func TestCreate_クローズ済みの編集提案は更新できない(t *testing.T) {
+func TestUpdate_クローズ済みの編集提案は更新できない(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -275,12 +297,12 @@ func TestCreate_クローズ済みの編集提案は更新できない(t *testin
 	db := testutil.GetTestDB()
 
 	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("spr-closed@example.com").
-		WithAtname("sprclosed").
+		WithEmail("sp-closed@example.com").
+		WithAtname("spclosed").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("spr-closed-sp").
+		WithIdentifier("sp-closed-sp").
 		Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -302,18 +324,18 @@ func TestCreate_クローズ済みの編集提案は更新できない(t *testin
 
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
-	form.Set("page_number", "1")
 
-	req := newPostRequest(t, "/s/spr-closed-sp/suggestions/1/page_revisions", map[string]string{
-		"space_identifier":  "spr-closed-sp",
-		"suggestion_number": "1",
+	req := newPatchRequest(t, "/s/sp-closed-sp/suggestions/1/suggestion_pages/test-sp-id", map[string]string{
+		"space_identifier":   "sp-closed-sp",
+		"suggestion_number":  "1",
+		"suggestion_page_id": "test-sp-id",
 	}, form)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "sprclosed"})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spclosed"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)

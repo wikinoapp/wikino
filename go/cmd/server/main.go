@@ -41,8 +41,8 @@ import (
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
 	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
 	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
+	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
-	suggestionpagerevisionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_revision"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -366,8 +366,8 @@ func main() {
 		startSuggestionPageEditUC,
 		sidebarHelper,
 	)
-	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo)
-	suggestionPageRevisionHandler := suggestionpagerevisionhandler.NewHandler(
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
+	suggestionPageHandler := suggestionpagehandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,
 		updateSuggestionPageUC,
@@ -507,8 +507,8 @@ func main() {
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits", suggestionPageEditHandler.Create)
 
-		// 編集提案ページリビジョン作成（編集提案を更新）
-		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_revisions", suggestionPageRevisionHandler.Create)
+		// 編集提案ページ更新
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Update)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

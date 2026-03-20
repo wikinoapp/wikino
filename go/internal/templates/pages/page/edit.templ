@@ -95,9 +95,7 @@ templ Edit(data EditPageData) {
 								>
 									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 									<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
-									if !data.IsSuggestionMode() {
-										<input type="hidden" name="_method" value="PATCH"/>
-									}
+									<input type="hidden" name="_method" value="PATCH"/>
 
 									<div class="grid gap-2">
 										<label for="page_title">

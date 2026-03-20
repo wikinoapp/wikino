@@ -1,4 +1,4 @@
-package suggestion_page_revision_test
+package suggestion_page_test
 
 import (
 	"os"

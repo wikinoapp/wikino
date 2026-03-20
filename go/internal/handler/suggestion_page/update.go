@@ -1,4 +1,4 @@
-package suggestion_page_revision
+package suggestion_page
 
 import (
 	"log/slog"
@@ -15,8 +15,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Create は編集提案ページリビジョンを作成します (POST /s/{space_identifier}/suggestions/{suggestion_number}/page_revisions)
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+// Update は編集提案ページを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// 認証済みユーザーを取得
@@ -29,6 +29,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// URLパラメータを取得
 	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 	suggestionNumberStr := chi.URLParam(r, "suggestion_number")
+	suggestionPageID := model.SuggestionPageID(chi.URLParam(r, "suggestion_page_id"))
 
 	suggestionNumberInt, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
@@ -37,10 +38,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
 
-	// フォームパラメータを取得
-	pageNumberStr := r.FormValue("page_number")
-	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
-	if err != nil {
+	if suggestionPageID == "" {
 		handler.NotFound(w, r)
 		return
 	}
@@ -74,13 +72,24 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SuggestionPageが現在の編集提案に属していることを検証
+	found := false
+	for _, sp := range detailOutput.SuggestionPages {
+		if sp.ID == suggestionPageID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		handler.NotFound(w, r)
+		return
+	}
+
 	// 編集提案ページを更新
 	_, err = h.updateSuggestionPageUsecase.Execute(ctx, usecase.UpdateSuggestionPageInput{
-		SpaceID:         detailOutput.Space.ID,
-		SpaceMemberID:   detailOutput.SpaceMember.ID,
-		SuggestionID:    detailOutput.Suggestion.ID,
-		PageNumber:      int32(pageNumber),
-		SuggestionPages: detailOutput.SuggestionPages,
+		SpaceID:          detailOutput.Space.ID,
+		SpaceMemberID:    detailOutput.SpaceMember.ID,
+		SuggestionPageID: suggestionPageID,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案ページの更新に失敗", "error", err)
