@@ -19,6 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func newPatchRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
@@ -56,13 +57,15 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
 	)
 	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
-		db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo,
+		db, suggestionPageRepo, suggestionPageRevisionRepo,
 	)
+	updateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 
 	return suggestionpagehandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,
 		updateSuggestionPageUC,
+		updateValidator,
 	)
 }
 

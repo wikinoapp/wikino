@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Update は編集提案ページを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
@@ -43,7 +44,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 編集提案詳細を取得（認可チェック用）
+	// 1. 読み取りUseCase: 編集提案詳細を取得
 	detailOutput, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,
@@ -73,23 +74,37 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SuggestionPageが現在の編集提案に属していることを検証
-	found := false
+	var targetSP *model.SuggestionPage
 	for _, sp := range detailOutput.SuggestionPages {
 		if sp.ID == suggestionPageID {
-			found = true
+			targetSP = sp
 			break
 		}
 	}
-	if !found {
+	if targetSP == nil {
 		handler.NotFound(w, r)
 		return
 	}
 
-	// 編集提案ページを更新
+	// 2. Validator: DraftPageの取得・検証
+	validationResult := h.updateValidator.Validate(ctx, validator.SuggestionPageUpdateValidatorInput{
+		SuggestionPageID: suggestionPageID,
+		PageID:           targetSP.PageID,
+		SpaceMemberID:    detailOutput.SpaceMember.ID,
+		SpaceID:          detailOutput.Space.ID,
+	})
+	if validationResult.Err != nil {
+		slog.ErrorContext(ctx, "編集提案ページ更新のバリデーションに失敗", "error", validationResult.Err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// 3. 書き込みUseCase: 編集提案ページを更新
 	_, err = h.updateSuggestionPageUsecase.Execute(ctx, usecase.UpdateSuggestionPageInput{
 		SpaceID:          detailOutput.Space.ID,
 		SpaceMemberID:    detailOutput.SpaceMember.ID,
 		SuggestionPageID: suggestionPageID,
+		DraftPage:        validationResult.DraftPage,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案ページの更新に失敗", "error", err)

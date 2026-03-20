@@ -366,11 +366,13 @@ func main() {
 		startSuggestionPageEditUC,
 		sidebarHelper,
 	)
-	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo)
+	suggestionPageUpdateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 	suggestionPageHandler := suggestionpagehandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,
 		updateSuggestionPageUC,
+		suggestionPageUpdateValidator,
 	)
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
