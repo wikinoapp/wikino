@@ -10,12 +10,14 @@ import (
 
 // GetPageDetailUsecase はページ詳細画面のデータ取得ユースケース
 type GetPageDetailUsecase struct {
-	spaceRepo       *repository.SpaceRepository
-	spaceMemberRepo *repository.SpaceMemberRepository
-	pageRepo        *repository.PageRepository
-	draftPageRepo   *repository.DraftPageRepository
-	topicRepo       *repository.TopicRepository
-	topicMemberRepo *repository.TopicMemberRepository
+	spaceRepo          *repository.SpaceRepository
+	spaceMemberRepo    *repository.SpaceMemberRepository
+	pageRepo           *repository.PageRepository
+	draftPageRepo      *repository.DraftPageRepository
+	topicRepo          *repository.TopicRepository
+	topicMemberRepo    *repository.TopicMemberRepository
+	suggestionPageRepo *repository.SuggestionPageRepository
+	suggestionRepo     *repository.SuggestionRepository
 }
 
 // NewGetPageDetailUsecase は GetPageDetailUsecase を生成する
@@ -26,14 +28,18 @@ func NewGetPageDetailUsecase(
 	draftPageRepo *repository.DraftPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
+	suggestionRepo *repository.SuggestionRepository,
 ) *GetPageDetailUsecase {
 	return &GetPageDetailUsecase{
-		spaceRepo:       spaceRepo,
-		spaceMemberRepo: spaceMemberRepo,
-		pageRepo:        pageRepo,
-		draftPageRepo:   draftPageRepo,
-		topicRepo:       topicRepo,
-		topicMemberRepo: topicMemberRepo,
+		spaceRepo:          spaceRepo,
+		spaceMemberRepo:    spaceMemberRepo,
+		pageRepo:           pageRepo,
+		draftPageRepo:      draftPageRepo,
+		topicRepo:          topicRepo,
+		topicMemberRepo:    topicMemberRepo,
+		suggestionPageRepo: suggestionPageRepo,
+		suggestionRepo:     suggestionRepo,
 	}
 }
 
@@ -52,6 +58,7 @@ type GetPageDetailOutput struct {
 	Topic       *model.Topic
 	TopicMember *model.TopicMember
 	DraftPage   *model.DraftPage
+	Suggestion  *model.Suggestion
 }
 
 // Execute はページ詳細画面に必要なデータを取得する
@@ -98,6 +105,21 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		return nil, fmt.Errorf("下書きの取得に失敗: %w", err)
 	}
 
+	// 下書きが編集提案にリンクされている場合、編集提案を取得する
+	var suggestion *model.Suggestion
+	if draftPage != nil && draftPage.SuggestionPageID != nil {
+		sp, err := uc.suggestionPageRepo.FindByID(ctx, *draftPage.SuggestionPageID, space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("編集提案ページの取得に失敗: %w", err)
+		}
+		if sp != nil {
+			suggestion, err = uc.suggestionRepo.FindByID(ctx, sp.SuggestionID, space.ID)
+			if err != nil {
+				return nil, fmt.Errorf("編集提案の取得に失敗: %w", err)
+			}
+		}
+	}
+
 	return &GetPageDetailOutput{
 		Space:       space,
 		SpaceMember: spaceMember,
@@ -105,5 +127,6 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		Topic:       topic,
 		TopicMember: topicMember,
 		DraftPage:   draftPage,
+		Suggestion:  suggestion,
 	}, nil
 }

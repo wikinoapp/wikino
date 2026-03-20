@@ -98,7 +98,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// テンプレートをレンダリング
 	spaceVM := viewmodel.NewSpace(output.Space)
 
-	content := pagepages.Edit(pagepages.EditPageData{
+	editData := pagepages.EditPageData{
 		CSRFToken:     csrfToken,
 		Page:          pageVM,
 		Space:         spaceVM,
@@ -106,7 +106,14 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
 		ManualSaveURL: string(templates.PageDraftPageRevisionPath(spaceIdentifier.String(), int32(output.Page.Number))),
-	})
+	}
+
+	if output.Suggestion != nil {
+		editData.SuggestionNumber = int32(output.Suggestion.Number)
+		editData.SuggestionURL = string(templates.SuggestionPageRevisionsPath(spaceIdentifier.String(), int32(output.Suggestion.Number)))
+	}
+
+	content := pagepages.Edit(editData)
 
 	// サイドバーコンテンツを取得
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)

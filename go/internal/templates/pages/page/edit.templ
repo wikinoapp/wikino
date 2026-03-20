@@ -11,14 +11,21 @@ import (
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken      string
-	FormErrors     *session.FormErrors
-	Page           viewmodel.Page
-	Space          viewmodel.Space
-	Topic          viewmodel.Topic
-	LinkList       viewmodel.LinkList
-	BacklinkList   viewmodel.BacklinkList
-	ManualSaveURL  string
+	CSRFToken        string
+	FormErrors       *session.FormErrors
+	Page             viewmodel.Page
+	Space            viewmodel.Space
+	Topic            viewmodel.Topic
+	LinkList         viewmodel.LinkList
+	BacklinkList     viewmodel.BacklinkList
+	ManualSaveURL    string
+	SuggestionNumber int32
+	SuggestionURL    string
+}
+
+// IsSuggestionMode は編集提案モードかどうかを返します
+func (d EditPageData) IsSuggestionMode() bool {
+	return d.SuggestionNumber > 0
 }
 
 // Edit はページ編集画面のコンテンツを表示します
@@ -47,7 +54,16 @@ templ Edit(data EditPageData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-4">
-					if data.Page.ShowingDraft {
+					if data.IsSuggestionMode() {
+						<div class="px-4">
+							<div class="alert">
+								@templates.Icon("warning-circle-regular", "fill-info")
+								<h2>
+									{ templates.T(ctx, "page_edit_suggestion_editing", map[string]any{"Number": data.SuggestionNumber}) }
+								</h2>
+							</div>
+						</div>
+					} else if data.Page.ShowingDraft {
 						<div class="px-4">
 							<div class="alert">
 								@templates.Icon("warning-circle-regular", "fill-info")
@@ -68,13 +84,20 @@ templ Edit(data EditPageData) {
 						<div class="card !rounded-none md:!rounded-xl">
 							<div class="card-body px-4">
 								<form
-									action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+									if data.IsSuggestionMode() {
+										action={ templ.SafeURL(data.SuggestionURL) }
+									} else {
+										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+									}
 									class="form grid gap-6"
 									data-on:submit__passive="$isSubmitting = true"
 									method="POST"
 								>
 									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-									<input type="hidden" name="_method" value="PATCH"/>
+									<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
+									if !data.IsSuggestionMode() {
+										<input type="hidden" name="_method" value="PATCH"/>
+									}
 
 									<div class="grid gap-2">
 										<label for="page_title">
@@ -130,14 +153,25 @@ templ Edit(data EditPageData) {
 
 									<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
 										<div class="flex gap-2">
-											<button
-												class="btn-primary rounded-full w-fit"
-												data-attr:disabled="$isSubmitting == true"
-												type="submit"
-											>
-												@templates.Icon("paper-plane-tilt-regular")
-												{ templates.T(ctx, "page_edit_publish_to_topic_button") }
-											</button>
+											if data.IsSuggestionMode() {
+												<button
+													class="btn-primary rounded-full w-fit"
+													data-attr:disabled="$isSubmitting == true"
+													type="submit"
+												>
+													@templates.Icon("paper-plane-tilt-regular")
+													{ templates.T(ctx, "page_edit_update_suggestion_button") }
+												</button>
+											} else {
+												<button
+													class="btn-primary rounded-full w-fit"
+													data-attr:disabled="$isSubmitting == true"
+													type="submit"
+												>
+													@templates.Icon("paper-plane-tilt-regular")
+													{ templates.T(ctx, "page_edit_publish_to_topic_button") }
+												</button>
+											}
 
 											<button
 												class="btn-secondary rounded-full w-fit"
