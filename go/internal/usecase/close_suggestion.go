@@ -28,8 +28,7 @@ func NewCloseSuggestionUsecase(
 
 // CloseSuggestionInput は編集提案クローズの入力パラメータ
 type CloseSuggestionInput struct {
-	SuggestionID model.SuggestionID
-	SpaceID      model.SpaceID
+	Suggestion *model.Suggestion
 }
 
 // CloseSuggestionOutput は編集提案クローズの出力パラメータ
@@ -49,21 +48,9 @@ func (uc *CloseSuggestionUsecase) Execute(ctx context.Context, input CloseSugges
 
 	suggestionRepo := uc.suggestionRepo.WithTx(tx)
 
-	suggestion, err := suggestionRepo.FindByID(ctx, input.SuggestionID, input.SpaceID)
-	if err != nil {
-		return nil, fmt.Errorf("編集提案の取得に失敗しました: %w", err)
-	}
-	if suggestion == nil {
-		return nil, fmt.Errorf("編集提案が見つかりません: %s", input.SuggestionID)
-	}
-
-	if suggestion.Status != model.SuggestionStatusOpen {
-		return nil, fmt.Errorf("オープンステータスの編集提案のみクローズできます（現在のステータス: %d）", suggestion.Status)
-	}
-
 	updatedSuggestion, err := suggestionRepo.UpdateStatus(ctx, repository.UpdateStatusInput{
-		ID:      suggestion.ID,
-		SpaceID: input.SpaceID,
+		ID:      input.Suggestion.ID,
+		SpaceID: input.Suggestion.SpaceID,
 		Status:  model.SuggestionStatusClosed,
 	})
 	if err != nil {
