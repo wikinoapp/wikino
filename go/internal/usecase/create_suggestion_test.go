@@ -14,6 +14,14 @@ import (
 func createPageRevisionViaRepo(t *testing.T, q *query.Queries, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, pageID model.PageID) model.PageRevisionID {
 	t.Helper()
 
+	rev := createPageRevisionForTest(t, q, spaceID, spaceMemberID, pageID)
+	return rev.ID
+}
+
+// createPageRevisionForTest はリポジトリ経由でページリビジョンを作成し、モデルを返すヘルパー
+func createPageRevisionForTest(t *testing.T, q *query.Queries, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, pageID model.PageID) *model.PageRevision {
+	t.Helper()
+
 	repo := repository.NewPageRevisionRepository(q)
 	rev, err := repo.Create(context.Background(), repository.CreatePageRevisionInput{
 		SpaceID:       spaceID,
@@ -26,7 +34,7 @@ func createPageRevisionViaRepo(t *testing.T, q *query.Queries, spaceID model.Spa
 	if err != nil {
 		t.Fatalf("ページリビジョン作成に失敗: %v", err)
 	}
-	return rev.ID
+	return rev
 }
 
 func TestCreateSuggestionUsecase_Execute(t *testing.T) {
@@ -36,12 +44,9 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	suggestionRepo := repository.NewSuggestionRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(q)
-	pageRevisionRepo := repository.NewPageRevisionRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
-	pageRepo := repository.NewPageRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
 
-	uc := NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo, draftPageRepo)
+	uc := NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 
 	t.Run("正常系: 1つの下書きページから編集提案を作成できる", func(t *testing.T) {
 		// テストデータを作成
@@ -68,17 +73,16 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			Build()
 
 		// ページリビジョンを作成（ベースリビジョンとして必要）
-		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+		pageRevision := createPageRevisionForTest(t, q, spaceID, spaceMemberID, pageID)
 
 		draftTitle := "提案タイトル"
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceID:          spaceID,
-			TopicID:          topicID,
-			SpaceMemberID:    spaceMemberID,
-			SpaceIdentifier:  "create-suggestion-1",
-			CurrentTopicName: "General",
-			Title:            "テスト編集提案",
-			Body:             "この提案の説明",
+			SpaceID:       spaceID,
+			TopicID:       topicID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "テスト編集提案",
+			Body:          "この提案の説明",
+			BodyHTML:      "<p>この提案の説明</p>",
 			DraftPages: []*model.DraftPage{
 				{
 					PageID:   pageID,
@@ -86,6 +90,9 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 					Body:     "提案ページ本文",
 					BodyHTML: "<p>提案ページ本文</p>",
 				},
+			},
+			PageRevisions: map[model.PageID]*model.PageRevision{
+				pageID: pageRevision,
 			},
 		})
 		if err != nil {
@@ -168,7 +175,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTitle("Linked Page").
 			Build()
 
-		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+		pageRevision := createPageRevisionForTest(t, q, spaceID, spaceMemberID, pageID)
 
 		featuredID := testutil.NewAttachmentBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -176,13 +183,12 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			Build()
 		draftTitle := "提案タイトル"
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceID:          spaceID,
-			TopicID:          topicID,
-			SpaceMemberID:    spaceMemberID,
-			SpaceIdentifier:  "create-suggestion-linked",
-			CurrentTopicName: "General",
-			Title:            "リンク付き提案",
-			Body:             "",
+			SpaceID:       spaceID,
+			TopicID:       topicID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "リンク付き提案",
+			Body:          "",
+			BodyHTML:      "",
 			DraftPages: []*model.DraftPage{
 				{
 					PageID:                    pageID,
@@ -192,6 +198,9 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 					LinkedPageIDs:             []model.PageID{linkedPageID},
 					FeaturedImageAttachmentID: &featuredID,
 				},
+			},
+			PageRevisions: map[model.PageID]*model.PageRevision{
+				pageID: pageRevision,
 			},
 		})
 		if err != nil {
@@ -244,19 +253,18 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTitle("Page 2").
 			Build()
 
-		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, page1ID)
-		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, page2ID)
+		page1Revision := createPageRevisionForTest(t, q, spaceID, spaceMemberID, page1ID)
+		page2Revision := createPageRevisionForTest(t, q, spaceID, spaceMemberID, page2ID)
 
 		draft1Title := "提案ページ1"
 		draft2Title := "提案ページ2"
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceID:          spaceID,
-			TopicID:          topicID,
-			SpaceMemberID:    spaceMemberID,
-			SpaceIdentifier:  "create-suggestion-2",
-			CurrentTopicName: "General",
-			Title:            "複数ページの提案",
-			Body:             "",
+			SpaceID:       spaceID,
+			TopicID:       topicID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "複数ページの提案",
+			Body:          "",
+			BodyHTML:      "",
 			DraftPages: []*model.DraftPage{
 				{
 					PageID:   page1ID,
@@ -270,6 +278,10 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 					Body:     "本文2",
 					BodyHTML: "<p>本文2</p>",
 				},
+			},
+			PageRevisions: map[model.PageID]*model.PageRevision{
+				page1ID: page1Revision,
+				page2ID: page2Revision,
 			},
 		})
 		if err != nil {
@@ -308,7 +320,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTitle("Test Page").
 			Build()
 
-		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+		pageRevision := createPageRevisionForTest(t, q, spaceID, spaceMemberID, pageID)
 
 		// 実際のDraftPageをDBに作成
 		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
@@ -323,13 +335,12 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 
 		draftTitle := "提案タイトル"
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceID:          spaceID,
-			TopicID:          topicID,
-			SpaceMemberID:    spaceMemberID,
-			SpaceIdentifier:  "create-suggestion-spid",
-			CurrentTopicName: "General",
-			Title:            "テスト編集提案",
-			Body:             "",
+			SpaceID:       spaceID,
+			TopicID:       topicID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "テスト編集提案",
+			Body:          "",
+			BodyHTML:      "",
 			DraftPages: []*model.DraftPage{
 				{
 					ID:       draftPageID,
@@ -338,6 +349,9 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 					Body:     "提案ページ本文",
 					BodyHTML: "<p>提案ページ本文</p>",
 				},
+			},
+			PageRevisions: map[model.PageID]*model.PageRevision{
+				pageID: pageRevision,
 			},
 		})
 		if err != nil {
@@ -366,53 +380,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if *updatedDraftPage.SuggestionPageID != suggestionPages[0].ID {
 			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", *updatedDraftPage.SuggestionPageID, suggestionPages[0].ID)
-		}
-	})
-
-	t.Run("異常系: ページリビジョンが存在しない場合はエラー", func(t *testing.T) {
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("create-suggestion-3").
-			Build()
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("create-suggestion-3@example.com").
-			WithAtname("createsuggestion3").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("General").
-			Build()
-		pageID := testutil.NewPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(1).
-			WithTitle("No Revision Page").
-			WithUnpublished().
-			Build()
-
-		draftTitle := "提案"
-		_, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceID:          spaceID,
-			TopicID:          topicID,
-			SpaceMemberID:    spaceMemberID,
-			SpaceIdentifier:  "create-suggestion-3",
-			CurrentTopicName: "General",
-			Title:            "テスト提案",
-			Body:             "",
-			DraftPages: []*model.DraftPage{
-				{
-					PageID:   pageID,
-					Title:    &draftTitle,
-					Body:     "本文",
-					BodyHTML: "<p>本文</p>",
-				},
-			},
-		})
-		if err == nil {
-			t.Error("expected error but got nil")
 		}
 	})
 }

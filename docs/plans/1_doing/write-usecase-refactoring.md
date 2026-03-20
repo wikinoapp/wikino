@@ -143,7 +143,7 @@
 - `resolveLinkedPages` ヘルパー内で `topicRepo.FindBySpaceAndNames` と `pageRepo.FindByTopicAndTitle` を呼び出し
 - `pageRevisionRepo.FindLatestByPageID` で各ページの最新リビジョンを取得
 
-**変更方針**: Wikiリンク解決はトランザクション外で実行し、解決済みの結果を Input に渡す。ページリビジョンの取得も事前に行う。`resolveLinkedPages` はUseCaseから独立した関数として呼び出し側で実行する。
+**変更方針**: Wikiリンク解決は読み取りUseCase（`GetSuggestionBodyHTMLUsecase`）で実行し、レンダリング済みの `BodyHTML` を書き込みUseCaseの Input に渡す。ページリビジョンの取得も読み取りUseCase（`GetLatestPageRevisionsUsecase`）で事前に行い、結果を Input に渡す。`resolveLinkedPages` は `get_suggestion_body_html.go` に移動。
 
 #### 5. `publish_page.go`（中規模）
 
@@ -279,7 +279,7 @@
 
 ### フェーズ 3: 編集提案作成のUseCaseリファクタリング
 
-- [ ] **3-1**: [Go] `create_suggestion.go` のリファクタリング
+- [x] **3-1**: [Go] `create_suggestion.go` のリファクタリング
   - Wikiリンク解決（`resolveLinkedPages`）をUseCase外で実行するように変更
   - `resolveLinkedPages` をHandler側で呼び出し、結果を Input に渡す
   - ページリビジョン取得（`FindLatestByPageID`）をValidatorに移動し、結果を Input に含める
