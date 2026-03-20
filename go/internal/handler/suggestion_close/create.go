@@ -86,8 +86,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// 編集提案をクローズ
 	_, err = h.closeSuggestionUsecase.Execute(ctx, usecase.CloseSuggestionInput{
-		SuggestionID: detailOutput.Suggestion.ID,
-		SpaceID:      detailOutput.Space.ID,
+		Suggestion: detailOutput.Suggestion,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案のクローズに失敗", "error", err)

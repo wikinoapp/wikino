@@ -247,7 +247,7 @@
 
 #### `close_suggestion.go`
 
-- [ ] **1-1**: [Go] `close_suggestion.go` のリファクタリング
+- [x] **1-1**: [Go] `close_suggestion.go` のリファクタリング
   - `CloseSuggestionInput` に `Suggestion *model.Suggestion` を追加
   - UseCase内の `FindByID` とステータス検証を削除（Handlerが既にgetSuggestionDetailで取得・検証済み）
   - Handler（`suggestion_close/create.go`）の呼び出しを更新
