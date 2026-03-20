@@ -548,6 +548,14 @@ other = "下書き保存"
 description = "自動保存時刻の表示"
 other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
 
+[page_edit_suggestion_editing]
+description = "編集提案のページ編集中メッセージ"
+other = "編集提案 #{{.Number}} のページを編集中です"
+
+[page_edit_update_suggestion_button]
+description = "編集提案を更新ボタンのラベル"
+other = "編集提案を更新"
+
 # ページ公開バリデーション
 [validation_page_title_required]
 description = "ページタイトル必須エラー"

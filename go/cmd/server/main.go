@@ -250,6 +250,8 @@ func main() {
 		draftPageRepo,
 		topicRepo,
 		topicMemberRepo,
+		suggestionPageRepo,
+		suggestionRepo,
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)

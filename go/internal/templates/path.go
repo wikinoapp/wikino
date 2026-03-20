@@ -138,6 +138,11 @@ func SuggestionPageEditShowPath(spaceIdentifier string, suggestionNumber int32, 
 	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
 }
 
+// SuggestionPageRevisionsPath は編集提案ページリビジョン作成のパスを生成します
+func SuggestionPageRevisionsPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_revisions", spaceIdentifier, suggestionNumber))
+}
+
 // DraftsPath は下書き一覧のパスを生成します
 func DraftsPath() Path {
 	return Path("/drafts")

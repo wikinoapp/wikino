@@ -35,6 +35,9 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 
 	flashMgr := session.NewFlashManager("", false, false)
 
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	suggestionRepo := repository.NewSuggestionRepository(queries)
+
 	return draft_page_revision.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -43,6 +46,8 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			draftPageRepo,
 			topicRepo,
 			topicMemberRepo,
+			suggestionPageRepo,
+			suggestionRepo,
 		),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
@@ -198,6 +203,8 @@ func TestUpdate_Success(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+	suggestionRepo := repository.NewSuggestionRepository(q)
 	handler := draft_page_revision.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -206,6 +213,8 @@ func TestUpdate_Success(t *testing.T) {
 			draftPageRepo,
 			topicRepo,
 			topicMemberRepo,
+			suggestionPageRepo,
+			suggestionRepo,
 		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
@@ -284,6 +293,8 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+	suggestionRepo := repository.NewSuggestionRepository(q)
 	handler := draft_page_revision.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -292,6 +303,8 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			draftPageRepo,
 			topicRepo,
 			topicMemberRepo,
+			suggestionPageRepo,
+			suggestionRepo,
 		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
