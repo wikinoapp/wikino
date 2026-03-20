@@ -64,7 +64,9 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo, draftPageRepo)
+	getSuggestionBodyHTMLUC := usecase.NewGetSuggestionBodyHTMLUsecase(topicRepo, pageRepo)
+	getLatestPageRevisionsUC := usecase.NewGetLatestPageRevisionsUsecase(pageRevisionRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
 
 	return suggestionhandler.NewHandler(
@@ -73,6 +75,8 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 		getSuggestionListUC,
 		getSuggestionDetailUC,
 		getSuggestionNewUC,
+		getSuggestionBodyHTMLUC,
+		getLatestPageRevisionsUC,
 		createSuggestionUC,
 		sidebarHelper,
 		suggestionCreateValidator,
