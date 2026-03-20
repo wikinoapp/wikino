@@ -14,7 +14,6 @@ import (
 type ApplySuggestionUsecase struct {
 	db                    *sql.DB
 	suggestionRepo        *repository.SuggestionRepository
-	suggestionPageRepo    *repository.SuggestionPageRepository
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
@@ -27,7 +26,6 @@ type ApplySuggestionUsecase struct {
 func NewApplySuggestionUsecase(
 	db *sql.DB,
 	suggestionRepo *repository.SuggestionRepository,
-	suggestionPageRepo *repository.SuggestionPageRepository,
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
@@ -38,7 +36,6 @@ func NewApplySuggestionUsecase(
 	return &ApplySuggestionUsecase{
 		db:                    db,
 		suggestionRepo:        suggestionRepo,
-		suggestionPageRepo:    suggestionPageRepo,
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
@@ -50,9 +47,10 @@ func NewApplySuggestionUsecase(
 
 // ApplySuggestionInput は編集提案反映の入力パラメータ
 type ApplySuggestionInput struct {
-	SuggestionID  model.SuggestionID
-	SpaceID       model.SpaceID
-	SpaceMemberID model.SpaceMemberID
+	Suggestion      *model.Suggestion
+	SuggestionPages []*model.SuggestionPage
+	Pages           []*model.Page
+	SpaceMemberID   model.SpaceMemberID
 }
 
 // ApplySuggestionOutput は編集提案反映の出力パラメータ
@@ -63,6 +61,7 @@ type ApplySuggestionOutput struct {
 // Execute は編集提案をトピックに反映する
 func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
 	now := time.Now()
+	spaceID := input.Suggestion.SpaceID
 
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -73,7 +72,6 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 	}()
 
 	suggestionRepo := uc.suggestionRepo.WithTx(tx)
-	suggestionPageRepo := uc.suggestionPageRepo.WithTx(tx)
 	pageRepo := uc.pageRepo.WithTx(tx)
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
@@ -81,42 +79,14 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// 1. 編集提案を取得
-	suggestion, err := suggestionRepo.FindByID(ctx, input.SuggestionID, input.SpaceID)
-	if err != nil {
-		return nil, fmt.Errorf("編集提案の取得に失敗しました: %w", err)
-	}
-	if suggestion == nil {
-		return nil, fmt.Errorf("編集提案が見つかりません: %s", input.SuggestionID)
-	}
-
-	// 2. ステータスがオープンであることを確認
-	if suggestion.Status != model.SuggestionStatusOpen {
-		return nil, fmt.Errorf("オープンステータスの編集提案のみ反映できます（現在のステータス: %d）", suggestion.Status)
-	}
-
-	// 3. 編集提案ページ一覧を取得
-	suggestionPages, err := suggestionPageRepo.ListBySuggestionID(ctx, suggestion.ID, input.SpaceID)
-	if err != nil {
-		return nil, fmt.Errorf("編集提案ページの取得に失敗しました: %w", err)
-	}
-
-	// 4. 対象ページをまとめて取得
-	pageIDs := make([]model.PageID, len(suggestionPages))
-	for i, sp := range suggestionPages {
-		pageIDs[i] = sp.PageID
-	}
-	pages, err := pageRepo.FindByIDs(ctx, pageIDs, input.SpaceID)
-	if err != nil {
-		return nil, fmt.Errorf("ページの取得に失敗しました: %w", err)
-	}
-	pageMap := make(map[model.PageID]*model.Page, len(pages))
-	for _, p := range pages {
+	// ページをマップに変換
+	pageMap := make(map[model.PageID]*model.Page, len(input.Pages))
+	for _, p := range input.Pages {
 		pageMap[p.ID] = p
 	}
 
-	// 5. 各SuggestionPageの内容をPageに反映
-	for _, sp := range suggestionPages {
+	// 各SuggestionPageの内容をPageに反映
+	for _, sp := range input.SuggestionPages {
 		page := pageMap[sp.PageID]
 		if page == nil {
 			return nil, fmt.Errorf("ページが見つかりません: %s", sp.PageID)
@@ -125,7 +95,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		// Pageを更新
 		_, err = pageRepo.Update(ctx, repository.UpdatePageInput{
 			ID:                        sp.PageID,
-			SpaceID:                   input.SpaceID,
+			SpaceID:                   spaceID,
 			TopicID:                   page.TopicID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,
@@ -140,7 +110,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		}
 
 		// 添付ファイル参照の同期
-		if err := syncAttachmentReferences(ctx, sp.BodyHTML, sp.PageID, input.SpaceID, attachmentRepo, pageAttachmentRefRepo); err != nil {
+		if err := syncAttachmentReferences(ctx, sp.BodyHTML, sp.PageID, spaceID, attachmentRepo, pageAttachmentRefRepo); err != nil {
 			return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 		}
 
@@ -150,7 +120,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 			title = *sp.Title
 		}
 		_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
-			SpaceID:       input.SpaceID,
+			SpaceID:       spaceID,
 			SpaceMemberID: input.SpaceMemberID,
 			PageID:        sp.PageID,
 			Title:         title,
@@ -163,7 +133,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 
 		// PageEditorを追加・更新
 		pageEditor, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
-			SpaceID:            input.SpaceID,
+			SpaceID:            spaceID,
 			PageID:             sp.PageID,
 			SpaceMemberID:      input.SpaceMemberID,
 			LastPageModifiedAt: now,
@@ -174,7 +144,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 
 		_, err = pageEditorRepo.UpdateLastPageModifiedAt(ctx, repository.UpdateLastPageModifiedAtInput{
 			ID:                 pageEditor.ID,
-			SpaceID:            input.SpaceID,
+			SpaceID:            spaceID,
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
@@ -182,16 +152,16 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		}
 
 		// TopicMemberのlast_page_modified_atを更新
-		err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, input.SpaceID, page.TopicID, input.SpaceMemberID, now)
+		err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, spaceID, page.TopicID, input.SpaceMemberID, now)
 		if err != nil {
 			return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 		}
 	}
 
-	// 6. 編集提案のステータスを「反映済み」に変更
+	// 編集提案のステータスを「反映済み」に変更
 	updatedSuggestion, err := suggestionRepo.UpdateStatus(ctx, repository.UpdateStatusInput{
-		ID:        suggestion.ID,
-		SpaceID:   input.SpaceID,
+		ID:        input.Suggestion.ID,
+		SpaceID:   spaceID,
 		Status:    model.SuggestionStatusApplied,
 		AppliedAt: &now,
 	})

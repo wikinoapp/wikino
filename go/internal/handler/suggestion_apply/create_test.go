@@ -58,10 +58,10 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo,
+		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
-		db, suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		db, suggestionRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo,
 	)
 

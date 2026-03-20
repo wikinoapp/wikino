@@ -86,9 +86,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// 編集提案を反映
 	_, err = h.applySuggestionUsecase.Execute(ctx, usecase.ApplySuggestionInput{
-		SuggestionID:  detailOutput.Suggestion.ID,
-		SpaceID:       detailOutput.Space.ID,
-		SpaceMemberID: detailOutput.SpaceMember.ID,
+		Suggestion:      detailOutput.Suggestion,
+		SuggestionPages: detailOutput.SuggestionPages,
+		Pages:           detailOutput.Pages,
+		SpaceMemberID:   detailOutput.SpaceMember.ID,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案の反映に失敗", "error", err)
