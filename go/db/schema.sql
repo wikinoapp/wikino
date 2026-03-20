@@ -204,7 +204,8 @@ CREATE TABLE public.draft_pages (
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    suggestion_page_id uuid
+    suggestion_page_id uuid,
+    featured_image_attachment_id uuid
 );
 
 
@@ -562,7 +563,9 @@ CREATE TABLE public.suggestion_pages (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     title character varying,
     body character varying DEFAULT ''::character varying NOT NULL,
-    body_html character varying DEFAULT ''::character varying NOT NULL
+    body_html character varying DEFAULT ''::character varying NOT NULL,
+    linked_page_ids character varying[] DEFAULT '{}'::character varying[] NOT NULL,
+    featured_image_attachment_id uuid
 );
 
 
@@ -1659,6 +1662,14 @@ ALTER TABLE ONLY public.feature_flags
 
 
 --
+-- Name: draft_pages fk_draft_pages_featured_image_attachment_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.draft_pages
+    ADD CONSTRAINT fk_draft_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+
+
+--
 -- Name: attachments fk_rails_06223f0ea2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1923,6 +1934,14 @@ ALTER TABLE ONLY public.user_two_factor_auths
 
 
 --
+-- Name: suggestion_pages fk_suggestion_pages_featured_image_attachment_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.suggestion_pages
+    ADD CONSTRAINT fk_suggestion_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+
+
+--
 -- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2091,4 +2110,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260316084613'),
     ('20260316090550'),
     ('20260316092918'),
-    ('20260317100418');
+    ('20260317100418'),
+    ('20260319072803'),
+    ('20260319074138'),
+    ('20260319082723');

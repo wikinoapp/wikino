@@ -39,8 +39,9 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	pageRepo := repository.NewPageRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
 
-	uc := NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo)
+	uc := NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo, draftPageRepo)
 
 	t.Run("正常系: 1つの下書きページから編集提案を作成できる", func(t *testing.T) {
 		// テストデータを作成
@@ -137,6 +138,83 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
+	t.Run("正常系: DraftPageのLinkedPageIDsとFeaturedImageAttachmentIDがSuggestionPageにコピーされる", func(t *testing.T) {
+		t.Parallel()
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("create-suggestion-linked").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("create-suggestion-linked@example.com").
+			WithAtname("createsuglinked").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Test Page").
+			Build()
+		linkedPageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Linked Page").
+			Build()
+
+		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+
+		featuredID := testutil.NewAttachmentBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		draftTitle := "提案タイトル"
+		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
+			SpaceID:          spaceID,
+			TopicID:          topicID,
+			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "create-suggestion-linked",
+			CurrentTopicName: "General",
+			Title:            "リンク付き提案",
+			Body:             "",
+			DraftPages: []*model.DraftPage{
+				{
+					PageID:                    pageID,
+					Title:                     &draftTitle,
+					Body:                      "本文",
+					BodyHTML:                  "<p>本文</p>",
+					LinkedPageIDs:             []model.PageID{linkedPageID},
+					FeaturedImageAttachmentID: &featuredID,
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+
+		suggestionPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), output.Suggestion.ID, spaceID)
+		if err != nil {
+			t.Fatalf("ListBySuggestionID() error = %v", err)
+		}
+		if len(suggestionPages) != 1 {
+			t.Fatalf("SuggestionPages count = %d, want 1", len(suggestionPages))
+		}
+
+		sp := suggestionPages[0]
+		if len(sp.LinkedPageIDs) != 1 || sp.LinkedPageIDs[0] != linkedPageID {
+			t.Errorf("SuggestionPage.LinkedPageIDs = %v, want [%v]", sp.LinkedPageIDs, linkedPageID)
+		}
+		if sp.FeaturedImageAttachmentID == nil || *sp.FeaturedImageAttachmentID != featuredID {
+			t.Errorf("SuggestionPage.FeaturedImageAttachmentID = %v, want %v", sp.FeaturedImageAttachmentID, featuredID)
+		}
+	})
+
 	t.Run("正常系: 複数の下書きページから編集提案を作成できる", func(t *testing.T) {
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("create-suggestion-2").
@@ -204,6 +282,90 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if len(suggestionPages) != 2 {
 			t.Errorf("SuggestionPages count = %d, want 2", len(suggestionPages))
+		}
+	})
+
+	t.Run("正常系: 編集提案作成後にDraftPageのsuggestion_page_idが設定される", func(t *testing.T) {
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("create-suggestion-spid").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("create-suggestion-spid@example.com").
+			WithAtname("createsugspid").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Test Page").
+			Build()
+
+		createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+
+		// 実際のDraftPageをDBに作成
+		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("提案タイトル").
+			WithBody("提案ページ本文").
+			WithBodyHTML("<p>提案ページ本文</p>").
+			Build()
+
+		draftTitle := "提案タイトル"
+		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
+			SpaceID:          spaceID,
+			TopicID:          topicID,
+			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "create-suggestion-spid",
+			CurrentTopicName: "General",
+			Title:            "テスト編集提案",
+			Body:             "",
+			DraftPages: []*model.DraftPage{
+				{
+					ID:       draftPageID,
+					PageID:   pageID,
+					Title:    &draftTitle,
+					Body:     "提案ページ本文",
+					BodyHTML: "<p>提案ページ本文</p>",
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+
+		// SuggestionPageのIDを取得
+		suggestionPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), output.Suggestion.ID, spaceID)
+		if err != nil {
+			t.Fatalf("ListBySuggestionID() error = %v", err)
+		}
+		if len(suggestionPages) != 1 {
+			t.Fatalf("SuggestionPages count = %d, want 1", len(suggestionPages))
+		}
+
+		// DraftPageのsuggestion_page_idが設定されていることを確認
+		updatedDraftPage, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID() error = %v", err)
+		}
+		if updatedDraftPage == nil {
+			t.Fatal("updatedDraftPage should not be nil")
+		}
+		if updatedDraftPage.SuggestionPageID == nil {
+			t.Fatal("DraftPage.SuggestionPageID should not be nil after suggestion creation")
+		}
+		if *updatedDraftPage.SuggestionPageID != suggestionPages[0].ID {
+			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", *updatedDraftPage.SuggestionPageID, suggestionPages[0].ID)
 		}
 	})
 

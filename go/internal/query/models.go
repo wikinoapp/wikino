@@ -106,19 +106,20 @@ type Attachment struct {
 }
 
 type DraftPage struct {
-	ID               string      `json:"id"`
-	SpaceID          string      `json:"space_id"`
-	PageID           string      `json:"page_id"`
-	SpaceMemberID    string      `json:"space_member_id"`
-	TopicID          string      `json:"topic_id"`
-	Title            interface{} `json:"title"`
-	Body             string      `json:"body"`
-	BodyHtml         string      `json:"body_html"`
-	LinkedPageIds    []string    `json:"linked_page_ids"`
-	ModifiedAt       time.Time   `json:"modified_at"`
-	CreatedAt        time.Time   `json:"created_at"`
-	UpdatedAt        time.Time   `json:"updated_at"`
-	SuggestionPageID *string     `json:"suggestion_page_id"`
+	ID                        string      `json:"id"`
+	SpaceID                   string      `json:"space_id"`
+	PageID                    string      `json:"page_id"`
+	SpaceMemberID             string      `json:"space_member_id"`
+	TopicID                   string      `json:"topic_id"`
+	Title                     interface{} `json:"title"`
+	Body                      string      `json:"body"`
+	BodyHtml                  string      `json:"body_html"`
+	LinkedPageIds             []string    `json:"linked_page_ids"`
+	ModifiedAt                time.Time   `json:"modified_at"`
+	CreatedAt                 time.Time   `json:"created_at"`
+	UpdatedAt                 time.Time   `json:"updated_at"`
+	SuggestionPageID          *string     `json:"suggestion_page_id"`
+	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
 }
 
 type DraftPageRevision struct {
@@ -345,16 +346,18 @@ type SuggestionComment struct {
 }
 
 type SuggestionPage struct {
-	ID             string         `json:"id"`
-	SpaceID        string         `json:"space_id"`
-	SuggestionID   string         `json:"suggestion_id"`
-	PageID         string         `json:"page_id"`
-	PageRevisionID string         `json:"page_revision_id"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	Title          sql.NullString `json:"title"`
-	Body           string         `json:"body"`
-	BodyHtml       string         `json:"body_html"`
+	ID                        string         `json:"id"`
+	SpaceID                   string         `json:"space_id"`
+	SuggestionID              string         `json:"suggestion_id"`
+	PageID                    string         `json:"page_id"`
+	PageRevisionID            string         `json:"page_revision_id"`
+	CreatedAt                 time.Time      `json:"created_at"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
+	Title                     sql.NullString `json:"title"`
+	Body                      string         `json:"body"`
+	BodyHtml                  string         `json:"body_html"`
+	LinkedPageIds             []string       `json:"linked_page_ids"`
+	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
 }
 
 type SuggestionPageRevision struct {

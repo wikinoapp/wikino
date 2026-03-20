@@ -16,16 +16,17 @@ type DraftPageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	spaceID          string
-	pageID           string
-	spaceMemberID    string
-	topicID          string
-	suggestionPageID *string
-	title            *string
-	body             string
-	bodyHTML         string
-	linkedPageIDs    []string
-	modifiedAt       time.Time
+	spaceID                   string
+	pageID                    string
+	spaceMemberID             string
+	topicID                   string
+	suggestionPageID          *string
+	title                     *string
+	body                      string
+	bodyHTML                  string
+	linkedPageIDs             []string
+	featuredImageAttachmentID *string
+	modifiedAt                time.Time
 }
 
 // NewDraftPageBuilder は DraftPageBuilder を生成します
@@ -111,6 +112,13 @@ func (b *DraftPageBuilder) WithSuggestionPageID(suggestionPageID model.Suggestio
 	return b
 }
 
+// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+func (b *DraftPageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *DraftPageBuilder {
+	s := string(id)
+	b.featuredImageAttachmentID = &s
+	return b
+}
+
 // Build は下書きページを作成し、IDを返します
 func (b *DraftPageBuilder) Build() model.DraftPageID {
 	b.t.Helper()
@@ -132,11 +140,11 @@ func (b *DraftPageBuilder) Build() model.DraftPageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		 RETURNING id`,
 		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body, b.bodyHTML,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, b.modifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("下書きページ作成に失敗: %v", err)
@@ -151,16 +159,17 @@ type DraftPageBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
-	spaceID          string
-	pageID           string
-	spaceMemberID    string
-	topicID          string
-	suggestionPageID *string
-	title            *string
-	body             string
-	bodyHTML         string
-	linkedPageIDs    []string
-	modifiedAt       time.Time
+	spaceID                   string
+	pageID                    string
+	spaceMemberID             string
+	topicID                   string
+	suggestionPageID          *string
+	title                     *string
+	body                      string
+	bodyHTML                  string
+	linkedPageIDs             []string
+	featuredImageAttachmentID *string
+	modifiedAt                time.Time
 }
 
 // NewDraftPageBuilderDB は DraftPageBuilderDB を生成します
@@ -228,6 +237,13 @@ func (b *DraftPageBuilderDB) WithSuggestionPageID(suggestionPageID model.Suggest
 	return b
 }
 
+// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+func (b *DraftPageBuilderDB) WithFeaturedImageAttachmentID(id model.AttachmentID) *DraftPageBuilderDB {
+	s := string(id)
+	b.featuredImageAttachmentID = &s
+	return b
+}
+
 // Build は下書きページを作成し、IDを返します
 func (b *DraftPageBuilderDB) Build() model.DraftPageID {
 	b.t.Helper()
@@ -249,11 +265,11 @@ func (b *DraftPageBuilderDB) Build() model.DraftPageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		 RETURNING id`,
 		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body, b.bodyHTML,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, b.modifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("下書きページ作成に失敗: %v", err)

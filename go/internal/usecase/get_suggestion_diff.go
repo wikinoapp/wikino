@@ -43,6 +43,9 @@ func (uc *GetSuggestionDiffUsecase) Execute(ctx context.Context, input GetSugges
 		if err != nil {
 			return nil, fmt.Errorf("ベースリビジョンの取得に失敗: %w", err)
 		}
+		if rev == nil {
+			return nil, fmt.Errorf("ベースリビジョンが見つかりません: pageRevisionID=%s, spaceID=%s", sp.PageRevisionID, input.SpaceID)
+		}
 		baseRevisions[sp.ID] = rev
 	}
 

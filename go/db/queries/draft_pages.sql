@@ -4,8 +4,8 @@ SELECT * FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_
 
 -- name: CreateDraftPage :one
 -- 下書きを作成する
-INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 RETURNING *;
 
 -- name: UpdateDraftPage :one
@@ -16,9 +16,10 @@ SET topic_id = $2,
     body = $4,
     body_html = $5,
     linked_page_ids = $6,
-    modified_at = $7,
-    updated_at = $8
-WHERE id = $1 AND space_id = $9
+    featured_image_attachment_id = $7,
+    modified_at = $8,
+    updated_at = $9
+WHERE id = $1 AND space_id = $10
 RETURNING *;
 
 -- name: UpdateDraftPageSuggestionPageID :one
