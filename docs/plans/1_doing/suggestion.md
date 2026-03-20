@@ -212,15 +212,16 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 編集提案のステータス変更（反映・クローズ）は、編集提案の内容更新（タイトル・本文の変更）とは別のエンドポイントとして設計する。
 
-| 操作         | HTTPメソッド | URL                                         | ハンドラー                     |
-| ------------ | ------------ | ------------------------------------------- | ------------------------------ |
-| 一覧         | GET          | `/s/{space}/topics/{topic}/suggestions`     | `suggestion/index.go`          |
-| 作成フォーム | GET          | `/s/{space}/topics/{topic}/suggestions/new` | `suggestion/new.go`            |
-| 作成         | POST         | `/s/{space}/topics/{topic}/suggestions`     | `suggestion/create.go`         |
-| 詳細         | GET          | `/s/{space}/suggestions/{number}`           | `suggestion/show.go`           |
-| 反映         | POST         | `/s/{space}/suggestions/{number}/apply`     | `suggestion_apply/create.go`   |
-| クローズ     | POST         | `/s/{space}/suggestions/{number}/close`     | `suggestion_close/create.go`   |
-| コメント作成 | POST         | `/s/{space}/suggestions/{number}/comments`  | `suggestion_comment/create.go` |
+| 操作         | HTTPメソッド | URL                                                                     | ハンドラー                     |
+| ------------ | ------------ | ----------------------------------------------------------------------- | ------------------------------ |
+| 一覧         | GET          | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/index.go`          |
+| 作成フォーム | GET          | `/s/{space}/topics/{topic}/suggestions/new`                             | `suggestion/new.go`            |
+| 作成         | POST         | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/create.go`         |
+| 詳細         | GET          | `/s/{space}/suggestions/{number}`                                       | `suggestion/show.go`           |
+| 反映         | POST         | `/s/{space}/suggestions/{number}/apply`                                 | `suggestion_apply/create.go`   |
+| クローズ     | POST         | `/s/{space}/suggestions/{number}/close`                                 | `suggestion_close/create.go`   |
+| コメント作成 | POST         | `/s/{space}/suggestions/{number}/comments`                              | `suggestion_comment/create.go` |
+| ページ更新   | PATCH        | `/s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}` | `suggestion_page/update.go`    |
 
 反映・クローズを独立したリソース（`suggestion_apply`、`suggestion_close`）として切り出すことで、将来 `PATCH /s/{space}/suggestions/{number}` で編集提案のタイトル・本文を更新するエンドポイントを追加する際に競合しない。
 
@@ -878,9 +879,11 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 1
   - **想定行数**: 実装 約100行, テスト 約80行
 
-- [ ] **9-3**: [Go] 「編集提案を更新」アクションの実装
-  - `internal/usecase/update_suggestion_page.go` に UseCase を作成（DraftPageの内容からSuggestionPageRevision作成 → SuggestionPageのlatest_revision_id更新 → DraftPageのsuggestion_page_idをクリア）
-  - 既存のページ更新ハンドラーに編集提案更新のルートを追加、またはsuggestion_page用の新ハンドラーを作成
+- [x] **9-3**: [Go] 「編集提案を更新」アクションの実装
+  - `internal/usecase/update_suggestion_page.go` に UseCase を作成（DraftPageの内容からSuggestionPageのコンテンツ更新 + SuggestionPageRevision作成）
+  - `internal/handler/suggestion_page/update.go` にハンドラーを作成（`PATCH /s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}`）
+  - 下書きステータスまたはオープンステータスの編集提案のページを更新可能とする（反映済み・クローズ済みは更新不可）
+  - DraftPageの `suggestion_page_id` は更新時にクリアしない（編集提案の適用・クローズ時にクリアする方針）
   - **想定ファイル数**: 実装 3, テスト 2
   - **想定行数**: 実装 約180行, テスト 約200行
 

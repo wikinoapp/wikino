@@ -1,0 +1,308 @@
+# 書き込みUseCaseのリファクタリング 作業計画書
+
+<!--
+このテンプレートの使い方:
+1. このファイルを `docs/plans/` ディレクトリにコピー
+   例: cp docs/plans/template.md docs/plans/2_todo/new-feature.md
+2. [機能名] などのプレースホルダーを実際の内容に置き換え
+3. 各セクションのガイドラインに従って記述
+4. コメント（ `\<!-- ... --\>` ）はガイドラインとして残してください
+
+**作業計画書の性質**:
+- 作業計画書は「何をどう変えるか」という変更内容を記述するドキュメントです
+- 新しい機能の場合は、概要・要件・設計もこのドキュメントに記述します
+- 現在のシステムの状態は `docs/specs/` の仕様書に記述されています
+- タスク完了後は、仕様書を新しい状態に更新してください（設計判断や採用しなかった方針も含める）
+
+**仕様書との関係**:
+- 新しい機能の場合: タスク完了後に `docs/specs/` に仕様書を作成する
+- 既存機能の変更の場合: 「仕様書」セクションに対応する仕様書へのリンクを記載し、タスク完了後に仕様書を更新する
+-->
+
+## 仕様書
+
+<!--
+- 既存機能を変更する場合: 変更対象の仕様書へのリンクを記載してください
+- 新しい機能の場合: タスク完了後に作成予定の仕様書のパスを記載してください
+-->
+
+- [アーキテクチャガイド](../../go/docs/architecture-guide.md)（タスク完了後に必要があれば更新）
+
+## 概要
+
+<!--
+ガイドライン:
+- この機能が「何であるか」「なぜ必要か」を簡潔に説明
+- 2-3段落程度で簡潔に
+- 既存機能の変更の場合は、変更の背景と目的を記述
+-->
+
+書き込みUseCaseのアーキテクチャ方針（「Handler での処理フロー」ガイドライン）に沿っていない既存実装をリファクタリングする。
+
+現在、複数の書き込みUseCaseが Execute メソッド内でデータの取得（`FindByID`, `FindByXxx` 等）や状態の検証（ステータスチェック、存在確認等）を行っている。これらはHandlerが読み取りUseCaseやValidatorを通じて事前に行い、書き込みUseCaseには取得・検証済みのデータのみを渡すべきである。
+
+**目的**:
+
+- 書き込みUseCaseをトランザクション内の永続化処理に専念させ、責務を明確にする
+- 検証ロジックをValidatorに集約し、一覧性を高める
+- トランザクションの保持時間を短縮する
+
+## 要件
+
+<!--
+ガイドライン:
+- 機能要件: 「何ができるべきか」を記述
+- 非機能要件: 「どのように動くべきか」を必要に応じて記述
+-->
+
+### 機能要件
+
+- 各書き込みUseCaseの Execute メソッドからデータ取得（Find/Get/List呼び出し）を削除する
+- 状態の検証はValidatorまたはHandler内で行い、書き込みUseCaseの入力には検証済みのモデルを渡す
+- 外部から見た挙動（HTTPレスポンス、永続化結果）は変わらない
+
+## 実装ガイドラインの参照
+
+<!--
+**重要**: 作業計画書を作成する前に、対象プラットフォームのガイドラインを必ず確認してください。
+特に以下の点に注意してください：
+- ディレクトリ構造・ファイル名の命名規則
+- コーディング規約
+- アーキテクチャパターン
+
+ガイドラインに沿わない設計は、実装時にそのまま実装されてしまうため、
+作業計画書作成の段階でガイドラインに準拠していることを確認してください。
+-->
+
+### Go版の実装の場合
+
+以下のガイドラインに従って設計・実装を行ってください：
+
+- [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - 全体的なコーディング規約
+- [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド（特に「Handler での処理フロー」セクション）
+- [@go/docs/handler-guide.md](/workspace/go/docs/handler-guide.md) - HTTPハンドラーガイドライン（**ファイル名は標準の9種類のみ**）
+- [@go/docs/validation-guide.md](/workspace/go/docs/validation-guide.md) - バリデーションガイド
+
+## 設計
+
+<!--
+ガイドライン:
+- 技術的な実装の設計を記述
+- 必要に応じて以下のようなサブセクションを追加してください：
+  - データベース設計（テーブル定義、インデックス、制約など）
+  - API設計（エンドポイント、リクエスト/レスポンス形式など）
+  - UI設計（画面構成、ユーザーフローなど）
+  - セキュリティ設計（認証・認可、トークン管理など）
+  - コード設計（パッケージ構成、主要な構造体など）
+
+**重要: 設計は実装中に更新する**:
+- 作業計画書内の設計は初期の方針であり、完璧ではない
+- 実装中により良いアプローチが見つかった場合は、設計を積極的に更新する
+- 設計に固執して実装の質を下げるよりも、実装で得た知見を設計に反映する方が重要
+- 変更した場合は「採用しなかった方針」セクションに変更前の方針と変更理由を記録する
+-->
+
+### リファクタリング方針
+
+各書き込みUseCaseに対して以下のパターンでリファクタリングする：
+
+1. **UseCase内のFind/Get/List呼び出しを特定する**
+2. **呼び出し側（Handler）で事前にデータを取得する** — 既存の読み取りUseCaseで取得済みなら再利用、なければValidatorで取得
+3. **UseCase の Input に取得済みモデルを追加し、Find呼び出しを削除する**
+4. **UseCase内の状態検証をValidatorに移動する**
+
+### 対象UseCaseと違反内容
+
+#### 1. `close_suggestion.go`（軽微）
+
+**違反内容**: トランザクション内で `suggestionRepo.FindByID` を呼び出し、ステータスを検証している。
+
+**変更方針**: Handler（`suggestion_close/create.go`）は既に `getSuggestionDetailUsecase` でSuggestionを取得済み。Input に `*model.Suggestion` を追加し、UseCase内のFindByIDとステータス検証を削除する。
+
+#### 2. `apply_suggestion.go`（中規模）
+
+**違反内容**: トランザクション内で以下を行っている：
+
+- `suggestionRepo.FindByID` でSuggestionを取得
+- `suggestion.Status != Open` のステータス検証
+- `suggestionPageRepo.ListBySuggestionID` でSuggestionPagesを取得
+- `pageRepo.FindByIDs` でPagesを取得
+
+**変更方針**: Handler（`suggestion_apply/create.go`）は既に `getSuggestionDetailUsecase` でSuggestion/SuggestionPagesを取得済み。Pagesの取得はValidatorまたは読み取りUseCaseに移動する。Input に取得済みモデルを追加する。
+
+#### 3. `create_account.go`（軽微）
+
+**違反内容**: トランザクション内で `emailConfirmationRepo.FindByID` を呼び出し、`IsSucceeded()` を検証している。
+
+**変更方針**: Handler（`account/create.go`）の既存Validator（`AccountCreateValidator`）にメール確認の検証を追加し、UseCaseからは削除する。
+
+#### 4. `create_suggestion.go`（中規模）
+
+**違反内容**: トランザクション内で以下を行っている：
+
+- `resolveLinkedPages` ヘルパー内で `topicRepo.FindBySpaceAndNames` と `pageRepo.FindByTopicAndTitle` を呼び出し
+- `pageRevisionRepo.FindLatestByPageID` で各ページの最新リビジョンを取得
+
+**変更方針**: Wikiリンク解決はトランザクション外で実行し、解決済みの結果を Input に渡す。ページリビジョンの取得も事前に行う。`resolveLinkedPages` はUseCaseから独立した関数として呼び出し側で実行する。
+
+#### 5. `publish_page.go`（中規模）
+
+**違反内容**: トランザクション内で以下を行っている：
+
+- `resolveAndCreateLinkedPages` ヘルパー内でトピック・ページの検索
+- `syncAttachmentReferences` 内で既存参照の取得
+- `extractFeaturedImageAttachmentID` 内で添付ファイルの存在確認
+- `markup.FilterAttachments` 内で添付ファイルの検索
+
+**変更方針**: `resolveAndCreateLinkedPages` はリンク先ページの自動作成を含むため、トランザクション内に残す必要がある部分と事前に行える部分（既存ページの解決）を分離する。添付ファイル関連の処理は事前に実行する。
+
+**注意**: `publish_page.go` は `resolveAndCreateLinkedPages` 内でリンク先ページの**自動作成**を行う。この作成処理はトランザクション内に残す必要があるため、完全な分離は難しい。既存ページの解決（Read）と新規ページの作成（Write）を分離する設計が必要。
+
+#### 6. `auto_save_draft_page.go` / `manual_save_draft_page.go`（大規模）
+
+**違反内容**: 共通ヘルパー `saveDraftPageContent` 内で以下を行っている：
+
+- `findOrCreateDraftPage` でのDraftPage取得/作成
+- `resolveAndCreateLinkedPages` でのトピック・ページ検索
+- `markup.FilterAttachments` での添付ファイル検索
+- `extractFeaturedImageAttachmentID` での添付ファイル検証
+
+**変更方針**: `publish_page.go` と同様のアプローチ。ただし `auto_save_draft_page` はエディタの自動保存で頻繁に呼ばれるため、パフォーマンスへの影響を考慮する。
+
+**注意**: 自動保存は `PATCH /s/{space}/pages/{page_number}/draft_page` で呼ばれ、レスポンス速度が重要。リファクタリングにより呼び出し回数が増えないよう注意が必要。
+
+### 優先順位
+
+| 優先度 | UseCase                                                 | 理由                                                 |
+| ------ | ------------------------------------------------------- | ---------------------------------------------------- |
+| 高     | `close_suggestion.go`                                   | 変更が小さく、パターンの実証に適する                 |
+| 高     | `apply_suggestion.go`                                   | 編集提案機能の一部であり、早期に整合性を保ちたい     |
+| 中     | `create_account.go`                                     | 変更が小さい                                         |
+| 中     | `create_suggestion.go`                                  | 編集提案機能の一部                                   |
+| 低     | `publish_page.go`                                       | リンク先ページの自動作成がありリファクタリングが複雑 |
+| 低     | `auto_save_draft_page.go` / `manual_save_draft_page.go` | 共通ヘルパーの大規模な分離が必要                     |
+
+## 採用しなかった方針
+
+<!--
+ガイドライン:
+- 検討したが採用しなかった設計や機能を、理由とともに記述
+- 将来の開発者が同じ検討を繰り返さないための判断記録
+- タスク完了後、この内容は `specs/` の仕様書にも転記する
+- 該当がない場合は「なし」と記載
+-->
+
+### `publish_page.go` の `resolveAndCreateLinkedPages` を完全にUseCaseから分離する案
+
+リンク解決（Read）とリンク先ページ自動作成（Write）が `resolveAndCreateLinkedPages` に混在しているため、完全に分離するにはこの関数の分割が必要。しかし、リンク先ページの自動作成はトランザクション内で行う必要があり、解決結果に依存する。
+
+リンク解決を事前に行い、結果をUseCaseに渡し、UseCase内では「未解決のリンク先ページの自動作成」のみを行う設計も可能だが、リンク解決時点で存在しなかったページがトランザクション開始までに他のユーザーに作成される可能性がある。実用上は問題にならないが、設計が複雑になるため、段階的に対応する。
+
+### `auto_save_draft_page.go` / `manual_save_draft_page.go` を同時にリファクタリングする案
+
+両者は `saveDraftPageContent` ヘルパーを共有しているため、同時にリファクタリングするのが理想。しかし変更規模が大きくなるため、フェーズを分けて対応する。
+
+### `create_password_reset_token.go` をリファクタリング対象にする案
+
+このUseCaseはトランザクション前にユーザーの存在確認（`FindByEmail`）を行っているが、これはセキュリティ上の設計判断（ユーザーの存在を外部に漏らさないため、存在しない場合は何もせず成功を返す）であり、Handlerに移すとセキュリティリスクが生じる可能性がある。そのため対象外とする。
+
+### `start_suggestion_page_edit.go` をリファクタリング対象にする案
+
+このUseCaseはトランザクション前にデータ取得と条件分岐を行っているが、これは「トランザクションが不要なケース（既にリンク済み、コンフリクト）」を早期リターンするための設計であり、合理的である。トランザクションの保持時間を最小化するという方針にも合致しているため、対象外とする。
+
+## タスクリスト
+
+<!--
+ガイドライン:
+- フェーズごとに段階的な実装計画を記述
+- チェックボックスで進捗を管理
+- **重要**: 1タスク = 1 Pull Request の粒度で作成してください
+- **重要**: 各タスクには想定ファイル数と想定行数を明記してください（PRサイズの見積もりのため）
+- 想定ファイル数は「実装」と「テスト」に分けて記載してください
+- 想定行数も「実装」と「テスト」に分けて記載してください
+- 依存関係を明確に
+- Pull Requestのガイドラインは CLAUDE.md を参照（変更ファイル数20以下、変更行数300行以下）
+
+タスク番号の付け方:
+- 各タスクには階層的な番号を付与します（例: 1-1, 1-2, 2-1, 2-2）
+- フォーマット: **フェーズ番号-タスク番号**: タスク名
+- **フェーズ番号は半角英数字とハイフンのみで表記**してください（ブランチ名に使用するため）
+  - 例: フェーズ 1, フェーズ 2, フェーズ 5a（フェーズ 5 と 6 の間に追加する場合）
+  - NG: フェーズ 5.5（ドットは使用不可）
+- タスクの前に別のタスクを追加する場合は、サブ番号を使用します
+  - 例: タスク 2-1 の前にタスクを追加する場合 → 2-0
+  - 例: タスク 2-0 の前にタスクを追加する場合 → 2-0-1
+- この番号はブランチ名の一部として使用されます（例: feature-1-1, feature-2-0）
+
+プラットフォームプレフィックス:
+- Go版またはRails版の修正を行うタスクには、タスク名の先頭にプラットフォームを示すプレフィックスを付けてください
+- フォーマット: **フェーズ番号-タスク番号**: [Go] タスク名 または **フェーズ番号-タスク番号**: [Rails] タスク名
+- Go版とRails版の両方を修正する場合は、別々のタスクに分けてください
+- 例:
+  - `- [ ] **1-1**: [Go] マイグレーション作成`
+  - `- [ ] **1-2**: [Rails] モデルへのコールバック追加`
+-->
+
+### フェーズ 1: 編集提案関連のUseCaseリファクタリング
+
+#### `close_suggestion.go`
+
+- [ ] **1-1**: [Go] `close_suggestion.go` のリファクタリング
+  - `CloseSuggestionInput` に `Suggestion *model.Suggestion` を追加
+  - UseCase内の `FindByID` とステータス検証を削除（Handlerが既にgetSuggestionDetailで取得・検証済み）
+  - Handler（`suggestion_close/create.go`）の呼び出しを更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 4 ファイル（実装 2 + テスト 2）
+  - **想定行数**: 約 60 行（実装 30 行 + テスト 30 行）
+
+#### `apply_suggestion.go`
+
+- [ ] **1-2**: [Go] `apply_suggestion.go` のリファクタリング
+  - `ApplySuggestionInput` に `Suggestion`, `SuggestionPages`, `Pages` を追加
+  - UseCase内の `FindByID`, `ListBySuggestionID`, `FindByIDs` とステータス検証を削除
+  - Pagesの取得をValidatorまたは読み取りUseCaseで事前に行う
+  - Handler（`suggestion_apply/create.go`）の呼び出しを更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）
+  - **想定行数**: 約 150 行（実装 80 行 + テスト 70 行）
+
+### フェーズ 2: アカウント・認証関連のUseCaseリファクタリング
+
+- [ ] **2-1**: [Go] `create_account.go` のリファクタリング
+  - 既存の `AccountCreateValidator` にメール確認の検証（`FindByID` + `IsSucceeded`）を追加
+  - `CreateAccountInput` に `EmailConfirmation *model.EmailConfirmation` を追加
+  - UseCase内の `FindByID` と `IsSucceeded` 検証を削除
+  - Handler（`account/create.go`）の呼び出しを更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）
+  - **想定行数**: 約 100 行（実装 50 行 + テスト 50 行）
+
+### フェーズ 3: 編集提案作成のUseCaseリファクタリング
+
+- [ ] **3-1**: [Go] `create_suggestion.go` のリファクタリング
+  - Wikiリンク解決（`resolveLinkedPages`）をUseCase外で実行するように変更
+  - `resolveLinkedPages` をHandler側で呼び出し、結果を Input に渡す
+  - ページリビジョン取得（`FindLatestByPageID`）をValidatorに移動し、結果を Input に含める
+  - `CreateSuggestionInput` に `BodyHTML`, `PageLocations`, `PageRevisions` を追加
+  - 関連テストの更新
+  - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）
+  - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
+
+### フェーズ 4: ページ公開・下書き保存のUseCaseリファクタリング
+
+- [ ] **4-1**: [Go] `publish_page.go` のリファクタリング
+  - 添付ファイル関連の事前処理（`extractFeaturedImageAttachmentID`, `syncAttachmentReferences` の読み取り部分）をUseCase外に移動
+  - `resolveAndCreateLinkedPages` の既存ページ解決部分を分離（新規ページ作成はトランザクション内に残す）
+  - `PublishPageInput` に事前計算済みの結果を追加
+  - 関連テストの更新
+  - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）
+  - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
+
+- [ ] **4-2**: [Go] `auto_save_draft_page.go` / `manual_save_draft_page.go` のリファクタリング
+  - `saveDraftPageContent` ヘルパーからデータ取得部分を分離
+  - 添付ファイル関連の事前処理をUseCase外に移動
+  - `auto_save_draft_page.go` と `manual_save_draft_page.go` の Input を更新
+  - 自動保存のパフォーマンスに影響がないことを確認
+  - 関連テストの更新
+  - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 4）
+  - **想定行数**: 約 300 行（実装 150 行 + テスト 150 行）

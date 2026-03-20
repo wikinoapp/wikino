@@ -773,17 +773,17 @@ func TestEdit_SuggestionMode(t *testing.T) {
 		t.Error("publish to topic button should not be shown in suggestion mode")
 	}
 
-	// フォームのアクションが編集提案ページリビジョンのURLであることを確認
+	// フォームのアクションが編集提案ページのURLであることを確認
 	if !strings.Contains(body, "/suggestions/") {
-		t.Error("suggestion page revisions URL not found in form action")
+		t.Error("suggestion page URL not found in form action")
 	}
-	if !strings.Contains(body, "/page_revisions") {
-		t.Error("page_revisions path not found in form action")
+	if !strings.Contains(body, "/suggestion_pages/") {
+		t.Error("suggestion_pages path not found in form action")
 	}
 
-	// _method=PATCH が含まれていないことを確認
-	if strings.Contains(body, `value="PATCH"`) {
-		t.Error("_method=PATCH should not be present in suggestion mode")
+	// _method=PATCH が含まれていることを確認（PATCHメソッドで送信）
+	if !strings.Contains(body, `value="PATCH"`) {
+		t.Error("_method=PATCH should be present in suggestion mode")
 	}
 
 	// 下書き保存ボタンが表示されていることを確認

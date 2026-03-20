@@ -569,6 +569,7 @@ Handler からのすべてのデータアクセスは UseCase を経由する。
 - トランザクションを伴う永続化処理（作成・更新・削除）
 - 複数の Repository を跨ぐビジネスロジック
 - ロールバックが必要な複合操作
+- **書き込み UseCase はデータの取得・検証を行わない**: 必要なデータはすべて入力として受け取り、トランザクション内の永続化処理に専念する（詳細は「Handler での処理フロー」を参照）
 
 ```go
 // 例: ページとスペースメンバーを同時に更新する場合
@@ -656,6 +657,75 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 - トランザクション境界が明確
 - テストしやすい構造
 - ビジネスロジックの再利用が可能
+
+### Handler での処理フロー（読み取り → 検証 → 書き込み）
+
+書き込み操作を行う Handler では、以下の順序で処理を実行する。書き込み UseCase にはデータ取得や検証のロジックを含めず、トランザクション内の永続化処理に専念させる。
+
+```
+Handler
+  1. 読み取り UseCase: 画面表示・認可チェック・書き込みに必要なデータを取得
+  2. Policy: 認可チェック（読み取り UseCase の出力を使用）
+  3. Validator: 入力の形式チェック + 状態チェック（必要なデータの存在確認・整合性検証）
+  4. 書き込み UseCase: トランザクション内で永続化処理のみ実行
+```
+
+**書き込み UseCase の入力には、事前に取得・検証済みのモデルを渡す**。書き込み UseCase 内で `FindByID` や `FindByXxx` によるデータ取得を行わない。
+
+```go
+// ✅ 良い例: Handler が事前にデータを取得・検証し、書き込み UseCase に渡す
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+    // 1. 読み取り UseCase でデータ取得
+    output, err := h.getDetailUsecase.Execute(ctx, ...)
+
+    // 2. 認可チェック
+    topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
+    if !topicPolicy.CanDoSomething() { ... }
+
+    // 3. Validator で検証（読み取り UseCase の出力を入力に使う）
+    result := h.validator.Validate(ctx, validator.Input{
+        Title:   title,
+        SpaceID: output.Space.ID,
+    })
+
+    // 4. 書き込み UseCase（検証済みデータを渡すだけ）
+    h.writeUsecase.Execute(ctx, usecase.Input{
+        SpaceID:    output.Space.ID,
+        DraftPages: result.DraftPages,  // Validator が取得・検証済みのモデル
+    })
+}
+
+// ❌ 悪い例: 書き込み UseCase 内でデータを取得・検証している
+func (uc *WriteUsecase) Execute(ctx context.Context, input Input) error {
+    // UseCase 内でデータ取得 → Handler 側で行うべき
+    page, err := uc.pageRepo.FindByID(ctx, input.PageID, input.SpaceID)
+    if page == nil { return errors.New("not found") }
+
+    // UseCase 内で整合性チェック → Validator で行うべき
+    if page.Status != model.StatusActive { return errors.New("invalid status") }
+
+    tx, err := uc.db.BeginTx(ctx, nil)
+    // ...
+}
+```
+
+**この設計のメリット**:
+
+- 書き込み UseCase がシンプルになり、テストしやすくなる
+- 検証ロジックが Validator に集約され、一覧性が高まる
+- トランザクションの保持時間が短くなる（読み取りがトランザクション外）
+- Validator の Result にデータを含めることで、取得と検証を1回で行える
+
+**Validator でのデータ取得パターン**: Validator は状態バリデーションの過程でデータを取得し、検証後にそのデータを Result に含めて返す。これにより、Handler → 書き込み UseCase の間でデータを二重に取得する必要がなくなる。
+
+```go
+// Validator が検証の過程で取得したデータを Result に含めて返す
+type SuggestionCreateValidatorResult struct {
+    FormErrors *session.FormErrors
+    DraftPages []*model.DraftPage  // 検証済みかつ取得済みのモデル
+    Err        error
+}
+```
 
 ### 実装例
 
