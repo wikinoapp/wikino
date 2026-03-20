@@ -1,0 +1,100 @@
+package suggestion_page_edit
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData は編集提案ページ編集の確認画面に渡すデータ構造体です
+type ShowData struct {
+	CSRFToken              string
+	Space                  viewmodel.Space
+	Topic                  viewmodel.Topic
+	SuggestionNumber       int32
+	SuggestionPageID       string
+	SuggestionPageTitle    string
+	IsOtherSuggestionDraft bool
+}
+
+// Show は編集提案ページ編集の確認画面のコンテンツを表示します
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label:    data.Space.Name,
+						Path:     templates.SpacePath(data.Space.Identifier.String()),
+						IconName: "globe-regular",
+					},
+					{
+						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						IconName: data.Topic.IconName,
+					},
+					{
+						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
+						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
+					},
+					{
+						Label: fmt.Sprintf("#%d", data.SuggestionNumber),
+						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.SuggestionNumber),
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6 px-4">
+					<h1 class="text-xl font-bold">
+						if data.IsOtherSuggestionDraft {
+							{ templates.T(ctx, "suggestion_page_edit_confirm_heading_other_suggestion") }
+						} else {
+							{ templates.T(ctx, "suggestion_page_edit_confirm_heading") }
+						}
+					</h1>
+
+					<p class="text-sm text-muted-foreground">
+						if data.IsOtherSuggestionDraft {
+							{ templates.T(ctx, "suggestion_page_edit_confirm_message_other_suggestion") }
+						} else {
+							{ templates.T(ctx, "suggestion_page_edit_confirm_message") }
+						}
+					</p>
+
+					if data.SuggestionPageTitle != "" {
+						<div class="rounded-md border border-border p-4">
+							<p class="text-sm font-semibold">{ data.SuggestionPageTitle }</p>
+						</div>
+					}
+
+					<div class="flex items-center gap-3">
+						<form method="POST" action={ templ.SafeURL(string(templates.SuggestionPageEditsPath(data.Space.Identifier.String(), data.SuggestionNumber))) }>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<input type="hidden" name="suggestion_page_id" value={ data.SuggestionPageID }/>
+							<input type="hidden" name="force" value="true"/>
+							<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">
+								{ templates.T(ctx, "suggestion_page_edit_overwrite_button") }
+							</button>
+						</form>
+
+						<a
+							href={ templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.SuggestionNumber))) }
+							class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+						>
+							{ templates.T(ctx, "suggestion_page_edit_keep_draft_button") }
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

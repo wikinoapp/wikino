@@ -4,15 +4,17 @@ package templates
 type PageName string
 
 const (
-	PageNameHome            PageName = "home"
-	PageNameWelcome         PageName = "welcome"
-	PageNameSearch          PageName = "search"
-	PageNameProfile         PageName = "profile"
-	PageNamePageEdit        PageName = "page_edit"
-	PageNamePageMove        PageName = "page_move"
-	PageNameDraftPageIndex  PageName = "draft_page_index"
-	PageNameTopicShow       PageName = "topic_show"
-	PageNameSuggestionIndex PageName = "suggestion_index"
-	PageNameSuggestionShow  PageName = "suggestion_show"
-	PageNameSuggestionNew   PageName = "suggestion_new"
+	PageNameHome                   PageName = "home"
+	PageNameWelcome                PageName = "welcome"
+	PageNameSearch                 PageName = "search"
+	PageNameProfile                PageName = "profile"
+	PageNamePageEdit               PageName = "page_edit"
+	PageNamePageMove               PageName = "page_move"
+	PageNameDraftPageIndex         PageName = "draft_page_index"
+	PageNameTopicShow              PageName = "topic_show"
+	PageNameSuggestionIndex        PageName = "suggestion_index"
+	PageNameSuggestionShow         PageName = "suggestion_show"
+	PageNameSuggestionNew          PageName = "suggestion_new"
+	PageNameSuggestionChanges      PageName = "suggestion_changes"
+	PageNameSuggestionPageEditShow PageName = "suggestion_page_edit_show"
 )

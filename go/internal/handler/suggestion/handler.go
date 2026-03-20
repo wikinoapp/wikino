@@ -15,7 +15,6 @@ type Handler struct {
 	flashMgr                   *session.FlashManager
 	getSuggestionListUsecase   *usecase.GetSuggestionListUsecase
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
-	getSuggestionDiffUsecase   *usecase.GetSuggestionDiffUsecase
 	getSuggestionNewUsecase    *usecase.GetSuggestionNewUsecase
 	createSuggestionUsecase    *usecase.CreateSuggestionUsecase
 	sidebarHelper              *sidebar.Helper
@@ -28,7 +27,6 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getSuggestionListUsecase *usecase.GetSuggestionListUsecase,
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
-	getSuggestionDiffUsecase *usecase.GetSuggestionDiffUsecase,
 	getSuggestionNewUsecase *usecase.GetSuggestionNewUsecase,
 	createSuggestionUsecase *usecase.CreateSuggestionUsecase,
 	sidebarHelper *sidebar.Helper,
@@ -39,7 +37,6 @@ func NewHandler(
 		flashMgr:                   flashMgr,
 		getSuggestionListUsecase:   getSuggestionListUsecase,
 		getSuggestionDetailUsecase: getSuggestionDetailUsecase,
-		getSuggestionDiffUsecase:   getSuggestionDiffUsecase,
 		getSuggestionNewUsecase:    getSuggestionNewUsecase,
 		createSuggestionUsecase:    createSuggestionUsecase,
 		sidebarHelper:              sidebarHelper,

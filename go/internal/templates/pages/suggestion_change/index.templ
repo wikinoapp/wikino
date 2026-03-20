@@ -1,0 +1,161 @@
+package suggestion_change
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexData は編集提案の変更差分画面に渡すデータ構造体です
+type IndexData struct {
+	CSRFToken                string
+	Space                    viewmodel.Space
+	Topic                    viewmodel.Topic
+	Suggestion               viewmodel.SuggestionForDetail
+	SuggestionPages          []viewmodel.SuggestionPageForList
+	PageDiffs                []viewmodel.SuggestionPageDiff
+	CanEditSuggestionPages   bool
+}
+
+// pageDiffEditData は差分表示内の編集ボタンに必要なデータです
+type pageDiffEditData struct {
+	CSRFToken        string
+	SpaceIdentifier  string
+	SuggestionNumber int32
+	CanEdit          bool
+}
+
+// Index は編集提案の変更差分画面のコンテンツを表示します
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label:    data.Space.Name,
+						Path:     templates.SpacePath(data.Space.Identifier.String()),
+						IconName: "globe-regular",
+					},
+					{
+						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						IconName: data.Topic.IconName,
+					},
+					{
+						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
+						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
+					},
+					{
+						Label: fmt.Sprintf("#%d", data.Suggestion.Number),
+						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6">
+					<div class="px-4">
+						<div class="flex flex-col gap-2">
+							<h1 class="text-xl font-bold">
+								{ data.Suggestion.Title }
+							</h1>
+							<div class="flex items-center gap-2 text-sm text-muted-foreground">
+								@components.SuggestionStatusBadge(data.Suggestion.Status)
+								<span>
+									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
+								</span>
+								<span>
+									{ data.Suggestion.CreatorName }
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="px-4">
+						@showTabs(data)
+					</div>
+
+					<div class="px-4">
+						<div class="flex flex-col gap-6">
+							if len(data.PageDiffs) == 0 {
+								<p class="text-sm text-muted-foreground">
+									{ templates.T(ctx, "diff_no_changes") }
+								</p>
+							} else {
+								for _, pd := range data.PageDiffs {
+									@suggestionPageDiff(pageDiffEditData{
+									CSRFToken:        data.CSRFToken,
+									SpaceIdentifier:  data.Space.Identifier.String(),
+									SuggestionNumber: data.Suggestion.Number,
+									CanEdit:          data.CanEditSuggestionPages,
+								}, pd)
+								}
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// showTabs は「会話」「編集したページ」のタブを表示します
+templ showTabs(data IndexData) {
+	<div class="flex gap-4 border-b border-border">
+		<a
+			href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+			class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+		>
+			@templates.Icon("comment-regular", "size-4")
+			{ templates.T(ctx, "suggestion_show_conversation_tab") }
+		</a>
+		<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
+			@templates.Icon("file-lines-regular", "size-4")
+			{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
+			<span class="text-xs">
+				{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
+			</span>
+		</span>
+	</div>
+}
+
+// suggestionPageDiff は1つの編集提案ページの差分を表示します
+templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDiff) {
+	<div class="flex flex-col gap-3">
+		<div class="flex items-center justify-between">
+			<div></div>
+			if editData.CanEdit {
+				<form method="POST" action={ templ.SafeURL(string(templates.SuggestionPageEditsPath(editData.SpaceIdentifier, editData.SuggestionNumber))) }>
+					<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
+					<input type="hidden" name="suggestion_page_id" value={ pd.SuggestionPageID }/>
+					<button type="submit" class="inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-md text-xs font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 py-1">
+						@templates.Icon("pen-to-square-regular", "size-3")
+						{ templates.T(ctx, "suggestion_page_edit_button") }
+					</button>
+				</form>
+			}
+		</div>
+		if pd.HasTitleChange {
+			<div class="flex flex-col gap-1">
+				<h3 class="text-sm font-semibold">{ templates.T(ctx, "suggestion_diff_title_change") }</h3>
+				<div class="text-sm">
+					<span class="line-through text-red-600 dark:text-red-400">{ pd.OldTitle }</span>
+					<span class="mx-1">→</span>
+					<span class="text-green-600 dark:text-green-400">{ pd.NewTitle }</span>
+				</div>
+			</div>
+		}
+		@components.DiffView(components.DiffViewData{
+			Title:  pd.PageTitle,
+			Blocks: pd.BodyBlocks,
+		})
+	</div>
+}

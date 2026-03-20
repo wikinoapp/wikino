@@ -3,20 +3,9 @@ package suggestion
 import (
 	"fmt"
 
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
-)
-
-// SuggestionShowTab は編集提案詳細画面のタブを表します
-type SuggestionShowTab string
-
-const (
-	// SuggestionShowTabConversation は会話タブです
-	SuggestionShowTabConversation SuggestionShowTab = "conversation"
-	// SuggestionShowTabDiff は編集したページタブです
-	SuggestionShowTabDiff SuggestionShowTab = "diff"
 )
 
 // ShowData は編集提案詳細画面に渡すデータ構造体です
@@ -27,9 +16,9 @@ type ShowData struct {
 	Suggestion      viewmodel.SuggestionForDetail
 	Comments        []viewmodel.SuggestionCommentForList
 	SuggestionPages []viewmodel.SuggestionPageForList
-	PageDiffs       []viewmodel.SuggestionPageDiff
 	IsSpaceMember   bool
-	ActiveTab       SuggestionShowTab
+	CanApply        bool
+	CanClose        bool
 }
 
 // Show は編集提案詳細画面のコンテンツを表示します
@@ -72,7 +61,7 @@ templ Show(data ShowData) {
 								{ data.Suggestion.Title }
 							</h1>
 							<div class="flex items-center gap-2 text-sm text-muted-foreground">
-								@showStatusBadge(data.Suggestion.Status)
+								@components.SuggestionStatusBadge(data.Suggestion.Status)
 								<span>
 									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
 								</span>
@@ -83,34 +72,41 @@ templ Show(data ShowData) {
 						</div>
 					</div>
 
+					if data.CanApply || data.CanClose {
+						<div class="px-4">
+							<div class="flex items-center gap-2">
+								if data.CanApply {
+									@showApplyForm(data)
+								}
+								if data.CanClose {
+									@showCloseForm(data)
+								}
+							</div>
+						</div>
+					}
+
 					<div class="px-4">
 						@showTabs(data)
 					</div>
 
-					if data.ActiveTab == SuggestionShowTabDiff {
+					if data.Suggestion.BodyHTML != "" {
 						<div class="px-4">
-							@diffTab(DiffTabData{PageDiffs: data.PageDiffs})
+							<div class="prose prose-sm max-w-none">
+								@templ.Raw(data.Suggestion.BodyHTML)
+							</div>
 						</div>
-					} else {
-						if data.Suggestion.BodyHTML != "" {
-							<div class="px-4">
-								<div class="prose prose-sm max-w-none">
-									@templ.Raw(data.Suggestion.BodyHTML)
-								</div>
-							</div>
-						}
+					}
 
-						if len(data.Comments) > 0 {
-							<div class="px-4">
-								@showComments(data)
-							</div>
-						}
+					if len(data.Comments) > 0 {
+						<div class="px-4">
+							@showComments(data)
+						</div>
+					}
 
-						if data.IsSpaceMember {
-							<div class="px-4">
-								@showCommentForm(data)
-							</div>
-						}
+					if data.IsSpaceMember {
+						<div class="px-4">
+							@showCommentForm(data)
+						</div>
 					}
 				</div>
 			</div>
@@ -118,68 +114,23 @@ templ Show(data ShowData) {
 	</div>
 }
 
-// showStatusBadge はステータスに応じたバッジを表示します
-templ showStatusBadge(status model.SuggestionStatus) {
-	switch status {
-		case model.SuggestionStatusDraft:
-			<span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-				{ templates.T(ctx, "suggestion_show_status_draft") }
-			</span>
-		case model.SuggestionStatusOpen:
-			<span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-200">
-				@templates.Icon("git-pull-request-regular", "size-3")
-				{ templates.T(ctx, "suggestion_show_status_open") }
-			</span>
-		case model.SuggestionStatusApplied:
-			<span class="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-				@templates.Icon("check-regular", "size-3")
-				{ templates.T(ctx, "suggestion_show_status_applied") }
-			</span>
-		case model.SuggestionStatusClosed:
-			<span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-200">
-				@templates.Icon("xmark-regular", "size-3")
-				{ templates.T(ctx, "suggestion_show_status_closed") }
-			</span>
-	}
-}
-
 // showTabs は「会話」「編集したページ」のタブを表示します
 templ showTabs(data ShowData) {
 	<div class="flex gap-4 border-b border-border">
-		if data.ActiveTab == SuggestionShowTabConversation {
-			<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
-				@templates.Icon("comment-regular", "size-4")
-				{ templates.T(ctx, "suggestion_show_conversation_tab") }
+		<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
+			@templates.Icon("comment-regular", "size-4")
+			{ templates.T(ctx, "suggestion_show_conversation_tab") }
+		</span>
+		<a
+			href={ templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+			class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+		>
+			@templates.Icon("file-lines-regular", "size-4")
+			{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
+			<span class="text-xs">
+				{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
 			</span>
-		} else {
-			<a
-				href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
-			>
-				@templates.Icon("comment-regular", "size-4")
-				{ templates.T(ctx, "suggestion_show_conversation_tab") }
-			</a>
-		}
-		if data.ActiveTab == SuggestionShowTabDiff {
-			<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
-				@templates.Icon("file-lines-regular", "size-4")
-				{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
-				<span class="text-xs">
-					{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
-				</span>
-			</span>
-		} else {
-			<a
-				href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)) + "?tab=diff") }
-				class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
-			>
-				@templates.Icon("file-lines-regular", "size-4")
-				{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
-				<span class="text-xs">
-					{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
-				</span>
-			</a>
-		}
+		</a>
 	</div>
 }
 
@@ -197,6 +148,26 @@ templ showComments(data ShowData) {
 			</div>
 		}
 	</div>
+}
+
+// showApplyForm は反映ボタンを表示します
+templ showApplyForm(data ShowData) {
+	<form method="POST" action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))) }>
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">
+			{ templates.T(ctx, "suggestion_apply_button") }
+		</button>
+	</form>
+}
+
+// showCloseForm はクローズボタンを表示します
+templ showCloseForm(data ShowData) {
+	<form method="POST" action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))) }>
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+			{ templates.T(ctx, "suggestion_close_button") }
+		</button>
+	</form>
 }
 
 // showCommentForm はコメント入力フォームを表示します

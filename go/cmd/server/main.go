@@ -37,7 +37,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
+	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
+	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
 	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
+	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -320,7 +324,7 @@ func main() {
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, pageRevisionRepo, topicRepo, pageRepo, draftPageRepo)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
 	suggestionHandler := suggestionhandler.NewHandler(
@@ -328,11 +332,36 @@ func main() {
 		flashMgr,
 		getSuggestionListUC,
 		getSuggestionDetailUC,
-		getSuggestionDiffUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
 		sidebarHelper,
 		suggestionCreateValidator,
+	)
+	suggestionChangeHandler := suggestionchangehandler.NewHandler(
+		cfg,
+		getSuggestionDetailUC,
+		getSuggestionDiffUC,
+		sidebarHelper,
+	)
+	applySuggestionUC := usecase.NewApplySuggestionUsecase(db, suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
+		flashMgr,
+		getSuggestionDetailUC,
+		applySuggestionUC,
+	)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, suggestionRepo)
+	suggestionCloseHandler := suggestionclosehandler.NewHandler(
+		flashMgr,
+		getSuggestionDetailUC,
+		closeSuggestionUC,
+	)
+	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(db, suggestionPageRepo, draftPageRepo, pageRepo)
+	suggestionPageEditHandler := suggestionpageedithandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionDetailUC,
+		startSuggestionPageEditUC,
+		sidebarHelper,
 	)
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
@@ -396,6 +425,7 @@ func main() {
 		// 編集提案（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Show)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/changes", suggestionChangeHandler.Index)
 	})
 
 	// 未認証ユーザー専用ルート
@@ -455,8 +485,18 @@ func main() {
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Create)
 
+		// 編集提案反映
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/apply", suggestionApplyHandler.Create)
+
+		// 編集提案クローズ
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/close", suggestionCloseHandler.Create)
+
 		// 編集提案コメント
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/comments", suggestionCommentHandler.Create)
+
+		// 編集提案ページ編集開始
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits", suggestionPageEditHandler.Create)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

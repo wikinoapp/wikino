@@ -1,4 +1,4 @@
-package suggestion
+package suggestion_change
 
 import (
 	"log/slog"
@@ -11,17 +11,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
-	suggestionpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion"
+	suggestionchangepages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_change"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show は編集提案詳細画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number})
-func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
+// Index は編集提案の変更差分を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/changes)
+func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// URLパラメータを取得
@@ -57,18 +56,29 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ベースリビジョンを取得して差分を計算
+	diffOutput, err := h.getSuggestionDiffUsecase.Execute(ctx, usecase.GetSuggestionDiffInput{
+		SpaceID:         output.Space.ID,
+		SuggestionPages: output.SuggestionPages,
+	})
+	if err != nil {
+		slog.ErrorContext(ctx, "編集提案の差分取得に失敗", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	// ViewModelに変換
 	suggestionVM := viewmodel.NewSuggestionForDetail(viewmodel.NewSuggestionForDetailInput{
 		Suggestion: output.Suggestion,
 		UserMap:    output.UserMap,
 	})
-	commentsVM := viewmodel.NewSuggestionCommentsForList(viewmodel.NewSuggestionCommentsForListInput{
-		Comments: output.Comments,
-		UserMap:  output.UserMap,
-	})
 	suggestionPagesVM := viewmodel.NewSuggestionPagesForList(output.SuggestionPages)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
+	pageDiffsVM := viewmodel.NewSuggestionPageDiffs(viewmodel.NewSuggestionPageDiffsInput{
+		SuggestionPages: output.SuggestionPages,
+		BaseRevisions:   diffOutput.BaseRevisions,
+	})
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -78,28 +88,24 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		"SpaceName":       output.Space.Name,
 	}) + " | Wikino"
 
-	// CSRFトークンを取得
-	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
+	// 編集権限を判定（スペースメンバーかつオープンステータス）
+	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen
 
-	// 反映・クローズ権限をチェック（オープンステータスかつ権限がある場合のみ）
-	var canApply, canClose bool
-	if output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen {
-		topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-		canApply = topicPolicy.CanApplySuggestion(output.Suggestion)
-		canClose = topicPolicy.CanCloseSuggestion(output.Suggestion)
+	// CSRFトークンを取得（編集ボタンのフォームで必要な場合のみ）
+	var csrfToken string
+	if canEditSuggestionPages {
+		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
 	}
 
 	// テンプレートをレンダリング
-	content := suggestionpages.Show(suggestionpages.ShowData{
-		CSRFToken:       csrfToken,
-		Space:           spaceVM,
-		Topic:           topicVM,
-		Suggestion:      suggestionVM,
-		Comments:        commentsVM,
-		SuggestionPages: suggestionPagesVM,
-		IsSpaceMember:   output.SpaceMember != nil,
-		CanApply:        canApply,
-		CanClose:        canClose,
+	content := suggestionchangepages.Index(suggestionchangepages.IndexData{
+		CSRFToken:              csrfToken,
+		Space:                  spaceVM,
+		Topic:                  topicVM,
+		Suggestion:             suggestionVM,
+		SuggestionPages:        suggestionPagesVM,
+		PageDiffs:              pageDiffsVM,
+		CanEditSuggestionPages: canEditSuggestionPages,
 	})
 
 	signedIn := user != nil
@@ -111,13 +117,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 		Sidebar: components.SidebarData{
-			CurrentPageName: templates.PageNameSuggestionShow,
+			CurrentPageName: templates.PageNameSuggestionChanges,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: string(spaceIdentifier),
 		},
 		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionShow,
+			CurrentPageName: templates.PageNameSuggestionChanges,
 			SignedIn:        signedIn,
 			SpaceIdentifier: string(spaceIdentifier),
 		},

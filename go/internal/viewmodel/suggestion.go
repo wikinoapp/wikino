@@ -136,11 +136,12 @@ func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageFo
 
 // SuggestionPageDiff は編集提案ページの差分表示データです
 type SuggestionPageDiff struct {
-	PageTitle      string
-	OldTitle       string
-	NewTitle       string
-	HasTitleChange bool
-	BodyBlocks     []DiffBlock
+	SuggestionPageID string
+	PageTitle        string
+	OldTitle         string
+	NewTitle         string
+	HasTitleChange   bool
+	BodyBlocks       []DiffBlock
 }
 
 // NewSuggestionPageDiffsInput はNewSuggestionPageDiffsの入力パラメータです
@@ -171,11 +172,12 @@ func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageD
 		}
 
 		diffs[i] = SuggestionPageDiff{
-			PageTitle:      pageTitle,
-			OldTitle:       oldTitle,
-			NewTitle:       newTitle,
-			HasTitleChange: oldTitle != newTitle,
-			BodyBlocks:     ComputeDiffBlocks(oldBody, sp.Body, 3),
+			SuggestionPageID: string(sp.ID),
+			PageTitle:        pageTitle,
+			OldTitle:         oldTitle,
+			NewTitle:         newTitle,
+			HasTitleChange:   oldTitle != newTitle,
+			BodyBlocks:       ComputeDiffBlocks(oldBody, sp.Body, 3),
 		}
 	}
 	return diffs
