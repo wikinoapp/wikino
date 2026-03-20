@@ -282,7 +282,7 @@
 - [x] **3-1**: [Go] `create_suggestion.go` のリファクタリング
   - Wikiリンク解決（`resolveLinkedPages`）をUseCase外で実行するように変更
   - `resolveLinkedPages` をHandler側で呼び出し、結果を Input に渡す
-  - ページリビジョン取得（`FindLatestByPageID`）をValidatorに移動し、結果を Input に含める
+  - ページリビジョン取得（`FindLatestByPageID`）を読み取りUseCase（`GetLatestPageRevisionsUsecase`）で事前に行い、結果を Input に含める
   - `CreateSuggestionInput` に `BodyHTML`, `PageLocations`, `PageRevisions` を追加
   - 関連テストの更新
   - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）

@@ -11,6 +11,8 @@ import (
 )
 
 func TestGetSuggestionBodyHTMLUsecase_Execute(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 

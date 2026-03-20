@@ -38,6 +38,8 @@ func createPageRevisionForTest(t *testing.T, q *query.Queries, spaceID model.Spa
 }
 
 func TestCreateSuggestionUsecase_Execute(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 
@@ -49,6 +51,8 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	uc := NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 
 	t.Run("正常系: 1つの下書きページから編集提案を作成できる", func(t *testing.T) {
+		t.Parallel()
+
 		// テストデータを作成
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("create-suggestion-1").
@@ -225,6 +229,8 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	})
 
 	t.Run("正常系: 複数の下書きページから編集提案を作成できる", func(t *testing.T) {
+		t.Parallel()
+
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("create-suggestion-2").
 			Build()
@@ -298,6 +304,8 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	})
 
 	t.Run("正常系: 編集提案作成後にDraftPageのsuggestion_page_idが設定される", func(t *testing.T) {
+		t.Parallel()
+
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("create-suggestion-spid").
 			Build()
