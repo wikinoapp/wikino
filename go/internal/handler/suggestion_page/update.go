@@ -67,8 +67,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// オープンステータスでなければ更新不可
-	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
+	// 下書きまたはオープンステータスでなければ更新不可
+	if detailOutput.Suggestion.Status != model.SuggestionStatusDraft &&
+		detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
 		suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
 		http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 		return

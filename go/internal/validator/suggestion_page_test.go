@@ -15,7 +15,6 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しリンクされて�
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	db := testutil.GetTestDB()
 	queries := testutil.QueriesWithTx(tx)
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -68,7 +67,6 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しリンクされて�
 		WithBody("提案の本文").
 		Build()
 
-	_ = db
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	v := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 

@@ -882,6 +882,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
 - [x] **9-3**: [Go] 「編集提案を更新」アクションの実装
   - `internal/usecase/update_suggestion_page.go` に UseCase を作成（DraftPageの内容からSuggestionPageのコンテンツ更新 + SuggestionPageRevision作成）
   - `internal/handler/suggestion_page/update.go` にハンドラーを作成（`PATCH /s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}`）
+  - 下書きステータスまたはオープンステータスの編集提案のページを更新可能とする（反映済み・クローズ済みは更新不可）
   - DraftPageの `suggestion_page_id` は更新時にクリアしない（編集提案の適用・クローズ時にクリアする方針）
   - **想定ファイル数**: 実装 3, テスト 2
   - **想定行数**: 実装 約180行, テスト 約200行
