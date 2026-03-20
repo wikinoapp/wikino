@@ -140,7 +140,7 @@ func SuggestionPageEditShowPath(spaceIdentifier string, suggestionNumber int32, 
 
 // SuggestionPagePath は編集提案ページのパスを生成します
 func SuggestionPagePath(spaceIdentifier string, suggestionNumber int32, suggestionPageID string) Path {
-	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages/%s", spaceIdentifier, suggestionNumber, suggestionPageID))
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
 }
 
 // DraftsPath は下書き一覧のパスを生成します
