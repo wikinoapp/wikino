@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,47 +14,37 @@ import (
 
 // CreateAccountUsecase はアカウント作成ユースケース
 type CreateAccountUsecase struct {
-	db                    *sql.DB
-	emailConfirmationRepo *repository.EmailConfirmationRepository
-	userRepo              *repository.UserRepository
-	userPasswordRepo      *repository.UserPasswordRepository
+	db               *sql.DB
+	userRepo         *repository.UserRepository
+	userPasswordRepo *repository.UserPasswordRepository
 }
 
 // NewCreateAccountUsecase は CreateAccountUsecase を生成する
 func NewCreateAccountUsecase(
 	db *sql.DB,
-	emailConfirmationRepo *repository.EmailConfirmationRepository,
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
 ) *CreateAccountUsecase {
 	return &CreateAccountUsecase{
-		db:                    db,
-		emailConfirmationRepo: emailConfirmationRepo,
-		userRepo:              userRepo,
-		userPasswordRepo:      userPasswordRepo,
+		db:               db,
+		userRepo:         userRepo,
+		userPasswordRepo: userPasswordRepo,
 	}
 }
 
 // CreateAccountInput はアカウント作成の入力パラメータ
 type CreateAccountInput struct {
-	EmailConfirmationID string
-	Email               string
-	Atname              string
-	Password            string
-	Locale              model.Locale
-	TimeZone            string
+	EmailConfirmation *model.EmailConfirmation
+	Atname            string
+	Password          string
+	Locale            model.Locale
+	TimeZone          string
 }
 
 // CreateAccountOutput はアカウント作成の出力パラメータ
 type CreateAccountOutput struct {
 	UserID model.UserID
 }
-
-// エラー定義
-var (
-	// ErrEmailNotConfirmed はメール確認が完了していない場合のエラー
-	ErrEmailNotConfirmed = errors.New("メール確認が完了していません")
-)
 
 // Execute はアカウントを作成する
 func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
@@ -69,18 +58,8 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 	}()
 
 	// トランザクション内で操作するためのリポジトリを取得
-	emailConfirmationRepo := uc.emailConfirmationRepo.WithTx(tx)
 	userRepo := uc.userRepo.WithTx(tx)
 	userPasswordRepo := uc.userPasswordRepo.WithTx(tx)
-
-	// メール確認が完了しているかチェック
-	confirmation, err := emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)
-	if err != nil {
-		return nil, fmt.Errorf("メール確認情報の取得に失敗しました: %w", err)
-	}
-	if confirmation == nil || !confirmation.IsSucceeded() {
-		return nil, ErrEmailNotConfirmed
-	}
 
 	// パスワードをbcryptでハッシュ化
 	passwordDigest, err := hashPassword(input.Password)
@@ -91,7 +70,7 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 	// ユーザーを作成
 	now := time.Now()
 	user, err := userRepo.Create(ctx, repository.CreateUserInput{
-		Email:       input.Email,
+		Email:       input.EmailConfirmation.Email,
 		Atname:      input.Atname,
 		Name:        "",
 		Description: "",

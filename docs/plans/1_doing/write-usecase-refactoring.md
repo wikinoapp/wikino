@@ -268,7 +268,7 @@
 
 ### フェーズ 2: アカウント・認証関連のUseCaseリファクタリング
 
-- [ ] **2-1**: [Go] `create_account.go` のリファクタリング
+- [x] **2-1**: [Go] `create_account.go` のリファクタリング
   - 既存の `AccountCreateValidator` にメール確認の検証（`FindByID` + `IsSucceeded`）を追加
   - `CreateAccountInput` に `EmailConfirmation *model.EmailConfirmation` を追加
   - UseCase内の `FindByID` と `IsSucceeded` 検証を削除

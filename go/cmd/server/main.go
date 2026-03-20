@@ -135,7 +135,7 @@ func main() {
 	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
 	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
 	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, userRepo, userPasswordRepo)
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)

@@ -83,12 +83,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// アカウントを作成
 	output, err := h.createAccountUC.Execute(ctx, usecase.CreateAccountInput{
-		EmailConfirmationID: emailConfirmationID,
-		Email:               result.EmailConfirmation.Email,
-		Atname:              atname,
-		Password:            password,
-		Locale:              modelLocale,
-		TimeZone:            "Asia/Tokyo",
+		EmailConfirmation: result.EmailConfirmation,
+		Atname:            atname,
+		Password:          password,
+		Locale:            modelLocale,
+		TimeZone:          "Asia/Tokyo",
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "アカウント作成に失敗", "error", err)

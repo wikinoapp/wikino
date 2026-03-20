@@ -61,7 +61,6 @@ func TestCreate_Success(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -196,7 +195,6 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -304,7 +302,6 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -412,7 +409,6 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -539,7 +535,6 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
@@ -643,7 +638,6 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 	// ユースケースを初期化
 	createAccountUC := usecase.NewCreateAccountUsecase(
 		db,
-		emailConfirmationRepo,
 		userRepo,
 		userPasswordRepo,
 	)
