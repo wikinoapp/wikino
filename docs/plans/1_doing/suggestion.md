@@ -878,7 +878,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 1
   - **想定行数**: 実装 約100行, テスト 約80行
 
-- [ ] **9-3**: [Go] 「編集提案を更新」アクションの実装
+- [x] **9-3**: [Go] 「編集提案を更新」アクションの実装
   - `internal/usecase/update_suggestion_page.go` に UseCase を作成（DraftPageの内容からSuggestionPageRevision作成 → SuggestionPageのlatest_revision_id更新 → DraftPageのsuggestion_page_idをクリア）
   - 既存のページ更新ハンドラーに編集提案更新のルートを追加、またはsuggestion_page用の新ハンドラーを作成
   - **想定ファイル数**: 実装 3, テスト 2

@@ -42,6 +42,7 @@ import (
 	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
 	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
+	suggestionpagerevisionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_revision"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -365,6 +366,12 @@ func main() {
 		startSuggestionPageEditUC,
 		sidebarHelper,
 	)
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo)
+	suggestionPageRevisionHandler := suggestionpagerevisionhandler.NewHandler(
+		flashMgr,
+		getSuggestionDetailUC,
+		updateSuggestionPageUC,
+	)
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
 	suggestionCommentHandler := suggestioncommenthandler.NewHandler(
@@ -499,6 +506,9 @@ func main() {
 		// 編集提案ページ編集開始
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits", suggestionPageEditHandler.Create)
+
+		// 編集提案ページリビジョン作成（編集提案を更新）
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_revisions", suggestionPageRevisionHandler.Create)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

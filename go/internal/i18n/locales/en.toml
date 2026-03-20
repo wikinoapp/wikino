@@ -591,6 +591,11 @@ other = "Page saved."
 description = "Draft page saved success message"
 other = "Draft saved."
 
+# Suggestion page update success
+[flash_suggestion_page_updated]
+description = "Suggestion page updated success message"
+other = "Suggestion updated."
+
 # Page move
 [page_move_title]
 description = "Page move screen title"

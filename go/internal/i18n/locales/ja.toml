@@ -591,6 +591,11 @@ other = "ページを保存しました"
 description = "下書き保存成功メッセージ"
 other = "下書きを保存しました"
 
+# 編集提案ページ更新成功
+[flash_suggestion_page_updated]
+description = "編集提案ページ更新成功メッセージ"
+other = "編集提案を更新しました"
+
 # ページ移動
 [page_move_title]
 description = "ページ移動画面のタイトル"
