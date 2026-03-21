@@ -95,8 +95,13 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
 	// 1. Wikiリンク解析・リンク先ページの自動作成
+	keys, topicMapForLinks, err := scanAndLookupWikilinks(ctx, input.Body, input.CurrentTopicName, input.SpaceID, topicRepo)
+	if err != nil {
+		return nil, fmt.Errorf("wikiリンクのスキャンに失敗しました: %w", err)
+	}
+
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo, topicRepo,
+		ctx, keys, topicMapForLinks, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)

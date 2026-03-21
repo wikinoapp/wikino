@@ -19,14 +19,21 @@ func newManualSaveUC(db *sql.DB) *ManualSaveDraftPageUsecase {
 		repository.NewDraftPageRevisionRepository(q),
 		repository.NewPageRepository(q),
 		repository.NewPageEditorRepository(q),
-		repository.NewTopicRepository(q),
+	)
+}
+
+func newDraftPageSaveDataUC(db *sql.DB) *GetDraftPageSaveDataUsecase {
+	q := query.New(db)
+	return NewGetDraftPageSaveDataUsecase(
 		repository.NewAttachmentRepository(q),
+		repository.NewTopicRepository(q),
 	)
 }
 
 func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
+	preUC := newDraftPageSaveDataUC(db)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -51,16 +58,30 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
+	body := "下書き本文"
+	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
+		Body:             body,
+		SpaceID:          spaceID,
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("GetDraftPageSaveData error = %v", err)
+	}
+
 	title := "下書きタイトル"
 	output, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             "下書き本文",
-		SpaceIdentifier:  "manual-save",
-		CurrentTopicName: "General",
+		SpaceID:                   spaceID,
+		PageID:                    pageID,
+		SpaceMemberID:             spaceMemberID,
+		TopicID:                   topicID,
+		Title:                     &title,
+		Body:                      body,
+		BodyHTML:                  saveData.BodyHTML,
+		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
+		WikilinkKeys:              saveData.WikilinkKeys,
+		TopicMap:                  saveData.TopicMap,
+		SpaceIdentifier:           "manual-save",
+		CurrentTopicName:          "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -88,6 +109,7 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
+	preUC := newDraftPageSaveDataUC(db)
 
 	// テストデータを作成（DraftPageは作成しない）
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -112,16 +134,30 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
+	body := "新規下書き本文"
+	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
+		Body:             body,
+		SpaceID:          spaceID,
+		CurrentTopicName: "General",
+	})
+	if err != nil {
+		t.Fatalf("GetDraftPageSaveData error = %v", err)
+	}
+
 	title := "新規下書き"
 	output, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             "新規下書き本文",
-		SpaceIdentifier:  model.SpaceIdentifier("manual-save-nodraft"),
-		CurrentTopicName: "General",
+		SpaceID:                   spaceID,
+		PageID:                    pageID,
+		SpaceMemberID:             spaceMemberID,
+		TopicID:                   topicID,
+		Title:                     &title,
+		Body:                      body,
+		BodyHTML:                  saveData.BodyHTML,
+		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
+		WikilinkKeys:              saveData.WikilinkKeys,
+		TopicMap:                  saveData.TopicMap,
+		SpaceIdentifier:           model.SpaceIdentifier("manual-save-nodraft"),
+		CurrentTopicName:          "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)

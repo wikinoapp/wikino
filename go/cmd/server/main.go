@@ -139,8 +139,9 @@ func main() {
 	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, riverClient)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
-	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
+	getDraftPageSaveDataUC := usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo)
 	getPagePublishDataUC := usecase.NewGetPagePublishDataUsecase(attachmentRepo, pageAttachmentRefRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, pageAttachmentRefRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
@@ -292,11 +293,13 @@ func main() {
 	draftPageHandler := draft_page.NewHandler(
 		getPageDetailUC,
 		getSaveDraftPageDataUC,
+		getDraftPageSaveDataUC,
 		autoSaveDraftPageUC,
 		getEditLinkDataUC,
 	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
 		getPageDetailUC,
+		getDraftPageSaveDataUC,
 		flashMgr,
 		manualSaveDraftPageUC,
 	)

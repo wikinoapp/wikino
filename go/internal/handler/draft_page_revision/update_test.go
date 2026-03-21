@@ -32,6 +32,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 	pageRepo := repository.NewPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
 
 	flashMgr := session.NewFlashManager("", false, false)
 
@@ -49,6 +50,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			suggestionPageRepo,
 			suggestionRepo,
 		),
+		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -56,8 +58,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			repository.NewDraftPageRevisionRepository(queries),
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			topicRepo,
-			repository.NewAttachmentRepository(queries),
 		),
 	)
 }
@@ -205,6 +205,7 @@ func TestUpdate_Success(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -216,6 +217,7 @@ func TestUpdate_Success(t *testing.T) {
 			suggestionPageRepo,
 			suggestionRepo,
 		),
+		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -223,8 +225,6 @@ func TestUpdate_Success(t *testing.T) {
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
-			topicRepo,
-			repository.NewAttachmentRepository(q),
 		),
 	)
 
@@ -295,6 +295,7 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -306,6 +307,7 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			suggestionPageRepo,
 			suggestionRepo,
 		),
+		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -313,8 +315,6 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
-			topicRepo,
-			repository.NewAttachmentRepository(q),
 		),
 	)
 

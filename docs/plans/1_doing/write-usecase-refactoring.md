@@ -300,7 +300,7 @@
   - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 2 + 既存テスト更新 2）
   - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
 
-- [ ] **4-2**: [Go] `auto_save_draft_page.go` / `manual_save_draft_page.go` のリファクタリング
+- [x] **4-2**: [Go] `auto_save_draft_page.go` / `manual_save_draft_page.go` のリファクタリング
   - `resolveAndCreateLinkedPages` から純粋な計算とDB読み取りをトランザクション前に分離
     - `markup.ScanWikilinks`、`uniqueTopicNames`（純粋な計算）をトランザクション前に移動
     - `topicRepo.FindBySpaceAndNames`（DB読み取り）をトランザクション前に移動

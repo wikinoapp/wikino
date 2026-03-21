@@ -34,6 +34,8 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 
+	attachmentRepo := repository.NewAttachmentRepository(queries)
+
 	return draft_page.NewHandler(
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
@@ -52,13 +54,12 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			topicRepo,
 			topicMemberRepo,
 		),
+		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			topicRepo,
-			repository.NewAttachmentRepository(queries),
 		),
 		usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo),
 	)

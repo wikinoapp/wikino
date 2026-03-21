@@ -16,23 +16,19 @@ import (
 // findOrCreateRetryLimit はfind_or_create時のリトライ上限
 const findOrCreateRetryLimit = 3
 
-// resolveAndCreateLinkedPages はWikiリンクを解析し、リンク先ページを自動作成する
-func resolveAndCreateLinkedPages(
+// scanAndLookupWikilinks はbodyからWikiリンクキーを抽出し、トピック名でバッチ検索してトピックMapを返す
+func scanAndLookupWikilinks(
 	ctx context.Context,
 	body string,
 	currentTopicName string,
 	spaceID model.SpaceID,
-	spaceMemberID model.SpaceMemberID,
-	pageRepo *repository.PageRepository,
-	pageEditorRepo *repository.PageEditorRepository,
 	topicRepo *repository.TopicRepository,
-) ([]model.PageID, []markup.PageLocation, error) {
+) ([]markup.WikilinkKey, map[string]*model.Topic, error) {
 	keys := markup.ScanWikilinks(body, currentTopicName)
 	if len(keys) == 0 {
 		return nil, nil, nil
 	}
 
-	// トピック名の一覧を抽出してバッチ検索
 	topicNames := uniqueTopicNames(keys)
 	topics, err := topicRepo.FindBySpaceAndNames(ctx, spaceID, topicNames)
 	if err != nil {
@@ -41,6 +37,23 @@ func resolveAndCreateLinkedPages(
 	topicMap := make(map[string]*model.Topic, len(topics))
 	for _, t := range topics {
 		topicMap[t.Name] = t
+	}
+
+	return keys, topicMap, nil
+}
+
+// resolveAndCreateLinkedPages は事前に取得したWikiリンクキーとトピックMapを使い、リンク先ページを自動作成する
+func resolveAndCreateLinkedPages(
+	ctx context.Context,
+	keys []markup.WikilinkKey,
+	topicMap map[string]*model.Topic,
+	spaceID model.SpaceID,
+	spaceMemberID model.SpaceMemberID,
+	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
+) ([]model.PageID, []markup.PageLocation, error) {
+	if len(keys) == 0 {
+		return nil, nil, nil
 	}
 
 	now := time.Now()
