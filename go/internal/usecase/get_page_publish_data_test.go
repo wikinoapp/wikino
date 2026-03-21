@@ -26,7 +26,7 @@ func TestGetPagePublishDataUsecase_Execute(t *testing.T) {
 		WithEmail("get-publish-data@example.com").
 		WithAtname("getpublishdata").
 		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+	testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
 		Build()
@@ -61,8 +61,6 @@ func TestGetPagePublishDataUsecase_Execute(t *testing.T) {
 	if len(output.AttachmentRefsToRemove) != 0 {
 		t.Errorf("AttachmentRefsToRemove should be empty, got %v", output.AttachmentRefsToRemove)
 	}
-
-	_ = spaceMemberID
 }
 
 func TestGetPagePublishDataUsecase_Execute_WithAttachment(t *testing.T) {
