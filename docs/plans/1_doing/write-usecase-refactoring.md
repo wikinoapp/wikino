@@ -154,9 +154,7 @@
 - `extractFeaturedImageAttachmentID` 内で添付ファイルの存在確認
 - `markup.FilterAttachments` 内で添付ファイルの検索
 
-**変更方針**: `resolveAndCreateLinkedPages` はリンク先ページの自動作成を含むため、トランザクション内に残す必要がある部分と事前に行える部分（既存ページの解決）を分離する。添付ファイル関連の処理は事前に実行する。
-
-**注意**: `publish_page.go` は `resolveAndCreateLinkedPages` 内でリンク先ページの**自動作成**を行う。この作成処理はトランザクション内に残す必要があるため、完全な分離は難しい。既存ページの解決（Read）と新規ページの作成（Write）を分離する設計が必要。
+**変更方針**: `resolveAndCreateLinkedPages` はリンク先ページの自動作成（Write）を含むためトランザクション内に残す。添付ファイル関連の処理（`syncAttachmentReferences` の読み取り部分、`extractFeaturedImageAttachmentID`、`markup.FilterAttachments`）とMarkdownレンダリング・画像ラッピングは読み取りUseCase（`GetPagePublishDataUsecase`）で事前に実行し、結果を `PublishPageInput` に渡す。`syncAttachmentReferences` は `calculateAttachmentRefDiff`（読み取り）と `applyAttachmentRefChanges`（書き込み）に分離する。
 
 #### 6. `auto_save_draft_page.go` / `manual_save_draft_page.go`（大規模）
 
@@ -290,12 +288,15 @@
 
 ### フェーズ 4: ページ公開・下書き保存のUseCaseリファクタリング
 
-- [ ] **4-1**: [Go] `publish_page.go` のリファクタリング
-  - 添付ファイル関連の事前処理（`extractFeaturedImageAttachmentID`, `syncAttachmentReferences` の読み取り部分）をUseCase外に移動
-  - `resolveAndCreateLinkedPages` の既存ページ解決部分を分離（新規ページ作成はトランザクション内に残す）
-  - `PublishPageInput` に事前計算済みの結果を追加
+- [x] **4-1**: [Go] `publish_page.go` のリファクタリング
+  - 読み取りUseCase `GetPagePublishDataUsecase` を新規作成し、Markdownレンダリング・添付ファイル参照の差分計算・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングをトランザクション外に移動
+  - `syncAttachmentReferences` を `calculateAttachmentRefDiff`（読み取り）と `applyAttachmentRefChanges`（書き込み）に分離
+  - `PublishPageInput` に `BodyHTML`, `FeaturedImageAttachmentID`, `AttachmentRefsToAdd`, `AttachmentRefsToRemove` を追加
+  - `PublishPageUsecase` から `attachmentRepo` を削除
+  - `resolveAndCreateLinkedPages` はリンク先ページの自動作成を含むためトランザクション内に残す
+  - Handler（`page/update.go`）で `GetPagePublishDataUsecase` を呼び出してから `PublishPageUsecase` に渡すように変更
   - 関連テストの更新
-  - **想定ファイル数**: 約 6 ファイル（実装 3 + テスト 3）
+  - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 2 + 既存テスト更新 2）
   - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
 
 - [ ] **4-2**: [Go] `auto_save_draft_page.go` / `manual_save_draft_page.go` のリファクタリング

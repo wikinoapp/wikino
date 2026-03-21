@@ -141,7 +141,8 @@ func main() {
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	getPagePublishDataUC := usecase.NewGetPagePublishDataUsecase(attachmentRepo, pageAttachmentRefRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, pageAttachmentRefRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
 
 	// セッションマネージャーを初期化
@@ -264,6 +265,7 @@ func main() {
 		flashMgr,
 		getPageDetailUC,
 		getEditLinkDataUC,
+		getPagePublishDataUC,
 		publishPageUC,
 		sidebarHelper,
 		pageUpdateValidator,
