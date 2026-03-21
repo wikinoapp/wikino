@@ -295,13 +295,22 @@
   - `PublishPageUsecase` から `attachmentRepo` を削除
   - `resolveAndCreateLinkedPages` はリンク先ページの自動作成を含むためトランザクション内に残す
   - Handler（`page/update.go`）で `GetPagePublishDataUsecase` を呼び出してから `PublishPageUsecase` に渡すように変更
+  - 複数UseCaseで共通利用されるWikiリンク関連の関数（`resolveAndCreateLinkedPages`, `findOrCreateLinkedPage`, `uniqueTopicNames`, `isUniqueViolation`, `findOrCreateRetryLimit`）を `auto_save_draft_page.go` から `linked_page.go` に切り出し
   - 関連テストの更新
   - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 2 + 既存テスト更新 2）
   - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
 
 - [ ] **4-2**: [Go] `auto_save_draft_page.go` / `manual_save_draft_page.go` のリファクタリング
-  - `saveDraftPageContent` ヘルパーからデータ取得部分を分離
-  - 添付ファイル関連の事前処理をUseCase外に移動
+  - `resolveAndCreateLinkedPages` から純粋な計算とDB読み取りをトランザクション前に分離
+    - `markup.ScanWikilinks`、`uniqueTopicNames`（純粋な計算）をトランザクション前に移動
+    - `topicRepo.FindBySpaceAndNames`（DB読み取り）をトランザクション前に移動
+    - `findOrCreateLinkedPage`、`pageEditorRepo.FindOrCreate`（find-or-create）はトランザクション内に残す
+    - 事前計算の結果（`WikilinkKey`のリスト、トピックのMap）を `resolveAndCreateLinkedPages` に引数として渡す
+  - `saveDraftPageContent` からトランザクション外に出せる処理を分離
+    - Markdownレンダリング（`markup.RenderMarkdown`）をトランザクション前に移動
+    - 添付ファイルフィルター（`markup.FilterAttachments`）をトランザクション前に移動
+    - 画像ラッピング（`markup.WrapStandaloneImageLinks`）をトランザクション前に移動
+    - アイキャッチ画像抽出（`extractFeaturedImageAttachmentID`）をトランザクション前に移動
   - `auto_save_draft_page.go` と `manual_save_draft_page.go` の Input を更新
   - 自動保存のパフォーマンスに影響がないことを確認
   - 関連テストの更新
