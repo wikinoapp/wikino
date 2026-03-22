@@ -91,40 +91,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 編集提案の本文HTMLを生成
-	bodyHTMLOutput, err := h.getSuggestionBodyHTMLUsecase.Execute(ctx, usecase.GetSuggestionBodyHTMLInput{
-		Body:             body,
-		CurrentTopicName: output.Topic.Name,
-		SpaceID:          output.Space.ID,
-		SpaceIdentifier:  spaceIdentifier,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案の本文HTML生成に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// 各下書きページのベースリビジョンを取得
-	revisionsOutput, err := h.getLatestPageRevisionsUsecase.Execute(ctx, usecase.GetLatestPageRevisionsInput{
-		DraftPages: validationResult.DraftPages,
-		SpaceID:    output.Space.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "ページリビジョンの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	// 編集提案を作成
 	createOutput, err := h.createSuggestionUsecase.Execute(ctx, usecase.CreateSuggestionInput{
-		SpaceID:       output.Space.ID,
-		TopicID:       output.Topic.ID,
-		SpaceMemberID: output.SpaceMember.ID,
-		Title:         title,
-		Body:          body,
-		BodyHTML:      bodyHTMLOutput.BodyHTML,
-		DraftPages:    validationResult.DraftPages,
-		PageRevisions: revisionsOutput.PageRevisions,
+		SpaceID:          output.Space.ID,
+		SpaceIdentifier:  spaceIdentifier,
+		TopicID:          output.Topic.ID,
+		SpaceMemberID:    output.SpaceMember.ID,
+		Title:            title,
+		Body:             body,
+		CurrentTopicName: output.Topic.Name,
+		DraftPages:       validationResult.DraftPages,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "編集提案の作成に失敗", "error", err)
