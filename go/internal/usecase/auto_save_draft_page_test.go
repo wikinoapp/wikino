@@ -20,8 +20,7 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -46,30 +45,16 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
-	body := "Hello, world!"
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title := "テスト下書き"
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-new",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "Hello, world!",
+		SpaceIdentifier:  "auto-save-new",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -101,8 +86,7 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -128,60 +112,32 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 		Build()
 
 	// 1回目: DraftPage作成
-	body1 := "初回本文"
-	saveData1, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body1,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title1 := "初回タイトル"
 	output1, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title1,
-		Body:                      body1,
-		BodyHTML:                  saveData1.BodyHTML,
-		FeaturedImageAttachmentID: saveData1.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData1.WikilinkKeys,
-		TopicMap:                  saveData1.TopicMap,
-		SpaceIdentifier:           "auto-save-existing",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title1,
+		Body:             "初回本文",
+		SpaceIdentifier:  "auto-save-existing",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("1回目のExecute() error = %v, want nil", err)
 	}
 
 	// 2回目: 同じDraftPageを更新
-	body2 := "更新本文"
-	saveData2, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body2,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title2 := "更新タイトル"
 	output2, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title2,
-		Body:                      body2,
-		BodyHTML:                  saveData2.BodyHTML,
-		FeaturedImageAttachmentID: saveData2.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData2.WikilinkKeys,
-		TopicMap:                  saveData2.TopicMap,
-		SpaceIdentifier:           "auto-save-existing",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title2,
+		Body:             "更新本文",
+		SpaceIdentifier:  "auto-save-existing",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("2回目のExecute() error = %v, want nil", err)
@@ -206,8 +162,7 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -232,28 +187,15 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             "",
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     nil,
-		Body:                      "",
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-empty",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            nil,
+		Body:             "",
+		SpaceIdentifier:  "auto-save-empty",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -273,8 +215,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -300,30 +241,16 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		Build()
 
 	// Wikilinkを含む本文で自動保存
-	body := "See [[リンク先ページ]]"
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title := "Wikilink Test"
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-wikilink",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[リンク先ページ]]",
+		SpaceIdentifier:  "auto-save-wikilink",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -350,8 +277,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -385,30 +311,16 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 		Build()
 
 	// 既存ページへのWikilinkを含む本文で自動保存
-	body := "See [[既存ページ]]"
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title := "Existing Page Link Test"
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-existing-page",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[既存ページ]]",
+		SpaceIdentifier:  "auto-save-existing-page",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -433,8 +345,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -460,30 +371,16 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 		Build()
 
 	// Wikilinkを含む本文で自動保存
-	body := "See [[自動作成ページ]]"
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title := "Editor Test"
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-editor",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[自動作成ページ]]",
+		SpaceIdentifier:  "auto-save-editor",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -522,8 +419,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 	pageEditorRepo := repository.NewPageEditorRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo)
-	preUC := NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -558,30 +454,16 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		Build()
 
 	// 廃棄済みページと同名のWikilinkを含む本文で自動保存
-	body := "See [[廃棄済みページ]]"
-	saveData, err := preUC.Execute(context.Background(), GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          spaceID,
-		CurrentTopicName: "General",
-	})
-	if err != nil {
-		t.Fatalf("GetDraftPageSaveData error = %v", err)
-	}
-
 	title := "Discarded Link Test"
 	output, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
-		SpaceID:                   spaceID,
-		PageID:                    pageID,
-		SpaceMemberID:             spaceMemberID,
-		TopicID:                   topicID,
-		Title:                     &title,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           "auto-save-discarded",
-		CurrentTopicName:          "General",
+		SpaceID:          spaceID,
+		PageID:           pageID,
+		SpaceMemberID:    spaceMemberID,
+		TopicID:          topicID,
+		Title:            &title,
+		Body:             "See [[廃棄済みページ]]",
+		SpaceIdentifier:  "auto-save-discarded",
+		CurrentTopicName: "General",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)

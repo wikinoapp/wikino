@@ -68,32 +68,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// 下書き保存に必要な事前計算データを取得
-	saveData, err := h.getDraftPageSaveDataUC.Execute(ctx, usecase.GetDraftPageSaveDataInput{
-		Body:             body,
-		SpaceID:          output.Space.ID,
-		CurrentTopicName: output.Topic.Name,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "下書き保存データの事前計算に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	// ユースケースを実行
 	_, err = h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
-		SpaceID:                   output.Space.ID,
-		PageID:                    output.Page.ID,
-		SpaceMemberID:             output.SpaceMember.ID,
-		TopicID:                   output.Topic.ID,
-		Title:                     titlePtr,
-		Body:                      body,
-		BodyHTML:                  saveData.BodyHTML,
-		FeaturedImageAttachmentID: saveData.FeaturedImageAttachmentID,
-		WikilinkKeys:              saveData.WikilinkKeys,
-		TopicMap:                  saveData.TopicMap,
-		SpaceIdentifier:           spaceIdentifier,
-		CurrentTopicName:          output.Topic.Name,
+		SpaceID:          output.Space.ID,
+		PageID:           output.Page.ID,
+		SpaceMemberID:    output.SpaceMember.ID,
+		TopicID:          output.Topic.ID,
+		Title:            titlePtr,
+		Body:             body,
+		SpaceIdentifier:  spaceIdentifier,
+		CurrentTopicName: output.Topic.Name,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "下書きの手動保存に失敗", "error", err)
