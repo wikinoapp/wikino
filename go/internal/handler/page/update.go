@@ -92,18 +92,6 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// ページ公開に必要な事前計算データを取得
-	publishData, err := h.getPagePublishDataUC.Execute(ctx, usecase.GetPagePublishDataInput{
-		Body:    body,
-		PageID:  output.Page.ID,
-		SpaceID: output.Space.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "ページ公開データの事前計算に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	// ページ公開ユースケースを実行
 	input := usecase.PublishPageInput{
 		SpaceID:                      output.Space.ID,
@@ -112,13 +100,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		TopicID:                      output.Page.TopicID,
 		Title:                        titlePtr,
 		Body:                         body,
-		BodyHTML:                     publishData.BodyHTML,
 		SpaceIdentifier:              spaceIdentifier,
 		CurrentTopicName:             output.Topic.Name,
 		UnpublishedConflictingPageID: validationResult.UnpublishedConflictingPageID,
-		FeaturedImageAttachmentID:    publishData.FeaturedImageAttachmentID,
-		AttachmentRefsToAdd:          publishData.AttachmentRefsToAdd,
-		AttachmentRefsToRemove:       publishData.AttachmentRefsToRemove,
 	}
 
 	// DraftPageが存在する場合はDraftPageIDを設定
