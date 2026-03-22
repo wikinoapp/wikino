@@ -56,6 +56,7 @@ type ManualSaveDraftPageInput struct {
 
 // ManualSaveDraftPageOutput は下書きページの手動保存の出力パラメータ
 type ManualSaveDraftPageOutput struct {
+	DraftPage         *model.DraftPage
 	DraftPageRevision *model.DraftPageRevision
 }
 
@@ -127,6 +128,7 @@ func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualS
 	}
 
 	return &ManualSaveDraftPageOutput{
+		DraftPage:         result.DraftPage,
 		DraftPageRevision: revision,
 	}, nil
 }

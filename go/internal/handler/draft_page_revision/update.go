@@ -1,6 +1,7 @@
 package draft_page_revision
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -69,7 +71,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ユースケースを実行
-	_, err = h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
+	saveOutput, err := h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
 		SpaceID:          output.Space.ID,
 		PageID:           output.Page.ID,
 		SpaceMemberID:    output.SpaceMember.ID,
@@ -82,6 +84,17 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.ErrorContext(ctx, "下書きの手動保存に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// リダイレクト先を決定
+	redirectTo := r.URL.Query().Get("redirect_to")
+	if redirectTo == "suggestion_new" && saveOutput.DraftPage != nil {
+		suggestionNewPath := fmt.Sprintf("%s?draft_page_ids=%s",
+			string(templates.SuggestionNewPath(spaceIdentifier.String(), output.Topic.Number)),
+			string(saveOutput.DraftPage.ID),
+		)
+		http.Redirect(w, r, suggestionNewPath, http.StatusSeeOther)
 		return
 	}
 

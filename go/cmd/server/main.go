@@ -253,6 +253,7 @@ func main() {
 		topicMemberRepo,
 		suggestionPageRepo,
 		suggestionRepo,
+		featureFlagRepo,
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)

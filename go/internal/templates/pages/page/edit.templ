@@ -11,16 +11,18 @@ import (
 
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
-	CSRFToken        string
-	FormErrors       *session.FormErrors
-	Page             viewmodel.Page
-	Space            viewmodel.Space
-	Topic            viewmodel.Topic
-	LinkList         viewmodel.LinkList
-	BacklinkList     viewmodel.BacklinkList
-	ManualSaveURL    string
-	SuggestionNumber int32
-	SuggestionURL    string
+	CSRFToken                string
+	FormErrors               *session.FormErrors
+	Page                     viewmodel.Page
+	Space                    viewmodel.Space
+	Topic                    viewmodel.Topic
+	LinkList                 viewmodel.LinkList
+	BacklinkList             viewmodel.BacklinkList
+	ManualSaveURL            string
+	SuggestionNumber         int32
+	SuggestionURL            string
+	SuggestionEnabled        bool
+	CreateSuggestionSaveURL  string
 }
 
 // IsSuggestionMode は編集提案モードかどうかを返します
@@ -171,6 +173,46 @@ templ Edit(data EditPageData) {
 												</button>
 											}
 
+											if data.SuggestionEnabled && !data.IsSuggestionMode() {
+											<div class="flex">
+												<button
+													class="btn-secondary rounded-l-full w-fit border-r-0"
+													type="submit"
+													formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+												>
+													@templates.Icon("floppy-disk-regular")
+													{ templates.T(ctx, "page_edit_save_draft_button") }
+												</button>
+
+												<div id="save-draft-dropdown" class="dropdown-menu">
+													<button
+														type="button"
+														id="save-draft-dropdown-trigger"
+														aria-haspopup="menu"
+														aria-controls="save-draft-dropdown-menu"
+														aria-expanded="false"
+														class="btn-secondary rounded-r-full rounded-l-none w-fit px-2 border-l border-border"
+													>
+														@templates.Icon("caret-down-regular", "size-[14px]")
+													</button>
+
+													<div id="save-draft-dropdown-popover" data-popover aria-hidden="true" class="min-w-64" data-align="end">
+														<div role="menu" id="save-draft-dropdown-menu" aria-labelledby="save-draft-dropdown-trigger">
+															<div role="menuitem">
+																<button
+																	type="submit"
+																	formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL)) }
+																	class="flex gap-2 items-center w-full"
+																>
+																	@templates.Icon("git-pull-request-regular", "size-[18px]")
+																	{ templates.T(ctx, "page_edit_save_draft_and_create_suggestion_button") }
+																</button>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										} else {
 											<button
 												class="btn-secondary rounded-full w-fit"
 												type="submit"
@@ -179,6 +221,7 @@ templ Edit(data EditPageData) {
 												@templates.Icon("floppy-disk-regular")
 												{ templates.T(ctx, "page_edit_save_draft_button") }
 											</button>
+										}
 										</div>
 
 										<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
