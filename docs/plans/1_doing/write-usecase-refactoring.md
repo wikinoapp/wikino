@@ -316,3 +316,12 @@
   - 関連テストの更新
   - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 4）
   - **想定行数**: 約 300 行（実装 150 行 + テスト 150 行）
+
+- [ ] **4-3**: [Go] `GetDraftPageSaveDataUsecase` の命名改善
+  - 既存の `GetSaveDraftPageDataUsecase`（ページ詳細データ取得）と新規の `GetDraftPageSaveDataUsecase`（事前計算データ取得）のファイル名・構造体名が酷似しており混同しやすい問題を解消する
+  - 対応方針（いずれかを選択）:
+    - A. 現状維持 + リネーム（例: `GetDraftPageRenderDataUsecase`）— 最小変更で命名の混同を解消
+    - B. UseCase を廃止し、DB 依存の操作を個別の読み取り UseCase に分割、純粋関数はハンドラーで直接呼び出す — 処理の流れが追いやすいが UseCase 数が増える。Handler から Repository への直接依存は禁止のため、`scanAndLookupWikilinks`・`extractFeaturedImageAttachmentID`・`markup.FilterAttachments` は個別の UseCase 経由が必要
+  - 関連ファイル: `get_draft_page_save_data.go`, `handler/draft_page/handler.go`, `handler/draft_page/update.go`, `handler/draft_page_revision/handler.go`, `handler/draft_page_revision/update.go`, `cmd/server/main.go`
+  - **想定ファイル数**: 約 6 ファイル（実装 4 + テスト 2）
+  - **想定行数**: 方針 A の場合 約 50 行、方針 B の場合 約 150 行
