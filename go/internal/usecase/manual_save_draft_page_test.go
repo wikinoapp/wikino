@@ -31,6 +31,8 @@ func newDraftPageSaveDataUC(db *sql.DB) *GetDraftPageSaveDataUsecase {
 }
 
 func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
 	preUC := newDraftPageSaveDataUC(db)
@@ -107,6 +109,8 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 }
 
 func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
 	preUC := newDraftPageSaveDataUC(db)

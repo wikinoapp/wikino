@@ -11,6 +11,8 @@ import (
 )
 
 func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -90,6 +92,8 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -193,6 +197,8 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -258,6 +264,8 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -333,6 +341,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -414,6 +424,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -501,6 +513,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 }
 
 func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	q := query.New(db)
 	draftPageRepo := repository.NewDraftPageRepository(q)
@@ -583,6 +597,8 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 }
 
 func TestUniqueTopicNames(t *testing.T) {
+	t.Parallel()
+
 	keys := []markup.WikilinkKey{
 		{TopicName: "General", PageTitle: "Page1"},
 		{TopicName: "General", PageTitle: "Page2"},
