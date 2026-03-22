@@ -18,6 +18,7 @@ type GetPageDetailUsecase struct {
 	topicMemberRepo    *repository.TopicMemberRepository
 	suggestionPageRepo *repository.SuggestionPageRepository
 	suggestionRepo     *repository.SuggestionRepository
+	featureFlagRepo    *repository.FeatureFlagRepository
 }
 
 // NewGetPageDetailUsecase は GetPageDetailUsecase を生成する
@@ -30,6 +31,7 @@ func NewGetPageDetailUsecase(
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionPageRepo *repository.SuggestionPageRepository,
 	suggestionRepo *repository.SuggestionRepository,
+	featureFlagRepo *repository.FeatureFlagRepository,
 ) *GetPageDetailUsecase {
 	return &GetPageDetailUsecase{
 		spaceRepo:          spaceRepo,
@@ -40,6 +42,7 @@ func NewGetPageDetailUsecase(
 		topicMemberRepo:    topicMemberRepo,
 		suggestionPageRepo: suggestionPageRepo,
 		suggestionRepo:     suggestionRepo,
+		featureFlagRepo:    featureFlagRepo,
 	}
 }
 
@@ -52,13 +55,14 @@ type GetPageDetailInput struct {
 
 // GetPageDetailOutput はページ詳細取得の出力
 type GetPageDetailOutput struct {
-	Space       *model.Space
-	SpaceMember *model.SpaceMember
-	Page        *model.Page
-	Topic       *model.Topic
-	TopicMember *model.TopicMember
-	DraftPage   *model.DraftPage
-	Suggestion  *model.Suggestion
+	Space             *model.Space
+	SpaceMember       *model.SpaceMember
+	Page              *model.Page
+	Topic             *model.Topic
+	TopicMember       *model.TopicMember
+	DraftPage         *model.DraftPage
+	Suggestion        *model.Suggestion
+	SuggestionEnabled bool
 }
 
 // Execute はページ詳細画面に必要なデータを取得する
@@ -120,13 +124,20 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		}
 	}
 
+	// 編集提案のフィーチャーフラグを確認
+	suggestionEnabled, err := uc.featureFlagRepo.IsEnabled(ctx, input.UserID, model.FeatureFlagSuggestion)
+	if err != nil {
+		return nil, fmt.Errorf("フィーチャーフラグの確認に失敗: %w", err)
+	}
+
 	return &GetPageDetailOutput{
-		Space:       space,
-		SpaceMember: spaceMember,
-		Page:        pg,
-		Topic:       topic,
-		TopicMember: topicMember,
-		DraftPage:   draftPage,
-		Suggestion:  suggestion,
+		Space:             space,
+		SpaceMember:       spaceMember,
+		Page:              pg,
+		Topic:             topic,
+		TopicMember:       topicMember,
+		DraftPage:         draftPage,
+		Suggestion:        suggestion,
+		SuggestionEnabled: suggestionEnabled,
 	}, nil
 }

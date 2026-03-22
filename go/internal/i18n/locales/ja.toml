@@ -544,6 +544,10 @@ other = "バックリンク"
 description = "下書き保存ボタンのラベル"
 other = "下書き保存"
 
+[page_edit_save_draft_and_create_suggestion_button]
+description = "下書き保存して編集提案を作成するボタンのラベル"
+other = "下書き保存して編集提案を作成する..."
+
 [page_edit_draft_saved_time]
 description = "自動保存時刻の表示"
 other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"

@@ -22,7 +22,8 @@ func TestGetPageDetailUsecase_Execute(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
-	uc := NewGetPageDetailUsecase(spaceRepo, spaceMemberRepo, pageRepo, draftPageRepo, topicRepo, topicMemberRepo, suggestionPageRepo, suggestionRepo)
+	featureFlagRepo := repository.NewFeatureFlagRepository(q)
+	uc := NewGetPageDetailUsecase(spaceRepo, spaceMemberRepo, pageRepo, draftPageRepo, topicRepo, topicMemberRepo, suggestionPageRepo, suggestionRepo, featureFlagRepo)
 
 	// テストデータを作成
 	ownerID := testutil.NewUserBuilder(t, tx).

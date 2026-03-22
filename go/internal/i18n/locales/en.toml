@@ -544,6 +544,10 @@ other = "Backlinks"
 description = "Label for the save draft button"
 other = "Save Draft"
 
+[page_edit_save_draft_and_create_suggestion_button]
+description = "Label for the save draft and create suggestion button"
+other = "Save Draft and Create Suggestion..."
+
 [page_edit_draft_saved_time]
 description = "Auto-saved time display"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"

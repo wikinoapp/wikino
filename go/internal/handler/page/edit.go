@@ -98,14 +98,18 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// テンプレートをレンダリング
 	spaceVM := viewmodel.NewSpace(output.Space)
 
+	manualSaveURL := string(templates.PageDraftPageRevisionPath(spaceIdentifier.String(), int32(output.Page.Number)))
+
 	editData := pagepages.EditPageData{
-		CSRFToken:     csrfToken,
-		Page:          pageVM,
-		Space:         spaceVM,
-		Topic:         topicVM,
-		LinkList:      linkResult.LinkList,
-		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPageRevisionPath(spaceIdentifier.String(), int32(output.Page.Number))),
+		CSRFToken:               csrfToken,
+		Page:                    pageVM,
+		Space:                   spaceVM,
+		Topic:                   topicVM,
+		LinkList:                linkResult.LinkList,
+		BacklinkList:            linkResult.BacklinkList,
+		ManualSaveURL:           manualSaveURL,
+		SuggestionEnabled:       output.SuggestionEnabled,
+		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
 	}
 
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {
