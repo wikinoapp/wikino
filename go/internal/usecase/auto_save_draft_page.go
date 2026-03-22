@@ -18,8 +18,6 @@ type AutoSaveDraftPageUsecase struct {
 	draftPageRepo  *repository.DraftPageRepository
 	pageRepo       *repository.PageRepository
 	pageEditorRepo *repository.PageEditorRepository
-	topicRepo      *repository.TopicRepository
-	attachmentRepo *repository.AttachmentRepository
 }
 
 // NewAutoSaveDraftPageUsecase は AutoSaveDraftPageUsecase を生成する
@@ -28,29 +26,29 @@ func NewAutoSaveDraftPageUsecase(
 	draftPageRepo *repository.DraftPageRepository,
 	pageRepo *repository.PageRepository,
 	pageEditorRepo *repository.PageEditorRepository,
-	topicRepo *repository.TopicRepository,
-	attachmentRepo *repository.AttachmentRepository,
 ) *AutoSaveDraftPageUsecase {
 	return &AutoSaveDraftPageUsecase{
 		db:             db,
 		draftPageRepo:  draftPageRepo,
 		pageRepo:       pageRepo,
 		pageEditorRepo: pageEditorRepo,
-		topicRepo:      topicRepo,
-		attachmentRepo: attachmentRepo,
 	}
 }
 
 // AutoSaveDraftPageInput は下書き自動保存の入力パラメータ
 type AutoSaveDraftPageInput struct {
-	SpaceID          model.SpaceID
-	PageID           model.PageID
-	SpaceMemberID    model.SpaceMemberID
-	TopicID          model.TopicID
-	Title            *string
-	Body             string
-	SpaceIdentifier  model.SpaceIdentifier
-	CurrentTopicName string
+	SpaceID                   model.SpaceID
+	PageID                    model.PageID
+	SpaceMemberID             model.SpaceMemberID
+	TopicID                   model.TopicID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	FeaturedImageAttachmentID *model.AttachmentID
+	WikilinkKeys              []markup.WikilinkKey
+	TopicMap                  map[string]*model.Topic
+	SpaceIdentifier           model.SpaceIdentifier
+	CurrentTopicName          string
 }
 
 // AutoSaveDraftPageOutput は下書き自動保存の出力パラメータ
@@ -61,14 +59,18 @@ type AutoSaveDraftPageOutput struct {
 
 // saveDraftPageContentInput はDraftPageの内容保存に必要な共通パラメータ
 type saveDraftPageContentInput struct {
-	SpaceID          model.SpaceID
-	PageID           model.PageID
-	SpaceMemberID    model.SpaceMemberID
-	TopicID          model.TopicID
-	Title            *string
-	Body             string
-	SpaceIdentifier  model.SpaceIdentifier
-	CurrentTopicName string
+	SpaceID                   model.SpaceID
+	PageID                    model.PageID
+	SpaceMemberID             model.SpaceMemberID
+	TopicID                   model.TopicID
+	Title                     *string
+	Body                      string
+	BodyHTML                  string
+	FeaturedImageAttachmentID *model.AttachmentID
+	WikilinkKeys              []markup.WikilinkKey
+	TopicMap                  map[string]*model.Topic
+	SpaceIdentifier           model.SpaceIdentifier
+	CurrentTopicName          string
 }
 
 // saveDraftPageContentOutput はDraftPageの内容保存の結果
@@ -77,7 +79,7 @@ type saveDraftPageContentOutput struct {
 	BodyHTML  string
 }
 
-// saveDraftPageContent はDraftPageのfind_or_create・Markdown処理・更新を行う共通ロジック
+// saveDraftPageContent はDraftPageのfind_or_create・リンク解決・更新を行う共通ロジック
 func saveDraftPageContent(
 	ctx context.Context,
 	input saveDraftPageContentInput,
@@ -85,55 +87,28 @@ func saveDraftPageContent(
 	draftPageRepo *repository.DraftPageRepository,
 	pageRepo *repository.PageRepository,
 	pageEditorRepo *repository.PageEditorRepository,
-	topicRepo *repository.TopicRepository,
-	attachmentRepo *repository.AttachmentRepository,
 ) (*saveDraftPageContentOutput, error) {
 	// 1. DraftPageをfind_or_createで取得・作成
-	autoSaveInput := AutoSaveDraftPageInput{
-		SpaceID:       input.SpaceID,
-		PageID:        input.PageID,
-		SpaceMemberID: input.SpaceMemberID,
-		TopicID:       input.TopicID,
-		Title:         input.Title,
-		Body:          input.Body,
-	}
-	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, autoSaveInput, now)
+	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, input, now)
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの取得・作成に失敗しました: %w", err)
 	}
 
-	// 2. Markdownレンダリング
-	bodyHTML := markup.RenderMarkdown(input.Body)
-
-	// 3. Wikiリンク解析・リンク先ページの自動作成
+	// 2. Wikiリンクのリンク先ページ自動作成（事前にスキャン・トピック検索済みのデータを使用）
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo, topicRepo,
+		ctx, input.WikilinkKeys, input.TopicMap, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
 	}
 
-	// 4. bodyHTML内のWikiリンクを<a>タグに変換
+	// 3. bodyHTML内のWikiリンクを<a>タグに変換
+	bodyHTML := input.BodyHTML
 	if len(pageLocations) > 0 {
 		bodyHTML = markup.ReplaceWikilinks(bodyHTML, input.CurrentTopicName, input.SpaceIdentifier, pageLocations)
 	}
 
-	// 5. 添付ファイルフィルター
-	bodyHTML, err = markup.FilterAttachments(ctx, bodyHTML, input.SpaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("添付ファイルのフィルター処理に失敗しました: %w", err)
-	}
-
-	// 6. スタンドアロン画像のラッピング
-	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
-
-	// 7. アイキャッチ画像の抽出
-	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, input.SpaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
-	}
-
-	// 8. DraftPageを更新
+	// 4. DraftPageを更新
 	updatedDraftPage, err := draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
 		ID:                        draftPage.ID,
 		SpaceID:                   input.SpaceID,
@@ -142,7 +117,7 @@ func saveDraftPageContent(
 		Body:                      input.Body,
 		BodyHTML:                  bodyHTML,
 		LinkedPageIDs:             linkedPageIDs,
-		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		FeaturedImageAttachmentID: input.FeaturedImageAttachmentID,
 		ModifiedAt:                now,
 	})
 	if err != nil {
@@ -171,8 +146,6 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
-		uc.topicRepo.WithTx(tx),
-		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err
@@ -193,7 +166,7 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 func findOrCreateDraftPage(
 	ctx context.Context,
 	repo *repository.DraftPageRepository,
-	input AutoSaveDraftPageInput,
+	input saveDraftPageContentInput,
 	now time.Time,
 ) (*model.DraftPage, error) {
 	for i := 0; i < findOrCreateRetryLimit; i++ {
