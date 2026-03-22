@@ -274,6 +274,7 @@ func main() {
 	)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(
 		draftPageRepo,
+		featureFlagRepo,
 	)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,

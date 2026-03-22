@@ -30,6 +30,7 @@ type DraftPageGroupForIndex struct {
 	SpaceName       string
 	SpaceIdentifier string
 	TopicName       string
+	TopicNumber     int32
 	TopicIconName   IconName
 	DraftPages      []DraftPageForIndex
 }
@@ -75,6 +76,7 @@ func NewDraftPageGroupsForIndex(drafts []*model.DraftPage, timeZone string) []Dr
 				SpaceName:       spaceName,
 				SpaceIdentifier: spaceIdentifier,
 				TopicName:       topicName,
+				TopicNumber:     d.Topic.Number,
 				TopicIconName:   topicVisibilityIconName(d.Topic.Visibility),
 			}
 		}

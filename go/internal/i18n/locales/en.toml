@@ -685,6 +685,10 @@ other = "Modified"
 description = "Untitled draft page"
 other = "Untitled"
 
+[draft_page_index_create_suggestion_button]
+description = "Create suggestion button on draft page index"
+other = "Create suggestion..."
+
 # Bottom navigation
 [bottom_nav_menu]
 description = "Menu button in the bottom navigation"

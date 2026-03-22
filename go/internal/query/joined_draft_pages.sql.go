@@ -97,6 +97,7 @@ SELECT
   p.number AS page_number,
   t.id AS topic_id,
   t.name AS topic_name,
+  t.number AS topic_number,
   t.visibility AS topic_visibility,
   s.id AS space_id,
   s.identifier AS space_identifier,
@@ -123,6 +124,7 @@ type ListDraftPagesByUserForIndexRow struct {
 	PageNumber          int32       `json:"page_number"`
 	TopicID             string      `json:"topic_id"`
 	TopicName           string      `json:"topic_name"`
+	TopicNumber         int32       `json:"topic_number"`
 	TopicVisibility     int32       `json:"topic_visibility"`
 	SpaceID             string      `json:"space_id"`
 	SpaceIdentifier     string      `json:"space_identifier"`
@@ -149,6 +151,7 @@ func (q *Queries) ListDraftPagesByUserForIndex(ctx context.Context, userID strin
 			&i.PageNumber,
 			&i.TopicID,
 			&i.TopicName,
+			&i.TopicNumber,
 			&i.TopicVisibility,
 			&i.SpaceID,
 			&i.SpaceIdentifier,

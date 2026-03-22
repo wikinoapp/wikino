@@ -29,9 +29,10 @@ func TestIndex_NotLoggedIn(t *testing.T) {
 	}
 	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo, featureFlagRepo)
 
 	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
@@ -66,9 +67,10 @@ func TestIndex_Empty(t *testing.T) {
 	}
 	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo, featureFlagRepo)
 
 	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
@@ -144,9 +146,10 @@ func TestIndex_WithDrafts(t *testing.T) {
 	}
 	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo, featureFlagRepo)
 
 	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
 
@@ -178,5 +181,93 @@ func TestIndex_WithDrafts(t *testing.T) {
 
 	if !strings.Contains(body, "/s/dpi-drafts-space/pages/1/edit") {
 		t.Error("edit page link not found in response")
+	}
+
+	if strings.Contains(body, "編集提案する") {
+		t.Error("suggestion button should not be shown when feature flag is disabled")
+	}
+}
+
+func TestIndex_WithDrafts_SuggestionEnabled(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpi-suggestion@example.com").
+		WithAtname("dpisuggestion").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("dpi-sugg-space").
+		WithName("提案スペース").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("提案トピック").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("提案ページ").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("提案下書き").
+		WithBody("提案本文").
+		Build()
+
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(userID).
+		WithName(string(model.FeatureFlagSuggestion)).
+		Build()
+
+	cfg := &config.Config{
+		Env:    "test",
+		Domain: "localhost",
+	}
+	flashMgr := session.NewFlashManager("", false, true)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo, featureFlagRepo)
+
+	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
+
+	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
+	req.Header.Set("Accept-Language", "ja")
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "dpisuggestion"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	if !strings.Contains(body, "編集提案する") {
+		t.Error("suggestion button not found in response")
+	}
+
+	if !strings.Contains(body, "/s/dpi-sugg-space/topics/3/suggestions/new") {
+		t.Error("suggestion new path not found in response")
 	}
 }

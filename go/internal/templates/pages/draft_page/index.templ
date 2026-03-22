@@ -8,7 +8,8 @@ import (
 
 // IndexData は下書き一覧画面に渡すデータ構造体です
 type IndexData struct {
-	Groups []viewmodel.DraftPageGroupForIndex
+	Groups            []viewmodel.DraftPageGroupForIndex
+	SuggestionEnabled bool
 }
 
 // Index は下書き一覧画面のコンテンツを表示します
@@ -88,6 +89,18 @@ templ Index(data IndexData) {
 													</tbody>
 												</table>
 											</div>
+
+											if data.SuggestionEnabled {
+												<div class="pt-2 md:pt-3 mt-2 md:mt-3 border-t border-border">
+													<a
+														href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
+														class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+													>
+														@templates.Icon("git-pull-request-regular", "size-4")
+														{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+													</a>
+												</div>
+											}
 										</section>
 									</div>
 								</div>

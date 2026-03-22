@@ -15,7 +15,8 @@ func TestGetDraftPagesUsecase_Execute(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	draftPageRepo := repository.NewDraftPageRepository(q)
-	uc := NewGetDraftPagesUsecase(draftPageRepo)
+	featureFlagRepo := repository.NewFeatureFlagRepository(q)
+	uc := NewGetDraftPagesUsecase(draftPageRepo, featureFlagRepo)
 
 	userID := testutil.NewUserBuilder(t, tx).
 		WithEmail("ldp-owner@example.com").

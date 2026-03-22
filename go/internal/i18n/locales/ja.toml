@@ -685,6 +685,10 @@ other = "更新日時"
 description = "タイトル未設定の下書き"
 other = "無題"
 
+[draft_page_index_create_suggestion_button]
+description = "下書き一覧画面の編集提案作成ボタン"
+other = "編集提案する..."
+
 # ボトムナビ
 [bottom_nav_menu]
 description = "ボトムナビのメニューボタン"
