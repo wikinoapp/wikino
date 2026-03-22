@@ -50,7 +50,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			suggestionPageRepo,
 			suggestionRepo,
 		),
-		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -58,6 +57,8 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			repository.NewDraftPageRevisionRepository(queries),
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
+			topicRepo,
+			attachmentRepo,
 		),
 	)
 }
@@ -217,7 +218,6 @@ func TestUpdate_Success(t *testing.T) {
 			suggestionPageRepo,
 			suggestionRepo,
 		),
-		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -225,6 +225,8 @@ func TestUpdate_Success(t *testing.T) {
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
+			topicRepo,
+			attachmentRepo,
 		),
 	)
 
@@ -307,7 +309,6 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			suggestionPageRepo,
 			suggestionRepo,
 		),
-		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
@@ -315,6 +316,8 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
+			topicRepo,
+			attachmentRepo,
 		),
 	)
 

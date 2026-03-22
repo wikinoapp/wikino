@@ -54,12 +54,13 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			topicRepo,
 			topicMemberRepo,
 		),
-		usecase.NewGetDraftPageSaveDataUsecase(attachmentRepo, topicRepo),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,
 			draftPageRepo,
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
+			topicRepo,
+			attachmentRepo,
 		),
 		usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo),
 	)

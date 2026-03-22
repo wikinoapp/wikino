@@ -368,7 +368,7 @@
 
 #### `AutoSaveDraftPageUsecase` / `ManualSaveDraftPageUsecase`
 
-- [ ] **5-3**: [Go] `GetDraftPageSaveDataUsecase` を `AutoSaveDraftPageUsecase` / `ManualSaveDraftPageUsecase` に統合
+- [x] **5-3**: [Go] `GetDraftPageSaveDataUsecase` を `AutoSaveDraftPageUsecase` / `ManualSaveDraftPageUsecase` に統合
   - Markdownレンダリング・Wikiリンクスキャン・トピック検索・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを共通ヘルパーまたは各UseCaseのトランザクション前に移動
   - `AutoSaveDraftPageUsecase`, `ManualSaveDraftPageUsecase` に `topicRepo`, `attachmentRepo` を追加
   - `AutoSaveDraftPageInput`, `ManualSaveDraftPageInput` から `BodyHTML`, `FeaturedImageAttachmentID`, `WikilinkKeys`, `TopicMap` を削除し、必要なパラメータ（`Body` 等）を追加

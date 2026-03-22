@@ -9,7 +9,6 @@ import (
 type Handler struct {
 	getPageDetailUC        *usecase.GetPageDetailUsecase
 	getSaveDraftPageDataUC *usecase.GetSaveDraftPageDataUsecase
-	getDraftPageSaveDataUC *usecase.GetDraftPageSaveDataUsecase
 	autoSaveDraftPageUC    *usecase.AutoSaveDraftPageUsecase
 	getEditLinkDataUC      *usecase.GetEditLinkDataUsecase
 }
@@ -18,14 +17,12 @@ type Handler struct {
 func NewHandler(
 	getPageDetailUC *usecase.GetPageDetailUsecase,
 	getSaveDraftPageDataUC *usecase.GetSaveDraftPageDataUsecase,
-	getDraftPageSaveDataUC *usecase.GetDraftPageSaveDataUsecase,
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase,
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 ) *Handler {
 	return &Handler{
 		getPageDetailUC:        getPageDetailUC,
 		getSaveDraftPageDataUC: getSaveDraftPageDataUC,
-		getDraftPageSaveDataUC: getDraftPageSaveDataUC,
 		autoSaveDraftPageUC:    autoSaveDraftPageUC,
 		getEditLinkDataUC:      getEditLinkDataUC,
 	}
