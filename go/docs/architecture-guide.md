@@ -569,7 +569,10 @@ Handler からのすべてのデータアクセスは UseCase を経由する。
 - トランザクションを伴う永続化処理（作成・更新・削除）
 - 複数の Repository を跨ぐビジネスロジック
 - ロールバックが必要な複合操作
-- **書き込み UseCase はデータの取得・検証を行わない**: 必要なデータはすべて入力として受け取り、トランザクション内の永続化処理に専念する（詳細は「Handler での処理フロー」を参照）
+- **書き込み UseCase のルール**（詳細は「Handler での処理フロー」を参照）:
+  1. データの検証処理（ユーザーに表示するエラーを判別するもの）を書かない。エラー返り値はサーバーエラーのみとする
+  2. トランザクション開始後はデータの取得や計算処理を行わない。永続化処理のみ行う（トランザクション前のデータ取得は許可）
+  3. Execute 内にロジックを直接書かない。ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
 
 ```go
 // 例: ページとスペースメンバーを同時に更新する場合
@@ -632,6 +635,8 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 
 `internal/usecase/` 直下にフラットに配置（サブディレクトリは作成しない）
 
+**プライベート関数の配置ルール**: あるUseCaseファイルに定義されたプライベート関数を別のUseCaseファイルから呼び出す必要が生じた場合は、その関数を専用のファイルに切り出す。ファイル名は関数の責務を表す名詞にする（例: Wikiリンク関連の共通関数を `linked_page.go` に配置）。
+
 ### 命名規則
 
 - **ファイル名**: `{action}_{entity}.go`
@@ -660,20 +665,53 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 
 ### Handler での処理フロー（読み取り → 検証 → 書き込み）
 
-書き込み操作を行う Handler では、以下の順序で処理を実行する。書き込み UseCase にはデータ取得や検証のロジックを含めず、トランザクション内の永続化処理に専念させる。
+書き込み操作を行う Handler では、以下の順序で処理を実行する。
 
 ```
 Handler
-  1. 読み取り UseCase: 画面表示・認可チェック・書き込みに必要なデータを取得
+  1. 読み取り UseCase: 画面表示・認可チェックに必要なデータを取得
   2. Policy: 認可チェック（読み取り UseCase の出力を使用）
   3. Validator: 入力の形式チェック + 状態チェック（必要なデータの存在確認・整合性検証）
-  4. 書き込み UseCase: トランザクション内で永続化処理のみ実行
+  4. 書き込み UseCase: トランザクション前のデータ取得 + トランザクション内の永続化処理
 ```
 
-**書き込み UseCase の入力には、事前に取得・検証済みのモデルを渡す**。書き込み UseCase 内で `FindByID` や `FindByXxx` によるデータ取得を行わない。
+#### 書き込み UseCase のルール
+
+書き込み UseCase は以下の 3 つのルールを守る:
+
+1. **データの検証処理を書かない**: ユーザーに表示するエラーを判別する検証は Validator に配置する。書き込み UseCase のエラー返り値はサーバーエラー（予期しない失敗）のみとする
+2. **トランザクション開始後はデータの取得や計算処理を行わない**: トランザクション内は永続化処理のみ行う。ただし、トランザクション開始前であればデータの取得や計算処理を行ってよい
+3. **Execute 内にロジックを直接書かない**: ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
 
 ```go
-// ✅ 良い例: Handler が事前にデータを取得・検証し、書き込み UseCase に渡す
+// ✅ 良い例: 書き込み UseCase がトランザクション前にデータを取得し、
+// トランザクション内では永続化のみ行う
+func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
+    // トランザクション前: データ取得・計算（OK）
+    publishData, err := uc.calculatePublishData(ctx, input)
+    if err != nil {
+        return nil, err
+    }
+
+    // トランザクション: 永続化のみ
+    return uc.publishPage(ctx, input, publishData)
+}
+
+// ❌ 悪い例: 書き込み UseCase 内でユーザー向けの検証を行っている
+func (uc *WriteUsecase) Execute(ctx context.Context, input Input) error {
+    // UseCase 内で整合性チェック → Validator で行うべき
+    if input.Status != model.StatusActive { return errors.New("invalid status") }
+
+    tx, err := uc.db.BeginTx(ctx, nil)
+    // トランザクション内でデータ取得 → トランザクション前に行うべき
+    page, err := pageRepo.FindByID(ctx, input.PageID, input.SpaceID)
+    // ...
+}
+```
+
+#### Handler の実装パターン
+
+```go
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
     // 1. 読み取り UseCase でデータ取得
     output, err := h.getDetailUsecase.Execute(ctx, ...)
@@ -682,39 +720,25 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
     topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
     if !topicPolicy.CanDoSomething() { ... }
 
-    // 3. Validator で検証（読み取り UseCase の出力を入力に使う）
+    // 3. Validator で検証
     result := h.validator.Validate(ctx, validator.Input{
         Title:   title,
         SpaceID: output.Space.ID,
     })
 
-    // 4. 書き込み UseCase（検証済みデータを渡すだけ）
+    // 4. 書き込み UseCase
     h.writeUsecase.Execute(ctx, usecase.Input{
         SpaceID:    output.Space.ID,
         DraftPages: result.DraftPages,  // Validator が取得・検証済みのモデル
     })
 }
-
-// ❌ 悪い例: 書き込み UseCase 内でデータを取得・検証している
-func (uc *WriteUsecase) Execute(ctx context.Context, input Input) error {
-    // UseCase 内でデータ取得 → Handler 側で行うべき
-    page, err := uc.pageRepo.FindByID(ctx, input.PageID, input.SpaceID)
-    if page == nil { return errors.New("not found") }
-
-    // UseCase 内で整合性チェック → Validator で行うべき
-    if page.Status != model.StatusActive { return errors.New("invalid status") }
-
-    tx, err := uc.db.BeginTx(ctx, nil)
-    // ...
-}
 ```
 
 **この設計のメリット**:
 
-- 書き込み UseCase がシンプルになり、テストしやすくなる
 - 検証ロジックが Validator に集約され、一覧性が高まる
-- トランザクションの保持時間が短くなる（読み取りがトランザクション外）
-- Validator の Result にデータを含めることで、取得と検証を1回で行える
+- トランザクションの保持時間が短くなる（データ取得がトランザクション外）
+- 書き込み UseCase が自身の永続化に必要なデータを自ら取得するため、Handler が書き込み UseCase の内部実装を知る必要がない
 
 **Validator でのデータ取得パターン**: Validator は状態バリデーションの過程でデータを取得し、検証後にそのデータを Result に含めて返す。これにより、Handler → 書き込み UseCase の間でデータを二重に取得する必要がなくなる。
 
@@ -1264,3 +1288,15 @@ Validator を `internal/handler/` 内に配置したまま、depguard による�
 - depguard で強制できないと、Handler から Repository への依存違反が再発する可能性がある
 - 「Handler パッケージは repository を import しない」というルールを完全に強制できるメリットが大きい
 - Validator を独立パッケージにすることで、将来的に Worker からもバリデーションを再利用できる
+
+### D. 書き込み UseCase のために読み取り UseCase を新設する
+
+書き込み UseCase からすべてのデータ取得を外出しし、書き込み UseCase のためだけに読み取り UseCase を作成する方針。
+
+**不採用の理由**:
+
+- Handler が書き込み UseCase の内部実装を知る必要が生じる（どんなデータを事前に用意すべきか）
+- 書き込み UseCase のために読み取り UseCase を作ると、両者が強く結合し、分離のメリットが薄い
+- 命名が酷似し混同しやすくなる（例: `GetDraftPageSaveDataUsecase` と `GetSaveDraftPageDataUsecase`）
+
+**代替として採用した方針**: 書き込み UseCase 内であっても、トランザクション開始前であればデータ取得を行ってよい。書き込み UseCase のルール（検証処理を書かない、トランザクション内は永続化のみ、Execute 内にロジックを直接書かない）を守る限り、データ取得の配置場所は柔軟に判断する。
