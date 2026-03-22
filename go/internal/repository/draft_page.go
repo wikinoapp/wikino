@@ -234,6 +234,7 @@ func (r *DraftPageRepository) toDraftPagesFromIndexRows(rows []query.ListDraftPa
 			Topic: &model.Topic{
 				ID:         model.TopicID(row.TopicID),
 				Name:       row.TopicName,
+				Number:     row.TopicNumber,
 				Visibility: model.TopicVisibility(row.TopicVisibility),
 				Space: &model.Space{
 					ID:         model.SpaceID(row.SpaceID),
