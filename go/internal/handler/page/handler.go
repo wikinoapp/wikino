@@ -11,14 +11,13 @@ import (
 
 // Handler はページハンドラー
 type Handler struct {
-	cfg                  *config.Config
-	flashMgr             *session.FlashManager
-	getPageDetailUC      *usecase.GetPageDetailUsecase
-	getEditLinkDataUC    *usecase.GetEditLinkDataUsecase
-	getPagePublishDataUC *usecase.GetPagePublishDataUsecase
-	publishPageUC        *usecase.PublishPageUsecase
-	sidebarHelper        *sidebar.Helper
-	updateValidator      *validator.PageUpdateValidator
+	cfg               *config.Config
+	flashMgr          *session.FlashManager
+	getPageDetailUC   *usecase.GetPageDetailUsecase
+	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
+	publishPageUC     *usecase.PublishPageUsecase
+	sidebarHelper     *sidebar.Helper
+	updateValidator   *validator.PageUpdateValidator
 }
 
 // NewHandler は新しいページハンドラーを作成します
@@ -27,19 +26,17 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getPageDetailUC *usecase.GetPageDetailUsecase,
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
-	getPagePublishDataUC *usecase.GetPagePublishDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
 	sidebarHelper *sidebar.Helper,
 	updateValidator *validator.PageUpdateValidator,
 ) *Handler {
 	return &Handler{
-		cfg:                  cfg,
-		flashMgr:             flashMgr,
-		getPageDetailUC:      getPageDetailUC,
-		getEditLinkDataUC:    getEditLinkDataUC,
-		getPagePublishDataUC: getPagePublishDataUC,
-		publishPageUC:        publishPageUC,
-		sidebarHelper:        sidebarHelper,
-		updateValidator:      updateValidator,
+		cfg:               cfg,
+		flashMgr:          flashMgr,
+		getPageDetailUC:   getPageDetailUC,
+		getEditLinkDataUC: getEditLinkDataUC,
+		publishPageUC:     publishPageUC,
+		sidebarHelper:     sidebarHelper,
+		updateValidator:   updateValidator,
 	}
 }

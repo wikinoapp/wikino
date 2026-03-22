@@ -66,7 +66,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		nil,
-		nil,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
 		validator.NewPageUpdateValidator(pageRepo),
 	)

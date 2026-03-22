@@ -354,7 +354,7 @@
 
 #### `PublishPageUsecase`
 
-- [ ] **5-2**: [Go] `GetPagePublishDataUsecase` を `PublishPageUsecase` に統合
+- [x] **5-2**: [Go] `GetPagePublishDataUsecase` を `PublishPageUsecase` に統合
   - `PublishPageUsecase` に `attachmentRepo` を追加
   - `GetPagePublishDataUsecase` のMarkdownレンダリング・添付ファイル参照差分計算・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを `PublishPageUsecase` のトランザクション前に移動
   - `PublishPageInput` から `BodyHTML`, `FeaturedImageAttachmentID`, `AttachmentRefsToAdd`, `AttachmentRefsToRemove` を削除し、必要なパラメータ（`Body` 等）を追加
