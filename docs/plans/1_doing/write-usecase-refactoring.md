@@ -208,6 +208,18 @@
 
 このUseCaseはトランザクション前にデータ取得と条件分岐を行っているが、これは「トランザクションが不要なケース（既にリンク済み、コンフリクト）」を早期リターンするための設計であり、合理的である。トランザクションの保持時間を最小化するという方針にも合致しているため、対象外とする。
 
+### 書き込みUseCaseからすべてのデータ取得を外出しし、読み取りUseCaseで行う案
+
+フェーズ1〜4では「書き込みUseCaseはデータの取得・検証を行わない。必要なデータはすべて入力として受け取る」という方針で、書き込みUseCaseのためのデータ取得を読み取りUseCaseやValidatorに移動した。しかし、書き込みUseCaseのためだけに読み取りUseCaseを新設すると、処理が分散して見通しが悪くなることが判明した。
+
+**不採用の理由**:
+
+- Handlerが書き込みUseCaseの内部実装を知る必要が生じる（どんなデータを事前に用意すべきか）
+- 書き込みUseCaseのために読み取りUseCaseを作ると、両者が強く結合し、分離のメリットが薄い
+- `GetDraftPageSaveDataUsecase` と `GetSaveDraftPageDataUsecase` のように命名が酷似し混同しやすくなる
+
+**代替として採用した方針**: 書き込みUseCase内であっても、トランザクション開始前であればデータ取得を行ってよい。ただし以下のルールを守る: (1) 検証処理を書かない（エラー返り値はサーバーエラーのみ）、(2) トランザクション内は永続化のみ、(3) Execute内にロジックを直接書かず関数に切り出す。
+
 ## タスクリスト
 
 <!--
@@ -317,11 +329,65 @@
   - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 4）
   - **想定行数**: 約 300 行（実装 150 行 + テスト 150 行）
 
-- [ ] **4-3**: [Go] `GetDraftPageSaveDataUsecase` の命名改善
-  - 既存の `GetSaveDraftPageDataUsecase`（ページ詳細データ取得）と新規の `GetDraftPageSaveDataUsecase`（事前計算データ取得）のファイル名・構造体名が酷似しており混同しやすい問題を解消する
-  - 対応方針（いずれかを選択）:
-    - A. 現状維持 + リネーム（例: `GetDraftPageRenderDataUsecase`）— 最小変更で命名の混同を解消
-    - B. UseCase を廃止し、DB 依存の操作を個別の読み取り UseCase に分割、純粋関数はハンドラーで直接呼び出す — 処理の流れが追いやすいが UseCase 数が増える。Handler から Repository への直接依存は禁止のため、`scanAndLookupWikilinks`・`extractFeaturedImageAttachmentID`・`markup.FilterAttachments` は個別の UseCase 経由が必要
-  - 関連ファイル: `get_draft_page_save_data.go`, `handler/draft_page/handler.go`, `handler/draft_page/update.go`, `handler/draft_page_revision/handler.go`, `handler/draft_page_revision/update.go`, `cmd/server/main.go`
-  - **想定ファイル数**: 約 6 ファイル（実装 4 + テスト 2）
-  - **想定行数**: 方針 A の場合 約 50 行、方針 B の場合 約 150 行
+### フェーズ 5: 書き込みUseCaseへの読み取りUseCase統合
+
+フェーズ3・4で書き込みUseCaseのデータ取得を外出しするために新設した読み取りUseCaseを廃止し、データ取得ロジックを書き込みUseCaseのトランザクション前に統合する。
+
+**背景**: 書き込みUseCaseのためだけに読み取りUseCaseを定義すると、処理が分散して見通しが悪くなる。書き込みUseCase内であっても、トランザクション開始前であればデータ取得を行ってよいという方針に変更する（詳細はフェーズ5最後のアーキテクチャガイド更新タスクを参照）。
+
+**注意**: フェーズ1・2でリファクタリング済みの `close_suggestion.go`、`apply_suggestion.go`、`create_account.go` は変更不要。これらはHandlerが既存の読み取りUseCaseやValidatorで自然に取得済みのデータを書き込みUseCaseに渡しており、書き込みUseCaseのために新しい読み取りUseCaseを作成していない。
+
+#### `CreateSuggestionUsecase`
+
+- [x] **5-1**: [Go] `GetSuggestionBodyHTMLUsecase` と `GetLatestPageRevisionsUsecase` を `CreateSuggestionUsecase` に統合
+  - `CreateSuggestionUsecase` に `topicRepo`, `pageRepo`, `pageRevisionRepo` を追加
+  - `GetSuggestionBodyHTMLUsecase` のWikiリンク解決・Markdownレンダリングロジックを `CreateSuggestionUsecase` のトランザクション前に移動
+  - `GetLatestPageRevisionsUsecase` のページリビジョン取得を `CreateSuggestionUsecase` のトランザクション前に移動
+  - `CreateSuggestionInput` から `BodyHTML`, `PageRevisions` を削除し、必要なパラメータ（`Body`, `CurrentTopicName`, `SpaceIdentifier`）を追加
+  - `get_suggestion_body_html.go`, `get_latest_page_revisions.go` を削除
+  - Handler（`suggestion/create.go`）から2つの読み取りUseCaseの呼び出しを削除
+  - Handler（`suggestion/handler.go`）から依存を削除
+  - `cmd/server/main.go` のUseCase構築と依存注入を更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 10 ファイル（実装 5 + テスト 3 + 削除 2）
+  - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
+
+#### `PublishPageUsecase`
+
+- [ ] **5-2**: [Go] `GetPagePublishDataUsecase` を `PublishPageUsecase` に統合
+  - `PublishPageUsecase` に `attachmentRepo` を追加
+  - `GetPagePublishDataUsecase` のMarkdownレンダリング・添付ファイル参照差分計算・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを `PublishPageUsecase` のトランザクション前に移動
+  - `PublishPageInput` から `BodyHTML`, `FeaturedImageAttachmentID`, `AttachmentRefsToAdd`, `AttachmentRefsToRemove` を削除し、必要なパラメータ（`Body` 等）を追加
+  - `get_page_publish_data.go` を削除
+  - Handler（`page/update.go`）から `GetPagePublishDataUsecase` の呼び出しを削除
+  - Handler（`page/handler.go`）から依存を削除
+  - `cmd/server/main.go` のUseCase構築と依存注入を更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 8 ファイル（実装 4 + テスト 3 + 削除 1）
+  - **想定行数**: 約 200 行（実装 100 行 + テスト 100 行）
+
+#### `AutoSaveDraftPageUsecase` / `ManualSaveDraftPageUsecase`
+
+- [ ] **5-3**: [Go] `GetDraftPageSaveDataUsecase` を `AutoSaveDraftPageUsecase` / `ManualSaveDraftPageUsecase` に統合
+  - Markdownレンダリング・Wikiリンクスキャン・トピック検索・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを共通ヘルパーまたは各UseCaseのトランザクション前に移動
+  - `AutoSaveDraftPageUsecase`, `ManualSaveDraftPageUsecase` に `topicRepo`, `attachmentRepo` を追加
+  - `AutoSaveDraftPageInput`, `ManualSaveDraftPageInput` から `BodyHTML`, `FeaturedImageAttachmentID`, `WikilinkKeys`, `TopicMap` を削除し、必要なパラメータ（`Body` 等）を追加
+  - `get_draft_page_save_data.go` を削除
+  - Handler（`draft_page/update.go`, `draft_page_revision/update.go`）から `GetDraftPageSaveDataUsecase` の呼び出しを削除
+  - Handler（`draft_page/handler.go`, `draft_page_revision/handler.go`）から依存を削除
+  - `cmd/server/main.go` のUseCase構築と依存注入を更新
+  - 関連テストの更新
+  - **想定ファイル数**: 約 10 ファイル（実装 5 + テスト 4 + 削除 1）
+  - **想定行数**: 約 250 行（実装 130 行 + テスト 120 行）
+
+#### アーキテクチャガイドの更新
+
+- [ ] **5-4**: [Go] アーキテクチャガイドの「Handler での処理フロー」セクションを更新
+  - 書き込みUseCaseのルールを以下の3つに整理:
+    1. データの検証処理（ユーザーに表示するエラーを判別するもの）を書かない。書き込みUseCaseのエラー返り値はサーバーエラーとする
+    2. トランザクション開始後はデータの取得や計算処理を行わない。永続化処理のみ行う（トランザクション前のデータ取得は許可）
+    3. Execute内にロジックを直接書かない。ロジックは関数やメソッドとして定義し、Execute内ではそれを呼び出すだけにする
+  - usecaseパッケージ内のプライベート関数の配置ルールを追加: あるUseCaseファイルに定義されたプライベート関数を別のUseCaseファイルから呼び出す必要が生じた場合は、その関数を専用のファイルに切り出す（例: `linked_page.go`）
+  - 「書き込みUseCaseのために読み取りUseCaseを新設する方針」を「採用しなかった方針」に追記
+  - **想定ファイル数**: 1 ファイル
+  - **想定行数**: 約 60 行
