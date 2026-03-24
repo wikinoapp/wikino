@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -82,11 +81,12 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.Title = i18n.T(ctx, "suggestion_show_title", map[string]any{
-		"SuggestionTitle": output.Suggestion.Title,
-		"TopicName":       output.Topic.Name,
-		"SpaceName":       output.Space.Name,
-	}) + " | Wikino"
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_show_title", map[string]any{
+		"SuggestionTitle":  output.Suggestion.Title,
+		"SuggestionNumber": output.Suggestion.Number,
+		"TopicName":        output.Topic.Name,
+		"SpaceName":        output.Space.Name,
+	})
 
 	// 編集権限を判定（スペースメンバーかつオープンステータス）
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen

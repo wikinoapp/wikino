@@ -163,7 +163,9 @@ func (h *Handler) renderEditWithErrors(
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "page_edit_title")
+	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
+		"SpaceName": output.Space.Name,
+	})
 
 	content := pagepages.Edit(pagepages.EditPageData{
 		CSRFToken:     csrfToken,

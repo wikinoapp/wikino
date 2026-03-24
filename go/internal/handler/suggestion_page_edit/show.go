@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -107,7 +106,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.Title = i18n.T(ctx, "suggestion_page_edit_confirm_title") + " | Wikino"
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_edit_confirm_title", map[string]any{
+		"SpaceName": detailOutput.Space.Name,
+	})
 
 	// テンプレートをレンダリング
 	content := suggestionpageeditpages.Show(suggestionpageeditpages.ShowData{

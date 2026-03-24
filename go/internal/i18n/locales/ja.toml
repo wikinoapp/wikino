@@ -490,7 +490,7 @@ other = "プライバシーポリシー"
 # ページ編集
 [page_edit_title]
 description = "ページ編集画面のタイトル"
-other = "ページを編集"
+other = "ページを編集 | {{.SpaceName}}"
 
 [page_edit_title_label]
 description = "ページタイトル入力フィールドのラベル"
@@ -603,7 +603,7 @@ other = "編集提案を更新しました"
 # ページ移動
 [page_move_title]
 description = "ページ移動画面のタイトル"
-other = "ページの移動"
+other = "ページの移動 | {{.SpaceName}}"
 
 [page_move_heading]
 description = "ページ移動画面の見出し"
@@ -812,7 +812,7 @@ other = "選択された下書きページが見つかりません"
 
 [suggestion_new_title]
 description = "編集提案作成のページタイトル"
-other = "編集提案を作成"
+other = "編集提案を作成 | {{.SpaceName}}"
 
 [suggestion_new_heading]
 description = "編集提案作成の見出し"
@@ -858,7 +858,7 @@ other = "編集提案を作成しました"
 
 [suggestion_show_title]
 description = "編集提案詳細のページタイトル"
-other = "{{.SuggestionTitle}} - {{.TopicName}} - {{.SpaceName}}"
+other = "{{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_show_breadcrumb]
 description = "編集提案詳細のパンくずリスト（編集提案一覧へのリンク）"
@@ -958,7 +958,7 @@ other = "編集する"
 
 [suggestion_page_edit_confirm_title]
 description = "編集提案ページ編集の確認画面タイトル"
-other = "下書きの確認"
+other = "下書きの確認 | {{.SpaceName}}"
 
 [suggestion_page_edit_confirm_heading]
 description = "編集提案ページ編集の確認画面見出し"

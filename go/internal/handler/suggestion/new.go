@@ -81,7 +81,9 @@ func (h *Handler) renderNewForm(
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "suggestion_new_title")
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_new_title", map[string]any{
+		"SpaceName": output.Space.Name,
+	})
 
 	// フラッシュメッセージを取得
 	flash := h.flashMgr.GetFlash(w, r)

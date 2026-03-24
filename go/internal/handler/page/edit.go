@@ -90,7 +90,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "page_edit_title")
+	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
+		"SpaceName": output.Space.Name,
+	})
 
 	// フラッシュメッセージを取得
 	flash := h.flashMgr.GetFlash(w, r)
