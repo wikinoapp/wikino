@@ -219,14 +219,14 @@ func TestShow_正常系_リンクなしで空レスポンスが返る(t *testing
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	// リンクなしの場合、SSEレスポンスは送信されない
+	// リンクなしの場合、ページネーションコンテナのみ返る
 	body := rr.Body.String()
-	if body != "" {
-		t.Errorf("expected empty body for no links, got %q", body)
+	if !strings.Contains(body, "page-link-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 
-func TestShow_正常系_リンクありでSSEレスポンスにリンクが含まれる(t *testing.T) {
+func TestShow_正常系_リンクありでHTMLレスポンスにリンクが含まれる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -289,16 +289,16 @@ func TestShow_正常系_リンクありでSSEレスポンスにリンクが含�
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	contentType := rr.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("wrong content type: got %v, want text/event-stream", contentType)
-	}
-
 	body := rr.Body.String()
 
 	// リンク先ページのタイトルが含まれること
 	if !strings.Contains(body, "Linked Page") {
 		t.Error("response should contain linked page title 'Linked Page'")
+	}
+
+	// ページネーションコンテナが含まれること
+	if !strings.Contains(body, "page-link-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 

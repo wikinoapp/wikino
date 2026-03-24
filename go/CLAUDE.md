@@ -29,9 +29,8 @@ Go 版の実装時には、Rails 版のコード（`/workspace/rails/`）を参�
   - resend-go/v2: メール送信ライブラリ（Resend API）
   - river: バックグラウンドジョブキュー（PostgreSQL ベース）
 - PostgreSQL 18.1
-- Datastar v1.0.0-RC.7: ハイパーメディアフレームワーク（SSE + フラグメント更新によるサーバードリブン UI）
-  - datastar-go/v1.1.0: Datastar Go SDK（SSE レスポンス生成）
-  - Datastar の実装時は `shimbaco-skills:datastar` スキルを使用すること
+- htmx 4: ハイパーメディアフレームワーク（HTML フラグメント返却によるサーバードリブン UI）
+  - htmx の実装時は `shimbaco-skills:htmx4` スキルを使用すること
 - Cloudflare Turnstile: Bot 対策サービス
 - pnpm
   - @tailwindcss/cli + tailwindcss: Tailwind CSS v4

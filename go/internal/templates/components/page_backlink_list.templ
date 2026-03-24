@@ -32,21 +32,26 @@ templ PageBacklinkList(data viewmodel.BacklinkList) {
 	}
 }
 
-// PageBacklinkListCards はバックリンクのカードのみを表示します。SSEのbeforeモードで使用します。
-templ PageBacklinkListCards(data viewmodel.BacklinkList) {
+// PageBacklinkListResponse はページレベルのバックリンク一覧の追加ページをHTMLフラグメントとして返します。
+// ページネーションコンテナを outerHTML で置換するレスポンスです。
+templ PageBacklinkListResponse(data viewmodel.BacklinkList) {
 	for _, item := range data.Items {
 		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 	}
-}
-
-// PageBacklinkListPagination はバックリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
-templ PageBacklinkListPagination(data viewmodel.BacklinkList) {
-	if data.Pagination.HasNext {
-		@pageBacklinkListLoadMore(data)
-	}
+	<div
+		id="page-backlink-list-pagination"
+		class="contents"
+	>
+		if data.Pagination.HasNext {
+			@pageBacklinkListLoadMore(data)
+		}
+	</div>
 }
 
 // pageBacklinkListLoadMore はページレベルのバックリンク一覧の「もっと見る」ボタンを表示します
 templ pageBacklinkListLoadMore(data viewmodel.BacklinkList) {
-	@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1))
+	@LoadMoreButton(
+		fmt.Sprintf("%s?page=%d", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1),
+		"#page-backlink-list-pagination",
+	)
 }

@@ -47,28 +47,23 @@ templ Show(data ShowData) {
 						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
 						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
 					},
-					{
-						Label: fmt.Sprintf("#%d", data.Suggestion.Number),
-					},
 				},
 			})
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
 					<div class="px-4">
-						<div class="flex flex-col gap-2">
-							<h1 class="text-xl font-bold">
-								{ data.Suggestion.Title }
-							</h1>
-							<div class="flex items-center gap-2 text-sm text-muted-foreground">
-								@components.SuggestionStatusBadge(data.Suggestion.Status)
-								<span>
-									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
-								</span>
-								<span>
-									{ data.Suggestion.CreatorName }
-								</span>
-							</div>
+						@components.MainTitle(components.MainTitleData{
+							Title: data.Suggestion.Title,
+						})
+						<div class="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+							@components.SuggestionStatusBadge(data.Suggestion.Status)
+							<span>
+								{ fmt.Sprintf("#%d", data.Suggestion.Number) }
+							</span>
+							<span>
+								{ data.Suggestion.CreatorName }
+							</span>
 						</div>
 					</div>
 

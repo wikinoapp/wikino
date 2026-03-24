@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -71,10 +70,10 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.Title = i18n.T(ctx, "suggestion_index_title", map[string]any{
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_index_title", map[string]any{
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
-	}) + " | Wikino"
+	})
 
 	// テンプレートをレンダリング
 	content := suggestionpages.Index(suggestionpages.IndexData{

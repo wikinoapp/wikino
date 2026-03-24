@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -17,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show は下書き保存時刻とリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/draft_page)
+// Show は下書き保存時刻とリンク一覧をOOBスワップ付きHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -105,29 +104,19 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		PageNumber:        int32(output.Page.Number),
 		CurrentPage:       currentPage,
 	})
-	linkListVM := editLinkData.LinkList
-	backlinkListVM := editLinkData.BacklinkList
 
-	// SSEフラグメントを送信
-	sse := datastar.NewSSE(w, r)
-
-	// 保存時刻フラグメントを送信（下書きが存在する場合のみ）
+	// OOBスワップ付きHTMLフラグメントをレンダリング
+	responseData := components.DraftPageShowResponseData{
+		LinkList:     editLinkData.LinkList,
+		BacklinkList: editLinkData.BacklinkList,
+	}
 	if output.DraftPage != nil {
-		if err := sse.PatchElementTempl(components.DraftSavedTime(output.DraftPage.ModifiedAt, user.TimeZone), datastar.WithSelectorID("page-draft-saved-at"), datastar.WithModeOuter()); err != nil {
-			slog.ErrorContext(ctx, "保存時刻のSSE送信に失敗", "error", err)
-			return
-		}
+		responseData.HasDraft = true
+		responseData.ModifiedAt = output.DraftPage.ModifiedAt
+		responseData.TimeZone = user.TimeZone
 	}
 
-	// リンク一覧フラグメントを送信
-	if err := sse.PatchElementTempl(components.LinkList(linkListVM), datastar.WithSelectorID("page-link-list"), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "リンク一覧のSSE送信に失敗", "error", err)
-		return
-	}
-
-	// バックリンク一覧フラグメントを送信
-	if err := sse.PatchElementTempl(components.PageBacklinkList(backlinkListVM), datastar.WithSelectorID("page-backlink-list"), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "バックリンク一覧のSSE送信に失敗", "error", err)
-		return
+	if err := components.DraftPageShowResponse(responseData).Render(ctx, w); err != nil {
+		slog.ErrorContext(ctx, "下書きページレスポンスのレンダリングに失敗", "error", err)
 	}
 }

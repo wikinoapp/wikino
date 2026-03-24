@@ -22,7 +22,7 @@ module Spaces
 
         sig { override.void }
         def before_render
-          helpers.set_meta_tags(title:, **default_meta_tags)
+          helpers.set_meta_tags(title:, **default_meta_tags(site: false))
         end
 
         sig { returns(User) }

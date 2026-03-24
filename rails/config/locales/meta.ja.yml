@@ -19,7 +19,7 @@ ja:
             show: "基本情報 | %{topic_name} | %{space_name}"
           show: "設定 | %{topic_name} | %{space_name}"
       trash:
-        show: ゴミ箱
+        show: "ゴミ箱 | %{space_name}"
       pages:
         show: "%{page_title} | %{space_name}"
       password_resets:

@@ -1,4 +1,4 @@
-// Package page_backlinks はページレベルのバックリンク一覧SSEハンドラーを提供します
+// Package page_backlinks はページレベルのバックリンク一覧ハンドラーを提供します
 package page_backlinks
 
 import (

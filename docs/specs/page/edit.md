@@ -43,7 +43,7 @@
 
 ページ編集画面では、スペースメンバーが既存のページのタイトルと本文を編集できる。エディタ部分はMarkdownエディタ（CodeMirror 6）を使用し、下書きの自動保存と手動保存（下書き保存）に対応している。Go版で実装されており、全ユーザーがGo版を使用する。
 
-編集画面のフッターには、そのページがリンクしている他ページの一覧（リンク一覧）が表示される。各リンク先ページには、そのリンク先にリンクしている他ページの一覧（バックリンク一覧）もネストして表示される。リンク一覧とバックリンク一覧はそれぞれオフセットベースのページネーションに対応しており、SSE（Server-Sent Events）を使用した非同期読み込みで表示される。
+編集画面のフッターには、そのページがリンクしている他ページの一覧（リンク一覧）が表示される。各リンク先ページには、そのリンク先にリンクしている他ページの一覧（バックリンク一覧）もネストして表示される。リンク一覧とバックリンク一覧はそれぞれオフセットベースのページネーションに対応しており、htmx による非同期読み込みで表示される。
 
 **下書きの2種類の保存**:
 
@@ -88,8 +88,8 @@
 - 自動保存ではDraftPageRevisionは作成されない
 - 下書き保存は PATCH リクエストで行い、204 No Content を返す（レスポンスボディなし）
 - 保存成功後、JavaScript が `draft-autosaved` カスタムイベントを dispatch する
-- Datastar がイベントを検知し、GET SSE エンドポイントを呼び出す
-- SSE レスポンスで保存時刻フラグメントとリンク一覧フラグメントが返され、DOM が更新される
+- htmx が `hx-trigger="draft-autosaved from:window"` でイベントを検知し、GET エンドポイントを呼び出す
+- OOB スワップ付き HTML フラグメントで保存時刻とリンク一覧が返され、DOM が更新される
 - 保存失敗時はエラーを静かに無視する（ユーザーへの通知なし）
 
 ### 下書き手動保存（下書き保存）
@@ -122,7 +122,7 @@
 - リンク一覧はオフセットベースのページネーションで表示される（1ページあたり15件）
 - ソート順は `modified_at DESC, id DESC`（更新日時が新しい順、同一の場合はID降順）
 - 「もっと見る」ボタンで次のページを読み込める
-- 下書き自動保存時にリンク一覧が自動更新される（Datastarのカスタムイベント `draft-autosaved` を使用）
+- 下書き自動保存時にリンク一覧が自動更新される（htmx の `hx-trigger` でカスタムイベント `draft-autosaved` を検知）
 
 ### バックリンク一覧
 
@@ -176,21 +176,21 @@ Rails版のページ編集関連コード（`Pages::EditController`、`Pages::Up
 
 ### エンドポイント
 
-| メソッド | パス                                                                                 | ハンドラー                           | 説明                                 |
-| -------- | ------------------------------------------------------------------------------------ | ------------------------------------ | ------------------------------------ |
-| GET      | `/s/{space_identifier}/pages/{page_number}/edit`                                     | `page.Handler.Edit`                  | ページ編集フォームの表示             |
-| PATCH    | `/s/{space_identifier}/pages/{page_number}`                                          | `page.Handler.Update`                | ページの更新（公開）                 |
-| PATCH    | `/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Update`          | 下書きの自動保存（204 No Content）   |
-| GET      | `/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Show`            | 保存時刻 + リンク一覧のSSEレスポンス |
-| PATCH    | `/s/{space_identifier}/pages/{page_number}/draft_page_revision`                      | `draft_page_revision.Handler.Update` | 下書きの手動保存（リダイレクト）     |
-| GET      | `/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list` | `page_backlink_list.Handler.Show`    | バックリンク一覧のSSEレスポンス      |
-| GET      | `/drafts`                                                                            | `draft_page_index.Handler.Index`     | 下書き一覧画面の表示                 |
+| メソッド | パス                                                                                 | ハンドラー                           | 説明                                    |
+| -------- | ------------------------------------------------------------------------------------ | ------------------------------------ | --------------------------------------- |
+| GET      | `/s/{space_identifier}/pages/{page_number}/edit`                                     | `page.Handler.Edit`                  | ページ編集フォームの表示                |
+| PATCH    | `/s/{space_identifier}/pages/{page_number}`                                          | `page.Handler.Update`                | ページの更新（公開）                    |
+| PATCH    | `/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Update`          | 下書きの自動保存（204 No Content）      |
+| GET      | `/s/{space_identifier}/pages/{page_number}/draft_page`                               | `draft_page.Handler.Show`            | 保存時刻 + リンク一覧のHTMLフラグメント |
+| PATCH    | `/s/{space_identifier}/pages/{page_number}/draft_page_revision`                      | `draft_page_revision.Handler.Update` | 下書きの手動保存（リダイレクト）        |
+| GET      | `/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list` | `page_backlink_list.Handler.Show`    | バックリンク一覧のHTMLフラグメント      |
+| GET      | `/drafts`                                                                            | `draft_page_index.Handler.Index`     | 下書き一覧画面の表示                    |
 
-下書き自動保存（PATCH `draft_page`）とUI更新（GET `draft_page`）はエンドポイントを分離している。PATCH は保存のみに専念し 204 No Content を返す。保存成功後に JavaScript が `draft-autosaved` カスタムイベントを dispatch し、Datastar が GET SSE エンドポイントを呼び出して保存時刻とリンク一覧の HTML フラグメントで DOM を更新する。
+下書き自動保存（PATCH `draft_page`）とUI更新（GET `draft_page`）はエンドポイントを分離している。PATCH は保存のみに専念し 204 No Content を返す。保存成功後に JavaScript が `draft-autosaved` カスタムイベントを dispatch し、htmx が `hx-trigger="draft-autosaved from:window"` でイベントを検知して GET エンドポイントを呼び出し、OOB スワップ付き HTML フラグメントで保存時刻とリンク一覧の DOM を更新する。
 
 下書き手動保存（PATCH `draft_page_revision`）は、公開フォームの `formaction` 属性によりsubmit先だけを変更する。フォーム内の `title`, `body` 等はそのまま送信される。保存完了後は下書き一覧画面（`GET /drafts`）にリダイレクトする。
 
-バックリンク一覧のエンドポイントも SSE（Server-Sent Events）でレスポンスを返し、Datastar によるフラグメント更新で DOM を部分更新する。
+バックリンク一覧のエンドポイントも HTML フラグメントを返し、htmx によるスワップで DOM を部分更新する。
 
 ### DraftPageRevision データモデル
 
@@ -374,24 +374,26 @@ LIMIT @page_limit OFFSET @page_offset;
     ↓ (204 No Content)
 [JS: window.dispatchEvent(new CustomEvent("draft-autosaved"))]
     ↓
-[Datastar: data-on:draft-autosaved__window="@get('/s/{id}/pages/{num}/draft_page')"]
-    ↓ (SSE レスポンス)
-[Datastar: SSE フラグメントで DOM を更新]
-    ├─ #page-draft-saved-at を更新（保存時刻）
-    └─ #page-link-list を更新（リンク一覧）
+[htmx: hx-trigger="draft-autosaved from:window" → hx-get="/s/{id}/pages/{num}/draft_page"]
+    ↓ (HTML フラグメント + OOB スワップ)
+[htmx: メインターゲットとOOBスワップで DOM を更新]
+    ├─ #page-draft-saved-at を更新（保存時刻、メインターゲット outerHTML）
+    ├─ #page-link-list を更新（リンク一覧、OOB innerHTML）
+    └─ #page-backlink-list を更新（バックリンク一覧、OOB innerHTML）
 ```
 
-PATCH と GET の責務を分離している理由は、自動保存が CodeMirror の `updateListener` から命令的に呼ばれるため、Datastar の `@patch()` 属性が使えないことによる。`@patch()` はシグナルを JSON で送信し SSE レスポンスを期待するが、自動保存は FormData で送信する必要がある。
+PATCH と GET の責務を分離している理由は、自動保存が CodeMirror の `updateListener` から命令的に呼ばれるため、htmx の宣言的な属性では制御しにくいことによる。PATCH は JavaScript から直接 fetch で呼び出し、成功後にカスタムイベントを dispatch して htmx の `hx-trigger` で GET リクエストをトリガーする。
 
-### SSEフラグメント更新
+### htmx によるフラグメント更新
 
-| 対象                           | セレクタID                                 | 更新モード | トリガー                                                     |
-| ------------------------------ | ------------------------------------------ | ---------- | ------------------------------------------------------------ |
-| 保存時刻                       | `#page-draft-saved-at`                     | `outer`    | 下書き自動保存時                                             |
-| リンク一覧                     | `#page-link-list`                          | `inner`    | ページ読み込み時、下書き自動保存時、「もっと見る」クリック時 |
-| バックリンク一覧（各リンク先） | `#page-backlink-list-{linked_page_number}` | -          | 「もっと見る」クリック時                                     |
+| 対象                           | セレクタID                                 | 更新方法                      | トリガー                                                     |
+| ------------------------------ | ------------------------------------------ | ----------------------------- | ------------------------------------------------------------ |
+| 保存時刻                       | `#page-draft-saved-at`                     | メインターゲット（outerHTML） | 下書き自動保存時                                             |
+| リンク一覧                     | `#page-link-list`                          | OOB スワップ（innerHTML）     | ページ読み込み時、下書き自動保存時、「もっと見る」クリック時 |
+| バックリンク一覧（各リンク先） | `#page-backlink-list-{linked_page_number}` | htmx swap（beforeend）        | 「もっと見る」クリック時                                     |
+| ページバックリンク一覧         | `#page-backlink-list`                      | OOB スワップ（innerHTML）     | 下書き自動保存時                                             |
 
-保存時刻フラグメントは `outer` モードで要素全体を置換する。下書きが存在しない場合は保存時刻フラグメントを送信しない。
+下書きが存在しない場合は保存時刻フラグメントを送信しない。
 
 ### ファイル構成
 
@@ -414,7 +416,7 @@ go/internal/
 │   │   └── edit.go                 # ページ編集フォーム表示
 │   ├── draft_page/
 │   │   ├── handler.go              # Handler構造体
-│   │   ├── show.go                 # 保存時刻+リンク一覧SSEエンドポイント
+│   │   ├── show.go                 # 保存時刻+リンク一覧HTMLフラグメントエンドポイント
 │   │   └── update.go               # 下書き自動保存（204 No Content）
 │   ├── draft_page_revision/
 │   │   ├── handler.go              # Handler構造体
@@ -424,7 +426,7 @@ go/internal/
 │   │   └── index.go                # 下書き一覧画面
 │   └── page_backlink_list/
 │       ├── handler.go              # Handler構造体
-│       └── show.go                 # バックリンク一覧SSEエンドポイント
+│       └── show.go                 # バックリンク一覧HTMLフラグメントエンドポイント
 ├── repository/
 │   ├── page.go                     # FindLinkedPagesPaginated等
 │   ├── draft_page.go               # ListByUserForIndex等
@@ -561,14 +563,17 @@ Rails版の `CardLinks::PageComponent` にはトピック名表示やカード�
 
 オフセットベースのページネーションでは「前へ」の実装は容易だが、リンク一覧のUIでは「もっと見る」（次ページのみ）で十分と判断した。「前へ」は必要性が低い。
 
-### PATCH エンドポイントを SSE に変更する
+### PATCH エンドポイントで UI 更新用レスポンスを返す
 
-PATCH `/go/s/{id}/pages/{num}/draft_page` 自体を SSE レスポンスにし、フラグメントで時刻とリンク一覧を返す案を検討した。
+PATCH `/go/s/{id}/pages/{num}/draft_page` 自体でフラグメントを返し、保存と UI 更新を 1 リクエストで完結させる案を検討した。
 
 **不採用の理由**:
 
-- 自動保存は CodeMirror の `updateListener` から命令的に呼ばれるため、Datastar の `@patch()` 属性が使えない（`@patch()` はシグナルを JSON で送信するが、自動保存は FormData で送信する必要がある）
-- `fetch` で PATCH を送る部分は残す必要があり、SSE レスポンスを受け取っても Datastar が自動的に処理しない
+- 自動保存は CodeMirror の `updateListener` から JavaScript で命令的に呼ばれるため、htmx の宣言的な属性（`hx-patch` 等）では制御しにくい
+- `fetch` で PATCH を送る部分は JavaScript に残す必要があり、htmx のスワップ機構を経由しないため、レスポンスの HTML フラグメントを自前で DOM に適用する必要がある
+- PATCH + GET の責務分離により、GET エンドポイントを初回表示時の遅延読み込みにも再利用できる
+
+> **経緯**: この設計判断は Datastar 使用時に行われ、htmx 移行後も同じ理由で PATCH + GET 分離を維持している。
 
 ### PATCH が `text/html` で保存時刻とリンク一覧を返す（1 リクエスト方式）
 
@@ -576,13 +581,13 @@ PATCH レスポンスを `text/html` に変更し、保存時刻とリンク一�
 
 **不採用の理由**:
 
-- GET SSE エンドポイントは初回表示時の遅延読み込みで引き続き必要であり、リンク一覧のレンダリングロジックが PATCH ハンドラーと SSE ハンドラーの 2 箇所に重複する
+- GET エンドポイントは初回表示時の遅延読み込みで引き続き必要であり、リンク一覧のレンダリングロジックが PATCH ハンドラーと GET ハンドラーの 2 箇所に重複する
 - JS に `DOMParser` によるパースロジックが必要になり、JS が厚くなる
-- Datastar の SSE フラグメント更新パターンを活用できず、独自の DOM 更新ロジックを実装する必要がある
+- htmx のスワップ機構を経由しない独自の DOM 更新ロジックを実装する必要がある
 
-### 保存時刻を専用の SSE エンドポイントで返す
+### 保存時刻を専用のエンドポイントで返す
 
-`GET /go/s/{id}/pages/{num}/draft_saved_time` のような専用エンドポイントを作り、別途 SSE フラグメントを返す案を検討した。
+`GET /go/s/{id}/pages/{num}/draft_saved_time` のような専用エンドポイントを作り、別途フラグメントを返す案を検討した。
 
 **不採用の理由**:
 
@@ -595,6 +600,6 @@ PATCH レスポンスを `text/html` に変更し、保存時刻とリンク一�
 参考にしたドキュメント、記事、OSSプロジェクトなど
 -->
 
-- [Datastar 公式サイト](https://data-star.dev/)
+- [htmx 公式サイト](https://htmx.org/)
 - [ページ編集画面のGo移行 作業計画書](/workspace/docs/plans/1_doing/page-edit-go-migration.md)
 - [ページ編集画面Go版の全ユーザー展開とRails版削除 作業計画書](/workspace/docs/plans/1_doing/page-edit-go-rollout.md)

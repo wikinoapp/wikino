@@ -490,7 +490,7 @@ other = "Privacy Policy"
 # Page edit
 [page_edit_title]
 description = "Page edit screen title"
-other = "Edit Page"
+other = "Edit Page | {{.SpaceName}}"
 
 [page_edit_title_label]
 description = "Label for the page title input field"
@@ -603,7 +603,7 @@ other = "Suggestion updated."
 # Page move
 [page_move_title]
 description = "Page move screen title"
-other = "Move Page"
+other = "Move Page | {{.SpaceName}}"
 
 [page_move_heading]
 description = "Page move screen heading"
@@ -812,7 +812,7 @@ other = "Selected draft page was not found"
 
 [suggestion_new_title]
 description = "Suggestion creation page title"
-other = "Create Suggestion"
+other = "Create Suggestion | {{.SpaceName}}"
 
 [suggestion_new_heading]
 description = "Suggestion creation heading"
@@ -858,7 +858,7 @@ other = "Suggestion has been created"
 
 [suggestion_show_title]
 description = "Suggestion detail page title"
-other = "{{.SuggestionTitle}} - {{.TopicName}} - {{.SpaceName}}"
+other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_show_breadcrumb]
 description = "Suggestion detail breadcrumb (link to suggestion list)"
@@ -958,7 +958,7 @@ other = "Edit"
 
 [suggestion_page_edit_confirm_title]
 description = "Suggestion page edit confirmation page title"
-other = "Draft confirmation"
+other = "Draft confirmation | {{.SpaceName}}"
 
 [suggestion_page_edit_confirm_heading]
 description = "Suggestion page edit confirmation heading"

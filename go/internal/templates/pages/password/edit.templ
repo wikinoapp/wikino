@@ -40,7 +40,7 @@ templ Edit(data EditPageData) {
 				<form
 					action="/password"
 					class="form grid gap-6"
-					data-on:submit__passive="$isSubmitting = true"
+					hx-on:submit="disableSubmitButtons(this)"
 					method="POST"
 				>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -110,7 +110,6 @@ templ Edit(data EditPageData) {
 
 					<button
 						class="btn-primary rounded-full w-fit"
-						data-attr:disabled="$isSubmitting == true"
 						tabindex="3"
 						type="submit"
 					>

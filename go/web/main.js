@@ -13,6 +13,10 @@ function initSidebarLocalStoragePersistence() {
   });
 }
 
+window.disableSubmitButtons = function (form) {
+  form.querySelectorAll("button[type=submit]").forEach((b) => (b.disabled = true));
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
   initSidebarLocalStoragePersistence();

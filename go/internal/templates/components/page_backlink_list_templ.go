@@ -79,8 +79,9 @@ func PageBacklinkList(data viewmodel.BacklinkList) templ.Component {
 	})
 }
 
-// PageBacklinkListCards はバックリンクのカードのみを表示します。SSEのbeforeモードで使用します。
-func PageBacklinkListCards(data viewmodel.BacklinkList) templ.Component {
+// PageBacklinkListResponse はページレベルのバックリンク一覧の追加ページをHTMLフラグメントとして返します。
+// ページネーションコンテナを outerHTML で置換するレスポンスです。
+func PageBacklinkListResponse(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -107,37 +108,19 @@ func PageBacklinkListCards(data viewmodel.BacklinkList) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		return nil
-	})
-}
-
-// PageBacklinkListPagination はバックリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
-func PageBacklinkListPagination(data viewmodel.BacklinkList) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div id=\"page-backlink-list-pagination\" class=\"contents\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
 		if data.Pagination.HasNext {
 			templ_7745c5c3_Err = pageBacklinkListLoadMore(data).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
 		return nil
 	})
@@ -160,12 +143,15 @@ func pageBacklinkListLoadMore(data viewmodel.BacklinkList) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = LoadMoreButton(
+			fmt.Sprintf("%s?page=%d", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1),
+			"#page-backlink-list-pagination",
+		).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

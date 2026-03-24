@@ -38,7 +38,7 @@ templ New(data NewPageData) {
 				<form
 					action="/sign_in"
 					class="form grid gap-6"
-					data-on:submit__passive="$isSubmitting = true"
+					hx-on:submit="disableSubmitButtons(this)"
 					method="POST"
 				>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -111,7 +111,6 @@ templ New(data NewPageData) {
 
 					<button
 						class="btn-primary rounded-full w-fit"
-						data-attr:disabled="$isSubmitting == true"
 						tabindex="3"
 						type="submit"
 					>

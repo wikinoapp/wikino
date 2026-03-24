@@ -21,7 +21,7 @@ module Spaces
         sig { override.void }
         def before_render
           title = I18n.t("meta.title.spaces.settings.general.show", space_name: space.name)
-          helpers.set_meta_tags(title:, **default_meta_tags)
+          helpers.set_meta_tags(title:, **default_meta_tags(site: false))
         end
 
         sig { returns(User) }
