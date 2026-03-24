@@ -164,7 +164,7 @@ func TestShow_不正なページ番号で404が返る(t *testing.T) {
 	}
 }
 
-func TestShow_正常系_バックリンクなしでSSEレスポンスが返る(t *testing.T) {
+func TestShow_正常系_バックリンクなしでHTMLレスポンスが返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -218,13 +218,14 @@ func TestShow_正常系_バックリンクなしでSSEレスポンスが返る(t
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	contentType := rr.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("wrong content type: got %v, want text/event-stream", contentType)
+	// ページネーションコンテナが含まれること
+	body := rr.Body.String()
+	if !strings.Contains(body, "page-backlink-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 
-func TestShow_正常系_バックリンクありでSSEレスポンスにバックリンクが含まれる(t *testing.T) {
+func TestShow_正常系_バックリンクありでHTMLレスポンスにバックリンクが含まれる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)

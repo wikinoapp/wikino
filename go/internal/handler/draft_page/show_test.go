@@ -144,7 +144,7 @@ func TestShow_不正なページ番号で404が返る(t *testing.T) {
 	}
 }
 
-func TestShow_正常系_リンクなしでSSEレスポンスが返る(t *testing.T) {
+func TestShow_正常系_リンクなしでOOBスワップレスポンスが返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -196,13 +196,15 @@ func TestShow_正常系_リンクなしでSSEレスポンスが返る(t *testing
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	contentType := rr.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("wrong content type: got %v, want text/event-stream", contentType)
+	body := rr.Body.String()
+
+	// OOBスワップ用の要素が含まれること
+	if !strings.Contains(body, `hx-swap-oob="innerHTML"`) {
+		t.Error("response should contain OOB swap attributes")
 	}
 }
 
-func TestShow_正常系_リンクありでSSEレスポンスにリンク先が含まれる(t *testing.T) {
+func TestShow_正常系_リンクありでレスポンスにリンク先が含まれる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -457,7 +459,7 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 	}
 }
 
-func TestShow_正常系_下書きにリンクを追加するとSSEレスポンスに反映される(t *testing.T) {
+func TestShow_正常系_下書きにリンクを追加するとレスポンスに反映される(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -503,7 +505,7 @@ func TestShow_正常系_下書きにリンクを追加するとSSEレスポン�
 
 	handler := setupHandler(t, queries)
 
-	// 1. リンクなしの状態でSSEエンドポイントを呼び出す
+	// 1. リンクなしの状態でエンドポイントを呼び出す
 	req1 := newShowRequest(t, "/s/show-add/pages/1/draft_page", map[string]string{
 		"space_identifier": "show-add",
 		"page_number":      "1",
@@ -533,7 +535,7 @@ func TestShow_正常系_下書きにリンクを追加するとSSEレスポン�
 		WithLinkedPageIDs([]model.PageID{linkedPageID}).
 		Build()
 
-	// 3. 下書き保存後にSSEエンドポイントを呼び出す
+	// 3. 下書き保存後にエンドポイントを呼び出す
 	req2 := newShowRequest(t, "/s/show-add/pages/1/draft_page", map[string]string{
 		"space_identifier": "show-add",
 		"page_number":      "1",
@@ -545,11 +547,6 @@ func TestShow_正常系_下書きにリンクを追加するとSSEレスポン�
 
 	if rr2.Code != http.StatusOK {
 		t.Fatalf("second request: wrong status code: got %v want %v", rr2.Code, http.StatusOK)
-	}
-
-	contentType := rr2.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("second request: wrong content type: got %v, want text/event-stream", contentType)
 	}
 
 	body2 := rr2.Body.String()
@@ -622,9 +619,12 @@ func TestShow_正常系_下書きが存在する場合に保存時刻フラグ�
 
 	body := rr.Body.String()
 
-	// 保存時刻フラグメントが含まれること（page-draft-saved-atセレクタ）
-	if !strings.Contains(body, "page-draft-saved-at") {
-		t.Error("response should contain saved time fragment with 'page-draft-saved-at' selector")
+	// 保存時刻のOOBスワップ要素が含まれること
+	if !strings.Contains(body, `id="page-draft-saved-at"`) {
+		t.Error("response should contain saved time element with 'page-draft-saved-at' id")
+	}
+	if !strings.Contains(body, `hx-swap-oob="outerHTML"`) {
+		t.Error("response should contain outerHTML OOB swap for saved time")
 	}
 }
 
@@ -682,14 +682,13 @@ func TestShow_正常系_下書きが存在しない場合に保存時刻フラ�
 
 	body := rr.Body.String()
 
-	// リンク一覧フラグメントは含まれるが、保存時刻のdiv要素は含まれないこと
-	// SSEレスポンスのpage-link-listセレクタは含まれる
-	if !strings.Contains(body, "page-link-list") {
-		t.Error("response should contain link list fragment with 'page-link-list' selector")
+	// リンク一覧のOOBスワップ要素は含まれる
+	if !strings.Contains(body, `id="page-link-list"`) {
+		t.Error("response should contain link list OOB element")
 	}
 
-	// 保存時刻のdiv要素（テンプレートがレンダリングするid属性付きdiv）は含まれないこと
-	if strings.Contains(body, `id="page-draft-saved-at"`) {
-		t.Error("response should not contain saved time div when no draft exists")
+	// 保存時刻のOOBスワップ要素（outerHTML）は含まれないこと
+	if strings.Contains(body, `hx-swap-oob="outerHTML"`) {
+		t.Error("response should not contain saved time OOB swap when no draft exists")
 	}
 }

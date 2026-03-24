@@ -580,20 +580,20 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 		t.Error("page-link-list container not found in response")
 	}
 
-	// Datastarのdata-on:draft-autosaved__window属性が含まれていること
-	// この属性により、下書き保存後にリンク一覧がSSEで自動再読み込みされる
-	if !strings.Contains(body, "data-on:draft-autosaved__window") {
-		t.Error("data-on:draft-autosaved__window attribute not found - link list auto-reload will not work")
+	// htmxのhx-trigger属性が含まれていること
+	// この属性により、下書き保存後にリンク一覧がOOBスワップで自動再読み込みされる
+	if !strings.Contains(body, `hx-trigger="draft-autosaved from:window"`) {
+		t.Error("hx-trigger attribute not found - link list auto-reload will not work")
 	}
 
-	// SSEエンドポイントのURLが正しいこと
+	// hx-getでエンドポイントが指定されていること
 	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
-		t.Error("draft_page SSE endpoint URL not found in response")
+		t.Error("draft_page endpoint URL not found in response")
 	}
 
-	// @get()アクションでSSEエンドポイントが呼び出されること
-	if !strings.Contains(body, "@get(") {
-		t.Error("@get() action not found - SSE request will not be triggered")
+	// hx-swap="none"が指定されていること（OOBスワップのみで更新するため）
+	if !strings.Contains(body, `hx-swap="none"`) {
+		t.Error("hx-swap=none not found - OOB swap will not work correctly")
 	}
 }
 

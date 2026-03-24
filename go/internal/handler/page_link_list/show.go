@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -17,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はリンク一覧の追加ページをSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
+// Show はリンク一覧の追加ページをHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -72,11 +71,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// リンク先ページがない場合は何も返さない
-	if len(output.LinkedPages) == 0 {
-		return
-	}
-
 	// ViewModelを構築
 	backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(output.BacklinksPerPage))
 	for pageID, backlinks := range output.BacklinksPerPage {
@@ -106,18 +100,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		PageNumber:      int32(output.Page.Number),
 	})
 
-	// SSEフラグメントとしてリンク一覧を送信
-	sse := datastar.NewSSE(w, r)
-
-	if len(linkListVM.Items) > 0 {
-		if err := sse.PatchElementTempl(components.LinkListCards(linkListVM), datastar.WithSelectorID("page-link-list-pagination"), datastar.WithModeBefore()); err != nil {
-			slog.ErrorContext(ctx, "リンク一覧カードのSSE送信に失敗", "error", err)
-			return
-		}
-	}
-
-	if err := sse.PatchElementTempl(components.LinkListPagination(linkListVM), datastar.WithSelectorID("page-link-list-pagination"), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "リンク一覧ページネーションのSSE送信に失敗", "error", err)
-		return
+	// HTMLフラグメントとしてリンク一覧を送信
+	if err := components.LinkListResponse(linkListVM).Render(ctx, w); err != nil {
+		slog.ErrorContext(ctx, "リンク一覧のレンダリングに失敗", "error", err)
 	}
 }

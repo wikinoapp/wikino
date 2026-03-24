@@ -481,13 +481,13 @@ func main() {
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
 
-		// リンク一覧SSE（Datastar）
+		// リンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
 
-		// バックリンク一覧SSE（Datastar）
+		// バックリンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
 
-		// ページレベルのバックリンク一覧SSE（Datastar）
+		// ページレベルのバックリンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
 
 		// ページ移動

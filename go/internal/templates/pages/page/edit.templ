@@ -92,7 +92,7 @@ templ Edit(data EditPageData) {
 										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 									}
 									class="form grid gap-6"
-									data-on:submit__passive="$isSubmitting = true"
+									hx-on:submit="disableSubmitButtons(this)"
 									method="POST"
 								>
 									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -156,7 +156,6 @@ templ Edit(data EditPageData) {
 											if data.IsSuggestionMode() {
 												<button
 													class="btn-primary rounded-full w-fit"
-													data-attr:disabled="$isSubmitting == true"
 													type="submit"
 												>
 													@templates.Icon("paper-plane-tilt-regular")
@@ -165,7 +164,6 @@ templ Edit(data EditPageData) {
 											} else {
 												<button
 													class="btn-primary rounded-full w-fit"
-													data-attr:disabled="$isSubmitting == true"
 													type="submit"
 												>
 													@templates.Icon("paper-plane-tilt-regular")
@@ -243,7 +241,9 @@ templ Edit(data EditPageData) {
 					<div class="flex flex-col gap-4 px-4">
 						<div
 							id="page-link-list"
-							data-on:draft-autosaved__window={ fmt.Sprintf("@get('%s')", string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number))) }
+							hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
+							hx-trigger="draft-autosaved from:window"
+							hx-swap="none"
 						>
 							@components.LinkList(data.LinkList)
 						</div>

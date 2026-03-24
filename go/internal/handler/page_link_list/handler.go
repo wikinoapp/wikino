@@ -1,4 +1,4 @@
-// Package page_link_list はページのリンク一覧SSEハンドラーを提供します
+// Package page_link_list はページのリンク一覧ハンドラーを提供します
 package page_link_list
 
 import (

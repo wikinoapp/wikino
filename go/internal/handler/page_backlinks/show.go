@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -17,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はページレベルのバックリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
+// Show はページレベルのバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -79,19 +78,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		PageNumber:      int32(output.Page.Number),
 	})
 
-	// SSEフラグメントとしてバックリンク一覧を送信
-	selectorID := "page-backlink-list-pagination"
-	sse := datastar.NewSSE(w, r)
-
-	if len(backlinkListVM.Items) > 0 {
-		if err := sse.PatchElementTempl(components.PageBacklinkListCards(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeBefore()); err != nil {
-			slog.ErrorContext(ctx, "バックリンクカードのSSE送信に失敗", "error", err)
-			return
-		}
-	}
-
-	if err := sse.PatchElementTempl(components.PageBacklinkListPagination(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "バックリンクページネーションのSSE送信に失敗", "error", err)
-		return
+	// HTMLフラグメントとしてバックリンク一覧を送信
+	if err := components.PageBacklinkListResponse(backlinkListVM).Render(ctx, w); err != nil {
+		slog.ErrorContext(ctx, "バックリンク一覧のレンダリングに失敗", "error", err)
 	}
 }
