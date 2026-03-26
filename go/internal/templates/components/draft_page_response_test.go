@@ -9,6 +9,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/timezone"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -29,13 +30,8 @@ func TestDraftPageShowResponse_タイムゾーン変換(t *testing.T) {
 			expectedTime: "14:30",
 		},
 		{
-			name:         "空文字の場合はUTCで表示される",
+			name:         "タイムゾーン未設定の場合はUTCで表示される",
 			timeZone:     "",
-			expectedTime: "05:30",
-		},
-		{
-			name:         "不正なタイムゾーンの場合はUTCで表示される",
-			timeZone:     "Invalid/TimeZone",
 			expectedTime: "05:30",
 		},
 		{
@@ -51,11 +47,13 @@ func TestDraftPageShowResponse_タイムゾーン変換(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
+			if tt.timeZone != "" {
+				ctx = timezone.ToContext(ctx, tt.timeZone)
+			}
 
 			data := components.DraftPageShowResponseData{
 				HasDraft:   true,
 				ModifiedAt: modifiedAt,
-				TimeZone:   tt.timeZone,
 			}
 
 			var buf bytes.Buffer
@@ -108,11 +106,11 @@ func TestDraftPageShowResponse_OOBスワップ属性(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = i18n.SetLocale(ctx, "ja")
+	ctx = timezone.ToContext(ctx, "Asia/Tokyo")
 
 	data := components.DraftPageShowResponseData{
 		HasDraft:     true,
 		ModifiedAt:   time.Date(2025, 1, 15, 5, 30, 0, 0, time.UTC),
-		TimeZone:     "Asia/Tokyo",
 		LinkList:     viewmodel.LinkList{},
 		BacklinkList: viewmodel.BacklinkList{},
 	}

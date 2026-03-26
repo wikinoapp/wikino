@@ -32,7 +32,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(output.DraftPages, user.TimeZone)
+	groups := viewmodel.NewDraftPageGroupsForIndex(output.DraftPages)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "draft_page_index_title")

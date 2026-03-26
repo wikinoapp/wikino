@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	accountpages "github.com/wikinoapp/wikino/go/internal/templates/pages/account"
+	"github.com/wikinoapp/wikino/go/internal/timezone"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -87,7 +88,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Atname:            atname,
 		Password:          password,
 		Locale:            modelLocale,
-		TimeZone:          "Asia/Tokyo",
+		TimeZone:          timezone.FromContext(ctx),
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "アカウント作成に失敗", "error", err)
