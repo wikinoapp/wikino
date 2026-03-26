@@ -81,25 +81,29 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// 反映・クローズ権限をチェック（オープンステータスかつ権限がある場合のみ）
-	var canApply, canClose bool
+	// 権限をチェック（オープンステータスかつ権限がある場合のみ）
+	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment bool
 	if output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen {
 		topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
 		canApply = topicPolicy.CanApplySuggestion(output.Suggestion)
 		canClose = topicPolicy.CanCloseSuggestion(output.Suggestion)
+		canUpdateSuggestion = topicPolicy.CanUpdateSuggestion(output.Suggestion)
+		canUpdateSuggestionComment = topicPolicy.CanUpdateSuggestionComment(output.Suggestion)
 	}
 
 	// テンプレートをレンダリング
 	content := suggestionpages.Show(suggestionpages.ShowData{
-		CSRFToken:       csrfToken,
-		Space:           spaceVM,
-		Topic:           topicVM,
-		Suggestion:      suggestionVM,
-		Comments:        commentsVM,
-		SuggestionPages: suggestionPagesVM,
-		IsSpaceMember:   output.SpaceMember != nil,
-		CanApply:        canApply,
-		CanClose:        canClose,
+		CSRFToken:                  csrfToken,
+		Space:                      spaceVM,
+		Topic:                      topicVM,
+		Suggestion:                 suggestionVM,
+		Comments:                   commentsVM,
+		SuggestionPages:            suggestionPagesVM,
+		IsSpaceMember:              output.SpaceMember != nil,
+		CanApply:                   canApply,
+		CanClose:                   canClose,
+		CanUpdateSuggestion:        canUpdateSuggestion,
+		CanUpdateSuggestionComment: canUpdateSuggestionComment,
 	})
 
 	signedIn := user != nil

@@ -18,10 +18,10 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	queries := testutil.QueriesWithTx(tx)
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/nonexistent/suggestions/1", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/nonexistent/suggestions/1", map[string]string{
 		"space_identifier":  "nonexistent",
 		"suggestion_number": "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
@@ -38,10 +38,10 @@ func TestShow_不正な提案番号で404が返る(t *testing.T) {
 	queries := testutil.QueriesWithTx(tx)
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/test-space/suggestions/abc", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/test-space/suggestions/abc", map[string]string{
 		"space_identifier":  "test-space",
 		"suggestion_number": "abc",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
@@ -68,10 +68,10 @@ func TestShow_存在しない提案番号で404が返る(t *testing.T) {
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/ss-noexist/suggestions/999", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/ss-noexist/suggestions/999", map[string]string{
 		"space_identifier":  "ss-noexist",
 		"suggestion_number": "999",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
@@ -126,10 +126,10 @@ func TestShow_公開トピックの編集提案を未ログインで閲覧でき
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/ss-pub-space/suggestions/1", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/ss-pub-space/suggestions/1", map[string]string{
 		"space_identifier":  "ss-pub-space",
 		"suggestion_number": "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
@@ -142,8 +142,8 @@ func TestShow_公開トピックの編集提案を未ログインで閲覧でき
 	if !strings.Contains(body, "テスト提案詳細") {
 		t.Error("response should contain suggestion title")
 	}
-	if !strings.Contains(body, "提案者") {
-		t.Error("response should contain creator name")
+	if !strings.Contains(body, "@sspub") {
+		t.Error("response should contain creator atname")
 	}
 	if !strings.Contains(body, "提案の説明") {
 		t.Error("response should contain suggestion body")
@@ -185,10 +185,10 @@ func TestShow_非公開トピックを未ログインで閲覧すると404が返
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/ss-priv1/suggestions/1", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/ss-priv1/suggestions/1", map[string]string{
 		"space_identifier":  "ss-priv1",
 		"suggestion_number": "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
@@ -231,10 +231,10 @@ func TestShow_非公開トピックをスペースオーナーが閲覧できる
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/ss-priv2/suggestions/1", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/ss-priv2/suggestions/1", map[string]string{
 		"space_identifier":  "ss-priv2",
 		"suggestion_number": "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "ssowner"})
 	req = req.WithContext(ctx)
 

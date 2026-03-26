@@ -52,13 +52,14 @@ func userDisplayName(user *model.User) string {
 
 // SuggestionForDetail は編集提案詳細画面用の表示データです
 type SuggestionForDetail struct {
-	Number      int32
-	Title       string
-	Body        string
-	BodyHTML    string
-	Status      model.SuggestionStatus
-	CreatorName string
-	CreatedAt   time.Time
+	Number        int32
+	Title         string
+	Body          string
+	BodyHTML      string
+	Status        model.SuggestionStatus
+	CreatorName   string
+	CreatorAtname string
+	CreatedAt     time.Time
 }
 
 // NewSuggestionForDetailInput はNewSuggestionForDetailの入力パラメータです
@@ -69,26 +70,30 @@ type NewSuggestionForDetailInput struct {
 
 // NewSuggestionForDetail は編集提案モデルから詳細画面用ViewModelを生成します
 func NewSuggestionForDetail(input NewSuggestionForDetailInput) SuggestionForDetail {
-	var creatorName string
+	var creatorName, creatorAtname string
 	if user, ok := input.UserMap[input.Suggestion.CreatedSpaceMemberID]; ok {
 		creatorName = userDisplayName(user)
+		creatorAtname = user.Atname
 	}
 	return SuggestionForDetail{
-		Number:      int32(input.Suggestion.Number),
-		Title:       input.Suggestion.Title,
-		Body:        input.Suggestion.Body,
-		BodyHTML:    input.Suggestion.BodyHTML,
-		Status:      input.Suggestion.Status,
-		CreatorName: creatorName,
-		CreatedAt:   input.Suggestion.CreatedAt,
+		Number:        int32(input.Suggestion.Number),
+		Title:         input.Suggestion.Title,
+		Body:          input.Suggestion.Body,
+		BodyHTML:      input.Suggestion.BodyHTML,
+		Status:        input.Suggestion.Status,
+		CreatorName:   creatorName,
+		CreatorAtname: creatorAtname,
+		CreatedAt:     input.Suggestion.CreatedAt,
 	}
 }
 
 // SuggestionCommentForList は編集提案コメント一覧用の表示データです
 type SuggestionCommentForList struct {
-	CreatorName string
-	BodyHTML    string
-	CreatedAt   time.Time
+	Number        int32
+	CreatorName   string
+	CreatorAtname string
+	BodyHTML      string
+	CreatedAt     time.Time
 }
 
 // NewSuggestionCommentsForListInput はNewSuggestionCommentsForListの入力パラメータです
@@ -101,14 +106,17 @@ type NewSuggestionCommentsForListInput struct {
 func NewSuggestionCommentsForList(input NewSuggestionCommentsForListInput) []SuggestionCommentForList {
 	items := make([]SuggestionCommentForList, len(input.Comments))
 	for i, c := range input.Comments {
-		var creatorName string
+		var creatorName, creatorAtname string
 		if user, ok := input.UserMap[c.CreatedSpaceMemberID]; ok {
 			creatorName = userDisplayName(user)
+			creatorAtname = user.Atname
 		}
 		items[i] = SuggestionCommentForList{
-			CreatorName: creatorName,
-			BodyHTML:    c.BodyHTML,
-			CreatedAt:   c.CreatedAt,
+			Number:        int32(c.Number),
+			CreatorName:   creatorName,
+			CreatorAtname: creatorAtname,
+			BodyHTML:      c.BodyHTML,
+			CreatedAt:     c.CreatedAt,
 		}
 	}
 	return items

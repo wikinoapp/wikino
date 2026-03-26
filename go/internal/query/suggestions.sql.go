@@ -236,6 +236,50 @@ func (q *Queries) ListSuggestionsByTopicAndStatuses(ctx context.Context, arg Lis
 	return items, nil
 }
 
+const updateSuggestion = `-- name: UpdateSuggestion :one
+UPDATE suggestions
+SET title = $2, body = $3, body_html = $4, updated_at = $5
+WHERE id = $1 AND space_id = $6
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
+`
+
+type UpdateSuggestionParams struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	BodyHtml  string    `json:"body_html"`
+	UpdatedAt time.Time `json:"updated_at"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// 編集提案のタイトルと本文を更新する（スペースIDでスコープ）
+func (q *Queries) UpdateSuggestion(ctx context.Context, arg UpdateSuggestionParams) (Suggestion, error) {
+	row := q.db.QueryRowContext(ctx, updateSuggestion,
+		arg.ID,
+		arg.Title,
+		arg.Body,
+		arg.BodyHtml,
+		arg.UpdatedAt,
+		arg.SpaceID,
+	)
+	var i Suggestion
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.CreatedSpaceMemberID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		&i.Status,
+		&i.AppliedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+	)
+	return i, err
+}
+
 const updateSuggestionStatus = `-- name: UpdateSuggestionStatus :one
 UPDATE suggestions
 SET status = $2, applied_at = $3, updated_at = $4

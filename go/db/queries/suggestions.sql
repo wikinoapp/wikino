@@ -35,6 +35,13 @@ SELECT * FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3;
 -- スペースIDと番号で編集提案を取得する
 SELECT * FROM suggestions WHERE space_id = $1 AND number = $2;
 
+-- name: UpdateSuggestion :one
+-- 編集提案のタイトルと本文を更新する（スペースIDでスコープ）
+UPDATE suggestions
+SET title = $2, body = $3, body_html = $4, updated_at = $5
+WHERE id = $1 AND space_id = $6
+RETURNING *;
+
 -- name: GetNextSuggestionNumber :one
 -- スペース内の次の編集提案番号を取得する
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestions WHERE space_id = $1;

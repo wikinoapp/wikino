@@ -189,3 +189,88 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 		}
 	})
 }
+
+func TestSuggestionUpdateValidator(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	v := validator.NewSuggestionUpdateValidator()
+
+	tests := []struct {
+		name          string
+		title         string
+		body          string
+		wantError     bool
+		expectedField string
+	}{
+		{
+			name:      "正常系: 有効な入力",
+			title:     "テスト提案",
+			body:      "テスト本文",
+			wantError: false,
+		},
+		{
+			name:      "正常系: 本文が空でもOK",
+			title:     "テスト提案",
+			body:      "",
+			wantError: false,
+		},
+		{
+			name:          "タイトルが空の場合はエラー",
+			title:         "",
+			body:          "テスト本文",
+			wantError:     true,
+			expectedField: "title",
+		},
+		{
+			name:          "タイトルが200文字を超える場合はエラー",
+			title:         strings.Repeat("あ", 201),
+			body:          "",
+			wantError:     true,
+			expectedField: "title",
+		},
+		{
+			name:      "タイトルがちょうど200文字の場合はOK",
+			title:     strings.Repeat("あ", 200),
+			body:      "",
+			wantError: false,
+		},
+		{
+			name:          "本文が10000文字を超える場合はエラー",
+			title:         "テスト提案",
+			body:          strings.Repeat("あ", 10001),
+			wantError:     true,
+			expectedField: "body",
+		},
+		{
+			name:      "本文がちょうど10000文字の場合はOK",
+			title:     "テスト提案",
+			body:      strings.Repeat("あ", 10000),
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := v.Validate(ctx, validator.SuggestionUpdateValidatorInput{
+				Title: tt.title,
+				Body:  tt.body,
+			})
+
+			if tt.wantError {
+				if !result.FormErrors.HasErrors() {
+					t.Error("expected errors but got none")
+				}
+				if tt.expectedField != "" && !result.FormErrors.HasFieldError(tt.expectedField) {
+					t.Errorf("expected %s field error but got none", tt.expectedField)
+				}
+			} else {
+				if result.FormErrors.HasErrors() {
+					t.Errorf("unexpected errors: %v", result.FormErrors)
+				}
+			}
+		})
+	}
+}

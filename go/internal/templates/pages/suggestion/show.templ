@@ -1,8 +1,10 @@
 package suggestion
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -10,15 +12,17 @@ import (
 
 // ShowData は編集提案詳細画面に渡すデータ構造体です
 type ShowData struct {
-	CSRFToken       string
-	Space           viewmodel.Space
-	Topic           viewmodel.Topic
-	Suggestion      viewmodel.SuggestionForDetail
-	Comments        []viewmodel.SuggestionCommentForList
-	SuggestionPages []viewmodel.SuggestionPageForList
-	IsSpaceMember   bool
-	CanApply        bool
-	CanClose        bool
+	CSRFToken                  string
+	Space                      viewmodel.Space
+	Topic                      viewmodel.Topic
+	Suggestion                 viewmodel.SuggestionForDetail
+	Comments                   []viewmodel.SuggestionCommentForList
+	SuggestionPages            []viewmodel.SuggestionPageForList
+	IsSpaceMember              bool
+	CanApply                   bool
+	CanClose                   bool
+	CanUpdateSuggestion        bool
+	CanUpdateSuggestionComment bool
 }
 
 // Show は編集提案詳細画面のコンテンツを表示します
@@ -52,23 +56,74 @@ templ Show(data ShowData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
-					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title: data.Suggestion.Title,
+					<div class="flex flex-col gap-4 px-4">
+						<div class="flex flex-col gap-2">
+							@components.MainTitle(components.MainTitleData{
+								Title:   data.Suggestion.Title,
+								Actions: showActions(data),
+							})
+
+							<div class="flex items-center gap-2 text-muted-foreground">
+								@components.SuggestionStatusBadge(data.Suggestion.Status)
+
+								<span>
+									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
+								</span>
+							</div>
+						</div>
+
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+								Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+								IconName:       "chats-circle-regular",
+								ActiveIconName: "chats-circle-fill",
+								IsActive:       true,
+							},
+							{
+								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+								IconName:       "files-regular",
+								ActiveIconName: "files-fill",
+								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+							},
 						})
-						<div class="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-							@components.SuggestionStatusBadge(data.Suggestion.Status)
-							<span>
-								{ fmt.Sprintf("#%d", data.Suggestion.Number) }
-							</span>
-							<span>
-								{ data.Suggestion.CreatorName }
-							</span>
+					</div>
+
+					<div class="px-4">
+						@components.Post(components.PostData{
+							CreatorAtname: data.Suggestion.CreatorAtname,
+							BodyHTML:      data.Suggestion.BodyHTML,
+							CreatedAt:     data.Suggestion.CreatedAt,
+						})
+					</div>
+
+					<div class="flex flex-col gap-2 px-4">
+						<h2 class="text-md font-bold antialiased">
+							{ templates.T(ctx, "suggestion_show_comments_heading") }
+						</h2>
+
+						<div class="flex flex-col gap-4">
+							if len(data.Comments) > 0 {
+								@showComments(data)
+							}
+
+							if data.IsSpaceMember {
+								@showCommentForm(data)
+							}
 						</div>
 					</div>
 
 					if data.CanApply || data.CanClose {
 						<div class="px-4">
+							<hr class="border-border border-dashed">
+						</div>
+
+						<div class="flex flex-col gap-4 px-4">
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "suggestion_show_action_description") }
+							</p>
+
 							<div class="flex items-center gap-2">
 								if data.CanApply {
 									@showApplyForm(data)
@@ -79,77 +134,52 @@ templ Show(data ShowData) {
 							</div>
 						</div>
 					}
-
-					<div class="px-4">
-						@showTabs(data)
-					</div>
-
-					if data.Suggestion.BodyHTML != "" {
-						<div class="px-4">
-							<div class="prose prose-sm max-w-none">
-								@templ.Raw(data.Suggestion.BodyHTML)
-							</div>
-						</div>
-					}
-
-					if len(data.Comments) > 0 {
-						<div class="px-4">
-							@showComments(data)
-						</div>
-					}
-
-					if data.IsSpaceMember {
-						<div class="px-4">
-							@showCommentForm(data)
-						</div>
-					}
 				</div>
 			</div>
 		</div>
 	</div>
 }
 
-// showTabs は「会話」「編集したページ」のタブを表示します
-templ showTabs(data ShowData) {
-	<div class="flex gap-4 border-b border-border">
-		<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
-			@templates.Icon("comment-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_conversation_tab") }
-		</span>
+// showActions は編集提案詳細画面のアクションボタンを表示します
+templ showActions(data ShowData) {
+	if data.CanUpdateSuggestion {
 		<a
-			href={ templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
-			class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+			href={ templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+			class="btn btn-sm rounded-full"
 		>
-			@templates.Icon("file-lines-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
-			<span class="text-xs">
-				{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
-			</span>
+			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+			{ templates.T(ctx, "suggestion_show_edit_button") }
 		</a>
-	</div>
+	}
 }
 
 // showComments はコメント一覧を表示します
 templ showComments(data ShowData) {
-	<div class="flex flex-col divide-y divide-border">
+	<div class="flex flex-col gap-4">
 		for _, c := range data.Comments {
-			<div class="flex flex-col gap-2 py-4">
-				<div class="flex items-center gap-2 text-sm font-semibold">
-					{ c.CreatorName }
-				</div>
-				<div class="prose prose-sm max-w-none">
-					@templ.Raw(c.BodyHTML)
-				</div>
-			</div>
+			@components.Post(components.PostData{
+				CreatorAtname: c.CreatorAtname,
+				BodyHTML:      c.BodyHTML,
+				CreatedAt:     c.CreatedAt,
+				Actions:       commentActions(ctx, data, c),
+				DropdownID:    fmt.Sprintf("comment-%d", c.Number),
+			})
 		}
 	</div>
 }
 
 // showApplyForm は反映ボタンを表示します
 templ showApplyForm(data ShowData) {
-	<form method="POST" action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))) }>
+	<form
+		action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		method="POST"
+	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-		<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">
+		<button
+			class="btn-primary rounded-full w-fit"
+			type="submit"
+		>
+			@templates.Icon("git-merge-regular")
 			{ templates.T(ctx, "suggestion_apply_button") }
 		</button>
 	</form>
@@ -157,34 +187,58 @@ templ showApplyForm(data ShowData) {
 
 // showCloseForm はクローズボタンを表示します
 templ showCloseForm(data ShowData) {
-	<form method="POST" action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))) }>
+	<form
+		action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		method="POST"
+	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-		<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+		<button
+			class="btn-secondary rounded-full w-fit"
+			type="submit"
+		>
 			{ templates.T(ctx, "suggestion_close_button") }
 		</button>
 	</form>
 }
 
+// commentActions はコメントのドロップダウンメニューに表示するアクション一覧を返します
+func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCommentForList) []components.PostAction {
+	if !data.CanUpdateSuggestionComment {
+		return nil
+	}
+	return []components.PostAction{
+		{
+			Label: i18n.T(ctx, "suggestion_comment_edit_action"),
+			URL:   string(templates.SuggestionCommentEditPath(data.Space.Identifier.String(), data.Suggestion.Number, c.Number)),
+		},
+	}
+}
+
 // showCommentForm はコメント入力フォームを表示します
 templ showCommentForm(data ShowData) {
-	<form method="POST" action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier.String(), data.Suggestion.Number))) }>
+	<form
+		action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		class="form grid gap-4"
+		method="POST"
+	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-		<div class="flex flex-col gap-3">
-			<label for="comment_body" class="text-sm font-semibold">
-				{ templates.T(ctx, "suggestion_comment_body_label") }
-			</label>
+
+		<div class="grid gap-2">
 			<textarea
+				class="textarea"
 				id="comment_body"
 				name="body"
-				rows="4"
-				class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				placeholder={ templates.T(ctx, "suggestion_comment_body_placeholder") }
+				rows="4"
 			></textarea>
-			<div class="flex justify-end">
-				<button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">
-					{ templates.T(ctx, "suggestion_comment_submit") }
-				</button>
-			</div>
 		</div>
+
+		<button
+			class="btn-primary rounded-full w-fit"
+			type="submit"
+		>
+			@templates.Icon("paper-plane-tilt-regular")
+			{ templates.T(ctx, "suggestion_comment_submit") }
+		</button>
 	</form>
 }

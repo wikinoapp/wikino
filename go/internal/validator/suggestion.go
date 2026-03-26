@@ -10,7 +10,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
-const suggestionTitleMaxLength = 200
+const (
+	suggestionTitleMaxLength = 200
+	suggestionBodyMaxLength  = 10000
+)
 
 // SuggestionCreateValidator は編集提案作成のバリデーションを行う
 type SuggestionCreateValidator struct {
@@ -27,6 +30,7 @@ func NewSuggestionCreateValidator(draftPageRepo *repository.DraftPageRepository)
 // SuggestionCreateValidatorInput はバリデーションの入力パラメータ
 type SuggestionCreateValidatorInput struct {
 	Title         string
+	Body          string
 	DraftPageIDs  []model.DraftPageID
 	SpaceMemberID model.SpaceMemberID
 	TopicID       model.TopicID
@@ -52,6 +56,11 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 	// タイトル文字数チェック
 	if input.Title != "" && utf8.RuneCountInString(input.Title) > suggestionTitleMaxLength {
 		formErrors.AddField("title", i18n.T(ctx, "validation_suggestion_title_too_long"))
+	}
+
+	// 本文文字数チェック
+	if input.Body != "" && utf8.RuneCountInString(input.Body) > suggestionBodyMaxLength {
+		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_body_too_long"))
 	}
 
 	// 下書きページ選択チェック
@@ -83,4 +92,45 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 		FormErrors: formErrors,
 		DraftPages: draftPages,
 	}
+}
+
+// SuggestionUpdateValidator は編集提案更新のバリデーションを行う
+type SuggestionUpdateValidator struct{}
+
+// NewSuggestionUpdateValidator は SuggestionUpdateValidator を生成する
+func NewSuggestionUpdateValidator() *SuggestionUpdateValidator {
+	return &SuggestionUpdateValidator{}
+}
+
+// SuggestionUpdateValidatorInput はバリデーションの入力パラメータ
+type SuggestionUpdateValidatorInput struct {
+	Title string
+	Body  string
+}
+
+// SuggestionUpdateValidatorResult はバリデーションの結果
+type SuggestionUpdateValidatorResult struct {
+	FormErrors *session.FormErrors
+}
+
+// Validate はバリデーションを行う
+func (v *SuggestionUpdateValidator) Validate(ctx context.Context, input SuggestionUpdateValidatorInput) *SuggestionUpdateValidatorResult {
+	formErrors := session.NewFormErrors()
+
+	// タイトル必須チェック
+	if input.Title == "" {
+		formErrors.AddField("title", i18n.T(ctx, "validation_suggestion_title_required"))
+	}
+
+	// タイトル文字数チェック
+	if input.Title != "" && utf8.RuneCountInString(input.Title) > suggestionTitleMaxLength {
+		formErrors.AddField("title", i18n.T(ctx, "validation_suggestion_title_too_long"))
+	}
+
+	// 本文文字数チェック
+	if input.Body != "" && utf8.RuneCountInString(input.Body) > suggestionBodyMaxLength {
+		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_body_too_long"))
+	}
+
+	return &SuggestionUpdateValidatorResult{FormErrors: formErrors}
 }
