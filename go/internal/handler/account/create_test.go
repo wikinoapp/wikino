@@ -20,6 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/timezone"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
@@ -117,8 +118,9 @@ func TestCreate_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept-Language", "ja")
 
-	// CSRFトークンをコンテキストに設定
+	// CSRFトークンとタイムゾーンをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = timezone.ToContext(ctx, "America/New_York")
 	req = req.WithContext(ctx)
 
 	// email_confirmation_id を Cookie に設定
@@ -166,6 +168,10 @@ func TestCreate_Success(t *testing.T) {
 	}
 	if user != nil && user.Email != testEmail {
 		t.Errorf("wrong email: got %v want %v", user.Email, testEmail)
+	}
+	// コンテキストから取得したタイムゾーンが保存されているか確認
+	if user != nil && user.TimeZone != "America/New_York" {
+		t.Errorf("wrong timezone: got %v want %v", user.TimeZone, "America/New_York")
 	}
 }
 

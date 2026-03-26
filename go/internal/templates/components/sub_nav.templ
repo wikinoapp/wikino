@@ -1,0 +1,55 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SubNavItem はサブナビゲーションの各タブ項目です
+type SubNavItem struct {
+	Label          string
+	Path           string
+	IconName       viewmodel.IconName
+	ActiveIconName viewmodel.IconName
+	IsActive       bool
+	Badge          string
+}
+
+// SubNav はページ内セクションを切り替えるタブナビゲーションを表示します
+templ SubNav(items []SubNavItem) {
+	<div class="flex gap-4 border-b border-border">
+		for _, item := range items {
+			if item.IsActive {
+				<a
+					href={ templ.SafeURL(item.Path) }
+					class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground"
+				>
+					if item.ActiveIconName != "" {
+						@templates.Icon(item.ActiveIconName, "size-4")
+					} else {
+						@templates.Icon(item.IconName, "size-4")
+					}
+					{ item.Label }
+					if item.Badge != "" {
+						<span class="text-xs">
+							{ item.Badge }
+						</span>
+					}
+				</a>
+			} else {
+				<a
+					href={ templ.SafeURL(item.Path) }
+					class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
+				>
+					@templates.Icon(item.IconName, "size-4")
+					{ item.Label }
+					if item.Badge != "" {
+						<span class="text-xs">
+							{ item.Badge }
+						</span>
+					}
+				</a>
+			}
+		}
+	</div>
+}

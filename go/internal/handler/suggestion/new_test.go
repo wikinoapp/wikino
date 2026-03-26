@@ -18,10 +18,10 @@ func TestNew_未ログインでサインインにリダイレクトされる(t *
 	queries := testutil.QueriesWithTx(tx)
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/test/topics/1/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/test/topics/1/suggestions/new", map[string]string{
 		"space_identifier": "test",
 		"topic_number":     "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.New(rr, req)
@@ -47,10 +47,10 @@ func TestNew_存在しないスペースで404が返る(t *testing.T) {
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/nonexistent/topics/1/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/nonexistent/topics/1/suggestions/new", map[string]string{
 		"space_identifier": "nonexistent",
 		"topic_number":     "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newnosp"})
 	req = req.WithContext(ctx)
 
@@ -75,10 +75,10 @@ func TestNew_不正なトピック番号で404が返る(t *testing.T) {
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/test/topics/abc/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/test/topics/abc/suggestions/new", map[string]string{
 		"space_identifier": "test",
 		"topic_number":     "abc",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newbadnum"})
 	req = req.WithContext(ctx)
 
@@ -112,10 +112,10 @@ func TestNew_スペースメンバーでない場合404が返る(t *testing.T) {
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/new-nomember-sp/topics/1/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/new-nomember-sp/topics/1/suggestions/new", map[string]string{
 		"space_identifier": "new-nomember-sp",
 		"topic_number":     "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newnomember"})
 	req = req.WithContext(ctx)
 
@@ -170,10 +170,10 @@ func TestNew_スペースメンバーで正常にフォームが表示される(
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/new-ok-sp/topics/1/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/new-ok-sp/topics/1/suggestions/new", map[string]string{
 		"space_identifier": "new-ok-sp",
 		"topic_number":     "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newok"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
 	req = req.WithContext(ctx)
@@ -220,10 +220,10 @@ func TestNew_下書きページがない場合でもフォームが表示され�
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/new-nodraft-sp/topics/1/suggestions/new", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/new-nodraft-sp/topics/1/suggestions/new", map[string]string{
 		"space_identifier": "new-nodraft-sp",
 		"topic_number":     "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newnodraft"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
 	req = req.WithContext(ctx)

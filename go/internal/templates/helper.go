@@ -3,10 +3,12 @@ package templates
 
 import (
 	"context"
+	"time"
 
 	"github.com/a-h/templ"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/timezone"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -32,6 +34,67 @@ func Deref[T any](v *T) T {
 	var zero T
 	return zero
 }
+
+// ========================================
+// 日時フォーマット関数
+// ========================================
+
+// FormatDateTime は日時を "2026/03/25 14:14" 形式でフォーマットする
+func FormatDateTime(ctx context.Context, t time.Time) string {
+	loc := loadLocationFromContext(ctx)
+	return t.In(loc).Format("2006/01/02 15:04")
+}
+
+// FormatTime は時刻を "14:14" 形式でフォーマットする
+func FormatTime(ctx context.Context, t time.Time) string {
+	loc := loadLocationFromContext(ctx)
+	return t.In(loc).Format("15:04")
+}
+
+// RelativeTime は相対時間文字列を返す
+// 1分未満: "たった今"
+// 1〜59分: "N分前"
+// 1〜23時間: "N時間前"
+// 1〜3日: "N日前"
+// 3日超: 絶対時間にフォールバック（"2026/03/25 14:14"）
+func RelativeTime(ctx context.Context, t time.Time) string {
+	d := time.Since(t)
+
+	switch {
+	case d < time.Minute:
+		return T(ctx, "datetime_just_now")
+	case d < time.Hour:
+		minutes := int(d.Minutes())
+		return T(ctx, "datetime_minutes_ago", map[string]any{"Count": minutes})
+	case d < 24*time.Hour:
+		hours := int(d.Hours())
+		return T(ctx, "datetime_hours_ago", map[string]any{"Count": hours})
+	case d < 72*time.Hour:
+		days := int(d.Hours() / 24)
+		return T(ctx, "datetime_days_ago", map[string]any{"Count": days})
+	default:
+		return FormatDateTime(ctx, t)
+	}
+}
+
+// IsRelativeTime は指定された時刻が相対時間として表示されるかどうかを返す
+func IsRelativeTime(t time.Time) bool {
+	return time.Since(t) < 72*time.Hour
+}
+
+// loadLocationFromContext はコンテキストからタイムゾーンを取得し *time.Location を返す
+func loadLocationFromContext(ctx context.Context) *time.Location {
+	tz := timezone.FromContext(ctx)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+}
+
+// ========================================
+// アイコン関数
+// ========================================
 
 // Icon はアイコン名からSVGを返す（templ.Component対応）
 // 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")

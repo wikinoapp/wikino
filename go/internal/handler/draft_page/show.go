@@ -113,7 +113,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	if output.DraftPage != nil {
 		responseData.HasDraft = true
 		responseData.ModifiedAt = output.DraftPage.ModifiedAt
-		responseData.TimeZone = user.TimeZone
 	}
 
 	if err := components.DraftPageShowResponse(responseData).Render(ctx, w); err != nil {

@@ -41,6 +41,7 @@ import (
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
 	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
 	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
+	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
@@ -332,6 +333,8 @@ func main() {
 	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, topicRepo, pageRepo, pageRevisionRepo)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, suggestionRepo, topicRepo, pageRepo)
+	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
 	suggestionHandler := suggestionhandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -339,8 +342,10 @@ func main() {
 		getSuggestionDetailUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
+		updateSuggestionUC,
 		sidebarHelper,
 		suggestionCreateValidator,
+		suggestionUpdateValidator,
 	)
 	suggestionChangeHandler := suggestionchangehandler.NewHandler(
 		cfg,
@@ -376,13 +381,25 @@ func main() {
 		updateSuggestionPageUC,
 		suggestionPageUpdateValidator,
 	)
-	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
 	suggestionCommentHandler := suggestioncommenthandler.NewHandler(
 		flashMgr,
 		getSuggestionDetailUC,
 		createSuggestionCommentUC,
 		suggestionCommentCreateValidator,
+	)
+	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
+	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(db, suggestionCommentRepo)
+	suggestionCommentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
+	suggestionCommentEditHandler := suggestioncommentedithandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionDetailUC,
+		getSuggestionCommentUC,
+		updateSuggestionCommentUC,
+		sidebarHelper,
+		suggestionCommentUpdateValidator,
 	)
 	r := chi.NewRouter()
 
@@ -430,6 +447,7 @@ func main() {
 	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
+		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
@@ -444,6 +462,7 @@ func main() {
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
+		r.Use(middleware.TimeZone)
 		r.Get("/sign_in", signInHandler.New)
 		r.Post("/sign_in", signInHandler.Create)
 		r.Get("/sign_in/two_factor/new", signInTwoFactorHandler.New)
@@ -465,6 +484,7 @@ func main() {
 	// 認証済みユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
+		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
 		// 下書き一覧
@@ -494,9 +514,11 @@ func main() {
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
 
-		// 編集提案作成
+		// 編集提案作成・編集
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Create)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/edit", suggestionHandler.Edit)
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Update)
 
 		// 編集提案反映
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/apply", suggestionApplyHandler.Create)
@@ -506,6 +528,8 @@ func main() {
 
 		// 編集提案コメント
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/comments", suggestionCommentHandler.Create)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}/edit", suggestionCommentEditHandler.Edit)
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}", suggestionCommentEditHandler.Update)
 
 		// 編集提案ページ編集開始
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)

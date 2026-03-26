@@ -138,6 +138,21 @@ func SuggestionPageEditShowPath(spaceIdentifier string, suggestionNumber int32, 
 	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
 }
 
+// SuggestionEditPath は編集提案編集のパスを生成します
+func SuggestionEditPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/edit", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionCommentPath は編集提案コメントのパスを生成します
+func SuggestionCommentPath(spaceIdentifier string, suggestionNumber int32, commentNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments/%d", spaceIdentifier, suggestionNumber, commentNumber))
+}
+
+// SuggestionCommentEditPath は編集提案コメント編集のパスを生成します
+func SuggestionCommentEditPath(spaceIdentifier string, suggestionNumber int32, commentNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments/%d/edit", spaceIdentifier, suggestionNumber, commentNumber))
+}
+
 // SuggestionPagePath は編集提案ページのパスを生成します
 func SuggestionPagePath(spaceIdentifier string, suggestionNumber int32, suggestionPageID string) Path {
 	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))

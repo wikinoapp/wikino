@@ -808,6 +808,10 @@ other = "下書きページを選択してください"
 description = "下書きページが見つからないエラー"
 other = "選択された下書きページが見つかりません"
 
+[validation_suggestion_body_too_long]
+description = "編集提案本文文字数超過エラー"
+other = "本文は10000文字以内で入力してください"
+
 # 編集提案作成
 
 [suggestion_new_title]
@@ -854,6 +858,40 @@ other = "編集提案を作成する"
 description = "編集提案作成成功メッセージ"
 other = "編集提案を作成しました"
 
+# 編集提案編集
+
+[suggestion_edit_title]
+description = "編集提案編集のページタイトル"
+other = "編集提案の編集 - #{{.SuggestionNumber}} {{.SuggestionTitle}} | {{.SpaceName}}"
+
+[suggestion_edit_heading]
+description = "編集提案編集画面の見出し"
+other = "編集提案の編集"
+
+[suggestion_edit_title_label]
+description = "編集提案編集のタイトルラベル"
+other = "タイトル"
+
+[suggestion_edit_title_placeholder]
+description = "編集提案編集のタイトルプレースホルダー"
+other = "編集提案のタイトル"
+
+[suggestion_edit_body_label]
+description = "編集提案編集の本文ラベル"
+other = "本文"
+
+[suggestion_edit_body_placeholder]
+description = "編集提案編集の本文プレースホルダー"
+other = "編集提案の説明（Markdown対応）"
+
+[suggestion_edit_submit]
+description = "編集提案編集の送信ボタン"
+other = "更新する"
+
+[suggestion_update_success]
+description = "編集提案更新成功メッセージ"
+other = "編集提案を更新しました"
+
 # 編集提案詳細
 
 [suggestion_show_title]
@@ -888,6 +926,10 @@ other = "会話"
 description = "編集提案詳細の編集したページタブ"
 other = "編集したページ"
 
+[suggestion_show_no_body]
+description = "編集提案の本文が空のときに表示するテキスト"
+other = "本文はありません"
+
 # 編集提案コメント
 
 [validation_suggestion_comment_body_required]
@@ -906,6 +948,22 @@ other = "コメント"
 description = "編集提案コメント本文のプレースホルダー"
 other = "コメントを入力してください"
 
+[suggestion_show_comments_heading]
+description = "編集提案詳細画面のコメント見出し"
+other = "コメント"
+
+[suggestion_show_edit_button]
+description = "編集提案詳細画面の編集ボタン"
+other = "編集する"
+
+[suggestion_show_action_description]
+description = "編集提案の反映・クローズボタンエリアの補足説明"
+other = "この提案の変更内容をトピックに反映するか、提案をクローズできます"
+
+[suggestion_comment_edit_action]
+description = "編集提案コメントのドロップダウンメニューの編集アクション"
+other = "編集する"
+
 [suggestion_comment_submit]
 description = "編集提案コメント送信ボタン"
 other = "コメントする"
@@ -913,6 +971,30 @@ other = "コメントする"
 [suggestion_comment_create_success]
 description = "編集提案コメント作成成功メッセージ"
 other = "コメントを投稿しました"
+
+[suggestion_comment_edit_heading]
+description = "編集提案コメント編集画面の見出し"
+other = "コメントを編集"
+
+[suggestion_comment_edit_title]
+description = "編集提案コメント編集画面のタイトル"
+other = "コメントを編集 - #{{.SuggestionNumber}} {{.SuggestionTitle}} - {{.SpaceName}}"
+
+[suggestion_comment_edit_body_label]
+description = "編集提案コメント編集画面の本文ラベル"
+other = "コメント"
+
+[suggestion_comment_edit_body_placeholder]
+description = "編集提案コメント編集画面の本文プレースホルダー"
+other = "コメントを入力してください"
+
+[suggestion_comment_edit_submit]
+description = "編集提案コメント編集画面の送信ボタン"
+other = "更新する"
+
+[suggestion_comment_update_success]
+description = "編集提案コメント更新成功メッセージ"
+other = "コメントを更新しました"
 
 # 編集提案反映
 
@@ -983,3 +1065,20 @@ other = "編集提案の内容で編集を続ける"
 [suggestion_page_edit_keep_draft_button]
 description = "もとの下書きを保持するボタン"
 other = "もとの下書きを保持する"
+
+# 日時表示
+[datetime_just_now]
+description = "1分未満の相対時間"
+other = "たった今"
+
+[datetime_minutes_ago]
+description = "N分前の相対時間"
+other = "{{.Count}}分前"
+
+[datetime_hours_ago]
+description = "N時間前の相対時間"
+other = "{{.Count}}時間前"
+
+[datetime_days_ago]
+description = "N日前の相対時間"
+other = "{{.Count}}日前"

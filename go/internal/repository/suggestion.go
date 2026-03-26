@@ -152,6 +152,34 @@ func (r *SuggestionRepository) UpdateStatus(ctx context.Context, input UpdateSta
 	return r.toModel(row), nil
 }
 
+// UpdateSuggestionInput は編集提案更新の入力パラメータ
+type UpdateSuggestionInput struct {
+	ID       model.SuggestionID
+	SpaceID  model.SpaceID
+	Title    string
+	Body     string
+	BodyHTML string
+}
+
+// Update は編集提案のタイトルと本文を更新する
+func (r *SuggestionRepository) Update(ctx context.Context, input UpdateSuggestionInput) (*model.Suggestion, error) {
+	row, err := r.q.UpdateSuggestion(ctx, query.UpdateSuggestionParams{
+		ID:        string(input.ID),
+		Title:     input.Title,
+		Body:      input.Body,
+		BodyHtml:  input.BodyHTML,
+		UpdatedAt: time.Now(),
+		SpaceID:   string(input.SpaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // CountByTopicAndStatuses はトピックIDとステータスリストで編集提案の件数を取得する
 func (r *SuggestionRepository) CountByTopicAndStatuses(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, statuses []model.SuggestionStatus) (int64, error) {
 	statusInts := make([]int32, len(statuses))

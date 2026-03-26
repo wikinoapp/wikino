@@ -80,7 +80,22 @@ templ Index(data IndexData) {
 					</div>
 
 					<div class="px-4">
-						@showTabs(data)
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+								Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+								IconName:       "chats-circle-regular",
+								ActiveIconName: "chats-circle-fill",
+							},
+							{
+								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+								IconName:       "files-regular",
+								ActiveIconName: "files-fill",
+								IsActive:       true,
+								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+							},
+						})
 					</div>
 
 					<div class="px-4">
@@ -104,26 +119,6 @@ templ Index(data IndexData) {
 				</div>
 			</div>
 		</div>
-	</div>
-}
-
-// showTabs は「会話」「編集したページ」のタブを表示します
-templ showTabs(data IndexData) {
-	<div class="flex gap-4 border-b border-border">
-		<a
-			href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
-			class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
-		>
-			@templates.Icon("comment-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_conversation_tab") }
-		</a>
-		<span class="flex items-center gap-1.5 px-2 py-2 text-sm font-semibold border-b-2 border-foreground">
-			@templates.Icon("file-lines-regular", "size-4")
-			{ templates.T(ctx, "suggestion_show_changed_pages_tab") }
-			<span class="text-xs">
-				{ fmt.Sprintf("%d", len(data.SuggestionPages)) }
-			</span>
-		</span>
 	</div>
 }
 

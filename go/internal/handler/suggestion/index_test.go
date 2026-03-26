@@ -3,6 +3,7 @@ package suggestion_test
 import (
 	"context"
 	"database/sql"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,11 +24,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newIndexRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
-func newIndexRequest(t *testing.T, path string, params map[string]string) *http.Request {
+// newSuggestionRequest はchiのURLパラメータ付きHTTPリクエストを作成するヘルパーです
+func newSuggestionRequest(t *testing.T, method string, path string, params map[string]string, body io.Reader) *http.Request {
 	t.Helper()
 
-	req := httptest.NewRequest(http.MethodGet, path, nil)
+	req := httptest.NewRequest(method, path, body)
 
 	rctx := chi.NewRouteContext()
 	for key, val := range params {
@@ -65,7 +66,9 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, topicRepo, pageRepo, pageRevisionRepo)
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, suggestionRepo, topicRepo, pageRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
+	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
 
 	return suggestionhandler.NewHandler(
 		cfg,
@@ -74,8 +77,10 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 		getSuggestionDetailUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
+		updateSuggestionUC,
 		sidebarHelper,
 		suggestionCreateValidator,
+		suggestionUpdateValidator,
 	)
 }
 
@@ -86,10 +91,10 @@ func TestIndex_存在しないスペースで404が返る(t *testing.T) {
 	queries := testutil.QueriesWithTx(tx)
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/nonexistent/topics/1/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/nonexistent/topics/1/suggestions", map[string]string{
 		"space_identifier": "nonexistent",
 		"topic_number":     "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -106,10 +111,10 @@ func TestIndex_不正なトピック番号で404が返る(t *testing.T) {
 	queries := testutil.QueriesWithTx(tx)
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/test-space/topics/abc/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/test-space/topics/abc/suggestions", map[string]string{
 		"space_identifier": "test-space",
 		"topic_number":     "abc",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -131,10 +136,10 @@ func TestIndex_存在しないトピックで404が返る(t *testing.T) {
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/si-noexist/topics/999/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-noexist/topics/999/suggestions", map[string]string{
 		"space_identifier": "si-noexist",
 		"topic_number":     "999",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -179,10 +184,10 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/si-pub-space/topics/1/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-pub-space/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-pub-space",
 		"topic_number":     "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -217,10 +222,10 @@ func TestIndex_非公開トピックを未ログインで閲覧すると404が�
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/si-priv1/topics/1/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-priv1/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-priv1",
 		"topic_number":     "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -271,10 +276,10 @@ func TestIndex_クローズタブで反映済みとクローズの提案が表�
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/si-closed-sp/topics/1/suggestions?tab=closed", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-closed-sp/topics/1/suggestions?tab=closed", map[string]string{
 		"space_identifier": "si-closed-sp",
 		"topic_number":     "1",
-	})
+	}, nil)
 
 	rr := httptest.NewRecorder()
 	handler.Index(rr, req)
@@ -319,10 +324,10 @@ func TestIndex_非公開トピックをスペースオーナーが閲覧でき�
 
 	handler := setupHandler(t, db, queries)
 
-	req := newIndexRequest(t, "/s/si-priv2/topics/1/suggestions", map[string]string{
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-priv2/topics/1/suggestions", map[string]string{
 		"space_identifier": "si-priv2",
 		"topic_number":     "1",
-	})
+	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "siowner"})
 	req = req.WithContext(ctx)
 

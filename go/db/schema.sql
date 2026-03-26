@@ -528,7 +528,8 @@ CREATE TABLE public.suggestion_comments (
     body character varying DEFAULT ''::character varying NOT NULL,
     body_html character varying DEFAULT ''::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    number integer NOT NULL
 );
 
 
@@ -1066,6 +1067,13 @@ CREATE INDEX idx_suggestion_comments_space_id ON public.suggestion_comments USIN
 --
 
 CREATE INDEX idx_suggestion_comments_suggestion_id_created_at ON public.suggestion_comments USING btree (suggestion_id, created_at);
+
+
+--
+-- Name: idx_suggestion_comments_suggestion_id_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_suggestion_comments_suggestion_id_number ON public.suggestion_comments USING btree (suggestion_id, number);
 
 
 --
@@ -2113,4 +2121,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260317100418'),
     ('20260319072803'),
     ('20260319074138'),
-    ('20260319082723');
+    ('20260319082723'),
+    ('20260326051852');

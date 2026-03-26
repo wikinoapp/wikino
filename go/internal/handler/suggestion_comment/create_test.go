@@ -2,6 +2,7 @@ package suggestion_comment_test
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -36,8 +37,8 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案コメントハンドラーを作成するヘルパーです
-func setupHandler(t *testing.T, queries *query.Queries) *suggestioncommenthandler.Handler {
+// setupHandler はテスト用の編集提案コメント作成ハンドラーを作成するヘルパーです
+func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestioncommenthandler.Handler {
 	t.Helper()
 
 	flashMgr := session.NewFlashManager("localhost", false, false)
@@ -56,7 +57,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *suggestioncommenthandle
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
-	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(suggestionCommentRepo)
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	commentCreateValidator := validator.NewSuggestionCommentCreateValidator()
 
 	return suggestioncommenthandler.NewHandler(
@@ -70,9 +71,9 @@ func setupHandler(t *testing.T, queries *query.Queries) *suggestioncommenthandle
 func TestCreate_未ログインでサインインにリダイレクトされる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "コメント本文")
@@ -96,7 +97,7 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 func TestCreate_本文が空の場合バリデーションエラーでリダイレクトされる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -104,7 +105,7 @@ func TestCreate_本文が空の場合バリデーションエラーでリダイ�
 		WithAtname("commentempty").
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "")
@@ -133,7 +134,7 @@ func TestCreate_本文が空の場合バリデーションエラーでリダイ�
 func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -141,7 +142,7 @@ func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 		WithAtname("commentnosugg").
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "コメント本文")
@@ -166,33 +167,34 @@ func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 func TestCreate_正常にコメントが作成されリダイレクトされる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	// usecaseが独自トランザクションを管理するためDB直接書き込みを使用
+	db := testutil.GetTestDB()
+	queries := query.New(db)
 
-	userID := testutil.NewUserBuilder(t, tx).
+	userID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("comment-ok@example.com").
 		WithAtname("commentok").
 		Build()
 
-	spaceID := testutil.NewSpaceBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("comment-ok-sp").
 		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithNumber(1).
 		WithVisibility(0).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "テストコメント")
@@ -221,7 +223,7 @@ func TestCreate_正常にコメントが作成されリダイレクトされる(
 func TestCreate_スペースメンバーでないユーザーは403が返る(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
 	ownerID := testutil.NewUserBuilder(t, tx).
@@ -251,7 +253,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 		WithCreatedSpaceMemberID(spaceMemberID).
 		Build()
 
-	handler := setupHandler(t, queries)
+	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "コメント本文")

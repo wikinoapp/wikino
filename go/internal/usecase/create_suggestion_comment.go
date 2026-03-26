@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/markup"
@@ -11,14 +12,17 @@ import (
 
 // CreateSuggestionCommentUsecase は編集提案コメント作成ユースケース
 type CreateSuggestionCommentUsecase struct {
+	db                    *sql.DB
 	suggestionCommentRepo *repository.SuggestionCommentRepository
 }
 
 // NewCreateSuggestionCommentUsecase は CreateSuggestionCommentUsecase を生成する
 func NewCreateSuggestionCommentUsecase(
+	db *sql.DB,
 	suggestionCommentRepo *repository.SuggestionCommentRepository,
 ) *CreateSuggestionCommentUsecase {
 	return &CreateSuggestionCommentUsecase{
+		db:                    db,
 		suggestionCommentRepo: suggestionCommentRepo,
 	}
 }
@@ -40,15 +44,39 @@ type CreateSuggestionCommentOutput struct {
 func (uc *CreateSuggestionCommentUsecase) Execute(ctx context.Context, input CreateSuggestionCommentInput) (*CreateSuggestionCommentOutput, error) {
 	bodyHTML := markup.RenderMarkdown(input.Body)
 
-	comment, err := uc.suggestionCommentRepo.Create(ctx, repository.CreateSuggestionCommentInput{
+	return uc.createComment(ctx, input, bodyHTML)
+}
+
+func (uc *CreateSuggestionCommentUsecase) createComment(ctx context.Context, input CreateSuggestionCommentInput, bodyHTML string) (*CreateSuggestionCommentOutput, error) {
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	suggestionCommentRepo := uc.suggestionCommentRepo.WithTx(tx)
+
+	nextNumber, err := suggestionCommentRepo.GetNextNumber(ctx, input.SuggestionID)
+	if err != nil {
+		return nil, fmt.Errorf("次のコメント番号の取得に失敗しました: %w", err)
+	}
+
+	comment, err := suggestionCommentRepo.Create(ctx, repository.CreateSuggestionCommentInput{
 		SpaceID:              input.SpaceID,
 		SuggestionID:         input.SuggestionID,
 		CreatedSpaceMemberID: input.SpaceMemberID,
+		Number:               nextNumber,
 		Body:                 input.Body,
 		BodyHTML:             bodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案コメントの作成に失敗しました: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
 	}
 
 	return &CreateSuggestionCommentOutput{

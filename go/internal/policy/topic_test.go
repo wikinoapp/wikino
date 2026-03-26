@@ -234,6 +234,83 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 			t.Error("非アクティブなスペースオーナーは編集提案をクローズできないべき")
 		}
 	})
+
+	t.Run("オープン状態の編集提案を編集可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if !p.CanUpdateSuggestion(suggestion) {
+			t.Error("スペースオーナーはオープン状態の編集提案を編集できるべき")
+		}
+		if !p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("スペースオーナーはオープン状態の編集提案のコメントを編集できるべき")
+		}
+	})
+
+	t.Run("クローズ状態の編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		suggestion.Status = model.SuggestionStatusClosed
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("スペースオーナーはクローズ状態の編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("スペースオーナーはクローズ状態の編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("反映済みの編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		suggestion.Status = model.SuggestionStatusApplied
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("スペースオーナーは反映済みの編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("スペースオーナーは反映済みの編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("別スペースの編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, true)
+		p := NewTopicPolicy(sm, nil)
+
+		suggestion := newSuggestion("space-2", "topic-1")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("スペースオーナーは別スペースの編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("スペースオーナーは別スペースの編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("非アクティブの場合は編集提案を編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleOwner, false)
+		p := NewTopicPolicy(sm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("非アクティブなスペースオーナーは編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非アクティブなスペースオーナーは編集提案のコメントを編集できないべき")
+		}
+	})
 }
 
 func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
@@ -412,6 +489,83 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 			t.Error("非アクティブなトピックAdminは編集提案をクローズできないべき")
 		}
 	})
+
+	t.Run("オープン状態の編集提案を編集可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if !p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックAdminはオープン状態の編集提案を編集できるべき")
+		}
+		if !p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックAdminはオープン状態の編集提案のコメントを編集できるべき")
+		}
+	})
+
+	t.Run("クローズ状態の編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		suggestion.Status = model.SuggestionStatusClosed
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックAdminはクローズ状態の編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックAdminはクローズ状態の編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("別トピックの編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-2")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックAdminは別トピックの編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックAdminは別トピックの編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("非アクティブの場合は編集提案を編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, false)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleAdmin,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("非アクティブなトピックAdminは編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非アクティブなトピックAdminは編集提案のコメントを編集できないべき")
+		}
+	})
 }
 
 func TestNewTopicPolicy_TopicMember(t *testing.T) {
@@ -572,6 +726,83 @@ func TestNewTopicPolicy_TopicMember(t *testing.T) {
 			t.Error("非アクティブな作成者は編集提案をクローズできないべき")
 		}
 	})
+
+	t.Run("オープン状態の編集提案を編集可能", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if !p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックMemberはオープン状態の編集提案を編集できるべき")
+		}
+		if !p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックMemberはオープン状態の編集提案のコメントを編集できるべき")
+		}
+	})
+
+	t.Run("クローズ状態の編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		suggestion.Status = model.SuggestionStatusClosed
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックMemberはクローズ状態の編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックMemberはクローズ状態の編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("別トピックの編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-2")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("トピックMemberは別トピックの編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("トピックMemberは別トピックの編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("非アクティブの場合は編集提案を編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		sm := newSpaceMember("space-1", model.SpaceMemberRoleMember, false)
+		topicMember := &model.TopicMember{
+			TopicID: "topic-1",
+			Role:    model.TopicMemberRoleMember,
+		}
+		p := NewTopicPolicy(sm, topicMember)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if p.CanUpdateSuggestion(suggestion) {
+			t.Error("非アクティブなトピックMemberは編集提案を編集できないべき")
+		}
+		if p.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非アクティブなトピックMemberは編集提案のコメントを編集できないべき")
+		}
+	})
 }
 
 func TestNewTopicPolicy_Guest(t *testing.T) {
@@ -610,6 +841,52 @@ func TestNewTopicPolicy_Guest(t *testing.T) {
 
 		if !guestPolicy.CanCloseSuggestion(newSuggestion("space-1", "topic-1")) {
 			t.Error("作成者本人はトピック非メンバーでも編集提案をクローズできるべき")
+		}
+	})
+
+	t.Run("オープン状態の編集提案を編集可能", func(t *testing.T) {
+		t.Parallel()
+
+		guestSm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		guestPolicy := NewTopicPolicy(guestSm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if !guestPolicy.CanUpdateSuggestion(suggestion) {
+			t.Error("非トピックメンバーでもオープン状態の編集提案を編集できるべき")
+		}
+		if !guestPolicy.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非トピックメンバーでもオープン状態の編集提案のコメントを編集できるべき")
+		}
+	})
+
+	t.Run("クローズ状態の編集提案は編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		guestSm := newSpaceMember("space-1", model.SpaceMemberRoleMember, true)
+		guestPolicy := NewTopicPolicy(guestSm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		suggestion.Status = model.SuggestionStatusClosed
+		if guestPolicy.CanUpdateSuggestion(suggestion) {
+			t.Error("非トピックメンバーはクローズ状態の編集提案を編集できないべき")
+		}
+		if guestPolicy.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非トピックメンバーはクローズ状態の編集提案のコメントを編集できないべき")
+		}
+	})
+
+	t.Run("非アクティブの場合は編集提案を編集不可", func(t *testing.T) {
+		t.Parallel()
+
+		guestSm := newSpaceMember("space-1", model.SpaceMemberRoleMember, false)
+		guestPolicy := NewTopicPolicy(guestSm, nil)
+
+		suggestion := newSuggestion("space-1", "topic-1")
+		if guestPolicy.CanUpdateSuggestion(suggestion) {
+			t.Error("非アクティブな非トピックメンバーは編集提案を編集できないべき")
+		}
+		if guestPolicy.CanUpdateSuggestionComment(suggestion) {
+			t.Error("非アクティブな非トピックメンバーは編集提案のコメントを編集できないべき")
 		}
 	})
 }

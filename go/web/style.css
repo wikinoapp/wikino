@@ -128,6 +128,8 @@
   --secondary: var(--color-brand-200);
   --secondary-foreground: var(--color-brand-950);
   --accent: var(--color-brand-200);
+  --border: var(--color-stone-300);
+  --input: var(--color-stone-300);
   --sidebar: var(--color-brand-50);
   --sidebar-accent: var(--color-brand-100);
   --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */

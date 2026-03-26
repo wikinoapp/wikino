@@ -73,6 +73,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// バリデーション
 	validationResult := h.createValidator.Validate(ctx, validator.SuggestionCreateValidatorInput{
 		Title:         title,
+		Body:          body,
 		DraftPageIDs:  draftPageIDs,
 		SpaceMemberID: output.SpaceMember.ID,
 		TopicID:       output.Topic.ID,

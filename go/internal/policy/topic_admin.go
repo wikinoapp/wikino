@@ -31,3 +31,11 @@ func (p *topicAdminPolicy) CanApplySuggestion(suggestion *model.Suggestion) bool
 func (p *topicAdminPolicy) CanCloseSuggestion(suggestion *model.Suggestion) bool {
 	return p.spaceMemberActive && (p.spaceMemberID == suggestion.CreatedSpaceMemberID || p.topicID == suggestion.TopicID)
 }
+
+func (p *topicAdminPolicy) CanUpdateSuggestion(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.topicID == suggestion.TopicID && suggestion.Status == model.SuggestionStatusOpen
+}
+
+func (p *topicAdminPolicy) CanUpdateSuggestionComment(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.topicID == suggestion.TopicID && suggestion.Status == model.SuggestionStatusOpen
+}

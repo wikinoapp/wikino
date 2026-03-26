@@ -82,7 +82,7 @@ templ Index(data IndexData) {
 																</td>
 
 																<td class="text-muted-foreground whitespace-nowrap">
-																	{ draft.ModifiedAt }
+																	{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
 																</td>
 															</tr>
 														}

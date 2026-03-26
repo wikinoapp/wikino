@@ -6,7 +6,6 @@ package components
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
 import (
-	"log/slog"
 	"time"
 
 	"github.com/a-h/templ"
@@ -15,26 +14,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// formatTimeInZone はUTC時刻をユーザーのタイムゾーンに変換してフォーマットします
-func formatTimeInZone(modifiedAt time.Time, timeZone string) string {
-	if timeZone == "" {
-		return modifiedAt.Format("15:04")
-	}
-
-	loc, err := time.LoadLocation(timeZone)
-	if err != nil {
-		slog.Warn("タイムゾーンの読み込みに失敗", "time_zone", timeZone, "error", err)
-		return modifiedAt.Format("15:04")
-	}
-
-	return modifiedAt.In(loc).Format("15:04")
-}
-
 // DraftPageShowResponseData は下書きページShowエンドポイントのOOBスワップレスポンスデータです
 type DraftPageShowResponseData struct {
 	HasDraft     bool
 	ModifiedAt   time.Time
-	TimeZone     string
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
 }
@@ -67,7 +50,7 @@ func DraftPageShowResponse(data DraftPageShowResponseData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": formatTimeInZone(data.ModifiedAt, data.TimeZone)})).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": templates.FormatTime(ctx, data.ModifiedAt)})).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

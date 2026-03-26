@@ -808,6 +808,10 @@ other = "Please select at least one draft page"
 description = "Draft page not found error"
 other = "Selected draft page was not found"
 
+[validation_suggestion_body_too_long]
+description = "Suggestion body too long error"
+other = "Body must be 10000 characters or less"
+
 # Suggestion creation
 
 [suggestion_new_title]
@@ -854,6 +858,40 @@ other = "Create Suggestion"
 description = "Suggestion creation success message"
 other = "Suggestion has been created"
 
+# Suggestion edit
+
+[suggestion_edit_title]
+description = "Suggestion edit page title"
+other = "Edit Suggestion - #{{.SuggestionNumber}} {{.SuggestionTitle}} | {{.SpaceName}}"
+
+[suggestion_edit_heading]
+description = "Suggestion edit page heading"
+other = "Edit Suggestion"
+
+[suggestion_edit_title_label]
+description = "Suggestion edit title label"
+other = "Title"
+
+[suggestion_edit_title_placeholder]
+description = "Suggestion edit title placeholder"
+other = "Suggestion title"
+
+[suggestion_edit_body_label]
+description = "Suggestion edit body label"
+other = "Body"
+
+[suggestion_edit_body_placeholder]
+description = "Suggestion edit body placeholder"
+other = "Suggestion description (Markdown supported)"
+
+[suggestion_edit_submit]
+description = "Suggestion edit submit button"
+other = "Update"
+
+[suggestion_update_success]
+description = "Suggestion update success message"
+other = "Suggestion has been updated"
+
 # Suggestion detail
 
 [suggestion_show_title]
@@ -888,6 +926,10 @@ other = "Conversation"
 description = "Suggestion detail changed pages tab"
 other = "Changed pages"
 
+[suggestion_show_no_body]
+description = "Text displayed when suggestion body is empty"
+other = "No description provided"
+
 # Suggestion comments
 
 [validation_suggestion_comment_body_required]
@@ -906,6 +948,22 @@ other = "Comment"
 description = "Suggestion comment body placeholder"
 other = "Write a comment"
 
+[suggestion_show_comments_heading]
+description = "Comments heading on suggestion detail page"
+other = "Comments"
+
+[suggestion_show_edit_button]
+description = "Edit button on suggestion detail page"
+other = "Edit"
+
+[suggestion_show_action_description]
+description = "Description text for suggestion apply/close action area"
+other = "You can apply the changes from this suggestion to the topic, or close it."
+
+[suggestion_comment_edit_action]
+description = "Edit action in suggestion comment dropdown menu"
+other = "Edit"
+
 [suggestion_comment_submit]
 description = "Suggestion comment submit button"
 other = "Comment"
@@ -913,6 +971,30 @@ other = "Comment"
 [suggestion_comment_create_success]
 description = "Suggestion comment creation success message"
 other = "Comment has been posted"
+
+[suggestion_comment_edit_heading]
+description = "Suggestion comment edit page heading"
+other = "Edit comment"
+
+[suggestion_comment_edit_title]
+description = "Suggestion comment edit page title"
+other = "Edit comment - #{{.SuggestionNumber}} {{.SuggestionTitle}} - {{.SpaceName}}"
+
+[suggestion_comment_edit_body_label]
+description = "Suggestion comment edit body label"
+other = "Comment"
+
+[suggestion_comment_edit_body_placeholder]
+description = "Suggestion comment edit body placeholder"
+other = "Write a comment"
+
+[suggestion_comment_edit_submit]
+description = "Suggestion comment edit submit button"
+other = "Update"
+
+[suggestion_comment_update_success]
+description = "Suggestion comment update success message"
+other = "Comment has been updated"
 
 # Suggestion apply
 
@@ -983,3 +1065,20 @@ other = "Continue with suggestion content"
 [suggestion_page_edit_keep_draft_button]
 description = "Button to keep existing draft"
 other = "Keep existing draft"
+
+# Datetime display
+[datetime_just_now]
+description = "Relative time for less than 1 minute"
+other = "just now"
+
+[datetime_minutes_ago]
+description = "Relative time for N minutes ago"
+other = "{{.Count}} minutes ago"
+
+[datetime_hours_ago]
+description = "Relative time for N hours ago"
+other = "{{.Count}} hours ago"
+
+[datetime_days_ago]
+description = "Relative time for N days ago"
+other = "{{.Count}} days ago"

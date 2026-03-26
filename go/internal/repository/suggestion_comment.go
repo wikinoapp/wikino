@@ -30,6 +30,7 @@ type CreateSuggestionCommentInput struct {
 	SpaceID              model.SpaceID
 	SuggestionID         model.SuggestionID
 	CreatedSpaceMemberID model.SpaceMemberID
+	Number               model.SuggestionCommentNumber
 	Body                 string
 	BodyHTML             string
 }
@@ -42,6 +43,7 @@ func (r *SuggestionCommentRepository) Create(ctx context.Context, input CreateSu
 		SpaceID:              string(input.SpaceID),
 		SuggestionID:         string(input.SuggestionID),
 		CreatedSpaceMemberID: string(input.CreatedSpaceMemberID),
+		Number:               int32(input.Number),
 		Body:                 input.Body,
 		BodyHtml:             input.BodyHTML,
 		CreatedAt:            now,
@@ -88,6 +90,57 @@ func (r *SuggestionCommentRepository) CountBySuggestionID(ctx context.Context, s
 	})
 }
 
+// FindByNumber は編集提案IDと番号でコメントを取得する（スペースIDでスコープ）
+func (r *SuggestionCommentRepository) FindByNumber(ctx context.Context, suggestionID model.SuggestionID, number model.SuggestionCommentNumber, spaceID model.SpaceID) (*model.SuggestionComment, error) {
+	row, err := r.q.FindSuggestionCommentByNumber(ctx, query.FindSuggestionCommentByNumberParams{
+		SuggestionID: string(suggestionID),
+		Number:       int32(number),
+		SpaceID:      string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// UpdateSuggestionCommentInput は編集提案コメント更新の入力パラメータ
+type UpdateSuggestionCommentInput struct {
+	ID       model.SuggestionCommentID
+	SpaceID  model.SpaceID
+	Body     string
+	BodyHTML string
+}
+
+// Update は編集提案コメントの本文を更新する
+func (r *SuggestionCommentRepository) Update(ctx context.Context, input UpdateSuggestionCommentInput) (*model.SuggestionComment, error) {
+	row, err := r.q.UpdateSuggestionComment(ctx, query.UpdateSuggestionCommentParams{
+		ID:        string(input.ID),
+		Body:      input.Body,
+		BodyHtml:  input.BodyHTML,
+		UpdatedAt: time.Now(),
+		SpaceID:   string(input.SpaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// GetNextNumber は編集提案内の次のコメント番号を取得する
+func (r *SuggestionCommentRepository) GetNextNumber(ctx context.Context, suggestionID model.SuggestionID) (model.SuggestionCommentNumber, error) {
+	n, err := r.q.GetNextSuggestionCommentNumber(ctx, string(suggestionID))
+	if err != nil {
+		return 0, err
+	}
+	return model.SuggestionCommentNumber(n), nil
+}
+
 // toModel は query.SuggestionComment を model.SuggestionComment に変換する
 func (r *SuggestionCommentRepository) toModel(row query.SuggestionComment) *model.SuggestionComment {
 	return &model.SuggestionComment{
@@ -95,6 +148,7 @@ func (r *SuggestionCommentRepository) toModel(row query.SuggestionComment) *mode
 		SpaceID:              model.SpaceID(row.SpaceID),
 		SuggestionID:         model.SuggestionID(row.SuggestionID),
 		CreatedSpaceMemberID: model.SpaceMemberID(row.CreatedSpaceMemberID),
+		Number:               model.SuggestionCommentNumber(row.Number),
 		Body:                 row.Body,
 		BodyHTML:             row.BodyHtml,
 		CreatedAt:            row.CreatedAt,

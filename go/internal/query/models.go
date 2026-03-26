@@ -343,6 +343,7 @@ type SuggestionComment struct {
 	BodyHtml             string    `json:"body_html"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
+	Number               int32     `json:"number"`
 }
 
 type SuggestionPage struct {

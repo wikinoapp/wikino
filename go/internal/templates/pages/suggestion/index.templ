@@ -57,10 +57,20 @@ templ Index(data IndexData) {
 						</div>
 
 						<div class="px-4">
-							@components.TopicTabs(components.TopicTabsData{
-								PagesPath:       string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
-								SuggestionsPath: data.suggestionsPath(""),
-								ActiveTab:       components.TopicTabSuggestions,
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "topic_show_tab_pages"),
+									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "file-regular",
+									ActiveIconName: "file-fill",
+								},
+								{
+									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+									Path:           data.suggestionsPath(""),
+									IconName:       "git-pull-request-regular",
+									ActiveIconName: "git-pull-request-fill",
+									IsActive:       true,
+								},
 							})
 						</div>
 					</div>

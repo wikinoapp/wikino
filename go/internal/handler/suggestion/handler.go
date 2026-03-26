@@ -17,8 +17,10 @@ type Handler struct {
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
 	getSuggestionNewUsecase    *usecase.GetSuggestionNewUsecase
 	createSuggestionUsecase    *usecase.CreateSuggestionUsecase
+	updateSuggestionUsecase    *usecase.UpdateSuggestionUsecase
 	sidebarHelper              *sidebar.Helper
 	createValidator            *validator.SuggestionCreateValidator
+	updateValidator            *validator.SuggestionUpdateValidator
 }
 
 // NewHandler は新しい編集提案ハンドラーを作成します
@@ -29,8 +31,10 @@ func NewHandler(
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
 	getSuggestionNewUsecase *usecase.GetSuggestionNewUsecase,
 	createSuggestionUsecase *usecase.CreateSuggestionUsecase,
+	updateSuggestionUsecase *usecase.UpdateSuggestionUsecase,
 	sidebarHelper *sidebar.Helper,
 	createValidator *validator.SuggestionCreateValidator,
+	updateValidator *validator.SuggestionUpdateValidator,
 ) *Handler {
 	return &Handler{
 		cfg:                        cfg,
@@ -39,7 +43,9 @@ func NewHandler(
 		getSuggestionDetailUsecase: getSuggestionDetailUsecase,
 		getSuggestionNewUsecase:    getSuggestionNewUsecase,
 		createSuggestionUsecase:    createSuggestionUsecase,
+		updateSuggestionUsecase:    updateSuggestionUsecase,
 		sidebarHelper:              sidebarHelper,
 		createValidator:            createValidator,
+		updateValidator:            updateValidator,
 	}
 }

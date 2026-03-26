@@ -88,6 +88,8 @@
 - 編集提案の作成はスペースメンバーのみ可能。公開トピックであってもスペースへの参加が必要となる
 - 編集提案作成者がスペースから退会しても、作成済みの編集提案は保持される
 - ページ編集画面の「下書き保存」ボタンの右側にドロップダウンメニューを表示するアイコンがあり、クリックすると「下書き保存して編集提案を作成する...」アクションが選択できる。このアクションを実行すると、下書き保存後に下書き一覧画面にはリダイレクトせず、保存した下書きページが選択された状態で編集提案作成画面に直接遷移する
+- オープン状態の編集提案のタイトルと本文を編集できる。編集はスペースメンバー（アクティブ）であれば誰でも可能（作成者以外も可）
+- オープン状態の編集提案のコメントの本文を編集できる。編集権限は編集提案と同じくスペースメンバー（アクティブ）であれば誰でも可能
 
 ## 実装ガイドラインの参照
 
@@ -212,18 +214,24 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 
 編集提案のステータス変更（反映・クローズ）は、編集提案の内容更新（タイトル・本文の変更）とは別のエンドポイントとして設計する。
 
-| 操作         | HTTPメソッド | URL                                                                     | ハンドラー                     |
-| ------------ | ------------ | ----------------------------------------------------------------------- | ------------------------------ |
-| 一覧         | GET          | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/index.go`          |
-| 作成フォーム | GET          | `/s/{space}/topics/{topic}/suggestions/new`                             | `suggestion/new.go`            |
-| 作成         | POST         | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/create.go`         |
-| 詳細         | GET          | `/s/{space}/suggestions/{number}`                                       | `suggestion/show.go`           |
-| 反映         | POST         | `/s/{space}/suggestions/{number}/apply`                                 | `suggestion_apply/create.go`   |
-| クローズ     | POST         | `/s/{space}/suggestions/{number}/close`                                 | `suggestion_close/create.go`   |
-| コメント作成 | POST         | `/s/{space}/suggestions/{number}/comments`                              | `suggestion_comment/create.go` |
-| ページ更新   | PATCH        | `/s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}` | `suggestion_page/update.go`    |
+| 操作                 | HTTPメソッド | URL                                                                     | ハンドラー                     |
+| -------------------- | ------------ | ----------------------------------------------------------------------- | ------------------------------ |
+| 一覧                 | GET          | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/index.go`          |
+| 作成フォーム         | GET          | `/s/{space}/topics/{topic}/suggestions/new`                             | `suggestion/new.go`            |
+| 作成                 | POST         | `/s/{space}/topics/{topic}/suggestions`                                 | `suggestion/create.go`         |
+| 詳細                 | GET          | `/s/{space}/suggestions/{number}`                                       | `suggestion/show.go`           |
+| 編集フォーム         | GET          | `/s/{space}/suggestions/{number}/edit`                                  | `suggestion/edit.go`           |
+| 更新                 | PATCH        | `/s/{space}/suggestions/{number}`                                       | `suggestion/update.go`         |
+| 反映                 | POST         | `/s/{space}/suggestions/{number}/apply`                                 | `suggestion_apply/create.go`   |
+| クローズ             | POST         | `/s/{space}/suggestions/{number}/close`                                 | `suggestion_close/create.go`   |
+| コメント作成         | POST         | `/s/{space}/suggestions/{number}/comments`                              | `suggestion_comment/create.go` |
+| コメント編集フォーム | GET          | `/s/{space}/suggestions/{number}/comments/{comment_number}/edit`        | `suggestion_comment/edit.go`   |
+| コメント更新         | PATCH        | `/s/{space}/suggestions/{number}/comments/{comment_number}`             | `suggestion_comment/update.go` |
+| ページ更新           | PATCH        | `/s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}` | `suggestion_page/update.go`    |
 
-反映・クローズを独立したリソース（`suggestion_apply`、`suggestion_close`）として切り出すことで、将来 `PATCH /s/{space}/suggestions/{number}` で編集提案のタイトル・本文を更新するエンドポイントを追加する際に競合しない。
+反映・クローズを独立したリソース（`suggestion_apply`、`suggestion_close`）として切り出すことで、`PATCH /s/{space}/suggestions/{number}` を編集提案のタイトル・本文の更新に使用できる。
+
+コメントのURLには `suggestion_comments.id`（UUID）ではなく、編集提案内の連番（`comment_number`）を使用する。これにより、編集提案の `number`（スペース内連番）と統一感のあるURLになる。
 
 ### フィーチャーフラグ
 
@@ -293,7 +301,9 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
   - featured_image_attachment_idはbody内の最初の画像から抽出されたアイキャッチ画像の添付ファイルID。編集提案作成時に `extractFeaturedImageAttachmentID()` で計算し、反映時にそのまま `pages.featured_image_attachment_id` に反映する
   - ユニークインデックス: [suggestion_id, page_id]
 - 編集提案コメントテーブル (`suggestion_comments`)
-  - id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
+  - id, space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at
+  - numberは編集提案内での連番。URLのキーとして使用する（例: `/s/{space}/suggestions/{number}/comments/{comment_number}`）
+  - ユニークインデックス: [suggestion_id, number]
 
 #### 既存テーブルの変更
 
@@ -324,6 +334,8 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 - 「会話」タブ：編集提案の概要とコメント表示
 - 「編集したページ」タブ：変更差分の表示
 - 「反映する」ボタン（権限がある場合）
+- タイトル横に「編集する」ボタンを配置（`@components.MainTitle` の `Actions`。トピック画面の「新規ページ」ボタンと同じパターンで、ドロップダウンではなく直接ボタンを配置する）。クリックすると編集提案のタイトルと本文を編集する別画面に遷移する。オープン状態かつ `CanUpdateSuggestion` がtrueの場合のみ表示
+- 各コメントの投稿ヘッダー（`@atname` + 日時の行）の右端に「...」ドロップダウンメニューを配置。メニュー内に「編集する」アイテムがあり、クリックするとコメント編集画面に遷移する。`CanUpdateSuggestionComment` がtrueの場合のみ表示
 
 ページ編集画面:
 
@@ -904,6 +916,87 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **フィーチャーフラグ対応**: `go_suggestion` フラグが有効な場合のみボタンを表示する
   - **想定ファイル数**: 実装 2, テスト 1
   - **想定行数**: 実装 約60行, テスト 約40行
+
+### フェーズ 11: タブコンポーネントの統合
+
+- [x] **11-1**: [Go] 汎用タブナビゲーションコンポーネントの作成と既存実装の置き換え
+  - トピック詳細画面の `components.TopicTabs` と編集提案詳細画面の `showTabs` が同じタブUIだが別々の実装になっているため、1つの汎用コンポーネントに統合する
+  - `internal/templates/components/` に汎用タブナビゲーションコンポーネントを作成（Basecoat の `Tabs` と名前が衝突しないよう `NavTabs` 等の名前にする）
+  - コンポーネントはタブ項目のスライスを受け取り、各項目にはラベル・パス・アイコン名・アクティブ状態・バッジ（任意）を指定可能にする
+  - `internal/templates/pages/topic/show.templ` を新コンポーネントに置き換え
+  - `internal/templates/pages/suggestion/show.templ` の `showTabs` を新コンポーネントに置き換え
+  - `internal/templates/pages/suggestion/changes.templ` にも同じタブがあれば同様に置き換え
+  - 既存の `components/topic_tabs.templ` は削除する
+  - **想定ファイル数**: 実装 4, テスト 0
+  - **想定行数**: 実装 約80行（新コンポーネント作成 + 既存ファイルの差し替え）
+
+### フェーズ 12: 編集提案・コメントの編集
+
+<!--
+設計メモ:
+- 編集権限: スペースメンバー（アクティブ）であれば編集可能（作成者以外も可。編集提案を作成できる人と同じ権限）
+- 編集対象: 編集提案のタイトル・本文、コメントの本文
+- 編集可能なステータス: オープン状態の編集提案のみ（反映済み・クローズ済みは編集不可）
+- 編集提案の編集UI: `@components.MainTitle` の `Actions` にトピック画面の「新規ページ」ボタンと同じパターンで「編集する」ボタンを直接配置。タイトル + 本文を一緒に編集する別画面に遷移
+- コメントの編集UI: 各コメントの Post コンポーネントのヘッダー右端に「...」ドロップダウンを配置し、「編集する」から別画面に遷移
+- コメントの number: `suggestion_comments` に `number` カラムを追加し、編集提案内で一意の連番とする。URLに UUID を露出させず `/comments/{comment_number}` とすることで、suggestions の number との統一感を保つ
+-->
+
+- [x] **12-1**: [Go] 編集提案・コメント編集の権限（Policy）追加
+  - `internal/policy/topic.go` の `TopicPolicy` インターフェースに `CanUpdateSuggestion` と `CanUpdateSuggestionComment` を追加
+  - スペースメンバー（アクティブ）であれば編集可能とする（作成者以外も編集可能）
+  - オープン状態の編集提案のみ編集可能
+  - 既存の Policy テストにテストケースを追加
+  - **想定ファイル数**: 実装 1, テスト 1
+  - **想定行数**: 実装 約30行, テスト 約60行
+
+- [x] **12-2**: [Go] `suggestion_comments` に `number` カラムを追加
+  - `go/db/migrations/` にマイグレーション作成: `suggestion_comments` テーブルに `number INTEGER NOT NULL` カラムを追加
+  - ユニークインデックス `[suggestion_id, number]` を追加（編集提案内で一意）
+  - 既存レコードには `ROW_NUMBER() OVER (PARTITION BY suggestion_id ORDER BY created_at)` でナンバーを付与
+  - `internal/query/queries/suggestion_comments.sql` に `GetNextSuggestionCommentNumber` クエリを追加
+  - `internal/repository/suggestion_comment.go` に `GetNextNumber` メソッドを追加
+  - `internal/model/suggestion_comment.go` の `SuggestionComment` に `Number` フィールドを追加、`internal/model/id.go` に `SuggestionCommentNumber` 型を追加
+  - `internal/usecase/create_suggestion_comment.go` でナンバーを採番するよう更新
+  - `internal/repository/suggestion_comment.go` の既存メソッドで `number` カラムを取得するよう更新
+  - sqlc コード再生成
+  - **想定ファイル数**: 実装 6, テスト 1
+  - **想定行数**: 実装 約80行, テスト 約40行
+
+- [x] **12-3**: [Go] 編集提案詳細画面に「編集する」ボタンを追加 & Post コンポーネントにコメント用「...」ドロップダウンを追加
+  - `internal/templates/pages/suggestion/show.templ` の `@components.MainTitle` で `Actions` に「編集する」ボタンを配置（トピック画面の「新規ページ」ボタンと同じパターン。ドロップダウンではなく直接ボタンを配置）
+  - `CanUpdateSuggestion` がtrueかつオープン状態の場合のみ表示
+  - `internal/templates/components/post.templ` の `PostData` に `Actions []PostAction` フィールドを追加（`PostAction` は Label, URL を持つ構造体）
+  - Post コンポーネントのヘッダー行（`@atname` + 日時）の右端に「...」アイコンボタンを配置し、Basecoat の Dropdown Menu でアクション一覧を表示。Actions が空の場合は非表示
+    - Basecoat の Dropdown Menu: https://basecoatui.com/components/dropdown-menu/
+  - `show.templ` で `CanUpdateSuggestionComment` の結果に応じて各コメントの Post に「編集する」アクションを設定
+  - 翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 4, テスト 0
+  - **想定行数**: 実装 約100行
+
+- [x] **12-4**: [Go] 編集提案本文の編集（Validator・UseCase・ハンドラー・テンプレート）
+  - `internal/validator/suggestion.go` に `SuggestionUpdateValidator` を作成（タイトル必須・長さ制限、本文長さ制限）
+  - `internal/usecase/update_suggestion.go` に `UpdateSuggestionUsecase` を作成（タイトル・本文更新、Markdown→HTML変換）
+  - `internal/repository/suggestion.go` に `Update` メソッドを追加
+  - `internal/query/queries/suggestions.sql` に UPDATE クエリを追加
+  - `internal/handler/suggestion/edit.go` に `Edit` メソッドを実装（GET /s/{space}/suggestions/{number}/edit）
+  - `internal/handler/suggestion/update.go` に `Update` メソッドを実装（PATCH /s/{space}/suggestions/{number}）
+  - `internal/templates/pages/suggestion/edit.templ` に編集フォームテンプレートを作成（タイトル + 本文の編集フォーム）
+  - `cmd/server/main.go` にルーティング登録、翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 8, テスト 3
+  - **想定行数**: 実装 約300行, テスト 約250行
+
+- [x] **12-5**: [Go] コメントの編集（Validator・UseCase・ハンドラー・テンプレート）
+  - `internal/validator/suggestion_comment.go` に `SuggestionCommentUpdateValidator` を追加（本文必須・長さ制限）
+  - `internal/usecase/update_suggestion_comment.go` に `UpdateSuggestionCommentUsecase` を作成（本文更新、Markdown→HTML変換）
+  - `internal/repository/suggestion_comment.go` に `Update` メソッドを追加
+  - `internal/query/queries/suggestion_comments.sql` に UPDATE クエリを追加
+  - `internal/handler/suggestion_comment/edit.go` に `Edit` メソッドを実装（GET /s/{space}/suggestions/{number}/comments/{comment_number}/edit）
+  - `internal/handler/suggestion_comment/update.go` に `Update` メソッドを実装（PATCH /s/{space}/suggestions/{number}/comments/{comment_number}）
+  - `internal/templates/pages/suggestion_comment/edit.templ` に編集フォームテンプレートを作成
+  - `cmd/server/main.go` にルーティング登録、翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 8, テスト 3
+  - **想定行数**: 実装 約250行, テスト 約200行
 
 ### フェーズ N: フィーチャーフラグの削除
 

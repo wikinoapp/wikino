@@ -1,4 +1,4 @@
-// Package suggestion_comment は編集提案コメント関連のHTTPハンドラーを提供します
+// Package suggestion_comment は編集提案コメント作成関連のHTTPハンドラーを提供します
 package suggestion_comment
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// Handler は編集提案コメントハンドラー
+// Handler は編集提案コメント作成ハンドラー
 type Handler struct {
 	flashMgr                       *session.FlashManager
 	getSuggestionDetailUsecase     *usecase.GetSuggestionDetailUsecase
@@ -15,7 +15,7 @@ type Handler struct {
 	createValidator                *validator.SuggestionCommentCreateValidator
 }
 
-// NewHandler は新しい編集提案コメントハンドラーを作成します
+// NewHandler は新しい編集提案コメント作成ハンドラーを作成します
 func NewHandler(
 	flashMgr *session.FlashManager,
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,

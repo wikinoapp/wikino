@@ -10,6 +10,7 @@ type SuggestionComment struct {
 	SpaceID              SpaceID
 	SuggestionID         SuggestionID
 	CreatedSpaceMemberID SpaceMemberID
+	Number               SuggestionCommentNumber
 	Body                 string
 	BodyHTML             string
 	CreatedAt            time.Time
