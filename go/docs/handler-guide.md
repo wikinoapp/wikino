@@ -131,6 +131,11 @@ internal/validator/
 - **個別ハンドラーテスト**: `{action}_test.go`（例: `index_test.go`, `show_test.go`）も許可
 - **バリデーションテスト**: `internal/validator/` パッケージに配置（`{resource}_test.go`）
 
+**テスト関数の配置ルール**: 個別テストファイル（`{action}_test.go`）を使用する場合、テスト関数は対応するアクションのファイルに配置する。異なるアクションのテストを 1 つの `{action}_test.go` に混在させない。
+
+- ✅ `TestUpdate_*` → `update_test.go`、`TestEdit_*` → `edit_test.go`
+- ❌ `TestUpdate_*` を `edit_test.go` に配置する
+
 ## メソッド命名規則
 
 リソースディレクトリ内では以下のメソッド名を使用します：
