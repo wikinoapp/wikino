@@ -29,15 +29,16 @@ func (q *Queries) CountSuggestionCommentsBySuggestionID(ctx context.Context, arg
 }
 
 const createSuggestionComment = `-- name: CreateSuggestionComment :one
-INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at
+INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number
 `
 
 type CreateSuggestionCommentParams struct {
 	SpaceID              string    `json:"space_id"`
 	SuggestionID         string    `json:"suggestion_id"`
 	CreatedSpaceMemberID string    `json:"created_space_member_id"`
+	Number               int32     `json:"number"`
 	Body                 string    `json:"body"`
 	BodyHtml             string    `json:"body_html"`
 	CreatedAt            time.Time `json:"created_at"`
@@ -50,6 +51,7 @@ func (q *Queries) CreateSuggestionComment(ctx context.Context, arg CreateSuggest
 		arg.SpaceID,
 		arg.SuggestionID,
 		arg.CreatedSpaceMemberID,
+		arg.Number,
 		arg.Body,
 		arg.BodyHtml,
 		arg.CreatedAt,
@@ -65,12 +67,13 @@ func (q *Queries) CreateSuggestionComment(ctx context.Context, arg CreateSuggest
 		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Number,
 	)
 	return i, err
 }
 
 const findSuggestionCommentByID = `-- name: FindSuggestionCommentByID :one
-SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at FROM suggestion_comments
+SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
 WHERE id = $1 AND space_id = $2
 `
 
@@ -92,12 +95,54 @@ func (q *Queries) FindSuggestionCommentByID(ctx context.Context, arg FindSuggest
 		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Number,
 	)
 	return i, err
 }
 
+const findSuggestionCommentByNumber = `-- name: FindSuggestionCommentByNumber :one
+SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
+WHERE suggestion_id = $1 AND number = $2 AND space_id = $3
+`
+
+type FindSuggestionCommentByNumberParams struct {
+	SuggestionID string `json:"suggestion_id"`
+	Number       int32  `json:"number"`
+	SpaceID      string `json:"space_id"`
+}
+
+// 編集提案IDと番号でコメントを取得する（スペースIDでスコープ）
+func (q *Queries) FindSuggestionCommentByNumber(ctx context.Context, arg FindSuggestionCommentByNumberParams) (SuggestionComment, error) {
+	row := q.db.QueryRowContext(ctx, findSuggestionCommentByNumber, arg.SuggestionID, arg.Number, arg.SpaceID)
+	var i SuggestionComment
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.SuggestionID,
+		&i.CreatedSpaceMemberID,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+	)
+	return i, err
+}
+
+const getNextSuggestionCommentNumber = `-- name: GetNextSuggestionCommentNumber :one
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM suggestion_comments WHERE suggestion_id = $1
+`
+
+// 編集提案内の次のコメント番号を取得する
+func (q *Queries) GetNextSuggestionCommentNumber(ctx context.Context, suggestionID string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNextSuggestionCommentNumber, suggestionID)
+	var next_number int32
+	err := row.Scan(&next_number)
+	return next_number, err
+}
+
 const listSuggestionCommentsBySuggestionID = `-- name: ListSuggestionCommentsBySuggestionID :many
-SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at FROM suggestion_comments
+SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
 WHERE suggestion_id = $1 AND space_id = $2
 ORDER BY created_at ASC
 `
@@ -126,6 +171,7 @@ func (q *Queries) ListSuggestionCommentsBySuggestionID(ctx context.Context, arg 
 			&i.BodyHtml,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Number,
 		); err != nil {
 			return nil, err
 		}
@@ -138,4 +184,43 @@ func (q *Queries) ListSuggestionCommentsBySuggestionID(ctx context.Context, arg 
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSuggestionComment = `-- name: UpdateSuggestionComment :one
+UPDATE suggestion_comments
+SET body = $2, body_html = $3, updated_at = $4
+WHERE id = $1 AND space_id = $5
+RETURNING id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number
+`
+
+type UpdateSuggestionCommentParams struct {
+	ID        string    `json:"id"`
+	Body      string    `json:"body"`
+	BodyHtml  string    `json:"body_html"`
+	UpdatedAt time.Time `json:"updated_at"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// 編集提案コメントの本文を更新する（スペースIDでスコープ）
+func (q *Queries) UpdateSuggestionComment(ctx context.Context, arg UpdateSuggestionCommentParams) (SuggestionComment, error) {
+	row := q.db.QueryRowContext(ctx, updateSuggestionComment,
+		arg.ID,
+		arg.Body,
+		arg.BodyHtml,
+		arg.UpdatedAt,
+		arg.SpaceID,
+	)
+	var i SuggestionComment
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.SuggestionID,
+		&i.CreatedSpaceMemberID,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+	)
+	return i, err
 }

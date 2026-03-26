@@ -50,6 +50,7 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 			SpaceID:              spaceID,
 			SuggestionID:         suggestionID,
 			CreatedSpaceMemberID: spaceMemberID,
+			Number:               1,
 			Body:                 "コメント本文",
 			BodyHTML:             "<p>コメント本文</p>",
 		})
@@ -71,6 +72,9 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 		if comment.CreatedSpaceMemberID != spaceMemberID {
 			t.Errorf("comment.CreatedSpaceMemberID = %v, want %v", comment.CreatedSpaceMemberID, spaceMemberID)
 		}
+		if comment.Number != 1 {
+			t.Errorf("comment.Number = %v, want 1", comment.Number)
+		}
 		if comment.Body != "コメント本文" {
 			t.Errorf("comment.Body = %v, want コメント本文", comment.Body)
 		}
@@ -82,6 +86,70 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 		}
 		if comment.UpdatedAt.IsZero() {
 			t.Error("comment.UpdatedAt is zero")
+		}
+	})
+}
+
+func TestSuggestionCommentRepository_GetNextNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionCommentRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sc-nextnumber@example.com").
+		WithAtname("sc_nextnumber").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sc-nextnumber-space").
+		WithName("SC NextNumber Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithTitle("番号テスト提案").
+		Build()
+
+	t.Run("コメントがない場合は1を返す", func(t *testing.T) {
+		n, err := repo.GetNextNumber(ctx, suggestionID)
+		if err != nil {
+			t.Fatalf("GetNextNumber() error = %v", err)
+		}
+		if n != 1 {
+			t.Errorf("GetNextNumber() = %v, want 1", n)
+		}
+	})
+
+	t.Run("コメントがある場合は次の番号を返す", func(t *testing.T) {
+		testutil.NewSuggestionCommentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+
+		n, err := repo.GetNextNumber(ctx, suggestionID)
+		if err != nil {
+			t.Fatalf("GetNextNumber() error = %v", err)
+		}
+		if n != 2 {
+			t.Errorf("GetNextNumber() = %v, want 2", n)
 		}
 	})
 }
@@ -253,6 +321,177 @@ func TestSuggestionCommentRepository_ListBySuggestionID(t *testing.T) {
 		}
 		if len(comments) != 0 {
 			t.Errorf("len(comments) = %v, want 0", len(comments))
+		}
+	})
+}
+
+func TestSuggestionCommentRepository_FindByNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionCommentRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sc-findnum@example.com").
+		WithAtname("sc_findnum").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sc-findnum-space").
+		WithName("SC FindNum Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
+	testutil.NewSuggestionCommentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithBody("番号検索対象コメント").
+		Build()
+
+	t.Run("番号でコメントを取得できる", func(t *testing.T) {
+		comment, err := repo.FindByNumber(ctx, suggestionID, 1, spaceID)
+		if err != nil {
+			t.Fatalf("FindByNumber() error = %v", err)
+		}
+		if comment == nil {
+			t.Fatal("FindByNumber() returned nil")
+		}
+		if comment.Body != "番号検索対象コメント" {
+			t.Errorf("comment.Body = %v, want 番号検索対象コメント", comment.Body)
+		}
+		if comment.Number != 1 {
+			t.Errorf("comment.Number = %v, want 1", comment.Number)
+		}
+	})
+
+	t.Run("存在しない番号の場合はnilを返す", func(t *testing.T) {
+		comment, err := repo.FindByNumber(ctx, suggestionID, 999, spaceID)
+		if err != nil {
+			t.Fatalf("FindByNumber() error = %v", err)
+		}
+		if comment != nil {
+			t.Errorf("FindByNumber() = %v, want nil", comment)
+		}
+	})
+
+	t.Run("異なるスペースIDではnilを返す", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("sc-findnum-other").
+			WithName("Other Space").
+			Build()
+
+		comment, err := repo.FindByNumber(ctx, suggestionID, 1, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByNumber() error = %v", err)
+		}
+		if comment != nil {
+			t.Errorf("FindByNumber() = %v, want nil", comment)
+		}
+	})
+}
+
+func TestSuggestionCommentRepository_Update(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionCommentRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sc-update@example.com").
+		WithAtname("sc_update").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sc-update-space").
+		WithName("SC Update Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
+	commentID := testutil.NewSuggestionCommentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithBody("更新前のコメント").
+		WithBodyHTML("<p>更新前のコメント</p>").
+		Build()
+
+	t.Run("コメントを更新できる", func(t *testing.T) {
+		comment, err := repo.Update(ctx, UpdateSuggestionCommentInput{
+			ID:       commentID,
+			SpaceID:  spaceID,
+			Body:     "更新後のコメント",
+			BodyHTML: "<p>更新後のコメント</p>",
+		})
+		if err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+		if comment == nil {
+			t.Fatal("Update() returned nil")
+		}
+		if comment.Body != "更新後のコメント" {
+			t.Errorf("comment.Body = %v, want 更新後のコメント", comment.Body)
+		}
+		if comment.BodyHTML != "<p>更新後のコメント</p>" {
+			t.Errorf("comment.BodyHTML = %v, want <p>更新後のコメント</p>", comment.BodyHTML)
+		}
+	})
+
+	t.Run("異なるスペースIDではnilを返す", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("sc-update-other").
+			WithName("Other Space").
+			Build()
+
+		comment, err := repo.Update(ctx, UpdateSuggestionCommentInput{
+			ID:       commentID,
+			SpaceID:  otherSpaceID,
+			Body:     "不正な更新",
+			BodyHTML: "<p>不正な更新</p>",
+		})
+		if err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+		if comment != nil {
+			t.Errorf("Update() = %v, want nil", comment)
 		}
 	})
 }

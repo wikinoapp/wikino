@@ -125,8 +125,14 @@ func (s SpaceIdentifier) String() string { return string(s) }
 // String はPageNumberを文字列に変換する
 func (n PageNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
+// SuggestionCommentNumber は編集提案コメント番号の型
+type SuggestionCommentNumber int32
+
 // String はSuggestionNumberを文字列に変換する
 func (n SuggestionNumber) String() string { return strconv.FormatInt(int64(n), 10) }
+
+// String はSuggestionCommentNumberを文字列に変換する
+func (n SuggestionCommentNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
 // TopicIDsToStrings はTopicIDスライスをstringスライスに変換する
 func TopicIDsToStrings(ids []TopicID) []string {
