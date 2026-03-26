@@ -1,0 +1,102 @@
+package suggestion_comment
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// EditData は編集提案コメント編集画面に渡すデータ構造体です
+type EditData struct {
+	CSRFToken  string
+	FormErrors *session.FormErrors
+	Space      viewmodel.Space
+	Topic      viewmodel.Topic
+	Suggestion viewmodel.SuggestionForDetail
+	Comment    viewmodel.SuggestionCommentForList
+	Body       string
+}
+
+// Edit は編集提案コメント編集画面のコンテンツを表示します
+templ Edit(data EditData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label:    data.Space.Name,
+						Path:     templates.SpacePath(data.Space.Identifier.String()),
+						IconName: "globe-regular",
+					},
+					{
+						Label: fmt.Sprintf("#%d %s", data.Suggestion.Number, data.Suggestion.Title),
+						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title: templates.T(ctx, "suggestion_comment_edit_heading"),
+						})
+					</div>
+
+					@components.FormErrors(data.FormErrors)
+
+					<div class="px-0 md:px-4">
+						<div class="card !rounded-none md:!rounded-xl">
+							<div class="card-body px-4">
+								<form
+									method="POST"
+									action={ templ.SafeURL(string(templates.SuggestionCommentPath(data.Space.Identifier.String(), data.Suggestion.Number, data.Comment.Number))) }
+									class="flex flex-col gap-6"
+								>
+									<input type="hidden" name="_method" value="PATCH"/>
+									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+									<div class="flex flex-col gap-2">
+										<label for="body" class="text-sm font-medium">
+											{ templates.T(ctx, "suggestion_comment_edit_body_label") }
+										</label>
+										<textarea
+											id="body"
+											name="body"
+											rows="8"
+											class={ "textarea", templ.KV("border-destructive", data.FormErrors != nil && data.FormErrors.HasFieldError("body")) }
+											placeholder={ templates.T(ctx, "suggestion_comment_edit_body_placeholder") }
+										>{ data.Body }</textarea>
+										if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
+											for _, errMsg := range data.FormErrors.GetFieldErrors("body") {
+												<p class="text-sm text-destructive">{ errMsg }</p>
+											}
+										}
+									</div>
+
+									<div class="flex justify-end">
+										<button
+											type="submit"
+											class="btn btn-primary"
+										>
+											{ templates.T(ctx, "suggestion_comment_edit_submit") }
+										</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

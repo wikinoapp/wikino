@@ -42,3 +42,36 @@ func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input S
 
 	return &SuggestionCommentCreateValidatorResult{FormErrors: formErrors}
 }
+
+// SuggestionCommentUpdateValidator は編集提案コメント更新のバリデーションを行う
+type SuggestionCommentUpdateValidator struct{}
+
+// NewSuggestionCommentUpdateValidator は SuggestionCommentUpdateValidator を生成する
+func NewSuggestionCommentUpdateValidator() *SuggestionCommentUpdateValidator {
+	return &SuggestionCommentUpdateValidator{}
+}
+
+// SuggestionCommentUpdateValidatorInput はバリデーションの入力パラメータ
+type SuggestionCommentUpdateValidatorInput struct {
+	Body string
+}
+
+// SuggestionCommentUpdateValidatorResult はバリデーションの結果
+type SuggestionCommentUpdateValidatorResult struct {
+	FormErrors *session.FormErrors
+}
+
+// Validate はバリデーションを行う
+func (v *SuggestionCommentUpdateValidator) Validate(ctx context.Context, input SuggestionCommentUpdateValidatorInput) *SuggestionCommentUpdateValidatorResult {
+	formErrors := session.NewFormErrors()
+
+	if input.Body == "" {
+		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_required"))
+	}
+
+	if input.Body != "" && utf8.RuneCountInString(input.Body) > suggestionCommentBodyMaxLength {
+		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_too_long"))
+	}
+
+	return &SuggestionCommentUpdateValidatorResult{FormErrors: formErrors}
+}
