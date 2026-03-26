@@ -12,6 +12,8 @@ type TopicPolicy interface {
 	CanUpdateDraftPage(draftPage *model.DraftPage) bool
 	CanApplySuggestion(suggestion *model.Suggestion) bool
 	CanCloseSuggestion(suggestion *model.Suggestion) bool
+	CanUpdateSuggestion(suggestion *model.Suggestion) bool
+	CanUpdateSuggestionComment(suggestion *model.Suggestion) bool
 }
 
 // NewTopicPolicy はスペースメンバー・トピックメンバー情報から適切なポリシーを生成する
