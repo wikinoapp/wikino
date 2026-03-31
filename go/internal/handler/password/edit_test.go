@@ -64,7 +64,6 @@ func TestEdit_Success(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+validToken, nil)
@@ -138,7 +137,6 @@ func TestEdit_TokenNotFound(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token=invalid-token", nil)
@@ -196,7 +194,6 @@ func TestEdit_TokenEmpty(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit", nil)
@@ -261,7 +258,6 @@ func TestEdit_TokenExpired(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+expiredToken, nil)
@@ -328,7 +324,6 @@ func TestEdit_TokenUsed(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+usedToken, nil)
@@ -393,7 +388,6 @@ func TestEdit_I18n_English(t *testing.T) {
 		flashMgr,
 		getTokenDataUC,
 		nil, // updatePasswordUsecase
-		nil, // updateValidator
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+validToken, nil)

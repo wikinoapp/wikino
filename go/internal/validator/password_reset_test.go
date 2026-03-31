@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
@@ -70,20 +71,22 @@ func TestPasswordResetCreateValidator_Validate(t *testing.T) {
 				ctx = i18n.SetLocale(ctx, "ja")
 
 				v := validator.NewPasswordResetCreateValidator()
-				result := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
+				err := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
 					Email: tt.email,
 				})
 
 				if tt.wantErrors {
-					if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-						t.Error("expected errors, but got none")
+					ve := model.AsValidationError(err)
+					if ve == nil {
+						t.Error("expected ValidationError, but got nil")
+						return
 					}
-					if tt.wantFieldError != "" && !result.FormErrors.HasFieldError(tt.wantFieldError) {
+					if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
 						t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
 					}
 				} else {
-					if result.FormErrors != nil && result.FormErrors.HasErrors() {
-						t.Errorf("unexpected errors: %v", result.FormErrors)
+					if err != nil {
+						t.Errorf("unexpected error: %v", err)
 					}
 				}
 			})
@@ -134,23 +137,24 @@ func TestPasswordResetCreateValidator_Validate_I18nMessages(t *testing.T) {
 			ctx = i18n.SetLocale(ctx, tt.locale)
 
 			v := validator.NewPasswordResetCreateValidator()
-			result := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
+			err := v.Validate(ctx, validator.PasswordResetCreateValidatorInput{
 				Email: tt.email,
 			})
 
-			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-				t.Fatal("expected errors, but got none")
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError, but got nil")
 			}
 
 			// エラーメッセージに期待するテキストが含まれているか確認
-			errors := result.FormErrors.GetFieldErrors("email")
+			errors := ve.GetFieldErrors("email")
 			if len(errors) == 0 {
 				t.Fatal("expected email field error, but not found")
 			}
 
 			found := false
-			for _, err := range errors {
-				if strings.Contains(err, tt.wantText) {
+			for _, e := range errors {
+				if strings.Contains(e, tt.wantText) {
 					found = true
 					break
 				}

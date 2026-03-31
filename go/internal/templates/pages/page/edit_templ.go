@@ -10,7 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -19,7 +19,7 @@ import (
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
 	CSRFToken               string
-	FormErrors              *session.FormErrors
+	FormErrors              *model.ValidationError
 	Page                    viewmodel.Page
 	Space                   viewmodel.Space
 	Topic                   viewmodel.Topic
@@ -552,7 +552,7 @@ func Edit(data EditPageData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full\"><div id=\"page-draft-saved-at\" class=\"text-xs text-right text-muted-foreground\"></div><a class=\"btn-outline bg-card hover:bg-accent rounded-full w-fit\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full\"><div id=\"page-draft-saved-at\" class=\"text-xs text-right text-muted-foreground\"></div><a class=\"btn-outline rounded-full w-fit\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

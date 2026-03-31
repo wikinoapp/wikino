@@ -59,29 +59,29 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	pageRepo := repository.NewPageRepository(queries)
 
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
+	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
+		suggestionRepo, userRepo,
 	)
 	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
-	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	commentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
+	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
+		suggestionRepo, suggestionCommentRepo, commentUpdateValidator,
+	)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	return suggestioncommentedithandler.NewHandler(
 		cfg,
 		flashMgr,
-		getSuggestionDetailUC,
+		getSuggestionEditUC,
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
 		sidebarHelper,
-		commentUpdateValidator,
 	)
 }
 

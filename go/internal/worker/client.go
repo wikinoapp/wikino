@@ -11,21 +11,20 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
-	"github.com/riverqueue/river/rivertype"
-
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/email"
+	"github.com/wikinoapp/wikino/go/internal/ratelimit"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Client は River クライアントのラッパー
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
 	pool        *pgxpool.Pool
-	hasWorkers  bool
 }
 
 // NewClient は新しい River クライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter) (*Client, error) {
 	// pgxpool の作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -54,21 +53,24 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 
 	// River ワーカーの登録
 	workers := river.NewWorkers()
-	hasWorkers := false
 
 	// メール送信ワーカーを登録
 	if emailSender != nil {
-		river.AddWorker(workers, NewSendEmailWorker(emailSender))
-		slog.InfoContext(ctx, "SendEmailWorker を登録しました")
-
-		river.AddWorker(workers, NewSendEmailConfirmationWorker(emailSender))
+		confirmationSender := email.NewConfirmationSender(emailSender)
+		sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(confirmationSender)
+		river.AddWorker(workers, NewSendEmailConfirmationWorker(sendEmailConfirmationUC))
 		slog.InfoContext(ctx, "SendEmailConfirmationWorker を登録しました")
 
-		river.AddWorker(workers, NewSendPasswordResetWorker(emailSender))
+		passwordResetSender := email.NewPasswordResetSender(emailSender)
+		sendPasswordResetUC := usecase.NewSendPasswordResetUsecase(passwordResetSender)
+		river.AddWorker(workers, NewSendPasswordResetWorker(sendPasswordResetUC))
 		slog.InfoContext(ctx, "SendPasswordResetWorker を登録しました")
-
-		hasWorkers = true
 	}
+
+	// Rate Limit クリーンアップワーカーを登録
+	cleanupRateLimitsUC := usecase.NewCleanupRateLimitsUsecase(limiter)
+	river.AddWorker(workers, NewCleanupRateLimitsWorker(cleanupRateLimitsUC))
+	slog.InfoContext(ctx, "CleanupRateLimitsWorker を登録しました")
 
 	// River クライアントの作成
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
@@ -86,29 +88,17 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config) (*Cl
 	return &Client{
 		riverClient: riverClient,
 		pool:        pool,
-		hasWorkers:  hasWorkers,
 	}, nil
 }
 
 // Start は River クライアントを起動します
-// ワーカーが未登録の場合はスキップします（River はワーカーが1つ以上必要なため）
 func (c *Client) Start(ctx context.Context) error {
-	if !c.hasWorkers {
-		slog.WarnContext(ctx, "ワーカーが未登録のため River クライアントの起動をスキップします")
-		return nil
-	}
-
 	slog.InfoContext(ctx, "River クライアントを起動します")
 	return c.riverClient.Start(ctx)
 }
 
 // Stop は River クライアントを停止します
 func (c *Client) Stop(ctx context.Context) error {
-	if !c.hasWorkers {
-		c.pool.Close()
-		return nil
-	}
-
 	slog.InfoContext(ctx, "River クライアントを停止します")
 	if err := c.riverClient.Stop(ctx); err != nil {
 		return err
@@ -120,14 +110,4 @@ func (c *Client) Stop(ctx context.Context) error {
 // Client は River クライアントへのアクセスを提供します
 func (c *Client) Client() *river.Client[pgx.Tx] {
 	return c.riverClient
-}
-
-// Insert はジョブをキューに追加します
-func (c *Client) Insert(ctx context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
-	// InsertOpts インターフェースを実装している場合は、そのオプションを使用
-	if optsProvider, ok := args.(interface{ InsertOpts() river.InsertOpts }); ok {
-		opts := optsProvider.InsertOpts()
-		return c.riverClient.Insert(ctx, args, &opts)
-	}
-	return c.riverClient.Insert(ctx, args, nil)
 }

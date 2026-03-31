@@ -10,8 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -41,26 +39,25 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得
+	// UseCaseでデータを取得（認可チェック含む）
 	output, err := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
 		UserID:          user.ID,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.NotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
 		slog.ErrorContext(ctx, "ページ移動データの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdatePage(output.Page) {
-		handler.NotFound(w, r)
 		return
 	}
 
@@ -74,7 +71,7 @@ func (h *Handler) renderMoveForm(
 	user *model.User,
 	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetPageMoveDataOutput,
-	formErrors *session.FormErrors,
+	formErrors *model.ValidationError,
 ) {
 	ctx := r.Context()
 

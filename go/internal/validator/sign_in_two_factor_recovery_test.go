@@ -2,10 +2,10 @@ package validator_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -103,17 +103,18 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_FormatValidation(t *tes
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+			_, err := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 				UserID:       "dummy-user-id",
 				RecoveryCode: tc.recoveryCode,
 			})
 
 			if tc.wantError {
-				if result.FormErrors == nil {
-					t.Errorf("expected error but got nil")
+				ve := model.AsValidationError(err)
+				if ve == nil {
+					t.Errorf("expected validation error but got %v", err)
 					return
 				}
-				if !result.FormErrors.HasFieldError(tc.errorField) {
+				if !ve.HasFieldError(tc.errorField) {
 					t.Errorf("expected error for field %s but not found", tc.errorField)
 				}
 			}
@@ -135,25 +136,22 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678", "abcd1234"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-valid@example.com").
-			WithAtname("recoveryvalid").
+			WithEmail("val-recovery-valid@example.com").
+			WithAtname("val-recoveryvalid").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, true, recoveryCodes)
 
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+		twoFactorAuth, err := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "code1234",
 		})
 
-		if result.Err != nil {
-			t.Errorf("unexpected error: %v", result.Err)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
-		if result.FormErrors != nil {
-			t.Errorf("unexpected form errors: %v", result.FormErrors)
-		}
-		if result.TwoFactorAuth == nil {
+		if twoFactorAuth == nil {
 			t.Error("expected TwoFactorAuth to be set")
 		}
 	})
@@ -169,27 +167,27 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-invalid@example.com").
-			WithAtname("recoveryinvalid").
+			WithEmail("val-recovery-invalid@example.com").
+			WithAtname("val-recoveryinvalid").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, true, recoveryCodes)
 
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+		_, err := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "wrongcod", // 無効なコード
 		})
 
-		if !errors.Is(result.Err, validator.ErrInvalidRecoveryCode) {
-			t.Errorf("expected ErrInvalidRecoveryCode, got %v", result.Err)
-		}
-		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Errorf("expected ValidationError, got %v", err)
+		} else if !ve.HasErrors() {
 			t.Error("expected form errors")
 		}
 	})
 
-	t.Run("2FAが有効でないユーザーの場合はエラーを返す", func(t *testing.T) {
+	t.Run("2FAが有効でないユーザーの場合はAppErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
@@ -200,28 +198,27 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-disabled@example.com").
-			WithAtname("recoverydisabled").
+			WithEmail("val-recovery-disabled@example.com").
+			WithAtname("val-recoverydisabled").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, false, recoveryCodes) // 2FAが無効
 
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+		_, err := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "code1234",
 		})
 
-		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
-		}
-		// 2FAが無効の場合はFormErrorsは設定されない（リダイレクト処理のため）
-		if result.FormErrors != nil {
-			t.Errorf("unexpected form errors: %v", result.FormErrors)
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Errorf("expected AppError, got %v", err)
+		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
+			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
 		}
 	})
 
-	t.Run("2FAが設定されていないユーザーの場合はエラーを返す", func(t *testing.T) {
+	t.Run("2FAが設定されていないユーザーの場合はAppErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
@@ -230,20 +227,23 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-nosetup@example.com").
-			WithAtname("recoverynosetup").
+			WithEmail("val-recovery-nosetup@example.com").
+			WithAtname("val-recoverynosetup").
 			Build() // 2FA設定なし
 
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+		_, err := v.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
 			UserID:       userID,
 			RecoveryCode: "anycode1",
 		})
 
-		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Errorf("expected AppError, got %v", err)
+		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
+			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
 		}
 	})
 }

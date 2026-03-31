@@ -12,15 +12,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -45,82 +42,62 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得
-	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
-		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdatePage(output.Page) {
-		handler.NotFound(w, r)
-		return
-	}
-
 	// フォームデータを取得
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 
-	// バリデーション
-	validationResult := h.updateValidator.Validate(ctx, validator.PageUpdateValidatorInput{
-		Title:           title,
-		PageID:          output.Page.ID,
-		TopicID:         output.Page.TopicID,
-		SpaceID:         output.Space.ID,
+	// UseCase を実行
+	publishOutput, err := h.publishPageUC.Execute(ctx, usecase.PublishPageInput{
 		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+		Title:           title,
+		Body:            body,
 	})
-
-	if validationResult.FormErrors.HasErrors() {
-		h.renderEditWithErrors(w, r, spaceIdentifier, output, title, body, validationResult.FormErrors)
-		return
-	}
-
-	// Titleをポインタに変換（空文字列の場合はnil）
-	var titlePtr *string
-	if title != "" {
-		titlePtr = &title
-	}
-
-	// ページ公開ユースケースを実行
-	input := usecase.PublishPageInput{
-		SpaceID:                      output.Space.ID,
-		PageID:                       output.Page.ID,
-		SpaceMemberID:                output.SpaceMember.ID,
-		TopicID:                      output.Page.TopicID,
-		Title:                        titlePtr,
-		Body:                         body,
-		SpaceIdentifier:              spaceIdentifier,
-		CurrentTopicName:             output.Topic.Name,
-		UnpublishedConflictingPageID: validationResult.UnpublishedConflictingPageID,
-	}
-
-	// DraftPageが存在する場合はDraftPageIDを設定
-	if output.DraftPage != nil {
-		input.DraftPageID = output.DraftPage.ID
-	}
-
-	_, err = h.publishPageUC.Execute(ctx, input)
 	if err != nil {
-		slog.ErrorContext(ctx, "ページの公開に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleUpdateError(w, r, err, user, spaceIdentifier, int32(pageNumber), title, body)
 		return
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_saved"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), output.Page.Number)
+	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), publishOutput.Page.Number)
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, pageNumber int32, title, body string) {
+	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		// バリデーションエラー → フォーム再描画
+		output, getErr := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
+			SpaceIdentifier: spaceIdentifier,
+			PageNumber:      pageNumber,
+			UserID:          user.ID,
+		})
+		if getErr != nil || output == nil {
+			slog.ErrorContext(ctx, "フォーム再表示用データの取得に失敗", "error", getErr, "original_error", ve.Error())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		h.renderEditWithErrors(w, r, spaceIdentifier, output, title, body, ve)
+		return
+	}
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+			handler.NotFound(w, r)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "ページの公開に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
 // renderEditWithErrors はバリデーションエラー時に編集画面を再表示します
@@ -131,7 +108,7 @@ func (h *Handler) renderEditWithErrors(
 	output *usecase.GetPageDetailOutput,
 	title string,
 	body string,
-	formErrors *session.FormErrors,
+	formErrors *model.ValidationError,
 ) {
 	ctx := r.Context()
 

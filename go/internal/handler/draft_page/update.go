@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -35,39 +35,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// フォームパラメータを取得
-	topicNumberStr := r.FormValue("pages_edit_form[topic_number]")
 	title := r.FormValue("pages_edit_form[title]")
 	body := r.FormValue("pages_edit_form[body]")
-
-	topicNumber, err := strconv.ParseInt(topicNumberStr, 10, 32)
-	if err != nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// UseCaseでデータ取得
-	output, err := h.getSaveDraftPageDataUC.Execute(ctx, usecase.GetSaveDraftPageDataInput{
-		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
-		TopicNumber:     int32(topicNumber),
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "下書き保存データの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdatePage(output.Page) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
 
 	// タイトルのポインタ変換（空文字列の場合もポインタとして渡す）
 	var titlePtr *string
@@ -75,18 +44,26 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// ユースケースを実行
+	// UseCase を実行
 	_, err = h.autoSaveDraftPageUC.Execute(ctx, usecase.AutoSaveDraftPageInput{
-		SpaceID:          output.Space.ID,
-		PageID:           output.Page.ID,
-		SpaceMemberID:    output.SpaceMember.ID,
-		TopicID:          output.Topic.ID,
-		Title:            titlePtr,
-		Body:             body,
-		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: output.Topic.Name,
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+		Title:           titlePtr,
+		Body:            body,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.NotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
+
 		slog.ErrorContext(ctx, "下書きの自動保存に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

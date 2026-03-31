@@ -6,7 +6,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はページハンドラー
@@ -17,7 +16,6 @@ type Handler struct {
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
 	publishPageUC     *usecase.PublishPageUsecase
 	sidebarHelper     *sidebar.Helper
-	updateValidator   *validator.PageUpdateValidator
 }
 
 // NewHandler は新しいページハンドラーを作成します
@@ -28,7 +26,6 @@ func NewHandler(
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
 	sidebarHelper *sidebar.Helper,
-	updateValidator *validator.PageUpdateValidator,
 ) *Handler {
 	return &Handler{
 		cfg:               cfg,
@@ -37,6 +34,5 @@ func NewHandler(
 		getEditLinkDataUC: getEditLinkDataUC,
 		publishPageUC:     publishPageUC,
 		sidebarHelper:     sidebarHelper,
-		updateValidator:   updateValidator,
 	}
 }

@@ -53,56 +53,40 @@ type GetPageMoveDataOutput struct {
 
 // Execute はページ移動フォームに必要なデータを取得する
 func (uc *GetPageMoveDataUsecase) Execute(ctx context.Context, input GetPageMoveDataInput) (*GetPageMoveDataOutput, error) {
-	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
+	// 1. データ取得 + 認可チェック
+	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-	}
-	if space == nil {
-		return nil, nil
+		return nil, err
 	}
 
-	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
-	}
-	if spaceMember == nil {
-		return nil, nil
+	if err := authorizePageUpdate(ctx, data); err != nil {
+		return nil, err
 	}
 
-	pg, err := uc.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(input.PageNumber))
-	if err != nil {
-		return nil, fmt.Errorf("ページの取得に失敗: %w", err)
-	}
-	if pg == nil {
-		return nil, nil
-	}
-
-	topicMember, err := uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
-	}
-
-	currentTopic, err := uc.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		return nil, fmt.Errorf("トピックの取得に失敗: %w", err)
-	}
-	if currentTopic == nil {
-		return nil, fmt.Errorf("ページのトピックが見つかりません: page_id=%s, topic_id=%s", pg.ID, pg.TopicID)
-	}
-
-	availableTopics, err := uc.availableTopicsForMove(ctx, spaceMember, space, pg.TopicID)
+	// 2. 移動先候補のトピック一覧を取得
+	availableTopics, err := uc.availableTopicsForMove(ctx, data.spaceMember, data.space, data.page.TopicID)
 	if err != nil {
 		return nil, fmt.Errorf("移動先トピック一覧の取得に失敗: %w", err)
 	}
 
 	return &GetPageMoveDataOutput{
-		Space:           space,
-		SpaceMember:     spaceMember,
-		Page:            pg,
-		TopicMember:     topicMember,
-		CurrentTopic:    currentTopic,
+		Space:           data.space,
+		SpaceMember:     data.spaceMember,
+		Page:            data.page,
+		TopicMember:     data.topicMember,
+		CurrentTopic:    data.topic,
 		AvailableTopics: availableTopics,
 	}, nil
+}
+
+func (uc *GetPageMoveDataUsecase) pageAccessRepos() pageAccessRepos {
+	return pageAccessRepos{
+		spaceRepo:       uc.spaceRepo,
+		spaceMemberRepo: uc.spaceMemberRepo,
+		pageRepo:        uc.pageRepo,
+		topicRepo:       uc.topicRepo,
+		topicMemberRepo: uc.topicMemberRepo,
+	}
 }
 
 // availableTopicsForMove は移動先候補のトピック一覧を取得する。

@@ -150,8 +150,11 @@ docker compose up
 - [@go/CLAUDE.md](/workspace/go/CLAUDE.md) - Go版の開発ガイド（技術スタック、プロジェクト構造、開発コマンド）
 - [@go/docs/architecture-guide.md](/workspace/go/docs/architecture-guide.md) - アーキテクチャガイド
   - 3層アーキテクチャの依存関係ルール
-  - Usecase、Repository、Workerの使い分け
+  - Repository、Workerの使い分け
   - ドメインID型
+- [@go/docs/usecase-guide.md](/workspace/go/docs/usecase-guide.md) - ユースケースガイド
+  - UseCaseの設計と実装パターン
+  - 処理順序、エラー型、WithTxパターン
 - [@go/docs/coding-guide.md](/workspace/go/docs/coding-guide.md) - コーディング規約
   - コメントのガイドライン
   - ログ出力（log/slog）
@@ -199,6 +202,24 @@ docker compose up
   - XSS対策
   - SQLインジェクション対策
   - 認証・Strong Parameters
+
+## 設計原則
+
+### シンプルさと一貫性
+
+このプロジェクトでは**シンプルさ**と**一貫性**を最も重要な設計原則として位置づけています。
+
+- **シンプルさ（YAGNI）**: 過度な抽象化を避け、必要十分な複雑さに留める。必要になったときに必要な機能だけを実装する
+- **一貫性**: 同じ種類の処理は同じパターンで実装する。ケースバイケースの判断を減らし、ルールを統一する
+
+### 判断コストをゼロにする
+
+設計上のルールは「どこに書くべきか」「このケースはどうするか」という判断が不要になるように定める。
+
+- ❌ 「場合によっては A、場合によっては B」→ 判断コストが発生する
+- ✅ 「常に A」→ 判断コストがゼロ
+
+例: バリデーションは常に `internal/validator/` に配置する（形式チェックのみでも、DB を使った検証を含む場合でも同じ場所）。
 
 ## 開発ワークフロー
 

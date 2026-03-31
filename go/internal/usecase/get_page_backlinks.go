@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -45,13 +46,14 @@ type GetPageBacklinksInput struct {
 
 // GetPageBacklinksOutput はページレベルのバックリンク一覧取得の出力
 type GetPageBacklinksOutput struct {
-	Space       *model.Space
-	SpaceMember *model.SpaceMember
-	Page        *model.Page
-	TopicMember *model.TopicMember
-	Backlinks   []*model.Page
-	TotalCount  int64
-	TopicMap    map[model.TopicID]*model.Topic
+	Space         *model.Space
+	SpaceMember   *model.SpaceMember
+	Page          *model.Page
+	TopicMember   *model.TopicMember
+	Backlinks     []*model.Page
+	TotalCount    int64
+	TopicMap      map[model.TopicID]*model.Topic
+	CanUpdatePage bool
 }
 
 // Execute はページレベルのバックリンク一覧を取得する
@@ -101,13 +103,18 @@ func (uc *GetPageBacklinksUsecase) Execute(ctx context.Context, input GetPageBac
 		topicMap[t.ID] = t
 	}
 
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
+	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+
 	return &GetPageBacklinksOutput{
-		Space:       space,
-		SpaceMember: spaceMember,
-		Page:        pg,
-		TopicMember: topicMember,
-		Backlinks:   paginatedBacklinks.Pages,
-		TotalCount:  paginatedBacklinks.TotalCount,
-		TopicMap:    topicMap,
+		Space:         space,
+		SpaceMember:   spaceMember,
+		Page:          pg,
+		TopicMember:   topicMember,
+		Backlinks:     paginatedBacklinks.Pages,
+		TotalCount:    paginatedBacklinks.TotalCount,
+		TopicMap:      topicMap,
+		CanUpdatePage: canUpdatePage,
 	}, nil
 }

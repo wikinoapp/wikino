@@ -20,6 +20,11 @@ func NewUserSessionRepository(q *query.Queries) *UserSessionRepository {
 	return &UserSessionRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *UserSessionRepository) WithTx(tx *sql.Tx) *UserSessionRepository {
+	return &UserSessionRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByID はセッションIDでセッションを取得する
 func (r *UserSessionRepository) FindByID(ctx context.Context, id string) (*model.UserSession, error) {
 	row, err := r.q.GetUserSessionByID(ctx, id)

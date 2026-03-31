@@ -95,19 +95,19 @@ templは自動でエスケープ処理を行うため、基本的に安全です
 
 ```go
 // ✅ Good: バリデーションを実施
-func (req *CommentRequest) Validate(ctx context.Context) *session.FormErrors {
-    errors := &session.FormErrors{}
+func (req *CommentRequest) Validate(ctx context.Context) *model.ValidationError {
+    ve := model.NewValidationError()
 
     if req.Comment == "" {
-        errors.AddFieldError("comment", i18n.T(ctx, "comment_required"))
+        ve.AddField("comment", i18n.T(ctx, "comment_required"))
     }
 
     // 文字数制限
     if len(req.Comment) > 1000 {
-        errors.AddFieldError("comment", i18n.T(ctx, "comment_too_long"))
+        ve.AddField("comment", i18n.T(ctx, "comment_too_long"))
     }
 
-    return errors
+    return ve
 }
 ```
 
@@ -237,18 +237,18 @@ slog.InfoContext(ctx, "ユーザーログイン試行", "email", email)
 
 ```go
 // バックエンド: Request DTOでバリデーション
-func (req *SignUpRequest) Validate(ctx context.Context) *session.FormErrors {
-    errors := &session.FormErrors{}
+func (req *SignUpRequest) Validate(ctx context.Context) *model.ValidationError {
+    ve := model.NewValidationError()
 
     if req.Email == "" {
-        errors.AddFieldError("email", i18n.T(ctx, "email_required"))
+        ve.AddField("email", i18n.T(ctx, "email_required"))
     }
 
     if !emailRegex.MatchString(req.Email) {
-        errors.AddFieldError("email", i18n.T(ctx, "email_invalid"))
+        ve.AddField("email", i18n.T(ctx, "email_invalid"))
     }
 
-    return errors
+    return ve
 }
 ```
 
@@ -265,14 +265,14 @@ var allowedSeasons = map[string]bool{
     "winter": true,
 }
 
-func (req *CreateWorkRequest) Validate(ctx context.Context) *session.FormErrors {
-    errors := &session.FormErrors{}
+func (req *CreateWorkRequest) Validate(ctx context.Context) *model.ValidationError {
+    ve := model.NewValidationError()
 
     if req.Season != "" && !allowedSeasons[req.Season] {
-        errors.AddFieldError("season", i18n.T(ctx, "season_invalid"))
+        ve.AddField("season", i18n.T(ctx, "season_invalid"))
     }
 
-    return errors
+    return ve
 }
 ```
 

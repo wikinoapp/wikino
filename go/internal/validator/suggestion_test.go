@@ -53,7 +53,7 @@ func TestSuggestionCreateValidator_FormatValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
+			_, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
 				Title:         tt.title,
 				DraftPageIDs:  tt.draftPageIDs,
 				SpaceMemberID: "test-member-id",
@@ -61,10 +61,11 @@ func TestSuggestionCreateValidator_FormatValidation(t *testing.T) {
 				SpaceID:       "test-space-id",
 			})
 
-			if !result.FormErrors.HasErrors() {
-				t.Error("expected errors but got none")
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError, got nil")
 			}
-			if !result.FormErrors.HasFieldError(tt.expectedField) {
+			if !ve.HasFieldError(tt.expectedField) {
 				t.Errorf("expected %s field error but got none", tt.expectedField)
 			}
 		})
@@ -138,7 +139,7 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 	v := validator.NewSuggestionCreateValidator(draftPageRepo)
 
 	t.Run("正常系: 有効な入力で下書きページのバリデーションが通る", func(t *testing.T) {
-		result := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
+		draftPages, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
 			Title:         "テスト編集提案",
 			DraftPageIDs:  []model.DraftPageID{draftPageID},
 			SpaceMemberID: spaceMemberID,
@@ -146,17 +147,17 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 			SpaceID:       spaceID,
 		})
 
-		if result.FormErrors.HasErrors() {
-			t.Errorf("unexpected errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
-		if len(result.DraftPages) != 1 {
-			t.Errorf("DraftPages count = %d, want 1", len(result.DraftPages))
+		if len(draftPages) != 1 {
+			t.Errorf("DraftPages count = %d, want 1", len(draftPages))
 		}
 	})
 
 	t.Run("存在しない下書きページIDの場合はエラー", func(t *testing.T) {
 		// 有効なUUID形式だが存在しないID
-		result := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
+		_, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
 			Title:         "テスト編集提案",
 			DraftPageIDs:  []model.DraftPageID{"00000000-0000-0000-0000-000000000000"},
 			SpaceMemberID: spaceMemberID,
@@ -164,16 +165,17 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 			SpaceID:       spaceID,
 		})
 
-		if !result.FormErrors.HasErrors() {
-			t.Error("expected error but got none")
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, got nil")
 		}
-		if !result.FormErrors.HasFieldError("draft_page_ids") {
+		if !ve.HasFieldError("draft_page_ids") {
 			t.Error("expected draft_page_ids field error")
 		}
 	})
 
 	t.Run("他のメンバーの下書きページの場合はエラー", func(t *testing.T) {
-		result := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
+		_, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
 			Title:         "テスト編集提案",
 			DraftPageIDs:  []model.DraftPageID{otherDraftPageID},
 			SpaceMemberID: spaceMemberID,
@@ -181,10 +183,11 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 			SpaceID:       spaceID,
 		})
 
-		if !result.FormErrors.HasErrors() {
-			t.Error("expected error but got none")
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, got nil")
 		}
-		if !result.FormErrors.HasFieldError("draft_page_ids") {
+		if !ve.HasFieldError("draft_page_ids") {
 			t.Error("expected draft_page_ids field error")
 		}
 	})
@@ -254,21 +257,22 @@ func TestSuggestionUpdateValidator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := v.Validate(ctx, validator.SuggestionUpdateValidatorInput{
+			err := v.Validate(ctx, validator.SuggestionUpdateValidatorInput{
 				Title: tt.title,
 				Body:  tt.body,
 			})
 
 			if tt.wantError {
-				if !result.FormErrors.HasErrors() {
-					t.Error("expected errors but got none")
+				ve := model.AsValidationError(err)
+				if ve == nil {
+					t.Fatal("expected ValidationError, got nil")
 				}
-				if tt.expectedField != "" && !result.FormErrors.HasFieldError(tt.expectedField) {
+				if tt.expectedField != "" && !ve.HasFieldError(tt.expectedField) {
 					t.Errorf("expected %s field error but got none", tt.expectedField)
 				}
 			} else {
-				if result.FormErrors.HasErrors() {
-					t.Errorf("unexpected errors: %v", result.FormErrors)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
 				}
 			}
 		})

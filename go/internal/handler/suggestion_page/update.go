@@ -1,7 +1,6 @@
 package suggestion_page
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Update は編集提案ページを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
@@ -45,78 +43,15 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. 読み取りUseCase: 編集提案詳細を取得
-	detailOutput, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
+	// UseCaseを実行
+	_, err = h.updateSuggestionPageUsecase.Execute(ctx, usecase.UpdateSuggestionPageInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,
-		UserID:           &user.ID,
+		SuggestionPageID: suggestionPageID,
+		UserID:           user.ID,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "編集提案詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if detailOutput == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// スペースメンバーでなければ403
-	if detailOutput.SpaceMember == nil {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	// 下書きまたはオープンステータスでなければ更新不可
-	if detailOutput.Suggestion.Status != model.SuggestionStatusDraft &&
-		detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
-		suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
-		http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
-		return
-	}
-
-	// SuggestionPageが現在の編集提案に属していることを検証
-	var targetSP *model.SuggestionPage
-	for _, sp := range detailOutput.SuggestionPages {
-		if sp.ID == suggestionPageID {
-			targetSP = sp
-			break
-		}
-	}
-	if targetSP == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// 2. Validator: DraftPageの取得・検証
-	validationResult := h.updateValidator.Validate(ctx, validator.SuggestionPageUpdateValidatorInput{
-		SuggestionPageID: suggestionPageID,
-		PageID:           targetSP.PageID,
-		SpaceMemberID:    detailOutput.SpaceMember.ID,
-		SpaceID:          detailOutput.Space.ID,
-	})
-	if validationResult.Err != nil {
-		if errors.Is(validationResult.Err, validator.ErrDraftPageNotFound) ||
-			errors.Is(validationResult.Err, validator.ErrDraftPageNotLinked) {
-			slog.WarnContext(ctx, "編集提案ページ更新の前提条件を満たしていない", "error", validationResult.Err)
-			handler.NotFound(w, r)
-			return
-		}
-		slog.ErrorContext(ctx, "編集提案ページ更新のバリデーションに失敗", "error", validationResult.Err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// 3. 書き込みUseCase: 編集提案ページを更新
-	_, err = h.updateSuggestionPageUsecase.Execute(ctx, usecase.UpdateSuggestionPageInput{
-		SpaceID:          detailOutput.Space.ID,
-		SpaceMemberID:    detailOutput.SpaceMember.ID,
-		SuggestionPageID: suggestionPageID,
-		DraftPage:        validationResult.DraftPage,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案ページの更新に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleUpdateError(w, r, err, spaceIdentifier, suggestionNumber)
 		return
 	}
 
@@ -124,4 +59,27 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_suggestion_page_updated"))
 	changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
 	http.Redirect(w, r, changesPath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
+	ctx := r.Context()
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+			handler.NotFound(w, r)
+		case model.AppErrCodeConflict:
+			slog.WarnContext(ctx, ae.LogString())
+			h.flashMgr.SetError(w, ae.UserMsg)
+			changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
+			http.Redirect(w, r, changesPath, http.StatusSeeOther)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "編集提案ページの更新に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

@@ -52,7 +52,6 @@ func setupHandlerWithUsecase(t *testing.T, queries *query.Queries, movePageUC *u
 		getPageMoveDataUC,
 		movePageUC,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
-		validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo),
 	)
 }
 
@@ -81,7 +80,7 @@ func TestCreate_Success(t *testing.T) {
 		WithNumber(1).
 		WithName("Source Topic").
 		Build()
-	destTopicID := testutil.NewTopicBuilderDB(t, db).
+	testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithNumber(2).
 		WithName("Dest Topic").
@@ -91,11 +90,6 @@ func TestCreate_Success(t *testing.T) {
 		WithTopicID(srcTopicID).
 		WithSpaceMemberID(spaceMemberID).
 		Build()
-	testutil.NewTopicMemberBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithTopicID(destTopicID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
 	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(srcTopicID).
@@ -103,8 +97,13 @@ func TestCreate_Success(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
-	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveValidator)
 	handler := setupHandlerWithUsecase(t, q, movePageUC)
 
 	form := url.Values{}
@@ -141,48 +140,58 @@ func TestCreate_Success(t *testing.T) {
 func TestCreate_ValidationError(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	db := testutil.GetTestDB()
+	q := query.New(db)
+
+	spaceIdentifier := "pm-create-ve"
 
 	// テストデータを作成
-	userID := testutil.NewUserBuilder(t, tx).Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("val-err-space").
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("pm-create-ve@example.com").
+		WithAtname("pm-create-ve").
 		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier(spaceIdentifier).
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithNumber(1).
 		WithName("Topic 1").
 		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
+	testutil.NewTopicMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
 		Build()
-	testutil.NewPageBuilder(t, tx).
+	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
 
-	// usecaseはバリデーションエラー時に呼ばれないのでnilでOK
-	handler := setupHandler(t, queries)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveValidator)
+	handler := setupHandlerWithUsecase(t, q, movePageUC)
 
 	// 移動先トピックを選択しない（空文字）
 	form := url.Values{}
 	form.Set("dest_topic", "")
 
-	req := httptest.NewRequest(http.MethodPost, "/s/val-err-space/pages/1/move", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/s/%s/pages/1/move", spaceIdentifier), strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	req = addChiParams(t, req, map[string]string{
-		"space_identifier": "val-err-space",
+		"space_identifier": spaceIdentifier,
 		"page_number":      "1",
 	})
 

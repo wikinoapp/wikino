@@ -43,30 +43,21 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
-	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
-	userRepo := repository.NewUserRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 
-	pageRepo := repository.NewPageRepository(queries)
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
-		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
-	)
-	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
-		db, suggestionPageRepo, suggestionPageRevisionRepo,
-	)
 	updateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, updateValidator,
+	)
 
 	return suggestionpagehandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		updateSuggestionPageUC,
-		updateValidator,
 	)
 }
 
@@ -98,7 +89,7 @@ func TestUpdate_未ログインでサインインにリダイレクトされる(
 	}
 }
 
-func TestUpdate_スペースメンバーでないユーザーは403が返る(t *testing.T) {
+func TestUpdate_スペースメンバーでないユーザーは404が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -167,8 +158,8 @@ func TestUpdate_スペースメンバーでないユーザーは403が返る(t *
 	rr := httptest.NewRecorder()
 	handler.Update(rr, req)
 
-	if rr.Code != http.StatusForbidden {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -293,100 +284,6 @@ func TestUpdate_正常に編集提案ページが更新される(t *testing.T) {
 	}
 }
 
-func TestUpdate_下書きステータスの編集提案ページが更新される(t *testing.T) {
-	t.Parallel()
-
-	db := testutil.GetTestDB()
-	queries := query.New(db)
-
-	userID := testutil.NewUserBuilderDB(t, db).
-		WithEmail("sp-draft-ok@example.com").
-		WithAtname("spdraftok").
-		Build()
-
-	spaceID := testutil.NewSpaceBuilderDB(t, db).
-		WithIdentifier("sp-draft-sp").
-		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-	topicID := testutil.NewTopicBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithName("Topic").
-		Build()
-	suggestionID := testutil.NewSuggestionBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithCreatedSpaceMemberID(spaceMemberID).
-		WithStatus(model.SuggestionStatusDraft).
-		Build()
-
-	pageID := testutil.NewPageBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithNumber(1).
-		WithTitle("Draft Test Page").
-		Build()
-	pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithPageID(pageID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
-	suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithSuggestionID(suggestionID).
-		WithPageID(pageID).
-		WithPageRevisionID(pageRevisionID).
-		WithBody("元の提案本文").
-		Build()
-
-	testutil.NewDraftPageBuilderDB(t, db).
-		WithSpaceID(spaceID).
-		WithPageID(pageID).
-		WithSpaceMemberID(spaceMemberID).
-		WithTopicID(topicID).
-		WithSuggestionPageID(suggestionPageID).
-		WithBody("下書き更新された本文").
-		WithTitle("下書き更新されたタイトル").
-		Build()
-
-	handler := setupHandler(t, queries, db)
-
-	form := url.Values{}
-	form.Set("csrf_token", "test-csrf-token")
-
-	req := newPatchRequest(t, "/s/sp-draft-sp/suggestions/1/suggestion_pages/"+string(suggestionPageID), map[string]string{
-		"space_identifier":   "sp-draft-sp",
-		"suggestion_number":  "1",
-		"suggestion_page_id": string(suggestionPageID),
-	}, form)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spdraftok"})
-	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
-	req = req.WithContext(ctx)
-
-	rr := httptest.NewRecorder()
-	handler.Update(rr, req)
-
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
-	}
-	expectedLoc := "/s/sp-draft-sp/suggestions/1/changes"
-	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
-	}
-
-	// SuggestionPageが更新されたことを確認
-	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	updatedSP, err := suggestionPageRepo.FindByID(context.Background(), suggestionPageID, spaceID)
-	if err != nil {
-		t.Fatalf("SuggestionPageの取得に失敗: %v", err)
-	}
-	if updatedSP.Body != "下書き更新された本文" {
-		t.Errorf("SuggestionPage.Body = %q, want %q", updatedSP.Body, "下書き更新された本文")
-	}
-}
-
 func TestUpdate_反映済みの編集提案は更新できない(t *testing.T) {
 	t.Parallel()
 
@@ -411,11 +308,28 @@ func TestUpdate_反映済みの編集提案は更新できない(t *testing.T) {
 		WithNumber(1).
 		WithVisibility(0).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithStatus(model.SuggestionStatusApplied).
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
 		Build()
 
 	handler := setupHandler(t, queries, db)
@@ -423,10 +337,10 @@ func TestUpdate_反映済みの編集提案は更新できない(t *testing.T) {
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
 
-	req := newPatchRequest(t, "/s/sp-applied-sp/suggestions/1/suggestion_pages/test-sp-id", map[string]string{
+	req := newPatchRequest(t, "/s/sp-applied-sp/suggestions/1/suggestion_pages/"+string(suggestionPageID), map[string]string{
 		"space_identifier":   "sp-applied-sp",
 		"suggestion_number":  "1",
-		"suggestion_page_id": "test-sp-id",
+		"suggestion_page_id": string(suggestionPageID),
 	}, form)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spapplied"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
@@ -435,12 +349,9 @@ func TestUpdate_反映済みの編集提案は更新できない(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Update(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
-	}
-	loc := rr.Header().Get("Location")
-	if !strings.Contains(loc, "/suggestions/1") {
-		t.Errorf("should redirect to suggestion page, got %q", loc)
+	// 認可エラー（Forbidden）→ 404で返される
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -468,11 +379,28 @@ func TestUpdate_クローズ済みの編集提案は更新できない(t *testin
 		WithNumber(1).
 		WithVisibility(0).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithStatus(model.SuggestionStatusClosed).
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
 		Build()
 
 	handler := setupHandler(t, queries, db)
@@ -480,10 +408,10 @@ func TestUpdate_クローズ済みの編集提案は更新できない(t *testin
 	form := url.Values{}
 	form.Set("csrf_token", "test-csrf-token")
 
-	req := newPatchRequest(t, "/s/sp-closed-sp/suggestions/1/suggestion_pages/test-sp-id", map[string]string{
+	req := newPatchRequest(t, "/s/sp-closed-sp/suggestions/1/suggestion_pages/"+string(suggestionPageID), map[string]string{
 		"space_identifier":   "sp-closed-sp",
 		"suggestion_number":  "1",
-		"suggestion_page_id": "test-sp-id",
+		"suggestion_page_id": string(suggestionPageID),
 	}, form)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spclosed"})
 	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
@@ -492,11 +420,8 @@ func TestUpdate_クローズ済みの編集提案は更新できない(t *testin
 	rr := httptest.NewRecorder()
 	handler.Update(rr, req)
 
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
-	}
-	loc := rr.Header().Get("Location")
-	if !strings.Contains(loc, "/suggestions/1") {
-		t.Errorf("should redirect to suggestion page, got %q", loc)
+	// 認可エラー（Forbidden）→ 404で返される
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
 	}
 }

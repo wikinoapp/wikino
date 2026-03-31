@@ -13,7 +13,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Create は編集提案を作成します (POST /s/{space_identifier}/topics/{topic_number}/suggestions)
@@ -54,58 +53,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		draftPageIDs[i] = model.DraftPageID(id)
 	}
 
-	// UseCaseでデータを取得（フォーム再表示用にも必要）
-	output, err := h.getSuggestionNewUsecase.Execute(ctx, usecase.GetSuggestionNewInput{
+	// UseCase を実行
+	createOutput, err := h.createSuggestionUsecase.Execute(ctx, usecase.CreateSuggestionInput{
 		SpaceIdentifier: spaceIdentifier,
 		TopicNumber:     int32(topicNumber),
 		UserID:          user.ID,
+		Title:           title,
+		Body:            body,
+		DraftPageIDs:    draftPageIDs,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "編集提案作成データの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// バリデーション
-	validationResult := h.createValidator.Validate(ctx, validator.SuggestionCreateValidatorInput{
-		Title:         title,
-		Body:          body,
-		DraftPageIDs:  draftPageIDs,
-		SpaceMemberID: output.SpaceMember.ID,
-		TopicID:       output.Topic.ID,
-		SpaceID:       output.Space.ID,
-	})
-
-	if validationResult.Err != nil {
-		slog.ErrorContext(ctx, "バリデーション中にシステムエラーが発生", "error", validationResult.Err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if validationResult.FormErrors.HasErrors() {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderNewForm(w, r, user, spaceIdentifier, output, validationResult.FormErrors, title, body, draftPageIDStrs)
-		return
-	}
-
-	// 編集提案を作成
-	createOutput, err := h.createSuggestionUsecase.Execute(ctx, usecase.CreateSuggestionInput{
-		SpaceID:          output.Space.ID,
-		SpaceIdentifier:  spaceIdentifier,
-		TopicID:          output.Topic.ID,
-		SpaceMemberID:    output.SpaceMember.ID,
-		Title:            title,
-		Body:             body,
-		CurrentTopicName: output.Topic.Name,
-		DraftPages:       validationResult.DraftPages,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案の作成に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleCreateError(w, r, err, user, spaceIdentifier, int32(topicNumber), title, body, draftPageIDStrs)
 		return
 	}
 
@@ -117,4 +75,42 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		createOutput.Suggestion.Number,
 	)
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, topicNumber int32, title, body string, draftPageIDStrs []string) {
+	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		// バリデーションエラー → フォーム再描画
+		output, getErr := h.getSuggestionNewUsecase.Execute(ctx, usecase.GetSuggestionNewInput{
+			SpaceIdentifier: spaceIdentifier,
+			TopicNumber:     topicNumber,
+			UserID:          user.ID,
+		})
+		if getErr != nil || output == nil {
+			slog.ErrorContext(ctx, "フォーム再表示用データの取得に失敗", "error", getErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		h.renderNewForm(w, r, user, spaceIdentifier, output, ve, title, body, draftPageIDStrs)
+		return
+	}
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound:
+			handler.NotFound(w, r)
+		case model.AppErrCodeForbidden:
+			handler.NotFound(w, r)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "編集提案の作成に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

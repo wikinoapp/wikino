@@ -36,14 +36,12 @@ func generateUniqueCode() string {
 	return string(code)
 }
 
-func TestCreate_Success(t *testing.T) {
-	t.Parallel()
+func setupHandler(t *testing.T) (*account.Handler, *repository.UserRepository, *repository.EmailConfirmationRepository) {
+	t.Helper()
 
-	// トランザクションなしでテスト用DBをセットアップ（Usecaseが独自のトランザクションを管理するため）
 	db := testutil.GetTestDB()
 	queries := query.New(db)
 
-	// 設定を作成
 	cfg := &config.Config{
 		Env:             "test",
 		Port:            "8080",
@@ -53,48 +51,17 @@ func TestCreate_Success(t *testing.T) {
 		SessionHTTPOnly: true,
 	}
 
-	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
+	accountCreateValidator := validator.NewAccountCreateValidator(userRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo, accountCreateValidator)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
 
-	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// ユニークなテストデータを生成
-	testID := time.Now().UnixNano()
-	testEmail := fmt.Sprintf("create_success_%d@example.com", testID)
-	testAtname := fmt.Sprintf("cs%d", testID%1000000000000)
-
-	// 確認済みのメール確認情報を作成
-	now := time.Now()
-	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
-		Email:     testEmail,
-		Event:     model.EmailConfirmationEventSignUp,
-		Code:      generateUniqueCode(),
-		StartedAt: now,
-	})
-	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
-	}
-
-	// メール確認を完了状態に更新
-	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
-	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
-	}
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 
 	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
 
@@ -103,10 +70,45 @@ func TestCreate_Success(t *testing.T) {
 		sessionMgr,
 		flashMgr,
 		getAccountNewDataUC,
-		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
+
+	return handler, userRepo, emailConfirmationRepo
+}
+
+func createConfirmedEmailConfirmation(t *testing.T, emailConfirmationRepo *repository.EmailConfirmationRepository, email string) string {
+	t.Helper()
+
+	now := time.Now()
+	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
+		Email:     email,
+		Event:     model.EmailConfirmationEventSignUp,
+		Code:      generateUniqueCode(),
+		StartedAt: now,
+	})
+	if err != nil {
+		t.Fatalf("failed to create email confirmation: %v", err)
+	}
+
+	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
+	if err != nil {
+		t.Fatalf("failed to succeed email confirmation: %v", err)
+	}
+
+	return emailConfirmation.ID
+}
+
+func TestCreate_Success(t *testing.T) {
+	t.Parallel()
+
+	handler, userRepo, emailConfirmationRepo := setupHandler(t)
+
+	testID := time.Now().UnixNano()
+	testEmail := fmt.Sprintf("create_success_%d@example.com", testID)
+	testAtname := fmt.Sprintf("cs%d", testID%1000000000000)
+
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
 	// フォームデータを作成
 	form := url.Values{}
@@ -126,7 +128,7 @@ func TestCreate_Success(t *testing.T) {
 	// email_confirmation_id を Cookie に設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
-		Value: emailConfirmation.ID,
+		Value: ecID,
 	})
 
 	rr := httptest.NewRecorder()
@@ -178,73 +180,12 @@ func TestCreate_Success(t *testing.T) {
 func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 	t.Parallel()
 
-	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.GetTestDB()
-	queries := query.New(db)
+	handler, _, emailConfirmationRepo := setupHandler(t)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:             "test",
-		Port:            "8080",
-		Domain:          "localhost",
-		CookieDomain:    "",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// ユニークなテストデータを生成
 	testID := time.Now().UnixNano()
 	testEmail := fmt.Sprintf("atname_required_%d@example.com", testID)
 
-	// 確認済みのメール確認情報を作成
-	now := time.Now()
-	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
-		Email:     testEmail,
-		Event:     model.EmailConfirmationEventSignUp,
-		Code:      generateUniqueCode(),
-		StartedAt: now,
-	})
-	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
-	}
-
-	// メール確認を完了状態に更新
-	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
-	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
-	}
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
-
-	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
-
-	handler := account.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		getAccountNewDataUC,
-		accountCreateValidator,
-		createAccountUC,
-		createUserSessionUC,
-	)
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
 	// フォームデータを作成（アットネーム空）
 	form := url.Values{}
@@ -264,7 +205,7 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 	// email_confirmation_id を Cookie に設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
-		Value: emailConfirmation.ID,
+		Value: ecID,
 	})
 
 	rr := httptest.NewRecorder()
@@ -285,73 +226,12 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 	t.Parallel()
 
-	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.GetTestDB()
-	queries := query.New(db)
+	handler, _, emailConfirmationRepo := setupHandler(t)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:             "test",
-		Port:            "8080",
-		Domain:          "localhost",
-		CookieDomain:    "",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// ユニークなテストデータを生成
 	testID := time.Now().UnixNano()
 	testEmail := fmt.Sprintf("pw_short_%d@example.com", testID)
 
-	// 確認済みのメール確認情報を作成
-	now := time.Now()
-	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
-		Email:     testEmail,
-		Event:     model.EmailConfirmationEventSignUp,
-		Code:      generateUniqueCode(),
-		StartedAt: now,
-	})
-	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
-	}
-
-	// メール確認を完了状態に更新
-	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
-	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
-	}
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
-
-	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
-
-	handler := account.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		getAccountNewDataUC,
-		accountCreateValidator,
-		createAccountUC,
-		createUserSessionUC,
-	)
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
 	// フォームデータを作成（パスワードが短い）
 	form := url.Values{}
@@ -371,7 +251,7 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 	// email_confirmation_id を Cookie に設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
-		Value: emailConfirmation.ID,
+		Value: ecID,
 	})
 
 	rr := httptest.NewRecorder()
@@ -392,73 +272,12 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 	t.Parallel()
 
-	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.GetTestDB()
-	queries := query.New(db)
+	handler, _, emailConfirmationRepo := setupHandler(t)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:             "test",
-		Port:            "8080",
-		Domain:          "localhost",
-		CookieDomain:    "",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// ユニークなテストデータを生成
 	testID := time.Now().UnixNano()
 	testEmail := fmt.Sprintf("atname_invalid_%d@example.com", testID)
 
-	// 確認済みのメール確認情報を作成
-	now := time.Now()
-	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
-		Email:     testEmail,
-		Event:     model.EmailConfirmationEventSignUp,
-		Code:      generateUniqueCode(),
-		StartedAt: now,
-	})
-	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
-	}
-
-	// メール確認を完了状態に更新
-	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
-	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
-	}
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
-
-	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
-
-	handler := account.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		getAccountNewDataUC,
-		accountCreateValidator,
-		createAccountUC,
-		createUserSessionUC,
-	)
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
 	// フォームデータを作成（アットネームに無効な文字）
 	form := url.Values{}
@@ -478,7 +297,7 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 	// email_confirmation_id を Cookie に設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
-		Value: emailConfirmation.ID,
+		Value: ecID,
 	})
 
 	rr := httptest.NewRecorder()
@@ -499,27 +318,8 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 	t.Parallel()
 
-	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.GetTestDB()
-	queries := query.New(db)
+	handler, userRepo, emailConfirmationRepo := setupHandler(t)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:             "test",
-		Port:            "8080",
-		Domain:          "localhost",
-		CookieDomain:    "",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユニークなテストデータを生成
 	testID := time.Now().UnixNano()
 	existingAtname := fmt.Sprintf("ex%d", testID%1000000000000)
 	testEmail := fmt.Sprintf("atname_taken_%d@example.com", testID)
@@ -538,49 +338,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 		t.Fatalf("failed to create existing user: %v", err)
 	}
 
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// 確認済みのメール確認情報を作成
-	now := time.Now()
-	emailConfirmation, err := emailConfirmationRepo.Create(t.Context(), repository.CreateEmailConfirmationInput{
-		Email:     testEmail,
-		Event:     model.EmailConfirmationEventSignUp,
-		Code:      generateUniqueCode(),
-		StartedAt: now,
-	})
-	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
-	}
-
-	// メール確認を完了状態に更新
-	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
-	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
-	}
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
-
-	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
-
-	handler := account.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		getAccountNewDataUC,
-		accountCreateValidator,
-		createAccountUC,
-		createUserSessionUC,
-	)
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
 	// フォームデータを作成（既存のアットネームを使用）
 	form := url.Values{}
@@ -600,7 +358,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 	// email_confirmation_id を Cookie に設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
-		Value: emailConfirmation.ID,
+		Value: ecID,
 	})
 
 	rr := httptest.NewRecorder()
@@ -621,51 +379,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 func TestCreate_NoEmailConfirmationID(t *testing.T) {
 	t.Parallel()
 
-	// トランザクションなしでテスト用DBをセットアップ
-	db := testutil.GetTestDB()
-	queries := query.New(db)
-
-	// 設定を作成
-	cfg := &config.Config{
-		Env:             "test",
-		Port:            "8080",
-		Domain:          "localhost",
-		CookieDomain:    "",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userPasswordRepo := repository.NewUserPasswordRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	createAccountUC := usecase.NewCreateAccountUsecase(
-		db,
-		userRepo,
-		userPasswordRepo,
-	)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
-
-	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
-
-	handler := account.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		getAccountNewDataUC,
-		accountCreateValidator,
-		createAccountUC,
-		createUserSessionUC,
-	)
+	handler, _, _ := setupHandler(t)
 
 	// フォームデータを作成
 	form := url.Values{}

@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 const suggestionCommentBodyMaxLength = 10000
@@ -23,24 +23,23 @@ type SuggestionCommentCreateValidatorInput struct {
 	Body string
 }
 
-// SuggestionCommentCreateValidatorResult はバリデーションの結果
-type SuggestionCommentCreateValidatorResult struct {
-	FormErrors *session.FormErrors
-}
-
 // Validate はバリデーションを行う
-func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input SuggestionCommentCreateValidatorInput) *SuggestionCommentCreateValidatorResult {
-	formErrors := session.NewFormErrors()
+func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input SuggestionCommentCreateValidatorInput) error {
+	ve := model.NewValidationError()
 
 	if input.Body == "" {
-		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_required"))
+		ve.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_required"))
 	}
 
 	if input.Body != "" && utf8.RuneCountInString(input.Body) > suggestionCommentBodyMaxLength {
-		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_too_long"))
+		ve.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_too_long"))
 	}
 
-	return &SuggestionCommentCreateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return ve
+	}
+
+	return nil
 }
 
 // SuggestionCommentUpdateValidator は編集提案コメント更新のバリデーションを行う
@@ -56,22 +55,21 @@ type SuggestionCommentUpdateValidatorInput struct {
 	Body string
 }
 
-// SuggestionCommentUpdateValidatorResult はバリデーションの結果
-type SuggestionCommentUpdateValidatorResult struct {
-	FormErrors *session.FormErrors
-}
-
 // Validate はバリデーションを行う
-func (v *SuggestionCommentUpdateValidator) Validate(ctx context.Context, input SuggestionCommentUpdateValidatorInput) *SuggestionCommentUpdateValidatorResult {
-	formErrors := session.NewFormErrors()
+func (v *SuggestionCommentUpdateValidator) Validate(ctx context.Context, input SuggestionCommentUpdateValidatorInput) error {
+	ve := model.NewValidationError()
 
 	if input.Body == "" {
-		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_required"))
+		ve.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_required"))
 	}
 
 	if input.Body != "" && utf8.RuneCountInString(input.Body) > suggestionCommentBodyMaxLength {
-		formErrors.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_too_long"))
+		ve.AddField("body", i18n.T(ctx, "validation_suggestion_comment_body_too_long"))
 	}
 
-	return &SuggestionCommentUpdateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return ve
+	}
+
+	return nil
 }

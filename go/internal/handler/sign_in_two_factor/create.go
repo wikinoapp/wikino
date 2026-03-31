@@ -1,17 +1,15 @@
 package sign_in_two_factor
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	twofactorpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -37,42 +35,31 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	totpCode := r.FormValue("totp_code")
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// バリデーション（形式チェック + DB検証）
-	result := h.createValidator.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
-		UserID:   pendingUserID,
-		TOTPCode: totpCode,
-	})
-	if result.FormErrors != nil && result.FormErrors.HasErrors() && result.Err == nil {
-		// 形式バリデーションエラー
-		h.renderTwoFactorForm(w, r, result.FormErrors, csrfToken)
-		return
-	}
-	if result.Err != nil {
-		if errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			// 2FAが有効でない場合はログインページにリダイレクト
-			slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
-			h.sessionMgr.DeletePendingUserCookie(w)
-			http.Redirect(w, r, "/sign_in", http.StatusFound)
-			return
-		}
-		if errors.Is(result.Err, validator.ErrInvalidTOTPCode) {
-			// TOTPコードが無効
-			h.renderTwoFactorForm(w, r, result.FormErrors, csrfToken)
-			return
-		}
-		slog.ErrorContext(ctx, "TOTP検証でエラー", "error", result.Err, "user_id", pendingUserID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// セッションを作成
-	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
+	// UseCaseを実行（バリデーション + セッション作成）
+	output, err := h.createTwoFactorSessionUC.Execute(ctx, usecase.CreateTwoFactorSessionInput{
 		UserID:    pendingUserID,
+		TOTPCode:  totpCode,
 		IPAddress: clientip.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "セッション作成でエラー", "error", err, "user_id", pendingUserID)
+		// バリデーションエラー → フォーム再描画
+		if ve := model.AsValidationError(err); ve != nil {
+			h.renderTwoFactorForm(w, r, ve, csrfToken)
+			return
+		}
+		// アプリケーションエラー
+		if ae := model.AsAppError(err); ae != nil {
+			if ae.Code == model.AppErrCodeTwoFactorNotEnabled {
+				slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
+				h.sessionMgr.DeletePendingUserCookie(w)
+				http.Redirect(w, r, "/sign_in", http.StatusFound)
+				return
+			}
+			slog.ErrorContext(ctx, ae.LogString())
+		} else {
+			slog.ErrorContext(ctx, "2FA認証でエラー", "error", err, "user_id", pendingUserID)
+		}
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +75,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // renderTwoFactorForm は2FAフォームをエラー付きでレンダリングします
-func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string) {
+func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)

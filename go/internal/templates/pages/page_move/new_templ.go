@@ -10,7 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -19,7 +19,7 @@ import (
 // MovePageData はページ移動画面に渡すデータ構造体です
 type MovePageData struct {
 	CSRFToken       string
-	FormErrors      *session.FormErrors
+	FormErrors      *model.ValidationError
 	Page            viewmodel.PageForMove
 	Space           viewmodel.Space
 	CurrentTopic    viewmodel.Topic

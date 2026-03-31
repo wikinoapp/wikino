@@ -8,20 +8,17 @@ import (
 
 // Handler は編集提案クローズハンドラー
 type Handler struct {
-	flashMgr                   *session.FlashManager
-	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
-	closeSuggestionUsecase     *usecase.CloseSuggestionUsecase
+	flashMgr               *session.FlashManager
+	closeSuggestionUsecase *usecase.CloseSuggestionUsecase
 }
 
 // NewHandler は新しい編集提案クローズハンドラーを作成します
 func NewHandler(
 	flashMgr *session.FlashManager,
-	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
 	closeSuggestionUsecase *usecase.CloseSuggestionUsecase,
 ) *Handler {
 	return &Handler{
-		flashMgr:                   flashMgr,
-		getSuggestionDetailUsecase: getSuggestionDetailUsecase,
-		closeSuggestionUsecase:     closeSuggestionUsecase,
+		flashMgr:               flashMgr,
+		closeSuggestionUsecase: closeSuggestionUsecase,
 	}
 }

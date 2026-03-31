@@ -20,6 +20,11 @@ func NewUserTwoFactorAuthRepository(q *query.Queries) *UserTwoFactorAuthReposito
 	return &UserTwoFactorAuthRepository{q: q}
 }
 
+// WithTx はトランザクションを使用する新しいRepositoryを返す
+func (r *UserTwoFactorAuthRepository) WithTx(tx *sql.Tx) *UserTwoFactorAuthRepository {
+	return &UserTwoFactorAuthRepository{q: r.q.WithTx(tx)}
+}
+
 // FindByUserID はユーザーIDで二要素認証設定を取得する
 func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID model.UserID) (*model.UserTwoFactorAuth, error) {
 	row, err := r.q.GetUserTwoFactorAuthByUserID(ctx, string(userID))

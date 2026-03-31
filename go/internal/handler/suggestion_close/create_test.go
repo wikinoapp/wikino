@@ -44,23 +44,13 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionc
 
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
-	userRepo := repository.NewUserRepository(queries)
 
-	pageRepo := repository.NewPageRepository(queries)
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
-		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
-	)
-	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, suggestionRepo)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo)
 
 	return suggestionclosehandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		closeSuggestionUC,
 	)
 }
@@ -252,43 +242,41 @@ func TestCreate_権限のない一般メンバーは403が返る(t *testing.T) {
 func TestCreate_作成者はクローズできる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	// UseCaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
+	queries := query.New(db)
 
-	ownerID := testutil.NewUserBuilder(t, tx).
+	ownerID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-creator-owner@example.com").
 		WithAtname("closecreatorowner").
 		Build()
-	creatorID := testutil.NewUserBuilder(t, tx).
+	creatorID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-creator@example.com").
 		WithAtname("closecreator").
 		Build()
 
-	spaceID := testutil.NewSpaceBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("close-creator-sp").
 		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
 		Build()
-	creatorSmID := testutil.NewSpaceMemberBuilder(t, tx).
+	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
 		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithVisibility(0).
+		WithName("General").
 		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
+	testutil.NewTopicMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(creatorSmID).
-		WithRole(int32(model.TopicMemberRoleMember)).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(creatorSmID).
@@ -323,37 +311,36 @@ func TestCreate_作成者はクローズできる(t *testing.T) {
 func TestCreate_スペースオーナーがクローズできる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	// UseCaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
+	queries := query.New(db)
 
-	ownerID := testutil.NewUserBuilder(t, tx).
+	ownerID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-ok-owner@example.com").
 		WithAtname("closeokowner").
 		Build()
-	creatorID := testutil.NewUserBuilder(t, tx).
+	creatorID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-ok-creator@example.com").
 		WithAtname("closeokcreator").
 		Build()
 
-	spaceID := testutil.NewSpaceBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("close-ok-sp").
 		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
 		Build()
-	creatorSmID := testutil.NewSpaceMemberBuilder(t, tx).
+	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
 		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithVisibility(0).
+		WithName("General").
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(creatorSmID).
@@ -388,52 +375,50 @@ func TestCreate_スペースオーナーがクローズできる(t *testing.T) {
 func TestCreate_トピック管理者がクローズできる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	// UseCaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
+	queries := query.New(db)
 
-	ownerID := testutil.NewUserBuilder(t, tx).
+	ownerID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-admin-owner@example.com").
 		WithAtname("closeadminowner").
 		Build()
-	adminID := testutil.NewUserBuilder(t, tx).
+	adminID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-admin@example.com").
 		WithAtname("closeadmin").
 		Build()
-	creatorID := testutil.NewUserBuilder(t, tx).
+	creatorID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("close-admin-creator@example.com").
 		WithAtname("closeadmincreator").
 		Build()
 
-	spaceID := testutil.NewSpaceBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("close-admin-sp").
 		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
 		Build()
-	adminSmID := testutil.NewSpaceMemberBuilder(t, tx).
+	adminSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(adminID).
 		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
-	creatorSmID := testutil.NewSpaceMemberBuilder(t, tx).
+	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
 		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithVisibility(0).
+		WithName("General").
 		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
+	testutil.NewTopicMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(adminSmID).
-		WithRole(int32(model.TopicMemberRoleAdmin)).
 		Build()
-	testutil.NewSuggestionBuilder(t, tx).
+	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(creatorSmID).

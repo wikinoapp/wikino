@@ -18,14 +18,15 @@ func TestPageMoveCreateValidator_EmptyDestTopic(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
 	v := validator.NewPageMoveCreateValidator(nil, nil, nil)
-	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	_, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "",
 	})
 
-	if !result.FormErrors.HasErrors() {
-		t.Error("expected errors but got none")
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError but got nil")
 	}
-	if !result.FormErrors.HasFieldError("dest_topic") {
+	if !ve.HasFieldError("dest_topic") {
 		t.Error("expected dest_topic field error")
 	}
 }
@@ -37,14 +38,15 @@ func TestPageMoveCreateValidator_InvalidDestTopicNumber(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
 	v := validator.NewPageMoveCreateValidator(nil, nil, nil)
-	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	_, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "abc",
 	})
 
-	if !result.FormErrors.HasErrors() {
-		t.Error("expected errors but got none")
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError but got nil")
 	}
-	if !result.FormErrors.HasFieldError("dest_topic") {
+	if !ve.HasFieldError("dest_topic") {
 		t.Error("expected dest_topic field error")
 	}
 }
@@ -90,7 +92,7 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	_, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "1",
 		PageID:          pageID,
 		PageTitle:       "Test Page",
@@ -99,10 +101,11 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
 	})
 
-	if !result.FormErrors.HasErrors() {
-		t.Error("expected errors but got none")
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError but got nil")
 	}
-	if !result.FormErrors.HasFieldError("dest_topic") {
+	if !ve.HasFieldError("dest_topic") {
 		t.Error("expected dest_topic field error for same topic")
 	}
 }
@@ -165,7 +168,7 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	_, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "2",
 		PageID:          pageID,
 		PageTitle:       "Duplicate Title",
@@ -174,10 +177,11 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
 	})
 
-	if !result.FormErrors.HasErrors() {
-		t.Error("expected errors but got none")
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError but got nil")
 	}
-	if !result.FormErrors.HasFieldError("dest_topic") {
+	if !ve.HasFieldError("dest_topic") {
 		t.Error("expected dest_topic field error for title exists")
 	}
 }
@@ -233,7 +237,7 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	v := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	result := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	destTopic, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
 		DestTopicNumber: "2",
 		PageID:          pageID,
 		PageTitle:       "Test Page",
@@ -242,10 +246,10 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
 	})
 
-	if result.FormErrors.HasErrors() {
-		t.Errorf("unexpected errors: %v", result.FormErrors)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if result.DestTopic == nil {
+	if destTopic == nil {
 		t.Error("expected dest topic but got nil")
 	}
 }

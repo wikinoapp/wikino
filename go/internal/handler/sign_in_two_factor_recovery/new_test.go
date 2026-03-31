@@ -19,7 +19,7 @@ import (
 func TestNew_WithPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	// テスト用のクエリとリポジトリを作成
 	q := testutil.QueriesWithTx(tx)
@@ -40,15 +40,12 @@ func TestNew_WithPendingUser(t *testing.T) {
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// ペンディングユーザーIDを持つHTTPリクエストを作成
@@ -95,7 +92,7 @@ func TestNew_WithPendingUser(t *testing.T) {
 func TestNew_WithoutPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	// テスト用のクエリとリポジトリを作成
 	q := testutil.QueriesWithTx(tx)
@@ -116,15 +113,12 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのHTTPリクエストを作成

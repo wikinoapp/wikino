@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -57,6 +58,7 @@ type GetLinkListOutput struct {
 	LinkedTotalCount int64
 	BacklinksPerPage map[model.PageID]*EditLinkBacklinks
 	TopicMap         map[model.TopicID]*model.Topic
+	CanUpdatePage    bool
 }
 
 // Execute はリンク一覧を取得する
@@ -102,12 +104,17 @@ func (uc *GetLinkListUsecase) Execute(ctx context.Context, input GetLinkListInpu
 		linkedPageIDs = pg.LinkedPageIDs
 	}
 
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
+	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+
 	if len(linkedPageIDs) == 0 {
 		return &GetLinkListOutput{
-			Space:       space,
-			SpaceMember: spaceMember,
-			Page:        pg,
-			TopicMember: topicMember,
+			Space:         space,
+			SpaceMember:   spaceMember,
+			Page:          pg,
+			TopicMember:   topicMember,
+			CanUpdatePage: canUpdatePage,
 		}, nil
 	}
 
@@ -157,5 +164,6 @@ func (uc *GetLinkListUsecase) Execute(ctx context.Context, input GetLinkListInpu
 		LinkedTotalCount: paginatedLinks.TotalCount,
 		BacklinksPerPage: backlinksPerPage,
 		TopicMap:         topicMap,
+		CanUpdatePage:    canUpdatePage,
 	}, nil
 }

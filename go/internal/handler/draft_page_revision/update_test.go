@@ -37,30 +37,18 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 
 	flashMgr := session.NewFlashManager("", false, false)
 
-	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	suggestionRepo := repository.NewSuggestionRepository(queries)
-	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
-
 	return draft_page_revision.NewHandler(
-		usecase.NewGetPageDetailUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			draftPageRepo,
-			topicRepo,
-			topicMemberRepo,
-			suggestionPageRepo,
-			suggestionRepo,
-			featureFlagRepo,
-		),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(queries),
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
 			topicRepo,
+			topicMemberRepo,
 			attachmentRepo,
 		),
 	)
@@ -207,30 +195,19 @@ func TestUpdate_Success(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
-	suggestionRepo := repository.NewSuggestionRepository(q)
-	featureFlagRepo := repository.NewFeatureFlagRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
-		usecase.NewGetPageDetailUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			draftPageRepo,
-			topicRepo,
-			topicMemberRepo,
-			suggestionPageRepo,
-			suggestionRepo,
-			featureFlagRepo,
-		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
 			topicRepo,
+			topicMemberRepo,
 			attachmentRepo,
 		),
 	)
@@ -300,30 +277,19 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
-	suggestionRepo := repository.NewSuggestionRepository(q)
-	featureFlagRepo := repository.NewFeatureFlagRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
-		usecase.NewGetPageDetailUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			draftPageRepo,
-			topicRepo,
-			topicMemberRepo,
-			suggestionPageRepo,
-			suggestionRepo,
-			featureFlagRepo,
-		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
 			topicRepo,
+			topicMemberRepo,
 			attachmentRepo,
 		),
 	)
@@ -400,30 +366,19 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
-	suggestionRepo := repository.NewSuggestionRepository(q)
-	featureFlagRepo := repository.NewFeatureFlagRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
-		usecase.NewGetPageDetailUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			draftPageRepo,
-			topicRepo,
-			topicMemberRepo,
-			suggestionPageRepo,
-			suggestionRepo,
-			featureFlagRepo,
-		),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
 			pageRepo,
 			repository.NewPageEditorRepository(q),
 			topicRepo,
+			topicMemberRepo,
 			attachmentRepo,
 		),
 	)

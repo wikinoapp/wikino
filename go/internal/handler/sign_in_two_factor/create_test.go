@@ -42,12 +42,12 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのリクエスト
@@ -96,12 +96,12 @@ func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 無効な形式のTOTPコードでリクエスト
@@ -164,12 +164,12 @@ func TestCreate_InvalidTOTPCode(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 間違ったTOTPコードでリクエスト
@@ -232,12 +232,12 @@ func TestCreate_ValidTOTPCode(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 正しいTOTPコードを生成

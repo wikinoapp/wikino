@@ -6,37 +6,33 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler は編集提案コメント編集ハンドラー
 type Handler struct {
 	cfg                            *config.Config
 	flashMgr                       *session.FlashManager
-	getSuggestionDetailUsecase     *usecase.GetSuggestionDetailUsecase
+	getSuggestionEditUsecase       *usecase.GetSuggestionEditUsecase
 	getSuggestionCommentUsecase    *usecase.GetSuggestionCommentUsecase
 	updateSuggestionCommentUsecase *usecase.UpdateSuggestionCommentUsecase
 	sidebarHelper                  *sidebar.Helper
-	updateValidator                *validator.SuggestionCommentUpdateValidator
 }
 
 // NewHandler は新しい編集提案コメント編集ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
-	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
+	getSuggestionEditUsecase *usecase.GetSuggestionEditUsecase,
 	getSuggestionCommentUsecase *usecase.GetSuggestionCommentUsecase,
 	updateSuggestionCommentUsecase *usecase.UpdateSuggestionCommentUsecase,
 	sidebarHelper *sidebar.Helper,
-	updateValidator *validator.SuggestionCommentUpdateValidator,
 ) *Handler {
 	return &Handler{
 		cfg:                            cfg,
 		flashMgr:                       flashMgr,
-		getSuggestionDetailUsecase:     getSuggestionDetailUsecase,
+		getSuggestionEditUsecase:       getSuggestionEditUsecase,
 		getSuggestionCommentUsecase:    getSuggestionCommentUsecase,
 		updateSuggestionCommentUsecase: updateSuggestionCommentUsecase,
 		sidebarHelper:                  sidebarHelper,
-		updateValidator:                updateValidator,
 	}
 }

@@ -75,10 +75,8 @@ func TestCreate_TurnstileVerification_Success(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
-	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil)
-
-	// バリデーターを初期化
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil, passwordResetCreateValidator)
 
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
@@ -88,7 +86,6 @@ func TestCreate_TurnstileVerification_Success(t *testing.T) {
 		nil, // limiter（テストでは不要）
 		mockTurnstile,
 		createTokenUsecase,
-		passwordResetCreateValidator,
 	)
 
 	// フォームデータを作成
@@ -149,18 +146,14 @@ func TestCreate_TurnstileVerification_Failed(t *testing.T) {
 	// モックTurnstileを初期化（常に失敗）
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
 
-	// バリデーターを初期化
-	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
-
-	// ハンドラーを初期化
+	// ハンドラーを初期化（Turnstile失敗でUseCaseには到達しないためnil）
 	handler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		nil, // limiter
 		mockTurnstile,
-		nil, // createTokenUsecase（検証失敗のため使われない）
-		passwordResetCreateValidator,
+		nil, // createTokenUsecase
 	)
 
 	// フォームデータを作成
@@ -215,8 +208,9 @@ func TestCreate_ValidationError(t *testing.T) {
 	// モックTurnstileを初期化（常に成功）
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// バリデーターを初期化
+	// UseCase を初期化（バリデーションエラーで永続化には到達しないため db, repo は nil）
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, nil, nil, nil, nil, passwordResetCreateValidator)
 
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
@@ -225,8 +219,7 @@ func TestCreate_ValidationError(t *testing.T) {
 		flashMgr,
 		nil, // limiter
 		mockTurnstile,
-		nil, // createTokenUsecase
-		passwordResetCreateValidator,
+		createTokenUsecase,
 	)
 
 	// 無効なメールアドレスでリクエスト
@@ -293,10 +286,8 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
-	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil)
-
-	// バリデーターを初期化
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil, passwordResetCreateValidator)
 
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
@@ -306,7 +297,6 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 		limiter,
 		mockTurnstile,
 		createTokenUsecase,
-		passwordResetCreateValidator,
 	)
 
 	// 5回まではOK（IPアドレス単位: 5回/時間）
@@ -398,10 +388,8 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
-	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil)
-
-	// バリデーターを初期化
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil, passwordResetCreateValidator)
 
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
@@ -411,7 +399,6 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 		limiter,
 		mockTurnstile,
 		createTokenUsecase,
-		passwordResetCreateValidator,
 	)
 
 	// 3回まではOK（メールアドレス単位: 3回/時間）
@@ -500,10 +487,8 @@ func TestCreate_UserNotExists_ShowsSuccessPage(t *testing.T) {
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
-	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil)
-
-	// バリデーターを初期化
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, nil, passwordResetCreateValidator)
 
 	// ハンドラーを初期化
 	handler := password_reset.NewHandler(
@@ -513,7 +498,6 @@ func TestCreate_UserNotExists_ShowsSuccessPage(t *testing.T) {
 		nil, // limiter
 		mockTurnstile,
 		createTokenUsecase,
-		passwordResetCreateValidator,
 	)
 
 	// 存在しないユーザーのメールアドレスでリクエスト

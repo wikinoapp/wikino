@@ -5,28 +5,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler は2要素認証ハンドラー
 type Handler struct {
-	cfg                 *config.Config
-	sessionMgr          *session.Manager
-	createValidator     *validator.SignInTwoFactorCreateValidator
-	createUserSessionUC *usecase.CreateUserSessionUsecase
+	cfg                      *config.Config
+	sessionMgr               *session.Manager
+	createTwoFactorSessionUC *usecase.CreateTwoFactorSessionUsecase
 }
 
 // NewHandler は新しい2要素認証ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
-	createValidator *validator.SignInTwoFactorCreateValidator,
-	createUserSessionUC *usecase.CreateUserSessionUsecase,
+	createTwoFactorSessionUC *usecase.CreateTwoFactorSessionUsecase,
 ) *Handler {
 	return &Handler{
-		cfg:                 cfg,
-		sessionMgr:          sessionMgr,
-		createValidator:     createValidator,
-		createUserSessionUC: createUserSessionUC,
+		cfg:                      cfg,
+		sessionMgr:               sessionMgr,
+		createTwoFactorSessionUC: createTwoFactorSessionUC,
 	}
 }

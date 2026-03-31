@@ -20,7 +20,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -53,7 +52,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 		getPageMoveDataUC,
 		nil,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
-		validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo),
 	)
 }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -38,67 +37,43 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
 
-	// 編集提案のパスを生成（リダイレクト用）
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
-
-	// UseCaseでデータを取得（編集提案の存在確認と権限チェック用データ）
-	detailOutput, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
+	// UseCaseを実行
+	_, err = h.applySuggestionUsecase.Execute(ctx, usecase.ApplySuggestionInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,
-		UserID:           &user.ID,
+		UserID:           user.ID,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "編集提案詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if detailOutput == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// スペースメンバーでなければ403
-	if detailOutput.SpaceMember == nil {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	// 反映権限チェック（スペースオーナーまたはトピック管理者のみ）
-	topicPolicy := policy.NewTopicPolicy(detailOutput.SpaceMember, detailOutput.TopicMember)
-	if !topicPolicy.CanApplySuggestion(detailOutput.Suggestion) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	// べき等性: 既に反映済みの場合は何もせず成功リダイレクト
-	if detailOutput.Suggestion.Status == model.SuggestionStatusApplied {
-		h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_apply_success"))
-		http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
-		return
-	}
-
-	// オープンステータスでなければ反映不可
-	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
-		h.flashMgr.SetError(w, i18n.T(ctx, "suggestion_apply_error"))
-		http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
-		return
-	}
-
-	// 編集提案を反映
-	_, err = h.applySuggestionUsecase.Execute(ctx, usecase.ApplySuggestionInput{
-		Suggestion:      detailOutput.Suggestion,
-		SuggestionPages: detailOutput.SuggestionPages,
-		Pages:           detailOutput.Pages,
-		SpaceMemberID:   detailOutput.SpaceMember.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案の反映に失敗", "error", err)
-		h.flashMgr.SetError(w, i18n.T(ctx, "suggestion_apply_error"))
-		http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+		h.handleCreateError(w, r, err, spaceIdentifier, suggestionNumber)
 		return
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
+	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_apply_success"))
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
+	ctx := r.Context()
+	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound:
+			handler.NotFound(w, r)
+		case model.AppErrCodeForbidden:
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		case model.AppErrCodeConflict:
+			h.flashMgr.SetError(w, ae.UserMsg)
+			http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "編集提案の反映に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

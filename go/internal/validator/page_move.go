@@ -8,7 +8,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // PageMoveCreateValidator はページ移動のバリデーションを行う
@@ -41,70 +40,64 @@ type PageMoveCreateValidatorInput struct {
 	SpaceMember     *model.SpaceMember
 }
 
-// PageMoveCreateValidatorResult はバリデーションの結果
-type PageMoveCreateValidatorResult struct {
-	DestTopic  *model.Topic
-	FormErrors *session.FormErrors
-	Err        error
-}
-
-// Validate はバリデーションを行う
-func (v *PageMoveCreateValidator) Validate(ctx context.Context, input PageMoveCreateValidatorInput) *PageMoveCreateValidatorResult {
-	formErrors := session.NewFormErrors()
+// Validate はバリデーションを行う。
+// 成功時は移動先トピックを返す。バリデーションエラー時は *model.ValidationError を返す。
+func (v *PageMoveCreateValidator) Validate(ctx context.Context, input PageMoveCreateValidatorInput) (*model.Topic, error) {
+	ve := model.NewValidationError()
 
 	// 形式バリデーション: 移動先トピックが選択されていること
 	if input.DestTopicNumber == "" {
-		formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
-		return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
+		return nil, ve
 	}
 
 	// 移動先トピック番号をパース
 	parsed, err := strconv.ParseInt(input.DestTopicNumber, 10, 32)
 	if err != nil {
-		formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
-		return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
+		return nil, ve
 	}
 	destTopicNumber := int32(parsed)
 
 	// 状態バリデーション: 移動先トピックが同一スペース内に存在すること
 	destTopic, err := v.topicRepo.FindBySpaceAndNumber(ctx, input.SpaceID, destTopicNumber)
 	if err != nil {
-		return &PageMoveCreateValidatorResult{Err: err}
+		return nil, err
 	}
 	if destTopic == nil {
-		formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
-		return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_topic_required"))
+		return nil, ve
 	}
 
 	// 移動先トピックが現在のトピックと異なること
 	if destTopic.ID == input.CurrentTopicID {
-		formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_same_topic"))
-		return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_same_topic"))
+		return nil, ve
 	}
 
 	// 移動先トピックにページ作成権限があること
 	topicMember, err := v.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, input.SpaceID, input.SpaceMember.ID, destTopic.ID)
 	if err != nil {
-		return &PageMoveCreateValidatorResult{Err: err}
+		return nil, err
 	}
 
 	topicPolicy := policy.NewTopicPolicy(input.SpaceMember, topicMember)
 	if !topicPolicy.CanCreatePage(destTopic) {
-		formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_no_permission"))
-		return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_no_permission"))
+		return nil, ve
 	}
 
 	// 移動先トピックに同名のページが存在しないこと
 	if input.PageTitle != "" {
 		existingPage, err := v.pageRepo.FindByTopicAndTitle(ctx, destTopic.ID, input.PageTitle, input.SpaceID)
 		if err != nil {
-			return &PageMoveCreateValidatorResult{Err: err}
+			return nil, err
 		}
 		if existingPage != nil && existingPage.ID != input.PageID {
-			formErrors.AddField("dest_topic", i18n.T(ctx, "page_move_error_title_exists"))
-			return &PageMoveCreateValidatorResult{FormErrors: formErrors}
+			ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_title_exists"))
+			return nil, ve
 		}
 	}
 
-	return &PageMoveCreateValidatorResult{DestTopic: destTopic}
+	return destTopic, nil
 }

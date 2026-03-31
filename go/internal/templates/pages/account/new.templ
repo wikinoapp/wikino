@@ -1,15 +1,14 @@
 package account
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
 // NewPageData はアカウント作成ページに渡すデータ構造体です
 type NewPageData struct {
 	CSRFToken  string
-	FormErrors *session.FormErrors
+	FormErrors *model.ValidationError
 	Email      string
 	Atname     string
 }
@@ -19,7 +18,7 @@ templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block">
-				<div class="bg-brand-100 rounded-xl">
+				<div class="bg-brand-50 rounded-xl">
 					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
 				</div>
 			</a>
@@ -31,7 +30,13 @@ templ New(data NewPageData) {
 			</h1>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
+			for _, errorMsg := range data.FormErrors.Global {
+				<div class="alert-destructive">
+					<section>{ errorMsg }</section>
+				</div>
+			}
+		}
 
 		<div class="card">
 			<div class="card-body px-4">

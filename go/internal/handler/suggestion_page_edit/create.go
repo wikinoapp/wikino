@@ -44,60 +44,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	force := r.FormValue("force") == "true"
 
-	// 変更差分画面のパス（エラー時のリダイレクト先）
-	changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
-
-	// 編集提案詳細を取得（認可チェック用）
-	detailOutput, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
+	// UseCaseを実行
+	output, err := h.startSuggestionPageEditUsecase.Execute(ctx, usecase.StartSuggestionPageEditInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,
-		UserID:           &user.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if detailOutput == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// スペースメンバーでなければ403
-	if detailOutput.SpaceMember == nil {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	// オープンステータスでなければ編集不可
-	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
-		http.Redirect(w, r, changesPath, http.StatusSeeOther)
-		return
-	}
-
-	// 編集提案ページが現在の編集提案に属していることを検証
-	found := false
-	for _, sp := range detailOutput.SuggestionPages {
-		if sp.ID == suggestionPageID {
-			found = true
-			break
-		}
-	}
-	if !found {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// 編集提案ページの編集を開始
-	output, err := h.startSuggestionPageEditUsecase.Execute(ctx, usecase.StartSuggestionPageEditInput{
-		SpaceID:          detailOutput.Space.ID,
-		SpaceMemberID:    detailOutput.SpaceMember.ID,
 		SuggestionPageID: suggestionPageID,
+		UserID:           user.ID,
 		Force:            force,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "編集提案ページの編集開始に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleCreateError(w, r, err, spaceIdentifier, suggestionNumber)
 		return
 	}
 
@@ -119,4 +75,28 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		slog.ErrorContext(ctx, "予期しないステータス", "status", output.Status)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
+}
+
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
+	ctx := r.Context()
+	changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound:
+			handler.NotFound(w, r)
+		case model.AppErrCodeForbidden:
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		case model.AppErrCodeConflict:
+			// ステータスが不正な場合は変更差分画面にリダイレクト
+			http.Redirect(w, r, changesPath, http.StatusSeeOther)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "編集提案ページの編集開始に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

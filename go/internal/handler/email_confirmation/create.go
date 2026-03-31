@@ -10,11 +10,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signuppages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -43,9 +41,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	event := r.FormValue("event")
 	turnstileToken := r.FormValue("cf-turnstile-response")
 
-	// CSRFトークンを取得
-	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
 	// Turnstile検証
 	valid, err := h.turnstileVerifier.Verify(ctx, turnstileToken)
 	if err != nil {
@@ -53,9 +48,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if !valid {
 		slog.WarnContext(ctx, "Turnstile検証に失敗", "email", email)
-		formErrors := session.NewFormErrors()
-		formErrors.AddGlobal(i18n.T(ctx, "validation_bot_detected"))
-		h.renderSignUpForm(w, r, formErrors, csrfToken, email)
+		ve := model.NewValidationError()
+		ve.AddGlobal(i18n.T(ctx, "validation_bot_detected"))
+		h.renderSignUpForm(w, r, ve, email)
 		return
 	}
 
@@ -68,9 +63,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		if errors.Is(err, ratelimit.ErrRateLimitExceeded) {
 			slog.WarnContext(ctx, "Rate Limit超過（IP）", "ip", clientIP)
-			formErrors := session.NewFormErrors()
-			formErrors.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
-			h.renderSignUpForm(w, r, formErrors, csrfToken, email)
+			ve := model.NewValidationError()
+			ve.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
+			h.renderSignUpForm(w, r, ve, email)
 			return
 		}
 		slog.ErrorContext(ctx, "Rate Limitチェックでエラー", "error", err, "ip", clientIP)
@@ -87,9 +82,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			if errors.Is(err, ratelimit.ErrRateLimitExceeded) {
 				slog.WarnContext(ctx, "Rate Limit超過（メールアドレス）", "email", email)
-				formErrors := session.NewFormErrors()
-				formErrors.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
-				h.renderSignUpForm(w, r, formErrors, csrfToken, email)
+				ve := model.NewValidationError()
+				ve.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
+				h.renderSignUpForm(w, r, ve, email)
 				return
 			}
 			slog.ErrorContext(ctx, "Rate Limitチェックでエラー", "error", err, "email", email)
@@ -101,31 +96,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// イベントタイプを変換
 	eventType := parseEmailConfirmationEvent(event)
 
-	// バリデーション（形式チェック + 状態チェック）
-	result := h.createValidator.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
-		Email: email,
-		Event: eventType,
-	})
-	if result.FormErrors != nil {
-		h.renderSignUpForm(w, r, result.FormErrors, csrfToken, email)
-		return
-	}
-	if result.Err != nil {
-		slog.ErrorContext(ctx, "バリデーションでエラー", "error", result.Err, "email", email)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// メール確認コードを送信
+	// UseCase を実行
 	locale := i18n.GetLocale(ctx)
-	output, err := h.sendEmailConfirmationUC.Execute(ctx, usecase.SendEmailConfirmationInput{
+	output, err := h.createEmailConfirmationUC.Execute(ctx, usecase.CreateEmailConfirmationInput{
 		Email:  email,
 		Event:  eventType,
 		Locale: locale,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "メール確認コード送信に失敗", "error", err, "email", email)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleCreateError(w, r, err, email)
 		return
 	}
 
@@ -139,9 +118,23 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/email_confirmation/edit", http.StatusFound)
 }
 
-// renderSignUpForm はサインアップフォームをエラー付きでレンダリングします
-func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string, email string) {
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, email string) {
 	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		h.renderSignUpForm(w, r, ve, email)
+		return
+	}
+
+	slog.ErrorContext(ctx, "メール確認コード送信に失敗", "error", err, "email", email)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+}
+
+// renderSignUpForm はサインアップフォームをエラー付きでレンダリングします
+func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, email string) {
+	ctx := r.Context()
+
+	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_up_title")
@@ -149,7 +142,7 @@ func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, formE
 	content := signuppages.New(signuppages.NewPageData{
 		CSRFToken:        csrfToken,
 		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
-		FormErrors:       formErrors,
+		FormErrors:       ve,
 		Email:            email,
 	})
 

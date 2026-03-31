@@ -12,9 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Create はページ移動を実行します (POST /s/{space_identifier}/pages/{page_number}/move)
@@ -38,74 +36,59 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得
-	output, err := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
-		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "ページ移動データの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		handler.NotFound(w, r)
-		return
-	}
-
-	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdatePage(output.Page) {
-		handler.NotFound(w, r)
-		return
-	}
-
 	// フォームデータを取得
 	destTopicNumber := r.FormValue("dest_topic")
 
-	// ページタイトルを取得
-	var pageTitle string
-	if output.Page.Title != nil {
-		pageTitle = *output.Page.Title
-	}
-
-	// バリデーション
-	validationResult := h.createValidator.Validate(ctx, validator.PageMoveCreateValidatorInput{
+	// UseCase を実行
+	moveOutput, err := h.movePageUC.Execute(ctx, usecase.MovePageInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
 		DestTopicNumber: destTopicNumber,
-		PageID:          output.Page.ID,
-		PageTitle:       pageTitle,
-		CurrentTopicID:  output.Page.TopicID,
-		SpaceID:         output.Space.ID,
-		SpaceMember:     output.SpaceMember,
-	})
-
-	if validationResult.Err != nil {
-		slog.ErrorContext(ctx, "バリデーション中にシステムエラーが発生", "error", validationResult.Err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if validationResult.FormErrors.HasErrors() {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderMoveForm(w, r, user, spaceIdentifier, output, validationResult.FormErrors)
-		return
-	}
-
-	// ページ移動ユースケースを実行
-	_, err = h.movePageUC.Execute(ctx, usecase.MovePageInput{
-		PageID:      output.Page.ID,
-		SpaceID:     output.Space.ID,
-		DestTopicID: validationResult.DestTopic.ID,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "ページの移動に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleCreateError(w, r, err, user, spaceIdentifier, int32(pageNumber))
 		return
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "page_move_success"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), output.Page.Number)
+	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), moveOutput.Page.Number)
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, pageNumber int32) {
+	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		// バリデーションエラー → フォーム再描画
+		output, getErr := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
+			SpaceIdentifier: spaceIdentifier,
+			PageNumber:      pageNumber,
+			UserID:          user.ID,
+		})
+		if getErr != nil {
+			slog.ErrorContext(ctx, "フォーム再表示用データの取得に失敗", "error", getErr, "original_error", ve.Error())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		h.renderMoveForm(w, r, user, spaceIdentifier, output, ve)
+		return
+	}
+
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+			handler.NotFound(w, r)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	slog.ErrorContext(ctx, "ページの移動に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

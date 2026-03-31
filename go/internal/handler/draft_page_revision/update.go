@@ -8,10 +8,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -37,29 +37,6 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得
-	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
-		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdatePage(output.Page) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
 	// フォームパラメータを取得
 	title := r.FormValue("title")
 	body := r.FormValue("body")
@@ -70,18 +47,26 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// ユースケースを実行
+	// UseCase を実行
 	saveOutput, err := h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
-		SpaceID:          output.Space.ID,
-		PageID:           output.Page.ID,
-		SpaceMemberID:    output.SpaceMember.ID,
-		TopicID:          output.Topic.ID,
-		Title:            titlePtr,
-		Body:             body,
-		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: output.Topic.Name,
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+		Title:           titlePtr,
+		Body:            body,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.NotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
+
 		slog.ErrorContext(ctx, "下書きの手動保存に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -91,7 +76,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	redirectTo := r.URL.Query().Get("redirect_to")
 	if redirectTo == "suggestion_new" && saveOutput.DraftPage != nil {
 		suggestionNewPath := fmt.Sprintf("%s?draft_page_ids=%s",
-			string(templates.SuggestionNewPath(spaceIdentifier.String(), output.Topic.Number)),
+			string(templates.SuggestionNewPath(spaceIdentifier.String(), saveOutput.TopicNumber)),
 			string(saveOutput.DraftPage.ID),
 		)
 		http.Redirect(w, r, suggestionNewPath, http.StatusSeeOther)

@@ -121,13 +121,14 @@
 
 :root {
   /* Basecoatの変数上書き */
-  --background: var(--color-brand-100);
+  --background: var(--color-brand-50);
   --foreground: var(--color-stone-900);
   --primary: var(--color-brand-950);
   --primary-foreground: var(--color-brand-100);
   --secondary: var(--color-brand-200);
   --secondary-foreground: var(--color-brand-950);
-  --accent: var(--color-brand-200);
+  --muted: var(--color-stone-200);
+  --accent: var(--color-brand-100);
   --border: var(--color-stone-300);
   --input: var(--color-stone-300);
   --sidebar: var(--color-brand-50);

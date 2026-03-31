@@ -24,6 +24,10 @@ func (p *topicAdminPolicy) CanUpdateDraftPage(draftPage *model.DraftPage) bool {
 	return p.spaceMemberActive && p.topicID == draftPage.TopicID
 }
 
+func (p *topicAdminPolicy) CanCreateSuggestion(topic *model.Topic) bool {
+	return p.spaceMemberActive && p.topicID == topic.ID
+}
+
 func (p *topicAdminPolicy) CanApplySuggestion(suggestion *model.Suggestion) bool {
 	return p.spaceMemberActive && p.topicID == suggestion.TopicID
 }
@@ -34,6 +38,14 @@ func (p *topicAdminPolicy) CanCloseSuggestion(suggestion *model.Suggestion) bool
 
 func (p *topicAdminPolicy) CanUpdateSuggestion(suggestion *model.Suggestion) bool {
 	return p.spaceMemberActive && p.topicID == suggestion.TopicID && suggestion.Status == model.SuggestionStatusOpen
+}
+
+func (p *topicAdminPolicy) CanEditSuggestionPage(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.topicID == suggestion.TopicID
+}
+
+func (p *topicAdminPolicy) CanCreateSuggestionComment(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.topicID == suggestion.TopicID
 }
 
 func (p *topicAdminPolicy) CanUpdateSuggestionComment(suggestion *model.Suggestion) bool {

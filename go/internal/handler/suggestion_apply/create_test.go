@@ -44,30 +44,23 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
-	userRepo := repository.NewUserRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	attachmentRepo := repository.NewAttachmentRepository(queries)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
-		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
-	)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
-		db, suggestionRepo, pageRepo, pageRevisionRepo,
-		pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo,
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo,
 	)
 
 	return suggestionapplyhandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		applySuggestionUC,
 	)
 }
@@ -258,50 +251,49 @@ func TestCreate_一般メンバーは403が返る(t *testing.T) {
 func TestCreate_スペースオーナーが反映できる(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+	// usecaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
+	queries := query.New(db)
 
-	ownerID := testutil.NewUserBuilder(t, tx).
+	ownerID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("apply-ok-owner@example.com").
 		WithAtname("applyokowner").
 		Build()
 
-	spaceID := testutil.NewSpaceBuilder(t, tx).
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("apply-ok-sp").
 		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
 		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
+	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithNumber(1).
 		WithVisibility(0).
 		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
+	testutil.NewTopicMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(int32(model.TopicMemberRoleAdmin)).
 		Build()
-	pageID := testutil.NewPageBuilder(t, tx).
+	pageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
 		Build()
-	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+	pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
 		Build()
-	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+	suggestionID := testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
-	testutil.NewSuggestionPageBuilder(t, tx).
+	testutil.NewSuggestionPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithSuggestionID(suggestionID).
 		WithPageID(pageID).

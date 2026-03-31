@@ -4,12 +4,14 @@ import (
 	"testing"
 
 	"github.com/riverqueue/river"
+
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 )
 
 func TestCleanupRateLimitsArgs_Kind(t *testing.T) {
 	t.Parallel()
 
-	args := CleanupRateLimitsArgs{}
+	args := dispatcher.CleanupRateLimitsArgs{}
 	if args.Kind() != "cleanup_rate_limits" {
 		t.Errorf("Kind() = %s, want cleanup_rate_limits", args.Kind())
 	}
@@ -18,7 +20,7 @@ func TestCleanupRateLimitsArgs_Kind(t *testing.T) {
 func TestCleanupRateLimitsArgs_InsertOpts(t *testing.T) {
 	t.Parallel()
 
-	args := CleanupRateLimitsArgs{}
+	args := dispatcher.CleanupRateLimitsArgs{}
 	opts := args.InsertOpts()
 
 	if opts.Queue != river.QueueDefault {

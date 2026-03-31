@@ -9,11 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // PublishPageUsecase はページ公開ユースケース
 type PublishPageUsecase struct {
 	db                    *sql.DB
+	spaceRepo             *repository.SpaceRepository
+	spaceMemberRepo       *repository.SpaceMemberRepository
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
@@ -23,11 +26,14 @@ type PublishPageUsecase struct {
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
+	updateValidator       *validator.PageUpdateValidator
 }
 
 // NewPublishPageUsecase は PublishPageUsecase を生成する
 func NewPublishPageUsecase(
 	db *sql.DB,
+	spaceRepo *repository.SpaceRepository,
+	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
@@ -37,9 +43,12 @@ func NewPublishPageUsecase(
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
+	updateValidator *validator.PageUpdateValidator,
 ) *PublishPageUsecase {
 	return &PublishPageUsecase{
 		db:                    db,
+		spaceRepo:             spaceRepo,
+		spaceMemberRepo:       spaceMemberRepo,
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
@@ -49,21 +58,18 @@ func NewPublishPageUsecase(
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
 		pageAttachmentRefRepo: pageAttachmentRefRepo,
+		updateValidator:       updateValidator,
 	}
 }
 
 // PublishPageInput はページ公開の入力パラメータ
 type PublishPageInput struct {
-	SpaceID                      model.SpaceID
-	PageID                       model.PageID
-	SpaceMemberID                model.SpaceMemberID
-	TopicID                      model.TopicID
-	DraftPageID                  model.DraftPageID
-	Title                        *string
-	Body                         string
-	SpaceIdentifier              model.SpaceIdentifier
-	CurrentTopicName             string
-	UnpublishedConflictingPageID *model.PageID
+	SpaceIdentifier model.SpaceIdentifier
+	PageNumber      int32
+	UserID          model.UserID
+	// Title はバリデーション前の必須フィールド（空文字列の場合はバリデーションエラー）
+	Title string
+	Body  string
 }
 
 // PublishPageOutput はページ公開の出力パラメータ
@@ -74,16 +80,63 @@ type PublishPageOutput struct {
 
 // Execute はページを公開する
 func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
+	// 1. データ取得
+	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 認可チェック
+	if err := authorizePageUpdate(ctx, data); err != nil {
+		return nil, err
+	}
+
+	// 3. バリデーション
+	unpublishedConflictingPageID, err := uc.updateValidator.Validate(ctx, validator.PageUpdateValidatorInput{
+		Title:           input.Title,
+		PageID:          data.page.ID,
+		TopicID:         data.page.TopicID,
+		SpaceID:         data.space.ID,
+		SpaceIdentifier: input.SpaceIdentifier,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. 追加データ取得（下書きページ）
+	var draftPage *model.DraftPage
+	if data.spaceMember != nil {
+		draftPage, err = uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("下書きページの取得に失敗: %w", err)
+		}
+	}
+
+	// 5. ビジネスロジック（トランザクション前）
+	return uc.publishPage(ctx, data, draftPage, input, unpublishedConflictingPageID)
+}
+
+func (uc *PublishPageUsecase) pageAccessRepos() pageAccessRepos {
+	return pageAccessRepos{
+		spaceRepo:       uc.spaceRepo,
+		spaceMemberRepo: uc.spaceMemberRepo,
+		pageRepo:        uc.pageRepo,
+		topicRepo:       uc.topicRepo,
+		topicMemberRepo: uc.topicMemberRepo,
+	}
+}
+
+func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessData, draftPage *model.DraftPage, input PublishPageInput, unpublishedConflictingPageID *model.PageID) (*PublishPageOutput, error) {
 	now := time.Now()
 
 	// トランザクション前: ページ公開に必要な事前計算データを取得
-	publishData, err := uc.calculatePublishData(ctx, input.Body, input.PageID, input.SpaceID)
+	pd, err := uc.calculatePublishData(ctx, input.Body, data.page.ID, data.space.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// トランザクション前: Wikiリンクのスキャン・トピック検索
-	keys, topicMapForLinks, err := scanAndLookupWikilinks(ctx, input.Body, input.CurrentTopicName, input.SpaceID, uc.topicRepo)
+	keys, topicMapForLinks, err := scanAndLookupWikilinks(ctx, input.Body, data.topic.Name, data.space.ID, uc.topicRepo)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクのスキャンに失敗しました: %w", err)
 	}
@@ -106,47 +159,49 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	// リンク先ページの自動作成
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, keys, topicMapForLinks, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo,
+		ctx, keys, topicMapForLinks, data.space.ID, data.spaceMember.ID, pageRepo, pageEditorRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
 	}
 
 	// bodyHTML内のWikiリンクを<a>タグに変換
-	bodyHTML := publishData.bodyHTML
+	bodyHTML := pd.bodyHTML
 	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, input.CurrentTopicName, input.SpaceIdentifier, pageLocations)
+		bodyHTML = markup.ReplaceWikilinks(bodyHTML, data.topic.Name, input.SpaceIdentifier, pageLocations)
 	}
 
 	// 添付ファイル参照の書き込み
-	if err := applyAttachmentRefChanges(ctx, input.PageID, input.SpaceID, publishData.attachmentRefsToAdd, publishData.attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
+	if err := applyAttachmentRefChanges(ctx, data.page.ID, data.space.ID, pd.attachmentRefsToAdd, pd.attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 	}
 
 	// 競合する未公開ページが存在する場合、論理削除する
-	if input.UnpublishedConflictingPageID != nil {
-		err := pageRepo.DiscardByID(ctx, *input.UnpublishedConflictingPageID, input.SpaceID, now)
+	if unpublishedConflictingPageID != nil {
+		err := pageRepo.DiscardByID(ctx, *unpublishedConflictingPageID, data.space.ID, now)
 		if err != nil {
 			return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
 		}
 	}
 
-	// Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
-	var title string
-	if input.Title != nil {
-		title = *input.Title
+	// Titleをポインタに変換（空文字列の場合はnil）
+	var titlePtr *string
+	if input.Title != "" {
+		titlePtr = &input.Title
 	}
+
+	// Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
 	updatedPage, err := pageRepo.Update(ctx, repository.UpdatePageInput{
-		ID:                        input.PageID,
-		SpaceID:                   input.SpaceID,
-		TopicID:                   input.TopicID,
-		Title:                     input.Title,
+		ID:                        data.page.ID,
+		SpaceID:                   data.space.ID,
+		TopicID:                   data.page.TopicID,
+		Title:                     titlePtr,
 		Body:                      input.Body,
 		BodyHTML:                  bodyHTML,
 		LinkedPageIDs:             linkedPageIDs,
 		ModifiedAt:                now,
 		PublishedAt:               &now,
-		FeaturedImageAttachmentID: publishData.featuredImageAttachmentID,
+		FeaturedImageAttachmentID: pd.featuredImageAttachmentID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
@@ -154,10 +209,10 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	// PageRevisionを作成（スナップショット）
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
-		SpaceID:       input.SpaceID,
-		SpaceMemberID: input.SpaceMemberID,
-		PageID:        input.PageID,
-		Title:         title,
+		SpaceID:       data.space.ID,
+		SpaceMemberID: data.spaceMember.ID,
+		PageID:        data.page.ID,
+		Title:         input.Title,
 		Body:          input.Body,
 		BodyHTML:      bodyHTML,
 	})
@@ -167,9 +222,9 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	// PageEditorを追加・更新
 	pageEditor, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
-		SpaceID:            input.SpaceID,
-		PageID:             input.PageID,
-		SpaceMemberID:      input.SpaceMemberID,
+		SpaceID:            data.space.ID,
+		PageID:             data.page.ID,
+		SpaceMemberID:      data.spaceMember.ID,
 		LastPageModifiedAt: now,
 	})
 	if err != nil {
@@ -178,7 +233,7 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	_, err = pageEditorRepo.UpdateLastPageModifiedAt(ctx, repository.UpdateLastPageModifiedAtInput{
 		ID:                 pageEditor.ID,
-		SpaceID:            input.SpaceID,
+		SpaceID:            data.space.ID,
 		LastPageModifiedAt: now,
 	})
 	if err != nil {
@@ -186,19 +241,19 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	}
 
 	// TopicMemberのlast_page_modified_atを更新
-	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, input.SpaceID, input.TopicID, input.SpaceMemberID, now)
+	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, data.space.ID, data.page.TopicID, data.spaceMember.ID, now)
 	if err != nil {
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
 	// DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
-	if input.DraftPageID != "" {
-		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, input.DraftPageID, input.SpaceID)
+	if draftPage != nil {
+		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, draftPage.ID, data.space.ID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きページリビジョンの削除に失敗しました: %w", err)
 		}
 
-		err = draftPageRepo.Delete(ctx, input.DraftPageID, input.SpaceID)
+		err = draftPageRepo.Delete(ctx, draftPage.ID, data.space.ID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)
 		}

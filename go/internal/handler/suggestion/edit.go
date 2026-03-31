@@ -10,8 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -42,13 +40,13 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// UseCaseでデータを取得
-	output, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
+	output, err := h.getSuggestionEditUsecase.Execute(ctx, usecase.GetSuggestionEditInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: model.SuggestionNumber(suggestionNumber),
-		UserID:           &user.ID,
+		UserID:           user.ID,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "編集提案詳細の取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "編集提案編集データの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -57,13 +55,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 権限チェック
-	if output.SpaceMember == nil {
-		handler.NotFound(w, r)
-		return
-	}
-	topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-	if !topicPolicy.CanUpdateSuggestion(output.Suggestion) {
+	// 認可チェック
+	if !output.CanUpdateSuggestion {
 		handler.NotFound(w, r)
 		return
 	}
@@ -77,8 +70,8 @@ func (h *Handler) renderEditForm(
 	r *http.Request,
 	user *model.User,
 	spaceIdentifier model.SpaceIdentifier,
-	output *usecase.GetSuggestionDetailOutput,
-	formErrors *session.FormErrors,
+	output *usecase.GetSuggestionEditOutput,
+	formErrors *model.ValidationError,
 	title string,
 	body string,
 ) {

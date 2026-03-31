@@ -784,6 +784,51 @@ class DraftPageRecord
     sig { void }
     def created_at_will_change!; end
 
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def featured_image_attachment_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def featured_image_attachment_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def featured_image_attachment_id_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def featured_image_attachment_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def featured_image_attachment_id_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def featured_image_attachment_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def featured_image_attachment_id_was; end
+
+    sig { void }
+    def featured_image_attachment_id_will_change!; end
+
     sig { returns(::String) }
     def id; end
 
@@ -1019,6 +1064,9 @@ class DraftPageRecord
     def restore_created_at!; end
 
     sig { void }
+    def restore_featured_image_attachment_id!; end
+
+    sig { void }
     def restore_id!; end
 
     sig { void }
@@ -1038,6 +1086,9 @@ class DraftPageRecord
 
     sig { void }
     def restore_space_member_id!; end
+
+    sig { void }
+    def restore_suggestion_page_id!; end
 
     sig { void }
     def restore_title!; end
@@ -1065,6 +1116,12 @@ class DraftPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_featured_image_attachment_id; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_featured_image_attachment_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_id; end
@@ -1107,6 +1164,12 @@ class DraftPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def saved_change_to_suggestion_page_id; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_suggestion_page_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
     def saved_change_to_title; end
@@ -1215,6 +1278,51 @@ class DraftPageRecord
 
     sig { void }
     def space_member_id_will_change!; end
+
+    sig { returns(T.nilable(::String)) }
+    def suggestion_page_id; end
+
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def suggestion_page_id=(value); end
+
+    sig { returns(T::Boolean) }
+    def suggestion_page_id?; end
+
+    sig { returns(T.nilable(::String)) }
+    def suggestion_page_id_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def suggestion_page_id_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def suggestion_page_id_came_from_user?; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def suggestion_page_id_change; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def suggestion_page_id_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def suggestion_page_id_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def suggestion_page_id_in_database; end
+
+    sig { returns(T.nilable([T.nilable(::String), T.nilable(::String)])) }
+    def suggestion_page_id_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def suggestion_page_id_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def suggestion_page_id_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def suggestion_page_id_was; end
+
+    sig { void }
+    def suggestion_page_id_will_change!; end
 
     sig { returns(T.nilable(::String)) }
     def title; end
@@ -1361,6 +1469,9 @@ class DraftPageRecord
     def will_save_change_to_created_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_featured_image_attachment_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1380,6 +1491,9 @@ class DraftPageRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_member_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_suggestion_page_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_title?(from: T.unsafe(nil), to: T.unsafe(nil)); end

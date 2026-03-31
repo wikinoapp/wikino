@@ -45,26 +45,18 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
-	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
-	userRepo := repository.NewUserRepository(queries)
 
-	pageRepo := repository.NewPageRepository(queries)
-	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(
-		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
-		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
-	)
-	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	commentCreateValidator := validator.NewSuggestionCommentCreateValidator()
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionCommentRepo, commentCreateValidator,
+	)
 
 	return suggestioncommenthandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		createSuggestionCommentUC,
-		commentCreateValidator,
 	)
 }
 
@@ -105,14 +97,32 @@ func TestCreate_本文が空の場合バリデーションエラーでリダイ�
 		WithAtname("commentempty").
 		Build()
 
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("comment-empty-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
 	handler := setupHandler(t, db, queries)
 
 	form := url.Values{}
 	form.Set("body", "")
 	form.Set("csrf_token", "test-csrf-token")
 
-	req := newPostRequest(t, "/s/any-sp/suggestions/1/comments", map[string]string{
-		"space_identifier":  "any-sp",
+	req := newPostRequest(t, "/s/comment-empty-sp/suggestions/1/comments", map[string]string{
+		"space_identifier":  "comment-empty-sp",
 		"suggestion_number": "1",
 	}, form)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "commentempty"})
@@ -126,7 +136,7 @@ func TestCreate_本文が空の場合バリデーションエラーでリダイ�
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
-	if loc != "/s/any-sp/suggestions/1" {
+	if loc != "/s/comment-empty-sp/suggestions/1" {
 		t.Errorf("wrong redirect location: got %q", loc)
 	}
 }
@@ -220,7 +230,7 @@ func TestCreate_正常にコメントが作成されリダイレクトされる(
 	}
 }
 
-func TestCreate_スペースメンバーでないユーザーは403が返る(t *testing.T) {
+func TestCreate_スペースメンバーでないユーザーは404が返る(t *testing.T) {
 	t.Parallel()
 
 	db, tx := testutil.SetupTx(t)
@@ -270,7 +280,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	if rr.Code != http.StatusForbidden {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
 	}
 }
