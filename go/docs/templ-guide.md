@@ -89,7 +89,7 @@ templ SignIn(ctx context.Context, csrfToken string) {
 ### 条件分岐
 
 ```templ
-templ SignIn(ctx context.Context, formErrors *session.FormErrors) {
+templ SignIn(ctx context.Context, formErrors *model.ValidationError) {
     <div>
         // if文
         if formErrors != nil && formErrors.HasErrors() {
@@ -229,11 +229,11 @@ package components
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/session"
+    "github.com/wikinoapp/wikino/internal/model"
     "github.com/wikinoapp/wikino/internal/templates"
 )
 
-templ FormErrors(ctx context.Context, formErrors *session.FormErrors) {
+templ FormErrors(ctx context.Context, formErrors *model.ValidationError) {
     if formErrors != nil && formErrors.HasErrors() {
         <div class="alert alert-danger">
             <p><strong>{ templates.T(ctx, "form_errors_found") }</strong></p>
@@ -255,11 +255,11 @@ package pages
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/session"
+    "github.com/wikinoapp/wikino/internal/model"
     "github.com/wikinoapp/wikino/internal/templates/components"
 )
 
-templ SignIn(ctx context.Context, formErrors *session.FormErrors) {
+templ SignIn(ctx context.Context, formErrors *model.ValidationError) {
     <div>
         // コンポーネントを呼び出し
         @components.FormErrors(ctx, formErrors)
@@ -343,7 +343,7 @@ templ WorkCard(ctx context.Context, work viewmodel.Work) {
 type NewPageData struct {
     CSRFToken        string
     TurnstileSiteKey string
-    FormErrors       *session.FormErrors
+    FormErrors       *model.ValidationError
     Email            string
 }
 
@@ -359,7 +359,7 @@ templ New(data NewPageData) {
 
 ```templ
 // ❌ context.Contextを明示的に渡し、複数の引数を個別に渡している
-templ New(ctx context.Context, formErrors *session.FormErrors, csrfToken string, turnstileSiteKey string) {
+templ New(ctx context.Context, formErrors *model.ValidationError, csrfToken string, turnstileSiteKey string) {
     // ...
 }
 ```
@@ -490,8 +490,8 @@ func TestFormErrorsComponent(t *testing.T) {
     ctx = i18n.WithLocale(ctx, "ja")
 
     // エラーを含むFormErrorsを作成
-    formErrors := &session.FormErrors{}
-    formErrors.AddFieldError("email", "メールアドレスを入力してください")
+    formErrors := model.NewValidationError()
+    formErrors.AddField("email", "メールアドレスを入力してください")
 
     // コンポーネントをレンダリング
     var buf bytes.Buffer

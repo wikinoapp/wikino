@@ -9,7 +9,6 @@
 Go 版は既存の Rails 実装を段階的に再実装しており、以下の方針で開発を進めています：
 
 - **Go 初心者にもわかりやすい実装**: 過度な抽象化を避け、標準ライブラリを優先的に使用
-- **YAGNI 原則**: 必要になったときに必要な機能だけを実装
 
 ### リバースプロキシによる段階的移行
 
@@ -44,51 +43,53 @@ Go 版の実装時には、Rails 版のコード（`/workspace/rails/`）を参�
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Presentation層                                          │
-│ - Handler, ViewModel, Template, Middleware            │
+│ - Handler, Worker, ViewModel, Template, Middleware    │
 └─────────────────────────────────────────────────────────┘
          ↓ 依存
 ┌─────────────────────────────────────────────────────────┐
 │ Application層                                           │
-│ - UseCase, Validator, Worker                          │
+│ - UseCase, Validator                                  │
 └─────────────────────────────────────────────────────────┘
          ↓ 依存
 ┌─────────────────────────────────────────────────────────┐
 │ Domain/Infrastructure層（統合）                          │
-│ - Query (sqlc), Repository, Model                     │
+│ - Query (sqlc), Repository, Model, Dispatcher         │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### 主要なパッケージ
 
-| パッケージ            | 層                    | 責務                         |
-| --------------------- | --------------------- | ---------------------------- |
-| `cmd/server/main.go`  | -                     | エントリポイント             |
-| `internal/handler`    | Presentation          | HTTP リクエストハンドラー    |
-| `internal/middleware` | Presentation          | HTTP ミドルウェア            |
-| `internal/templates`  | Presentation          | templ テンプレート           |
-| `internal/viewmodel`  | Presentation          | 表示用データ変換             |
-| `internal/usecase`    | Application           | データ取得・ビジネスロジック |
-| `internal/worker`     | Application           | バックグラウンドジョブ処理   |
-| `internal/validator`  | Application           | 入力バリデーション           |
-| `internal/query`      | Domain/Infrastructure | sqlc 生成コード              |
-| `internal/repository` | Domain/Infrastructure | Repository 層                |
-| `internal/model`      | Domain/Infrastructure | ドメインモデル               |
-| `internal/policy`     | Domain/Infrastructure | 認可ロジック                 |
-| `internal/config`     | -                     | 設定管理                     |
-| `internal/i18n`       | -                     | 国際化                       |
-| `internal/session`    | -                     | セッション管理               |
+| パッケージ            | 層                    | 責務                       |
+| --------------------- | --------------------- | -------------------------- |
+| `cmd/server/main.go`  | -                     | エントリポイント           |
+| `internal/handler`    | Presentation          | HTTP リクエストハンドラー  |
+| `internal/middleware` | Presentation          | HTTP ミドルウェア          |
+| `internal/templates`  | Presentation          | templ テンプレート         |
+| `internal/viewmodel`  | Presentation          | 表示用データ変換           |
+| `internal/worker`     | Presentation          | バックグラウンドジョブ受信 |
+| `internal/usecase`    | Application           | オーケストレーション       |
+| `internal/validator`  | Application           | 入力バリデーション         |
+| `internal/query`      | Domain/Infrastructure | sqlc 生成コード            |
+| `internal/repository` | Domain/Infrastructure | Repository 層              |
+| `internal/model`      | Domain/Infrastructure | ドメインモデル             |
+| `internal/policy`     | Domain/Infrastructure | 認可ロジック               |
+| `internal/dispatcher` | Domain/Infrastructure | ジョブキュー投入           |
+| `internal/email`      | Presentation          | メール送信・レンダリング   |
+| `internal/config`     | -                     | 設定管理                   |
+| `internal/i18n`       | -                     | 国際化                     |
+| `internal/session`    | -                     | セッション管理             |
 
 ### 重要な設計原則
 
 - **依存の方向**: Presentation 層 → Application 層 → Domain/Infrastructure 層
 - **Handler から Repository への直接依存は禁止**: Handler のすべてのデータアクセスは UseCase を経由する
-- **UseCase は読み取り・書き込みの両方を担当**: 読み取り UseCase（データ取得）と書き込み UseCase（トランザクション管理）の 2 種類がある
-- **Validator は Application 層**: すべてのバリデーションは `internal/validator/` に配置し、Handler パッケージから repository の import を排除する
-- **認可チェックは Handler で実行**: UseCase から Policy への依存は禁止。Handler が UseCase の出力を使って Policy チェックを実行する
+- **UseCase はオーケストレーター**: 書き込み UseCase は認可・バリデーション・ビジネスロジック・永続化を統括する。読み取り UseCase はデータ取得を担当する
+- **Handler / Worker は薄い Adapter**: HTTP/ジョブの入出力変換のみ。認可・バリデーションは UseCase を経由する
+- **Validator は Application 層**: すべてのバリデーションは `internal/validator/` に配置し、UseCase から呼び出される
+- **認可チェックは UseCase で実行**: UseCase が Policy を呼び出して認可チェックを行う。Handler から Policy への直接依存は禁止
 - **Query への依存は Repository のみ**: Handler/UseCase/Worker が Query に直接依存することは禁止
 - **Model と Repository は 1:1 の関係**: 各ドメインエンティティに対応する Repository を作成
 - **ドメイン ID 型の使用**: モデルの ID フィールドには `string` ではなく専用のドメイン ID 型を使用する
-- **Worker の templates 依存**: Worker は Application 層だが、メールレンダリングのため templates への依存を例外として許可
 
 📖 **詳細は [docs/architecture-guide.md](docs/architecture-guide.md) を参照**
 
@@ -153,17 +154,18 @@ make templ-generate && go mod tidy && make fmt && make lint && go build ./... &&
 
 各トピックの詳細は以下のドキュメントを参照してください：
 
-| ドキュメント                                             | 内容                                            |
-| -------------------------------------------------------- | ----------------------------------------------- |
-| [docs/architecture-guide.md](docs/architecture-guide.md) | 3 層アーキテクチャ、UseCase、Repository、Worker |
-| [docs/handler-guide.md](docs/handler-guide.md)           | HTTP ハンドラー、ルーティング、Method Override  |
-| [docs/coding-guide.md](docs/coding-guide.md)             | コーディング規約、コメント、ログ出力            |
-| [docs/templ-guide.md](docs/templ-guide.md)               | templ テンプレート、ViewModel との関係          |
-| [docs/validation-guide.md](docs/validation-guide.md)     | バリデーション                                  |
-| [docs/i18n-guide.md](docs/i18n-guide.md)                 | 国際化（I18n）                                  |
-| [docs/security-guide.md](docs/security-guide.md)         | セキュリティ                                    |
-| [docs/testing-guide.md](docs/testing-guide.md)           | テスト戦略                                      |
-| [docs/development-guide.md](docs/development-guide.md)   | 開発環境、DB マイグレーション、golangci-lint    |
+| ドキュメント                                             | 内容                                           |
+| -------------------------------------------------------- | ---------------------------------------------- |
+| [docs/architecture-guide.md](docs/architecture-guide.md) | 3 層アーキテクチャ、Repository、Worker         |
+| [docs/usecase-guide.md](docs/usecase-guide.md)           | UseCase の設計と実装パターン                   |
+| [docs/handler-guide.md](docs/handler-guide.md)           | HTTP ハンドラー、ルーティング、Method Override |
+| [docs/coding-guide.md](docs/coding-guide.md)             | コーディング規約、コメント、ログ出力           |
+| [docs/templ-guide.md](docs/templ-guide.md)               | templ テンプレート、ViewModel との関係         |
+| [docs/validation-guide.md](docs/validation-guide.md)     | バリデーション                                 |
+| [docs/i18n-guide.md](docs/i18n-guide.md)                 | 国際化（I18n）                                 |
+| [docs/security-guide.md](docs/security-guide.md)         | セキュリティ                                   |
+| [docs/testing-guide.md](docs/testing-guide.md)           | テスト戦略                                     |
+| [docs/development-guide.md](docs/development-guide.md)   | 開発環境、DB マイグレーション、golangci-lint   |
 
 ## Pull Request のガイドライン
 

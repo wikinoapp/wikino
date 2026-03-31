@@ -11,7 +11,8 @@ Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を�
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Presentation層（プレゼンテーション層）                    │
-│ - Handler                                              │
+│ - Handler（HTTP Adapter）                              │
+│ - Worker（Job Adapter）                                │
 │ - ViewModel                                            │
 │ - Template                                             │
 │ - Middleware                                           │
@@ -20,9 +21,8 @@ Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を�
          ↓ 依存（OK）
 ┌─────────────────────────────────────────────────────────┐
 │ Application層（アプリケーション層）                        │
-│ - UseCase（ビジネスフロー、トランザクション管理）           │
+│ - UseCase（オーケストレーター：認可・検証・ロジック・永続化）│
 │ - Validator（入力バリデーション）                         │
-│ - Worker（バックグラウンドジョブ）                        │
 └─────────────────────────────────────────────────────────┘
          ↓ 依存（OK）
 ┌─────────────────────────────────────────────────────────┐
@@ -30,6 +30,7 @@ Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を�
 │ - Query (sqlc)                                         │
 │ - Repository                                           │
 │ - Model                                                │
+│ - Dispatcher（ジョブキュー投入）                         │
 │ （同じ層なので相互に依存できる）                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -43,7 +44,6 @@ Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を�
 - **実用的**: データベース変更（PostgreSQL → MySQLなど）はほぼ起こらない
 - **シンプル**: 層をまたぐ変換コストを削減し、シンプルさを保つ
 - **Goらしい**: Goのプラグマティックな哲学に合致
-- **YAGNI原則**: 必要になってから層を分ければ良い
 
 RepositoryとModelを同じ層として扱うことで、依存関係がシンプルになり、相互に依存できます。
 
@@ -192,12 +192,14 @@ internal/query/queries/
 
 ### 主要なレイヤー
 
-- **Handler**: HTTPリクエスト・レスポンスの処理
-- **UseCase**: データ取得とビジネスロジック（読み取り・書き込みの両方を担当）
+- **Handler**: HTTP リクエストのパース → UseCase 呼び出し → レスポンス生成（薄い Adapter）
+- **Worker**: ジョブ引数の変換 → UseCase 呼び出し（薄い Adapter）
+- **UseCase**: オーケストレーター（データ取得・認可・バリデーション・ビジネスロジック・永続化を統括）
 - **ViewModel**: プレゼンテーション層のデータ変換
-- **Validator**: バリデーション（`internal/validator/` に全て配置、状態バリデーションでは Repository に依存）
-- **Policy**: 認可ロジック（Model のみに依存、Handler で使用）
+- **Validator**: バリデーション（`internal/validator/` に全て配置、UseCase から呼び出される）
+- **Policy**: 認可ロジック（Model のみに依存、UseCase から呼び出される）
 - **Repository**: Query結果をModelに変換
+- **Dispatcher**: ジョブキューへの投入を抽象化
 - **Model**: ドメインエンティティ
 - **Query**: sqlc生成コード（データアクセス層）
 
@@ -205,7 +207,12 @@ internal/query/queries/
 
 ### Presentation層（プレゼンテーション層）
 
-- **internal/handler**: HTTP リクエストハンドラー（リソースごとにディレクトリを切り、1 エンドポイント = 1 ファイルの原則）
+- **internal/handler**: HTTP リクエストハンドラー（薄い Adapter。リソースごとにディレクトリを切り、1 エンドポイント = 1 ファイルの原則）
+  - リクエストのパース → UseCase 呼び出し → レスポンス（リダイレクト or テンプレート描画）
+  - UseCase からのエラーを `errors.As` で判別してレスポンスを決定する
+- **internal/worker**: バックグラウンドジョブの受信（薄い Adapter）
+  - ジョブ引数の変換 → UseCase 呼び出しのみ
+  - ビジネスロジックやテンプレートレンダリングは含まない
 - **internal/viewmodel**: プレゼンテーション層のデータ変換（View 用のデータ構造）
 - **internal/templates**: templ テンプレートファイル（型安全な HTML テンプレート）
   - `layouts/`: レイアウトテンプレート（`default.templ`, `simple.templ`）
@@ -221,21 +228,21 @@ internal/query/queries/
 
 **Presentation層のヘルパー**（Presentation層内で使用可能）:
 
+- **internal/email**: メール送信・テンプレートレンダリング（メール種別ごとの Sender でテンプレートレンダリングと i18n 件名取得を担当）
 - **internal/image**: 画像URL生成（imgproxy署名付きURL）
 - **internal/i18n**: 国際化（翻訳取得、言語切り替え）
 - **internal/session**: セッション管理（フラッシュメッセージ、ユーザー情報）
 
 ### Application層（アプリケーション層）
 
-- **internal/usecase**: ビジネスロジック層（フラットなファイル配置）
+- **internal/usecase**: オーケストレーション層（フラットなファイル配置）
   - 読み取り UseCase: データ取得、複数 Repository の集約（トランザクションなし）
-  - 書き込み UseCase: ビジネスフロー、トランザクション管理
-  - Handler からのすべてのデータアクセスは UseCase を経由する
+  - 書き込み UseCase: 認可チェック → バリデーション → ビジネスロジック → トランザクション管理
+  - Handler/Worker からのすべてのデータアクセスは UseCase を経由する
 - **internal/validator**: バリデーション（形式チェック + 状態チェック）
   - すべてのバリデーターをこのパッケージに配置（形式バリデーションのみの場合も含む）
-  - Handler から呼び出され、状態バリデーションでは Repository に依存する
-  - Handler パッケージから repository の import を排除するために独立パッケージとして配置
-  - `main.go` で構築し、Handler のコンストラクタに渡す
+  - UseCase から呼び出され、状態バリデーションでは Repository に依存する
+  - `main.go` で構築し、UseCase のコンストラクタに渡す
 
 ### Domain/Infrastructure層（統合）
 
@@ -254,7 +261,11 @@ internal/query/queries/
 - **internal/policy**: 認可ロジック
   - リソースに対する権限判定（例: `TopicPolicy` でページの作成・更新権限を判定）
   - Model のみに依存し、Query・Repository・UseCase には依存しない
-  - Handler で UseCase の出力を使って認可チェックを実行する
+  - UseCase から呼び出される
+- **internal/dispatcher**: ジョブキューへの投入を抽象化
+  - Repository がデータベースアクセスを抽象化するのと同じ発想で、ジョブキューアクセスを抽象化する
+  - River（外部ライブラリ）のみに依存。上位層（UseCase, Handler, Worker）には依存しない
+  - ジョブ引数の Args 型もこのパッケージ内に定義する
 
 ### その他
 
@@ -273,13 +284,14 @@ Presentation層 → Application層 → Domain/Infrastructure層
 
 下位層は上位層に依存しません（依存の方向は一方通行）。
 
-### Presentation層（Handler, ViewModel, Template, Middleware）
+### Presentation層（Handler, Worker, ViewModel, Template, Middleware）
 
 各パッケージの依存関係：
 
 - **Templates**: `ViewModel` を通じてデータを表示。データアクセス（`repository`, `query`）、ビジネスロジック（`usecase`）、`Model` への直接依存は禁止。
 - **ViewModel**: `Model` → `ViewModel` の変換のみ。`repository`, `query` に依存しない
-- **Handler**: `query`, `repository` への直接アクセス禁止。すべてのデータアクセスは `usecase` を経由する。状態バリデーションは `internal/validator/` パッケージ、認可チェックは `internal/policy/` パッケージを使用
+- **Handler**: 薄い HTTP Adapter。`query`, `repository`, `validator`, `policy` への直接アクセス禁止。すべてのデータアクセス・認可・バリデーションは `usecase` を経由する。UseCase からのエラーを `errors.As` で判別してレスポンスを決定する
+- **Worker**: 薄い Job Adapter。ジョブ引数を UseCase の入力に変換して呼び出すだけ。`templates`, `repository`, `query`, `validator`, `policy` への依存は禁止
 - **Middleware**: 共通処理のみ。`query`, `repository`, `usecase`、`handler`, `viewmodel` に依存しない。エラーページやメンテナンスページのレンダリングのため `templates` への依存は許可
 
 **依存関係の図解**:
@@ -289,25 +301,29 @@ Templates → ViewModel (OK: 表示用データを受け取る)
               ↓
 ViewModel → Model (OK: ドメインデータを表示用に変換)
               ↓
-Handler → UseCase, Validator, Policy, ViewModel
+Handler → UseCase, ViewModel
+Worker  → UseCase, Dispatcher (Args 型の参照)
   ↑
 Middleware → Templates (OK: エラーページ等のレンダリング)
 ```
 
 **重要**: Templates は ViewModel に依存できますが、Model に直接依存することは禁止です。必ず ViewModel を経由してください。
 
-### Application層（UseCase, Validator, Worker）
+### Application層（UseCase, Validator）
 
 - `query` への直接アクセス禁止。データアクセスは `repository` を経由
-- Presentation層（`handler`, `middleware`, `viewmodel`, `templates`）に依存しない
+- Presentation層（`handler`, `worker`, `middleware`, `viewmodel`, `templates`）に依存しない
+- **UseCase → Policy, Validator, Dispatcher**: UseCase はオーケストレーターとして Policy・Validator・Dispatcher に依存する
+- **UseCase → email（interface 経由）**: メール送信は UseCase 側で定義した interface に依存し、`templates` を直接 import しない
 
-### Domain/Infrastructure層（Query, Repository, Model, Policy）
+### Domain/Infrastructure層（Query, Repository, Model, Policy, Dispatcher）
 
 各パッケージの依存関係：
 
 - **Model**: 純粋なドメインエンティティ。`query`, `repository` に依存しない
 - **Policy**: 認可ロジック。`model` のみに依存し、`query`, `repository` に依存しない
 - **Repository**: `query`, `model` に依存できる。上位層に依存しない
+- **Dispatcher**: ジョブキューへの投入。River（外部ライブラリ）のみに依存。上位層（UseCase, Handler, Worker）や同レイヤーの他パッケージ（Validator, Policy, Repository, Model）には依存しない
 - **Query**: sqlc生成コード。他のすべての層に依存しない（独立）
 
 **依存関係の図解**:
@@ -318,6 +334,8 @@ Query (独立、単独で動作)
 Repository → Query, Model
   ↓
 Policy → Model
+  ↓
+Dispatcher → River (外部ライブラリのみ)
   ↓
 Model (独立、他に依存しない)
 ```
@@ -330,8 +348,11 @@ Model (独立、他に依存しない)
 2. **HandlerからRepositoryへの直接依存は禁止**: HandlerのすべてのデータアクセスはUseCaseを経由する
 3. **下位層は上位層に依存しない**: Domain/Infrastructure層はPresentation層に依存しない
 4. **関心の分離**: 各パッケージは明確な責務を持ち、その責務に集中する
-5. **ValidatorはApplication層**: すべてのバリデーションは `internal/validator/` に配置し、Handler パッケージから repository の import を排除する
-6. **認可チェックはHandlerで実行**: UseCase から Policy への依存は禁止。Handler が UseCase の出力を使って Policy チェックを実行する
+5. **ValidatorはApplication層**: すべてのバリデーションは `internal/validator/` に配置する。UseCase から呼び出される
+6. **認可チェックはUseCaseで実行**: UseCase がオーケストレーターとして Policy を呼び出し認可チェックを行う。Handler から Policy への直接依存は禁止
+7. **HandlerからValidator・Policyへの直接依存は禁止**: Handler はすべて UseCase を経由する
+8. **WorkerからTemplatesへの依存は禁止**: メールレンダリングは UseCase を経由する
+9. **UseCaseからTemplatesへの依存は禁止**: メールレンダリングは email パッケージが担当し、UseCase は interface 経由で呼び出す
 
 ### なぜRepositoryのみがQueryに依存すべきか
 
@@ -544,623 +565,242 @@ func TestNewWorkFromPopularRow(t *testing.T) {
 
 ## ユースケース（Use Case）
 
-### 概要
-
-データ取得とビジネスロジックは `internal/usecase` パッケージで行います。Handler からのすべてのデータアクセスは UseCase を経由します。
-
-### 責務
-
-- データ取得ロジックの集約（読み取り UseCase）
-- トランザクション管理（書き込み UseCase: `db.BeginTx` から `tx.Commit` まで）
-- 複数の repository を跨ぐ処理
-- ビジネスロジックの実装
-
-### UseCase の役割
-
-Handler からのすべてのデータアクセスは UseCase を経由する。UseCase は読み取りと書き込みの両方を担当する。
-
-| 種類             | 責務                               | トランザクション        |
-| ---------------- | ---------------------------------- | ----------------------- |
-| 書き込み UseCase | 永続化処理、ビジネスロジック       | あり（WithTx パターン） |
-| 読み取り UseCase | データ取得、複数 Repository の集約 | なし                    |
-
-**書き込み UseCase**:
-
-- トランザクションを伴う永続化処理（作成・更新・削除）
-- 複数の Repository を跨ぐビジネスロジック
-- ロールバックが必要な複合操作
-- **書き込み UseCase のルール**（詳細は「Handler での処理フロー」を参照）:
-  1. データの検証処理（ユーザーに表示するエラーを判別するもの）を書かない。エラー返り値はサーバーエラーのみとする
-  2. トランザクション開始後はデータの取得や計算処理を行わない。永続化処理のみ行う（トランザクション前のデータ取得は許可）
-  3. Execute 内にロジックを直接書かない。ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
-
-```go
-// 例: ページとスペースメンバーを同時に更新する場合
-type CreatePageUsecase struct {
-    db              *sql.DB
-    pageRepo        *repository.PageRepository
-    spaceMemberRepo *repository.SpaceMemberRepository
-}
-
-func (uc *CreatePageUsecase) Execute(ctx context.Context, input Input) (*Result, error) {
-    tx, err := uc.db.BeginTx(ctx, nil)
-    // トランザクション内で複数のRepositoryを操作
-}
-```
-
-**読み取り UseCase**:
-
-- Handler が必要とするデータ取得ロジックを集約する
-- 複数の Repository を組み合わせてデータを取得する
-- トランザクションは不要
-
-```go
-// 例: トピック詳細ページのデータ取得
-type GetTopicDetailUsecase struct {
-    spaceRepo       *repository.SpaceRepository
-    spaceMemberRepo *repository.SpaceMemberRepository
-    topicRepo       *repository.TopicRepository
-    topicMemberRepo *repository.TopicMemberRepository
-    pageRepo        *repository.PageRepository
-}
-
-type GetTopicDetailInput struct {
-    SpaceIdentifier model.SpaceIdentifier
-    TopicNumber     int32
-    UserID          *model.UserID
-    Page            int32
-}
-
-type GetTopicDetailOutput struct {
-    Space       *model.Space
-    SpaceMember *model.SpaceMember
-    Topic       *model.Topic
-    TopicMember *model.TopicMember
-    PinnedPages []*model.Page
-    Pages       []*model.Page
-    Pagination  *repository.PaginationResult
-}
-
-func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDetailInput) (*GetTopicDetailOutput, error) {
-    space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
-    if err != nil {
-        return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-    }
-    // 複数のRepositoryからデータを取得して集約
-    // ...
-}
-```
-
-### ファイル配置
-
-`internal/usecase/` 直下にフラットに配置（サブディレクトリは作成しない）
-
-**プライベート関数の配置ルール**: あるUseCaseファイルに定義されたプライベート関数を別のUseCaseファイルから呼び出す必要が生じた場合は、その関数を専用のファイルに切り出す。ファイル名は関数の責務を表す名詞にする（例: Wikiリンク関連の共通関数を `linked_page.go` に配置）。
-
-### 命名規則
-
-- **ファイル名**: `{action}_{entity}.go`
-  - 例: `create_session.go`, `create_password_reset_token.go`, `update_password_reset.go`
-  - **重要**: 動詞（アクション）を必ず先頭に配置する
-- **構造体名**: `{Action}{Entity}Usecase`
-  - 例: `CreateSessionUsecase`, `CreatePasswordResetTokenUsecase`
-  - 注: `Usecase` の `c` は小文字（既存コードとの統一のため）
-- **読み取り UseCase のプレフィックスは `Get` に統一**: 読み取り UseCase のアクションには `Get` を使用する。`List` や `Fetch` など他の動詞は使用しない。これにより `Get` = 読み取り、それ以外 = 書き込みという判別が即座にできる
-  - 例: `GetTopicDetailUsecase`, `GetPageDetailUsecase`, `GetDraftPagesUsecase`
-- **コンストラクタ**: `New{Action}{Entity}Usecase`
-- **Execute メソッド**: `Execute(ctx context.Context, ...) (*Result, error)`
-
-### 結果型
-
-各 UseCase は専用の Result 構造体を返します。
-
-例: `SessionResult`, `CreatePasswordResetTokenResult`
-
-### 利点
-
-- ハンドラーがシンプルになる（HTTP 処理に専念できる）
-- トランザクション境界が明確
-- テストしやすい構造
-- ビジネスロジックの再利用が可能
-
-### Handler での処理フロー（読み取り → 検証 → 書き込み）
-
-書き込み操作を行う Handler では、以下の順序で処理を実行する。
-
-```
-Handler
-  1. 読み取り UseCase: 画面表示・認可チェックに必要なデータを取得
-  2. Policy: 認可チェック（読み取り UseCase の出力を使用）
-  3. Validator: 入力の形式チェック + 状態チェック（必要なデータの存在確認・整合性検証）
-  4. 書き込み UseCase: トランザクション前のデータ取得 + トランザクション内の永続化処理
-```
-
-#### 書き込み UseCase のルール
-
-書き込み UseCase は以下の 3 つのルールを守る:
-
-1. **データの検証処理を書かない**: ユーザーに表示するエラーを判別する検証は Validator に配置する。書き込み UseCase のエラー返り値はサーバーエラー（予期しない失敗）のみとする
-2. **トランザクション開始後はデータの取得や計算処理を行わない**: トランザクション内は永続化処理のみ行う。ただし、トランザクション開始前であればデータの取得や計算処理を行ってよい
-3. **Execute 内にロジックを直接書かない**: ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
-
-```go
-// ✅ 良い例: 書き込み UseCase がトランザクション前にデータを取得し、
-// トランザクション内では永続化のみ行う
-func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
-    // トランザクション前: データ取得・計算（OK）
-    publishData, err := uc.calculatePublishData(ctx, input)
-    if err != nil {
-        return nil, err
-    }
-
-    // トランザクション: 永続化のみ
-    return uc.publishPage(ctx, input, publishData)
-}
-
-// ❌ 悪い例: 書き込み UseCase 内でユーザー向けの検証を行っている
-func (uc *WriteUsecase) Execute(ctx context.Context, input Input) error {
-    // UseCase 内で整合性チェック → Validator で行うべき
-    if input.Status != model.StatusActive { return errors.New("invalid status") }
-
-    tx, err := uc.db.BeginTx(ctx, nil)
-    // トランザクション内でデータ取得 → トランザクション前に行うべき
-    page, err := pageRepo.FindByID(ctx, input.PageID, input.SpaceID)
-    // ...
-}
-```
-
-#### Handler の実装パターン
-
-```go
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-    // 1. 読み取り UseCase でデータ取得
-    output, err := h.getDetailUsecase.Execute(ctx, ...)
-
-    // 2. 認可チェック
-    topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-    if !topicPolicy.CanDoSomething() { ... }
-
-    // 3. Validator で検証
-    result := h.validator.Validate(ctx, validator.Input{
-        Title:   title,
-        SpaceID: output.Space.ID,
-    })
-
-    // 4. 書き込み UseCase
-    h.writeUsecase.Execute(ctx, usecase.Input{
-        SpaceID:    output.Space.ID,
-        DraftPages: result.DraftPages,  // Validator が取得・検証済みのモデル
-    })
-}
-```
-
-**この設計のメリット**:
-
-- 検証ロジックが Validator に集約され、一覧性が高まる
-- トランザクションの保持時間が短くなる（データ取得がトランザクション外）
-- 書き込み UseCase が自身の永続化に必要なデータを自ら取得するため、Handler が書き込み UseCase の内部実装を知る必要がない
-
-**Validator でのデータ取得パターン**: Validator は状態バリデーションの過程でデータを取得し、検証後にそのデータを Result に含めて返す。これにより、Handler → 書き込み UseCase の間でデータを二重に取得する必要がなくなる。
-
-```go
-// Validator が検証の過程で取得したデータを Result に含めて返す
-type SuggestionCreateValidatorResult struct {
-    FormErrors *session.FormErrors
-    DraftPages []*model.DraftPage  // 検証済みかつ取得済みのモデル
-    Err        error
-}
-```
-
-### 実装例
-
-#### シンプルなユースケース（トランザクションなし）
-
-```go
-// internal/usecase/create_session.go
-package usecase
-
-import (
-    "context"
-    "github.com/wikinoapp/wikino/internal/repository"
-)
-
-type CreateSessionUsecase struct {
-    queries *repository.Queries
-}
-
-func NewCreateSessionUsecase(queries *repository.Queries) *CreateSessionUsecase {
-    return &CreateSessionUsecase{queries: queries}
-}
-
-type SessionResult struct {
-    PublicID string
-    UserID   int64
-}
-
-func (uc *CreateSessionUsecase) Execute(ctx context.Context, userID int64) (*SessionResult, error) {
-    // セッションIDを生成
-    publicID := generateSecureRandomString(32)
-
-    // セッションをDBに保存
-    session, err := uc.queries.CreateSession(ctx, repository.CreateSessionParams{
-        PublicID: publicID,
-        UserID:   userID,
-    })
-    if err != nil {
-        return nil, fmt.Errorf("セッションの作成に失敗: %w", err)
-    }
-
-    return &SessionResult{
-        PublicID: session.PublicID,
-        UserID:   session.UserID,
-    }, nil
-}
-```
-
-#### 複雑なユースケース（トランザクションあり）
-
-```go
-// internal/usecase/create_password_reset_token.go
-package usecase
-
-import (
-    "context"
-    "database/sql"
-    "fmt"
-    "time"
-    "github.com/wikinoapp/wikino/internal/repository"
-)
-
-type CreatePasswordResetTokenUsecase struct {
-    db      *sql.DB
-    queries *repository.Queries
-}
-
-func NewCreatePasswordResetTokenUsecase(db *sql.DB, queries *repository.Queries) *CreatePasswordResetTokenUsecase {
-    return &CreatePasswordResetTokenUsecase{
-        db:      db,
-        queries: queries,
-    }
-}
-
-type CreatePasswordResetTokenResult struct {
-    Token  string
-    UserID int64
-}
-
-func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, userID int64) (*CreatePasswordResetTokenResult, error) {
-    // トランザクション開始
-    tx, err := uc.db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, fmt.Errorf("トランザクションの開始に失敗: %w", err)
-    }
-    defer tx.Rollback()
-
-    // トランザクション対応のクエリを作成
-    qtx := uc.queries.WithTx(tx)
-
-    // 既存のトークンを削除
-    err = qtx.DeletePasswordResetTokensByUserID(ctx, userID)
-    if err != nil {
-        return nil, fmt.Errorf("既存トークンの削除に失敗: %w", err)
-    }
-
-    // 新しいトークンを生成
-    token := generateSecureRandomString(32)
-    hashedToken := hashToken(token)
-
-    // トークンをDBに保存
-    expiresAt := time.Now().Add(24 * time.Hour)
-    _, err = qtx.CreatePasswordResetToken(ctx, repository.CreatePasswordResetTokenParams{
-        UserID:      userID,
-        Token:       hashedToken,
-        ExpiresAt:   expiresAt,
-    })
-    if err != nil {
-        return nil, fmt.Errorf("トークンの作成に失敗: %w", err)
-    }
-
-    // トランザクションをコミット
-    if err := tx.Commit(); err != nil {
-        return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
-    }
-
-    return &CreatePasswordResetTokenResult{
-        Token:  token,
-        UserID: userID,
-    }, nil
-}
-```
-
-### ハンドラーでの使用
-
-```go
-// internal/handler/password_reset.go
-package handler
-
-import (
-    "github.com/wikinoapp/wikino/internal/usecase"
-)
-
-func (h *Handler) ProcessPasswordReset(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
-
-    // リクエストバリデーション
-    req := &PasswordResetRequest{
-        Email: r.FormValue("email"),
-    }
-    if formErrors := req.Validate(ctx); formErrors != nil {
-        // エラー処理
-        return
-    }
-
-    // ユーザーを検索
-    user, err := h.queries.GetUserByEmail(ctx, req.Email)
-    if err != nil {
-        // ユーザーが見つからない場合の処理
-        return
-    }
-
-    // ユースケースを実行
-    uc := usecase.NewCreatePasswordResetTokenUsecase(h.db, h.queries)
-    result, err := uc.Execute(ctx, user.ID)
-    if err != nil {
-        slog.ErrorContext(ctx, "トークンの作成に失敗", "error", err)
-        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-        return
-    }
-
-    // メール送信
-    err = h.sendPasswordResetEmail(ctx, user.Email, result.Token)
-    if err != nil {
-        slog.ErrorContext(ctx, "メール送信に失敗", "error", err)
-        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-        return
-    }
-
-    // 成功レスポンス
-    http.Redirect(w, r, "/password/reset_sent", http.StatusSeeOther)
-}
-```
-
-### Repository の WithTx パターン
-
-Usecase でトランザクションを使用する場合、**Repository の `WithTx` メソッド**を使用してトランザクション内で操作するリポジトリを取得します。
-
-#### なぜ WithTx パターンを使うのか
-
-**メリット**:
-
-- **依存性注入**: Repository をコンストラクタで受け取るため、テストでモックに差し替えやすい
-- **意図が明確**: `WithTx(tx)` の呼び出しで「このリポジトリはトランザクション内で操作する」という意図が明確
-- **一貫性**: すべての Usecase で同じパターンを使用することで、コードの読みやすさが向上
-
-#### Repository に WithTx を実装する
-
-各 Repository には `WithTx` メソッドを実装します：
-
-```go
-// internal/repository/user_repository.go
-
-// WithTx はトランザクションを使用する新しいRepositoryを返す
-func (r *UserRepository) WithTx(tx *sql.Tx) *UserRepository {
-    return &UserRepository{q: r.q.WithTx(tx)}
-}
-```
-
-#### Usecase で WithTx を使用する
-
-```go
-// internal/usecase/create_account.go
-
-type CreateAccountUsecase struct {
-    db                    *sql.DB
-    emailConfirmationRepo *repository.EmailConfirmationRepository
-    userRepo              *repository.UserRepository
-    userPasswordRepo      *repository.UserPasswordRepository
-}
-
-func NewCreateAccountUsecase(
-    db *sql.DB,
-    emailConfirmationRepo *repository.EmailConfirmationRepository,
-    userRepo *repository.UserRepository,
-    userPasswordRepo *repository.UserPasswordRepository,
-) *CreateAccountUsecase {
-    return &CreateAccountUsecase{
-        db:                    db,
-        emailConfirmationRepo: emailConfirmationRepo,
-        userRepo:              userRepo,
-        userPasswordRepo:      userPasswordRepo,
-    }
-}
-
-func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
-    // トランザクションを開始
-    tx, err := uc.db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
-    }
-    defer func() {
-        _ = tx.Rollback()
-    }()
-
-    // トランザクション内で操作するためのリポジトリを取得
-    emailConfirmationRepo := uc.emailConfirmationRepo.WithTx(tx)
-    userRepo := uc.userRepo.WithTx(tx)
-    userPasswordRepo := uc.userPasswordRepo.WithTx(tx)
-
-    // 以降の処理はトランザクション内のリポジトリを使用
-    // ...
-
-    // トランザクションをコミット
-    if err := tx.Commit(); err != nil {
-        return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
-    }
-
-    return &CreateAccountOutput{UserID: user.ID}, nil
-}
-```
-
-#### 重要なポイント
-
-1. **Repository はコンストラクタで受け取る**: `NewXxxUsecase` で Repository を引数として受け取る
-2. **Execute 内で WithTx を呼び出す**: トランザクションを開始した後、各 Repository の `WithTx(tx)` を呼び出す
-3. **元の Repository は変更しない**: `WithTx` は新しい Repository インスタンスを返すため、元の Repository には影響しない
-4. **すべての Repository で WithTx を使う**: トランザクション内で使用するすべての Repository に対して `WithTx` を呼び出す
-
-### テスト
-
-```go
-func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
-    // 共有DB接続プールからトランザクションをセットアップ
-    db, tx := testutil.SetupTx(t)
-    queries := repository.New(db).WithTx(tx)
-
-    // テストユーザーを作成
-    userID := testutil.NewUserBuilder(t, tx).
-        WithEmail("test@example.com").
-        Build()
-
-    // ユースケースを実行
-    uc := usecase.NewCreatePasswordResetTokenUsecase(db, queries)
-    result, err := uc.Execute(context.Background(), userID)
-
-    // アサーション
-    if err != nil {
-        t.Fatalf("Execute() error = %v", err)
-    }
-
-    if result.Token == "" {
-        t.Error("Token should not be empty")
-    }
-
-    if result.UserID != userID {
-        t.Errorf("UserID = %d, want %d", result.UserID, userID)
-    }
-
-    // トークンがDBに保存されているか確認
-    tokens, err := queries.GetPasswordResetTokensByUserID(context.Background(), userID)
-    if err != nil {
-        t.Fatalf("GetPasswordResetTokensByUserID() error = %v", err)
-    }
-
-    if len(tokens) != 1 {
-        t.Errorf("len(tokens) = %d, want 1", len(tokens))
-    }
-}
-```
-
-### 命名の注意点
-
-#### ファイル名の順序
-
-`{action}_{entity}` の順（動詞を必ず先頭に）
-
-- ✅ `create_session.go`
-- ❌ `session_create.go`
-- ✅ `create_password_reset_token.go`
-- ❌ `password_reset_create_token.go`
-
-#### 複合エンティティ
-
-エンティティが複数単語の場合はアンダースコアで連結
-
-- ✅ `create_password_reset_token.go` （password_reset_token というエンティティ）
-
-#### 構造体名の大文字化
-
-`Usecase` の `c` は小文字
-
-- ✅ `CreateSessionUsecase`
-- ❌ `CreateSessionUseCase`
-
-### ファイル配置の理由
-
-#### フラット構造
-
-エンティティごとにディレクトリを作らず、`internal/usecase/` 直下にすべてのファイルを配置
-
-理由:
-
-- **検索性**: ファイル名のプレフィックスでグルーピングされるため、エディタで検索しやすい
-- **シンプルさ**: ディレクトリ階層が深くならず、import パスがシンプル
-- **スケーラビリティ**: ファイル数が増えても管理しやすい
+📖 **詳細は [docs/usecase-guide.md](usecase-guide.md) を参照**
 
 ## ワーカー（Worker）
 
-バックグラウンドジョブを処理します。River（PostgreSQL ベースのジョブキュー）を使用します。
+バックグラウンドジョブの受信を担当する薄い Adapter です。River（PostgreSQL ベースのジョブキュー）を使用します。Worker は Presentation 層に属し、Handler と同じく UseCase を呼び出すだけの役割です。
 
-- **配置**: `internal/worker`
-- **責務**: 非同期処理（メール送信、定期実行処理など）
+- **配置**: `internal/worker`（Presentation 層）
+- **責務**: ジョブ引数の変換 → UseCase 呼び出し
 - **命名**: ファイル名 `{action}_{entity}.go`、構造体名 `{Action}{Entity}Worker`
-- **ジョブ引数**: `{Action}{Entity}Args` 構造体で定義
+- **ジョブ引数**: `internal/dispatcher/` パッケージ内の `{Action}{Entity}Args` 構造体を使用
 
 **Worker の依存関係**:
 
-- Worker は **UseCase を呼び出し可能**（定期実行処理などで永続化が必要な場合）
-- Worker は **templates に依存可能**（メールレンダリングのため、例外として許可）
-- Worker は **Presentation 層（Handler, Middleware, ViewModel）に依存不可**
+- Worker は **UseCase を呼び出す**（すべてのビジネスロジックは UseCase に委譲）
+- Worker は **Dispatcher の Args 型を参照する**（ジョブ引数の型定義）
+- Worker は **templates に依存不可**（メールレンダリングは UseCase を経由）
+- Worker は **Repository, Query, Validator, Policy に依存不可**
 
 ```go
-// ワーカーの実装例
-type SendEmailConfirmationArgs struct {
-    Email      string `json:"email"`
-    Code       string `json:"code"`
-    Subject    string `json:"subject"`
-    IsJapanese bool   `json:"is_japanese"`
-}
-
-func (SendEmailConfirmationArgs) Kind() string {
-    return "send_email_confirmation"
-}
-
+// ワーカーの実装例（薄い Adapter）
 type SendEmailConfirmationWorker struct {
-    river.WorkerDefaults[SendEmailConfirmationArgs]
-    confirmationSender *email.ConfirmationSender
+    river.WorkerDefaults[dispatcher.SendEmailConfirmationArgs]
+    uc *usecase.SendEmailConfirmationUsecase
 }
 
-func (w *SendEmailConfirmationWorker) Work(ctx context.Context, job *river.Job[SendEmailConfirmationArgs]) error {
-    return w.confirmationSender.Send(ctx, email.ConfirmationEmailInput{...})
+func (w *SendEmailConfirmationWorker) Work(ctx context.Context, job *river.Job[dispatcher.SendEmailConfirmationArgs]) error {
+    return w.uc.Execute(ctx, usecase.SendEmailConfirmationInput{
+        Email:  job.Args.Email,
+        Code:   job.Args.Code,
+        Locale: job.Args.Locale,
+    })
 }
 ```
+
+## ディスパッチャー（Dispatcher）
+
+ジョブキューへの投入を抽象化します。Repository がデータベースアクセスを抽象化するのと同じ発想で、Dispatcher がジョブキューアクセスを抽象化します。
+
+- **配置**: `internal/dispatcher`（Domain/Infrastructure 層）
+- **責務**: ジョブキューへの投入、Args 型の定義
+- **依存先**: River（外部ライブラリ）のみ。上位層（UseCase, Handler, Worker）には依存しない
+
+**Repository との対比**:
+
+|                          | Repository                                       | Dispatcher                                      |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------- |
+| **抽象化する対象**       | データベースアクセス（同期的なデータ永続化）     | ジョブキューへの投入（非同期タスク委譲）        |
+| **層**                   | Domain/Infrastructure                            | Domain/Infrastructure                           |
+| **UseCase からの見え方** | `repo.FindByID(ctx, id)`                         | `dispatcher.EnqueueEmailConfirmation(ctx, ...)` |
+| **分離の基準**           | インフラの種類ではなく、**操作の性質**で分離する |
+
+```go
+// internal/dispatcher/dispatcher.go
+package dispatcher
+
+type Dispatcher struct {
+    client JobInserter
+}
+
+func NewDispatcher(client JobInserter) *Dispatcher {
+    return &Dispatcher{client: client}
+}
+
+func (d *Dispatcher) EnqueueEmailConfirmation(ctx context.Context, email, code, locale string) error {
+    _, err := d.client.Insert(ctx, &SendEmailConfirmationArgs{
+        Email: email, Code: code, Locale: locale,
+    }, nil)
+    return err
+}
+
+// Args 型もこのパッケージ内に定義する
+type SendEmailConfirmationArgs struct {
+    Email  string `json:"email"`
+    Code   string `json:"code"`
+    Locale string `json:"locale"`
+}
+func (SendEmailConfirmationArgs) Kind() string { return "send_email_confirmation" }
+```
+
+**依存の方向**:
+
+```
+Worker (Presentation)      → dispatcher (Args 型参照) + usecase
+UseCase (Application)      → dispatcher (Enqueue メソッド呼び出し)
+Dispatcher (Domain/Infra)  → river（外部ライブラリ）
+```
+
+循環なし。UseCase は River やジョブ Args 型の存在を知らない。
+
+## メール送信（Email）
+
+メール送信とテンプレートレンダリングを担当する Presentation 層のヘルパーパッケージです。メール種別ごとの Sender を提供し、テンプレートレンダリングと i18n 件名取得を email パッケージ内に閉じ込めます。
+
+- **配置**: `internal/email`（Presentation 層ヘルパー）
+- **責務**: メール送信、テンプレートレンダリング、i18n 件名取得
+- **依存先**: `templates`（メールテンプレート）、`i18n`（件名の翻訳）、外部ライブラリ（`templ`, `resend`）
+
+### パッケージ構成
+
+| ファイル                   | 責務                                                    |
+| -------------------------- | ------------------------------------------------------- |
+| `sender.go`                | `Sender` インターフェース、`ResendSender`、`NoopSender` |
+| `confirmation_sender.go`   | メール確認コードのテンプレートレンダリング + 送信       |
+| `password_reset_sender.go` | パスワードリセットのテンプレートレンダリング + 送信     |
+
+### Sender インターフェース
+
+`Sender` はメール送信の基盤インターフェースです。`templ.Component` をレンダリングして送信します。
+
+```go
+// internal/email/sender.go
+type Sender interface {
+    Send(ctx context.Context, input SendInput) error
+}
+
+type SendInput struct {
+    To       string          // 送信先メールアドレス
+    Subject  string          // 件名
+    HTMLBody templ.Component // メール本文（HTML形式）
+    TextBody templ.Component // メール本文（テキスト形式）
+}
+```
+
+実装:
+
+- `ResendSender`: Resend API を使用した本番用の送信実装
+- `NoopSender`: メールを送信せず記録のみ行うテスト用実装
+
+### メール種別ごとの Sender
+
+メール種別ごとに専用の Sender を定義し、テンプレートレンダリングと i18n 件名取得の責務を担います。
+
+```go
+// internal/email/confirmation_sender.go
+type ConfirmationSender struct {
+    sender Sender
+}
+
+func (s *ConfirmationSender) Send(ctx context.Context, to, code, appURL, locale string) error {
+    ctx = i18n.SetLocale(ctx, locale)
+    subject := i18n.T(ctx, "email_confirmation_subject")
+
+    // テンプレートを選択してレンダリング
+    var htmlBody, textBody templ.Component
+    switch locale {
+    case "ja":
+        htmlBody = email_confirmation.JaHTML(data)
+        textBody = email_confirmation.JaText(data)
+    default:
+        htmlBody = email_confirmation.EnHTML(data)
+        textBody = email_confirmation.EnText(data)
+    }
+
+    return s.sender.Send(ctx, SendInput{To: to, Subject: subject, HTMLBody: htmlBody, TextBody: textBody})
+}
+```
+
+### UseCase との連携（interface パターン）
+
+UseCase は email パッケージに直接依存せず、UseCase 側で定義した小さな interface に依存します。これにより UseCase は `internal/templates` を import せず、テストではモックに差し替えられます。
+
+```go
+// internal/usecase/send_email_confirmation.go
+// UseCase 側で interface を定義（templates に依存しない）
+type EmailConfirmationSender interface {
+    Send(ctx context.Context, to, code, appURL, locale string) error
+}
+
+type SendEmailConfirmationUsecase struct {
+    sender EmailConfirmationSender
+}
+
+func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendEmailConfirmationInput) error {
+    return uc.sender.Send(ctx, input.Email, input.Code, input.AppURL, input.Locale)
+}
+```
+
+`main.go` で `email.ConfirmationSender` を UseCase に注入します。
+
+**依存の方向**:
+
+```
+Worker (Presentation)       → UseCase
+UseCase (Application)       → EmailConfirmationSender (interface、UseCase 側で定義)
+email.ConfirmationSender    → Sender, templates, i18n
+```
+
+UseCase は `templates` を直接 import しない。テンプレートレンダリングは email パッケージに閉じる。
+
+### depguard ルール
+
+email パッケージは以下の依存関係ルールに従います。
+
+**許可される依存先**: `templates`、`i18n`、`model`、`config`、外部パッケージ（`templ`、`resend`）
+
+**禁止される依存先**: `query`、`repository`、`handler`、`middleware`、`viewmodel`、`usecase`、`validator`、`worker`、`dispatcher`、`session`
 
 ## 認可チェック（Policy）
 
 ### 概要
 
-認可チェック（`policy.TopicPolicy` など）は **Presentation 層（Handler）** で行い、UseCase は Policy に依存しない。
+認可チェック（`policy.TopicPolicy` など）は **UseCase** 内で行う。UseCase がオーケストレーターとして、データ取得後に認可チェックを実行する。
 
 ### 方針
 
-- UseCase はデータ取得と永続化に専念し、認可判断に必要なデータ（`TopicMember` など）を Output に含めて返す
-- Handler が UseCase の Output を使って Policy チェックを実行する
-- depguard で UseCase → Policy の依存を禁止する
+- UseCase がデータ取得・認可チェック・バリデーション・永続化を統括する
+- UseCase 内で Policy を呼び出して認可チェックを実行する
+- Handler から Policy への直接依存は depguard で禁止する
 
 ### 理由
 
-- Handler が唯一の Entry Point であるため、Handler で認可すれば漏れがない
-- UseCase の責務が明確になる（データ取得 / ビジネスロジックに集中）
-- 認可ロジックが Handler に集約されて見通しが良い
+- エントリーポイントが増えた場合（Web API など）でも、認可チェックの漏れが発生しない
+- 認可・バリデーション・ビジネスロジックが UseCase に集約され、一貫性が保たれる
+- Handler は HTTP の入出力変換に専念でき、ドメイン固有の判断を持たない
 
 ### 実装パターン
 
 ```go
-// Handler で認可チェックを実行
-func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
-
-    // 1. UseCase でデータを取得（認可に必要なデータも含む）
-    output, err := h.getDataUC.Execute(ctx, input)
+// UseCase 内で認可チェックを実行
+func (uc *UpdateSuggestionUsecase) Execute(ctx context.Context, input UpdateSuggestionInput) (*UpdateSuggestionOutput, error) {
+    // 1. データ取得
+    space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
+    // ...
+    spaceMember, err := uc.spaceMemberRepo.Find(ctx, space.ID, input.UserID)
     // ...
 
-    // 2. Policy で認可チェック
-    topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-    if !topicPolicy.CanUpdatePage(output.Page) {
-        // 403 Forbidden
-        return
+    // 2. 認可チェック
+    if !policy.NewTopicPolicy(spaceMember, topicMember).CanUpdateSuggestion(suggestion) {
+        return nil, &model.AppError{
+            Code:    model.AppErrCodeForbidden,
+            UserMsg: i18n.T(ctx, "error_forbidden"),
+        }
     }
 
-    // 3. 書き込み UseCase を実行
+    // 3. バリデーション
+    // 4. 永続化
     // ...
 }
 ```
@@ -1250,12 +890,14 @@ func (h *Handler) ProcessPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 ## まとめ
 
+- **Handler / Worker**: 薄い Adapter（HTTP/ジョブの入出力変換のみ）
+- **UseCase**: オーケストレーター（認可・バリデーション・ビジネスロジック・永続化を統括）
+- **Validator**: バリデーション（`internal/validator/` に全て配置、UseCase から呼び出される）
+- **Policy**: 認可ロジック（UseCase から呼び出される）
+- **Dispatcher**: ジョブキューへの投入を抽象化（UseCase から呼び出される）
 - **ViewModel**: リポジトリ層のデータをテンプレート表示用に変換
-- **UseCase**: データ取得（読み取り）とビジネスロジック・トランザクション管理（書き込み）
-- **Validator**: バリデーション（`internal/validator/` に全て配置、状態バリデーションでは Repository に依存）
-- **Handler**: HTTP処理に専念し、UseCase・Validator・ViewModelを活用してシンプルに保つ（Repository への直接依存は禁止）
 
-この構造により、コードの見通しが良く、テストしやすく、保守しやすいアーキテクチャを実現できます。
+この構造により、エントリーポイントが増えても認可・バリデーションが漏れない、テストしやすく保守しやすいアーキテクチャを実現できます。
 
 ## 採用しなかった方針
 
@@ -1289,14 +931,42 @@ Validator を `internal/handler/` 内に配置したまま、depguard による�
 - 「Handler パッケージは repository を import しない」というルールを完全に強制できるメリットが大きい
 - Validator を独立パッケージにすることで、将来的に Worker からもバリデーションを再利用できる
 
-### D. 書き込み UseCase のために読み取り UseCase を新設する
+### D. ジョブの enqueue を Repository に含める
 
-書き込み UseCase からすべてのデータ取得を外出しし、書き込み UseCase のためだけに読み取り UseCase を作成する方針。
+Repository がデータベースの抽象化層であるため、ジョブキューへの投入も Repository に含める方針。
 
 **不採用の理由**:
 
-- Handler が書き込み UseCase の内部実装を知る必要が生じる（どんなデータを事前に用意すべきか）
-- 書き込み UseCase のために読み取り UseCase を作ると、両者が強く結合し、分離のメリットが薄い
-- 命名が酷似し混同しやすくなる（例: `GetDraftPageSaveDataUsecase` と `GetSaveDraftPageDataUsecase`）
+- Repository は同期的なデータ永続化（CRUD）を担当し、Model と 1:1 で対応する。ジョブキューへの投入（非同期タスク委譲）は操作の性質が異なる
+- Repository は `WithTx` パターンでトランザクションに参加するが、ジョブ投入はトランザクションとは別のライフサイクルを持つ
+- `EnqueueEmailConfirmation` をどの Repository に置くかという判断コストが発生する
+- 分離の基準はインフラの種類（PostgreSQL vs Redis vs River）ではなく、操作の性質（同期的データ永続化 vs 非同期タスク委譲）とする
 
-**代替として採用した方針**: 書き込み UseCase 内であっても、トランザクション開始前であればデータ取得を行ってよい。書き込み UseCase のルール（検証処理を書かない、トランザクション内は永続化のみ、Execute 内にロジックを直接書かない）を守る限り、データ取得の配置場所は柔軟に判断する。
+### E. ValidationError と AppError を Application 層に配置する
+
+`internal/usecase/errors.go` または新設の `internal/apperror/` にエラー型を定義する方針。
+
+**不採用の理由**:
+
+- Validator（Application 層）が `ValidationError` を生成するために `usecase` パッケージを import すると、UseCase → Validator という依存の方向に対して Validator → UseCase の逆方向依存が発生し、循環依存のリスクがある
+- 新設パッケージ（`internal/apperror/`）を作ると、パッケージが増えて複雑になる
+- Model（Domain/Infrastructure 層）は依存グラフの最下層にあり、すべての層から自然に参照できるため、エラー型の配置先として適切
+
+### F. Worker（Presentation 層）でテンプレートをレンダリングし UseCase に渡す
+
+Worker がメールテンプレートをレンダリングし、レンダリング済み HTML を UseCase に渡す方針。Handler がテンプレートを描画するのと同じパターンで、アーキテクチャの例外が不要という利点があった。
+
+**不採用の理由**:
+
+- 将来テンプレート選択にビジネスロジック（例: ユーザーのプランに応じた内容の分岐）が必要になった場合、Worker 側でその判断ができない
+- その時点で UseCase 内でレンダリングに変更する手間が発生する
+- 最初から UseCase にレンダリングを配置しておけば、判断コストが不要
+
+### G. メールテンプレートを独立パッケージに分離する
+
+メールテンプレートを `internal/email/templates/` のような独立パッケージに移動する方針。
+
+**不採用の理由**:
+
+- パッケージが増えて複雑になる
+- メールテンプレートも templ で記述しており、HTTP レスポンス用テンプレートと同じツールチェーンを使用しているため、分離するメリットが薄い

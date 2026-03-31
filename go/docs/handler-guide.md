@@ -13,11 +13,14 @@
 - [バリデーターの配置](#バリデーターの配置)
 - [ルーティング登録](#ルーティング登録)
 - [実装例](#実装例)
+- [エラーハンドリング](#エラーハンドリング)
 
 ## 基本方針
 
-HTTP ハンドラーは以下の原則に従って実装します：
+HTTP ハンドラーは**薄い Adapter**として、HTTP の入出力変換のみを行います。認可・バリデーション・ビジネスロジックはすべて UseCase に委譲します。
 
+- **Handler は薄い Adapter**: リクエストのパース → UseCase 呼び出し → レスポンス（リダイレクト or テンプレート描画）のみ
+- **認可・バリデーションは UseCase 経由**: Handler から Policy・Validator への直接依存は禁止（depguard で強制）
 - **リソースごとにディレクトリを切る**: すべてのエンドポイントはリソースディレクトリを作成
 - **1 エンドポイント = 1 ハンドラーファイル**: 各エンドポイントは個別のファイルに実装
 - **統一された命名規則**: ファイル名とメソッド名に一貫性を持たせる
@@ -201,26 +204,31 @@ internal/validator/
 
 ### 基本的な構造
 
+Handler は UseCase を受け取り、HTTP の入出力変換のみを行います。
+
 ```go
-// handler/popular_work/handler.go
-package popular_work
+// handler/suggestion_comment/handler.go
+package suggestion_comment
 
 import (
-    "github.com/wikinoapp/wikino/go/internal/config"
-    repository "github.com/wikinoapp/wikino/go/internal/repository/sqlc"
+    "github.com/wikinoapp/wikino/go/internal/session"
+    "github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は人気作品関連のHTTPハンドラーです
+// Handler は編集提案コメント関連のHTTPハンドラーです
 type Handler struct {
-    cfg     *config.Config
-    queries *repository.Queries
+    flashMgr                       *session.FlashManager
+    createSuggestionCommentUsecase *usecase.CreateSuggestionCommentUsecase
 }
 
 // NewHandler は新しいHandlerを作成します
-func NewHandler(cfg *config.Config, queries *repository.Queries) *Handler {
+func NewHandler(
+    flashMgr *session.FlashManager,
+    createSuggestionCommentUsecase *usecase.CreateSuggestionCommentUsecase,
+) *Handler {
     return &Handler{
-        cfg:     cfg,
-        queries: queries,
+        flashMgr:                       flashMgr,
+        createSuggestionCommentUsecase: createSuggestionCommentUsecase,
     }
 }
 ```
@@ -247,11 +255,10 @@ Handler 構造体には、そのリソースで必要な依存性を注入しま
 ```go
 // ✅ 良い例: update.goでしか使わない依存性も含める（3-4個程度なら許容）
 type Handler struct {
-    cfg                   *config.Config
-    queries               *repository.Queries
-    db                    *sql.DB
-    sessionMgr            *session.Manager
-    updatePasswordUsecase *usecase.UpdatePasswordUsecase  // update.goでしか使わない
+    cfg                        *config.Config
+    flashMgr                   *session.FlashManager
+    getPasswordEditUsecase     *usecase.GetPasswordEditUsecase
+    updatePasswordResetUsecase *usecase.UpdatePasswordResetUsecase  // update.goでしか使わない
 }
 ```
 
@@ -266,15 +273,16 @@ type Handler struct {
 ```go
 // ⚠️ 注意: フィールドが8個を超えたらリソース分割を検討
 type Handler struct {
-    cfg            *config.Config
-    queries        *repository.Queries
-    db             *sql.DB
-    sessionMgr     *session.Manager
-    limiter        *ratelimit.Limiter
-    riverClient    *worker.Client
-    createUsecase  *usecase.CreatePasswordUsecase
-    updateUsecase  *usecase.UpdatePasswordUsecase
-    resetUsecase   *usecase.ResetPasswordUsecase
+    cfg               *config.Config
+    flashMgr          *session.FlashManager
+    sidebarHelper     *sidebar.Helper
+    getListUsecase    *usecase.GetSuggestionListUsecase
+    getDetailUsecase  *usecase.GetSuggestionDetailUsecase
+    getEditUsecase    *usecase.GetSuggestionEditUsecase
+    getNewUsecase     *usecase.GetSuggestionNewUsecase
+    createUsecase     *usecase.CreateSuggestionUsecase
+    updateUsecase     *usecase.UpdateSuggestionUsecase
+    closeUsecase      *usecase.CloseSuggestionUsecase
     // ↑ このような場合は、リソースを更に細分化すべき
 }
 ```
@@ -313,8 +321,8 @@ password_reset/
 
 - **構造体名**: `{Resource}{Action}Validator`（例: `SignInCreateValidator`, `PasswordResetCreateValidator`）
 - **コンストラクタ**: `New{Resource}{Action}Validator`
-- **メソッド**: `Validate(ctx context.Context, input {Resource}{Action}ValidatorInput) *{Resource}{Action}ValidatorResult`
-- `main.go` で構築し、Handler のコンストラクタに渡す
+- **メソッド**: Go の慣習に従った `(data, error)` の 2 値返し。詳細は [@go/docs/validation-guide.md](validation-guide.md) を参照
+- **呼び出し元は UseCase**: `main.go` で Validator を構築し、UseCase のコンストラクタに渡す。Handler は Validator に直接依存しない
 
 ### 配置例
 
@@ -329,12 +337,12 @@ internal/validator/
 
 internal/handler/
 ├── sign_in/
-│   ├── handler.go              # Validatorを外部から受け取る
+│   ├── handler.go              # UseCaseを外部から受け取る
 │   ├── new.go
 │   ├── create.go
 │   └── handler_test.go         # ハンドラーの統合テスト
 ├── password_reset/
-│   ├── handler.go              # Validatorを外部から受け取る
+│   ├── handler.go              # UseCaseを外部から受け取る
 │   ├── new.go
 │   ├── create.go
 │   └── handler_test.go         # ハンドラーの統合テスト
@@ -348,19 +356,20 @@ internal/handler/
 
 ### 基本的な登録方法
 
+`main.go` で Validator → UseCase → Handler の順に構築します。
+
 ```go
-// ハンドラーの初期化
-popularWorkHandler := popular_work.NewHandler(cfg, queries)
-passwordResetHandler := password_reset.NewHandler(cfg, db, queries, sessionMgr, limiter, riverClient)
-passwordHandler := password.NewHandler(cfg, db, queries, sessionMgr)
-signInHandler := sign_in.NewHandler(cfg, queries, sessionMgr)
+// 1. Validator の構築
+signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+
+// 2. UseCase の構築（Validator を注入）
+createSignInUC := usecase.NewCreateSignInUsecase(signInValidator, userSessionRepo)
+getSignInNewUC := usecase.NewGetSignInNewUsecase()
+
+// 3. Handler の構築（UseCase を注入）
+signInHandler := sign_in.NewHandler(flashMgr, getSignInNewUC, createSignInUC)
 
 // ルーティング登録
-r.Get("/works/popular", popularWorkHandler.Index)
-r.Get("/password/reset", passwordResetHandler.New)
-r.Post("/password/reset", passwordResetHandler.Create)
-r.Get("/password/edit", passwordHandler.Edit)
-r.Patch("/password", passwordHandler.Update)
 r.Get("/sign_in", signInHandler.New)
 r.Post("/sign_in", signInHandler.Create)
 ```
@@ -411,79 +420,148 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### 例 2: 複数エンドポイント（password_reset/）
+### 例 2: 複数エンドポイント（sign_in/）
 
 ```go
-// internal/handler/password_reset/handler.go
-package password_reset
+// internal/handler/sign_in/handler.go
+package sign_in
 
 import (
-    "database/sql"
-    "github.com/wikinoapp/wikino/go/internal/config"
-    repository "github.com/wikinoapp/wikino/go/internal/repository/sqlc"
     "github.com/wikinoapp/wikino/go/internal/session"
-    "github.com/wikinoapp/wikino/go/pkg/ratelimit"
-    "github.com/riverqueue/river"
+    "github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はパスワードリセット関連のHTTPハンドラーです
+// Handler はサインイン関連のHTTPハンドラーです
 type Handler struct {
-    cfg         *config.Config
-    db          *sql.DB
-    queries     *repository.Queries
-    sessionMgr  *session.Manager
-    limiter     *ratelimit.Limiter
-    riverClient *river.Client
+    flashMgr           *session.FlashManager
+    getSignInNewUC     *usecase.GetSignInNewUsecase
+    createSignInUC     *usecase.CreateSignInUsecase
 }
 
 // NewHandler は新しいHandlerを作成します
 func NewHandler(
-    cfg *config.Config,
-    db *sql.DB,
-    queries *repository.Queries,
-    sessionMgr *session.Manager,
-    limiter *ratelimit.Limiter,
-    riverClient *river.Client,
+    flashMgr *session.FlashManager,
+    getSignInNewUC *usecase.GetSignInNewUsecase,
+    createSignInUC *usecase.CreateSignInUsecase,
 ) *Handler {
     return &Handler{
-        cfg:         cfg,
-        db:          db,
-        queries:     queries,
-        sessionMgr:  sessionMgr,
-        limiter:     limiter,
-        riverClient: riverClient,
+        flashMgr:       flashMgr,
+        getSignInNewUC: getSignInNewUC,
+        createSignInUC: createSignInUC,
     }
 }
 ```
 
 ```go
-// internal/handler/password_reset/new.go
-package password_reset
+// internal/handler/sign_in/new.go
+package sign_in
 
-import (
-    "net/http"
-    "github.com/wikinoapp/wikino/go/internal/templates/pages/password_reset"
-)
+import "net/http"
 
-// New GET /password/reset - パスワードリセット申請フォーム
+// New GET /sign_in - サインインフォーム
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
-    // 実装
+    // テンプレートをレンダリング
 }
 ```
 
 ```go
-// internal/handler/password_reset/create.go
-package password_reset
+// internal/handler/sign_in/create.go
+package sign_in
 
 import (
+    "errors"
+    "log/slog"
     "net/http"
+
+    "github.com/wikinoapp/wikino/go/internal/model"
+    "github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Create POST /password/reset - パスワードリセット申請処理
+// Create POST /sign_in - サインイン処理
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-    // 実装
+    ctx := r.Context()
+
+    // 1. リクエストのパース
+    email := r.FormValue("email")
+    password := r.FormValue("password")
+
+    // 2. UseCase 呼び出し（認可・バリデーション・永続化はすべて UseCase 内で実行）
+    output, err := h.createSignInUC.Execute(ctx, usecase.CreateSignInInput{
+        Email:    email,
+        Password: password,
+    })
+    if err != nil {
+        // エラー型に応じたレスポンス
+        var ve *model.ValidationError
+        if errors.As(err, &ve) {
+            w.WriteHeader(http.StatusUnprocessableEntity)
+            h.renderForm(w, r, ve, email)
+            return
+        }
+        slog.ErrorContext(ctx, "サインインに失敗", "error", err)
+        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+        return
+    }
+
+    // 3. レスポンス
+    h.flashMgr.SetSuccess(w, "サインインしました")
+    http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 ```
+
+## エラーハンドリング
+
+Handler は UseCase から返されるエラーを `errors.As` で型判別し、適切な HTTP レスポンスを返します。
+
+### エラー型の使い分け
+
+| エラー型                 | 生成元    | 意味                             | Handler の対応                          |
+| ------------------------ | --------- | -------------------------------- | --------------------------------------- |
+| `*model.ValidationError` | Validator | 入力が不正（ユーザーが修正可能） | フォーム再描画（422）                   |
+| `*model.AppError`        | UseCase   | 業務レベルの既知の失敗           | エラーコードに応じた処理（403, 404 等） |
+| 素の `error`             | どこでも  | 予期しないシステムエラー         | 500                                     |
+
+### 実装パターン
+
+```go
+output, err := h.createSuggestionUC.Execute(ctx, input)
+if err != nil {
+    // 1. バリデーションエラー → フォーム再描画（422）
+    var ve *model.ValidationError
+    if errors.As(err, &ve) {
+        w.WriteHeader(http.StatusUnprocessableEntity)
+        h.renderNewForm(w, r, ve)
+        return
+    }
+
+    // 2. アプリケーションエラー → エラーコードに応じた処理
+    var ae *model.AppError
+    if errors.As(err, &ae) {
+        switch ae.Code {
+        case model.AppErrCodeResourceNotFound:
+            handler.NotFound(w, r)
+        case model.AppErrCodeForbidden:
+            handler.NotFound(w, r)
+        default:
+            slog.ErrorContext(ctx, ae.LogString())
+            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    // 3. 予期しないエラー → 500
+    slog.ErrorContext(ctx, "予期しないエラー", "error", err)
+    http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+    return
+}
+```
+
+### 重要なルール
+
+- **Handler はエラーの型を判別するだけ**: どのエラーを返すかは UseCase と Validator の責務
+- **`*model.ValidationError`**: Validator が生成し、UseCase がそのまま返す
+- **`*model.AppError`**: UseCase が業務文脈に基づいて生成する（例: リソースが見つからない、権限がない）
+- **素の `error`**: ユーザーには汎用的なエラーメッセージを表示し、詳細はログに記録する
 
 ## HTTP メソッドとルーティング
 
@@ -536,18 +614,20 @@ r.Delete("/posts/{id}", h.DeletePost)
 
 HTTP ハンドラーを実装する際は、以下のポイントを守ってください：
 
-1. **すべてのエンドポイントをディレクトリ化**: 例外なく、リソースディレクトリを作成
-2. **標準的なファイル名を使用**: 8 種類のファイル名のみを使用
+1. **Handler は薄い Adapter**: リクエストのパース → UseCase 呼び出し → レスポンス生成のみ。認可・バリデーションは UseCase に委譲する
+2. **すべてのエンドポイントをディレクトリ化**: 例外なく、リソースディレクトリを作成
+3. **標準的なファイル名を使用**: 8 種類のファイル名のみを使用
    - `handler.go`, `index.go`, `show.go`, `new.go`, `create.go`, `edit.go`, `update.go`, `delete.go`
-3. **ファイル名とメソッド名を一致させる**: 可読性と保守性を向上
-4. **依存性注入を適切に管理**: 8 個以下のフィールドを目安に、必要に応じてリソースを分割
-5. **すべてのバリデーターは `internal/validator/` パッケージに配置**: Handler パッケージから repository の import を排除する
+4. **ファイル名とメソッド名を一致させる**: 可読性と保守性を向上
+5. **依存性注入を適切に管理**: 8 個以下のフィールドを目安に、必要に応じてリソースを分割
+6. **UseCase のエラーを `errors.As` で判別**: `ValidationError` → 422、`AppError` → エラーコードに応じた処理、素の `error` → 500
+7. **Handler から Policy・Validator への直接依存は禁止**: depguard で強制。すべて UseCase を経由する
 
 これらの規則を守ることで、以下のメリットが得られます：
 
 - コードの可読性と保守性が向上する
 - 新規機能追加時に迷わない
-- 並行開発がスムーズになる
+- エントリーポイントが増えても認可・バリデーションが漏れない
 - テストが書きやすくなる
 
 ## 関連ドキュメント
