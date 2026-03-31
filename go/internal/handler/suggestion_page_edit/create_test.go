@@ -59,7 +59,7 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
 	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(
-		db, suggestionPageRepo, draftPageRepo, pageRepo,
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, draftPageRepo, pageRepo,
 	)
 
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)

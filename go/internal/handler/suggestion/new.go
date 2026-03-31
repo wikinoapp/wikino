@@ -10,7 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -69,7 +68,7 @@ func (h *Handler) renderNewForm(
 	user *model.User,
 	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionNewOutput,
-	formErrors *session.FormErrors,
+	formErrors *model.ValidationError,
 	title string,
 	body string,
 	selectedDraftIDs []string,

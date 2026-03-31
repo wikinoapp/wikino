@@ -6,17 +6,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はログインハンドラー
 type Handler struct {
-	cfg                 *config.Config
-	sessionMgr          *session.Manager
-	flashMgr            *session.FlashManager
-	createUserSessionUC *usecase.CreateUserSessionUsecase
-	turnstileVerifier   turnstile.Verifier
-	validator           *validator.SignInCreateValidator
+	cfg               *config.Config
+	sessionMgr        *session.Manager
+	flashMgr          *session.FlashManager
+	signInUC          *usecase.CreateSignInUsecase
+	turnstileVerifier turnstile.Verifier
 }
 
 // NewHandler は新しいログインハンドラーを作成します
@@ -24,16 +22,14 @@ func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
 	flashMgr *session.FlashManager,
-	createUserSessionUC *usecase.CreateUserSessionUsecase,
+	signInUC *usecase.CreateSignInUsecase,
 	turnstileVerifier turnstile.Verifier,
-	signInValidator *validator.SignInCreateValidator,
 ) *Handler {
 	return &Handler{
-		cfg:                 cfg,
-		sessionMgr:          sessionMgr,
-		flashMgr:            flashMgr,
-		createUserSessionUC: createUserSessionUC,
-		turnstileVerifier:   turnstileVerifier,
-		validator:           signInValidator,
+		cfg:               cfg,
+		sessionMgr:        sessionMgr,
+		flashMgr:          flashMgr,
+		signInUC:          signInUC,
+		turnstileVerifier: turnstileVerifier,
 	}
 }

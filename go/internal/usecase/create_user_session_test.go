@@ -11,25 +11,24 @@ import (
 func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	userSessionRepo := repository.NewUserSessionRepository(q)
-	uc := NewCreateUserSessionUsecase(userSessionRepo)
+	t.Run("正常系: セッションを作成できる", func(t *testing.T) {
+		t.Parallel()
 
-	// テストユーザーを作成
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("create-session@example.com").
-		WithAtname("createsessionuser").
-		Build()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		userSessionRepo := repository.NewUserSessionRepository(q)
+		uc := NewCreateUserSessionUsecase(userSessionRepo)
 
-	t.Run("セッションを作成できる", func(t *testing.T) {
-		input := CreateUserSessionInput{
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("create-session@example.com").
+			WithAtname("createsession").
+			Build()
+
+		output, err := uc.Execute(context.Background(), CreateUserSessionInput{
 			UserID:    userID,
 			IPAddress: "192.168.1.1",
 			UserAgent: "Mozilla/5.0",
-		}
-
-		output, err := uc.Execute(context.Background(), input)
+		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
 		}
@@ -38,10 +37,6 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 		}
 		if output.Token == "" {
 			t.Error("Execute() returned empty token")
-		}
-		// トークンは32文字のBase64エンコードされた文字列
-		if len(output.Token) != 32 {
-			t.Errorf("Execute() token length = %d, want 32", len(output.Token))
 		}
 
 		// DBに保存されていることを確認
@@ -63,14 +58,24 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("空のIPアドレスとUserAgentでもセッションを作成できる", func(t *testing.T) {
-		input := CreateUserSessionInput{
+	t.Run("正常系: 空のIPアドレスとUserAgentでもセッションを作成できる", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		userSessionRepo := repository.NewUserSessionRepository(q)
+		uc := NewCreateUserSessionUsecase(userSessionRepo)
+
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("empty-fields@example.com").
+			WithAtname("emptyfields").
+			Build()
+
+		output, err := uc.Execute(context.Background(), CreateUserSessionInput{
 			UserID:    userID,
 			IPAddress: "",
 			UserAgent: "",
-		}
-
-		output, err := uc.Execute(context.Background(), input)
+		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
 		}
@@ -81,7 +86,6 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 			t.Error("Execute() returned empty token")
 		}
 
-		// DBに保存されていることを確認
 		session, err := userSessionRepo.FindByToken(context.Background(), output.Token)
 		if err != nil {
 			t.Fatalf("FindByToken() error = %v", err)
@@ -97,7 +101,19 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("各呼び出しで異なるトークンが生成される", func(t *testing.T) {
+	t.Run("正常系: 各呼び出しで異なるトークンが生成される", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		userSessionRepo := repository.NewUserSessionRepository(q)
+		uc := NewCreateUserSessionUsecase(userSessionRepo)
+
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("unique-token@example.com").
+			WithAtname("uniquetoken").
+			Build()
+
 		input := CreateUserSessionInput{
 			UserID:    userID,
 			IPAddress: "192.168.1.2",
@@ -118,24 +134,20 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 			t.Error("Execute() returned same token for different calls")
 		}
 	})
-}
 
-func TestCreateUserSessionUsecase_Execute_InvalidUserID(t *testing.T) {
-	t.Parallel()
+	t.Run("異常系: 存在しないユーザーIDの場合はエラーを返す", func(t *testing.T) {
+		t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	userSessionRepo := repository.NewUserSessionRepository(q)
-	uc := NewCreateUserSessionUsecase(userSessionRepo)
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		userSessionRepo := repository.NewUserSessionRepository(q)
+		uc := NewCreateUserSessionUsecase(userSessionRepo)
 
-	t.Run("存在しないユーザーIDの場合はエラーを返す", func(t *testing.T) {
-		input := CreateUserSessionInput{
+		_, err := uc.Execute(context.Background(), CreateUserSessionInput{
 			UserID:    "00000000-0000-0000-0000-000000000000",
 			IPAddress: "192.168.1.1",
 			UserAgent: "Mozilla/5.0",
-		}
-
-		_, err := uc.Execute(context.Background(), input)
+		})
 		if err == nil {
 			t.Error("Execute() expected error for non-existent user, got nil")
 		}

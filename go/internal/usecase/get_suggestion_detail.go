@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -55,15 +56,19 @@ type GetSuggestionDetailInput struct {
 
 // GetSuggestionDetailOutput は編集提案詳細取得の出力
 type GetSuggestionDetailOutput struct {
-	Space           *model.Space
-	SpaceMember     *model.SpaceMember
-	Topic           *model.Topic
-	TopicMember     *model.TopicMember
-	Suggestion      *model.Suggestion
-	SuggestionPages []*model.SuggestionPage
-	Pages           []*model.Page
-	Comments        []*model.SuggestionComment
-	UserMap         map[model.SpaceMemberID]*model.User
+	Space                      *model.Space
+	SpaceMember                *model.SpaceMember
+	Topic                      *model.Topic
+	TopicMember                *model.TopicMember
+	Suggestion                 *model.Suggestion
+	SuggestionPages            []*model.SuggestionPage
+	Pages                      []*model.Page
+	Comments                   []*model.SuggestionComment
+	UserMap                    map[model.SpaceMemberID]*model.User
+	CanApplySuggestion         bool
+	CanCloseSuggestion         bool
+	CanUpdateSuggestion        bool
+	CanUpdateSuggestionComment bool
 }
 
 // Execute は編集提案詳細を取得する
@@ -151,16 +156,30 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		return nil, fmt.Errorf("ユーザー情報の取得に失敗: %w", err)
 	}
 
+	// 認可チェック
+	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment bool
+	if spaceMember != nil {
+		topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
+		canApply = topicPolicy.CanApplySuggestion(suggestion)
+		canClose = topicPolicy.CanCloseSuggestion(suggestion)
+		canUpdateSuggestion = topicPolicy.CanUpdateSuggestion(suggestion)
+		canUpdateSuggestionComment = topicPolicy.CanUpdateSuggestionComment(suggestion)
+	}
+
 	return &GetSuggestionDetailOutput{
-		Space:           space,
-		SpaceMember:     spaceMember,
-		Topic:           topic,
-		TopicMember:     topicMember,
-		Suggestion:      suggestion,
-		SuggestionPages: suggestionPages,
-		Pages:           pages,
-		Comments:        comments,
-		UserMap:         userMap,
+		Space:                      space,
+		SpaceMember:                spaceMember,
+		Topic:                      topic,
+		TopicMember:                topicMember,
+		Suggestion:                 suggestion,
+		SuggestionPages:            suggestionPages,
+		Pages:                      pages,
+		Comments:                   comments,
+		UserMap:                    userMap,
+		CanApplySuggestion:         canApply,
+		CanCloseSuggestion:         canClose,
+		CanUpdateSuggestion:        canUpdateSuggestion,
+		CanUpdateSuggestionComment: canUpdateSuggestionComment,
 	}, nil
 }
 

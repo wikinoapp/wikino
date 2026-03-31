@@ -96,7 +96,7 @@ linters:
               desc: "ViewModelはTemplatesに依存できません。"
 
         # Handler層のルール: HTTPリクエスト処理
-        # QueryへのアクセスはRepositoryを経由
+        # QueryへのアクセスはRepositoryを経由、認可・バリデーションはUseCase経由
         handler-layer:
           files:
             - "**/internal/handler/**"
@@ -105,6 +105,10 @@ linters:
               desc: "HandlerはQueryに直接依存できません。Repositoryを経由してください。"
             - pkg: github.com/wikinoapp/wikino/go/internal/repository
               desc: "HandlerはRepositoryに直接依存できません。UseCaseまたはValidatorを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "HandlerはPolicyに直接依存できません。UseCaseを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "HandlerはValidatorに直接依存できません。UseCaseを経由してください。"
 
         # バリデーター層のルール: 形式チェック + DBの状態を使った検証
         # Repository/Modelは許可、query/usecaseへの依存禁止
@@ -135,15 +139,13 @@ linters:
               desc: "MiddlewareはViewModelに依存できません。"
 
         # Application層のルール（UseCase）
-        # Presentation層に依存しない
+        # Presentation層に依存しない（メール送信はemail パッケージが担当し、UseCase は interface 経由で呼び出す）
         application-layer:
           files:
             - "**/internal/usecase/**"
           deny:
             - pkg: github.com/wikinoapp/wikino/go/internal/query
               desc: "Application層はQueryに直接依存できません。Repositoryを経由してください。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/policy
-              desc: "UseCaseはPolicyに直接依存できません。認可チェックはHandlerで行ってください。"
             - pkg: github.com/wikinoapp/wikino/go/internal/handler
               desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
@@ -151,7 +153,36 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
               desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
-              desc: "Application層はPresentation層に依存できません。"
+              desc: "Application層はPresentation層に依存できません。テンプレートレンダリングはemailパッケージを経由してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/session
+              desc: "Application層はPresentation層のヘルパーに依存できません。トークン生成はauthパッケージを使用してください。"
+
+        # Email層のルール: テンプレートレンダリング + メール送信
+        # templates, i18n, Sender に依存可能。上位層や他のPresentation層パッケージに依存しない
+        email-layer:
+          files:
+            - "**/internal/email/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "EmailはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "EmailはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "EmailはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "EmailはMiddlewareに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "EmailはViewModelに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "EmailはUseCaseに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "EmailはValidatorに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "EmailはWorkerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/dispatcher
+              desc: "EmailはDispatcherに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/session
+              desc: "EmailはSessionに依存できません。"
 
         # Model層のルール: 純粋なドメインエンティティ
         # データアクセス層、上位層に依存しない
@@ -254,9 +285,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "QueryはPresentation層に依存できません。"
 
-        # Worker層のルール: バックグラウンドジョブ処理（Application層）
-        # Presentation層（Handler等）に依存しない
-        # 例外: templatesへの依存はメールレンダリングのため許可
+        # Worker層のルール: バックグラウンドジョブ処理（Presentation層）
+        # 他のPresentation層パッケージに依存しない
         worker-layer:
           files:
             - "**/internal/worker/**"
@@ -269,6 +299,37 @@ linters:
               desc: "WorkerはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
               desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "WorkerはTemplatesに依存できません。メールレンダリングはUseCaseを経由してください。"
+
+        # Dispatcher層のルール: ジョブキューへの投入を抽象化（Domain/Infrastructure層）
+        # 上位層や同レイヤーの他パッケージに依存しない
+        dispatcher-layer:
+          files:
+            - "**/internal/dispatcher/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "DispatcherはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "DispatcherはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "DispatcherはWorkerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "DispatcherはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "DispatcherはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "DispatcherはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "DispatcherはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "DispatcherはPolicyに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "DispatcherはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "DispatcherはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "DispatcherはModelに依存できません。"
 
         # RateLimit層のルール: インフラストラクチャユーティリティ
         # Queryに直接依存せず、Repositoryを経由する

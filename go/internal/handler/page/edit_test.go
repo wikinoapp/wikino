@@ -62,14 +62,36 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
+	pageEditorRepo := repository.NewPageEditorRepository(queries)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+
+	publishPageUC := usecase.NewPublishPageUsecase(
+		nil,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		pageRevisionRepo,
+		pageEditorRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+		topicRepo,
+		topicMemberRepo,
+		attachmentRepo,
+		pageAttachmentRefRepo,
+		pageUpdateValidator,
+	)
+
 	return page.NewHandler(
 		cfg,
 		flashMgr,
 		getPageDetailUC,
 		getEditLinkDataUC,
-		nil,
+		publishPageUC,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
-		validator.NewPageUpdateValidator(pageRepo),
 	)
 }
 

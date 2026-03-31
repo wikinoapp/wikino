@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
@@ -88,8 +89,12 @@ func main() {
 	// クエリを初期化
 	queries := query.New(db)
 
+	// Rate Limiterを初期化
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
+
 	// River クライアントを初期化（バックグラウンドジョブ用）
-	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg)
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter)
 	if err != nil {
 		slog.Error("River クライアントの初期化に失敗しました", "error", err)
 		os.Exit(1)
@@ -131,19 +136,31 @@ func main() {
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 
+	// Dispatcher を初期化（ジョブキューへの投入を抽象化）
+	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
+
 	// ユースケースを初期化
+	signInCreateValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+	signInUC := usecase.NewCreateSignInUsecase(signInCreateValidator, userSessionRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-	createAccountUC := usecase.NewCreateAccountUsecase(db, userRepo, userPasswordRepo)
-	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, riverClient)
-	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, jobDispatcher, emailConfirmationCreateValidator)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo, emailConfirmationUpdateValidator)
+	accountCreateValidator := validator.NewAccountCreateValidator(userRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo, accountCreateValidator)
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, jobDispatcher, passwordResetCreateValidator)
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
-	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
-	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
+	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveCreateValidator)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -152,10 +169,6 @@ func main() {
 	// Turnstileクライアントを初期化
 	turnstileClient := turnstile.NewClient(cfg.TurnstileEnabled, cfg.TurnstileSecretKey)
 
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
-
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
 	csrfMiddleware := middleware.NewCSRF(cfg)
@@ -163,14 +176,12 @@ func main() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
-	signInValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
 	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		createUserSessionUC,
+		signInUC,
 		turnstileClient,
-		signInValidator,
 	)
 	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 	userSessionHandler := user_session.NewHandler(
@@ -180,49 +191,41 @@ func main() {
 		deleteUserSessionUC,
 	)
 	signInTwoFactorValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(signInTwoFactorValidator, createUserSessionUC)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		signInTwoFactorValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 	signInTwoFactorRecoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, signInTwoFactorRecoveryValidator, userTwoFactorAuthRepo, userSessionRepo)
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		signInTwoFactorRecoveryValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 	signUpHandler := sign_up.NewHandler(
 		cfg,
 		sessionMgr,
 	)
-	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
-	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
 	emailConfirmationHandler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		sendEmailConfirmationUC,
+		createEmailConfirmationUC,
 		markEmailAsConfirmedUC,
-		emailConfirmationCreateValidator,
-		emailConfirmationUpdateValidator,
 		turnstileClient,
 		rateLimiter,
 	)
-	accountCreateValidator := validator.NewAccountCreateValidator(emailConfirmationRepo, userRepo)
 	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
 	accountHandler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
 		getAccountNewDataUC,
-		accountCreateValidator,
 		createAccountUC,
 		createUserSessionUC,
 	)
-	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
 	passwordResetHandler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
@@ -230,9 +233,7 @@ func main() {
 		rateLimiter,
 		turnstileClient,
 		createPasswordResetTokenUC,
-		passwordResetCreateValidator,
 	)
-	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	passwordHandler := password.NewHandler(
 		cfg,
@@ -240,11 +241,9 @@ func main() {
 		flashMgr,
 		getTokenDataUC,
 		updatePasswordResetUC,
-		passwordUpdateValidator,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	getPageDetailUC := usecase.NewGetPageDetailUsecase(
 		spaceRepo,
 		spaceMemberRepo,
@@ -268,7 +267,6 @@ func main() {
 		getEditLinkDataUC,
 		publishPageUC,
 		sidebarHelper,
-		pageUpdateValidator,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
@@ -283,21 +281,12 @@ func main() {
 		getDraftPagesUC,
 		sidebarHelper,
 	)
-	getSaveDraftPageDataUC := usecase.NewGetSaveDraftPageDataUsecase(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
-	)
 	draftPageHandler := draft_page.NewHandler(
 		getPageDetailUC,
-		getSaveDraftPageDataUC,
 		autoSaveDraftPageUC,
 		getEditLinkDataUC,
 	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
-		getPageDetailUC,
 		flashMgr,
 		manualSaveDraftPageUC,
 	)
@@ -310,7 +299,6 @@ func main() {
 	pageLinkListHandler := page_link_list.NewHandler(
 		getLinkListUC,
 	)
-	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
 	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	pageMoveHandler := page_move.NewHandler(
 		cfg,
@@ -318,7 +306,6 @@ func main() {
 		getPageMoveDataUC,
 		movePageUC,
 		sidebarHelper,
-		pageMoveCreateValidator,
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
 	topicHandler := topichandler.NewHandler(
@@ -329,23 +316,23 @@ func main() {
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
+	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, topicRepo, pageRepo, pageRevisionRepo)
-	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
-	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, suggestionRepo, topicRepo, pageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, suggestionCreateValidator)
+	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, suggestionUpdateValidator)
 	suggestionHandler := suggestionhandler.NewHandler(
 		cfg,
 		flashMgr,
 		getSuggestionListUC,
 		getSuggestionDetailUC,
+		getSuggestionEditUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
 		updateSuggestionUC,
 		sidebarHelper,
-		suggestionCreateValidator,
-		suggestionUpdateValidator,
 	)
 	suggestionChangeHandler := suggestionchangehandler.NewHandler(
 		cfg,
@@ -353,19 +340,21 @@ func main() {
 		getSuggestionDiffUC,
 		sidebarHelper,
 	)
-	applySuggestionUC := usecase.NewApplySuggestionUsecase(db, suggestionRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	applySuggestionUC := usecase.NewApplySuggestionUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo,
+	)
 	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		applySuggestionUC,
 	)
-	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, suggestionRepo)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo)
 	suggestionCloseHandler := suggestionclosehandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		closeSuggestionUC,
 	)
-	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(db, suggestionPageRepo, draftPageRepo, pageRepo)
+	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, draftPageRepo, pageRepo)
 	suggestionPageEditHandler := suggestionpageedithandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -373,33 +362,36 @@ func main() {
 		startSuggestionPageEditUC,
 		sidebarHelper,
 	)
-	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(db, suggestionPageRepo, suggestionPageRevisionRepo)
 	suggestionPageUpdateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, suggestionPageUpdateValidator,
+	)
 	suggestionPageHandler := suggestionpagehandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		updateSuggestionPageUC,
-		suggestionPageUpdateValidator,
 	)
-	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionCommentRepo, suggestionCommentCreateValidator,
+	)
 	suggestionCommentHandler := suggestioncommenthandler.NewHandler(
 		flashMgr,
-		getSuggestionDetailUC,
 		createSuggestionCommentUC,
-		suggestionCommentCreateValidator,
 	)
 	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
-	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(db, suggestionCommentRepo)
 	suggestionCommentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
+	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
+		suggestionRepo, suggestionCommentRepo, suggestionCommentUpdateValidator,
+	)
 	suggestionCommentEditHandler := suggestioncommentedithandler.NewHandler(
 		cfg,
 		flashMgr,
-		getSuggestionDetailUC,
+		getSuggestionEditUC,
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
 		sidebarHelper,
-		suggestionCommentUpdateValidator,
 	)
 	r := chi.NewRouter()
 

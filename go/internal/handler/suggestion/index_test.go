@@ -64,23 +64,23 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
+	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, topicRepo, pageRepo, pageRevisionRepo)
-	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, suggestionRepo, topicRepo, pageRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, suggestionCreateValidator)
 	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, suggestionUpdateValidator)
 
 	return suggestionhandler.NewHandler(
 		cfg,
 		flashMgr,
 		getSuggestionListUC,
 		getSuggestionDetailUC,
+		getSuggestionEditUC,
 		getSuggestionNewUC,
 		createSuggestionUC,
 		updateSuggestionUC,
 		sidebarHelper,
-		suggestionCreateValidator,
-		suggestionUpdateValidator,
 	)
 }
 

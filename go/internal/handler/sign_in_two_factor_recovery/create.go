@@ -1,17 +1,15 @@
 package sign_in_two_factor_recovery
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	twofactorpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -37,54 +35,31 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	recoveryCode := r.FormValue("recovery_code")
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// バリデーション（形式チェック + DB検証）
-	result := h.createValidator.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+	// UseCaseを実行（バリデーション + リカバリーコード消費 + セッション作成）
+	output, err := h.createRecoveryCodeSessionUC.Execute(ctx, usecase.CreateRecoveryCodeSessionInput{
 		UserID:       pendingUserID,
 		RecoveryCode: recoveryCode,
-	})
-	if result.FormErrors != nil && result.FormErrors.HasErrors() && result.Err == nil {
-		// 形式バリデーションエラー
-		h.renderRecoveryForm(w, r, result.FormErrors, csrfToken)
-		return
-	}
-	if result.Err != nil {
-		if errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			// 2FAが有効でない場合はログインページにリダイレクト
-			slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
-			h.sessionMgr.DeletePendingUserCookie(w)
-			http.Redirect(w, r, "/sign_in", http.StatusFound)
-			return
-		}
-		if errors.Is(result.Err, validator.ErrInvalidRecoveryCode) {
-			// リカバリーコードが無効
-			h.renderRecoveryForm(w, r, result.FormErrors, csrfToken)
-			return
-		}
-		slog.ErrorContext(ctx, "リカバリーコード検証でエラー", "error", result.Err, "user_id", pendingUserID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// リカバリーコードを消費（使用済みにする）
-	err := h.consumeRecoveryCodeUC.Execute(ctx, usecase.ConsumeRecoveryCodeInput{
-		UserID:       pendingUserID,
-		RecoveryCode: recoveryCode,
-		CurrentCodes: result.TwoFactorAuth.RecoveryCodes,
+		IPAddress:    clientip.GetClientIP(r),
+		UserAgent:    r.UserAgent(),
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "リカバリーコード消費でエラー", "error", err, "user_id", pendingUserID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// セッションを作成
-	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
-		UserID:    pendingUserID,
-		IPAddress: clientip.GetClientIP(r),
-		UserAgent: r.UserAgent(),
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "セッション作成でエラー", "error", err, "user_id", pendingUserID)
+		// バリデーションエラー → フォーム再描画
+		if ve := model.AsValidationError(err); ve != nil {
+			h.renderRecoveryForm(w, r, ve, csrfToken)
+			return
+		}
+		// アプリケーションエラー
+		if ae := model.AsAppError(err); ae != nil {
+			if ae.Code == model.AppErrCodeTwoFactorNotEnabled {
+				slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
+				h.sessionMgr.DeletePendingUserCookie(w)
+				http.Redirect(w, r, "/sign_in", http.StatusFound)
+				return
+			}
+			slog.ErrorContext(ctx, ae.LogString())
+		} else {
+			slog.ErrorContext(ctx, "リカバリーコード認証でエラー", "error", err, "user_id", pendingUserID)
+		}
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -100,7 +75,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // renderRecoveryForm はリカバリーコードフォームをエラー付きでレンダリングします
-func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string) {
+func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)

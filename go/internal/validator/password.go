@@ -2,20 +2,11 @@ package validator
 
 import (
 	"context"
-	"errors"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
-)
-
-// バリデーションのエラー定義
-var (
-	ErrTokenNotFound = errors.New("トークンが見つかりません")
-	ErrTokenUsed     = errors.New("トークンは既に使用されています")
-	ErrTokenExpired  = errors.New("トークンの有効期限が切れています")
 )
 
 // PasswordUpdateValidator はパスワード更新のバリデーションを行う
@@ -37,79 +28,59 @@ type PasswordUpdateValidatorInput struct {
 	PasswordConfirmation string
 }
 
-// PasswordUpdateValidatorResult はバリデーションの結果
-type PasswordUpdateValidatorResult struct {
-	// TokenID は検証成功時のトークンID（UseCaseに渡す）
+// PasswordUpdateValidateOutput はバリデーション成功時の出力
+type PasswordUpdateValidateOutput struct {
 	TokenID string
-	// UserID は検証成功時のユーザーID（UseCaseに渡す）
-	UserID model.UserID
-	// FormErrors はフォームエラー
-	FormErrors *session.FormErrors
-	// Err はシステムエラー
-	Err error
+	UserID  model.UserID
 }
 
 const passwordUpdateMinLength = 8
 
 // Validate はバリデーションを行う
-func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUpdateValidatorInput) *PasswordUpdateValidatorResult {
-	formErrors := session.NewFormErrors()
+func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUpdateValidatorInput) (*PasswordUpdateValidateOutput, error) {
+	ve := model.NewValidationError()
 
 	// 形式バリデーション
 	// トークン必須チェック
 	if input.Token == "" {
-		formErrors.AddGlobal(i18n.T(ctx, "validation_token_required"))
-		return &PasswordUpdateValidatorResult{FormErrors: formErrors}
+		ve.AddGlobal(i18n.T(ctx, "validation_token_required"))
+		return nil, ve
 	}
 
 	// パスワード必須チェック
 	if input.Password == "" {
-		formErrors.AddField("password", i18n.T(ctx, "validation_password_required"))
+		ve.AddField("password", i18n.T(ctx, "validation_password_required"))
 	}
 
 	// パスワード確認必須チェック
 	if input.PasswordConfirmation == "" {
-		formErrors.AddField("password_confirmation", i18n.T(ctx, "validation_password_confirmation_required"))
+		ve.AddField("password_confirmation", i18n.T(ctx, "validation_password_confirmation_required"))
 	}
 
 	// パスワード文字数チェック
 	if len(input.Password) > 0 && len(input.Password) < passwordUpdateMinLength {
-		formErrors.AddField("password", i18n.T(ctx, "validation_password_too_short"))
+		ve.AddField("password", i18n.T(ctx, "validation_password_too_short"))
 	}
 
 	// パスワード確認一致チェック
 	if input.Password != "" && input.PasswordConfirmation != "" && input.Password != input.PasswordConfirmation {
-		formErrors.AddField("password_confirmation", i18n.T(ctx, "validation_password_confirmation_mismatch"))
+		ve.AddField("password_confirmation", i18n.T(ctx, "validation_password_confirmation_mismatch"))
 	}
 
-	if formErrors.HasErrors() {
-		return &PasswordUpdateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return nil, ve
 	}
 
 	// トークン検証（状態バリデーション）
 	token, err := v.validateToken(ctx, input.Token)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrTokenNotFound):
-			formErrors.AddGlobal(i18n.T(ctx, "validation_token_invalid"))
-			return &PasswordUpdateValidatorResult{FormErrors: formErrors, Err: err}
-		case errors.Is(err, ErrTokenUsed):
-			formErrors.AddGlobal(i18n.T(ctx, "validation_token_used"))
-			return &PasswordUpdateValidatorResult{FormErrors: formErrors, Err: err}
-		case errors.Is(err, ErrTokenExpired):
-			formErrors.AddGlobal(i18n.T(ctx, "validation_token_expired"))
-			return &PasswordUpdateValidatorResult{FormErrors: formErrors, Err: err}
-		default:
-			// DBエラーはログに記録し、ユーザーにはシステムエラーを表示
-			formErrors.AddGlobal(i18n.T(ctx, "validation_system_error"))
-			return &PasswordUpdateValidatorResult{FormErrors: formErrors, Err: err}
-		}
+		return nil, err
 	}
 
-	return &PasswordUpdateValidatorResult{
+	return &PasswordUpdateValidateOutput{
 		TokenID: token.ID,
 		UserID:  token.UserID,
-	}
+	}, nil
 }
 
 // validateToken はトークンの検証を行う
@@ -120,16 +91,21 @@ func (v *PasswordUpdateValidator) validateToken(ctx context.Context, token strin
 		return nil, err
 	}
 
+	ve := model.NewValidationError()
+
 	if tokenModel == nil {
-		return nil, ErrTokenNotFound
+		ve.AddGlobal(i18n.T(ctx, "validation_token_invalid"))
+		return nil, ve
 	}
 
 	if tokenModel.IsUsed() {
-		return nil, ErrTokenUsed
+		ve.AddGlobal(i18n.T(ctx, "validation_token_used"))
+		return nil, ve
 	}
 
 	if tokenModel.IsExpired() {
-		return nil, ErrTokenExpired
+		ve.AddGlobal(i18n.T(ctx, "validation_token_expired"))
+		return nil, ve
 	}
 
 	return tokenModel, nil

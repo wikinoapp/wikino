@@ -70,21 +70,21 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しリンクされて�
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	v := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 
-	result := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
+	dp, err := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
 		SuggestionPageID: suggestionPageID,
 		PageID:           pageID,
 		SpaceMemberID:    spaceMemberID,
 		SpaceID:          spaceID,
 	})
 
-	if result.Err != nil {
-		t.Fatalf("unexpected error: %v", result.Err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if result.DraftPage == nil {
+	if dp == nil {
 		t.Fatal("DraftPage should not be nil")
 	}
-	if result.DraftPage.Body != "提案の本文" {
-		t.Errorf("DraftPage.Body = %q, want %q", result.DraftPage.Body, "提案の本文")
+	if dp.Body != "提案の本文" {
+		t.Errorf("DraftPage.Body = %q, want %q", dp.Body, "提案の本文")
 	}
 }
 
@@ -121,18 +121,21 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しない場合はエ�
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	v := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 
-	result := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
+	dp, err := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
 		SuggestionPageID: "nonexistent-sp-id",
 		PageID:           pageID,
 		SpaceMemberID:    spaceMemberID,
 		SpaceID:          spaceID,
 	})
 
-	if result.Err == nil {
+	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(result.Err, validator.ErrDraftPageNotFound) {
-		t.Errorf("expected ErrDraftPageNotFound, got %v", result.Err)
+	if !errors.Is(err, validator.ErrDraftPageNotFound) {
+		t.Errorf("expected ErrDraftPageNotFound, got %v", err)
+	}
+	if dp != nil {
+		t.Error("DraftPage should be nil on error")
 	}
 }
 
@@ -196,17 +199,20 @@ func TestSuggestionPageUpdateValidator_DraftPageが別のSuggestionPageにリン
 	v := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 
 	// 別のSuggestionPageIDを指定
-	result := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
+	dp, err := v.Validate(context.Background(), validator.SuggestionPageUpdateValidatorInput{
 		SuggestionPageID: "different-sp-id",
 		PageID:           pageID,
 		SpaceMemberID:    spaceMemberID,
 		SpaceID:          spaceID,
 	})
 
-	if result.Err == nil {
+	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(result.Err, validator.ErrDraftPageNotLinked) {
-		t.Errorf("expected ErrDraftPageNotLinked, got %v", result.Err)
+	if !errors.Is(err, validator.ErrDraftPageNotLinked) {
+		t.Errorf("expected ErrDraftPageNotLinked, got %v", err)
+	}
+	if dp != nil {
+		t.Error("DraftPage should be nil on error")
 	}
 }

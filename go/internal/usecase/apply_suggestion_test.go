@@ -14,20 +14,26 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
-	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
 
-	uc := NewApplySuggestionUsecase(db, suggestionRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	uc := NewApplySuggestionUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo,
+	)
 
 	t.Run("正常系: 1つのページの編集提案を反映できる", func(t *testing.T) {
 		t.Parallel()
-		// テストデータを作成
+
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("apply-suggestion-1").
 			Build()
@@ -56,14 +62,12 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithBody("Original body").
 			Build()
 
-		// ページリビジョンを作成
 		pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithSpaceMemberID(spaceMemberID).
 			WithPageID(pageID).
 			Build()
 
-		// オープンステータスの編集提案を作成
 		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -71,7 +75,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithStatus(model.SuggestionStatusOpen).
 			Build()
 
-		// 編集提案ページを作成
 		testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithSuggestionID(suggestionID).
@@ -82,26 +85,10 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithBodyHTML("<p>提案本文</p>").
 			Build()
 
-		// 事前にデータを取得
-		suggestion, err := suggestionRepo.FindByID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
-		}
-		suggestionPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
-		}
-		pages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
-		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
-		}
-
-		// 反映を実行
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
-			Suggestion:      suggestion,
-			SuggestionPages: suggestionPages,
-			Pages:           pages,
-			SpaceMemberID:   spaceMemberID,
+			SpaceIdentifier:  "apply-suggestion-1",
+			SuggestionNumber: 1,
+			UserID:           userID,
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -113,17 +100,14 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			t.Fatal("Suggestion should not be nil")
 		}
 
-		// ステータスが反映済みになっていることを確認
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
 			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
-		// AppliedAtが設定されていることを確認
 		if output.Suggestion.AppliedAt == nil {
 			t.Error("AppliedAt should not be nil")
 		}
 
-		// ページが更新されていることを確認
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
 			t.Fatalf("FindByIDs() error = %v", err)
@@ -140,7 +124,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			t.Errorf("Page.Title = %v, want %q", updatedPage.Title, wantTitle)
 		}
 
-		// PageRevisionが作成されていることを確認
 		latestRevision, err := pageRevisionRepo.FindLatestByPageID(context.Background(), pageID, spaceID)
 		if err != nil {
 			t.Fatalf("FindLatestByPageID() error = %v", err)
@@ -155,6 +138,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 
 	t.Run("正常系: SuggestionPageのLinkedPageIDsとFeaturedImageAttachmentIDがPageに反映される", func(t *testing.T) {
 		t.Parallel()
+
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("apply-suggestion-linked").
 			Build()
@@ -217,25 +201,10 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithFeaturedImageAttachmentID(featuredAttachmentID).
 			Build()
 
-		// 事前にデータを取得
-		suggestion, err := suggestionRepo.FindByID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
-		}
-		suggestionPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
-		}
-		pages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
-		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
-		}
-
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
-			Suggestion:      suggestion,
-			SuggestionPages: suggestionPages,
-			Pages:           pages,
-			SpaceMemberID:   spaceMemberID,
+			SpaceIdentifier:  "apply-suggestion-linked",
+			SuggestionNumber: 1,
+			UserID:           userID,
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -263,6 +232,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 
 	t.Run("正常系: 複数ページの編集提案を反映できる", func(t *testing.T) {
 		t.Parallel()
+
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("apply-suggestion-2").
 			Build()
@@ -333,25 +303,10 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithBodyHTML("<p>提案本文2</p>").
 			Build()
 
-		// 事前にデータを取得
-		suggestion, err := suggestionRepo.FindByID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
-		}
-		suggestionPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestionID, spaceID)
-		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
-		}
-		pages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{page1ID, page2ID}, spaceID)
-		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
-		}
-
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
-			Suggestion:      suggestion,
-			SuggestionPages: suggestionPages,
-			Pages:           pages,
-			SpaceMemberID:   spaceMemberID,
+			SpaceIdentifier:  "apply-suggestion-2",
+			SuggestionNumber: 1,
+			UserID:           userID,
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -361,7 +316,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
-		// 両方のページが更新されていることを確認
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{page1ID, page2ID}, spaceID)
 		if err != nil {
 			t.Fatalf("FindByIDs() error = %v", err)
@@ -370,7 +324,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			t.Fatalf("updated pages count = %d, want 2", len(updatedPages))
 		}
 
-		// 各ページの内容が反映されていることを確認
 		pageMap := make(map[model.PageID]*model.Page, len(updatedPages))
 		for _, p := range updatedPages {
 			pageMap[p.ID] = p
@@ -380,6 +333,137 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 		if pageMap[page2ID].Body != "提案本文2" {
 			t.Errorf("Page2.Body = %q, want %q", pageMap[page2ID].Body, "提案本文2")
+		}
+	})
+
+	t.Run("認可エラー: スペースメンバーでないユーザーはForbiddenエラーが返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-auth-1").
+			Build()
+		ownerID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-auth-owner@example.com").
+			WithAtname("applysugauthown").
+			Build()
+		nonMemberID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-auth-non@example.com").
+			WithAtname("applysugauthnon").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(ownerID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-auth-1",
+			SuggestionNumber: 1,
+			UserID:           nonMemberID,
+		})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatalf("expected AppError but got %T: %v", err, err)
+		}
+		if ae.Code != model.AppErrCodeForbidden {
+			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+		}
+	})
+
+	t.Run("ステータスエラー: クローズ済みの編集提案はConflictエラーが返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-closed").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-closed@example.com").
+			WithAtname("applysugclosed").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusClosed).
+			Build()
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-closed",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatalf("expected AppError but got %T: %v", err, err)
+		}
+		if ae.Code != model.AppErrCodeConflict {
+			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeConflict)
+		}
+	})
+
+	t.Run("べき等性: 反映済みの編集提案は成功出力を返す", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-idem").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-idem@example.com").
+			WithAtname("applysugidem").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusApplied).
+			Build()
+
+		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-idem",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+		if output.Suggestion.Status != model.SuggestionStatusApplied {
+			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 	})
 }

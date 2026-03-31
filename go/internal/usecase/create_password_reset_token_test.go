@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
-	"github.com/wikinoapp/wikino/go/internal/worker"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
@@ -30,8 +31,10 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
-	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
+	mock := &mockJobInserter{}
+	d := dispatcher.NewDispatcher(mock)
+	createValidator := validator.NewPasswordResetCreateValidator()
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
@@ -49,14 +52,14 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 	}
 
 	// エンキューが呼ばれたことを確認
-	if !inserter.called {
+	if !mock.called {
 		t.Error("Insert が呼ばれていません")
 	}
 
 	// SendPasswordResetArgs の検証
-	resetArgs, ok := inserter.args.(worker.SendPasswordResetArgs)
+	resetArgs, ok := mock.args.(dispatcher.SendPasswordResetArgs)
 	if !ok {
-		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", mock.args)
 	}
 	if resetArgs.Email != "reset-test@example.com" {
 		t.Errorf("Email = %s, want reset-test@example.com", resetArgs.Email)
@@ -96,8 +99,10 @@ func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *
 
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
-	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
+	mock := &mockJobInserter{}
+	d := dispatcher.NewDispatcher(mock)
+	createValidator := validator.NewPasswordResetCreateValidator()
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
@@ -141,8 +146,10 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
-	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
+	mock := &mockJobInserter{}
+	d := dispatcher.NewDispatcher(mock)
+	createValidator := validator.NewPasswordResetCreateValidator()
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
 	ctx := i18n.SetLocale(context.Background(), "en")
 	input := CreatePasswordResetTokenInput{
@@ -160,9 +167,9 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 	}
 
 	// SendPasswordResetArgs の検証（英語）
-	resetArgs, ok := inserter.args.(worker.SendPasswordResetArgs)
+	resetArgs, ok := mock.args.(dispatcher.SendPasswordResetArgs)
 	if !ok {
-		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", mock.args)
 	}
 	if resetArgs.Locale != "en" {
 		t.Errorf("Locale = %s, want en", resetArgs.Locale)
@@ -186,8 +193,10 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
-	inserter := &mockInserter{}
-	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, inserter)
+	mock := &mockJobInserter{}
+	d := dispatcher.NewDispatcher(mock)
+	createValidator := validator.NewPasswordResetCreateValidator()
+	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := CreatePasswordResetTokenInput{
@@ -201,7 +210,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 	}
 
 	// エンキューされたResetURLからトークンを取得
-	resetArgs := inserter.args.(worker.SendPasswordResetArgs)
+	resetArgs := mock.args.(dispatcher.SendPasswordResetArgs)
 
 	// ResetURLからトークンを抽出（"https://wikino.app/password/edit?token=xxx" の形式）
 	resetURL := resetArgs.ResetURL

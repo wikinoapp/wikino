@@ -2,13 +2,13 @@ package validator_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/pquerna/otp/totp"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -101,15 +101,16 @@ func TestSignInTwoFactorCreateValidator_Validate_FormatValidation(t *testing.T) 
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
+			err := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 				UserID:   "dummy-user-id",
 				TOTPCode: tt.totpCode,
 			})
 
 			if tt.wantErrors {
-				if result.FormErrors == nil {
-					t.Error("expected form errors, but got nil")
-				} else if tt.wantFieldError != "" && !result.FormErrors.HasFieldError(tt.wantFieldError) {
+				ve := model.AsValidationError(err)
+				if ve == nil {
+					t.Error("expected validation error, but got nil or different error type")
+				} else if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
 					t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
 				}
 			}
@@ -139,16 +140,13 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
+		err := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: code,
 		})
 
-		if result.Err != nil {
-			t.Errorf("unexpected error: %v", result.Err)
-		}
-		if result.FormErrors != nil {
-			t.Errorf("unexpected form errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
@@ -169,20 +167,20 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
+		err := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: "000000", // 無効なコード
 		})
 
-		if !errors.Is(result.Err, validator.ErrInvalidTOTPCode) {
-			t.Errorf("expected ErrInvalidTOTPCode, got %v", result.Err)
-		}
-		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Errorf("expected ValidationError, got %v", err)
+		} else if !ve.HasErrors() {
 			t.Error("expected form errors")
 		}
 	})
 
-	t.Run("2FAが有効でないユーザーの場合はエラーを返す", func(t *testing.T) {
+	t.Run("2FAが有効でないユーザーの場合はAppErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
@@ -201,21 +199,20 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
+		err := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: code,
 		})
 
-		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
-		}
-		// 2FAが無効の場合はFormErrorsは設定されない（リダイレクト処理のため）
-		if result.FormErrors != nil {
-			t.Errorf("unexpected form errors: %v", result.FormErrors)
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Errorf("expected AppError, got %v", err)
+		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
+			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
 		}
 	})
 
-	t.Run("2FAが設定されていないユーザーの場合はエラーを返す", func(t *testing.T) {
+	t.Run("2FAが設定されていないユーザーの場合はAppErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
@@ -231,13 +228,16 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
+		err := v.Validate(ctx, validator.SignInTwoFactorCreateValidatorInput{
 			UserID:   userID,
 			TOTPCode: "123456",
 		})
 
-		if !errors.Is(result.Err, validator.ErrTwoFactorNotEnabled) {
-			t.Errorf("expected ErrTwoFactorNotEnabled, got %v", result.Err)
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Errorf("expected AppError, got %v", err)
+		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
+			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
 		}
 	})
 }

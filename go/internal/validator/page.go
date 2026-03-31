@@ -10,7 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
@@ -49,68 +48,60 @@ type PageUpdateValidatorInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 }
 
-// PageUpdateValidatorResult はバリデーションの結果
-type PageUpdateValidatorResult struct {
-	FormErrors                   *session.FormErrors
-	UnpublishedConflictingPageID *model.PageID
-}
-
-// Validate はバリデーションを行う
-func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateValidatorInput) *PageUpdateValidatorResult {
-	formErrors := session.NewFormErrors()
+// Validate はバリデーションを行う。
+// 戻り値の *model.PageID は未公開かつ本文が空の競合ページのID（存在する場合）。
+func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateValidatorInput) (*model.PageID, error) {
+	ve := model.NewValidationError()
 
 	// 必須チェック
 	if input.Title == "" {
-		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_required"))
-		return &PageUpdateValidatorResult{FormErrors: formErrors}
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_required"))
+		return nil, ve
 	}
 
 	// 文字数チェック
 	if utf8.RuneCountInString(input.Title) > pageTitleMaxLength {
-		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_too_long"))
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_too_long"))
 	}
 
 	// 禁止文字チェック
 	if invalidCharsRegex.MatchString(input.Title) {
-		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_invalid_chars"))
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_chars"))
 	}
 
 	// 先頭・末尾のスペースとドットのチェック
 	if strings.HasPrefix(input.Title, " ") || strings.HasSuffix(input.Title, " ") ||
 		strings.HasPrefix(input.Title, ".") || strings.HasSuffix(input.Title, ".") {
-		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
 	}
 
 	// Windows予約語チェック
 	upperTitle := strings.ToUpper(input.Title)
 	if windowsReservedNames[upperTitle] {
-		formErrors.AddField("title", i18n.T(ctx, "validation_page_title_reserved"))
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_reserved"))
 	}
 
-	if formErrors.HasErrors() {
-		return &PageUpdateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return nil, ve
 	}
 
 	// タイトル一意性チェック（DB検証）
 	existingPage, err := v.pageRepo.FindByTopicAndTitle(ctx, input.TopicID, input.Title, input.SpaceID)
 	if err != nil {
-		formErrors.AddField("title", i18n.T(ctx, "validation_system_error"))
-		return &PageUpdateValidatorResult{FormErrors: formErrors}
+		return nil, fmt.Errorf("タイトル一意性チェックに失敗: %w", err)
 	}
 
 	if existingPage != nil && existingPage.ID != input.PageID {
 		if existingPage.PublishedAt == nil && existingPage.Body == "" {
-			// 未公開かつ本文が空のページとの競合 → エラーにせず、結果に格納
-			return &PageUpdateValidatorResult{
-				FormErrors:                   formErrors,
-				UnpublishedConflictingPageID: &existingPage.ID,
-			}
+			// 未公開かつ本文が空のページとの競合 → エラーにせず、競合ページIDを返す
+			return &existingPage.ID, nil
 		}
 
 		editPath := fmt.Sprintf("/s/%s/pages/%d/edit", input.SpaceIdentifier, existingPage.Number)
 		errorMsg := templates.T(ctx, "validation_page_title_uniqueness_html")
-		formErrors.AddField("title", fmt.Sprintf(errorMsg, editPath))
+		ve.AddField("title", fmt.Sprintf(errorMsg, editPath))
+		return nil, ve
 	}
 
-	return &PageUpdateValidatorResult{FormErrors: formErrors}
+	return nil, nil
 }

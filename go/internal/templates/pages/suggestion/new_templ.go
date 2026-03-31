@@ -8,7 +8,7 @@ package suggestion
 import (
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -17,7 +17,7 @@ import (
 // NewData は編集提案作成画面に渡すデータ構造体です
 type NewData struct {
 	CSRFToken        string
-	FormErrors       *session.FormErrors
+	FormErrors       *model.ValidationError
 	Space            viewmodel.Space
 	Topic            viewmodel.Topic
 	DraftPages       []viewmodel.DraftPageForSuggestionNew

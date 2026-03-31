@@ -27,8 +27,8 @@ type PostData struct {
 // Post は投稿UIを表示するコンポーネントです。
 // 編集提案の本文とコメントで共通のUIを提供します。
 templ Post(data PostData) {
-	<div class="flex flex-col border border-border rounded-xl">
-		<div class="flex items-center gap-2 bg-brand-200/60 rounded-t-xl px-4 py-1 min-h-[40px]">
+	<div class="flex flex-col border border-border rounded-lg">
+		<div class="flex items-center gap-2 bg-brand-200/30 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]">
 			<a
 				class="font-bold text-sm hover:underline"
 				href={ templ.SafeURL(string(templates.ProfilePath(data.CreatorAtname))) }

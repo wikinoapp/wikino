@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -13,11 +14,15 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	suggestionRepo := repository.NewSuggestionRepository(q)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 
-	uc := NewStartSuggestionPageEditUsecase(db, suggestionPageRepo, draftPageRepo, pageRepo)
+	uc := NewStartSuggestionPageEditUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, draftPageRepo, pageRepo)
 
 	t.Run("正常系: 下書きが存在しない場合に新規作成してリダイレクト", func(t *testing.T) {
 		t.Parallel()
@@ -49,6 +54,7 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
 			Build()
 		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -61,9 +67,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
-			SpaceID:          spaceID,
-			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "start-edit-1",
+			SuggestionNumber: 1,
 			SuggestionPageID: suggestionPageID,
+			UserID:           userID,
 			Force:            false,
 		})
 		if err != nil {
@@ -122,6 +129,7 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
 			Build()
 		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -140,9 +148,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
-			SpaceID:          spaceID,
-			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "start-edit-2",
+			SuggestionNumber: 1,
 			SuggestionPageID: suggestionPageID,
+			UserID:           userID,
 			Force:            false,
 		})
 		if err != nil {
@@ -183,6 +192,7 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
 			Build()
 		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -201,9 +211,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
-			SpaceID:          spaceID,
-			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "start-edit-3",
+			SuggestionNumber: 1,
 			SuggestionPageID: suggestionPageID,
+			UserID:           userID,
 			Force:            false,
 		})
 		if err != nil {
@@ -244,6 +255,7 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
 			Build()
 		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -264,9 +276,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
-			SpaceID:          spaceID,
-			SpaceMemberID:    spaceMemberID,
+			SpaceIdentifier:  "start-edit-4",
+			SuggestionNumber: 1,
 			SuggestionPageID: suggestionPageID,
+			UserID:           userID,
 			Force:            true,
 		})
 		if err != nil {
@@ -289,6 +302,120 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 		}
 		if draft.Body != "提案の本文" {
 			t.Errorf("DraftPage.Body = %q, want %q", draft.Body, "提案の本文")
+		}
+	})
+
+	t.Run("異常系: スペースメンバーでないユーザーは AppErrCodeForbidden が返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("start-edit-forbid").
+			Build()
+		ownerID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("start-edit-forbid-owner@example.com").
+			WithAtname("starteditforbidowner").
+			Build()
+		nonMemberID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("start-edit-forbid-nm@example.com").
+			WithAtname("starteditforbidnm").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(ownerID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("Topic").
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Test Page").
+			Build()
+		pageRevisionID := createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		_, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
+			SpaceIdentifier:  "start-edit-forbid",
+			SuggestionNumber: 1,
+			SuggestionPageID: suggestionPageID,
+			UserID:           nonMemberID,
+			Force:            false,
+		})
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatal("expected AppError but got nil")
+		}
+		if ae.Code != model.AppErrCodeForbidden {
+			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+		}
+	})
+
+	t.Run("異常系: オープンでない編集提案は AppErrCodeConflict が返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("start-edit-closed").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("start-edit-closed@example.com").
+			WithAtname("starteditclosed").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("Topic").
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Test Page").
+			Build()
+		pageRevisionID := createPageRevisionViaRepo(t, q, spaceID, spaceMemberID, pageID)
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusClosed).
+			Build()
+		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		_, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
+			SpaceIdentifier:  "start-edit-closed",
+			SuggestionNumber: 1,
+			SuggestionPageID: suggestionPageID,
+			UserID:           userID,
+			Force:            false,
+		})
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatal("expected AppError but got nil")
+		}
+		if ae.Code != model.AppErrCodeConflict {
+			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeConflict)
 		}
 	})
 }

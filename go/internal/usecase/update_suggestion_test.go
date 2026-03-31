@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
@@ -17,11 +18,15 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 	db := testutil.GetTestDB()
 	q := query.New(db)
 
-	suggestionRepo := repository.NewSuggestionRepository(q)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	suggestionRepo := repository.NewSuggestionRepository(q)
 	pageRepo := repository.NewPageRepository(q)
+	updateValidator := validator.NewSuggestionUpdateValidator()
 
-	uc := NewUpdateSuggestionUsecase(db, suggestionRepo, topicRepo, pageRepo)
+	uc := NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, updateValidator)
 
 	t.Run("正常系: タイトルと本文を更新できる", func(t *testing.T) {
 		t.Parallel()
@@ -43,7 +48,7 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithName("テストトピック").
 			Build()
-		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+		testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
@@ -52,10 +57,9 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(ctx, UpdateSuggestionInput{
-			SuggestionID:     suggestionID,
-			SpaceID:          spaceID,
 			SpaceIdentifier:  "update-sug-1",
-			CurrentTopicName: "テストトピック",
+			SuggestionNumber: 1,
+			UserID:           userID,
 			Title:            "新タイトル",
 			Body:             "新本文",
 		})
@@ -94,7 +98,7 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithName("テストトピック2").
 			Build()
-		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+		testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
@@ -103,10 +107,9 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(ctx, UpdateSuggestionInput{
-			SuggestionID:     suggestionID,
-			SpaceID:          spaceID,
 			SpaceIdentifier:  "update-sug-2",
-			CurrentTopicName: "テストトピック2",
+			SuggestionNumber: 1,
+			UserID:           userID,
 			Title:            "更新タイトル",
 			Body:             "",
 		})
@@ -142,7 +145,7 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithName("テストトピック3").
 			Build()
-		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+		testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
@@ -151,10 +154,9 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			Build()
 
 		output, err := uc.Execute(ctx, UpdateSuggestionInput{
-			SuggestionID:     suggestionID,
-			SpaceID:          spaceID,
 			SpaceIdentifier:  "update-sug-3",
-			CurrentTopicName: "テストトピック3",
+			SuggestionNumber: 1,
+			UserID:           userID,
 			Title:            "Markdownテスト",
 			Body:             "**太字** テスト",
 		})
@@ -167,6 +169,129 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if !strings.Contains(output.Suggestion.BodyHTML, "<strong>") {
 			t.Errorf("BodyHTML should contain <strong> tag, got: %s", output.Suggestion.BodyHTML)
+		}
+	})
+
+	t.Run("異常系: 存在しないスペースでAppErrorが返る", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("update-sug-notfound@example.com").
+			WithAtname("updatesugnotfound").
+			Build()
+
+		_, err := uc.Execute(ctx, UpdateSuggestionInput{
+			SpaceIdentifier:  "nonexistent-space",
+			SuggestionNumber: 1,
+			UserID:           userID,
+			Title:            "テスト",
+			Body:             "",
+		})
+
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatal("expected AppError, got nil")
+		}
+		if ae.Code != model.AppErrCodeResourceNotFound {
+			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+		}
+	})
+
+	t.Run("異常系: 非メンバーはForbiddenエラーが返る", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("update-sug-forbidden").
+			Build()
+		ownerUserID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("update-sug-owner@example.com").
+			WithAtname("updatesugowner").
+			Build()
+		ownerMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(ownerUserID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("テストトピック").
+			Build()
+		testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(ownerMemberID).
+			WithTitle("テスト").
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+
+		// 別のユーザー（スペースメンバーではない）
+		nonMemberUserID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("update-sug-nonmember@example.com").
+			WithAtname("updatesugnonmember").
+			Build()
+
+		_, err := uc.Execute(ctx, UpdateSuggestionInput{
+			SpaceIdentifier:  "update-sug-forbidden",
+			SuggestionNumber: 1,
+			UserID:           nonMemberUserID,
+			Title:            "テスト",
+			Body:             "",
+		})
+
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatal("expected AppError, got nil")
+		}
+		if ae.Code != model.AppErrCodeForbidden {
+			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+		}
+	})
+
+	t.Run("異常系: タイトル空でValidationErrorが返る", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("update-sug-val").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("update-sug-val@example.com").
+			WithAtname("updatesugval").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("テストトピック").
+			Build()
+		testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithTitle("テスト").
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+
+		_, err := uc.Execute(ctx, UpdateSuggestionInput{
+			SpaceIdentifier:  "update-sug-val",
+			SuggestionNumber: 1,
+			UserID:           userID,
+			Title:            "",
+			Body:             "本文",
+		})
+
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, got nil")
+		}
+		if !ve.HasFieldError("title") {
+			t.Error("expected title field error")
 		}
 	})
 }

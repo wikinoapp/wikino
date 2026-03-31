@@ -13,7 +13,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Create は編集提案コメントを作成します (POST /s/{space_identifier}/suggestions/{suggestion_number}/comments)
@@ -47,16 +46,31 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	body := r.FormValue("body")
 
-	// バリデーション
-	validationResult := h.createValidator.Validate(ctx, validator.SuggestionCommentCreateValidatorInput{
-		Body: body,
-	})
-
 	// 編集提案のパスを生成（リダイレクト用）
 	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
 
-	if validationResult.FormErrors.HasErrors() {
-		errs := validationResult.FormErrors.GetFieldErrors("body")
+	// UseCase を実行
+	_, err = h.createSuggestionCommentUsecase.Execute(ctx, usecase.CreateSuggestionCommentInput{
+		SpaceIdentifier:  spaceIdentifier,
+		SuggestionNumber: suggestionNumber,
+		UserID:           user.ID,
+		Body:             body,
+	})
+	if err != nil {
+		h.handleError(w, r, err, suggestionPath)
+		return
+	}
+
+	// フラッシュメッセージを設定してリダイレクト
+	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_comment_create_success"))
+	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+}
+
+func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error, suggestionPath string) {
+	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		errs := ve.GetFieldErrors("body")
 		if len(errs) > 0 {
 			h.flashMgr.SetError(w, errs[0])
 		}
@@ -64,42 +78,19 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得（編集提案の存在確認と権限チェック）
-	detailOutput, err := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
-		SpaceIdentifier:  spaceIdentifier,
-		SuggestionNumber: suggestionNumber,
-		UserID:           &user.ID,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案詳細の取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if detailOutput == nil {
-		handler.NotFound(w, r)
+	if ae := model.AsAppError(err); ae != nil {
+		switch ae.Code {
+		case model.AppErrCodeResourceNotFound:
+			handler.NotFound(w, r)
+		case model.AppErrCodeForbidden:
+			handler.NotFound(w, r)
+		default:
+			slog.ErrorContext(ctx, ae.LogString())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	// スペースメンバーのみコメント可能
-	if detailOutput.SpaceMember == nil {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	// コメントを作成
-	_, err = h.createSuggestionCommentUsecase.Execute(ctx, usecase.CreateSuggestionCommentInput{
-		SpaceID:       detailOutput.Space.ID,
-		SuggestionID:  detailOutput.Suggestion.ID,
-		SpaceMemberID: detailOutput.SpaceMember.ID,
-		Body:          body,
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "編集提案コメントの作成に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	// フラッシュメッセージを設定してリダイレクト
-	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_comment_create_success"))
-	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+	slog.ErrorContext(ctx, "編集提案コメントの作成に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

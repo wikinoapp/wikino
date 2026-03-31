@@ -6,7 +6,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler は編集提案ハンドラー
@@ -15,12 +14,11 @@ type Handler struct {
 	flashMgr                   *session.FlashManager
 	getSuggestionListUsecase   *usecase.GetSuggestionListUsecase
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
+	getSuggestionEditUsecase   *usecase.GetSuggestionEditUsecase
 	getSuggestionNewUsecase    *usecase.GetSuggestionNewUsecase
 	createSuggestionUsecase    *usecase.CreateSuggestionUsecase
 	updateSuggestionUsecase    *usecase.UpdateSuggestionUsecase
 	sidebarHelper              *sidebar.Helper
-	createValidator            *validator.SuggestionCreateValidator
-	updateValidator            *validator.SuggestionUpdateValidator
 }
 
 // NewHandler は新しい編集提案ハンドラーを作成します
@@ -29,23 +27,21 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getSuggestionListUsecase *usecase.GetSuggestionListUsecase,
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
+	getSuggestionEditUsecase *usecase.GetSuggestionEditUsecase,
 	getSuggestionNewUsecase *usecase.GetSuggestionNewUsecase,
 	createSuggestionUsecase *usecase.CreateSuggestionUsecase,
 	updateSuggestionUsecase *usecase.UpdateSuggestionUsecase,
 	sidebarHelper *sidebar.Helper,
-	createValidator *validator.SuggestionCreateValidator,
-	updateValidator *validator.SuggestionUpdateValidator,
 ) *Handler {
 	return &Handler{
 		cfg:                        cfg,
 		flashMgr:                   flashMgr,
 		getSuggestionListUsecase:   getSuggestionListUsecase,
 		getSuggestionDetailUsecase: getSuggestionDetailUsecase,
+		getSuggestionEditUsecase:   getSuggestionEditUsecase,
 		getSuggestionNewUsecase:    getSuggestionNewUsecase,
 		createSuggestionUsecase:    createSuggestionUsecase,
 		updateSuggestionUsecase:    updateSuggestionUsecase,
 		sidebarHelper:              sidebarHelper,
-		createValidator:            createValidator,
-		updateValidator:            updateValidator,
 	}
 }

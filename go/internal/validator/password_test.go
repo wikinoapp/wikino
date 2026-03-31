@@ -2,10 +2,12 @@ package validator_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -18,7 +20,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          validator.PasswordUpdateValidatorInput
-		wantErrors     bool
 		wantFieldError string
 		wantGlobal     bool
 	}{
@@ -29,7 +30,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Password:             "",
 				PasswordConfirmation: "password123",
 			},
-			wantErrors:     true,
 			wantFieldError: "password",
 		},
 		{
@@ -39,7 +39,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Password:             "password123",
 				PasswordConfirmation: "",
 			},
-			wantErrors:     true,
 			wantFieldError: "password_confirmation",
 		},
 		{
@@ -49,7 +48,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Password:             "pass",
 				PasswordConfirmation: "pass",
 			},
-			wantErrors:     true,
 			wantFieldError: "password",
 		},
 		{
@@ -59,7 +57,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Password:             "password123",
 				PasswordConfirmation: "different456",
 			},
-			wantErrors:     true,
 			wantFieldError: "password_confirmation",
 		},
 		{
@@ -69,7 +66,6 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Password:             "password123",
 				PasswordConfirmation: "password123",
 			},
-			wantErrors: true,
 			wantGlobal: true,
 		},
 	}
@@ -84,18 +80,21 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
-			result := v.Validate(ctx, tt.input)
+			output, err := v.Validate(ctx, tt.input)
 
-			if tt.wantErrors {
-				if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-					t.Error("expected errors, but got none")
-				}
-				if tt.wantFieldError != "" && !result.FormErrors.HasFieldError(tt.wantFieldError) {
-					t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
-				}
-				if tt.wantGlobal && len(result.FormErrors.Global) == 0 {
-					t.Error("expected global error, but not found")
-				}
+			if output != nil {
+				t.Error("expected nil output for validation error")
+			}
+
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError, but got nil")
+			}
+			if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
+				t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
+			}
+			if tt.wantGlobal && len(ve.Global) == 0 {
+				t.Error("expected global error, but not found")
 			}
 		})
 	}
@@ -147,19 +146,22 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
+		output, err := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                validToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
 		})
 
-		if result.FormErrors != nil && result.FormErrors.HasErrors() {
-			t.Errorf("unexpected errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
-		if result.TokenID == "" {
+		if output == nil {
+			t.Fatal("expected output, but got nil")
+		}
+		if output.TokenID == "" {
 			t.Error("expected TokenID, but got empty")
 		}
-		if result.UserID == "" {
+		if output.UserID == "" {
 			t.Error("expected UserID, but got empty")
 		}
 	})
@@ -168,16 +170,20 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
+		output, err := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                "non-existent-token",
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
 		})
 
-		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-			t.Error("expected errors, but got none")
+		if output != nil {
+			t.Error("expected nil output")
 		}
-		if len(result.FormErrors.Global) == 0 {
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, but got nil")
+		}
+		if len(ve.Global) == 0 {
 			t.Error("expected global error for invalid token")
 		}
 	})
@@ -186,16 +192,20 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
+		output, err := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                usedToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
 		})
 
-		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-			t.Error("expected errors, but got none")
+		if output != nil {
+			t.Error("expected nil output")
 		}
-		if len(result.FormErrors.Global) == 0 {
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, but got nil")
+		}
+		if len(ve.Global) == 0 {
 			t.Error("expected global error for used token")
 		}
 	})
@@ -204,16 +214,20 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, "ja")
 
-		result := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
+		output, err := v.Validate(ctx, validator.PasswordUpdateValidatorInput{
 			Token:                expiredToken,
 			Password:             "newpassword123",
 			PasswordConfirmation: "newpassword123",
 		})
 
-		if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-			t.Error("expected errors, but got none")
+		if output != nil {
+			t.Error("expected nil output")
 		}
-		if len(result.FormErrors.Global) == 0 {
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, but got nil")
+		}
+		if len(ve.Global) == 0 {
 			t.Error("expected global error for expired token")
 		}
 	})
@@ -279,19 +293,20 @@ func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, tt.locale)
 
-			result := v.Validate(ctx, tt.input)
+			_, err := v.Validate(ctx, tt.input)
 
-			if result.FormErrors == nil || !result.FormErrors.HasErrors() {
-				t.Fatal("expected errors, but got none")
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError, but got nil")
 			}
 
 			// エラーメッセージに期待するテキストが含まれているか確認
 			found := false
 
 			// フィールドエラーをチェック
-			for _, errs := range result.FormErrors.Fields {
-				for _, err := range errs {
-					if containsSubstring(err, tt.wantText) {
+			for _, errs := range ve.Fields {
+				for _, e := range errs {
+					if strings.Contains(e, tt.wantText) {
 						found = true
 						break
 					}
@@ -299,29 +314,16 @@ func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 			}
 
 			// グローバルエラーをチェック
-			for _, err := range result.FormErrors.Global {
-				if containsSubstring(err, tt.wantText) {
+			for _, e := range ve.Global {
+				if strings.Contains(e, tt.wantText) {
 					found = true
 					break
 				}
 			}
 
 			if !found {
-				t.Errorf("expected error message containing %q, got fields=%v, global=%v", tt.wantText, result.FormErrors.Fields, result.FormErrors.Global)
+				t.Errorf("expected error message containing %q, got fields=%v, global=%v", tt.wantText, ve.Fields, ve.Global)
 			}
 		})
 	}
-}
-
-func containsSubstring(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstringHelper(s, substr))
-}
-
-func containsSubstringHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

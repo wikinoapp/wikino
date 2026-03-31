@@ -151,7 +151,7 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 				t.Skip("format validation passes, requires DB for uniqueness check")
 			}
 
-			result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+			_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 				Title:           tt.title,
 				PageID:          "test-page-id",
 				TopicID:         "test-topic-id",
@@ -159,10 +159,11 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 				SpaceIdentifier: "test-space",
 			})
 
-			if !result.FormErrors.HasErrors() {
-				t.Error("expected errors but got none")
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError but got nil")
 			}
-			if !result.FormErrors.HasFieldError("title") {
+			if !ve.HasFieldError("title") {
 				t.Error("expected title field error but got none")
 			}
 		})
@@ -207,7 +208,7 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 	v := validator.NewPageUpdateValidator(pageRepo)
 
 	t.Run("同じタイトルの別ページが存在する場合はエラー", func(t *testing.T) {
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Existing Page",
 			PageID:          anotherPageID,
 			TopicID:         topicID,
@@ -215,16 +216,17 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 			SpaceIdentifier: "validator-space",
 		})
 
-		if !result.FormErrors.HasErrors() {
-			t.Error("expected uniqueness error but got none")
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError but got nil")
 		}
-		if !result.FormErrors.HasFieldError("title") {
+		if !ve.HasFieldError("title") {
 			t.Error("expected title field error but got none")
 		}
 	})
 
 	t.Run("自分自身のタイトルは重複にならない", func(t *testing.T) {
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Existing Page",
 			PageID:          existingPageID,
 			TopicID:         topicID,
@@ -232,13 +234,13 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 			SpaceIdentifier: "validator-space",
 		})
 
-		if result.FormErrors.HasErrors() {
-			t.Errorf("unexpected errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("重複しないタイトルの場合は正常", func(t *testing.T) {
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Unique Title",
 			PageID:          model.PageID("any-page-id"),
 			TopicID:         topicID,
@@ -246,8 +248,8 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 			SpaceIdentifier: "validator-space",
 		})
 
-		if result.FormErrors.HasErrors() {
-			t.Errorf("unexpected errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
@@ -293,7 +295,7 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			WithUnpublished().
 			Build()
 
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		conflictingPageID, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Target Title",
 			PageID:          renamingPageID,
 			TopicID:         topicID,
@@ -301,14 +303,14 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			SpaceIdentifier: "unpub-conflict",
 		})
 
-		if result.FormErrors.HasErrors() {
-			t.Errorf("unexpected errors: %v", result.FormErrors)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
-		if result.UnpublishedConflictingPageID == nil {
-			t.Fatal("UnpublishedConflictingPageID should not be nil")
+		if conflictingPageID == nil {
+			t.Fatal("conflictingPageID should not be nil")
 		}
-		if *result.UnpublishedConflictingPageID != unpublishedPageID {
-			t.Errorf("UnpublishedConflictingPageID = %v, want %v", *result.UnpublishedConflictingPageID, unpublishedPageID)
+		if *conflictingPageID != unpublishedPageID {
+			t.Errorf("conflictingPageID = %v, want %v", *conflictingPageID, unpublishedPageID)
 		}
 	})
 
@@ -322,7 +324,7 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			WithUnpublished().
 			Build()
 
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		conflictingPageID, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Has Body",
 			PageID:          renamingPageID,
 			TopicID:         topicID,
@@ -330,14 +332,15 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			SpaceIdentifier: "unpub-conflict",
 		})
 
-		if !result.FormErrors.HasErrors() {
-			t.Error("expected error but got none")
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError but got nil")
 		}
-		if !result.FormErrors.HasFieldError("title") {
+		if !ve.HasFieldError("title") {
 			t.Error("expected title field error")
 		}
-		if result.UnpublishedConflictingPageID != nil {
-			t.Error("UnpublishedConflictingPageID should be nil for non-empty body")
+		if conflictingPageID != nil {
+			t.Error("conflictingPageID should be nil for non-empty body")
 		}
 	})
 
@@ -349,7 +352,7 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			WithTitle("Published Page").
 			Build()
 
-		result := v.Validate(ctx, validator.PageUpdateValidatorInput{
+		conflictingPageID, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 			Title:           "Published Page",
 			PageID:          renamingPageID,
 			TopicID:         topicID,
@@ -357,14 +360,15 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			SpaceIdentifier: "unpub-conflict",
 		})
 
-		if !result.FormErrors.HasErrors() {
-			t.Error("expected error but got none")
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError but got nil")
 		}
-		if !result.FormErrors.HasFieldError("title") {
+		if !ve.HasFieldError("title") {
 			t.Error("expected title field error")
 		}
-		if result.UnpublishedConflictingPageID != nil {
-			t.Error("UnpublishedConflictingPageID should be nil for published page")
+		if conflictingPageID != nil {
+			t.Error("conflictingPageID should be nil for published page")
 		}
 	})
 }

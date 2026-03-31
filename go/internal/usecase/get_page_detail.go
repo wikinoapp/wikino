@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -63,6 +64,7 @@ type GetPageDetailOutput struct {
 	DraftPage         *model.DraftPage
 	Suggestion        *model.Suggestion
 	SuggestionEnabled bool
+	CanUpdatePage     bool
 }
 
 // Execute はページ詳細画面に必要なデータを取得する
@@ -130,6 +132,10 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		return nil, fmt.Errorf("フィーチャーフラグの確認に失敗: %w", err)
 	}
 
+	// 認可チェック
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
+	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+
 	return &GetPageDetailOutput{
 		Space:             space,
 		SpaceMember:       spaceMember,
@@ -139,5 +145,6 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		DraftPage:         draftPage,
 		Suggestion:        suggestion,
 		SuggestionEnabled: suggestionEnabled,
+		CanUpdatePage:     canUpdatePage,
 	}, nil
 }

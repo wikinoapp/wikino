@@ -5,7 +5,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はアカウントハンドラー
@@ -14,7 +13,6 @@ type Handler struct {
 	sessionMgr          *session.Manager
 	flashMgr            *session.FlashManager
 	getAccountNewDataUC *usecase.GetAccountNewDataUsecase
-	createValidator     *validator.AccountCreateValidator
 	createAccountUC     *usecase.CreateAccountUsecase
 	createUserSessionUC *usecase.CreateUserSessionUsecase
 }
@@ -25,7 +23,6 @@ func NewHandler(
 	sessionMgr *session.Manager,
 	flashMgr *session.FlashManager,
 	getAccountNewDataUC *usecase.GetAccountNewDataUsecase,
-	createValidator *validator.AccountCreateValidator,
 	createAccountUC *usecase.CreateAccountUsecase,
 	createUserSessionUC *usecase.CreateUserSessionUsecase,
 ) *Handler {
@@ -34,7 +31,6 @@ func NewHandler(
 		sessionMgr:          sessionMgr,
 		flashMgr:            flashMgr,
 		getAccountNewDataUC: getAccountNewDataUC,
-		createValidator:     createValidator,
 		createAccountUC:     createAccountUC,
 		createUserSessionUC: createUserSessionUC,
 	}

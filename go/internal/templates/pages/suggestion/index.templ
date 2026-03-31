@@ -82,11 +82,7 @@ templ Index(data IndexData) {
 
 						<div class="px-4">
 							if len(data.Suggestions) > 0 {
-								<div class="card">
-									<div class="card-body px-4">
-										@indexList(data)
-									</div>
-								</div>
+								@indexList(data)
 							} else {
 								@indexEmptyState(data)
 							}

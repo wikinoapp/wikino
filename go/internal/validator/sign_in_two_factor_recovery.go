@@ -2,23 +2,15 @@ package validator
 
 import (
 	"context"
-	"errors"
 	"regexp"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // リカバリーコードは8文字の英小文字と数字のみ
 var recoveryCodeRegex = regexp.MustCompile(`^[a-z0-9]{8}$`)
-
-// バリデーションのエラー定義
-var (
-	// ErrInvalidRecoveryCode はリカバリーコードが無効な場合のエラー
-	ErrInvalidRecoveryCode = errors.New("リカバリーコードが無効です")
-)
 
 // SignInTwoFactorRecoveryCreateValidator はリカバリーコード認証のバリデーションを行う
 type SignInTwoFactorRecoveryCreateValidator struct {
@@ -40,51 +32,41 @@ type SignInTwoFactorRecoveryCreateValidatorInput struct {
 	RecoveryCode string
 }
 
-// SignInTwoFactorRecoveryCreateValidatorResult はバリデーションの結果
-type SignInTwoFactorRecoveryCreateValidatorResult struct {
-	TwoFactorAuth *model.UserTwoFactorAuth
-	FormErrors    *session.FormErrors
-	Err           error
-}
-
 // Validate はバリデーションを行う
-func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, input SignInTwoFactorRecoveryCreateValidatorInput) *SignInTwoFactorRecoveryCreateValidatorResult {
+func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, input SignInTwoFactorRecoveryCreateValidatorInput) (*model.UserTwoFactorAuth, error) {
 	// 1. 形式バリデーション
-	formErrors := session.NewFormErrors()
+	ve := model.NewValidationError()
 
 	if input.RecoveryCode == "" {
-		formErrors.AddField("recovery_code", i18n.T(ctx, "validation_required"))
+		ve.AddField("recovery_code", i18n.T(ctx, "validation_required"))
 	} else if !recoveryCodeRegex.MatchString(input.RecoveryCode) {
-		formErrors.AddField("recovery_code", i18n.T(ctx, "validation_recovery_code_invalid"))
+		ve.AddField("recovery_code", i18n.T(ctx, "validation_recovery_code_invalid"))
 	}
 
-	if formErrors.HasErrors() {
-		return &SignInTwoFactorRecoveryCreateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return nil, ve
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
-		return &SignInTwoFactorRecoveryCreateValidatorResult{Err: err}
+		return nil, err
 	}
 	if twoFactorAuth == nil {
-		return &SignInTwoFactorRecoveryCreateValidatorResult{Err: ErrTwoFactorNotEnabled}
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeTwoFactorNotEnabled,
+			UserMsg: i18n.T(ctx, "error_two_factor_not_enabled"),
+		}
 	}
 
 	// リカバリーコードを検証
 	if !isValidRecoveryCode(twoFactorAuth, input.RecoveryCode) {
-		formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_recovery_invalid_code"))
-		return &SignInTwoFactorRecoveryCreateValidatorResult{
-			TwoFactorAuth: twoFactorAuth,
-			FormErrors:    formErrors,
-			Err:           ErrInvalidRecoveryCode,
-		}
+		ve.AddGlobal(i18n.T(ctx, "sign_in_two_factor_recovery_invalid_code"))
+		return nil, ve
 	}
 
 	// 検証成功
-	return &SignInTwoFactorRecoveryCreateValidatorResult{
-		TwoFactorAuth: twoFactorAuth,
-	}
+	return twoFactorAuth, nil
 }
 
 // isValidRecoveryCode はリカバリーコードが有効かどうかを確認する

@@ -5,56 +5,69 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // CreateSuggestionUsecase は編集提案作成ユースケース
 type CreateSuggestionUsecase struct {
 	db                         *sql.DB
+	spaceRepo                  *repository.SpaceRepository
+	spaceMemberRepo            *repository.SpaceMemberRepository
+	topicRepo                  *repository.TopicRepository
+	topicMemberRepo            *repository.TopicMemberRepository
 	suggestionRepo             *repository.SuggestionRepository
 	suggestionPageRepo         *repository.SuggestionPageRepository
 	suggestionPageRevisionRepo *repository.SuggestionPageRevisionRepository
 	draftPageRepo              *repository.DraftPageRepository
-	topicRepo                  *repository.TopicRepository
 	pageRepo                   *repository.PageRepository
 	pageRevisionRepo           *repository.PageRevisionRepository
+	createValidator            *validator.SuggestionCreateValidator
 }
 
 // NewCreateSuggestionUsecase は CreateSuggestionUsecase を生成する
 func NewCreateSuggestionUsecase(
 	db *sql.DB,
+	spaceRepo *repository.SpaceRepository,
+	spaceMemberRepo *repository.SpaceMemberRepository,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionRepo *repository.SuggestionRepository,
 	suggestionPageRepo *repository.SuggestionPageRepository,
 	suggestionPageRevisionRepo *repository.SuggestionPageRevisionRepository,
 	draftPageRepo *repository.DraftPageRepository,
-	topicRepo *repository.TopicRepository,
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
+	createValidator *validator.SuggestionCreateValidator,
 ) *CreateSuggestionUsecase {
 	return &CreateSuggestionUsecase{
 		db:                         db,
+		spaceRepo:                  spaceRepo,
+		spaceMemberRepo:            spaceMemberRepo,
+		topicRepo:                  topicRepo,
+		topicMemberRepo:            topicMemberRepo,
 		suggestionRepo:             suggestionRepo,
 		suggestionPageRepo:         suggestionPageRepo,
 		suggestionPageRevisionRepo: suggestionPageRevisionRepo,
 		draftPageRepo:              draftPageRepo,
-		topicRepo:                  topicRepo,
 		pageRepo:                   pageRepo,
 		pageRevisionRepo:           pageRevisionRepo,
+		createValidator:            createValidator,
 	}
 }
 
 // CreateSuggestionInput は編集提案作成の入力パラメータ
 type CreateSuggestionInput struct {
-	SpaceID          model.SpaceID
-	SpaceIdentifier  model.SpaceIdentifier
-	TopicID          model.TopicID
-	SpaceMemberID    model.SpaceMemberID
-	Title            string
-	Body             string
-	CurrentTopicName string
-	DraftPages       []*model.DraftPage
+	SpaceIdentifier model.SpaceIdentifier
+	TopicNumber     int32
+	UserID          model.UserID
+	Title           string
+	Body            string
+	DraftPageIDs    []model.DraftPageID
 }
 
 // CreateSuggestionOutput は編集提案作成の出力パラメータ
@@ -64,32 +77,123 @@ type CreateSuggestionOutput struct {
 
 // Execute は編集提案を作成する
 func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSuggestionInput) (*CreateSuggestionOutput, error) {
-	// トランザクション前: 本文HTMLの生成
-	bodyHTML, err := uc.renderBodyHTML(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("本文HTMLの生成に失敗しました: %w", err)
-	}
-
-	// トランザクション前: 各下書きページの最新リビジョンを取得
-	pageRevisions, err := uc.fetchLatestPageRevisions(ctx, input.DraftPages, input.SpaceID)
+	// 1. データ取得
+	space, spaceMember, topic, err := uc.fetchData(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// トランザクション: 永続化処理
-	return uc.createSuggestion(ctx, input, bodyHTML, pageRevisions)
+	// 2. 認可チェック
+	if err := uc.authorize(ctx, space, spaceMember, topic); err != nil {
+		return nil, err
+	}
+
+	// 3. バリデーション
+	draftPages, err := uc.createValidator.Validate(ctx, validator.SuggestionCreateValidatorInput{
+		Title:         input.Title,
+		Body:          input.Body,
+		DraftPageIDs:  input.DraftPageIDs,
+		SpaceMemberID: spaceMember.ID,
+		TopicID:       topic.ID,
+		SpaceID:       space.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. ビジネスロジック（トランザクション前）
+	bodyHTML, err := uc.renderBodyHTML(ctx, input.Body, topic.Name, space.ID, input.SpaceIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("本文HTMLの生成に失敗しました: %w", err)
+	}
+
+	pageRevisions, err := uc.fetchLatestPageRevisions(ctx, draftPages, space.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 5. 永続化（トランザクション）
+	return uc.createSuggestion(ctx, createSuggestionInput{
+		SpaceID:       space.ID,
+		TopicID:       topic.ID,
+		SpaceMemberID: spaceMember.ID,
+		Title:         input.Title,
+		Body:          input.Body,
+		BodyHTML:      bodyHTML,
+		DraftPages:    draftPages,
+		PageRevisions: pageRevisions,
+	})
+}
+
+func (uc *CreateSuggestionUsecase) fetchData(ctx context.Context, input CreateSuggestionInput) (*model.Space, *model.SpaceMember, *model.Topic, error) {
+	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+	}
+	if space == nil {
+		return nil, nil, nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
+	topic, err := uc.topicRepo.FindBySpaceAndNumber(ctx, space.ID, input.TopicNumber)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("トピックの取得に失敗: %w", err)
+	}
+	if topic == nil {
+		return nil, nil, nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
+	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+	}
+
+	return space, spaceMember, topic, nil
+}
+
+func (uc *CreateSuggestionUsecase) authorize(ctx context.Context, space *model.Space, spaceMember *model.SpaceMember, topic *model.Topic) error {
+	if spaceMember == nil {
+		return &model.AppError{
+			Code:    model.AppErrCodeForbidden,
+			UserMsg: i18n.T(ctx, "error_forbidden"),
+		}
+	}
+
+	var topicMember *model.TopicMember
+	if spaceMember.Role != model.SpaceMemberRoleOwner {
+		var err error
+		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, topic.ID)
+		if err != nil {
+			return fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
+		}
+	}
+
+	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
+	if !topicPolicy.CanCreateSuggestion(topic) {
+		return &model.AppError{
+			Code:    model.AppErrCodeForbidden,
+			UserMsg: i18n.T(ctx, "error_forbidden"),
+		}
+	}
+
+	return nil
 }
 
 // renderBodyHTML は本文のMarkdownをHTMLに変換し、Wikiリンクを解決する
-func (uc *CreateSuggestionUsecase) renderBodyHTML(ctx context.Context, input CreateSuggestionInput) (string, error) {
-	bodyHTML := markup.RenderMarkdown(input.Body)
+func (uc *CreateSuggestionUsecase) renderBodyHTML(ctx context.Context, body, currentTopicName string, spaceID model.SpaceID, spaceIdentifier model.SpaceIdentifier) (string, error) {
+	bodyHTML := markup.RenderMarkdown(body)
 
-	pageLocations, err := resolveLinkedPages(ctx, input.Body, input.CurrentTopicName, input.SpaceID, uc.topicRepo, uc.pageRepo)
+	pageLocations, err := resolveLinkedPages(ctx, body, currentTopicName, spaceID, uc.topicRepo, uc.pageRepo)
 	if err != nil {
 		return "", fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
 	}
 	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, input.CurrentTopicName, input.SpaceIdentifier, pageLocations)
+		bodyHTML = markup.ReplaceWikilinks(bodyHTML, currentTopicName, spaceIdentifier, pageLocations)
 	}
 
 	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
@@ -116,8 +220,20 @@ func (uc *CreateSuggestionUsecase) fetchLatestPageRevisions(ctx context.Context,
 	return pageRevisions, nil
 }
 
+// createSuggestionInput はトランザクション内で編集提案を作成するための入力パラメータ
+type createSuggestionInput struct {
+	SpaceID       model.SpaceID
+	TopicID       model.TopicID
+	SpaceMemberID model.SpaceMemberID
+	Title         string
+	Body          string
+	BodyHTML      string
+	DraftPages    []*model.DraftPage
+	PageRevisions map[model.PageID]*model.PageRevision
+}
+
 // createSuggestion はトランザクション内で編集提案を作成する
-func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input CreateSuggestionInput, bodyHTML string, pageRevisions map[model.PageID]*model.PageRevision) (*CreateSuggestionOutput, error) {
+func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input createSuggestionInput) (*CreateSuggestionOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -145,7 +261,7 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input C
 		Number:               nextNumber,
 		Title:                input.Title,
 		Body:                 input.Body,
-		BodyHTML:             bodyHTML,
+		BodyHTML:             input.BodyHTML,
 		Status:               model.SuggestionStatusOpen,
 	})
 	if err != nil {
@@ -154,7 +270,7 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input C
 
 	// 3. 各下書きページからSuggestionPageとSuggestionPageRevisionを作成
 	for _, draftPage := range input.DraftPages {
-		latestRevision := pageRevisions[draftPage.PageID]
+		latestRevision := input.PageRevisions[draftPage.PageID]
 
 		// SuggestionPageを作成
 		suggestionPage, err := suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{

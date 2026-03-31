@@ -190,6 +190,10 @@ other = "確認コードの有効期限が切れています。もう一度お�
 [validation_confirmation_not_found]
 other = "確認情報が見つかりません。もう一度お試しください"
 
+[validation_confirmation_already_succeeded]
+description = "既に確認済みの場合のエラー"
+other = "この確認は既に完了しています"
+
 # アカウント作成
 [account_new_title]
 other = "アカウント作成"
@@ -600,6 +604,10 @@ other = "下書きを保存しました"
 description = "編集提案ページ更新成功メッセージ"
 other = "編集提案を更新しました"
 
+[error_suggestion_page_update_conflict]
+description = "編集提案ページ更新時の競合エラー"
+other = "下書きが見つからないため、編集提案を更新できませんでした"
+
 # ページ移動
 [page_move_title]
 description = "ページ移動画面のタイトル"
@@ -753,6 +761,10 @@ other = "ページが見つかりませんでした | Wikino"
 description = "404エラーページのメッセージ"
 other = "お探しのページは見つかりませんでした"
 
+[error_email_not_confirmed]
+description = "メール確認が未完了の場合のエラーメッセージ"
+other = "メール確認が完了していません"
+
 [error_not_found_back_to_top]
 description = "404エラーページのトップページリンク"
 other = "トップページに戻る"
@@ -888,6 +900,10 @@ other = "編集提案の説明（Markdown対応）"
 description = "編集提案編集の送信ボタン"
 other = "更新する"
 
+[suggestion_edit_cancel]
+description = "編集提案編集のキャンセルリンク"
+other = "キャンセル"
+
 [suggestion_update_success]
 description = "編集提案更新成功メッセージ"
 other = "編集提案を更新しました"
@@ -980,10 +996,6 @@ other = "コメントを編集"
 description = "編集提案コメント編集画面のタイトル"
 other = "コメントを編集 - #{{.SuggestionNumber}} {{.SuggestionTitle}} - {{.SpaceName}}"
 
-[suggestion_comment_edit_body_label]
-description = "編集提案コメント編集画面の本文ラベル"
-other = "コメント"
-
 [suggestion_comment_edit_body_placeholder]
 description = "編集提案コメント編集画面の本文プレースホルダー"
 other = "コメントを入力してください"
@@ -1065,6 +1077,10 @@ other = "編集提案の内容で編集を続ける"
 [suggestion_page_edit_keep_draft_button]
 description = "もとの下書きを保持するボタン"
 other = "もとの下書きを保持する"
+
+[suggestion_page_edit_error_not_open]
+description = "編集提案がオープンでないため編集を開始できないエラーメッセージ"
+other = "この編集提案はオープンではないため、編集を開始できません"
 
 # 日時表示
 [datetime_just_now]

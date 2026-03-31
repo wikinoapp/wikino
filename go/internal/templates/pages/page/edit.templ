@@ -3,7 +3,7 @@ package page
 import (
 	"fmt"
 
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -12,7 +12,7 @@ import (
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
 	CSRFToken                string
-	FormErrors               *session.FormErrors
+	FormErrors               *model.ValidationError
 	Page                     viewmodel.Page
 	Space                    viewmodel.Space
 	Topic                    viewmodel.Topic
@@ -226,7 +226,7 @@ templ Edit(data EditPageData) {
 											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
 
 											<a
-												class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
+												class="btn-outline rounded-full w-fit"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
 											>
 												{ templates.T(ctx, "page_edit_cancel") }

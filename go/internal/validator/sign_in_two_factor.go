@@ -2,7 +2,6 @@ package validator
 
 import (
 	"context"
-	"errors"
 	"regexp"
 	"time"
 
@@ -11,19 +10,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // TOTPコードは6桁の数字のみ
 var totpCodeRegex = regexp.MustCompile(`^\d{6}$`)
-
-// バリデーションのエラー定義
-var (
-	// ErrTwoFactorNotEnabled は2FAが有効でない場合のエラー
-	ErrTwoFactorNotEnabled = errors.New("2FAが有効ではありません")
-	// ErrInvalidTOTPCode はTOTPコードが無効な場合のエラー
-	ErrInvalidTOTPCode = errors.New("TOTPコードが無効です")
-)
 
 // SignInTwoFactorCreateValidator は2FAコード検証のバリデーションを行う
 type SignInTwoFactorCreateValidator struct {
@@ -45,34 +35,31 @@ type SignInTwoFactorCreateValidatorInput struct {
 	TOTPCode string
 }
 
-// SignInTwoFactorCreateValidatorResult はバリデーションの結果
-type SignInTwoFactorCreateValidatorResult struct {
-	FormErrors *session.FormErrors
-	Err        error
-}
-
 // Validate はバリデーションを行う
-func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input SignInTwoFactorCreateValidatorInput) *SignInTwoFactorCreateValidatorResult {
+func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input SignInTwoFactorCreateValidatorInput) error {
 	// 1. 形式バリデーション
-	formErrors := session.NewFormErrors()
+	ve := model.NewValidationError()
 
 	if input.TOTPCode == "" {
-		formErrors.AddField("totp_code", i18n.T(ctx, "validation_required"))
+		ve.AddField("totp_code", i18n.T(ctx, "validation_required"))
 	} else if !totpCodeRegex.MatchString(input.TOTPCode) {
-		formErrors.AddField("totp_code", i18n.T(ctx, "validation_totp_code_invalid"))
+		ve.AddField("totp_code", i18n.T(ctx, "validation_totp_code_invalid"))
 	}
 
-	if formErrors.HasErrors() {
-		return &SignInTwoFactorCreateValidatorResult{FormErrors: formErrors}
+	if ve.HasErrors() {
+		return ve
 	}
 
 	// 2. 状態バリデーション（DB検証）
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
-		return &SignInTwoFactorCreateValidatorResult{Err: err}
+		return err
 	}
 	if twoFactorAuth == nil {
-		return &SignInTwoFactorCreateValidatorResult{Err: ErrTwoFactorNotEnabled}
+		return &model.AppError{
+			Code:    model.AppErrCodeTwoFactorNotEnabled,
+			UserMsg: i18n.T(ctx, "error_two_factor_not_enabled"),
+		}
 	}
 
 	// TOTPコードを検証
@@ -84,15 +71,12 @@ func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input Sig
 	}
 
 	if !valid {
-		formErrors.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
-		return &SignInTwoFactorCreateValidatorResult{
-			FormErrors: formErrors,
-			Err:        ErrInvalidTOTPCode,
-		}
+		ve.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
+		return ve
 	}
 
 	// 検証成功
-	return &SignInTwoFactorCreateValidatorResult{}
+	return nil
 }
 
 // validateWithDrift は前後のタイムステップも考慮してTOTPコードを検証する

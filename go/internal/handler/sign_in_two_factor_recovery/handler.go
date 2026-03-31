@@ -5,31 +5,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はリカバリーコードハンドラー
 type Handler struct {
-	cfg                   *config.Config
-	sessionMgr            *session.Manager
-	createValidator       *validator.SignInTwoFactorRecoveryCreateValidator
-	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase
-	createUserSessionUC   *usecase.CreateUserSessionUsecase
+	cfg                         *config.Config
+	sessionMgr                  *session.Manager
+	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase
 }
 
 // NewHandler は新しいリカバリーコードハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
-	createValidator *validator.SignInTwoFactorRecoveryCreateValidator,
-	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase,
-	createUserSessionUC *usecase.CreateUserSessionUsecase,
+	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase,
 ) *Handler {
 	return &Handler{
-		cfg:                   cfg,
-		sessionMgr:            sessionMgr,
-		createValidator:       createValidator,
-		consumeRecoveryCodeUC: consumeRecoveryCodeUC,
-		createUserSessionUC:   createUserSessionUC,
+		cfg:                         cfg,
+		sessionMgr:                  sessionMgr,
+		createRecoveryCodeSessionUC: createRecoveryCodeSessionUC,
 	}
 }

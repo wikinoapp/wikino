@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestPublishPageUsecase_Execute(t *testing.T) {
@@ -15,6 +17,8 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -24,7 +28,8 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -53,7 +58,7 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+	testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -62,19 +67,12 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 		WithBody("Updated body").
 		Build()
 
-	body := "Updated body"
-
-	title := "Updated Title"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		DraftPageID:      draftPageID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-test",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-test"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Updated Title",
+		Body:            "Updated body",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -107,6 +105,8 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -116,7 +116,8 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -154,18 +155,12 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		WithBody("See [[リンク先ページ]]").
 		Build()
 
-	body := "See [[リンク先ページ]]"
-
-	title := "Wikilink Publish Test"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-wikilink",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-wikilink"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Wikilink Publish Test",
+		Body:            "See [[リンク先ページ]]",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -192,6 +187,8 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -201,7 +198,8 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -230,7 +228,7 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+	testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -238,27 +236,23 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 		WithBody("Body without title").
 		Build()
 
-	body := "Body without title"
-
-	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		DraftPageID:      draftPageID,
-		Title:            nil,
-		Body:             body,
-		SpaceIdentifier:  "publish-niltitle",
-		CurrentTopicName: "General",
+	_, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-niltitle"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "",
+		Body:            "Body without title",
 	})
-	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+	if err == nil {
+		t.Fatal("Execute() should return error for empty title")
 	}
-	if output.Page.Body != "Body without title" {
-		t.Errorf("Body = %q, want %q", output.Page.Body, "Body without title")
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("expected ValidationError but got: %v", err)
 	}
-	if output.PublishedAt.IsZero() {
-		t.Error("PublishedAt should not be zero")
+	if !ve.HasFieldError("title") {
+		t.Error("expected title field error")
 	}
 }
 
@@ -267,6 +261,8 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -276,7 +272,8 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -323,18 +320,12 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 		WithBody("See [[既存ページ]]").
 		Build()
 
-	body := "See [[既存ページ]]"
-
-	title := "Existing Link Test"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-existing-link",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-existing-link"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Existing Link Test",
+		Body:            "See [[既存ページ]]",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -354,6 +345,8 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -363,7 +356,8 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -401,18 +395,12 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 		WithBody("See [[公開時自動作成ページ]]").
 		Build()
 
-	body := "See [[公開時自動作成ページ]]"
-
-	title := "Editor Publish Test"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-editor",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-editor"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Editor Publish Test",
+		Body:            "See [[公開時自動作成ページ]]",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -446,6 +434,8 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -455,7 +445,8 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -503,18 +494,12 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		WithBody("See [[廃棄済みページ]]").
 		Build()
 
-	body := "See [[廃棄済みページ]]"
-
-	title := "Discarded Link Test"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-discarded",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-discarded"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Discarded Link Test",
+		Body:            "See [[廃棄済みページ]]",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -534,6 +519,8 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -543,7 +530,8 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -591,16 +579,12 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 		WithBody(body).
 		Build()
 
-	title := "Attachment Test"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-attach",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-attach"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Attachment Test",
+		Body:            body,
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -631,6 +615,8 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -640,7 +626,8 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -672,7 +659,7 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 
 	// 1行目がテキストのみの本文（アイキャッチ画像なし）
 	body := "This is plain text\nSome more content"
-	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+	testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -681,17 +668,12 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 		WithBody(body).
 		Build()
 
-	title := "No Featured Image"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		DraftPageID:      draftPageID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-nofeatured",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-nofeatured"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "No Featured Image",
+		Body:            body,
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -708,6 +690,8 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -717,7 +701,8 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -740,26 +725,19 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
 		Build()
-	pageID := testutil.NewPageBuilderDB(t, db).
+	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
 
-	body := "Published directly"
-
-	title := "Updated Without Draft"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		DraftPageID:      "", // 下書きなしで公開
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-nodraft",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-nodraft"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Updated Without Draft",
+		Body:            "Published directly",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -783,6 +761,8 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -792,7 +772,8 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -817,7 +798,7 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 		Build()
 
 	// リネーム対象のページ
-	pageID := testutil.NewPageBuilderDB(t, db).
+	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
@@ -834,19 +815,12 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 		WithUnpublished().
 		Build()
 
-	body := "Updated body"
-
-	title := "New Title"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:                      spaceID,
-		PageID:                       pageID,
-		SpaceMemberID:                spaceMemberID,
-		TopicID:                      topicID,
-		Title:                        &title,
-		Body:                         body,
-		SpaceIdentifier:              "publish-discard",
-		CurrentTopicName:             "General",
-		UnpublishedConflictingPageID: &conflictingPageID,
+		SpaceIdentifier: model.SpaceIdentifier("publish-discard"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "New Title",
+		Body:            "Updated body",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -876,6 +850,8 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	pageEditorRepo := repository.NewPageEditorRepository(q)
@@ -885,7 +861,8 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
-	uc := NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -935,19 +912,12 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	body := "Draft body with revisions"
-
-	title := "Draft With Revisions"
 	output, err := uc.Execute(context.Background(), PublishPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		DraftPageID:      draftPageID,
-		Title:            &title,
-		Body:             body,
-		SpaceIdentifier:  "publish-draftrev",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("publish-draftrev"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Draft With Revisions",
+		Body:            "Draft body with revisions",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)

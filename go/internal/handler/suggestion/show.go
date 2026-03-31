@@ -10,7 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -83,12 +82,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// 権限をチェック（オープンステータスかつ権限がある場合のみ）
 	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment bool
-	if output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen {
-		topicPolicy := policy.NewTopicPolicy(output.SpaceMember, output.TopicMember)
-		canApply = topicPolicy.CanApplySuggestion(output.Suggestion)
-		canClose = topicPolicy.CanCloseSuggestion(output.Suggestion)
-		canUpdateSuggestion = topicPolicy.CanUpdateSuggestion(output.Suggestion)
-		canUpdateSuggestionComment = topicPolicy.CanUpdateSuggestionComment(output.Suggestion)
+	if output.Suggestion.Status == model.SuggestionStatusOpen {
+		canApply = output.CanApplySuggestion
+		canClose = output.CanCloseSuggestion
+		canUpdateSuggestion = output.CanUpdateSuggestion
+		canUpdateSuggestionComment = output.CanUpdateSuggestionComment
 	}
 
 	// テンプレートをレンダリング

@@ -41,12 +41,12 @@ func TestNew_WithPendingUser(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDを持つHTTPリクエストを作成
@@ -120,12 +120,12 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのHTTPリクエストを作成

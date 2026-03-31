@@ -5,7 +5,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // Handler はパスワード更新機能のハンドラー
@@ -15,7 +14,6 @@ type Handler struct {
 	flashMgr              *session.FlashManager
 	getTokenDataUC        *usecase.GetPasswordResetTokenDataUsecase
 	updatePasswordUsecase *usecase.UpdatePasswordResetUsecase
-	updateValidator       *validator.PasswordUpdateValidator
 }
 
 // NewHandler は新しいHandlerを作成します
@@ -25,7 +23,6 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getTokenDataUC *usecase.GetPasswordResetTokenDataUsecase,
 	updatePasswordUsecase *usecase.UpdatePasswordResetUsecase,
-	updateValidator *validator.PasswordUpdateValidator,
 ) *Handler {
 	return &Handler{
 		cfg:                   cfg,
@@ -33,6 +30,5 @@ func NewHandler(
 		flashMgr:              flashMgr,
 		getTokenDataUC:        getTokenDataUC,
 		updatePasswordUsecase: updatePasswordUsecase,
-		updateValidator:       updateValidator,
 	}
 }

@@ -237,6 +237,12 @@ func (b *DraftPageBuilderDB) WithSuggestionPageID(suggestionPageID model.Suggest
 	return b
 }
 
+// WithLinkedPageIDs はリンク先ページIDリストを設定します
+func (b *DraftPageBuilderDB) WithLinkedPageIDs(ids []model.PageID) *DraftPageBuilderDB {
+	b.linkedPageIDs = model.PageIDsToStrings(ids)
+	return b
+}
+
 // WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
 func (b *DraftPageBuilderDB) WithFeaturedImageAttachmentID(id model.AttachmentID) *DraftPageBuilderDB {
 	s := string(id)

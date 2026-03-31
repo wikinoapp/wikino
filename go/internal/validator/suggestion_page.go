@@ -33,27 +33,22 @@ type SuggestionPageUpdateValidatorInput struct {
 	SpaceID          model.SpaceID
 }
 
-// SuggestionPageUpdateValidatorResult はバリデーションの結果
-type SuggestionPageUpdateValidatorResult struct {
-	DraftPage *model.DraftPage
-	Err       error
-}
-
-// Validate はバリデーションを行う
-func (v *SuggestionPageUpdateValidator) Validate(ctx context.Context, input SuggestionPageUpdateValidatorInput) *SuggestionPageUpdateValidatorResult {
+// Validate はバリデーションを行う。
+// 成功時はDraftPageを返す。エラー時はErrDraftPageNotFound、ErrDraftPageNotLinked、またはシステムエラーを返す。
+func (v *SuggestionPageUpdateValidator) Validate(ctx context.Context, input SuggestionPageUpdateValidatorInput) (*model.DraftPage, error) {
 	// DraftPageの存在確認
 	dp, err := v.draftPageRepo.FindByPageAndMember(ctx, input.PageID, input.SpaceMemberID, input.SpaceID)
 	if err != nil {
-		return &SuggestionPageUpdateValidatorResult{Err: err}
+		return nil, err
 	}
 	if dp == nil {
-		return &SuggestionPageUpdateValidatorResult{Err: ErrDraftPageNotFound}
+		return nil, ErrDraftPageNotFound
 	}
 
 	// DraftPageが対象のSuggestionPageにリンクされていることを検証
 	if dp.SuggestionPageID == nil || *dp.SuggestionPageID != input.SuggestionPageID {
-		return &SuggestionPageUpdateValidatorResult{Err: ErrDraftPageNotLinked}
+		return nil, ErrDraftPageNotLinked
 	}
 
-	return &SuggestionPageUpdateValidatorResult{DraftPage: dp}
+	return dp, nil
 }
