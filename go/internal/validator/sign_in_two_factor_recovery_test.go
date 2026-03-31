@@ -136,8 +136,8 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678", "abcd1234"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-valid@example.com").
-			WithAtname("recoveryvalid").
+			WithEmail("val-recovery-valid@example.com").
+			WithAtname("val-recoveryvalid").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, true, recoveryCodes)
 
 		ctx := context.Background()
@@ -167,8 +167,8 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234", "code5678"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-invalid@example.com").
-			WithAtname("recoveryinvalid").
+			WithEmail("val-recovery-invalid@example.com").
+			WithAtname("val-recoveryinvalid").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, true, recoveryCodes)
 
 		ctx := context.Background()
@@ -198,8 +198,8 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		secret := "JBSWY3DPEHPK3PXP"
 		recoveryCodes := []string{"code1234"}
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-disabled@example.com").
-			WithAtname("recoverydisabled").
+			WithEmail("val-recovery-disabled@example.com").
+			WithAtname("val-recoverydisabled").
 			BuildWithTwoFactorAuthAndRecoveryCodes(secret, false, recoveryCodes) // 2FAが無効
 
 		ctx := context.Background()
@@ -227,8 +227,8 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		v := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 
 		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("recovery-nosetup@example.com").
-			WithAtname("recoverynosetup").
+			WithEmail("val-recovery-nosetup@example.com").
+			WithAtname("val-recoverynosetup").
 			Build() // 2FA設定なし
 
 		ctx := context.Background()

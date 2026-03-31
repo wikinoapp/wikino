@@ -16,8 +16,8 @@ func TestUserTwoFactorAuthRepository_FindByUserID(t *testing.T) {
 
 	// テストユーザーと二要素認証設定を作成（無効）
 	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("2fa@example.com").
-		WithAtname("twofauser").
+		WithEmail("repo-2fa@example.com").
+		WithAtname("repo-twofauser").
 		BuildWithTwoFactorAuth("JBSWY3DPEHPK3PXP", false)
 
 	t.Run("存在するユーザーの二要素認証設定を取得できる", func(t *testing.T) {
@@ -59,14 +59,14 @@ func TestUserTwoFactorAuthRepository_FindEnabledByUserID(t *testing.T) {
 
 	// 有効な二要素認証設定を持つユーザーを作成
 	enabledUserID := testutil.NewUserBuilder(t, tx).
-		WithEmail("2fa-enabled@example.com").
-		WithAtname("twofaenableduser").
+		WithEmail("repo-2fa-enabled@example.com").
+		WithAtname("repo-twofaenableduser").
 		BuildWithTwoFactorAuth("ENABLEDSECRET123", true)
 
 	// 無効な二要素認証設定を持つユーザーを作成
 	disabledUserID := testutil.NewUserBuilder(t, tx).
-		WithEmail("2fa-disabled@example.com").
-		WithAtname("twofadisableduser").
+		WithEmail("repo-2fa-disabled@example.com").
+		WithAtname("repo-twofadisableduser").
 		BuildWithTwoFactorAuth("DISABLEDSECRET12", false)
 
 	t.Run("有効な二要素認証設定を取得できる", func(t *testing.T) {
@@ -105,8 +105,8 @@ func TestUserTwoFactorAuthRepository_UpdateRecoveryCodes(t *testing.T) {
 
 	// テストユーザーと二要素認証設定を作成
 	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("2fa-recovery@example.com").
-		WithAtname("twofarecoveryuser").
+		WithEmail("repo-2fa-recovery@example.com").
+		WithAtname("repo-twofarecoveryuser").
 		BuildWithTwoFactorAuth("RECOVERYSECRET12", true)
 
 	t.Run("リカバリーコードを更新できる", func(t *testing.T) {
