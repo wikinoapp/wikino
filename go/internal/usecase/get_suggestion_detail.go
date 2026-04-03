@@ -69,6 +69,8 @@ type GetSuggestionDetailOutput struct {
 	CanCloseSuggestion         bool
 	CanUpdateSuggestion        bool
 	CanUpdateSuggestionComment bool
+	CanAddSuggestionPage       bool
+	CanRemoveSuggestionPage    bool
 }
 
 // Execute は編集提案詳細を取得する
@@ -157,13 +159,15 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 	}
 
 	// 認可チェック
-	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment bool
+	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment, canAddSuggestionPage, canRemoveSuggestionPage bool
 	if spaceMember != nil {
 		topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
 		canApply = topicPolicy.CanApplySuggestion(suggestion)
 		canClose = topicPolicy.CanCloseSuggestion(suggestion)
 		canUpdateSuggestion = topicPolicy.CanUpdateSuggestion(suggestion)
 		canUpdateSuggestionComment = topicPolicy.CanUpdateSuggestionComment(suggestion)
+		canAddSuggestionPage = topicPolicy.CanAddSuggestionPage(suggestion)
+		canRemoveSuggestionPage = topicPolicy.CanRemoveSuggestionPage(suggestion)
 	}
 
 	return &GetSuggestionDetailOutput{
@@ -180,6 +184,8 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		CanCloseSuggestion:         canClose,
 		CanUpdateSuggestion:        canUpdateSuggestion,
 		CanUpdateSuggestionComment: canUpdateSuggestionComment,
+		CanAddSuggestionPage:       canAddSuggestionPage,
+		CanRemoveSuggestionPage:    canRemoveSuggestionPage,
 	}, nil
 }
 

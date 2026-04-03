@@ -91,21 +91,23 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	// 編集権限を判定（スペースメンバーかつオープンステータス）
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen
 
-	// CSRFトークンを取得（編集ボタンのフォームで必要な場合のみ）
+	// CSRFトークンを取得（編集・削除ボタンのフォームで必要な場合のみ）
 	var csrfToken string
-	if canEditSuggestionPages {
+	if canEditSuggestionPages || output.CanAddSuggestionPage || output.CanRemoveSuggestionPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
 	}
 
 	// テンプレートをレンダリング
 	content := suggestionchangepages.Index(suggestionchangepages.IndexData{
-		CSRFToken:              csrfToken,
-		Space:                  spaceVM,
-		Topic:                  topicVM,
-		Suggestion:             suggestionVM,
-		SuggestionPages:        suggestionPagesVM,
-		PageDiffs:              pageDiffsVM,
-		CanEditSuggestionPages: canEditSuggestionPages,
+		CSRFToken:               csrfToken,
+		Space:                   spaceVM,
+		Topic:                   topicVM,
+		Suggestion:              suggestionVM,
+		SuggestionPages:         suggestionPagesVM,
+		PageDiffs:               pageDiffsVM,
+		CanEditSuggestionPages:  canEditSuggestionPages,
+		CanAddSuggestionPage:    output.CanAddSuggestionPage,
+		CanRemoveSuggestionPage: output.CanRemoveSuggestionPage,
 	})
 
 	signedIn := user != nil
