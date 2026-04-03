@@ -14,6 +14,8 @@ type TopicPolicy interface {
 	CanApplySuggestion(suggestion *model.Suggestion) bool
 	CanCloseSuggestion(suggestion *model.Suggestion) bool
 	CanUpdateSuggestion(suggestion *model.Suggestion) bool
+	CanAddSuggestionPage(suggestion *model.Suggestion) bool
+	CanRemoveSuggestionPage(suggestion *model.Suggestion) bool
 	CanEditSuggestionPage(suggestion *model.Suggestion) bool
 	CanCreateSuggestionComment(suggestion *model.Suggestion) bool
 	CanUpdateSuggestionComment(suggestion *model.Suggestion) bool

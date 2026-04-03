@@ -17,6 +17,7 @@ const (
 	PageNameSuggestionNew          PageName = "suggestion_new"
 	PageNameSuggestionChanges      PageName = "suggestion_changes"
 	PageNameSuggestionEdit         PageName = "suggestion_edit"
+	PageNameSuggestionPageNew      PageName = "suggestion_page_new"
 	PageNameSuggestionPageEditShow PageName = "suggestion_page_edit_show"
 	PageNameSuggestionCommentEdit  PageName = "suggestion_comment_edit"
 )

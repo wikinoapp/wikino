@@ -87,6 +87,14 @@ func (r *SuggestionPageRevisionRepository) FindLatest(ctx context.Context, sugge
 	return r.toModel(row), nil
 }
 
+// DeleteBySuggestionPageID は編集提案ページIDでリビジョンを一括削除する
+func (r *SuggestionPageRevisionRepository) DeleteBySuggestionPageID(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) error {
+	return r.q.DeleteSuggestionPageRevisionsBySuggestionPageID(ctx, query.DeleteSuggestionPageRevisionsBySuggestionPageIDParams{
+		SuggestionPageID: string(suggestionPageID),
+		SpaceID:          string(spaceID),
+	})
+}
+
 // toModel は query.SuggestionPageRevision を model.SuggestionPageRevision に変換する
 func (r *SuggestionPageRevisionRepository) toModel(row query.SuggestionPageRevision) *model.SuggestionPageRevision {
 	var title *string

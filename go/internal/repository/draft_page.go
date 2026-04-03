@@ -155,6 +155,23 @@ func (r *DraftPageRepository) Delete(ctx context.Context, id model.DraftPageID, 
 	})
 }
 
+// FindBySuggestionPageID は編集提案ページIDで下書きを取得する
+func (r *DraftPageRepository) FindBySuggestionPageID(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
+	spID := string(suggestionPageID)
+
+	row, err := r.q.FindDraftPageBySuggestionPageID(ctx, query.FindDraftPageBySuggestionPageIDParams{
+		SuggestionPageID: &spID,
+		SpaceID:          string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // UpdateSuggestionPageID は下書きの編集提案ページIDを更新する
 func (r *DraftPageRepository) UpdateSuggestionPageID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID, suggestionPageID *model.SuggestionPageID) (*model.DraftPage, error) {
 	var spID *string

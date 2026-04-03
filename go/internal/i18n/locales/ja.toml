@@ -604,6 +604,38 @@ other = "下書きを保存しました"
 description = "編集提案ページ更新成功メッセージ"
 other = "編集提案を更新しました"
 
+[flash_suggestion_page_added]
+description = "編集提案ページ追加成功メッセージ"
+other = "ページを追加しました"
+
+[flash_suggestion_page_removed]
+description = "編集提案ページ削除成功メッセージ"
+other = "ページを削除しました"
+
+[error_suggestion_page_remove_last_page]
+description = "編集提案ページ削除時の最後のページエラー"
+other = "編集提案には少なくとも1つのページが必要です"
+
+[suggestion_page_new_title]
+description = "編集提案ページ追加のページタイトル"
+other = "ページを追加 | {{.SpaceName}}"
+
+[suggestion_page_new_heading]
+description = "編集提案ページ追加の見出し"
+other = "ページを追加"
+
+[suggestion_page_new_draft_pages_label]
+description = "編集提案ページ追加の下書きページ選択ラベル"
+other = "追加する下書きページ"
+
+[suggestion_page_new_no_draft_pages]
+description = "編集提案ページ追加で追加可能な下書きがない場合のメッセージ"
+other = "追加可能な下書きページがありません"
+
+[suggestion_page_new_submit]
+description = "編集提案ページ追加の送信ボタン"
+other = "追加する"
+
 [error_suggestion_page_update_conflict]
 description = "編集提案ページ更新時の競合エラー"
 other = "下書きが見つからないため、編集提案を更新できませんでした"
@@ -1045,6 +1077,18 @@ other = "変更はありません"
 description = "編集提案のタイトル変更ラベル"
 other = "タイトルの変更"
 
+[suggestion_change_add_page_button]
+description = "変更差分画面のページ追加ボタン"
+other = "ページを追加する"
+
+[suggestion_change_remove_page_button]
+description = "変更差分画面のページ削除ボタン"
+other = "削除する"
+
+[suggestion_change_remove_page_confirm]
+description = "変更差分画面のページ削除確認ダイアログ"
+other = "このページを編集提案から削除しますか？"
+
 # 編集提案ページ編集
 [suggestion_page_edit_button]
 description = "編集提案の変更差分画面の編集ボタン"
@@ -1098,3 +1142,11 @@ other = "{{.Count}}時間前"
 [datetime_days_ago]
 description = "N日前の相対時間"
 other = "{{.Count}}日前"
+
+[validation_suggestion_page_draft_page_not_found]
+description = "編集提案ページ追加時に下書きページが見つからないエラー"
+other = "選択された下書きページが見つかりません"
+
+[validation_suggestion_page_already_exists]
+description = "編集提案に同じページが既に含まれているエラー"
+other = "このページは既に編集提案に含まれています"

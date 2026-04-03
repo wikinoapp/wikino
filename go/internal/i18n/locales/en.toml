@@ -604,6 +604,38 @@ other = "Draft saved."
 description = "Suggestion page updated success message"
 other = "Suggestion updated."
 
+[flash_suggestion_page_added]
+description = "Suggestion page added success message"
+other = "Page added."
+
+[flash_suggestion_page_removed]
+description = "Suggestion page removed success message"
+other = "Page removed."
+
+[error_suggestion_page_remove_last_page]
+description = "Cannot remove last page from suggestion error"
+other = "A suggestion must have at least one page."
+
+[suggestion_page_new_title]
+description = "Add suggestion page title"
+other = "Add Page | {{.SpaceName}}"
+
+[suggestion_page_new_heading]
+description = "Add suggestion page heading"
+other = "Add Page"
+
+[suggestion_page_new_draft_pages_label]
+description = "Draft pages selection label for adding suggestion page"
+other = "Draft pages to add"
+
+[suggestion_page_new_no_draft_pages]
+description = "Message when no draft pages available to add"
+other = "No draft pages available to add."
+
+[suggestion_page_new_submit]
+description = "Add suggestion page submit button"
+other = "Add"
+
 [error_suggestion_page_update_conflict]
 description = "Conflict error when updating suggestion page"
 other = "Could not update the suggestion because the draft was not found."
@@ -1045,6 +1077,18 @@ other = "No changes"
 description = "Suggestion title change label"
 other = "Title change"
 
+[suggestion_change_add_page_button]
+description = "Add page button on suggestion changes page"
+other = "Add page"
+
+[suggestion_change_remove_page_button]
+description = "Remove page button on suggestion changes page"
+other = "Remove"
+
+[suggestion_change_remove_page_confirm]
+description = "Confirmation dialog for removing a page from suggestion"
+other = "Remove this page from the suggestion?"
+
 # Suggestion page edit
 [suggestion_page_edit_button]
 description = "Edit button on suggestion changes page"
@@ -1098,3 +1142,11 @@ other = "{{.Count}} hours ago"
 [datetime_days_ago]
 description = "Relative time for N days ago"
 other = "{{.Count}} days ago"
+
+[validation_suggestion_page_draft_page_not_found]
+description = "Draft page not found when adding a suggestion page"
+other = "The selected draft page was not found"
+
+[validation_suggestion_page_already_exists]
+description = "Page already included in the suggestion"
+other = "This page is already included in the suggestion"

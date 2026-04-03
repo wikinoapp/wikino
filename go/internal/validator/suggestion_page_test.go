@@ -216,3 +216,294 @@ func TestSuggestionPageUpdateValidator_DraftPageが別のSuggestionPageにリン
 		t.Error("DraftPage should be nil on error")
 	}
 }
+
+func TestSuggestionPageCreateValidator_正常系_有効な下書きページで成功する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spcv-ok@example.com").
+		WithAtname("spcvok").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("spcv-ok-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithBody("本文").
+		Build()
+
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+
+	draftPages, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
+		DraftPageIDs:  []model.DraftPageID{draftPageID},
+		SpaceMemberID: spaceMemberID,
+		TopicID:       topicID,
+		SpaceID:       spaceID,
+		SuggestionID:  suggestionID,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(draftPages) != 1 {
+		t.Fatalf("draftPages count = %d, want 1", len(draftPages))
+	}
+	if draftPages[0].Body != "本文" {
+		t.Errorf("DraftPage.Body = %q, want %q", draftPages[0].Body, "本文")
+	}
+}
+
+func TestSuggestionPageCreateValidator_異常系_下書きページ未選択(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+
+	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
+		DraftPageIDs:  []model.DraftPageID{},
+		SpaceMemberID: "dummy-sm",
+		TopicID:       "dummy-topic",
+		SpaceID:       "dummy-space",
+		SuggestionID:  "dummy-sug",
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError, got nil")
+	}
+	if !ve.HasFieldError("draft_page_ids") {
+		t.Error("expected draft_page_ids field error")
+	}
+}
+
+func TestSuggestionPageCreateValidator_異常系_下書きページが存在しない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spcv-nodp@example.com").
+		WithAtname("spcvnodp").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("spcv-nodp-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+
+	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
+		DraftPageIDs:  []model.DraftPageID{"00000000-0000-0000-0000-000000000099"},
+		SpaceMemberID: spaceMemberID,
+		TopicID:       topicID,
+		SpaceID:       spaceID,
+		SuggestionID:  suggestionID,
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError, got nil")
+	}
+	if !ve.HasFieldError("draft_page_ids") {
+		t.Error("expected draft_page_ids field error")
+	}
+}
+
+func TestSuggestionPageCreateValidator_異常系_別メンバーの下書きページ(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spcv-othermem@example.com").
+		WithAtname("spcvothermem").
+		Build()
+	otherUserID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spcv-othermem2@example.com").
+		WithAtname("spcvothermem2").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("spcv-othermem-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(otherUserID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+
+	// 別メンバーが作成した下書きページ
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(otherSpaceMemberID).
+		WithTopicID(topicID).
+		WithBody("本文").
+		Build()
+
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+
+	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
+		DraftPageIDs:  []model.DraftPageID{draftPageID},
+		SpaceMemberID: spaceMemberID,
+		TopicID:       topicID,
+		SpaceID:       spaceID,
+		SuggestionID:  suggestionID,
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError, got nil")
+	}
+	if !ve.HasFieldError("draft_page_ids") {
+		t.Error("expected draft_page_ids field error")
+	}
+}
+
+func TestSuggestionPageCreateValidator_異常系_既に編集提案に含まれているページ(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spcv-dup@example.com").
+		WithAtname("spcvdup").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("spcv-dup-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// 既に編集提案に含まれているSuggestionPage
+	testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
+		Build()
+
+	// 同じページの下書き
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithBody("本文").
+		Build()
+
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+
+	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
+		DraftPageIDs:  []model.DraftPageID{draftPageID},
+		SpaceMemberID: spaceMemberID,
+		TopicID:       topicID,
+		SpaceID:       spaceID,
+		SuggestionID:  suggestionID,
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("expected ValidationError, got nil")
+	}
+	if !ve.HasFieldError("draft_page_ids") {
+		t.Error("expected draft_page_ids field error")
+	}
+}
