@@ -278,6 +278,12 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 		if !p.CanUpdateSuggestion(suggestion) {
 			t.Error("スペースオーナーはオープン状態の編集提案を編集できるべき")
 		}
+		if !p.CanAddSuggestionPage(suggestion) {
+			t.Error("スペースオーナーはオープン状態の編集提案にページを追加できるべき")
+		}
+		if !p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("スペースオーナーはオープン状態の編集提案からページを削除できるべき")
+		}
 		if !p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("スペースオーナーはオープン状態の編集提案のコメントを編集できるべき")
 		}
@@ -293,6 +299,12 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 		suggestion.Status = model.SuggestionStatusClosed
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("スペースオーナーはクローズ状態の編集提案を編集できないべき")
+		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("スペースオーナーはクローズ状態の編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("スペースオーナーはクローズ状態の編集提案からページを削除できないべき")
 		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("スペースオーナーはクローズ状態の編集提案のコメントを編集できないべき")
@@ -310,6 +322,12 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("スペースオーナーは反映済みの編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("スペースオーナーは反映済みの編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("スペースオーナーは反映済みの編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("スペースオーナーは反映済みの編集提案のコメントを編集できないべき")
 		}
@@ -325,6 +343,12 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("スペースオーナーは別スペースの編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("スペースオーナーは別スペースの編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("スペースオーナーは別スペースの編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("スペースオーナーは別スペースの編集提案のコメントを編集できないべき")
 		}
@@ -339,6 +363,12 @@ func TestNewTopicPolicy_SpaceOwner(t *testing.T) {
 		suggestion := newSuggestion("space-1", "topic-1")
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("非アクティブなスペースオーナーは編集提案を編集できないべき")
+		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("非アクティブなスペースオーナーは編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非アクティブなスペースオーナーは編集提案からページを削除できないべき")
 		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非アクティブなスペースオーナーは編集提案のコメントを編集できないべき")
@@ -582,6 +612,12 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 		if !p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックAdminはオープン状態の編集提案を編集できるべき")
 		}
+		if !p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックAdminはオープン状態の編集提案にページを追加できるべき")
+		}
+		if !p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックAdminはオープン状態の編集提案からページを削除できるべき")
+		}
 		if !p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックAdminはオープン状態の編集提案のコメントを編集できるべき")
 		}
@@ -602,6 +638,12 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックAdminはクローズ状態の編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックAdminはクローズ状態の編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックAdminはクローズ状態の編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックAdminはクローズ状態の編集提案のコメントを編集できないべき")
 		}
@@ -621,6 +663,12 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックAdminは別トピックの編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックAdminは別トピックの編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックAdminは別トピックの編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックAdminは別トピックの編集提案のコメントを編集できないべき")
 		}
@@ -639,6 +687,12 @@ func TestNewTopicPolicy_TopicAdmin(t *testing.T) {
 		suggestion := newSuggestion("space-1", "topic-1")
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("非アクティブなトピックAdminは編集提案を編集できないべき")
+		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("非アクティブなトピックAdminは編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非アクティブなトピックAdminは編集提案からページを削除できないべき")
 		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非アクティブなトピックAdminは編集提案のコメントを編集できないべき")
@@ -864,6 +918,12 @@ func TestNewTopicPolicy_TopicMember(t *testing.T) {
 		if !p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックMemberはオープン状態の編集提案を編集できるべき")
 		}
+		if !p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックMemberはオープン状態の編集提案にページを追加できるべき")
+		}
+		if !p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックMemberはオープン状態の編集提案からページを削除できるべき")
+		}
 		if !p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックMemberはオープン状態の編集提案のコメントを編集できるべき")
 		}
@@ -884,6 +944,12 @@ func TestNewTopicPolicy_TopicMember(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックMemberはクローズ状態の編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックMemberはクローズ状態の編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックMemberはクローズ状態の編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックMemberはクローズ状態の編集提案のコメントを編集できないべき")
 		}
@@ -903,6 +969,12 @@ func TestNewTopicPolicy_TopicMember(t *testing.T) {
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("トピックMemberは別トピックの編集提案を編集できないべき")
 		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("トピックMemberは別トピックの編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("トピックMemberは別トピックの編集提案からページを削除できないべき")
+		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("トピックMemberは別トピックの編集提案のコメントを編集できないべき")
 		}
@@ -921,6 +993,12 @@ func TestNewTopicPolicy_TopicMember(t *testing.T) {
 		suggestion := newSuggestion("space-1", "topic-1")
 		if p.CanUpdateSuggestion(suggestion) {
 			t.Error("非アクティブなトピックMemberは編集提案を編集できないべき")
+		}
+		if p.CanAddSuggestionPage(suggestion) {
+			t.Error("非アクティブなトピックMemberは編集提案にページを追加できないべき")
+		}
+		if p.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非アクティブなトピックMemberは編集提案からページを削除できないべき")
 		}
 		if p.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非アクティブなトピックMemberは編集提案のコメントを編集できないべき")
@@ -1014,6 +1092,12 @@ func TestNewTopicPolicy_Guest(t *testing.T) {
 		if !guestPolicy.CanUpdateSuggestion(suggestion) {
 			t.Error("非トピックメンバーでもオープン状態の編集提案を編集できるべき")
 		}
+		if !guestPolicy.CanAddSuggestionPage(suggestion) {
+			t.Error("非トピックメンバーでもオープン状態の編集提案にページを追加できるべき")
+		}
+		if !guestPolicy.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非トピックメンバーでもオープン状態の編集提案からページを削除できるべき")
+		}
 		if !guestPolicy.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非トピックメンバーでもオープン状態の編集提案のコメントを編集できるべき")
 		}
@@ -1030,6 +1114,12 @@ func TestNewTopicPolicy_Guest(t *testing.T) {
 		if guestPolicy.CanUpdateSuggestion(suggestion) {
 			t.Error("非トピックメンバーはクローズ状態の編集提案を編集できないべき")
 		}
+		if guestPolicy.CanAddSuggestionPage(suggestion) {
+			t.Error("非トピックメンバーはクローズ状態の編集提案にページを追加できないべき")
+		}
+		if guestPolicy.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非トピックメンバーはクローズ状態の編集提案からページを削除できないべき")
+		}
 		if guestPolicy.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非トピックメンバーはクローズ状態の編集提案のコメントを編集できないべき")
 		}
@@ -1044,6 +1134,12 @@ func TestNewTopicPolicy_Guest(t *testing.T) {
 		suggestion := newSuggestion("space-1", "topic-1")
 		if guestPolicy.CanUpdateSuggestion(suggestion) {
 			t.Error("非アクティブな非トピックメンバーは編集提案を編集できないべき")
+		}
+		if guestPolicy.CanAddSuggestionPage(suggestion) {
+			t.Error("非アクティブな非トピックメンバーは編集提案にページを追加できないべき")
+		}
+		if guestPolicy.CanRemoveSuggestionPage(suggestion) {
+			t.Error("非アクティブな非トピックメンバーは編集提案からページを削除できないべき")
 		}
 		if guestPolicy.CanUpdateSuggestionComment(suggestion) {
 			t.Error("非アクティブな非トピックメンバーは編集提案のコメントを編集できないべき")

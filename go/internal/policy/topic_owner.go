@@ -39,6 +39,14 @@ func (p *topicOwnerPolicy) CanUpdateSuggestion(suggestion *model.Suggestion) boo
 	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID && suggestion.Status == model.SuggestionStatusOpen
 }
 
+func (p *topicOwnerPolicy) CanAddSuggestionPage(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID && suggestion.Status == model.SuggestionStatusOpen
+}
+
+func (p *topicOwnerPolicy) CanRemoveSuggestionPage(suggestion *model.Suggestion) bool {
+	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID && suggestion.Status == model.SuggestionStatusOpen
+}
+
 func (p *topicOwnerPolicy) CanEditSuggestionPage(suggestion *model.Suggestion) bool {
 	return p.spaceMemberActive && p.spaceID == suggestion.SpaceID
 }
