@@ -1020,7 +1020,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - ページ追加画面: 編集提案作成画面と似た形式で、対象トピック内の自分の下書きページをチェックボックスで選択
 -->
 
-- [ ] **13-1**: [Go] 編集提案ページ追加の権限（Policy）追加
+- [x] **13-1**: [Go] 編集提案ページ追加の権限（Policy）追加
   - `internal/policy/topic.go` の `TopicPolicy` インターフェースに `CanAddSuggestionPage` と `CanRemoveSuggestionPage` を追加
   - `CanUpdateSuggestion` と同じ条件（スペースメンバー（アクティブ）かつオープン状態）
   - 各 Policy 実装（`topic_owner.go`, `topic_admin.go`, `topic_member.go`, `topic_guest.go`）に実装を追加
@@ -1028,7 +1028,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 5, テスト 1
   - **想定行数**: 実装 約60行, テスト 約80行
 
-- [ ] **13-2**: [Go] 編集提案ページ追加の Validator・UseCase
+- [x] **13-2**: [Go] 編集提案ページ追加の Validator・UseCase
   - `internal/validator/suggestion_page.go` に `SuggestionPageCreateValidator` を作成（下書きページの存在チェック、同一トピック・スペースチェック、重複ページチェック）
   - `internal/usecase/add_suggestion_page.go` に `AddSuggestionPageUsecase` を作成
     - データ取得 → 認可チェック → バリデーション → トランザクション内で SuggestionPage 作成・SuggestionPageRevision 作成・DraftPage の suggestion_page_id 更新
@@ -1037,7 +1037,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 3, テスト 3
   - **想定行数**: 実装 約250行, テスト 約300行
 
-- [ ] **13-3**: [Go] 編集提案ページ追加のハンドラー・テンプレート
+- [x] **13-3**: [Go] 編集提案ページ追加のハンドラー・テンプレート
   - `internal/handler/suggestion_page/new.go` に `New` メソッドを実装（GET /s/{space}/suggestions/{number}/suggestion_pages/new）
   - `internal/handler/suggestion_page/create.go` に `Create` メソッドを実装（POST /s/{space}/suggestions/{number}/suggestion_pages）
   - `internal/usecase/get_suggestion_page_new.go` に読み取り UseCase を作成（追加可能な下書きページ一覧を取得）
@@ -1047,7 +1047,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 6, テスト 2
   - **想定行数**: 実装 約250行, テスト 約200行
 
-- [ ] **13-4**: [Go] 編集提案ページ削除の UseCase・ハンドラー
+- [x] **13-4**: [Go] 編集提案ページ削除の UseCase・ハンドラー
   - `internal/usecase/remove_suggestion_page.go` に `RemoveSuggestionPageUsecase` を作成
     - データ取得 → 認可チェック → 残りページ数チェック（1ページの場合はエラー） → トランザクション内で DraftPage の suggestion_page_id クリア・SuggestionPageRevision 削除・SuggestionPage 削除
   - `internal/repository/suggestion_page.go` に `Delete` メソッドを追加
@@ -1061,7 +1061,7 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - **想定ファイル数**: 実装 7, テスト 3
   - **想定行数**: 実装 約250行, テスト 約250行
 
-- [ ] **13-5**: [Go] 変更差分画面に「ページを追加する」ボタンと「削除する」アクションを追加
+- [x] **13-5**: [Go] 変更差分画面に「ページを追加する」ボタンと「削除する」アクションを追加
   - `internal/templates/pages/suggestion_change/index.templ` に「ページを追加する」ボタンを追加（CanAddSuggestionPage がtrueの場合のみ表示）
   - 各編集提案ページの差分表示に「削除する」アクションを追加（CanRemoveSuggestionPage がtrueかつページ数が2以上の場合のみ表示）
   - 「削除する」は確認ダイアログ付きフォーム（Method Override で DELETE）
