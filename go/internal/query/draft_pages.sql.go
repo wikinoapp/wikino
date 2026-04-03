@@ -151,6 +151,38 @@ func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraf
 	return i, err
 }
 
+const findDraftPageBySuggestionPageID = `-- name: FindDraftPageBySuggestionPageID :one
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2
+`
+
+type FindDraftPageBySuggestionPageIDParams struct {
+	SuggestionPageID *string `json:"suggestion_page_id"`
+	SpaceID          string  `json:"space_id"`
+}
+
+// 編集提案ページIDで下書きを取得する（スペースIDでスコープ）
+func (q *Queries) FindDraftPageBySuggestionPageID(ctx context.Context, arg FindDraftPageBySuggestionPageIDParams) (DraftPage, error) {
+	row := q.db.QueryRowContext(ctx, findDraftPageBySuggestionPageID, arg.SuggestionPageID, arg.SpaceID)
+	var i DraftPage
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.PageID,
+		&i.SpaceMemberID,
+		&i.TopicID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SuggestionPageID,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const listDraftPagesByMemberAndTopic = `-- name: ListDraftPagesByMemberAndTopic :many
 SELECT
   dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.body_html, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id,

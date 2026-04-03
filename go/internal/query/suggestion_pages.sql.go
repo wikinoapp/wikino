@@ -66,6 +66,21 @@ func (q *Queries) CreateSuggestionPage(ctx context.Context, arg CreateSuggestion
 	return i, err
 }
 
+const deleteSuggestionPage = `-- name: DeleteSuggestionPage :exec
+DELETE FROM suggestion_pages WHERE id = $1 AND space_id = $2
+`
+
+type DeleteSuggestionPageParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 編集提案ページを削除する（スペースIDでスコープ）
+func (q *Queries) DeleteSuggestionPage(ctx context.Context, arg DeleteSuggestionPageParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSuggestionPage, arg.ID, arg.SpaceID)
+	return err
+}
+
 const findSuggestionPageByID = `-- name: FindSuggestionPageByID :one
 SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages WHERE id = $1 AND space_id = $2
 `

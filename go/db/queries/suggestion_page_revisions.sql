@@ -16,3 +16,7 @@ SELECT * FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: DeleteSuggestionPageRevisionsBySuggestionPageID :exec
+-- 編集提案ページIDでリビジョンを一括削除する（スペースIDでスコープ）
+DELETE FROM suggestion_page_revisions WHERE suggestion_page_id = $1 AND space_id = $2;

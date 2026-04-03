@@ -55,6 +55,21 @@ func (q *Queries) CreateSuggestionPageRevision(ctx context.Context, arg CreateSu
 	return i, err
 }
 
+const deleteSuggestionPageRevisionsBySuggestionPageID = `-- name: DeleteSuggestionPageRevisionsBySuggestionPageID :exec
+DELETE FROM suggestion_page_revisions WHERE suggestion_page_id = $1 AND space_id = $2
+`
+
+type DeleteSuggestionPageRevisionsBySuggestionPageIDParams struct {
+	SuggestionPageID string `json:"suggestion_page_id"`
+	SpaceID          string `json:"space_id"`
+}
+
+// 編集提案ページIDでリビジョンを一括削除する（スペースIDでスコープ）
+func (q *Queries) DeleteSuggestionPageRevisionsBySuggestionPageID(ctx context.Context, arg DeleteSuggestionPageRevisionsBySuggestionPageIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSuggestionPageRevisionsBySuggestionPageID, arg.SuggestionPageID, arg.SpaceID)
+	return err
+}
+
 const findLatestSuggestionPageRevision = `-- name: FindLatestSuggestionPageRevision :one
 SELECT id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2

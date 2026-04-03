@@ -38,6 +38,10 @@ SELECT * FROM draft_pages WHERE id = $1 AND space_id = $2;
 -- 下書きを削除する
 DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
 
+-- name: FindDraftPageBySuggestionPageID :one
+-- 編集提案ページIDで下書きを取得する（スペースIDでスコープ）
+SELECT * FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2;
+
 -- name: ListDraftPagesByMemberAndTopic :many
 -- スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
 SELECT

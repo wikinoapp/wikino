@@ -20,3 +20,7 @@ UPDATE suggestion_pages
 SET title = $2, body = $3, body_html = $4, linked_page_ids = $5, featured_image_attachment_id = $6, updated_at = $7
 WHERE id = $1 AND space_id = $8
 RETURNING *;
+
+-- name: DeleteSuggestionPage :exec
+-- 編集提案ページを削除する（スペースIDでスコープ）
+DELETE FROM suggestion_pages WHERE id = $1 AND space_id = $2;

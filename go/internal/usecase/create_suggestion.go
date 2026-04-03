@@ -107,7 +107,7 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 		return nil, fmt.Errorf("本文HTMLの生成に失敗しました: %w", err)
 	}
 
-	pageRevisions, err := uc.fetchLatestPageRevisions(ctx, draftPages, space.ID)
+	pageRevisions, err := fetchLatestPageRevisions(ctx, draftPages, space.ID, uc.pageRevisionRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -201,25 +201,6 @@ func (uc *CreateSuggestionUsecase) renderBodyHTML(ctx context.Context, body, cur
 	return bodyHTML, nil
 }
 
-// fetchLatestPageRevisions は各下書きページに対応するページの最新リビジョンを取得する
-func (uc *CreateSuggestionUsecase) fetchLatestPageRevisions(ctx context.Context, draftPages []*model.DraftPage, spaceID model.SpaceID) (map[model.PageID]*model.PageRevision, error) {
-	pageRevisions := make(map[model.PageID]*model.PageRevision, len(draftPages))
-
-	for _, draftPage := range draftPages {
-		latestRevision, err := uc.pageRevisionRepo.FindLatestByPageID(ctx, draftPage.PageID, spaceID)
-		if err != nil {
-			return nil, fmt.Errorf("ページリビジョンの取得に失敗しました: %w", err)
-		}
-		if latestRevision == nil {
-			return nil, fmt.Errorf("ページ %s のリビジョンが見つかりません", draftPage.PageID)
-		}
-
-		pageRevisions[draftPage.PageID] = latestRevision
-	}
-
-	return pageRevisions, nil
-}
-
 // createSuggestionInput はトランザクション内で編集提案を作成するための入力パラメータ
 type createSuggestionInput struct {
 	SpaceID       model.SpaceID
@@ -272,41 +253,15 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input c
 	for _, draftPage := range input.DraftPages {
 		latestRevision := input.PageRevisions[draftPage.PageID]
 
-		// SuggestionPageを作成
-		suggestionPage, err := suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{
-			SpaceID:                   input.SpaceID,
-			SuggestionID:              suggestion.ID,
-			PageID:                    draftPage.PageID,
-			PageRevisionID:            latestRevision.ID,
-			Title:                     draftPage.Title,
-			Body:                      draftPage.Body,
-			BodyHTML:                  draftPage.BodyHTML,
-			LinkedPageIDs:             draftPage.LinkedPageIDs,
-			FeaturedImageAttachmentID: draftPage.FeaturedImageAttachmentID,
-		})
+		_, err = createSuggestionPageFromDraftPage(ctx, createSuggestionPageInput{
+			SpaceID:        input.SpaceID,
+			SuggestionID:   suggestion.ID,
+			SpaceMemberID:  input.SpaceMemberID,
+			DraftPage:      draftPage,
+			PageRevisionID: latestRevision.ID,
+		}, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 		if err != nil {
-			return nil, fmt.Errorf("編集提案ページの作成に失敗しました: %w", err)
-		}
-
-		// SuggestionPageRevisionを作成
-		_, err = suggestionPageRevisionRepo.Create(ctx, repository.CreateSuggestionPageRevisionInput{
-			SpaceID:             input.SpaceID,
-			SuggestionPageID:    suggestionPage.ID,
-			EditorSpaceMemberID: input.SpaceMemberID,
-			Title:               draftPage.Title,
-			Body:                draftPage.Body,
-			BodyHTML:            draftPage.BodyHTML,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("編集提案ページリビジョンの作成に失敗しました: %w", err)
-		}
-
-		// DraftPageのsuggestion_page_idを設定し、編集提案モードにリンクする
-		if draftPage.ID != "" {
-			_, err = draftPageRepo.UpdateSuggestionPageID(ctx, draftPage.ID, input.SpaceID, &suggestionPage.ID)
-			if err != nil {
-				return nil, fmt.Errorf("下書きページのsuggestion_page_id設定に失敗しました: %w", err)
-			}
+			return nil, err
 		}
 	}
 

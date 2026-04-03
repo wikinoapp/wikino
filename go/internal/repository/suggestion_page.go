@@ -142,6 +142,14 @@ func (r *SuggestionPageRepository) UpdateContent(ctx context.Context, input Upda
 	return r.toModel(row), nil
 }
 
+// Delete は編集提案ページを削除する
+func (r *SuggestionPageRepository) Delete(ctx context.Context, id model.SuggestionPageID, spaceID model.SpaceID) error {
+	return r.q.DeleteSuggestionPage(ctx, query.DeleteSuggestionPageParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+}
+
 // toModel は query.SuggestionPage を model.SuggestionPage に変換する
 func (r *SuggestionPageRepository) toModel(row query.SuggestionPage) *model.SuggestionPage {
 	var title *string
