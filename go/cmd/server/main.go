@@ -367,9 +367,25 @@ func main() {
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, suggestionPageUpdateValidator,
 	)
+	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
+	suggestionPageCreateValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo,
+		suggestionPageCreateValidator,
+	)
+	removeSuggestionPageUC := usecase.NewRemoveSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo,
+	)
 	suggestionPageHandler := suggestionpagehandler.NewHandler(
+		cfg,
 		flashMgr,
+		getSuggestionPageNewUC,
+		addSuggestionPageUC,
 		updateSuggestionPageUC,
+		removeSuggestionPageUC,
+		sidebarHelper,
 	)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(
@@ -527,8 +543,11 @@ func main() {
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits", suggestionPageEditHandler.Create)
 
-		// 編集提案ページ更新
+		// 編集提案ページ追加・更新
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new", suggestionPageHandler.New)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages", suggestionPageHandler.Create)
 		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Update)
+		r.Delete("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Delete)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

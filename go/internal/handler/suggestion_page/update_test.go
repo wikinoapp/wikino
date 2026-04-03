@@ -11,12 +11,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/config"
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -39,6 +41,7 @@ func newPatchRequest(t *testing.T, path string, params map[string]string, form u
 func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionpagehandler.Handler {
 	t.Helper()
 
+	cfg := &config.Config{Domain: "localhost"}
 	flashMgr := session.NewFlashManager("localhost", false, false)
 
 	spaceRepo := repository.NewSpaceRepository(queries)
@@ -48,16 +51,35 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
 
+	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
+	createValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo,
+		createValidator,
+	)
 	updateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, updateValidator,
 	)
+	removeSuggestionPageUC := usecase.NewRemoveSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo,
+	)
+	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	return suggestionpagehandler.NewHandler(
+		cfg,
 		flashMgr,
+		getSuggestionPageNewUC,
+		addSuggestionPageUC,
 		updateSuggestionPageUC,
+		removeSuggestionPageUC,
+		sidebarHelper,
 	)
 }
 
