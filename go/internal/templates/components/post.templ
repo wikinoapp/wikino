@@ -27,7 +27,7 @@ type PostData struct {
 // Post は投稿UIを表示するコンポーネントです。
 // 編集提案の本文とコメントで共通のUIを提供します。
 templ Post(data PostData) {
-	<div class="flex flex-col border border-border rounded-lg">
+	<div class="card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4">
 		<div class="flex items-center gap-2 bg-brand-200/30 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]">
 			<a
 				class="font-bold text-sm hover:underline"
@@ -47,7 +47,7 @@ templ Post(data PostData) {
 			}
 		</div>
 
-		<div class="px-4 py-2">
+		<section class="px-4">
 			if data.BodyHTML != "" {
 				@templ.Raw(data.BodyHTML)
 			} else {
@@ -55,7 +55,7 @@ templ Post(data PostData) {
 					{ templates.T(ctx, "suggestion_show_no_body") }
 				</p>
 			}
-		</div>
+		</section>
 	</div>
 }
 

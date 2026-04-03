@@ -56,52 +56,47 @@ templ Show(data ShowData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
-					<div class="flex flex-col gap-4 px-4">
-						<div class="flex flex-col gap-2">
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
 							@components.MainTitle(components.MainTitleData{
 								Title:   data.Suggestion.Title,
+								Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
 								Actions: showActions(data),
 							})
-
-							<div class="flex items-center gap-2 text-muted-foreground">
-								@components.SuggestionStatusBadge(data.Suggestion.Status)
-
-								<span>
-									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
-								</span>
-							</div>
 						</div>
 
-						@components.SubNav([]components.SubNavItem{
-							{
-								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-								Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
-								IconName:       "chats-circle-regular",
-								ActiveIconName: "chats-circle-fill",
-								IsActive:       true,
-							},
-							{
-								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
-								IconName:       "files-regular",
-								ActiveIconName: "files-fill",
-								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
-							},
-						})
+						<div class="px-0 md:px-4">
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+									Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									IconName:       "chats-circle-regular",
+									ActiveIconName: "chats-circle-fill",
+									IsActive:       true,
+								},
+								{
+									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									IconName:       "files-regular",
+									ActiveIconName: "files-fill",
+									Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+								},
+							})
+						</div>
 					</div>
 
-					<div class="px-4">
-						@components.Post(components.PostData{
-							CreatorAtname: data.Suggestion.CreatorAtname,
-							BodyHTML:      data.Suggestion.BodyHTML,
-							CreatedAt:     data.Suggestion.CreatedAt,
-						})
-					</div>
+					@components.Post(components.PostData{
+						CreatorAtname: data.Suggestion.CreatorAtname,
+						BodyHTML:      data.Suggestion.BodyHTML,
+						CreatedAt:     data.Suggestion.CreatedAt,
+					})
 
-					<div class="flex flex-col gap-2 px-4">
-						<h2 class="text-md font-bold antialiased">
-							{ templates.T(ctx, "suggestion_show_comments_heading") }
-						</h2>
+					<div class="flex flex-col gap-2">
+						<div class="px-4">
+							<h2 class="text-md font-bold antialiased">
+								{ templates.T(ctx, "suggestion_show_comments_heading") }
+							</h2>
+						</div>
 
 						<div class="flex flex-col gap-4">
 							if len(data.Comments) > 0 {
@@ -109,29 +104,37 @@ templ Show(data ShowData) {
 							}
 
 							if data.IsSpaceMember {
-								@showCommentForm(data)
+								<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+									<section class="px-4">
+										@showCommentForm(data)
+									</section>
+								</div>
 							}
 						</div>
 					</div>
 
 					if data.CanApply || data.CanClose {
-						<div class="px-4">
+						<div class="px-0 md:px-4">
 							<hr class="border-border border-dashed">
 						</div>
 
-						<div class="flex flex-col gap-4 px-4">
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "suggestion_show_action_description") }
-							</p>
+						<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+							<section class="px-4">
+								<div class="flex flex-col gap-4">
+									<p class="text-sm text-muted-foreground">
+										{ templates.T(ctx, "suggestion_show_action_description") }
+									</p>
 
-							<div class="flex items-center gap-2">
-								if data.CanApply {
-									@showApplyForm(data)
-								}
-								if data.CanClose {
-									@showCloseForm(data)
-								}
-							</div>
+									<div class="flex items-center gap-2">
+										if data.CanApply {
+											@showApplyForm(data)
+										}
+										if data.CanClose {
+											@showCloseForm(data)
+										}
+									</div>
+								</div>
+							</section>
 						</div>
 					}
 				</div>
