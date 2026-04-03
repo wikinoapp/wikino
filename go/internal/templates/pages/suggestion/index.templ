@@ -80,13 +80,17 @@ templ Index(data IndexData) {
 							@indexTabs(data)
 						</div>
 
-						<div class="px-4">
-							if len(data.Suggestions) > 0 {
-								@indexList(data)
-							} else {
+						if len(data.Suggestions) > 0 {
+							<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+								<section class="px-4">
+									@indexList(data)
+								</section>
+							</div>
+						} else {
+							<div class="px-4">
 								@indexEmptyState(data)
-							}
-						</div>
+							</div>
+						}
 					</div>
 				</div>
 			</div>

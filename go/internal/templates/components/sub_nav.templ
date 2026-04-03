@@ -29,9 +29,11 @@ templ SubNav(items []SubNavItem) {
 					} else {
 						@templates.Icon(item.IconName, "size-4")
 					}
+
 					{ item.Label }
+
 					if item.Badge != "" {
-						<span class="text-xs">
+						<span class="badge bg-muted text-muted-foreground">
 							{ item.Badge }
 						</span>
 					}
@@ -42,9 +44,11 @@ templ SubNav(items []SubNavItem) {
 					class="flex items-center gap-1.5 px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
 				>
 					@templates.Icon(item.IconName, "size-4")
+
 					{ item.Label }
+
 					if item.Badge != "" {
-						<span class="text-xs">
+						<span class="badge bg-muted text-muted-foreground">
 							{ item.Badge }
 						</span>
 					}

@@ -974,7 +974,7 @@ other = "編集する"
 
 [suggestion_show_action_description]
 description = "編集提案の反映・クローズボタンエリアの補足説明"
-other = "この提案の変更内容をトピックに反映するか、提案をクローズできます"
+other = "この提案の変更内容をトピックに反映するか、反映せずにクローズできます"
 
 [suggestion_comment_edit_action]
 description = "編集提案コメントのドロップダウンメニューの編集アクション"

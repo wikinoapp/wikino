@@ -228,6 +228,9 @@ DraftPageが編集提案にリンクされている場合（`suggestion_page_id`
 | コメント編集フォーム | GET          | `/s/{space}/suggestions/{number}/comments/{comment_number}/edit`        | `suggestion_comment/edit.go`   |
 | コメント更新         | PATCH        | `/s/{space}/suggestions/{number}/comments/{comment_number}`             | `suggestion_comment/update.go` |
 | ページ更新           | PATCH        | `/s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}` | `suggestion_page/update.go`    |
+| ページ追加フォーム   | GET          | `/s/{space}/suggestions/{number}/suggestion_pages/new`                  | `suggestion_page/new.go`       |
+| ページ追加           | POST         | `/s/{space}/suggestions/{number}/suggestion_pages`                      | `suggestion_page/create.go`    |
+| ページ削除           | DELETE       | `/s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}` | `suggestion_page/delete.go`    |
 
 反映・クローズを独立したリソース（`suggestion_apply`、`suggestion_close`）として切り出すことで、`PATCH /s/{space}/suggestions/{number}` を編集提案のタイトル・本文の更新に使用できる。
 
@@ -997,6 +1000,76 @@ DraftPageがスペースメンバーごとに作成される設計を活かし�
   - `cmd/server/main.go` にルーティング登録、翻訳ファイル（ja.toml, en.toml）にメッセージ追加
   - **想定ファイル数**: 実装 8, テスト 3
   - **想定行数**: 実装 約250行, テスト 約200行
+
+### フェーズ 13: 編集提案へのページ追加・削除
+
+<!--
+設計メモ:
+- オープン状態の編集提案に対して、下書きページを追加したり、既存の編集提案ページを削除したりできる
+- 権限: CanUpdateSuggestion と同じ（スペースメンバー（アクティブ）であれば可能、作成者以外も可）
+- ページ追加: 編集提案作成時と同じ流れで、DraftPage から SuggestionPage を作成し、DraftPage の suggestion_page_id を設定する
+- ページ削除: SuggestionPage を削除し、関連する DraftPage の suggestion_page_id をクリアし、SuggestionPageRevision も削除する
+- 削除制約: 編集提案に含まれるページが1つの場合は削除不可（空の編集提案は許可しない）
+- URL設計:
+  - ページ追加フォーム: GET /s/{space}/suggestions/{number}/suggestion_pages/new → suggestion_page/new.go
+  - ページ追加: POST /s/{space}/suggestions/{number}/suggestion_pages → suggestion_page/create.go
+  - ページ削除: DELETE /s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id} → suggestion_page/delete.go
+- UI:
+  - 変更差分画面に「ページを追加する」ボタンを配置（CanUpdateSuggestion がtrueかつオープン状態の場合のみ表示）
+  - 各編集提案ページの差分表示内に「削除する」アクションを追加（CanUpdateSuggestion がtrueかつオープン状態の場合のみ表示。ページが1つのみの場合は非表示）
+  - ページ追加画面: 編集提案作成画面と似た形式で、対象トピック内の自分の下書きページをチェックボックスで選択
+-->
+
+- [ ] **13-1**: [Go] 編集提案ページ追加の権限（Policy）追加
+  - `internal/policy/topic.go` の `TopicPolicy` インターフェースに `CanAddSuggestionPage` と `CanRemoveSuggestionPage` を追加
+  - `CanUpdateSuggestion` と同じ条件（スペースメンバー（アクティブ）かつオープン状態）
+  - 各 Policy 実装（`topic_owner.go`, `topic_admin.go`, `topic_member.go`, `topic_guest.go`）に実装を追加
+  - 既存の Policy テストにテストケースを追加
+  - **想定ファイル数**: 実装 5, テスト 1
+  - **想定行数**: 実装 約60行, テスト 約80行
+
+- [ ] **13-2**: [Go] 編集提案ページ追加の Validator・UseCase
+  - `internal/validator/suggestion_page.go` に `SuggestionPageCreateValidator` を作成（下書きページの存在チェック、同一トピック・スペースチェック、重複ページチェック）
+  - `internal/usecase/add_suggestion_page.go` に `AddSuggestionPageUsecase` を作成
+    - データ取得 → 認可チェック → バリデーション → トランザクション内で SuggestionPage 作成・SuggestionPageRevision 作成・DraftPage の suggestion_page_id 更新
+    - 編集提案作成時（`create_suggestion.go`）の SuggestionPage 作成ロジックを再利用
+  - `internal/repository/suggestion_page.go` に必要なメソッドを追加（既存の `Create` で対応可能か確認）
+  - **想定ファイル数**: 実装 3, テスト 3
+  - **想定行数**: 実装 約250行, テスト 約300行
+
+- [ ] **13-3**: [Go] 編集提案ページ追加のハンドラー・テンプレート
+  - `internal/handler/suggestion_page/new.go` に `New` メソッドを実装（GET /s/{space}/suggestions/{number}/suggestion_pages/new）
+  - `internal/handler/suggestion_page/create.go` に `Create` メソッドを実装（POST /s/{space}/suggestions/{number}/suggestion_pages）
+  - `internal/usecase/get_suggestion_page_new.go` に読み取り UseCase を作成（追加可能な下書きページ一覧を取得）
+  - `internal/templates/pages/suggestion_page/new.templ` にページ追加フォームテンプレートを作成
+  - `internal/handler/suggestion_page/handler.go` に新しい UseCase の依存を追加
+  - `cmd/server/main.go` にルーティング登録、翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 6, テスト 2
+  - **想定行数**: 実装 約250行, テスト 約200行
+
+- [ ] **13-4**: [Go] 編集提案ページ削除の UseCase・ハンドラー
+  - `internal/usecase/remove_suggestion_page.go` に `RemoveSuggestionPageUsecase` を作成
+    - データ取得 → 認可チェック → 残りページ数チェック（1ページの場合はエラー） → トランザクション内で DraftPage の suggestion_page_id クリア・SuggestionPageRevision 削除・SuggestionPage 削除
+  - `internal/repository/suggestion_page.go` に `Delete` メソッドを追加
+  - `internal/repository/suggestion_page_revision.go` に `DeleteBySuggestionPageID` メソッドを追加
+  - `db/queries/suggestion_pages.sql` に DELETE クエリを追加
+  - `db/queries/suggestion_page_revisions.sql` に DELETE クエリを追加
+  - `db/queries/draft_pages.sql` に suggestion_page_id をクリアするクエリを追加（既存の `UpdateSuggestionPageID` で対応可能か確認）
+  - `internal/handler/suggestion_page/delete.go` に `Delete` メソッドを実装（DELETE /s/{space}/suggestions/{number}/suggestion_pages/{suggestion_page_id}）
+  - `internal/handler/suggestion_page/handler.go` に新しい UseCase の依存を追加
+  - `cmd/server/main.go` にルーティング登録、翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 7, テスト 3
+  - **想定行数**: 実装 約250行, テスト 約250行
+
+- [ ] **13-5**: [Go] 変更差分画面に「ページを追加する」ボタンと「削除する」アクションを追加
+  - `internal/templates/pages/suggestion_change/index.templ` に「ページを追加する」ボタンを追加（CanAddSuggestionPage がtrueの場合のみ表示）
+  - 各編集提案ページの差分表示に「削除する」アクションを追加（CanRemoveSuggestionPage がtrueかつページ数が2以上の場合のみ表示）
+  - 「削除する」は確認ダイアログ付きフォーム（Method Override で DELETE）
+  - `internal/usecase/get_suggestion_diff.go` の出力に認可情報を追加（必要に応じて）
+  - `internal/viewmodel/` に必要な ViewModel の更新
+  - 翻訳ファイル（ja.toml, en.toml）にメッセージ追加
+  - **想定ファイル数**: 実装 4, テスト 0
+  - **想定行数**: 実装 約100行
 
 ### フェーズ N: フィーチャーフラグの削除
 

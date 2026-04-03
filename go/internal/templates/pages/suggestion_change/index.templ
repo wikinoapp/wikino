@@ -50,11 +50,7 @@ templ Index(data IndexData) {
 						IconName: data.Topic.IconName,
 					},
 					{
-						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
-						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
-					},
-					{
-						Label: fmt.Sprintf("#%d", data.Suggestion.Number),
+						Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.Suggestion.Number),
 						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
 					},
 				},
@@ -62,60 +58,56 @@ templ Index(data IndexData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
-					<div class="px-4">
-						<div class="flex flex-col gap-2">
-							<h1 class="text-xl font-bold">
-								{ data.Suggestion.Title }
-							</h1>
-							<div class="flex items-center gap-2 text-sm text-muted-foreground">
-								@components.SuggestionStatusBadge(data.Suggestion.Status)
-								<span>
-									{ fmt.Sprintf("#%d", data.Suggestion.Number) }
-								</span>
-								<span>
-									{ data.Suggestion.CreatorName }
-								</span>
-							</div>
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
+							@components.MainTitle(components.MainTitleData{
+								Title:   data.Suggestion.Title,
+								Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
+							})
+						</div>
+
+						<div class="px-0 md:px-4">
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+									Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									IconName:       "chats-circle-regular",
+									ActiveIconName: "chats-circle-fill",
+								},
+								{
+									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									IconName:       "files-regular",
+									ActiveIconName: "files-fill",
+									IsActive:       true,
+									Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+								},
+							})
 						</div>
 					</div>
 
-					<div class="px-4">
-						@components.SubNav([]components.SubNavItem{
-							{
-								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-								Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
-								IconName:       "chats-circle-regular",
-								ActiveIconName: "chats-circle-fill",
-							},
-							{
-								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
-								IconName:       "files-regular",
-								ActiveIconName: "files-fill",
-								IsActive:       true,
-								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
-							},
-						})
-					</div>
-
-					<div class="px-4">
+					if len(data.PageDiffs) == 0 {
+						<div class="px-4">
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "diff_no_changes") }
+							</p>
+						</div>
+					} else {
 						<div class="flex flex-col gap-6">
-							if len(data.PageDiffs) == 0 {
-								<p class="text-sm text-muted-foreground">
-									{ templates.T(ctx, "diff_no_changes") }
-								</p>
-							} else {
-								for _, pd := range data.PageDiffs {
-									@suggestionPageDiff(pageDiffEditData{
-									CSRFToken:        data.CSRFToken,
-									SpaceIdentifier:  data.Space.Identifier.String(),
-									SuggestionNumber: data.Suggestion.Number,
-									CanEdit:          data.CanEditSuggestionPages,
-								}, pd)
-								}
+							for _, pd := range data.PageDiffs {
+								<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+									<section class="px-4">
+										@suggestionPageDiff(pageDiffEditData{
+											CSRFToken:        data.CSRFToken,
+											SpaceIdentifier:  data.Space.Identifier.String(),
+											SuggestionNumber: data.Suggestion.Number,
+											CanEdit:          data.CanEditSuggestionPages,
+										}, pd)
+									</section>
+								</div>
 							}
 						</div>
-					</div>
+					}
 				</div>
 			</div>
 		</div>

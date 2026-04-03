@@ -6,6 +6,7 @@ import "github.com/a-h/templ"
 type MainTitleData struct {
 	Title    string
 	Subtitle string
+	Content  templ.Component
 	Actions  templ.Component
 }
 
@@ -17,10 +18,15 @@ templ MainTitle(data MainTitleData) {
 				<h1 class="flex items-center gap-2 text-2xl font-bold antialiased">
 					{ data.Title }
 				</h1>
+
 				if data.Subtitle != "" {
 					<div class="text-sm text-gray-600">
 						{ data.Subtitle }
 					</div>
+				}
+
+				if data.Content != nil {
+					@data.Content
 				}
 			</div>
 
