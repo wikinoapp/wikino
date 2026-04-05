@@ -17,7 +17,7 @@ templ Index(data IndexData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
 			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-2xl",
+				MaxWidthClass: "max-w-3xl",
 				Items: []components.BreadcrumbItem{
 					{
 						Path:      templates.HomePath(),
@@ -30,7 +30,7 @@ templ Index(data IndexData) {
 				},
 			})
 
-			<div class="max-w-2xl w-full mx-auto">
+			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-4">
 					<div class="px-4">
 						@components.MainTitle(components.MainTitleData{
@@ -45,64 +45,66 @@ templ Index(data IndexData) {
 							</p>
 						</div>
 					} else {
-						<div class="px-4 flex flex-col gap-6">
+						<div class="flex flex-col gap-6">
 							for _, group := range data.Groups {
 								<div class="flex flex-col gap-2">
-									<h2 class="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-										@templates.Icon(group.TopicIconName, "size-4")
-										{ group.SpaceName } / { group.TopicName }
-									</h2>
+									<div class="flex items-center justify-between gap-4 px-4">
+										<h2 class="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+											@templates.Icon(group.TopicIconName, "size-4")
+											<span>
+												<a href={ templ.SafeURL(string(templates.SpacePath(group.SpaceIdentifier))) } class="hover:text-foreground">{ group.SpaceName }</a>
+												{ " / " }
+												<a href={ templ.SafeURL(string(templates.TopicPath(group.SpaceIdentifier, group.TopicNumber))) } class="hover:text-foreground">{ group.TopicName }</a>
+											</span>
+										</h2>
 
-									<div class="card py-2 md:py-4">
-										<section class="px-2 md:px-4">
-											<div class="overflow-x-auto">
-												<table class="table">
-													<thead>
-														<tr>
-															<th class="w-full">
-																{ templates.T(ctx, "draft_page_index_column_title") }
-															</th>
-
-															<th>
-																{ templates.T(ctx, "draft_page_index_column_modified_at") }
-															</th>
-														</tr>
-													</thead>
-
-													<tbody>
-														for _, draft := range group.DraftPages {
-															<tr>
-																<td>
-																	<a
-																		href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
-																		class="link-foreground"
-																	>
-																		{ draft.DisplayTitle(ctx) }
-																	</a>
-																</td>
-
-																<td class="text-muted-foreground whitespace-nowrap">
-																	{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
-																</td>
-															</tr>
-														}
-													</tbody>
-												</table>
-											</div>
-
-											if data.SuggestionEnabled {
-												<div class="pt-2 md:pt-3 mt-2 md:mt-3 border-t border-border">
-													<a
-														href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
-														class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-													>
-														@templates.Icon("git-pull-request-regular", "size-4")
-														{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
-													</a>
-												</div>
-											}
-										</section>
+										if data.SuggestionEnabled {
+											<a
+												href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
+												class="btn-sm rounded-full"
+											>
+												@templates.Icon("git-pull-request-regular", "size-4")
+												{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+											</a>
+										}
 									</div>
+
+									@components.ContentCard() {
+										<div class="overflow-x-auto">
+											<table class="table">
+												<thead>
+													<tr>
+														<th class="w-full">
+															{ templates.T(ctx, "draft_page_index_column_title") }
+														</th>
+
+														<th>
+															{ templates.T(ctx, "draft_page_index_column_modified_at") }
+														</th>
+													</tr>
+												</thead>
+
+												<tbody>
+													for _, draft := range group.DraftPages {
+														<tr>
+															<td>
+																<a
+																	href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+																	class="link-foreground"
+																>
+																	{ draft.DisplayTitle(ctx) }
+																</a>
+															</td>
+
+															<td class="text-muted-foreground whitespace-nowrap">
+																{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
+															</td>
+														</tr>
+													}
+												</tbody>
+											</table>
+										</div>
+									}
 								</div>
 							}
 						</div>

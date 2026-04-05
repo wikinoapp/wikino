@@ -35,14 +35,13 @@ templ Edit(data EditPageData) {
 
 		@components.FormErrors(data.FormErrors)
 
-		<div class="card">
-			<div class="card-body px-4">
-				<form
-					action="/email_confirmation"
-					class="form grid gap-6"
-					hx-on:submit="disableSubmitButtons(this)"
-					method="POST"
-				>
+		@components.ContentCard() {
+			<form
+				action="/email_confirmation"
+				class="form grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
+				method="POST"
+			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<input type="hidden" name="_method" value="PATCH"/>
 
@@ -90,8 +89,7 @@ templ Edit(data EditPageData) {
 						{ templates.T(ctx, "email_confirmation_edit_submit_button") }
 					</button>
 				</form>
-			</div>
-		</div>
+		}
 
 		<div class="text-center">
 			<a href="/sign_up" class="link underline inline-flex items-center gap-1">

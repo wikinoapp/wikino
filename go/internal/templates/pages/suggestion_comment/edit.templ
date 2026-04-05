@@ -59,58 +59,56 @@ templ Edit(data EditData) {
 
 					@components.FormErrors(data.FormErrors)
 
-					<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-						<section class="px-4">
-							<form
-								action={ templ.SafeURL(string(templates.SuggestionCommentPath(data.Space.Identifier.String(), data.Suggestion.Number, data.Comment.Number))) }
-								class="form grid gap-6"
-								method="POST"
-							>
-								<input type="hidden" name="_method" value="PATCH"/>
-								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					@components.ContentCard() {
+						<form
+							action={ templ.SafeURL(string(templates.SuggestionCommentPath(data.Space.Identifier.String(), data.Suggestion.Number, data.Comment.Number))) }
+							class="form grid gap-6"
+							method="POST"
+						>
+							<input type="hidden" name="_method" value="PATCH"/>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-								<div class="grid gap-2">
-									<textarea
-										if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
-											aria-invalid="true"
-										} else {
-											aria-invalid="false"
-										}
-										autofocus
-										id="body"
-										name="body"
-										placeholder={ templates.T(ctx, "suggestion_comment_edit_body_placeholder") }
-										rows="8"
-									>
-										{ data.Body }
-									</textarea>
-
+							<div class="grid gap-2">
+								<textarea
 									if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
-										for _, errMsg := range data.FormErrors.GetFieldErrors("body") {
-											<p class="text-sm text-destructive">{ errMsg }</p>
-										}
+										aria-invalid="true"
+									} else {
+										aria-invalid="false"
 									}
-								</div>
+									autofocus
+									id="body"
+									name="body"
+									placeholder={ templates.T(ctx, "suggestion_comment_edit_body_placeholder") }
+									rows="8"
+								>
+									{ data.Body }
+								</textarea>
 
-								<div class="flex justify-between gap-2">
-									<button
-										class="btn rounded-full w-fit"
-										type="submit"
-									>
-										@templates.Icon("floppy-disk-regular")
-										{ templates.T(ctx, "suggestion_comment_edit_submit") }
-									</button>
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
+									for _, errMsg := range data.FormErrors.GetFieldErrors("body") {
+										<p class="text-sm text-destructive">{ errMsg }</p>
+									}
+								}
+							</div>
 
-									<a
-										class="btn-outline rounded-full w-fit"
-										href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
-									>
-										{ templates.T(ctx, "suggestion_edit_cancel") }
-									</a>
-								</div>
-							</form>
-						</section>
-					</div>
+							<div class="flex justify-between gap-2">
+								<button
+									class="btn rounded-full w-fit"
+									type="submit"
+								>
+									@templates.Icon("floppy-disk-regular")
+									{ templates.T(ctx, "suggestion_comment_edit_submit") }
+								</button>
+
+								<a
+									class="btn-outline rounded-full w-fit"
+									href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+								>
+									{ templates.T(ctx, "suggestion_edit_cancel") }
+								</a>
+							</div>
+						</form>
+					}
 				</div>
 			</div>
 		</div>

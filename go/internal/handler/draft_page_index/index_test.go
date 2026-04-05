@@ -263,7 +263,7 @@ func TestIndex_WithDrafts_SuggestionEnabled(t *testing.T) {
 
 	body := rr.Body.String()
 
-	if !strings.Contains(body, "編集提案する") {
+	if !strings.Contains(body, "新規編集提案") {
 		t.Error("suggestion button not found in response")
 	}
 
