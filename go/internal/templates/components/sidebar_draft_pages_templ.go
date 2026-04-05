@@ -96,9 +96,9 @@ func SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) tem
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 templ.SafeURL
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, draft.PageNumber))))
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, viewmodel.PageNumber(draft.PageNumber)))))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/sidebar_draft_pages.templ`, Line: 28, Col: 96}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/sidebar_draft_pages.templ`, Line: 28, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {

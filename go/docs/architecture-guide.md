@@ -432,6 +432,32 @@ type Topic struct {
 }
 ```
 
+### Presentation 層用の型定義
+
+Templates は Model に直接依存できない（depguard で禁止）ため、パスヘルパー関数などで型安全性が必要な場合は ViewModel パッケージに Presentation 層用の型を定義する。
+
+```go
+// internal/viewmodel/page_number.go
+// Model の型をラップした Presentation 層用の型
+type PageNumber model.PageNumber
+```
+
+Templates のパスヘルパー関数は ViewModel の型を引数に取る：
+
+```go
+// internal/templates/path.go
+func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path { ... }
+```
+
+ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う：
+
+```go
+// internal/viewmodel/suggestion.go
+diffs[i] = SuggestionPageDiff{
+    PageNumber: PageNumber(pageNumberByID[sp.PageID]),  // model.PageNumber → viewmodel.PageNumber
+}
+```
+
 ### 命名規則
 
 - **構造体名**: `Work`, `User` など（エンティティ名と同じ）
@@ -982,3 +1008,14 @@ Validator は入力のバリデーションだけでなく Repository に依存�
 - このプロジェクトの Validator は「フォーム入力の検証 + ユースケース固有の状態検証」という性格が強く、DDD でいう「ドメインの不変条件」（値オブジェクトやエンティティが常に満たすべき条件）とは役割が異なる
 
 **補足**: Handler から Validator への直接依存の禁止は、Validator がどの層にいても depguard の設定で制御可能であり、層の選択理由にはならない。DDD の文脈でドメインの不変条件を表現したい場合は、Validator の配置を変えるのではなく、値オブジェクト（例: `EmailAddress` 型）を Model 層に導入するのが適切なアプローチである
+
+### I. Templates から Model に直接依存して型安全性を確保する
+
+Templates のパスヘルパー関数（`PagePath` など）の引数にドメイン ID 型（`model.PageNumber` など）を使用し、型安全性を高める方針。Templates は既に ViewModel を経由して間接的に Model に依存しており、依存の方向も Presentation 層 → Domain/Infrastructure 層で正しいため、直接依存を許可しても問題ないという考え方に基づく。
+
+**不採用の理由**:
+
+- depguard では「Model の型エイリアスのみ許可し、Model の構造体は禁止する」という粒度の制御ができない。Templates が Model に依存できるようになると、`model.Page` のようなモデル構造体をテンプレートに直接渡すミスを静的解析で検出できなくなる
+- ViewModel による変換層のバイパスをコードレビューだけで防ぐのは漏れが発生しやすい
+
+**代替として採用した方針**: ViewModel パッケージに Presentation 層用の型を定義する（例: `type PageNumber model.PageNumber`）。Templates は ViewModel の型のみに依存し、depguard による境界の強制を維持する。ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う

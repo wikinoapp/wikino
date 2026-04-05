@@ -87,7 +87,7 @@ templ Edit(data EditPageData) {
 							if data.IsSuggestionMode() {
 								action={ templ.SafeURL(data.SuggestionURL) }
 							} else {
-								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
 							}
 							class="form grid gap-6"
 							hx-on:submit="disableSubmitButtons(this)"
@@ -225,7 +225,7 @@ templ Edit(data EditPageData) {
 
 									<a
 										class="btn-outline rounded-full w-fit"
-										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
 									>
 										{ templates.T(ctx, "page_edit_cancel") }
 									</a>

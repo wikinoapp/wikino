@@ -145,7 +145,7 @@ func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageFo
 // SuggestionPageDiff は編集提案ページの差分表示データです
 type SuggestionPageDiff struct {
 	SuggestionPageID string
-	PageNumber       model.PageNumber
+	PageNumber       PageNumber
 	PageTitle        string
 	OldTitle         string
 	NewTitle         string
@@ -188,7 +188,7 @@ func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageD
 
 		diffs[i] = SuggestionPageDiff{
 			SuggestionPageID: string(sp.ID),
-			PageNumber:       pageNumberByID[sp.PageID],
+			PageNumber:       PageNumber(pageNumberByID[sp.PageID]),
 			PageTitle:        pageTitle,
 			OldTitle:         oldTitle,
 			NewTitle:         newTitle,

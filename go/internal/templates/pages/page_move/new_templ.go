@@ -350,9 +350,9 @@ func New(data MovePageData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 templ.SafeURL
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))))
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page_move/new.templ`, Line: 140, Col: 109}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page_move/new.templ`, Line: 140, Col: 131}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {

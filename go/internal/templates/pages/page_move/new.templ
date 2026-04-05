@@ -137,7 +137,7 @@ templ New(data MovePageData) {
 										</button>
 
 										<a
-											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
 											class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
 										>
 											{ templates.T(ctx, "page_move_cancel") }

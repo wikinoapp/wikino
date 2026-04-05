@@ -264,9 +264,9 @@ func suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDi
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 templ.SafeURL
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, int32(pd.PageNumber)))))
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, pd.PageNumber))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 141, Col: 101}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 141, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -316,9 +316,9 @@ func suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDi
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 templ.SafeURL
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, int32(pd.PageNumber)))))
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, pd.PageNumber))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 156, Col: 101}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 156, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
