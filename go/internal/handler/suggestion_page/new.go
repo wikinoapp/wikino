@@ -87,14 +87,19 @@ func (h *Handler) renderNewForm(
 
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)
+	topicVM := viewmodel.NewTopic(output.Topic)
+	suggestionVM := viewmodel.NewSuggestionForDetail(viewmodel.NewSuggestionForDetailInput{
+		Suggestion: output.Suggestion,
+	})
 	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
 
 	content := suggestionpagepages.New(suggestionpagepages.NewData{
-		CSRFToken:        csrfToken,
-		FormErrors:       formErrors,
-		Space:            spaceVM,
-		SuggestionNumber: int32(output.Suggestion.Number),
-		DraftPages:       draftPagesVM,
+		CSRFToken:  csrfToken,
+		FormErrors: formErrors,
+		Space:      spaceVM,
+		Topic:      topicVM,
+		Suggestion: suggestionVM,
+		DraftPages: draftPagesVM,
 	})
 
 	// サイドバーコンテンツを取得

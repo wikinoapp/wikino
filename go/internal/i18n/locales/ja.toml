@@ -640,6 +640,10 @@ other = "追加可能な下書きページがありません"
 description = "編集提案ページ追加の送信ボタン"
 other = "追加する"
 
+[suggestion_page_new_cancel]
+description = "編集提案ページ追加のキャンセルリンク"
+other = "キャンセル"
+
 [error_suggestion_page_update_conflict]
 description = "編集提案ページ更新時の競合エラー"
 other = "下書きが見つからないため、編集提案を更新できませんでした"

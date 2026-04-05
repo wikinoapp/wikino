@@ -16,6 +16,7 @@ type GetSuggestionPageNewUsecase struct {
 	spaceMemberRepo *repository.SpaceMemberRepository
 	topicMemberRepo *repository.TopicMemberRepository
 	suggestionRepo  *repository.SuggestionRepository
+	topicRepo       *repository.TopicRepository
 	draftPageRepo   *repository.DraftPageRepository
 }
 
@@ -25,6 +26,7 @@ func NewGetSuggestionPageNewUsecase(
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionRepo *repository.SuggestionRepository,
+	topicRepo *repository.TopicRepository,
 	draftPageRepo *repository.DraftPageRepository,
 ) *GetSuggestionPageNewUsecase {
 	return &GetSuggestionPageNewUsecase{
@@ -32,6 +34,7 @@ func NewGetSuggestionPageNewUsecase(
 		spaceMemberRepo: spaceMemberRepo,
 		topicMemberRepo: topicMemberRepo,
 		suggestionRepo:  suggestionRepo,
+		topicRepo:       topicRepo,
 		draftPageRepo:   draftPageRepo,
 	}
 }
@@ -46,6 +49,7 @@ type GetSuggestionPageNewInput struct {
 // GetSuggestionPageNewOutput は編集提案ページ追加画面のデータ取得の出力パラメータ
 type GetSuggestionPageNewOutput struct {
 	Space      *model.Space
+	Topic      *model.Topic
 	Suggestion *model.Suggestion
 	DraftPages []*model.DraftPage
 }
@@ -105,6 +109,18 @@ func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSug
 		}
 	}
 
+	// トピックを取得
+	topic, err := uc.topicRepo.FindBySpaceAndID(ctx, space.ID, suggestion.TopicID)
+	if err != nil {
+		return nil, fmt.Errorf("トピックの取得に失敗: %w", err)
+	}
+	if topic == nil {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
 	// トピック内の自分の下書きページ一覧を取得（編集提案にリンクされていないもの）
 	draftPages, err := uc.draftPageRepo.ListByMemberAndTopic(ctx, spaceMember.ID, suggestion.TopicID, space.ID)
 	if err != nil {
@@ -113,6 +129,7 @@ func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSug
 
 	return &GetSuggestionPageNewOutput{
 		Space:      space,
+		Topic:      topic,
 		Suggestion: suggestion,
 		DraftPages: draftPages,
 	}, nil
