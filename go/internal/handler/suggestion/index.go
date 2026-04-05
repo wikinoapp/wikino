@@ -93,6 +93,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName: templates.PageNameSuggestionIndex,
 			SignedIn:        signedIn,

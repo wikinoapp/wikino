@@ -28,13 +28,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitleWithoutSuffix(ctx, "welcome_title")
 	meta.Description = i18n.T(ctx, "welcome_description")
 
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
 	// テンプレートをレンダリング
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName: templates.PageNameWelcome,
 		},

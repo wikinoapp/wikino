@@ -10,8 +10,7 @@ import (
 
 // SimpleLayoutData はシンプルレイアウトに渡すデータ構造体です
 type SimpleLayoutData struct {
-	Meta  viewmodel.PageMeta
-	Flash *session.FlashMessage
+	Meta viewmodel.PageMeta
 }
 
 // Simple はシンプルなレイアウトです
@@ -24,7 +23,7 @@ templ Simple(data SimpleLayoutData, content templ.Component) {
 		</head>
 
 		<body class="min-h-screen flex items-center justify-center">
-			@components.Flash(data.Flash)
+			@components.Flash(session.FlashFromContext(ctx))
 			@content
 		</body>
 	</html>

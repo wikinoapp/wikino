@@ -1,0 +1,25 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// OptionalLabelData は任意項目のラベルに渡すデータ構造体です
+type OptionalLabelData struct {
+	For   string
+	Label string
+}
+
+// OptionalLabel は任意項目であることを示すラベルを表示します
+templ OptionalLabel(data OptionalLabelData) {
+	<label
+		if data.For != "" {
+			for={ data.For }
+		}
+	>
+		<span class="flex items-center gap-1">
+			{ data.Label }
+			<span class="text-xs text-muted-foreground">
+				- { templates.T(ctx, "form_optional") }
+			</span>
+		</span>
+	</label>
+}

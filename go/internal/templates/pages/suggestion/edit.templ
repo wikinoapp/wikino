@@ -59,7 +59,7 @@ templ Edit(data EditData) {
 
 					@components.FormErrors(data.FormErrors)
 
-					<div class="px-4">
+					@components.ContentCard() {
 						<form
 							action={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
 							class="form grid gap-6"
@@ -137,7 +137,7 @@ templ Edit(data EditData) {
 								</a>
 							</div>
 						</form>
-					</div>
+					}
 				</div>
 			</div>
 		</div>

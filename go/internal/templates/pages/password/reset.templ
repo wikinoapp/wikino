@@ -36,14 +36,13 @@ templ Reset(data ResetPageData) {
 
 		@components.FormErrors(data.FormErrors)
 
-		<div class="card">
-			<div class="card-body px-4">
-				<form
-					action="/password/reset"
-					class="form grid gap-6"
-					hx-on:submit="disableSubmitButtons(this)"
-					method="POST"
-				>
+		@components.ContentCard() {
+			<form
+				action="/password/reset"
+				class="form grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
+				method="POST"
+			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
@@ -87,8 +86,7 @@ templ Reset(data ResetPageData) {
 						{ templates.T(ctx, "password_reset_submit") }
 					</button>
 				</form>
-			</div>
-		</div>
+		}
 
 		<div class="text-center">
 			<a href="/sign_in" class="link inline-flex items-center gap-2">

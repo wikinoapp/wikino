@@ -3,6 +3,7 @@ package account
 import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
 // NewPageData はアカウント作成ページに渡すデータ構造体です
@@ -38,14 +39,13 @@ templ New(data NewPageData) {
 			}
 		}
 
-		<div class="card">
-			<div class="card-body px-4">
-				<form
-					action="/accounts"
-					class="form grid gap-6"
-					hx-on:submit="disableSubmitButtons(this)"
-					method="POST"
-				>
+		@components.ContentCard() {
+			<form
+				action="/accounts"
+				class="form grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
+				method="POST"
+			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
@@ -150,9 +150,7 @@ templ New(data NewPageData) {
 						{ templates.T(ctx, "account_new_submit_button") }
 					</button>
 				</form>
-
-			</div>
-		</div>
+		}
 
 		<div class="text-center">
 			<a href="/sign_up" class="link underline inline-flex items-center gap-1">

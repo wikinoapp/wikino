@@ -105,9 +105,9 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdenti
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 templ.SafeURL
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), page.Number))))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), viewmodel.PageNumber(page.Number)))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_page.templ`, Line: 42, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_page.templ`, Line: 42, Col: 114}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

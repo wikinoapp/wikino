@@ -189,6 +189,93 @@ func TestComputeDiffBlocks(t *testing.T) {
 		}
 	})
 
+	t.Run("末尾改行なしのテキストに行を追加した場合に余分な空行が含まれない", func(t *testing.T) {
+		t.Parallel()
+
+		oldText := "foo"
+		newText := "foo\nbuz"
+		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
+
+		if len(blocks) == 0 {
+			t.Fatal("expected at least one block")
+		}
+
+		for _, block := range blocks {
+			for _, line := range block.Lines {
+				if line.Type == viewmodel.DiffLineInsert && line.Content == "" {
+					t.Error("unexpected empty insert line")
+				}
+			}
+		}
+
+		// "foo"がEqual、"buz"がInsertであることを確認
+		hasEqual := false
+		hasInsert := false
+		for _, block := range blocks {
+			for _, line := range block.Lines {
+				if line.Type == viewmodel.DiffLineEqual && line.Content == "foo" {
+					hasEqual = true
+				}
+				if line.Type == viewmodel.DiffLineInsert && line.Content == "buz" {
+					hasInsert = true
+				}
+			}
+		}
+		if !hasEqual {
+			t.Error("expected an equal line with content 'foo'")
+		}
+		if !hasInsert {
+			t.Error("expected an insert line with content 'buz'")
+		}
+	})
+
+	t.Run("CRLFとLFの混在でも同じ行内容はEqualとして検出される", func(t *testing.T) {
+		t.Parallel()
+
+		oldText := "foo\r\nbar\r\n"
+		newText := "foo\nbar\nbuz\n"
+		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
+
+		if len(blocks) == 0 {
+			t.Fatal("expected at least one block")
+		}
+
+		var lines []viewmodel.DiffLine
+		for _, block := range blocks {
+			lines = append(lines, block.Lines...)
+		}
+
+		// "foo"と"bar"はEqualであること
+		equalFoo := false
+		equalBar := false
+		insertBuz := false
+		for _, line := range lines {
+			if line.Type == viewmodel.DiffLineEqual && line.Content == "foo" {
+				equalFoo = true
+			}
+			if line.Type == viewmodel.DiffLineEqual && line.Content == "bar" {
+				equalBar = true
+			}
+			if line.Type == viewmodel.DiffLineInsert && line.Content == "buz" {
+				insertBuz = true
+			}
+			// "foo"や"bar"がDelete/Insertとして検出されていないこと
+			if (line.Type == viewmodel.DiffLineDelete || line.Type == viewmodel.DiffLineInsert) &&
+				(line.Content == "foo" || line.Content == "bar") {
+				t.Errorf("'%s' should be equal, not %v", line.Content, line.Type)
+			}
+		}
+		if !equalFoo {
+			t.Error("expected 'foo' as equal line")
+		}
+		if !equalBar {
+			t.Error("expected 'bar' as equal line")
+		}
+		if !insertBuz {
+			t.Error("expected 'buz' as insert line")
+		}
+	})
+
 	t.Run("テキストから空テキストへの差分", func(t *testing.T) {
 		t.Parallel()
 

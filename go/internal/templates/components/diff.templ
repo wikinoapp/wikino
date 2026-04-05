@@ -9,18 +9,14 @@ import (
 
 // DiffViewData は差分表示コンポーネントに渡すデータ構造体です
 type DiffViewData struct {
-	Title  string
 	Blocks []viewmodel.DiffBlock
 }
 
 // DiffView は差分表示コンポーネントを表示します
 templ DiffView(data DiffViewData) {
 	<div class="flex flex-col gap-4">
-		if data.Title != "" {
-			<h3 class="text-sm font-semibold">{ data.Title }</h3>
-		}
 		if len(data.Blocks) == 0 {
-			<p class="text-sm text-muted-foreground">
+			<p class="text-sm text-muted-foreground italic">
 				{ templates.T(ctx, "diff_no_changes") }
 			</p>
 		} else {

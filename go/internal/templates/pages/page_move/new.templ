@@ -59,13 +59,12 @@ templ New(data MovePageData) {
 					}
 
 					<div class="px-4">
-						<div class="card">
-							<div class="card-body px-4">
-								<form
-									action={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d/move", data.Space.Identifier.String(), data.Page.Number)) }
-									class="form grid gap-6"
-									method="POST"
-								>
+						@components.ContentCard() {
+							<form
+								action={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d/move", data.Space.Identifier.String(), data.Page.Number)) }
+								class="form grid gap-6"
+								method="POST"
+							>
 									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 									<div class="grid gap-2">
@@ -138,15 +137,14 @@ templ New(data MovePageData) {
 										</button>
 
 										<a
-											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), data.Page.Number))) }
+											href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
 											class="btn-outline bg-card hover:bg-accent rounded-full w-fit"
 										>
 											{ templates.T(ctx, "page_move_cancel") }
 										</a>
 									</div>
 								</form>
-							</div>
-						</div>
+						}
 					</div>
 				</div>
 			</div>

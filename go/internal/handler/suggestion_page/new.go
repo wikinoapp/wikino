@@ -85,9 +85,6 @@ func (h *Handler) renderNewForm(
 		"SpaceName": output.Space.Name,
 	})
 
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)
 	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
@@ -104,8 +101,8 @@ func (h *Handler) renderNewForm(
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNameSuggestionPageNew,
 			SignedIn:          true,

@@ -92,9 +92,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		"SpaceName": output.Space.Name,
 	})
 
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
 	// テンプレートをレンダリング
 	spaceVM := viewmodel.NewSpace(output.Space)
 
@@ -123,8 +120,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:       meta,
-		Flash:      flash,
+		Meta: meta,
+
 		HideFooter: true,
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNamePageEdit,

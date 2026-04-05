@@ -3,6 +3,8 @@ package templates
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Path はURLのパスを表す型です
@@ -34,7 +36,7 @@ func NewPagePath(spaceIdentifier string, topicNumber int32) Path {
 }
 
 // PagePath はページのパスを生成します
-func PagePath(spaceIdentifier string, pageNumber int32) Path {
+func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d", spaceIdentifier, pageNumber))
 }
 

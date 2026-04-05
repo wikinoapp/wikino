@@ -25,7 +25,7 @@ templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) {
 						</a>
 
 						<a
-							href={ templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, draft.PageNumber))) }
+							href={ templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, viewmodel.PageNumber(draft.PageNumber)))) }
 							class="flex w-full items-center gap-2 rounded-md p-2 text-foreground"
 						>
 							<div class="w-[16px] shrink-0">

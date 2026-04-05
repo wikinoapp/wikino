@@ -145,6 +145,7 @@ func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageFo
 // SuggestionPageDiff は編集提案ページの差分表示データです
 type SuggestionPageDiff struct {
 	SuggestionPageID string
+	PageNumber       PageNumber
 	PageTitle        string
 	OldTitle         string
 	NewTitle         string
@@ -156,10 +157,16 @@ type SuggestionPageDiff struct {
 type NewSuggestionPageDiffsInput struct {
 	SuggestionPages []*model.SuggestionPage
 	BaseRevisions   map[model.SuggestionPageID]*model.PageRevision
+	Pages           []*model.Page
 }
 
 // NewSuggestionPageDiffs は編集提案ページとベースリビジョンから差分表示用ViewModelのスライスを生成します
 func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageDiff {
+	pageNumberByID := make(map[model.PageID]model.PageNumber, len(input.Pages))
+	for _, p := range input.Pages {
+		pageNumberByID[p.ID] = p.Number
+	}
+
 	diffs := make([]SuggestionPageDiff, len(input.SuggestionPages))
 	for i, sp := range input.SuggestionPages {
 		var oldTitle, oldBody string
@@ -181,6 +188,7 @@ func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageD
 
 		diffs[i] = SuggestionPageDiff{
 			SuggestionPageID: string(sp.ID),
+			PageNumber:       PageNumber(pageNumberByID[sp.PageID]),
 			PageTitle:        pageTitle,
 			OldTitle:         oldTitle,
 			NewTitle:         newTitle,

@@ -81,11 +81,9 @@ func (h *Handler) renderNewForm(
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_new_title", map[string]any{
+		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
-
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
 
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)
@@ -107,8 +105,8 @@ func (h *Handler) renderNewForm(
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNameSuggestionNew,
 			SignedIn:          true,

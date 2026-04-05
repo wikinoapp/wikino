@@ -104,11 +104,9 @@ templ Show(data ShowData) {
 							}
 
 							if data.IsSpaceMember {
-								<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-									<section class="px-4">
-										@showCommentForm(data)
-									</section>
-								</div>
+								@components.ContentCard() {
+									@showCommentForm(data)
+								}
 							}
 						</div>
 					</div>
@@ -118,24 +116,22 @@ templ Show(data ShowData) {
 							<hr class="border-border border-dashed">
 						</div>
 
-						<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-							<section class="px-4">
-								<div class="flex flex-col gap-4">
-									<p class="text-sm text-muted-foreground">
-										{ templates.T(ctx, "suggestion_show_action_description") }
-									</p>
+						@components.ContentCard() {
+							<div class="flex flex-col gap-4">
+								<p class="text-sm text-muted-foreground">
+									{ templates.T(ctx, "suggestion_show_action_description") }
+								</p>
 
-									<div class="flex items-center gap-2">
-										if data.CanApply {
-											@showApplyForm(data)
-										}
-										if data.CanClose {
-											@showCloseForm(data)
-										}
-									</div>
+								<div class="flex items-center gap-2">
+									if data.CanApply {
+										@showApplyForm(data)
+									}
+									if data.CanClose {
+										@showCloseForm(data)
+									}
 								</div>
-							</section>
-						</div>
+							</div>
+						}
 					}
 				</div>
 			</div>

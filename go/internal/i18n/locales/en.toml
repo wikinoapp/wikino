@@ -16,6 +16,10 @@ other = "Error"
 [back_to_home]
 other = "Back to Home"
 
+[form_optional]
+description = "Label for optional form fields"
+other = "Optional"
+
 # Sign in
 [sign_in_title]
 other = "Sign in"
@@ -727,7 +731,7 @@ other = "Untitled"
 
 [draft_page_index_create_suggestion_button]
 description = "Create suggestion button on draft page index"
-other = "Create suggestion..."
+other = "New suggestion"
 
 # Bottom navigation
 [bottom_nav_menu]
@@ -804,7 +808,7 @@ other = "Back to top page"
 # Suggestions
 [suggestion_index_title]
 description = "Suggestion list page title"
-other = "Suggestions - {{.TopicName}} - {{.SpaceName}}"
+other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_index_heading]
 description = "Suggestion list heading"
@@ -860,11 +864,11 @@ other = "Body must be 10000 characters or less"
 
 [suggestion_new_title]
 description = "Suggestion creation page title"
-other = "Create Suggestion | {{.SpaceName}}"
+other = "New Suggestion | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_new_heading]
 description = "Suggestion creation heading"
-other = "Create Suggestion"
+other = "New Suggestion"
 
 [suggestion_new_breadcrumb]
 description = "Suggestion creation breadcrumb (link to suggestion list)"
@@ -880,7 +884,7 @@ other = "Briefly describe your changes"
 
 [suggestion_new_body_label]
 description = "Suggestion body label"
-other = "Description (optional)"
+other = "Description"
 
 [suggestion_new_body_placeholder]
 description = "Suggestion body placeholder"
@@ -896,7 +900,11 @@ other = "No draft pages in this topic"
 
 [suggestion_new_submit]
 description = "Suggestion creation submit button"
-other = "Create Suggestion"
+other = "Create"
+
+[suggestion_new_cancel]
+description = "Cancel link on suggestion creation page"
+other = "Cancel"
 
 [suggestion_create_success]
 description = "Suggestion creation success message"
@@ -906,7 +914,7 @@ other = "Suggestion has been created"
 
 [suggestion_edit_title]
 description = "Suggestion edit page title"
-other = "Edit Suggestion - #{{.SuggestionNumber}} {{.SuggestionTitle}} | {{.SpaceName}}"
+other = "Edit - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_edit_heading]
 description = "Suggestion edit page heading"
@@ -1026,7 +1034,7 @@ other = "Edit comment"
 
 [suggestion_comment_edit_title]
 description = "Suggestion comment edit page title"
-other = "Edit comment - #{{.SuggestionNumber}} {{.SuggestionTitle}} - {{.SpaceName}}"
+other = "Edit Comment - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_comment_edit_body_placeholder]
 description = "Suggestion comment edit body placeholder"
@@ -1071,7 +1079,7 @@ other = "Failed to close suggestion"
 # Diff view
 [diff_no_changes]
 description = "Message when there are no changes"
-other = "No changes"
+other = "No changes in body"
 
 [suggestion_diff_title_change]
 description = "Suggestion title change label"
@@ -1087,7 +1095,7 @@ other = "Remove"
 
 [suggestion_change_remove_page_confirm]
 description = "Confirmation dialog for removing a page from suggestion"
-other = "Remove this page from the suggestion?"
+other = "Remove this page from the suggestion?\n(Your draft will remain)"
 
 # Suggestion page edit
 [suggestion_page_edit_button]

@@ -441,6 +441,7 @@ func main() {
 	r.Use(chimiddleware.RealIP)
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
+	r.Use(flashMgr.Middleware)
 
 	// 静的ファイルの配信 (Tailwind CLI + esbuild のビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))

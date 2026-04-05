@@ -39,7 +39,7 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdent
 		<div class="card-body h-full">
 			<div class="flex h-full">
 				<a
-					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), page.Number))) }
+					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), viewmodel.PageNumber(page.Number)))) }
 					class="flex w-full h-full px-3 py-2"
 				>
 					<div class="flex justify-between w-full h-full gap-2">

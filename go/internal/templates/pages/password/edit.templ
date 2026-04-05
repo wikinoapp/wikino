@@ -35,14 +35,13 @@ templ Edit(data EditPageData) {
 
 		@components.FormErrors(data.FormErrors)
 
-		<div class="card">
-			<div class="card-body px-4">
-				<form
-					action="/password"
-					class="form grid gap-6"
-					hx-on:submit="disableSubmitButtons(this)"
-					method="POST"
-				>
+		@components.ContentCard() {
+			<form
+				action="/password"
+				class="form grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
+				method="POST"
+			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<input type="hidden" name="token" value={ data.Token }/>
 					<input type="hidden" name="_method" value="PATCH"/>
@@ -117,7 +116,6 @@ templ Edit(data EditPageData) {
 						{ templates.T(ctx, "password_edit_submit") }
 					</button>
 				</form>
-			</div>
-		</div>
+		}
 	</div>
 }

@@ -90,29 +90,17 @@ templ Index(data IndexData) {
 						</div>
 					</div>
 
-					if data.CanAddSuggestionPage {
-						<div class="px-4">
-							<a
-								href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
-								class="inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-md text-xs font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 py-1"
-							>
-								@templates.Icon("plus-regular", "size-3")
-								{ templates.T(ctx, "suggestion_change_add_page_button") }
-							</a>
-						</div>
-					}
-
-					if len(data.PageDiffs) == 0 {
-						<div class="px-4">
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "diff_no_changes") }
-							</p>
-						</div>
-					} else {
-						<div class="flex flex-col gap-6">
-							for _, pd := range data.PageDiffs {
-								<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-									<section class="px-4">
+					<div class="flex flex-col gap-4">
+						if len(data.PageDiffs) == 0 {
+							<div class="px-4">
+								<p class="text-sm text-muted-foreground">
+									{ templates.T(ctx, "diff_no_changes") }
+								</p>
+							</div>
+						} else {
+							<div class="flex flex-col gap-4">
+								for _, pd := range data.PageDiffs {
+									@components.ContentCard() {
 										@suggestionPageDiff(pageDiffEditData{
 											CSRFToken:        data.CSRFToken,
 											SpaceIdentifier:  data.Space.Identifier.String(),
@@ -121,11 +109,23 @@ templ Index(data IndexData) {
 											CanRemove:        data.CanRemoveSuggestionPage,
 											PageCount:        len(data.PageDiffs),
 										}, pd)
-									</section>
-								</div>
-							}
-						</div>
-					}
+									}
+								}
+							</div>
+						}
+
+						if data.CanAddSuggestionPage {
+							<div class="px-4">
+								<a
+									href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+									class="btn-secondary rounded-full"
+								>
+									@templates.Icon("file-plus-regular", "size-4")
+									{ templates.T(ctx, "suggestion_change_add_page_button") }
+								</a>
+							</div>
+						}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -134,30 +134,62 @@ templ Index(data IndexData) {
 
 // suggestionPageDiff は1つの編集提案ページの差分を表示します
 templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDiff) {
-	<div class="flex flex-col gap-3">
+	<div class="flex flex-col gap-2">
 		<div class="flex items-center justify-between">
-			<div></div>
-			<div class="flex items-center gap-2">
+			if pd.HasTitleChange {
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, pd.PageNumber))) }
+					class="flex items-center gap-1 hover:underline"
+				>
+					<span class="text-sm font-semibold">
+						{ pd.OldTitle }
+					</span>
+
+					@templates.Icon("arrow-right-regular", "size-3")
+
+					<span class="text-sm font-semibold">
+						{ pd.NewTitle }
+					</span>
+				</a>
+			} else {
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, pd.PageNumber))) }
+					class="text-sm font-semibold hover:underline"
+				>
+					{ pd.PageTitle }
+				</a>
+			}
+
+			<div class="flex items-center gap-4">
 				if editData.CanEdit {
-					<form method="POST" action={ templ.SafeURL(string(templates.SuggestionPageEditsPath(editData.SpaceIdentifier, editData.SuggestionNumber))) }>
+					<form
+						action={ templ.SafeURL(string(templates.SuggestionPageEditsPath(editData.SpaceIdentifier, editData.SuggestionNumber))) }
+						method="POST"
+					>
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
 						<input type="hidden" name="suggestion_page_id" value={ pd.SuggestionPageID }/>
-						<button type="submit" class="inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-md text-xs font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 py-1">
-							@templates.Icon("pen-to-square-regular", "size-3")
+						<button
+							class="btn-sm-link h-fit p-0"
+							type="submit"
+						>
+							@templates.Icon("pencil-simple-line-regular", "size-3")
 							{ templates.T(ctx, "suggestion_page_edit_button") }
 						</button>
 					</form>
 				}
 				if editData.CanRemove && editData.PageCount >= 2 {
 					<form
-						method="POST"
 						action={ templ.SafeURL(string(templates.SuggestionPagePath(editData.SpaceIdentifier, editData.SuggestionNumber, pd.SuggestionPageID))) }
 						data-confirm={ templates.T(ctx, "suggestion_change_remove_page_confirm") }
 						hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+						method="POST"
 					>
 						<input type="hidden" name="_method" value="DELETE"/>
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
-						<button type="submit" class="inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-md text-xs font-medium border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 py-1 text-destructive">
+						<button
+							class="btn-sm-link h-fit p-0 text-error"
+							type="submit"
+						>
 							@templates.Icon("trash-regular", "size-3")
 							{ templates.T(ctx, "suggestion_change_remove_page_button") }
 						</button>
@@ -165,18 +197,8 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 				}
 			</div>
 		</div>
-		if pd.HasTitleChange {
-			<div class="flex flex-col gap-1">
-				<h3 class="text-sm font-semibold">{ templates.T(ctx, "suggestion_diff_title_change") }</h3>
-				<div class="text-sm">
-					<span class="line-through text-red-600 dark:text-red-400">{ pd.OldTitle }</span>
-					<span class="mx-1">→</span>
-					<span class="text-green-600 dark:text-green-400">{ pd.NewTitle }</span>
-				</div>
-			</div>
-		}
+
 		@components.DiffView(components.DiffViewData{
-			Title:  pd.PageTitle,
 			Blocks: pd.BodyBlocks,
 		})
 	</div>

@@ -52,7 +52,8 @@ templ Index(data IndexData) {
 					<div class="flex flex-col gap-4">
 						<div class="px-4">
 							@components.MainTitle(components.MainTitleData{
-								Title: data.Topic.Name,
+								Title:   data.Topic.Name,
+								Actions: suggestionNewButton(data),
 							})
 						</div>
 
@@ -81,11 +82,9 @@ templ Index(data IndexData) {
 						</div>
 
 						if len(data.Suggestions) > 0 {
-							<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-								<section class="px-4">
-									@indexList(data)
-								</section>
-							</div>
+							@components.ContentCard() {
+								@indexList(data)
+							}
 						} else {
 							<div class="px-4">
 								@indexEmptyState(data)
@@ -159,6 +158,17 @@ templ indexList(data IndexData) {
 			</tbody>
 		</table>
 	</div>
+}
+
+// suggestionNewButton は編集提案作成ボタンを表示します
+templ suggestionNewButton(data IndexData) {
+	<a
+		href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))) }
+		class="btn-sm rounded-full"
+	>
+		@templates.Icon("git-pull-request-regular", "size-4")
+		{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+	</a>
 }
 
 // indexEmptyState は編集提案がない場合の空状態を表示します
