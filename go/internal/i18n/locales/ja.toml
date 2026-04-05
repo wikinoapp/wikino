@@ -16,6 +16,10 @@ other = "エラー"
 [back_to_home]
 other = "ホームに戻る"
 
+[form_optional]
+description = "フォームの任意項目に表示するラベル"
+other = "任意"
+
 # サインイン
 [sign_in_title]
 other = "ログイン"
@@ -727,7 +731,7 @@ other = "無題"
 
 [draft_page_index_create_suggestion_button]
 description = "下書き一覧画面の編集提案作成ボタン"
-other = "編集提案する..."
+other = "新規編集提案"
 
 # ボトムナビ
 [bottom_nav_menu]
@@ -804,7 +808,7 @@ other = "トップページに戻る"
 # 編集提案一覧
 [suggestion_index_title]
 description = "編集提案一覧のページタイトル"
-other = "編集提案 - {{.TopicName}} - {{.SpaceName}}"
+other = "編集提案 | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_index_heading]
 description = "編集提案一覧の見出し"
@@ -860,11 +864,11 @@ other = "本文は10000文字以内で入力してください"
 
 [suggestion_new_title]
 description = "編集提案作成のページタイトル"
-other = "編集提案を作成 | {{.SpaceName}}"
+other = "新規編集提案 | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_new_heading]
 description = "編集提案作成の見出し"
-other = "編集提案を作成"
+other = "新規編集提案"
 
 [suggestion_new_breadcrumb]
 description = "編集提案作成画面のパンくずリスト（編集提案一覧へのリンク）"
@@ -880,7 +884,7 @@ other = "変更内容を簡潔に記述してください"
 
 [suggestion_new_body_label]
 description = "編集提案概要のラベル"
-other = "概要（任意）"
+other = "概要"
 
 [suggestion_new_body_placeholder]
 description = "編集提案概要のプレースホルダー"
@@ -896,7 +900,11 @@ other = "このトピックには下書きページがありません"
 
 [suggestion_new_submit]
 description = "編集提案作成の送信ボタン"
-other = "編集提案を作成する"
+other = "作成する"
+
+[suggestion_new_cancel]
+description = "編集提案作成のキャンセルリンク"
+other = "キャンセル"
 
 [suggestion_create_success]
 description = "編集提案作成成功メッセージ"
@@ -906,7 +914,7 @@ other = "編集提案を作成しました"
 
 [suggestion_edit_title]
 description = "編集提案編集のページタイトル"
-other = "編集提案の編集 - #{{.SuggestionNumber}} {{.SuggestionTitle}} | {{.SpaceName}}"
+other = "編集提案の編集 - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_edit_heading]
 description = "編集提案編集画面の見出し"
@@ -1022,11 +1030,11 @@ other = "コメントを投稿しました"
 
 [suggestion_comment_edit_heading]
 description = "編集提案コメント編集画面の見出し"
-other = "コメントを編集"
+other = "コメントの編集"
 
 [suggestion_comment_edit_title]
 description = "編集提案コメント編集画面のタイトル"
-other = "コメントを編集 - #{{.SuggestionNumber}} {{.SuggestionTitle}} - {{.SpaceName}}"
+other = "コメントの編集 - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_comment_edit_body_placeholder]
 description = "編集提案コメント編集画面の本文プレースホルダー"
@@ -1071,7 +1079,7 @@ other = "編集提案のクローズに失敗しました"
 # 差分表示
 [diff_no_changes]
 description = "差分がない場合のメッセージ"
-other = "変更はありません"
+other = "本文に変更はありません"
 
 [suggestion_diff_title_change]
 description = "編集提案のタイトル変更ラベル"
@@ -1087,7 +1095,7 @@ other = "削除する"
 
 [suggestion_change_remove_page_confirm]
 description = "変更差分画面のページ削除確認ダイアログ"
-other = "このページを編集提案から削除しますか？"
+other = "このページを編集提案から削除しますか？\n(編集提案から削除しても下書きは残り続けます)"
 
 # 編集提案ページ編集
 [suggestion_page_edit_button]
