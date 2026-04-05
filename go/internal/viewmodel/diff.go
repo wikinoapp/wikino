@@ -44,6 +44,11 @@ func (b DiffBlock) HasChanges() bool {
 // ComputeDiffBlocks は2つのテキストの差分を計算し、DiffBlockのスライスとして返します。
 // contextLines は変更箇所の前後に表示するコンテキスト行数です。
 func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
+	// 改行コードを正規化する。ブラウザのフォーム送信では\r\nが使われることがあり、
+	// DB内の既存データと改行コードが異なると同じ行内容でも差分として検出される。
+	oldText = normalizeNewlines(oldText)
+	newText = normalizeNewlines(newText)
+
 	dmp := diffmatchpatch.New()
 	a, b, c := dmp.DiffLinesToChars(oldText, newText)
 	diffs := dmp.DiffMain(a, b, false)
@@ -56,6 +61,16 @@ func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
 	}
 
 	return groupIntoBlocks(lines, contextLines)
+}
+
+// normalizeNewlines は改行コードを\nに統一し、末尾に改行がなければ追加します
+func normalizeNewlines(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	if text != "" && !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	return text
 }
 
 // buildDiffLines はdiffの結果からDiffLineのスライスを構築します
