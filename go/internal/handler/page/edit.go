@@ -112,6 +112,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {
 		editData.SuggestionNumber = int32(output.Suggestion.Number)
 		editData.SuggestionURL = string(templates.SuggestionPagePath(spaceIdentifier.String(), int32(output.Suggestion.Number), string(*output.DraftPage.SuggestionPageID)))
+		editData.SuggestionShowURL = string(templates.SuggestionShowPath(spaceIdentifier.String(), int32(output.Suggestion.Number)))
 	}
 
 	content := pagepages.Edit(editData)

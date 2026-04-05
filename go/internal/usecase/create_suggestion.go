@@ -251,14 +251,17 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input c
 
 	// 3. 各下書きページからSuggestionPageとSuggestionPageRevisionを作成
 	for _, draftPage := range input.DraftPages {
-		latestRevision := input.PageRevisions[draftPage.PageID]
+		var pageRevisionID *model.PageRevisionID
+		if latestRevision := input.PageRevisions[draftPage.PageID]; latestRevision != nil {
+			pageRevisionID = &latestRevision.ID
+		}
 
 		_, err = createSuggestionPageFromDraftPage(ctx, createSuggestionPageInput{
 			SpaceID:        input.SpaceID,
 			SuggestionID:   suggestion.ID,
 			SpaceMemberID:  input.SpaceMemberID,
 			DraftPage:      draftPage,
-			PageRevisionID: latestRevision.ID,
+			PageRevisionID: pageRevisionID,
 		}, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 		if err != nil {
 			return nil, err

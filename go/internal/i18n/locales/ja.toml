@@ -562,7 +562,7 @@ other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_suggestion_editing]
 description = "編集提案のページ編集中メッセージ"
-other = "編集提案 #{{.Number}} のページを編集中です"
+other = "<a href=\"{{.URL}}\" class=\"underline\">編集提案 #{{.Number}}</a> のページを編集中です"
 
 [page_edit_update_suggestion_button]
 description = "編集提案を更新ボタンのラベル"
@@ -639,6 +639,10 @@ other = "追加可能な下書きページがありません"
 [suggestion_page_new_submit]
 description = "編集提案ページ追加の送信ボタン"
 other = "追加する"
+
+[suggestion_page_new_cancel]
+description = "編集提案ページ追加のキャンセルリンク"
+other = "キャンセル"
 
 [error_suggestion_page_update_conflict]
 description = "編集提案ページ更新時の競合エラー"

@@ -619,7 +619,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: ページリビジョンが存在しない場合はエラー", func(t *testing.T) {
+	t.Run("正常系: 新規ページ（リビジョンなし）の下書きで編集提案を作成できる", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -655,7 +655,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithBodyHTML("<p>本文</p>").
 			Build()
 
-		_, err := uc.Execute(context.Background(), CreateSuggestionInput{
+		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
 			SpaceIdentifier: "create-sug-norev",
 			TopicNumber:     1,
 			UserID:          userID,
@@ -663,8 +663,24 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			Body:            "",
 			DraftPageIDs:    []model.DraftPageID{draftPageID},
 		})
-		if err == nil {
-			t.Error("expected error but got nil")
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil || output.Suggestion == nil {
+			t.Fatal("output or Suggestion should not be nil")
+		}
+
+		// SuggestionPageのPageRevisionIDがnilであることを確認
+		suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+		pages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), output.Suggestion.ID, spaceID)
+		if err != nil {
+			t.Fatalf("ListBySuggestionID() error = %v", err)
+		}
+		if len(pages) != 1 {
+			t.Fatalf("SuggestionPages count = %d, want 1", len(pages))
+		}
+		if pages[0].PageRevisionID != nil {
+			t.Errorf("SuggestionPage.PageRevisionID = %v, want nil", pages[0].PageRevisionID)
 		}
 	})
 }

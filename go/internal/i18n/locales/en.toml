@@ -562,7 +562,7 @@ other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_suggestion_editing]
 description = "Message shown when editing a page for a suggestion"
-other = "Editing a page for suggestion #{{.Number}}"
+other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion #{{.Number}}</a>"
 
 [page_edit_update_suggestion_button]
 description = "Label for the update suggestion button"
@@ -639,6 +639,10 @@ other = "No draft pages available to add."
 [suggestion_page_new_submit]
 description = "Add suggestion page submit button"
 other = "Add"
+
+[suggestion_page_new_cancel]
+description = "Cancel link on add suggestion page"
+other = "Cancel"
 
 [error_suggestion_page_update_conflict]
 description = "Conflict error when updating suggestion page"

@@ -23,7 +23,7 @@ type CreateSuggestionPageParams struct {
 	SpaceID                   string         `json:"space_id"`
 	SuggestionID              string         `json:"suggestion_id"`
 	PageID                    string         `json:"page_id"`
-	PageRevisionID            string         `json:"page_revision_id"`
+	PageRevisionID            *string        `json:"page_revision_id"`
 	Title                     sql.NullString `json:"title"`
 	Body                      string         `json:"body"`
 	BodyHtml                  string         `json:"body_html"`

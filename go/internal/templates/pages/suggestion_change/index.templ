@@ -141,11 +141,13 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 					href={ templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, pd.PageNumber))) }
 					class="flex items-center gap-1 hover:underline"
 				>
-					<span class="text-sm font-semibold">
-						{ pd.OldTitle }
-					</span>
+					if pd.OldTitle != "" {
+						<span class="text-sm font-semibold">
+							{ pd.OldTitle }
+						</span>
 
-					@templates.Icon("arrow-right-regular", "size-3")
+						@templates.Icon("arrow-right-regular", "size-3")
+					}
 
 					<span class="text-sm font-semibold">
 						{ pd.NewTitle }

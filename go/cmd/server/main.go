@@ -367,7 +367,7 @@ func main() {
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, suggestionPageUpdateValidator,
 	)
-	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
+	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, topicRepo, draftPageRepo)
 	suggestionPageCreateValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
 	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,

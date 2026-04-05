@@ -1,6 +1,8 @@
 package suggestion_page
 
 import (
+	"fmt"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -12,7 +14,8 @@ type NewData struct {
 	CSRFToken        string
 	FormErrors       *model.ValidationError
 	Space            viewmodel.Space
-	SuggestionNumber int32
+	Topic            viewmodel.Topic
+	Suggestion       viewmodel.SuggestionForDetail
 	DraftPages       []viewmodel.DraftPageForSuggestionNew
 }
 
@@ -33,6 +36,15 @@ templ New(data NewData) {
 						Path:     templates.SpacePath(data.Space.Identifier.String()),
 						IconName: "globe-regular",
 					},
+					{
+						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						IconName: data.Topic.IconName,
+					},
+					{
+						Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.Suggestion.Number),
+						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
+					},
 				},
 			})
 
@@ -48,21 +60,23 @@ templ New(data NewData) {
 
 					@components.ContentCard() {
 						<form
+							action={ templ.SafeURL(string(templates.SuggestionPagesPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+							class="form grid gap-6"
 							method="POST"
-							action={ templ.SafeURL(string(templates.SuggestionPagesPath(data.Space.Identifier.String(), data.SuggestionNumber))) }
-							class="flex flex-col gap-6"
 						>
 							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-							<div class="flex flex-col gap-2">
-								<label class="text-sm font-medium">
+							<div class="grid gap-2">
+								<label>
 									{ templates.T(ctx, "suggestion_page_new_draft_pages_label") }
 								</label>
+
 								if data.FormErrors != nil && data.FormErrors.HasFieldError("draft_page_ids") {
 									for _, errMsg := range data.FormErrors.GetFieldErrors("draft_page_ids") {
 										<p class="text-sm text-destructive">{ errMsg }</p>
 									}
 								}
+
 								if len(data.DraftPages) > 0 {
 									<div class="flex flex-col gap-2 border border-border rounded-lg p-4">
 										for _, dp := range data.DraftPages {
@@ -73,7 +87,10 @@ templ New(data NewData) {
 													value={ string(dp.ID) }
 													class="checkbox"
 												/>
-												<span class="text-sm">{ dp.DisplayTitle(ctx) }</span>
+
+												<span class="text-sm">
+													{ dp.DisplayTitle(ctx) }
+												</span>
 											</label>
 										}
 									</div>
@@ -84,16 +101,24 @@ templ New(data NewData) {
 								}
 							</div>
 
-							<div class="flex justify-end">
+							<div class="flex justify-between gap-2">
 								<button
 									type="submit"
-									class="btn btn-primary"
+									class="btn rounded-full w-fit"
 									if len(data.DraftPages) == 0 {
 										disabled
 									}
 								>
+									@templates.Icon("file-plus-regular", "size-4")
 									{ templates.T(ctx, "suggestion_page_new_submit") }
 								</button>
+
+								<a
+									class="btn-outline rounded-full w-fit"
+									href={ templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+								>
+									{ templates.T(ctx, "suggestion_page_new_cancel") }
+								</a>
 							</div>
 						</form>
 					}

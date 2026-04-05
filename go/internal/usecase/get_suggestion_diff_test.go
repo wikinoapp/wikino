@@ -76,7 +76,7 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 				SpaceID:        spaceID,
 				SuggestionID:   suggestionID,
 				PageID:         pageID,
-				PageRevisionID: pageRevisionID,
+				PageRevisionID: &pageRevisionID,
 				Title:          strPtr("変更後タイトル"),
 				Body:           "元の本文\n変更された2行目\n3行目\n追加行",
 			},
@@ -105,6 +105,49 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 		}
 		if baseRev.Body != "元の本文\n2行目\n3行目" {
 			t.Errorf("baseRev.Body = %q, want %q", baseRev.Body, "元の本文\n2行目\n3行目")
+		}
+	})
+
+	t.Run("PageRevisionIDがnilの場合はBaseRevisionsに含まれない", func(t *testing.T) {
+		newPageSuggestionPageID := model.SuggestionPageID("new-page-sp-id")
+
+		suggestionPages := []*model.SuggestionPage{
+			{
+				ID:             suggestionPageID,
+				SpaceID:        spaceID,
+				SuggestionID:   suggestionID,
+				PageID:         pageID,
+				PageRevisionID: &pageRevisionID,
+				Title:          strPtr("変更後タイトル"),
+				Body:           "変更本文",
+			},
+			{
+				ID:             newPageSuggestionPageID,
+				SpaceID:        spaceID,
+				SuggestionID:   suggestionID,
+				PageID:         "new-page-id",
+				PageRevisionID: nil,
+				Title:          strPtr("新規ページ"),
+				Body:           "新規ページ本文",
+			},
+		}
+
+		output, err := uc.Execute(context.Background(), GetSuggestionDiffInput{
+			SpaceID:         spaceID,
+			SuggestionPages: suggestionPages,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+
+		// ベースリビジョンがある方は含まれる
+		if _, ok := output.BaseRevisions[suggestionPageID]; !ok {
+			t.Error("BaseRevisions should contain suggestionPageID")
+		}
+
+		// ベースリビジョンがない方は含まれない
+		if _, ok := output.BaseRevisions[newPageSuggestionPageID]; ok {
+			t.Error("BaseRevisions should not contain newPageSuggestionPageID")
 		}
 	})
 
