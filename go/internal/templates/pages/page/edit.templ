@@ -21,6 +21,7 @@ type EditPageData struct {
 	ManualSaveURL            string
 	SuggestionNumber         int32
 	SuggestionURL            string
+	SuggestionShowURL        string
 	SuggestionEnabled        bool
 	CreateSuggestionSaveURL  string
 }
@@ -61,7 +62,7 @@ templ Edit(data EditPageData) {
 							<div class="alert">
 								@templates.Icon("warning-circle-regular", "fill-info")
 								<h2>
-									{ templates.T(ctx, "page_edit_suggestion_editing", map[string]any{"Number": data.SuggestionNumber}) }
+									@templ.Raw(templates.T(ctx, "page_edit_suggestion_editing", map[string]any{"Number": data.SuggestionNumber, "URL": data.SuggestionShowURL}))
 								</h2>
 							</div>
 						</div>

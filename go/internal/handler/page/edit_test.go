@@ -787,6 +787,11 @@ func TestEdit_SuggestionMode(t *testing.T) {
 		t.Error("suggestion editing suffix not found in response")
 	}
 
+	// 編集提案へのリンクが含まれていることを確認
+	if !strings.Contains(body, `/s/suggestion-edit-space/suggestions/`) {
+		t.Error("suggestion show link not found in response")
+	}
+
 	// 「編集提案を更新」ボタンが表示されていることを確認
 	if !strings.Contains(body, "編集提案を更新") {
 		t.Error("update suggestion button not found in response")

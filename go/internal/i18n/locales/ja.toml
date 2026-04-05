@@ -562,7 +562,7 @@ other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_suggestion_editing]
 description = "編集提案のページ編集中メッセージ"
-other = "編集提案 #{{.Number}} のページを編集中です"
+other = "<a href=\"{{.URL}}\" class=\"underline\">編集提案 #{{.Number}}</a> のページを編集中です"
 
 [page_edit_update_suggestion_button]
 description = "編集提案を更新ボタンのラベル"
