@@ -16,8 +16,7 @@ import (
 
 // SimpleLayoutData はシンプルレイアウトに渡すデータ構造体です
 type SimpleLayoutData struct {
-	Meta  viewmodel.PageMeta
-	Flash *session.FlashMessage
+	Meta viewmodel.PageMeta
 }
 
 // Simple はシンプルなレイアウトです
@@ -50,7 +49,7 @@ func Simple(data SimpleLayoutData, content templ.Component) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Locale(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/simple.templ`, Line: 21, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/simple.templ`, Line: 20, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -68,7 +67,7 @@ func Simple(data SimpleLayoutData, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.Flash(data.Flash).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Flash(session.FlashFromContext(ctx)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

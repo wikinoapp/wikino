@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -117,6 +118,27 @@ func (f *FlashManager) GetFlash(w http.ResponseWriter, r *http.Request) *FlashMe
 	f.clearFlash(w)
 
 	return &flash
+}
+
+type flashContextKey struct{}
+
+// Middleware はリクエストからフラッシュメッセージを読み取り、contextに格納するミドルウェアです。
+// Cookieからフラッシュを読み取り後、自動的にCookieを削除します。
+func (f *FlashManager) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		flash := f.GetFlash(w, r)
+		if flash != nil {
+			ctx := context.WithValue(r.Context(), flashContextKey{}, flash)
+			r = r.WithContext(ctx)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// FlashFromContext はcontextからフラッシュメッセージを取得します
+func FlashFromContext(ctx context.Context) *FlashMessage {
+	flash, _ := ctx.Value(flashContextKey{}).(*FlashMessage)
+	return flash
 }
 
 // clearFlash はフラッシュCookieを削除する

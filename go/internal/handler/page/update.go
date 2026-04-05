@@ -164,7 +164,8 @@ func (h *Handler) renderEditWithErrors(
 	}
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:       meta,
+		Meta: meta,
+
 		HideFooter: true,
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNamePageEdit,

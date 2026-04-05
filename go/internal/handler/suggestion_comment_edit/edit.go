@@ -104,12 +104,10 @@ func (h *Handler) renderEditForm(
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_comment_edit_title", map[string]any{
-		"SuggestionTitle":  output.Suggestion.Title,
 		"SuggestionNumber": output.Suggestion.Number,
+		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
-
-	flash := h.flashMgr.GetFlash(w, r)
 
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
@@ -135,8 +133,8 @@ func (h *Handler) renderEditForm(
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNameSuggestionCommentEdit,
 			SignedIn:          true,

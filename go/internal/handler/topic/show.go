@@ -98,9 +98,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		"SpaceName": output.Space.Name,
 	})
 
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
 	// テンプレートをレンダリング
 	content := topicpages.Show(topicpages.ShowData{
 		Topic:             topicVM,
@@ -118,8 +115,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName: templates.PageNameTopicShow,
 			SignedIn:        signedIn,
