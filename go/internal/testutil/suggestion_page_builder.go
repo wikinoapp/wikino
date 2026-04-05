@@ -19,7 +19,7 @@ type SuggestionPageBuilder struct {
 	spaceID                   string
 	suggestionID              string
 	pageID                    string
-	pageRevisionID            string
+	pageRevisionID            *string
 	title                     *string
 	body                      string
 	bodyHTML                  string
@@ -61,7 +61,8 @@ func (b *SuggestionPageBuilder) WithPageID(pageID model.PageID) *SuggestionPageB
 
 // WithPageRevisionID はページリビジョンIDを設定します
 func (b *SuggestionPageBuilder) WithPageRevisionID(pageRevisionID model.PageRevisionID) *SuggestionPageBuilder {
-	b.pageRevisionID = string(pageRevisionID)
+	s := string(pageRevisionID)
+	b.pageRevisionID = &s
 	return b
 }
 
@@ -115,9 +116,6 @@ func (b *SuggestionPageBuilder) Build() model.SuggestionPageID {
 	if b.pageID == "" {
 		b.t.Fatal("SuggestionPageBuilder: pageIDが設定されていません。WithPageID()を呼んでください")
 	}
-	if b.pageRevisionID == "" {
-		b.t.Fatal("SuggestionPageBuilder: pageRevisionIDが設定されていません。WithPageRevisionID()を呼んでください")
-	}
 
 	now := time.Now()
 	var id string
@@ -144,7 +142,7 @@ type SuggestionPageBuilderDB struct {
 	spaceID                   string
 	suggestionID              string
 	pageID                    string
-	pageRevisionID            string
+	pageRevisionID            *string
 	title                     *string
 	body                      string
 	bodyHTML                  string
@@ -186,7 +184,8 @@ func (b *SuggestionPageBuilderDB) WithPageID(pageID model.PageID) *SuggestionPag
 
 // WithPageRevisionID はページリビジョンIDを設定します
 func (b *SuggestionPageBuilderDB) WithPageRevisionID(pageRevisionID model.PageRevisionID) *SuggestionPageBuilderDB {
-	b.pageRevisionID = string(pageRevisionID)
+	s := string(pageRevisionID)
+	b.pageRevisionID = &s
 	return b
 }
 
@@ -233,10 +232,6 @@ func (b *SuggestionPageBuilderDB) Build() model.SuggestionPageID {
 	}
 	if b.pageID == "" {
 		b.t.Fatal("SuggestionPageBuilderDB: pageIDが設定されていません。WithPageID()を呼んでください")
-	}
-
-	if b.pageRevisionID == "" {
-		b.t.Fatal("SuggestionPageBuilderDB: pageRevisionIDが設定されていません。WithPageRevisionID()を呼んでください")
 	}
 
 	now := time.Now()

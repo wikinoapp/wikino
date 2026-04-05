@@ -351,7 +351,7 @@ type SuggestionPage struct {
 	SpaceID                   string         `json:"space_id"`
 	SuggestionID              string         `json:"suggestion_id"`
 	PageID                    string         `json:"page_id"`
-	PageRevisionID            string         `json:"page_revision_id"`
+	PageRevisionID            *string        `json:"page_revision_id"`
 	CreatedAt                 time.Time      `json:"created_at"`
 	UpdatedAt                 time.Time      `json:"updated_at"`
 	Title                     sql.NullString `json:"title"`

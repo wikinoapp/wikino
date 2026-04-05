@@ -30,7 +30,7 @@ type CreateSuggestionPageInput struct {
 	SpaceID                   model.SpaceID
 	SuggestionID              model.SuggestionID
 	PageID                    model.PageID
-	PageRevisionID            model.PageRevisionID
+	PageRevisionID            *model.PageRevisionID
 	Title                     *string
 	Body                      string
 	BodyHTML                  string
@@ -47,6 +47,12 @@ func (r *SuggestionPageRepository) Create(ctx context.Context, input CreateSugge
 		title = sql.NullString{String: *input.Title, Valid: true}
 	}
 
+	var pageRevisionID *string
+	if input.PageRevisionID != nil {
+		s := string(*input.PageRevisionID)
+		pageRevisionID = &s
+	}
+
 	var featuredImageAttachmentID *string
 	if input.FeaturedImageAttachmentID != nil {
 		s := string(*input.FeaturedImageAttachmentID)
@@ -57,7 +63,7 @@ func (r *SuggestionPageRepository) Create(ctx context.Context, input CreateSugge
 		SpaceID:                   string(input.SpaceID),
 		SuggestionID:              string(input.SuggestionID),
 		PageID:                    string(input.PageID),
-		PageRevisionID:            string(input.PageRevisionID),
+		PageRevisionID:            pageRevisionID,
 		Title:                     title,
 		Body:                      input.Body,
 		BodyHtml:                  input.BodyHTML,
@@ -163,12 +169,18 @@ func (r *SuggestionPageRepository) toModel(row query.SuggestionPage) *model.Sugg
 		featuredImageAttachmentID = &id
 	}
 
+	var pageRevisionID *model.PageRevisionID
+	if row.PageRevisionID != nil {
+		id := model.PageRevisionID(*row.PageRevisionID)
+		pageRevisionID = &id
+	}
+
 	return &model.SuggestionPage{
 		ID:                        model.SuggestionPageID(row.ID),
 		SpaceID:                   model.SpaceID(row.SpaceID),
 		SuggestionID:              model.SuggestionID(row.SuggestionID),
 		PageID:                    model.PageID(row.PageID),
-		PageRevisionID:            model.PageRevisionID(row.PageRevisionID),
+		PageRevisionID:            pageRevisionID,
 		Title:                     title,
 		Body:                      row.Body,
 		BodyHTML:                  row.BodyHtml,

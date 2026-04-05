@@ -181,14 +181,17 @@ func (uc *AddSuggestionPageUsecase) addSuggestionPages(
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 
 	for _, draftPage := range draftPages {
-		latestRevision := pageRevisions[draftPage.PageID]
+		var pageRevisionID *model.PageRevisionID
+		if latestRevision := pageRevisions[draftPage.PageID]; latestRevision != nil {
+			pageRevisionID = &latestRevision.ID
+		}
 
 		_, err = createSuggestionPageFromDraftPage(ctx, createSuggestionPageInput{
 			SpaceID:        spaceID,
 			SuggestionID:   suggestion.ID,
 			SpaceMemberID:  spaceMemberID,
 			DraftPage:      draftPage,
-			PageRevisionID: latestRevision.ID,
+			PageRevisionID: pageRevisionID,
 		}, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo)
 		if err != nil {
 			return nil, err

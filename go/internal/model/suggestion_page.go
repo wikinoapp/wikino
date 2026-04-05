@@ -10,7 +10,7 @@ type SuggestionPage struct {
 	SpaceID                   SpaceID
 	SuggestionID              SuggestionID
 	PageID                    PageID
-	PageRevisionID            PageRevisionID
+	PageRevisionID            *PageRevisionID
 	Title                     *string
 	Body                      string
 	BodyHTML                  string

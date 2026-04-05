@@ -17,11 +17,10 @@ func fetchLatestPageRevisions(ctx context.Context, draftPages []*model.DraftPage
 		if err != nil {
 			return nil, fmt.Errorf("ページリビジョンの取得に失敗しました: %w", err)
 		}
-		if latestRevision == nil {
-			return nil, fmt.Errorf("ページ %s のリビジョンが見つかりません", draftPage.PageID)
+		// リビジョンが存在しない場合はスキップ（新規ページの場合）
+		if latestRevision != nil {
+			pageRevisions[draftPage.PageID] = latestRevision
 		}
-
-		pageRevisions[draftPage.PageID] = latestRevision
 	}
 
 	return pageRevisions, nil
@@ -33,7 +32,7 @@ type createSuggestionPageInput struct {
 	SuggestionID   model.SuggestionID
 	SpaceMemberID  model.SpaceMemberID
 	DraftPage      *model.DraftPage
-	PageRevisionID model.PageRevisionID
+	PageRevisionID *model.PageRevisionID
 }
 
 // createSuggestionPageFromDraftPage は下書きページからSuggestionPage・SuggestionPageRevisionを作成し、DraftPageのsuggestion_page_idを設定する。

@@ -79,7 +79,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			SpaceID:        spaceID,
 			SuggestionID:   suggestion.ID,
 			PageID:         existingPageID,
-			PageRevisionID: model.PageRevisionID(existingPageRevisionID),
+			PageRevisionID: pageRevisionIDPtr(model.PageRevisionID(existingPageRevisionID)),
 			Title:          strPtr("既存ページ"),
 			Body:           "既存本文",
 			BodyHTML:       "<p>既存本文</p>",
@@ -163,6 +163,91 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 		}
 		if *updatedDraft.SuggestionPageID != addedPage.ID {
 			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", *updatedDraft.SuggestionPageID, addedPage.ID)
+		}
+	})
+
+	t.Run("正常系: 新規ページ（リビジョンなし）の下書きを編集提案に追加できる", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("add-sp-newpg").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("add-sp-newpg@example.com").
+			WithAtname("addspnewpg").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+
+		// 編集提案を作成
+		sugRepo := repository.NewSuggestionRepository(q)
+		suggestion, err := sugRepo.Create(context.Background(), repository.CreateSuggestionInput{
+			SpaceID:              spaceID,
+			TopicID:              topicID,
+			CreatedSpaceMemberID: spaceMemberID,
+			Number:               1,
+			Title:                "新規ページ提案",
+			Body:                 "",
+			BodyHTML:             "",
+			Status:               model.SuggestionStatusOpen,
+		})
+		if err != nil {
+			t.Fatalf("suggestion creation failed: %v", err)
+		}
+
+		// 新規ページ（リビジョンなし）を作成
+		newPageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("新規ページ").
+			Build()
+		// リビジョンは作成しない（新規ページ）
+
+		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithPageID(newPageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("新規ページタイトル").
+			WithBody("新規ページ本文").
+			WithBodyHTML("<p>新規ページ本文</p>").
+			Build()
+
+		output, err := uc.Execute(context.Background(), AddSuggestionPageInput{
+			SpaceIdentifier:  "add-sp-newpg",
+			SuggestionNumber: suggestion.Number,
+			UserID:           userID,
+			DraftPageIDs:     []model.DraftPageID{draftPageID},
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil || output.Suggestion == nil {
+			t.Fatal("output or Suggestion should not be nil")
+		}
+
+		// SuggestionPageが作成されたことを確認
+		pages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestion.ID, spaceID)
+		if err != nil {
+			t.Fatalf("ListBySuggestionID() error = %v", err)
+		}
+		if len(pages) != 1 {
+			t.Fatalf("SuggestionPages count = %d, want 1", len(pages))
+		}
+
+		addedPage := pages[0]
+		if addedPage.PageRevisionID != nil {
+			t.Errorf("SuggestionPage.PageRevisionID = %v, want nil", addedPage.PageRevisionID)
+		}
+		if addedPage.Body != "新規ページ本文" {
+			t.Errorf("SuggestionPage.Body = %q, want %q", addedPage.Body, "新規ページ本文")
 		}
 	})
 
@@ -369,7 +454,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			SpaceID:        spaceID,
 			SuggestionID:   suggestion.ID,
 			PageID:         pageID,
-			PageRevisionID: model.PageRevisionID(pageRevisionID),
+			PageRevisionID: pageRevisionIDPtr(model.PageRevisionID(pageRevisionID)),
 			Title:          strPtr("対象ページ"),
 			Body:           "本文",
 			BodyHTML:       "<p>本文</p>",
@@ -404,4 +489,8 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			t.Error("expected draft_page_ids field error")
 		}
 	})
+}
+
+func pageRevisionIDPtr(id model.PageRevisionID) *model.PageRevisionID {
+	return &id
 }

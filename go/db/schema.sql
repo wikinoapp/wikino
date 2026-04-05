@@ -559,7 +559,7 @@ CREATE TABLE public.suggestion_pages (
     space_id uuid NOT NULL,
     suggestion_id uuid NOT NULL,
     page_id uuid NOT NULL,
-    page_revision_id uuid NOT NULL,
+    page_revision_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     title character varying,
@@ -2122,4 +2122,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260319072803'),
     ('20260319074138'),
     ('20260319082723'),
-    ('20260326051852');
+    ('20260326051852'),
+    ('20260405084047');

@@ -201,6 +201,92 @@ func TestCreate_正常にページが追加される(t *testing.T) {
 	}
 }
 
+func TestCreate_新規ページが正常に追加される(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	queries := query.New(db)
+
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("sp-cr-newpg@example.com").
+		WithAtname("spcrnewpg").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("sp-cr-newpg").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("Topic").
+		Build()
+	suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+
+	// 新規ページ（リビジョンなし）
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("新規ページ").
+		WithUnpublished().
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithBody("新規ページ本文").
+		WithTitle("新規ページタイトル").
+		Build()
+
+	handler := setupHandler(t, queries, db)
+
+	form := url.Values{}
+	form.Set("csrf_token", "test-csrf-token")
+	form.Add("draft_page_ids", string(draftPageID))
+
+	req := newPostRequest(t, "/s/sp-cr-newpg/suggestions/1/suggestion_pages", map[string]string{
+		"space_identifier":  "sp-cr-newpg",
+		"suggestion_number": "1",
+	}, form)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "spcrnewpg"})
+	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+	}
+	expectedLoc := "/s/sp-cr-newpg/suggestions/1/changes"
+	if loc := rr.Header().Get("Location"); loc != expectedLoc {
+		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+	}
+
+	// SuggestionPageが作成され、PageRevisionIDがnilであることを確認
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	pages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestionID, spaceID)
+	if err != nil {
+		t.Fatalf("SuggestionPageの取得に失敗: %v", err)
+	}
+	if len(pages) != 1 {
+		t.Fatalf("SuggestionPage count = %d, want 1", len(pages))
+	}
+	if pages[0].PageRevisionID != nil {
+		t.Errorf("PageRevisionID = %v, want nil", pages[0].PageRevisionID)
+	}
+}
+
 func TestCreate_下書きページ未選択でバリデーションエラーが返る(t *testing.T) {
 	t.Parallel()
 

@@ -180,6 +180,78 @@ func TestCreate_下書きページ未選択でバリデーションエラーが�
 	}
 }
 
+func TestCreate_新規ページで編集提案が作成されリダイレクトされる(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	queries := query.New(db)
+
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("create-newpg@example.com").
+		WithAtname("createnewpg").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("create-newpg-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("New Page Topic").
+		Build()
+
+	// 新規ページ（リビジョンなし）
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("新規ページ").
+		WithUnpublished().
+		Build()
+
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("新規ページタイトル").
+		WithBody("新規ページ本文").
+		WithBodyHTML("<p>新規ページ本文</p>").
+		Build()
+
+	handler := setupHandler(t, db, queries)
+
+	form := url.Values{}
+	form.Set("title", "新規ページ編集提案")
+	form.Set("body", "")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Add("draft_page_ids", string(draftPageID))
+
+	req := newPostRequest(t, "/s/create-newpg-sp/topics/1/suggestions", map[string]string{
+		"space_identifier": "create-newpg-sp",
+		"topic_number":     "1",
+	}, form)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "createnewpg"})
+	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+	}
+
+	loc := rr.Header().Get("Location")
+	if !strings.HasPrefix(loc, "/s/create-newpg-sp/topics/1/suggestions/") {
+		t.Errorf("wrong redirect location: got %q", loc)
+	}
+}
+
 func TestCreate_正常に編集提案が作成されリダイレクトされる(t *testing.T) {
 	t.Parallel()
 

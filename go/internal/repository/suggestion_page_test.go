@@ -64,7 +64,7 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 			SpaceID:        spaceID,
 			SuggestionID:   suggestionID,
 			PageID:         pageID,
-			PageRevisionID: pageRevisionID,
+			PageRevisionID: &pageRevisionID,
 			Title:          &title,
 			Body:           "提案ページ本文",
 			BodyHTML:       "<p>提案ページ本文</p>",
@@ -87,7 +87,7 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 		if sp.PageID != pageID {
 			t.Errorf("sp.PageID = %v, want %v", sp.PageID, pageID)
 		}
-		if sp.PageRevisionID != pageRevisionID {
+		if sp.PageRevisionID == nil || *sp.PageRevisionID != pageRevisionID {
 			t.Errorf("sp.PageRevisionID = %v, want %v", sp.PageRevisionID, pageRevisionID)
 		}
 		if sp.Title == nil || *sp.Title != "提案ページタイトル" {
@@ -98,6 +98,43 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 		}
 		if sp.BodyHTML != "<p>提案ページ本文</p>" {
 			t.Errorf("sp.BodyHTML = %v, want <p>提案ページ本文</p>", sp.BodyHTML)
+		}
+	})
+
+	t.Run("PageRevisionIDなしで編集提案ページを作成できる", func(t *testing.T) {
+		// 別のページを作成してユニーク制約を回避
+		pageID3 := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(3).
+			WithTitle("新規ページ").
+			WithUnpublished().
+			Build()
+
+		title := "新規ページ提案"
+		sp, err := repo.Create(ctx, CreateSuggestionPageInput{
+			SpaceID:        spaceID,
+			SuggestionID:   suggestionID,
+			PageID:         pageID3,
+			PageRevisionID: nil,
+			Title:          &title,
+			Body:           "新規ページ本文",
+			BodyHTML:       "<p>新規ページ本文</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+		if sp == nil {
+			t.Fatal("Create() returned nil")
+		}
+		if sp.PageRevisionID != nil {
+			t.Errorf("sp.PageRevisionID = %v, want nil", sp.PageRevisionID)
+		}
+		if sp.Title == nil || *sp.Title != "新規ページ提案" {
+			t.Errorf("sp.Title = %v, want 新規ページ提案", sp.Title)
+		}
+		if sp.Body != "新規ページ本文" {
+			t.Errorf("sp.Body = %v, want 新規ページ本文", sp.Body)
 		}
 	})
 
@@ -121,7 +158,7 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 			SpaceID:        spaceID,
 			SuggestionID:   suggestionID,
 			PageID:         pageID2,
-			PageRevisionID: pageRevisionID2,
+			PageRevisionID: &pageRevisionID2,
 			Title:          nil,
 			Body:           "タイトルなし本文",
 			BodyHTML:       "<p>タイトルなし本文</p>",
