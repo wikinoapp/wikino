@@ -137,7 +137,10 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 	<div class="flex flex-col gap-2">
 		<div class="flex items-center justify-between">
 			if pd.HasTitleChange {
-				<div class="flex items-center gap-1">
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, int32(pd.PageNumber)))) }
+					class="flex items-center gap-1 hover:underline"
+				>
 					<span class="text-sm font-semibold">
 						{ pd.OldTitle }
 					</span>
@@ -147,11 +150,14 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 					<span class="text-sm font-semibold">
 						{ pd.NewTitle }
 					</span>
-				</div>
+				</a>
 			} else {
-				<div class="text-sm font-semibold">
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(editData.SpaceIdentifier, int32(pd.PageNumber)))) }
+					class="text-sm font-semibold hover:underline"
+				>
 					{ pd.PageTitle }
-				</div>
+				</a>
 			}
 
 			<div class="flex items-center gap-4">

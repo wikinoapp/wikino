@@ -77,6 +77,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	pageDiffsVM := viewmodel.NewSuggestionPageDiffs(viewmodel.NewSuggestionPageDiffsInput{
 		SuggestionPages: output.SuggestionPages,
 		BaseRevisions:   diffOutput.BaseRevisions,
+		Pages:           output.Pages,
 	})
 
 	// ページメタ情報を設定
