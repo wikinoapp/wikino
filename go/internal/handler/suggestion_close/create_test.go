@@ -47,7 +47,8 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionc
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 
-	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 
 	return suggestionclosehandler.NewHandler(
 		flashMgr,

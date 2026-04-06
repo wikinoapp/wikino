@@ -55,7 +55,8 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionp
 	topicRepo := repository.NewTopicRepository(queries)
 
 	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, topicRepo, draftPageRepo)
-	createValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	pageRepo := repository.NewPageRepository(queries)
+	createValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo,

@@ -102,8 +102,10 @@ func TestCreate_Success(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveValidator)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveValidator)
 	handler := setupHandlerWithUsecase(t, q, movePageUC)
 
 	form := url.Values{}
@@ -179,8 +181,10 @@ func TestCreate_ValidationError(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveValidator)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveValidator)
 	handler := setupHandlerWithUsecase(t, q, movePageUC)
 
 	// 移動先トピックを選択しない（空文字）

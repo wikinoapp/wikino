@@ -1,7 +1,6 @@
 package suggestion
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -69,12 +69,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_create_success"))
-	suggestionPath := fmt.Sprintf("/s/%s/topics/%d/suggestions/%d",
-		string(spaceIdentifier),
-		topicNumber,
-		createOutput.Suggestion.Number,
-	)
-	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
+	suggestionPath := templates.SuggestionShowPath(string(spaceIdentifier), int32(createOutput.Suggestion.Number))
+	http.Redirect(w, r, string(suggestionPath), http.StatusSeeOther)
 }
 
 func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, topicNumber int32, title, body string, draftPageIDStrs []string) {

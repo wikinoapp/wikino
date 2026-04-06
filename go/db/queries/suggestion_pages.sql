@@ -24,3 +24,11 @@ RETURNING *;
 -- name: DeleteSuggestionPage :exec
 -- 編集提案ページを削除する（スペースIDでスコープ）
 DELETE FROM suggestion_pages WHERE id = $1 AND space_id = $2;
+
+-- name: ExistsOpenSuggestionByPageID :one
+-- 指定ページを参照しているオープンな編集提案が存在するかを確認する
+SELECT EXISTS(
+  SELECT 1 FROM suggestion_pages sp
+  INNER JOIN suggestions s ON sp.suggestion_id = s.id
+  WHERE sp.page_id = $1 AND sp.space_id = $2 AND s.status = 1
+);

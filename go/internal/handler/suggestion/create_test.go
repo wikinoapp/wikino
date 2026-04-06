@@ -247,7 +247,7 @@ func TestCreate_新規ページで編集提案が作成されリダイレクト�
 	}
 
 	loc := rr.Header().Get("Location")
-	if !strings.HasPrefix(loc, "/s/create-newpg-sp/topics/1/suggestions/") {
+	if !strings.HasPrefix(loc, "/s/create-newpg-sp/suggestions/") {
 		t.Errorf("wrong redirect location: got %q", loc)
 	}
 }
@@ -320,7 +320,7 @@ func TestCreate_正常に編集提案が作成されリダイレクトされる(
 	}
 
 	loc := rr.Header().Get("Location")
-	if !strings.HasPrefix(loc, "/s/create-ok-sp/topics/1/suggestions/") {
+	if !strings.HasPrefix(loc, "/s/create-ok-sp/suggestions/") {
 		t.Errorf("wrong redirect location: got %q", loc)
 	}
 }

@@ -81,6 +81,27 @@ func (q *Queries) DeleteSuggestionPage(ctx context.Context, arg DeleteSuggestion
 	return err
 }
 
+const existsOpenSuggestionByPageID = `-- name: ExistsOpenSuggestionByPageID :one
+SELECT EXISTS(
+  SELECT 1 FROM suggestion_pages sp
+  INNER JOIN suggestions s ON sp.suggestion_id = s.id
+  WHERE sp.page_id = $1 AND sp.space_id = $2 AND s.status = 1
+)
+`
+
+type ExistsOpenSuggestionByPageIDParams struct {
+	PageID  string `json:"page_id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 指定ページを参照しているオープンな編集提案が存在するかを確認する
+func (q *Queries) ExistsOpenSuggestionByPageID(ctx context.Context, arg ExistsOpenSuggestionByPageIDParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsOpenSuggestionByPageID, arg.PageID, arg.SpaceID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const findSuggestionPageByID = `-- name: FindSuggestionPageByID :one
 SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages WHERE id = $1 AND space_id = $2
 `

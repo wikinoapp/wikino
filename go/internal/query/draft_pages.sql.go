@@ -12,6 +12,28 @@ import (
 	"github.com/lib/pq"
 )
 
+const clearSuggestionPageIDsBySuggestionID = `-- name: ClearSuggestionPageIDsBySuggestionID :exec
+UPDATE draft_pages dp
+SET suggestion_page_id = NULL,
+    updated_at = $2
+WHERE dp.suggestion_page_id IN (
+    SELECT sp.id FROM suggestion_pages sp WHERE sp.suggestion_id = $1 AND sp.space_id = $3
+)
+AND dp.space_id = $3
+`
+
+type ClearSuggestionPageIDsBySuggestionIDParams struct {
+	SuggestionID string    `json:"suggestion_id"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	SpaceID      string    `json:"space_id"`
+}
+
+// 編集提案に紐づく下書きのsuggestion_page_idをクリアする（編集提案クローズ・反映時に使用）
+func (q *Queries) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, arg ClearSuggestionPageIDsBySuggestionIDParams) error {
+	_, err := q.db.ExecContext(ctx, clearSuggestionPageIDsBySuggestionID, arg.SuggestionID, arg.UpdatedAt, arg.SpaceID)
+	return err
+}
+
 const createDraftPage = `-- name: CreateDraftPage :one
 INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -366,4 +388,29 @@ func (q *Queries) UpdateDraftPageSuggestionPageID(ctx context.Context, arg Updat
 		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
+}
+
+const updateDraftPageTopicByPageID = `-- name: UpdateDraftPageTopicByPageID :exec
+UPDATE draft_pages
+SET topic_id = $2,
+    updated_at = $3
+WHERE page_id = $1 AND space_id = $4
+`
+
+type UpdateDraftPageTopicByPageIDParams struct {
+	PageID    string    `json:"page_id"`
+	TopicID   string    `json:"topic_id"`
+	UpdatedAt time.Time `json:"updated_at"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// ページIDに紐づく下書きのトピックIDを更新する（ページ移動時に使用）
+func (q *Queries) UpdateDraftPageTopicByPageID(ctx context.Context, arg UpdateDraftPageTopicByPageIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateDraftPageTopicByPageID,
+		arg.PageID,
+		arg.TopicID,
+		arg.UpdatedAt,
+		arg.SpaceID,
+	)
+	return err
 }

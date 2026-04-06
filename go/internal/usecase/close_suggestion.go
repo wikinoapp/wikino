@@ -18,6 +18,7 @@ type CloseSuggestionUsecase struct {
 	spaceMemberRepo *repository.SpaceMemberRepository
 	topicMemberRepo *repository.TopicMemberRepository
 	suggestionRepo  *repository.SuggestionRepository
+	draftPageRepo   *repository.DraftPageRepository
 }
 
 // NewCloseSuggestionUsecase は CloseSuggestionUsecase を生成する
@@ -27,6 +28,7 @@ func NewCloseSuggestionUsecase(
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionRepo *repository.SuggestionRepository,
+	draftPageRepo *repository.DraftPageRepository,
 ) *CloseSuggestionUsecase {
 	return &CloseSuggestionUsecase{
 		db:              db,
@@ -34,6 +36,7 @@ func NewCloseSuggestionUsecase(
 		spaceMemberRepo: spaceMemberRepo,
 		topicMemberRepo: topicMemberRepo,
 		suggestionRepo:  suggestionRepo,
+		draftPageRepo:   draftPageRepo,
 	}
 }
 
@@ -166,6 +169,7 @@ func (uc *CloseSuggestionUsecase) closeSuggestion(ctx context.Context, data *clo
 	}()
 
 	suggestionRepo := uc.suggestionRepo.WithTx(tx)
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 
 	updatedSuggestion, err := suggestionRepo.UpdateStatus(ctx, repository.UpdateStatusInput{
 		ID:      data.suggestion.ID,
@@ -177,6 +181,10 @@ func (uc *CloseSuggestionUsecase) closeSuggestion(ctx context.Context, data *clo
 	}
 	if updatedSuggestion == nil {
 		return nil, fmt.Errorf("編集提案が見つかりません: %s", data.suggestion.ID)
+	}
+
+	if err := draftPageRepo.ClearSuggestionPageIDsBySuggestionID(ctx, data.suggestion.ID, data.suggestion.SpaceID); err != nil {
+		return nil, fmt.Errorf("下書きのsuggestion_page_idクリアに失敗しました: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {

@@ -53,10 +53,11 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 	attachmentRepo := repository.NewAttachmentRepository(queries)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 
+	draftPageRepo := repository.NewDraftPageRepository(queries)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
-		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 	)
 
 	return suggestionapplyhandler.NewHandler(

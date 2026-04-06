@@ -192,6 +192,25 @@ func (r *DraftPageRepository) UpdateSuggestionPageID(ctx context.Context, id mod
 	return r.toModel(row), nil
 }
 
+// ClearSuggestionPageIDsBySuggestionID は編集提案に紐づく下書きのsuggestion_page_idをクリアする
+func (r *DraftPageRepository) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, suggestionID model.SuggestionID, spaceID model.SpaceID) error {
+	return r.q.ClearSuggestionPageIDsBySuggestionID(ctx, query.ClearSuggestionPageIDsBySuggestionIDParams{
+		SuggestionID: string(suggestionID),
+		UpdatedAt:    time.Now(),
+		SpaceID:      string(spaceID),
+	})
+}
+
+// UpdateTopicByPageID はページIDに紐づく下書きのトピックIDを更新する
+func (r *DraftPageRepository) UpdateTopicByPageID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, topicID model.TopicID) error {
+	return r.q.UpdateDraftPageTopicByPageID(ctx, query.UpdateDraftPageTopicByPageIDParams{
+		PageID:    string(pageID),
+		TopicID:   string(topicID),
+		UpdatedAt: time.Now(),
+		SpaceID:   string(spaceID),
+	})
+}
+
 // ListByUser はユーザーの下書きページ一覧を取得する（サイドバー表示用）
 func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUser(ctx, query.ListDraftPagesByUserParams{
