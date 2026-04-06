@@ -156,6 +156,14 @@ func (r *SuggestionPageRepository) Delete(ctx context.Context, id model.Suggesti
 	})
 }
 
+// ExistsByPageIDAndOpenStatus は指定ページを参照しているオープンな編集提案が存在するかを確認する
+func (r *SuggestionPageRepository) ExistsByPageIDAndOpenStatus(ctx context.Context, pageID model.PageID, spaceID model.SpaceID) (bool, error) {
+	return r.q.ExistsOpenSuggestionByPageID(ctx, query.ExistsOpenSuggestionByPageIDParams{
+		PageID:  string(pageID),
+		SpaceID: string(spaceID),
+	})
+}
+
 // toModel は query.SuggestionPage を model.SuggestionPage に変換する
 func (r *SuggestionPageRepository) toModel(row query.SuggestionPage) *model.SuggestionPage {
 	var title *string

@@ -709,6 +709,10 @@ other = "移動先トピックへのページ作成権限がありません"
 description = "移動先トピックにタイトル重複エラー"
 other = "移動先トピックに同じタイトルのページが既に存在しています"
 
+[page_move_error_open_suggestion_exists]
+description = "オープンな編集提案が存在するため移動不可エラー"
+other = "オープンな編集提案で参照されているページは移動できません"
+
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"
 other = "下書きのページ"
@@ -859,6 +863,10 @@ other = "下書きページを選択してください"
 [validation_suggestion_draft_page_not_found]
 description = "下書きページが見つからないエラー"
 other = "選択された下書きページが見つかりません"
+
+[validation_suggestion_draft_page_already_linked]
+description = "下書きページが別の編集提案にリンク済みエラー"
+other = "選択された下書きページは別の編集提案で使用されています"
 
 [validation_suggestion_body_too_long]
 description = "編集提案本文文字数超過エラー"

@@ -159,8 +159,8 @@ func main() {
 	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
-	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveCreateValidator)
+	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveCreateValidator)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -318,7 +318,7 @@ func main() {
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
-	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
+	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
 	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, suggestionCreateValidator)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
@@ -343,13 +343,13 @@ func main() {
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
-		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 	)
 	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
 		flashMgr,
 		applySuggestionUC,
 	)
-	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 	suggestionCloseHandler := suggestionclosehandler.NewHandler(
 		flashMgr,
 		closeSuggestionUC,
@@ -368,7 +368,7 @@ func main() {
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, suggestionPageUpdateValidator,
 	)
 	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, topicRepo, draftPageRepo)
-	suggestionPageCreateValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	suggestionPageCreateValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo,

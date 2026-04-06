@@ -42,6 +42,23 @@ DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
 -- 編集提案ページIDで下書きを取得する（スペースIDでスコープ）
 SELECT * FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2;
 
+-- name: ClearSuggestionPageIDsBySuggestionID :exec
+-- 編集提案に紐づく下書きのsuggestion_page_idをクリアする（編集提案クローズ・反映時に使用）
+UPDATE draft_pages dp
+SET suggestion_page_id = NULL,
+    updated_at = $2
+WHERE dp.suggestion_page_id IN (
+    SELECT sp.id FROM suggestion_pages sp WHERE sp.suggestion_id = $1 AND sp.space_id = $3
+)
+AND dp.space_id = $3;
+
+-- name: UpdateDraftPageTopicByPageID :exec
+-- ページIDに紐づく下書きのトピックIDを更新する（ページ移動時に使用）
+UPDATE draft_pages
+SET topic_id = $2,
+    updated_at = $3
+WHERE page_id = $1 AND space_id = $4;
+
 -- name: ListDraftPagesByMemberAndTopic :many
 -- スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
 SELECT

@@ -55,7 +55,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
-	createValidator := validator.NewSuggestionCreateValidator(draftPageRepo)
+	createValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
 
 	uc := NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, createValidator)
 

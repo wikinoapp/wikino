@@ -19,7 +19,8 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
 
-	uc := NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	uc := NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 
 	t.Run("正常系: スペースオーナーがオープンの編集提案をクローズできる", func(t *testing.T) {
 		t.Parallel()
@@ -39,11 +40,34 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithName("General").
 			Build()
-		testutil.NewSuggestionBuilderDB(t, db).
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Close Test Page").
+			Build()
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithCreatedSpaceMemberID(spaceMemberID).
 			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithTitle("提案タイトル").
+			WithBody("提案本文").
+			Build()
+
+		// 編集提案ページにリンクされた下書きを作成
+		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithBody("Draft body").
+			WithSuggestionPageID(suggestionPageID).
 			Build()
 
 		output, err := uc.Execute(context.Background(), CloseSuggestionInput{
@@ -59,6 +83,15 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if output.Suggestion.Status != model.SuggestionStatusClosed {
 			t.Errorf("suggestion status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusClosed)
+		}
+
+		// 下書きのsuggestion_page_idがクリアされていることを確認
+		dp, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID() error = %v", err)
+		}
+		if dp != nil && dp.SuggestionPageID != nil {
+			t.Error("DraftPage.SuggestionPageID should be nil after close")
 		}
 	})
 

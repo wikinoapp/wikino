@@ -25,6 +25,7 @@ type ApplySuggestionUsecase struct {
 	pageEditorRepo        *repository.PageEditorRepository
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
+	draftPageRepo         *repository.DraftPageRepository
 }
 
 // NewApplySuggestionUsecase は ApplySuggestionUsecase を生成する
@@ -40,6 +41,7 @@ func NewApplySuggestionUsecase(
 	pageEditorRepo *repository.PageEditorRepository,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
+	draftPageRepo *repository.DraftPageRepository,
 ) *ApplySuggestionUsecase {
 	return &ApplySuggestionUsecase{
 		db:                    db,
@@ -53,6 +55,7 @@ func NewApplySuggestionUsecase(
 		pageEditorRepo:        pageEditorRepo,
 		attachmentRepo:        attachmentRepo,
 		pageAttachmentRefRepo: pageAttachmentRefRepo,
+		draftPageRepo:         draftPageRepo,
 	}
 }
 
@@ -309,6 +312,12 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案のステータス更新に失敗しました: %w", err)
+	}
+
+	// 下書きのsuggestion_page_idをクリアして再利用可能にする
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
+	if err := draftPageRepo.ClearSuggestionPageIDsBySuggestionID(ctx, data.suggestion.ID, spaceID); err != nil {
+		return nil, fmt.Errorf("下書きのsuggestion_page_idクリアに失敗しました: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {

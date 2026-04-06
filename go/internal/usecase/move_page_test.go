@@ -22,10 +22,14 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo)
-	uc := NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, pageMoveValidator)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(q)
+	pageMoveValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
+	uc := NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveValidator)
 
 	t.Run("正常系: ページを別のトピックに移動できる", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
@@ -45,7 +49,7 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 			WithName("Source Topic").
 			WithNumber(1).
 			Build()
-		testutil.NewTopicBuilderDB(t, db).
+		destTopicID := testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithName("Dest Topic").
 			WithNumber(2).
@@ -55,11 +59,20 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 			WithTopicID(srcTopicID).
 			WithSpaceMemberID(spaceMemberID).
 			Build()
-		testutil.NewPageBuilderDB(t, db).
+		pageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(srcTopicID).
 			WithNumber(1).
 			WithTitle("Move Test Page").
+			Build()
+
+		// 移動対象ページに下書きを作成
+		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(srcTopicID).
+			WithBody("Draft body").
 			Build()
 
 		output, err := uc.Execute(ctx, MovePageInput{
@@ -77,9 +90,21 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 		if output.Page.SpaceID != spaceID {
 			t.Errorf("Page.SpaceID = %v, want %v", output.Page.SpaceID, spaceID)
 		}
+
+		// 下書きのトピックも移動��に更新されていることを確認
+		q := repository.NewDraftPageRepository(query.New(db))
+		dp, err := q.FindByID(ctx, draftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID() error = %v", err)
+		}
+		if dp.TopicID != destTopicID {
+			t.Errorf("DraftPage.TopicID = %v, want %v", dp.TopicID, destTopicID)
+		}
 	})
 
 	t.Run("異常系: 存在しないスペースでAppErrorが返る", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
@@ -105,6 +130,8 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 	})
 
 	t.Run("異常系: 権限がないユーザーでAppErrorが返る", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
@@ -145,6 +172,8 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 	})
 
 	t.Run("異常系: バリデーションエラーでValidationErrorが返る", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		ctx = i18n.SetLocale(ctx, i18n.LangJa)
 

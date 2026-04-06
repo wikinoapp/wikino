@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -474,6 +475,293 @@ func TestSuggestionPageRepository_UpdateContent(t *testing.T) {
 		}
 		if sp != nil {
 			t.Errorf("UpdateContent() = %v, want nil", sp)
+		}
+	})
+}
+
+func TestSuggestionPageRepository_Delete(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionPageRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sp-delete@example.com").
+		WithAtname("sp_delete").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sp-delete-space").
+		WithName("SP Delete Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		Build()
+
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithPageID(pageID).
+		Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		Build()
+
+	t.Run("編集提案ページを削除できる", func(t *testing.T) {
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			WithTitle("削除テスト").
+			Build()
+
+		err := repo.Delete(ctx, suggestionPageID, spaceID)
+		if err != nil {
+			t.Fatalf("Delete() error = %v", err)
+		}
+
+		sp, err := repo.FindByID(ctx, suggestionPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID() error = %v", err)
+		}
+		if sp != nil {
+			t.Errorf("FindByID() = %v, want nil (deleted)", sp)
+		}
+	})
+
+	t.Run("存在しないIDで削除してもエラーにならない", func(t *testing.T) {
+		err := repo.Delete(ctx, "00000000-0000-0000-0000-000000000000", spaceID)
+		if err != nil {
+			t.Fatalf("Delete() error = %v", err)
+		}
+	})
+
+	t.Run("異なるスペースIDでは削除されない", func(t *testing.T) {
+		pageID2 := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("削除テストページ2").
+			Build()
+
+		pageRevisionID2 := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID2).
+			Build()
+
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID2).
+			WithPageRevisionID(pageRevisionID2).
+			WithTitle("別スペース削除テスト").
+			Build()
+
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("sp-delete-other").
+			WithName("Other Space").
+			Build()
+
+		err := repo.Delete(ctx, suggestionPageID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("Delete() error = %v", err)
+		}
+
+		sp, err := repo.FindByID(ctx, suggestionPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID() error = %v", err)
+		}
+		if sp == nil {
+			t.Error("FindByID() = nil, want non-nil (should not be deleted by different space)")
+		}
+	})
+}
+
+func TestSuggestionPageRepository_ExistsByPageIDAndOpenStatus(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionPageRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sp-exists-open@example.com").
+		WithAtname("sp_exists_open").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sp-exists-open-space").
+		WithName("SP Exists Open Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithRole(0).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("オープンな編集提案がページを参照している場合trueを返す", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(10).
+			WithTitle("オープン参照ページ").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			WithTitle("オープン提案").
+			Build()
+
+		testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		exists, err := repo.ExistsByPageIDAndOpenStatus(ctx, pageID, spaceID)
+		if err != nil {
+			t.Fatalf("ExistsByPageIDAndOpenStatus() error = %v", err)
+		}
+		if !exists {
+			t.Error("ExistsByPageIDAndOpenStatus() = false, want true")
+		}
+	})
+
+	t.Run("クローズ済みの編集提案のみの場合falseを返す", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(11).
+			WithTitle("クローズ参照ページ").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusClosed).
+			WithTitle("クローズ提案").
+			Build()
+
+		testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		exists, err := repo.ExistsByPageIDAndOpenStatus(ctx, pageID, spaceID)
+		if err != nil {
+			t.Fatalf("ExistsByPageIDAndOpenStatus() error = %v", err)
+		}
+		if exists {
+			t.Error("ExistsByPageIDAndOpenStatus() = true, want false")
+		}
+	})
+
+	t.Run("編集提案がない場合falseを返す", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(12).
+			WithTitle("参照なしページ").
+			Build()
+
+		exists, err := repo.ExistsByPageIDAndOpenStatus(ctx, pageID, spaceID)
+		if err != nil {
+			t.Fatalf("ExistsByPageIDAndOpenStatus() error = %v", err)
+		}
+		if exists {
+			t.Error("ExistsByPageIDAndOpenStatus() = true, want false")
+		}
+	})
+
+	t.Run("異なるスペースIDではfalseを返す", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(13).
+			WithTitle("別スペーステストページ").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			WithTitle("別スペーステスト提案").
+			Build()
+
+		testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("sp-exists-other").
+			WithName("Other Space").
+			Build()
+
+		exists, err := repo.ExistsByPageIDAndOpenStatus(ctx, pageID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("ExistsByPageIDAndOpenStatus() error = %v", err)
+		}
+		if exists {
+			t.Error("ExistsByPageIDAndOpenStatus() = true, want false")
 		}
 	})
 }

@@ -12,9 +12,10 @@ import (
 
 // PageMoveCreateValidator はページ移動のバリデーションを行う
 type PageMoveCreateValidator struct {
-	pageRepo        *repository.PageRepository
-	topicRepo       *repository.TopicRepository
-	topicMemberRepo *repository.TopicMemberRepository
+	pageRepo           *repository.PageRepository
+	topicRepo          *repository.TopicRepository
+	topicMemberRepo    *repository.TopicMemberRepository
+	suggestionPageRepo *repository.SuggestionPageRepository
 }
 
 // NewPageMoveCreateValidator は PageMoveCreateValidator を生成する
@@ -22,11 +23,13 @@ func NewPageMoveCreateValidator(
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 ) *PageMoveCreateValidator {
 	return &PageMoveCreateValidator{
-		pageRepo:        pageRepo,
-		topicRepo:       topicRepo,
-		topicMemberRepo: topicMemberRepo,
+		pageRepo:           pageRepo,
+		topicRepo:          topicRepo,
+		topicMemberRepo:    topicMemberRepo,
+		suggestionPageRepo: suggestionPageRepo,
 	}
 }
 
@@ -58,6 +61,16 @@ func (v *PageMoveCreateValidator) Validate(ctx context.Context, input PageMoveCr
 		return nil, ve
 	}
 	destTopicNumber := int32(parsed)
+
+	// 状態バリデーション: 対象ページにオープンな編集提案が存在しないこと
+	hasOpenSuggestion, err := v.suggestionPageRepo.ExistsByPageIDAndOpenStatus(ctx, input.PageID, input.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	if hasOpenSuggestion {
+		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_open_suggestion_exists"))
+		return nil, ve
+	}
 
 	// 状態バリデーション: 移動先トピックが同一スペース内に存在すること
 	destTopic, err := v.topicRepo.FindBySpaceAndNumber(ctx, input.SpaceID, destTopicNumber)

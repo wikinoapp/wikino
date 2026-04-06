@@ -18,6 +18,7 @@ type MovePageUsecase struct {
 	pageRepo        *repository.PageRepository
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
+	draftPageRepo   *repository.DraftPageRepository
 	createValidator *validator.PageMoveCreateValidator
 }
 
@@ -29,6 +30,7 @@ func NewMovePageUsecase(
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
+	draftPageRepo *repository.DraftPageRepository,
 	createValidator *validator.PageMoveCreateValidator,
 ) *MovePageUsecase {
 	return &MovePageUsecase{
@@ -38,6 +40,7 @@ func NewMovePageUsecase(
 		pageRepo:        pageRepo,
 		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
+		draftPageRepo:   draftPageRepo,
 		createValidator: createValidator,
 	}
 }
@@ -110,6 +113,7 @@ func (uc *MovePageUsecase) movePage(ctx context.Context, pageID model.PageID, sp
 	}()
 
 	pageRepo := uc.pageRepo.WithTx(tx)
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 
 	page, err := pageRepo.MoveTopic(ctx, repository.MoveTopicInput{
 		ID:      pageID,
@@ -118,6 +122,10 @@ func (uc *MovePageUsecase) movePage(ctx context.Context, pageID model.PageID, sp
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページのトピック変更に失敗しました: %w", err)
+	}
+
+	if err := draftPageRepo.UpdateTopicByPageID(ctx, pageID, spaceID, destTopicID); err != nil {
+		return nil, fmt.Errorf("下書きページのトピック変更に失敗しました: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {

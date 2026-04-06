@@ -260,8 +260,9 @@ func TestSuggestionPageCreateValidator_正常系_有効な下書きページで�
 		Build()
 
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 
 	draftPages, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
 		DraftPageIDs:  []model.DraftPageID{draftPageID},
@@ -289,8 +290,9 @@ func TestSuggestionPageCreateValidator_異常系_下書きページ未選択(t *
 	queries := testutil.QueriesWithTx(tx)
 
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 
 	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
 		DraftPageIDs:  []model.DraftPageID{},
@@ -339,8 +341,9 @@ func TestSuggestionPageCreateValidator_異常系_下書きページが存在し�
 		Build()
 
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 
 	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
 		DraftPageIDs:  []model.DraftPageID{"00000000-0000-0000-0000-000000000099"},
@@ -411,8 +414,9 @@ func TestSuggestionPageCreateValidator_異常系_別メンバーの下書きペ�
 		Build()
 
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 
 	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
 		DraftPageIDs:  []model.DraftPageID{draftPageID},
@@ -488,8 +492,9 @@ func TestSuggestionPageCreateValidator_異常系_既に編集提案に含まれ�
 		Build()
 
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
-	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, suggestionPageRepo)
+	v := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
 
 	_, err := v.Validate(context.Background(), validator.SuggestionPageCreateValidatorInput{
 		DraftPageIDs:  []model.DraftPageID{draftPageID},

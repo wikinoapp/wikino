@@ -17,12 +17,14 @@ const (
 // SuggestionCreateValidator は編集提案作成のバリデーションを行う
 type SuggestionCreateValidator struct {
 	draftPageRepo *repository.DraftPageRepository
+	pageRepo      *repository.PageRepository
 }
 
 // NewSuggestionCreateValidator は SuggestionCreateValidator を生成する
-func NewSuggestionCreateValidator(draftPageRepo *repository.DraftPageRepository) *SuggestionCreateValidator {
+func NewSuggestionCreateValidator(draftPageRepo *repository.DraftPageRepository, pageRepo *repository.PageRepository) *SuggestionCreateValidator {
 	return &SuggestionCreateValidator{
 		draftPageRepo: draftPageRepo,
+		pageRepo:      pageRepo,
 	}
 }
 
@@ -77,7 +79,17 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 			return nil, ve
 		}
 
+		if draftPage.SuggestionPageID != nil {
+			ve.AddField("draft_page_ids", i18n.T(ctx, "validation_suggestion_draft_page_already_linked"))
+			return nil, ve
+		}
+
 		draftPages = append(draftPages, draftPage)
+	}
+
+	// ページの現在のトピックが一致するか確認（ページ移動後の不整合を防止）
+	if err := validatePageTopicConsistency(ctx, v.pageRepo, draftPages, input.TopicID, input.SpaceID, "draft_page_ids", "validation_suggestion_draft_page_not_found"); err != nil {
+		return nil, err
 	}
 
 	return draftPages, nil

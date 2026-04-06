@@ -709,6 +709,10 @@ other = "You do not have permission to create pages in the destination topic."
 description = "Title exists in destination topic error"
 other = "A page with the same title already exists in the destination topic."
 
+[page_move_error_open_suggestion_exists]
+description = "Cannot move page referenced by open suggestion error"
+other = "Pages referenced by open suggestions cannot be moved."
+
 [draft_page_index_title]
 description = "Draft page index page title"
 other = "Draft Pages"
@@ -859,6 +863,10 @@ other = "Please select at least one draft page"
 [validation_suggestion_draft_page_not_found]
 description = "Draft page not found error"
 other = "Selected draft page was not found"
+
+[validation_suggestion_draft_page_already_linked]
+description = "Draft page already linked to another suggestion error"
+other = "The selected draft page is already used in another suggestion"
 
 [validation_suggestion_body_too_long]
 description = "Suggestion body too long error"

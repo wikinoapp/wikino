@@ -48,8 +48,8 @@ func TestSuggestionCreateValidator_FormatValidation(t *testing.T) {
 		},
 	}
 
-	// 形式バリデーションのみテストするためnilのdraftPageRepoを使用
-	v := validator.NewSuggestionCreateValidator(nil)
+	// 形式バリデーションのみテストするためnilのrepoを使用
+	v := validator.NewSuggestionCreateValidator(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -135,8 +135,40 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 		WithTitle("Other Draft").
 		Build()
 
+	// 編集提案にリンク済みの下書きを作成
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithTitle("既存の編集提案").
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Linked Page").
+		Build()
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(linkedPageID).
+		WithTitle("Suggestion Page Title").
+		WithBody("Suggestion page body").
+		Build()
+	linkedDraftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(linkedPageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Linked Draft").
+		WithBody("Linked draft body").
+		WithSuggestionPageID(suggestionPageID).
+		Build()
+
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	v := validator.NewSuggestionCreateValidator(draftPageRepo)
+	pageRepo := repository.NewPageRepository(queries)
+	v := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
 
 	t.Run("正常系: 有効な入力で下書きページのバリデーションが通る", func(t *testing.T) {
 		draftPages, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
@@ -178,6 +210,24 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 		_, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
 			Title:         "テスト編集提案",
 			DraftPageIDs:  []model.DraftPageID{otherDraftPageID},
+			SpaceMemberID: spaceMemberID,
+			TopicID:       topicID,
+			SpaceID:       spaceID,
+		})
+
+		ve := model.AsValidationError(err)
+		if ve == nil {
+			t.Fatal("expected ValidationError, got nil")
+		}
+		if !ve.HasFieldError("draft_page_ids") {
+			t.Error("expected draft_page_ids field error")
+		}
+	})
+
+	t.Run("別の編集提案にリンク済みの下書きページの場合はエラー", func(t *testing.T) {
+		_, err := v.Validate(ctx, validator.SuggestionCreateValidatorInput{
+			Title:         "テスト編集提案",
+			DraftPageIDs:  []model.DraftPageID{linkedDraftPageID},
 			SpaceMemberID: spaceMemberID,
 			TopicID:       topicID,
 			SpaceID:       spaceID,
