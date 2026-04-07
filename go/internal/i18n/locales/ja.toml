@@ -936,17 +936,9 @@ other = "編集提案の編集"
 description = "編集提案編集のタイトルラベル"
 other = "タイトル"
 
-[suggestion_edit_title_placeholder]
-description = "編集提案編集のタイトルプレースホルダー"
-other = "編集提案のタイトル"
-
 [suggestion_edit_body_label]
 description = "編集提案編集の本文ラベル"
 other = "本文"
-
-[suggestion_edit_body_placeholder]
-description = "編集提案編集の本文プレースホルダー"
-other = "編集提案の説明（Markdown対応）"
 
 [suggestion_edit_submit]
 description = "編集提案編集の送信ボタン"

@@ -936,17 +936,9 @@ other = "Edit Suggestion"
 description = "Suggestion edit title label"
 other = "Title"
 
-[suggestion_edit_title_placeholder]
-description = "Suggestion edit title placeholder"
-other = "Suggestion title"
-
 [suggestion_edit_body_label]
 description = "Suggestion edit body label"
 other = "Body"
-
-[suggestion_edit_body_placeholder]
-description = "Suggestion edit body placeholder"
-other = "Suggestion description (Markdown supported)"
 
 [suggestion_edit_submit]
 description = "Suggestion edit submit button"
