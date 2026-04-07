@@ -331,13 +331,9 @@ func TestCreate_通常編集の下書きがある場合に確認画面にリダ�
 	if !strings.HasPrefix(loc, expectedPrefix) {
 		t.Errorf("wrong redirect location: got %q, want prefix %q", loc, expectedPrefix)
 	}
-	// 通常の下書きの場合はdraft_kindクエリパラメータなし
-	if strings.Contains(loc, "draft_kind") {
-		t.Errorf("normal draft should not have draft_kind query param: got %q", loc)
-	}
 }
 
-func TestCreate_別の編集提案の下書きがある場合に確認画面にリダイレクトされクエリパラメータが付与される(t *testing.T) {
+func TestCreate_別の編集提案の下書きがある場合に確認画面にリダイレクトされる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -435,9 +431,5 @@ func TestCreate_別の編集提案の下書きがある場合に確認画面に�
 	expectedPrefix := "/s/spe-other-sg-sp/suggestions/1/page_edits/"
 	if !strings.HasPrefix(loc, expectedPrefix) {
 		t.Errorf("wrong redirect location: got %q, want prefix %q", loc, expectedPrefix)
-	}
-	// 別の編集提案の下書きの場合はdraft_kindクエリパラメータが付与される
-	if !strings.Contains(loc, "draft_kind=other_suggestion") {
-		t.Errorf("other suggestion draft should have draft_kind=other_suggestion query param: got %q", loc)
 	}
 }

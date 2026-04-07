@@ -57,16 +57,6 @@ const (
 	StartSuggestionPageEditConflict
 )
 
-// ConflictDraftKind はコンフリクト時の下書きの種類
-type ConflictDraftKind int
-
-const (
-	// ConflictDraftKindNormal は通常の下書き（suggestion_page_idがNULL）
-	ConflictDraftKindNormal ConflictDraftKind = iota
-	// ConflictDraftKindOtherSuggestion は別の編集提案にリンクされた下書き
-	ConflictDraftKindOtherSuggestion
-)
-
 // StartSuggestionPageEditInput は編集開始の入力パラメータ
 type StartSuggestionPageEditInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
@@ -78,9 +68,8 @@ type StartSuggestionPageEditInput struct {
 
 // StartSuggestionPageEditOutput は編集開始の出力
 type StartSuggestionPageEditOutput struct {
-	Status            StartSuggestionPageEditStatus
-	PageNumber        model.PageNumber
-	ConflictDraftKind ConflictDraftKind
+	Status     StartSuggestionPageEditStatus
+	PageNumber model.PageNumber
 }
 
 // Execute は編集提案ページの編集を開始する
@@ -230,15 +219,13 @@ func (uc *StartSuggestionPageEditUsecase) startEdit(ctx context.Context, data *s
 	}
 
 	// 下書きが存在し、Force=falseの場合はコンフリクト
+	// 通常の下書き（suggestion_page_id が NULL）と別の編集提案にリンクされた下書きを区別せず、
+	// いずれの場合も同じ確認画面に誘導する。ユーザーの選択肢は「上書き」「保持」の二択であり、
+	// 下書きの種類に依らず同じであるため文言を出し分けない（spec の「採用しなかった方針」を参照）。
 	if draft != nil && !force {
-		draftKind := ConflictDraftKindNormal
-		if draft.SuggestionPageID != nil {
-			draftKind = ConflictDraftKindOtherSuggestion
-		}
 		return &StartSuggestionPageEditOutput{
-			Status:            StartSuggestionPageEditConflict,
-			PageNumber:        page.Number,
-			ConflictDraftKind: draftKind,
+			Status:     StartSuggestionPageEditConflict,
+			PageNumber: page.Number,
 		}, nil
 	}
 

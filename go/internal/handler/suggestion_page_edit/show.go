@@ -94,9 +94,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 下書きの種類をクエリパラメータから取得
-	isOtherSuggestionDraft := r.URL.Query().Get("draft_kind") == "other_suggestion"
-
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(detailOutput.Space)
 	topicVM := viewmodel.NewTopic(detailOutput.Topic)
@@ -112,13 +109,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// テンプレートをレンダリング
 	content := suggestionpageeditpages.Show(suggestionpageeditpages.ShowData{
-		CSRFToken:              csrfToken,
-		Space:                  spaceVM,
-		Topic:                  topicVM,
-		SuggestionNumber:       int32(suggestionNumber),
-		SuggestionPageID:       string(suggestionPageID),
-		SuggestionPageTitle:    suggestionPageTitle,
-		IsOtherSuggestionDraft: isOtherSuggestionDraft,
+		CSRFToken:           csrfToken,
+		Space:               spaceVM,
+		Topic:               topicVM,
+		SuggestionNumber:    int32(suggestionNumber),
+		SuggestionPageID:    string(suggestionPageID),
+		SuggestionPageTitle: suggestionPageTitle,
 	})
 
 	// サイドバーコンテンツを取得
