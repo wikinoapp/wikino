@@ -66,9 +66,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	case usecase.StartSuggestionPageEditConflict:
 		// 確認画面にリダイレクト
 		confirmPath := string(templates.SuggestionPageEditShowPath(string(spaceIdentifier), int32(suggestionNumber), string(suggestionPageID)))
-		if output.ConflictDraftKind == usecase.ConflictDraftKindOtherSuggestion {
-			confirmPath += "?draft_kind=other_suggestion"
-		}
 		http.Redirect(w, r, confirmPath, http.StatusSeeOther)
 
 	default:

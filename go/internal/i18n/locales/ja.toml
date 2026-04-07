@@ -936,17 +936,9 @@ other = "編集提案の編集"
 description = "編集提案編集のタイトルラベル"
 other = "タイトル"
 
-[suggestion_edit_title_placeholder]
-description = "編集提案編集のタイトルプレースホルダー"
-other = "編集提案のタイトル"
-
 [suggestion_edit_body_label]
 description = "編集提案編集の本文ラベル"
 other = "本文"
-
-[suggestion_edit_body_placeholder]
-description = "編集提案編集の本文プレースホルダー"
-other = "編集提案の説明（Markdown対応）"
 
 [suggestion_edit_submit]
 description = "編集提案編集の送信ボタン"
@@ -1120,27 +1112,19 @@ other = "下書きの確認 | {{.SpaceName}}"
 
 [suggestion_page_edit_confirm_heading]
 description = "編集提案ページ編集の確認画面見出し"
-other = "このページには既存の下書きがあります"
+other = "既存の下書きがあります"
 
 [suggestion_page_edit_confirm_message]
-description = "編集提案ページ編集の確認画面メッセージ（通常の下書き）"
-other = "このページには保存済みの下書きがあります。編集提案の内容で上書きして編集を開始するか、もとの下書きを保持するかを選択してください。"
-
-[suggestion_page_edit_confirm_heading_other_suggestion]
-description = "編集提案ページ編集の確認画面見出し（別の編集提案の下書き）"
-other = "このページには別の編集提案の下書きがあります"
-
-[suggestion_page_edit_confirm_message_other_suggestion]
-description = "編集提案ページ編集の確認画面メッセージ（別の編集提案の下書き）"
-other = "このページには別の編集提案で編集中の下書きがあります。編集提案の内容で上書きして編集を開始するか、もとの下書きを保持するかを選択してください。"
+description = "編集提案ページ編集の確認画面メッセージ"
+other = "このページにはすでに別の下書きがあります。編集提案の内容で上書きして編集を続けるか、もとの下書きを保持するかを選択してください"
 
 [suggestion_page_edit_overwrite_button]
 description = "編集提案の内容で上書きして編集するボタン"
-other = "編集提案の内容で編集を続ける"
+other = "編集を続ける"
 
 [suggestion_page_edit_keep_draft_button]
 description = "もとの下書きを保持するボタン"
-other = "もとの下書きを保持する"
+other = "下書きを保持する"
 
 [suggestion_page_edit_error_not_open]
 description = "編集提案がオープンでないため編集を開始できないエラーメッセージ"
