@@ -49,7 +49,6 @@
 ### カテゴリ 5: Claude Code 設定
 
 - `.claude/commands/commit.md`
-- `.claude/commands/review.md`
 - `.claude/commands/sync.md`
 
 ### カテゴリ 6: ドキュメントテンプレート
