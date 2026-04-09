@@ -16,6 +16,22 @@ updates:
     directory: "/go"
     schedule:
       interval: "daily"
+    groups:
+      tailwindcss:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "patch"
+          - "minor"
+      codemirror:
+        patterns:
+          - "@codemirror/*"
+          - "@lezer/*"
+          - "codemirror"
+        update-types:
+          - "patch"
+          - "minor"
 
   # Rails version bundler dependencies
   - package-ecosystem: "bundler"
