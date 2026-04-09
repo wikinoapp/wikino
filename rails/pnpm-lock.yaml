@@ -27,8 +27,8 @@ importers:
         specifier: ^6.38.2
         version: 6.38.2
       '@github/hotkey':
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.4
+        version: 3.1.4
       '@hotwired/stimulus':
         specifier: ^3.2.2
         version: 3.2.2
@@ -297,8 +297,8 @@ packages:
     resolution: {integrity: sha512-Z5kJ+wU3oA7MMIqVR9tyZRtjYPr4OC004Q4Rw7pgOKUOKkJfZ3O24nz3WYfGRpMDNmcOi3TwQOmgm7B7Tpii0w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@github/hotkey@3.1.1':
-    resolution: {integrity: sha512-H30I6XDO3gFSgLuEuHoMBRZG9c3uCKNdAcYklL1FaZDPdU1bXfgjnpzGDPcUr0U6eGQ+T3XLY9slatwZYWL1dA==}
+  '@github/hotkey@3.1.4':
+    resolution: {integrity: sha512-pFGIqElJ/ISKhBGG3l9uVaq3XlVRrROkbWDVFmR4799mvCp2UPfFo2YBFdZVvYubLuV9Lk9JuTEkEBL3ISh6GA==}
 
   '@hotwired/stimulus@3.2.2':
     resolution: {integrity: sha512-eGeIqNOQpXoPAIP7tC1+1Yc1yl1xnwYqg+3mzqxyrbE5pg5YFBZcA6YoTiByJB6DKAEsiWtl6tjTJS4IYtbB7A==}
@@ -1304,7 +1304,7 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-  '@github/hotkey@3.1.1': {}
+  '@github/hotkey@3.1.4': {}
 
   '@hotwired/stimulus@3.2.2': {}
 
