@@ -16,6 +16,26 @@ updates:
     directory: "/go"
     schedule:
       interval: "daily"
+    groups:
+      tailwindcss:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
+      codemirror:
+        patterns:
+          - "@codemirror/*"
+          - "@lezer/*"
+          - "codemirror"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
 
   # Rails version bundler dependencies
   - package-ecosystem: "bundler"
