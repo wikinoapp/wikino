@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -71,51 +70,6 @@ func TestCreateSuggestionCommentUsecase_Execute(t *testing.T) {
 		}
 		if output.Comment.Body != "テストコメント" {
 			t.Errorf("Body = %q, want %q", output.Comment.Body, "テストコメント")
-		}
-		if output.Comment.BodyHTML == "" {
-			t.Error("BodyHTML should not be empty")
-		}
-	})
-
-	t.Run("正常系: Markdown本文がHTMLに変換される", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("csc-md@example.com").
-			WithAtname("cscmd").
-			Build()
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("csc-md-sp").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("Markdownトピック").
-			Build()
-		testutil.NewSuggestionBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithCreatedSpaceMemberID(spaceMemberID).
-			WithTitle("Markdown提案").
-			WithStatus(model.SuggestionStatusOpen).
-			Build()
-
-		output, err := uc.Execute(ctx, CreateSuggestionCommentInput{
-			SpaceIdentifier:  "csc-md-sp",
-			SuggestionNumber: 1,
-			UserID:           userID,
-			Body:             "**太字** テスト",
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if !strings.Contains(output.Comment.BodyHTML, "<strong>") {
-			t.Errorf("BodyHTML should contain <strong> tag, got: %s", output.Comment.BodyHTML)
 		}
 	})
 

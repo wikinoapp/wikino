@@ -1,7 +1,7 @@
 -- name: CreateSuggestionComment :one
 -- 編集提案コメントを作成する
-INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: ListSuggestionCommentsBySuggestionID :many
@@ -28,8 +28,8 @@ WHERE suggestion_id = $1 AND number = $2 AND space_id = $3;
 -- name: UpdateSuggestionComment :one
 -- 編集提案コメントの本文を更新する（スペースIDでスコープ）
 UPDATE suggestion_comments
-SET body = $2, body_html = $3, updated_at = $4
-WHERE id = $1 AND space_id = $5
+SET body = $2, updated_at = $3
+WHERE id = $1 AND space_id = $4
 RETURNING *;
 
 -- name: GetNextSuggestionCommentNumber :one

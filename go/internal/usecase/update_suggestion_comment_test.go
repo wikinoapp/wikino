@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -21,14 +20,13 @@ func TestUpdateSuggestionCommentUsecase_Execute(t *testing.T) {
 
 	spaceRepo := repository.NewSpaceRepository(q)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(q)
 	updateValidator := validator.NewSuggestionCommentUpdateValidator()
 
 	uc := NewUpdateSuggestionCommentUsecase(
-		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionCommentRepo, updateValidator,
 	)
 
@@ -86,66 +84,6 @@ func TestUpdateSuggestionCommentUsecase_Execute(t *testing.T) {
 		}
 		if output.Comment.Body != "更新後のコメント" {
 			t.Errorf("Body = %q, want %q", output.Comment.Body, "更新後のコメント")
-		}
-		if output.Comment.BodyHTML == "" {
-			t.Error("BodyHTML should not be empty")
-		}
-	})
-
-	t.Run("正常系: Markdown本文がHTMLに変換される", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("update-sc-uc-2").
-			Build()
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("update-sc-uc-2@example.com").
-			WithAtname("updatescuc2").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("テストトピック2").
-			Build()
-		testutil.NewTopicMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithSpaceMemberID(spaceMemberID).
-			WithTopicID(topicID).
-			Build()
-		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithCreatedSpaceMemberID(spaceMemberID).
-			WithTitle("テスト提案2").
-			WithStatus(model.SuggestionStatusOpen).
-			Build()
-		testutil.NewSuggestionCommentBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithSuggestionID(suggestionID).
-			WithCreatedSpaceMemberID(spaceMemberID).
-			WithBody("元のコメント").
-			Build()
-
-		output, err := uc.Execute(ctx, UpdateSuggestionCommentInput{
-			SpaceIdentifier:  "update-sc-uc-2",
-			SuggestionNumber: 1,
-			CommentNumber:    1,
-			UserID:           userID,
-			Body:             "**太字** テスト",
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if output == nil {
-			t.Fatal("output should not be nil")
-		}
-		if !strings.Contains(output.Comment.BodyHTML, "<strong>") {
-			t.Errorf("BodyHTML should contain <strong> tag, got: %s", output.Comment.BodyHTML)
 		}
 	})
 

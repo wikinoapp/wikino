@@ -67,7 +67,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Number:               1,
 			Title:                "テスト提案",
 			Body:                 "",
-			BodyHTML:             "",
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
@@ -195,7 +194,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Number:               1,
 			Title:                "新規ページ提案",
 			Body:                 "",
-			BodyHTML:             "",
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
@@ -329,7 +327,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Number:               1,
 			Title:                "テスト提案",
 			Body:                 "",
-			BodyHTML:             "",
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
@@ -384,7 +381,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Number:               1,
 			Title:                "テスト提案",
 			Body:                 "",
-			BodyHTML:             "",
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
@@ -442,7 +438,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Number:               1,
 			Title:                "テスト提案",
 			Body:                 "",
-			BodyHTML:             "",
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {

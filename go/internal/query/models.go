@@ -326,7 +326,6 @@ type Suggestion struct {
 	CreatedSpaceMemberID string       `json:"created_space_member_id"`
 	Title                string       `json:"title"`
 	Body                 string       `json:"body"`
-	BodyHtml             string       `json:"body_html"`
 	Status               int32        `json:"status"`
 	AppliedAt            sql.NullTime `json:"applied_at"`
 	CreatedAt            time.Time    `json:"created_at"`
@@ -340,7 +339,6 @@ type SuggestionComment struct {
 	SuggestionID         string    `json:"suggestion_id"`
 	CreatedSpaceMemberID string    `json:"created_space_member_id"`
 	Body                 string    `json:"body"`
-	BodyHtml             string    `json:"body_html"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 	Number               int32     `json:"number"`

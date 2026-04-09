@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -78,11 +77,8 @@ func (uc *CreateSuggestionCommentUsecase) Execute(ctx context.Context, input Cre
 		return nil, err
 	}
 
-	// 4. ビジネスロジック
-	bodyHTML := markup.RenderMarkdown(input.Body)
-
-	// 5. 永続化
-	return uc.createComment(ctx, space.ID, suggestion.ID, spaceMember.ID, input.Body, bodyHTML)
+	// 4. 永続化
+	return uc.createComment(ctx, space.ID, suggestion.ID, spaceMember.ID, input.Body)
 }
 
 func (uc *CreateSuggestionCommentUsecase) fetchData(ctx context.Context, input CreateSuggestionCommentInput) (*model.Space, *model.SpaceMember, *model.Suggestion, error) {
@@ -140,7 +136,7 @@ func (uc *CreateSuggestionCommentUsecase) authorize(ctx context.Context, space *
 	return nil
 }
 
-func (uc *CreateSuggestionCommentUsecase) createComment(ctx context.Context, spaceID model.SpaceID, suggestionID model.SuggestionID, spaceMemberID model.SpaceMemberID, body, bodyHTML string) (*CreateSuggestionCommentOutput, error) {
+func (uc *CreateSuggestionCommentUsecase) createComment(ctx context.Context, spaceID model.SpaceID, suggestionID model.SuggestionID, spaceMemberID model.SpaceMemberID, body string) (*CreateSuggestionCommentOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -162,7 +158,6 @@ func (uc *CreateSuggestionCommentUsecase) createComment(ctx context.Context, spa
 		CreatedSpaceMemberID: spaceMemberID,
 		Number:               nextNumber,
 		Body:                 body,
-		BodyHTML:             bodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案コメントの作成に失敗しました: %w", err)

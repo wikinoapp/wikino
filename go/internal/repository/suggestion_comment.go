@@ -32,7 +32,6 @@ type CreateSuggestionCommentInput struct {
 	CreatedSpaceMemberID model.SpaceMemberID
 	Number               model.SuggestionCommentNumber
 	Body                 string
-	BodyHTML             string
 }
 
 // Create は編集提案コメントを作成する
@@ -45,7 +44,6 @@ func (r *SuggestionCommentRepository) Create(ctx context.Context, input CreateSu
 		CreatedSpaceMemberID: string(input.CreatedSpaceMemberID),
 		Number:               int32(input.Number),
 		Body:                 input.Body,
-		BodyHtml:             input.BodyHTML,
 		CreatedAt:            now,
 		UpdatedAt:            now,
 	})
@@ -108,10 +106,9 @@ func (r *SuggestionCommentRepository) FindByNumber(ctx context.Context, suggesti
 
 // UpdateSuggestionCommentInput は編集提案コメント更新の入力パラメータ
 type UpdateSuggestionCommentInput struct {
-	ID       model.SuggestionCommentID
-	SpaceID  model.SpaceID
-	Body     string
-	BodyHTML string
+	ID      model.SuggestionCommentID
+	SpaceID model.SpaceID
+	Body    string
 }
 
 // Update は編集提案コメントの本文を更新する
@@ -119,7 +116,6 @@ func (r *SuggestionCommentRepository) Update(ctx context.Context, input UpdateSu
 	row, err := r.q.UpdateSuggestionComment(ctx, query.UpdateSuggestionCommentParams{
 		ID:        string(input.ID),
 		Body:      input.Body,
-		BodyHtml:  input.BodyHTML,
 		UpdatedAt: time.Now(),
 		SpaceID:   string(input.SpaceID),
 	})
@@ -150,7 +146,6 @@ func (r *SuggestionCommentRepository) toModel(row query.SuggestionComment) *mode
 		CreatedSpaceMemberID: model.SpaceMemberID(row.CreatedSpaceMemberID),
 		Number:               model.SuggestionCommentNumber(row.Number),
 		Body:                 row.Body,
-		BodyHTML:             row.BodyHtml,
 		CreatedAt:            row.CreatedAt,
 		UpdatedAt:            row.UpdatedAt,
 	}

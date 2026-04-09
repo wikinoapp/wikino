@@ -19,7 +19,6 @@ type SuggestionBuilder struct {
 	createdSpaceMemberID string
 	title                string
 	body                 string
-	bodyHTML             string
 	status               int32
 	appliedAt            *time.Time
 }
@@ -28,12 +27,11 @@ type SuggestionBuilder struct {
 func NewSuggestionBuilder(t *testing.T, tx *sql.Tx) *SuggestionBuilder {
 	t.Helper()
 	return &SuggestionBuilder{
-		t:        t,
-		tx:       tx,
-		title:    "テスト編集提案",
-		body:     "テスト本文",
-		bodyHTML: "<p>テスト本文</p>",
-		status:   0, // Draft
+		t:      t,
+		tx:     tx,
+		title:  "テスト編集提案",
+		body:   "テスト本文",
+		status: 0, // Draft
 	}
 }
 
@@ -64,12 +62,6 @@ func (b *SuggestionBuilder) WithTitle(title string) *SuggestionBuilder {
 // WithBody は本文を設定します
 func (b *SuggestionBuilder) WithBody(body string) *SuggestionBuilder {
 	b.body = body
-	return b
-}
-
-// WithBodyHTML はHTML本文を設定します
-func (b *SuggestionBuilder) WithBodyHTML(bodyHTML string) *SuggestionBuilder {
-	b.bodyHTML = bodyHTML
 	return b
 }
 
@@ -108,10 +100,10 @@ func (b *SuggestionBuilder) Build() model.SuggestionID {
 	var id string
 	err = b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, applied_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, status, applied_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.createdSpaceMemberID, nextNumber, b.title, b.body, b.bodyHTML, b.status, b.appliedAt, now, now,
+		b.spaceID, b.topicID, b.createdSpaceMemberID, nextNumber, b.title, b.body, b.status, b.appliedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案作成に失敗: %v", err)
@@ -131,7 +123,6 @@ type SuggestionBuilderDB struct {
 	createdSpaceMemberID string
 	title                string
 	body                 string
-	bodyHTML             string
 	status               int32
 	appliedAt            *time.Time
 }
@@ -140,12 +131,11 @@ type SuggestionBuilderDB struct {
 func NewSuggestionBuilderDB(t *testing.T, db *sql.DB) *SuggestionBuilderDB {
 	t.Helper()
 	return &SuggestionBuilderDB{
-		t:        t,
-		db:       db,
-		title:    "テスト編集提案",
-		body:     "テスト本文",
-		bodyHTML: "<p>テスト本文</p>",
-		status:   0,
+		t:      t,
+		db:     db,
+		title:  "テスト編集提案",
+		body:   "テスト本文",
+		status: 0,
 	}
 }
 
@@ -208,10 +198,10 @@ func (b *SuggestionBuilderDB) Build() model.SuggestionID {
 	var id string
 	err = b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, applied_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, status, applied_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.createdSpaceMemberID, nextNumber, b.title, b.body, b.bodyHTML, b.status, b.appliedAt, now, now,
+		b.spaceID, b.topicID, b.createdSpaceMemberID, nextNumber, b.title, b.body, b.status, b.appliedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案作成に失敗: %v", err)

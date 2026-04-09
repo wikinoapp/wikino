@@ -526,7 +526,6 @@ CREATE TABLE public.suggestion_comments (
     suggestion_id uuid NOT NULL,
     created_space_member_id uuid NOT NULL,
     body character varying DEFAULT ''::character varying NOT NULL,
-    body_html character varying DEFAULT ''::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     number integer NOT NULL
@@ -581,7 +580,6 @@ CREATE TABLE public.suggestions (
     created_space_member_id uuid NOT NULL,
     title character varying NOT NULL,
     body character varying NOT NULL,
-    body_html character varying NOT NULL,
     status integer DEFAULT 0 NOT NULL,
     applied_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -2123,4 +2121,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260319074138'),
     ('20260319082723'),
     ('20260326051852'),
-    ('20260405084047');
+    ('20260405084047'),
+    ('20260409023339'),
+    ('20260409023341');

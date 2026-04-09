@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -57,7 +56,7 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 	pageRevisionRepo := repository.NewPageRevisionRepository(q)
 	createValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
 
-	uc := NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, createValidator)
+	uc := NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo, createValidator)
 
 	t.Run("正常系: 1つの下書きページから編集提案を作成できる", func(t *testing.T) {
 		t.Parallel()
@@ -121,9 +120,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if output.Suggestion.Number == 0 {
 			t.Error("Number should not be 0")
-		}
-		if output.Suggestion.BodyHTML == "" {
-			t.Error("BodyHTML should not be empty")
 		}
 
 		// SuggestionPageが作成されたことを確認
@@ -379,58 +375,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: Markdownの本文が正しくHTMLに変換される", func(t *testing.T) {
-		t.Parallel()
-
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("create-sug-html").
-			Build()
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("create-sug-html@example.com").
-			WithAtname("createsughtml").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("General").
-			Build()
-		pageID := testutil.NewPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(1).
-			WithTitle("Test Page").
-			Build()
-		createPageRevisionForTest(t, q, spaceID, spaceMemberID, pageID)
-
-		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithPageID(pageID).
-			WithSpaceMemberID(spaceMemberID).
-			WithTopicID(topicID).
-			WithTitle("提案タイトル").
-			WithBody("本文").
-			WithBodyHTML("<p>本文</p>").
-			Build()
-
-		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceIdentifier: "create-sug-html",
-			TopicNumber:     1,
-			UserID:          userID,
-			Title:           "HTML変換テスト",
-			Body:            "**太字**のテスト",
-			DraftPageIDs:    []model.DraftPageID{draftPageID},
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if !strings.Contains(output.Suggestion.BodyHTML, "<strong>太字</strong>") {
-			t.Errorf("BodyHTML = %q, want containing <strong>太字</strong>", output.Suggestion.BodyHTML)
-		}
-	})
-
 	t.Run("異常系: 存在しないスペースの場合AppErrorが返る", func(t *testing.T) {
 		t.Parallel()
 
@@ -554,68 +498,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if !ve.HasFieldError("title") {
 			t.Error("expected title field error")
-		}
-	})
-
-	t.Run("正常系: Wikiリンクが解決される", func(t *testing.T) {
-		t.Parallel()
-
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("create-sug-wl").
-			Build()
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("create-sug-wl@example.com").
-			WithAtname("createsugwl").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("General").
-			Build()
-		// リンク先ページ
-		linkTargetPageID := testutil.NewPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(1).
-			WithTitle("リンク先ページ").
-			Build()
-		createPageRevisionForTest(t, q, spaceID, spaceMemberID, linkTargetPageID)
-
-		// 編集提案の対象となるページ
-		targetPageID := testutil.NewPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(2).
-			WithTitle("対象ページ").
-			Build()
-		createPageRevisionForTest(t, q, spaceID, spaceMemberID, targetPageID)
-
-		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithPageID(targetPageID).
-			WithSpaceMemberID(spaceMemberID).
-			WithTopicID(topicID).
-			WithTitle("対象ページ").
-			WithBody("本文").
-			WithBodyHTML("<p>本文</p>").
-			Build()
-
-		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
-			SpaceIdentifier: "create-sug-wl",
-			TopicNumber:     1,
-			UserID:          userID,
-			Title:           "Wikiリンクテスト",
-			Body:            "[[リンク先ページ]]を参照",
-			DraftPageIDs:    []model.DraftPageID{draftPageID},
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if !strings.Contains(output.Suggestion.BodyHTML, "/s/create-sug-wl/") {
-			t.Errorf("BodyHTML should contain resolved wikilink URL, got %q", output.Suggestion.BodyHTML)
 		}
 	})
 

@@ -54,7 +54,6 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithTitle("編集テスト提案").
 		WithBody("提案の本文").
-		WithBodyHTML("<p>提案の本文</p>").
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 

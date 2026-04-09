@@ -126,7 +126,7 @@ func Show(data ShowData) templ.Component {
 		}
 		templ_7745c5c3_Err = components.Post(components.PostData{
 			CreatorAtname: data.Suggestion.CreatorAtname,
-			BodyHTML:      data.Suggestion.BodyHTML,
+			Body:          data.Suggestion.Body,
 			CreatedAt:     data.Suggestion.CreatedAt,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -339,7 +339,7 @@ func showComments(data ShowData) templ.Component {
 		for _, c := range data.Comments {
 			templ_7745c5c3_Err = components.Post(components.PostData{
 				CreatorAtname: c.CreatorAtname,
-				BodyHTML:      c.BodyHTML,
+				Body:          c.Body,
 				CreatedAt:     c.CreatedAt,
 				Actions:       commentActions(ctx, data, c),
 				DropdownID:    fmt.Sprintf("comment-%d", c.Number),

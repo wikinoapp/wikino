@@ -70,7 +70,7 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
 	commentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
 	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(
-		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionCommentRepo, commentUpdateValidator,
 	)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)

@@ -67,9 +67,9 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, suggestionCreateValidator)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo, suggestionCreateValidator)
 	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
-	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, suggestionUpdateValidator)
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionUpdateValidator)
 
 	return suggestionhandler.NewHandler(
 		cfg,

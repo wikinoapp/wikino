@@ -12,7 +12,6 @@ type SuggestionComment struct {
 	CreatedSpaceMemberID SpaceMemberID
 	Number               SuggestionCommentNumber
 	Body                 string
-	BodyHTML             string
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }

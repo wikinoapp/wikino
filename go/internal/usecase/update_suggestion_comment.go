@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -18,7 +17,6 @@ type UpdateSuggestionCommentUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
 	spaceMemberRepo       *repository.SpaceMemberRepository
-	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	suggestionRepo        *repository.SuggestionRepository
 	suggestionCommentRepo *repository.SuggestionCommentRepository
@@ -30,7 +28,6 @@ func NewUpdateSuggestionCommentUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
-	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionRepo *repository.SuggestionRepository,
 	suggestionCommentRepo *repository.SuggestionCommentRepository,
@@ -40,7 +37,6 @@ func NewUpdateSuggestionCommentUsecase(
 		db:                    db,
 		spaceRepo:             spaceRepo,
 		spaceMemberRepo:       spaceMemberRepo,
-		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		suggestionRepo:        suggestionRepo,
 		suggestionCommentRepo: suggestionCommentRepo,
@@ -65,13 +61,13 @@ type UpdateSuggestionCommentOutput struct {
 // Execute は編集提案コメントを更新する
 func (uc *UpdateSuggestionCommentUsecase) Execute(ctx context.Context, input UpdateSuggestionCommentInput) (*UpdateSuggestionCommentOutput, error) {
 	// 1. データ取得
-	space, spaceMember, topic, suggestion, comment, err := uc.fetchData(ctx, input)
+	space, spaceMember, suggestion, comment, err := uc.fetchData(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
 	// 2. 認可チェック
-	if err := uc.authorize(ctx, space, spaceMember, topic, suggestion); err != nil {
+	if err := uc.authorize(ctx, space, spaceMember, suggestion); err != nil {
 		return nil, err
 	}
 
@@ -82,20 +78,17 @@ func (uc *UpdateSuggestionCommentUsecase) Execute(ctx context.Context, input Upd
 		return nil, err
 	}
 
-	// 4. ビジネスロジック（トランザクション前）
-	bodyHTML := markup.RenderMarkdown(input.Body)
-
-	// 5. 永続化（トランザクション）
-	return uc.updateComment(ctx, comment.ID, space.ID, input.Body, bodyHTML)
+	// 4. 永続化（トランザクション）
+	return uc.updateComment(ctx, comment.ID, space.ID, input.Body)
 }
 
-func (uc *UpdateSuggestionCommentUsecase) fetchData(ctx context.Context, input UpdateSuggestionCommentInput) (*model.Space, *model.SpaceMember, *model.Topic, *model.Suggestion, *model.SuggestionComment, error) {
+func (uc *UpdateSuggestionCommentUsecase) fetchData(ctx context.Context, input UpdateSuggestionCommentInput) (*model.Space, *model.SpaceMember, *model.Suggestion, *model.SuggestionComment, error) {
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("スペースの取得に失敗: %w", err)
 	}
 	if space == nil {
-		return nil, nil, nil, nil, nil, &model.AppError{
+		return nil, nil, nil, nil, &model.AppError{
 			Code:    model.AppErrCodeResourceNotFound,
 			UserMsg: i18n.T(ctx, "error_not_found_message"),
 		}
@@ -103,21 +96,10 @@ func (uc *UpdateSuggestionCommentUsecase) fetchData(ctx context.Context, input U
 
 	suggestion, err := uc.suggestionRepo.FindBySpaceAndNumber(ctx, space.ID, input.SuggestionNumber)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("編集提案の取得に失敗: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("編集提案の取得に失敗: %w", err)
 	}
 	if suggestion == nil {
-		return nil, nil, nil, nil, nil, &model.AppError{
-			Code:    model.AppErrCodeResourceNotFound,
-			UserMsg: i18n.T(ctx, "error_not_found_message"),
-		}
-	}
-
-	topic, err := uc.topicRepo.FindBySpaceAndID(ctx, space.ID, suggestion.TopicID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("トピックの取得に失敗: %w", err)
-	}
-	if topic == nil {
-		return nil, nil, nil, nil, nil, &model.AppError{
+		return nil, nil, nil, nil, &model.AppError{
 			Code:    model.AppErrCodeResourceNotFound,
 			UserMsg: i18n.T(ctx, "error_not_found_message"),
 		}
@@ -125,24 +107,24 @@ func (uc *UpdateSuggestionCommentUsecase) fetchData(ctx context.Context, input U
 
 	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
 	}
 
 	comment, err := uc.suggestionCommentRepo.FindByNumber(ctx, suggestion.ID, input.CommentNumber, space.ID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("編集提案コメントの取得に失敗: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("編集提案コメントの取得に失敗: %w", err)
 	}
 	if comment == nil {
-		return nil, nil, nil, nil, nil, &model.AppError{
+		return nil, nil, nil, nil, &model.AppError{
 			Code:    model.AppErrCodeResourceNotFound,
 			UserMsg: i18n.T(ctx, "error_not_found_message"),
 		}
 	}
 
-	return space, spaceMember, topic, suggestion, comment, nil
+	return space, spaceMember, suggestion, comment, nil
 }
 
-func (uc *UpdateSuggestionCommentUsecase) authorize(ctx context.Context, space *model.Space, spaceMember *model.SpaceMember, topic *model.Topic, suggestion *model.Suggestion) error {
+func (uc *UpdateSuggestionCommentUsecase) authorize(ctx context.Context, space *model.Space, spaceMember *model.SpaceMember, suggestion *model.Suggestion) error {
 	if spaceMember == nil {
 		return &model.AppError{
 			Code:    model.AppErrCodeForbidden,
@@ -153,7 +135,7 @@ func (uc *UpdateSuggestionCommentUsecase) authorize(ctx context.Context, space *
 	var topicMember *model.TopicMember
 	if spaceMember.Role != model.SpaceMemberRoleOwner {
 		var err error
-		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, topic.ID)
+		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
 		if err != nil {
 			return fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 		}
@@ -170,7 +152,7 @@ func (uc *UpdateSuggestionCommentUsecase) authorize(ctx context.Context, space *
 	return nil
 }
 
-func (uc *UpdateSuggestionCommentUsecase) updateComment(ctx context.Context, commentID model.SuggestionCommentID, spaceID model.SpaceID, body, bodyHTML string) (*UpdateSuggestionCommentOutput, error) {
+func (uc *UpdateSuggestionCommentUsecase) updateComment(ctx context.Context, commentID model.SuggestionCommentID, spaceID model.SpaceID, body string) (*UpdateSuggestionCommentOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -182,10 +164,9 @@ func (uc *UpdateSuggestionCommentUsecase) updateComment(ctx context.Context, com
 	suggestionCommentRepo := uc.suggestionCommentRepo.WithTx(tx)
 
 	comment, err := suggestionCommentRepo.Update(ctx, repository.UpdateSuggestionCommentInput{
-		ID:       commentID,
-		SpaceID:  spaceID,
-		Body:     body,
-		BodyHTML: bodyHTML,
+		ID:      commentID,
+		SpaceID: spaceID,
+		Body:    body,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案コメントの更新に失敗しました: %w", err)

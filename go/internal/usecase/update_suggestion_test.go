@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -20,13 +19,11 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 
 	spaceRepo := repository.NewSpaceRepository(q)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	suggestionRepo := repository.NewSuggestionRepository(q)
-	pageRepo := repository.NewPageRepository(q)
 	updateValidator := validator.NewSuggestionUpdateValidator()
 
-	uc := NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, updateValidator)
+	uc := NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, updateValidator)
 
 	t.Run("正常系: タイトルと本文を更新できる", func(t *testing.T) {
 		t.Parallel()
@@ -72,9 +69,6 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if output.Suggestion.Body != "新本文" {
 			t.Errorf("Body = %q, want %q", output.Suggestion.Body, "新本文")
-		}
-		if output.Suggestion.BodyHTML == "" {
-			t.Error("BodyHTML should not be empty")
 		}
 	})
 
@@ -122,53 +116,6 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 		}
 		if output.Suggestion.Body != "" {
 			t.Errorf("Body = %q, want empty", output.Suggestion.Body)
-		}
-	})
-
-	t.Run("正常系: Markdown本文がHTMLに変換される", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		spaceID := testutil.NewSpaceBuilderDB(t, db).
-			WithIdentifier("update-sug-3").
-			Build()
-		userID := testutil.NewUserBuilderDB(t, db).
-			WithEmail("update-sug-3@example.com").
-			WithAtname("updatesug3").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithName("テストトピック3").
-			Build()
-		testutil.NewSuggestionBuilderDB(t, db).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithCreatedSpaceMemberID(spaceMemberID).
-			WithTitle("テスト").
-			WithStatus(model.SuggestionStatusOpen).
-			Build()
-
-		output, err := uc.Execute(ctx, UpdateSuggestionInput{
-			SpaceIdentifier:  "update-sug-3",
-			SuggestionNumber: 1,
-			UserID:           userID,
-			Title:            "Markdownテスト",
-			Body:             "**太字** テスト",
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-
-		if output.Suggestion.BodyHTML == "" {
-			t.Error("BodyHTML should not be empty")
-		}
-		if !strings.Contains(output.Suggestion.BodyHTML, "<strong>") {
-			t.Errorf("BodyHTML should contain <strong> tag, got: %s", output.Suggestion.BodyHTML)
 		}
 	})
 

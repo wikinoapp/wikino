@@ -23,7 +23,7 @@ type PostAction struct {
 // PostData は投稿（編集提案の本文やコメント）の表示データです
 type PostData struct {
 	CreatorAtname string
-	BodyHTML      string
+	Body          string
 	CreatedAt     time.Time
 	Actions       []PostAction
 	// dropdownID はドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
@@ -110,8 +110,8 @@ func Post(data PostData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if data.BodyHTML != "" {
-			templ_7745c5c3_Err = templ.Raw(data.BodyHTML).Render(ctx, templ_7745c5c3_Buffer)
+		if data.Body != "" {
+			templ_7745c5c3_Err = PlainTextBody(PlainTextBodyData{Text: data.Body}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
