@@ -21,6 +21,8 @@ updates:
         patterns:
           - "tailwindcss"
           - "@tailwindcss/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
         update-types:
           - "patch"
           - "minor"
@@ -29,6 +31,8 @@ updates:
           - "@codemirror/*"
           - "@lezer/*"
           - "codemirror"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
         update-types:
           - "patch"
           - "minor"
