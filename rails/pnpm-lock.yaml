@@ -45,8 +45,8 @@ importers:
         specifier: ^4.1.13
         version: 4.1.13
       basecoat-css:
-        specifier: ^0.3.2
-        version: 0.3.2
+        specifier: ^0.3.11
+        version: 0.3.11
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -632,8 +632,8 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  basecoat-css@0.3.2:
-    resolution: {integrity: sha512-WLdyYnyLU4kr3rZNl5n4YG0i3YUamYIISjpip0ipah9l4wwbmEEB/3v/K3l4tKCYg3PaEaallnvs04ZfxHZ7YQ==}
+  basecoat-css@0.3.11:
+    resolution: {integrity: sha512-cU91Egcg9AhKJ1HswpKFItHC//FWDt1T8AlL5Yk9Fh5I2WYe+QhN3MtiVJ2vemqFF4iAM1vfbikhhjc+vkr2zA==}
 
   brace-expansion@1.1.12:
     resolution: {integrity: sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==}
@@ -1626,7 +1626,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  basecoat-css@0.3.2: {}
+  basecoat-css@0.3.11: {}
 
   brace-expansion@1.1.12:
     dependencies:
