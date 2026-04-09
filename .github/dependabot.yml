@@ -42,12 +42,18 @@ updates:
     directory: "/rails"
     schedule:
       interval: "daily"
+    # Rails 版はメンテナンスモードに入っており、Dependabot alerts に基づく
+    # セキュリティアップデートのみ対応する。通常の version update PR は作らない
+    open-pull-requests-limit: 0
 
   # Rails version npm dependencies
   - package-ecosystem: "npm"
     directory: "/rails"
     schedule:
       interval: "daily"
+    # Rails 版はメンテナンスモードに入っており、Dependabot alerts に基づく
+    # セキュリティアップデートのみ対応する。通常の version update PR は作らない
+    open-pull-requests-limit: 0
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
