@@ -1,0 +1,17 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/markup"
+
+// PlainTextBodyData はプレーンテキスト本文コンポーネントのデータです
+type PlainTextBodyData struct {
+	Text string
+}
+
+// PlainTextBody はプレーンテキストの本文を表示するコンポーネントです。
+// 改行を `white-space: pre-wrap` で保持し、http:// / https:// で始まる URL を
+// 自動的に <a> タグに変換します。
+templ PlainTextBody(data PlainTextBodyData) {
+	<p class="whitespace-pre-wrap">
+		@templ.Raw(markup.LinkifyPlainText(data.Text))
+	</p>
+}
