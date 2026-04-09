@@ -29,9 +29,9 @@ func (q *Queries) CountSuggestionCommentsBySuggestionID(ctx context.Context, arg
 }
 
 const createSuggestionComment = `-- name: CreateSuggestionComment :one
-INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number
+INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, space_id, suggestion_id, created_space_member_id, body, created_at, updated_at, number
 `
 
 type CreateSuggestionCommentParams struct {
@@ -40,7 +40,6 @@ type CreateSuggestionCommentParams struct {
 	CreatedSpaceMemberID string    `json:"created_space_member_id"`
 	Number               int32     `json:"number"`
 	Body                 string    `json:"body"`
-	BodyHtml             string    `json:"body_html"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 }
@@ -53,7 +52,6 @@ func (q *Queries) CreateSuggestionComment(ctx context.Context, arg CreateSuggest
 		arg.CreatedSpaceMemberID,
 		arg.Number,
 		arg.Body,
-		arg.BodyHtml,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -64,7 +62,6 @@ func (q *Queries) CreateSuggestionComment(ctx context.Context, arg CreateSuggest
 		&i.SuggestionID,
 		&i.CreatedSpaceMemberID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Number,
@@ -73,7 +70,7 @@ func (q *Queries) CreateSuggestionComment(ctx context.Context, arg CreateSuggest
 }
 
 const findSuggestionCommentByID = `-- name: FindSuggestionCommentByID :one
-SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
+SELECT id, space_id, suggestion_id, created_space_member_id, body, created_at, updated_at, number FROM suggestion_comments
 WHERE id = $1 AND space_id = $2
 `
 
@@ -92,7 +89,6 @@ func (q *Queries) FindSuggestionCommentByID(ctx context.Context, arg FindSuggest
 		&i.SuggestionID,
 		&i.CreatedSpaceMemberID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Number,
@@ -101,7 +97,7 @@ func (q *Queries) FindSuggestionCommentByID(ctx context.Context, arg FindSuggest
 }
 
 const findSuggestionCommentByNumber = `-- name: FindSuggestionCommentByNumber :one
-SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
+SELECT id, space_id, suggestion_id, created_space_member_id, body, created_at, updated_at, number FROM suggestion_comments
 WHERE suggestion_id = $1 AND number = $2 AND space_id = $3
 `
 
@@ -121,7 +117,6 @@ func (q *Queries) FindSuggestionCommentByNumber(ctx context.Context, arg FindSug
 		&i.SuggestionID,
 		&i.CreatedSpaceMemberID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Number,
@@ -142,7 +137,7 @@ func (q *Queries) GetNextSuggestionCommentNumber(ctx context.Context, suggestion
 }
 
 const listSuggestionCommentsBySuggestionID = `-- name: ListSuggestionCommentsBySuggestionID :many
-SELECT id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number FROM suggestion_comments
+SELECT id, space_id, suggestion_id, created_space_member_id, body, created_at, updated_at, number FROM suggestion_comments
 WHERE suggestion_id = $1 AND space_id = $2
 ORDER BY created_at ASC
 `
@@ -168,7 +163,6 @@ func (q *Queries) ListSuggestionCommentsBySuggestionID(ctx context.Context, arg 
 			&i.SuggestionID,
 			&i.CreatedSpaceMemberID,
 			&i.Body,
-			&i.BodyHtml,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Number,
@@ -188,15 +182,14 @@ func (q *Queries) ListSuggestionCommentsBySuggestionID(ctx context.Context, arg 
 
 const updateSuggestionComment = `-- name: UpdateSuggestionComment :one
 UPDATE suggestion_comments
-SET body = $2, body_html = $3, updated_at = $4
-WHERE id = $1 AND space_id = $5
-RETURNING id, space_id, suggestion_id, created_space_member_id, body, body_html, created_at, updated_at, number
+SET body = $2, updated_at = $3
+WHERE id = $1 AND space_id = $4
+RETURNING id, space_id, suggestion_id, created_space_member_id, body, created_at, updated_at, number
 `
 
 type UpdateSuggestionCommentParams struct {
 	ID        string    `json:"id"`
 	Body      string    `json:"body"`
-	BodyHtml  string    `json:"body_html"`
 	UpdatedAt time.Time `json:"updated_at"`
 	SpaceID   string    `json:"space_id"`
 }
@@ -206,7 +199,6 @@ func (q *Queries) UpdateSuggestionComment(ctx context.Context, arg UpdateSuggest
 	row := q.db.QueryRowContext(ctx, updateSuggestionComment,
 		arg.ID,
 		arg.Body,
-		arg.BodyHtml,
 		arg.UpdatedAt,
 		arg.SpaceID,
 	)
@@ -217,7 +209,6 @@ func (q *Queries) UpdateSuggestionComment(ctx context.Context, arg UpdateSuggest
 		&i.SuggestionID,
 		&i.CreatedSpaceMemberID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Number,

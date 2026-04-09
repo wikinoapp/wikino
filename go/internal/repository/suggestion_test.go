@@ -46,7 +46,6 @@ func TestSuggestionRepository_Create(t *testing.T) {
 			CreatedSpaceMemberID: spaceMemberID,
 			Title:                "テスト提案",
 			Body:                 "テスト本文",
-			BodyHTML:             "<p>テスト本文</p>",
 			Status:               model.SuggestionStatusDraft,
 		})
 		if err != nil {
@@ -72,9 +71,6 @@ func TestSuggestionRepository_Create(t *testing.T) {
 		}
 		if suggestion.Body != "テスト本文" {
 			t.Errorf("suggestion.Body = %v, want テスト本文", suggestion.Body)
-		}
-		if suggestion.BodyHTML != "<p>テスト本文</p>" {
-			t.Errorf("suggestion.BodyHTML = %v, want <p>テスト本文</p>", suggestion.BodyHTML)
 		}
 		if suggestion.Status != model.SuggestionStatusDraft {
 			t.Errorf("suggestion.Status = %v, want %v", suggestion.Status, model.SuggestionStatusDraft)

@@ -27,7 +27,6 @@ type Suggestion struct {
 	Number               SuggestionNumber
 	Title                string
 	Body                 string
-	BodyHTML             string
 	Status               SuggestionStatus
 	AppliedAt            *time.Time
 	CreatedAt            time.Time

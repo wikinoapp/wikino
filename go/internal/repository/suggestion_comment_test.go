@@ -52,7 +52,6 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 			CreatedSpaceMemberID: spaceMemberID,
 			Number:               1,
 			Body:                 "コメント本文",
-			BodyHTML:             "<p>コメント本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() error = %v", err)
@@ -77,9 +76,6 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 		}
 		if comment.Body != "コメント本文" {
 			t.Errorf("comment.Body = %v, want コメント本文", comment.Body)
-		}
-		if comment.BodyHTML != "<p>コメント本文</p>" {
-			t.Errorf("comment.BodyHTML = %v, want <p>コメント本文</p>", comment.BodyHTML)
 		}
 		if comment.CreatedAt.IsZero() {
 			t.Error("comment.CreatedAt is zero")
@@ -451,15 +447,13 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 		WithSuggestionID(suggestionID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithBody("更新前のコメント").
-		WithBodyHTML("<p>更新前のコメント</p>").
 		Build()
 
 	t.Run("コメントを更新できる", func(t *testing.T) {
 		comment, err := repo.Update(ctx, UpdateSuggestionCommentInput{
-			ID:       commentID,
-			SpaceID:  spaceID,
-			Body:     "更新後のコメント",
-			BodyHTML: "<p>更新後のコメント</p>",
+			ID:      commentID,
+			SpaceID: spaceID,
+			Body:    "更新後のコメント",
 		})
 		if err != nil {
 			t.Fatalf("Update() error = %v", err)
@@ -470,9 +464,6 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 		if comment.Body != "更新後のコメント" {
 			t.Errorf("comment.Body = %v, want 更新後のコメント", comment.Body)
 		}
-		if comment.BodyHTML != "<p>更新後のコメント</p>" {
-			t.Errorf("comment.BodyHTML = %v, want <p>更新後のコメント</p>", comment.BodyHTML)
-		}
 	})
 
 	t.Run("異なるスペースIDではnilを返す", func(t *testing.T) {
@@ -482,10 +473,9 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 			Build()
 
 		comment, err := repo.Update(ctx, UpdateSuggestionCommentInput{
-			ID:       commentID,
-			SpaceID:  otherSpaceID,
-			Body:     "不正な更新",
-			BodyHTML: "<p>不正な更新</p>",
+			ID:      commentID,
+			SpaceID: otherSpaceID,
+			Body:    "不正な更新",
 		})
 		if err != nil {
 			t.Fatalf("Update() error = %v", err)

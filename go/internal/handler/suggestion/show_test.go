@@ -112,7 +112,6 @@ func TestShow_公開トピックの編集提案を未ログインで閲覧でき
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithTitle("テスト提案詳細").
 		WithBody("提案の説明").
-		WithBodyHTML("<p>提案の説明</p>").
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
@@ -121,7 +120,6 @@ func TestShow_公開トピックの編集提案を未ログインで閲覧でき
 		WithSuggestionID(suggestionID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithBody("テストコメント").
-		WithBodyHTML("<p>テストコメント</p>").
 		Build()
 
 	handler := setupHandler(t, db, queries)

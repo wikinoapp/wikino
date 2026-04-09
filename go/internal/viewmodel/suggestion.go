@@ -55,7 +55,6 @@ type SuggestionForDetail struct {
 	Number        int32
 	Title         string
 	Body          string
-	BodyHTML      string
 	Status        model.SuggestionStatus
 	CreatorName   string
 	CreatorAtname string
@@ -79,7 +78,6 @@ func NewSuggestionForDetail(input NewSuggestionForDetailInput) SuggestionForDeta
 		Number:        int32(input.Suggestion.Number),
 		Title:         input.Suggestion.Title,
 		Body:          input.Suggestion.Body,
-		BodyHTML:      input.Suggestion.BodyHTML,
 		Status:        input.Suggestion.Status,
 		CreatorName:   creatorName,
 		CreatorAtname: creatorAtname,
@@ -92,7 +90,7 @@ type SuggestionCommentForList struct {
 	Number        int32
 	CreatorName   string
 	CreatorAtname string
-	BodyHTML      string
+	Body          string
 	CreatedAt     time.Time
 }
 
@@ -115,7 +113,7 @@ func NewSuggestionCommentsForList(input NewSuggestionCommentsForListInput) []Sug
 			Number:        int32(c.Number),
 			CreatorName:   creatorName,
 			CreatorAtname: creatorAtname,
-			BodyHTML:      c.BodyHTML,
+			Body:          c.Body,
 			CreatedAt:     c.CreatedAt,
 		}
 	}

@@ -53,7 +53,6 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithTitle("テスト提案").
 		WithBody("提案の本文").
-		WithBodyHTML("<p>提案の本文</p>").
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
@@ -81,7 +80,6 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 		WithSuggestionID(suggestionID).
 		WithCreatedSpaceMemberID(spaceMemberID).
 		WithBody("テストコメント1").
-		WithBodyHTML("<p>テストコメント1</p>").
 		Build()
 
 	t.Run("編集提案の詳細が取得できる", func(t *testing.T) {

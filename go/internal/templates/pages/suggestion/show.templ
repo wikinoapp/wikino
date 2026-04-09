@@ -87,7 +87,7 @@ templ Show(data ShowData) {
 
 					@components.Post(components.PostData{
 						CreatorAtname: data.Suggestion.CreatorAtname,
-						BodyHTML:      data.Suggestion.BodyHTML,
+						Body:          data.Suggestion.Body,
 						CreatedAt:     data.Suggestion.CreatedAt,
 					})
 
@@ -158,7 +158,7 @@ templ showComments(data ShowData) {
 		for _, c := range data.Comments {
 			@components.Post(components.PostData{
 				CreatorAtname: c.CreatorAtname,
-				BodyHTML:      c.BodyHTML,
+				Body:          c.Body,
 				CreatedAt:     c.CreatedAt,
 				Actions:       commentActions(ctx, data, c),
 				DropdownID:    fmt.Sprintf("comment-%d", c.Number),

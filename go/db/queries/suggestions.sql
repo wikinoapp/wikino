@@ -1,7 +1,7 @@
 -- name: CreateSuggestion :one
 -- 編集提案を作成する
-INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, status, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: FindSuggestionByID :one
@@ -38,8 +38,8 @@ SELECT * FROM suggestions WHERE space_id = $1 AND number = $2;
 -- name: UpdateSuggestion :one
 -- 編集提案のタイトルと本文を更新する（スペースIDでスコープ）
 UPDATE suggestions
-SET title = $2, body = $3, body_html = $4, updated_at = $5
-WHERE id = $1 AND space_id = $6
+SET title = $2, body = $3, updated_at = $4
+WHERE id = $1 AND space_id = $5
 RETURNING *;
 
 -- name: GetNextSuggestionNumber :one

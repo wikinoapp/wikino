@@ -18,17 +18,15 @@ type SuggestionCommentBuilder struct {
 	suggestionID         string
 	createdSpaceMemberID string
 	body                 string
-	bodyHTML             string
 }
 
 // NewSuggestionCommentBuilder は SuggestionCommentBuilder を生成します
 func NewSuggestionCommentBuilder(t *testing.T, tx *sql.Tx) *SuggestionCommentBuilder {
 	t.Helper()
 	return &SuggestionCommentBuilder{
-		t:        t,
-		tx:       tx,
-		body:     "テストコメント",
-		bodyHTML: "<p>テストコメント</p>",
+		t:    t,
+		tx:   tx,
+		body: "テストコメント",
 	}
 }
 
@@ -53,12 +51,6 @@ func (b *SuggestionCommentBuilder) WithCreatedSpaceMemberID(createdSpaceMemberID
 // WithBody は本文を設定します
 func (b *SuggestionCommentBuilder) WithBody(body string) *SuggestionCommentBuilder {
 	b.body = body
-	return b
-}
-
-// WithBodyHTML はHTML本文を設定します
-func (b *SuggestionCommentBuilder) WithBodyHTML(bodyHTML string) *SuggestionCommentBuilder {
-	b.bodyHTML = bodyHTML
 	return b
 }
 
@@ -91,10 +83,10 @@ func (b *SuggestionCommentBuilder) Build() model.SuggestionCommentID {
 	var id string
 	err = b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.suggestionID, b.createdSpaceMemberID, nextNumber, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.suggestionID, b.createdSpaceMemberID, nextNumber, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案コメント作成に失敗: %v", err)
@@ -112,17 +104,15 @@ type SuggestionCommentBuilderDB struct {
 	suggestionID         string
 	createdSpaceMemberID string
 	body                 string
-	bodyHTML             string
 }
 
 // NewSuggestionCommentBuilderDB は SuggestionCommentBuilderDB を生成します
 func NewSuggestionCommentBuilderDB(t *testing.T, db *sql.DB) *SuggestionCommentBuilderDB {
 	t.Helper()
 	return &SuggestionCommentBuilderDB{
-		t:        t,
-		db:       db,
-		body:     "テストコメント",
-		bodyHTML: "<p>テストコメント</p>",
+		t:    t,
+		db:   db,
+		body: "テストコメント",
 	}
 }
 
@@ -179,10 +169,10 @@ func (b *SuggestionCommentBuilderDB) Build() model.SuggestionCommentID {
 	var id string
 	err = b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO suggestion_comments (space_id, suggestion_id, created_space_member_id, number, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.suggestionID, b.createdSpaceMemberID, nextNumber, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.suggestionID, b.createdSpaceMemberID, nextNumber, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案コメント作成に失敗: %v", err)

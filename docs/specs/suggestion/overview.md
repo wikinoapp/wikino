@@ -118,7 +118,7 @@ Draft ──┐
 - 編集提案は 1 つのトピック内のページに限定される。複数トピックにまたがる編集提案は作成できない
 - 複数のページの変更を 1 つの編集提案にまとめることができる
 - 編集提案ではページのトピック変更は対象外とする。トピックの変更は [ページの移動 仕様書](../page/move.md) を参照
-- 編集提案の本文は Markdown で記述し、保存時にページと同じ Markdown パイプライン（Wiki リンク解決を含む）で `body_html` を生成する
+- 編集提案の本文・編集提案コメントの本文はプレーンテキストで記述する。改行は表示時に CSS の `white-space: pre-wrap` で保持し、URL は表示時にヘルパーで自動的にリンク化する。Markdown 記法・Wiki リンク記法はサポートしない
 - 編集提案作成画面では、対象トピック内の自分の下書きページがチェックボックス付きで表示される。チェックを入れた下書きページが編集提案ページ（`SuggestionPage`）として登録される
 - 編集提案作成時、各下書きページから `linked_page_ids` と `featured_image_attachment_id` をそのままコピーして `SuggestionPage` に保存する。反映時の Markdown パイプライン再実行を避けるため、write time に計算した値を保持する
 - 編集提案作成時、各下書きページの `suggestion_page_id` に作成した `SuggestionPage` の ID を設定し、作成者がそのまま編集提案モードでページ編集を継続できるようにする
@@ -359,7 +359,6 @@ CREATE TABLE suggestions (
     created_space_member_id uuid NOT NULL,
     title character varying NOT NULL,
     body character varying NOT NULL,
-    body_html character varying NOT NULL,
     status integer DEFAULT 0 NOT NULL,
     applied_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -374,7 +373,7 @@ CREATE INDEX idx_suggestions_created_space_member_id ON suggestions(created_spac
 ```
 
 - `number` はスペース内での連番（`pages.number` と同じパターン）。URL のキーとして使用する
-- `body` は Markdown で記述し、保存時にページと同じ Markdown パイプライン（Wiki リンク解決を含む）で `body_html` を生成する
+- `body` はプレーンテキストとして保存する。表示時に CSS の `white-space: pre-wrap` で改行を保持し、ヘルパーで URL を自動的にリンク化する
 
 #### `suggestion_pages`
 
@@ -433,7 +432,6 @@ CREATE TABLE suggestion_comments (
     suggestion_id uuid NOT NULL,
     created_space_member_id uuid NOT NULL,
     body character varying DEFAULT '' NOT NULL,
-    body_html character varying DEFAULT '' NOT NULL,
     number integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
@@ -445,6 +443,7 @@ CREATE INDEX idx_suggestion_comments_space_id ON suggestion_comments(space_id);
 ```
 
 - `number` は編集提案内での連番。URL のキーとして使用する
+- `body` はプレーンテキストとして保存する。表示時に CSS の `white-space: pre-wrap` で改行を保持し、ヘルパーで URL を自動的にリンク化する
 
 #### `draft_pages` への変更
 
@@ -481,7 +480,6 @@ type Suggestion struct {
     Number               SuggestionNumber
     Title                string
     Body                 string
-    BodyHTML             string
     Status               SuggestionStatus
     AppliedAt            *time.Time
     CreatedAt            time.Time
@@ -525,7 +523,6 @@ type SuggestionComment struct {
     CreatedSpaceMemberID SpaceMemberID
     Number               SuggestionCommentNumber
     Body                 string
-    BodyHTML             string
     CreatedAt            time.Time
     UpdatedAt            time.Time
 }
@@ -696,6 +693,26 @@ type SuggestionComment struct {
 - 「編集リクエスト」のニュアンス: 「変更してください」というやや能動的なイメージ。受け手にアクションを求めるイメージ。編集を取り込むことを前提としたイメージ
 - 「編集提案」のニュアンス: 「こうしたらどうだろうか？」という控えめなイメージ。受け手に判断を委ねる受動的なイメージ。あくまでアイデアを提示したまでで、取り込まれなくても問題ないというイメージ
 
+### 編集提案・編集提案コメントで Markdown をサポートする案
+
+当初、編集提案の本文 (`suggestions.body`) と編集提案コメントの本文 (`suggestion_comments.body`) は Markdown で記述し、保存時にページと同じ Markdown パイプライン（Wiki リンク解決を含む）で `body_html` を生成して保存していた。その後、両方の Markdown サポートを廃止し、プレーンテキスト入力に変更した。
+
+**不採用の理由**:
+
+- 編集提案の本文に Markdown が必要になるほどの情報量を書くのは Wiki の責務分離として不自然である。詳細はページ本体に書き、編集提案では「なぜこの変更を提案するか」に集中するスタイルが望ましい
+- Claude などの AI と既存テキストを修正するワークフローでも、編集提案や編集提案コメントの本文を Markdown で書きたい場面はほとんどない
+- YAGNI: まずは Markdown なしでリリースし、本当に必要になったときに改めて検討する
+- `body_html` カラムを保持し続けると、保存時にレンダリングするための Markdown パイプライン依存が UseCase に残り、Wikiリンク解決のための Repository 依存も増えて編集提案系の UseCase が肥大化する
+
+**採用した方針**:
+
+- `suggestions.body_html` / `suggestion_comments.body_html` カラムは削除する。`body` のみをプレーンテキストとして保存する
+- 改行は表示時に CSS の `white-space: pre-wrap` で保持する（DB に `<br>` を入れない）
+- URL は表示時にヘルパー（`internal/markup/linkify.go` の `LinkifyPlainText`）で都度リンク化する
+- Wiki リンク `[[...]]` はサポートしない（バックリンクを生成する性質上、編集提案のような一時的なリソースから使えるのは違和感があるため）
+- コードブロック・インラインコードはサポートしない（行ごとのコメント機能で対応予定）
+- 影響範囲は `suggestions.body` / `suggestion_comments.body` のみ。`pages.body`、`suggestion_pages.body`、`suggestion_page_revisions.body` を含むページ系の Markdown サポートには触れない（`suggestion_pages` / `suggestion_page_revisions` は反映時にページ本体の系統に流れるため、`body_html` カラムを引き続き保持する）
+
 ### 編集提案をページの亜種として扱う案
 
 `pages` テーブルに `type` カラムを追加し、通常のページを `type: note`、編集提案を `type: suggestion` として管理する案を検討した。「すべてのドキュメントはページ」という思想に基づき、編集提案の本文で Wiki リンク記法を自然に使えるようにする狙いがあった。
@@ -706,7 +723,7 @@ type SuggestionComment struct {
 - ページ一覧やトピック内ページ数など、既存のクエリすべてに `WHERE type = 'note'` が必要になり、漏れるとバグになる
 - `[[編集提案のタイトル]]` でリンクできてしまうが、リンク先が編集提案の説明文ページになるのは意味的に不自然
 - 編集提案の説明文は「変更に関するメタデータ」であり、Wiki のコンテンツではない。GitHub の PR description が「ファイル」ではないのと同じ
-- Wiki リンク記法のサポートは Markdown レンダリングパイプラインの機能であり、ページモデルに依存しない。`suggestions.body` を保存時にページと同じ Markdown パイプライン（Wiki リンク解決を含む）で処理すれば、ページモデルを変更せずに目的を達成できる
+- そもそも編集提案・編集提案コメントの本文は Markdown サポートを廃止したため（前項参照）、Wiki リンク記法を自然に使えるようにする目的そのものが消滅した
 
 ### 編集提案番号をトピック内で採番する案
 

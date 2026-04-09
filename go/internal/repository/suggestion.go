@@ -33,7 +33,6 @@ type CreateSuggestionInput struct {
 	Number               model.SuggestionNumber
 	Title                string
 	Body                 string
-	BodyHTML             string
 	Status               model.SuggestionStatus
 }
 
@@ -47,7 +46,6 @@ func (r *SuggestionRepository) Create(ctx context.Context, input CreateSuggestio
 		Number:               int32(input.Number),
 		Title:                input.Title,
 		Body:                 input.Body,
-		BodyHtml:             input.BodyHTML,
 		Status:               int32(input.Status),
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -154,11 +152,10 @@ func (r *SuggestionRepository) UpdateStatus(ctx context.Context, input UpdateSta
 
 // UpdateSuggestionInput は編集提案更新の入力パラメータ
 type UpdateSuggestionInput struct {
-	ID       model.SuggestionID
-	SpaceID  model.SpaceID
-	Title    string
-	Body     string
-	BodyHTML string
+	ID      model.SuggestionID
+	SpaceID model.SpaceID
+	Title   string
+	Body    string
 }
 
 // Update は編集提案のタイトルと本文を更新する
@@ -167,7 +164,6 @@ func (r *SuggestionRepository) Update(ctx context.Context, input UpdateSuggestio
 		ID:        string(input.ID),
 		Title:     input.Title,
 		Body:      input.Body,
-		BodyHtml:  input.BodyHTML,
 		UpdatedAt: time.Now(),
 		SpaceID:   string(input.SpaceID),
 	})
@@ -217,7 +213,6 @@ func (r *SuggestionRepository) toModel(row query.Suggestion) *model.Suggestion {
 		Number:               model.SuggestionNumber(row.Number),
 		Title:                row.Title,
 		Body:                 row.Body,
-		BodyHTML:             row.BodyHtml,
 		Status:               model.SuggestionStatus(row.Status),
 		AppliedAt:            appliedAt,
 		CreatedAt:            row.CreatedAt,

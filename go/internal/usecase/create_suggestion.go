@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -24,7 +23,6 @@ type CreateSuggestionUsecase struct {
 	suggestionPageRepo         *repository.SuggestionPageRepository
 	suggestionPageRevisionRepo *repository.SuggestionPageRevisionRepository
 	draftPageRepo              *repository.DraftPageRepository
-	pageRepo                   *repository.PageRepository
 	pageRevisionRepo           *repository.PageRevisionRepository
 	createValidator            *validator.SuggestionCreateValidator
 }
@@ -40,7 +38,6 @@ func NewCreateSuggestionUsecase(
 	suggestionPageRepo *repository.SuggestionPageRepository,
 	suggestionPageRevisionRepo *repository.SuggestionPageRevisionRepository,
 	draftPageRepo *repository.DraftPageRepository,
-	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	createValidator *validator.SuggestionCreateValidator,
 ) *CreateSuggestionUsecase {
@@ -54,7 +51,6 @@ func NewCreateSuggestionUsecase(
 		suggestionPageRepo:         suggestionPageRepo,
 		suggestionPageRevisionRepo: suggestionPageRevisionRepo,
 		draftPageRepo:              draftPageRepo,
-		pageRepo:                   pageRepo,
 		pageRevisionRepo:           pageRevisionRepo,
 		createValidator:            createValidator,
 	}
@@ -102,11 +98,6 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 	}
 
 	// 4. ビジネスロジック（トランザクション前）
-	bodyHTML, err := uc.renderBodyHTML(ctx, input.Body, topic.Name, space.ID, input.SpaceIdentifier)
-	if err != nil {
-		return nil, fmt.Errorf("本文HTMLの生成に失敗しました: %w", err)
-	}
-
 	pageRevisions, err := fetchLatestPageRevisions(ctx, draftPages, space.ID, uc.pageRevisionRepo)
 	if err != nil {
 		return nil, err
@@ -119,7 +110,6 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 		SpaceMemberID: spaceMember.ID,
 		Title:         input.Title,
 		Body:          input.Body,
-		BodyHTML:      bodyHTML,
 		DraftPages:    draftPages,
 		PageRevisions: pageRevisions,
 	})
@@ -184,23 +174,6 @@ func (uc *CreateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 	return nil
 }
 
-// renderBodyHTML は本文のMarkdownをHTMLに変換し、Wikiリンクを解決する
-func (uc *CreateSuggestionUsecase) renderBodyHTML(ctx context.Context, body, currentTopicName string, spaceID model.SpaceID, spaceIdentifier model.SpaceIdentifier) (string, error) {
-	bodyHTML := markup.RenderMarkdown(body)
-
-	pageLocations, err := resolveLinkedPages(ctx, body, currentTopicName, spaceID, uc.topicRepo, uc.pageRepo)
-	if err != nil {
-		return "", fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
-	}
-	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, currentTopicName, spaceIdentifier, pageLocations)
-	}
-
-	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
-
-	return bodyHTML, nil
-}
-
 // createSuggestionInput はトランザクション内で編集提案を作成するための入力パラメータ
 type createSuggestionInput struct {
 	SpaceID       model.SpaceID
@@ -208,7 +181,6 @@ type createSuggestionInput struct {
 	SpaceMemberID model.SpaceMemberID
 	Title         string
 	Body          string
-	BodyHTML      string
 	DraftPages    []*model.DraftPage
 	PageRevisions map[model.PageID]*model.PageRevision
 }
@@ -242,7 +214,6 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input c
 		Number:               nextNumber,
 		Title:                input.Title,
 		Body:                 input.Body,
-		BodyHTML:             input.BodyHTML,
 		Status:               model.SuggestionStatusOpen,
 	})
 	if err != nil {
@@ -275,68 +246,4 @@ func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input c
 	return &CreateSuggestionOutput{
 		Suggestion: suggestion,
 	}, nil
-}
-
-// resolveLinkedPages はWikiリンクを解析し、既存ページへのリンク情報を返す。
-// resolveAndCreateLinkedPagesと異なり、リンク先ページの自動作成は行わない。
-func resolveLinkedPages(
-	ctx context.Context,
-	body string,
-	currentTopicName string,
-	spaceID model.SpaceID,
-	topicRepo *repository.TopicRepository,
-	pageRepo *repository.PageRepository,
-) ([]markup.PageLocation, error) {
-	keys := markup.ScanWikilinks(body, currentTopicName)
-	if len(keys) == 0 {
-		return nil, nil
-	}
-
-	topicNames := uniqueTopicNames(keys)
-	topics, err := topicRepo.FindBySpaceAndNames(ctx, spaceID, topicNames)
-	if err != nil {
-		return nil, err
-	}
-	topicMap := make(map[string]*model.Topic, len(topics))
-	for _, t := range topics {
-		topicMap[t.Name] = t
-	}
-
-	var pageLocations []markup.PageLocation
-	seen := make(map[string]bool)
-
-	for _, key := range keys {
-		lookupKey := key.TopicName + "/" + key.PageTitle
-		if seen[lookupKey] {
-			continue
-		}
-		seen[lookupKey] = true
-
-		topic := topicMap[key.TopicName]
-		if topic == nil {
-			continue
-		}
-
-		page, err := pageRepo.FindByTopicAndTitle(ctx, topic.ID, key.PageTitle, spaceID)
-		if err != nil {
-			return nil, err
-		}
-		if page == nil {
-			continue
-		}
-
-		pageTitle := key.PageTitle
-		if page.Title != nil {
-			pageTitle = *page.Title
-		}
-		pageLocations = append(pageLocations, markup.PageLocation{
-			Key:        key,
-			TopicName:  topic.Name,
-			PageID:     page.ID,
-			PageNumber: int(page.Number),
-			PageTitle:  pageTitle,
-		})
-	}
-
-	return pageLocations, nil
 }

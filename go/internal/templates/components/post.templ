@@ -16,7 +16,7 @@ type PostAction struct {
 // PostData は投稿（編集提案の本文やコメント）の表示データです
 type PostData struct {
 	CreatorAtname string
-	BodyHTML      string
+	Body          string
 	CreatedAt     time.Time
 	Actions       []PostAction
 	// dropdownID はドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
@@ -48,8 +48,8 @@ templ Post(data PostData) {
 		</div>
 
 		<section class="px-4">
-			if data.BodyHTML != "" {
-				@templ.Raw(data.BodyHTML)
+			if data.Body != "" {
+				@PlainTextBody(PlainTextBodyData{Text: data.Body})
 			} else {
 				<p class="text-muted-foreground italic">
 					{ templates.T(ctx, "suggestion_show_no_body") }

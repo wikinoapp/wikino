@@ -34,9 +34,9 @@ func (q *Queries) CountSuggestionsByTopicAndStatuses(ctx context.Context, arg Co
 }
 
 const createSuggestion = `-- name: CreateSuggestion :one
-INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, body_html, status, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
+INSERT INTO suggestions (space_id, topic_id, created_space_member_id, number, title, body, status, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number
 `
 
 type CreateSuggestionParams struct {
@@ -46,7 +46,6 @@ type CreateSuggestionParams struct {
 	Number               int32     `json:"number"`
 	Title                string    `json:"title"`
 	Body                 string    `json:"body"`
-	BodyHtml             string    `json:"body_html"`
 	Status               int32     `json:"status"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
@@ -61,7 +60,6 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 		arg.Number,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		arg.Status,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -74,7 +72,6 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,
@@ -85,7 +82,7 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 }
 
 const findSuggestionByID = `-- name: FindSuggestionByID :one
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE id = $1 AND space_id = $2
+SELECT id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number FROM suggestions WHERE id = $1 AND space_id = $2
 `
 
 type FindSuggestionByIDParams struct {
@@ -104,7 +101,6 @@ func (q *Queries) FindSuggestionByID(ctx context.Context, arg FindSuggestionByID
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,
@@ -115,7 +111,7 @@ func (q *Queries) FindSuggestionByID(ctx context.Context, arg FindSuggestionByID
 }
 
 const findSuggestionBySpaceAndNumber = `-- name: FindSuggestionBySpaceAndNumber :one
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE space_id = $1 AND number = $2
+SELECT id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number FROM suggestions WHERE space_id = $1 AND number = $2
 `
 
 type FindSuggestionBySpaceAndNumberParams struct {
@@ -134,7 +130,6 @@ func (q *Queries) FindSuggestionBySpaceAndNumber(ctx context.Context, arg FindSu
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,
@@ -145,7 +140,7 @@ func (q *Queries) FindSuggestionBySpaceAndNumber(ctx context.Context, arg FindSu
 }
 
 const findSuggestionByTopicAndNumber = `-- name: FindSuggestionByTopicAndNumber :one
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3
+SELECT id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3
 `
 
 type FindSuggestionByTopicAndNumberParams struct {
@@ -165,7 +160,6 @@ func (q *Queries) FindSuggestionByTopicAndNumber(ctx context.Context, arg FindSu
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,
@@ -188,7 +182,7 @@ func (q *Queries) GetNextSuggestionNumber(ctx context.Context, spaceID string) (
 }
 
 const listSuggestionsByTopicAndStatuses = `-- name: ListSuggestionsByTopicAndStatuses :many
-SELECT id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number FROM suggestions
+SELECT id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[])
 ORDER BY created_at DESC
 `
@@ -216,7 +210,6 @@ func (q *Queries) ListSuggestionsByTopicAndStatuses(ctx context.Context, arg Lis
 			&i.CreatedSpaceMemberID,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			&i.Status,
 			&i.AppliedAt,
 			&i.CreatedAt,
@@ -238,16 +231,15 @@ func (q *Queries) ListSuggestionsByTopicAndStatuses(ctx context.Context, arg Lis
 
 const updateSuggestion = `-- name: UpdateSuggestion :one
 UPDATE suggestions
-SET title = $2, body = $3, body_html = $4, updated_at = $5
-WHERE id = $1 AND space_id = $6
-RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
+SET title = $2, body = $3, updated_at = $4
+WHERE id = $1 AND space_id = $5
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number
 `
 
 type UpdateSuggestionParams struct {
 	ID        string    `json:"id"`
 	Title     string    `json:"title"`
 	Body      string    `json:"body"`
-	BodyHtml  string    `json:"body_html"`
 	UpdatedAt time.Time `json:"updated_at"`
 	SpaceID   string    `json:"space_id"`
 }
@@ -258,7 +250,6 @@ func (q *Queries) UpdateSuggestion(ctx context.Context, arg UpdateSuggestionPara
 		arg.ID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		arg.UpdatedAt,
 		arg.SpaceID,
 	)
@@ -270,7 +261,6 @@ func (q *Queries) UpdateSuggestion(ctx context.Context, arg UpdateSuggestionPara
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,
@@ -284,7 +274,7 @@ const updateSuggestionStatus = `-- name: UpdateSuggestionStatus :one
 UPDATE suggestions
 SET status = $2, applied_at = $3, updated_at = $4
 WHERE id = $1 AND space_id = $5
-RETURNING id, space_id, topic_id, created_space_member_id, title, body, body_html, status, applied_at, created_at, updated_at, number
+RETURNING id, space_id, topic_id, created_space_member_id, title, body, status, applied_at, created_at, updated_at, number
 `
 
 type UpdateSuggestionStatusParams struct {
@@ -312,7 +302,6 @@ func (q *Queries) UpdateSuggestionStatus(ctx context.Context, arg UpdateSuggesti
 		&i.CreatedSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.Status,
 		&i.AppliedAt,
 		&i.CreatedAt,

@@ -319,10 +319,10 @@ func main() {
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
-	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRepo, pageRevisionRepo, suggestionCreateValidator)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo, suggestionCreateValidator)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
 	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
-	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, pageRepo, suggestionUpdateValidator)
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionUpdateValidator)
 	suggestionHandler := suggestionhandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -398,7 +398,7 @@ func main() {
 	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
 	suggestionCommentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
 	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(
-		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionCommentRepo, suggestionCommentUpdateValidator,
 	)
 	suggestionCommentEditHandler := suggestioncommentedithandler.NewHandler(
