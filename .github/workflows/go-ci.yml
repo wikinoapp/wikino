@@ -12,7 +12,6 @@ on:
     paths:
       - "go/**"
       - ".github/workflows/go-ci.yml"
-  merge_group:
 
 env:
   GO_VERSION: "1.25.5"
@@ -125,12 +124,3 @@ jobs:
             echo "Build failed: binary not found"
             exit 1
           fi
-
-  result:
-    name: Result
-    runs-on: ubuntu-latest
-    if: always()
-    needs: [lint, test, build]
-    steps:
-      - run: exit 1
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

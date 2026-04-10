@@ -12,7 +12,6 @@ on:
     paths:
       - "go/**"
       - ".github/workflows/go-e2e-ci.yml"
-  merge_group:
 
 env:
   GO_VERSION: "1.25.5"
@@ -125,12 +124,3 @@ jobs:
           name: playwright-report
           path: go/e2e/playwright-report/
           retention-days: 30
-
-  result:
-    name: Result
-    runs-on: ubuntu-latest
-    if: always()
-    needs: [e2e]
-    steps:
-      - run: exit 1
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
