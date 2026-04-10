@@ -18,7 +18,7 @@ require (
 	github.com/riverqueue/river/rivertype v0.34.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/sqlc-dev/sqlc v1.30.0
-	github.com/yuin/goldmark v1.7.16
+	github.com/yuin/goldmark v1.8.2
 	golang.org/x/crypto v0.49.0
 	golang.org/x/net v0.52.0
 	golang.org/x/text v0.35.0
