@@ -12,6 +12,7 @@ on:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
+  merge_group:
 
 jobs:
   zeitwerk:
@@ -190,3 +191,12 @@ jobs:
         with:
           name: capybara-screenshots
           path: "rails/**/tmp/capybara/"
+
+  result:
+    name: Result
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [zeitwerk, sorbet, standard, erb_lint, eslint, rspec]
+    steps:
+      - run: exit 1
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

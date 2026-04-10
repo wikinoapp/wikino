@@ -26,6 +26,7 @@ on:
       - "**.yml"
       - "**.md"
       - "**.toml"
+  merge_group:
 
 jobs:
   oxfmt:
@@ -40,3 +41,12 @@ jobs:
           cache: pnpm
       - run: pnpm install
       - run: pnpm fmt:check
+
+  result:
+    name: Result
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [oxfmt]
+    steps:
+      - run: exit 1
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
