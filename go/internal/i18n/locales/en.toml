@@ -896,7 +896,7 @@ other = "Briefly describe your changes"
 
 [suggestion_new_body_label]
 description = "Suggestion body label"
-other = "Description"
+other = "Body"
 
 [suggestion_new_body_placeholder]
 description = "Suggestion body placeholder"
