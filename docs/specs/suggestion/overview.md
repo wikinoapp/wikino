@@ -94,13 +94,11 @@ Go 版で実装されており、現在は `go_suggestion` フィーチャーフ
 | 3   | `SuggestionStatusClosed`  | クローズ                   |
 
 ```
-Draft ──┐
-        ├─→ Open ──┬─→ Applied
-        │          └─→ Closed
-        └─→ Open（作成直後はOpen）
+作成 ──→ Open ──┬─→ Applied
+                └─→ Closed
 ```
 
-現在の実装では、編集提案は作成時に `Open` ステータスで開始する。`Draft` ステータスは `SuggestionStatus` 型として定義されているものの、UI からのドラフト保存フローはまだ提供していない。
+現在の実装では、編集提案は作成時に `Open` ステータスで開始する。`Draft` ステータスは `SuggestionStatus` 型として将来の拡張のために定義されているものの、UI からのドラフト保存フローはまだ提供していない。
 
 #### ステータス変更のべき等性
 
@@ -191,26 +189,28 @@ Draft ──┐
 
 `TopicPolicy` インターフェースに定義された編集提案関連の権限。
 
-| メソッド                     | 判定対象     | 概要                                                                 |
-| ---------------------------- | ------------ | -------------------------------------------------------------------- |
-| `CanCreateSuggestion`        | `Topic`      | 編集提案の作成権限                                                   |
-| `CanApplySuggestion`         | `Suggestion` | 編集提案の反映権限（スペースオーナー / トピック管理者のみ）          |
-| `CanCloseSuggestion`         | `Suggestion` | 編集提案のクローズ権限（作成者 + スペースオーナー / トピック管理者） |
-| `CanUpdateSuggestion`        | `Suggestion` | 編集提案のタイトル・本文の編集権限（オープン状態のみ）               |
-| `CanAddSuggestionPage`       | `Suggestion` | 編集提案へのページ追加権限（オープン状態のみ）                       |
-| `CanRemoveSuggestionPage`    | `Suggestion` | 編集提案からのページ削除権限（オープン状態のみ）                     |
-| `CanEditSuggestionPage`      | `Suggestion` | 編集提案ページの編集権限                                             |
-| `CanCreateSuggestionComment` | `Suggestion` | コメント作成権限                                                     |
-| `CanUpdateSuggestionComment` | `Suggestion` | コメント編集権限（オープン状態のみ）                                 |
+| メソッド                     | 判定対象     | 概要                                                                                                                                |
+| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `CanCreateSuggestion`        | `Topic`      | 編集提案の作成権限                                                                                                                  |
+| `CanApplySuggestion`         | `Suggestion` | 編集提案の反映権限（スペースオーナー / トピック管理者のみ）                                                                         |
+| `CanCloseSuggestion`         | `Suggestion` | 編集提案のクローズ権限（作成者 + スペースオーナー / トピック管理者）                                                                |
+| `CanUpdateSuggestion`        | `Suggestion` | 編集提案のタイトル・本文の編集権限（オープン状態のみ）                                                                              |
+| `CanAddSuggestionPage`       | `Suggestion` | 編集提案へのページ追加権限（オープン状態のみ）                                                                                      |
+| `CanRemoveSuggestionPage`    | `Suggestion` | 編集提案からのページ削除権限（オープン状態のみ）                                                                                    |
+| `CanEditSuggestionPage`      | `Suggestion` | 編集提案ページの編集権限（`Policy` 自体は状態をチェックしない。オープン状態の制約は `StartSuggestionPageEditUsecase` 側で強制する） |
+| `CanCreateSuggestionComment` | `Suggestion` | コメント作成権限                                                                                                                    |
+| `CanUpdateSuggestionComment` | `Suggestion` | コメント編集権限（オープン状態のみ）                                                                                                |
 
-ロールごとの判定の概要:
+ロールごとの判定の概要（主要なアクションを抜粋。すべてのアクションでアクティブなスペースメンバーであることが前提）:
 
-| ロール       | 編集提案作成                         | 反映 | クローズ             | 更新（オープン状態） |
-| ------------ | ------------------------------------ | ---- | -------------------- | -------------------- |
-| Space Owner  | 同一スペース                         | 可   | 可                   | 可                   |
-| Topic Admin  | 同一トピック                         | 可   | 作成者 or 同トピック | 同一トピック         |
-| Topic Member | 同一トピック                         | 不可 | 作成者のみ           | 同一トピック         |
-| Topic Guest  | 公開トピックのみ（スペースメンバー） | 不可 | 作成者のみ           | スペースメンバー     |
+| ロール       | 編集提案作成     | 反映 | クローズ             | 更新（タイトル・本文・ページ追加・ページ削除）           |
+| ------------ | ---------------- | ---- | -------------------- | -------------------------------------------------------- |
+| Space Owner  | 同一スペース     | 可   | 可                   | 可                                                       |
+| Topic Admin  | 同一トピック     | 可   | 作成者 or 同トピック | 同一トピック                                             |
+| Topic Member | 同一トピック     | 不可 | 作成者のみ           | 同一トピック                                             |
+| Topic Guest  | 公開トピックのみ | 不可 | 作成者のみ           | スペースメンバーであれば可能（トピック所属チェックなし） |
+
+「Topic Guest」はトピックメンバーではないがアクティブなスペースメンバーであるユーザーを表す。コメント作成・コメント更新・編集提案ページの編集も上記の「更新」と同じ条件で判定される。
 
 ### UI
 

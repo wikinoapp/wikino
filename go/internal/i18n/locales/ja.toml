@@ -596,7 +596,7 @@ other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既
 # ページ公開成功
 [flash_page_saved]
 description = "ページ保存成功メッセージ"
-other = "ページを保存しました"
+other = "ページを公開しました"
 
 # 下書き保存成功
 [flash_draft_page_saved]
@@ -896,7 +896,7 @@ other = "変更内容を簡潔に記述してください"
 
 [suggestion_new_body_label]
 description = "編集提案概要のラベル"
-other = "概要"
+other = "本文"
 
 [suggestion_new_body_placeholder]
 description = "編集提案概要のプレースホルダー"
