@@ -6,8 +6,9 @@
 /.pnpm-store
 /compose-up.sh
 /docker-compose.override.yml
-/docs/README.md
+/docs/helps
 /docs/plans
+/docs/README.md
 /docs/reviews
 /node_modules
 /shimbaco-skills
