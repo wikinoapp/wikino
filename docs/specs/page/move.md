@@ -80,17 +80,15 @@
 
 ### `CanCreatePage` の判定
 
-| ポリシー          | CanCreatePage の判定                             |
-| ----------------- | ------------------------------------------------ |
-| topicOwnerPolicy  | `spaceMemberActive && spaceID == topic.Space.ID` |
-| topicAdminPolicy  | `spaceMemberActive && topicID == topic.ID`       |
-| topicMemberPolicy | `spaceMemberActive && topicID == topic.ID`       |
-| topicGuestPolicy  | `false`（常に不可）                              |
+`CanCreatePage` はスコープベースの `Authorizer` インターフェース（`MemberPolicy` / `GuestPolicy`）で判定される:
+
+- `MemberPolicy`: `page:write` スコープ（スペーススコープまたはトピックスコープ）を持つ場合に `true`
+- `GuestPolicy`: 常に `false`
 
 ### 移動先トピックの選択肢
 
-- スペースオーナーの場合: スペース内の全アクティブトピック
-- トピックメンバーの場合: 所属トピックのみ
+- `space:admin` スコープを持つスペースメンバーの場合: スペース内の全アクティブトピック
+- それ以外のスペースメンバーの場合: 所属トピック（トピックメンバーであるトピック）のみ
 - いずれの場合も現在のトピックを除外して表示する
 
 ### バリデーション
