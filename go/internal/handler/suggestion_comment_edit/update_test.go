@@ -52,7 +52,6 @@ func TestUpdate_本文が空の場合バリデーションエラーで422が返�
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

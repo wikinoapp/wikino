@@ -29,7 +29,6 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -194,7 +193,6 @@ func TestSuggestionPageRepository_FindByID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -292,7 +290,6 @@ func TestSuggestionPageRepository_ListBySuggestionID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -398,7 +395,6 @@ func TestSuggestionPageRepository_UpdateContent(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -500,7 +496,6 @@ func TestSuggestionPageRepository_Delete(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -620,7 +615,6 @@ func TestSuggestionPageRepository_ExistsByPageIDAndOpenStatus(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

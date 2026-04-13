@@ -29,7 +29,6 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -107,7 +106,6 @@ func TestSuggestionCommentRepository_GetNextNumber(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -171,7 +169,6 @@ func TestSuggestionCommentRepository_FindByID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -256,7 +253,6 @@ func TestSuggestionCommentRepository_ListBySuggestionID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -342,7 +338,6 @@ func TestSuggestionCommentRepository_FindByNumber(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -427,7 +422,6 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -507,7 +501,6 @@ func TestSuggestionCommentRepository_CountBySuggestionID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

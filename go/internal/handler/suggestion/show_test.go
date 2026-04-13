@@ -212,7 +212,6 @@ func TestShow_非公開トピックをスペースオーナーが閲覧できる
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

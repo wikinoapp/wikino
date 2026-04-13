@@ -34,7 +34,6 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -46,7 +45,6 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0). // admin
 		Build()
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -131,9 +129,6 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 		if output.SpaceMember == nil {
 			t.Fatal("SpaceMember should not be nil for authenticated user")
 		}
-		if output.SpaceMember.Role != model.SpaceMemberRoleOwner {
-			t.Errorf("SpaceMember.Role = %d, want %d", output.SpaceMember.Role, model.SpaceMemberRoleOwner)
-		}
 		if output.TopicMember == nil {
 			t.Fatal("TopicMember should not be nil for topic member")
 		}
@@ -157,9 +152,13 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 		WithEmail("gtd-priv-owner@example.com").
 		WithAtname("gtdprivowner").
 		Build()
-	nonMemberID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gtd-priv-nonmember@example.com").
-		WithAtname("gtdprivnonmember").
+	spaceMemberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gtd-priv-member@example.com").
+		WithAtname("gtdprivmember").
+		Build()
+	nonSpaceMemberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gtd-priv-nonspace@example.com").
+		WithAtname("gtdprivnonspace").
 		Build()
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("gtd-priv").
@@ -167,12 +166,10 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(nonMemberID).
-		WithRole(1). // member
+		WithUserID(spaceMemberID).
 		Build()
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -213,8 +210,28 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 		}
 	})
 
-	t.Run("非メンバーでnilが返る", func(t *testing.T) {
-		userID := nonMemberID
+	t.Run("スペースメンバーは非公開トピックを閲覧できる", func(t *testing.T) {
+		userID := spaceMemberID
+		output, err := uc.Execute(context.Background(), GetTopicDetailInput{
+			SpaceIdentifier: "gtd-priv",
+			TopicNumber:     1,
+			UserID:          &userID,
+			Page:            1,
+			PageLimit:       100,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil for space member on private topic")
+		}
+		if output.Topic.Name != "非公開トピック" {
+			t.Errorf("Topic.Name = %q, want %q", output.Topic.Name, "非公開トピック")
+		}
+	})
+
+	t.Run("スペースに参加していないユーザーは閲覧できない", func(t *testing.T) {
+		userID := nonSpaceMemberID
 		output, err := uc.Execute(context.Background(), GetTopicDetailInput{
 			SpaceIdentifier: "gtd-priv",
 			TopicNumber:     1,
@@ -226,7 +243,7 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 			t.Fatalf("Execute() error = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-member on private topic")
+			t.Error("output should be nil for non-space-member on private topic")
 		}
 	})
 }

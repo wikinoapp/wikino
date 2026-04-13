@@ -65,7 +65,7 @@ func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMembe
 		ID:       model.SpaceMemberID(row.ID),
 		SpaceID:  model.SpaceID(row.SpaceID),
 		UserID:   model.UserID(row.UserID),
-		Role:     model.SpaceMemberRole(row.Role),
+		Scopes:   model.StringsToScopes(row.Scopes),
 		JoinedAt: row.JoinedAt,
 		Active:   row.Active,
 	}

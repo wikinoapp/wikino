@@ -6,7 +6,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -94,8 +93,8 @@ func authorizePageUpdate(ctx context.Context, data *pageAccessData) error {
 		}
 	}
 
-	topicPolicy := policy.NewTopicPolicy(data.spaceMember, data.topicMember)
-	if !topicPolicy.CanUpdatePage(data.page) {
+	authorizer := newAuthorizer(data.spaceMember, data.topicMember)
+	if !authorizer.CanUpdatePage() {
 		return &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

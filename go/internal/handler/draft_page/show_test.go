@@ -170,7 +170,6 @@ func TestShow_正常系_リンクなしでOOBスワップレスポンスが返�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -230,7 +229,6 @@ func TestShow_正常系_リンクありでレスポンスにリンク先が含�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	linkedPageID := testutil.NewPageBuilder(t, tx).
@@ -296,7 +294,6 @@ func TestShow_正常系_下書きのリンクが優先される(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	originalLinkedPageID := testutil.NewPageBuilder(t, tx).
@@ -383,7 +380,6 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	linkedPage1ID := testutil.NewPageBuilder(t, tx).
@@ -485,7 +481,6 @@ func TestShow_正常系_下書きにリンクを追加するとレスポンス�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	linkedPageID := testutil.NewPageBuilder(t, tx).
@@ -581,7 +576,6 @@ func TestShow_正常系_下書きが存在する場合に保存時刻フラグ�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	pageID := testutil.NewPageBuilder(t, tx).
@@ -654,7 +648,6 @@ func TestShow_正常系_下書きが存在しない場合に保存時刻フラ�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).

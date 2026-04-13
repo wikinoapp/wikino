@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -94,11 +93,10 @@ func (uc *GetSuggestionEditUsecase) Execute(ctx context.Context, input GetSugges
 		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
-	// 権限チェック: 非公開トピックはスペースオーナーまたはトピックメンバーのみアクセス可能
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		if spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil {
-			return nil, nil
-		}
+	// 権限チェック
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanShowTopic(topic) {
+		return nil, nil
 	}
 
 	// 作成者のユーザー情報を取得
@@ -108,9 +106,8 @@ func (uc *GetSuggestionEditUsecase) Execute(ctx context.Context, input GetSugges
 	}
 
 	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	canUpdateSuggestion := topicPolicy.CanUpdateSuggestion(suggestion)
-	canUpdateSuggestionComment := topicPolicy.CanUpdateSuggestionComment(suggestion)
+	canUpdateSuggestion := authorizer.CanUpdateSuggestion(suggestion)
+	canUpdateSuggestionComment := authorizer.CanUpdateSuggestionComment(suggestion)
 
 	return &GetSuggestionEditOutput{
 		Space:                      space,

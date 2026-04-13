@@ -216,7 +216,6 @@ func TestShow_非公開トピックをスペースオーナーが閲覧できる
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -263,7 +262,6 @@ func TestShow_非公開トピックをトピックメンバーが閲覧できる
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberUserID).
-		WithRole(1). // member (not owner)
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -275,7 +273,6 @@ func TestShow_非公開トピックをトピックメンバーが閲覧できる
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0). // admin
 		Build()
 
 	handler := setupHandler(t, queries)
@@ -300,7 +297,7 @@ func TestShow_非公開トピックをトピックメンバーが閲覧できる
 	}
 }
 
-func TestShow_非公開トピックを非メンバーが閲覧すると404が返る(t *testing.T) {
+func TestShow_非公開トピックをスペースメンバーが閲覧できる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -310,7 +307,7 @@ func TestShow_非公開トピックを非メンバーが閲覧すると404が返
 		WithEmail("ts-owner4@example.com").
 		WithAtname("tsowner4").
 		Build()
-	nonMemberID := testutil.NewUserBuilder(t, tx).
+	memberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("ts-nonmember@example.com").
 		WithAtname("tsnonmember").
 		Build()
@@ -320,12 +317,10 @@ func TestShow_非公開トピックを非メンバーが閲覧すると404が返
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(nonMemberID).
-		WithRole(1). // member
+		WithUserID(memberID).
 		Build()
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -339,14 +334,14 @@ func TestShow_非公開トピックを非メンバーが閲覧すると404が返
 		"space_identifier": "ts-priv4",
 		"topic_number":     "1",
 	})
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: nonMemberID, Atname: "tsnonmember"})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: memberID, Atname: "tsnonmember"})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
 
-	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -425,7 +420,6 @@ func TestShow_フィーチャーフラグ有効時に編集提案タブが表示
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -477,7 +471,6 @@ func TestShow_フィーチャーフラグ無効時に編集提案タブが表示
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

@@ -253,7 +253,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	}
 }
 
-func TestUpdate_TopicPolicyDenied(t *testing.T) {
+func TestUpdate_PermissionDenied(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -266,11 +266,11 @@ func TestUpdate_TopicPolicyDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("dp-policy-space").
 		Build()
-	// メンバーロール（オーナーではない）で作成し、トピックメンバーには登録しない
+	// page:write スコープを持たないメンバーを作成
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(1). // member（非オーナー）
+		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

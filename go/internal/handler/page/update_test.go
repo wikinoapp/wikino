@@ -37,7 +37,6 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -124,7 +123,6 @@ func TestUpdate_ValidationError_InvalidChars(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -192,7 +190,6 @@ func TestUpdate_ValidationError_DuplicateTitle(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

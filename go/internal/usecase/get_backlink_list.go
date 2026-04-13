@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -115,8 +114,8 @@ func (uc *GetBacklinkListUsecase) Execute(ctx context.Context, input GetBacklink
 	}
 
 	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	canUpdatePage := authorizer.CanUpdatePage()
 
 	return &GetBacklinkListOutput{
 		Space:         space,

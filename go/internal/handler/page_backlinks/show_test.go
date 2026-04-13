@@ -190,7 +190,6 @@ func TestShow_正常系_バックリンクなしでHTMLレスポンスが返る(
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ
@@ -251,7 +250,6 @@ func TestShow_正常系_バックリンクありでHTMLレスポンスにバッ�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ
@@ -322,7 +320,6 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ

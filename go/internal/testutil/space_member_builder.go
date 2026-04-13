@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -17,6 +19,7 @@ type SpaceMemberBuilder struct {
 	spaceID  string
 	userID   model.UserID
 	role     int32
+	scopes   []string
 	joinedAt time.Time
 	active   bool
 }
@@ -29,6 +32,7 @@ func NewSpaceMemberBuilder(t *testing.T, tx *sql.Tx) *SpaceMemberBuilder {
 		t:        t,
 		tx:       tx,
 		role:     0, // owner
+		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
 	}
@@ -46,15 +50,19 @@ func (b *SpaceMemberBuilder) WithUserID(userID model.UserID) *SpaceMemberBuilder
 	return b
 }
 
-// WithRole はロールを設定します
-func (b *SpaceMemberBuilder) WithRole(role int32) *SpaceMemberBuilder {
-	b.role = role
-	return b
-}
-
 // WithActive はアクティブ状態を設定します
 func (b *SpaceMemberBuilder) WithActive(active bool) *SpaceMemberBuilder {
 	b.active = active
+	return b
+}
+
+// WithScopes はスコープを設定します
+func (b *SpaceMemberBuilder) WithScopes(scopes []model.Scope) *SpaceMemberBuilder {
+	ss := make([]string, len(scopes))
+	for i, s := range scopes {
+		ss[i] = string(s)
+	}
+	b.scopes = ss
 	return b
 }
 
@@ -73,10 +81,10 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), b.role, b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), b.role, pq.Array(b.scopes), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -94,6 +102,7 @@ type SpaceMemberBuilderDB struct {
 	spaceID  string
 	userID   model.UserID
 	role     int32
+	scopes   []string
 	joinedAt time.Time
 	active   bool
 }
@@ -106,6 +115,7 @@ func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
 		t:        t,
 		db:       db,
 		role:     0,
+		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
 	}
@@ -123,9 +133,13 @@ func (b *SpaceMemberBuilderDB) WithUserID(userID model.UserID) *SpaceMemberBuild
 	return b
 }
 
-// WithRole はロールを設定します
-func (b *SpaceMemberBuilderDB) WithRole(role int32) *SpaceMemberBuilderDB {
-	b.role = role
+// WithScopes はスコープを設定します
+func (b *SpaceMemberBuilderDB) WithScopes(scopes []model.Scope) *SpaceMemberBuilderDB {
+	ss := make([]string, len(scopes))
+	for i, s := range scopes {
+		ss[i] = string(s)
+	}
+	b.scopes = ss
 	return b
 }
 
@@ -144,10 +158,10 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), b.role, b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), b.role, pq.Array(b.scopes), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)

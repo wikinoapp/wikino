@@ -172,7 +172,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	}
 }
 
-func TestCreate_権限のない一般メンバーは403が返る(t *testing.T) {
+func TestCreate_suggestion_closeスコープなしの非作成者は403が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -198,7 +198,7 @@ func TestCreate_権限のない一般メンバーは403が返る(t *testing.T) {
 	memberSmID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
+		WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -209,7 +209,6 @@ func TestCreate_権限のない一般メンバーは403が返る(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(memberSmID).
-		WithRole(int32(model.TopicMemberRoleMember)).
 		Build()
 	// 提案はオーナーが作成（一般メンバーは作成者ではない）
 	testutil.NewSuggestionBuilder(t, tx).
@@ -266,7 +265,6 @@ func TestCreate_作成者はクローズできる(t *testing.T) {
 	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -335,7 +333,6 @@ func TestCreate_スペースオーナーがクローズできる(t *testing.T) {
 	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -403,12 +400,10 @@ func TestCreate_トピック管理者がクローズできる(t *testing.T) {
 	adminSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(adminID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(creatorID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).

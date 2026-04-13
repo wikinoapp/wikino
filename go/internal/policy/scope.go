@@ -1,3 +1,4 @@
+// Package policy はリソースに対する権限チェックを提供する
 package policy
 
 import (
