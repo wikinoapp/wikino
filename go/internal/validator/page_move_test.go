@@ -68,7 +68,6 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -99,7 +98,7 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
 	})
 
 	ve := model.AsValidationError(err)
@@ -128,7 +127,6 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -176,7 +174,7 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 		PageTitle:       "Duplicate Title",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
 	})
 
 	ve := model.AsValidationError(err)
@@ -205,7 +203,6 @@ func TestPageMoveCreateValidator_OpenSuggestionExists(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -266,7 +263,7 @@ func TestPageMoveCreateValidator_OpenSuggestionExists(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
 	})
 
 	ve := model.AsValidationError(err)
@@ -295,7 +292,6 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -336,7 +332,7 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, Role: model.SpaceMemberRoleOwner, SpaceID: spaceID, Active: true},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
 	})
 
 	if err != nil {

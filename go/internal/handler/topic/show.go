@@ -67,9 +67,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 権限判定
-	canUpdate := canUpdateTopic(output.SpaceMember, output.TopicMember)
-	canCreatePage := canCreateTopicPage(output.SpaceMember, output.TopicMember)
+	// 権限判定（UseCase が Authorizer 経由で判定した結果を使用）
+	canUpdate := output.CanUpdateTopic
+	canCreatePage := output.CanCreatePage
 
 	// ViewModelに変換
 	// トピック詳細画面ではトピック情報をカードに表示しないため、topicMapにnilを渡す
@@ -144,31 +144,4 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-}
-
-// canUpdateTopic はトピックの設定を更新できるかを判定する
-// スペースオーナーまたはトピック管理者のみ可能
-func canUpdateTopic(spaceMember *model.SpaceMember, topicMember *model.TopicMember) bool {
-	if spaceMember == nil {
-		return false
-	}
-	if spaceMember.Role == model.SpaceMemberRoleOwner {
-		return true
-	}
-	if topicMember != nil && topicMember.Role == model.TopicMemberRoleAdmin {
-		return true
-	}
-	return false
-}
-
-// canCreateTopicPage はトピックにページを作成できるかを判定する
-// トピックメンバー（スペースオーナーを含む）のみ可能
-func canCreateTopicPage(spaceMember *model.SpaceMember, topicMember *model.TopicMember) bool {
-	if spaceMember == nil {
-		return false
-	}
-	if spaceMember.Role == model.SpaceMemberRoleOwner {
-		return true
-	}
-	return topicMember != nil
 }

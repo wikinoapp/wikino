@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -133,8 +132,8 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 	}
 
 	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	canUpdatePage := authorizer.CanUpdatePage()
 
 	return &GetPageDetailOutput{
 		Space:             space,

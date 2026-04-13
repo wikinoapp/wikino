@@ -94,8 +94,12 @@ func (v *PageMoveCreateValidator) Validate(ctx context.Context, input PageMoveCr
 		return nil, err
 	}
 
-	topicPolicy := policy.NewTopicPolicy(input.SpaceMember, topicMember)
-	if !topicPolicy.CanCreatePage(destTopic) {
+	var topicScopes []model.Scope
+	if topicMember != nil {
+		topicScopes = topicMember.Scopes
+	}
+	authorizer := policy.NewMemberPolicy(input.SpaceMember.Scopes, topicScopes)
+	if !authorizer.CanCreatePage() {
 		ve.AddField("dest_topic", i18n.T(ctx, "page_move_error_no_permission"))
 		return nil, ve
 	}

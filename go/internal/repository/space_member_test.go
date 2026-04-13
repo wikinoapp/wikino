@@ -29,7 +29,6 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		WithActive(true).
 		Build()
 
@@ -50,8 +49,8 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		if member.UserID != model.UserID(userID) {
 			t.Errorf("member.UserID = %v, want %v", member.UserID, userID)
 		}
-		if member.Role != model.SpaceMemberRoleOwner {
-			t.Errorf("member.Role = %v, want SpaceMemberRoleOwner", member.Role)
+		if len(member.Scopes) != 1 || member.Scopes[0] != model.ScopeSpaceAdmin {
+			t.Errorf("member.Scopes = %v, want [%v]", member.Scopes, model.ScopeSpaceAdmin)
 		}
 		if !member.Active {
 			t.Error("member.Active = false, want true")
@@ -88,7 +87,6 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		testutil.NewSpaceMemberBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithUserID(inactiveUserID).
-			WithRole(1). // member
 			WithActive(false).
 			Build()
 

@@ -95,11 +95,10 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 		}
 	}
 
-	// 権限チェック: 非公開トピックはスペースオーナーまたはトピックメンバーのみ閲覧可能
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		if spaceMember == nil || (spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil) {
-			return nil, nil
-		}
+	// 権限チェック
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanShowTopic(topic) {
+		return nil, nil
 	}
 
 	// ステータスのグルーピング

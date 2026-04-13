@@ -191,7 +191,6 @@ func TestShow_正常系_リンクなしで空レスポンスが返る(t *testing
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンクなしのページ
@@ -252,7 +251,6 @@ func TestShow_正常系_リンクありでHTMLレスポンスにリンクが含�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンク先ページ
@@ -328,7 +326,6 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンク先ページ

@@ -85,11 +85,10 @@ func (uc *GetSuggestionNewUsecase) Execute(ctx context.Context, input GetSuggest
 		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
-	// 非公開トピックの場合、スペースオーナーまたはトピックメンバーのみアクセス可能
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		if spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil {
-			return nil, nil
-		}
+	// 権限チェック
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanShowTopic(topic) {
+		return nil, nil
 	}
 
 	// トピック内の自分の下書きページ一覧を取得（編集提案にリンクされていないもの）

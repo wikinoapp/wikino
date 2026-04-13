@@ -232,7 +232,6 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 	spaceMember1ID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(space1ID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	// スペース2を作成
@@ -244,7 +243,6 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 	spaceMember2ID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(space2ID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	// スペース1のトピック（last_page_modified_atあり）
@@ -360,7 +358,6 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		inactiveSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 			WithSpaceID(inactiveSpaceID).
 			WithUserID(inactiveUserID).
-			WithRole(0).
 			WithActive(false).
 			Build()
 
@@ -399,7 +396,6 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		discardedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 			WithSpaceID(discardedSpaceID).
 			WithUserID(discardedUserID).
-			WithRole(0).
 			Build()
 
 		discardedTopicID := testutil.NewTopicBuilder(t, tx).
@@ -455,7 +451,6 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID1 := testutil.NewTopicBuilder(t, tx).

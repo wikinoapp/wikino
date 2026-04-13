@@ -42,11 +42,20 @@ module ControllerConcerns
     end
 
     # Topic用のPolicyインスタンスを取得
-    # SpacePolicyInstanceのtopic_policy_forメソッドを呼び出す
-    sig { params(topic_record: TopicRecord).returns(Types::TopicPolicyInstance) }
+    sig { params(topic_record: TopicRecord).returns(Types::PolicyInstance) }
     def topic_policy_for(topic_record:)
-      space_policy = space_policy_for(space_record: topic_record.space_record.not_nil!)
-      space_policy.topic_policy_for(topic_record:)
+      space_record = topic_record.space_record.not_nil!
+      space_member_record = current_space_member_record(space_record:)
+
+      if space_member_record.nil?
+        return GuestPolicy.new
+      end
+
+      topic_member_record = current_topic_member_record(topic_record:)
+      MemberPolicy.new(
+        space_scopes: space_member_record.scopes,
+        topic_scopes: topic_member_record&.scopes || []
+      )
     end
   end
 end

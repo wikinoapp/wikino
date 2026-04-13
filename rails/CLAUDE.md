@@ -462,8 +462,8 @@ pnpm tsc
 # 8. テストを実行
 make test
 
-# 全ての検証を実行（ワンライナー）
-bin/check
+# すべてを一度に実行するワンライナー:
+make zeitwerk && make sorbet-update && make sorbet && make fmt && bin/erb_lint --lint-all && make -C /workspace fmt && pnpm eslint . --fix && pnpm tsc && make test
 ```
 
 ## Pull Request のガイドライン
@@ -533,9 +533,6 @@ make test
 make -C /workspace fmt
 pnpm eslint . --fix
 pnpm tsc
-
-# 全ての検証を実行
-bin/check
 ```
 
 ## デバッグ・トラブルシューティング

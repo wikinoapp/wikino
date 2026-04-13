@@ -317,6 +317,7 @@ type SpaceMember struct {
 	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Scopes    []string  `json:"scopes"`
 }
 
 type Suggestion struct {
@@ -393,6 +394,7 @@ type TopicMember struct {
 	LastPageModifiedAt sql.NullTime `json:"last_page_modified_at"`
 	CreatedAt          time.Time    `json:"created_at"`
 	UpdatedAt          time.Time    `json:"updated_at"`
+	Scopes             []string     `json:"scopes"`
 }
 
 type User struct {

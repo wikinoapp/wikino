@@ -95,7 +95,6 @@ func TestNew(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -242,7 +241,6 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

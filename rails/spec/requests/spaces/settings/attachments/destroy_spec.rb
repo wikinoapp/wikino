@@ -79,7 +79,8 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    FactoryBot.create(:space_member_record, :member, space_record:, user_record:)
+    FactoryBot.create(:space_member_record, space_record:, user_record:,
+      scopes: [Scope::ATTACHMENT_WRITE, Scope::SPACE_WRITE])
 
     # 他のメンバーがアップロードしたファイル
     other_member = FactoryBot.create(:space_member_record, space_record:)
@@ -157,7 +158,7 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     expect(delete_service).to have_received(:call).with(attachment_record_id: attachment_record.id)
   end
 
-  it "自分がアップロードした添付ファイルは一般メンバーでも削除できること" do
+  it "space:adminスコープを持つメンバーは自分がアップロードした添付ファイルを削除できること" do
     user_record = FactoryBot.create(:user_record, :with_password)
     sign_in(user_record:)
 

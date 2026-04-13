@@ -7,7 +7,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
@@ -125,8 +124,8 @@ func (uc *CreateSuggestionCommentUsecase) authorize(ctx context.Context, space *
 		return fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanCreateSuggestionComment(suggestion) {
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanCreateSuggestionComment() {
 		return &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

@@ -7,7 +7,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
@@ -155,7 +154,7 @@ func (uc *CreateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 	}
 
 	var topicMember *model.TopicMember
-	if spaceMember.Role != model.SpaceMemberRoleOwner {
+	if !model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
 		var err error
 		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, topic.ID)
 		if err != nil {
@@ -163,8 +162,8 @@ func (uc *CreateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 		}
 	}
 
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanCreateSuggestion(topic) {
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanCreateSuggestion(topic) {
 		return &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

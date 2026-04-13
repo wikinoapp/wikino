@@ -56,6 +56,8 @@ type GetTopicDetailOutput struct {
 	Pages             []*model.Page
 	TotalCount        int64
 	SuggestionEnabled bool
+	CanUpdateTopic    bool
+	CanCreatePage     bool
 }
 
 // Execute はトピック詳細画面に必要なデータを取得する
@@ -96,11 +98,10 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 		}
 	}
 
-	// 権限チェック: 非公開トピックはスペースオーナーまたはトピックメンバーのみ閲覧可能
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		if spaceMember == nil || (spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil) {
-			return nil, nil
-		}
+	// 権限チェック
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanShowTopic(topic) {
+		return nil, nil
 	}
 
 	// ピン留めページを取得
@@ -134,5 +135,7 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 		Pages:             paginatedResult.Pages,
 		TotalCount:        paginatedResult.TotalCount,
 		SuggestionEnabled: suggestionEnabled,
+		CanUpdateTopic:    authorizer.CanUpdateTopic(),
+		CanCreatePage:     authorizer.CanCreatePage(),
 	}, nil
 }

@@ -9,10 +9,12 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
-SELECT id, space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
+SELECT id, space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `
 
 type FindTopicMemberBySpaceMemberAndTopicParams struct {
@@ -35,6 +37,7 @@ func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg 
 		&i.LastPageModifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.Scopes),
 	)
 	return i, err
 }

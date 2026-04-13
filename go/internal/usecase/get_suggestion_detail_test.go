@@ -270,17 +270,14 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerUserID).
-		WithRole(int32(model.SpaceMemberRoleOwner)).
 		Build()
 	memberSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberUserID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(nonMemberUserID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
 		Build()
 
 	// 非公開トピックを作成
@@ -356,7 +353,7 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 		}
 	})
 
-	t.Run("トピックメンバーでないスペースメンバーはnilが返る", func(t *testing.T) {
+	t.Run("トピックメンバーでないスペースメンバーも閲覧できる", func(t *testing.T) {
 		uid := nonMemberUserID
 		output, err := uc.Execute(context.Background(), GetSuggestionDetailInput{
 			SpaceIdentifier:  "sug-detail-priv",
@@ -366,8 +363,11 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
 		}
-		if output != nil {
-			t.Error("output should be nil for non-topic-member on private topic")
+		if output == nil {
+			t.Fatal("output should not be nil for space member on private topic")
+		}
+		if output.Suggestion.Title != "非公開トピックの提案" {
+			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "非公開トピックの提案")
 		}
 	})
 }

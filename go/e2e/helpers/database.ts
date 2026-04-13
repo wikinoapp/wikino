@@ -120,12 +120,17 @@ export async function createTestSpace(
   return { id, identifier, name };
 }
 
-export async function createTestSpaceMember(spaceId: string, userId: string, role: number = 0): Promise<string> {
+export async function createTestSpaceMember(
+  spaceId: string,
+  userId: string,
+  role: number = 0,
+  scopes: string[] = ["space:admin"],
+): Promise<string> {
   const result = await query(
-    `INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
-     VALUES ($1, $2, $3, NOW(), true, NOW(), NOW())
+    `INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, NOW(), true, NOW(), NOW())
      RETURNING id`,
-    [spaceId, userId, role],
+    [spaceId, userId, role, scopes],
   );
 
   return result.rows[0].id;
@@ -150,12 +155,13 @@ export async function createTestTopicMember(
   topicId: string,
   spaceMemberId: string,
   role: number = 0,
+  scopes: string[] = [],
 ): Promise<string> {
   const result = await query(
-    `INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
+    `INSERT INTO topic_members (space_id, topic_id, space_member_id, role, scopes, joined_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), NOW())
      RETURNING id`,
-    [spaceId, topicId, spaceMemberId, role],
+    [spaceId, topicId, spaceMemberId, role, scopes],
   );
 
   return result.rows[0].id;

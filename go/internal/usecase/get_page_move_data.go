@@ -90,10 +90,10 @@ func (uc *GetPageMoveDataUsecase) pageAccessRepos() pageAccessRepos {
 }
 
 // availableTopicsForMove は移動先候補のトピック一覧を取得する。
-// スペースオーナーは全アクティブトピック、それ以外は所属トピックのみ返す。
+// space:admin スコープを持つメンバーは全アクティブトピック、それ以外は所属トピックのみ返す。
 // 現在のトピックは除外する。
-// スペースオーナーは同スペース内の全トピックにCanCreatePageが真であり、
-// 非オーナーはListJoinedBySpaceMemberが所属トピックのみを返すため、
+// space:admin を持つメンバーは同スペース内の全トピックにCanCreatePageが真であり、
+// それ以外はListJoinedBySpaceMemberが所属トピックのみを返すため、
 // いずれの場合もリスト取得の段階で権限が暗黙的に満たされている。
 func (uc *GetPageMoveDataUsecase) availableTopicsForMove(
 	ctx context.Context,
@@ -104,7 +104,7 @@ func (uc *GetPageMoveDataUsecase) availableTopicsForMove(
 	var topics []*model.Topic
 	var err error
 
-	if spaceMember.Role == model.SpaceMemberRoleOwner {
+	if model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
 		topics, err = uc.topicRepo.ListActiveBySpace(ctx, space.ID)
 	} else {
 		topics, err = uc.topicRepo.ListJoinedBySpaceMember(ctx, spaceMember.ID, space.ID)

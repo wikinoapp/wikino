@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -104,8 +103,8 @@ func (uc *GetPageBacklinksUsecase) Execute(ctx context.Context, input GetPageBac
 	}
 
 	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	canUpdatePage := authorizer.CanUpdatePage()
 
 	return &GetPageBacklinksOutput{
 		Space:         space,

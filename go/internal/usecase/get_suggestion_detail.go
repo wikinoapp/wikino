@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -120,11 +119,10 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		}
 	}
 
-	// 権限チェック: 非公開トピックはスペースオーナーまたはトピックメンバーのみ閲覧可能
-	if topic.Visibility == model.TopicVisibilityPrivate {
-		if spaceMember == nil || (spaceMember.Role != model.SpaceMemberRoleOwner && topicMember == nil) {
-			return nil, nil
-		}
+	// 権限チェック
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanShowTopic(topic) {
+		return nil, nil
 	}
 
 	// 編集提案ページ一覧を取得
@@ -161,13 +159,13 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 	// 認可チェック
 	var canApply, canClose, canUpdateSuggestion, canUpdateSuggestionComment, canAddSuggestionPage, canRemoveSuggestionPage bool
 	if spaceMember != nil {
-		topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-		canApply = topicPolicy.CanApplySuggestion(suggestion)
-		canClose = topicPolicy.CanCloseSuggestion(suggestion)
-		canUpdateSuggestion = topicPolicy.CanUpdateSuggestion(suggestion)
-		canUpdateSuggestionComment = topicPolicy.CanUpdateSuggestionComment(suggestion)
-		canAddSuggestionPage = topicPolicy.CanAddSuggestionPage(suggestion)
-		canRemoveSuggestionPage = topicPolicy.CanRemoveSuggestionPage(suggestion)
+		isCreator := suggestion.CreatedSpaceMemberID == spaceMember.ID
+		canApply = authorizer.CanApplySuggestion()
+		canClose = authorizer.CanCloseSuggestion(isCreator)
+		canUpdateSuggestion = authorizer.CanUpdateSuggestion(suggestion)
+		canUpdateSuggestionComment = authorizer.CanUpdateSuggestionComment(suggestion)
+		canAddSuggestionPage = authorizer.CanAddSuggestionPage(suggestion)
+		canRemoveSuggestionPage = authorizer.CanRemoveSuggestionPage(suggestion)
 	}
 
 	return &GetSuggestionDetailOutput{

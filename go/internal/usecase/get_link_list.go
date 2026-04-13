@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -105,8 +104,8 @@ func (uc *GetLinkListUsecase) Execute(ctx context.Context, input GetLinkListInpu
 	}
 
 	// 認可チェック
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	canUpdatePage := topicPolicy.CanUpdatePage(pg)
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	canUpdatePage := authorizer.CanUpdatePage()
 
 	if len(linkedPageIDs) == 0 {
 		return &GetLinkListOutput{

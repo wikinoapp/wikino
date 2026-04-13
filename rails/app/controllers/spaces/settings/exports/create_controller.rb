@@ -17,7 +17,7 @@ module Spaces
           space_record = current_space_record
           space_policy = space_policy_for(space_record:)
 
-          unless space_policy.can_export_space?(space_record:)
+          unless space_policy.can_export_space?
             return render_404
           end
 

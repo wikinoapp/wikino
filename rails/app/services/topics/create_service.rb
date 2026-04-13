@@ -21,7 +21,7 @@ module Topics
           description:,
           visibility:
         )
-        new_topic_record.add_member!(member: space_member_record, role: TopicMemberRole::Admin)
+        new_topic_record.add_member!(member: space_member_record)
         new_topic_record
       end
 

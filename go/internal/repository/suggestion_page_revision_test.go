@@ -29,7 +29,6 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -151,7 +150,6 @@ func TestSuggestionPageRevisionRepository_ListBySuggestionPageID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -271,7 +269,6 @@ func TestSuggestionPageRevisionRepository_FindLatest(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

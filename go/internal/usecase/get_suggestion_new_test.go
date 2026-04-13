@@ -124,7 +124,7 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("非公開トピックでトピックメンバーでない場合nilが返る", func(t *testing.T) {
+	t.Run("非公開トピックでもスペースメンバーはアクセスできる", func(t *testing.T) {
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
 			WithIdentifier("get-sug-new-4").
 			Build()
@@ -135,7 +135,6 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 		testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(userID).
-			WithRole(1). // member (not owner)
 			Build()
 		testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -151,8 +150,8 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
 		}
-		if output != nil {
-			t.Error("output should be nil for non-topic-member on private topic")
+		if output == nil {
+			t.Fatal("output should not be nil for space member on private topic")
 		}
 	})
 
@@ -167,7 +166,6 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 		testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(userID).
-			WithRole(0). // owner
 			Build()
 		testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).

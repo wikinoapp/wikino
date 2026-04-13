@@ -30,7 +30,6 @@ func TestSuggestionRepository_Create(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -102,7 +101,6 @@ func TestSuggestionRepository_FindByID(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -181,7 +179,6 @@ func TestSuggestionRepository_ListByTopicAndStatuses(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -281,7 +278,6 @@ func TestSuggestionRepository_UpdateStatus(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -364,7 +360,6 @@ func TestSuggestionRepository_CountByTopicAndStatuses(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

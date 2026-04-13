@@ -80,7 +80,7 @@
 - ユーザーはページのタイトルと本文を編集し、「公開」ボタンで保存できる
 - 本文の編集はMarkdownエディタ（CodeMirror 6）で行う
 - 下書きは自動保存され、編集画面を再度開いたときに下書きの内容が復元される
-- 編集権限はトピックポリシー（`TopicPolicy.CanUpdatePage`）で制御される
+- 編集権限は `Authorizer.CanUpdatePage` で制御される（`page:write` スコープが必要）
 
 ### 下書き自動保存
 

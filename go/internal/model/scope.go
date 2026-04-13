@@ -71,3 +71,22 @@ const (
 	ScopeAttachmentWrite  Scope = "attachment:write"
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
+
+// HasScope は指定のスコープがスライスに含まれているかチェックする
+func HasScope(scopes []Scope, target Scope) bool {
+	for _, s := range scopes {
+		if s == target {
+			return true
+		}
+	}
+	return false
+}
+
+// StringsToScopes は []string を []Scope に変換する
+func StringsToScopes(ss []string) []Scope {
+	scopes := make([]Scope, len(ss))
+	for i, s := range ss {
+		scopes[i] = Scope(s)
+	}
+	return scopes
+}

@@ -161,7 +161,7 @@ Go 版で実装されており、現在は `go_suggestion` フィーチャーフ
 
 ### 編集提案の反映
 
-- 反映権限を持つユーザー（スペースオーナー、トピック管理者）はオープンな編集提案を反映できる
+- `suggestion:apply` スコープを持つスペースメンバーはオープンな編集提案を反映できる
 - 反映時は各 `SuggestionPage` の最新内容で対応する `Page` を更新し、`PageRevision` を作成する
 - 反映時に `SuggestionPage` の `linked_page_ids` と `featured_image_attachment_id` を `Page` にコピーする（write time に計算済みの値を再利用）
 - 反映時に `page_attachment_references` テーブルを更新する
@@ -174,7 +174,7 @@ Go 版で実装されており、現在は `go_suggestion` フィーチャーフ
 
 ### 編集提案のクローズ
 
-- 編集提案の作成者またはスペースオーナー / トピック管理者はオープンな編集提案をクローズできる
+- 編集提案の作成者または `suggestion:close` スコープを持つスペースメンバーはオープンな編集提案をクローズできる
 - クローズ後、編集提案のステータスを `Closed` に変更する
 - クローズ後、関連する `DraftPage` の `suggestion_page_id` をクリアする
 - 反映済みの編集提案はクローズできない
@@ -187,13 +187,13 @@ Go 版で実装されており、現在は `go_suggestion` フィーチャーフ
 
 ### 認可ポリシー
 
-`TopicPolicy` インターフェースに定義された編集提案関連の権限。
+`Authorizer` インターフェース（`MemberPolicy` / `GuestPolicy`）で判定される編集提案関連の権限。
 
 | メソッド                     | 判定対象     | 概要                                                                                                                                |
 | ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `CanCreateSuggestion`        | `Topic`      | 編集提案の作成権限                                                                                                                  |
-| `CanApplySuggestion`         | `Suggestion` | 編集提案の反映権限（スペースオーナー / トピック管理者のみ）                                                                         |
-| `CanCloseSuggestion`         | `Suggestion` | 編集提案のクローズ権限（作成者 + スペースオーナー / トピック管理者）                                                                |
+| `CanApplySuggestion`         | `Suggestion` | 編集提案の反映権限（`suggestion:apply` スコープが必要）                                                                             |
+| `CanCloseSuggestion`         | `Suggestion` | 編集提案のクローズ権限（作成者は常に可能 + `suggestion:close` スコープ保持者も可能）                                                |
 | `CanUpdateSuggestion`        | `Suggestion` | 編集提案のタイトル・本文の編集権限（オープン状態のみ）                                                                              |
 | `CanAddSuggestionPage`       | `Suggestion` | 編集提案へのページ追加権限（オープン状態のみ）                                                                                      |
 | `CanRemoveSuggestionPage`    | `Suggestion` | 編集提案からのページ削除権限（オープン状態のみ）                                                                                    |
@@ -201,16 +201,17 @@ Go 版で実装されており、現在は `go_suggestion` フィーチャーフ
 | `CanCreateSuggestionComment` | `Suggestion` | コメント作成権限                                                                                                                    |
 | `CanUpdateSuggestionComment` | `Suggestion` | コメント編集権限（オープン状態のみ）                                                                                                |
 
-ロールごとの判定の概要（主要なアクションを抜粋。すべてのアクションでアクティブなスペースメンバーであることが前提）:
+スコープごとの判定の概要（すべてのアクションでアクティブなスペースメンバーであることが前提。有効スコープは `space_members.scopes` と `topic_members.scopes` の和集合を含意展開した結果）:
 
-| ロール       | 編集提案作成     | 反映 | クローズ             | 更新（タイトル・本文・ページ追加・ページ削除）           |
-| ------------ | ---------------- | ---- | -------------------- | -------------------------------------------------------- |
-| Space Owner  | 同一スペース     | 可   | 可                   | 可                                                       |
-| Topic Admin  | 同一トピック     | 可   | 作成者 or 同トピック | 同一トピック                                             |
-| Topic Member | 同一トピック     | 不可 | 作成者のみ           | 同一トピック                                             |
-| Topic Guest  | 公開トピックのみ | 不可 | 作成者のみ           | スペースメンバーであれば可能（トピック所属チェックなし） |
-
-「Topic Guest」はトピックメンバーではないがアクティブなスペースメンバーであるユーザーを表す。コメント作成・コメント更新・編集提案ページの編集も上記の「更新」と同じ条件で判定される。
+| アクション                                     | 必要なスコープ             | 追加条件                                           |
+| ---------------------------------------------- | -------------------------- | -------------------------------------------------- |
+| 編集提案の作成                                 | `suggestion:write`         | 非公開トピックの場合は `topic:read` も必要         |
+| 反映                                           | `suggestion:apply`         | -                                                  |
+| クローズ                                       | `suggestion:close`         | 作成者は `suggestion:close` がなくてもクローズ可能 |
+| 更新（タイトル・本文・ページ追加・ページ削除） | `suggestion:write`         | オープン状態の編集提案のみ                         |
+| 編集提案ページの編集                           | `suggestion:write`         | -                                                  |
+| コメント作成                                   | `suggestion_comment:write` | -                                                  |
+| コメント更新                                   | `suggestion_comment:write` | オープン状態の編集提案のみ                         |
 
 ### UI
 

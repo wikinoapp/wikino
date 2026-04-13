@@ -6,7 +6,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -94,15 +93,15 @@ func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSug
 
 	// 認可チェック
 	var topicMember *model.TopicMember
-	if spaceMember.Role != model.SpaceMemberRoleOwner {
+	if !model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
 		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
 		if err != nil {
 			return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 		}
 	}
 
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanAddSuggestionPage(suggestion) {
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanAddSuggestionPage(suggestion) {
 		return nil, &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

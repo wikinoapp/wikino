@@ -34,7 +34,6 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -52,13 +51,11 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID1).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0). // admin
 		Build()
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID2).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0). // admin
 		Build()
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).

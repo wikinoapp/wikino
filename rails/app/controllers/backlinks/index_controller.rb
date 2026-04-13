@@ -17,9 +17,10 @@ module Backlinks
       space_record = SpaceRecord.find_by_identifier!(params[:space_identifier])
       space_member_record = current_user_record&.space_member_record(space_record:)
       page_record = space_record.page_record_by_number!(params[:page_number])
-      topic_policy = topic_policy_for(topic_record: page_record.topic_record.not_nil!)
+      topic_record = page_record.topic_record.not_nil!
+      policy = topic_policy_for(topic_record:)
 
-      unless topic_policy.can_show_page?(page_record:)
+      unless policy.can_show_topic?(topic_record:)
         return render_404
       end
 

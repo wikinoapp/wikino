@@ -38,11 +38,11 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/settings", type: :
     expect(response.status).to eq(404)
   end
 
-  it "ログインしている & スペースに参加している & トピックに参加していないとき、404を返すこと" do
+  it "ログインしている & スペースに参加している & 必要なスコープを持っていないとき、404を返すこと" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)
     topic_record = create(:topic_record, space_record:)
-    create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Member.serialize)
+    create(:space_member_record, space_record:, user_record:, scopes: [Scope::TOPIC_READ])
 
     sign_in(user_record:)
 

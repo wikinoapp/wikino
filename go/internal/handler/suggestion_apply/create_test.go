@@ -182,7 +182,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	}
 }
 
-func TestCreate_一般メンバーは403が返る(t *testing.T) {
+func TestCreate_suggestion_applyスコープなしは403が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -208,7 +208,7 @@ func TestCreate_一般メンバーは403が返る(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberID).
-		WithRole(int32(model.SpaceMemberRoleMember)).
+		WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -219,7 +219,6 @@ func TestCreate_一般メンバーは403が返る(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(int32(model.TopicMemberRoleMember)).
 		Build()
 	testutil.NewSuggestionBuilder(t, tx).
 		WithSpaceID(spaceID).

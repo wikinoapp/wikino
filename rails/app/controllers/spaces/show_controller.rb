@@ -15,7 +15,13 @@ module Spaces
       space_record = current_space_record
       space_member_record = current_space_member_record(space_record:)
       space_policy = space_policy_for(space_record:)
-      showable_pages = space_policy.showable_pages(space_record:).preload(:topic_record)
+
+      showable_pages = if space_member_record
+        space_record.page_records.active
+      else
+        space_record.page_records.active.topics_visibility_public
+      end
+      showable_pages = showable_pages.preload(:topic_record)
 
       cursor_paginate_page = showable_pages.not_pinned.cursor_paginate(
         after: params[:after].presence,
@@ -32,7 +38,7 @@ module Spaces
         can_create_topic: space_policy.can_create_topic?
       )
 
-      first_joined_topic_record = space_policy.joined_topic_records.order(:id).first
+      first_joined_topic_record = space_member_record&.joined_topic_records&.order(:id)&.first
       first_joined_topic = if first_joined_topic_record
         TopicRepository.new.to_model(topic_record: first_joined_topic_record)
       end

@@ -12,7 +12,7 @@ import (
 )
 
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
-SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
+SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `
 
 type FindActiveSpaceMemberBySpaceAndUserParams struct {
@@ -33,12 +33,13 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.Scopes),
 	)
 	return i, err
 }
 
 const findSpaceMembersByIDs = `-- name: FindSpaceMembersByIDs :many
-SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
+SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
 `
 
 type FindSpaceMembersByIDsParams struct {
@@ -65,6 +66,7 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
 		); err != nil {
 			return nil, err
 		}

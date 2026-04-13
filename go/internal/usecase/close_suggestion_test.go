@@ -201,7 +201,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: 権限のない一般メンバーは AppErrCodeForbidden が返る", func(t *testing.T) {
+	t.Run("異常系: suggestion:closeスコープなしの非作成者は AppErrCodeForbidden が返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -222,7 +222,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(memberID).
-			WithRole(int32(model.SpaceMemberRoleMember)).
+			WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
 			Build()
 		topicID := testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).
