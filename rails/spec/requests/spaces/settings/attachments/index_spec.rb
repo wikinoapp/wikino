@@ -38,7 +38,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
   it "ログインしている & スペースの管理者のとき、添付ファイル一覧が表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    create(:space_member_record, user_record: user, space_record: space, role: SpaceMemberRole::Owner.serialize)
+    create(:space_member_record, user_record: user, space_record: space, scopes: ["space:admin"])
 
     sign_in(user_record: user)
 
@@ -51,7 +51,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
   it "ログインしている & スペースの管理者のとき、添付ファイルが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    space_member = create(:space_member_record, user_record: user, space_record: space, role: SpaceMemberRole::Owner.serialize)
+    space_member = create(:space_member_record, user_record: user, space_record: space, scopes: ["space:admin"])
 
     # ActiveStorageのアタッチメントとBlobを作成
     blob = ActiveStorage::Blob.create_and_upload!(
@@ -88,7 +88,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
   it "検索クエリが指定されたとき、ファイル名で絞り込まれること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    space_member = create(:space_member_record, user_record: user, space_record: space, role: SpaceMemberRole::Owner.serialize)
+    space_member = create(:space_member_record, user_record: user, space_record: space, scopes: ["space:admin"])
 
     # 複数のファイルを作成
     blob1 = ActiveStorage::Blob.create_and_upload!(
@@ -158,7 +158,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
   it "ファイルタイプが指定されたとき、コンテントタイプで絞り込まれること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    space_member = create(:space_member_record, user_record: user, space_record: space, role: SpaceMemberRole::Owner.serialize)
+    space_member = create(:space_member_record, user_record: user, space_record: space, scopes: ["space:admin"])
 
     # 異なるタイプのファイルを作成
     blob1 = ActiveStorage::Blob.create_and_upload!(
@@ -215,7 +215,7 @@ RSpec.describe "GET /s/:space_identifier/settings/attachments", type: :request d
   it "ページネーションが機能すること" do
     user = create(:user_record, :with_password)
     space = create(:space_record)
-    space_member = create(:space_member_record, user_record: user, space_record: space, role: SpaceMemberRole::Owner.serialize)
+    space_member = create(:space_member_record, user_record: user, space_record: space, scopes: ["space:admin"])
 
     # 51個のファイルを作成（1ページ50件なので2ページ目が必要）
     51.times do |i|

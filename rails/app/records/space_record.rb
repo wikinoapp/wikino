@@ -87,11 +87,11 @@ class SpaceRecord < ApplicationRecord
   sig do
     params(
       user_record: UserRecord,
-      role: SpaceMemberRole,
+      scopes: T::Array[String],
       joined_at: ActiveSupport::TimeWithZone
     ).void
   end
-  def add_member!(user_record:, role:, joined_at:)
-    space_member_records.create!(user_record:, role: role.serialize, joined_at:)
+  def add_member!(user_record:, scopes:, joined_at:)
+    space_member_records.create!(user_record:, scopes:, joined_at:)
   end
 end

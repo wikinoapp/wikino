@@ -34,13 +34,13 @@ RSpec.describe ControllerConcerns::SpaceAware do
     expect(result).to eq(space_member_record)
   end
 
-  it "space_policy_forが正しいPolicyを返すこと" do
+  it "space_policy_forがスペースメンバーの場合にMemberPolicyを返すこと" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     FactoryBot.create(:space_member_record,
       user_record:,
       space_record:,
-      role: SpaceMemberRole::Owner.serialize)
+      scopes: ["space:admin"])
 
     controller_class = Class.new(ApplicationController) do
       include ControllerConcerns::Authenticatable
@@ -50,7 +50,22 @@ RSpec.describe ControllerConcerns::SpaceAware do
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.space_policy_for(space_record:)
-    expect(policy).to be_a(SpaceOwnerPolicy)
+    expect(policy).to be_a(MemberPolicy)
+  end
+
+  it "space_policy_forが非メンバーの場合にGuestPolicyを返すこと" do
+    user_record = FactoryBot.create(:user_record)
+    space_record = FactoryBot.create(:space_record)
+
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::SpaceAware
+    end
+    controller = controller_class.new
+    allow(controller).to receive(:current_user_record).and_return(user_record)
+
+    policy = controller.space_policy_for(space_record:)
+    expect(policy).to be_a(GuestPolicy)
   end
 
   it "current_space_recordがパラメータからSpaceレコードを取得すること" do

@@ -99,11 +99,6 @@ class UserRecord < ApplicationRecord
       .distinct
   end
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_destroy_topic?(topic_record:)
-    topic_member_records.find_by(topic_record:)&.role_admin? == true
-  end
-
   sig { params(email_confirmation_record: EmailConfirmationRecord).void }
   def run_after_email_confirmation_success!(email_confirmation_record:)
     return unless email_confirmation_record.succeeded?

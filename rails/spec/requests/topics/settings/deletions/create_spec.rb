@@ -26,10 +26,10 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     expect(response.status).to eq(404)
   end
 
-  it "トピックに参加していないとき、404を返すこと" do
+  it "必要なスコープを持っていないとき、404を返すこと" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small)
-    create(:space_member_record, space_record:, user_record:, role: SpaceMemberRole::Member.serialize)
+    create(:space_member_record, space_record:, user_record:, scopes: [Scope::TOPIC_READ])
     topic_record = create(:topic_record, space_record:)
 
     sign_in(user_record:)
@@ -44,7 +44,7 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     space_record = create(:space_record, :small)
     space_member_record = create(:space_member_record, space_record:, user_record:)
     topic_record = create(:topic_record, space_record:, name: "テストトピック")
-    create(:topic_member_record, space_record:, topic_record:, space_member_record:, role: :admin)
+    create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     sign_in(user_record:)
 
@@ -63,7 +63,7 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     space_record = create(:space_record, :small)
     space_member_record = create(:space_member_record, space_record:, user_record:)
     topic_record = create(:topic_record, space_record:, name: "テストトピック")
-    create(:topic_member_record, space_record:, topic_record:, space_member_record:, role: :admin)
+    create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
     sign_in(user_record:)
 

@@ -27,10 +27,10 @@ RSpec.describe "GET /s/:space_identifier/topics/:topic_number/pages/new", type: 
     expect(response.status).to eq(404)
   end
 
-  it "スペースに参加している & ページのトピックに参加していないとき、404ページが表示されること" do
+  it "スペースに参加している & 必要なスコープを持っていないとき、404ページが表示されること" do
     user = create(:user_record, :with_password)
     space = create(:space_record, :small)
-    create(:space_member_record, space_record: space, user_record: user, role: SpaceMemberRole::Member.serialize)
+    create(:space_member_record, space_record: space, user_record: user, scopes: [Scope::TOPIC_READ])
     topic = create(:topic_record, :public, space_record: space)
 
     sign_in(user_record: user)

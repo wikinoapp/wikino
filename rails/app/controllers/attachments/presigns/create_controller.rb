@@ -21,7 +21,7 @@ module Attachments
         space_record = current_space_record
         space_policy = space_policy_for(space_record:)
 
-        unless space_policy.can_upload_attachment?(space_record:)
+        unless space_policy.can_upload_attachment?
           render json: {error: "Unauthorized"}, status: :forbidden
           return
         end

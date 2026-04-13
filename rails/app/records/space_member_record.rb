@@ -4,10 +4,8 @@
 class SpaceMemberRecord < ApplicationRecord
   self.table_name = "space_members"
 
-  enum :role, {
-    SpaceMemberRole::Owner.serialize => 0,
-    SpaceMemberRole::Member.serialize => 1
-  }, prefix: true
+  # role カラムは 7-2 で削除予定。NOT NULL 制約を満たすためデフォルト値を設定する。
+  attribute :role, :integer, default: 0
 
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :user_record, foreign_key: :user_id
@@ -68,11 +66,6 @@ class SpaceMemberRecord < ApplicationRecord
     nil
   end
 
-  sig { returns(SpaceMemberRole) }
-  def deserialized_role
-    SpaceMemberRole.deserialize(role)
-  end
-
   sig { returns(PageRecord::PrivateAssociationRelation) }
   def last_modified_pages
     space_record.not_nil!.page_records.joins(:page_editor_records).merge(
@@ -83,10 +76,5 @@ class SpaceMemberRecord < ApplicationRecord
   sig { returns(T.any(TopicRecord::PrivateAssociationRelation, TopicRecord::PrivateRelation)) }
   def joined_topic_records
     topic_records.kept
-  end
-
-  sig { params(space: SpaceRecord).returns(T::Boolean) }
-  def can_create_bulk_restored_pages?(space:)
-    active? && space_id == space.id
   end
 end

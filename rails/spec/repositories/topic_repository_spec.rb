@@ -21,19 +21,19 @@ RSpec.describe TopicRepository do
         space_record:,
         topic_record: topic_record1,
         space_member_record:,
-        role: TopicMemberRole::Admin.serialize,
+
         last_page_modified_at: 3.days.ago)
       FactoryBot.create(:topic_member_record,
         space_record:,
         topic_record: topic_record2,
         space_member_record:,
-        role: TopicMemberRole::Member.serialize,
+
         last_page_modified_at: 1.day.ago)
       FactoryBot.create(:topic_member_record,
         space_record:,
         topic_record: topic_record3,
         space_member_record:,
-        role: TopicMemberRole::Admin.serialize,
+
         last_page_modified_at: 2.days.ago)
 
       # メソッド実行
@@ -116,7 +116,7 @@ RSpec.describe TopicRepository do
       expect(topics).to be_empty
     end
 
-    it "トピック管理者の場合、can_updateがtrueになること" do
+    it "space:adminを持つメンバーの場合、can_updateがtrueになること" do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
@@ -125,8 +125,7 @@ RSpec.describe TopicRepository do
       FactoryBot.create(:topic_member_record,
         space_record:,
         topic_record:,
-        space_member_record:,
-        role: TopicMemberRole::Admin.serialize)
+        space_member_record:)
 
       # メソッド実行
       repository = TopicRepository.new
@@ -139,17 +138,19 @@ RSpec.describe TopicRepository do
       expect(topic.can_create_page).to be(true)
     end
 
-    it "トピック一般メンバーの場合、can_updateがfalse、can_create_pageがtrueになること" do
+    it "topic:writeなしの場合、can_updateがfalse、can_create_pageがtrueになること" do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, :member,
+        user_record:,
+        space_record:,
+        scopes: [Scope::PAGE_WRITE, Scope::TOPIC_READ])
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record,
         space_record:,
         topic_record:,
-        space_member_record:,
-        role: TopicMemberRole::Member.serialize)
+        space_member_record:)
 
       # メソッド実行
       repository = TopicRepository.new
@@ -484,23 +485,25 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, :member,
+        user_record:,
+        space_record:,
+        scopes: [Scope::PAGE_WRITE, Scope::TOPIC_READ])
 
-      # 管理者として参加するトピック
-      admin_topic = FactoryBot.create(:topic_record, space_record:, name: "Admin Topic")
+      # topic:writeを持つトピック
+      write_topic = FactoryBot.create(:topic_record, space_record:, name: "Write Topic")
       FactoryBot.create(:topic_member_record,
         space_record:,
-        topic_record: admin_topic,
+        topic_record: write_topic,
         space_member_record:,
-        role: TopicMemberRole::Admin.serialize)
+        scopes: [Scope::TOPIC_WRITE])
 
-      # メンバーとして参加するトピック
-      member_topic = FactoryBot.create(:topic_record, space_record:, name: "Member Topic")
+      # 追加スコープなしのトピック
+      read_topic = FactoryBot.create(:topic_record, space_record:, name: "Read Topic")
       FactoryBot.create(:topic_member_record,
         space_record:,
-        topic_record: member_topic,
-        space_member_record:,
-        role: TopicMemberRole::Member.serialize)
+        topic_record: read_topic,
+        space_member_record:)
 
       # メソッド実行
       repository = TopicRepository.new
@@ -509,13 +512,13 @@ RSpec.describe TopicRepository do
       # 検証
       expect(topics.size).to eq(2)
 
-      admin_topic_model = topics.find { |t| t.name == "Admin Topic" }
-      expect(admin_topic_model.can_update).to be(true)
-      expect(admin_topic_model.can_create_page).to be(true)
+      write_topic_model = topics.find { |t| t.name == "Write Topic" }
+      expect(write_topic_model.can_update).to be(true)
+      expect(write_topic_model.can_create_page).to be(true)
 
-      member_topic_model = topics.find { |t| t.name == "Member Topic" }
-      expect(member_topic_model.can_update).to be(false)
-      expect(member_topic_model.can_create_page).to be(true)
+      read_topic_model = topics.find { |t| t.name == "Read Topic" }
+      expect(read_topic_model.can_update).to be(false)
+      expect(read_topic_model.can_create_page).to be(true)
     end
 
     it "last_page_modified_atがnilの場合は最後にソートされること" do

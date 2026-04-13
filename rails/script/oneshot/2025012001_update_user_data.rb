@@ -6,7 +6,7 @@ UserRecord.find_each do |user|
   ActiveRecord::Base.transaction do
     space_member = user.space_members.create!(
       space:,
-      role: SpaceMemberRole::Owner.serialize,
+      scopes: ["space:admin"],
       joined_at: space.joined_at
     )
 
