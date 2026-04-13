@@ -6,26 +6,26 @@ on:
       - main
       - develop
     paths:
-      - "**.js"
-      - "**.ts"
-      - "**.tsx"
-      - "**.css"
-      - "**.json"
-      - "**.yaml"
-      - "**.yml"
-      - "**.md"
-      - "**.toml"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.md"
+      - "**/*.toml"
   pull_request:
     paths:
-      - "**.js"
-      - "**.ts"
-      - "**.tsx"
-      - "**.css"
-      - "**.json"
-      - "**.yaml"
-      - "**.yml"
-      - "**.md"
-      - "**.toml"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.md"
+      - "**/*.toml"
 
 jobs:
   oxfmt:
@@ -36,7 +36,7 @@ jobs:
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install
       - run: pnpm fmt:check
