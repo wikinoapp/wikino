@@ -158,4 +158,60 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			t.Error("output should be nil for nonexistent topic")
 		}
 	})
+
+	t.Run("スペースメンバーが閲覧した場合はCanCreateSuggestionがtrue", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+			UserID:          &userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+		if !output.CanCreateSuggestion {
+			t.Error("CanCreateSuggestion should be true for space member")
+		}
+	})
+
+	t.Run("非メンバーのログインユーザーが閲覧した場合はCanCreateSuggestionがfalse", func(t *testing.T) {
+		outsiderID := testutil.NewUserBuilder(t, tx).
+			WithEmail("sug-list-outsider@example.com").
+			WithAtname("suglistoutsider").
+			WithName("よそ者").
+			Build()
+
+		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+			UserID:          &outsiderID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+		if output.CanCreateSuggestion {
+			t.Error("CanCreateSuggestion should be false for non-member")
+		}
+	})
+
+	t.Run("未ログインで閲覧した場合はCanCreateSuggestionがfalse", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
+			SpaceIdentifier: "sug-list-space",
+			TopicNumber:     1,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+		if output.CanCreateSuggestion {
+			t.Error("CanCreateSuggestion should be false for guest")
+		}
+	})
 }

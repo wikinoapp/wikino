@@ -47,14 +47,15 @@ type GetSuggestionListInput struct {
 
 // GetSuggestionListOutput は編集提案一覧取得の出力
 type GetSuggestionListOutput struct {
-	Space       *model.Space
-	SpaceMember *model.SpaceMember
-	Topic       *model.Topic
-	TopicMember *model.TopicMember
-	Suggestions []*model.Suggestion
-	UserMap     map[model.SpaceMemberID]*model.User
-	OpenCount   int64
-	ClosedCount int64
+	Space               *model.Space
+	SpaceMember         *model.SpaceMember
+	Topic               *model.Topic
+	TopicMember         *model.TopicMember
+	Suggestions         []*model.Suggestion
+	UserMap             map[model.SpaceMemberID]*model.User
+	OpenCount           int64
+	ClosedCount         int64
+	CanCreateSuggestion bool
 }
 
 // Execute は編集提案一覧を取得する
@@ -138,14 +139,15 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 	}
 
 	return &GetSuggestionListOutput{
-		Space:       space,
-		SpaceMember: spaceMember,
-		Topic:       topic,
-		TopicMember: topicMember,
-		Suggestions: suggestions,
-		UserMap:     userMap,
-		OpenCount:   openCount,
-		ClosedCount: closedCount,
+		Space:               space,
+		SpaceMember:         spaceMember,
+		Topic:               topic,
+		TopicMember:         topicMember,
+		Suggestions:         suggestions,
+		UserMap:             userMap,
+		OpenCount:           openCount,
+		ClosedCount:         closedCount,
+		CanCreateSuggestion: authorizer.CanCreateSuggestion(topic),
 	}, nil
 }
 

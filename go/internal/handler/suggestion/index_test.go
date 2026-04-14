@@ -203,6 +203,9 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 	if !strings.Contains(body, "提案者") {
 		t.Error("response should contain creator name")
 	}
+	if strings.Contains(body, "/s/si-pub-space/topics/1/suggestions/new") {
+		t.Error("新規編集提案ボタンが未ログインユーザーに表示されてはならない")
+	}
 }
 
 func TestIndex_非公開トピックを未ログインで閲覧すると404が返る(t *testing.T) {
@@ -335,5 +338,63 @@ func TestIndex_非公開トピックをスペースオーナーが閲覧でき�
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "/s/si-priv2/topics/1/suggestions/new") {
+		t.Error("新規編集提案ボタンがスペースメンバーに表示されていない")
+	}
+}
+
+func TestIndex_他スペースのログインユーザーには新規編集提案ボタンが表示されない(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// スペース B（対象スペース、公開トピック）
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("si-outsider-space").
+		WithName("Target Space").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(0). // public
+		Build()
+
+	// スペース A 所属のユーザー（スペース B には所属しない）
+	outsiderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("si-outsider@example.com").
+		WithAtname("sioutsider").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("si-other-space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithUserID(outsiderID).
+		Build()
+
+	handler := setupHandler(t, db, queries)
+
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-outsider-space/topics/1/suggestions", map[string]string{
+		"space_identifier": "si-outsider-space",
+		"topic_number":     "1",
+	}, nil)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: outsiderID, Atname: "sioutsider"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if strings.Contains(body, "/s/si-outsider-space/topics/1/suggestions/new") {
+		t.Error("新規編集提案ボタンが非メンバーに表示されてはならない")
 	}
 }
