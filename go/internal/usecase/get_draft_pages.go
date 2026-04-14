@@ -10,18 +10,15 @@ import (
 
 // GetDraftPagesUsecase は下書きページ一覧取得ユースケース
 type GetDraftPagesUsecase struct {
-	draftPageRepo   *repository.DraftPageRepository
-	featureFlagRepo *repository.FeatureFlagRepository
+	draftPageRepo *repository.DraftPageRepository
 }
 
 // NewGetDraftPagesUsecase は GetDraftPagesUsecase を生成する
 func NewGetDraftPagesUsecase(
 	draftPageRepo *repository.DraftPageRepository,
-	featureFlagRepo *repository.FeatureFlagRepository,
 ) *GetDraftPagesUsecase {
 	return &GetDraftPagesUsecase{
-		draftPageRepo:   draftPageRepo,
-		featureFlagRepo: featureFlagRepo,
+		draftPageRepo: draftPageRepo,
 	}
 }
 
@@ -32,8 +29,7 @@ type GetDraftPagesInput struct {
 
 // GetDraftPagesOutput は下書きページ一覧取得の出力
 type GetDraftPagesOutput struct {
-	DraftPages        []*model.DraftPage
-	SuggestionEnabled bool
+	DraftPages []*model.DraftPage
 }
 
 // Execute は下書きページ一覧を取得する
@@ -43,13 +39,7 @@ func (uc *GetDraftPagesUsecase) Execute(ctx context.Context, input GetDraftPages
 		return nil, fmt.Errorf("下書き一覧の取得に失敗: %w", err)
 	}
 
-	suggestionEnabled, err := uc.featureFlagRepo.IsEnabled(ctx, input.UserID, model.FeatureFlagSuggestion)
-	if err != nil {
-		return nil, fmt.Errorf("フィーチャーフラグの確認に失敗: %w", err)
-	}
-
 	return &GetDraftPagesOutput{
-		DraftPages:        drafts,
-		SuggestionEnabled: suggestionEnabled,
+		DraftPages: drafts,
 	}, nil
 }

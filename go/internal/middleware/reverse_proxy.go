@@ -36,10 +36,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`), flag: model.FeatureFlagSuggestion},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`), flag: model.FeatureFlagSuggestion},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -94,6 +91,8 @@ type goHandledPattern struct {
 // プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
 var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},

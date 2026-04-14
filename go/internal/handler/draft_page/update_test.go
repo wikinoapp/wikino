@@ -44,7 +44,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			topicMemberRepo,
 			repository.NewSuggestionPageRepository(queries),
 			repository.NewSuggestionRepository(queries),
-			repository.NewFeatureFlagRepository(queries),
 		),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,

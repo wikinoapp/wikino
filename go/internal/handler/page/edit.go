@@ -105,7 +105,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		LinkList:                linkResult.LinkList,
 		BacklinkList:            linkResult.BacklinkList,
 		ManualSaveURL:           manualSaveURL,
-		SuggestionEnabled:       output.SuggestionEnabled,
 		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
 	}
 

@@ -253,7 +253,6 @@ func main() {
 		topicMemberRepo,
 		suggestionPageRepo,
 		suggestionRepo,
-		featureFlagRepo,
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
@@ -271,10 +270,7 @@ func main() {
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
 	)
-	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(
-		draftPageRepo,
-		featureFlagRepo,
-	)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
 		flashMgr,
@@ -307,7 +303,7 @@ func main() {
 		movePageUC,
 		sidebarHelper,
 	)
-	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	topicHandler := topichandler.NewHandler(
 		cfg,
 		flashMgr,

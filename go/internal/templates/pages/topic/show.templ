@@ -10,12 +10,11 @@ import (
 
 // ShowData はトピック詳細画面に渡すデータ構造体です
 type ShowData struct {
-	Topic             viewmodel.TopicForShow
-	Space             viewmodel.Space
-	PinnedPages       []viewmodel.CardLinkPage
-	Pages             []viewmodel.CardLinkPage
-	Pagination        viewmodel.Pagination
-	SuggestionEnabled bool
+	Topic       viewmodel.TopicForShow
+	Space       viewmodel.Space
+	PinnedPages []viewmodel.CardLinkPage
+	Pages       []viewmodel.CardLinkPage
+	Pagination  viewmodel.Pagination
 }
 
 // paginationPath はページネーション用のパスを生成します
@@ -50,25 +49,23 @@ templ Show(data ShowData) {
 							@showHeader(data)
 						</div>
 
-						if data.SuggestionEnabled {
-							<div class="px-4">
-								@components.SubNav([]components.SubNavItem{
-									{
-										Label:          templates.T(ctx, "topic_show_tab_pages"),
-										Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
-										IconName:       "file-regular",
-										ActiveIconName: "file-fill",
-										IsActive:       true,
-									},
-									{
-										Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-										Path:           string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
-										IconName:       "git-pull-request-regular",
-										ActiveIconName: "git-pull-request-fill",
-									},
-								})
-							</div>
-						}
+						<div class="px-4">
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "topic_show_tab_pages"),
+									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "file-regular",
+									ActiveIconName: "file-fill",
+									IsActive:       true,
+								},
+								{
+									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+									Path:           string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "git-pull-request-regular",
+									ActiveIconName: "git-pull-request-fill",
+								},
+							})
+						</div>
 					</div>
 
 					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
