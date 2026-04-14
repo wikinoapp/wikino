@@ -44,9 +44,8 @@ templ Index(data IndexData) {
 						AriaLabel: templates.T(ctx, "breadcrumb_home"),
 					},
 					{
-						Label:    data.Space.Name,
-						Path:     templates.SpacePath(data.Space.Identifier.String()),
-						IconName: "globe-regular",
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
 					},
 					{
 						Label:    data.Topic.Name,
