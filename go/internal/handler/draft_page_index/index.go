@@ -57,8 +57,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := draftpagepages.Index(draftpagepages.IndexData{
-		Groups:            groups,
-		SuggestionEnabled: output.SuggestionEnabled,
+		Groups: groups,
 	})
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

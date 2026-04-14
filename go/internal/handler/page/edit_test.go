@@ -47,7 +47,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
-	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 
 	getPageDetailUC := usecase.NewGetPageDetailUsecase(
 		spaceRepo,
@@ -58,7 +57,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		topicMemberRepo,
 		suggestionPageRepo,
 		suggestionRepo,
-		featureFlagRepo,
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 

@@ -2,6 +2,7 @@ package topic_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -51,11 +52,10 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
-	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, featureFlagRepo)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 
 	return topichandler.NewHandler(
 		cfg,
@@ -403,100 +403,98 @@ func TestShow_正常系_ページ一覧が表示される(t *testing.T) {
 	}
 }
 
-func TestShow_フィーチャーフラグ有効時に編集提案タブが表示される(t *testing.T) {
+// docs/specs/suggestion/overview.md のトピック詳細画面の仕様に対応する回帰テスト。
+// 閲覧可能なすべてのシナリオで編集提案タブが表示されることを検証する。
+func TestShow_編集提案タブが常に表示される(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("ts-flag@example.com").
-		WithAtname("tsflag").
-		Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("ts-flag").
-		WithName("Flag Space").
-		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-	testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithName("フラグテスト").
-		WithVisibility(0). // public
-		Build()
-	testutil.NewFeatureFlagBuilder(t, tx).
-		WithUserID(userID).
-		WithName(string(model.FeatureFlagSuggestion)).
-		Build()
-
-	handler := setupHandler(t, queries)
-
-	req := newShowRequest(t, "/s/ts-flag/topics/1", map[string]string{
-		"space_identifier": "ts-flag",
-		"topic_number":     "1",
-	})
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "tsflag"})
-	req = req.WithContext(ctx)
-
-	rr := httptest.NewRecorder()
-	handler.Show(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	tests := []struct {
+		name            string
+		spaceIdentifier string
+		visibility      int32
+		withSpaceMember bool
+		withTopicMember bool
+	}{
+		{
+			name:            "公開トピック_未ログイン",
+			spaceIdentifier: "ts-tab-pub-guest",
+			visibility:      0,
+			withSpaceMember: false,
+			withTopicMember: false,
+		},
+		{
+			name:            "非公開トピック_スペースメンバー",
+			spaceIdentifier: "ts-tab-priv-sm",
+			visibility:      1,
+			withSpaceMember: true,
+			withTopicMember: false,
+		},
+		{
+			name:            "非公開トピック_トピックメンバー",
+			spaceIdentifier: "ts-tab-priv-tm",
+			visibility:      1,
+			withSpaceMember: true,
+			withTopicMember: true,
+		},
 	}
 
-	body := rr.Body.String()
-	if !strings.Contains(body, "/s/ts-flag/topics/1/suggestions") {
-		t.Error("response should contain suggestions tab link")
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestShow_フィーチャーフラグ無効時に編集提案タブが表示されない(t *testing.T) {
-	t.Parallel()
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
 
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(tt.spaceIdentifier).
+				Build()
+			topicID := testutil.NewTopicBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithNumber(1).
+				WithName("タブテスト").
+				WithVisibility(tt.visibility).
+				Build()
 
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("ts-noflag@example.com").
-		WithAtname("tsnoflag").
-		Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("ts-noflag").
-		WithName("No Flag Space").
-		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-	testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithName("フラグなしテスト").
-		WithVisibility(0). // public
-		Build()
+			handler := setupHandler(t, queries)
 
-	handler := setupHandler(t, queries)
+			req := newShowRequest(t, fmt.Sprintf("/s/%s/topics/1", tt.spaceIdentifier), map[string]string{
+				"space_identifier": tt.spaceIdentifier,
+				"topic_number":     "1",
+			})
 
-	req := newShowRequest(t, "/s/ts-noflag/topics/1", map[string]string{
-		"space_identifier": "ts-noflag",
-		"topic_number":     "1",
-	})
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "tsnoflag"})
-	req = req.WithContext(ctx)
+			if tt.withSpaceMember {
+				atname := strings.ReplaceAll(tt.spaceIdentifier, "-", "")
+				userID := testutil.NewUserBuilder(t, tx).
+					WithEmail(fmt.Sprintf("%s@example.com", tt.spaceIdentifier)).
+					WithAtname(atname).
+					Build()
+				spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+					WithSpaceID(spaceID).
+					WithUserID(userID).
+					Build()
+				if tt.withTopicMember {
+					testutil.NewTopicMemberBuilder(t, tx).
+						WithSpaceID(spaceID).
+						WithTopicID(topicID).
+						WithSpaceMemberID(spaceMemberID).
+						Build()
+				}
+				ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: atname})
+				req = req.WithContext(ctx)
+			}
 
-	rr := httptest.NewRecorder()
-	handler.Show(rr, req)
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
-	}
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
 
-	body := rr.Body.String()
-	if strings.Contains(body, "/s/ts-noflag/topics/1/suggestions") {
-		t.Error("response should not contain suggestions tab link when feature flag is disabled")
+			body := rr.Body.String()
+			expected := fmt.Sprintf("/s/%s/topics/1/suggestions", tt.spaceIdentifier)
+			if !strings.Contains(body, expected) {
+				t.Errorf("response should contain suggestions tab link %q", expected)
+			}
+		})
 	}
 }
