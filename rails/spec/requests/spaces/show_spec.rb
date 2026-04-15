@@ -92,4 +92,44 @@ RSpec.describe "GET /s/:space_identifier", type: :request do
     expect(response.body).to include("参加していない公開トピックのページ")
     expect(response.body).to include("参加していない非公開トピックのページ")
   end
+
+  it "ログインしていないとき、スペース操作メニューに新規トピック・ゴミ箱・設定が表示されないこと" do
+    space_record = create(:space_record)
+
+    get "/s/#{space_record.identifier}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include(new_topic_path(space_record.identifier))
+    expect(response.body).not_to include(trash_path(space_record.identifier))
+    expect(response.body).not_to include(space_settings_path(space_record.identifier))
+  end
+
+  it "ログインしているがスペースに参加していないとき、スペース操作メニューに新規トピック・ゴミ箱・設定が表示されないこと" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record)
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).not_to include(new_topic_path(space_record.identifier))
+    expect(response.body).not_to include(trash_path(space_record.identifier))
+    expect(response.body).not_to include(space_settings_path(space_record.identifier))
+  end
+
+  it "スペースに参加しているとき、スペース操作メニューに新規トピック・ゴミ箱・設定が表示されること" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record)
+    create(:space_member_record, space_record:, user_record:)
+
+    sign_in(user_record:)
+
+    get "/s/#{space_record.identifier}"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include(new_topic_path(space_record.identifier))
+    expect(response.body).to include(trash_path(space_record.identifier))
+    expect(response.body).to include(space_settings_path(space_record.identifier))
+  end
 end

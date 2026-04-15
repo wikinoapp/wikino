@@ -13,7 +13,7 @@
         <% end %>
       <% end %>
 
-      <% if signed_in? %>
+      <% if joined_space? %>
         <%= dropdown_menu.with_item do %>
           <%= link_to new_topic_path(space.identifier), class: "flex gap-2 items-center w-full" do %>
             <%= render BaseUI::IconComponent.new(name: "plus", size: "18px", class_name: "fill-primary") %>
