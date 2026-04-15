@@ -81,7 +81,7 @@
                 <%= f.password_field(:password, autocomplete: "current-password") %>
               </div>
 
-              <div class="flex gap-2">
+              <div class="flex justify-between gap-2">
                 <%= f.button(
                   class: "btn rounded-full w-fit",
                   data: { turbo_confirm: t("messages.two_factor_auth.regenerate_confirmation") },
@@ -91,7 +91,7 @@
                 <% end %>
 
                 <%= link_to t("nouns.cancel"), settings_two_factor_auth_path, {
-                  class: "btn-ghost rounded-full w-fit"
+                  class: "btn-outline rounded-full w-fit"
                 } %>
               </div>
             <% end %>

@@ -33,14 +33,14 @@
 
       <%= render BaseUI::CardComponent.new do |card| %>
         <%= card.with_body(class_name: "px-4") do %>
-          <div class="flex gap-2">
+          <div class="flex justify-between gap-2">
             <%= button_to t("messages.exports.start"), space_settings_export_list_path(space.identifier), {
               method: :post,
               class: "btn rounded-full"
             } %>
 
             <%= link_to t("nouns.cancel"), space_settings_path(space.identifier), {
-              class: "btn-ghost rounded-full w-fit"
+              class: "btn-outline rounded-full w-fit"
             } %>
           </div>
         <% end %>
