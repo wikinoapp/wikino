@@ -8,6 +8,6 @@
   <% end %>
 <% end %>
 
-<% if signed_in? %>
+<% if page.can_update? %>
   <%= render Dropdowns::PageActionsComponent.new(page:) %>
 <% end %>
