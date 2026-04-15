@@ -64,85 +64,85 @@ templ New(data MovePageData) {
 							class="form grid gap-6"
 							method="POST"
 						>
-								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-								<div class="grid gap-2">
-									<label>
-										{ templates.T(ctx, "page_move_page_title_label") }
-									</label>
+							<div class="grid gap-2">
+								<label>
+									{ templates.T(ctx, "page_move_page_title_label") }
+								</label>
 
-									<p class="text-sm text-muted-foreground">
-										{ data.Page.Title }
-									</p>
-								</div>
+								<p class="text-sm text-muted-foreground">
+									{ data.Page.Title }
+								</p>
+							</div>
 
-								<div class="grid gap-2">
-									<label>
-										{ templates.T(ctx, "page_move_current_topic_label") }
-									</label>
+							<div class="grid gap-2">
+								<label>
+									{ templates.T(ctx, "page_move_current_topic_label") }
+								</label>
 
-									<p class="text-sm text-muted-foreground">
-										{ data.CurrentTopic.Name }
-									</p>
-								</div>
+								<p class="text-sm text-muted-foreground">
+									{ data.CurrentTopic.Name }
+								</p>
+							</div>
 
-								<div class="grid gap-2">
-									<label for="dest_topic">
-										{ templates.T(ctx, "page_move_destination_topic_label") }
-									</label>
+							<div class="grid gap-2">
+								<label for="dest_topic">
+									{ templates.T(ctx, "page_move_destination_topic_label") }
+								</label>
 
-									if len(data.AvailableTopics) > 0 {
-										<select
-											id="dest_topic"
-											name="dest_topic"
-											class="select"
-											if data.FormErrors != nil && data.FormErrors.HasFieldError("dest_topic") {
-												aria-invalid="true"
-											}
-										>
-											<option value="">
-												{ templates.T(ctx, "page_move_select_topic_placeholder") }
-											</option>
-											for _, topic := range data.AvailableTopics {
-												<option value={ fmt.Sprintf("%d", topic.Number) }>
-													{ topic.Name }
-												</option>
-											}
-										</select>
+								if len(data.AvailableTopics) > 0 {
+									<select
+										id="dest_topic"
+										name="dest_topic"
+										class="select"
 										if data.FormErrors != nil && data.FormErrors.HasFieldError("dest_topic") {
-											for _, errorMsg := range data.FormErrors.GetFieldErrors("dest_topic") {
-												<p class="text-sm text-error">
-													{ errorMsg }
-												</p>
-											}
+											aria-invalid="true"
 										}
-									} else {
-										<p class="text-sm text-muted-foreground">
-											{ templates.T(ctx, "page_move_no_available_topics") }
-										</p>
+									>
+										<option value="">
+											{ templates.T(ctx, "page_move_select_topic_placeholder") }
+										</option>
+										for _, topic := range data.AvailableTopics {
+											<option value={ fmt.Sprintf("%d", topic.Number) }>
+												{ topic.Name }
+											</option>
+										}
+									</select>
+									if data.FormErrors != nil && data.FormErrors.HasFieldError("dest_topic") {
+										for _, errorMsg := range data.FormErrors.GetFieldErrors("dest_topic") {
+											<p class="text-sm text-error">
+												{ errorMsg }
+											</p>
+										}
 									}
-								</div>
+								} else {
+									<p class="text-sm text-muted-foreground">
+										{ templates.T(ctx, "page_move_no_available_topics") }
+									</p>
+								}
+							</div>
 
-								<div class="flex justify-between gap-2">
-									<button
-										type="submit"
-										class="btn rounded-full w-fit"
-										if len(data.AvailableTopics) == 0 {
-											disabled
-										}
-									>
-										@templates.Icon("paper-plane-tilt-regular")
-										{ templates.T(ctx, "page_move_submit") }
-									</button>
+							<div class="flex justify-between gap-2">
+								<button
+									type="submit"
+									class="btn rounded-full w-fit"
+									if len(data.AvailableTopics) == 0 {
+										disabled
+									}
+								>
+									@templates.Icon("paper-plane-tilt-regular")
+									{ templates.T(ctx, "page_move_submit") }
+								</button>
 
-									<a
-										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
-										class="btn-outline rounded-full w-fit"
-									>
-										{ templates.T(ctx, "page_move_cancel") }
-									</a>
-								</div>
-							</form>
+								<a
+									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
+									class="btn-outline rounded-full w-fit"
+								>
+									{ templates.T(ctx, "page_move_cancel") }
+								</a>
+							</div>
+						</form>
 					}
 				</div>
 			</div>
