@@ -96,7 +96,7 @@
               <%= t("messages.two_factor_auth.status.disabled") %>
             </p>
 
-            <div class="flex gap-2">
+            <div class="flex justify-between gap-2">
               <%= link_to(
                 t("verbs.enable_two_factor_auth"),
                 settings_new_two_factor_auth_path,
@@ -104,7 +104,7 @@
               ) %>
 
               <%= link_to t("nouns.cancel"), settings_path, {
-                class: "btn-ghost rounded-full w-fit"
+                class: "btn-outline rounded-full w-fit"
               } %>
             </div>
           <% end %>

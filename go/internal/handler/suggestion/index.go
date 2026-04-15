@@ -77,12 +77,13 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	// テンプレートをレンダリング
 	content := suggestionpages.Index(suggestionpages.IndexData{
-		Space:       spaceVM,
-		Topic:       topicVM,
-		Suggestions: suggestions,
-		OpenCount:   output.OpenCount,
-		ClosedCount: output.ClosedCount,
-		ShowClosed:  showClosed,
+		Space:               spaceVM,
+		Topic:               topicVM,
+		Suggestions:         suggestions,
+		OpenCount:           output.OpenCount,
+		ClosedCount:         output.ClosedCount,
+		ShowClosed:          showClosed,
+		CanCreateSuggestion: output.CanCreateSuggestion,
 	})
 
 	signedIn := user != nil

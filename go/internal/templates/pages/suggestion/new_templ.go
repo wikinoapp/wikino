@@ -61,9 +61,8 @@ func New(data NewData) templ.Component {
 					AriaLabel: templates.T(ctx, "breadcrumb_home"),
 				},
 				{
-					Label:    data.Space.Name,
-					Path:     templates.SpacePath(data.Space.Identifier.String()),
-					IconName: "globe-regular",
+					Label: data.Space.Name,
+					Path:  templates.SpacePath(data.Space.Identifier.String()),
 				},
 				{
 					Label:    data.Topic.Name,
@@ -134,7 +133,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var3 templ.SafeURL
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 80, Col: 118}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 79, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -147,7 +146,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 83, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 82, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -160,7 +159,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_new_title_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 87, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 86, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -188,7 +187,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(data.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 101, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 100, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -207,7 +206,7 @@ func New(data NewData) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 106, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 105, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -252,7 +251,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(data.Body)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 128, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 127, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -265,7 +264,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_new_draft_pages_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 134, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 133, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -284,7 +283,7 @@ func New(data NewData) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 139, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 138, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -309,7 +308,7 @@ func New(data NewData) templ.Component {
 					var templ_7745c5c3_Var11 string
 					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(string(dp.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 150, Col: 34}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 149, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
@@ -332,7 +331,7 @@ func New(data NewData) templ.Component {
 					var templ_7745c5c3_Var12 string
 					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(dp.DisplayTitle(ctx))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 158, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 157, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 					if templ_7745c5c3_Err != nil {
@@ -355,7 +354,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_new_no_draft_pages"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 165, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 164, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -387,7 +386,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_new_submit"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 179, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 178, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -400,7 +399,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var15 templ.SafeURL
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 184, Col: 118}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 183, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -413,7 +412,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_new_cancel"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 186, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/new.templ`, Line: 185, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {

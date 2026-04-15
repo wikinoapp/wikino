@@ -7,6 +7,6 @@
   ).with_content(page.title || "") %>
 
   <div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
-    <%= render Pages::HeaderActionsComponent.new(signed_in:, page:) %>
+    <%= render Pages::HeaderActionsComponent.new(page:) %>
   </div>
 </div>

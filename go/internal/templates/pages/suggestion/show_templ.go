@@ -67,9 +67,8 @@ func Show(data ShowData) templ.Component {
 					AriaLabel: templates.T(ctx, "breadcrumb_home"),
 				},
 				{
-					Label:    data.Space.Name,
-					Path:     templates.SpacePath(data.Space.Identifier.String()),
-					IconName: "globe-regular",
+					Label: data.Space.Name,
+					Path:  templates.SpacePath(data.Space.Identifier.String()),
 				},
 				{
 					Label:    data.Topic.Name,
@@ -139,7 +138,7 @@ func Show(data ShowData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_show_comments_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 97, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 96, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -207,7 +206,7 @@ func Show(data ShowData) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_show_action_description"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 122, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 121, Col: 65}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -278,7 +277,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var7 templ.SafeURL
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier.String(), data.Suggestion.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 146, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 145, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -295,7 +294,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_show_edit_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 150, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 149, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -385,7 +384,7 @@ func showApplyForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 173, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 172, Col: 119}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -398,7 +397,7 @@ func showApplyForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 176, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 175, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -415,7 +414,7 @@ func showApplyForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_apply_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 182, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 181, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -458,7 +457,7 @@ func showCloseForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var15 templ.SafeURL
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 190, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 189, Col: 119}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -471,7 +470,7 @@ func showCloseForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 193, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 192, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -484,7 +483,7 @@ func showCloseForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_close_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 198, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 197, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -540,7 +539,7 @@ func showCommentForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var19 templ.SafeURL
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier.String(), data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 219, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 218, Col: 122}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -553,7 +552,7 @@ func showCommentForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 223, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 222, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -566,7 +565,7 @@ func showCommentForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_comment_body_placeholder"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 230, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 229, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -583,7 +582,7 @@ func showCommentForm(data ShowData) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_comment_submit"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 240, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 239, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {

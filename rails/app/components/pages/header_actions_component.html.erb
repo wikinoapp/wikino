@@ -6,8 +6,6 @@
 
     <%= t("verbs.edit") %>
   <% end %>
-<% end %>
 
-<% if signed_in? %>
   <%= render Dropdowns::PageActionsComponent.new(page:) %>
 <% end %>

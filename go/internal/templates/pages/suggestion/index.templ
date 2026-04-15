@@ -10,12 +10,13 @@ import (
 
 // IndexData は編集提案一覧画面に渡すデータ構造体です
 type IndexData struct {
-	Space       viewmodel.Space
-	Topic       viewmodel.Topic
-	Suggestions []viewmodel.SuggestionForList
-	OpenCount   int64
-	ClosedCount int64
-	ShowClosed  bool
+	Space               viewmodel.Space
+	Topic               viewmodel.Topic
+	Suggestions         []viewmodel.SuggestionForList
+	OpenCount           int64
+	ClosedCount         int64
+	ShowClosed          bool
+	CanCreateSuggestion bool
 }
 
 // suggestionsPath は編集提案一覧のパスを生成します
@@ -40,9 +41,8 @@ templ Index(data IndexData) {
 						AriaLabel: templates.T(ctx, "breadcrumb_home"),
 					},
 					{
-						Label:    data.Space.Name,
-						Path:     templates.SpacePath(data.Space.Identifier.String()),
-						IconName: "globe-regular",
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
 					},
 				},
 			})
@@ -162,13 +162,15 @@ templ indexList(data IndexData) {
 
 // suggestionNewButton は編集提案作成ボタンを表示します
 templ suggestionNewButton(data IndexData) {
-	<a
-		href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))) }
-		class="btn-sm rounded-full"
-	>
-		@templates.Icon("git-pull-request-regular", "size-4")
-		{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
-	</a>
+	if data.CanCreateSuggestion {
+		<a
+			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="btn-sm rounded-full"
+		>
+			@templates.Icon("git-pull-request-regular", "size-4")
+			{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+		</a>
+	}
 }
 
 // indexEmptyState は編集提案がない場合の空状態を表示します

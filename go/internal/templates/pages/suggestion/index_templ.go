@@ -17,12 +17,13 @@ import (
 
 // IndexData は編集提案一覧画面に渡すデータ構造体です
 type IndexData struct {
-	Space       viewmodel.Space
-	Topic       viewmodel.Topic
-	Suggestions []viewmodel.SuggestionForList
-	OpenCount   int64
-	ClosedCount int64
-	ShowClosed  bool
+	Space               viewmodel.Space
+	Topic               viewmodel.Topic
+	Suggestions         []viewmodel.SuggestionForList
+	OpenCount           int64
+	ClosedCount         int64
+	ShowClosed          bool
+	CanCreateSuggestion bool
 }
 
 // suggestionsPath は編集提案一覧のパスを生成します
@@ -69,9 +70,8 @@ func Index(data IndexData) templ.Component {
 					AriaLabel: templates.T(ctx, "breadcrumb_home"),
 				},
 				{
-					Label:    data.Space.Name,
-					Path:     templates.SpacePath(data.Space.Identifier.String()),
-					IconName: "globe-regular",
+					Label: data.Space.Name,
+					Path:  templates.SpacePath(data.Space.Identifier.String()),
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -441,39 +441,41 @@ func suggestionNewButton(data IndexData) templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<a href=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var17 templ.SafeURL
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 166, Col: 110}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" class=\"btn-sm rounded-full\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templates.Icon("git-pull-request-regular", "size-4").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "draft_page_index_create_suggestion_button"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 170, Col: 65}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</a>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if data.CanCreateSuggestion {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<a href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var17 templ.SafeURL
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 167, Col: 111}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" class=\"btn-sm rounded-full\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templates.Icon("git-pull-request-regular", "size-4").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var18 string
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "draft_page_index_create_suggestion_button"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 171, Col: 66}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
@@ -517,7 +519,7 @@ func indexEmptyState(data IndexData) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_index_no_closed"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 182, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 184, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -527,7 +529,7 @@ func indexEmptyState(data IndexData) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_index_no_open"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 184, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/index.templ`, Line: 186, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
