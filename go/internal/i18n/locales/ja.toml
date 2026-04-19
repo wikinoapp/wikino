@@ -1091,6 +1091,14 @@ other = "編集提案を反映しました"
 description = "編集提案反映エラーメッセージ"
 other = "編集提案の反映に失敗しました"
 
+[suggestion_apply_page_error]
+description = "編集提案反映バリデーションエラーのページ名プレフィックス（{{.PageTitle}} は templ 側の自動エスケープ後に挿入される）"
+other = "ページ「{{.PageTitle}}」: "
+
+[error_suggestion_conflict_during_apply]
+description = "編集提案反映中に競合ページの状態が変わった場合のエラー"
+other = "反映中にページの状態が変わりました。再度お試しください"
+
 # 編集提案クローズ
 
 [suggestion_close_button]

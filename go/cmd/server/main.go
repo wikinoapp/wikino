@@ -336,14 +336,19 @@ func main() {
 		getSuggestionDiffUC,
 		sidebarHelper,
 	)
+	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
+		suggestionApplyValidator,
 	)
 	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
+		cfg,
 		flashMgr,
 		applySuggestionUC,
+		getSuggestionDetailUC,
+		sidebarHelper,
 	)
 	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 	suggestionCloseHandler := suggestionclosehandler.NewHandler(

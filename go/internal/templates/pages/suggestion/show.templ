@@ -23,6 +23,9 @@ type ShowData struct {
 	CanClose                   bool
 	CanUpdateSuggestion        bool
 	CanUpdateSuggestionComment bool
+	// ApplyError は反映処理のバリデーション失敗時にセットされる。
+	// ページタイトルはテンプレート側で通常補間し自動エスケープ、メッセージは @templ.Raw で展開する。
+	ApplyError *viewmodel.SuggestionApplyError
 }
 
 // Show は編集提案詳細画面のコンテンツを表示します
@@ -55,6 +58,7 @@ templ Show(data ShowData) {
 
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
+					@components.SuggestionApplyError(data.ApplyError)
 					<div class="flex flex-col gap-4">
 						<div class="px-4">
 							@components.MainTitle(components.MainTitleData{

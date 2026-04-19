@@ -8,6 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestApplySuggestionUsecase_Execute(t *testing.T) {
@@ -26,10 +27,13 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
 
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	uc := NewApplySuggestionUsecase(
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
+		suggestionApplyValidator,
 	)
 
 	t.Run("正常系: 1つのページの編集提案を反映できる", func(t *testing.T) {
@@ -842,6 +846,263 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
 			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+		}
+	})
+
+	t.Run("正常系: 未公開かつ本文が空の同タイトルページは論理削除されて反映できる", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-discard").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-discard@example.com").
+			WithAtname("applysugdiscard").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewTopicMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Source Title").
+			Build()
+
+		// 未公開かつ本文が空の同タイトルページ（論理削除の対象）
+		conflictID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Target Title").
+			WithBody("").
+			WithUnpublished().
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			WithTitle("Target Title").
+			WithBody("new body").
+			WithBodyHTML("<p>new body</p>").
+			Build()
+
+		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-discard",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output.Suggestion.Status != model.SuggestionStatusApplied {
+			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+		}
+
+		// 反映後、競合ページが論理削除されている
+		discardedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{conflictID}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDs() error = %v", err)
+		}
+		if len(discardedPages) != 0 {
+			t.Errorf("discarded page should not be returned by FindByIDs, got %d pages", len(discardedPages))
+		}
+
+		// 反映後、反映対象ページのタイトルが更新されている
+		appliedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDs() error = %v", err)
+		}
+		if len(appliedPages) != 1 {
+			t.Fatalf("applied page count = %d, want 1", len(appliedPages))
+		}
+		if appliedPages[0].Title == nil || *appliedPages[0].Title != "Target Title" {
+			t.Errorf("Page.Title = %v, want %q", appliedPages[0].Title, "Target Title")
+		}
+	})
+
+	t.Run("バリデーションエラー: 公開済みページと衝突する編集提案は ValidationError を返す", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-conflict").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-conflict@example.com").
+			WithAtname("applysugconflict").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewTopicMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Source").
+			WithBody("original body").
+			Build()
+
+		// 公開済みの同タイトルページ
+		testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Conflict").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			WithTitle("Conflict").
+			WithBody("new body").
+			WithBodyHTML("<p>new body</p>").
+			Build()
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-conflict",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		ae := model.AsSuggestionApplyError(err)
+		if ae == nil {
+			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+		}
+		if len(ae.PageErrors) == 0 {
+			t.Error("expected page errors but none")
+		}
+
+		// 反映対象のページが書き換わっていない
+		unchangedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDs() error = %v", err)
+		}
+		if len(unchangedPages) != 1 {
+			t.Fatalf("page count = %d, want 1", len(unchangedPages))
+		}
+		if unchangedPages[0].Body != "original body" {
+			t.Errorf("Page.Body = %q, want %q", unchangedPages[0].Body, "original body")
+		}
+	})
+
+	t.Run("バリデーションエラー: 禁止文字を含むタイトルの編集提案は SuggestionApplyError を返す", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-invalid-chars").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-invalid-chars@example.com").
+			WithAtname("applysuginv").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewTopicMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Valid Source").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			WithTitle("foo/bar").
+			WithBody("body").
+			WithBodyHTML("<p>body</p>").
+			Build()
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-invalid-chars",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		ae := model.AsSuggestionApplyError(err)
+		if ae == nil {
+			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+		}
+		if len(ae.PageErrors) == 0 {
+			t.Error("expected page errors but none")
 		}
 	})
 }

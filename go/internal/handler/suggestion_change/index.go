@@ -8,11 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionchangepages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_change"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -111,39 +110,15 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		CanRemoveSuggestionPage: output.CanRemoveSuggestionPage,
 	})
 
-	signedIn := user != nil
-	var userAtname string
-	if user != nil {
-		userAtname = user.Atname
-	}
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName: templates.PageNameSuggestionChanges,
-			SignedIn:        signedIn,
-			UserAtname:      userAtname,
-			SpaceIdentifier: string(spaceIdentifier),
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionChanges,
-			SignedIn:        signedIn,
-			SpaceIdentifier: string(spaceIdentifier),
-		},
-	}
-
-	// ログイン済みの場合はサイドバーコンテンツを取得
-	if user != nil {
-		sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
-	}
-
-	err = layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
+		Cfg:             h.cfg,
+		SidebarHelper:   h.sidebarHelper,
+		User:            user,
+		SpaceIdentifier: spaceIdentifier,
+		CurrentPageName: templates.PageNameSuggestionChanges,
+		Meta:            meta,
+		Content:         content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

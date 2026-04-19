@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // ApplySuggestionUsecase は編集提案反映ユースケース
@@ -25,6 +26,7 @@ type ApplySuggestionUsecase struct {
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
 	draftPageRepo         *repository.DraftPageRepository
+	applyValidator        *validator.SuggestionApplyValidator
 }
 
 // NewApplySuggestionUsecase は ApplySuggestionUsecase を生成する
@@ -41,6 +43,7 @@ func NewApplySuggestionUsecase(
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 	draftPageRepo *repository.DraftPageRepository,
+	applyValidator *validator.SuggestionApplyValidator,
 ) *ApplySuggestionUsecase {
 	return &ApplySuggestionUsecase{
 		db:                    db,
@@ -55,6 +58,7 @@ func NewApplySuggestionUsecase(
 		attachmentRepo:        attachmentRepo,
 		pageAttachmentRefRepo: pageAttachmentRefRepo,
 		draftPageRepo:         draftPageRepo,
+		applyValidator:        applyValidator,
 	}
 }
 
@@ -91,8 +95,36 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		return nil, err
 	}
 
-	// 4. 永続化（トランザクション）
-	return uc.applySuggestion(ctx, data)
+	// 4. バリデーション（トランザクション外）
+	validateOutput, err := uc.applyValidator.Validate(ctx, validator.SuggestionApplyValidatorInput{
+		SpaceID:         data.space.ID,
+		SpaceIdentifier: data.space.Identifier,
+		Entries:         buildApplyValidatorEntries(data.suggestionPages, data.pages),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 5. 永続化（トランザクション）
+	return uc.applySuggestion(ctx, data, validateOutput.ConflictingPageIDs)
+}
+
+// buildApplyValidatorEntries は SuggestionPage と Page のペアから Validator 入力を構築する
+func buildApplyValidatorEntries(suggestionPages []*model.SuggestionPage, pages []*model.Page) []validator.SuggestionApplyValidatorEntry {
+	topicIDByPageID := make(map[model.PageID]model.TopicID, len(pages))
+	for _, p := range pages {
+		topicIDByPageID[p.ID] = p.TopicID
+	}
+
+	entries := make([]validator.SuggestionApplyValidatorEntry, 0, len(suggestionPages))
+	for _, sp := range suggestionPages {
+		entries = append(entries, validator.SuggestionApplyValidatorEntry{
+			PageID:  sp.PageID,
+			TopicID: topicIDByPageID[sp.PageID],
+			Title:   sp.Title,
+		})
+	}
+	return entries
 }
 
 // applySuggestionData はデータ取得結果をまとめた構造体
@@ -203,7 +235,7 @@ func (uc *ApplySuggestionUsecase) checkStatus(ctx context.Context, suggestion *m
 	return nil
 }
 
-func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData) (*ApplySuggestionOutput, error) {
+func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData, conflictingPageIDs []model.PageID) (*ApplySuggestionOutput, error) {
 	now := time.Now()
 	spaceID := data.space.ID
 
@@ -222,6 +254,37 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
+
+	// 競合する未公開ページを論理削除
+	// トランザクション開始後にページの状態が変わっている可能性があるため、
+	// 論理削除直前に再取得し「未公開かつ本文が空」条件を再確認する（TOCTOU 対策）。
+	if len(conflictingPageIDs) > 0 {
+		conflictPages, err := pageRepo.FindByIDs(ctx, conflictingPageIDs, spaceID)
+		if err != nil {
+			return nil, fmt.Errorf("競合ページの再取得に失敗しました: %w", err)
+		}
+
+		conflictPageMap := make(map[model.PageID]*model.Page, len(conflictPages))
+		for _, cp := range conflictPages {
+			conflictPageMap[cp.ID] = cp
+		}
+
+		for _, conflictID := range conflictingPageIDs {
+			conflictPage, ok := conflictPageMap[conflictID]
+			if !ok {
+				continue
+			}
+			if conflictPage.PublishedAt != nil || conflictPage.Body != "" {
+				return nil, &model.AppError{
+					Code:    model.AppErrCodeConflict,
+					UserMsg: i18n.T(ctx, "error_suggestion_conflict_during_apply"),
+				}
+			}
+			if err := pageRepo.DiscardByID(ctx, conflictID, spaceID, now); err != nil {
+				return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
+			}
+		}
+	}
 
 	// ページをマップに変換
 	pageMap := make(map[model.PageID]*model.Page, len(data.pages))

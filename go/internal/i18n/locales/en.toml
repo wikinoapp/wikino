@@ -1091,6 +1091,14 @@ other = "Suggestion has been applied"
 description = "Suggestion apply error message"
 other = "Failed to apply suggestion"
 
+[suggestion_apply_page_error]
+description = "Suggestion apply validation error page name prefix ({{.PageTitle}} is inserted after templ auto-escape)"
+other = "Page \"{{.PageTitle}}\": "
+
+[error_suggestion_conflict_during_apply]
+description = "Error when a page state changes during suggestion apply"
+other = "Page state changed during apply. Please try again."
+
 # Suggestion close
 
 [suggestion_close_button]

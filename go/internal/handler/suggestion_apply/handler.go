@@ -2,23 +2,34 @@
 package suggestion_apply
 
 import (
+	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler は編集提案反映ハンドラー
 type Handler struct {
-	flashMgr               *session.FlashManager
-	applySuggestionUsecase *usecase.ApplySuggestionUsecase
+	cfg                        *config.Config
+	flashMgr                   *session.FlashManager
+	applySuggestionUsecase     *usecase.ApplySuggestionUsecase
+	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
+	sidebarHelper              *sidebar.Helper
 }
 
 // NewHandler は新しい編集提案反映ハンドラーを作成します
 func NewHandler(
+	cfg *config.Config,
 	flashMgr *session.FlashManager,
 	applySuggestionUsecase *usecase.ApplySuggestionUsecase,
+	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
+	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
-		flashMgr:               flashMgr,
-		applySuggestionUsecase: applySuggestionUsecase,
+		cfg:                        cfg,
+		flashMgr:                   flashMgr,
+		applySuggestionUsecase:     applySuggestionUsecase,
+		getSuggestionDetailUsecase: getSuggestionDetailUsecase,
+		sidebarHelper:              sidebarHelper,
 	}
 }
