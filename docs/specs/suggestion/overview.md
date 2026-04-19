@@ -179,6 +179,14 @@ Go 版で実装されており、全ユーザーが利用できる。Rails 版�
 - 反映後、関連する `DraftPage` の `suggestion_page_id` をクリアする
 - 新規ページ（`page_revision_id` が NULL の `SuggestionPage`）を含む編集提案も反映できる。新規ページの場合は `Page` を初めて公開する（`published_at` を設定する）
 - ベースリビジョンが古くなっている（編集提案作成後にページが直接更新された）場合でも、強制的に上書き反映される
+- 反映時は各 `SuggestionPage.Title` に対して、ページ更新時と同等のバリデーション（形式チェックと一意性チェック）を実施する。形式チェックは必須・文字数・禁止文字・先頭末尾のスペース / ドット・Windows 予約語を検証し、一意性チェックは同一トピック内での重複を検証する
+- `SuggestionPage.Title` が NULL のエントリはバリデーションの対象外とする（タイトル未設定の下書きから作成された編集提案ページは、反映時も NULL のまま扱う）
+- 一意性違反の競合相手が未公開かつ本文が空のページ（`published_at IS NULL AND body = ''`）の場合は、その競合ページを論理削除してから反映を続行する。論理削除のロジックは [ページ編集 仕様書](../page/edit.md) の「タイトルリネーム時の未公開ページ競合解消」と同じ
+- 公開済み・本文ありのページと競合する場合、または形式バリデーションに違反する場合は反映を拒否し、編集提案詳細ページを HTTP 422 で再描画してエラーメッセージを表示する
+- エラーメッセージにはページタイトルが含まれ、一意性違反時は衝突した既存ページへのリンクがメッセージ内に表示される
+- 複数ページで違反がある場合は、すべての違反メッセージをまとめて表示する（修正漏れの往復を減らすため）
+- 競合する相手が反映対象のページ自身の場合は衝突とみなさない
+- 論理削除と反映は同一トランザクション内で実行し、論理削除直前に競合ページの状態を再確認する。反映中にページの状態が変わっていた場合（TOCTOU）はエラーを返し、ユーザーに再試行を促す
 
 ### 編集提案のクローズ
 
@@ -574,6 +582,7 @@ type SuggestionComment struct {
 - `SuggestionUpdateValidator`: 編集提案更新のバリデーション
 - `SuggestionPageCreateValidator`: 編集提案ページ追加のバリデーション
 - `SuggestionPageUpdateValidator`: 編集提案ページ更新のバリデーション
+- `SuggestionApplyValidator`: 編集提案反映時のバリデーション（各 `SuggestionPage.Title` に対して `PageUpdateValidator` を適用）
 - `SuggestionCommentCreateValidator`: コメント作成のバリデーション
 - `SuggestionCommentUpdateValidator`: コメント更新のバリデーション
 
