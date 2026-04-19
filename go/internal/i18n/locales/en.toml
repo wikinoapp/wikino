@@ -843,6 +843,10 @@ other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
 description = "Suggestion list heading"
 other = "Suggestions"
 
+[suggestion_index_subtitle_html]
+description = "Suggestion list subtitle (includes help page link)"
+other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
+
 [suggestion_index_breadcrumb]
 description = "Suggestion list breadcrumb"
 other = "Suggestions"

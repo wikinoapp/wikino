@@ -80,7 +80,7 @@ func New(data MovePageData) templ.Component {
 		}
 		templ_7745c5c3_Err = components.MainTitle(components.MainTitleData{
 			Title:    templates.T(ctx, "page_move_heading"),
-			Subtitle: templates.T(ctx, "page_move_subtitle"),
+			Subtitle: components.SubtitleText(templates.T(ctx, "page_move_subtitle")),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

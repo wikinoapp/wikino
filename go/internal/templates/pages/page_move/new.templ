@@ -48,7 +48,7 @@ templ New(data MovePageData) {
 					<div class="px-4">
 						@components.MainTitle(components.MainTitleData{
 							Title:    templates.T(ctx, "page_move_heading"),
-							Subtitle: templates.T(ctx, "page_move_subtitle"),
+							Subtitle: components.SubtitleText(templates.T(ctx, "page_move_subtitle")),
 						})
 					</div>
 

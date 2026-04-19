@@ -108,7 +108,7 @@ templ Show(data ShowData) {
 templ showHeader(data ShowData) {
 	@components.MainTitle(components.MainTitleData{
 		Title:    data.Topic.Name,
-		Subtitle: data.Topic.Description,
+		Subtitle: components.SubtitleText(data.Topic.Description),
 		Actions:  showActions(data),
 	})
 }
