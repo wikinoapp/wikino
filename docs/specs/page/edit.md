@@ -147,6 +147,10 @@
 
 論理削除されたページの `linked_page_ids` を参照している他のページ・下書きについては、リネーム時に即座に更新しない。既存のリンク一覧・バックリンク一覧のクエリは `discarded_at IS NULL` でフィルタしているため実用上の問題は発生せず、参照元ページが次回保存されたときにWikiリンク再解析が実行され自然に修正される。
 
+#### 編集提案反映時の適用
+
+編集提案の反映（`ApplySuggestionUsecase`）でも、各 `SuggestionPage.Title` に対してページ公開時と同じバリデーション（形式・一意性）と論理削除ポリシーが適用される。詳細は [編集提案 仕様書](../suggestion/overview.md) の「編集提案の反映」を参照。
+
 ### 表示条件
 
 - 未廃棄（`discarded_at IS NULL`）のページのみ表示される
@@ -248,6 +252,7 @@ CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at
 - `PageUpdateValidatorResult` に `UnpublishedConflictingPageID *model.PageID` フィールドを持ち、未公開かつ本文が空の競合ページIDを格納する
 - `PublishPageInput` に `UnpublishedConflictingPageID *model.PageID` フィールドを持ち、トランザクション内で `PageRepository.DiscardByID` を呼び出す
 - `DiscardByID` は `space_id` によるスコープで同一スペース内のページに限定する
+- 編集提案反映（`ApplySuggestionUsecase`）でも同じ処理フローが実行される。`SuggestionApplyValidator` が各 `SuggestionPage.Title` に対して `PageUpdateValidator` を呼び出し、未公開かつ本文が空の競合ページIDを収集した上で、反映のトランザクション内でまとめて論理削除する
 
 ### Usecase命名
 
