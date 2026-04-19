@@ -88,11 +88,11 @@ templ Sidebar(data SidebarData) {
 				</ul>
 
 				if data.SignedIn {
-					<hr class="border-gray-300 mx-2">
+					<hr class="border-stone-300 mx-2">
 
 					@SidebarDraftPages(data.DraftPages, data.HasMoreDraftPages)
 
-					<hr class="border-gray-300 mx-2">
+					<hr class="border-stone-300 mx-2">
 
 					@SidebarJoinedTopics(data.JoinedTopics)
 				}

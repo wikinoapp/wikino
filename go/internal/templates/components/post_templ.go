@@ -54,7 +54,7 @@ func Post(data PostData) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4\"><div class=\"flex items-center gap-2 bg-brand-200/30 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]\"><a class=\"font-bold text-sm hover:underline\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4\"><div class=\"flex items-center gap-2 bg-stone-600/6 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]\"><a class=\"font-bold text-sm hover:underline\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

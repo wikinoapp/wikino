@@ -37,7 +37,7 @@ func LinkList(data viewmodel.LinkList) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(data.Items) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><h2 class=\"text-xl/8 font-bold antialiased\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><h2 class=\"text-2xl/8 font-bold antialiased\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
