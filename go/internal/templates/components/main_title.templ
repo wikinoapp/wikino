@@ -5,9 +5,22 @@ import "github.com/a-h/templ"
 // MainTitleData はメインタイトルコンポーネントに渡すデータ構造体です
 type MainTitleData struct {
 	Title    string
-	Subtitle string
+	Subtitle templ.Component
 	Content  templ.Component
 	Actions  templ.Component
+}
+
+// SubtitleText は文字列をサブタイトル用の templ.Component に変換します。
+// 空文字列の場合は nil を返し、MainTitle のサブタイトル表示をスキップさせます。
+func SubtitleText(text string) templ.Component {
+	if text == "" {
+		return nil
+	}
+	return subtitleText(text)
+}
+
+templ subtitleText(text string) {
+	{ text }
 }
 
 // MainTitle はページのメインタイトルと区切り線を表示します
@@ -19,9 +32,9 @@ templ MainTitle(data MainTitleData) {
 					{ data.Title }
 				</h1>
 
-				if data.Subtitle != "" {
+				if data.Subtitle != nil {
 					<div class="text-sm text-stone-600">
-						{ data.Subtitle }
+						@data.Subtitle
 					</div>
 				}
 

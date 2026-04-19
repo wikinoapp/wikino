@@ -205,7 +205,7 @@ func showHeader(data ShowData) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = components.MainTitle(components.MainTitleData{
 			Title:    data.Topic.Name,
-			Subtitle: data.Topic.Description,
+			Subtitle: components.SubtitleText(data.Topic.Description),
 			Actions:  showActions(data),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
