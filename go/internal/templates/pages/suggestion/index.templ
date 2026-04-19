@@ -52,8 +52,9 @@ templ Index(data IndexData) {
 					<div class="flex flex-col gap-4">
 						<div class="px-4">
 							@components.MainTitle(components.MainTitleData{
-								Title:   data.Topic.Name,
-								Actions: suggestionNewButton(data),
+								Title:    data.Topic.Name,
+								Subtitle: indexSubtitle(),
+								Actions:  suggestionNewButton(data),
 							})
 						</div>
 
@@ -95,6 +96,11 @@ templ Index(data IndexData) {
 			</div>
 		</div>
 	</div>
+}
+
+// indexSubtitle は編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）を表示します
+templ indexSubtitle() {
+	@templ.Raw(templates.T(ctx, "suggestion_index_subtitle_html"))
 }
 
 // indexTabs はオープン/クローズのタブ切り替えを表示します
