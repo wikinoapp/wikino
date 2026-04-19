@@ -28,7 +28,7 @@ type PostData struct {
 // 編集提案の本文とコメントで共通のUIを提供します。
 templ Post(data PostData) {
 	<div class="card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4">
-		<div class="flex items-center gap-2 bg-brand-200/30 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]">
+		<div class="flex items-center gap-2 bg-stone-600/6 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]">
 			<a
 				class="font-bold text-sm hover:underline"
 				href={ templ.SafeURL(string(templates.ProfilePath(data.CreatorAtname))) }

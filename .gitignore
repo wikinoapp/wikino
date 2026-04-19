@@ -6,10 +6,8 @@
 /.pnpm-store
 /compose-up.sh
 /docker-compose.override.yml
-/docs/helps
-/docs/plans
+/docs/private
 /docs/README.md
-/docs/reviews
 /node_modules
 /shimbaco-skills
 /tmp

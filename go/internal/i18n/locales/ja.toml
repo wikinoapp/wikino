@@ -359,7 +359,7 @@ other = "Wikino | リンクで見つかるWikiのアプリ"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
-other = "リンクで見つかるWikiのアプリ"
+other = "リンクで見つかる<br class=\"md:hidden\"/>Wikiのアプリ"
 
 [welcome_hero_description_html]
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
@@ -377,11 +377,17 @@ other = "Markdownでシンプルに書ける"
 [welcome_feature_markdown_description]
 other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます"
 
+[welcome_feature_markdown_help_title]
+other = "Wikinoで使えるMarkdown記法について"
+
 [welcome_feature_wikilink_title]
 other = "ページ同士を簡単につなげる"
 
 [welcome_feature_wikilink_description]
 other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます"
+
+[welcome_feature_wikilink_help_title]
+other = "Wikiリンク記法について"
 
 [welcome_feature_backlinks_title]
 other = "つながりが見える"
@@ -389,14 +395,29 @@ other = "つながりが見える"
 [welcome_feature_backlinks_description]
 other = "ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移でき、関連ページを見つけることができます"
 
+[welcome_feature_backlinks_help_title]
+other = "ページのつながりについて"
+
+[welcome_feature_suggestion_title]
+other = "変更を提案してレビューできる"
+
+[welcome_feature_suggestion_description]
+other = "ページを直接編集する代わりに、変更案を編集提案として提出し、コメントによるレビューを経て反映することができます"
+
+[welcome_feature_suggestion_help_title]
+other = "編集提案について"
+
 [welcome_feature_publish_title]
 other = "ページを公開して共有できる"
 
 [welcome_feature_publish_description]
-other = "作成したページを公開して、他の人と共有することができます"
+other = "作成したページをインターネット上に公開して、ブログのように他の人と共有することができます"
 
 [welcome_feature_publish_note]
 other = "※ 非公開機能は現在無料で使えますが、今後提供する有料プラン限定の機能になる予定です。公開機能はずっと無料です"
+
+[welcome_feature_publish_help_title]
+other = "トピックについて"
 
 [welcome_cta_title]
 other = "Wikinoを始めよう"

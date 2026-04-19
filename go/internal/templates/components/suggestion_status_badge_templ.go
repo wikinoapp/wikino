@@ -36,7 +36,7 @@ func SuggestionStatusBadge(status model.SuggestionStatus) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		switch status {
 		case model.SuggestionStatusDraft:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<span class=\"badge bg-muted-foreground font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<span class=\"badge bg-muted font-bold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

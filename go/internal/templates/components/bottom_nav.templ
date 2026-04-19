@@ -30,14 +30,14 @@ func (d BottomNavData) homePath() templates.Path {
 // BottomNav はモバイル用ボトムナビゲーションを表示します
 // デスクトップでは非表示（md:hidden）、モバイルでのみ表示されます
 templ BottomNav(data BottomNavData) {
-	<div class="bg-card flex items-center gap-4 rounded-full border border-gray-400 px-4 py-1 md:hidden">
+	<div class="bg-card flex items-center gap-4 rounded-full border border-stone-400 px-4 py-1 md:hidden">
 		<button
 			onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
 			class="flex w-[48px] flex-col items-center gap-1"
 			aria-label={ templates.T(ctx, "bottom_nav_menu") }
 		>
 			@templates.Icon("sidebar-simple-regular", "size-[26px] fill-base-content")
-			<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_menu") }</div>
+			<div class="text-xs text-stone-500">{ templates.T(ctx, "bottom_nav_menu") }</div>
 		</button>
 
 		<a href={ templ.SafeURL(string(data.homePath())) } class="flex w-[48px] flex-col items-center gap-1">
@@ -46,7 +46,7 @@ templ BottomNav(data BottomNavData) {
 			} else {
 				@templates.Icon("house-regular", "size-[26px] fill-base-content")
 			}
-			<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_home") }</div>
+			<div class="text-xs text-stone-500">{ templates.T(ctx, "bottom_nav_home") }</div>
 		</a>
 
 		if data.SignedIn {
@@ -56,12 +56,12 @@ templ BottomNav(data BottomNavData) {
 				} else {
 					@templates.Icon("magnifying-glass-regular", "size-[26px] fill-base-content")
 				}
-				<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_search") }</div>
+				<div class="text-xs text-stone-500">{ templates.T(ctx, "bottom_nav_search") }</div>
 			</a>
 		} else {
 			<a href={ templ.SafeURL(string(templates.SignInPath())) } class="flex w-[48px] flex-col items-center gap-1">
 				@templates.Icon("sign-in-regular", "size-[26px] fill-base-content")
-				<div class="text-xs text-gray-500">{ templates.T(ctx, "bottom_nav_sign_in") }</div>
+				<div class="text-xs text-stone-500">{ templates.T(ctx, "bottom_nav_sign_in") }</div>
 			</a>
 		}
 	</div>

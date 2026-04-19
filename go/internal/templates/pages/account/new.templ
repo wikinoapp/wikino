@@ -19,14 +19,14 @@ templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block">
-				<div class="bg-brand-50 rounded-xl">
-					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				<div class="bg-primary rounded-xl">
+					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
 
 		<div class="flex flex-col gap-2">
-			<h1 class="text-center text-3xl font-bold antialiased">
+			<h1 class="text-center text-3xl text-primary font-bold antialiased">
 				{ templates.T(ctx, "account_new_heading") }
 			</h1>
 		</div>
@@ -153,7 +153,7 @@ templ New(data NewPageData) {
 		}
 
 		<div class="text-center">
-			<a href="/sign_up" class="link underline inline-flex items-center gap-1">
+			<a href="/sign_up" class="link-foreground inline-flex items-center gap-1">
 				@templates.Icon("arrow-left-regular", "w-4 h-4")
 				{ templates.T(ctx, "account_new_back_to_sign_up") }
 			</a>

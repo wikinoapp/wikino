@@ -11,7 +11,7 @@ import (
 templ PageBacklinkList(data viewmodel.BacklinkList) {
 	if len(data.Items) > 0 || data.Pagination.HasNext {
 		<div class="flex flex-col gap-4">
-			<h2 class="text-xl/8 font-bold antialiased">
+			<h2 class="text-2xl/8 font-bold antialiased">
 				{ templates.T(ctx, "page_edit_backlinks_heading") }
 			</h2>
 

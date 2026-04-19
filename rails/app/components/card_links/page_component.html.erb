@@ -14,18 +14,18 @@
           <% if show_topic_name? %>
             <% if show_space_name? %>
               <div class="flex flex-wrap items-center gap-1">
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-stone-500">
                   <%= space.name.truncate(10) %>
                 </span>
 
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-stone-500">
                   /
                 </span>
 
                 <div class="flex items-center gap-0.5">
                   <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
-                  <span class="text-xs text-gray-500">
+                  <span class="text-xs text-stone-500">
                     <%= topic.name.truncate(10) %>
                   </span>
                 </div>
@@ -34,7 +34,7 @@
               <div class="flex items-center gap-0.5">
                 <%= render Icons::TopicComponent.new(topic:, size: "12px", class_name: "fill-gray-500") %>
 
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-stone-500">
                   <%= topic.name.truncate(10) %>
                 </span>
               </div>

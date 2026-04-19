@@ -377,17 +377,35 @@ other = "Write simply in Markdown"
 [welcome_feature_markdown_description]
 other = "Write documents in Markdown format with a clean, plain text editor."
 
+[welcome_feature_markdown_help_title]
+other = "About Markdown syntax in Wikino"
+
 [welcome_feature_wikilink_title]
 other = "Easily connect pages"
 
 [welcome_feature_wikilink_description]
 other = "Wrap a page title with our link syntax to create and link to that page."
 
+[welcome_feature_wikilink_help_title]
+other = "About Wiki link syntax"
+
 [welcome_feature_backlinks_title]
 other = "See the connections"
 
 [welcome_feature_backlinks_description]
 other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
+
+[welcome_feature_backlinks_help_title]
+other = "About page connections"
+
+[welcome_feature_suggestion_title]
+other = "Propose and review changes"
+
+[welcome_feature_suggestion_description]
+other = "Instead of editing directly, submit changes as a suggestion and apply them after a review through comments."
+
+[welcome_feature_suggestion_help_title]
+other = "About suggestions"
 
 [welcome_feature_publish_title]
 other = "Publish and share your pages"
@@ -397,6 +415,9 @@ other = "Make your pages public and share them with others."
 
 [welcome_feature_publish_note]
 other = "* Private spaces are currently free but will become a paid feature in the future."
+
+[welcome_feature_publish_help_title]
+other = "About topics"
 
 [welcome_cta_title]
 other = "Get Started with Wikino"

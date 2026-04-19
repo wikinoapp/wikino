@@ -1,5 +1,5 @@
 <div
-  class="bg-brand-50 z-sticky-bar group sticky top-0 min-h-[76px] md:min-h-[49px]"
+  class="z-sticky-bar group sticky top-0 min-h-[76px] md:min-h-[49px]"
   data-controller="stuck"
 >
   <%# スクロールする前に表示されるヘッダー %>
@@ -12,7 +12,7 @@
   </div>
 
   <%# スクロールした後に表示されるヘッダー %>
-  <div class="hidden border-b-1 border-gray-300 group-data-stuck:block">
+  <div class="hidden bg-background border-b-1 border-stone-300 group-data-stuck:block">
     <%= render Pages::StickyHeaderComponent.new(page:) %>
   </div>
 </div>

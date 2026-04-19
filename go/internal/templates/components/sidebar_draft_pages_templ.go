@@ -161,7 +161,7 @@ func SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) tem
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"link-muted text-xs flex items-center gap-1 w-fit\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"link-bare-muted-foreground text-xs flex items-center gap-1 w-fit\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

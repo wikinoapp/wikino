@@ -9,7 +9,7 @@ import (
 templ SuggestionStatusBadge(status model.SuggestionStatus) {
 	switch status {
 		case model.SuggestionStatusDraft:
-			<span class="badge bg-muted-foreground font-bold">
+			<span class="badge bg-muted font-bold">
 				@templates.Icon("file-dashed-regular", "size-5")
 				{ templates.T(ctx, "suggestion_show_status_draft") }
 			</span>
