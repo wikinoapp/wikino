@@ -8,11 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案を反映します (POST /s/{space_identifier}/suggestions/{suggestion_number}/apply)
@@ -44,7 +46,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		UserID:           user.ID,
 	})
 	if err != nil {
-		h.handleCreateError(w, r, err, spaceIdentifier, suggestionNumber)
+		h.handleCreateError(w, r, err, user, spaceIdentifier, suggestionNumber)
 		return
 	}
 
@@ -54,16 +56,48 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 }
 
-func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
 	ctx := r.Context()
 	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+
+	if ae := model.AsSuggestionApplyError(err); ae != nil {
+		// バリデーションエラー → 編集提案詳細ページを 422 で再描画
+		output, getErr := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
+			SpaceIdentifier:  spaceIdentifier,
+			SuggestionNumber: suggestionNumber,
+			UserID:           &user.ID,
+		})
+		if getErr != nil {
+			slog.ErrorContext(ctx, "編集提案詳細の再表示データ取得に失敗", "error", getErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		if output == nil {
+			handler.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		if renderErr := suggestionhandler.RenderShow(ctx, w, suggestionhandler.RenderShowInput{
+			Cfg:             h.cfg,
+			SidebarHelper:   h.sidebarHelper,
+			User:            user,
+			SpaceIdentifier: spaceIdentifier,
+			Output:          output,
+			ApplyError:      viewmodel.NewSuggestionApplyError(ae),
+		}); renderErr != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
 
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {
 		case model.AppErrCodeResourceNotFound:
 			handler.NotFound(w, r)
 		case model.AppErrCodeForbidden:
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			handler.NotFound(w, r)
 		case model.AppErrCodeConflict:
 			h.flashMgr.SetError(w, ae.UserMsg)
 			http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
