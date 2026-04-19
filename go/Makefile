@@ -1,10 +1,18 @@
+ifeq ($(CI),true)
+  OP_RUN_DEV = APP_ENV=dev
+  OP_RUN_TEST = APP_ENV=test
+else
+  OP_RUN_DEV = APP_ENV=dev op run --env-file=".env" --
+  OP_RUN_TEST = APP_ENV=test op run --env-file=".env" --
+endif
+
 .PHONY: help
 help: ## ヘルプを表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: run
 run: ## サーバーを起動
-	APP_ENV=dev op run --env-file=".env" -- go run cmd/server/main.go
+	$(OP_RUN_DEV) go run cmd/server/main.go
 
 .PHONY: templ-generate
 templ-generate: ## templファイルからGoコードを生成し、import文を整理
@@ -36,7 +44,7 @@ build: templ-generate ## バイナリをビルド（templ-generateがgoimports�
 .PHONY: test
 test: db-setup-test ## テストを実行
 	@which tparse > /dev/null || (echo "Installing tparse from go.mod..." && go install github.com/mfridman/tparse)
-	@bash -c 'set -o pipefail && go test -json -race ./... | tparse -all'
+	@bash -c 'set -o pipefail && $(OP_RUN_TEST) go test -json -race ./... | tparse -all'
 
 .PHONY: test-pkg
 test-pkg: db-setup-test ## 特定のパッケージのテストを実行（使用例: make test-pkg PKG=internal/handler/sign_in）
@@ -47,7 +55,7 @@ test-pkg: db-setup-test ## 特定のパッケージのテストを実行（使�
 		exit 1; \
 	fi
 	@echo "パッケージ $(PKG) のテストを実行"
-	@bash -c 'set -o pipefail && APP_ENV=test op run --env-file=".env" -- go test -json -race ./$(PKG) | tparse -all'
+	@bash -c 'set -o pipefail && $(OP_RUN_TEST) go test -json -race ./$(PKG) | tparse -all'
 
 .PHONY: test-run
 test-run: db-setup-test ## 特定のテストを実行（使用例: make test-run PKG=internal/handler/sign_in RUN=TestCreate）
@@ -63,13 +71,13 @@ test-run: db-setup-test ## 特定のテストを実行（使用例: make test-ru
 		exit 1; \
 	fi
 	@echo "パッケージ $(PKG) のテスト $(RUN) を実行"
-	@bash -c 'set -o pipefail && APP_ENV=test op run --env-file=".env" -- go test -json -race ./$(PKG) -run $(RUN) | tparse -all'
+	@bash -c 'set -o pipefail && $(OP_RUN_TEST) go test -json -race ./$(PKG) -run $(RUN) | tparse -all'
 
 .PHONY: test-verbose
 test-verbose: db-setup-test ## 詳細ログ付きで全テストを実行（デバッグ用）
 	@which tparse > /dev/null || (echo "Installing tparse from go.mod..." && go install github.com/mfridman/tparse)
 	@echo "ローカル環境: 詳細ログ付きで全テストを実行"
-	@bash -c 'set -o pipefail && APP_ENV=test op run --env-file=".env" -- go test -json -race -count=1 ./... | tparse -all'
+	@bash -c 'set -o pipefail && $(OP_RUN_TEST) go test -json -race -count=1 ./... | tparse -all'
 
 .PHONY: fmt
 fmt: ## コードをフォーマット
@@ -92,7 +100,7 @@ clean: ## ビルド成果物をクリーン
 # データベースマイグレーションコマンド
 .PHONY: db-migrate
 db-migrate: ## データベースマイグレーションを実行
-	APP_ENV=dev op run --env-file=".env" -- dbmate up
+	$(OP_RUN_DEV) dbmate up
 	# PostgreSQL 17.6以降のpg_dumpが生成するランダムな\restrict行を削除
 	# https://github.com/amacneil/dbmate/issues/678
 	@sed -i '/^\\restrict /d;/^\\unrestrict /d' db/schema.sql
@@ -111,7 +119,7 @@ db-setup-test: ## テスト用データベースのスキーマをセットア�
 
 .PHONY: db-rollback
 db-rollback: ## 最後のマイグレーションをロールバック
-	APP_ENV=dev op run --env-file=".env" -- dbmate down
+	$(OP_RUN_DEV) dbmate down
 
 .PHONY: db-new
 db-new: ## 新しいマイグレーションファイルを作成（使用法: make db-new name=create_users）
@@ -119,7 +127,7 @@ db-new: ## 新しいマイグレーションファイルを作成（使用法: m
 
 .PHONY: db-dump
 db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
-	APP_ENV=dev op run --env-file=".env" -- dbmate dump
+	$(OP_RUN_DEV) dbmate dump
 	# PostgreSQL 17.6以降のpg_dumpが生成するランダムな\restrict行を削除
 	# https://github.com/amacneil/dbmate/issues/678
 	@sed -i '/^\\restrict /d;/^\\unrestrict /d' db/schema.sql

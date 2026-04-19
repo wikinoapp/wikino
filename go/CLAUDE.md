@@ -137,7 +137,7 @@ pnpm watch             # CSS + JS 監視（開発用）
 
 ```sh
 # すべてを一度に実行するワンライナー:
-make templ-generate && go mod tidy && make fmt && make lint && go build ./... && make -C /workspace fmt && APP_ENV=test make test
+make templ-generate && go mod tidy && make fmt && make lint && go build ./... && make -C /workspace fmt && make test
 ```
 
 個別に実行する場合：
@@ -148,7 +148,7 @@ make templ-generate && go mod tidy && make fmt && make lint && go build ./... &&
 4. `make lint` - 静的解析（golangci-lint）
 5. `go build ./...` - 全パッケージの型チェック
 6. `make -C /workspace fmt` - JS/TS/Markdown ファイルを編集した場合
-7. `APP_ENV=test make test` - テスト実行
+7. `make test` - テスト実行
 
 ## ガイドライン一覧
 
