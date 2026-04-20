@@ -78,7 +78,7 @@ templ Show(data ShowData) {
 							}
 
 							if len(data.Pages) > 0 {
-								<div class="flex flex-col gap-4">
+								<div class="flex flex-col gap-6">
 									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
 										for _, page := range data.Pages {
 											@components.CardLinkPage(page, data.Space.Identifier)

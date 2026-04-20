@@ -845,7 +845,7 @@ other = "編集提案"
 
 [suggestion_index_subtitle_html]
 description = "編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）"
-other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧下さい"
+other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
 description = "編集提案一覧のパンくずリスト"

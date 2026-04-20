@@ -94,7 +94,7 @@ ja:
         この識別子はスペースのURLに使用されます。あとから変更もできます<br>
         %{max_length}文字以内で半角英数字とハイフンのみ使用できます
       new_hint_html: |-
-        スペースについては %{space_help_link} をご覧下さい<br>
+        スペースについては %{space_help_link} をご覧ください<br>
         どんなスペースを作ると良いかわからないときは
         %{space_best_practice_help_link} が参考になるかもしれません
       new_space: 新しいスペース
@@ -140,7 +140,7 @@ ja:
       created: トピックを作成しました
       deleted: トピックを削除しました
       new_hint_html: |-
-        トピックについては %{topic_help_link} をご覧下さい<br>
+        トピックについては %{topic_help_link} をご覧ください<br>
         どんなトピックを作ると良いかわからないときは
         %{topic_best_practice_help_link} が参考になるかもしれません
       settings:

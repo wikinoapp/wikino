@@ -128,7 +128,7 @@ func Show(data ShowData) templ.Component {
 				}
 			}
 			if len(data.Pages) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"flex flex-col gap-4\"><div class=\"grid grid-cols-1 items-stretch gap-2 md:grid-cols-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"flex flex-col gap-6\"><div class=\"grid grid-cols-1 items-stretch gap-2 md:grid-cols-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
