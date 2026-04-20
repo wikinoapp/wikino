@@ -29,7 +29,7 @@ Go 版の実装時には、Rails 版のコード（`/workspace/rails/`）を参�
   - river: バックグラウンドジョブキュー（PostgreSQL ベース）
 - PostgreSQL 18.1
 - htmx 4: ハイパーメディアフレームワーク（HTML フラグメント返却によるサーバードリブン UI）
-  - htmx の実装時は `shimbaco-skills:htmx4` スキルを使用すること
+  - htmx の実装時は `/htmx4` スキルを使用すること
 - Cloudflare Turnstile: Bot 対策サービス
 - pnpm
   - @tailwindcss/cli + tailwindcss: Tailwind CSS v4
