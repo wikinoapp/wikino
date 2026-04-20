@@ -78,13 +78,13 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdent
 				</a>
 
 				if page.CanEdit {
-					<div class="touch:flex non-touch:hidden h-fit self-center pr-2">
+					<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
 						<a
 							href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier.String(), page.Number))) }
-							class="rounded-full p-2 leading-none text-center bg-brand-300/60"
+							class="btn-sm-icon-primary rounded-full"
 							title={ templates.T(ctx, "page_edit_links_edit_page") }
 						>
-							@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
+							@templates.Icon("pencil-simple-line-regular", "size-4")
 						</a>
 					</div>
 				}
