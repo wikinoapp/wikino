@@ -433,6 +433,11 @@ func main() {
 	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg)
 	r.Use(maintenanceMW.Middleware)
 
+	// リクエストボディサイズ制限ミドルウェア
+	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
+	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
+	r.Use(middleware.BodyLimit)
+
 	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
 	r.Use(middleware.MethodOverride)
 

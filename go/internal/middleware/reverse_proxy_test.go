@@ -246,8 +246,10 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 	t.Parallel()
 
 	var receivedHeaders http.Header
+	var receivedHost string
 	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivedHeaders = r.Header.Clone()
+		receivedHost = r.Host
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer railsServer.Close()
@@ -294,6 +296,65 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 		// X-Real-IPがCF-Connecting-IPの値になることを確認
 		if receivedHeaders.Get("X-Real-IP") != "203.0.113.1" {
 			t.Errorf("X-Real-IP = %q, want %q", receivedHeaders.Get("X-Real-IP"), "203.0.113.1")
+		}
+	})
+
+	t.Run("既存のX-Forwarded-Forがある場合は維持される", func(t *testing.T) {
+		// Cloudflare などの上流プロキシが X-Forwarded-For を設定するシナリオを想定
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.Header.Set("X-Forwarded-For", "203.0.113.1, 198.51.100.2")
+		req.RemoteAddr = "192.168.1.1:12345"
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		// 既存の X-Forwarded-For がそのまま維持されることを確認
+		if got := receivedHeaders.Get("X-Forwarded-For"); got != "203.0.113.1, 198.51.100.2" {
+			t.Errorf("X-Forwarded-For = %q, want %q", got, "203.0.113.1, 198.51.100.2")
+		}
+	})
+
+	t.Run("X-Forwarded-Forがない場合はclientIPが設定される", func(t *testing.T) {
+		// クライアントが直接接続するシナリオを想定
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.RemoteAddr = "192.168.1.1:12345"
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		// RemoteAddr 由来の IP が X-Forwarded-For に設定されることを確認
+		if got := receivedHeaders.Get("X-Forwarded-For"); got != "192.168.1.1" {
+			t.Errorf("X-Forwarded-For = %q, want %q", got, "192.168.1.1")
+		}
+	})
+
+	t.Run("X-Forwarded-ForがなくCF-Connecting-IPがある場合はCF-Connecting-IPが使われる", func(t *testing.T) {
+		// Cloudflare 経由だが X-Forwarded-For は未設定のシナリオを想定
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.Header.Set("CF-Connecting-IP", "203.0.113.1")
+		req.RemoteAddr = "192.168.1.1:12345"
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		// CF-Connecting-IP の値が X-Forwarded-For に設定されることを確認
+		if got := receivedHeaders.Get("X-Forwarded-For"); got != "203.0.113.1" {
+			t.Errorf("X-Forwarded-For = %q, want %q", got, "203.0.113.1")
+		}
+	})
+
+	t.Run("クライアントのHostヘッダがそのままRailsに転送される", func(t *testing.T) {
+		// pr.SetURL(parsedURL) の後に pr.Out.Host = pr.In.Host を設定する
+		// 挙動が効いているかを退行テストとして検証する
+		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req.Host = "example.com"
+		req.RemoteAddr = "192.168.1.1:12345"
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if receivedHost != "example.com" {
+			t.Errorf("Host = %q, want %q（pr.Out.Host = pr.In.Host が効いているか）", receivedHost, "example.com")
 		}
 	})
 }
