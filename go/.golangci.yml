@@ -50,8 +50,15 @@ linters:
   settings:
     # gosec の設定
     gosec:
-      # 除外する脆弱性ルール（必要に応じて調整）
-      excludes: []
+      # 除外する脆弱性ルール
+      # G120: r.FormValue / r.ParseForm のボディサイズ未制限の指摘。
+      #   internal/middleware/body_limit.go の BodyLimit ミドルウェアで全リクエストに一律の
+      #   ボディサイズ上限 (DefaultMaxBodyBytes) を適用しているため、実質的な保護は達成している。
+      #   gosec G120 は関数単位のヒューリスティックで検出するため、ミドルウェアでラップしても
+      #   ハンドラー内の r.FormValue / r.ParseForm は検出対象として残る。25+ 箇所に個別 nolint を
+      #   散在させるより、ここで一括除外する方が管理コストが低く、保護している構造を明示できる。
+      excludes:
+        - G120
       # セキュリティの重要度（low, medium, high）
       severity: medium
       confidence: medium
