@@ -61,7 +61,7 @@ ENV PATH="/mise/shims:${PATH}"
 RUN curl https://mise.run | sh
 
 # Go、Ruby、Node.js、pnpmをmise経由でインストール
-RUN mise install go@1.25.5 && \
+RUN mise install go@1.26.2 && \
     mise install ruby@3.4.4 && \
     mise install node@24.13.0 && \
     mise install node@20.16.0 && \
@@ -69,7 +69,7 @@ RUN mise install go@1.25.5 && \
     mise install pnpm@10.12.3
 
 # グローバルデフォルトを設定
-RUN mise use --global go@1.25.5 && \
+RUN mise use --global go@1.26.2 && \
     mise use --global ruby@3.4.4 && \
     mise use --global node@24.13.0 && \
     mise use --global pnpm@10.25.0
@@ -88,7 +88,7 @@ RUN curl -fsSL -L -o /tmp/hivemind.gz \
 
 # --- golangci-lint ---
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
-      | sh -s -- -b /usr/local/bin v2.7.2
+      | sh -s -- -b /usr/local/bin v2.11.4
 
 # --- GitHub CLI ---
 RUN (type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \

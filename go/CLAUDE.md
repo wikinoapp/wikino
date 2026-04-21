@@ -20,7 +20,7 @@ Go 版の実装時には、Rails 版のコード（`/workspace/rails/`）を参�
 
 ## 技術スタック
 
-- Go 1.25.5
+- Go 1.26.2
   - chi/v5: HTTP ルーターとミドルウェア
   - lib/pq: PostgreSQL ドライバー
   - sqlc: SQL クエリからタイプセーフな Go コードを生成
