@@ -1,14 +1,12 @@
 .DS_Store
+test-results/
 
 /.claude/*.local.json
-/.claude/skills
 /.env.op
 /.pnpm-store
+/apm_modules
 /compose-up.sh
 /docker-compose.override.yml
 /docs/private
-/docs/README.md
 /node_modules
-/shimbaco-skills
 /tmp
-test-results/
