@@ -146,7 +146,7 @@ GEM
     drb (2.2.3)
     email_validator (2.2.4)
       activemodel
-    erb (5.0.2)
+    erb (6.0.1.1)
     erb_lint (0.9.0)
       activesupport
       better_html (>= 2.0.1)
