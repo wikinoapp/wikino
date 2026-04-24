@@ -1,10 +1,10 @@
 .DS_Store
+apm_modules/
 test-results/
 
 /.claude/*.local.json
 /.env.op
 /.pnpm-store
-/apm_modules
 /compose-up.sh
 /docker-compose.override.yml
 /docs/private
