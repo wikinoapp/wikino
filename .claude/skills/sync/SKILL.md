@@ -31,30 +31,29 @@ argument-hint: "annict | mewst | wikino"
 
 ### public リポジトリ（`/workspace/` または `/{プロジェクト名}/`）
 
-- `.claude/commands/*.md`
+- `.github/dependabot.yml`
 - `.github/workflows/*.yml`
 - `.oxfmtrc.json`
-- `CLAUDE.md`
+- `apm.yml`
 - `docker-compose.yml`
 - `Dockerfile.dev`
+- `docs/README.md`
+- `docs/specs/template.md`
+- `docs/system/template.md`
 - `go/.golangci.yml`
-- `go/CLAUDE.md`
-- `go/docs/*.md`
 - `go/Makefile`
 - `Makefile`
 - `rails/.prettierrc`
 - `rails/.rspec`
-- `rails/CLAUDE.md`
-- `rails/docs/*.md`
 - `rails/eslint.config.mjs`
 - `rails/Makefile`
 
 ### private リポジトリ（`/{プロジェクト名}-private/`）
 
-- `docs/plans/template.md`
-- `docs/README.md`
-- `docs/reviews/template.md`
-- `docs/specs/template.md`
+- `docker-compose.override.yml`
+- `docs/private/plans/template.md`
+- `docs/private/reviews/template.md`
+- `docs/private/README.md`
 
 ## スキップ済みの差分
 
@@ -116,7 +115,7 @@ argument-hint: "annict | mewst | wikino"
 ### ステップ 1: レビュードキュメントの作成
 
 1. `.claude/skills/sync/review-template.md` をコピーして `docs/reviews/sync-YYYYMMDD-{3桁連番}.md` を作成する（YYYYMMDD は実行日）
-2. 連番は `docs/reviews/` と `docs/reviews/done/` 配下から `sync-YYYYMMDD-*` のファイルを検索し、既存の最大連番 + 1 を付与する
+2. 連番は `docs/private/reviews/` と `docs/private/reviews/done/` 配下から `sync-YYYYMMDD-*` のファイルを検索し、既存の最大連番 + 1 を付与する
 3. レビュー情報テーブルを記入する（実行日、自プロジェクト名）
 
 ### ステップ 2: 並列差分調査
@@ -181,7 +180,7 @@ argument-hint: "annict | mewst | wikino"
 
 2. **作業計画書の作成**: 各プロジェクトの private リポジトリに作業計画書を作成する
    - パス: `/{プロジェクト名}-private/docs/plans/1_doing/cross-project-unification-YYYYMMDD.md`（YYYYMMDD は実行日）
-   - `docs/plans/template.md` をベースに作成する
+   - `docs/private/plans/template.md` をベースに作成する
    - **各プロジェクトには自プロジェクトで必要な修正のみをタスクリストに記載する**
    - 既に対応済みの項目はタスクリストに含めず、「実装しない機能（スコープ外）」に記載する
    - 設計セクションには全項目の現状比較表と統一方針を記載する
