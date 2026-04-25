@@ -6,26 +6,26 @@ on:
       - main
       - develop
     paths:
-      - "**.js"
-      - "**.ts"
-      - "**.tsx"
-      - "**.css"
-      - "**.json"
-      - "**.yaml"
-      - "**.yml"
-      - "**.md"
-      - "**.toml"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.md"
+      - "**/*.toml"
   pull_request:
     paths:
-      - "**.js"
-      - "**.ts"
-      - "**.tsx"
-      - "**.css"
-      - "**.json"
-      - "**.yaml"
-      - "**.yml"
-      - "**.md"
-      - "**.toml"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.md"
+      - "**/*.toml"
 
 jobs:
   oxfmt:
@@ -33,10 +33,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install
       - run: pnpm fmt:check

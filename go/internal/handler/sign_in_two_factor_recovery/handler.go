@@ -3,36 +3,26 @@ package sign_in_two_factor_recovery
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler はリカバリーコードハンドラー
 type Handler struct {
-	cfg                   *config.Config
-	sessionMgr            *session.Manager
-	userRepo              *repository.UserRepository
-	createValidator       *CreateValidator
-	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase
-	createUserSessionUC   *usecase.CreateUserSessionUsecase
+	cfg                         *config.Config
+	sessionMgr                  *session.Manager
+	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase
 }
 
 // NewHandler は新しいリカバリーコードハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
-	userRepo *repository.UserRepository,
-	createValidator *CreateValidator,
-	consumeRecoveryCodeUC *usecase.ConsumeRecoveryCodeUsecase,
-	createUserSessionUC *usecase.CreateUserSessionUsecase,
+	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase,
 ) *Handler {
 	return &Handler{
-		cfg:                   cfg,
-		sessionMgr:            sessionMgr,
-		userRepo:              userRepo,
-		createValidator:       createValidator,
-		consumeRecoveryCodeUC: consumeRecoveryCodeUC,
-		createUserSessionUC:   createUserSessionUC,
+		cfg:                         cfg,
+		sessionMgr:                  sessionMgr,
+		createRecoveryCodeSessionUC: createRecoveryCodeSessionUC,
 	}
 }

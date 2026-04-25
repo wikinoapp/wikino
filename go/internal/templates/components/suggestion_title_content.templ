@@ -1,0 +1,18 @@
+package components
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+)
+
+// SuggestionTitleContent は編集提案のステータスバッジと番号を表示します
+templ SuggestionTitleContent(status model.SuggestionStatus, number int32) {
+	<div class="flex items-center gap-2 text-muted-foreground">
+		@SuggestionStatusBadge(status)
+
+		<span>
+			{ fmt.Sprintf("#%d", number) }
+		</span>
+	</div>
+}

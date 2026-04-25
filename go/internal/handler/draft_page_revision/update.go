@@ -1,16 +1,18 @@
 package draft_page_revision
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -35,71 +37,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if space == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// トピックメンバーを取得してTopicPolicyを生成
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
 	// フォームパラメータを取得
 	title := r.FormValue("title")
 	body := r.FormValue("body")
-
-	// トピックを取得
-	topic, err := h.topicRepo.FindBySpaceAndID(ctx, space.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if topic == nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
 
 	// タイトルのポインタ変換
 	var titlePtr *string
@@ -107,20 +47,39 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// ユースケースを実行
-	_, err = h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
-		SpaceID:          space.ID,
-		PageID:           pg.ID,
-		SpaceMemberID:    spaceMember.ID,
-		TopicID:          topic.ID,
-		Title:            titlePtr,
-		Body:             body,
-		SpaceIdentifier:  spaceIdentifier,
-		CurrentTopicName: topic.Name,
+	// UseCase を実行
+	saveOutput, err := h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+		Title:           titlePtr,
+		Body:            body,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.NotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
+
 		slog.ErrorContext(ctx, "下書きの手動保存に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// リダイレクト先を決定
+	redirectTo := r.URL.Query().Get("redirect_to")
+	if redirectTo == "suggestion_new" && saveOutput.DraftPage != nil {
+		suggestionNewPath := fmt.Sprintf("%s?draft_page_ids=%s",
+			string(templates.SuggestionNewPath(spaceIdentifier.String(), saveOutput.TopicNumber)),
+			string(saveOutput.DraftPage.ID),
+		)
+		http.Redirect(w, r, suggestionNewPath, http.StatusSeeOther)
 		return
 	}
 

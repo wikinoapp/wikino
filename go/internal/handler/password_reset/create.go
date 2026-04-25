@@ -9,8 +9,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	passwordpages "github.com/wikinoapp/wikino/go/internal/templates/pages/password"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -41,19 +41,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if !valid {
 		slog.WarnContext(ctx, "Turnstile検証に失敗", "email", email)
-		formErrors := session.NewFormErrors()
+		formErrors := model.NewValidationError()
 		formErrors.AddGlobal(i18n.T(ctx, "validation_bot_detected"))
 		h.renderForm(w, r, formErrors, csrfToken, email)
-		return
-	}
-
-	// フォームバリデーション
-	validator := NewCreateValidator()
-	result := validator.Validate(ctx, CreateValidatorInput{
-		Email: email,
-	})
-	if result.FormErrors != nil && result.FormErrors.HasErrors() {
-		h.renderForm(w, r, result.FormErrors, csrfToken, email)
 		return
 	}
 
@@ -72,7 +62,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			slog.WarnContext(ctx, "パスワードリセット申請がRate Limitingにより制限されました（IPアドレス単位）",
 				"ip_address", ip,
 			)
-			formErrors := session.NewFormErrors()
+			formErrors := model.NewValidationError()
 			formErrors.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
 			h.renderForm(w, r, formErrors, csrfToken, email)
 			return
@@ -94,39 +84,33 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 				"email", email,
 				"ip_address", clientip.GetClientIP(r),
 			)
-			formErrors := session.NewFormErrors()
+			formErrors := model.NewValidationError()
 			formErrors.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
 			h.renderForm(w, r, formErrors, csrfToken, email)
 			return
 		}
 	}
 
-	// ユーザーを検索（存在しない場合もエラーを返さない - セキュリティ対策）
-	user, err := h.userRepo.FindByEmail(ctx, email)
+	// ロケールを取得
+	locale := i18n.GetLocale(ctx)
+
+	// パスワードリセットトークンを生成（ユーザーが存在しない場合は内部で無視される）
+	output, err := h.createTokenUsecase.Execute(ctx, usecase.CreatePasswordResetTokenInput{
+		Email:  email,
+		Locale: locale,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "ユーザーの検索エラー", "error", err)
-	}
-
-	// ユーザーが存在する場合のみトークンを生成
-	if user != nil {
-		// ロケールを取得
-		locale := i18n.GetLocale(ctx)
-
-		_, err := h.createTokenUsecase.Execute(ctx, usecase.CreatePasswordResetTokenInput{
-			UserID: user.ID,
-			Email:  user.Email,
-			Locale: locale,
-		})
-		if err != nil {
-			slog.ErrorContext(ctx, "パスワードリセットトークンの生成エラー", "error", err, "user_id", user.ID)
-			// トークン生成に失敗してもセキュリティ上、成功ページを表示
-		} else {
-			slog.InfoContext(ctx, "パスワードリセット申請を受け付けました",
-				"user_id", user.ID,
-				"email", user.Email,
-				"ip_address", clientip.GetClientIP(r),
-			)
+		if ve := model.AsValidationError(err); ve != nil {
+			h.renderForm(w, r, ve, csrfToken, email)
+			return
 		}
+		slog.ErrorContext(ctx, "パスワードリセットトークンの生成エラー", "error", err)
+		// トークン生成に失敗してもセキュリティ上、成功ページを表示
+	} else if output != nil {
+		slog.InfoContext(ctx, "パスワードリセット申請を受け付けました",
+			"email", email,
+			"ip_address", clientip.GetClientIP(r),
+		)
 	} else {
 		slog.InfoContext(ctx, "パスワードリセット申請（ユーザーが存在しない）",
 			"email", email,
@@ -139,7 +123,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // renderForm はパスワードリセット申請フォームをエラー付きでレンダリングします
-func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string, email string) {
+func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string, email string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)

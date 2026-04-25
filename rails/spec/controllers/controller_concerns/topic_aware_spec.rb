@@ -43,14 +43,14 @@ RSpec.describe ControllerConcerns::TopicAware do
     expect(result).to eq(topic_member_record)
   end
 
-  it "topic_policy_forがSpace Ownerに対して正しいPolicyを返すこと" do
+  it "topic_policy_forがスペースメンバーに対してMemberPolicyを返すこと" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
     FactoryBot.create(:space_member_record,
       user_record:,
       space_record:,
-      role: SpaceMemberRole::Owner.serialize)
+      scopes: [Scope::SPACE_ADMIN])
 
     controller_class = Class.new(ApplicationController) do
       include ControllerConcerns::Authenticatable
@@ -60,22 +60,13 @@ RSpec.describe ControllerConcerns::TopicAware do
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.topic_policy_for(topic_record:)
-    # Space OwnerはTopicに対してTopicOwnerPolicyを持つ
-    expect(policy).to be_a(TopicOwnerPolicy)
+    expect(policy).to be_a(MemberPolicy)
   end
 
-  it "topic_policy_forがTopic Adminに対して正しいPolicyを返すこと" do
+  it "topic_policy_forが非メンバーに対してGuestPolicyを返すこと" do
     user_record = FactoryBot.create(:user_record)
     space_record = FactoryBot.create(:space_record)
     topic_record = FactoryBot.create(:topic_record, space_record:)
-    space_member_record = FactoryBot.create(:space_member_record,
-      user_record:,
-      space_record:,
-      role: SpaceMemberRole::Member.serialize)
-    FactoryBot.create(:topic_member_record,
-      space_member_record:,
-      topic_record:,
-      role: TopicMemberRole::Admin.serialize)
 
     controller_class = Class.new(ApplicationController) do
       include ControllerConcerns::Authenticatable
@@ -85,7 +76,22 @@ RSpec.describe ControllerConcerns::TopicAware do
     allow(controller).to receive(:current_user_record).and_return(user_record)
 
     policy = controller.topic_policy_for(topic_record:)
-    expect(policy).to be_a(TopicAdminPolicy)
+    expect(policy).to be_a(GuestPolicy)
+  end
+
+  it "topic_policy_forが未ログインユーザーに対してGuestPolicyを返すこと" do
+    space_record = FactoryBot.create(:space_record)
+    topic_record = FactoryBot.create(:topic_record, space_record:)
+
+    controller_class = Class.new(ApplicationController) do
+      include ControllerConcerns::Authenticatable
+      include ControllerConcerns::TopicAware
+    end
+    controller = controller_class.new
+    allow(controller).to receive(:current_user_record).and_return(nil)
+
+    policy = controller.topic_policy_for(topic_record:)
+    expect(policy).to be_a(GuestPolicy)
   end
 
   it "current_topic_recordがパラメータからTopicレコードを取得すること" do

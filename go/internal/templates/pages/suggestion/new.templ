@@ -1,0 +1,204 @@
+package suggestion
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// NewData は編集提案作成画面に渡すデータ構造体です
+type NewData struct {
+	CSRFToken        string
+	FormErrors       *model.ValidationError
+	Space            viewmodel.Space
+	Topic            viewmodel.Topic
+	DraftPages       []viewmodel.DraftPageForSuggestionNew
+	Title            string
+	Body             string
+	SelectedDraftIDs []string
+}
+
+// New は編集提案作成画面のコンテンツを表示します
+templ New(data NewData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
+					},
+					{
+						Label:    data.Topic.Name,
+						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						IconName: data.Topic.IconName,
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6">
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
+							@components.MainTitle(components.MainTitleData{
+								Title: templates.T(ctx, "suggestion_new_heading"),
+							})
+						</div>
+
+						<div class="px-0 md:px-4">
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "topic_show_tab_pages"),
+									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "file-regular",
+									ActiveIconName: "file-fill",
+								},
+								{
+									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+									Path:           string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "git-pull-request-regular",
+									ActiveIconName: "git-pull-request-fill",
+									IsActive:       true,
+								},
+							})
+						</div>
+					</div>
+
+					@components.FormErrors(data.FormErrors)
+
+					@components.ContentCard() {
+						<form
+							method="POST"
+							action={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))) }
+							class="form grid gap-6"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+							<div class="grid gap-2">
+								<label for="title">
+									{ templates.T(ctx, "suggestion_new_title_label") }
+								</label>
+
+								<input
+									if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+										aria-invalid="true"
+									} else {
+										aria-invalid="false"
+									}
+									autofocus
+									id="title"
+									name="title"
+									required
+									type="text"
+									value={ data.Title }
+								/>
+
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+									for _, errMsg := range data.FormErrors.GetFieldErrors("title") {
+										<p class="text-sm text-destructive">{ errMsg }</p>
+									}
+								}
+							</div>
+
+							<div class="grid gap-2">
+								@components.OptionalLabel(components.OptionalLabelData{
+									For:   "body",
+									Label: templates.T(ctx, "suggestion_new_body_label"),
+								})
+
+								<textarea
+									if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
+										aria-invalid="true"
+									} else {
+										aria-invalid="false"
+									}
+									id="body"
+									name="body"
+									rows="4"
+									class="textarea"
+								>
+									{ data.Body }
+								</textarea>
+							</div>
+
+							<div class="grid gap-2">
+								<label>
+									{ templates.T(ctx, "suggestion_new_draft_pages_label") }
+								</label>
+
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("draft_page_ids") {
+									for _, errMsg := range data.FormErrors.GetFieldErrors("draft_page_ids") {
+										<p class="text-sm text-destructive">{ errMsg }</p>
+									}
+								}
+
+								if len(data.DraftPages) > 0 {
+									<div class="flex flex-col gap-2 border border-border rounded-lg p-4">
+										for _, dp := range data.DraftPages {
+											<label class="flex items-center gap-3 cursor-pointer">
+												<input
+													type="checkbox"
+													name="draft_page_ids"
+													value={ string(dp.ID) }
+													class="input"
+													if isSelected(data.SelectedDraftIDs, string(dp.ID)) {
+														checked
+													}
+												/>
+
+												<span class="text-sm">
+													{ dp.DisplayTitle(ctx) }
+												</span>
+											</label>
+										}
+									</div>
+								} else {
+									<p class="text-sm text-muted-foreground">
+										{ templates.T(ctx, "suggestion_new_no_draft_pages") }
+									</p>
+								}
+							</div>
+
+							<div class="flex justify-between gap-2">
+								<button
+									class="btn rounded-full w-fit"
+									type="submit"
+									if len(data.DraftPages) == 0 {
+										disabled
+									}
+								>
+									@templates.Icon("paper-plane-tilt-regular")
+									{ templates.T(ctx, "suggestion_new_submit") }
+								</button>
+
+								<a
+									class="btn-outline rounded-full w-fit"
+									href={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number))) }
+								>
+									{ templates.T(ctx, "suggestion_new_cancel") }
+								</a>
+							</div>
+						</form>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// isSelected はIDが選択済みリストに含まれているかを判定します
+func isSelected(selectedIDs []string, id string) bool {
+	for _, sid := range selectedIDs {
+		if sid == id {
+			return true
+		}
+	}
+	return false
+}

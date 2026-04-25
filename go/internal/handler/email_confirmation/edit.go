@@ -24,9 +24,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
-
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "email_confirmation_edit_title")
@@ -36,7 +33,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		CSRFToken:  csrfToken,
 		FormErrors: nil,
 	})
-	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta, Flash: flash}, content).Render(ctx, w)
+	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

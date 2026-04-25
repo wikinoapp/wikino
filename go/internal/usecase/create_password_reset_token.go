@@ -8,38 +8,44 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/worker"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // CreatePasswordResetTokenUsecase はパスワードリセットトークン作成ユースケース
 type CreatePasswordResetTokenUsecase struct {
 	cfg                    *config.Config
 	db                     *sql.DB
+	userRepo               *repository.UserRepository
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository
-	inserter               JobInserter
+	dispatcher             *dispatcher.Dispatcher
+	createValidator        *validator.PasswordResetCreateValidator
 }
 
 // NewCreatePasswordResetTokenUsecase は CreatePasswordResetTokenUsecase を生成する
 func NewCreatePasswordResetTokenUsecase(
 	cfg *config.Config,
 	db *sql.DB,
+	userRepo *repository.UserRepository,
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository,
-	inserter JobInserter,
+	d *dispatcher.Dispatcher,
+	createValidator *validator.PasswordResetCreateValidator,
 ) *CreatePasswordResetTokenUsecase {
 	return &CreatePasswordResetTokenUsecase{
 		cfg:                    cfg,
 		db:                     db,
+		userRepo:               userRepo,
 		passwordResetTokenRepo: passwordResetTokenRepo,
-		inserter:               inserter,
+		dispatcher:             d,
+		createValidator:        createValidator,
 	}
 }
 
 // CreatePasswordResetTokenInput はパスワードリセットトークン作成の入力パラメータ
 type CreatePasswordResetTokenInput struct {
-	UserID model.UserID
 	Email  string
 	Locale string
 }
@@ -49,8 +55,25 @@ type CreatePasswordResetTokenOutput struct {
 	TokenID string
 }
 
-// Execute はパスワードリセットトークンを生成し、メール送信ジョブをエンキューする
+// Execute はバリデーション・トークン生成・メール送信ジョブエンキューを行う。
+// ユーザーが存在しない場合は nil を返す（セキュリティ対策: ユーザーの存在を明かさない）。
 func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input CreatePasswordResetTokenInput) (*CreatePasswordResetTokenOutput, error) {
+	// 1. バリデーション
+	if err := uc.createValidator.Validate(ctx, validator.PasswordResetCreateValidatorInput{
+		Email: input.Email,
+	}); err != nil {
+		return nil, err
+	}
+
+	// 2. ユーザーを検索
+	user, err := uc.userRepo.FindByEmail(ctx, input.Email)
+	if err != nil {
+		return nil, fmt.Errorf("ユーザーの検索に失敗しました: %w", err)
+	}
+	if user == nil {
+		return nil, nil
+	}
+
 	// トランザクションを開始
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -64,7 +87,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 	tokenRepo := uc.passwordResetTokenRepo.WithTx(tx)
 
 	// 既存の未使用トークンを削除
-	if err := tokenRepo.DeleteUnusedByUserID(ctx, input.UserID); err != nil {
+	if err := tokenRepo.DeleteUnusedByUserID(ctx, user.ID); err != nil {
 		return nil, fmt.Errorf("既存トークンの削除に失敗しました: %w", err)
 	}
 
@@ -80,7 +103,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 	// トークンをDBに保存
 	expiresAt := time.Now().Add(model.PasswordResetTokenExpirationDuration)
 	token, err := tokenRepo.Create(ctx, repository.CreatePasswordResetTokenInput{
-		UserID:      input.UserID,
+		UserID:      user.ID,
 		TokenDigest: tokenDigest,
 		ExpiresAt:   expiresAt,
 	})
@@ -97,12 +120,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 	resetURL := fmt.Sprintf("%s/password/edit?token=%s", uc.cfg.AppURL(), plainToken)
 
 	// メール送信ジョブをエンキュー
-	_, err = uc.inserter.Insert(ctx, worker.SendPasswordResetArgs{
-		Email:    input.Email,
-		ResetURL: resetURL,
-		AppURL:   uc.cfg.AppURL(),
-		Locale:   input.Locale,
-	})
+	err = uc.dispatcher.EnqueuePasswordReset(ctx, user.Email, resetURL, uc.cfg.AppURL(), input.Locale)
 	if err != nil {
 		// ジョブエンキューに失敗してもトークンは有効なので、エラーログを出力して続行
 		slog.ErrorContext(ctx, "パスワードリセットメール送信ジョブのエンキューに失敗しました",

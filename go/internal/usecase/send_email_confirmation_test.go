@@ -2,263 +2,137 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/riverqueue/river"
-	"github.com/riverqueue/river/rivertype"
-
-	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/testutil"
-	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// mockInserter はテスト用のモック inserter
-type mockInserter struct {
+// mockEmailConfirmationSender はテスト用のモック EmailConfirmationSender
+type mockEmailConfirmationSender struct {
 	called bool
-	args   river.JobArgs
+	to     string
+	code   string
+	appURL string
+	locale string
+	err    error
 }
 
-func (m *mockInserter) Insert(_ context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
+func (m *mockEmailConfirmationSender) Send(_ context.Context, to, code, appURL, locale string) error {
 	m.called = true
-	m.args = args
-	return &rivertype.JobInsertResult{}, nil
+	m.to = to
+	m.code = code
+	m.appURL = appURL
+	m.locale = locale
+	return m.err
 }
 
 func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-
-	cfg := &config.Config{
-		Env:    "test",
-		Domain: "wikino.app",
-	}
-
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	inserter := &mockInserter{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	sender := &mockEmailConfirmationSender{}
+	uc := NewSendEmailConfirmationUsecase(sender)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	input := SendEmailConfirmationInput{
 		Email:  "test@example.com",
-		Event:  model.EmailConfirmationEventSignUp,
+		Code:   "ABC123",
+		AppURL: "https://example.dev",
 		Locale: "ja",
 	}
 
-	output, err := uc.Execute(ctx, input)
+	err := uc.Execute(ctx, input)
 	if err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	if output.EmailConfirmationID == "" {
-		t.Error("EmailConfirmationID が空です")
+	if !sender.called {
+		t.Fatal("Send() が呼ばれていません")
 	}
-
-	// DBに保存されたことを確認
-	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
-	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+	if sender.to != "test@example.com" {
+		t.Errorf("to = %s, want test@example.com", sender.to)
 	}
-	if confirmation == nil {
-		t.Fatal("メール確認情報がDBに保存されていません")
+	if sender.code != "ABC123" {
+		t.Errorf("code = %s, want ABC123", sender.code)
 	}
-	if confirmation.Email != "test@example.com" {
-		t.Errorf("Email = %s, want test@example.com", confirmation.Email)
+	if sender.appURL != "https://example.dev" {
+		t.Errorf("appURL = %s, want https://example.dev", sender.appURL)
 	}
-	if confirmation.Event != model.EmailConfirmationEventSignUp {
-		t.Errorf("Event = %d, want %d", confirmation.Event, model.EmailConfirmationEventSignUp)
-	}
-	if len(confirmation.Code) != 6 {
-		t.Errorf("Code length = %d, want 6", len(confirmation.Code))
-	}
-
-	// エンキューが呼ばれたことを確認
-	if !inserter.called {
-		t.Error("Insert が呼ばれていません")
-	}
-
-	// SendEmailConfirmationArgs の検証
-	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
-	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
-	}
-	if emailArgs.Email != "test@example.com" {
-		t.Errorf("Email = %s, want test@example.com", emailArgs.Email)
-	}
-	if emailArgs.Code != confirmation.Code {
-		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
-	}
-	if emailArgs.Locale != "ja" {
-		t.Errorf("Locale = %s, want ja", emailArgs.Locale)
-	}
-	if emailArgs.AppURL == "" {
-		t.Error("AppURL が空です")
+	if sender.locale != "ja" {
+		t.Errorf("locale = %s, want ja", sender.locale)
 	}
 }
 
 func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-
-	cfg := &config.Config{
-		Env:    "test",
-		Domain: "wikino.app",
-	}
-
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	inserter := &mockInserter{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	sender := &mockEmailConfirmationSender{}
+	uc := NewSendEmailConfirmationUsecase(sender)
 
 	ctx := i18n.SetLocale(context.Background(), "en")
 	input := SendEmailConfirmationInput{
-		Email:  "english@example.com",
-		Event:  model.EmailConfirmationEventSignUp,
+		Email:  "test@example.com",
+		Code:   "ABC123",
+		AppURL: "https://example.dev",
 		Locale: "en",
 	}
 
-	output, err := uc.Execute(ctx, input)
+	err := uc.Execute(ctx, input)
 	if err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	if output.EmailConfirmationID == "" {
-		t.Error("EmailConfirmationID が空です")
+	if !sender.called {
+		t.Fatal("Send() が呼ばれていません")
 	}
-
-	// DBに保存されたことを確認
-	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
-	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
-	}
-	if confirmation == nil {
-		t.Fatal("メール確認情報がDBに保存されていません")
-	}
-	if confirmation.Email != "english@example.com" {
-		t.Errorf("Email = %s, want english@example.com", confirmation.Email)
-	}
-
-	// エンキューが呼ばれたことを確認
-	if !inserter.called {
-		t.Error("Insert が呼ばれていません")
-	}
-
-	// SendEmailConfirmationArgs の検証（英語）
-	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
-	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
-	}
-	if emailArgs.Email != "english@example.com" {
-		t.Errorf("Email = %s, want english@example.com", emailArgs.Email)
-	}
-	if emailArgs.Code != confirmation.Code {
-		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
-	}
-	if emailArgs.Locale != "en" {
-		t.Errorf("Locale = %s, want en", emailArgs.Locale)
+	if sender.locale != "en" {
+		t.Errorf("locale = %s, want en", sender.locale)
 	}
 }
 
-func TestSendEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
+func TestSendEmailConfirmationUsecase_Execute_EmptyEmail(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
+	sender := &mockEmailConfirmationSender{}
+	uc := NewSendEmailConfirmationUsecase(sender)
 
-	cfg := &config.Config{
-		Env:    "test",
-		Domain: "wikino.app",
-	}
-
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
-	inserter := &mockInserter{}
-	uc := NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	ctx := i18n.SetLocale(context.Background(), "ja")
+	ctx := context.Background()
 	input := SendEmailConfirmationInput{
-		Email:  "reset@example.com",
-		Event:  model.EmailConfirmationEventPasswordReset,
+		Email:  "",
+		Code:   "ABC123",
+		AppURL: "https://example.dev",
 		Locale: "ja",
 	}
 
-	output, err := uc.Execute(ctx, input)
-	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+	err := uc.Execute(ctx, input)
+	if err == nil {
+		t.Fatal("Execute() error = nil, want error")
 	}
-
-	// DBに保存されたイベント種別を確認
-	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
-	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
-	}
-	if confirmation.Event != model.EmailConfirmationEventPasswordReset {
-		t.Errorf("Event = %d, want %d", confirmation.Event, model.EmailConfirmationEventPasswordReset)
-	}
-
-	// エンキューが呼ばれたことを確認
-	if !inserter.called {
-		t.Error("Insert が呼ばれていません")
+	if sender.called {
+		t.Error("Send() が呼ばれるべきではありません")
 	}
 }
 
-func TestGenerateConfirmationCode(t *testing.T) {
+func TestSendEmailConfirmationUsecase_Execute_SendError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("6文字の大文字英数字が生成される", func(t *testing.T) {
-		t.Parallel()
+	expectedErr := errors.New("メール送信エラー")
+	sender := &mockEmailConfirmationSender{err: expectedErr}
+	uc := NewSendEmailConfirmationUsecase(sender)
 
-		code, err := generateConfirmationCode()
-		if err != nil {
-			t.Fatalf("generateConfirmationCode() error = %v", err)
-		}
-
-		if len(code) != 6 {
-			t.Errorf("コード長 = %d, want 6", len(code))
-		}
-
-		// すべての文字が有効な文字セットに含まれていることを確認
-		const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		for _, c := range code {
-			if !contains(charset, string(c)) {
-				t.Errorf("無効な文字: %c", c)
-			}
-		}
-	})
-
-	t.Run("生成されるコードはランダムである", func(t *testing.T) {
-		t.Parallel()
-
-		codes := make(map[string]bool)
-		for i := 0; i < 100; i++ {
-			code, err := generateConfirmationCode()
-			if err != nil {
-				t.Fatalf("generateConfirmationCode() error = %v", err)
-			}
-			codes[code] = true
-		}
-
-		// 100回生成して、少なくとも90種類以上の異なるコードが生成されることを確認
-		if len(codes) < 90 {
-			t.Errorf("ユニークなコード数 = %d, want >= 90", len(codes))
-		}
-	})
-}
-
-// contains は文字列に指定した部分文字列が含まれているかを返す
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+	ctx := i18n.SetLocale(context.Background(), "ja")
+	input := SendEmailConfirmationInput{
+		Email:  "test@example.com",
+		Code:   "ABC123",
+		AppURL: "https://example.dev",
+		Locale: "ja",
 	}
-	return false
+
+	err := uc.Execute(ctx, input)
+	if err == nil {
+		t.Fatal("Execute() error = nil, want error")
+	}
+	if !sender.called {
+		t.Error("Send() が呼ばれていません")
+	}
 }

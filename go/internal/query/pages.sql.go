@@ -10,7 +10,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -103,6 +102,30 @@ func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesPara
 	return count, err
 }
 
+const countRegularPagesByTopic = `-- name: CountRegularPagesByTopic :one
+SELECT COUNT(*)
+FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL
+`
+
+type CountRegularPagesByTopicParams struct {
+	TopicID string `json:"topic_id"`
+	SpaceID string `json:"space_id"`
+}
+
+// トピック内の通常ページの総件数を取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegularPagesByTopicParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRegularPagesByTopic, arg.TopicID, arg.SpaceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLinkedPage = `-- name: CreateLinkedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
@@ -146,6 +169,33 @@ func (q *Queries) CreateLinkedPage(ctx context.Context, arg CreateLinkedPagePara
 		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
+}
+
+const discardPageByID = `-- name: DiscardPageByID :exec
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = $1,
+    updated_at = $2
+WHERE id = $3
+  AND space_id = $4
+`
+
+type DiscardPageByIDParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+}
+
+// 指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+func (q *Queries) DiscardPageByID(ctx context.Context, arg DiscardPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, discardPageByID,
+		arg.DiscardedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+	)
+	return err
 }
 
 const findBacklinkedPagesByPageID = `-- name: FindBacklinkedPagesByPageID :many
@@ -225,23 +275,23 @@ type FindBacklinkedPagesForTargetsParams struct {
 }
 
 type FindBacklinkedPagesForTargetsRow struct {
-	ID                        string        `json:"id"`
-	SpaceID                   string        `json:"space_id"`
-	TopicID                   string        `json:"topic_id"`
-	Number                    int32         `json:"number"`
-	Title                     interface{}   `json:"title"`
-	Body                      string        `json:"body"`
-	BodyHtml                  string        `json:"body_html"`
-	LinkedPageIds             []string      `json:"linked_page_ids"`
-	ModifiedAt                time.Time     `json:"modified_at"`
-	PublishedAt               sql.NullTime  `json:"published_at"`
-	TrashedAt                 sql.NullTime  `json:"trashed_at"`
-	CreatedAt                 time.Time     `json:"created_at"`
-	UpdatedAt                 time.Time     `json:"updated_at"`
-	PinnedAt                  sql.NullTime  `json:"pinned_at"`
-	DiscardedAt               sql.NullTime  `json:"discarded_at"`
-	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
-	TargetID                  interface{}   `json:"target_id"`
+	ID                        string       `json:"id"`
+	SpaceID                   string       `json:"space_id"`
+	TopicID                   string       `json:"topic_id"`
+	Number                    int32        `json:"number"`
+	Title                     interface{}  `json:"title"`
+	Body                      string       `json:"body"`
+	BodyHtml                  string       `json:"body_html"`
+	LinkedPageIds             []string     `json:"linked_page_ids"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	TrashedAt                 sql.NullTime `json:"trashed_at"`
+	CreatedAt                 time.Time    `json:"created_at"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	PinnedAt                  sql.NullTime `json:"pinned_at"`
+	DiscardedAt               sql.NullTime `json:"discarded_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
+	TargetID                  interface{}  `json:"target_id"`
 }
 
 // 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
@@ -546,6 +596,129 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 	return items, nil
 }
 
+const findPinnedPagesByTopic = `-- name: FindPinnedPagesByTopic :many
+SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NOT NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL
+ORDER BY pinned_at DESC
+`
+
+type FindPinnedPagesByTopicParams struct {
+	TopicID string `json:"topic_id"`
+	SpaceID string `json:"space_id"`
+}
+
+// トピック内のピン留めページを取得する（公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート）
+func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPagesByTopicParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findPinnedPagesByTopic, arg.TopicID, arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findRegularPagesByTopicPaginated = `-- name: FindRegularPagesByTopicPaginated :many
+SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4
+`
+
+type FindRegularPagesByTopicPaginatedParams struct {
+	TopicID string `json:"topic_id"`
+	SpaceID string `json:"space_id"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+// トピック内の通常ページをオフセットページネーションで取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+func (q *Queries) FindRegularPagesByTopicPaginated(ctx context.Context, arg FindRegularPagesByTopicPaginatedParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findRegularPagesByTopicPaginated,
+		arg.TopicID,
+		arg.SpaceID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNextPageNumber = `-- name: GetNextPageNumber :one
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1
 `
@@ -660,17 +833,17 @@ RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_id
 `
 
 type UpdatePageParams struct {
-	ID                        string        `json:"id"`
-	TopicID                   string        `json:"topic_id"`
-	Title                     interface{}   `json:"title"`
-	Body                      string        `json:"body"`
-	BodyHtml                  string        `json:"body_html"`
-	LinkedPageIds             []string      `json:"linked_page_ids"`
-	ModifiedAt                time.Time     `json:"modified_at"`
-	PublishedAt               sql.NullTime  `json:"published_at"`
-	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
-	UpdatedAt                 time.Time     `json:"updated_at"`
-	SpaceID                   string        `json:"space_id"`
+	ID                        string       `json:"id"`
+	TopicID                   string       `json:"topic_id"`
+	Title                     interface{}  `json:"title"`
+	Body                      string       `json:"body"`
+	BodyHtml                  string       `json:"body_html"`
+	LinkedPageIds             []string     `json:"linked_page_ids"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	SpaceID                   string       `json:"space_id"`
 }
 
 // ページを更新する

@@ -11,7 +11,7 @@
     <%= render Containers::MainComponent.new do %>
       <%= render Headers::MainTitleComponent.new(title: space.name) do |main_title| %>
         <%= main_title.with_actions do %>
-          <%= render Dropdowns::SpaceOptionsComponent.new(signed_in: signed_in?, space:) %>
+          <%= render Dropdowns::SpaceOptionsComponent.new(joined_space: joined_space?, space:) %>
         <% end %>
       <% end %>
 

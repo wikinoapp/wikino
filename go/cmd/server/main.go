@@ -16,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
@@ -35,6 +37,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
+	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
+	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
+	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
+	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
+	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
+	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
+	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -46,6 +57,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
@@ -77,8 +89,12 @@ func main() {
 	// クエリを初期化
 	queries := query.New(db)
 
+	// Rate Limiterを初期化
+	rateLimitRepo := repository.NewRateLimitRepository(queries)
+	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
+
 	// River クライアントを初期化（バックグラウンドジョブ用）
-	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg)
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter)
 	if err != nil {
 		slog.Error("River クライアントの初期化に失敗しました", "error", err)
 		os.Exit(1)
@@ -115,20 +131,36 @@ func main() {
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
+	suggestionRepo := repository.NewSuggestionRepository(queries)
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
+	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
+
+	// Dispatcher を初期化（ジョブキューへの投入を抽象化）
+	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
 
 	// ユースケースを初期化
+	signInCreateValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
+	signInUC := usecase.NewCreateSignInUsecase(signInCreateValidator, userSessionRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, riverClient)
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo)
-	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, passwordResetTokenRepo, riverClient)
-	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo)
+
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, jobDispatcher, emailConfirmationCreateValidator)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo, emailConfirmationUpdateValidator)
+	accountCreateValidator := validator.NewAccountCreateValidator(userRepo)
+	createAccountUC := usecase.NewCreateAccountUsecase(db, emailConfirmationRepo, userRepo, userPasswordRepo, accountCreateValidator)
+	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
+	createPasswordResetTokenUC := usecase.NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, jobDispatcher, passwordResetCreateValidator)
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
-	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, attachmentRepo)
-	publishPageUC := usecase.NewPublishPageUsecase(db, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo)
-	movePageUC := usecase.NewMovePageUsecase(db, pageRepo)
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	publishPageUC := usecase.NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
+	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
+	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveCreateValidator)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -136,10 +168,6 @@ func main() {
 
 	// Turnstileクライアントを初期化
 	turnstileClient := turnstile.NewClient(cfg.TurnstileEnabled, cfg.TurnstileSecretKey)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
@@ -152,35 +180,29 @@ func main() {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		userPasswordRepo,
-		userSessionRepo,
-		userTwoFactorAuthRepo,
-		createUserSessionUC,
+		signInUC,
 		turnstileClient,
 	)
+	deleteUserSessionUC := usecase.NewDeleteUserSessionUsecase(userSessionRepo)
 	userSessionHandler := user_session.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userSessionRepo,
+		deleteUserSessionUC,
 	)
-	signInTwoFactorValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	signInTwoFactorValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(signInTwoFactorValidator, createUserSessionUC)
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		signInTwoFactorValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
-	signInTwoFactorRecoveryValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
+	signInTwoFactorRecoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, signInTwoFactorRecoveryValidator, userTwoFactorAuthRepo, userSessionRepo)
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		signInTwoFactorRecoveryValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 	signUpHandler := sign_up.NewHandler(
 		cfg,
@@ -190,19 +212,17 @@ func main() {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
+		createEmailConfirmationUC,
 		markEmailAsConfirmedUC,
 		turnstileClient,
 		rateLimiter,
 	)
+	getAccountNewDataUC := usecase.NewGetAccountNewDataUsecase(emailConfirmationRepo)
 	accountHandler := account.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		emailConfirmationRepo,
-		userRepo,
+		getAccountNewDataUC,
 		createAccountUC,
 		createUserSessionUC,
 	)
@@ -210,95 +230,190 @@ func main() {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		rateLimiter,
 		turnstileClient,
 		createPasswordResetTokenUC,
 	)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	passwordHandler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
+		getTokenDataUC,
 		updatePasswordResetUC,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	pageHandler := page.NewHandler(
-		cfg,
-		flashMgr,
+	getPageDetailUC := usecase.NewGetPageDetailUsecase(
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
 		draftPageRepo,
 		topicRepo,
 		topicMemberRepo,
+		suggestionPageRepo,
+		suggestionRepo,
+	)
+	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
+	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
+	getPageBacklinksUC := usecase.NewGetPageBacklinksUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getBacklinkListUC := usecase.NewGetBacklinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getLinkListUC := usecase.NewGetLinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	pageHandler := page.NewHandler(
+		cfg,
+		flashMgr,
+		getPageDetailUC,
+		getEditLinkDataUC,
 		publishPageUC,
 		sidebarHelper,
 	)
 	pageLocationHandler := page_location.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
+		getPageLocationsUC,
 	)
+	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
 		flashMgr,
-		draftPageRepo,
+		getDraftPagesUC,
 		sidebarHelper,
 	)
 	draftPageHandler := draft_page.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
-		draftPageRepo,
+		getPageDetailUC,
 		autoSaveDraftPageUC,
+		getEditLinkDataUC,
 	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
 		flashMgr,
 		manualSaveDraftPageUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getBacklinkListUC,
 	)
 	pageBacklinksHandler := page_backlinks.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getPageBacklinksUC,
 	)
 	pageLinkListHandler := page_link_list.NewHandler(
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
-		draftPageRepo,
+		getLinkListUC,
 	)
+	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	pageMoveHandler := page_move.NewHandler(
 		cfg,
 		flashMgr,
-		spaceRepo,
-		spaceMemberRepo,
-		pageRepo,
-		topicRepo,
-		topicMemberRepo,
+		getPageMoveDataUC,
 		movePageUC,
 		sidebarHelper,
 	)
+	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	topicHandler := topichandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicDetailUC,
+		sidebarHelper,
+	)
+	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
+	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
+	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
+	getSuggestionNewUC := usecase.NewGetSuggestionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	suggestionCreateValidator := validator.NewSuggestionCreateValidator(draftPageRepo, pageRepo)
+	createSuggestionUC := usecase.NewCreateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo, suggestionCreateValidator)
+	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
+	suggestionUpdateValidator := validator.NewSuggestionUpdateValidator()
+	updateSuggestionUC := usecase.NewUpdateSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionUpdateValidator)
+	suggestionHandler := suggestionhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionListUC,
+		getSuggestionDetailUC,
+		getSuggestionEditUC,
+		getSuggestionNewUC,
+		createSuggestionUC,
+		updateSuggestionUC,
+		sidebarHelper,
+	)
+	suggestionChangeHandler := suggestionchangehandler.NewHandler(
+		cfg,
+		getSuggestionDetailUC,
+		getSuggestionDiffUC,
+		sidebarHelper,
+	)
+	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
+	applySuggestionUC := usecase.NewApplySuggestionUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
+		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
+		suggestionApplyValidator,
+	)
+	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
+		cfg,
+		flashMgr,
+		applySuggestionUC,
+		getSuggestionDetailUC,
+		sidebarHelper,
+	)
+	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
+	suggestionCloseHandler := suggestionclosehandler.NewHandler(
+		flashMgr,
+		closeSuggestionUC,
+	)
+	startSuggestionPageEditUC := usecase.NewStartSuggestionPageEditUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, draftPageRepo, pageRepo)
+	suggestionPageEditHandler := suggestionpageedithandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionDetailUC,
+		startSuggestionPageEditUC,
+		sidebarHelper,
+	)
+	suggestionPageUpdateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
+	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, suggestionPageUpdateValidator,
+	)
+	getSuggestionPageNewUC := usecase.NewGetSuggestionPageNewUsecase(spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, topicRepo, draftPageRepo)
+	suggestionPageCreateValidator := validator.NewSuggestionPageCreateValidator(draftPageRepo, pageRepo, suggestionPageRepo)
+	addSuggestionPageUC := usecase.NewAddSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo, pageRevisionRepo,
+		suggestionPageCreateValidator,
+	)
+	removeSuggestionPageUC := usecase.NewRemoveSuggestionPageUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionPageRepo, suggestionPageRevisionRepo, draftPageRepo,
+	)
+	suggestionPageHandler := suggestionpagehandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionPageNewUC,
+		addSuggestionPageUC,
+		updateSuggestionPageUC,
+		removeSuggestionPageUC,
+		sidebarHelper,
+	)
+	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
+	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, suggestionCommentRepo, suggestionCommentCreateValidator,
+	)
+	suggestionCommentHandler := suggestioncommenthandler.NewHandler(
+		flashMgr,
+		createSuggestionCommentUC,
+	)
+	getSuggestionCommentUC := usecase.NewGetSuggestionCommentUsecase(suggestionCommentRepo)
+	suggestionCommentUpdateValidator := validator.NewSuggestionCommentUpdateValidator()
+	updateSuggestionCommentUC := usecase.NewUpdateSuggestionCommentUsecase(
+		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		suggestionRepo, suggestionCommentRepo, suggestionCommentUpdateValidator,
+	)
+	suggestionCommentEditHandler := suggestioncommentedithandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSuggestionEditUC,
+		getSuggestionCommentUC,
+		updateSuggestionCommentUC,
+		sidebarHelper,
+	)
 	r := chi.NewRouter()
+
+	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
+	r.NotFound(handler.NotFound)
 
 	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
 	// 注: RailsAppURLが設定されている場合のみ有効化
@@ -318,6 +433,11 @@ func main() {
 	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg)
 	r.Use(maintenanceMW.Middleware)
 
+	// リクエストボディサイズ制限ミドルウェア
+	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
+	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
+	r.Use(middleware.BodyLimit)
+
 	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
 	r.Use(middleware.MethodOverride)
 
@@ -327,6 +447,7 @@ func main() {
 	r.Use(chimiddleware.RealIP)
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
+	r.Use(flashMgr.Middleware)
 
 	// 静的ファイルの配信 (Tailwind CLI + esbuild のビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -341,12 +462,22 @@ func main() {
 	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
+		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
+
+		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
+		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
+
+		// 編集提案（公開トピックは未ログインでも閲覧可能）
+		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Show)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/changes", suggestionChangeHandler.Index)
 	})
 
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
+		r.Use(middleware.TimeZone)
 		r.Get("/sign_in", signInHandler.New)
 		r.Post("/sign_in", signInHandler.Create)
 		r.Get("/sign_in/two_factor/new", signInTwoFactorHandler.New)
@@ -368,6 +499,7 @@ func main() {
 	// 認証済みユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
+		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
 		// 下書き一覧
@@ -384,18 +516,45 @@ func main() {
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
 
-		// リンク一覧SSE（Datastar）
+		// リンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
 
-		// バックリンク一覧SSE（Datastar）
+		// バックリンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
 
-		// ページレベルのバックリンク一覧SSE（Datastar）
+		// ページレベルのバックリンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
 
 		// ページ移動
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
+
+		// 編集提案作成・編集
+		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)
+		r.Post("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Create)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/edit", suggestionHandler.Edit)
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Update)
+
+		// 編集提案反映
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/apply", suggestionApplyHandler.Create)
+
+		// 編集提案クローズ
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/close", suggestionCloseHandler.Create)
+
+		// 編集提案コメント
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/comments", suggestionCommentHandler.Create)
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}/edit", suggestionCommentEditHandler.Edit)
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}", suggestionCommentEditHandler.Update)
+
+		// 編集提案ページ編集開始
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id}", suggestionPageEditHandler.Show)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/page_edits", suggestionPageEditHandler.Create)
+
+		// 編集提案ページ追加・更新
+		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new", suggestionPageHandler.New)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages", suggestionPageHandler.Create)
+		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Update)
+		r.Delete("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Delete)
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)

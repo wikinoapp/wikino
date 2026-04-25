@@ -53,3 +53,57 @@ func (q *Queries) CreatePageRevision(ctx context.Context, arg CreatePageRevision
 	)
 	return i, err
 }
+
+const findLatestPageRevisionByPage = `-- name: FindLatestPageRevisionByPage :one
+SELECT id, space_id, space_member_id, page_id, body, body_html, created_at, updated_at, title FROM page_revisions WHERE page_id = $1 AND space_id = $2 ORDER BY created_at DESC LIMIT 1
+`
+
+type FindLatestPageRevisionByPageParams struct {
+	PageID  string `json:"page_id"`
+	SpaceID string `json:"space_id"`
+}
+
+// ページの最新リビジョンを取得する（スペースIDでスコープ）
+func (q *Queries) FindLatestPageRevisionByPage(ctx context.Context, arg FindLatestPageRevisionByPageParams) (PageRevision, error) {
+	row := q.db.QueryRowContext(ctx, findLatestPageRevisionByPage, arg.PageID, arg.SpaceID)
+	var i PageRevision
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		&i.PageID,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+	)
+	return i, err
+}
+
+const findPageRevisionByID = `-- name: FindPageRevisionByID :one
+SELECT id, space_id, space_member_id, page_id, body, body_html, created_at, updated_at, title FROM page_revisions WHERE id = $1 AND space_id = $2
+`
+
+type FindPageRevisionByIDParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// ページリビジョンをIDで取得する（スペースIDでスコープ）
+func (q *Queries) FindPageRevisionByID(ctx context.Context, arg FindPageRevisionByIDParams) (PageRevision, error) {
+	row := q.db.QueryRowContext(ctx, findPageRevisionByID, arg.ID, arg.SpaceID)
+	var i PageRevision
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		&i.PageID,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+	)
+	return i, err
+}

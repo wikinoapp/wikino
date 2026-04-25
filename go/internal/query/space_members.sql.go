@@ -7,10 +7,12 @@ package query
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
-SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
+SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `
 
 type FindActiveSpaceMemberBySpaceAndUserParams struct {
@@ -31,6 +33,50 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.Scopes),
 	)
 	return i, err
+}
+
+const findSpaceMembersByIDs = `-- name: FindSpaceMembersByIDs :many
+SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
+`
+
+type FindSpaceMembersByIDsParams struct {
+	Column1 []string `json:"column_1"`
+	SpaceID string   `json:"space_id"`
+}
+
+// IDリストでスペースメンバーを一括取得する（スペースIDでスコープ）
+func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMembersByIDsParams) ([]SpaceMember, error) {
+	rows, err := q.db.QueryContext(ctx, findSpaceMembersByIDs, pq.Array(arg.Column1), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SpaceMember{}
+	for rows.Next() {
+		var i SpaceMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.UserID,
+			&i.Role,
+			&i.JoinedAt,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

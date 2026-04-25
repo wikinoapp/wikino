@@ -11,7 +11,7 @@ import (
 templ LinkList(data viewmodel.LinkList) {
 	if len(data.Items) > 0 {
 		<div class="flex flex-col gap-4">
-			<h2 class="text-xl/8 font-bold antialiased">
+			<h2 class="text-2xl/8 font-bold antialiased">
 				{ templates.T(ctx, "page_edit_links_heading") }
 			</h2>
 
@@ -35,26 +35,31 @@ templ LinkList(data viewmodel.LinkList) {
 	}
 }
 
-// LinkListCards はリンクのカードのみを表示します。SSEのbeforeモードで使用します。
-templ LinkListCards(data viewmodel.LinkList) {
+// LinkListResponse はリンク一覧の追加ページをHTMLフラグメントとして返します。
+// ページネーションコンテナを outerHTML で置換するレスポンスです。
+templ LinkListResponse(data viewmodel.LinkList) {
 	for _, item := range data.Items {
 		<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
 			@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 			@BacklinkList(item.BacklinkList)
 		</div>
 	}
-}
-
-// LinkListPagination はリンクのページネーション内容を表示します。SSEのinnerモードで使用します。
-templ LinkListPagination(data viewmodel.LinkList) {
-	if data.Pagination.HasNext {
-		@linkListLoadMore(data)
-	}
+	<div
+		id="page-link-list-pagination"
+		class="contents"
+	>
+		if data.Pagination.HasNext {
+			@linkListLoadMore(data)
+		}
+	</div>
 }
 
 // linkListLoadMore はリンク一覧の「もっと見る」ボタンを表示します
 templ linkListLoadMore(data viewmodel.LinkList) {
 	<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-		@LoadMoreButton(fmt.Sprintf("@get('%s?page=%d', {filterSignals: {include: /(?!)/}})", string(templates.PageLinkListPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1))
+		@LoadMoreButton(
+			fmt.Sprintf("%s?page=%d", string(templates.PageLinkListPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1),
+			"#page-link-list-pagination",
+		)
 	</div>
 }

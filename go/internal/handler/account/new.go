@@ -1,11 +1,13 @@
 package account
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	accountpages "github.com/wikinoapp/wikino/go/internal/templates/pages/account"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -22,16 +24,21 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// メール確認情報を取得
-	emailConfirmation, err := h.emailConfirmationRepo.FindByID(ctx, emailConfirmationID)
+	output, err := h.getAccountNewDataUC.Execute(ctx, usecase.GetAccountNewDataInput{
+		EmailConfirmationID: emailConfirmationID,
+	})
 	if err != nil {
+		slog.ErrorContext(ctx, "メール確認情報の取得に失敗しました", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if emailConfirmation == nil {
+	if output == nil {
 		// 確認情報が見つからない場合は /sign_up にリダイレクト
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}
+
+	emailConfirmation := output.EmailConfirmation
 
 	// メール確認が完了していない場合は /email_confirmation/edit にリダイレクト
 	if !emailConfirmation.IsSucceeded() {
@@ -41,9 +48,6 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
-	// フラッシュメッセージを取得
-	flash := h.flashMgr.GetFlash(w, r)
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -56,7 +60,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		Email:      emailConfirmation.Email,
 		Atname:     "",
 	})
-	err = layouts.Simple(layouts.SimpleLayoutData{Meta: meta, Flash: flash}, content).Render(ctx, w)
+	err = layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

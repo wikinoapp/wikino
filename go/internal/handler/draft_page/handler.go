@@ -2,38 +2,25 @@
 package draft_page
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler は下書きページハンドラー
 type Handler struct {
-	spaceRepo           *repository.SpaceRepository
-	spaceMemberRepo     *repository.SpaceMemberRepository
-	pageRepo            *repository.PageRepository
-	topicRepo           *repository.TopicRepository
-	topicMemberRepo     *repository.TopicMemberRepository
-	draftPageRepo       *repository.DraftPageRepository
+	getPageDetailUC     *usecase.GetPageDetailUsecase
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase
+	getEditLinkDataUC   *usecase.GetEditLinkDataUsecase
 }
 
 // NewHandler は新しい下書きページハンドラーを作成します
 func NewHandler(
-	spaceRepo *repository.SpaceRepository,
-	spaceMemberRepo *repository.SpaceMemberRepository,
-	pageRepo *repository.PageRepository,
-	topicRepo *repository.TopicRepository,
-	topicMemberRepo *repository.TopicMemberRepository,
-	draftPageRepo *repository.DraftPageRepository,
+	getPageDetailUC *usecase.GetPageDetailUsecase,
 	autoSaveDraftPageUC *usecase.AutoSaveDraftPageUsecase,
+	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 ) *Handler {
 	return &Handler{
-		spaceRepo:           spaceRepo,
-		spaceMemberRepo:     spaceMemberRepo,
-		pageRepo:            pageRepo,
-		topicRepo:           topicRepo,
-		topicMemberRepo:     topicMemberRepo,
-		draftPageRepo:       draftPageRepo,
+		getPageDetailUC:     getPageDetailUC,
 		autoSaveDraftPageUC: autoSaveDraftPageUC,
+		getEditLinkDataUC:   getEditLinkDataUC,
 	}
 }

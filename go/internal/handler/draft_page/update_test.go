@@ -25,23 +25,38 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 
 	db := testutil.GetTestDB()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+
+	attachmentRepo := repository.NewAttachmentRepository(queries)
 
 	return draft_page.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
-		draftPageRepo,
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			topicRepo,
+			topicMemberRepo,
+			repository.NewSuggestionPageRepository(queries),
+			repository.NewSuggestionRepository(queries),
+		),
 		usecase.NewAutoSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
-			repository.NewPageRepository(queries),
+			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			repository.NewTopicRepository(queries),
-			repository.NewAttachmentRepository(queries),
+			topicRepo,
+			topicMemberRepo,
+			attachmentRepo,
 		),
+		usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo),
 	)
 }
 
@@ -69,9 +84,8 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/my-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "my-space",
@@ -106,9 +120,8 @@ func TestUpdate_InvalidPageNumber(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/my-space/pages/abc/draft_page", map[string]string{
 		"space_identifier": "my-space",
@@ -139,9 +152,8 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/nonexistent/pages/1/draft_page", map[string]string{
 		"space_identifier": "nonexistent",
@@ -183,9 +195,8 @@ func TestUpdate_NotSpaceMember(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-private-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-private-space",
@@ -223,9 +234,8 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-page-missing/pages/999/draft_page", map[string]string{
 		"space_identifier": "dp-page-missing",
@@ -242,7 +252,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	}
 }
 
-func TestUpdate_TopicPolicyDenied(t *testing.T) {
+func TestUpdate_PermissionDenied(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -255,11 +265,11 @@ func TestUpdate_TopicPolicyDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("dp-policy-space").
 		Build()
-	// メンバーロール（オーナーではない）で作成し、トピックメンバーには登録しない
+	// page:write スコープを持たないメンバーを作成
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(1). // member（非オーナー）
+		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -277,126 +287,11 @@ func TestUpdate_TopicPolicyDenied(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[topic_number]": {"1"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
+		"pages_edit_form[title]": {"Test"},
+		"pages_edit_form[body]":  {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-policy-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-policy-space",
-		"page_number":      "1",
-	}, formData)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
-	req = req.WithContext(ctx)
-
-	rr := httptest.NewRecorder()
-	handler.Update(rr, req)
-
-	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
-	}
-}
-
-func TestUpdate_InvalidTopicNumber(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("dpinvalidtopic@example.com").
-		WithAtname("dpinvalidtopic").
-		Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("dp-invalid-topic").
-		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithName("General").
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithNumber(1).
-		WithTitle("Test Page").
-		Build()
-
-	handler := setupHandler(t, queries)
-
-	// topic_numberが不正な値
-	formData := url.Values{
-		"pages_edit_form[topic_number]": {"abc"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
-	}
-	req := newRequestWithChiParams(t, "/s/dp-invalid-topic/pages/1/draft_page", map[string]string{
-		"space_identifier": "dp-invalid-topic",
-		"page_number":      "1",
-	}, formData)
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
-	req = req.WithContext(ctx)
-
-	rr := httptest.NewRecorder()
-	handler.Update(rr, req)
-
-	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
-	}
-}
-
-func TestUpdate_TopicNotFound(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("dptopicnotfound@example.com").
-		WithAtname("dptopicnotfound").
-		Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("dp-topic-notfound").
-		Build()
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-	topicID := testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithName("General").
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicID).
-		WithNumber(1).
-		WithTitle("Test Page").
-		Build()
-
-	handler := setupHandler(t, queries)
-
-	// 存在しないtopic_numberを指定
-	formData := url.Values{
-		"pages_edit_form[topic_number]": {"999"},
-		"pages_edit_form[title]":        {"Test"},
-		"pages_edit_form[body]":         {"body"},
-	}
-	req := newRequestWithChiParams(t, "/s/dp-topic-notfound/pages/1/draft_page", map[string]string{
-		"space_identifier": "dp-topic-notfound",
 		"page_number":      "1",
 	}, formData)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})

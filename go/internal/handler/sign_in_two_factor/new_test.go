@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestNew_WithPendingUser(t *testing.T) {
@@ -38,15 +39,14 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// バリデーターとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDを持つHTTPリクエストを作成
@@ -118,15 +118,14 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// バリデーターとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのHTTPリクエストを作成

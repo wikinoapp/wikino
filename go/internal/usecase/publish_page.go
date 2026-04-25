@@ -9,11 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // PublishPageUsecase はページ公開ユースケース
 type PublishPageUsecase struct {
 	db                    *sql.DB
+	spaceRepo             *repository.SpaceRepository
+	spaceMemberRepo       *repository.SpaceMemberRepository
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
@@ -23,11 +26,14 @@ type PublishPageUsecase struct {
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
+	updateValidator       *validator.PageUpdateValidator
 }
 
 // NewPublishPageUsecase は PublishPageUsecase を生成する
 func NewPublishPageUsecase(
 	db *sql.DB,
+	spaceRepo *repository.SpaceRepository,
+	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
@@ -37,9 +43,12 @@ func NewPublishPageUsecase(
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
+	updateValidator *validator.PageUpdateValidator,
 ) *PublishPageUsecase {
 	return &PublishPageUsecase{
 		db:                    db,
+		spaceRepo:             spaceRepo,
+		spaceMemberRepo:       spaceMemberRepo,
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
@@ -49,20 +58,18 @@ func NewPublishPageUsecase(
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
 		pageAttachmentRefRepo: pageAttachmentRefRepo,
+		updateValidator:       updateValidator,
 	}
 }
 
 // PublishPageInput はページ公開の入力パラメータ
 type PublishPageInput struct {
-	SpaceID          model.SpaceID
-	PageID           model.PageID
-	SpaceMemberID    model.SpaceMemberID
-	TopicID          model.TopicID
-	DraftPageID      model.DraftPageID
-	Title            *string
-	Body             string
-	SpaceIdentifier  model.SpaceIdentifier
-	CurrentTopicName string
+	SpaceIdentifier model.SpaceIdentifier
+	PageNumber      int32
+	UserID          model.UserID
+	// Title はバリデーション前の必須フィールド（空文字列の場合はバリデーションエラー）
+	Title string
+	Body  string
 }
 
 // PublishPageOutput はページ公開の出力パラメータ
@@ -73,7 +80,66 @@ type PublishPageOutput struct {
 
 // Execute はページを公開する
 func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
+	// 1. データ取得
+	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 認可チェック
+	if err := authorizePageUpdate(ctx, data); err != nil {
+		return nil, err
+	}
+
+	// 3. バリデーション
+	unpublishedConflictingPageID, err := uc.updateValidator.Validate(ctx, validator.PageUpdateValidatorInput{
+		Title:           input.Title,
+		PageID:          data.page.ID,
+		TopicID:         data.page.TopicID,
+		SpaceID:         data.space.ID,
+		SpaceIdentifier: input.SpaceIdentifier,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. 追加データ取得（下書きページ）
+	var draftPage *model.DraftPage
+	if data.spaceMember != nil {
+		draftPage, err = uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("下書きページの取得に失敗: %w", err)
+		}
+	}
+
+	// 5. ビジネスロジック（トランザクション前）
+	return uc.publishPage(ctx, data, draftPage, input, unpublishedConflictingPageID)
+}
+
+func (uc *PublishPageUsecase) pageAccessRepos() pageAccessRepos {
+	return pageAccessRepos{
+		spaceRepo:       uc.spaceRepo,
+		spaceMemberRepo: uc.spaceMemberRepo,
+		pageRepo:        uc.pageRepo,
+		topicRepo:       uc.topicRepo,
+		topicMemberRepo: uc.topicMemberRepo,
+	}
+}
+
+func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessData, draftPage *model.DraftPage, input PublishPageInput, unpublishedConflictingPageID *model.PageID) (*PublishPageOutput, error) {
 	now := time.Now()
+
+	// トランザクション前: ページ公開に必要な事前計算データを取得
+	pd, err := uc.calculatePublishData(ctx, input.Body, data.page.ID, data.space.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// トランザクション前: Wikiリンクのスキャン・トピック検索
+	keys, topicMapForLinks, err := scanAndLookupWikilinks(ctx, input.Body, data.topic.Name, data.space.ID, uc.topicRepo)
+	if err != nil {
+		return nil, fmt.Errorf("wikiリンクのスキャンに失敗しました: %w", err)
+	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -88,74 +154,65 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	draftPageRevisionRepo := uc.draftPageRevisionRepo.WithTx(tx)
-	topicRepo := uc.topicRepo.WithTx(tx)
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
-	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// 1. Markdownレンダリング
-	bodyHTML := markup.RenderMarkdown(input.Body)
-
-	// 2. Wikiリンク解析・リンク先ページの自動作成
+	// リンク先ページの自動作成
 	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo, topicRepo,
+		ctx, keys, topicMapForLinks, data.space.ID, data.spaceMember.ID, pageRepo, pageEditorRepo,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
 	}
 
-	// 3. bodyHTML内のWikiリンクを<a>タグに変換
+	// bodyHTML内のWikiリンクを<a>タグに変換
+	bodyHTML := pd.bodyHTML
 	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, input.CurrentTopicName, input.SpaceIdentifier, pageLocations)
+		bodyHTML = markup.ReplaceWikilinks(bodyHTML, data.topic.Name, input.SpaceIdentifier, pageLocations)
 	}
 
-	// 4. 添付ファイル参照の同期（FilterAttachments前に実行。FilterAttachmentsが/attachments/{id}をdata属性に変換するため）
-	if err := syncAttachmentReferences(ctx, bodyHTML, input.PageID, input.SpaceID, attachmentRepo, pageAttachmentRefRepo); err != nil {
+	// 添付ファイル参照の書き込み
+	if err := applyAttachmentRefChanges(ctx, data.page.ID, data.space.ID, pd.attachmentRefsToAdd, pd.attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 	}
 
-	// 5. アイキャッチ画像の抽出
-	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, input.SpaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
+	// 競合する未公開ページが存在する場合、論理削除する
+	if unpublishedConflictingPageID != nil {
+		err := pageRepo.DiscardByID(ctx, *unpublishedConflictingPageID, data.space.ID, now)
+		if err != nil {
+			return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
+		}
 	}
 
-	// 6. 添付ファイルフィルター
-	bodyHTML, err = markup.FilterAttachments(ctx, bodyHTML, input.SpaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("添付ファイルのフィルター処理に失敗しました: %w", err)
+	// Titleをポインタに変換（空文字列の場合はnil）
+	var titlePtr *string
+	if input.Title != "" {
+		titlePtr = &input.Title
 	}
 
-	// 7. スタンドアロン画像のラッピング
-	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
-
-	// 8. Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
-	var title string
-	if input.Title != nil {
-		title = *input.Title
-	}
+	// Pageを更新（DraftPageの内容を反映 + publishedAtを更新）
 	updatedPage, err := pageRepo.Update(ctx, repository.UpdatePageInput{
-		ID:                        input.PageID,
-		SpaceID:                   input.SpaceID,
-		TopicID:                   input.TopicID,
-		Title:                     input.Title,
+		ID:                        data.page.ID,
+		SpaceID:                   data.space.ID,
+		TopicID:                   data.page.TopicID,
+		Title:                     titlePtr,
 		Body:                      input.Body,
 		BodyHTML:                  bodyHTML,
 		LinkedPageIDs:             linkedPageIDs,
 		ModifiedAt:                now,
 		PublishedAt:               &now,
-		FeaturedImageAttachmentID: featuredImageAttachmentID,
+		FeaturedImageAttachmentID: pd.featuredImageAttachmentID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
 	}
 
-	// 9. PageRevisionを作成（スナップショット）
+	// PageRevisionを作成（スナップショット）
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
-		SpaceID:       input.SpaceID,
-		SpaceMemberID: input.SpaceMemberID,
-		PageID:        input.PageID,
-		Title:         title,
+		SpaceID:       data.space.ID,
+		SpaceMemberID: data.spaceMember.ID,
+		PageID:        data.page.ID,
+		Title:         input.Title,
 		Body:          input.Body,
 		BodyHTML:      bodyHTML,
 	})
@@ -163,11 +220,11 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 		return nil, fmt.Errorf("ページリビジョンの作成に失敗しました: %w", err)
 	}
 
-	// 10. PageEditorを追加・更新
+	// PageEditorを追加・更新
 	pageEditor, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
-		SpaceID:            input.SpaceID,
-		PageID:             input.PageID,
-		SpaceMemberID:      input.SpaceMemberID,
+		SpaceID:            data.space.ID,
+		PageID:             data.page.ID,
+		SpaceMemberID:      data.spaceMember.ID,
 		LastPageModifiedAt: now,
 	})
 	if err != nil {
@@ -176,27 +233,27 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 
 	_, err = pageEditorRepo.UpdateLastPageModifiedAt(ctx, repository.UpdateLastPageModifiedAtInput{
 		ID:                 pageEditor.ID,
-		SpaceID:            input.SpaceID,
+		SpaceID:            data.space.ID,
 		LastPageModifiedAt: now,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページ編集者の更新に失敗しました: %w", err)
 	}
 
-	// 11. TopicMemberのlast_page_modified_atを更新
-	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, input.SpaceID, input.TopicID, input.SpaceMemberID, now)
+	// TopicMemberのlast_page_modified_atを更新
+	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, data.space.ID, data.page.TopicID, data.spaceMember.ID, now)
 	if err != nil {
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// 12. DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
-	if input.DraftPageID != "" {
-		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, input.DraftPageID, input.SpaceID)
+	// DraftPageRevisionとDraftPageを削除（下書きが存在する場合のみ）
+	if draftPage != nil {
+		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, draftPage.ID, data.space.ID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きページリビジョンの削除に失敗しました: %w", err)
 		}
 
-		err = draftPageRepo.Delete(ctx, input.DraftPageID, input.SpaceID)
+		err = draftPageRepo.Delete(ctx, draftPage.ID, data.space.ID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)
 		}
@@ -212,101 +269,39 @@ func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInpu
 	}, nil
 }
 
-// syncAttachmentReferences はbodyHTMLから添付ファイルIDを抽出し、
-// 既存の参照との差分を計算して追加・削除を行う
-func syncAttachmentReferences(
-	ctx context.Context,
-	bodyHTML string,
-	pageID model.PageID,
-	spaceID model.SpaceID,
-	attachmentRepo *repository.AttachmentRepository,
-	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
-) error {
-	// bodyHTMLから添付ファイルIDを抽出
-	newIDStrings := markup.ExtractAttachmentIDs(bodyHTML)
-
-	// 既存の参照を取得
-	existingRefs, err := pageAttachmentRefRepo.ListByPageID(ctx, pageID, spaceID)
-	if err != nil {
-		return fmt.Errorf("既存の添付ファイル参照の取得に失敗しました: %w", err)
-	}
-
-	existingIDSet := make(map[model.AttachmentID]bool, len(existingRefs))
-	for _, ref := range existingRefs {
-		existingIDSet[ref.AttachmentID] = true
-	}
-
-	newIDSet := make(map[model.AttachmentID]bool, len(newIDStrings))
-	for _, idStr := range newIDStrings {
-		newIDSet[model.AttachmentID(idStr)] = true
-	}
-
-	// 追加分: 新規IDに含まれるが既存に含まれないもの
-	var toAdd []model.AttachmentID
-	for id := range newIDSet {
-		if !existingIDSet[id] {
-			toAdd = append(toAdd, id)
-		}
-	}
-
-	// 削除分: 既存IDに含まれるが新規に含まれないもの
-	var toRemove []model.AttachmentID
-	for id := range existingIDSet {
-		if !newIDSet[id] {
-			toRemove = append(toRemove, id)
-		}
-	}
-
-	// 追加分は添付ファイルの存在確認後に参照を作成
-	if len(toAdd) > 0 {
-		var validIDs []model.AttachmentID
-		for _, id := range toAdd {
-			exists, err := attachmentRepo.ExistsByIDAndSpace(ctx, id, spaceID)
-			if err != nil {
-				return fmt.Errorf("添付ファイルの存在確認に失敗しました: %w", err)
-			}
-			if exists {
-				validIDs = append(validIDs, id)
-			}
-		}
-		if len(validIDs) > 0 {
-			if _, err := pageAttachmentRefRepo.CreateBatch(ctx, pageID, spaceID, validIDs); err != nil {
-				return fmt.Errorf("添付ファイル参照の作成に失敗しました: %w", err)
-			}
-		}
-	}
-
-	// 削除分の参照を削除
-	if len(toRemove) > 0 {
-		if err := pageAttachmentRefRepo.DeleteByPageAndAttachmentIDs(ctx, pageID, spaceID, toRemove); err != nil {
-			return fmt.Errorf("添付ファイル参照の削除に失敗しました: %w", err)
-		}
-	}
-
-	return nil
+// publishData はページ公開の事前計算データ
+type publishData struct {
+	bodyHTML                  string
+	featuredImageAttachmentID *model.AttachmentID
+	attachmentRefsToAdd       []model.AttachmentID
+	attachmentRefsToRemove    []model.AttachmentID
 }
 
-// extractFeaturedImageAttachmentID はbodyの1行目から画像IDを抽出し、
-// 添付ファイルの存在を確認した上でAttachmentIDを返す
-func extractFeaturedImageAttachmentID(
-	ctx context.Context,
-	body string,
-	spaceID model.SpaceID,
-	attachmentRepo *repository.AttachmentRepository,
-) (*model.AttachmentID, error) {
-	imageIDStr := markup.ExtractFeaturedImageID(body)
-	if imageIDStr == nil {
-		return nil, nil
-	}
+// calculatePublishData はMarkdownレンダリング・添付ファイル参照の差分計算・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを行う
+func (uc *PublishPageUsecase) calculatePublishData(ctx context.Context, body string, pageID model.PageID, spaceID model.SpaceID) (*publishData, error) {
+	bodyHTML := markup.RenderMarkdown(body)
 
-	attachmentID := model.AttachmentID(*imageIDStr)
-	exists, err := attachmentRepo.ExistsByIDAndSpace(ctx, attachmentID, spaceID)
+	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, bodyHTML, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
 	if err != nil {
-		return nil, fmt.Errorf("アイキャッチ画像の存在確認に失敗しました: %w", err)
-	}
-	if !exists {
-		return nil, nil
+		return nil, fmt.Errorf("添付ファイル参照の差分計算に失敗しました: %w", err)
 	}
 
-	return &attachmentID, nil
+	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, body, spaceID, uc.attachmentRepo)
+	if err != nil {
+		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
+	}
+
+	bodyHTML, err = markup.FilterAttachments(ctx, bodyHTML, spaceID, uc.attachmentRepo)
+	if err != nil {
+		return nil, fmt.Errorf("添付ファイルのフィルター処理に失敗しました: %w", err)
+	}
+
+	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
+
+	return &publishData{
+		bodyHTML:                  bodyHTML,
+		featuredImageAttachmentID: featuredImageAttachmentID,
+		attachmentRefsToAdd:       toAdd,
+		attachmentRefsToRemove:    toRemove,
+	}, nil
 }

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // CreateUserSessionUsecase はユーザーセッション作成ユースケース
@@ -39,13 +39,11 @@ type CreateUserSessionOutput struct {
 
 // Execute はユーザーセッションを作成する
 func (uc *CreateUserSessionUsecase) Execute(ctx context.Context, input CreateUserSessionInput) (*CreateUserSessionOutput, error) {
-	// セッショントークンを生成
-	token, err := session.GenerateSecureToken()
+	token, err := auth.GenerateSecureToken()
 	if err != nil {
 		return nil, fmt.Errorf("セッショントークンの生成に失敗しました: %w", err)
 	}
 
-	// セッションをDBに保存
 	now := time.Now()
 	_, err = uc.userSessionRepo.Create(ctx, repository.CreateInput{
 		UserID:     input.UserID,

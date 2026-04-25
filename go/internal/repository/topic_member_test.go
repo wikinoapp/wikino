@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -30,7 +29,6 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		WithActive(true).
 		Build()
 
@@ -44,7 +42,6 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0). // admin
 		Build()
 
 	t.Run("トピックメンバーを取得できる", func(t *testing.T) {
@@ -67,8 +64,8 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 		if member.SpaceMemberID != spaceMemberID {
 			t.Errorf("member.SpaceMemberID = %v, want %v", member.SpaceMemberID, spaceMemberID)
 		}
-		if member.Role != model.TopicMemberRoleAdmin {
-			t.Errorf("member.Role = %v, want TopicMemberRoleAdmin", member.Role)
+		if len(member.Scopes) != 0 {
+			t.Errorf("member.Scopes = %v, want empty", member.Scopes)
 		}
 		if member.LastPageModifiedAt != nil {
 			t.Errorf("member.LastPageModifiedAt = %v, want nil", member.LastPageModifiedAt)
@@ -117,7 +114,6 @@ func TestTopicMemberRepository_UpdateLastPageModifiedAt(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0).
 		WithActive(true).
 		Build()
 
@@ -131,7 +127,6 @@ func TestTopicMemberRepository_UpdateLastPageModifiedAt(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	t.Run("last_page_modified_atを更新できる", func(t *testing.T) {

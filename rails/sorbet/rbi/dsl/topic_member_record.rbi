@@ -8,7 +8,6 @@
 class TopicMemberRecord
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
-  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -25,9 +24,6 @@ class TopicMemberRecord
       ).returns(::TopicMemberRecord)
     end
     def new(attributes = nil, &block); end
-
-    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
-    def roles; end
   end
 
   module CommonRelationMethods
@@ -393,20 +389,6 @@ class TopicMemberRecord
     def third_to_last!; end
   end
 
-  module EnumMethodsModule
-    sig { void }
-    def role_admin!; end
-
-    sig { returns(T::Boolean) }
-    def role_admin?; end
-
-    sig { void }
-    def role_member!; end
-
-    sig { returns(T::Boolean) }
-    def role_member?; end
-  end
-
   module GeneratedAssociationMethods
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceMemberRecord) }
     def build_space_member_record(*args, &blk); end
@@ -564,12 +546,6 @@ class TopicMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def not_role_admin(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def not_role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -610,12 +586,6 @@ class TopicMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def role_admin(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def role_member(*args, &blk); end
 
     sig { params(args: T.untyped).returns(PrivateAssociationRelation) }
     sig do
@@ -896,6 +866,9 @@ class TopicMemberRecord
     def restore_role!; end
 
     sig { void }
+    def restore_scopes!; end
+
+    sig { void }
     def restore_space_id!; end
 
     sig { void }
@@ -907,16 +880,16 @@ class TopicMemberRecord
     sig { void }
     def restore_updated_at!; end
 
-    sig { returns(::String) }
+    sig { returns(::Integer) }
     def role; end
 
-    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
+    sig { params(value: ::Integer).returns(::Integer) }
     def role=(value); end
 
     sig { returns(T::Boolean) }
     def role?; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_before_last_save; end
 
     sig { returns(T.untyped) }
@@ -925,28 +898,28 @@ class TopicMemberRecord
     sig { returns(T::Boolean) }
     def role_came_from_user?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_change; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_change_to_be_saved; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_in_database; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_previous_change; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_previously_was; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_was; end
 
     sig { void }
@@ -982,11 +955,17 @@ class TopicMemberRecord
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_last_page_modified_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def saved_change_to_role; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def saved_change_to_scopes; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_scopes?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_space_id; end
@@ -1011,6 +990,51 @@ class TopicMemberRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_updated_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T::Array[::String]) }
+    def scopes; end
+
+    sig { params(value: T::Array[::String]).returns(T::Array[::String]) }
+    def scopes=(value); end
+
+    sig { returns(T::Boolean) }
+    def scopes?; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def scopes_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def scopes_came_from_user?; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_change; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def scopes_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_in_database; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def scopes_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_previously_was; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_was; end
+
+    sig { void }
+    def scopes_will_change!; end
 
     sig { returns(::String) }
     def space_id; end
@@ -1211,6 +1235,9 @@ class TopicMemberRecord
     def will_save_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_scopes?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1297,12 +1324,6 @@ class TopicMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def not_role_admin(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def not_role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1343,12 +1364,6 @@ class TopicMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def role_admin(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def role_member(*args, &blk); end
 
     sig { params(args: T.untyped).returns(PrivateRelation) }
     sig do

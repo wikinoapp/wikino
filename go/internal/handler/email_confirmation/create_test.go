@@ -12,15 +12,17 @@ import (
 	"github.com/riverqueue/river/rivertype"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
-	"github.com/wikinoapp/wikino/go/internal/worker"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // mockTurnstileVerifier はテスト用のTurnstile検証モック
@@ -33,26 +35,26 @@ func (m *mockTurnstileVerifier) Verify(_ context.Context, _ string) (bool, error
 	return m.valid, m.err
 }
 
-// mockInserter はテスト用のモック inserter
-type mockInserter struct {
+// mockJobInserter はテスト用のモック inserter
+type mockJobInserter struct {
 	called bool
 	args   river.JobArgs
 }
 
-func (m *mockInserter) Insert(_ context.Context, args river.JobArgs) (*rivertype.JobInsertResult, error) {
+func (m *mockJobInserter) Insert(_ context.Context, args river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
 	m.called = true
 	m.args = args
 	return &rivertype.JobInsertResult{}, nil
 }
 
-func TestCreate_Success(t *testing.T) {
-	t.Parallel()
+type testHandlerSetup struct {
+	handler      *email_confirmation.Handler
+	mockInserter *mockJobInserter
+}
 
-	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
+func newTestHandlerForCreate(t *testing.T, queries *query.Queries, turnstileValid bool) *testHandlerSetup {
+	t.Helper()
 
-	// 設定を作成
 	cfg := &config.Config{
 		Env:                "test",
 		Port:               "8080",
@@ -64,43 +66,46 @@ func TestCreate_Success(t *testing.T) {
 		TurnstileSecretKey: "",
 	}
 
-	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
+	mock := &mockJobInserter{}
+	d := dispatcher.NewDispatcher(mock)
+	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
+	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
+	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, emailConfirmationCreateValidator)
+	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo, emailConfirmationUpdateValidator)
 
-	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
+	mockTurnstile := &mockTurnstileVerifier{valid: turnstileValid, err: nil}
 
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
-	// ハンドラーを初期化
 	handler := email_confirmation.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
+		createEmailConfirmationUC,
 		markEmailAsConfirmedUC,
 		mockTurnstile,
 		limiter,
 	)
 
-	// フォームデータを作成
+	return &testHandlerSetup{handler: handler, mockInserter: mock}
+}
+
+func TestCreate_Success(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	setup := newTestHandlerForCreate(t, queries, true)
+
 	form := url.Values{}
 	form.Set("email", "newuser@example.com")
 	form.Set("event", "signup")
@@ -110,26 +115,22 @@ func TestCreate_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// リダイレクトを検証
 	if rr.Code != http.StatusFound {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
 	}
 
-	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/email_confirmation/edit" {
 		t.Errorf("wrong redirect location: got %v want /email_confirmation/edit", location)
 	}
 
-	// email_confirmation_id Cookieが設定されているか確認
 	cookies := rr.Result().Cookies()
 	var emailConfirmationCookie *http.Cookie
 	for _, c := range cookies {
@@ -142,13 +143,12 @@ func TestCreate_Success(t *testing.T) {
 		t.Error("email_confirmation_id cookie not set")
 	}
 
-	// エンキューが呼ばれたことを確認
-	if !inserter.called {
+	if !setup.mockInserter.called {
 		t.Error("Insert was not called")
 	}
-	emailArgs, ok := inserter.args.(worker.SendEmailConfirmationArgs)
+	emailArgs, ok := setup.mockInserter.args.(dispatcher.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", inserter.args)
+		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", setup.mockInserter.args)
 	}
 	if emailArgs.Email != "newuser@example.com" {
 		t.Errorf("enqueued email = %s, want newuser@example.com", emailArgs.Email)
@@ -158,59 +158,11 @@ func TestCreate_Success(t *testing.T) {
 func TestCreate_TurnstileFailure(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
+	setup := newTestHandlerForCreate(t, queries, false)
 
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に失敗）
-	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
-
-	// フォームデータを作成
 	form := url.Values{}
 	form.Set("email", "test@example.com")
 	form.Set("event", "signup")
@@ -220,20 +172,17 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// email_confirmation_id Cookieが設定されていないことを確認
 	cookies := rr.Result().Cookies()
 	for _, c := range cookies {
 		if c.Name == session.EmailConfirmationCookieName {
@@ -241,8 +190,7 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 		}
 	}
 
-	// エンキューが呼ばれていないことを確認
-	if inserter.called {
+	if setup.mockInserter.called {
 		t.Error("Insert should not be called")
 	}
 }
@@ -250,59 +198,11 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 func TestCreate_InvalidEmail(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
+	setup := newTestHandlerForCreate(t, queries, true)
 
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
-
-	// 無効なメールアドレスでリクエスト
 	form := url.Values{}
 	form.Set("email", "invalid-email")
 	form.Set("event", "signup")
@@ -312,20 +212,17 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// サインアップフォームが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/email_confirmation"`) {
 		t.Error("sign up form not found in response")
@@ -335,59 +232,11 @@ func TestCreate_InvalidEmail(t *testing.T) {
 func TestCreate_EmptyEmail(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
+	setup := newTestHandlerForCreate(t, queries, true)
 
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
-
-	// 空のメールアドレスでリクエスト
 	form := url.Values{}
 	form.Set("email", "")
 	form.Set("event", "signup")
@@ -397,15 +246,13 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
@@ -414,65 +261,16 @@ func TestCreate_EmptyEmail(t *testing.T) {
 func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 既存のユーザーを作成
 	_ = testutil.NewUserBuilder(t, tx).
 		WithEmail("existinguser1@example.com").
 		WithAtname("existinguser1").
 		Build()
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
+	setup := newTestHandlerForCreate(t, queries, true)
 
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
-
-	// 既に登録済みのメールアドレスでリクエスト
 	form := url.Values{}
 	form.Set("email", "existinguser1@example.com")
 	form.Set("event", "signup")
@@ -482,27 +280,23 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "既に登録されています") {
 		t.Error("email already registered error message not found in response")
 	}
 
-	// エンキューが呼ばれていないことを確認
-	if inserter.called {
+	if setup.mockInserter.called {
 		t.Error("Insert should not be called for existing email")
 	}
 }
@@ -510,65 +304,16 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 既存のユーザーを作成
 	_ = testutil.NewUserBuilder(t, tx).
 		WithEmail("resetuser@example.com").
 		WithAtname("resetuser").
 		Build()
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
+	setup := newTestHandlerForCreate(t, queries, true)
 
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
-
-	// password_reset イベントでは既存のメールアドレスでもOK
 	form := url.Values{}
 	form.Set("email", "resetuser@example.com")
 	form.Set("event", "password_reset")
@@ -578,21 +323,18 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// CSRFトークンとロケールをコンテキストに設定
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// リダイレクトを検証
 	if rr.Code != http.StatusFound {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
 	}
 
-	// エンキューが呼ばれたことを確認
-	if !inserter.called {
+	if !setup.mockInserter.called {
 		t.Error("Insert was not called")
 	}
 }
@@ -600,57 +342,10 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
+	setup := newTestHandlerForCreate(t, queries, true)
 
 	// 同じIPから5回リクエスト（制限内）
 	for i := 0; i < 5; i++ {
@@ -669,7 +364,7 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		handler.Create(rr, req)
+		setup.handler.Create(rr, req)
 
 		if rr.Code != http.StatusFound {
 			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
@@ -692,14 +387,12 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// Rate Limit超過時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("6th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") {
 		t.Error("rate limit exceeded message not found in response")
@@ -709,57 +402,10 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	t.Parallel()
 
-	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "",
-		TurnstileSecretKey: "",
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
-
-	// ユースケースを初期化
-	inserter := &mockInserter{}
-	sendEmailConfirmationUC := usecase.NewSendEmailConfirmationUsecase(cfg, emailConfirmationRepo, inserter)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
-
-	// モックTurnstileを初期化（常に成功）
-	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
-
-	// ユースケースを初期化
-	markEmailAsConfirmedUC := usecase.NewMarkEmailAsConfirmedUsecase(emailConfirmationRepo)
-
-	// Rate Limiterを初期化
-	rateLimitRepo := repository.NewRateLimitRepository(queries)
-	limiter := ratelimit.NewLimiter(rateLimitRepo)
-
-	// ハンドラーを初期化
-	handler := email_confirmation.NewHandler(
-		cfg,
-		sessionMgr,
-		flashMgr,
-		userRepo,
-		emailConfirmationRepo,
-		sendEmailConfirmationUC,
-		markEmailAsConfirmedUC,
-		mockTurnstile,
-		limiter,
-	)
+	setup := newTestHandlerForCreate(t, queries, true)
 
 	// 同じメールアドレスで3回リクエスト（制限内、異なるIPから）
 	for i := 0; i < 3; i++ {
@@ -778,7 +424,7 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rr := httptest.NewRecorder()
-		handler.Create(rr, req)
+		setup.handler.Create(rr, req)
 
 		if rr.Code != http.StatusFound {
 			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
@@ -801,14 +447,12 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	handler.Create(rr, req)
+	setup.handler.Create(rr, req)
 
-	// Rate Limit超過時は 422 Unprocessable Entity を返す
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("4th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") {
 		t.Error("rate limit exceeded message not found in response")

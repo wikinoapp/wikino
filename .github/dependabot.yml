@@ -10,24 +10,84 @@ updates:
     directory: "/go"
     schedule:
       interval: "daily"
+    groups:
+      river:
+        patterns:
+          - "github.com/riverqueue/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
+      golang-x:
+        patterns:
+          - "golang.org/x/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
+      jackc-pgx:
+        patterns:
+          - "github.com/jackc/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
 
   # Go version npm dependencies (pnpm)
   - package-ecosystem: "npm"
     directory: "/go"
     schedule:
       interval: "daily"
+    groups:
+      tailwindcss:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
+      codemirror:
+        patterns:
+          - "@codemirror/*"
+          - "@lezer/*"
+          - "codemirror"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
+      spark-md5:
+        patterns:
+          - "spark-md5"
+          - "@types/spark-md5"
+        # メジャーは破壊的変更を含むことがあり個別 PR でレビューしたいため、
+        # グループ PR には patch / minor のみを含める
+        update-types:
+          - "patch"
+          - "minor"
 
   # Rails version bundler dependencies
   - package-ecosystem: "bundler"
     directory: "/rails"
     schedule:
       interval: "daily"
+    # Rails 版はメンテナンスモードに入っており、Dependabot alerts に基づく
+    # セキュリティアップデートのみ対応する。通常の version update PR は作らない
+    open-pull-requests-limit: 0
 
   # Rails version npm dependencies
   - package-ecosystem: "npm"
     directory: "/rails"
     schedule:
       interval: "daily"
+    # Rails 版はメンテナンスモードに入っており、Dependabot alerts に基づく
+    # セキュリティアップデートのみ対応する。通常の version update PR は作らない
+    open-pull-requests-limit: 0
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

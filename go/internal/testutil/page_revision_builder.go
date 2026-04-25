@@ -99,3 +99,77 @@ func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 
 	return model.PageRevisionID(id)
 }
+
+// PageRevisionBuilderDB はDBを直接使用するページリビジョンテストデータのビルダー
+// トランザクション管理を自前で行うUsecaseのテストに使用します
+type PageRevisionBuilderDB struct {
+	t  *testing.T
+	db *sql.DB
+
+	spaceID       string
+	spaceMemberID string
+	pageID        string
+	title         string
+	body          string
+	bodyHTML      string
+}
+
+// NewPageRevisionBuilderDB は PageRevisionBuilderDB を生成します
+func NewPageRevisionBuilderDB(t *testing.T, db *sql.DB) *PageRevisionBuilderDB {
+	t.Helper()
+	return &PageRevisionBuilderDB{
+		t:        t,
+		db:       db,
+		title:    "Revision Title",
+		body:     "Revision body",
+		bodyHTML: "<p>Revision body</p>",
+	}
+}
+
+// WithSpaceID はスペースIDを設定します
+func (b *PageRevisionBuilderDB) WithSpaceID(spaceID model.SpaceID) *PageRevisionBuilderDB {
+	b.spaceID = string(spaceID)
+	return b
+}
+
+// WithSpaceMemberID はスペースメンバーIDを設定します
+func (b *PageRevisionBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *PageRevisionBuilderDB {
+	b.spaceMemberID = string(spaceMemberID)
+	return b
+}
+
+// WithPageID はページIDを設定します
+func (b *PageRevisionBuilderDB) WithPageID(pageID model.PageID) *PageRevisionBuilderDB {
+	b.pageID = string(pageID)
+	return b
+}
+
+// Build はページリビジョンを作成し、IDを返します
+func (b *PageRevisionBuilderDB) Build() model.PageRevisionID {
+	b.t.Helper()
+
+	if b.spaceID == "" {
+		b.t.Fatal("PageRevisionBuilderDB: spaceIDが設定されていません。WithSpaceID()を呼んでください")
+	}
+	if b.spaceMemberID == "" {
+		b.t.Fatal("PageRevisionBuilderDB: spaceMemberIDが設定されていません。WithSpaceMemberID()を呼んでください")
+	}
+	if b.pageID == "" {
+		b.t.Fatal("PageRevisionBuilderDB: pageIDが設定されていません。WithPageID()を呼んでください")
+	}
+
+	now := time.Now()
+	var id string
+	err := b.db.QueryRowContext(
+		context.Background(),
+		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, body_html, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		 RETURNING id`,
+		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, b.bodyHTML, now, now,
+	).Scan(&id)
+	if err != nil {
+		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)
+	}
+
+	return model.PageRevisionID(id)
+}

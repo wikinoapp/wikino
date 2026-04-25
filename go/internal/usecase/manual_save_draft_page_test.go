@@ -15,16 +15,21 @@ func newManualSaveUC(db *sql.DB) *ManualSaveDraftPageUsecase {
 	q := query.New(db)
 	return NewManualSaveDraftPageUsecase(
 		db,
+		repository.NewSpaceRepository(q),
+		repository.NewSpaceMemberRepository(q),
 		repository.NewDraftPageRepository(q),
 		repository.NewDraftPageRevisionRepository(q),
 		repository.NewPageRepository(q),
 		repository.NewPageEditorRepository(q),
 		repository.NewTopicRepository(q),
+		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),
 	)
 }
 
 func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
 
@@ -44,7 +49,12 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithName("General").
 		Build()
-	pageID := testutil.NewPageBuilderDB(t, db).
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
@@ -53,14 +63,11 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 
 	title := "下書きタイトル"
 	output, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             "下書き本文",
-		SpaceIdentifier:  "manual-save",
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("manual-save"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           &title,
+		Body:            "下書き本文",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)
@@ -86,6 +93,8 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 }
 
 func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
+	t.Parallel()
+
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
 
@@ -105,7 +114,12 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithName("General").
 		Build()
-	pageID := testutil.NewPageBuilderDB(t, db).
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
@@ -114,14 +128,11 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 
 	title := "新規下書き"
 	output, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
-		SpaceID:          spaceID,
-		PageID:           pageID,
-		SpaceMemberID:    spaceMemberID,
-		TopicID:          topicID,
-		Title:            &title,
-		Body:             "新規下書き本文",
-		SpaceIdentifier:  model.SpaceIdentifier("manual-save-nodraft"),
-		CurrentTopicName: "General",
+		SpaceIdentifier: model.SpaceIdentifier("manual-save-nodraft"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           &title,
+		Body:            "新規下書き本文",
 	})
 	if err != nil {
 		t.Fatalf("Execute() error = %v, want nil", err)

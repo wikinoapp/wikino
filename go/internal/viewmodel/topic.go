@@ -34,6 +34,28 @@ func NewTopicForSelect(topic *model.Topic) TopicForSelect {
 	}
 }
 
+// TopicForShow はトピック詳細画面用のトピック情報です
+type TopicForShow struct {
+	Name          string
+	Number        int32
+	Description   string
+	IconName      IconName
+	CanUpdate     bool
+	CanCreatePage bool
+}
+
+// NewTopicForShow はモデルからTopicForShowを生成します
+func NewTopicForShow(topic *model.Topic, canUpdate bool, canCreatePage bool) TopicForShow {
+	return TopicForShow{
+		Name:          topic.Name,
+		Number:        topic.Number,
+		Description:   topic.Description,
+		IconName:      topicVisibilityIconName(topic.Visibility),
+		CanUpdate:     canUpdate,
+		CanCreatePage: canCreatePage,
+	}
+}
+
 // topicVisibilityIconName はトピックの公開範囲に対応するアイコン名を返します
 func topicVisibilityIconName(v model.TopicVisibility) IconName {
 	if v == model.TopicVisibilityPublic {

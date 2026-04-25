@@ -5,31 +5,49 @@ import "github.com/a-h/templ"
 // MainTitleData はメインタイトルコンポーネントに渡すデータ構造体です
 type MainTitleData struct {
 	Title    string
-	Subtitle string
+	Subtitle templ.Component
+	Content  templ.Component
 	Actions  templ.Component
+}
+
+// SubtitleText は文字列をサブタイトル用の templ.Component に変換します。
+// 空文字列の場合は nil を返し、MainTitle のサブタイトル表示をスキップさせます。
+func SubtitleText(text string) templ.Component {
+	if text == "" {
+		return nil
+	}
+	return subtitleText(text)
+}
+
+templ subtitleText(text string) {
+	{ text }
 }
 
 // MainTitle はページのメインタイトルと区切り線を表示します
 templ MainTitle(data MainTitleData) {
 	<div class="flex flex-col gap-4">
-		<div class="flex flex-wrap items-center justify-between gap-2">
+		<div class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
 			<div class="flex flex-col gap-2">
-				<h1 class="flex items-center gap-2 text-2xl font-bold antialiased">
+				<h1 class="flex items-center gap-2 text-3xl text-primary font-bold antialiased">
 					{ data.Title }
 				</h1>
-				if data.Subtitle != "" {
-					<div class="text-sm text-gray-600">
-						{ data.Subtitle }
+
+				if data.Subtitle != nil {
+					<div class="text-sm text-stone-600">
+						@data.Subtitle
 					</div>
 				}
+
+				if data.Content != nil {
+					@data.Content
+				}
 			</div>
+
 			if data.Actions != nil {
 				<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
 					@data.Actions
 				</div>
 			}
 		</div>
-
-		<hr class="border-gray-300"/>
 	</div>
 }

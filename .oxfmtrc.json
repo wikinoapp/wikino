@@ -17,12 +17,13 @@
   "ignorePatterns": [
     "**/node_modules/",
     "**/vendor/",
-    "rails/db/",
-    "rails/app/assets/builds/",
-    "rails/sorbet/",
+    "apm.lock.yaml",
+    "apm_modules/",
     "go/internal/query/*.go",
     "go/internal/templates/*_templ.go",
     "go/static/",
-    "shimbaco-skills/"
+    "rails/app/assets/builds/",
+    "rails/db/",
+    "rails/sorbet/"
   ]
 }

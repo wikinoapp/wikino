@@ -2,51 +2,82 @@
 @import "basecoat-css";
 @import "tailwindcss-safe-area";
 
+:root {
+  /* 独自の変数 */
+  --app-brand-50: oklch(0.9799 0.0074 197.04);
+  --app-brand-100: oklch(0.9383 0.0283 193.96);
+  --app-brand-200: oklch(0.876 0.0543 194.76);
+  --app-brand-300: oklch(0.7918 0.0779 196.73);
+  --app-brand-400: oklch(0.6932 0.088 199.14);
+  --app-brand-500: oklch(0.6002 0.083 201.49);
+  --app-brand-600: oklch(0.5071 0.0701 202.99);
+  --app-brand-700: oklch(0.4373 0.0571 203.57);
+  --app-brand-800: oklch(0.3787 0.0457 206.19);
+  --app-brand-900: oklch(0.3419 0.0362 203.92);
+  --app-brand-950: oklch(0.2853 0.0357 210.24); /* オリジナル */
+  --app-primary: var(--app-brand-950);
+  --app-primary-foreground: oklch(0.9729 0.0076 61.45);
+  --app-secondary: oklch(0.9231 0.0066 185.26);
+  --app-secondary-foreground: var(--app-primary);
+  --app-muted: oklch(0.95 0.0076 61.45);
+  --app-muted-foreground: oklch(0.5659 0.0128 45.61);
+  --app-link-foreground: var(--app-primary);
+  --app-link-primary-foreground: oklch(0.5346 0.0836 210.24);
+  --app-link-muted-foreground: var(--app-muted-foreground);
+  --app-success: var(--color-green-600);
+  --app-success-foreground: var(--color-white);
+  --app-error: var(--color-red-600);
+  --app-error-foreground: var(--color-white);
+  --app-warning: var(--color-yellow-600);
+  --app-warning-foreground: var(--color-black);
+  --app-info: var(--color-blue-600);
+  --app-info-foreground: var(--color-white);
+  --app-bottom-nav-max-height: 54px;
+
+  /* Basecoatの変数上書き */
+  --background: var(--app-primary-foreground);
+  --foreground: var(--app-primary);
+  --primary: var(--app-primary);
+  --primary-foreground: var(--app-primary-foreground);
+  --secondary: var(--app-secondary);
+  --secondary-foreground: var(--app-secondary-foreground);
+  --muted: var(--app-muted);
+  --muted-foreground: var(--app-muted-foreground);
+  --accent: oklch(0.9402 0.017 61.95);
+  --border: var(--color-stone-300);
+  --input: var(--color-stone-300);
+  --sidebar: var(--background);
+  --sidebar-accent: var(--accent);
+  --sidebar-width: 200px;
+
+  text-autospace: normal;
+}
+
 @theme {
-  --color-brand-50: #f9f7f7;
-  --color-brand-100: #f2efee;
-  --color-brand-200: #e6dfdd;
-  --color-brand-300: #d7cdca;
-  --color-brand-400: #bfafaa; /* オリジナル */
-  --color-brand-500: #a7928c;
-  --color-brand-600: #8f7973;
-  --color-brand-700: #77645e;
-  --color-brand-800: #645450;
-  --color-brand-900: #564a46;
-  --color-brand-950: #2c2523;
+  --color-brand-50: var(--app-brand-50);
+  --color-brand-100: var(--app-brand-100);
+  --color-brand-200: var(--app-brand-200);
+  --color-brand-300: var(--app-brand-300);
+  --color-brand-400: var(--app-brand-400);
+  --color-brand-500: var(--app-brand-500);
+  --color-brand-600: var(--app-brand-600);
+  --color-brand-700: var(--app-brand-700);
+  --color-brand-800: var(--app-brand-800);
+  --color-brand-900: var(--app-brand-900);
+  --color-brand-950: var(--app-brand-950);
 
-  --color-brand-green-50: #f9fbfa;
-  --color-brand-green-100: #f2f7f5;
-  --color-brand-green-200: #e4ece8;
-  --color-brand-green-300: #cfddd6;
-  --color-brand-green-400: #98b3a7;
-  --color-brand-green-500: #7c9a8e; /* オリジナル */
-  --color-brand-green-600: #466858;
-  --color-brand-green-700: #315745;
-  --color-brand-green-800: #1a3c2c;
-  --color-brand-green-900: #0c2c20;
-  --color-brand-green-950: #00150f;
+  --color-link-foreground: var(--app-link-foreground);
+  --color-link-primary-foreground: var(--app-link-primary-foreground);
+  --color-link-muted-foreground: var(--app-link-muted-foreground);
 
-  --color-brand-beige-50: #f9f7f7;
-  --color-brand-beige-100: #f2efee;
-  --color-brand-beige-200: #e6dfdd;
-  --color-brand-beige-300: #d7cdca;
-  --color-brand-beige-400: #bfafaa; /* オリジナル */
-  --color-brand-beige-500: #a7928c;
-  --color-brand-beige-600: #8f7973;
-  --color-brand-beige-700: #77645e;
-  --color-brand-beige-800: #645450;
-  --color-brand-beige-900: #564a46;
-  --color-brand-beige-950: #2c2523;
-
-  --color-error-foreground: var(--error-foreground);
-  --color-error: var(--error);
-  --color-info-foreground: var(--info-foreground);
-  --color-info: var(--info);
-  --color-success-foreground: var(--success-foreground);
-  --color-success: var(--success);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-warning: var(--warning);
+  --color-error-foreground: var(--app-error-foreground);
+  --color-error: var(--app-error);
+  --color-info-foreground: var(--app-info-foreground);
+  --color-info: var(--app-info);
+  --color-success-foreground: var(--app-success-foreground);
+  --color-success: var(--app-success);
+  --color-warning-foreground: var(--app-warning-foreground);
+  --color-warning: var(--app-warning);
 
   --z-index-*: initial;
   --z-index-tooltip: 300;
@@ -60,6 +91,186 @@
   --content-screen-max-width-large: 1200px;
 }
 
+@utility link-bare-* {
+  @apply transition-colors duration-100;
+  @apply text-[--value(--color-link-*)] hover:text-[--value(--color-link-*)]/85;
+}
+
+@utility link-* {
+  /* `@apply link-bare-*;` と書きたいが、そうすると .link-bare-muted-foreground などが効かなくなる */
+  @apply transition-colors duration-100;
+  @apply text-[--value(--color-link-*)] hover:text-[--value(--color-link-*)]/85;
+  @apply underline underline-offset-4;
+}
+
+@layer base {
+  code,
+  pre {
+    text-autospace: no-autospace;
+  }
+}
+
+@layer components {
+  /*
+    ============================================================================
+    .wikino-markdown
+    ============================================================================
+  */
+  .wikino-markdown {
+    @apply break-words;
+
+    & > :first-child {
+      @apply mt-0;
+    }
+
+    & a {
+      @apply link-primary-foreground;
+    }
+
+    & blockquote {
+      @apply border-l-4 border-stone-300 pr-4 pl-4 text-base/8 text-stone-600;
+    }
+
+    & code {
+      @apply inline rounded-sm bg-stone-950/6 px-2 py-1 font-mono text-sm/normal;
+    }
+
+    & details > summary {
+      @apply gap-1 link-primary-foreground;
+    }
+
+    & details > summary::before {
+      content: "";
+      @apply inline-block size-4 shrink-0 bg-current transition-transform;
+      mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='9 18 15 12 9 6'/></svg>")
+        center/contain no-repeat;
+    }
+
+    & details[open] > summary::before {
+      @apply rotate-90;
+    }
+
+    & h1 {
+      /*
+        h2と同じスタイルにする
+        ページタイトルがh1なので本文内でh1をあまり使ってほしくないため
+      */
+      @apply mt-10 mb-4 text-2xl/8 font-bold antialiased;
+    }
+
+    & h2 {
+      @apply mt-10 mb-4 text-2xl/8 font-bold antialiased;
+    }
+
+    & h3 {
+      @apply mt-6 mb-2 text-base/8 font-bold antialiased;
+    }
+
+    /*
+      h4以降をh3と同じスタイルにする
+      h4以降が必要になったときはページの分割をおすすめしたい
+    */
+    & h4 {
+      @apply mt-6 mb-2 text-base/8 font-bold antialiased;
+    }
+
+    & h5 {
+      @apply mt-6 mb-2 text-base/8 font-bold antialiased;
+    }
+
+    & h6 {
+      @apply mt-6 mb-2 text-base/8 font-bold antialiased;
+    }
+
+    & hr {
+      @apply my-6 border-stone-300;
+    }
+
+    & img {
+      @apply mx-auto block;
+    }
+
+    /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
+    & a:has(img) {
+      @apply mx-auto table;
+    }
+
+    & img.wikino-attachment-image {
+      @apply opacity-0 transition-opacity duration-100 ease-in-out;
+    }
+
+    & img.wikino-attachment-image-loaded {
+      @apply opacity-100 transition-opacity duration-100 ease-in-out;
+    }
+
+    & video {
+      @apply mx-auto;
+    }
+
+    & video.wikino-attachment-video {
+      @apply opacity-0 transition-opacity duration-300 ease-in-out;
+    }
+
+    & video.wikino-attachment-video-loaded {
+      @apply opacity-100 transition-opacity duration-300 ease-in-out;
+    }
+
+    /* 画像・動画のキャプション */
+    & img + br + em,
+    & video + br + em,
+    & a.wikino-attachment-image-link + br + em {
+      @apply mt-2 mb-4 block text-center text-sm text-stone-600 italic;
+    }
+
+    /* キャプション前のbr要素を非表示にして高さを取らないようにする */
+    & img + br:has(+ em),
+    & video + br:has(+ em),
+    & a.wikino-attachment-image-link + br:has(+ em) {
+      @apply hidden;
+    }
+
+    & li {
+      @apply mt-2;
+    }
+
+    & li p {
+      @apply mb-0;
+    }
+
+    & ol {
+      @apply mb-4 list-decimal pl-6 text-base/normal;
+    }
+
+    & p {
+      @apply mb-4 leading-8;
+    }
+
+    & pre {
+      @apply bg-card mb-4 overflow-auto rounded-lg border border-stone-300 p-4;
+    }
+
+    & pre code {
+      @apply block overflow-visible rounded-none bg-transparent p-0;
+    }
+
+    & table {
+      @apply mb-4;
+    }
+
+    & table td {
+      @apply border border-stone-300 px-2 py-1;
+    }
+
+    & table th {
+      @apply bg-brand-600/5 border border-stone-300 p-2;
+    }
+
+    & ul {
+      @apply mb-4 list-disc pl-6 text-base/normal;
+    }
+  }
+}
+
 /* タッチデバイスかどうかを判別するためのカスタムバリアント */
 /*
   hover: none ... hoverがサポートされていないデバイスかどうか
@@ -71,99 +282,6 @@
   pointer: fine ... マウスのような精密なポインターデバイスかどうか
 */
 @custom-variant non-touch (@media (hover: hover) and (pointer: fine));
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
-}
-
-@layer components {
-  .link,
-  .link-muted,
-  .link-foreground {
-    @apply underline underline-offset-4 transition-colors duration-150;
-  }
-
-  .link {
-    @apply text-blue-600 hover:text-blue-700;
-    @apply dark:text-blue-400 dark:hover:text-blue-300;
-  }
-
-  .link-muted {
-    @apply text-muted-foreground/90 hover:text-muted-foreground;
-    @apply dark:text-muted-foreground/90 dark:hover:text-muted-foreground;
-  }
-
-  .link-foreground {
-    @apply text-foreground/90 hover:text-foreground;
-    @apply dark:text-foreground/90 dark:hover:text-foreground;
-  }
-
-  .link:focus-visible,
-  .link-muted:focus-visible,
-  .link-foreground:focus-visible {
-    @apply outline-none ring-2 ring-ring;
-  }
-}
-
-:root {
-  /* Basecoatの変数上書き */
-  --background: var(--color-brand-100);
-  --foreground: var(--color-stone-900);
-  --primary: var(--color-brand-950);
-  --primary-foreground: var(--color-brand-100);
-  --secondary: var(--color-brand-200);
-  --secondary-foreground: var(--color-brand-950);
-  --accent: var(--color-brand-200);
-  --sidebar: var(--color-brand-50);
-  --sidebar-accent: var(--color-brand-100);
-  --sidebar-width: 200px; /* https://basecoatui.com/components/sidebar/ */
-
-  /* 独自の変数 */
-  --success: var(--color-green-600);
-  --success-foreground: var(--color-white);
-  --error: var(--color-red-600);
-  --error-foreground: var(--color-white);
-  --warning: var(--color-yellow-600);
-  --warning-foreground: var(--color-black);
-  --info: var(--color-blue-600);
-  --info-foreground: var(--color-white);
-
-  --bottom-nav-max-height: 54px;
-}
-
-.dark {
-  /* Basecoatの変数上書き */
-  --background: var(--color-brand-950);
-  --foreground: var(--color-stone-300);
-  --primary: var(--color-brand-200);
-  --primary-foreground: var(--color-brand-950);
-  --secondary: var(--color-stone-600);
-  --secondary-foreground: var(--color-stone-50);
-
-  /* 独自の変数 */
-  --success: var(--color-green-400);
-  --success-foreground: var(--color-black);
-  --error: var(--color-red-400);
-  --error-foreground: var(--color-black);
-  --warning: var(--color-yellow-400);
-  --warning-foreground: var(--color-black);
-  --info: var(--color-blue-400);
-  --info-foreground: var(--color-black);
-}
 
 /*
   ============================================================================

@@ -110,16 +110,13 @@ class TopicRepository < ApplicationRepository
       topic_record = topic_member_record.topic_record.not_nil!
       space_member_record = topic_member_record.space_member_record.not_nil!
 
-      # TopicPolicyFactoryを使用して適切なポリシークラスを取得
-      policy = TopicPolicyFactory.build(
-        user_record:,
-        space_member_record:,
-        topic_member_record:
+      policy = MemberPolicy.new(
+        space_scopes: space_member_record.scopes,
+        topic_scopes: topic_member_record.scopes
       )
 
-      # ポリシークラスのメソッドを直接使用
-      can_update = policy.can_update_topic?(topic_record:)
-      can_create_page = policy.can_create_page?(topic_record:)
+      can_update = policy.can_update_topic?
+      can_create_page = policy.can_create_page?
 
       to_model(
         topic_record:,
@@ -141,36 +138,21 @@ class TopicRepository < ApplicationRepository
     # トピックメンバー情報を一括取得
     topic_members = TopicMemberRecord
       .where(space_member_id: space_member_record.id, topic_id: topic_ids)
-      .preload(:topic_record) # ポリシーで必要になる可能性があるため
       .index_by(&:topic_id)
 
     # 各トピックの権限情報をマッピング
     topic_ids.each_with_object({}) do |topic_id, map|
       topic_member = topic_members[topic_id]
 
-      if topic_member
-        # TopicPolicyFactoryを使用して適切なポリシークラスを取得
-        policy = TopicPolicyFactory.build(
-          user_record: space_member_record.user_record.not_nil!,
-          space_member_record:,
-          topic_member_record: topic_member
-        )
+      policy = MemberPolicy.new(
+        space_scopes: space_member_record.scopes,
+        topic_scopes: topic_member&.scopes || []
+      )
 
-        # ポリシークラスのメソッドを直接使用
-        can_update = policy.can_update_topic?(topic_record: topic_member.topic_record.not_nil!)
-        can_create_page = policy.can_create_page?(topic_record: topic_member.topic_record.not_nil!)
-
-        map[topic_id] = {
-          can_update:,
-          can_create_page:
-        }
-      else
-        # トピックメンバーではない場合は権限なし
-        map[topic_id] = {
-          can_update: false,
-          can_create_page: false
-        }
-      end
+      map[topic_id] = {
+        can_update: policy.can_update_topic?,
+        can_create_page: policy.can_create_page?
+      }
     end
   end
 end

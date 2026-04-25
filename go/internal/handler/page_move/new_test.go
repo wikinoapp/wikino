@@ -19,6 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -36,17 +37,19 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+
+	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	return page_move.NewHandler(
 		cfg,
 		flashMgr,
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		topicRepo,
-		repository.NewTopicMemberRepository(queries),
+		getPageMoveDataUC,
 		nil,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
@@ -92,7 +95,6 @@ func TestNew(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -239,7 +241,6 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

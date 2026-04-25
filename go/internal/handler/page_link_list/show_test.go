@@ -15,19 +15,23 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_link_list.Handler {
 	t.Helper()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	draftPageRepo := repository.NewDraftPageRepository(queries)
+	getLinkListUC := usecase.NewGetLinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo)
+
 	return page_link_list.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
-		repository.NewDraftPageRepository(queries),
+		getLinkListUC,
 	)
 }
 
@@ -187,7 +191,6 @@ func TestShow_正常系_リンクなしで空レスポンスが返る(t *testing
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンクなしのページ
@@ -215,14 +218,14 @@ func TestShow_正常系_リンクなしで空レスポンスが返る(t *testing
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	// リンクなしの場合、SSEレスポンスは送信されない
+	// リンクなしの場合、ページネーションコンテナのみ返る
 	body := rr.Body.String()
-	if body != "" {
-		t.Errorf("expected empty body for no links, got %q", body)
+	if !strings.Contains(body, "page-link-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 
-func TestShow_正常系_リンクありでSSEレスポンスにリンクが含まれる(t *testing.T) {
+func TestShow_正常系_リンクありでHTMLレスポンスにリンクが含まれる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -248,7 +251,6 @@ func TestShow_正常系_リンクありでSSEレスポンスにリンクが含�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンク先ページ
@@ -285,16 +287,16 @@ func TestShow_正常系_リンクありでSSEレスポンスにリンクが含�
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	contentType := rr.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("wrong content type: got %v, want text/event-stream", contentType)
-	}
-
 	body := rr.Body.String()
 
 	// リンク先ページのタイトルが含まれること
 	if !strings.Contains(body, "Linked Page") {
 		t.Error("response should contain linked page title 'Linked Page'")
+	}
+
+	// ページネーションコンテナが含まれること
+	if !strings.Contains(body, "page-link-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 
@@ -324,7 +326,6 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// リンク先ページ

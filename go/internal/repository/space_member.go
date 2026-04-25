@@ -39,13 +39,33 @@ func (r *SpaceMemberRepository) FindActiveBySpaceAndUser(ctx context.Context, sp
 	return r.toModel(row), nil
 }
 
+// FindByIDs はIDリストでスペースメンバーを一括取得する（スペースIDでスコープ）
+func (r *SpaceMemberRepository) FindByIDs(ctx context.Context, ids []model.SpaceMemberID, spaceID model.SpaceID) ([]*model.SpaceMember, error) {
+	if len(ids) == 0 {
+		return []*model.SpaceMember{}, nil
+	}
+	idStrs := model.SpaceMemberIDsToStrings(ids)
+	rows, err := r.q.FindSpaceMembersByIDs(ctx, query.FindSpaceMembersByIDsParams{
+		Column1: idStrs,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	members := make([]*model.SpaceMember, len(rows))
+	for i, row := range rows {
+		members[i] = r.toModel(row)
+	}
+	return members, nil
+}
+
 // toModel は query.SpaceMember を model.SpaceMember に変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
 	return &model.SpaceMember{
 		ID:       model.SpaceMemberID(row.ID),
 		SpaceID:  model.SpaceID(row.SpaceID),
 		UserID:   model.UserID(row.UserID),
-		Role:     model.SpaceMemberRole(row.Role),
+		Scopes:   model.StringsToScopes(row.Scopes),
 		JoinedAt: row.JoinedAt,
 		Active:   row.Active,
 	}

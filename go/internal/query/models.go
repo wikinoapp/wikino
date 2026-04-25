@@ -10,8 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type RiverJobState string
@@ -108,18 +106,20 @@ type Attachment struct {
 }
 
 type DraftPage struct {
-	ID            string      `json:"id"`
-	SpaceID       string      `json:"space_id"`
-	PageID        string      `json:"page_id"`
-	SpaceMemberID string      `json:"space_member_id"`
-	TopicID       string      `json:"topic_id"`
-	Title         interface{} `json:"title"`
-	Body          string      `json:"body"`
-	BodyHtml      string      `json:"body_html"`
-	LinkedPageIds []string    `json:"linked_page_ids"`
-	ModifiedAt    time.Time   `json:"modified_at"`
-	CreatedAt     time.Time   `json:"created_at"`
-	UpdatedAt     time.Time   `json:"updated_at"`
+	ID                        string      `json:"id"`
+	SpaceID                   string      `json:"space_id"`
+	PageID                    string      `json:"page_id"`
+	SpaceMemberID             string      `json:"space_member_id"`
+	TopicID                   string      `json:"topic_id"`
+	Title                     interface{} `json:"title"`
+	Body                      string      `json:"body"`
+	BodyHtml                  string      `json:"body_html"`
+	LinkedPageIds             []string    `json:"linked_page_ids"`
+	ModifiedAt                time.Time   `json:"modified_at"`
+	CreatedAt                 time.Time   `json:"created_at"`
+	UpdatedAt                 time.Time   `json:"updated_at"`
+	SuggestionPageID          *string     `json:"suggestion_page_id"`
+	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
 }
 
 type DraftPageRevision struct {
@@ -163,29 +163,30 @@ type ExportStatus struct {
 }
 
 type FeatureFlag struct {
-	ID        string    `json:"id"`
-	UserID    string    `json:"user_id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          string         `json:"id"`
+	UserID      *string        `json:"user_id"`
+	Name        string         `json:"name"`
+	CreatedAt   time.Time      `json:"created_at"`
+	DeviceToken sql.NullString `json:"device_token"`
 }
 
 type Page struct {
-	ID                        string        `json:"id"`
-	SpaceID                   string        `json:"space_id"`
-	TopicID                   string        `json:"topic_id"`
-	Number                    int32         `json:"number"`
-	Title                     interface{}   `json:"title"`
-	Body                      string        `json:"body"`
-	BodyHtml                  string        `json:"body_html"`
-	LinkedPageIds             []string      `json:"linked_page_ids"`
-	ModifiedAt                time.Time     `json:"modified_at"`
-	PublishedAt               sql.NullTime  `json:"published_at"`
-	TrashedAt                 sql.NullTime  `json:"trashed_at"`
-	CreatedAt                 time.Time     `json:"created_at"`
-	UpdatedAt                 time.Time     `json:"updated_at"`
-	PinnedAt                  sql.NullTime  `json:"pinned_at"`
-	DiscardedAt               sql.NullTime  `json:"discarded_at"`
-	FeaturedImageAttachmentID uuid.NullUUID `json:"featured_image_attachment_id"`
+	ID                        string       `json:"id"`
+	SpaceID                   string       `json:"space_id"`
+	TopicID                   string       `json:"topic_id"`
+	Number                    int32        `json:"number"`
+	Title                     interface{}  `json:"title"`
+	Body                      string       `json:"body"`
+	BodyHtml                  string       `json:"body_html"`
+	LinkedPageIds             []string     `json:"linked_page_ids"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	TrashedAt                 sql.NullTime `json:"trashed_at"`
+	CreatedAt                 time.Time    `json:"created_at"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	PinnedAt                  sql.NullTime `json:"pinned_at"`
+	DiscardedAt               sql.NullTime `json:"discarded_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
 }
 
 type PageAttachmentReference struct {
@@ -316,6 +317,59 @@ type SpaceMember struct {
 	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Scopes    []string  `json:"scopes"`
+}
+
+type Suggestion struct {
+	ID                   string       `json:"id"`
+	SpaceID              string       `json:"space_id"`
+	TopicID              string       `json:"topic_id"`
+	CreatedSpaceMemberID string       `json:"created_space_member_id"`
+	Title                string       `json:"title"`
+	Body                 string       `json:"body"`
+	Status               int32        `json:"status"`
+	AppliedAt            sql.NullTime `json:"applied_at"`
+	CreatedAt            time.Time    `json:"created_at"`
+	UpdatedAt            time.Time    `json:"updated_at"`
+	Number               int32        `json:"number"`
+}
+
+type SuggestionComment struct {
+	ID                   string    `json:"id"`
+	SpaceID              string    `json:"space_id"`
+	SuggestionID         string    `json:"suggestion_id"`
+	CreatedSpaceMemberID string    `json:"created_space_member_id"`
+	Body                 string    `json:"body"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	Number               int32     `json:"number"`
+}
+
+type SuggestionPage struct {
+	ID                        string         `json:"id"`
+	SpaceID                   string         `json:"space_id"`
+	SuggestionID              string         `json:"suggestion_id"`
+	PageID                    string         `json:"page_id"`
+	PageRevisionID            *string        `json:"page_revision_id"`
+	CreatedAt                 time.Time      `json:"created_at"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
+	Title                     sql.NullString `json:"title"`
+	Body                      string         `json:"body"`
+	BodyHtml                  string         `json:"body_html"`
+	LinkedPageIds             []string       `json:"linked_page_ids"`
+	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
+}
+
+type SuggestionPageRevision struct {
+	ID                  string         `json:"id"`
+	SpaceID             string         `json:"space_id"`
+	SuggestionPageID    string         `json:"suggestion_page_id"`
+	EditorSpaceMemberID string         `json:"editor_space_member_id"`
+	Title               sql.NullString `json:"title"`
+	Body                string         `json:"body"`
+	BodyHtml            string         `json:"body_html"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
 }
 
 type Topic struct {
@@ -340,6 +394,7 @@ type TopicMember struct {
 	LastPageModifiedAt sql.NullTime `json:"last_page_modified_at"`
 	CreatedAt          time.Time    `json:"created_at"`
 	UpdatedAt          time.Time    `json:"updated_at"`
+	Scopes             []string     `json:"scopes"`
 }
 
 type User struct {

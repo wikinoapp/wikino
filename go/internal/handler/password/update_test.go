@@ -16,6 +16,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestUpdate_Success(t *testing.T) {
@@ -46,18 +48,22 @@ func TestUpdate_ValidationError_EmptyPassword(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// ハンドラーを初期化
+	// UseCase を初期化
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		updatePasswordResetUC,
 	)
 
 	// フォームデータを作成（パスワードが空）
@@ -110,18 +116,22 @@ func TestUpdate_ValidationError_PasswordMismatch(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// ハンドラーを初期化
+	// UseCase を初期化
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		updatePasswordResetUC,
 	)
 
 	// フォームデータを作成（パスワード不一致）
@@ -174,18 +184,22 @@ func TestUpdate_ValidationError_InvalidToken(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// ハンドラーを初期化
+	// UseCase を初期化
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		updatePasswordResetUC,
 	)
 
 	// フォームデータを作成（無効なトークン）
@@ -250,18 +264,22 @@ func TestUpdate_ValidationError_ExpiredToken(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// ハンドラーを初期化
+	// UseCase を初期化
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		updatePasswordResetUC,
 	)
 
 	// フォームデータを作成
@@ -328,18 +346,22 @@ func TestUpdate_ValidationError_UsedToken(t *testing.T) {
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(queries)
+	userPasswordRepo := repository.NewUserPasswordRepository(queries)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// ハンドラーを初期化
+	// UseCase を初期化
+	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
+	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		updatePasswordResetUC,
 	)
 
 	// フォームデータを作成

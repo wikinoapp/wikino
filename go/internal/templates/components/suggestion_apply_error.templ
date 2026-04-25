@@ -1,0 +1,24 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SuggestionApplyError は編集提案反映時のバリデーションエラーを表示します
+templ SuggestionApplyError(data *viewmodel.SuggestionApplyError) {
+	if data != nil && len(data.PageErrors) > 0 {
+		<div class="px-4">
+			<div class="alert-destructive">
+				<section class="flex flex-col gap-1">
+					for _, pageErr := range data.PageErrors {
+						<p>
+							{ templates.T(ctx, "suggestion_apply_page_error", map[string]any{"PageTitle": pageErr.PageTitle}) }
+							@templ.Raw(pageErr.Message)
+						</p>
+					}
+				</section>
+			</div>
+		</div>
+	}
+}

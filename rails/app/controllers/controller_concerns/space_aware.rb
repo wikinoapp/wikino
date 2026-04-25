@@ -27,11 +27,17 @@ module ControllerConcerns
     end
 
     # Space用のPolicyインスタンスを取得
-    sig { params(space_record: SpaceRecord).returns(Types::SpacePolicyInstance) }
+    sig { params(space_record: SpaceRecord).returns(Types::PolicyInstance) }
     def space_policy_for(space_record:)
-      SpacePolicyFactory.build(
-        user_record: current_user_record,
-        space_member_record: current_space_member_record(space_record:)
+      space_member_record = current_space_member_record(space_record:)
+
+      if space_member_record.nil?
+        return GuestPolicy.new
+      end
+
+      MemberPolicy.new(
+        space_scopes: space_member_record.scopes,
+        topic_scopes: []
       )
     end
 

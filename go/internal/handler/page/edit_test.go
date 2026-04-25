@@ -19,6 +19,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -36,19 +38,57 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+
+	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
+	suggestionRepo := repository.NewSuggestionRepository(queries)
+
+	getPageDetailUC := usecase.NewGetPageDetailUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		draftPageRepo,
+		topicRepo,
+		topicMemberRepo,
+		suggestionPageRepo,
+		suggestionRepo,
+	)
+	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
+
+	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
+	pageEditorRepo := repository.NewPageEditorRepository(queries)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+
+	publishPageUC := usecase.NewPublishPageUsecase(
+		nil,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		pageRevisionRepo,
+		pageEditorRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+		topicRepo,
+		topicMemberRepo,
+		attachmentRepo,
+		pageAttachmentRefRepo,
+		pageUpdateValidator,
+	)
 
 	return page.NewHandler(
 		cfg,
 		flashMgr,
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		draftPageRepo,
-		topicRepo,
-		repository.NewTopicMemberRepository(queries),
-		nil,
+		getPageDetailUC,
+		getEditLinkDataUC,
+		publishPageUC,
 		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
@@ -81,7 +121,6 @@ func TestEdit(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithRole(0). // owner
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -560,20 +599,20 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 		t.Error("page-link-list container not found in response")
 	}
 
-	// Datastarのdata-on:draft-autosaved__window属性が含まれていること
-	// この属性により、下書き保存後にリンク一覧がSSEで自動再読み込みされる
-	if !strings.Contains(body, "data-on:draft-autosaved__window") {
-		t.Error("data-on:draft-autosaved__window attribute not found - link list auto-reload will not work")
+	// htmxのhx-trigger属性が含まれていること
+	// この属性により、下書き保存後にリンク一覧がOOBスワップで自動再読み込みされる
+	if !strings.Contains(body, `hx-trigger="draft-autosaved from:window"`) {
+		t.Error("hx-trigger attribute not found - link list auto-reload will not work")
 	}
 
-	// SSEエンドポイントのURLが正しいこと
+	// hx-getでエンドポイントが指定されていること
 	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
-		t.Error("draft_page SSE endpoint URL not found in response")
+		t.Error("draft_page endpoint URL not found in response")
 	}
 
-	// @get()アクションでSSEエンドポイントが呼び出されること
-	if !strings.Contains(body, "@get(") {
-		t.Error("@get() action not found - SSE request will not be triggered")
+	// hx-swap="none"が指定されていること（OOBスワップのみで更新するため）
+	if !strings.Contains(body, `hx-swap="none"`) {
+		t.Error("hx-swap=none not found - OOB swap will not work correctly")
 	}
 }
 
@@ -639,5 +678,146 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	}
 	if !strings.Contains(body, "Cancel") {
 		t.Error("English cancel link not found in response")
+	}
+}
+
+func TestEdit_SuggestionMode(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	// テストデータを作成
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("suggestion-edit@example.com").
+		WithAtname("suggestionedit").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("suggestion-edit-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Suggestion Page Title").
+		WithBody("Original body").
+		Build()
+
+	// 編集提案を作成
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithTitle("テスト提案").
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+
+	// ページリビジョンを作成（SuggestionPageのベース用）
+	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithPageID(pageID).
+		WithTitle("Suggestion Page Title").
+		WithBody("Original body").
+		Build()
+
+	// 編集提案ページを作成
+	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSuggestionID(suggestionID).
+		WithPageID(pageID).
+		WithPageRevisionID(pageRevisionID).
+		WithTitle("Suggested Title").
+		WithBody("Suggested body").
+		Build()
+
+	// DraftPageを編集提案にリンク
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft for suggestion").
+		WithBody("Draft body for suggestion").
+		WithSuggestionPageID(suggestionPageID).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/suggestion-edit-space/pages/1/edit", map[string]string{
+		"space_identifier": "suggestion-edit-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// 編集提案モードのメッセージが表示されていることを確認
+	if !strings.Contains(body, "編集提案 #") {
+		t.Error("suggestion editing message not found in response")
+	}
+	if !strings.Contains(body, "のページを編集中です") {
+		t.Error("suggestion editing suffix not found in response")
+	}
+
+	// 編集提案へのリンクが含まれていることを確認
+	if !strings.Contains(body, `/s/suggestion-edit-space/suggestions/`) {
+		t.Error("suggestion show link not found in response")
+	}
+
+	// 「編集提案を更新」ボタンが表示されていることを確認
+	if !strings.Contains(body, "編集提案を更新") {
+		t.Error("update suggestion button not found in response")
+	}
+
+	// 「トピックに公開」ボタンが表示されていないことを確認
+	if strings.Contains(body, "トピックに公開") {
+		t.Error("publish to topic button should not be shown in suggestion mode")
+	}
+
+	// フォームのアクションが編集提案ページのURLであることを確認
+	if !strings.Contains(body, "/suggestions/") {
+		t.Error("suggestion page URL not found in form action")
+	}
+	if !strings.Contains(body, "/suggestion_pages/") {
+		t.Error("suggestion_pages path not found in form action")
+	}
+
+	// _method=PATCH が含まれていることを確認（PATCHメソッドで送信）
+	if !strings.Contains(body, `value="PATCH"`) {
+		t.Error("_method=PATCH should be present in suggestion mode")
+	}
+
+	// 下書き保存ボタンが表示されていることを確認
+	if !strings.Contains(body, "下書き保存") {
+		t.Error("save draft button should be shown in suggestion mode")
+	}
+
+	// 通常の下書きアラートが表示されていないことを確認（編集提案メッセージが代わりに表示される）
+	if strings.Contains(body, "現在下書きを表示しています") {
+		t.Error("normal draft alert should not be shown in suggestion mode")
 	}
 }

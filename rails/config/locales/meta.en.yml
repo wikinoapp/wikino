@@ -19,7 +19,7 @@ en:
             show: "General | %{topic_name} | %{space_name}"
           show: "Settings | %{topic_name} | %{space_name}"
       trash:
-        show: Trash
+        show: "Trash | %{space_name}"
       pages:
         show: "%{page_title} | %{space_name}"
       password_resets:

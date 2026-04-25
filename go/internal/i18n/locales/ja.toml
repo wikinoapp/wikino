@@ -16,6 +16,10 @@ other = "エラー"
 [back_to_home]
 other = "ホームに戻る"
 
+[form_optional]
+description = "フォームの任意項目に表示するラベル"
+other = "任意"
+
 # サインイン
 [sign_in_title]
 other = "ログイン"
@@ -190,6 +194,10 @@ other = "確認コードの有効期限が切れています。もう一度お�
 [validation_confirmation_not_found]
 other = "確認情報が見つかりません。もう一度お試しください"
 
+[validation_confirmation_already_succeeded]
+description = "既に確認済みの場合のエラー"
+other = "この確認は既に完了しています"
+
 # アカウント作成
 [account_new_title]
 other = "アカウント作成"
@@ -351,7 +359,7 @@ other = "Wikino | リンクで見つかるWikiのアプリ"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
-other = "リンクで見つかるWikiのアプリ"
+other = "リンクで見つかる<br class=\"md:hidden\"/>Wikiのアプリ"
 
 [welcome_hero_description_html]
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
@@ -369,11 +377,17 @@ other = "Markdownでシンプルに書ける"
 [welcome_feature_markdown_description]
 other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます"
 
+[welcome_feature_markdown_help_title]
+other = "Wikinoで使えるMarkdown記法について"
+
 [welcome_feature_wikilink_title]
 other = "ページ同士を簡単につなげる"
 
 [welcome_feature_wikilink_description]
 other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます"
+
+[welcome_feature_wikilink_help_title]
+other = "Wikiリンク記法について"
 
 [welcome_feature_backlinks_title]
 other = "つながりが見える"
@@ -381,14 +395,29 @@ other = "つながりが見える"
 [welcome_feature_backlinks_description]
 other = "ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移でき、関連ページを見つけることができます"
 
+[welcome_feature_backlinks_help_title]
+other = "ページのつながりについて"
+
+[welcome_feature_suggestion_title]
+other = "変更を提案してレビューできる"
+
+[welcome_feature_suggestion_description]
+other = "ページを直接編集する代わりに、変更案を編集提案として提出し、コメントによるレビューを経て反映することができます"
+
+[welcome_feature_suggestion_help_title]
+other = "編集提案について"
+
 [welcome_feature_publish_title]
 other = "ページを公開して共有できる"
 
 [welcome_feature_publish_description]
-other = "作成したページを公開して、他の人と共有することができます"
+other = "作成したページをインターネット上に公開して、ブログのように他の人と共有することができます"
 
 [welcome_feature_publish_note]
 other = "※ 非公開機能は現在無料で使えますが、今後提供する有料プラン限定の機能になる予定です。公開機能はずっと無料です"
+
+[welcome_feature_publish_help_title]
+other = "トピックについて"
 
 [welcome_cta_title]
 other = "Wikinoを始めよう"
@@ -490,7 +519,7 @@ other = "プライバシーポリシー"
 # ページ編集
 [page_edit_title]
 description = "ページ編集画面のタイトル"
-other = "ページを編集"
+other = "ページを編集 | {{.SpaceName}}"
 
 [page_edit_title_label]
 description = "ページタイトル入力フィールドのラベル"
@@ -544,9 +573,21 @@ other = "バックリンク"
 description = "下書き保存ボタンのラベル"
 other = "下書き保存"
 
+[page_edit_save_draft_and_create_suggestion_button]
+description = "下書き保存して編集提案を作成するボタンのラベル"
+other = "下書き保存して編集提案を作成する..."
+
 [page_edit_draft_saved_time]
 description = "自動保存時刻の表示"
 other = "自動保存: <span class=\"font-bold\">{{.Time}}</span>"
+
+[page_edit_suggestion_editing]
+description = "編集提案のページ編集中メッセージ"
+other = "<a href=\"{{.URL}}\" class=\"underline\">編集提案 #{{.Number}}</a> のページを編集中です"
+
+[page_edit_update_suggestion_button]
+description = "編集提案を更新ボタンのラベル"
+other = "編集提案を更新"
 
 # ページ公開バリデーション
 [validation_page_title_required]
@@ -576,17 +617,62 @@ other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既
 # ページ公開成功
 [flash_page_saved]
 description = "ページ保存成功メッセージ"
-other = "ページを保存しました"
+other = "ページを公開しました"
 
 # 下書き保存成功
 [flash_draft_page_saved]
 description = "下書き保存成功メッセージ"
 other = "下書きを保存しました"
 
+# 編集提案ページ更新成功
+[flash_suggestion_page_updated]
+description = "編集提案ページ更新成功メッセージ"
+other = "編集提案を更新しました"
+
+[flash_suggestion_page_added]
+description = "編集提案ページ追加成功メッセージ"
+other = "ページを追加しました"
+
+[flash_suggestion_page_removed]
+description = "編集提案ページ削除成功メッセージ"
+other = "ページを削除しました"
+
+[error_suggestion_page_remove_last_page]
+description = "編集提案ページ削除時の最後のページエラー"
+other = "編集提案には少なくとも1つのページが必要です"
+
+[suggestion_page_new_title]
+description = "編集提案ページ追加のページタイトル"
+other = "ページを追加 | {{.SpaceName}}"
+
+[suggestion_page_new_heading]
+description = "編集提案ページ追加の見出し"
+other = "ページを追加"
+
+[suggestion_page_new_draft_pages_label]
+description = "編集提案ページ追加の下書きページ選択ラベル"
+other = "追加する下書きページ"
+
+[suggestion_page_new_no_draft_pages]
+description = "編集提案ページ追加で追加可能な下書きがない場合のメッセージ"
+other = "追加可能な下書きページがありません"
+
+[suggestion_page_new_submit]
+description = "編集提案ページ追加の送信ボタン"
+other = "追加する"
+
+[suggestion_page_new_cancel]
+description = "編集提案ページ追加のキャンセルリンク"
+other = "キャンセル"
+
+[error_suggestion_page_update_conflict]
+description = "編集提案ページ更新時の競合エラー"
+other = "下書きが見つからないため、編集提案を更新できませんでした"
+
 # ページ移動
 [page_move_title]
 description = "ページ移動画面のタイトル"
-other = "ページの移動"
+other = "ページの移動 | {{.SpaceName}}"
 
 [page_move_heading]
 description = "ページ移動画面の見出し"
@@ -644,6 +730,10 @@ other = "移動先トピックへのページ作成権限がありません"
 description = "移動先トピックにタイトル重複エラー"
 other = "移動先トピックに同じタイトルのページが既に存在しています"
 
+[page_move_error_open_suggestion_exists]
+description = "オープンな編集提案が存在するため移動不可エラー"
+other = "オープンな編集提案で参照されているページは移動できません"
+
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"
 other = "下書きのページ"
@@ -667,3 +757,433 @@ other = "更新日時"
 [draft_page_index_untitled]
 description = "タイトル未設定の下書き"
 other = "無題"
+
+[draft_page_index_create_suggestion_button]
+description = "下書き一覧画面の編集提案作成ボタン"
+other = "新規編集提案"
+
+# ボトムナビ
+[bottom_nav_menu]
+description = "ボトムナビのメニューボタン"
+other = "メニュー"
+
+[bottom_nav_home]
+description = "ボトムナビのホームボタン"
+other = "ホーム"
+
+[bottom_nav_search]
+description = "ボトムナビの検索ボタン"
+other = "検索"
+
+[bottom_nav_sign_in]
+description = "ボトムナビのログインボタン"
+other = "ログイン"
+
+# トピック詳細
+[topic_show_title]
+description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
+other = "{{.TopicName}} | {{.SpaceName}}"
+
+[topic_show_no_pages_message]
+description = "トピック詳細画面でページがない場合のメッセージ"
+other = "ページはありません"
+
+[topic_show_no_pages_description]
+description = "トピック詳細画面でページがない場合の説明文"
+other = "最初の1ページ目を作成しましょう"
+
+[topic_show_new_page]
+description = "トピック詳細画面の新規ページ作成ボタン"
+other = "新規ページ"
+
+[topic_show_settings]
+description = "トピック詳細画面のトピック設定リンク"
+other = "トピック設定"
+
+[topic_show_tab_pages]
+description = "トピック詳細画面の「ページ」タブラベル"
+other = "ページ"
+
+[topic_show_tab_suggestions]
+description = "トピック詳細画面の「編集提案」タブラベル"
+other = "編集提案"
+
+# ページネーション
+[pagination_previous]
+description = "ページネーションの前のページへのリンク"
+other = "前へ"
+
+[pagination_next]
+description = "ページネーションの次のページへのリンク"
+other = "次へ"
+
+# 404エラーページ
+[error_not_found_title]
+description = "404エラーページのタイトル"
+other = "ページが見つかりませんでした | Wikino"
+
+[error_not_found_message]
+description = "404エラーページのメッセージ"
+other = "お探しのページは見つかりませんでした"
+
+[error_email_not_confirmed]
+description = "メール確認が未完了の場合のエラーメッセージ"
+other = "メール確認が完了していません"
+
+[error_not_found_back_to_top]
+description = "404エラーページのトップページリンク"
+other = "トップページに戻る"
+
+# 編集提案一覧
+[suggestion_index_title]
+description = "編集提案一覧のページタイトル"
+other = "編集提案 | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_index_heading]
+description = "編集提案一覧の見出し"
+other = "編集提案"
+
+[suggestion_index_subtitle_html]
+description = "編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）"
+other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
+
+[suggestion_index_breadcrumb]
+description = "編集提案一覧のパンくずリスト"
+other = "編集提案"
+
+[suggestion_index_open_tab]
+description = "編集提案一覧のオープンタブ"
+other = "オープン"
+
+[suggestion_index_closed_tab]
+description = "編集提案一覧のクローズタブ"
+other = "クローズ"
+
+[suggestion_index_opened_by]
+description = "編集提案の作成者表示"
+other = "作成:"
+
+[suggestion_index_no_open]
+description = "オープンの編集提案がない場合のメッセージ"
+other = "オープンの編集提案はありません"
+
+[suggestion_index_no_closed]
+description = "クローズの編集提案がない場合のメッセージ"
+other = "クローズの編集提案はありません"
+
+# 編集提案バリデーション
+
+[validation_suggestion_title_required]
+description = "編集提案タイトル必須エラー"
+other = "タイトルを入力してください"
+
+[validation_suggestion_title_too_long]
+description = "編集提案タイトル文字数超過エラー"
+other = "タイトルは200文字以内で入力してください"
+
+[validation_suggestion_draft_pages_required]
+description = "下書きページ未選択エラー"
+other = "下書きページを選択してください"
+
+[validation_suggestion_draft_page_not_found]
+description = "下書きページが見つからないエラー"
+other = "選択された下書きページが見つかりません"
+
+[validation_suggestion_draft_page_already_linked]
+description = "下書きページが別の編集提案にリンク済みエラー"
+other = "選択された下書きページは別の編集提案で使用されています"
+
+[validation_suggestion_body_too_long]
+description = "編集提案本文文字数超過エラー"
+other = "本文は10000文字以内で入力してください"
+
+# 編集提案作成
+
+[suggestion_new_title]
+description = "編集提案作成のページタイトル"
+other = "新規編集提案 | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_new_heading]
+description = "編集提案作成の見出し"
+other = "新規編集提案"
+
+[suggestion_new_breadcrumb]
+description = "編集提案作成画面のパンくずリスト（編集提案一覧へのリンク）"
+other = "編集提案"
+
+[suggestion_new_title_label]
+description = "編集提案タイトルのラベル"
+other = "タイトル"
+
+[suggestion_new_title_placeholder]
+description = "編集提案タイトルのプレースホルダー"
+other = "変更内容を簡潔に記述してください"
+
+[suggestion_new_body_label]
+description = "編集提案概要のラベル"
+other = "本文"
+
+[suggestion_new_body_placeholder]
+description = "編集提案概要のプレースホルダー"
+other = "変更の理由や背景を記述してください"
+
+[suggestion_new_draft_pages_label]
+description = "下書きページ選択のラベル"
+other = "下書きページを選択"
+
+[suggestion_new_no_draft_pages]
+description = "下書きページがない場合のメッセージ"
+other = "このトピックには下書きページがありません"
+
+[suggestion_new_submit]
+description = "編集提案作成の送信ボタン"
+other = "作成する"
+
+[suggestion_new_cancel]
+description = "編集提案作成のキャンセルリンク"
+other = "キャンセル"
+
+[suggestion_create_success]
+description = "編集提案作成成功メッセージ"
+other = "編集提案を作成しました"
+
+# 編集提案編集
+
+[suggestion_edit_title]
+description = "編集提案編集のページタイトル"
+other = "編集提案の編集 - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_edit_heading]
+description = "編集提案編集画面の見出し"
+other = "編集提案の編集"
+
+[suggestion_edit_title_label]
+description = "編集提案編集のタイトルラベル"
+other = "タイトル"
+
+[suggestion_edit_body_label]
+description = "編集提案編集の本文ラベル"
+other = "本文"
+
+[suggestion_edit_submit]
+description = "編集提案編集の送信ボタン"
+other = "更新する"
+
+[suggestion_edit_cancel]
+description = "編集提案編集のキャンセルリンク"
+other = "キャンセル"
+
+[suggestion_update_success]
+description = "編集提案更新成功メッセージ"
+other = "編集提案を更新しました"
+
+# 編集提案詳細
+
+[suggestion_show_title]
+description = "編集提案詳細のページタイトル"
+other = "{{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_show_breadcrumb]
+description = "編集提案詳細のパンくずリスト（編集提案一覧へのリンク）"
+other = "編集提案"
+
+[suggestion_show_status_draft]
+description = "編集提案のステータス: 下書き"
+other = "下書き"
+
+[suggestion_show_status_open]
+description = "編集提案のステータス: オープン"
+other = "オープン"
+
+[suggestion_show_status_applied]
+description = "編集提案のステータス: 反映済み"
+other = "反映済み"
+
+[suggestion_show_status_closed]
+description = "編集提案のステータス: クローズ"
+other = "クローズ"
+
+[suggestion_show_conversation_tab]
+description = "編集提案詳細の会話タブ"
+other = "会話"
+
+[suggestion_show_changed_pages_tab]
+description = "編集提案詳細の編集したページタブ"
+other = "編集したページ"
+
+[suggestion_show_no_body]
+description = "編集提案の本文が空のときに表示するテキスト"
+other = "本文はありません"
+
+# 編集提案コメント
+
+[validation_suggestion_comment_body_required]
+description = "編集提案コメント本文必須エラー"
+other = "コメントを入力してください"
+
+[validation_suggestion_comment_body_too_long]
+description = "編集提案コメント本文文字数超過エラー"
+other = "コメントは10000文字以内で入力してください"
+
+[suggestion_comment_body_label]
+description = "編集提案コメント本文のラベル"
+other = "コメント"
+
+[suggestion_comment_body_placeholder]
+description = "編集提案コメント本文のプレースホルダー"
+other = "コメントを入力してください"
+
+[suggestion_show_comments_heading]
+description = "編集提案詳細画面のコメント見出し"
+other = "コメント"
+
+[suggestion_show_edit_button]
+description = "編集提案詳細画面の編集ボタン"
+other = "編集する"
+
+[suggestion_show_action_description]
+description = "編集提案の反映・クローズボタンエリアの補足説明"
+other = "この提案の変更内容をトピックに反映するか、反映せずにクローズできます"
+
+[suggestion_comment_edit_action]
+description = "編集提案コメントのドロップダウンメニューの編集アクション"
+other = "編集する"
+
+[suggestion_comment_submit]
+description = "編集提案コメント送信ボタン"
+other = "コメントする"
+
+[suggestion_comment_create_success]
+description = "編集提案コメント作成成功メッセージ"
+other = "コメントを投稿しました"
+
+[suggestion_comment_edit_heading]
+description = "編集提案コメント編集画面の見出し"
+other = "コメントの編集"
+
+[suggestion_comment_edit_title]
+description = "編集提案コメント編集画面のタイトル"
+other = "コメントの編集 - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_comment_edit_body_placeholder]
+description = "編集提案コメント編集画面の本文プレースホルダー"
+other = "コメントを入力してください"
+
+[suggestion_comment_edit_submit]
+description = "編集提案コメント編集画面の送信ボタン"
+other = "更新する"
+
+[suggestion_comment_update_success]
+description = "編集提案コメント更新成功メッセージ"
+other = "コメントを更新しました"
+
+# 編集提案反映
+
+[suggestion_apply_button]
+description = "編集提案反映ボタン"
+other = "反映する"
+
+[suggestion_apply_success]
+description = "編集提案反映成功メッセージ"
+other = "編集提案を反映しました"
+
+[suggestion_apply_error]
+description = "編集提案反映エラーメッセージ"
+other = "編集提案の反映に失敗しました"
+
+[suggestion_apply_page_error]
+description = "編集提案反映バリデーションエラーのページ名プレフィックス（{{.PageTitle}} は templ 側の自動エスケープ後に挿入される）"
+other = "ページ「{{.PageTitle}}」: "
+
+[error_suggestion_conflict_during_apply]
+description = "編集提案反映中に競合ページの状態が変わった場合のエラー"
+other = "反映中にページの状態が変わりました。再度お試しください"
+
+# 編集提案クローズ
+
+[suggestion_close_button]
+description = "編集提案クローズボタン"
+other = "クローズする"
+
+[suggestion_close_success]
+description = "編集提案クローズ成功メッセージ"
+other = "編集提案をクローズしました"
+
+[suggestion_close_error]
+description = "編集提案クローズエラーメッセージ"
+other = "編集提案のクローズに失敗しました"
+
+# 差分表示
+[diff_no_changes]
+description = "差分がない場合のメッセージ"
+other = "本文に変更はありません"
+
+[suggestion_diff_title_change]
+description = "編集提案のタイトル変更ラベル"
+other = "タイトルの変更"
+
+[suggestion_change_add_page_button]
+description = "変更差分画面のページ追加ボタン"
+other = "ページを追加する"
+
+[suggestion_change_remove_page_button]
+description = "変更差分画面のページ削除ボタン"
+other = "削除する"
+
+[suggestion_change_remove_page_confirm]
+description = "変更差分画面のページ削除確認ダイアログ"
+other = "このページを編集提案から削除しますか？\n(編集提案から削除しても下書きは残り続けます)"
+
+# 編集提案ページ編集
+[suggestion_page_edit_button]
+description = "編集提案の変更差分画面の編集ボタン"
+other = "編集する"
+
+[suggestion_page_edit_confirm_title]
+description = "編集提案ページ編集の確認画面タイトル"
+other = "下書きの確認 | {{.SpaceName}}"
+
+[suggestion_page_edit_confirm_heading]
+description = "編集提案ページ編集の確認画面見出し"
+other = "既存の下書きがあります"
+
+[suggestion_page_edit_confirm_message]
+description = "編集提案ページ編集の確認画面メッセージ"
+other = "このページにはすでに別の下書きがあります。編集提案の内容で上書きして編集を続けるか、もとの下書きを保持するかを選択してください"
+
+[suggestion_page_edit_overwrite_button]
+description = "編集提案の内容で上書きして編集するボタン"
+other = "編集を続ける"
+
+[suggestion_page_edit_keep_draft_button]
+description = "もとの下書きを保持するボタン"
+other = "下書きを保持する"
+
+[suggestion_page_edit_error_not_open]
+description = "編集提案がオープンでないため編集を開始できないエラーメッセージ"
+other = "この編集提案はオープンではないため、編集を開始できません"
+
+# 日時表示
+[datetime_just_now]
+description = "1分未満の相対時間"
+other = "たった今"
+
+[datetime_minutes_ago]
+description = "N分前の相対時間"
+other = "{{.Count}}分前"
+
+[datetime_hours_ago]
+description = "N時間前の相対時間"
+other = "{{.Count}}時間前"
+
+[datetime_days_ago]
+description = "N日前の相対時間"
+other = "{{.Count}}日前"
+
+[validation_suggestion_page_draft_page_not_found]
+description = "編集提案ページ追加時に下書きページが見つからないエラー"
+other = "選択された下書きページが見つかりません"
+
+[validation_suggestion_page_already_exists]
+description = "編集提案に同じページが既に含まれているエラー"
+other = "このページは既に編集提案に含まれています"

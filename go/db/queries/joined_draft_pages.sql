@@ -36,6 +36,7 @@ SELECT
   p.number AS page_number,
   t.id AS topic_id,
   t.name AS topic_name,
+  t.number AS topic_number,
   t.visibility AS topic_visibility,
   s.id AS space_id,
   s.identifier AS space_identifier,

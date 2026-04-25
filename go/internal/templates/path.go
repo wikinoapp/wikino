@@ -1,6 +1,11 @@
 package templates
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
 
 // Path はURLのパスを表す型です
 type Path string
@@ -20,13 +25,18 @@ func TopicPath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
 
+// TopicSettingsPath はトピック設定のパスを生成します
+func TopicSettingsPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
+}
+
 // NewPagePath はページ新規作成のパスを生成します
 func NewPagePath(spaceIdentifier string, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/pages/new", spaceIdentifier, topicNumber))
 }
 
 // PagePath はページのパスを生成します
-func PagePath(spaceIdentifier string, pageNumber int32) Path {
+func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d", spaceIdentifier, pageNumber))
 }
 
@@ -83,6 +93,81 @@ func PageEditPath(spaceIdentifier string, pageNumber int32) Path {
 // PageMovePath はページ移動のパスを生成します
 func PageMovePath(spaceIdentifier string, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
+}
+
+// SuggestionListPath は編集提案一覧のパスを生成します
+func SuggestionListPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))
+}
+
+// SuggestionShowPath は編集提案詳細のパスを生成します
+func SuggestionShowPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionNewPath は編集提案作成のパスを生成します
+func SuggestionNewPath(spaceIdentifier string, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions/new", spaceIdentifier, topicNumber))
+}
+
+// SuggestionChangesPath は編集提案の変更差分のパスを生成します
+func SuggestionChangesPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/changes", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionApplyPath は編集提案反映のパスを生成します
+func SuggestionApplyPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/apply", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionClosePath は編集提案クローズのパスを生成します
+func SuggestionClosePath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/close", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionCommentsPath は編集提案コメント作成のパスを生成します
+func SuggestionCommentsPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionPageEditsPath は編集提案ページの編集開始のパスを生成します
+func SuggestionPageEditsPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionPageEditShowPath は編集提案ページ編集の確認画面のパスを生成します
+func SuggestionPageEditShowPath(spaceIdentifier string, suggestionNumber int32, suggestionPageID string) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/page_edits/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
+}
+
+// SuggestionEditPath は編集提案編集のパスを生成します
+func SuggestionEditPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/edit", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionCommentPath は編集提案コメントのパスを生成します
+func SuggestionCommentPath(spaceIdentifier string, suggestionNumber int32, commentNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments/%d", spaceIdentifier, suggestionNumber, commentNumber))
+}
+
+// SuggestionCommentEditPath は編集提案コメント編集のパスを生成します
+func SuggestionCommentEditPath(spaceIdentifier string, suggestionNumber int32, commentNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/comments/%d/edit", spaceIdentifier, suggestionNumber, commentNumber))
+}
+
+// SuggestionPagePath は編集提案ページのパスを生成します
+func SuggestionPagePath(spaceIdentifier string, suggestionNumber int32, suggestionPageID string) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages/%s", spaceIdentifier, suggestionNumber, url.PathEscape(suggestionPageID)))
+}
+
+// SuggestionPagesPath は編集提案ページ一覧のパスを生成します
+func SuggestionPagesPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages", spaceIdentifier, suggestionNumber))
+}
+
+// SuggestionPageNewPath は編集提案ページ追加のパスを生成します
+func SuggestionPageNewPath(spaceIdentifier string, suggestionNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/suggestions/%d/suggestion_pages/new", spaceIdentifier, suggestionNumber))
 }
 
 // DraftsPath は下書き一覧のパスを生成します

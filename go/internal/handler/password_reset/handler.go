@@ -4,7 +4,6 @@ package password_reset
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -15,7 +14,6 @@ type Handler struct {
 	cfg                *config.Config
 	sessionMgr         *session.Manager
 	flashMgr           *session.FlashManager
-	userRepo           *repository.UserRepository
 	limiter            *ratelimit.Limiter
 	turnstileVerifier  turnstile.Verifier
 	createTokenUsecase *usecase.CreatePasswordResetTokenUsecase
@@ -26,7 +24,6 @@ func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
 	flashMgr *session.FlashManager,
-	userRepo *repository.UserRepository,
 	limiter *ratelimit.Limiter,
 	turnstileVerifier turnstile.Verifier,
 	createTokenUsecase *usecase.CreatePasswordResetTokenUsecase,
@@ -35,7 +32,6 @@ func NewHandler(
 		cfg:                cfg,
 		sessionMgr:         sessionMgr,
 		flashMgr:           flashMgr,
-		userRepo:           userRepo,
 		limiter:            limiter,
 		turnstileVerifier:  turnstileVerifier,
 		createTokenUsecase: createTokenUsecase,

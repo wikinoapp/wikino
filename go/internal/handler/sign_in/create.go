@@ -7,8 +7,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/redirect"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -31,9 +31,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	turnstileToken := r.FormValue("cf-turnstile-response")
 	backURL := r.FormValue("back")
 
-	// CSRFトークンを取得
-	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
 	// Turnstile検証
 	valid, err := h.turnstileVerifier.Verify(ctx, turnstileToken)
 	if err != nil {
@@ -41,53 +38,28 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if !valid {
 		slog.WarnContext(ctx, "Turnstile検証に失敗", "email", email)
-		formErrors := session.NewFormErrors()
-		formErrors.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
-		h.renderSignInForm(w, r, formErrors, csrfToken, email, backURL)
+		ve := model.NewValidationError()
+		ve.AddGlobal(i18n.T(ctx, "validation_email_or_password_invalid"))
+		h.renderSignInForm(w, r, ve, email, backURL)
 		return
 	}
 
-	// バリデーション（形式チェック + DB検証）
-	result := h.validator.Validate(ctx, CreateValidatorInput{
-		Email:    email,
-		Password: password,
-	})
-	if result.FormErrors != nil && result.FormErrors.HasErrors() {
-		// バリデーションエラー
-		h.renderSignInForm(w, r, result.FormErrors, csrfToken, email, backURL)
-		return
-	}
-	if result.Err != nil {
-		// システムエラー
-		slog.ErrorContext(ctx, "バリデーションでエラー", "error", result.Err, "email", email)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	user := result.User
-
-	// 二要素認証が有効かチェック
-	twoFactorAuth, err := h.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "二要素認証設定の取得でエラー", "error", err, "user_id", user.ID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if twoFactorAuth != nil {
-		// 二要素認証が有効な場合はペンディングユーザーIDをCookieに設定し、2FAページにリダイレクト
-		h.sessionMgr.SetPendingUserCookie(w, user.ID)
-		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)
-		return
-	}
-
-	// セッションを作成
-	output, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
-		UserID:    user.ID,
+	// UseCase を実行
+	output, err := h.signInUC.Execute(ctx, usecase.CreateSignInInput{
+		Email:     email,
+		Password:  password,
 		IPAddress: clientip.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "セッション作成でエラー", "error", err, "user_id", user.ID)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		h.handleCreateError(w, r, err, email, backURL)
+		return
+	}
+
+	// 二要素認証が必要な場合
+	if output.TwoFactorRequired {
+		h.sessionMgr.SetPendingUserCookie(w, output.UserID)
+		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)
 		return
 	}
 
@@ -102,9 +74,23 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
-// renderSignInForm はログインフォームをエラー付きでレンダリングします
-func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formErrors *session.FormErrors, csrfToken string, email string, backURL string) {
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, email string, backURL string) {
 	ctx := r.Context()
+
+	if ve := model.AsValidationError(err); ve != nil {
+		h.renderSignInForm(w, r, ve, email, backURL)
+		return
+	}
+
+	slog.ErrorContext(ctx, "ログイン処理に失敗", "error", err)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+}
+
+// renderSignInForm はログインフォームをエラー付きでレンダリングします
+func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, email string, backURL string) {
+	ctx := r.Context()
+
+	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_title")
@@ -112,7 +98,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, formE
 	content := signinpages.New(signinpages.NewPageData{
 		CSRFToken:        csrfToken,
 		TurnstileSiteKey: h.cfg.TurnstileSiteKey,
-		FormErrors:       formErrors,
+		FormErrors:       ve,
 		BackURL:          backURL,
 	})
 

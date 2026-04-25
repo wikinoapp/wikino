@@ -16,6 +16,10 @@ other = "Error"
 [back_to_home]
 other = "Back to Home"
 
+[form_optional]
+description = "Label for optional form fields"
+other = "Optional"
+
 # Sign in
 [sign_in_title]
 other = "Sign in"
@@ -189,6 +193,10 @@ other = "The confirmation code has expired. Please try again"
 
 [validation_confirmation_not_found]
 other = "Confirmation not found. Please try again"
+
+[validation_confirmation_already_succeeded]
+description = "Error when confirmation is already completed"
+other = "This confirmation has already been completed"
 
 # Account creation
 [account_new_title]
@@ -369,17 +377,35 @@ other = "Write simply in Markdown"
 [welcome_feature_markdown_description]
 other = "Write documents in Markdown format with a clean, plain text editor."
 
+[welcome_feature_markdown_help_title]
+other = "About Markdown syntax in Wikino"
+
 [welcome_feature_wikilink_title]
 other = "Easily connect pages"
 
 [welcome_feature_wikilink_description]
 other = "Wrap a page title with our link syntax to create and link to that page."
 
+[welcome_feature_wikilink_help_title]
+other = "About Wiki link syntax"
+
 [welcome_feature_backlinks_title]
 other = "See the connections"
 
 [welcome_feature_backlinks_description]
 other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
+
+[welcome_feature_backlinks_help_title]
+other = "About page connections"
+
+[welcome_feature_suggestion_title]
+other = "Propose and review changes"
+
+[welcome_feature_suggestion_description]
+other = "Instead of editing directly, submit changes as a suggestion and apply them after a review through comments."
+
+[welcome_feature_suggestion_help_title]
+other = "About suggestions"
 
 [welcome_feature_publish_title]
 other = "Publish and share your pages"
@@ -389,6 +415,9 @@ other = "Make your pages public and share them with others."
 
 [welcome_feature_publish_note]
 other = "* Private spaces are currently free but will become a paid feature in the future."
+
+[welcome_feature_publish_help_title]
+other = "About topics"
 
 [welcome_cta_title]
 other = "Get Started with Wikino"
@@ -490,7 +519,7 @@ other = "Privacy Policy"
 # Page edit
 [page_edit_title]
 description = "Page edit screen title"
-other = "Edit Page"
+other = "Edit Page | {{.SpaceName}}"
 
 [page_edit_title_label]
 description = "Label for the page title input field"
@@ -544,9 +573,21 @@ other = "Backlinks"
 description = "Label for the save draft button"
 other = "Save Draft"
 
+[page_edit_save_draft_and_create_suggestion_button]
+description = "Label for the save draft and create suggestion button"
+other = "Save Draft and Create Suggestion..."
+
 [page_edit_draft_saved_time]
 description = "Auto-saved time display"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
+
+[page_edit_suggestion_editing]
+description = "Message shown when editing a page for a suggestion"
+other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion #{{.Number}}</a>"
+
+[page_edit_update_suggestion_button]
+description = "Label for the update suggestion button"
+other = "Update Suggestion"
 
 # Page publish validation
 [validation_page_title_required]
@@ -583,10 +624,55 @@ other = "Page saved."
 description = "Draft page saved success message"
 other = "Draft saved."
 
+# Suggestion page update success
+[flash_suggestion_page_updated]
+description = "Suggestion page updated success message"
+other = "Suggestion updated."
+
+[flash_suggestion_page_added]
+description = "Suggestion page added success message"
+other = "Page added."
+
+[flash_suggestion_page_removed]
+description = "Suggestion page removed success message"
+other = "Page removed."
+
+[error_suggestion_page_remove_last_page]
+description = "Cannot remove last page from suggestion error"
+other = "A suggestion must have at least one page."
+
+[suggestion_page_new_title]
+description = "Add suggestion page title"
+other = "Add Page | {{.SpaceName}}"
+
+[suggestion_page_new_heading]
+description = "Add suggestion page heading"
+other = "Add Page"
+
+[suggestion_page_new_draft_pages_label]
+description = "Draft pages selection label for adding suggestion page"
+other = "Draft pages to add"
+
+[suggestion_page_new_no_draft_pages]
+description = "Message when no draft pages available to add"
+other = "No draft pages available to add."
+
+[suggestion_page_new_submit]
+description = "Add suggestion page submit button"
+other = "Add"
+
+[suggestion_page_new_cancel]
+description = "Cancel link on add suggestion page"
+other = "Cancel"
+
+[error_suggestion_page_update_conflict]
+description = "Conflict error when updating suggestion page"
+other = "Could not update the suggestion because the draft was not found."
+
 # Page move
 [page_move_title]
 description = "Page move screen title"
-other = "Move Page"
+other = "Move Page | {{.SpaceName}}"
 
 [page_move_heading]
 description = "Page move screen heading"
@@ -644,6 +730,10 @@ other = "You do not have permission to create pages in the destination topic."
 description = "Title exists in destination topic error"
 other = "A page with the same title already exists in the destination topic."
 
+[page_move_error_open_suggestion_exists]
+description = "Cannot move page referenced by open suggestion error"
+other = "Pages referenced by open suggestions cannot be moved."
+
 [draft_page_index_title]
 description = "Draft page index page title"
 other = "Draft Pages"
@@ -667,3 +757,433 @@ other = "Modified"
 [draft_page_index_untitled]
 description = "Untitled draft page"
 other = "Untitled"
+
+[draft_page_index_create_suggestion_button]
+description = "Create suggestion button on draft page index"
+other = "New suggestion"
+
+# Bottom navigation
+[bottom_nav_menu]
+description = "Menu button in the bottom navigation"
+other = "Menu"
+
+[bottom_nav_home]
+description = "Home button in the bottom navigation"
+other = "Home"
+
+[bottom_nav_search]
+description = "Search button in the bottom navigation"
+other = "Search"
+
+[bottom_nav_sign_in]
+description = "Sign in button in the bottom navigation"
+other = "Sign in"
+
+# Topic show
+[topic_show_title]
+description = "Topic show page title ({topic_name} | {space_name} format)"
+other = "{{.TopicName}} | {{.SpaceName}}"
+
+[topic_show_no_pages_message]
+description = "Message when there are no pages in the topic"
+other = "No pages"
+
+[topic_show_no_pages_description]
+description = "Description when there are no pages in the topic"
+other = "Create your first page."
+
+[topic_show_new_page]
+description = "New page button on the topic show page"
+other = "New page"
+
+[topic_show_settings]
+description = "Topic settings link on the topic show page"
+other = "Topic settings"
+
+[topic_show_tab_pages]
+description = "Pages tab label on the topic show page"
+other = "Pages"
+
+[topic_show_tab_suggestions]
+description = "Suggestions tab label on the topic show page"
+other = "Suggestions"
+
+# Pagination
+[pagination_previous]
+description = "Link to the previous page in pagination"
+other = "Prev"
+
+[pagination_next]
+description = "Link to the next page in pagination"
+other = "Next"
+
+# 404 error page
+[error_not_found_title]
+description = "404 error page title"
+other = "Page Not Found | Wikino"
+
+[error_not_found_message]
+description = "404 error page message"
+other = "The page you are looking for could not be found"
+
+[error_email_not_confirmed]
+description = "Error message when email is not confirmed"
+other = "Email has not been confirmed"
+
+[error_not_found_back_to_top]
+description = "404 error page link to top page"
+other = "Back to top page"
+
+# Suggestions
+[suggestion_index_title]
+description = "Suggestion list page title"
+other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_index_heading]
+description = "Suggestion list heading"
+other = "Suggestions"
+
+[suggestion_index_subtitle_html]
+description = "Suggestion list subtitle (includes help page link)"
+other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
+
+[suggestion_index_breadcrumb]
+description = "Suggestion list breadcrumb"
+other = "Suggestions"
+
+[suggestion_index_open_tab]
+description = "Suggestion list open tab"
+other = "Open"
+
+[suggestion_index_closed_tab]
+description = "Suggestion list closed tab"
+other = "Closed"
+
+[suggestion_index_opened_by]
+description = "Suggestion author display"
+other = "by"
+
+[suggestion_index_no_open]
+description = "Message when no open suggestions"
+other = "No open suggestions"
+
+[suggestion_index_no_closed]
+description = "Message when no closed suggestions"
+other = "No closed suggestions"
+
+# Suggestion validation
+
+[validation_suggestion_title_required]
+description = "Suggestion title required error"
+other = "Please enter a title"
+
+[validation_suggestion_title_too_long]
+description = "Suggestion title too long error"
+other = "Title must be 200 characters or less"
+
+[validation_suggestion_draft_pages_required]
+description = "Draft pages not selected error"
+other = "Please select at least one draft page"
+
+[validation_suggestion_draft_page_not_found]
+description = "Draft page not found error"
+other = "Selected draft page was not found"
+
+[validation_suggestion_draft_page_already_linked]
+description = "Draft page already linked to another suggestion error"
+other = "The selected draft page is already used in another suggestion"
+
+[validation_suggestion_body_too_long]
+description = "Suggestion body too long error"
+other = "Body must be 10000 characters or less"
+
+# Suggestion creation
+
+[suggestion_new_title]
+description = "Suggestion creation page title"
+other = "New Suggestion | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_new_heading]
+description = "Suggestion creation heading"
+other = "New Suggestion"
+
+[suggestion_new_breadcrumb]
+description = "Suggestion creation breadcrumb (link to suggestion list)"
+other = "Suggestions"
+
+[suggestion_new_title_label]
+description = "Suggestion title label"
+other = "Title"
+
+[suggestion_new_title_placeholder]
+description = "Suggestion title placeholder"
+other = "Briefly describe your changes"
+
+[suggestion_new_body_label]
+description = "Suggestion body label"
+other = "Body"
+
+[suggestion_new_body_placeholder]
+description = "Suggestion body placeholder"
+other = "Describe the reason and context for your changes"
+
+[suggestion_new_draft_pages_label]
+description = "Draft pages selection label"
+other = "Select draft pages"
+
+[suggestion_new_no_draft_pages]
+description = "Message when no draft pages available"
+other = "No draft pages in this topic"
+
+[suggestion_new_submit]
+description = "Suggestion creation submit button"
+other = "Create"
+
+[suggestion_new_cancel]
+description = "Cancel link on suggestion creation page"
+other = "Cancel"
+
+[suggestion_create_success]
+description = "Suggestion creation success message"
+other = "Suggestion has been created"
+
+# Suggestion edit
+
+[suggestion_edit_title]
+description = "Suggestion edit page title"
+other = "Edit - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_edit_heading]
+description = "Suggestion edit page heading"
+other = "Edit Suggestion"
+
+[suggestion_edit_title_label]
+description = "Suggestion edit title label"
+other = "Title"
+
+[suggestion_edit_body_label]
+description = "Suggestion edit body label"
+other = "Body"
+
+[suggestion_edit_submit]
+description = "Suggestion edit submit button"
+other = "Update"
+
+[suggestion_edit_cancel]
+description = "Cancel link on suggestion edit page"
+other = "Cancel"
+
+[suggestion_update_success]
+description = "Suggestion update success message"
+other = "Suggestion has been updated"
+
+# Suggestion detail
+
+[suggestion_show_title]
+description = "Suggestion detail page title"
+other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_show_breadcrumb]
+description = "Suggestion detail breadcrumb (link to suggestion list)"
+other = "Suggestions"
+
+[suggestion_show_status_draft]
+description = "Suggestion status: draft"
+other = "Draft"
+
+[suggestion_show_status_open]
+description = "Suggestion status: open"
+other = "Open"
+
+[suggestion_show_status_applied]
+description = "Suggestion status: applied"
+other = "Applied"
+
+[suggestion_show_status_closed]
+description = "Suggestion status: closed"
+other = "Closed"
+
+[suggestion_show_conversation_tab]
+description = "Suggestion detail conversation tab"
+other = "Conversation"
+
+[suggestion_show_changed_pages_tab]
+description = "Suggestion detail changed pages tab"
+other = "Changed pages"
+
+[suggestion_show_no_body]
+description = "Text displayed when suggestion body is empty"
+other = "No description provided"
+
+# Suggestion comments
+
+[validation_suggestion_comment_body_required]
+description = "Suggestion comment body required error"
+other = "Please enter a comment"
+
+[validation_suggestion_comment_body_too_long]
+description = "Suggestion comment body too long error"
+other = "Comment must be 10000 characters or less"
+
+[suggestion_comment_body_label]
+description = "Suggestion comment body label"
+other = "Comment"
+
+[suggestion_comment_body_placeholder]
+description = "Suggestion comment body placeholder"
+other = "Write a comment"
+
+[suggestion_show_comments_heading]
+description = "Comments heading on suggestion detail page"
+other = "Comments"
+
+[suggestion_show_edit_button]
+description = "Edit button on suggestion detail page"
+other = "Edit"
+
+[suggestion_show_action_description]
+description = "Description text for suggestion apply/close action area"
+other = "You can apply the changes from this suggestion to the topic, or close it."
+
+[suggestion_comment_edit_action]
+description = "Edit action in suggestion comment dropdown menu"
+other = "Edit"
+
+[suggestion_comment_submit]
+description = "Suggestion comment submit button"
+other = "Comment"
+
+[suggestion_comment_create_success]
+description = "Suggestion comment creation success message"
+other = "Comment has been posted"
+
+[suggestion_comment_edit_heading]
+description = "Suggestion comment edit page heading"
+other = "Edit comment"
+
+[suggestion_comment_edit_title]
+description = "Suggestion comment edit page title"
+other = "Edit Comment - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_comment_edit_body_placeholder]
+description = "Suggestion comment edit body placeholder"
+other = "Write a comment"
+
+[suggestion_comment_edit_submit]
+description = "Suggestion comment edit submit button"
+other = "Update"
+
+[suggestion_comment_update_success]
+description = "Suggestion comment update success message"
+other = "Comment has been updated"
+
+# Suggestion apply
+
+[suggestion_apply_button]
+description = "Suggestion apply button"
+other = "Apply"
+
+[suggestion_apply_success]
+description = "Suggestion apply success message"
+other = "Suggestion has been applied"
+
+[suggestion_apply_error]
+description = "Suggestion apply error message"
+other = "Failed to apply suggestion"
+
+[suggestion_apply_page_error]
+description = "Suggestion apply validation error page name prefix ({{.PageTitle}} is inserted after templ auto-escape)"
+other = "Page \"{{.PageTitle}}\": "
+
+[error_suggestion_conflict_during_apply]
+description = "Error when a page state changes during suggestion apply"
+other = "Page state changed during apply. Please try again."
+
+# Suggestion close
+
+[suggestion_close_button]
+description = "Suggestion close button"
+other = "Close"
+
+[suggestion_close_success]
+description = "Suggestion close success message"
+other = "Suggestion has been closed"
+
+[suggestion_close_error]
+description = "Suggestion close error message"
+other = "Failed to close suggestion"
+
+# Diff view
+[diff_no_changes]
+description = "Message when there are no changes"
+other = "No changes in body"
+
+[suggestion_diff_title_change]
+description = "Suggestion title change label"
+other = "Title change"
+
+[suggestion_change_add_page_button]
+description = "Add page button on suggestion changes page"
+other = "Add page"
+
+[suggestion_change_remove_page_button]
+description = "Remove page button on suggestion changes page"
+other = "Remove"
+
+[suggestion_change_remove_page_confirm]
+description = "Confirmation dialog for removing a page from suggestion"
+other = "Remove this page from the suggestion?\n(Your draft will remain)"
+
+# Suggestion page edit
+[suggestion_page_edit_button]
+description = "Edit button on suggestion changes page"
+other = "Edit"
+
+[suggestion_page_edit_confirm_title]
+description = "Suggestion page edit confirmation page title"
+other = "Draft confirmation | {{.SpaceName}}"
+
+[suggestion_page_edit_confirm_heading]
+description = "Suggestion page edit confirmation heading"
+other = "An existing draft is present"
+
+[suggestion_page_edit_confirm_message]
+description = "Suggestion page edit confirmation message"
+other = "This page already has another draft. Choose whether to overwrite it with the suggestion content and continue editing, or keep your existing draft."
+
+[suggestion_page_edit_overwrite_button]
+description = "Button to overwrite with suggestion content"
+other = "Continue with suggestion content"
+
+[suggestion_page_edit_keep_draft_button]
+description = "Button to keep existing draft"
+other = "Keep existing draft"
+
+[suggestion_page_edit_error_not_open]
+description = "Error message when suggestion is not open for editing"
+other = "This suggestion is not open, so editing cannot be started"
+
+# Datetime display
+[datetime_just_now]
+description = "Relative time for less than 1 minute"
+other = "just now"
+
+[datetime_minutes_ago]
+description = "Relative time for N minutes ago"
+other = "{{.Count}} minutes ago"
+
+[datetime_hours_ago]
+description = "Relative time for N hours ago"
+other = "{{.Count}} hours ago"
+
+[datetime_days_ago]
+description = "Relative time for N days ago"
+other = "{{.Count}} days ago"
+
+[validation_suggestion_page_draft_page_not_found]
+description = "Draft page not found when adding a suggestion page"
+other = "The selected draft page was not found"
+
+[validation_suggestion_page_already_exists]
+description = "Page already included in the suggestion"
+other = "This page is already included in the suggestion"

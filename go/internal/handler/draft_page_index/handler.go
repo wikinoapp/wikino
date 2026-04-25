@@ -3,30 +3,30 @@ package draft_page_index
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Handler は下書き一覧ハンドラー
 type Handler struct {
-	cfg           *config.Config
-	flashMgr      *session.FlashManager
-	draftPageRepo *repository.DraftPageRepository
-	sidebarHelper *sidebar.Helper
+	cfg             *config.Config
+	flashMgr        *session.FlashManager
+	getDraftPagesUC *usecase.GetDraftPagesUsecase
+	sidebarHelper   *sidebar.Helper
 }
 
 // NewHandler は新しい下書き一覧ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
-	draftPageRepo *repository.DraftPageRepository,
+	getDraftPagesUC *usecase.GetDraftPagesUsecase,
 	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
-		cfg:           cfg,
-		flashMgr:      flashMgr,
-		draftPageRepo: draftPageRepo,
-		sidebarHelper: sidebarHelper,
+		cfg:             cfg,
+		flashMgr:        flashMgr,
+		getDraftPagesUC: getDraftPagesUC,
+		sidebarHelper:   sidebarHelper,
 	}
 }

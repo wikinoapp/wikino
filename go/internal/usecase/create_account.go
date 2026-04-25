@@ -3,14 +3,15 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // CreateAccountUsecase はアカウント作成ユースケース
@@ -19,6 +20,7 @@ type CreateAccountUsecase struct {
 	emailConfirmationRepo *repository.EmailConfirmationRepository
 	userRepo              *repository.UserRepository
 	userPasswordRepo      *repository.UserPasswordRepository
+	createValidator       *validator.AccountCreateValidator
 }
 
 // NewCreateAccountUsecase は CreateAccountUsecase を生成する
@@ -27,19 +29,20 @@ func NewCreateAccountUsecase(
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
+	createValidator *validator.AccountCreateValidator,
 ) *CreateAccountUsecase {
 	return &CreateAccountUsecase{
 		db:                    db,
 		emailConfirmationRepo: emailConfirmationRepo,
 		userRepo:              userRepo,
 		userPasswordRepo:      userPasswordRepo,
+		createValidator:       createValidator,
 	}
 }
 
 // CreateAccountInput はアカウント作成の入力パラメータ
 type CreateAccountInput struct {
 	EmailConfirmationID string
-	Email               string
 	Atname              string
 	Password            string
 	Locale              model.Locale
@@ -51,15 +54,54 @@ type CreateAccountOutput struct {
 	UserID model.UserID
 }
 
-// エラー定義
-var (
-	// ErrEmailNotConfirmed はメール確認が完了していない場合のエラー
-	ErrEmailNotConfirmed = errors.New("メール確認が完了していません")
-)
-
 // Execute はアカウントを作成する
 func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
-	// トランザクションを開始
+	// 1. データ取得
+	emailConfirmation, err := uc.fetchEmailConfirmation(ctx, input.EmailConfirmationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. バリデーション
+	if err := uc.createValidator.Validate(ctx, validator.AccountCreateValidatorInput{
+		Atname:   input.Atname,
+		Password: input.Password,
+	}); err != nil {
+		return nil, err
+	}
+
+	// 3. 永続化
+	return uc.createAccount(ctx, emailConfirmation, input)
+}
+
+func (uc *CreateAccountUsecase) fetchEmailConfirmation(ctx context.Context, emailConfirmationID string) (*model.EmailConfirmation, error) {
+	emailConfirmation, err := uc.emailConfirmationRepo.FindByID(ctx, emailConfirmationID)
+	if err != nil {
+		return nil, fmt.Errorf("メール確認情報の取得に失敗しました: %w", err)
+	}
+	if emailConfirmation == nil {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
+	if !emailConfirmation.IsSucceeded() {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeConflict,
+			UserMsg: i18n.T(ctx, "error_email_not_confirmed"),
+		}
+	}
+
+	return emailConfirmation, nil
+}
+
+func (uc *CreateAccountUsecase) createAccount(ctx context.Context, emailConfirmation *model.EmailConfirmation, input CreateAccountInput) (*CreateAccountOutput, error) {
+	passwordDigest, err := hashPassword(input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("パスワードのハッシュ化に失敗しました: %w", err)
+	}
+
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -68,30 +110,12 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 		_ = tx.Rollback()
 	}()
 
-	// トランザクション内で操作するためのリポジトリを取得
-	emailConfirmationRepo := uc.emailConfirmationRepo.WithTx(tx)
 	userRepo := uc.userRepo.WithTx(tx)
 	userPasswordRepo := uc.userPasswordRepo.WithTx(tx)
 
-	// メール確認が完了しているかチェック
-	confirmation, err := emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)
-	if err != nil {
-		return nil, fmt.Errorf("メール確認情報の取得に失敗しました: %w", err)
-	}
-	if confirmation == nil || !confirmation.IsSucceeded() {
-		return nil, ErrEmailNotConfirmed
-	}
-
-	// パスワードをbcryptでハッシュ化
-	passwordDigest, err := hashPassword(input.Password)
-	if err != nil {
-		return nil, fmt.Errorf("パスワードのハッシュ化に失敗しました: %w", err)
-	}
-
-	// ユーザーを作成
 	now := time.Now()
 	user, err := userRepo.Create(ctx, repository.CreateUserInput{
-		Email:       input.Email,
+		Email:       emailConfirmation.Email,
 		Atname:      input.Atname,
 		Name:        "",
 		Description: "",
@@ -103,7 +127,6 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 		return nil, fmt.Errorf("ユーザーの作成に失敗しました: %w", err)
 	}
 
-	// ユーザーパスワードを作成
 	_, err = userPasswordRepo.Create(ctx, repository.CreateUserPasswordInput{
 		UserID:         user.ID,
 		PasswordDigest: passwordDigest,
@@ -112,7 +135,6 @@ func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccount
 		return nil, fmt.Errorf("ユーザーパスワードの作成に失敗しました: %w", err)
 	}
 
-	// トランザクションをコミット
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
 	}

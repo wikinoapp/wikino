@@ -6,16 +6,16 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 
+	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はページレベルのバックリンク一覧をSSEフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
+// Show はページレベルのバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -32,57 +32,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// スペースを取得
-	space, err := h.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if space == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// スペースメンバーを取得
-	spaceMember, err := h.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, user.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "スペースメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if spaceMember == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// ページを取得
-	pg, err := h.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
-	if err != nil {
-		slog.ErrorContext(ctx, "ページの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if pg == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	// トピックメンバーを取得してTopicPolicyを生成
-	topicMember, err := h.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックメンバーの取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	topicPolicy := policy.NewTopicPolicy(spaceMember, topicMember)
-	if !topicPolicy.CanUpdatePage(pg) {
-		http.NotFound(w, r)
+		handler.NotFound(w, r)
 		return
 	}
 
@@ -94,58 +44,40 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// ページレベルのバックリンクをページネーション付きで取得
-	paginatedBacklinks, err := h.pageRepo.FindBacklinkedPagesPaginated(ctx, pg.ID, space.ID, currentPage, viewmodel.PageBacklinkLimit, nil)
+	// UseCaseを実行
+	output, err := h.getPageBacklinksUC.Execute(ctx, usecase.GetPageBacklinksInput{
+		SpaceIdentifier: spaceIdentifier,
+		PageNumber:      int32(pageNumber),
+		UserID:          user.ID,
+		CurrentPage:     currentPage,
+		Limit:           viewmodel.PageBacklinkLimit,
+	})
 	if err != nil {
 		slog.ErrorContext(ctx, "ページレベルのバックリンクの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	// バックリンクページからTopicIDを収集してトピックを一括取得
-	topicIDSet := make(map[model.TopicID]struct{})
-	for _, p := range paginatedBacklinks.Pages {
-		topicIDSet[p.TopicID] = struct{}{}
-	}
-
-	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
-	for id := range topicIDSet {
-		topicIDs = append(topicIDs, id)
-	}
-
-	topics, err := h.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
-	if err != nil {
-		slog.ErrorContext(ctx, "トピックの一括取得に失敗", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if output == nil {
+		handler.NotFound(w, r)
 		return
 	}
 
-	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
-	for _, t := range topics {
-		topicMap[t.ID] = t
+	// 認可チェック
+	if !output.CanUpdatePage {
+		handler.NotFound(w, r)
+		return
 	}
 
 	backlinkListVM := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-		Pages:           paginatedBacklinks.Pages,
-		TopicMap:        topicMap,
-		Pagination:      viewmodel.NewPagination(int(currentPage), paginatedBacklinks.TotalCount, int(viewmodel.PageBacklinkLimit)),
+		Pages:           output.Backlinks,
+		TopicMap:        output.TopicMap,
+		Pagination:      viewmodel.NewPagination(int(currentPage), output.TotalCount, int(viewmodel.PageBacklinkLimit)),
 		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pg.Number),
+		PageNumber:      int32(output.Page.Number),
 	})
 
-	// SSEフラグメントとしてバックリンク一覧を送信
-	selectorID := "page-backlink-list-pagination"
-	sse := datastar.NewSSE(w, r)
-
-	if len(backlinkListVM.Items) > 0 {
-		if err := sse.PatchElementTempl(components.PageBacklinkListCards(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeBefore()); err != nil {
-			slog.ErrorContext(ctx, "バックリンクカードのSSE送信に失敗", "error", err)
-			return
-		}
-	}
-
-	if err := sse.PatchElementTempl(components.PageBacklinkListPagination(backlinkListVM), datastar.WithSelectorID(selectorID), datastar.WithModeInner()); err != nil {
-		slog.ErrorContext(ctx, "バックリンクページネーションのSSE送信に失敗", "error", err)
-		return
+	// HTMLフラグメントとしてバックリンク一覧を送信
+	if err := components.PageBacklinkListResponse(backlinkListVM).Render(ctx, w); err != nil {
+		slog.ErrorContext(ctx, "バックリンク一覧のレンダリングに失敗", "error", err)
 	}
 }

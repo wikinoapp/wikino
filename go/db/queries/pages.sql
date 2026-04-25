@@ -128,6 +128,50 @@ SET topic_id = $2, updated_at = NOW()
 WHERE id = $1 AND space_id = $3
 RETURNING *;
 
+-- name: FindPinnedPagesByTopic :many
+-- トピック内のピン留めページを取得する（公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート）
+SELECT * FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NOT NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL
+ORDER BY pinned_at DESC;
+
+-- name: FindRegularPagesByTopicPaginated :many
+-- トピック内の通常ページをオフセットページネーションで取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+SELECT * FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL
+ORDER BY modified_at DESC, id DESC
+LIMIT $3
+OFFSET $4;
+
+-- name: CountRegularPagesByTopic :one
+-- トピック内の通常ページの総件数を取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+SELECT COUNT(*)
+FROM pages
+WHERE topic_id = $1
+  AND space_id = $2
+  AND pinned_at IS NULL
+  AND published_at IS NOT NULL
+  AND discarded_at IS NULL
+  AND trashed_at IS NULL;
+
+-- name: DiscardPageByID :exec
+-- 指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = @discarded_at,
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
 -- name: CreateLinkedPage :one
 -- Wikiリンクから参照されるページを作成する
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)

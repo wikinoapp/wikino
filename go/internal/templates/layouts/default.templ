@@ -11,10 +11,10 @@ import (
 // DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
 type DefaultLayoutData struct {
 	Meta        viewmodel.PageMeta
-	Flash       *session.FlashMessage
 	HideFooter  bool
 	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
 	Sidebar     components.SidebarData
+	BottomNav   components.BottomNavData
 }
 
 // Default はデフォルトのレイアウトです
@@ -26,7 +26,7 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 		</head>
 
 		<body class="bg-background">
-			@components.Flash(data.Flash)
+			@components.Flash(session.FlashFromContext(ctx))
 
 			if !data.HideSidebar {
 				@components.Sidebar(data.Sidebar)
@@ -40,6 +40,10 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 				if !data.HideFooter {
 					@components.Footer()
 				}
+			</div>
+
+			<div class="fixed bottom-2 left-1/2 z-50 flex w-full -translate-x-1/2 flex-col items-center px-2">
+				@components.BottomNav(data.BottomNav)
 			</div>
 		</body>
 	</html>

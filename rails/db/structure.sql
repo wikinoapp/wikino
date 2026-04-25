@@ -291,7 +291,8 @@ CREATE TABLE public.space_members (
     joined_at timestamp without time zone NOT NULL,
     active boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL
 );
 
 
@@ -324,7 +325,8 @@ CREATE TABLE public.topic_members (
     joined_at timestamp without time zone NOT NULL,
     last_page_modified_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL
 );
 
 

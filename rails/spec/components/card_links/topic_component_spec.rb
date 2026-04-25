@@ -45,7 +45,7 @@ RSpec.describe CardLinks::TopicComponent, type: :view do
 
     render_inline(CardLinks::TopicComponent.new(topic:))
 
-    expect(page).not_to have_css(".text-gray-600")
+    expect(page).not_to have_css(".text-stone-600")
   end
 
   it "トピックアイコンが表示されること" do

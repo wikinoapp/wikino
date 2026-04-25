@@ -1,0 +1,197 @@
+package suggestion
+
+import (
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexData は編集提案一覧画面に渡すデータ構造体です
+type IndexData struct {
+	Space               viewmodel.Space
+	Topic               viewmodel.Topic
+	Suggestions         []viewmodel.SuggestionForList
+	OpenCount           int64
+	ClosedCount         int64
+	ShowClosed          bool
+	CanCreateSuggestion bool
+}
+
+// suggestionsPath は編集提案一覧のパスを生成します
+func (d IndexData) suggestionsPath(tab string) string {
+	base := string(templates.SuggestionListPath(d.Space.Identifier.String(), d.Topic.Number))
+	if tab == "" {
+		return base
+	}
+	return base + "?tab=" + tab
+}
+
+// Index は編集提案一覧画面のコンテンツを表示します
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+					{
+						Label: data.Space.Name,
+						Path:  templates.SpacePath(data.Space.Identifier.String()),
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6">
+					<div class="flex flex-col gap-4">
+						<div class="px-4">
+							@components.MainTitle(components.MainTitleData{
+								Title:    data.Topic.Name,
+								Subtitle: indexSubtitle(),
+								Actions:  suggestionNewButton(data),
+							})
+						</div>
+
+						<div class="px-4">
+							@components.SubNav([]components.SubNavItem{
+								{
+									Label:          templates.T(ctx, "topic_show_tab_pages"),
+									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									IconName:       "file-regular",
+									ActiveIconName: "file-fill",
+								},
+								{
+									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+									Path:           data.suggestionsPath(""),
+									IconName:       "git-pull-request-regular",
+									ActiveIconName: "git-pull-request-fill",
+									IsActive:       true,
+								},
+							})
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-2">
+						<div class="px-4">
+							@indexTabs(data)
+						</div>
+
+						if len(data.Suggestions) > 0 {
+							@components.ContentCard() {
+								@indexList(data)
+							}
+						} else {
+							<div class="px-4">
+								@indexEmptyState(data)
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// indexSubtitle は編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）を表示します
+templ indexSubtitle() {
+	@templ.Raw(templates.T(ctx, "suggestion_index_subtitle_html"))
+}
+
+// indexTabs はオープン/クローズのタブ切り替えを表示します
+templ indexTabs(data IndexData) {
+	<div class="tabs">
+		<nav class="bg-card" role="tablist" aria-orientation="horizontal">
+			<a
+				role="tab"
+				href={ templ.SafeURL(data.suggestionsPath("")) }
+				if !data.ShowClosed {
+					aria-selected="true"
+				} else {
+					aria-selected="false"
+				}
+			>
+				@templates.Icon("git-pull-request-regular", "size-4")
+				{ fmt.Sprintf("%d", data.OpenCount) }
+				{ templates.T(ctx, "suggestion_index_open_tab") }
+			</a>
+			<a
+				role="tab"
+				href={ templ.SafeURL(data.suggestionsPath("closed")) }
+				if data.ShowClosed {
+					aria-selected="true"
+				} else {
+					aria-selected="false"
+				}
+			>
+				@templates.Icon("check-regular", "size-4")
+				{ fmt.Sprintf("%d", data.ClosedCount) }
+				{ templates.T(ctx, "suggestion_index_closed_tab") }
+			</a>
+		</nav>
+	</div>
+}
+
+// indexList は編集提案のリストを表示します
+templ indexList(data IndexData) {
+	<div class="overflow-x-auto">
+		<table class="table">
+			<tbody>
+				for _, s := range data.Suggestions {
+					<tr>
+						<td>
+							<a
+								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), s.Number))) }
+								class="flex flex-col gap-1"
+							>
+								<div class="font-medium">
+									{ s.Title }
+								</div>
+								<div class="text-sm text-muted-foreground">
+									{ fmt.Sprintf("#%d", s.Number) }
+									{ templates.T(ctx, "suggestion_index_opened_by") }
+									{ s.CreatorName }
+								</div>
+							</a>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// suggestionNewButton は編集提案作成ボタンを表示します
+templ suggestionNewButton(data IndexData) {
+	if data.CanCreateSuggestion {
+		<a
+			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			class="btn-sm rounded-full"
+		>
+			@templates.Icon("git-pull-request-regular", "size-4")
+			{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+		</a>
+	}
+}
+
+// indexEmptyState は編集提案がない場合の空状態を表示します
+templ indexEmptyState(data IndexData) {
+	<div class="flex flex-col items-center gap-4 py-12 text-center">
+		@templates.Icon("git-pull-request-regular", "size-[50px] fill-muted-foreground")
+
+		<div class="flex flex-col gap-2">
+			<h2 class="text-lg font-bold">
+				if data.ShowClosed {
+					{ templates.T(ctx, "suggestion_index_no_closed") }
+				} else {
+					{ templates.T(ctx, "suggestion_index_no_open") }
+				}
+			</h2>
+		</div>
+	</div>
+}

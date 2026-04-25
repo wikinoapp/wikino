@@ -2,6 +2,7 @@ package draft_page_revision_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -26,25 +27,29 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 
 	db := testutil.GetTestDB()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	attachmentRepo := repository.NewAttachmentRepository(queries)
 
 	flashMgr := session.NewFlashManager("", false, false)
 
 	return draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
 		flashMgr,
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(queries),
-			repository.NewPageRepository(queries),
+			pageRepo,
 			repository.NewPageEditorRepository(queries),
-			repository.NewTopicRepository(queries),
-			repository.NewAttachmentRepository(queries),
+			topicRepo,
+			topicMemberRepo,
+			attachmentRepo,
 		),
 	)
 }
@@ -184,22 +189,26 @@ func TestUpdate_Success(t *testing.T) {
 		WithBody("Draft body").
 		Build()
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(q),
-		repository.NewSpaceMemberRepository(q),
-		repository.NewPageRepository(q),
-		repository.NewTopicRepository(q),
-		repository.NewTopicMemberRepository(q),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
-			repository.NewPageRepository(q),
+			pageRepo,
 			repository.NewPageEditorRepository(q),
-			repository.NewTopicRepository(q),
-			repository.NewAttachmentRepository(q),
+			topicRepo,
+			topicMemberRepo,
+			attachmentRepo,
 		),
 	)
 
@@ -262,22 +271,26 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
 	handler := draft_page_revision.NewHandler(
-		repository.NewSpaceRepository(q),
-		repository.NewSpaceMemberRepository(q),
-		repository.NewPageRepository(q),
-		repository.NewTopicRepository(q),
-		repository.NewTopicMemberRepository(q),
 		session.NewFlashManager("", false, false),
 		usecase.NewManualSaveDraftPageUsecase(
 			db,
+			spaceRepo,
+			spaceMemberRepo,
 			draftPageRepo,
 			repository.NewDraftPageRevisionRepository(q),
-			repository.NewPageRepository(q),
+			pageRepo,
 			repository.NewPageEditorRepository(q),
-			repository.NewTopicRepository(q),
-			repository.NewAttachmentRepository(q),
+			topicRepo,
+			topicMemberRepo,
+			attachmentRepo,
 		),
 	)
 
@@ -302,5 +315,95 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 	location := rr.Header().Get("Location")
 	if location != "/drafts" {
 		t.Errorf("wrong redirect location: got %v want /drafts", location)
+	}
+}
+
+func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("dpr-suggest-redir@example.com").
+		WithAtname("dprsuggestredir").
+		Build()
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("dpr-suggest-redir-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft Title").
+		WithBody("Draft body").
+		Build()
+
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	handler := draft_page_revision.NewHandler(
+		session.NewFlashManager("", false, false),
+		usecase.NewManualSaveDraftPageUsecase(
+			db,
+			spaceRepo,
+			spaceMemberRepo,
+			draftPageRepo,
+			repository.NewDraftPageRevisionRepository(q),
+			pageRepo,
+			repository.NewPageEditorRepository(q),
+			topicRepo,
+			topicMemberRepo,
+			attachmentRepo,
+		),
+	)
+
+	formData := url.Values{}
+	formData.Set("title", "Draft Title")
+	formData.Set("body", "Draft body")
+	req := newRequestWithChiParams(t, "/s/dpr-suggest-redir-sp/pages/1/draft_page_revision?redirect_to=suggestion_new", map[string]string{
+		"space_identifier": "dpr-suggest-redir-sp",
+		"page_number":      "1",
+	}, formData)
+
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+	}
+
+	location := rr.Header().Get("Location")
+	expectedLocation := fmt.Sprintf("/s/dpr-suggest-redir-sp/topics/1/suggestions/new?draft_page_ids=%s", string(draftPageID))
+	if location != expectedLocation {
+		t.Errorf("wrong redirect location: got %v, want %v", location, expectedLocation)
 	}
 }

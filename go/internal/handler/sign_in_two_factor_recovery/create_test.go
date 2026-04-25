@@ -11,16 +11,18 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestCreate_WithoutPendingUser(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -37,17 +39,13 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのリクエスト
@@ -77,7 +75,7 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -94,17 +92,13 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	testCases := []struct {
@@ -155,7 +149,7 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	q := testutil.QueriesWithTx(tx)
 	userRepo := repository.NewUserRepository(q)
@@ -172,17 +166,13 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// 空のリカバリーコードでリクエスト
@@ -219,7 +209,7 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db, tx := testutil.SetupTx(t)
 
 	// ユーザーと2FA設定を作成（リカバリーコード付き）
 	secret := "JBSWY3DPEHPK3PXP"
@@ -244,17 +234,13 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// 間違ったリカバリーコードでリクエスト
@@ -291,18 +277,18 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 func TestCreate_ValidRecoveryCode(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db := testutil.GetTestDB()
 
 	// ユーザーと2FA設定を作成（リカバリーコード付き）
 	secret := "JBSWY3DPEHPK3PXP"
 	validCode := "code1234"
 	recoveryCodes := []string{validCode, "code5678", "abcd1234"}
-	userID := testutil.NewUserBuilder(t, tx).
+	userID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("recovery-valid@example.com").
 		WithAtname("recovery_valid_user").
 		BuildWithTwoFactorAuthAndRecoveryCodes(secret, true, recoveryCodes)
 
-	q := testutil.QueriesWithTx(tx)
+	q := query.New(db)
 	userRepo := repository.NewUserRepository(q)
 	userSessionRepo := repository.NewUserSessionRepository(q)
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
@@ -317,17 +303,13 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	// 正しいリカバリーコードでリクエスト
@@ -410,17 +392,17 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
+	db := testutil.GetTestDB()
 
 	// 2FAが無効なユーザーを作成
 	secret := "JBSWY3DPEHPK3PXP"
 	recoveryCodes := []string{"code1234"}
-	userID := testutil.NewUserBuilder(t, tx).
+	userID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("2fa-disabled@example.com").
 		WithAtname("2fa_disabled_user").
 		BuildWithTwoFactorAuthAndRecoveryCodes(secret, false, recoveryCodes)
 
-	q := testutil.QueriesWithTx(tx)
+	q := query.New(db)
 	userRepo := repository.NewUserRepository(q)
 	userSessionRepo := repository.NewUserSessionRepository(q)
 	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
@@ -435,17 +417,13 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor_recovery.NewCreateValidator(userTwoFactorAuthRepo)
-	consumeRecoveryCodeUC := usecase.NewConsumeRecoveryCodeUsecase(userTwoFactorAuthRepo)
-	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		consumeRecoveryCodeUC,
-		createUserSessionUC,
+		createRecoveryCodeSessionUC,
 	)
 
 	form := url.Values{}

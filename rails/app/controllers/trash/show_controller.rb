@@ -15,7 +15,7 @@ module Trash
       space_record = current_space_record
       space_policy = space_policy_for(space_record:)
 
-      unless space_policy.can_show_trash?(space_record:)
+      unless space_policy.can_show_trash?
         return render_404
       end
 

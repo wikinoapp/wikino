@@ -74,7 +74,9 @@ func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
 		Response: token,
 	}
 
-	// JSONエンコード
+	// Turnstile siteverify API は仕様上 secret_key の送信が必須のため、
+	// reqBody.Secret を含む構造体のシリアライズに対する gosec G117 は false positive として抑制する。
+	//nolint:gosec // G117
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
 		return false, fmt.Errorf("リクエストボディのJSONエンコードに失敗しました: %w", err)

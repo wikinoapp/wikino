@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestCreate_WithoutPendingUser(t *testing.T) {
@@ -39,15 +40,14 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// ペンディングユーザーIDなしのリクエスト
@@ -94,15 +94,14 @@ func TestCreate_InvalidTOTPCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 無効な形式のTOTPコードでリクエスト
@@ -163,15 +162,14 @@ func TestCreate_InvalidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 間違ったTOTPコードでリクエスト
@@ -232,15 +230,14 @@ func TestCreate_ValidTOTPCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-	createValidator := sign_in_two_factor.NewCreateValidator(userTwoFactorAuthRepo)
+	createValidator := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 	createUserSessionUC := usecase.NewCreateUserSessionUsecase(userSessionRepo)
+	createTwoFactorSessionUC := usecase.NewCreateTwoFactorSessionUsecase(createValidator, createUserSessionUC)
 
 	handler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
-		userRepo,
-		createValidator,
-		createUserSessionUC,
+		createTwoFactorSessionUC,
 	)
 
 	// 正しいTOTPコードを生成

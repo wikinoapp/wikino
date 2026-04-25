@@ -57,7 +57,7 @@
               <%= f.text_field(:name, required: true) %>
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex justify-between gap-2">
               <%= f.button class: "btn rounded-full w-fit", type: :submit do %>
                 <%= render BaseUI::IconComponent.new(name: "paper-plane-tilt", size: "18px", class_name: "fill-primary-foreground") %>
 
@@ -65,7 +65,7 @@
               <% end %>
 
               <%= link_to t("nouns.cancel"), home_path, {
-                class: "btn-ghost rounded-full w-fit"
+                class: "btn-outline rounded-full w-fit"
               } %>
             </div>
           <% end %>

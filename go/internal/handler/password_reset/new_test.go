@@ -47,7 +47,6 @@ func TestNew_Success(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase
@@ -116,7 +115,6 @@ func TestNew_I18n_Japanese(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase
@@ -184,7 +182,6 @@ func TestNew_I18n_English(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		userRepo,
 		nil, // limiter
 		nil, // turnstileVerifier
 		nil, // createTokenUsecase

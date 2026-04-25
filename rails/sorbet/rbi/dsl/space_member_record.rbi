@@ -8,7 +8,6 @@
 class SpaceMemberRecord
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
-  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -25,9 +24,6 @@ class SpaceMemberRecord
       ).returns(::SpaceMemberRecord)
     end
     def new(attributes = nil, &block); end
-
-    sig { returns(T::Hash[T.any(String, Symbol), Integer]) }
-    def roles; end
   end
 
   module CommonRelationMethods
@@ -393,20 +389,6 @@ class SpaceMemberRecord
     def third_to_last!; end
   end
 
-  module EnumMethodsModule
-    sig { void }
-    def role_member!; end
-
-    sig { returns(T::Boolean) }
-    def role_member?; end
-
-    sig { void }
-    def role_owner!; end
-
-    sig { returns(T::Boolean) }
-    def role_owner?; end
-  end
-
   module GeneratedAssociationMethods
     sig { params(args: T.untyped, blk: T.untyped).returns(::SpaceRecord) }
     def build_space_record(*args, &blk); end
@@ -599,12 +581,6 @@ class SpaceMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def not_role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def not_role_owner(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
@@ -645,12 +621,6 @@ class SpaceMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
-    def role_owner(*args, &blk); end
 
     sig { params(args: T.untyped).returns(PrivateAssociationRelation) }
     sig do
@@ -931,6 +901,9 @@ class SpaceMemberRecord
     def restore_role!; end
 
     sig { void }
+    def restore_scopes!; end
+
+    sig { void }
     def restore_space_id!; end
 
     sig { void }
@@ -939,16 +912,16 @@ class SpaceMemberRecord
     sig { void }
     def restore_user_id!; end
 
-    sig { returns(::String) }
+    sig { returns(::Integer) }
     def role; end
 
-    sig { params(value: T.any(::String, ::Symbol, ::Integer)).returns(T.any(::String, ::Symbol, ::Integer)) }
+    sig { params(value: ::Integer).returns(::Integer) }
     def role=(value); end
 
     sig { returns(T::Boolean) }
     def role?; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_before_last_save; end
 
     sig { returns(T.untyped) }
@@ -957,28 +930,28 @@ class SpaceMemberRecord
     sig { returns(T::Boolean) }
     def role_came_from_user?; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_change; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_change_to_be_saved; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_in_database; end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def role_previous_change; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_previously_was; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(T.nilable(::Integer)) }
     def role_was; end
 
     sig { void }
@@ -1014,11 +987,17 @@ class SpaceMemberRecord
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_joined_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
-    sig { returns(T.nilable([::String, ::String])) }
+    sig { returns(T.nilable([::Integer, ::Integer])) }
     def saved_change_to_role; end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def saved_change_to_scopes; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_scopes?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_space_id; end
@@ -1037,6 +1016,51 @@ class SpaceMemberRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_user_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T::Array[::String]) }
+    def scopes; end
+
+    sig { params(value: T::Array[::String]).returns(T::Array[::String]) }
+    def scopes=(value); end
+
+    sig { returns(T::Boolean) }
+    def scopes?; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def scopes_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def scopes_came_from_user?; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_change; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def scopes_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_in_database; end
+
+    sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
+    def scopes_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def scopes_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_previously_was; end
+
+    sig { returns(T.nilable(T::Array[::String])) }
+    def scopes_was; end
+
+    sig { void }
+    def scopes_will_change!; end
 
     sig { returns(::String) }
     def space_id; end
@@ -1192,6 +1216,9 @@ class SpaceMemberRecord
     def will_save_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_scopes?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_space_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1281,12 +1308,6 @@ class SpaceMemberRecord
     def none(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def not_role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def not_role_owner(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
@@ -1327,12 +1348,6 @@ class SpaceMemberRecord
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def rewhere(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def role_member(*args, &blk); end
-
-    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
-    def role_owner(*args, &blk); end
 
     sig { params(args: T.untyped).returns(PrivateRelation) }
     sig do

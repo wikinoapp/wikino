@@ -3,16 +3,10 @@
 
 module Pages
   class StickyHeaderComponent < ApplicationComponent
-    sig { params(signed_in: T::Boolean, page: Page).void }
-    def initialize(signed_in:, page:)
-      @signed_in = signed_in
+    sig { params(page: Page).void }
+    def initialize(page:)
       @page = page
     end
-
-    sig { returns(T::Boolean) }
-    attr_reader :signed_in
-    private :signed_in
-    alias_method :signed_in?, :signed_in
 
     sig { returns(Page) }
     attr_reader :page

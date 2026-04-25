@@ -13,7 +13,7 @@ import (
 func TestNewDraftPageGroupsForIndex_Empty(t *testing.T) {
 	t.Parallel()
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(nil, "Asia/Tokyo")
+	groups := viewmodel.NewDraftPageGroupsForIndex(nil)
 	if groups != nil {
 		t.Errorf("expected nil, got %v", groups)
 	}
@@ -62,7 +62,7 @@ func TestNewDraftPageGroupsForIndex_Grouping(t *testing.T) {
 		},
 	}
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(drafts, "Asia/Tokyo")
+	groups := viewmodel.NewDraftPageGroupsForIndex(drafts)
 
 	if len(groups) != 2 {
 		t.Fatalf("expected 2 groups, got %d", len(groups))
@@ -132,7 +132,7 @@ func TestDraftPageForIndex_DisplayTitle(t *testing.T) {
 		},
 	}
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(drafts, "Asia/Tokyo")
+	groups := viewmodel.NewDraftPageGroupsForIndex(drafts)
 	if len(groups) != 1 {
 		t.Fatalf("expected 1 group, got %d", len(groups))
 	}

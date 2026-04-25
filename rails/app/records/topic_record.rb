@@ -19,9 +19,9 @@ class TopicRecord < ApplicationRecord
 
   scope :public_visibility, -> { where(visibility: TopicVisibility::Public.serialize) }
 
-  sig { params(member: SpaceMemberRecord, role: TopicMemberRole, joined_at: ActiveSupport::TimeWithZone).void }
-  def add_member!(member:, role:, joined_at: Time.zone.now)
-    member_records.create!(space_record: member.space_record, space_member_record: member, role: role.serialize, joined_at:)
+  sig { params(member: SpaceMemberRecord, joined_at: ActiveSupport::TimeWithZone).void }
+  def add_member!(member:, joined_at: Time.zone.now)
+    member_records.create!(space_record: member.space_record, space_member_record: member, joined_at:)
 
     nil
   end

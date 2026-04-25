@@ -223,3 +223,30 @@ func (b *UserBuilderDB) Build() model.UserID {
 
 	return model.UserID(id)
 }
+
+// BuildWithTwoFactorAuthAndRecoveryCodes はユーザーと二要素認証設定（リカバリーコード付き）を作成し、ユーザーIDを返します
+func (b *UserBuilderDB) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) model.UserID {
+	b.t.Helper()
+
+	userID := b.Build()
+
+	now := time.Now()
+	var enabledAt sql.NullTime
+	if enabled {
+		enabledAt = sql.NullTime{Time: now, Valid: true}
+	}
+
+	recoveryCodesStr := formatPostgresArray(recoveryCodes)
+
+	_, err := b.db.ExecContext(
+		context.Background(),
+		`INSERT INTO user_two_factor_auths (user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		string(userID), secret, enabled, enabledAt, recoveryCodesStr, now, now,
+	)
+	if err != nil {
+		b.t.Fatalf("二要素認証設定作成に失敗: %v", err)
+	}
+
+	return userID
+}

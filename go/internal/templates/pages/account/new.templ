@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
@@ -9,7 +9,7 @@ import (
 // NewPageData はアカウント作成ページに渡すデータ構造体です
 type NewPageData struct {
 	CSRFToken  string
-	FormErrors *session.FormErrors
+	FormErrors *model.ValidationError
 	Email      string
 	Atname     string
 }
@@ -19,28 +19,33 @@ templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
 			<a href="/" class="inline-block">
-				<div class="bg-brand-100 rounded-xl">
-					@templates.Icon("logo", "fill-black w-[60px] h-[60px]")
+				<div class="bg-primary rounded-xl">
+					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
 
 		<div class="flex flex-col gap-2">
-			<h1 class="text-center text-3xl font-bold antialiased">
+			<h1 class="text-center text-3xl text-primary font-bold antialiased">
 				{ templates.T(ctx, "account_new_heading") }
 			</h1>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
+			for _, errorMsg := range data.FormErrors.Global {
+				<div class="alert-destructive">
+					<section>{ errorMsg }</section>
+				</div>
+			}
+		}
 
-		<div class="card">
-			<div class="card-body px-4">
-				<form
-					action="/accounts"
-					class="form grid gap-6"
-					data-on:submit__passive="$isSubmitting = true"
-					method="POST"
-				>
+		@components.ContentCard() {
+			<form
+				action="/accounts"
+				class="form grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
+				method="POST"
+			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
@@ -138,7 +143,6 @@ templ New(data NewPageData) {
 					</div>
 					<button
 						class="btn-primary rounded-full w-fit"
-						data-attr:disabled="$isSubmitting == true"
 						tabindex="3"
 						type="submit"
 					>
@@ -146,12 +150,10 @@ templ New(data NewPageData) {
 						{ templates.T(ctx, "account_new_submit_button") }
 					</button>
 				</form>
-
-			</div>
-		</div>
+		}
 
 		<div class="text-center">
-			<a href="/sign_up" class="link underline inline-flex items-center gap-1">
+			<a href="/sign_up" class="link-foreground inline-flex items-center gap-1">
 				@templates.Icon("arrow-left-regular", "w-4 h-4")
 				{ templates.T(ctx, "account_new_back_to_sign_up") }
 			</a>

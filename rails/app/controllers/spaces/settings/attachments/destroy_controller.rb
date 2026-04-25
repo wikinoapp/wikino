@@ -19,7 +19,7 @@ module Spaces
 
           attachment_record = space_record.attachment_records.find(params[:attachment_id])
 
-          unless space_policy.can_delete_attachment?(attachment_record:)
+          unless space_policy.can_delete_attachment?
             return render_404
           end
 

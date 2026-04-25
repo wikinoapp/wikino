@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	draftpagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/draft_page"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -22,25 +23,25 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	drafts, err := h.draftPageRepo.ListByUserForIndex(ctx, user.ID)
+	output, err := h.getDraftPagesUC.Execute(ctx, usecase.GetDraftPagesInput{
+		UserID: user.ID,
+	})
 	if err != nil {
 		slog.ErrorContext(ctx, "下書き一覧の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(drafts, user.TimeZone)
+	groups := viewmodel.NewDraftPageGroupsForIndex(output.DraftPages)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "draft_page_index_title")
 
-	flash := h.flashMgr.GetFlash(w, r)
-
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
 	layoutData := layouts.DefaultLayoutData{
-		Meta:  meta,
-		Flash: flash,
+		Meta: meta,
+
 		Sidebar: components.SidebarData{
 			CurrentPageName:   templates.PageNameDraftPageIndex,
 			SignedIn:          true,
@@ -48,6 +49,10 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
+		},
+		BottomNav: components.BottomNavData{
+			CurrentPageName: templates.PageNameDraftPageIndex,
+			SignedIn:        true,
 		},
 	}
 

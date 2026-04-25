@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -19,6 +21,7 @@ type TopicMemberBuilderDB struct {
 	topicID       string
 	spaceMemberID string
 	role          int32
+	scopes        []string
 	joinedAt      time.Time
 }
 
@@ -29,6 +32,7 @@ func NewTopicMemberBuilderDB(t *testing.T, db *sql.DB) *TopicMemberBuilderDB {
 		t:        t,
 		db:       db,
 		role:     0, // admin
+		scopes:   []string{},
 		joinedAt: time.Now(),
 	}
 }
@@ -51,6 +55,16 @@ func (b *TopicMemberBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMember
 	return b
 }
 
+// WithScopes はスコープを設定します
+func (b *TopicMemberBuilderDB) WithScopes(scopes []model.Scope) *TopicMemberBuilderDB {
+	ss := make([]string, len(scopes))
+	for i, s := range scopes {
+		ss[i] = string(s)
+	}
+	b.scopes = ss
+	return b
+}
+
 // Build はトピックメンバーを作成し、IDを返します
 func (b *TopicMemberBuilderDB) Build() model.TopicMemberID {
 	b.t.Helper()
@@ -69,10 +83,10 @@ func (b *TopicMemberBuilderDB) Build() model.TopicMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, scopes, joined_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.spaceMemberID, b.role, b.joinedAt, now, now,
+		b.spaceID, b.topicID, b.spaceMemberID, b.role, pq.Array(b.scopes), b.joinedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピックメンバー作成に失敗: %v", err)
@@ -90,6 +104,7 @@ type TopicMemberBuilder struct {
 	topicID            string
 	spaceMemberID      string
 	role               int32
+	scopes             []string
 	joinedAt           time.Time
 	lastPageModifiedAt *time.Time
 }
@@ -101,6 +116,7 @@ func NewTopicMemberBuilder(t *testing.T, tx *sql.Tx) *TopicMemberBuilder {
 		t:        t,
 		tx:       tx,
 		role:     0, // admin
+		scopes:   []string{},
 		joinedAt: time.Now(),
 	}
 }
@@ -123,15 +139,19 @@ func (b *TopicMemberBuilder) WithSpaceMemberID(spaceMemberID model.SpaceMemberID
 	return b
 }
 
-// WithRole はロールを設定します
-func (b *TopicMemberBuilder) WithRole(role int32) *TopicMemberBuilder {
-	b.role = role
-	return b
-}
-
 // WithLastPageModifiedAt はlast_page_modified_atを設定します
 func (b *TopicMemberBuilder) WithLastPageModifiedAt(t time.Time) *TopicMemberBuilder {
 	b.lastPageModifiedAt = &t
+	return b
+}
+
+// WithScopes はスコープを設定します
+func (b *TopicMemberBuilder) WithScopes(scopes []model.Scope) *TopicMemberBuilder {
+	ss := make([]string, len(scopes))
+	for i, s := range scopes {
+		ss[i] = string(s)
+	}
+	b.scopes = ss
 	return b
 }
 
@@ -153,10 +173,10 @@ func (b *TopicMemberBuilder) Build() model.TopicMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, scopes, joined_at, last_page_modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.spaceMemberID, b.role, b.joinedAt, b.lastPageModifiedAt, now, now,
+		b.spaceID, b.topicID, b.spaceMemberID, b.role, pq.Array(b.scopes), b.joinedAt, b.lastPageModifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピックメンバー作成に失敗: %v", err)

@@ -15,18 +15,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_backlinks.Handler {
 	t.Helper()
 
+	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
+	pageRepo := repository.NewPageRepository(queries)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	getPageBacklinksUC := usecase.NewGetPageBacklinksUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+
 	return page_backlinks.NewHandler(
-		repository.NewSpaceRepository(queries),
-		repository.NewSpaceMemberRepository(queries),
-		repository.NewPageRepository(queries),
-		repository.NewTopicRepository(queries),
-		repository.NewTopicMemberRepository(queries),
+		getPageBacklinksUC,
 	)
 }
 
@@ -160,7 +164,7 @@ func TestShow_不正なページ番号で404が返る(t *testing.T) {
 	}
 }
 
-func TestShow_正常系_バックリンクなしでSSEレスポンスが返る(t *testing.T) {
+func TestShow_正常系_バックリンクなしでHTMLレスポンスが返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -186,7 +190,6 @@ func TestShow_正常系_バックリンクなしでSSEレスポンスが返る(t
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ
@@ -214,13 +217,14 @@ func TestShow_正常系_バックリンクなしでSSEレスポンスが返る(t
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
-	contentType := rr.Header().Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("wrong content type: got %v, want text/event-stream", contentType)
+	// ページネーションコンテナが含まれること
+	body := rr.Body.String()
+	if !strings.Contains(body, "page-backlink-list-pagination") {
+		t.Error("response should contain pagination container")
 	}
 }
 
-func TestShow_正常系_バックリンクありでSSEレスポンスにバックリンクが含まれる(t *testing.T) {
+func TestShow_正常系_バックリンクありでHTMLレスポンスにバックリンクが含まれる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -246,7 +250,6 @@ func TestShow_正常系_バックリンクありでSSEレスポンスにバッ�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ
@@ -317,7 +320,6 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithRole(0).
 		Build()
 
 	// 対象ページ

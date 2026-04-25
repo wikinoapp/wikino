@@ -22,7 +22,7 @@ templ Show(data ShowPageData) {
 					</div>
 
 					<div class="flex flex-col gap-2">
-						<h1 class="text-4xl/8 leading-snug font-bold antialiased">
+						<h1 class="text-4xl/8 leading-snug font-bold antialiased text-primary">
 							@templ.Raw(templates.T(ctx, "welcome_hero_title_html"))
 						</h1>
 
@@ -49,7 +49,7 @@ templ Show(data ShowPageData) {
 				<img
 					src="/static/images/welcome/hero.png"
 					alt={ templates.T(ctx, "welcome_screenshot_alt") }
-					class="w-full rounded-lg ring ring-brand-200 shadow-xl"
+					class="w-full rounded-lg ring ring-stone-200 shadow-xl"
 					loading="lazy"
 				/>
 			</div>
@@ -57,7 +57,7 @@ templ Show(data ShowPageData) {
 
 		// 機能紹介セクション
 		<section class="max-w-5xl w-full mx-auto flex flex-col gap-12 px-4">
-			<h2 class="text-center text-2xl/8 leading-snug font-bold antialiased">
+			<h2 class="text-center text-2xl/8 leading-snug font-bold antialiased text-primary">
 				{ templates.T(ctx, "welcome_features_title") }
 			</h2>
 
@@ -68,6 +68,9 @@ templ Show(data ShowPageData) {
 					templates.T(ctx, "welcome_feature_markdown_description"),
 					"markdown-logo-regular",
 					"/static/images/welcome/feature_1.png",
+					"",
+					templates.T(ctx, "welcome_feature_markdown_help_title"),
+					"https://wikino.app/s/wikino/pages/143",
 				)
 
 				// Wikilink機能
@@ -76,6 +79,9 @@ templ Show(data ShowPageData) {
 					templates.T(ctx, "welcome_feature_wikilink_description"),
 					"link-regular",
 					"/static/images/welcome/feature_2.png",
+					"",
+					templates.T(ctx, "welcome_feature_wikilink_help_title"),
+					"https://wikino.app/s/wikino/pages/22",
 				)
 
 				// バックリンク機能
@@ -84,26 +90,43 @@ templ Show(data ShowPageData) {
 					templates.T(ctx, "welcome_feature_backlinks_description"),
 					"share-network-regular",
 					"/static/images/welcome/feature_3.png",
+					"",
+					templates.T(ctx, "welcome_feature_backlinks_help_title"),
+					"https://wikino.app/s/wikino/pages/250",
+				)
+
+				// 編集提案機能
+				@featureItem(
+					templates.T(ctx, "welcome_feature_suggestion_title"),
+					templates.T(ctx, "welcome_feature_suggestion_description"),
+					"git-pull-request-regular",
+					"/static/images/welcome/feature_suggestion.png",
+					"",
+					templates.T(ctx, "welcome_feature_suggestion_help_title"),
+					"https://wikino.app/s/wikino/pages/254",
 				)
 
 				// 公開・共有機能
-				@featureItemWithNote(
+				@featureItem(
 					templates.T(ctx, "welcome_feature_publish_title"),
 					templates.T(ctx, "welcome_feature_publish_description"),
-					templates.T(ctx, "welcome_feature_publish_note"),
+					"globe-regular",
 					"/static/images/welcome/feature_4.png",
+					templates.T(ctx, "welcome_feature_publish_note"),
+					templates.T(ctx, "welcome_feature_publish_help_title"),
+					"https://wikino.app/s/wikino/pages/11",
 				)
 			</div>
 		</section>
 
 		// CTAセクション
-		<section class="flex flex-col gap-6 bg-brand-300 py-24">
-			<div class="text-center text-2xl/8 font-bold antialiased">
+		<section class="flex flex-col gap-6 bg-primary py-24">
+			<div class="text-primary-foreground text-center text-2xl/8 font-bold antialiased">
 				{ templates.T(ctx, "welcome_cta_title") }
 			</div>
 
-			<a href="/sign_up" class="btn rounded-full self-center">
-				@templates.Icon("rocket-launch-regular", "fill-primary-foreground")
+			<a href="/sign_up" class="btn bg-primary-foreground hover:bg-primary-foreground/90 text-primary rounded-full self-center">
+				@templates.Icon("rocket-launch-regular", "fill-primary")
 				{ templates.T(ctx, "sign_up") }
 			</a>
 		</section>
@@ -189,46 +212,16 @@ templ Show(data ShowPageData) {
 }
 
 // featureItem は機能紹介の1項目を表示するコンポーネントです
-templ featureItem(title string, description string, iconName viewmodel.IconName, imagePath string) {
+templ featureItem(title string, description string, iconName viewmodel.IconName, imagePath string, note string, helpTitle string, helpURL string) {
 	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
 		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
 			<div class="flex items-start space-x-4">
-				<div class="bg-brand-200 rounded-xl flex items-center justify-center w-10 h-10 flex-shrink-0">
-					@templates.Icon(iconName, "fill-brand-800 w-[24px] h-[24px]")
+				<div class="bg-brand-300/30 rounded-xl flex items-center justify-center w-10 h-10 flex-shrink-0">
+					@templates.Icon(iconName, "fill-primary size-[24px]")
 				</div>
 
 				<div class="flex flex-col gap-2">
-					<h3 class="text-lg/8 leading-snug font-bold antialiased">
-						{ title }
-					</h3>
-
-					<p>
-						{ description }
-					</p>
-				</div>
-			</div>
-		</div>
-
-		<img
-			src={ imagePath }
-			alt=""
-			class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-brand-200 shadow object-contain"
-			loading="lazy"
-		/>
-	</div>
-}
-
-// featureItemWithNote は注釈付きの機能紹介の1項目を表示するコンポーネントです
-templ featureItemWithNote(title string, description string, note string, imagePath string) {
-	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
-		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">
-			<div class="flex items-start space-x-4">
-				<div class="bg-brand-200 rounded-xl flex items-center justify-center w-10 h-10 flex-shrink-0">
-					@templates.Icon("globe-regular", "fill-brand-800 w-[24px] h-[24px]")
-				</div>
-
-				<div class="flex flex-col gap-2">
-					<h3 class="text-lg/8 leading-snug font-bold antialiased">
+					<h3 class="text-lg/8 leading-snug font-bold antialiased text-primary">
 						{ title }
 					</h3>
 
@@ -236,18 +229,29 @@ templ featureItemWithNote(title string, description string, note string, imagePa
 						{ description }
 					</p>
 
-					<p class="text-sm text-muted-foreground">
-						{ note }
-					</p>
+					if note != "" {
+						<p class="text-sm text-muted-foreground">
+							{ note }
+						</p>
+					}
+
+					if helpTitle != "" && helpURL != "" {
+						<a href={ templ.SafeURL(helpURL) } class="link-primary-foreground flex items-center gap-2" target="_blank">
+							@templates.Icon("arrow-right-regular", "fill-foreground size-4")
+							{ helpTitle }
+						</a>
+					}
 				</div>
 			</div>
 		</div>
 
-		<img
-			src={ imagePath }
-			alt=""
-			class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-brand-200 shadow object-contain"
-			loading="lazy"
-		/>
+		if imagePath != "" {
+			<img
+				src={ imagePath }
+				alt=""
+				class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-stone-200 shadow aspect-4/3 object-contain"
+				loading="lazy"
+			/>
+		}
 	</div>
 }

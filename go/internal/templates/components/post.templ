@@ -1,0 +1,101 @@
+package components
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// PostAction はPostコンポーネントのドロップダウンメニューに表示するアクションです
+type PostAction struct {
+	Label string
+	URL   string
+}
+
+// PostData は投稿（編集提案の本文やコメント）の表示データです
+type PostData struct {
+	CreatorAtname string
+	Body          string
+	CreatedAt     time.Time
+	Actions       []PostAction
+	// dropdownID はドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
+	// Actionsが設定されている場合は必ず指定してください。
+	DropdownID string
+}
+
+// Post は投稿UIを表示するコンポーネントです。
+// 編集提案の本文とコメントで共通のUIを提供します。
+templ Post(data PostData) {
+	<div class="card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+		<div class="flex items-center gap-2 bg-stone-600/6 rounded-t-lg pl-4 pr-2 py-1 min-h-[40px]">
+			<a
+				class="font-bold text-sm hover:underline"
+				href={ templ.SafeURL(string(templates.ProfilePath(data.CreatorAtname))) }
+			>
+				{ "@" + data.CreatorAtname }
+			</a>
+
+			<span class="text-muted-foreground text-sm">
+				@RelativeTime(RelativeTimeData{Time: data.CreatedAt})
+			</span>
+
+			if len(data.Actions) > 0 {
+				<div class="ml-auto">
+					@postDropdown(data)
+				</div>
+			}
+		</div>
+
+		<section class="px-4">
+			if data.Body != "" {
+				@PlainTextBody(PlainTextBodyData{Text: data.Body})
+			} else {
+				<p class="text-muted-foreground italic">
+					{ templates.T(ctx, "suggestion_show_no_body") }
+				</p>
+			}
+		</section>
+	</div>
+}
+
+// postDropdown はPostコンポーネントのアクションドロップダウンメニューを表示します
+templ postDropdown(data PostData) {
+	<div id={ fmt.Sprintf("post-%s-dropdown", data.DropdownID) } class="dropdown-menu">
+		<button
+			type="button"
+			id={ fmt.Sprintf("post-%s-dropdown-trigger", data.DropdownID) }
+			aria-haspopup="menu"
+			aria-controls={ fmt.Sprintf("post-%s-dropdown-menu", data.DropdownID) }
+			aria-expanded="false"
+			class="btn-sm-icon-ghost rounded-full"
+		>
+			@templates.Icon("dots-three-regular")
+		</button>
+
+		<div
+			id={ fmt.Sprintf("post-%s-dropdown-popover", data.DropdownID) }
+			data-popover
+			aria-hidden="true"
+			class="min-w-44"
+			data-align="end"
+		>
+			<div
+				role="menu"
+				id={ fmt.Sprintf("post-%s-dropdown-menu", data.DropdownID) }
+				aria-labelledby={ fmt.Sprintf("post-%s-dropdown-trigger", data.DropdownID) }
+			>
+				for _, action := range data.Actions {
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(action.URL) }
+						>
+							{ action.Label }
+						</a>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

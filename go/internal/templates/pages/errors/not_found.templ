@@ -1,0 +1,73 @@
+package errors
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// NotFoundPage は404エラーページを表示するテンプレート。
+// 404発生時にはセッションやDBが利用できない可能性があるため、
+// レイアウトテンプレートを使用せず外部依存のない完全なHTMLドキュメントとして生成する。
+templ NotFoundPage() {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="initial-scale=1, width=device-width"/>
+			<meta name="robots" content="noindex, nofollow"/>
+			<title>{ templates.T(ctx, "error_not_found_title") }</title>
+			<style>
+				body {
+					font-family:
+						system-ui,
+						-apple-system,
+						"Segoe UI",
+						Roboto,
+						"Helvetica Neue",
+						"Noto Sans",
+						"Liberation Sans",
+						Arial,
+						sans-serif,
+						"Apple Color Emoji",
+						"Segoe UI Emoji",
+						"Noto Color Emoji";
+				}
+
+				h1 {
+					font-size: 70px;
+					margin-bottom: 10px;
+				}
+
+				a {
+					color: #7c3aed;
+				}
+
+				.container {
+					align-items: center;
+					display: flex;
+					justify-content: center;
+					min-height: 100dvh;
+				}
+
+				.wrapper {
+					text-align: center;
+				}
+
+				.message {
+					font-size: 14px;
+					margin-bottom: 20px;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<div class="wrapper">
+					<h1>
+						&#x1FAE5;
+					</h1>
+					<div class="message">
+						{ templates.T(ctx, "error_not_found_message") }
+					</div>
+					<a href="/">{ templates.T(ctx, "error_not_found_back_to_top") }</a>
+				</div>
+			</div>
+		</body>
+	</html>
+}

@@ -1,0 +1,40 @@
+package components
+
+import (
+	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// RelativeTimeData は相対時間コンポーネントのデータです
+type RelativeTimeData struct {
+	Time time.Time
+}
+
+// RelativeTime は相対時間を表示するコンポーネントです。
+// 相対時間表示の場合はtitle属性に絶対時間を設定し、ホバー時に正確な日時を確認できます。
+// 絶対時間にフォールバックした場合はtitle属性を付与しません。
+templ RelativeTime(data RelativeTimeData) {
+	if templates.IsRelativeTime(data.Time) {
+		<time
+			datetime={ data.Time.UTC().Format(time.RFC3339) }
+			title={ templates.FormatDateTime(ctx, data.Time) }
+		>
+			{ templates.RelativeTime(ctx, data.Time) }
+		</time>
+	} else {
+		@AbsoluteTime(AbsoluteTimeData{Time: data.Time})
+	}
+}
+
+// AbsoluteTimeData は絶対時間コンポーネントのデータです
+type AbsoluteTimeData struct {
+	Time time.Time
+}
+
+// AbsoluteTime は絶対時間を表示するコンポーネントです。
+templ AbsoluteTime(data AbsoluteTimeData) {
+	<time datetime={ data.Time.UTC().Format(time.RFC3339) }>
+		{ templates.FormatDateTime(ctx, data.Time) }
+	</time>
+}

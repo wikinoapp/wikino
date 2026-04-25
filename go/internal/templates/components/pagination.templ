@@ -1,0 +1,53 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// PaginationNav はオフセットベースのページネーションナビゲーションを表示するコンポーネントです。
+// previousPath と nextPath にはページ番号を含む完全なパスを渡します。
+templ PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPath string) {
+	if pagination.HasPrevious || pagination.HasNext {
+		<nav
+			role="navigation"
+			aria-label="pagination"
+			class="mx-auto flex w-full justify-center"
+		>
+			<ul class="flex flex-row items-center gap-1">
+				<li>
+					if pagination.HasPrevious {
+						<a
+							class="btn-ghost"
+							href={ templ.SafeURL(previousPath) }
+						>
+							@templates.Icon("caret-left-regular")
+							{ templates.T(ctx, "pagination_previous") }
+						</a>
+					} else {
+						<button class="btn-ghost" disabled>
+							@templates.Icon("caret-left-regular")
+							{ templates.T(ctx, "pagination_previous") }
+						</button>
+					}
+				</li>
+				<li>
+					if pagination.HasNext {
+						<a
+							class="btn-ghost"
+							href={ templ.SafeURL(nextPath) }
+						>
+							{ templates.T(ctx, "pagination_next") }
+							@templates.Icon("caret-right-regular")
+						</a>
+					} else {
+						<button class="btn-ghost" disabled>
+							{ templates.T(ctx, "pagination_next") }
+							@templates.Icon("caret-right-regular")
+						</button>
+					}
+				</li>
+			</ul>
+		</nav>
+	}
+}

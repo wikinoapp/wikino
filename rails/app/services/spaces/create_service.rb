@@ -18,7 +18,7 @@ module Spaces
           plan: Plan::Free.serialize,
           joined_at: current_time
         )
-        new_space_record.add_member!(user_record:, role: SpaceMemberRole::Owner, joined_at: current_time)
+        new_space_record.add_member!(user_record:, scopes: [Scope::SPACE_ADMIN], joined_at: current_time)
         new_space_record
       end
 

@@ -1,15 +1,16 @@
 package password
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/password_reset"
-	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	passwordPage "github.com/wikinoapp/wikino/go/internal/templates/pages/password"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -25,26 +26,21 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// トークンを検証
-	tokenDigest := password_reset.HashToken(token)
-	tokenModel, err := h.passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)
+	_, err := h.getTokenDataUC.Execute(ctx, usecase.GetPasswordResetTokenDataInput{
+		Token: token,
+	})
 	if err != nil {
-		slog.ErrorContext(ctx, "トークンの検索に失敗しました", "error", err)
-		h.renderInvalidTokenError(w, r)
-		return
-	}
-
-	if tokenModel == nil {
-		h.renderInvalidTokenError(w, r)
-		return
-	}
-
-	if tokenModel.IsUsed() {
-		h.renderTokenUsedError(w, r)
-		return
-	}
-
-	if tokenModel.IsExpired() {
-		h.renderTokenExpiredError(w, r)
+		switch {
+		case errors.Is(err, usecase.ErrPasswordResetTokenUsed):
+			h.renderTokenUsedError(w, r)
+		case errors.Is(err, usecase.ErrPasswordResetTokenExpired):
+			h.renderTokenExpiredError(w, r)
+		case errors.Is(err, usecase.ErrPasswordResetTokenNotFound):
+			h.renderInvalidTokenError(w, r)
+		default:
+			slog.ErrorContext(ctx, "トークンの検証に失敗しました", "error", err)
+			h.renderInvalidTokenError(w, r)
+		}
 		return
 	}
 
@@ -53,7 +49,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 // renderEditForm は編集フォームをレンダリングします
-func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token string, formErrors *session.FormErrors) {
+func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token string, formErrors *model.ValidationError) {
 	ctx := r.Context()
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -79,7 +75,7 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token s
 func (h *Handler) renderInvalidTokenError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	formErrors := session.NewFormErrors()
+	formErrors := model.NewValidationError()
 	formErrors.AddGlobal(i18n.T(ctx, "validation_token_invalid"))
 
 	h.renderEditForm(w, r, "", formErrors)
@@ -89,7 +85,7 @@ func (h *Handler) renderInvalidTokenError(w http.ResponseWriter, r *http.Request
 func (h *Handler) renderTokenUsedError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	formErrors := session.NewFormErrors()
+	formErrors := model.NewValidationError()
 	formErrors.AddGlobal(i18n.T(ctx, "validation_token_used"))
 
 	h.renderEditForm(w, r, "", formErrors)
@@ -99,7 +95,7 @@ func (h *Handler) renderTokenUsedError(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) renderTokenExpiredError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	formErrors := session.NewFormErrors()
+	formErrors := model.NewValidationError()
 	formErrors.AddGlobal(i18n.T(ctx, "validation_token_expired"))
 
 	h.renderEditForm(w, r, "", formErrors)

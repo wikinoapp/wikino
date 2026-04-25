@@ -25,7 +25,7 @@ templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) {
 						</a>
 
 						<a
-							href={ templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, draft.PageNumber))) }
+							href={ templ.SafeURL(string(templates.PagePath(draft.SpaceIdentifier, viewmodel.PageNumber(draft.PageNumber)))) }
 							class="flex w-full items-center gap-2 rounded-md p-2 text-foreground"
 						>
 							<div class="w-[16px] shrink-0">
@@ -50,7 +50,7 @@ templ SidebarDraftPages(drafts []viewmodel.DraftPageForSidebar, hasMore bool) {
 				<div class="px-2">
 					<a
 						href={ templ.SafeURL(string(templates.DraftsPath())) }
-						class="link-muted text-xs flex items-center gap-1 w-fit"
+						class="link-bare-muted-foreground text-xs flex items-center gap-1 w-fit"
 					>
 						@templates.Icon("arrow-right-regular", "size-4 fill-muted-foreground")
 						{ templates.T(ctx, "sidebar_draft_pages_show_all") }

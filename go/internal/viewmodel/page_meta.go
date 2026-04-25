@@ -54,7 +54,7 @@ func (p *PageMeta) SetTitle(ctx context.Context, titleKey string) {
 }
 
 // SetTitleWithoutSuffix はタイトルを設定します（サフィックスなし）
-// トップページなど、サフィックスが不要なページで使用します
-func (p *PageMeta) SetTitleWithoutSuffix(ctx context.Context, titleKey string) {
-	p.Title = i18n.T(ctx, titleKey)
+// スペース配下のページなど、" | Wikino" サフィックスが不要なページで使用します
+func (p *PageMeta) SetTitleWithoutSuffix(ctx context.Context, titleKey string, data ...map[string]any) {
+	p.Title = i18n.T(ctx, titleKey, data...)
 }

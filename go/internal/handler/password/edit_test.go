@@ -15,6 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 func TestEdit_Success(t *testing.T) {
@@ -56,11 +57,12 @@ func TestEdit_Success(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
+		getTokenDataUC,
 		nil, // updatePasswordUsecase
 	)
 
@@ -128,12 +130,13 @@ func TestEdit_TokenNotFound(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		nil, // updatePasswordUsecase
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token=invalid-token", nil)
@@ -184,12 +187,13 @@ func TestEdit_TokenEmpty(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		nil, // updatePasswordUsecase
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit", nil)
@@ -247,12 +251,13 @@ func TestEdit_TokenExpired(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		nil, // updatePasswordUsecase
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+expiredToken, nil)
@@ -312,12 +317,13 @@ func TestEdit_TokenUsed(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		nil, // updatePasswordUsecase
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+usedToken, nil)
@@ -375,12 +381,13 @@ func TestEdit_I18n_English(t *testing.T) {
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
 	// ハンドラーを初期化
+	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
 	handler := password.NewHandler(
 		cfg,
 		sessionMgr,
 		flashMgr,
-		passwordResetTokenRepo,
-		nil,
+		getTokenDataUC,
+		nil, // updatePasswordUsecase
 	)
 
 	req := httptest.NewRequest(http.MethodGet, "/password/edit?token="+validToken, nil)

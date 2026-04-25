@@ -2,6 +2,49 @@
 # frozen_string_literal: true
 
 RSpec.describe SpaceMemberRecord, type: :record do
+  describe "#scopes" do
+    it "scopesを読み取れること" do
+      space_record = FactoryBot.create(:space_record)
+      user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        space_record:,
+        user_record:,
+        scopes: ["space:admin"]
+      )
+
+      expect(space_member_record.reload.scopes).to eq(["space:admin"])
+    end
+
+    it "複数のスコープを保存・取得できること" do
+      space_record = FactoryBot.create(:space_record)
+      user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        space_record:,
+        user_record:,
+        scopes: ["topic:read", "page:write"]
+      )
+
+      expect(space_member_record.reload.scopes).to eq(
+        ["topic:read", "page:write"]
+      )
+    end
+
+    it "空配列を保存できること" do
+      space_record = FactoryBot.create(:space_record)
+      user_record = FactoryBot.create(:user_record)
+      space_member_record = FactoryBot.create(
+        :space_member_record,
+        space_record:,
+        user_record:,
+        scopes: []
+      )
+
+      expect(space_member_record.reload.scopes).to eq([])
+    end
+  end
+
   describe "#last_modified_pages" do
     it "ページが存在するとき、最後に編集したページから取得できること" do
       user_a = create(:user_record)

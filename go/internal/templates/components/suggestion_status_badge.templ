@@ -1,0 +1,32 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// SuggestionStatusBadge はステータスに応じたバッジを表示します
+templ SuggestionStatusBadge(status model.SuggestionStatus) {
+	switch status {
+		case model.SuggestionStatusDraft:
+			<span class="badge bg-muted font-bold">
+				@templates.Icon("file-dashed-regular", "size-5")
+				{ templates.T(ctx, "suggestion_show_status_draft") }
+			</span>
+		case model.SuggestionStatusOpen:
+			<span class="badge bg-success font-bold">
+				@templates.Icon("git-pull-request-regular", "size-5")
+				{ templates.T(ctx, "suggestion_show_status_open") }
+			</span>
+		case model.SuggestionStatusApplied:
+			<span class="badge bg-violet-500 font-bold">
+				@templates.Icon("check-circle-regular", "size-5")
+				{ templates.T(ctx, "suggestion_show_status_applied") }
+			</span>
+		case model.SuggestionStatusClosed:
+			<span class="badge bg-error font-bold">
+				@templates.Icon("x-circle-regular", "size-5")
+				{ templates.T(ctx, "suggestion_show_status_closed") }
+			</span>
+	}
+}

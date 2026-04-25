@@ -37,7 +37,7 @@ templ Footer() {
 // footerLink はフッターのリンク項目を生成します
 templ footerLink(path string, labelKey string) {
 	<li>
-		<a class="link-muted text-sm" href={ templ.SafeURL(path) }>
+		<a class="link-muted-foreground text-sm" href={ templ.SafeURL(path) }>
 			{ templates.T(ctx, labelKey) }
 		</a>
 	</li>
