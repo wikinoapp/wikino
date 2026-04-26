@@ -5,7 +5,7 @@ paths:
 
 # templ テンプレートガイド
 
-このドキュメントは、Go版Wikinoで使用している [templ](https://templ.guide/) テンプレートエンジンの使い方を説明します。
+このドキュメントは、Go 版プロジェクトで使用している [templ](https://templ.guide/) テンプレートエンジンの使い方を説明します。
 
 ## 概要
 
@@ -68,7 +68,7 @@ package pages
 // インポート
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/templates"
+    "example.com/app/internal/templates"
 )
 
 // テンプレートコンポーネントの定義
@@ -149,9 +149,9 @@ package layouts
 import (
     "context"
     "github.com/a-h/templ"
-    "github.com/wikinoapp/wikino/internal/repository"
-    "github.com/wikinoapp/wikino/internal/templates/components"
-    "github.com/wikinoapp/wikino/internal/viewmodel"
+    "example.com/app/internal/repository"
+    "example.com/app/internal/templates/components"
+    "example.com/app/internal/viewmodel"
 )
 
 templ Default(ctx context.Context, meta viewmodel.PageMeta, user *repository.GetUserByIDRow, content templ.Component) {
@@ -188,7 +188,7 @@ package pages
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/templates"
+    "example.com/app/internal/templates"
 )
 
 templ SignIn(ctx context.Context, csrfToken string) {
@@ -234,8 +234,8 @@ package components
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/model"
-    "github.com/wikinoapp/wikino/internal/templates"
+    "example.com/app/internal/model"
+    "example.com/app/internal/templates"
 )
 
 templ FormErrors(ctx context.Context, formErrors *model.ValidationError) {
@@ -260,8 +260,8 @@ package pages
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/model"
-    "github.com/wikinoapp/wikino/internal/templates/components"
+    "example.com/app/internal/model"
+    "example.com/app/internal/templates/components"
 )
 
 templ SignIn(ctx context.Context, formErrors *model.ValidationError) {
@@ -381,6 +381,7 @@ templ New(ctx context.Context, formErrors *model.ValidationError, csrfToken stri
 **良い例**:
 
 ```go
+// Wikino の例
 type EditPageData struct {
     CSRFToken string
     Page      viewmodel.Page
@@ -394,6 +395,7 @@ pageVM := viewmodel.NewPageForEdit(pg, draftPage)
 **悪い例**:
 
 ```go
+// Wikino の例
 // ❌ モデルのフィールドを個別に展開している
 type EditPageData struct {
     CSRFToken      string

@@ -3,9 +3,9 @@ paths:
   - "rails/**"
 ---
 
-# Wikino 開発ガイド (Rails 版)
+# Rails 版プロジェクト 開発ガイド
 
-このファイルは、Rails 版 Wikino の開発に関するガイダンスを提供します。
+このファイルは、Rails 版プロジェクトの開発に関するガイダンスを提供します。
 
 > **Note**: プロジェクト全体の概要、モノレポ構造、共通インフラ（PostgreSQL）については、[/CLAUDE.md](../CLAUDE.md) を参照してください。
 
@@ -20,11 +20,6 @@ Rails 版は既存の本番システムであり、以下の方針で開発・�
 ### Go 版への移行について
 
 現在、Rails 版の機能を段階的に Go 版へ移行中です。Go 版の実装時には、Rails 版のコードを参考にして既存の仕様を理解できます。
-
-## プロジェクト概要
-
-WikinoはWikiアプリケーションです。
-ユーザーは「スペース」と呼ばれる場所にページを作成し、ページ間をリンクで繋げることができます。
 
 ## 技術スタック
 
@@ -237,6 +232,8 @@ sig { params(space_record_id: Types::DatabaseId).returns(T::Boolean) }
 📖 **詳細については [@.claude/rules/rails-testing.md](rails-testing.md) を参照してください。**
 
 ```ruby
+# Wikino の例
+
 # ❌ context, let, described_classは使用しない
 context "when xxx" do
   let(:user) { create(:user) }

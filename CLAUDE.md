@@ -133,11 +133,68 @@ make dev
 
 Claude Code は `.claude/rules/` 配下のガイドラインを自動で読み込むため、通常は特に意識せず書いて OK。ガイドラインの実体は `korylus-guidelines` から `apm install` で配置されています。
 
-- **Korylus 共通**: `.claude/rules/common.md` / `.claude/rules/apm.md`
+- **Korylus 共通**: `.claude/rules/common.md` / `.claude/rules/apm.md` / `.claude/rules/guidelines-authoring.md`
 - **Go 版**: `.claude/rules/go-*.md` (coding, architecture, handler, usecase, testing, validation, security, templ, i18n, development)
 - **Rails 版**: `.claude/rules/rails-*.md` (common, architecture, testing, security)
 
 APM 管理下のファイルは `apm install` で上書きされます。編集したい場合は `korylus-guidelines` 側を修正してください。
+
+## Wikino 固有のガイドライン
+
+`apm install` で配置される共通ガイドライン (`.claude/rules/`) に加えて、Wikino プロジェクト固有の規約を本セクションに記述する。Korylus の他プロダクトには適用されない、Wikino 独自のドメイン規約・セキュリティ規約を扱う。
+
+### スペース ID によるクエリスコープ
+
+主に Go 版の SQL クエリ (sqlc / 生 SQL) に適用する規約。Rails 版では ActiveRecord の関連 (`current_space.pages` など) を経由することで同等のスコープを実現しているため、本規約の対象外。
+
+#### 基本方針
+
+Wikino ではスペースがデータの分離境界です。スペース内のリソースに対するクエリには、**必ず `space_id` を WHERE 条件に含めてください**。
+
+ハンドラーやユースケースでの認可チェックに加え、クエリレベルでもスペースをまたいだデータアクセスを防止する防御的プログラミングです。
+
+#### 対象テーブル
+
+`space_id` カラムを持つテーブル:
+
+- `pages`, `draft_pages`, `topics`, `topic_members`, `space_members`
+- `page_editors`, `page_revisions`, `attachments`
+
+`space_id` カラムを持たないが、スペース内リソースを参照するテーブル:
+
+- `page_attachment_references`（`pages` 経由でスペースに紐づく）
+
+#### 実装方法
+
+```sql
+-- ✅ Good: テーブル自体に space_id がある場合は直接条件に含める
+UPDATE pages SET title = $2 WHERE id = $1 AND space_id = $3;
+DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
+
+-- ✅ Good: テーブルに space_id がない場合は JOIN で検証する
+SELECT par.* FROM page_attachment_references par
+INNER JOIN pages p ON par.page_id = p.id
+WHERE par.page_id = $1 AND p.space_id = $2;
+
+-- ❌ Bad: space_id なしで ID のみで操作している
+UPDATE pages SET title = $2 WHERE id = $1;
+DELETE FROM draft_pages WHERE id = $1;
+SELECT * FROM page_attachment_references WHERE page_id = $1;
+```
+
+#### なぜ必要か
+
+- **防御の多層化**: 認可チェックとクエリスコープの 2 重防御により、どちらかに不備があっても安全
+- **影響範囲の限定**: 万一不正な ID が渡されても、操作がスペース内に閉じる
+- **意図の明確化**: クエリを読むだけでスペーススコープであることが分かる
+
+### 環境変数プレフィックス
+
+Wikino で定義する環境変数には、外部ライブラリなどが指定してくるものを除き、**必ず `WIKINO_` プレフィックスを付ける**。Go 版・Rails 版の両方で同一の規約を適用する。
+
+- 例: `WIKINO_PORT`, `WIKINO_DOMAIN`, `WIKINO_RAILS_APP_URL`
+- 外部ライブラリが要求する環境変数はそのまま使用 (例: `DATABASE_URL`, `REDIS_URL`)
+- **例外**: `APP_ENV` などの慣習的な環境変数は `WIKINO_` プレフィックスなしで使用する
 
 ## 開発ワークフロー
 

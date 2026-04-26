@@ -5,7 +5,7 @@ paths:
 
 # テストガイド
 
-このドキュメントは、Rails 版 Wikino でのテストのコーディング規約とベストプラクティスを説明します。
+このドキュメントは、Rails 版プロジェクトでのテストのコーディング規約とベストプラクティスを説明します。
 
 ## RSpec
 
@@ -16,6 +16,8 @@ paths:
 - FactoryBot で作成したレコードの変数名には `_record` サフィックスを付ける
 
 ```ruby
+# Wikino の例
+
 # ❌ context, let, described_classは使用しない
 context "when xxx" do
   let(:user) { create(:user) }

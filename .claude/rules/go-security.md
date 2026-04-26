@@ -5,7 +5,7 @@ paths:
 
 # セキュリティガイドライン
 
-このドキュメントは、Go版Wikinoでのセキュリティベストプラクティスを説明します。
+このドキュメントは、Go 版プロジェクトでのセキュリティベストプラクティスを説明します。
 
 ## 基本方針
 
@@ -52,7 +52,7 @@ templ SignIn(ctx context.Context, csrfToken string) {
 package handler
 
 import (
-    "github.com/wikinoapp/wikino/internal/middleware"
+    "example.com/app/internal/middleware"
 )
 
 func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -145,49 +145,6 @@ db.Query(query)
 // ✅ Good: プレースホルダーを使用
 db.Query("SELECT * FROM users WHERE id = $1", userID)
 ```
-
-## スペースIDによるクエリスコープ
-
-### 基本方針
-
-Wikino ではスペースがデータの分離境界です。スペース内のリソースに対するクエリには、**必ず `space_id` を WHERE 条件に含めてください**。
-
-ハンドラーやユースケースでの認可チェックに加え、クエリレベルでもスペースをまたいだデータアクセスを防止する防御的プログラミングです。
-
-### 対象テーブル
-
-`space_id` カラムを持つテーブル:
-
-- `pages`, `draft_pages`, `topics`, `topic_members`, `space_members`
-- `page_editors`, `page_revisions`, `attachments`
-
-`space_id` カラムを持たないが、スペース内リソースを参照するテーブル:
-
-- `page_attachment_references`（`pages` 経由でスペースに紐づく）
-
-### 実装方法
-
-```sql
--- ✅ Good: テーブル自体に space_id がある場合は直接条件に含める
-UPDATE pages SET title = $2 WHERE id = $1 AND space_id = $3;
-DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
-
--- ✅ Good: テーブルに space_id がない場合は JOIN で検証する
-SELECT par.* FROM page_attachment_references par
-INNER JOIN pages p ON par.page_id = p.id
-WHERE par.page_id = $1 AND p.space_id = $2;
-
--- ❌ Bad: space_id なしで ID のみで操作している
-UPDATE pages SET title = $2 WHERE id = $1;
-DELETE FROM draft_pages WHERE id = $1;
-SELECT * FROM page_attachment_references WHERE page_id = $1;
-```
-
-### なぜ必要か
-
-- **防御の多層化**: 認可チェックとクエリスコープの2重防御により、どちらかに不備があっても安全
-- **影響範囲の限定**: 万一不正な ID が渡されても、操作がスペース内に閉じる
-- **意図の明確化**: クエリを読むだけでスペーススコープであることが分かる
 
 ## パスワード管理
 
@@ -446,7 +403,6 @@ http.SetCookie(w, cookie)
 
 - [ ] SQL クエリはプリペアドステートメントを使用しているか
 - [ ] sqlc で生成したコードを使用しているか
-- [ ] スペース内リソースへのクエリに `space_id` を条件として含めているか
 
 ### パスワード
 

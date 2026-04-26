@@ -5,7 +5,7 @@ paths:
 
 # セキュリティガイドライン（Rails 版）
 
-このドキュメントは、Rails 版 Wikino でのセキュリティベストプラクティスを説明します。
+このドキュメントは、Rails 版プロジェクトでのセキュリティベストプラクティスを説明します。
 
 ## 基本方針
 
@@ -15,7 +15,7 @@ Web アプリケーションのセキュリティは**最優先事項**です。
 
 ### Rails 標準の保護
 
-Rails では `protect_from_forgery with: :exception` がデフォルトで有効になっています。Wikino では `ApplicationController` でこれを継承しており、POST / PATCH / DELETE リクエストには自動的に CSRF トークンの検証が行われます。
+Rails では `protect_from_forgery with: :exception` がデフォルトで有効になっています。`ApplicationController` でこれを継承することで、POST / PATCH / DELETE リクエストには自動的に CSRF トークンの検証が行われます。
 
 ```ruby
 # app/controllers/application_controller.rb
@@ -29,6 +29,8 @@ end
 `form_with` ヘルパーが自動的に CSRF トークンを追加します。
 
 ```erb
+<%# Wikino の例 %>
+
 <%# ✅ Good: form_with は自動的に CSRF トークンを追加 %>
 <%= form_with model: @page, url: pages_path do |f| %>
   <%= f.text_field :title %>
@@ -43,7 +45,7 @@ end
 
 ### 内部 API の扱い
 
-Wikino の内部 API（`app/controllers/api/internal/`）は、外部公開用ではなく同一オリジン上の JavaScript からのみ呼び出されます。認証は通常のコントローラーと同じ `require_authentication`（Cookie ベース）を使います。
+外部公開用ではなく、同一オリジン上の JavaScript からのみ呼び出される内部 API では、通常のコントローラーと同じ Cookie ベースの認証を使います。
 
 JavaScript からの HTTP リクエストには `@rails/request.js` を使うことで、CSRF トークンが自動的にリクエストヘッダーに付与されます。
 
@@ -51,13 +53,13 @@ JavaScript からの HTTP リクエストには `@rails/request.js` を使うこ
 // ✅ Good: @rails/request.js を使用（CSRF トークンが自動付与される）
 import { post } from "@rails/request.js";
 
-const response = await post("/api/internal/attachments", {
+const response = await post("/api/internal/resources", {
   body: data,
   responseKind: "json",
 });
 ```
 
-なお、S3 署名付き URL 発行のように Rails 側の CSRF 検証を適用できないエンドポイントでは、`require_authentication` と `origin` 検証など、別途ガードを設けます（例: `app/controllers/attachments/presigns/create_controller.rb`）。
+なお、S3 署名付き URL 発行のように Rails 側の CSRF 検証を適用できないエンドポイントでは、認証と `origin` 検証など、別途ガードを設けます。
 
 ## XSS（Cross-Site Scripting）対策
 
@@ -75,6 +77,8 @@ ERB / ViewComponent は自動でエスケープ処理を行います。
 `raw` や `html_safe` を使う場合は、データが信頼できるソースからのものであることを確認してください。
 
 ```erb
+<%# Wikino の例 %>
+
 <%# ⚠️ 注意: 信頼できる HTML のみ %>
 <%= raw @rendered_markdown %>
 
@@ -85,13 +89,11 @@ ERB / ViewComponent は自動でエスケープ処理を行います。
 <%= @page.body_html %>  <%# Markup モデル側で html-pipeline + sanitize により無害化済み %>
 ```
 
-Wikino では Markdown 本文を `Markup` クラス（`app/models/markup.rb`）で処理し、`html-pipeline` と `sanitize` gem で XSS 対策を施してから表示します。SVG を扱う場合は `SvgSanitizer` を通します。
+Markdown 本文を扱う場合は専用クラスで処理し、`html-pipeline` と `sanitize` gem で XSS 対策を施してから表示します。SVG を扱う場合はサニタイズ処理を通します。
 
 ### Content Security Policy
 
-**現状**: Wikino では CSP は**まだ設定していません**。`config/initializers/content_security_policy.rb` は全行コメントアウトされています。
-
-将来 CSP を導入する際は、以下のような設定を参考にしてください。
+CSP を導入する際は、以下のような設定を参考にしてください。
 
 ```ruby
 # config/initializers/content_security_policy.rb
@@ -132,6 +134,8 @@ UserRecord.where("email = '#{params[:email]}'")
 必ずプレースホルダー（`?` または名前付き）を使用します。`LIKE` 句を使う場合は `sanitize_sql_like` でメタ文字をエスケープします。
 
 ```ruby
+# Wikino の例
+
 # ✅ Good: プレースホルダー + LIKE のメタ文字エスケープ
 def search_pages(title)
   PageRecord.where("title LIKE ?", "%#{sanitize_sql_like(title)}%")
@@ -147,9 +151,11 @@ end
 
 ### `has_secure_password` の使用
 
-Wikino ではパスワードを `UserPasswordRecord` に `has_secure_password` で保管します（`users` と別テーブルに分離しています）。bcrypt が内部的に使われ、ソルトも自動生成されます。
+パスワードは `has_secure_password` で保管します。bcrypt が内部的に使われ、ソルトも自動生成されます。
 
 ```ruby
+# Wikino の例
+
 # app/records/user_password_record.rb
 class UserPasswordRecord < ApplicationRecord
   self.table_name = "user_passwords"
@@ -161,6 +167,8 @@ end
 ```
 
 ```ruby
+# Wikino の例
+
 # パスワードの作成
 UserPasswordRecord.create!(user_record:, password: "secure_password")
 
@@ -180,7 +188,7 @@ Rails.logger.info "User password: #{params[:password]}"
 Rails.logger.info "User sign-in attempt: email=#{params[:email]}"
 ```
 
-Wikino の `config/initializers/filter_parameter_logging.rb` では、`:passw`, `:secret`, `:token`, `:crypt`, `:salt`, `:otp`, `:cvv`, `:cvc` などを自動的にフィルタリングしています。新しい機密パラメータを追加する場合は、このリストも更新してください。
+Rails の `config/initializers/filter_parameter_logging.rb` で、`:passw`, `:secret`, `:token`, `:crypt`, `:salt`, `:otp`, `:cvv`, `:cvc` などを自動的にフィルタリングできます。新しい機密パラメータを追加する場合は、このリストも更新してください。
 
 ```ruby
 # config/initializers/filter_parameter_logging.rb
@@ -191,13 +199,15 @@ Rails.application.config.filter_parameters += [
 
 ## 認証・認可
 
-Wikino は Devise / Pundit を使わず、独自の認証・認可機構を実装しています。詳細は [@.claude/rules/rails-architecture.md](rails-architecture.md) を参照してください。
+プロジェクトによっては Devise / Pundit などの認証・認可ライブラリの代わりに、独自の認証・認可機構を実装することがあります。
 
-### 認証: `ControllerConcerns::Authenticatable`
+### 認証
 
-認証は `ControllerConcerns::Authenticatable` モジュール（`app/controllers/controller_concerns/authenticatable.rb`）で提供される `require_authentication` を `before_action` に設定します。
+認証ヘルパーで提供される `require_authentication` のようなメソッドを `before_action` に設定します。
 
 ```ruby
+# Wikino の例
+
 # app/controllers/pages/new_controller.rb
 module Pages
   class NewController < ApplicationController
@@ -212,7 +222,7 @@ module Pages
 end
 ```
 
-提供されるメソッド:
+**Wikino の例**: 認証ヘルパー (`ControllerConcerns::Authenticatable`) が提供するメソッド一覧
 
 | メソッド                 | 用途                                                     |
 | ------------------------ | -------------------------------------------------------- |
@@ -223,11 +233,13 @@ end
 | `current_user_record`    | 認証中の `UserRecord` を返す（未認証なら `nil`）         |
 | `current_user`           | 認証中の `User` モデルを返す（未認証なら `nil`）         |
 
-### 認可: `MemberPolicy` / `GuestPolicy`
+### 認可
 
-認可は Pundit の代わりに Wikino 独自の Policy クラス（`app/policies/`）で判定します。`MemberPolicy` はスペースメンバーに対して、`GuestPolicy` は非メンバーに対して権限判定を行います。
+認可は `app/policies/` 配下の Policy クラスで判定します。Policy クラスは利用者の属性 (メンバー/ゲストなど) ごとに分け、権限のスコープを保持して可否判定メソッドを提供します。
 
 ```ruby
+# Wikino の例
+
 # app/policies/member_policy.rb
 class MemberPolicy
   def can_create_page?
@@ -244,6 +256,8 @@ end
 コントローラーから Policy を呼び出して認可チェックを行います。権限がなければ 404 を返す、または適切なエラーページに遷移させます。
 
 ```ruby
+# Wikino の例
+
 # app/controllers/pages/create_controller.rb
 module Pages
   class CreateController < ApplicationController
@@ -268,13 +282,15 @@ end
 
 ### 所有者チェック
 
-認証だけでなく、リソースの所有者であるかもチェックします。たとえば編集中の下書きページは所有者のみが編集できます（`can_update_draft_page?(is_owner:)` のように、`MemberPolicy` が `is_owner` を受け取って判定）。
+認証だけでなく、リソースの所有者であるかもチェックします。Policy クラスで `is_owner` のような所有者フラグを受け取り、所有者のみが行える操作を判定するパターンを使うことがあります。
 
 ## Strong Parameters
 
 すべてのコントローラーで Strong Parameters を使用し、許可するパラメータを明示します。
 
 ```ruby
+# Wikino の例
+
 # ✅ Good: Strong Parameters
 private def page_params
   params.require(:page).permit(:title, :body)
@@ -291,11 +307,13 @@ def call
 end
 ```
 
-Wikino では多くの入力を Form オブジェクト（`app/forms/`）で受け取り、Form 側で許可パラメータとバリデーションを管理するケースもあります。どちらの場合も「明示的に許可したパラメータのみを使う」という原則は共通です。
+Form オブジェクト（`app/forms/`）で入力を受け取り、Form 側で許可パラメータとバリデーションを管理するケースもあります。どちらの場合も「明示的に許可したパラメータのみを使う」という原則は共通です。
 
 ## セッション管理
 
-Wikino は 2 種類のセッションを併用しています。
+フラッシュメッセージなどの軽量データと、ユーザー認証の状態は分けて管理することがあります。
+
+**Wikino の例**: 2 種類のセッションを併用するパターン
 
 | 用途                   | 実装                                           | 保存先                                                  |
 | ---------------------- | ---------------------------------------------- | ------------------------------------------------------- |
@@ -304,11 +322,13 @@ Wikino は 2 種類のセッションを併用しています。
 
 ### ユーザー認証セッション
 
-ログイン時に `UserSessionRecord.start!` を呼び、`has_secure_token` で生成された**新しいトークン**をレコードに保存します。このトークンを Cookie に保存し、以降のリクエストで認証に使います。
+ログイン時にセッションレコードを作成し、`has_secure_token` で生成された**新しいトークン**をレコードに保存します。このトークンを Cookie に保存し、以降のリクエストで認証に使います。
 
-ログインのたびにレコードが新規作成されトークンが更新されるため、**セッション固定攻撃（Session Fixation）は構造的に防がれています**。
+ログインのたびにレコードが新規作成されトークンが更新されるため、**セッション固定攻撃（Session Fixation）は構造的に防がれます**。
 
 ```ruby
+# Wikino の例
+
 # app/records/user_session_record.rb
 class UserSessionRecord < ApplicationRecord
   self.table_name = "user_sessions"
@@ -325,9 +345,11 @@ end
 
 ### Cookie の設定
 
-認証トークン Cookie は `ControllerConcerns::Authenticatable#store_user_session_token` で以下の属性を付与して保存します。
+認証トークン Cookie は以下の属性を付与して保存します。
 
 ```ruby
+# Wikino の例
+
 cookies.permanent[UserSession::TOKENS_COOKIE_KEY] = {
   value: token,
   httponly: true,              # JavaScript からアクセス不可（XSS 経由の窃取を防ぐ）
@@ -345,7 +367,7 @@ cookies.permanent[UserSession::TOKENS_COOKIE_KEY] = {
 
 ### ログアウト
 
-`sign_out` は `UserSessions::DestroyService` で `user_sessions` レコードを削除し、Cookie も削除します。これによりサーバー側のトークンが無効化され、万一 Cookie が流出していても再利用できなくなります。
+ログアウト時はサーバー側のセッションレコードを削除し、Cookie も削除します。これによりサーバー側のトークンが無効化され、万一 Cookie が流出していても再利用できなくなります。
 
 ## エラーメッセージ
 
@@ -369,9 +391,11 @@ end
 
 ### Sentry による自動エラー追跡
 
-Wikino では `sentry-rails` / `sentry-ruby` gem を使用し、例外を自動的に Sentry へ送信します。`sentry-rails` は Rack ミドルウェアとして機能するため、コントローラー内で明示的な `rescue_from` を書く必要はありません。
+Sentry を導入する場合は、`sentry-rails` / `sentry-ruby` gem を使用すると例外を自動的に Sentry へ送信できます。`sentry-rails` は Rack ミドルウェアとして機能するため、コントローラー内で明示的な `rescue_from` を書く必要はありません。
 
 ```ruby
+# Wikino の例
+
 # config/initializers/sentry.rb
 Sentry.init do |config|
   config.dsn = Wikino.config.sentry_dsn
@@ -408,8 +432,6 @@ end
 ```
 
 ### Permissions Policy
-
-**現状**: Wikino では Permissions Policy は**まだ設定していません**。`config/initializers/permissions_policy.rb` は全行コメントアウトされています。
 
 カメラ・マイク・位置情報などの機能を制限したい場合は、以下のような設定を参考にしてください。
 
@@ -448,14 +470,14 @@ end
 
 ### パスワード
 
-- [ ] `has_secure_password` を使用しているか（`UserPasswordRecord`）
+- [ ] `has_secure_password` を使用しているか
 - [ ] 平文パスワードをログに出力していないか
 - [ ] `filter_parameter_logging` に機密パラメータが登録されているか
 
 ### 認証・認可
 
 - [ ] `before_action :require_authentication` を設定しているか
-- [ ] `MemberPolicy` / `GuestPolicy` で認可チェックを行っているか
+- [ ] Policy クラスで認可チェックを行っているか
 - [ ] リソースの所有者チェックを行っているか
 
 ### エラー処理
@@ -471,7 +493,7 @@ end
 
 ### 1. bundler-audit で脆弱性をチェック
 
-**現状**: Wikino では bundler-audit は**まだ導入していません**。依存ライブラリの CVE を定期的にチェックしたい場合、導入を検討してください。
+依存ライブラリの CVE を定期的にチェックしたい場合は、bundler-audit の導入を検討してください。
 
 ```sh
 # インストール後、以下のコマンドで実行
@@ -480,7 +502,7 @@ bundle audit check --update
 
 ### 2. Brakeman で静的解析
 
-**現状**: Wikino では Brakeman は**まだ導入していません**。Rails 固有のセキュリティ脆弱性を静的に検出したい場合、導入を検討してください。
+Rails 固有のセキュリティ脆弱性を静的に検出したい場合は、Brakeman の導入を検討してください。
 
 ```sh
 # インストール後、以下のコマンドで実行
@@ -496,14 +518,14 @@ brakeman -q
 API_KEY = "abc123"
 
 # ✅ Good: 環境変数
-API_KEY = ENV.fetch("WIKINO_API_KEY")
+API_KEY = ENV.fetch("APP_API_KEY")
 ```
 
-Wikino では `.env.{environment}` ファイルで環境変数を管理します。シークレットを含む `.env.local` は Git 管理外です。
+`.env.{environment}` ファイルで環境変数を管理することがあります。シークレットを含む `.env.local` は Git 管理外にします。
 
 ### 4. 定期的に Gem を更新
 
-Dependabot が有効になっており、依存 Gem の更新 PR が自動で作成されます。PR 単位でセキュリティ更新を取り込むため、マージは定期的に行ってください。
+Dependabot を有効にしておくと、依存 Gem の更新 PR が自動で作成されます。PR 単位でセキュリティ更新を取り込むため、マージは定期的に行ってください。
 
 ## トラブルシューティング
 
@@ -520,6 +542,8 @@ Dependabot が有効になっており、依存 Gem の更新 PR が自動で作
 **解決方法**:
 
 ```erb
+<%# Wikino の例 %>
+
 <%# フォーム: form_with を使用 %>
 <%= form_with model: @page do |f| %>
   <%= f.submit %>
@@ -545,6 +569,8 @@ const response = await post("/api/internal/...", {
 **解決方法**:
 
 ```ruby
+# Wikino の例
+
 # ✅ Good: Strong Parameters
 private def page_params
   params.require(:page).permit(:title, :body)

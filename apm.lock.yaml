@@ -1,11 +1,11 @@
 lockfile_version: '1'
-generated_at: '2026-04-24T09:57:01.484128+00:00'
+generated_at: '2026-04-26T15:54:11.837119+00:00'
 apm_version: 0.9.2
 dependencies:
 - repo_url: korylus/guidelines
   host: github.com
-  resolved_commit: 6986922cdc13cd5011c74318be1471d17eaf8a64
-  resolved_ref: v1.0.0
+  resolved_commit: 4698158de9f24807e4f80681fd983b3218b8195c
+  resolved_ref: v1.0.4
   package_type: apm_package
   deployed_files:
   - .claude/rules/apm.md
@@ -21,6 +21,7 @@ dependencies:
   - .claude/rules/go-testing.md
   - .claude/rules/go-usecase.md
   - .claude/rules/go-validation.md
+  - .claude/rules/guidelines-authoring.md
   - .claude/rules/rails-architecture.md
   - .claude/rules/rails-common.md
   - .claude/rules/rails-security.md
@@ -35,19 +36,20 @@ dependencies:
   deployed_file_hashes:
     .claude/rules/apm.md: sha256:12085669d1359b920ccad15cc364a3550d6eb4a14d34b61a33a5054637217b63
     .claude/rules/common.md: sha256:4ff0a327b13a002043a48f8b49529b66a53e3603dd522e728922e331d2553fd0
-    .claude/rules/go-architecture.md: sha256:347f1307a478efdaef255c89bec29eb5e7f836e9c723456176cd5163181b5f96
-    .claude/rules/go-coding.md: sha256:fc532a44d25dae97bbd9eb9da42c17ae6a5c9e2a7ff6f69edf7813f2656768fa
-    .claude/rules/go-common.md: sha256:1b1c1e84956ab3180271ca73abdb55ab2b5d9abda09949d614f6001b535e82a9
-    .claude/rules/go-development.md: sha256:866c04528bb1e155bd5382bf7266b22f81b660c7d6254956095ae8d261136936
-    .claude/rules/go-handler.md: sha256:09364d6ca0cd70ed1f088e216954ed4792fa44681fa7249012cfb390d401c218
-    .claude/rules/go-i18n.md: sha256:133a1c740c29a7ad882b47d0d598d53ad83dc4a69ae9dfe2348ab2389f181c8c
-    .claude/rules/go-security.md: sha256:e54b166cb331a88441f3089f5a1271da483ff7343eb0940692baa3edf9b2d5b6
-    .claude/rules/go-templ.md: sha256:324ad1cec613d89d8d64910a0b321ef2d6113337a377d8fc145cdaa4af376e7c
-    .claude/rules/go-testing.md: sha256:a24dfaf7b576cf9782f90c48862f530d35d2c3af4f0e2e9760b74809eae01fed
-    .claude/rules/go-usecase.md: sha256:bef441a17c4c2e67ae9336e42164ab72a6642b852eba82762da5a53ea89cbcf5
-    .claude/rules/go-validation.md: sha256:88f74b204bc9c2924ec511ec0a5a1dd2447afddf857af108467248d0ab5c7b32
-    .claude/rules/rails-architecture.md: sha256:a48870a0d6ed277b515c9beb75fdb27485206acdeccb9f741c46df09b8f4e256
-    .claude/rules/rails-common.md: sha256:c4f2466a654e18f6cd35db5a425efa49356613e600345f2bc43a05c91b088f52
-    .claude/rules/rails-security.md: sha256:0275f8407a660fa966dd13390050aa0fcb9b91ee8f6c7af281b6bcaee44b2c55
-    .claude/rules/rails-testing.md: sha256:b10cfb829607e003c5f9b78f6be7f65fc3b7f5b1a2671d4f2e8aad25191af01a
-  content_hash: sha256:3e0988866caa4eeaa7c46c07f82306ae72f08004f78d3ef18dbbe40a3854a549
+    .claude/rules/go-architecture.md: sha256:d5ff96940b76daf9783bdedfb2906b79aa3c5bc3a2c8032613d7a1f973273a85
+    .claude/rules/go-coding.md: sha256:ab5e37f3802874437f6b08a46998b5970b3cbedb2d48eaceed52748789dc15f1
+    .claude/rules/go-common.md: sha256:a3681285bfdbcfde9e37ab001dd6253c6cbfb07d01f64c3d2fd2039c11882c6e
+    .claude/rules/go-development.md: sha256:eb453111a410a9c7791e136119ebf76e87ffef1f8f70a3721ba472b66dc8c8c9
+    .claude/rules/go-handler.md: sha256:4d06acb412263cbd88fc0d734b122c55a1a5274385ff7442a8da68b94e506038
+    .claude/rules/go-i18n.md: sha256:53ecb2c8dbe00f621a39c6ccf422d585ab4f96b1882bec298264fecf49b6047f
+    .claude/rules/go-security.md: sha256:c1be0e2f0959e6ff1b4614a4b2dcbe701987034677f3f1cd2543bfd567150d48
+    .claude/rules/go-templ.md: sha256:ebbe66c0efecb6d4e7b5a2f28b34085ed8a50e17c356104c7b3d28f43be6c060
+    .claude/rules/go-testing.md: sha256:866e2227b63f7ef78666a5b2e3eab0544d6614c8feaef1a27a9a08b556f0c974
+    .claude/rules/go-usecase.md: sha256:34ac78f52baccec9255744043caef368f990550228f58b5424bc97dbce0d9a9e
+    .claude/rules/go-validation.md: sha256:e798f5ed86211c2e66044dff58daf345c4e4eb04d552ccfe4600a434f2d7298f
+    .claude/rules/guidelines-authoring.md: sha256:0a4a93d16063efc3026ae2e2059c5161fdbbbbebe8a1ee819f3ce0d284262ebe
+    .claude/rules/rails-architecture.md: sha256:326075d2d3a999fe8e1edc46c33dea3bd79ebd24c1e173333d325bc9460b3f56
+    .claude/rules/rails-common.md: sha256:8346c10a6253bc4dc323490bb66306d09446b66cebb5f57e8b10359bf627d70c
+    .claude/rules/rails-security.md: sha256:d410bb4d9f401a071fefe863c5ae7ac1b3864a8567dfcc13f7ada55d326f7b5b
+    .claude/rules/rails-testing.md: sha256:6375be24036a797e497cf706247cb9db312f8effa905b9db321b4056c1febb9b
+  content_hash: sha256:24cda77d7be03122b2c121722c2f9ae108da11eff0beedb500c5c29a6fe8c608
