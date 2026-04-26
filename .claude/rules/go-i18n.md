@@ -5,7 +5,7 @@ paths:
 
 # 国際化（I18n）ガイド
 
-このドキュメントは、Go版Wikinoでの国際化（Internationalization）のベストプラクティスを説明します。
+このドキュメントは、Go 版プロジェクトでの国際化（Internationalization）のベストプラクティスを説明します。
 
 ## 概要
 
@@ -31,7 +31,7 @@ package pages
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/templates"
+    "example.com/app/internal/templates"
 )
 
 templ SignIn(ctx context.Context, csrfToken string) {
@@ -57,7 +57,7 @@ templ SignIn(ctx context.Context, csrfToken string) {
 package handler
 
 import (
-    "github.com/wikinoapp/wikino/internal/i18n"
+    "example.com/app/internal/i18n"
 )
 
 func (h *Handler) ProcessSignIn(w http.ResponseWriter, r *http.Request) {

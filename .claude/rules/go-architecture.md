@@ -5,11 +5,11 @@ paths:
 
 # アーキテクチャガイド
 
-このドキュメントは、Go版Wikinoのアーキテクチャパターンを説明します。
+このドキュメントは、Go 版プロジェクトのアーキテクチャパターンを説明します。
 
 ## 概要
 
-Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を採用しています。
+Go 版プロジェクトは、関心の分離を意識した**3層アーキテクチャ**を採用しています。
 
 ### 3層アーキテクチャの構成
 
@@ -70,6 +70,8 @@ RepositoryとModelを同じ層として扱うことで、依存関係がシン�
 
 ModelとRepositoryのファイル名・構造体名は統一します：
 
+**Wikino の例**:
+
 | Model         | Repository              | ファイル名        |
 | ------------- | ----------------------- | ----------------- |
 | `Page`        | `PageRepository`        | `page.go`         |
@@ -87,6 +89,7 @@ ModelとRepositoryのファイル名・構造体名は統一します：
 クエリの結果や状態ごとに新しいモデルを作らず、既存のモデルを再利用します。関連エンティティのデータが必要な場合は、ポインタ型のフィールドでモデル間の参照を表現します。
 
 ```go
+// Wikino の例
 // ✅ 良い例: 既存の Topic モデルに Space への参照を持たせる
 type Topic struct {
     ID     TopicID
@@ -108,6 +111,7 @@ type JoinedTopic struct {
 Repositoryではクエリ結果ごとに変換メソッドを用意し、同じモデルに変換します：
 
 ```go
+// Wikino の例
 // 単純なクエリ結果 → Topic（Space は ID のみ）
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic { ... }
 
@@ -129,6 +133,7 @@ func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsBy
 **実装パターン**:
 
 ```go
+// Wikino の例
 // internal/model/id.go - 型定義
 type SpaceID string
 func (id SpaceID) String() string { return string(id) }
@@ -159,6 +164,7 @@ func (b *SpaceBuilder) Build() model.SpaceID {
 IDのスライスと `[]string` の相互変換が必要な場合（例: PostgreSQL の配列型との変換）は、`id.go` にヘルパー関数を定義します：
 
 ```go
+// Wikino の例
 func PageIDsToStrings(ids []PageID) []string { ... }
 func StringsToPageIDs(ss []string) []PageID { ... }
 ```
@@ -177,6 +183,8 @@ Queryファイルは用途に応じて2つのパターンがあります：
 - 複数テーブルをJOINするクエリ
 - 特定のモデルを構築するためのクエリ
 - 例: `space_member.sql`（users, space_membersなどをJOIN）
+
+**Wikino の例**:
 
 ```
 internal/query/queries/
@@ -411,6 +419,7 @@ ViewModelはModelとは異なり、**画面の要件に応じて必要な数だ�
 **ただし**: 表示項目が同じであれば再利用しても構いません。重複を避けること自体が目的ではなく、「画面の要件に合ったViewModelを定義する」のが原則です。
 
 ```go
+// Wikino の例
 // ✅ 良い例: 画面ごとに異なるViewModelを定義
 // サイドバー用（シンプル）
 type TopicForSidebar struct {
@@ -442,6 +451,7 @@ type Topic struct {
 Templates は Model に直接依存できない（depguard で禁止）ため、パスヘルパー関数などで型安全性が必要な場合は ViewModel パッケージに Presentation 層用の型を定義する。
 
 ```go
+// Wikino の例
 // internal/viewmodel/page_number.go
 // Model の型をラップした Presentation 層用の型
 type PageNumber model.PageNumber
@@ -450,6 +460,7 @@ type PageNumber model.PageNumber
 Templates のパスヘルパー関数は ViewModel の型を引数に取る：
 
 ```go
+// Wikino の例
 // internal/templates/path.go
 func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path { ... }
 ```
@@ -457,6 +468,7 @@ func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path { ..
 ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う：
 
 ```go
+// Wikino の例
 // internal/viewmodel/suggestion.go
 diffs[i] = SuggestionPageDiff{
     PageNumber: PageNumber(pageNumberByID[sp.PageID]),  // model.PageNumber → viewmodel.PageNumber
@@ -483,7 +495,7 @@ diffs[i] = SuggestionPageDiff{
 package viewmodel
 
 import (
-    "github.com/wikinoapp/wikino/internal/repository"
+    "example.com/app/internal/repository"
 )
 
 // Work はテンプレートで表示する作品データ
@@ -534,9 +546,9 @@ func generateImageURL(cfg *config.Config, imageData *string) string {
 package handler
 
 import (
-    "github.com/wikinoapp/wikino/internal/templates/layouts"
-    "github.com/wikinoapp/wikino/internal/templates/pages/works"
-    "github.com/wikinoapp/wikino/internal/viewmodel"
+    "example.com/app/internal/templates/layouts"
+    "example.com/app/internal/templates/pages/works"
+    "example.com/app/internal/viewmodel"
 )
 
 func (h *Handler) PopularWorks(w http.ResponseWriter, r *http.Request) {
@@ -814,6 +826,7 @@ email パッケージは以下の依存関係ルールに従います。
 ### 実装パターン
 
 ```go
+// Wikino の例
 // UseCase 内で認可チェックを実行
 func (uc *UpdateSuggestionUsecase) Execute(ctx context.Context, input UpdateSuggestionInput) (*UpdateSuggestionOutput, error) {
     // 1. データ取得

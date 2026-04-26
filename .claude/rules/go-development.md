@@ -5,17 +5,15 @@ paths:
 
 # 開発環境ガイド
 
-このドキュメントは、Go 版 Wikino の開発環境のセットアップと運用に関するガイドを提供します。
+このドキュメントは、Go 版プロジェクトの開発環境のセットアップと運用に関するガイドを提供します。
 
 ## 環境変数の設定
 
 ### 命名規則
 
-- Wikino で定義する環境変数は、外部ライブラリなどが指定してくるものを除き、**必ずプレフィックス `WIKINO_` を付ける**
-- 例:
-  - `WIKINO_PORT`, `WIKINO_DOMAIN`, `WIKINO_RAILS_APP_URL`
-  - 外部ライブラリが要求する環境変数はそのまま使用（例: `DATABASE_URL`, `REDIS_URL`）
-- **例外**: `APP_ENV` は `WIKINO_` プレフィックスなしで使用する
+- プロジェクトで定義する環境変数には、外部ライブラリなどが指定してくるものを除き、**プロジェクト名のプレフィックスを付ける**
+- 外部ライブラリが要求する環境変数はそのまま使用する（例: `DATABASE_URL`, `REDIS_URL`）
+- **例外**: `APP_ENV` などの慣習的な環境変数はプレフィックスなしで使用する
 
 ### .env ファイルを使用する
 
@@ -102,7 +100,7 @@ make sqlc-generate              # sqlcでGoコードを生成
 - マイグレーションファイルは `db/migrations/` ディレクトリに作成される
 - スキーマは `db/schema.sql` に出力される
 - `make test` 実行時は自動的に `make db-setup-test` が実行される
-- テスト用 DB (`wikino_test`) は完全にリセット（`DROP SCHEMA public CASCADE`）してから `db/schema.sql` を適用
+- テスト用 DB は完全にリセット（`DROP SCHEMA public CASCADE`）してから `db/schema.sql` を適用
 - **マイグレーション単体のテストは不要**: リポジトリやユースケースのテストで間接的に検証される
 
 ### カラム定義のガイドライン
