@@ -18,7 +18,6 @@ type SpaceMemberBuilder struct {
 
 	spaceID  string
 	userID   model.UserID
-	role     int32
 	scopes   []string
 	joinedAt time.Time
 	active   bool
@@ -31,7 +30,6 @@ func NewSpaceMemberBuilder(t *testing.T, tx *sql.Tx) *SpaceMemberBuilder {
 	return &SpaceMemberBuilder{
 		t:        t,
 		tx:       tx,
-		role:     0, // owner
 		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
@@ -81,10 +79,10 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO space_members (space_id, user_id, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), b.role, pq.Array(b.scopes), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), pq.Array(b.scopes), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -101,7 +99,6 @@ type SpaceMemberBuilderDB struct {
 
 	spaceID  string
 	userID   model.UserID
-	role     int32
 	scopes   []string
 	joinedAt time.Time
 	active   bool
@@ -114,7 +111,6 @@ func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
 	return &SpaceMemberBuilderDB{
 		t:        t,
 		db:       db,
-		role:     0,
 		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
@@ -158,10 +154,10 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO space_members (space_id, user_id, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), b.role, pq.Array(b.scopes), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), pq.Array(b.scopes), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
