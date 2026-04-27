@@ -280,11 +280,19 @@ internal/query/queries/
   - River（外部ライブラリ）のみに依存。上位層（UseCase, Handler, Worker）には依存しない
   - ジョブ引数の Args 型もこのパッケージ内に定義する
 
+#### 横断的な技術ユーティリティ（auth パッケージ）
+
+- **internal/auth**: 横断的な技術ユーティリティ。暗号処理（bcrypt）・セキュアランダム生成・パスワード強度検証などを提供する
+  - **層**: Domain/Infrastructure 層（`model` / `query` と同じ最下層）に属するが、ドメインエンティティ（`model`）やデータアクセス（`query` / `repository`）とは別枠の「純粋な技術ユーティリティ」として扱う
+  - **依存可能**: 標準ライブラリ、外部ライブラリ（`golang.org/x/crypto/bcrypt`, `crypto/rand` など）のみ
+  - **依存不可**: プロジェクト内部のすべてのパッケージ。具体的な禁止対象は各プロジェクトの `.golangci.yml` の `auth-layer` ルールで強制する
+  - **呼び出し元**: 上位層（Presentation 層 / Application 層 / Domain/Infrastructure 層の他パッケージ）から自由に呼び出して構わない
+  - **i18n に依存しない**: パスワード強度検証などのバリデーションエラーは sentinel error（`errors.New(...)` で定義したパッケージレベルのエラー値）で返し、翻訳の解決は呼び出し元（`validator` など）の責務とする。auth が `i18n` に依存すると `auth → i18n → middleware → session → auth` のような循環依存を招きやすいため、純粋な技術ユーティリティの性質を保つ
+
 ### その他
 
 - **cmd/server/main.go**: エントリポイント。設定、データベース接続、Chi ルーターを使用した HTTP サーバーを初期化
 - **internal/config**: 環境変数から設定を読み込む設定管理。`.env.{environment}` ファイルを使用
-- **internal/auth**: 認証ロジック
 - **internal/turnstile**: Cloudflare Turnstile連携
 
 ## レイヤー間の依存関係
@@ -1037,3 +1045,15 @@ Templates のパスヘルパー関数（`PagePath` など）の引数にドメ�
 - ViewModel による変換層のバイパスをコードレビューだけで防ぐのは漏れが発生しやすい
 
 **代替として採用した方針**: ViewModel パッケージに Presentation 層用の型を定義する（例: `type PageNumber model.PageNumber`）。Templates は ViewModel の型のみに依存し、depguard による境界の強制を維持する。ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う
+
+### J. auth パッケージに i18n メッセージを埋め込む設計
+
+auth パッケージのバリデーション関数（パスワード強度検証など）に `context.Context` を渡し、`errors.New(i18n.T(ctx, ...))` のように翻訳済みメッセージを埋め込んで返す方針。呼び出し元（`validator`）は受け取ったエラーメッセージをそのまま画面に出すだけで済む利便性がある。
+
+**不採用の理由**:
+
+- auth が `i18n` に依存すると、auth パッケージの「純粋な技術ユーティリティ」という性質が失われる
+- `i18n` は実装上 `middleware` に依存することが多く、`auth → i18n → middleware → session → auth` のような循環依存を引き起こしやすい（実際にプロジェクトでこの問題が発生した経緯あり）
+- sentinel error 方式（`auth.ErrPasswordTooShort` のようなパッケージレベルのエラー値を `errors.Is` で判別する）にすれば、auth は `i18n` 非依存のまま検証ロジックを提供でき、翻訳の責務は呼び出し元（`validator`）に集約できる
+
+**代替として採用した方針**: バリデーション失敗時は sentinel error を返し、呼び出し元で `errors.Is` により種別を判別して `i18n.T(ctx, ...)` で翻訳メッセージを解決する。auth と `i18n` の依存関係は `.golangci.yml` の `auth-layer` ルールで静的に禁止し、退行を防ぐ
