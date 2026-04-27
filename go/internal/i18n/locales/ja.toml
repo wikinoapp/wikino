@@ -2,18 +2,23 @@
 
 # 共通
 [default_title]
+description = "デフォルトのページタイトル"
 other = "Wikino"
 
 [default_description]
+description = "デフォルトのページ説明文（meta description）"
 other = "Wikinoはオンラインで情報を共有・整理できるWikiアプリケーションです。"
 
 [flash_dismiss]
+description = "フラッシュメッセージの閉じるボタンのラベル"
 other = "閉じる"
 
 [label_error]
+description = "エラーラベルの汎用表示"
 other = "エラー"
 
 [back_to_home]
+description = "ホームへ戻るリンクのラベル"
 other = "ホームに戻る"
 
 [form_optional]
@@ -22,106 +27,138 @@ other = "任意"
 
 # サインイン
 [sign_in_title]
+description = "サインインページのタイトル"
 other = "ログイン"
 
 [sign_in_heading]
+description = "サインインページの見出し"
 other = "Wikinoにログイン"
 
 [sign_in_email_label]
+description = "サインインのメールアドレス入力ラベル"
 other = "メールアドレス"
 
 [sign_in_password_label]
+description = "サインインのパスワード入力ラベル"
 other = "パスワード"
 
 [sign_in_submit_button]
+description = "サインインの送信ボタンのラベル"
 other = "ログインする"
 
 [sign_in_forgot_password]
+description = "サインインページのパスワード忘れリンクのラベル"
 other = "パスワードを忘れた？"
 
 [sign_in_no_account]
+description = "サインインページのアカウント未所持時の案内文"
 other = "アカウントをお持ちでない方は"
 
 [sign_in_sign_up]
+description = "サインインページから新規登録への導線リンク"
 other = "新規登録"
 
 # バリデーションエラー
 [validation_required]
+description = "汎用の必須入力エラー"
 other = "入力してください"
 
 [validation_email_invalid]
+description = "メールアドレス形式エラー"
 other = "有効なメールアドレスを入力してください"
 
 [validation_email_or_password_invalid]
+description = "サインイン時のメールアドレスまたはパスワード不一致エラー"
 other = "メールアドレスまたはパスワードが正しくありません"
 
 # 二要素認証
 [sign_in_two_factor_title]
+description = "二要素認証ページのタイトル"
 other = "二要素認証の確認"
 
 [sign_in_two_factor_heading]
+description = "二要素認証ページの見出し"
 other = "二要素認証"
 
 [sign_in_two_factor_enter_code]
+description = "二要素認証ページの認証コード入力案内文"
 other = "認証アプリに表示される認証コードを入力してください"
 
 [sign_in_two_factor_code_label]
+description = "二要素認証の認証コード入力ラベル"
 other = "認証コード"
 
 [sign_in_two_factor_code_hint]
+description = "二要素認証の認証コード入力ヒント"
 other = "6桁のコードを入力してください"
 
 [sign_in_two_factor_submit_button]
+description = "二要素認証の送信ボタンのラベル"
 other = "確認"
 
 [sign_in_two_factor_recovery_description]
+description = "二要素認証ページのリカバリーコード使用案内"
 other = "認証アプリが手元に無い場合は、リカバリーコードを使用してログインできます"
 
 [sign_in_two_factor_recovery_link]
+description = "リカバリーコード使用への遷移リンクのラベル"
 other = "リカバリーコードを使用する"
 
 # 二要素認証リカバリー
 [sign_in_two_factor_recovery_title]
+description = "リカバリーコード入力ページのタイトル"
 other = "二要素認証のリカバリー"
 
 [sign_in_two_factor_recovery_heading]
+description = "リカバリーコード入力ページの見出し"
 other = "リカバリーコード"
 
 [sign_in_two_factor_recovery_code_usage]
+description = "リカバリーコード入力ページの使用方法案内"
 other = "認証アプリにアクセスできない場合は、\n事前に保存したリカバリーコードを使用してログインできます"
 
 [sign_in_two_factor_recovery_code_label]
+description = "リカバリーコード入力ラベル"
 other = "リカバリーコード"
 
 [sign_in_two_factor_recovery_code_hint]
+description = "リカバリーコード入力ヒント"
 other = "リカバリーコードは8文字の英数字です"
 
 # 二要素認証バリデーションエラー
 [validation_totp_code_invalid]
+description = "認証コードのバリデーションエラー"
 other = "認証コードが無効です"
 
 [validation_recovery_code_invalid]
+description = "リカバリーコードのバリデーションエラー"
 other = "リカバリーコードが無効です"
 
 [sign_in_two_factor_invalid_code]
+description = "二要素認証の認証コード不一致エラー"
 other = "認証コードが正しくありません"
 
 [sign_in_two_factor_recovery_invalid_code]
+description = "リカバリーコード不一致エラー"
 other = "リカバリーコードが正しくありません"
 
 # ログイン成功
 [flash_sign_in_success]
+description = "サインイン成功時のフラッシュメッセージ"
 other = "ログインしました"
 
 # ログアウト
 [signed_out_successfully]
+description = "サインアウト成功時のフラッシュメッセージ"
 other = "ログアウトしました"
 
 # サインアップ
 [sign_up_title]
+description = "サインアップページのタイトル"
 other = "新規登録"
 
 [sign_up_heading]
+description = "サインアップページの見出し"
 other = "Wikinoに新規登録"
 
 [sign_up_email_instruction]
@@ -129,69 +166,90 @@ description = "サインアップ時のメール入力フィールドの説明"
 other = "メールアドレスの確認のため、\n入力したメールアドレス宛てに確認コードをお送りします"
 
 [sign_up_email_label]
+description = "サインアップのメールアドレス入力ラベル"
 other = "メールアドレス"
 
 [sign_up_submit_button]
+description = "サインアップの送信ボタンのラベル"
 other = "確認コードを送信"
 
 [sign_up_have_account]
+description = "サインアップページのアカウント所持済み案内文"
 other = "アカウントをお持ちの方は"
 
 [sign_up_sign_in]
+description = "サインアップページからサインインへの導線リンク"
 other = "ログイン"
 
 # メール確認
 [email_confirmation_subject]
+description = "メール確認コード送信メールの件名"
 other = "[Wikino] 確認用コード"
 
 [flash_email_confirmation_sent]
+description = "確認コード送信完了時のフラッシュメッセージ"
 other = "確認コードを送信しました"
 
 [validation_email_already_registered]
+description = "メールアドレス重複エラー"
 other = "このメールアドレスは既に登録されています"
 
 [validation_invalid_event]
+description = "Turnstile などで無効なイベントが検知された場合のエラー"
 other = "無効なイベントタイプです"
 
 [validation_bot_detected]
+description = "Bot 判定された場合のエラー"
 other = "しばらくしてからもう一度お試しください"
 
 [validation_rate_limit_exceeded]
+description = "レート制限超過エラー"
 other = "リクエストが多すぎます。しばらくしてからお試しください"
 
 # メール確認コード入力
 [email_confirmation_edit_title]
+description = "確認コード入力ページのタイトル"
 other = "確認コードの入力"
 
 [email_confirmation_edit_heading]
+description = "確認コード入力ページの見出し"
 other = "確認コードを入力"
 
 [email_confirmation_edit_description]
+description = "確認コード入力ページの案内文"
 other = "メールアドレスに送信された6桁の確認コードを入力してください"
 
 [email_confirmation_edit_code_label]
+description = "確認コード入力ラベル"
 other = "確認コード"
 
 [email_confirmation_edit_code_hint]
+description = "確認コード入力のヒント"
 other = "6文字の英数字を入力してください"
 
 [email_confirmation_edit_submit_button]
+description = "確認コード入力の送信ボタンのラベル"
 other = "確認する"
 
 [email_confirmation_edit_back_to_sign_up]
+description = "確認コード入力ページから新規登録への戻るリンク"
 other = "新規登録に戻る"
 
 # メール確認コードバリデーション
 [validation_confirmation_code_invalid_length]
+description = "確認コード文字数エラー"
 other = "確認コードは6文字で入力してください"
 
 [validation_confirmation_code_mismatch]
+description = "確認コード不一致エラー"
 other = "確認コードが正しくありません"
 
 [validation_confirmation_code_expired]
+description = "確認コードの有効期限切れエラー"
 other = "確認コードの有効期限が切れています。もう一度お試しください"
 
 [validation_confirmation_not_found]
+description = "確認情報が見つからない場合のエラー"
 other = "確認情報が見つかりません。もう一度お試しください"
 
 [validation_confirmation_already_succeeded]
@@ -200,94 +258,131 @@ other = "この確認は既に完了しています"
 
 # アカウント作成
 [account_new_title]
+description = "アカウント作成ページのタイトル"
 other = "アカウント作成"
 
 [account_new_heading]
+description = "アカウント作成ページの見出し"
 other = "アカウントを作成"
 
 [account_new_email_label]
+description = "アカウント作成のメールアドレス表示ラベル"
 other = "メールアドレス"
 
 [account_new_email_verified]
+description = "アカウント作成画面でメール確認済みであることを示すラベル"
 other = "確認済み"
 
 [account_new_atname_label]
+description = "アカウント作成のアットネーム入力ラベル"
 other = "アットネーム"
 
 [account_new_atname_hint]
+description = "アカウント作成のアットネーム入力ヒント"
 other = "20文字以内、半角英数字とアンダースコアのみ使用可能です"
 
 [account_new_password_label]
+description = "アカウント作成のパスワード入力ラベル"
 other = "パスワード"
 
 [account_new_password_hint]
-other = "8文字以上で入力してください"
+description = "アカウント作成画面のパスワード入力ヒント"
+other = "{{.MinLength}}文字以上で入力してください"
 
 [account_new_submit_button]
+description = "アカウント作成の送信ボタンのラベル"
 other = "アカウントを作成"
 
 [account_new_back_to_sign_up]
+description = "アカウント作成ページから新規登録への戻るリンク"
 other = "新規登録に戻る"
 
 # アカウント作成バリデーション
 [validation_atname_required]
+description = "アットネーム必須エラー"
 other = "アットネームを入力してください"
 
 [validation_atname_too_long]
+description = "アットネーム文字数超過エラー"
 other = "アットネームは20文字以内で入力してください"
 
 [validation_atname_invalid_format]
+description = "アットネーム形式エラー（許可されない文字を含む）"
 other = "アットネームは英数字とアンダースコアのみ使用できます"
 
 [validation_atname_already_taken]
+description = "アットネーム重複エラー"
 other = "このアットネームは既に使用されています"
 
 [validation_password_required]
+description = "パスワード必須エラー"
 other = "パスワードを入力してください"
 
 [validation_password_too_short]
-other = "パスワードは8文字以上で入力してください"
+description = "パスワードが最小文字数未満のときのエラー"
+other = "パスワードは{{.MinLength}}文字以上で入力してください"
+
+[validation_password_too_long]
+description = "パスワードが最大文字数を超えたときのエラー"
+other = "パスワードは{{.MaxLength}}文字以内で入力してください"
+
+[validation_password_invalid_chars]
+description = "パスワードに印字可能ASCII文字以外が含まれるときのエラー"
+other = "パスワードには印字可能なASCII文字のみ使用できます"
 
 # アカウント作成成功
 [flash_account_created]
+description = "アカウント作成成功時のフラッシュメッセージ"
 other = "アカウントを作成しました"
 
 # パスワードリセット申請
 [password_reset_title]
+description = "パスワードリセット申請ページのタイトル"
 other = "パスワードリセット"
 
 [password_reset_heading]
+description = "パスワードリセット申請ページの見出し"
 other = "パスワードをリセット"
 
 [password_reset_description]
+description = "パスワードリセット申請ページの案内文"
 other = "登録したメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。"
 
 [password_reset_email_label]
+description = "パスワードリセット申請のメールアドレス入力ラベル"
 other = "メールアドレス"
 
 [password_reset_submit]
+description = "パスワードリセット申請の送信ボタンのラベル"
 other = "リセットリンクを送信"
 
 [password_reset_back_to_sign_in]
+description = "パスワードリセット申請ページからサインインへの戻るリンク"
 other = "ログインに戻る"
 
 # パスワードリセットメール送信完了
 [password_reset_sent_title]
+description = "パスワードリセットメール送信完了ページのタイトル"
 other = "メール送信完了"
 
 [password_reset_sent_heading]
+description = "パスワードリセットメール送信完了ページの見出し"
 other = "メールを送信しました"
 
 [password_reset_sent_message]
+description = "パスワードリセットメール送信完了の本文メッセージ"
 other = "パスワードリセット用のリンクを送信しました"
 
 [password_reset_sent_instructions]
+description = "パスワードリセットメール送信完了の操作手順案内"
 other = "メールに記載されたリンクをクリックして、新しいパスワードを設定してください。リンクの有効期限は1時間です"
 
 [password_reset_email_not_received_heading]
+description = "パスワードリセットメールが届かない場合の見出し"
 other = "メールが届かない場合"
 
 [password_reset_email_not_received_help]
+description = "パスワードリセットメールが届かない場合のヘルプ文"
 other = "迷惑メールフォルダをご確認ください。数分経ってもメールが届かない場合は、入力したメールアドレスが正しいかご確認のうえ、再度お試しください"
 
 # パスワードリセットメール
@@ -297,150 +392,197 @@ other = "[Wikino] パスワードリセット"
 
 # パスワード変更
 [password_edit_title]
+description = "パスワード変更ページのタイトル"
 other = "新しいパスワードを設定"
 
 [password_edit_heading]
+description = "パスワード変更ページの見出し"
 other = "新しいパスワードを設定"
 
 [password_edit_description]
+description = "パスワード変更ページの案内文"
 other = "新しいパスワードを入力してください"
 
 [password_edit_password_label]
+description = "パスワード変更の新パスワード入力ラベル"
 other = "新しいパスワード"
 
 [password_edit_password_requirements]
-other = "8文字以上で入力してください"
+description = "パスワード変更画面のパスワード入力ヒント"
+other = "{{.MinLength}}文字以上で入力してください"
 
 [password_edit_password_confirmation_label]
+description = "パスワード変更の確認用パスワード入力ラベル"
 other = "新しいパスワード（確認）"
 
 [password_edit_submit]
+description = "パスワード変更の送信ボタンのラベル"
 other = "パスワードを変更"
 
 # パスワードバリデーション（追加）
 [validation_password_confirmation_required]
+description = "確認用パスワード必須エラー"
 other = "パスワード（確認）を入力してください"
 
 [validation_password_confirmation_mismatch]
+description = "確認用パスワード不一致エラー"
 other = "パスワードが一致しません"
 
 # トークンバリデーション
 [validation_token_required]
+description = "トークン必須エラー"
 other = "トークンが必要です"
 
 [validation_token_invalid]
+description = "無効なトークンのエラー"
 other = "無効なリンクです。パスワードリセットを再度お試しください"
 
 [validation_token_expired]
+description = "トークン有効期限切れエラー"
 other = "リンクの有効期限が切れています。パスワードリセットを再度お試しください"
 
 [validation_token_used]
+description = "使用済みトークンエラー"
 other = "このリンクは既に使用されています。パスワードリセットを再度お試しください"
 
 [validation_system_error]
+description = "汎用のシステムエラー"
 other = "システムエラーが発生しました。しばらく経ってから再度お試しください"
 
 # パスワード変更成功
 [flash_password_updated]
+description = "パスワード変更成功時のフラッシュメッセージ"
 other = "パスワードを変更しました"
 
 # 共通ボタン・リンク
 [sign_up]
+description = "ヒーローエリアなどで使うサインアップボタンのラベル"
 other = "無料で始める"
 
 [sign_in]
+description = "ヒーローエリアなどで使うサインインボタンのラベル"
 other = "ログイン"
 
 # トップページ
 [welcome_title]
+description = "トップページのタイトル"
 other = "Wikino | リンクで見つかるWikiのアプリ"
 
 [welcome_description]
+description = "トップページの meta description"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
+description = "トップページのヒーローエリアの見出し（HTML を含む）"
 other = "リンクで見つかる<br class=\"md:hidden\"/>Wikiのアプリ"
 
 [welcome_hero_description_html]
+description = "トップページのヒーローエリアの説明文（HTML を含む）"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 
 [welcome_screenshot_alt]
+description = "トップページのスクリーンショット画像の alt テキスト"
 other = "Wikinoのスクリーンショット"
 
 [welcome_features_title]
+description = "トップページの「特徴」セクションの見出し"
 other = "特徴"
 
 [welcome_feature_markdown_title]
+description = "Markdown 機能紹介の見出し"
 other = "Markdownでシンプルに書ける"
 
 [welcome_feature_markdown_description]
+description = "Markdown 機能紹介の説明文"
 other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます"
 
 [welcome_feature_markdown_help_title]
+description = "Markdown 機能のヘルプリンクのタイトル"
 other = "Wikinoで使えるMarkdown記法について"
 
 [welcome_feature_wikilink_title]
+description = "Wiki リンク機能紹介の見出し"
 other = "ページ同士を簡単につなげる"
 
 [welcome_feature_wikilink_description]
+description = "Wiki リンク機能紹介の説明文"
 other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます"
 
 [welcome_feature_wikilink_help_title]
+description = "Wiki リンク機能のヘルプリンクのタイトル"
 other = "Wikiリンク記法について"
 
 [welcome_feature_backlinks_title]
+description = "バックリンク機能紹介の見出し"
 other = "つながりが見える"
 
 [welcome_feature_backlinks_description]
+description = "バックリンク機能紹介の説明文"
 other = "ページをリンク記法で繋げると、リンクしたページやそのページをリンクしている別のページに遷移でき、関連ページを見つけることができます"
 
 [welcome_feature_backlinks_help_title]
+description = "バックリンク機能のヘルプリンクのタイトル"
 other = "ページのつながりについて"
 
 [welcome_feature_suggestion_title]
+description = "編集提案機能紹介の見出し"
 other = "変更を提案してレビューできる"
 
 [welcome_feature_suggestion_description]
+description = "編集提案機能紹介の説明文"
 other = "ページを直接編集する代わりに、変更案を編集提案として提出し、コメントによるレビューを経て反映することができます"
 
 [welcome_feature_suggestion_help_title]
+description = "編集提案機能のヘルプリンクのタイトル"
 other = "編集提案について"
 
 [welcome_feature_publish_title]
+description = "ページ公開機能紹介の見出し"
 other = "ページを公開して共有できる"
 
 [welcome_feature_publish_description]
+description = "ページ公開機能紹介の説明文"
 other = "作成したページをインターネット上に公開して、ブログのように他の人と共有することができます"
 
 [welcome_feature_publish_note]
+description = "ページ公開機能の補足注釈"
 other = "※ 非公開機能は現在無料で使えますが、今後提供する有料プラン限定の機能になる予定です。公開機能はずっと無料です"
 
 [welcome_feature_publish_help_title]
+description = "ページ公開機能のヘルプリンクのタイトル"
 other = "トピックについて"
 
 [welcome_cta_title]
+description = "トップページの CTA セクションの見出し"
 other = "Wikinoを始めよう"
 
 [welcome_footer_resources]
+description = "トップページフッターのリソースグループ見出し"
 other = "リソース"
 
 [welcome_footer_help_page]
+description = "トップページフッターのヘルプページリンクのラベル"
 other = "ヘルプページ"
 
 [welcome_footer_release_notes]
+description = "トップページフッターのリリースノートリンクのラベル"
 other = "リリースノート"
 
 [welcome_footer_about_developer]
+description = "トップページフッターの開発者紹介リンクのラベル"
 other = "開発者について"
 
 [welcome_footer_community]
+description = "トップページフッターのコミュニティグループ見出し"
 other = "コミュニティ"
 
 [welcome_footer_open_source]
+description = "トップページフッターのオープンソース項目見出し"
 other = "オープンソース"
 
 [welcome_open_source_description]
+description = "トップページのオープンソース項目の説明文"
 other = "WikinoのソースコードはGitHubで公開されています"
 
 # トップナビゲーション
@@ -511,9 +653,11 @@ other = "すべてを表示"
 
 # フッター
 [footer_terms]
+description = "フッターの利用規約リンクのラベル"
 other = "利用規約"
 
 [footer_privacy]
+description = "フッターのプライバシーポリシーリンクのラベル"
 other = "プライバシーポリシー"
 
 # ページ編集

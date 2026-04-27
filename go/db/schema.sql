@@ -492,7 +492,6 @@ CREATE TABLE public.space_members (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     space_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
     active boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -598,7 +597,6 @@ CREATE TABLE public.topic_members (
     space_id uuid NOT NULL,
     topic_id uuid NOT NULL,
     space_member_id uuid NOT NULL,
-    role integer NOT NULL,
     joined_at timestamp without time zone NOT NULL,
     last_page_modified_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
@@ -2126,4 +2124,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260405084047'),
     ('20260409023339'),
     ('20260409023341'),
-    ('20260412091757');
+    ('20260412091757'),
+    ('20260427014536');

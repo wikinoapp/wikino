@@ -1,11 +1,11 @@
 lockfile_version: '1'
-generated_at: '2026-04-26T15:54:11.837119+00:00'
+generated_at: '2026-04-27T10:24:00.473096+00:00'
 apm_version: 0.9.2
 dependencies:
 - repo_url: korylus/guidelines
   host: github.com
-  resolved_commit: 4698158de9f24807e4f80681fd983b3218b8195c
-  resolved_ref: v1.0.4
+  resolved_commit: 409f5b7e8c367b9bd38b601acbb875414cf43a78
+  resolved_ref: v1.1.0
   package_type: apm_package
   deployed_files:
   - .claude/rules/apm.md
@@ -36,7 +36,7 @@ dependencies:
   deployed_file_hashes:
     .claude/rules/apm.md: sha256:12085669d1359b920ccad15cc364a3550d6eb4a14d34b61a33a5054637217b63
     .claude/rules/common.md: sha256:4ff0a327b13a002043a48f8b49529b66a53e3603dd522e728922e331d2553fd0
-    .claude/rules/go-architecture.md: sha256:d5ff96940b76daf9783bdedfb2906b79aa3c5bc3a2c8032613d7a1f973273a85
+    .claude/rules/go-architecture.md: sha256:6bff5a6789e701ac4663bcd923a8edc8deb2eac95d410f54d8c90be93bef9ce1
     .claude/rules/go-coding.md: sha256:ab5e37f3802874437f6b08a46998b5970b3cbedb2d48eaceed52748789dc15f1
     .claude/rules/go-common.md: sha256:a3681285bfdbcfde9e37ab001dd6253c6cbfb07d01f64c3d2fd2039c11882c6e
     .claude/rules/go-development.md: sha256:eb453111a410a9c7791e136119ebf76e87ffef1f8f70a3721ba472b66dc8c8c9
@@ -52,4 +52,4 @@ dependencies:
     .claude/rules/rails-common.md: sha256:8346c10a6253bc4dc323490bb66306d09446b66cebb5f57e8b10359bf627d70c
     .claude/rules/rails-security.md: sha256:d410bb4d9f401a071fefe863c5ae7ac1b3864a8567dfcc13f7ada55d326f7b5b
     .claude/rules/rails-testing.md: sha256:6375be24036a797e497cf706247cb9db312f8effa905b9db321b4056c1febb9b
-  content_hash: sha256:24cda77d7be03122b2c121722c2f9ae108da11eff0beedb500c5c29a6fe8c608
+  content_hash: sha256:56e963c09832c4b681c5443edd3533e1ab52f635e187cf9ac8ab7d1f8e5f6a1c

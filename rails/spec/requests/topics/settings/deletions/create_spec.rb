@@ -16,7 +16,7 @@ RSpec.describe "POST /s/:space_identifier/topics/:topic_number/settings/deletion
     space_record = create(:space_record, :small)
     other_space_record = create(:space_record)
     user_record = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record: other_space_record, user_record:)
+    create(:space_member_record, space_record: other_space_record, user_record:)
     topic_record = create(:topic_record, space_record:)
 
     sign_in(user_record:)

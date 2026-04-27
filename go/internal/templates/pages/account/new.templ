@@ -1,6 +1,9 @@
 package account
 
 import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -124,14 +127,15 @@ templ New(data NewPageData) {
 							}
 							autocomplete="new-password"
 							id="password"
-							minlength="8"
+							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+							minlength={ strconv.Itoa(auth.MinPasswordLength) }
 							name="password"
 							required
 							tabindex="2"
 							type="password"
 						/>
 						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "account_new_password_hint") }
+							{ templates.T(ctx, "account_new_password_hint", map[string]any{"MinLength": auth.MinPasswordLength}) }
 						</p>
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
 							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {

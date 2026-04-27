@@ -4,4 +4,4 @@ author: shimbaco
 target: claude
 dependencies:
   apm:
-    - github.com/korylus/guidelines#v1.0.4
+    - github.com/korylus/guidelines#v1.1.0

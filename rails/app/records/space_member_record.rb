@@ -4,9 +4,6 @@
 class SpaceMemberRecord < ApplicationRecord
   self.table_name = "space_members"
 
-  # role カラムは 7-2 で削除予定。NOT NULL 制約を満たすためデフォルト値を設定する。
-  attribute :role, :integer, default: 0
-
   belongs_to :space_record, foreign_key: :space_id
   belongs_to :user_record, foreign_key: :user_id
   has_many :topic_member_records,

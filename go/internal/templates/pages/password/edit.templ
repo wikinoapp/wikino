@@ -1,6 +1,9 @@
 package password
 
 import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -60,6 +63,8 @@ templ Edit(data EditPageData) {
 							autocomplete="new-password"
 							autofocus
 							id="password"
+							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+							minlength={ strconv.Itoa(auth.MinPasswordLength) }
 							name="password"
 							required
 							tabindex="1"
@@ -67,7 +72,7 @@ templ Edit(data EditPageData) {
 						/>
 
 						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "password_edit_password_requirements") }
+							{ templates.T(ctx, "password_edit_password_requirements", map[string]any{"MinLength": auth.MinPasswordLength}) }
 						</p>
 
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
@@ -92,6 +97,8 @@ templ Edit(data EditPageData) {
 							}
 							autocomplete="new-password"
 							id="password_confirmation"
+							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+							minlength={ strconv.Itoa(auth.MinPasswordLength) }
 							name="password_confirmation"
 							required
 							tabindex="2"

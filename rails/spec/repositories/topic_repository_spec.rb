@@ -9,7 +9,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # 3つのトピックを作成
       topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Topic 1")
@@ -51,7 +51,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record, space_record:, topic_record:, space_member_record:)
 
@@ -68,8 +68,8 @@ RSpec.describe TopicRepository do
       user_record1 = FactoryBot.create(:user_record)
       user_record2 = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record1 = FactoryBot.create(:space_member_record, :member, user_record: user_record1, space_record:)
-      space_member_record2 = FactoryBot.create(:space_member_record, :member, user_record: user_record2, space_record:)
+      space_member_record1 = FactoryBot.create(:space_member_record, user_record: user_record1, space_record:)
+      space_member_record2 = FactoryBot.create(:space_member_record, user_record: user_record2, space_record:)
 
       # 3つのトピックを作成
       topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Topic 1")
@@ -120,7 +120,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record,
         space_record:,
@@ -142,7 +142,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member,
+      space_member_record = FactoryBot.create(:space_member_record,
         user_record:,
         space_record:,
         scopes: [Scope::PAGE_WRITE, Scope::TOPIC_READ])
@@ -167,7 +167,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Topic with nil")
       topic_record2 = FactoryBot.create(:topic_record, space_record:, name: "Topic with date")
@@ -337,8 +337,8 @@ RSpec.describe TopicRepository do
       space_record2 = FactoryBot.create(:space_record, name: "Space 2")
 
       # ユーザーを両方のスペースのメンバーにする
-      space_member_record1 = FactoryBot.create(:space_member_record, :member, user_record:, space_record: space_record1)
-      space_member_record2 = FactoryBot.create(:space_member_record, :member, user_record:, space_record: space_record2)
+      space_member_record1 = FactoryBot.create(:space_member_record, user_record:, space_record: space_record1)
+      space_member_record2 = FactoryBot.create(:space_member_record, user_record:, space_record: space_record2)
 
       # 各スペースにトピックを作成
       topic_record1 = FactoryBot.create(:topic_record, space_record: space_record1, name: "Topic 1 in Space 1")
@@ -375,7 +375,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # 3つのトピックを作成
       topic_record1 = FactoryBot.create(:topic_record, space_record:, name: "Oldest Topic")
@@ -417,13 +417,13 @@ RSpec.describe TopicRepository do
       space_record2 = FactoryBot.create(:space_record)
 
       # アクティブなスペースメンバー
-      active_space_member = FactoryBot.create(:space_member_record, :member,
+      active_space_member = FactoryBot.create(:space_member_record,
         user_record:,
         space_record: space_record1,
         active: true)
 
       # 非アクティブなスペースメンバー
-      inactive_space_member = FactoryBot.create(:space_member_record, :member,
+      inactive_space_member = FactoryBot.create(:space_member_record,
         user_record:,
         space_record: space_record2,
         active: false)
@@ -455,7 +455,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # アクティブなトピックと削除されたトピックを作成
       active_topic = FactoryBot.create(:topic_record, space_record:, name: "Active Topic")
@@ -485,7 +485,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member,
+      space_member_record = FactoryBot.create(:space_member_record,
         user_record:,
         space_record:,
         scopes: [Scope::PAGE_WRITE, Scope::TOPIC_READ])
@@ -525,7 +525,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # トピックを作成
       topic_with_date = FactoryBot.create(:topic_record, space_record:, name: "Topic with date", number: 1)
@@ -557,7 +557,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       same_time = 1.day.ago
 
       # 同じlast_page_modified_atで異なるnumberのトピックを作成
@@ -600,7 +600,7 @@ RSpec.describe TopicRepository do
       space_record = FactoryBot.create(:space_record)
 
       # 他のユーザーだけがメンバーのトピックを作成
-      other_space_member = FactoryBot.create(:space_member_record, :member, user_record: other_user_record, space_record:)
+      other_space_member = FactoryBot.create(:space_member_record, user_record: other_user_record, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record,
         space_record:,
@@ -619,7 +619,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # 5つのトピックを作成
       5.times do |i|
@@ -646,7 +646,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       # 5つのトピックを作成
       5.times do |i|
@@ -669,7 +669,7 @@ RSpec.describe TopicRepository do
       # テスト用のデータ作成
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
 
       topic_record = FactoryBot.create(:topic_record, space_record:)
       FactoryBot.create(:topic_member_record,
