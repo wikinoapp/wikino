@@ -34,8 +34,6 @@ type PasswordUpdateValidateOutput struct {
 	UserID  model.UserID
 }
 
-const passwordUpdateMinLength = 8
-
 // Validate はバリデーションを行う
 func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUpdateValidatorInput) (*PasswordUpdateValidateOutput, error) {
 	ve := model.NewValidationError()
@@ -47,19 +45,16 @@ func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUp
 		return nil, ve
 	}
 
-	// パスワード必須チェック
+	// パスワード必須チェック・強度チェック
 	if input.Password == "" {
 		ve.AddField("password", i18n.T(ctx, "validation_password_required"))
+	} else {
+		addPasswordStrengthError(ctx, ve, input.Password)
 	}
 
 	// パスワード確認必須チェック
 	if input.PasswordConfirmation == "" {
 		ve.AddField("password_confirmation", i18n.T(ctx, "validation_password_confirmation_required"))
-	}
-
-	// パスワード文字数チェック
-	if len(input.Password) > 0 && len(input.Password) < passwordUpdateMinLength {
-		ve.AddField("password", i18n.T(ctx, "validation_password_too_short"))
 	}
 
 	// パスワード確認一致チェック

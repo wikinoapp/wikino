@@ -14,6 +14,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
+// 128文字を超えるパスワードのテスト用文字列
+var longPassword = strings.Repeat("a", 129)
+
 func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 	t.Parallel()
 
@@ -47,6 +50,24 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 				Token:                "valid-token",
 				Password:             "pass",
 				PasswordConfirmation: "pass",
+			},
+			wantFieldError: "password",
+		},
+		{
+			name: "パスワードが長すぎる",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             longPassword,
+				PasswordConfirmation: longPassword,
+			},
+			wantFieldError: "password",
+		},
+		{
+			name: "パスワードに無効な文字が含まれる",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             "パスワード123",
+				PasswordConfirmation: "パスワード123",
 			},
 			wantFieldError: "password",
 		},
@@ -281,6 +302,46 @@ func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 				PasswordConfirmation: "different456",
 			},
 			wantText: "Passwords do not match",
+		},
+		{
+			name:   "日本語: パスワード長すぎエラー",
+			locale: "ja",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             longPassword,
+				PasswordConfirmation: longPassword,
+			},
+			wantText: "パスワードは128文字以内で入力してください",
+		},
+		{
+			name:   "英語: パスワード長すぎエラー",
+			locale: "en",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             longPassword,
+				PasswordConfirmation: longPassword,
+			},
+			wantText: "Password must be at most 128 characters",
+		},
+		{
+			name:   "日本語: パスワード無効文字エラー",
+			locale: "ja",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             "パスワード123",
+				PasswordConfirmation: "パスワード123",
+			},
+			wantText: "パスワードには印字可能なASCII文字のみ使用できます",
+		},
+		{
+			name:   "英語: パスワード無効文字エラー",
+			locale: "en",
+			input: validator.PasswordUpdateValidatorInput{
+				Token:                "valid-token",
+				Password:             "パスワード123",
+				PasswordConfirmation: "パスワード123",
+			},
+			wantText: "Password can only contain printable ASCII characters",
 		},
 	}
 

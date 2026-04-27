@@ -357,6 +357,61 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "RateLimitはPresentation層に依存できません。"
 
+        # auth層のルール: 横断的な技術ユーティリティ（Domain/Infrastructure層）
+        # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
+        auth-layer:
+          files:
+            - "**/internal/auth/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "authはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "authはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "authはModelに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "authはApplication層 (usecase) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "authはApplication層 (validator) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "authはPresentation層 (handler) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "authはPresentation層 (middleware) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "authはPresentation層 (viewmodel) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "authはPresentation層 (templates) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "authはPresentation層 (worker) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/session
+              desc: "authはSessionに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/i18n
+              desc: "authはI18nに依存できません。エラー種別はsentinel errorで返し、翻訳は呼び出し元で解決してください。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/dispatcher
+              desc: "authはDispatcherに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/email
+              desc: "authはEmailに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "authはPolicyに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/markup
+              desc: "authはMarkupに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/clientip
+              desc: "authはClientIPに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/config
+              desc: "authはConfigに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/password_reset
+              desc: "authはPasswordResetに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/ratelimit
+              desc: "authはRateLimitに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/redirect
+              desc: "authはRedirectに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/sidebar
+              desc: "authはSidebarに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/timezone
+              desc: "authはTimezoneに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/turnstile
+              desc: "authはTurnstileに依存できません。"
+
     # staticcheck の設定
     staticcheck:
       # 有効化するチェック（デフォルトですべて有効）

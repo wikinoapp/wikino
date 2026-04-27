@@ -287,7 +287,7 @@ other = "Password"
 
 [account_new_password_hint]
 description = "Password input hint on the account creation page"
-other = "Must be at least 8 characters"
+other = "Must be at least {{.MinLength}} characters"
 
 [account_new_submit_button]
 description = "Account creation submit button label"
@@ -320,7 +320,15 @@ other = "Please enter a password"
 
 [validation_password_too_short]
 description = "Error when password is shorter than the minimum length"
-other = "Password must be at least 8 characters"
+other = "Password must be at least {{.MinLength}} characters"
+
+[validation_password_too_long]
+description = "Error when password exceeds the maximum length"
+other = "Password must be at most {{.MaxLength}} characters"
+
+[validation_password_invalid_chars]
+description = "Error when password contains characters outside printable ASCII"
+other = "Password can only contain printable ASCII characters"
 
 # Account creation success
 [flash_account_created]
@@ -401,7 +409,7 @@ other = "New password"
 
 [password_edit_password_requirements]
 description = "Password input hint on the password edit page"
-other = "Must be at least 8 characters"
+other = "Must be at least {{.MinLength}} characters"
 
 [password_edit_password_confirmation_label]
 description = "Password edit confirmation password input label"

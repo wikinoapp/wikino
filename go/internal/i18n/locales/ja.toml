@@ -287,7 +287,7 @@ other = "パスワード"
 
 [account_new_password_hint]
 description = "アカウント作成画面のパスワード入力ヒント"
-other = "8文字以上で入力してください"
+other = "{{.MinLength}}文字以上で入力してください"
 
 [account_new_submit_button]
 description = "アカウント作成の送信ボタンのラベル"
@@ -320,7 +320,15 @@ other = "パスワードを入力してください"
 
 [validation_password_too_short]
 description = "パスワードが最小文字数未満のときのエラー"
-other = "パスワードは8文字以上で入力してください"
+other = "パスワードは{{.MinLength}}文字以上で入力してください"
+
+[validation_password_too_long]
+description = "パスワードが最大文字数を超えたときのエラー"
+other = "パスワードは{{.MaxLength}}文字以内で入力してください"
+
+[validation_password_invalid_chars]
+description = "パスワードに印字可能ASCII文字以外が含まれるときのエラー"
+other = "パスワードには印字可能なASCII文字のみ使用できます"
 
 # アカウント作成成功
 [flash_account_created]
@@ -401,7 +409,7 @@ other = "新しいパスワード"
 
 [password_edit_password_requirements]
 description = "パスワード変更画面のパスワード入力ヒント"
-other = "8文字以上で入力してください"
+other = "{{.MinLength}}文字以上で入力してください"
 
 [password_edit_password_confirmation_label]
 description = "パスワード変更の確認用パスワード入力ラベル"
