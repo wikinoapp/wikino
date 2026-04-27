@@ -15,7 +15,7 @@ RSpec.describe "POST /s/:space_identifier/settings/deletion", type: :request do
     space_record = create(:space_record, :small)
     other_space_record = create(:space_record)
     user_record = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record: other_space_record, user_record:)
+    create(:space_member_record, space_record: other_space_record, user_record:)
 
     sign_in(user_record:)
 
@@ -27,7 +27,7 @@ RSpec.describe "POST /s/:space_identifier/settings/deletion", type: :request do
   it "スペース名が一致しないとき、削除確認画面が再表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small, name: "テストスペース")
-    create(:space_member_record, :owner, space_record:, user_record:)
+    create(:space_member_record, space_record:, user_record:)
 
     sign_in(user_record:)
 
@@ -44,7 +44,7 @@ RSpec.describe "POST /s/:space_identifier/settings/deletion", type: :request do
   it "ログインしている & スペースのオーナーのとき、スペースが削除されてトップページにリダイレクトすること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small, name: "テストスペース")
-    create(:space_member_record, :owner, space_record:, user_record:)
+    create(:space_member_record, space_record:, user_record:)
 
     sign_in(user_record:)
 

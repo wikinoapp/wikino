@@ -8,9 +8,6 @@ class TopicMemberRecord < ApplicationRecord
   belongs_to :topic_record, foreign_key: :topic_id
   belongs_to :space_member_record, foreign_key: :space_member_id
 
-  # role カラムは 7-2 で削除予定。NOT NULL 制約を満たすためデフォルト値を設定する。
-  attribute :role, :integer, default: 0
-
   sig { params(time: ActiveSupport::TimeWithZone).void }
   def update_last_page_modified_at!(time:)
     update!(last_page_modified_at: time)
