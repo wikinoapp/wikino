@@ -74,6 +74,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// テンプレートをレンダリング
 	content := suggestionpages.Index(suggestionpages.IndexData{

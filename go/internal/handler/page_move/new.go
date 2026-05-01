@@ -83,6 +83,7 @@ func (h *Handler) renderMoveForm(
 	meta.SetTitleWithoutSuffix(ctx, "page_move_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	pageVM := viewmodel.NewPageForMove(output.Page)
 	spaceVM := viewmodel.NewSpace(output.Space)

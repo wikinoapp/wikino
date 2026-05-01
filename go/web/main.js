@@ -1,5 +1,6 @@
 import "basecoat-css/all";
 
+import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
 
 const SIDEBAR_STORAGE_KEY = "wikinoSidebarOpen";
@@ -27,6 +28,7 @@ function setTimeZoneCookie() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
+  initializeGlobalHotkey();
   initSidebarLocalStoragePersistence();
   setTimeZoneCookie();
 });

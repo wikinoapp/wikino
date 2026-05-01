@@ -106,6 +106,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_edit_confirm_title", map[string]any{
 		"SpaceName": detailOutput.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// テンプレートをレンダリング
 	content := suggestionpageeditpages.Show(suggestionpageeditpages.ShowData{

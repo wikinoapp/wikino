@@ -91,6 +91,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// テンプレートをレンダリング
 	spaceVM := viewmodel.NewSpace(output.Space)

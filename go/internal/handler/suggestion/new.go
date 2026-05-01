@@ -84,6 +84,7 @@ func (h *Handler) renderNewForm(
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)

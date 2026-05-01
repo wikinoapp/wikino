@@ -85,6 +85,7 @@ func (h *Handler) renderEditForm(
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)

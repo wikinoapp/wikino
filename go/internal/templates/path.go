@@ -60,6 +60,15 @@ func SearchPathWithSpaceFilter(spaceIdentifier string) Path {
 	return Path("/search?q=space:" + spaceIdentifier)
 }
 
+// SearchPathFor は現在のスペースに応じた検索パスを生成します
+// スペース内ならスペースフィルター付き、スペース外なら素の `/search` を返します
+func SearchPathFor(spaceIdentifier string) Path {
+	if spaceIdentifier != "" {
+		return SearchPathWithSpaceFilter(spaceIdentifier)
+	}
+	return SearchPath()
+}
+
 // ProfilePath はプロフィールのパスを生成します
 func ProfilePath(atname string) Path {
 	return Path("/@" + atname)

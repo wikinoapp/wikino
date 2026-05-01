@@ -103,6 +103,7 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(input.SpaceIdentifier)
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 

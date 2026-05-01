@@ -10,13 +10,14 @@ import (
 
 // PageMeta はページのメタ情報を保持します
 type PageMeta struct {
-	Title        string // ページタイトル（<title>タグ、og:title、twitter:title用）
-	Description  string // ページ説明（description、og:description、twitter:description用）
-	OGType       string // og:typeの値（"website", "article"など）
-	OGURL        string // og:urlの値
-	OGImage      string // og:imageの値
-	OGLocale     string // og:localeの値（"ja_JP", "en_US"など）
-	AssetVersion string // CSSやJSのバージョン（キャッシュバスティング用）
+	Title                  string // ページタイトル（<title>タグ、og:title、twitter:title用）
+	Description            string // ページ説明（description、og:description、twitter:description用）
+	OGType                 string // og:typeの値（"website", "article"など）
+	OGURL                  string // og:urlの値
+	OGImage                string // og:imageの値
+	OGLocale               string // og:localeの値（"ja_JP", "en_US"など）
+	AssetVersion           string // CSSやJSのバージョン（キャッシュバスティング用）
+	CurrentSpaceIdentifier string // 現在のスペース識別子。グローバルホットキーの検索 URL (`/search?q=space:{identifier}`) を default.templ で組み立てるために使用する。スペース外画面では空文字
 }
 
 // localeToOGLocale はlocale（"ja", "en"など）をOGPのlocale形式（"ja_JP", "en_US"など）に変換します

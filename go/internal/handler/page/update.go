@@ -143,6 +143,7 @@ func (h *Handler) renderEditWithErrors(
 	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	content := pagepages.Edit(pagepages.EditPageData{
 		CSRFToken:     csrfToken,

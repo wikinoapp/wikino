@@ -84,6 +84,7 @@ func (h *Handler) renderNewForm(
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_new_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)

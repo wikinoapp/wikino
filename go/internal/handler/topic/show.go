@@ -97,6 +97,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
 
 	// テンプレートをレンダリング
 	content := topicpages.Show(topicpages.ShowData{
