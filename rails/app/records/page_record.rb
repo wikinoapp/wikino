@@ -361,14 +361,19 @@ class PageRecord < ApplicationRecord
   end
 
   # OGP画像URLを取得
-  sig { params(expires_in: ActiveSupport::Duration).returns(T.nilable(String)) }
-  def og_image_url(expires_in: 1.hour)
+  #
+  # 「再検証付き永続 URL」 (`/attachments/:id/og_image`) を返す。HTML キャッシュ寿命を超えても
+  # URL 文字列が無効化されないため、SNS クローラのリッチプレビューが壊れない。
+  # アクセスごとに Go 側ハンドラーが `all_referencing_pages_public?` を再評価するため、
+  # 非公開トピックや参照ゼロ件のケースでは 404 が返り、画像が漏洩することはない。
+  sig { returns(T.nilable(String)) }
+  def og_image_url
     attachment = featured_image_attachment_record
     return nil unless attachment
 
     # GIFの場合はnilを返す（デフォルトOGP画像を使用）
     return nil if featured_image_is_gif?
 
-    attachment.thumbnail_url(size: AttachmentThumbnailSize::Og, expires_in:)
+    "#{Wikino.config.app_url}/attachments/#{attachment.id}/og_image"
   end
 end

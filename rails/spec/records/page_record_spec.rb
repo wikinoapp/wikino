@@ -609,11 +609,13 @@ RSpec.describe PageRecord, type: :record do
   end
 
   describe "#og_image_url" do
-    it "通常の画像の場合はOGサイズのサムネイルURLを返すこと" do
-      user = create(:user_record)
-      space = create(:space_record)
-      space_member = create(:space_member_record, user_record: user, space_record: space)
-      topic = create(:topic_record, space_record: space)
+    it "ページから参照されていない通常の画像の場合も再検証付き永続URLを返すこと" do
+      # Rails 側は visibility を判定せず常に永続 URL を返す。Go 側ハンドラーが
+      # all_referencing_pages_public? を再評価し、参照ゼロ件のケースは 404 を返す。
+      user_record = create(:user_record)
+      space_record = create(:space_record)
+      space_member_record = create(:space_member_record, user_record:, space_record:)
+      topic_record = create(:topic_record, space_record:)
 
       # JPEGファイルのAttachmentRecordを作成
       blob = ActiveStorage::Blob.create!(
@@ -627,33 +629,71 @@ RSpec.describe PageRecord, type: :record do
 
       as_attachment = ActiveStorage::Attachment.create!(
         name: "file",
-        record: space,
+        record: space_record,
         blob: blob
       )
 
-      attachment = AttachmentRecord.create!(
-        space_id: space.id,
+      attachment_record = AttachmentRecord.create!(
+        space_id: space_record.id,
         active_storage_attachment_id: as_attachment.id,
-        attached_space_member_id: space_member.id,
+        attached_space_member_id: space_member_record.id,
         attached_at: Time.current,
         processing_status: AttachmentProcessingStatus::Completed.serialize
       )
 
-      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
+      page_record = create(:page_record, space_record:, topic_record:, featured_image_attachment_id: attachment_record.id)
 
       # reloadして関連を読み込み
-      page.reload
+      page_record.reload
 
-      # thumbnail_urlが呼ばれることを期待
-      allow(page.featured_image_attachment_record).to receive(:thumbnail_url).with(size: AttachmentThumbnailSize::Og, expires_in: 1.hour).and_return("https://example.com/og-thumbnail.jpg")
-      expect(page.og_image_url).to eq("https://example.com/og-thumbnail.jpg")
+      expect(Wikino.config.app_url).to be_present
+      expect(page_record.og_image_url).to eq("#{Wikino.config.app_url}/attachments/#{attachment_record.id}/og_image")
+    end
+
+    it "公開トピックから参照される通常の画像の場合は再検証付き永続URLを返すこと" do
+      space_record = create(:space_record)
+      topic_record = create(:topic_record, :public, space_record:)
+      attachment_record = create(:attachment_record, :with_image, space_record:)
+      page_record = create(
+        :page_record,
+        space_record:,
+        topic_record:,
+        featured_image_attachment_id: attachment_record.id
+      )
+      create(:page_attachment_reference_record, page_record:, attachment_record:)
+
+      page_record.reload
+
+      # Wikino.config.app_url が未設定だと自己参照で見落としが起きるため事前に検証する
+      expect(Wikino.config.app_url).to be_present
+      expect(page_record.og_image_url).to eq("#{Wikino.config.app_url}/attachments/#{attachment_record.id}/og_image")
+    end
+
+    it "非公開トピックから参照される通常の画像の場合も再検証付き永続URLを返すこと" do
+      # Rails 側は visibility を判定せず常に永続 URL を返す。Go 側ハンドラーが
+      # all_referencing_pages_public? を再評価し、非公開トピックは 404 を返すため画像漏洩は起きない。
+      space_record = create(:space_record)
+      topic_record = create(:topic_record, :private, space_record:)
+      attachment_record = create(:attachment_record, :with_image, space_record:)
+      page_record = create(
+        :page_record,
+        space_record:,
+        topic_record:,
+        featured_image_attachment_id: attachment_record.id
+      )
+      create(:page_attachment_reference_record, page_record:, attachment_record:)
+
+      page_record.reload
+
+      expect(Wikino.config.app_url).to be_present
+      expect(page_record.og_image_url).to eq("#{Wikino.config.app_url}/attachments/#{attachment_record.id}/og_image")
     end
 
     it "GIFファイルの場合はnilを返すこと" do
-      user = create(:user_record)
-      space = create(:space_record)
-      space_member = create(:space_member_record, user_record: user, space_record: space)
-      topic = create(:topic_record, space_record: space)
+      user_record = create(:user_record)
+      space_record = create(:space_record)
+      space_member_record = create(:space_member_record, user_record:, space_record:)
+      topic_record = create(:topic_record, space_record:)
 
       # GIFファイルのAttachmentRecordを作成
       blob = ActiveStorage::Blob.create!(
@@ -667,28 +707,62 @@ RSpec.describe PageRecord, type: :record do
 
       as_attachment = ActiveStorage::Attachment.create!(
         name: "file",
-        record: space,
+        record: space_record,
         blob: blob
       )
 
-      attachment = AttachmentRecord.create!(
-        space_id: space.id,
+      attachment_record = AttachmentRecord.create!(
+        space_id: space_record.id,
         active_storage_attachment_id: as_attachment.id,
-        attached_space_member_id: space_member.id,
+        attached_space_member_id: space_member_record.id,
         attached_at: Time.current,
         processing_status: AttachmentProcessingStatus::Completed.serialize
       )
 
-      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: attachment.id)
-      expect(page.og_image_url).to be_nil
+      page_record = create(:page_record, space_record:, topic_record:, featured_image_attachment_id: attachment_record.id)
+      expect(page_record.og_image_url).to be_nil
+    end
+
+    it "公開トピックから参照されていてもGIFファイルの場合はnilを返すこと" do
+      # featured_image_is_gif? のチェックが永続 URL の組み立てより前にあることを保証するための回帰防止テスト。
+      space_record = create(:space_record)
+      topic_record = create(:topic_record, :public, space_record:)
+      space_member_record = create(:space_member_record, space_record:)
+      blob = ActiveStorage::Blob.create!(
+        key: "test_gif_og_public",
+        filename: "animation.gif",
+        content_type: "image/gif",
+        metadata: {},
+        byte_size: 1024,
+        checksum: "checksum_gif_og_public"
+      )
+      as_attachment = ActiveStorage::Attachment.create!(name: "file", record: space_record, blob:)
+      attachment_record = AttachmentRecord.create!(
+        space_id: space_record.id,
+        active_storage_attachment_id: as_attachment.id,
+        attached_space_member_id: space_member_record.id,
+        attached_at: Time.current,
+        processing_status: AttachmentProcessingStatus::Completed.serialize
+      )
+      page_record = create(
+        :page_record,
+        space_record:,
+        topic_record:,
+        featured_image_attachment_id: attachment_record.id
+      )
+      create(:page_attachment_reference_record, page_record:, attachment_record:)
+
+      page_record.reload
+
+      expect(page_record.og_image_url).to be_nil
     end
 
     it "featured_image_attachment_recordがない場合はnilを返すこと" do
-      space = create(:space_record)
-      topic = create(:topic_record, space_record: space)
-      page = create(:page_record, space_record: space, topic_record: topic, featured_image_attachment_id: nil)
+      space_record = create(:space_record)
+      topic_record = create(:topic_record, space_record:)
+      page_record = create(:page_record, space_record:, topic_record:, featured_image_attachment_id: nil)
 
-      expect(page.og_image_url).to be_nil
+      expect(page_record.og_image_url).to be_nil
     end
   end
 end

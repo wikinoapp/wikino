@@ -1,4 +1,5 @@
 shared:
+  app_url: <%= ENV["WIKINO_URL"] %>
   email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
   host: "<%= (Rails.env.test? && !ENV['CI']) ? `hostname`.strip.downcase : ENV['WIKINO_DOMAIN'] %>"
   resend_api_key: <%= ENV["WIKINO_RESEND_API_KEY"] %>
