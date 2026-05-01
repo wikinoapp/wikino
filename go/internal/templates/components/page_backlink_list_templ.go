@@ -149,7 +149,7 @@ func pageBacklinkListLoadMore(data viewmodel.BacklinkList) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = LoadMoreButton(
-			fmt.Sprintf("%s?page=%d", string(templates.PageBacklinksPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1),
+			fmt.Sprintf("%s?page=%d", string(templates.PageBacklinksPath(data.SpaceIdentifier, data.PageNumber)), data.Pagination.Current+1),
 			"#page-backlink-list-pagination",
 		).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {

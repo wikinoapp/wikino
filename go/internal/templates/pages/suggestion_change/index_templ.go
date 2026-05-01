@@ -31,7 +31,7 @@ type IndexData struct {
 // pageDiffEditData は差分表示内の編集・削除ボタンに必要なデータです
 type pageDiffEditData struct {
 	CSRFToken        string
-	SpaceIdentifier  string
+	SpaceIdentifier  viewmodel.SpaceIdentifier
 	SuggestionNumber int32
 	CanEdit          bool
 	CanRemove        bool
@@ -74,16 +74,16 @@ func Index(data IndexData) templ.Component {
 				},
 				{
 					Label: data.Space.Name,
-					Path:  templates.SpacePath(data.Space.Identifier.String()),
+					Path:  templates.SpacePath(data.Space.Identifier),
 				},
 				{
 					Label:    data.Topic.Name,
-					Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+					Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 					IconName: data.Topic.IconName,
 				},
 				{
 					Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.Suggestion.Number),
-					Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
+					Path:  templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number),
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -108,13 +108,13 @@ func Index(data IndexData) templ.Component {
 		templ_7745c5c3_Err = components.SubNav([]components.SubNavItem{
 			{
 				Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-				Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+				Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
 				IconName:       "chats-circle-regular",
 				ActiveIconName: "chats-circle-fill",
 			},
 			{
 				Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-				Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+				Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
 				IconName:       "files-regular",
 				ActiveIconName: "files-fill",
 				IsActive:       true,
@@ -166,7 +166,7 @@ func Index(data IndexData) templ.Component {
 					ctx = templ.InitializeContext(ctx)
 					templ_7745c5c3_Err = suggestionPageDiff(pageDiffEditData{
 						CSRFToken:        data.CSRFToken,
-						SpaceIdentifier:  data.Space.Identifier.String(),
+						SpaceIdentifier:  data.Space.Identifier,
 						SuggestionNumber: data.Suggestion.Number,
 						CanEdit:          data.CanEditSuggestionPages,
 						CanRemove:        data.CanRemoveSuggestionPage,
@@ -193,9 +193,9 @@ func Index(data IndexData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 templ.SafeURL
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier.String(), data.Suggestion.Number))))
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier, data.Suggestion.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 119, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_change/index.templ`, Line: 119, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {

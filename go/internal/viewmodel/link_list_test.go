@@ -74,7 +74,7 @@ func TestNewLinkList(t *testing.T) {
 				t.Errorf("len(Items) = %d, want %d", len(got.Items), tt.wantItemCount)
 			}
 
-			if got.SpaceIdentifier != tt.spaceIdentifier {
+			if got.SpaceIdentifier != viewmodel.NewSpaceIdentifier(tt.spaceIdentifier) {
 				t.Errorf("SpaceIdentifier = %q, want %q", got.SpaceIdentifier, tt.spaceIdentifier)
 			}
 

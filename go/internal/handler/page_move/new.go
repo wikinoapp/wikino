@@ -78,12 +78,14 @@ func (h *Handler) renderMoveForm(
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_move_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	pageVM := viewmodel.NewPageForMove(output.Page)
 	spaceVM := viewmodel.NewSpace(output.Space)
@@ -114,7 +116,7 @@ func (h *Handler) renderMoveForm(
 			CurrentPageName:   templates.PageNamePageMove,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -122,7 +124,7 @@ func (h *Handler) renderMoveForm(
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNamePageMove,
 			SignedIn:        true,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

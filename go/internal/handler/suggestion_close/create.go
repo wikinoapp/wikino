@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案をクローズします (POST /s/{space_identifier}/suggestions/{suggestion_number}/close)
@@ -49,14 +50,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_close_success"))
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 }
 
 func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
 	ctx := r.Context()
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {

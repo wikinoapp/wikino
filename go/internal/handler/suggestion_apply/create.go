@@ -51,14 +51,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_apply_success"))
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 }
 
 func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
 	ctx := r.Context()
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 
 	if ae := model.AsSuggestionApplyError(err); ae != nil {
 		// バリデーションエラー → 編集提案詳細ページを 422 で再描画

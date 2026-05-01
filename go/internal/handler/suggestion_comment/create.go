@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案コメントを作成します (POST /s/{space_identifier}/suggestions/{suggestion_number}/comments)
@@ -47,7 +48,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	body := r.FormValue("body")
 
 	// 編集提案のパスを生成（リダイレクト用）
-	suggestionPath := string(templates.SuggestionShowPath(string(spaceIdentifier), int32(suggestionNumber)))
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 
 	// UseCase を実行
 	_, err = h.createSuggestionCommentUsecase.Execute(ctx, usecase.CreateSuggestionCommentInput{

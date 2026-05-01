@@ -79,12 +79,14 @@ func (h *Handler) renderNewForm(
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_new_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)
@@ -113,7 +115,7 @@ func (h *Handler) renderNewForm(
 			CurrentPageName:   templates.PageNameSuggestionPageNew,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -121,7 +123,7 @@ func (h *Handler) renderNewForm(
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNameSuggestionPageNew,
 			SignedIn:        true,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

@@ -1,7 +1,6 @@
 package page
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -61,7 +60,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_saved"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), publishOutput.Page.Number)
+	pagePath := string(templates.PagePath(viewmodel.NewSpaceIdentifier(spaceIdentifier), viewmodel.PageNumber(publishOutput.Page.Number)))
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
 }
 
@@ -112,6 +111,8 @@ func (h *Handler) renderEditWithErrors(
 ) {
 	ctx := r.Context()
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ViewModelを生成
 	pageVM := viewmodel.NewPageFromFormInput(title, body, output.Page.Number)
 	spaceVM := viewmodel.NewSpace(output.Space)
@@ -143,7 +144,7 @@ func (h *Handler) renderEditWithErrors(
 	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	content := pagepages.Edit(pagepages.EditPageData{
 		CSRFToken:     csrfToken,
@@ -153,7 +154,7 @@ func (h *Handler) renderEditWithErrors(
 		Topic:         topicVM,
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentifier.String(), int32(output.Page.Number))),
+		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)
@@ -172,7 +173,7 @@ func (h *Handler) renderEditWithErrors(
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          currentUser != nil,
 			UserAtname:        userAtname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -180,7 +181,7 @@ func (h *Handler) renderEditWithErrors(
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNamePageEdit,
 			SignedIn:        currentUser != nil,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

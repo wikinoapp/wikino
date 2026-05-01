@@ -68,13 +68,15 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_index_title", map[string]any{
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
 	content := suggestionpages.Index(suggestionpages.IndexData{
@@ -100,12 +102,12 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 			CurrentPageName: templates.PageNameSuggestionIndex,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNameSuggestionIndex,
 			SignedIn:        signedIn,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

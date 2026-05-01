@@ -86,17 +86,19 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
 		"SpaceName": output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
 	spaceVM := viewmodel.NewSpace(output.Space)
 
-	manualSaveURL := string(templates.PageDraftPageRevisionPath(spaceIdentifier.String(), int32(output.Page.Number)))
+	manualSaveURL := string(templates.PageDraftPageRevisionPath(spaceIdentVM, int32(output.Page.Number)))
 
 	editData := pagepages.EditPageData{
 		CSRFToken:               csrfToken,
@@ -111,8 +113,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {
 		editData.SuggestionNumber = int32(output.Suggestion.Number)
-		editData.SuggestionURL = string(templates.SuggestionPagePath(spaceIdentifier.String(), int32(output.Suggestion.Number), string(*output.DraftPage.SuggestionPageID)))
-		editData.SuggestionShowURL = string(templates.SuggestionShowPath(spaceIdentifier.String(), int32(output.Suggestion.Number)))
+		editData.SuggestionURL = string(templates.SuggestionPagePath(spaceIdentVM, int32(output.Suggestion.Number), string(*output.DraftPage.SuggestionPageID)))
+		editData.SuggestionShowURL = string(templates.SuggestionShowPath(spaceIdentVM, int32(output.Suggestion.Number)))
 	}
 
 	content := pagepages.Edit(editData)
@@ -128,7 +130,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -136,7 +138,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNamePageEdit,
 			SignedIn:        true,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

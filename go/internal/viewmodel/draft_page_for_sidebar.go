@@ -13,7 +13,7 @@ type DraftPageForSidebar struct {
 	PageNumber      int32
 	TopicName       string
 	IconName        IconName
-	SpaceIdentifier string
+	SpaceIdentifier SpaceIdentifier
 }
 
 // DisplayTitle は表示用タイトルを返します。タイトルが未設定の場合は「無題」を返します。
@@ -33,7 +33,7 @@ func NewDraftPagesForSidebar(drafts []*model.DraftPage) []DraftPageForSidebar {
 			PageNumber:      int32(d.Page.Number),
 			TopicName:       d.Topic.Name,
 			IconName:        topicVisibilityIconName(d.Topic.Visibility),
-			SpaceIdentifier: d.Topic.Space.Identifier.String(),
+			SpaceIdentifier: NewSpaceIdentifier(d.Topic.Space.Identifier),
 		}
 	}
 	return result

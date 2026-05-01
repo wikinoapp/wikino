@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Update は下書きページを手動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page_revision)
@@ -76,7 +77,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	redirectTo := r.URL.Query().Get("redirect_to")
 	if redirectTo == "suggestion_new" && saveOutput.DraftPage != nil {
 		suggestionNewPath := fmt.Sprintf("%s?draft_page_ids=%s",
-			string(templates.SuggestionNewPath(spaceIdentifier.String(), saveOutput.TopicNumber)),
+			string(templates.SuggestionNewPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), saveOutput.TopicNumber)),
 			string(saveOutput.DraftPage.ID),
 		)
 		http.Redirect(w, r, suggestionNewPath, http.StatusSeeOther)

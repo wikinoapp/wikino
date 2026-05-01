@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案にページを追加します (POST /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages)
@@ -66,7 +67,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_suggestion_page_added"))
-	changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
+	changesPath := string(templates.SuggestionChangesPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 	http.Redirect(w, r, changesPath, http.StatusSeeOther)
 }
 

@@ -33,11 +33,11 @@ templ New(data MovePageData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 					{
 						Label:    data.CurrentTopic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.CurrentTopic.Number),
+						Path:     templates.TopicPath(data.Space.Identifier, data.CurrentTopic.Number),
 						IconName: data.CurrentTopic.IconName,
 					},
 				},
@@ -60,7 +60,7 @@ templ New(data MovePageData) {
 
 					@components.ContentCard() {
 						<form
-							action={ templ.SafeURL(fmt.Sprintf("/s/%s/pages/%d/move", data.Space.Identifier.String(), data.Page.Number)) }
+							action={ templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))) }
 							class="form grid gap-6"
 							method="POST"
 						>
@@ -136,7 +136,7 @@ templ New(data MovePageData) {
 								</button>
 
 								<a
-									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
+									href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									class="btn-outline rounded-full w-fit"
 								>
 									{ templates.T(ctx, "page_move_cancel") }

@@ -23,7 +23,7 @@ type LinkListItem struct {
 type LinkList struct {
 	Items           []LinkListItem
 	Pagination      Pagination
-	SpaceIdentifier model.SpaceIdentifier
+	SpaceIdentifier SpaceIdentifier
 	PageNumber      int32
 }
 
@@ -55,7 +55,7 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	return LinkList{
 		Items:           items,
 		Pagination:      input.Pagination,
-		SpaceIdentifier: input.SpaceIdentifier,
+		SpaceIdentifier: NewSpaceIdentifier(input.SpaceIdentifier),
 		PageNumber:      input.PageNumber,
 	}
 }

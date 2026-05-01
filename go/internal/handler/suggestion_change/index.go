@@ -87,7 +87,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(spaceIdentifier)
+	meta.CurrentSpaceIdentifier = viewmodel.NewSpaceIdentifier(spaceIdentifier)
 
 	// 編集権限を判定（スペースメンバーかつオープンステータス）
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen

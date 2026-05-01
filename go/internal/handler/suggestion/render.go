@@ -39,18 +39,20 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 		userAtname = input.User.Atname
 	}
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(input.SpaceIdentifier)
+
 	layoutData := layouts.DefaultLayoutData{
 		Meta: input.Meta,
 		Sidebar: components.SidebarData{
 			CurrentPageName: input.CurrentPageName,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
-			SpaceIdentifier: string(input.SpaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 		BottomNav: components.BottomNavData{
 			CurrentPageName: input.CurrentPageName,
 			SignedIn:        signedIn,
-			SpaceIdentifier: string(input.SpaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 
@@ -103,7 +105,7 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = string(input.SpaceIdentifier)
+	meta.CurrentSpaceIdentifier = viewmodel.NewSpaceIdentifier(input.SpaceIdentifier)
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 

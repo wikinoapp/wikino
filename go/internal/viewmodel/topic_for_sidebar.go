@@ -9,7 +9,7 @@ type TopicForSidebar struct {
 	Name            string
 	Number          int32
 	IconName        IconName
-	SpaceIdentifier string
+	SpaceIdentifier SpaceIdentifier
 	SpaceName       string
 }
 
@@ -21,7 +21,7 @@ func NewTopicsForSidebar(topics []*model.Topic) []TopicForSidebar {
 			Name:            t.Name,
 			Number:          t.Number,
 			IconName:        topicVisibilityIconName(t.Visibility),
-			SpaceIdentifier: t.Space.Identifier.String(),
+			SpaceIdentifier: NewSpaceIdentifier(t.Space.Identifier),
 			SpaceName:       t.Space.Name,
 		}
 	}
