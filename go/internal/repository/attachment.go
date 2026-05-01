@@ -64,6 +64,36 @@ func (r *AttachmentRepository) FindByIDsAndSpace(ctx context.Context, ids []mode
 	return attachments, nil
 }
 
+// FindPubliclyReferencedBlobByID は公開 og:image 配信用: 「生きている公開トピックのページから
+// のみ参照されている」場合に限り blob 情報を返す。
+//
+// Rails 版 AttachmentRecord#all_referencing_pages_public? と等価な判定を 1 SQL に統合する
+// ことで、呼び出し側で visibility 検証を忘れる構造的事故を排除している。判定スコープからは
+// 論理削除済みのページ・トピック (`discarded_at IS NOT NULL`) を除外する。
+//
+// 戻り値の Attachment は BlobKey / ContentType を populate するが、Filename は空のまま
+// (このメソッドでは取得していない)。og:image 配信用途では Filename を使わないため問題ない。
+// space スコープは取らず、URL 文字列を知っている誰でも (ゲスト含む) 閲覧可能であることを
+// 前提にする。
+func (r *AttachmentRepository) FindPubliclyReferencedBlobByID(ctx context.Context, id model.AttachmentID) (*model.Attachment, error) {
+	if !uuidRegex.MatchString(string(id)) {
+		return nil, nil
+	}
+	row, err := r.q.FindPubliclyReferencedAttachmentBlobByID(ctx, string(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.Attachment{
+		ID:          model.AttachmentID(row.ID),
+		SpaceID:     model.SpaceID(row.SpaceID),
+		BlobKey:     row.BlobKey,
+		ContentType: row.BlobContentType.String,
+	}, nil
+}
+
 // FindByIDAndSpace はIDとスペースIDで添付ファイルを取得する（ファイル名を含む）
 func (r *AttachmentRepository) FindByIDAndSpace(ctx context.Context, id model.AttachmentID, spaceID model.SpaceID) (*model.Attachment, error) {
 	if !uuidRegex.MatchString(string(id)) {

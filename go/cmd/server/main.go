@@ -19,6 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
@@ -49,6 +50,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/image"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
@@ -173,9 +175,35 @@ func main() {
 	authMiddleware := middleware.NewAuth(sessionMgr)
 	csrfMiddleware := middleware.NewCSRF(cfg)
 
+	// imgproxy ヘルパー / OgImageBuilder を初期化（環境変数が揃っている場合のみ有効）
+	// 環境変数が未設定でもサーバー起動は継続するが、その場合 /attachments/:id/og_image に到達した
+	// リクエストは 500 を受け取る。本番環境への適用ミスを早期に検知できるよう、起動時に WARN ログで
+	// 状態を可視化する。
+	var ogImageBuilder *image.OgImageBuilder
+	switch {
+	case cfg.ImgproxyURL == "":
+		slog.Warn("WIKINO_IMGPROXY_URL が未設定のため og:image エンドポイントは無効。リクエストには 500 を返します")
+	case cfg.R2BucketName == "":
+		slog.Warn("WIKINO_R2_BUCKET_NAME が未設定のため og:image エンドポイントは無効。リクエストには 500 を返します")
+	default:
+		imgproxyHelper, err := image.NewHelper(cfg.ImgproxyURL, cfg.ImgproxyKey, cfg.ImgproxySalt)
+		if err != nil {
+			slog.Error("imgproxy ヘルパーの初期化に失敗しました", "error", err)
+			os.Exit(1)
+		}
+		ogImageBuilder, err = image.NewOgImageBuilder(imgproxyHelper, cfg.R2BucketName)
+		if err != nil {
+			slog.Error("OgImageBuilder の初期化に失敗しました", "error", err)
+			os.Exit(1)
+		}
+	}
+
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+
+	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
+	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
 	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
@@ -458,6 +486,9 @@ func main() {
 
 	// Web App Manifest（認証不要）
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// og:image 配信エンドポイント（認証不要、公開トピックの og:image を imgproxy 経由で配信する）
+	r.Get("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
 
 	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
 	r.Group(func(r chi.Router) {

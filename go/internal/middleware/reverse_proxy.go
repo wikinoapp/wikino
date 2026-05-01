@@ -102,6 +102,9 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
+	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルを imgproxy 経由で配信する
+	// /attachments/:id (ダウンロードURL) は Rails が提供するため、og_image 末尾でパスを限定する
+	{pattern: regexp.MustCompile(`^/attachments/[^/]+/og_image$`), methods: []string{http.MethodGet}},
 }
 
 // NewReverseProxyMiddleware は新しいReverseProxyMiddlewareを作成
