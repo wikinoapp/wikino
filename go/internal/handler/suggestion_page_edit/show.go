@@ -70,9 +70,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// オープンステータスでなければ変更差分画面にリダイレクト
 	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
-		changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
+		changesPath := string(templates.SuggestionChangesPath(spaceIdentVM, int32(suggestionNumber)))
 		http.Redirect(w, r, changesPath, http.StatusSeeOther)
 		return
 	}
@@ -106,6 +108,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_edit_confirm_title", map[string]any{
 		"SpaceName": detailOutput.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
 	content := suggestionpageeditpages.Show(suggestionpageeditpages.ShowData{
@@ -127,7 +130,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			CurrentPageName:   templates.PageNameSuggestionPageEditShow,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -135,7 +138,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNameSuggestionPageEditShow,
 			SignedIn:        true,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

@@ -13,7 +13,7 @@ type BacklinkListItem struct {
 type BacklinkList struct {
 	Items            []BacklinkListItem
 	Pagination       Pagination
-	SpaceIdentifier  model.SpaceIdentifier
+	SpaceIdentifier  SpaceIdentifier
 	PageNumber       int32
 	LinkedPageNumber int32
 }
@@ -41,7 +41,7 @@ func NewBacklinkList(input NewBacklinkListInput) BacklinkList {
 	return BacklinkList{
 		Items:            items,
 		Pagination:       input.Pagination,
-		SpaceIdentifier:  input.SpaceIdentifier,
+		SpaceIdentifier:  NewSpaceIdentifier(input.SpaceIdentifier),
 		PageNumber:       input.PageNumber,
 		LinkedPageNumber: input.LinkedPageNumber,
 	}

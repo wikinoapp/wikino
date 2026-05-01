@@ -2,13 +2,14 @@ package components
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // BottomNavData はモバイル用ボトムナビに渡すデータ構造体です
 type BottomNavData struct {
 	CurrentPageName templates.PageName
 	SignedIn        bool
-	SpaceIdentifier string
+	SpaceIdentifier viewmodel.SpaceIdentifier
 }
 
 // searchPath はスペース内のときスペースフィルター付き検索パスを返します

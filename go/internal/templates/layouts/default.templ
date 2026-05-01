@@ -23,6 +23,7 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 	<html lang={ templates.Locale(ctx) }>
 		<head>
 			@components.Head(data.Meta)
+			<meta name="wikino-search-path" content={ string(templates.SearchPathFor(data.Meta.CurrentSpaceIdentifier)) }/>
 		</head>
 
 		<body class="bg-background">

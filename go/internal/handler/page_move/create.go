@@ -1,7 +1,6 @@
 package page_move
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,7 +11,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create はページ移動を実行します (POST /s/{space_identifier}/pages/{page_number}/move)
@@ -53,7 +54,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "page_move_success"))
-	pagePath := fmt.Sprintf("/s/%s/pages/%d", string(spaceIdentifier), moveOutput.Page.Number)
+	pagePath := string(templates.PagePath(viewmodel.NewSpaceIdentifier(spaceIdentifier), viewmodel.PageNumber(moveOutput.Page.Number)))
 	http.Redirect(w, r, pagePath, http.StatusSeeOther)
 }
 

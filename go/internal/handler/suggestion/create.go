@@ -13,6 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案を作成します (POST /s/{space_identifier}/topics/{topic_number}/suggestions)
@@ -69,7 +70,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_create_success"))
-	suggestionPath := templates.SuggestionShowPath(string(spaceIdentifier), int32(createOutput.Suggestion.Number))
+	suggestionPath := templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(createOutput.Suggestion.Number))
 	http.Redirect(w, r, string(suggestionPath), http.StatusSeeOther)
 }
 

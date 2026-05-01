@@ -26,7 +26,7 @@ templ BacklinkList(data viewmodel.BacklinkList) {
 // backlinkListLoadMore はバックリンク一覧の「もっと見る」ボタンを表示します
 templ backlinkListLoadMore(data viewmodel.BacklinkList) {
 	@LoadMoreButton(
-		fmt.Sprintf("%s?page=%d", string(templates.PageBacklinkListPath(data.SpaceIdentifier.String(), data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1),
+		fmt.Sprintf("%s?page=%d", string(templates.PageBacklinkListPath(data.SpaceIdentifier, data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1),
 		fmt.Sprintf("#page-backlink-list-%d", data.LinkedPageNumber),
 	)
 }

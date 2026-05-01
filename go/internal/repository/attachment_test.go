@@ -133,6 +133,281 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 	})
 }
 
+func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("公開トピックのページから参照されている添付は blob 情報を取得できる", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-1")
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Page 1").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithFilename("og.png").
+			WithContentType("image/png").
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+		}
+		if attachment.ID != attachmentID {
+			t.Errorf("attachment.ID = %v, want %v", attachment.ID, attachmentID)
+		}
+		if attachment.SpaceID != spaceID {
+			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, spaceID)
+		}
+		if attachment.BlobKey == "" {
+			t.Error("attachment.BlobKey should not be empty")
+		}
+		if attachment.ContentType != "image/png" {
+			t.Errorf("attachment.ContentType = %v, want image/png", attachment.ContentType)
+		}
+	})
+
+	t.Run("非公開トピックのページから参照されている添付は nil を返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-2")
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("private").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Page 1").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("公開と非公開のページから混在参照されている添付は nil を返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-3")
+		publicTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		privateTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(2).
+			WithName("private").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+		publicPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(publicTopicID).
+			WithNumber(1).
+			WithTitle("Public").
+			Build()
+		privatePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(privateTopicID).
+			WithNumber(2).
+			WithTitle("Private").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+		if _, err := parRepo.CreateBatch(context.Background(), privatePageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("どのページからも参照されていない添付は nil を返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-4")
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("論理削除されたページからの参照は無視される (有効な公開参照がない場合 nil)", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-5")
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Discarded").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+		// ページを論理削除する
+		if _, err := tx.ExecContext(context.Background(),
+			"UPDATE pages SET discarded_at = NOW() WHERE id = $1", string(pageID)); err != nil {
+			t.Fatalf("論理削除に失敗: %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("論理削除されたトピックからの参照は無視される (有効な公開参照がない場合 nil)", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-6")
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			WithDiscarded().
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Page in discarded topic").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"))
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("UUID形式でないIDはnilを返す (DBアクセスを行わない)", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), model.AttachmentID("not-a-uuid"))
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+}
+
 func TestAttachmentRepository_FindByIDsAndSpace(t *testing.T) {
 	t.Parallel()
 

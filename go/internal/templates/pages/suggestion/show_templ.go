@@ -71,16 +71,16 @@ func Show(data ShowData) templ.Component {
 				},
 				{
 					Label: data.Space.Name,
-					Path:  templates.SpacePath(data.Space.Identifier.String()),
+					Path:  templates.SpacePath(data.Space.Identifier),
 				},
 				{
 					Label:    data.Topic.Name,
-					Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+					Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 					IconName: data.Topic.IconName,
 				},
 				{
 					Label: templates.T(ctx, "suggestion_show_breadcrumb"),
-					Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
+					Path:  templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number),
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -114,14 +114,14 @@ func Show(data ShowData) templ.Component {
 		templ_7745c5c3_Err = components.SubNav([]components.SubNavItem{
 			{
 				Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-				Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+				Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
 				IconName:       "chats-circle-regular",
 				ActiveIconName: "chats-circle-fill",
 				IsActive:       true,
 			},
 			{
 				Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-				Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+				Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
 				IconName:       "files-regular",
 				ActiveIconName: "files-fill",
 				Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
@@ -286,9 +286,9 @@ func showActions(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 templ.SafeURL
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier.String(), data.Suggestion.Number))))
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier, data.Suggestion.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 149, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 149, Col: 108}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -393,9 +393,9 @@ func showApplyForm(data ShowData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 templ.SafeURL
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))))
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier, data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 176, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 176, Col: 110}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -466,9 +466,9 @@ func showCloseForm(data ShowData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 templ.SafeURL
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))))
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier, data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 193, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 193, Col: 110}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -516,7 +516,7 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 	return []components.PostAction{
 		{
 			Label: i18n.T(ctx, "suggestion_comment_edit_action"),
-			URL:   string(templates.SuggestionCommentEditPath(data.Space.Identifier.String(), data.Suggestion.Number, c.Number)),
+			URL:   string(templates.SuggestionCommentEditPath(data.Space.Identifier, data.Suggestion.Number, c.Number)),
 		},
 	}
 }
@@ -548,9 +548,9 @@ func showCommentForm(data ShowData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 templ.SafeURL
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier.String(), data.Suggestion.Number))))
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier, data.Suggestion.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 222, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion/show.templ`, Line: 222, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {

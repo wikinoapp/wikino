@@ -91,12 +91,15 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(output.Space)
 	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, topicShowPageLimit)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "topic_show_title", map[string]any{
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
 	content := topicpages.Show(topicpages.ShowData{
@@ -120,12 +123,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			CurrentPageName: templates.PageNameTopicShow,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNameTopicShow,
 			SignedIn:        signedIn,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

@@ -1,7 +1,6 @@
 package suggestion
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,7 +11,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Update は編集提案を更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number})
@@ -61,10 +62,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// フラッシュメッセージを設定してリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_update_success"))
-	suggestionPath := fmt.Sprintf("/s/%s/suggestions/%d",
-		string(spaceIdentifier),
-		suggestionNumber,
-	)
+	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 }
 

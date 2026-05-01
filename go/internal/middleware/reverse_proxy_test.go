@@ -823,12 +823,42 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			path:     "/s/my-space/pages/1/move",
 			expected: true,
 		},
+		{
+			name:     "og:image エンドポイント（GET）",
+			method:   http.MethodGet,
+			path:     "/attachments/01HXYZ123/og_image",
+			expected: true,
+		},
 
 		// Rails版に転送するパス
 		{
 			name:     "ページ表示（GET）はRails版に転送",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
+			expected: false,
+		},
+		{
+			name:     "og:image エンドポイント（POST）はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/attachments/01HXYZ123/og_image",
+			expected: false,
+		},
+		{
+			name:     "og:image エンドポイント（PATCH）はGETのみフィルタによりマッチしない",
+			method:   http.MethodPatch,
+			path:     "/attachments/01HXYZ123/og_image",
+			expected: false,
+		},
+		{
+			name:     "og:image の末尾セグメントがないパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/attachments/01HXYZ123",
+			expected: false,
+		},
+		{
+			name:     "og:image の末尾に余分なセグメントがあるとマッチしない",
+			method:   http.MethodGet,
+			path:     "/attachments/01HXYZ123/og_image/extra",
 			expected: false,
 		},
 		{

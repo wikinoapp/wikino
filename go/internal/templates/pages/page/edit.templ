@@ -44,11 +44,11 @@ templ Edit(data EditPageData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 					{
 						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 						IconName: data.Topic.IconName,
 					},
 				},
@@ -87,7 +87,7 @@ templ Edit(data EditPageData) {
 							if data.IsSuggestionMode() {
 								action={ templ.SafeURL(data.SuggestionURL) }
 							} else {
-								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
+								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 							}
 							class="form grid gap-6"
 							hx-on:submit="disableSubmitButtons(this)"
@@ -136,7 +136,7 @@ templ Edit(data EditPageData) {
 									data-markdown-editor-title="#page_title"
 									data-markdown-editor-body={ data.Page.Body }
 									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
+									data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
 									data-markdown-editor-csrf-token={ data.CSRFToken }
 									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
@@ -225,7 +225,7 @@ templ Edit(data EditPageData) {
 
 									<a
 										class="btn-outline rounded-full w-fit"
-										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier.String(), viewmodel.PageNumber(data.Page.Number)))) }
+										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									>
 										{ templates.T(ctx, "page_edit_cancel") }
 									</a>
@@ -237,7 +237,7 @@ templ Edit(data EditPageData) {
 					<div class="flex flex-col gap-4 px-4">
 						<div
 							id="page-link-list"
-							hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier.String(), data.Page.Number)) }
+							hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
 							hx-trigger="draft-autosaved from:window"
 							hx-swap="none"
 						>

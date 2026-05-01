@@ -1,13 +1,12 @@
 package components
 
 import (
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
-templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdentifier) {
+templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceIdentifier) {
 	<div
 		if page.Primary {
 			class="group card relative min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600 border-l-2 border-l-brand-600"
@@ -22,7 +21,7 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdent
 		if page.CanEdit {
 			<div class="touch:hidden non-touch:flex absolute right-2 top-2 z-10">
 				<a
-					href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier.String(), page.Number))) }
+					href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier, page.Number))) }
 					class="
 						rounded-full p-2 leading-none text-center transition duration-150 ease-in-out shadow-sm
 						opacity-0 group-hover:opacity-100
@@ -39,7 +38,7 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdent
 		<div class="card-body h-full">
 			<div class="flex h-full">
 				<a
-					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier.String(), viewmodel.PageNumber(page.Number)))) }
+					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, viewmodel.PageNumber(page.Number)))) }
 					class="flex w-full h-full px-3 py-2"
 				>
 					<div class="flex justify-between w-full h-full gap-2">
@@ -80,7 +79,7 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier model.SpaceIdent
 				if page.CanEdit {
 					<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
 						<a
-							href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier.String(), page.Number))) }
+							href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier, page.Number))) }
 							class="btn-sm-icon-primary rounded-full"
 							title={ templates.T(ctx, "page_edit_links_edit_page") }
 						>
