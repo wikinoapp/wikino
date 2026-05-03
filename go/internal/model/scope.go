@@ -31,8 +31,9 @@ const (
 
 // 下書きページ関連スコープ
 const (
-	ScopeDraftPageRead  Scope = "draft_page:read"
-	ScopeDraftPageWrite Scope = "draft_page:write"
+	ScopeDraftPageRead   Scope = "draft_page:read"
+	ScopeDraftPageWrite  Scope = "draft_page:write"
+	ScopeDraftPageDelete Scope = "draft_page:delete"
 )
 
 // 編集提案関連スコープ
