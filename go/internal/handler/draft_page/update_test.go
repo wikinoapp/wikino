@@ -15,6 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -28,13 +29,17 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 
 	attachmentRepo := repository.NewAttachmentRepository(queries)
 
+	flashMgr := session.NewFlashManager("", false, true)
+
 	return draft_page.NewHandler(
+		flashMgr,
 		usecase.NewGetPageDetailUsecase(
 			spaceRepo,
 			spaceMemberRepo,
@@ -55,6 +60,16 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			topicRepo,
 			topicMemberRepo,
 			attachmentRepo,
+		),
+		usecase.NewDeleteDraftPageUsecase(
+			db,
+			spaceRepo,
+			spaceMemberRepo,
+			draftPageRepo,
+			draftPageRevisionRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
 		),
 		usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo),
 	)
