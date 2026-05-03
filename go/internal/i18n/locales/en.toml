@@ -906,6 +906,22 @@ other = "Untitled"
 description = "Create suggestion button on draft page index"
 other = "New suggestion"
 
+[draft_page_index_actions_aria_label]
+description = "Aria label for the dropdown trigger button on each draft row"
+other = "Draft actions"
+
+[draft_page_delete_menu_item]
+description = "Dropdown menu item: delete a draft from the index"
+other = "Delete"
+
+[draft_page_delete_confirm]
+description = "Confirmation dialog before deleting a draft"
+other = "Delete this draft?"
+
+[flash_draft_page_deleted]
+description = "Flash message shown after a draft is deleted"
+other = "Draft deleted"
+
 # Bottom navigation
 [bottom_nav_menu]
 description = "Menu button in the bottom navigation"

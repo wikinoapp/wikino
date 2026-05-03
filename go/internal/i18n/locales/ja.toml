@@ -906,6 +906,22 @@ other = "無題"
 description = "下書き一覧画面の編集提案作成ボタン"
 other = "新規編集提案"
 
+[draft_page_index_actions_aria_label]
+description = "下書き一覧の各行のアクションメニューを開くボタンの aria-label"
+other = "下書きのアクション"
+
+[draft_page_delete_menu_item]
+description = "下書き一覧のドロップダウンメニュー: 削除アクション"
+other = "削除する"
+
+[draft_page_delete_confirm]
+description = "下書き削除の確認ダイアログ"
+other = "この下書きを削除しますか？"
+
+[flash_draft_page_deleted]
+description = "下書き削除成功時のフラッシュメッセージ"
+other = "下書きを削除しました"
+
 # ボトムナビ
 [bottom_nav_menu]
 description = "ボトムナビのメニューボタン"
