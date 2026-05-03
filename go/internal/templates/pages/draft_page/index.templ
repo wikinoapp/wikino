@@ -157,15 +157,19 @@ templ draftRowActions(csrfToken string, draft viewmodel.DraftPageForIndex) {
 				<div role="menuitem">
 					<form
 						action={ templ.SafeURL(string(templates.PageDraftPagePath(draft.SpaceIdentifier, draft.PageNumber))) }
+						class="w-full"
 						data-confirm={ templates.T(ctx, "draft_page_delete_confirm") }
 						hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 						method="POST"
 					>
 						<input type="hidden" name="_method" value="DELETE"/>
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
-						<button class="flex gap-2 items-center w-full text-error" type="submit">
-							@templates.Icon("trash-regular", "size-4")
-							{ templates.T(ctx, "draft_page_delete_menu_item") }
+						<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+							@templates.Icon("trash-regular", "size-4 fill-error")
+
+							<span class="text-error">
+								{ templates.T(ctx, "draft_page_delete_menu_item") }
+							</span>
 						</button>
 					</form>
 				</div>
