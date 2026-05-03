@@ -10,6 +10,23 @@ import (
 	"time"
 )
 
+const countDraftPageRevisionsByDraftPageID = `-- name: CountDraftPageRevisionsByDraftPageID :one
+SELECT COUNT(*) FROM draft_page_revisions WHERE draft_page_id = $1 AND space_id = $2
+`
+
+type CountDraftPageRevisionsByDraftPageIDParams struct {
+	DraftPageID string `json:"draft_page_id"`
+	SpaceID     string `json:"space_id"`
+}
+
+// 下書きページIDに紐づくリビジョン件数を返す
+func (q *Queries) CountDraftPageRevisionsByDraftPageID(ctx context.Context, arg CountDraftPageRevisionsByDraftPageIDParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countDraftPageRevisionsByDraftPageID, arg.DraftPageID, arg.SpaceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createDraftPageRevision = `-- name: CreateDraftPageRevision :one
 INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, body_html, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
