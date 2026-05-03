@@ -45,6 +45,7 @@ module ScopeExpander
       # 下書きページ
       Scope::DRAFT_PAGE_READ,
       Scope::DRAFT_PAGE_WRITE,
+      Scope::DRAFT_PAGE_DELETE,
       # 編集提案
       Scope::SUGGESTION_READ,
       Scope::SUGGESTION_WRITE,
