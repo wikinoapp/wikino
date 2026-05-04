@@ -51,6 +51,17 @@ type Config struct {
 	ResendAPIKey    string
 	ResendFromEmail string
 	ResendFromName  string
+
+	// imgproxy（画像配信） - og:image エンドポイントのリサイズ・フォーマット変換に使用
+	// ImgproxyURL は signed URL のベース URL（ブラウザがアクセスする URL）
+	// ImgproxyKey / ImgproxySalt は HMAC-SHA256 署名用の 16 進数文字列
+	ImgproxyURL  string
+	ImgproxyKey  string
+	ImgproxySalt string
+
+	// 添付ファイルの保存先S3互換ストレージ
+	// R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築に使う
+	R2BucketName string
 }
 
 // Load は環境変数から設定を読み込みます
@@ -133,6 +144,14 @@ func Load() (*Config, error) {
 	cfg.ResendAPIKey = os.Getenv("WIKINO_RESEND_API_KEY")
 	cfg.ResendFromEmail = os.Getenv("WIKINO_RESEND_FROM_EMAIL")
 	cfg.ResendFromName = os.Getenv("WIKINO_RESEND_FROM_NAME")
+
+	// imgproxy（オプショナル - フィーチャーフラグ有効時のみ使用）
+	cfg.ImgproxyURL = os.Getenv("WIKINO_IMGPROXY_URL")
+	cfg.ImgproxyKey = os.Getenv("WIKINO_IMGPROXY_KEY")
+	cfg.ImgproxySalt = os.Getenv("WIKINO_IMGPROXY_SALT")
+
+	// S3互換ストレージのバケット名（imgproxy のソース URL 構築に使用）
+	cfg.R2BucketName = os.Getenv("WIKINO_R2_BUCKET_NAME")
 
 	return cfg, nil
 }

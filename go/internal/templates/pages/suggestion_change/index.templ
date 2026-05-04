@@ -24,7 +24,7 @@ type IndexData struct {
 // pageDiffEditData は差分表示内の編集・削除ボタンに必要なデータです
 type pageDiffEditData struct {
 	CSRFToken        string
-	SpaceIdentifier  string
+	SpaceIdentifier  viewmodel.SpaceIdentifier
 	SuggestionNumber int32
 	CanEdit          bool
 	CanRemove        bool
@@ -45,16 +45,16 @@ templ Index(data IndexData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 					{
 						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 						IconName: data.Topic.IconName,
 					},
 					{
 						Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.Suggestion.Number),
-						Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number),
+						Path:  templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number),
 					},
 				},
 			})
@@ -73,13 +73,13 @@ templ Index(data IndexData) {
 							@components.SubNav([]components.SubNavItem{
 								{
 									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-									Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
 									IconName:       "chats-circle-regular",
 									ActiveIconName: "chats-circle-fill",
 								},
 								{
 									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
 									IconName:       "files-regular",
 									ActiveIconName: "files-fill",
 									IsActive:       true,
@@ -102,7 +102,7 @@ templ Index(data IndexData) {
 									@components.ContentCard() {
 										@suggestionPageDiff(pageDiffEditData{
 											CSRFToken:        data.CSRFToken,
-											SpaceIdentifier:  data.Space.Identifier.String(),
+											SpaceIdentifier:  data.Space.Identifier,
 											SuggestionNumber: data.Suggestion.Number,
 											CanEdit:          data.CanEditSuggestionPages,
 											CanRemove:        data.CanRemoveSuggestionPage,
@@ -116,7 +116,7 @@ templ Index(data IndexData) {
 						if data.CanAddSuggestionPage {
 							<div class="px-4">
 								<a
-									href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+									href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier, data.Suggestion.Number))) }
 									class="btn-secondary rounded-full"
 								>
 									@templates.Icon("file-plus-regular", "size-4")

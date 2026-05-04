@@ -42,16 +42,16 @@ templ Show(data ShowData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 					{
 						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 						IconName: data.Topic.IconName,
 					},
 					{
 						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
-						Path:  templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number),
+						Path:  templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number),
 					},
 				},
 			})
@@ -72,14 +72,14 @@ templ Show(data ShowData) {
 							@components.SubNav([]components.SubNavItem{
 								{
 									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-									Path:           string(templates.SuggestionShowPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
 									IconName:       "chats-circle-regular",
 									ActiveIconName: "chats-circle-fill",
 									IsActive:       true,
 								},
 								{
 									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.Suggestion.Number)),
+									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
 									IconName:       "files-regular",
 									ActiveIconName: "files-fill",
 									Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
@@ -146,7 +146,7 @@ templ Show(data ShowData) {
 templ showActions(data ShowData) {
 	if data.CanUpdateSuggestion {
 		<a
-			href={ templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+			href={ templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier, data.Suggestion.Number))) }
 			class="btn btn-sm rounded-full"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
@@ -173,7 +173,7 @@ templ showComments(data ShowData) {
 // showApplyForm は反映ボタンを表示します
 templ showApplyForm(data ShowData) {
 	<form
-		action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier, data.Suggestion.Number))) }
 		method="POST"
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -190,7 +190,7 @@ templ showApplyForm(data ShowData) {
 // showCloseForm はクローズボタンを表示します
 templ showCloseForm(data ShowData) {
 	<form
-		action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier, data.Suggestion.Number))) }
 		method="POST"
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -211,7 +211,7 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 	return []components.PostAction{
 		{
 			Label: i18n.T(ctx, "suggestion_comment_edit_action"),
-			URL:   string(templates.SuggestionCommentEditPath(data.Space.Identifier.String(), data.Suggestion.Number, c.Number)),
+			URL:   string(templates.SuggestionCommentEditPath(data.Space.Identifier, data.Suggestion.Number, c.Number)),
 		},
 	}
 }
@@ -219,7 +219,7 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 // showCommentForm はコメント入力フォームを表示します
 templ showCommentForm(data ShowData) {
 	<form
-		action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier.String(), data.Suggestion.Number))) }
+		action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier, data.Suggestion.Number))) }
 		class="form grid gap-4"
 		method="POST"
 	>

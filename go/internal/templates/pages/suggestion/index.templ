@@ -21,7 +21,7 @@ type IndexData struct {
 
 // suggestionsPath は編集提案一覧のパスを生成します
 func (d IndexData) suggestionsPath(tab string) string {
-	base := string(templates.SuggestionListPath(d.Space.Identifier.String(), d.Topic.Number))
+	base := string(templates.SuggestionListPath(d.Space.Identifier, d.Topic.Number))
 	if tab == "" {
 		return base
 	}
@@ -42,7 +42,7 @@ templ Index(data IndexData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 				},
 			})
@@ -62,7 +62,7 @@ templ Index(data IndexData) {
 							@components.SubNav([]components.SubNavItem{
 								{
 									Label:          templates.T(ctx, "topic_show_tab_pages"),
-									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
 									IconName:       "file-regular",
 									ActiveIconName: "file-fill",
 								},
@@ -146,7 +146,7 @@ templ indexList(data IndexData) {
 					<tr>
 						<td>
 							<a
-								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier.String(), s.Number))) }
+								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier, s.Number))) }
 								class="flex flex-col gap-1"
 							>
 								<div class="font-medium">
@@ -170,7 +170,7 @@ templ indexList(data IndexData) {
 templ suggestionNewButton(data IndexData) {
 	if data.CanCreateSuggestion {
 		<a
-			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier.String(), data.Topic.Number))) }
+			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier, data.Topic.Number))) }
 			class="btn-sm rounded-full"
 		>
 			@templates.Icon("git-pull-request-regular", "size-4")

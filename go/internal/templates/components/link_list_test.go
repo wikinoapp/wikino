@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
@@ -25,7 +24,7 @@ func TestLinkList_LoadMoreURL(t *testing.T) {
 			},
 		},
 		Pagination:      viewmodel.NewPagination(1, 20, 5),
-		SpaceIdentifier: model.SpaceIdentifier("my-space"),
+		SpaceIdentifier: viewmodel.SpaceIdentifier("my-space"),
 		PageNumber:      1,
 	}
 
@@ -56,7 +55,7 @@ func TestLinkList_Empty(t *testing.T) {
 
 	data := viewmodel.LinkList{
 		Items:           nil,
-		SpaceIdentifier: model.SpaceIdentifier("my-space"),
+		SpaceIdentifier: viewmodel.SpaceIdentifier("my-space"),
 		PageNumber:      1,
 	}
 
@@ -89,7 +88,7 @@ func TestLinkList_NoPagination(t *testing.T) {
 			},
 		},
 		Pagination:      viewmodel.NewPagination(1, 1, 5),
-		SpaceIdentifier: model.SpaceIdentifier("my-space"),
+		SpaceIdentifier: viewmodel.SpaceIdentifier("my-space"),
 		PageNumber:      1,
 	}
 

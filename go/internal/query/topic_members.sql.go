@@ -14,7 +14,7 @@ import (
 )
 
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
-SELECT id, space_id, topic_id, space_member_id, role, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
+SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `
 
 type FindTopicMemberBySpaceMemberAndTopicParams struct {
@@ -32,7 +32,6 @@ func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg 
 		&i.SpaceID,
 		&i.TopicID,
 		&i.SpaceMemberID,
-		&i.Role,
 		&i.JoinedAt,
 		&i.LastPageModifiedAt,
 		&i.CreatedAt,

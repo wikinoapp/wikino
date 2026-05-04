@@ -12,7 +12,7 @@ import (
 )
 
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
-SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `
 
 type FindActiveSpaceMemberBySpaceAndUserParams struct {
@@ -28,7 +28,6 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 		&i.ID,
 		&i.SpaceID,
 		&i.UserID,
-		&i.Role,
 		&i.JoinedAt,
 		&i.Active,
 		&i.CreatedAt,
@@ -39,7 +38,7 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 }
 
 const findSpaceMembersByIDs = `-- name: FindSpaceMembersByIDs :many
-SELECT id, space_id, user_id, role, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
 `
 
 type FindSpaceMembersByIDsParams struct {
@@ -61,7 +60,6 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 			&i.ID,
 			&i.SpaceID,
 			&i.UserID,
-			&i.Role,
 			&i.JoinedAt,
 			&i.Active,
 			&i.CreatedAt,

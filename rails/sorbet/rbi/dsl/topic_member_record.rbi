@@ -863,9 +863,6 @@ class TopicMemberRecord
     def restore_last_page_modified_at!; end
 
     sig { void }
-    def restore_role!; end
-
-    sig { void }
     def restore_scopes!; end
 
     sig { void }
@@ -879,51 +876,6 @@ class TopicMemberRecord
 
     sig { void }
     def restore_updated_at!; end
-
-    sig { returns(::Integer) }
-    def role; end
-
-    sig { params(value: ::Integer).returns(::Integer) }
-    def role=(value); end
-
-    sig { returns(T::Boolean) }
-    def role?; end
-
-    sig { returns(T.nilable(::Integer)) }
-    def role_before_last_save; end
-
-    sig { returns(T.untyped) }
-    def role_before_type_cast; end
-
-    sig { returns(T::Boolean) }
-    def role_came_from_user?; end
-
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def role_change; end
-
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def role_change_to_be_saved; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::Integer)) }
-    def role_in_database; end
-
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def role_previous_change; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable(::Integer)) }
-    def role_previously_was; end
-
-    sig { returns(T.nilable(::Integer)) }
-    def role_was; end
-
-    sig { void }
-    def role_will_change!; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -954,12 +906,6 @@ class TopicMemberRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_last_page_modified_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { returns(T.nilable([::Integer, ::Integer])) }
-    def saved_change_to_role; end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def saved_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([T::Array[::String], T::Array[::String]])) }
     def saved_change_to_scopes; end
@@ -1230,9 +1176,6 @@ class TopicMemberRecord
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_last_page_modified_at?(from: T.unsafe(nil), to: T.unsafe(nil)); end
-
-    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
-    def will_save_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_scopes?(from: T.unsafe(nil), to: T.unsafe(nil)); end

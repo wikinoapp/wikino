@@ -119,7 +119,7 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, :owner, space_record:, user_record:)
+    space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:)
 
     # ActiveStorageのテーブルに直接データを作成
     blob = ActiveStorage::Blob.create!(
@@ -163,7 +163,7 @@ RSpec.describe "DELETE /s/:space_identifier/settings/attachments/:attachment_id"
     sign_in(user_record:)
 
     space_record = FactoryBot.create(:space_record)
-    space_member_record = FactoryBot.create(:space_member_record, :member, space_record:, user_record:)
+    space_member_record = FactoryBot.create(:space_member_record, space_record:, user_record:)
 
     # 自分がアップロードしたファイル
     # ActiveStorageのテーブルに直接データを作成

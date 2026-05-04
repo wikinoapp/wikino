@@ -17,11 +17,6 @@ const (
 // アットネームの形式（英数字とアンダースコアのみ）
 var atnameRegex = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
-// パスワードのバリデーション定数
-const (
-	PasswordMinLength = 8
-)
-
 // AccountCreateValidator はアカウント作成のバリデーションを行う
 type AccountCreateValidator struct {
 	userRepo *repository.UserRepository
@@ -61,8 +56,8 @@ func (v *AccountCreateValidator) Validate(ctx context.Context, input AccountCrea
 	// パスワードのバリデーション
 	if input.Password == "" {
 		ve.AddField("password", i18n.T(ctx, "validation_password_required"))
-	} else if len(input.Password) < PasswordMinLength {
-		ve.AddField("password", i18n.T(ctx, "validation_password_too_short"))
+	} else {
+		addPasswordStrengthError(ctx, ve, input.Password)
 	}
 
 	if ve.HasErrors() {

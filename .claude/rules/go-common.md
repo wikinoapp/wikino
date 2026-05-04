@@ -3,9 +3,9 @@ paths:
   - "go/**"
 ---
 
-# Wikino 開発ガイド (Go 版)
+# Go 版開発ガイド
 
-このファイルは、Go 版 Wikino の開発に関するガイダンスを提供します。
+このファイルは、Go 版プロジェクトの開発に関するガイダンスを提供します。
 
 > **Note**: プロジェクト全体の概要、モノレポ構造、共通インフラ（PostgreSQL）については、[/CLAUDE.md](../CLAUDE.md) を参照してください。
 
@@ -17,11 +17,11 @@ Go 版は既存の Rails 実装を段階的に再実装しており、以下の�
 
 ### リバースプロキシによる段階的移行
 
-Go 版で未実装の機能は自動的に Rails 版にプロキシされます（`internal/middleware/reverse_proxy.go`、ホワイトリスト方式）。
+Go 版で未実装の機能は自動的に Rails 版にプロキシされます（ホワイトリスト方式）。具体的な実装ファイルやプロキシ対象パスはプロジェクト側のドキュメントを参照してください。
 
 ### Rails 版のソースコードを参照する
 
-Go 版の実装時には、Rails 版のコード（`/workspace/rails/`）を参考にして既存の仕様を理解できます。
+Go 版の実装時には、各プロジェクトの Rails 版コードを参考にして既存の仕様を理解できます。
 
 ## 技術スタック
 
@@ -128,10 +128,6 @@ make templ-generate    # templ → Go コード生成（goimports も自動実�
 make db-migrate        # マイグレーション実行
 make db-new name=xxx   # 新しいマイグレーション作成
 make sqlc-generate     # sqlc コード生成
-
-# PostgreSQL に接続
-psql -h postgresql -p 5432 -U postgres -d wikino_development  # 開発
-psql -h postgresql -p 5432 -U postgres -d wikino_test          # テスト
 
 # フロントエンドアセット
 pnpm build             # CSS + JS ビルド（本番用）

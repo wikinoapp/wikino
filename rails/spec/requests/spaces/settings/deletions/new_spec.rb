@@ -15,7 +15,7 @@ RSpec.describe "GET /s/:space_identifier/settings/deletion/new", type: :request 
     space_record = create(:space_record, :small)
     other_space_record = create(:space_record)
     user_record = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record: other_space_record, user_record:)
+    create(:space_member_record, space_record: other_space_record, user_record:)
 
     sign_in(user_record:)
 
@@ -40,7 +40,7 @@ RSpec.describe "GET /s/:space_identifier/settings/deletion/new", type: :request 
   it "ログインしている & スペースに参加している & スペースのオーナーのとき、削除確認画面が表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record, :small, name: "テストスペース")
-    create(:space_member_record, :owner, space_record:, user_record:)
+    create(:space_member_record, space_record:, user_record:)
 
     sign_in(user_record:)
 

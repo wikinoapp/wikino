@@ -12,6 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Create は編集提案ページの編集を開始します (POST /s/{space_identifier}/suggestions/{suggestion_number}/page_edits)
@@ -57,15 +58,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	switch output.Status {
 	case usecase.StartSuggestionPageEditRedirect:
 		// ページ編集画面にリダイレクト
-		editPath := string(templates.PageEditPath(string(spaceIdentifier), int32(output.PageNumber)))
+		editPath := string(templates.PageEditPath(spaceIdentVM, int32(output.PageNumber)))
 		http.Redirect(w, r, editPath, http.StatusSeeOther)
 
 	case usecase.StartSuggestionPageEditConflict:
 		// 確認画面にリダイレクト
-		confirmPath := string(templates.SuggestionPageEditShowPath(string(spaceIdentifier), int32(suggestionNumber), string(suggestionPageID)))
+		confirmPath := string(templates.SuggestionPageEditShowPath(spaceIdentVM, int32(suggestionNumber), string(suggestionPageID)))
 		http.Redirect(w, r, confirmPath, http.StatusSeeOther)
 
 	default:
@@ -76,7 +79,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
 	ctx := r.Context()
-	changesPath := string(templates.SuggestionChangesPath(string(spaceIdentifier), int32(suggestionNumber)))
+	changesPath := string(templates.SuggestionChangesPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {

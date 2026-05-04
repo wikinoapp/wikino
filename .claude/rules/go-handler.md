@@ -5,7 +5,7 @@ paths:
 
 # HTTP ハンドラーのガイドライン
 
-このドキュメントは、Wikino Go 版で HTTP ハンドラーを実装する際のガイドラインを提供します。
+このドキュメントは、Go 版プロジェクトで HTTP ハンドラーを実装する際のガイドラインを提供します。
 
 ## 目次
 
@@ -212,12 +212,13 @@ internal/validator/
 Handler は UseCase を受け取り、HTTP の入出力変換のみを行います。
 
 ```go
+// Wikino の例
 // handler/suggestion_comment/handler.go
 package suggestion_comment
 
 import (
-    "github.com/wikinoapp/wikino/go/internal/session"
-    "github.com/wikinoapp/wikino/go/internal/usecase"
+    "example.com/app/internal/session"
+    "example.com/app/internal/usecase"
 )
 
 // Handler は編集提案コメント関連のHTTPハンドラーです
@@ -394,7 +395,7 @@ r.Post("/sign_in", signInHandler.Create)
 package health
 
 import (
-    "github.com/wikinoapp/wikino/go/internal/config"
+    "example.com/app/internal/config"
 )
 
 // Handler はヘルスチェック関連のHTTPハンドラーです
@@ -432,8 +433,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 package sign_in
 
 import (
-    "github.com/wikinoapp/wikino/go/internal/session"
-    "github.com/wikinoapp/wikino/go/internal/usecase"
+    "example.com/app/internal/session"
+    "example.com/app/internal/usecase"
 )
 
 // Handler はサインイン関連のHTTPハンドラーです
@@ -478,8 +479,8 @@ import (
     "log/slog"
     "net/http"
 
-    "github.com/wikinoapp/wikino/go/internal/model"
-    "github.com/wikinoapp/wikino/go/internal/usecase"
+    "example.com/app/internal/model"
+    "example.com/app/internal/usecase"
 )
 
 // Create POST /sign_in - サインイン処理

@@ -12,7 +12,7 @@ import (
 type DraftPageForIndex struct {
 	title           string
 	PageNumber      int32
-	SpaceIdentifier string
+	SpaceIdentifier SpaceIdentifier
 	ModifiedAt      time.Time
 }
 
@@ -27,7 +27,7 @@ func (d DraftPageForIndex) DisplayTitle(ctx context.Context) string {
 // DraftPageGroupForIndex は下書き一覧画面のスペース・トピック単位のグループです
 type DraftPageGroupForIndex struct {
 	SpaceName       string
-	SpaceIdentifier string
+	SpaceIdentifier SpaceIdentifier
 	TopicName       string
 	TopicNumber     int32
 	TopicIconName   IconName
@@ -45,7 +45,7 @@ func NewDraftPageGroupsForIndex(drafts []*model.DraftPage) []DraftPageGroupForIn
 	var current *DraftPageGroupForIndex
 
 	for _, d := range drafts {
-		spaceIdentifier := d.Topic.Space.Identifier.String()
+		spaceIdentifier := NewSpaceIdentifier(d.Topic.Space.Identifier)
 		topicName := d.Topic.Name
 		spaceName := d.Topic.Space.Name
 

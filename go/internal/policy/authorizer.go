@@ -18,6 +18,10 @@ type Authorizer interface {
 	// 下書きページ（所有者チェックパターン）
 	CanShowDraftPage(isOwner bool) bool
 	CanUpdateDraftPage(isOwner bool) bool
+	// CanDeleteDraftPage は draft_page:delete スコープを持つかどうかのみで判定する。
+	// 所有者チェックは UseCase 側で「本人の下書きしか取得しない」ことで担保する。
+	// admin が他メンバーの下書きを操作する経路は将来別 UseCase で実装する想定。
+	CanDeleteDraftPage() bool
 
 	// 編集提案
 	CanCreateSuggestion(topic *model.Topic) bool

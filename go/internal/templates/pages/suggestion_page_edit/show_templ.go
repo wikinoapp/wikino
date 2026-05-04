@@ -61,16 +61,16 @@ func Show(data ShowData) templ.Component {
 				},
 				{
 					Label: data.Space.Name,
-					Path:  templates.SpacePath(data.Space.Identifier.String()),
+					Path:  templates.SpacePath(data.Space.Identifier),
 				},
 				{
 					Label:    data.Topic.Name,
-					Path:     templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number),
+					Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
 					IconName: data.Topic.IconName,
 				},
 				{
 					Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.SuggestionNumber),
-					Path:  templates.SuggestionShowPath(data.Space.Identifier.String(), data.SuggestionNumber),
+					Path:  templates.SuggestionShowPath(data.Space.Identifier, data.SuggestionNumber),
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -144,9 +144,9 @@ func Show(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 templ.SafeURL
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionPageEditsPath(data.Space.Identifier.String(), data.SuggestionNumber))))
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionPageEditsPath(data.Space.Identifier, data.SuggestionNumber))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_page_edit/show.templ`, Line: 73, Col: 129}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_page_edit/show.templ`, Line: 73, Col: 120}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -196,9 +196,9 @@ func Show(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 templ.SafeURL
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier.String(), data.SuggestionNumber))))
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier, data.SuggestionNumber))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_page_edit/show.templ`, Line: 88, Col: 125}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/suggestion_page_edit/show.templ`, Line: 88, Col: 116}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {

@@ -17,7 +17,7 @@ type SidebarData struct {
 	CurrentPageName   templates.PageName
 	SignedIn          bool
 	UserAtname        string
-	SpaceIdentifier   string
+	SpaceIdentifier   viewmodel.SpaceIdentifier
 	JoinedTopics      []viewmodel.TopicForSidebar
 	DraftPages        []viewmodel.DraftPageForSidebar
 	HasMoreDraftPages bool

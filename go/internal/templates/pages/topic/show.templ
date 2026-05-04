@@ -36,7 +36,7 @@ templ Show(data ShowData) {
 					},
 					{
 						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier.String()),
+						Path:  templates.SpacePath(data.Space.Identifier),
 					},
 				},
 			})
@@ -52,14 +52,14 @@ templ Show(data ShowData) {
 							@components.SubNav([]components.SubNavItem{
 								{
 									Label:          templates.T(ctx, "topic_show_tab_pages"),
-									Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+									Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
 									IconName:       "file-regular",
 									ActiveIconName: "file-fill",
 									IsActive:       true,
 								},
 								{
 									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-									Path:           string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
+									Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
 									IconName:       "git-pull-request-regular",
 									ActiveIconName: "git-pull-request-fill",
 								},
@@ -117,7 +117,7 @@ templ showHeader(data ShowData) {
 templ showActions(data ShowData) {
 	if data.Topic.CanCreatePage {
 		<a
-			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
+			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
 			class="btn btn-sm rounded-full"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
@@ -143,7 +143,7 @@ templ showActions(data ShowData) {
 					<div role="menuitem">
 						<a
 							class="flex gap-2 items-center w-full"
-							href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))) }
+							href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))) }
 						>
 							@templates.Icon("gear-regular", "size-[18px]")
 							{ templates.T(ctx, "topic_show_settings") }
@@ -174,7 +174,7 @@ templ showEmptyState(data ShowData) {
 
 		if data.Topic.CanCreatePage {
 			<a
-				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))) }
+				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
 				class="btn-sm rounded-full"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")

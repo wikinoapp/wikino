@@ -76,6 +76,24 @@ func TestExpandScopes(t *testing.T) {
 		assertScopes(t, result, []model.Scope{model.ScopeTopicDelete})
 	})
 
+	t.Run("draft_page:deleteは含意を持たない", func(t *testing.T) {
+		t.Parallel()
+
+		result := expandScopes([]model.Scope{model.ScopeDraftPageDelete})
+		assertScopes(t, result, []model.Scope{model.ScopeDraftPageDelete})
+	})
+
+	t.Run("draft_page:writeはdraft_page:deleteを含意しない", func(t *testing.T) {
+		t.Parallel()
+
+		result := expandScopes([]model.Scope{model.ScopeDraftPageWrite})
+		assertHasScope(t, result, model.ScopeDraftPageWrite)
+		assertHasScope(t, result, model.ScopeDraftPageRead)
+		if slices.Contains(result, model.ScopeDraftPageDelete) {
+			t.Error("draft_page:write should not imply draft_page:delete")
+		}
+	})
+
 	t.Run("複数のwriteスコープがそれぞれreadを含意する", func(t *testing.T) {
 		t.Parallel()
 
@@ -147,7 +165,7 @@ func TestAllResourceScopes(t *testing.T) {
 			model.ScopeTopicRead, model.ScopeTopicWrite, model.ScopeTopicDelete,
 			model.ScopeTopicMemberRead, model.ScopeTopicMemberWrite, model.ScopeTopicMemberDelete,
 			model.ScopePageRead, model.ScopePageWrite, model.ScopePageTrash, model.ScopePageRestore,
-			model.ScopeDraftPageRead, model.ScopeDraftPageWrite,
+			model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete,
 			model.ScopeSuggestionRead, model.ScopeSuggestionWrite, model.ScopeSuggestionApply, model.ScopeSuggestionClose,
 			model.ScopeSuggestionCommentRead, model.ScopeSuggestionCommentWrite,
 			model.ScopeSpaceMemberRead, model.ScopeSpaceMemberWrite, model.ScopeSpaceMemberDelete,

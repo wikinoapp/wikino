@@ -312,7 +312,6 @@ type SpaceMember struct {
 	ID        string    `json:"id"`
 	SpaceID   string    `json:"space_id"`
 	UserID    string    `json:"user_id"`
-	Role      int32     `json:"role"`
 	JoinedAt  time.Time `json:"joined_at"`
 	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -389,7 +388,6 @@ type TopicMember struct {
 	SpaceID            string       `json:"space_id"`
 	TopicID            string       `json:"topic_id"`
 	SpaceMemberID      string       `json:"space_member_id"`
-	Role               int32        `json:"role"`
 	JoinedAt           time.Time    `json:"joined_at"`
 	LastPageModifiedAt sql.NullTime `json:"last_page_modified_at"`
 	CreatedAt          time.Time    `json:"created_at"`

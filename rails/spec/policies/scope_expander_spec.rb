@@ -78,12 +78,22 @@ RSpec.describe ScopeExpander do
         Scope::TOPIC_DELETE,
         Scope::PAGE_TRASH,
         Scope::PAGE_RESTORE,
+        Scope::DRAFT_PAGE_DELETE,
         Scope::SUGGESTION_APPLY,
         Scope::SUGGESTION_CLOSE
       ]
       result = ScopeExpander.expand(scopes)
 
       expect(result).to match_array(scopes)
+    end
+
+    it "draft_page:write は draft_page:delete を含意しないこと" do
+      result = ScopeExpander.expand([Scope::DRAFT_PAGE_WRITE])
+
+      expect(result).to contain_exactly(
+        Scope::DRAFT_PAGE_WRITE,
+        Scope::DRAFT_PAGE_READ
+      )
     end
   end
 end

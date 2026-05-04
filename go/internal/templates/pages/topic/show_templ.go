@@ -65,7 +65,7 @@ func Show(data ShowData) templ.Component {
 				},
 				{
 					Label: data.Space.Name,
-					Path:  templates.SpacePath(data.Space.Identifier.String()),
+					Path:  templates.SpacePath(data.Space.Identifier),
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -87,14 +87,14 @@ func Show(data ShowData) templ.Component {
 		templ_7745c5c3_Err = components.SubNav([]components.SubNavItem{
 			{
 				Label:          templates.T(ctx, "topic_show_tab_pages"),
-				Path:           string(templates.TopicPath(data.Space.Identifier.String(), data.Topic.Number)),
+				Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
 				IconName:       "file-regular",
 				ActiveIconName: "file-fill",
 				IsActive:       true,
 			},
 			{
 				Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-				Path:           string(templates.SuggestionListPath(data.Space.Identifier.String(), data.Topic.Number)),
+				Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
 				IconName:       "git-pull-request-regular",
 				ActiveIconName: "git-pull-request-fill",
 			},
@@ -243,9 +243,9 @@ func showActions(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 templ.SafeURL
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))))
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 120, Col: 105}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 120, Col: 96}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -287,9 +287,9 @@ func showActions(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 templ.SafeURL
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier.String(), data.Topic.Number))))
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 146, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 146, Col: 106}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -397,9 +397,9 @@ func showEmptyState(data ShowData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 templ.SafeURL
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier.String(), data.Topic.Number))))
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 177, Col: 106}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 177, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {

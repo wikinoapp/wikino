@@ -125,6 +125,67 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		}
 	})
 
+	t.Run("下書きページIDに紐づくリビジョン件数を取得できる", func(t *testing.T) {
+		// 検証用に独立した Page と DraftPage を作成 (unique 制約と他サブテストの干渉を避けるため)
+		countPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Count Test Page").
+			Build()
+
+		countDraftPageID := testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(countPageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("Count Draft Title").
+			WithBody("count draft body").
+			WithBodyHTML("<p>count draft body</p>").
+			Build()
+
+		// 0 件の状態で 0 が返ること
+		count, err := repo.CountByDraftPageID(context.Background(), countDraftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("CountByDraftPageID() error = %v", err)
+		}
+		if count != 0 {
+			t.Errorf("count = %d, want 0", count)
+		}
+
+		// 2 件作成 → 2 が返ること
+		_, err = repo.Create(context.Background(), CreateDraftPageRevisionInput{
+			DraftPageID:   countDraftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "Count Test 1",
+			Body:          "count body 1",
+			BodyHTML:      "<p>count body 1</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() first revision error = %v", err)
+		}
+		_, err = repo.Create(context.Background(), CreateDraftPageRevisionInput{
+			DraftPageID:   countDraftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "Count Test 2",
+			Body:          "count body 2",
+			BodyHTML:      "<p>count body 2</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() second revision error = %v", err)
+		}
+
+		count, err = repo.CountByDraftPageID(context.Background(), countDraftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("CountByDraftPageID() error = %v", err)
+		}
+		if count != 2 {
+			t.Errorf("count = %d, want 2", count)
+		}
+	})
+
 	t.Run("同じ下書きに対して複数のリビジョンを作成できる", func(t *testing.T) {
 		revision1, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
 			DraftPageID:   draftPageID,

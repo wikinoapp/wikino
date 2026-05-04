@@ -8,7 +8,7 @@ RSpec.describe DraftPageRepository do
     it "ユーザーの下書きページをmodified_atの降順で返すこと" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
       page_record1 = FactoryBot.create(:page_record, space_record:, topic_record:, title: "Page 1")
@@ -32,7 +32,7 @@ RSpec.describe DraftPageRepository do
     it "limitを超える場合has_moreがtrueになること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
       3.times do |i|
@@ -50,7 +50,7 @@ RSpec.describe DraftPageRepository do
     it "limit以下の場合has_moreがfalseになること" do
       user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
       topic_record = FactoryBot.create(:topic_record, space_record:)
 
       page_record = FactoryBot.create(:page_record, space_record:, topic_record:)
@@ -68,8 +68,8 @@ RSpec.describe DraftPageRepository do
       active_space_record = FactoryBot.create(:space_record)
       inactive_space_record = FactoryBot.create(:space_record)
 
-      active_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record: active_space_record, active: true)
-      inactive_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record: inactive_space_record, active: false)
+      active_member_record = FactoryBot.create(:space_member_record, user_record:, space_record: active_space_record, active: true)
+      inactive_member_record = FactoryBot.create(:space_member_record, user_record:, space_record: inactive_space_record, active: false)
 
       active_topic_record = FactoryBot.create(:topic_record, space_record: active_space_record)
       inactive_topic_record = FactoryBot.create(:topic_record, space_record: inactive_space_record)
@@ -92,8 +92,8 @@ RSpec.describe DraftPageRepository do
       other_user_record = FactoryBot.create(:user_record)
       space_record = FactoryBot.create(:space_record)
 
-      space_member_record = FactoryBot.create(:space_member_record, :member, user_record:, space_record:)
-      other_space_member_record = FactoryBot.create(:space_member_record, :member, user_record: other_user_record, space_record:)
+      space_member_record = FactoryBot.create(:space_member_record, user_record:, space_record:)
+      other_space_member_record = FactoryBot.create(:space_member_record, user_record: other_user_record, space_record:)
 
       topic_record = FactoryBot.create(:topic_record, space_record:)
 

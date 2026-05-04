@@ -57,7 +57,8 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := draftpagepages.Index(draftpagepages.IndexData{
-		Groups: groups,
+		CSRFToken: middleware.GetCSRFTokenFromContext(ctx),
+		Groups:    groups,
 	})
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+	"strings"
 	"testing"
 )
 
@@ -159,6 +161,124 @@ func TestHashPassword_UniqueHashes(t *testing.T) {
 	}
 	if !VerifyPassword(hash2, password) {
 		t.Error("hash2での検証に失敗")
+	}
+}
+
+func TestValidatePasswordStrength(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		password string
+		wantErr  error
+	}{
+		// 正常系
+		{
+			name:     "最小文字数ちょうど (8文字)",
+			password: "abcdefgh",
+			wantErr:  nil,
+		},
+		{
+			name:     "最大文字数ちょうど (128文字)",
+			password: strings.Repeat("a", MaxPasswordLength),
+			wantErr:  nil,
+		},
+		{
+			name:     "中間の長さ",
+			password: "Password123!",
+			wantErr:  nil,
+		},
+		{
+			name:     "印字可能ASCIIの境界文字を含む (0x21 と 0x7E)",
+			password: "!~!~!~!~",
+			wantErr:  nil,
+		},
+		{
+			name:     "記号を含む",
+			password: "p@ssw0rd!#$%",
+			wantErr:  nil,
+		},
+		{
+			name:     "大文字小文字数字記号を組み合わせる",
+			password: "Aa1!Aa1!",
+			wantErr:  nil,
+		},
+
+		// 異常系: 文字数不足
+		{
+			name:     "空文字列",
+			password: "",
+			wantErr:  ErrPasswordTooShort,
+		},
+		{
+			name:     "1文字",
+			password: "a",
+			wantErr:  ErrPasswordTooShort,
+		},
+		{
+			name:     "最小文字数より1文字少ない (7文字)",
+			password: "abcdefg",
+			wantErr:  ErrPasswordTooShort,
+		},
+
+		// 異常系: 文字数超過
+		{
+			name:     "最大文字数より1文字多い (129文字)",
+			password: strings.Repeat("a", MaxPasswordLength+1),
+			wantErr:  ErrPasswordTooLong,
+		},
+
+		// 異常系: 不正な文字
+		{
+			name:     "スペース (0x20) を含む",
+			password: "abcd efgh",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "タブ文字を含む",
+			password: "abcd\tefgh",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "改行文字を含む",
+			password: "abcd\nefgh",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "DEL (0x7F) を含む",
+			password: "abcdefg\x7f",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "NULL文字を含む",
+			password: "abcdefg\x00",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "日本語を含む",
+			password: "パスワード123",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "絵文字を含む",
+			password: "passwo🔑rd",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+		{
+			name:     "マルチバイト文字のみ (バイト長は十分)",
+			password: "あいうえおかきくけこ",
+			wantErr:  ErrPasswordInvalidChars,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			err := ValidatePasswordStrength(tt.password)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("ValidatePasswordStrength() error = %v, want %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 

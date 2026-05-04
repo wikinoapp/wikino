@@ -79,12 +79,15 @@ func (h *Handler) renderEditForm(
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
+	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_edit_title", map[string]any{
 		"SuggestionNumber": output.Suggestion.Number,
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
@@ -112,7 +115,7 @@ func (h *Handler) renderEditForm(
 			CurrentPageName:   templates.PageNameSuggestionEdit,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
-			SpaceIdentifier:   string(spaceIdentifier),
+			SpaceIdentifier:   spaceIdentVM,
 			JoinedTopics:      sidebarContent.JoinedTopics,
 			DraftPages:        sidebarContent.DraftPages,
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
@@ -120,7 +123,7 @@ func (h *Handler) renderEditForm(
 		BottomNav: components.BottomNavData{
 			CurrentPageName: templates.PageNameSuggestionEdit,
 			SignedIn:        true,
-			SpaceIdentifier: string(spaceIdentifier),
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

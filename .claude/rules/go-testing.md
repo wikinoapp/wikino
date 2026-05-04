@@ -5,7 +5,7 @@ paths:
 
 # テストガイド
 
-このドキュメントは、Go 版 Wikino のテスト戦略とベストプラクティスを説明します。
+このドキュメントは、Go 版プロジェクトのテスト戦略とベストプラクティスを説明します。
 
 ## 基本方針
 
@@ -49,7 +49,7 @@ import (
     "os"
     "testing"
 
-    "github.com/wikinoapp/wikino/go/internal/testutil"
+    "example.com/app/internal/testutil"
 )
 
 func TestMain(m *testing.M) {

@@ -5,11 +5,11 @@ paths:
 
 # アーキテクチャガイド
 
-このドキュメントは、Go版Wikinoのアーキテクチャパターンを説明します。
+このドキュメントは、Go 版プロジェクトのアーキテクチャパターンを説明します。
 
 ## 概要
 
-Go版Wikinoは、関心の分離を意識した**3層アーキテクチャ**を採用しています。
+Go 版プロジェクトは、関心の分離を意識した**3層アーキテクチャ**を採用しています。
 
 ### 3層アーキテクチャの構成
 
@@ -70,6 +70,8 @@ RepositoryとModelを同じ層として扱うことで、依存関係がシン�
 
 ModelとRepositoryのファイル名・構造体名は統一します：
 
+**Wikino の例**:
+
 | Model         | Repository              | ファイル名        |
 | ------------- | ----------------------- | ----------------- |
 | `Page`        | `PageRepository`        | `page.go`         |
@@ -87,6 +89,7 @@ ModelとRepositoryのファイル名・構造体名は統一します：
 クエリの結果や状態ごとに新しいモデルを作らず、既存のモデルを再利用します。関連エンティティのデータが必要な場合は、ポインタ型のフィールドでモデル間の参照を表現します。
 
 ```go
+// Wikino の例
 // ✅ 良い例: 既存の Topic モデルに Space への参照を持たせる
 type Topic struct {
     ID     TopicID
@@ -108,6 +111,7 @@ type JoinedTopic struct {
 Repositoryではクエリ結果ごとに変換メソッドを用意し、同じモデルに変換します：
 
 ```go
+// Wikino の例
 // 単純なクエリ結果 → Topic（Space は ID のみ）
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic { ... }
 
@@ -129,6 +133,7 @@ func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsBy
 **実装パターン**:
 
 ```go
+// Wikino の例
 // internal/model/id.go - 型定義
 type SpaceID string
 func (id SpaceID) String() string { return string(id) }
@@ -159,6 +164,7 @@ func (b *SpaceBuilder) Build() model.SpaceID {
 IDのスライスと `[]string` の相互変換が必要な場合（例: PostgreSQL の配列型との変換）は、`id.go` にヘルパー関数を定義します：
 
 ```go
+// Wikino の例
 func PageIDsToStrings(ids []PageID) []string { ... }
 func StringsToPageIDs(ss []string) []PageID { ... }
 ```
@@ -177,6 +183,8 @@ Queryファイルは用途に応じて2つのパターンがあります：
 - 複数テーブルをJOINするクエリ
 - 特定のモデルを構築するためのクエリ
 - 例: `space_member.sql`（users, space_membersなどをJOIN）
+
+**Wikino の例**:
 
 ```
 internal/query/queries/
@@ -272,11 +280,19 @@ internal/query/queries/
   - River（外部ライブラリ）のみに依存。上位層（UseCase, Handler, Worker）には依存しない
   - ジョブ引数の Args 型もこのパッケージ内に定義する
 
+#### 横断的な技術ユーティリティ（auth パッケージ）
+
+- **internal/auth**: 横断的な技術ユーティリティ。暗号処理（bcrypt）・セキュアランダム生成・パスワード強度検証などを提供する
+  - **層**: Domain/Infrastructure 層（`model` / `query` と同じ最下層）に属するが、ドメインエンティティ（`model`）やデータアクセス（`query` / `repository`）とは別枠の「純粋な技術ユーティリティ」として扱う
+  - **依存可能**: 標準ライブラリ、外部ライブラリ（`golang.org/x/crypto/bcrypt`, `crypto/rand` など）のみ
+  - **依存不可**: プロジェクト内部のすべてのパッケージ。具体的な禁止対象は各プロジェクトの `.golangci.yml` の `auth-layer` ルールで強制する
+  - **呼び出し元**: 上位層（Presentation 層 / Application 層 / Domain/Infrastructure 層の他パッケージ）から自由に呼び出して構わない
+  - **i18n に依存しない**: パスワード強度検証などのバリデーションエラーは sentinel error（`errors.New(...)` で定義したパッケージレベルのエラー値）で返し、翻訳の解決は呼び出し元（`validator` など）の責務とする。auth が `i18n` に依存すると `auth → i18n → middleware → session → auth` のような循環依存を招きやすいため、純粋な技術ユーティリティの性質を保つ
+
 ### その他
 
 - **cmd/server/main.go**: エントリポイント。設定、データベース接続、Chi ルーターを使用した HTTP サーバーを初期化
 - **internal/config**: 環境変数から設定を読み込む設定管理。`.env.{environment}` ファイルを使用
-- **internal/auth**: 認証ロジック
 - **internal/turnstile**: Cloudflare Turnstile連携
 
 ## レイヤー間の依存関係
@@ -411,6 +427,7 @@ ViewModelはModelとは異なり、**画面の要件に応じて必要な数だ�
 **ただし**: 表示項目が同じであれば再利用しても構いません。重複を避けること自体が目的ではなく、「画面の要件に合ったViewModelを定義する」のが原則です。
 
 ```go
+// Wikino の例
 // ✅ 良い例: 画面ごとに異なるViewModelを定義
 // サイドバー用（シンプル）
 type TopicForSidebar struct {
@@ -442,6 +459,7 @@ type Topic struct {
 Templates は Model に直接依存できない（depguard で禁止）ため、パスヘルパー関数などで型安全性が必要な場合は ViewModel パッケージに Presentation 層用の型を定義する。
 
 ```go
+// Wikino の例
 // internal/viewmodel/page_number.go
 // Model の型をラップした Presentation 層用の型
 type PageNumber model.PageNumber
@@ -450,6 +468,7 @@ type PageNumber model.PageNumber
 Templates のパスヘルパー関数は ViewModel の型を引数に取る：
 
 ```go
+// Wikino の例
 // internal/templates/path.go
 func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path { ... }
 ```
@@ -457,6 +476,7 @@ func PagePath(spaceIdentifier string, pageNumber viewmodel.PageNumber) Path { ..
 ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う：
 
 ```go
+// Wikino の例
 // internal/viewmodel/suggestion.go
 diffs[i] = SuggestionPageDiff{
     PageNumber: PageNumber(pageNumberByID[sp.PageID]),  // model.PageNumber → viewmodel.PageNumber
@@ -483,7 +503,7 @@ diffs[i] = SuggestionPageDiff{
 package viewmodel
 
 import (
-    "github.com/wikinoapp/wikino/internal/repository"
+    "example.com/app/internal/repository"
 )
 
 // Work はテンプレートで表示する作品データ
@@ -534,9 +554,9 @@ func generateImageURL(cfg *config.Config, imageData *string) string {
 package handler
 
 import (
-    "github.com/wikinoapp/wikino/internal/templates/layouts"
-    "github.com/wikinoapp/wikino/internal/templates/pages/works"
-    "github.com/wikinoapp/wikino/internal/viewmodel"
+    "example.com/app/internal/templates/layouts"
+    "example.com/app/internal/templates/pages/works"
+    "example.com/app/internal/viewmodel"
 )
 
 func (h *Handler) PopularWorks(w http.ResponseWriter, r *http.Request) {
@@ -814,6 +834,7 @@ email パッケージは以下の依存関係ルールに従います。
 ### 実装パターン
 
 ```go
+// Wikino の例
 // UseCase 内で認可チェックを実行
 func (uc *UpdateSuggestionUsecase) Execute(ctx context.Context, input UpdateSuggestionInput) (*UpdateSuggestionOutput, error) {
     // 1. データ取得
@@ -1024,3 +1045,15 @@ Templates のパスヘルパー関数（`PagePath` など）の引数にドメ�
 - ViewModel による変換層のバイパスをコードレビューだけで防ぐのは漏れが発生しやすい
 
 **代替として採用した方針**: ViewModel パッケージに Presentation 層用の型を定義する（例: `type PageNumber model.PageNumber`）。Templates は ViewModel の型のみに依存し、depguard による境界の強制を維持する。ViewModel のコンストラクタで `model.PageNumber` → `viewmodel.PageNumber` の変換を行う
+
+### J. auth パッケージに i18n メッセージを埋め込む設計
+
+auth パッケージのバリデーション関数（パスワード強度検証など）に `context.Context` を渡し、`errors.New(i18n.T(ctx, ...))` のように翻訳済みメッセージを埋め込んで返す方針。呼び出し元（`validator`）は受け取ったエラーメッセージをそのまま画面に出すだけで済む利便性がある。
+
+**不採用の理由**:
+
+- auth が `i18n` に依存すると、auth パッケージの「純粋な技術ユーティリティ」という性質が失われる
+- `i18n` は実装上 `middleware` に依存することが多く、`auth → i18n → middleware → session → auth` のような循環依存を引き起こしやすい（実際にプロジェクトでこの問題が発生した経緯あり）
+- sentinel error 方式（`auth.ErrPasswordTooShort` のようなパッケージレベルのエラー値を `errors.Is` で判別する）にすれば、auth は `i18n` 非依存のまま検証ロジックを提供でき、翻訳の責務は呼び出し元（`validator`）に集約できる
+
+**代替として採用した方針**: バリデーション失敗時は sentinel error を返し、呼び出し元で `errors.Is` により種別を判別して `i18n.T(ctx, ...)` で翻訳メッセージを解決する。auth と `i18n` の依存関係は `.golangci.yml` の `auth-layer` ルールで静的に禁止し、退行を防ぐ

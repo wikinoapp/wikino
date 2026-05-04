@@ -57,6 +57,10 @@ func (p *MemberPolicy) CanUpdateDraftPage(isOwner bool) bool {
 	return isOwner || p.effectiveScopes[model.ScopeSpaceAdmin]
 }
 
+func (p *MemberPolicy) CanDeleteDraftPage() bool {
+	return p.effectiveScopes[model.ScopeDraftPageDelete]
+}
+
 func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {
 	if !p.effectiveScopes[model.ScopeSuggestionWrite] {
 		return false

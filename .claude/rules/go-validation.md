@@ -5,7 +5,7 @@ paths:
 
 # バリデーションガイド
 
-このドキュメントは、Go 版 Wikino でのバリデーションのベストプラクティスを説明します。
+このドキュメントは、Go 版プロジェクトでのバリデーションのベストプラクティスを説明します。
 
 ## 概要
 
@@ -137,10 +137,10 @@ import (
     "context"
     "net/mail"
 
-    "github.com/wikinoapp/wikino/go/internal/auth"
-    "github.com/wikinoapp/wikino/go/internal/i18n"
-    "github.com/wikinoapp/wikino/go/internal/model"
-    "github.com/wikinoapp/wikino/go/internal/repository"
+    "example.com/app/internal/auth"
+    "example.com/app/internal/i18n"
+    "example.com/app/internal/model"
+    "example.com/app/internal/repository"
 )
 
 // SignInCreateValidator はサインインのバリデーションを行う
@@ -224,6 +224,7 @@ func isValidEmail(email string) bool {
 DB を使った検証が不要な場合でも、`internal/validator/` パッケージに配置します。データを返す必要がない場合は `error` のみを返します。
 
 ```go
+// Wikino の例
 // internal/validator/suggestion_comment.go
 package validator
 
@@ -231,8 +232,8 @@ import (
     "context"
     "unicode/utf8"
 
-    "github.com/wikinoapp/wikino/go/internal/i18n"
-    "github.com/wikinoapp/wikino/go/internal/model"
+    "example.com/app/internal/i18n"
+    "example.com/app/internal/model"
 )
 
 const suggestionCommentBodyMaxLength = 10000
@@ -275,6 +276,7 @@ func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input S
 Validator は状態バリデーションの過程でデータを取得し、検証後にそのデータを戻り値として返します。これにより UseCase 内でデータを二重に取得する必要がなくなります。
 
 ```go
+// Wikino の例
 // internal/validator/suggestion.go
 package validator
 
@@ -282,9 +284,9 @@ import (
     "context"
     "unicode/utf8"
 
-    "github.com/wikinoapp/wikino/go/internal/i18n"
-    "github.com/wikinoapp/wikino/go/internal/model"
-    "github.com/wikinoapp/wikino/go/internal/repository"
+    "example.com/app/internal/i18n"
+    "example.com/app/internal/model"
+    "example.com/app/internal/repository"
 )
 
 // SuggestionCreateValidator は編集提案作成のバリデーションを行う
@@ -342,6 +344,7 @@ Validator は UseCase から呼び出されます。Handler は UseCase を呼�
 ### UseCase でのバリデーション呼び出し
 
 ```go
+// Wikino の例
 // internal/usecase/create_suggestion_comment.go
 func (uc *CreateSuggestionCommentUsecase) Execute(ctx context.Context, input CreateSuggestionCommentInput) (*CreateSuggestionCommentOutput, error) {
     // 1. データ取得
@@ -370,6 +373,7 @@ func (uc *CreateSuggestionCommentUsecase) Execute(ctx context.Context, input Cre
 ### Handler は UseCase を呼ぶだけ
 
 ```go
+// Wikino の例
 // internal/handler/suggestion_comment/create.go
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
@@ -412,6 +416,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 `main.go` で Validator → UseCase → Handler の順に構築します。
 
 ```go
+// Wikino の例
 // cmd/server/main.go での構築
 
 // 1. Validator の構築
@@ -448,6 +453,7 @@ suggestionCommentHandler := suggestion_comment.NewHandler(flashMgr, createSugges
 ### バリデーションのテスト
 
 ```go
+// Wikino の例
 // internal/validator/suggestion_comment_test.go
 func TestSuggestionCommentCreateValidator_Validate(t *testing.T) {
     t.Parallel()
@@ -688,6 +694,7 @@ func (v *PasswordResetCreateValidator) Validate(ctx context.Context, input Passw
 ### 5. Go の慣習に従った `(data, error)` の 2 値返し
 
 ```go
+// Wikino の例
 // ✅ Good: データを返す場合は (data, error)
 func (v *SuggestionCreateValidator) Validate(ctx context.Context, input SuggestionCreateValidatorInput) ([]*model.DraftPage, error) {
     ve := model.NewValidationError()

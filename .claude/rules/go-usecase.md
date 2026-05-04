@@ -5,7 +5,7 @@ paths:
 
 # ユースケースガイド
 
-このドキュメントは、Go 版 Wikino の UseCase 層の設計と実装パターンを説明します。
+このドキュメントは、Go 版プロジェクトの UseCase 層の設計と実装パターンを説明します。
 
 ## 概要
 
@@ -38,7 +38,7 @@ Handler/Worker からのすべてのデータアクセスは UseCase を経由�
   2. Execute 内にロジックを直接書かない。ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
 
 ```go
-// 例: ページとスペースメンバーを同時に更新する場合
+// Wikino の例: ページとスペースメンバーを同時に更新する場合
 type CreatePageUsecase struct {
     db              *sql.DB
     pageRepo        *repository.PageRepository
@@ -58,7 +58,7 @@ func (uc *CreatePageUsecase) Execute(ctx context.Context, input Input) (*Result,
 - トランザクションは不要
 
 ```go
-// 例: トピック詳細ページのデータ取得
+// Wikino の例: トピック詳細ページのデータ取得
 type GetTopicDetailUsecase struct {
     spaceRepo       *repository.SpaceRepository
     spaceMemberRepo *repository.SpaceMemberRepository
@@ -147,6 +147,7 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 2. **Execute 内にロジックを直接書かない**: ロジックは関数やメソッドとして定義し、Execute 内ではそれを呼び出すだけにする
 
 ```go
+// Wikino の例
 // ✅ 良い例: 書き込み UseCase がデータ取得・認可・バリデーション・永続化を統括する
 func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSuggestionInput) (*CreateSuggestionOutput, error) {
     // 1. データ取得（トランザクション外）
@@ -204,6 +205,7 @@ UseCase は以下の 3 種類のエラーを返す。Handler は `errors.As` で
 Handler は薄い Adapter として、リクエストのパース → UseCase 呼び出し → レスポンス生成のみを行う。
 
 ```go
+// Wikino の例
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
 
@@ -246,6 +248,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 **Validator でのデータ取得パターン**: Validator は状態バリデーションの過程でデータを取得し、検証後にそのデータを戻り値として返す。これにより UseCase 内でデータを二重に取得する必要がなくなる。Validator は Go の慣習に従った `(data, error)` の 2 値返しを使用する。
 
 ```go
+// Wikino の例
 // Validator が検証の過程で取得したデータを戻り値として返す
 func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Input) ([]*model.DraftPage, error) {
     ve := model.NewValidationError()
@@ -277,7 +280,7 @@ package usecase
 
 import (
     "context"
-    "github.com/wikinoapp/wikino/internal/repository"
+    "example.com/app/internal/repository"
 )
 
 type CreateSessionUsecase struct {
@@ -324,7 +327,7 @@ import (
     "database/sql"
     "fmt"
     "time"
-    "github.com/wikinoapp/wikino/internal/repository"
+    "example.com/app/internal/repository"
 )
 
 type CreatePasswordResetTokenUsecase struct {

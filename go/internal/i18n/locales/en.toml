@@ -2,18 +2,23 @@
 
 # Common
 [default_title]
+description = "Default page title"
 other = "Wikino"
 
 [default_description]
+description = "Default meta description for the page"
 other = "Wikino is a wiki application for sharing and organizing information online."
 
 [flash_dismiss]
+description = "Dismiss button label for the flash message"
 other = "Dismiss"
 
 [label_error]
+description = "Generic error label"
 other = "Error"
 
 [back_to_home]
+description = "Label for the back-to-home link"
 other = "Back to Home"
 
 [form_optional]
@@ -22,106 +27,138 @@ other = "Optional"
 
 # Sign in
 [sign_in_title]
+description = "Sign-in page title"
 other = "Sign in"
 
 [sign_in_heading]
+description = "Sign-in page heading"
 other = "Sign in to Wikino"
 
 [sign_in_email_label]
+description = "Sign-in email input label"
 other = "Email address"
 
 [sign_in_password_label]
+description = "Sign-in password input label"
 other = "Password"
 
 [sign_in_submit_button]
+description = "Sign-in submit button label"
 other = "Sign in"
 
 [sign_in_forgot_password]
+description = "Sign-in forgot password link label"
 other = "Forgot your password?"
 
 [sign_in_no_account]
+description = "Sign-in copy shown to users without an account"
 other = "Don't have an account?"
 
 [sign_in_sign_up]
+description = "Link to the sign-up page from sign-in"
 other = "Sign up"
 
 # Validation errors
 [validation_required]
+description = "Generic required-field error"
 other = "This field is required"
 
 [validation_email_invalid]
+description = "Email format error"
 other = "Please enter a valid email address"
 
 [validation_email_or_password_invalid]
+description = "Email or password mismatch error on sign-in"
 other = "Invalid email or password"
 
 # Two-factor authentication
 [sign_in_two_factor_title]
+description = "Two-factor authentication page title"
 other = "Two-factor authentication"
 
 [sign_in_two_factor_heading]
+description = "Two-factor authentication page heading"
 other = "Two-factor authentication"
 
 [sign_in_two_factor_enter_code]
+description = "Two-factor authentication code entry instruction"
 other = "Enter the authentication code from your app"
 
 [sign_in_two_factor_code_label]
+description = "Two-factor authentication code input label"
 other = "Authentication code"
 
 [sign_in_two_factor_code_hint]
+description = "Two-factor authentication code input hint"
 other = "Enter a 6-digit code"
 
 [sign_in_two_factor_submit_button]
+description = "Two-factor authentication submit button label"
 other = "Verify"
 
 [sign_in_two_factor_recovery_description]
+description = "Description for using a recovery code on the two-factor page"
 other = "If you lose your authenticator app, you can sign in using a recovery code"
 
 [sign_in_two_factor_recovery_link]
+description = "Link to the recovery-code flow"
 other = "Use a recovery code"
 
 # Two-factor authentication recovery
 [sign_in_two_factor_recovery_title]
+description = "Recovery code entry page title"
 other = "Two-factor recovery"
 
 [sign_in_two_factor_recovery_heading]
+description = "Recovery code entry page heading"
 other = "Recovery code"
 
 [sign_in_two_factor_recovery_code_usage]
+description = "Recovery code usage explanation"
 other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
 
 [sign_in_two_factor_recovery_code_label]
+description = "Recovery code input label"
 other = "Recovery code"
 
 [sign_in_two_factor_recovery_code_hint]
+description = "Recovery code input hint"
 other = "Recovery codes are 8 alphanumeric characters"
 
 # Two-factor authentication validation errors
 [validation_totp_code_invalid]
+description = "Invalid TOTP code validation error"
 other = "Invalid authentication code"
 
 [validation_recovery_code_invalid]
+description = "Invalid recovery code validation error"
 other = "Invalid recovery code"
 
 [sign_in_two_factor_invalid_code]
+description = "Two-factor authentication code mismatch error"
 other = "The authentication code is incorrect"
 
 [sign_in_two_factor_recovery_invalid_code]
+description = "Recovery code mismatch error"
 other = "The recovery code is incorrect"
 
 # Sign in success
 [flash_sign_in_success]
+description = "Flash message after successful sign-in"
 other = "Signed in successfully."
 
 # Sign out
 [signed_out_successfully]
+description = "Flash message after successful sign-out"
 other = "Signed out successfully."
 
 # Sign up
 [sign_up_title]
+description = "Sign-up page title"
 other = "Sign up"
 
 [sign_up_heading]
+description = "Sign-up page heading"
 other = "Sign up for Wikino"
 
 [sign_up_email_instruction]
@@ -129,69 +166,90 @@ description = "Description for email input field on sign up"
 other = "We'll send a confirmation code to the email address you enter to verify it"
 
 [sign_up_email_label]
+description = "Sign-up email input label"
 other = "Email address"
 
 [sign_up_submit_button]
+description = "Sign-up submit button label"
 other = "Send confirmation code"
 
 [sign_up_have_account]
+description = "Sign-up copy shown to users who already have an account"
 other = "Already have an account?"
 
 [sign_up_sign_in]
+description = "Link to the sign-in page from sign-up"
 other = "Sign in"
 
 # Email confirmation
 [email_confirmation_subject]
+description = "Subject line for the confirmation code email"
 other = "[Wikino] Confirmation Code"
 
 [flash_email_confirmation_sent]
+description = "Flash message when the confirmation code is sent"
 other = "Confirmation code sent."
 
 [validation_email_already_registered]
+description = "Email already registered validation error"
 other = "This email address is already registered"
 
 [validation_invalid_event]
+description = "Error when an invalid event type (e.g. Turnstile) is detected"
 other = "Invalid event type"
 
 [validation_bot_detected]
+description = "Error when a request is detected as a bot"
 other = "Please try again later"
 
 [validation_rate_limit_exceeded]
+description = "Rate-limit exceeded validation error"
 other = "Too many requests. Please try again later"
 
 # Email confirmation code entry
 [email_confirmation_edit_title]
+description = "Confirmation code entry page title"
 other = "Enter confirmation code"
 
 [email_confirmation_edit_heading]
+description = "Confirmation code entry page heading"
 other = "Enter confirmation code"
 
 [email_confirmation_edit_description]
+description = "Confirmation code entry page instruction"
 other = "Enter the 6-character confirmation code sent to your email address"
 
 [email_confirmation_edit_code_label]
+description = "Confirmation code input label"
 other = "Confirmation code"
 
 [email_confirmation_edit_code_hint]
+description = "Confirmation code input hint"
 other = "Enter the 6-character code"
 
 [email_confirmation_edit_submit_button]
+description = "Confirmation code submit button label"
 other = "Verify"
 
 [email_confirmation_edit_back_to_sign_up]
+description = "Back-to-sign-up link from the confirmation code page"
 other = "Back to sign up"
 
 # Email confirmation code validation
 [validation_confirmation_code_invalid_length]
+description = "Confirmation code length validation error"
 other = "Confirmation code must be 6 characters"
 
 [validation_confirmation_code_mismatch]
+description = "Confirmation code mismatch error"
 other = "The confirmation code is incorrect"
 
 [validation_confirmation_code_expired]
+description = "Confirmation code expired error"
 other = "The confirmation code has expired. Please try again"
 
 [validation_confirmation_not_found]
+description = "Error when the confirmation record is not found"
 other = "Confirmation not found. Please try again"
 
 [validation_confirmation_already_succeeded]
@@ -200,94 +258,131 @@ other = "This confirmation has already been completed"
 
 # Account creation
 [account_new_title]
+description = "Account creation page title"
 other = "Create Account"
 
 [account_new_heading]
+description = "Account creation page heading"
 other = "Create your account"
 
 [account_new_email_label]
+description = "Email display label on the account creation page"
 other = "Email address"
 
 [account_new_email_verified]
+description = "Label indicating the email has been verified"
 other = "Verified"
 
 [account_new_atname_label]
+description = "Account creation atname input label"
 other = "Username"
 
 [account_new_atname_hint]
+description = "Account creation atname input hint"
 other = "Only letters, numbers, and underscores (max 20 characters)"
 
 [account_new_password_label]
+description = "Account creation password input label"
 other = "Password"
 
 [account_new_password_hint]
-other = "Must be at least 8 characters"
+description = "Password input hint on the account creation page"
+other = "Must be at least {{.MinLength}} characters"
 
 [account_new_submit_button]
+description = "Account creation submit button label"
 other = "Create account"
 
 [account_new_back_to_sign_up]
+description = "Back-to-sign-up link from the account creation page"
 other = "Back to sign up"
 
 # Account creation validation
 [validation_atname_required]
+description = "Atname required validation error"
 other = "Please enter a username"
 
 [validation_atname_too_long]
+description = "Atname too long validation error"
 other = "Username must be 20 characters or less"
 
 [validation_atname_invalid_format]
+description = "Atname invalid format validation error"
 other = "Username can only contain letters, numbers, and underscores"
 
 [validation_atname_already_taken]
+description = "Atname already taken validation error"
 other = "This username is already taken"
 
 [validation_password_required]
+description = "Password required validation error"
 other = "Please enter a password"
 
 [validation_password_too_short]
-other = "Password must be at least 8 characters"
+description = "Error when password is shorter than the minimum length"
+other = "Password must be at least {{.MinLength}} characters"
+
+[validation_password_too_long]
+description = "Error when password exceeds the maximum length"
+other = "Password must be at most {{.MaxLength}} characters"
+
+[validation_password_invalid_chars]
+description = "Error when password contains characters outside printable ASCII"
+other = "Password can only contain printable ASCII characters"
 
 # Account creation success
 [flash_account_created]
+description = "Flash message after successful account creation"
 other = "Your account has been created"
 
 # Password reset request
 [password_reset_title]
+description = "Password reset request page title"
 other = "Password Reset"
 
 [password_reset_heading]
+description = "Password reset request page heading"
 other = "Reset your password"
 
 [password_reset_description]
+description = "Password reset request page description"
 other = "Enter your registered email address and we'll send you a link to reset your password."
 
 [password_reset_email_label]
+description = "Password reset email input label"
 other = "Email address"
 
 [password_reset_submit]
+description = "Password reset request submit button label"
 other = "Send reset link"
 
 [password_reset_back_to_sign_in]
+description = "Back-to-sign-in link from the password reset request page"
 other = "Back to sign in"
 
 # Password reset email sent
 [password_reset_sent_title]
+description = "Password reset email sent confirmation page title"
 other = "Email Sent"
 
 [password_reset_sent_heading]
+description = "Password reset email sent confirmation page heading"
 other = "Check your email"
 
 [password_reset_sent_message]
+description = "Password reset email sent confirmation message body"
 other = "We've sent you a password reset link"
 
 [password_reset_sent_instructions]
+description = "Password reset email sent instructions"
 other = "Click the link in the email to set a new password. The link expires in 1 hour."
 
 [password_reset_email_not_received_heading]
+description = "Heading for the email-not-received help section on the reset confirmation page"
 other = "Didn't receive the email?"
 
 [password_reset_email_not_received_help]
+description = "Help text for users who did not receive the password reset email"
 other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
 
 # Password reset email
@@ -297,150 +392,197 @@ other = "[Wikino] Password Reset"
 
 # Password change
 [password_edit_title]
+description = "Password edit page title"
 other = "Set New Password"
 
 [password_edit_heading]
+description = "Password edit page heading"
 other = "Set a new password"
 
 [password_edit_description]
+description = "Password edit page instruction"
 other = "Enter your new password below."
 
 [password_edit_password_label]
+description = "Password edit new password input label"
 other = "New password"
 
 [password_edit_password_requirements]
-other = "Must be at least 8 characters"
+description = "Password input hint on the password edit page"
+other = "Must be at least {{.MinLength}} characters"
 
 [password_edit_password_confirmation_label]
+description = "Password edit confirmation password input label"
 other = "Confirm new password"
 
 [password_edit_submit]
+description = "Password edit submit button label"
 other = "Change password"
 
 # Password validation (additional)
 [validation_password_confirmation_required]
+description = "Password confirmation required validation error"
 other = "Please enter password confirmation"
 
 [validation_password_confirmation_mismatch]
+description = "Password confirmation mismatch error"
 other = "Passwords do not match"
 
 # Token validation
 [validation_token_required]
+description = "Token required validation error"
 other = "Token is required"
 
 [validation_token_invalid]
+description = "Invalid token validation error"
 other = "Invalid link. Please request a new password reset."
 
 [validation_token_expired]
+description = "Expired token validation error"
 other = "This link has expired. Please request a new password reset."
 
 [validation_token_used]
+description = "Already-used token validation error"
 other = "This link has already been used. Please request a new password reset."
 
 [validation_system_error]
+description = "Generic system error message"
 other = "A system error occurred. Please try again later."
 
 # Password change success
 [flash_password_updated]
+description = "Flash message after successful password change"
 other = "Your password has been updated"
 
 # Common buttons/links
 [sign_up]
+description = "Sign-up button label used in the hero area and similar places"
 other = "Sign up"
 
 [sign_in]
+description = "Sign-in button label used in the hero area and similar places"
 other = "Sign in"
 
 # Welcome page
 [welcome_title]
+description = "Welcome (top) page title"
 other = "Wikino"
 
 [welcome_description]
+description = "Welcome (top) page meta description"
 other = "Wikino is a web service where you can create and share wikis."
 
 [welcome_hero_title_html]
+description = "Welcome page hero heading (contains HTML)"
 other = "A Wiki app to discover through links"
 
 [welcome_hero_description_html]
+description = "Welcome page hero description (contains HTML)"
 other = "Wikino is a web service where you can create and share wikis."
 
 
 [welcome_screenshot_alt]
+description = "Alt text for the welcome page screenshot image"
 other = "Screenshot of Wikino"
 
 [welcome_features_title]
+description = "Welcome page features section heading"
 other = "Features"
 
 [welcome_feature_markdown_title]
+description = "Markdown feature heading on the welcome page"
 other = "Write simply in Markdown"
 
 [welcome_feature_markdown_description]
+description = "Markdown feature description on the welcome page"
 other = "Write documents in Markdown format with a clean, plain text editor."
 
 [welcome_feature_markdown_help_title]
+description = "Title for the Markdown feature help link"
 other = "About Markdown syntax in Wikino"
 
 [welcome_feature_wikilink_title]
+description = "Wiki link feature heading on the welcome page"
 other = "Easily connect pages"
 
 [welcome_feature_wikilink_description]
+description = "Wiki link feature description on the welcome page"
 other = "Wrap a page title with our link syntax to create and link to that page."
 
 [welcome_feature_wikilink_help_title]
+description = "Title for the Wiki link feature help link"
 other = "About Wiki link syntax"
 
 [welcome_feature_backlinks_title]
+description = "Backlinks feature heading on the welcome page"
 other = "See the connections"
 
 [welcome_feature_backlinks_description]
+description = "Backlinks feature description on the welcome page"
 other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
 
 [welcome_feature_backlinks_help_title]
+description = "Title for the backlinks feature help link"
 other = "About page connections"
 
 [welcome_feature_suggestion_title]
+description = "Suggestion feature heading on the welcome page"
 other = "Propose and review changes"
 
 [welcome_feature_suggestion_description]
+description = "Suggestion feature description on the welcome page"
 other = "Instead of editing directly, submit changes as a suggestion and apply them after a review through comments."
 
 [welcome_feature_suggestion_help_title]
+description = "Title for the suggestion feature help link"
 other = "About suggestions"
 
 [welcome_feature_publish_title]
+description = "Page publish feature heading on the welcome page"
 other = "Publish and share your pages"
 
 [welcome_feature_publish_description]
+description = "Page publish feature description on the welcome page"
 other = "Make your pages public and share them with others."
 
 [welcome_feature_publish_note]
+description = "Note for the page publish feature on the welcome page"
 other = "* Private spaces are currently free but will become a paid feature in the future."
 
 [welcome_feature_publish_help_title]
+description = "Title for the page publish feature help link"
 other = "About topics"
 
 [welcome_cta_title]
+description = "Welcome page CTA section heading"
 other = "Get Started with Wikino"
 
 [welcome_footer_resources]
+description = "Welcome page footer resources group heading"
 other = "Resources"
 
 [welcome_footer_help_page]
+description = "Welcome page footer help link label"
 other = "Help Page"
 
 [welcome_footer_release_notes]
+description = "Welcome page footer release notes link label"
 other = "Release Notes"
 
 [welcome_footer_about_developer]
+description = "Welcome page footer about-developer link label"
 other = "About the Developer"
 
 [welcome_footer_community]
+description = "Welcome page footer community group heading"
 other = "Community"
 
 [welcome_footer_open_source]
+description = "Welcome page footer open-source group heading"
 other = "Open Source"
 
 [welcome_open_source_description]
+description = "Welcome page open-source group description"
 other = "Wikino's source code is publicly available on GitHub."
 
 # Top navigation
@@ -511,9 +653,11 @@ other = "Show all"
 
 # Footer
 [footer_terms]
+description = "Footer terms-of-service link label"
 other = "Terms of Service"
 
 [footer_privacy]
+description = "Footer privacy-policy link label"
 other = "Privacy Policy"
 
 # Page edit
@@ -761,6 +905,22 @@ other = "Untitled"
 [draft_page_index_create_suggestion_button]
 description = "Create suggestion button on draft page index"
 other = "New suggestion"
+
+[draft_page_index_actions_aria_label]
+description = "Aria label for the dropdown trigger button on each draft row"
+other = "Draft actions"
+
+[draft_page_delete_menu_item]
+description = "Dropdown menu item: delete a draft from the index"
+other = "Delete"
+
+[draft_page_delete_confirm]
+description = "Confirmation dialog before deleting a draft"
+other = "Delete this draft?"
+
+[flash_draft_page_deleted]
+description = "Flash message shown after a draft is deleted"
+other = "Draft deleted"
 
 # Bottom navigation
 [bottom_nav_menu]

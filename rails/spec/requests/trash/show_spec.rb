@@ -15,7 +15,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
     space = create(:space_record, :small)
     other_space = create(:space_record)
     user = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record: other_space, user_record: user)
+    create(:space_member_record, space_record: other_space, user_record: user)
 
     sign_in(user_record: user)
 
@@ -27,7 +27,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
   it "トピックが削除されているとき、そのトピックに紐付くページは表示されないこと" do
     space_record = create(:space_record)
     user_record = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record:, user_record:)
+    create(:space_member_record, space_record:, user_record:)
     topic_record = create(:topic_record, space_record:)
     create(:page_record, :trashed, space_record:, topic_record:, title: "削除されたページ")
 
@@ -49,7 +49,7 @@ RSpec.describe "GET /s/:space_identifier/trash", type: :request do
   it "スペースに参加しているとき、ゴミ箱ページが表示されること" do
     space = create(:space_record, :small)
     user = create(:user_record, :with_password)
-    create(:space_member_record, :owner, space_record: space, user_record: user)
+    create(:space_member_record, space_record: space, user_record: user)
     topic = create(:topic_record, space_record: space)
     create(:page_record, :trashed, space_record: space, topic_record: topic, title: "削除されたページ")
 

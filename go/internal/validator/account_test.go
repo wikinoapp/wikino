@@ -78,6 +78,27 @@ func TestAccountCreateValidator_Validate_FormatValidation(t *testing.T) {
 			expectedField: "password",
 		},
 		{
+			name:          "password too long",
+			atname:        "testuser",
+			password:      strings.Repeat("a", 129),
+			wantErrors:    true,
+			expectedField: "password",
+		},
+		{
+			name:          "password with multibyte characters",
+			atname:        "testuser",
+			password:      "パスワード123",
+			wantErrors:    true,
+			expectedField: "password",
+		},
+		{
+			name:          "password with space",
+			atname:        "testuser",
+			password:      "pass word",
+			wantErrors:    true,
+			expectedField: "password",
+		},
+		{
 			name:       "atname with underscore",
 			atname:     "test_user",
 			password:   "password123",
@@ -99,6 +120,12 @@ func TestAccountCreateValidator_Validate_FormatValidation(t *testing.T) {
 			name:       "password exactly 8 chars",
 			atname:     "testuser8",
 			password:   "12345678",
+			wantErrors: false,
+		},
+		{
+			name:       "password exactly 128 chars",
+			atname:     "testuser",
+			password:   strings.Repeat("a", 128),
 			wantErrors: false,
 		},
 	}
@@ -219,6 +246,34 @@ func TestAccountCreateValidator_Validate_ErrorMessages(t *testing.T) {
 			password:        "short",
 			locale:          "en",
 			expectedMessage: "Password must be at least 8 characters",
+		},
+		{
+			name:            "password too long ja",
+			atname:          "testuser",
+			password:        strings.Repeat("a", 129),
+			locale:          "ja",
+			expectedMessage: "パスワードは128文字以内で入力してください",
+		},
+		{
+			name:            "password too long en",
+			atname:          "testuser",
+			password:        strings.Repeat("a", 129),
+			locale:          "en",
+			expectedMessage: "Password must be at most 128 characters",
+		},
+		{
+			name:            "password invalid chars ja",
+			atname:          "testuser",
+			password:        "パスワード123",
+			locale:          "ja",
+			expectedMessage: "パスワードには印字可能なASCII文字のみ使用できます",
+		},
+		{
+			name:            "password invalid chars en",
+			atname:          "testuser",
+			password:        "パスワード123",
+			locale:          "en",
+			expectedMessage: "Password can only contain printable ASCII characters",
 		},
 	}
 

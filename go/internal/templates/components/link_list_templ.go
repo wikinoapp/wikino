@@ -177,7 +177,7 @@ func linkListLoadMore(data viewmodel.LinkList) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = LoadMoreButton(
-			fmt.Sprintf("%s?page=%d", string(templates.PageLinkListPath(data.SpaceIdentifier.String(), data.PageNumber)), data.Pagination.Current+1),
+			fmt.Sprintf("%s?page=%d", string(templates.PageLinkListPath(data.SpaceIdentifier, data.PageNumber)), data.Pagination.Current+1),
 			"#page-link-list-pagination",
 		).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
