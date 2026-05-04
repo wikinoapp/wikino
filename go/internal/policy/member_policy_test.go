@@ -248,6 +248,40 @@ func TestMemberPolicy_CanUpdateDraftPage(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanDeleteDraftPage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("draft_page:deleteで削除可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageDelete}, nil)
+
+		if !p.CanDeleteDraftPage() {
+			t.Error("draft_page:delete を持つメンバーは削除可能であるべき")
+		}
+	})
+
+	t.Run("space:adminで削除可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanDeleteDraftPage() {
+			t.Error("space:admin は draft_page:delete を含意展開するため削除可能であるべき")
+		}
+	})
+
+	t.Run("draft_page:writeだけでは削除不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageWrite}, nil)
+
+		if p.CanDeleteDraftPage() {
+			t.Error("draft_page:write だけでは削除できないべき (draft_page:delete が必要)")
+		}
+	})
+}
+
 func TestMemberPolicy_CanCreateSuggestion(t *testing.T) {
 	t.Parallel()
 

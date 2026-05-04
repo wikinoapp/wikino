@@ -59,6 +59,14 @@ func (r *DraftPageRevisionRepository) DeleteByDraftPageID(ctx context.Context, d
 	})
 }
 
+// CountByDraftPageID は下書きページIDに紐づくリビジョン件数を返す
+func (r *DraftPageRevisionRepository) CountByDraftPageID(ctx context.Context, draftPageID model.DraftPageID, spaceID model.SpaceID) (int64, error) {
+	return r.q.CountDraftPageRevisionsByDraftPageID(ctx, query.CountDraftPageRevisionsByDraftPageIDParams{
+		DraftPageID: string(draftPageID),
+		SpaceID:     string(spaceID),
+	})
+}
+
 // toModel は query.DraftPageRevision を model.DraftPageRevision に変換する
 func (r *DraftPageRevisionRepository) toModel(row query.DraftPageRevision) *model.DraftPageRevision {
 	return &model.DraftPageRevision{

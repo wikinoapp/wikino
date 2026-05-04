@@ -7,3 +7,7 @@ RETURNING *;
 -- name: DeleteDraftPageRevisionsByDraftPageID :exec
 -- 下書きページIDに紐づくリビジョンをすべて削除する
 DELETE FROM draft_page_revisions WHERE draft_page_id = $1 AND space_id = $2;
+
+-- name: CountDraftPageRevisionsByDraftPageID :one
+-- 下書きページIDに紐づくリビジョン件数を返す
+SELECT COUNT(*) FROM draft_page_revisions WHERE draft_page_id = $1 AND space_id = $2;

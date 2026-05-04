@@ -1,6 +1,8 @@
 package draft_page
 
 import (
+	"fmt"
+
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -8,7 +10,8 @@ import (
 
 // IndexData は下書き一覧画面に渡すデータ構造体です
 type IndexData struct {
-	Groups []viewmodel.DraftPageGroupForIndex
+	CSRFToken string
+	Groups    []viewmodel.DraftPageGroupForIndex
 }
 
 // Index は下書き一覧画面のコンテンツを表示します
@@ -78,6 +81,12 @@ templ Index(data IndexData) {
 														<th>
 															{ templates.T(ctx, "draft_page_index_column_modified_at") }
 														</th>
+
+														<th>
+															<span class="sr-only">
+																{ templates.T(ctx, "draft_page_index_actions_aria_label") }
+															</span>
+														</th>
 													</tr>
 												</thead>
 
@@ -96,6 +105,10 @@ templ Index(data IndexData) {
 															<td class="text-muted-foreground whitespace-nowrap">
 																{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
 															</td>
+
+															<td class="whitespace-nowrap">
+																@draftRowActions(data.CSRFToken, draft)
+															</td>
 														</tr>
 													}
 												</tbody>
@@ -106,6 +119,59 @@ templ Index(data IndexData) {
 							}
 						</div>
 					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// draftRowActions は下書き一覧の各行のアクションメニューを表示します。
+// 三点リーダーアイコンのドロップダウンを開き、削除フォームを含むメニュー項目を提供します。
+templ draftRowActions(csrfToken string, draft viewmodel.DraftPageForIndex) {
+	{{ dropdownID := fmt.Sprintf("draft-actions-%s-%d", string(draft.SpaceIdentifier), draft.PageNumber) }}
+	<div id={ dropdownID } class="dropdown-menu">
+		<button
+			type="button"
+			id={ dropdownID + "-trigger" }
+			aria-haspopup="menu"
+			aria-controls={ dropdownID + "-menu" }
+			aria-expanded="false"
+			aria-label={ templates.T(ctx, "draft_page_index_actions_aria_label") }
+			class="btn-sm-icon-ghost rounded-full"
+		>
+			@templates.Icon("dots-three-regular")
+		</button>
+
+		<div
+			id={ dropdownID + "-popover" }
+			data-popover
+			aria-hidden="true"
+			class="min-w-44"
+			data-align="end"
+		>
+			<div
+				role="menu"
+				id={ dropdownID + "-menu" }
+				aria-labelledby={ dropdownID + "-trigger" }
+			>
+				<div role="menuitem">
+					<form
+						action={ templ.SafeURL(string(templates.PageDraftPagePath(draft.SpaceIdentifier, draft.PageNumber))) }
+						class="w-full"
+						data-confirm={ templates.T(ctx, "draft_page_delete_confirm") }
+						hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+						method="POST"
+					>
+						<input type="hidden" name="_method" value="DELETE"/>
+						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+						<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+							@templates.Icon("trash-regular", "size-4 fill-error")
+
+							<span class="text-error">
+								{ templates.T(ctx, "draft_page_delete_menu_item") }
+							</span>
+						</button>
+					</form>
 				</div>
 			</div>
 		</div>

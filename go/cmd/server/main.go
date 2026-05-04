@@ -305,9 +305,21 @@ func main() {
 		getDraftPagesUC,
 		sidebarHelper,
 	)
+	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
+		db,
+		spaceRepo,
+		spaceMemberRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+	)
 	draftPageHandler := draft_page.NewHandler(
+		flashMgr,
 		getPageDetailUC,
 		autoSaveDraftPageUC,
+		deleteDraftPageUC,
 		getEditLinkDataUC,
 	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
@@ -543,6 +555,7 @@ func main() {
 		// 下書きページSSE・自動保存API
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Update)
+		r.Delete("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Delete)
 
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)

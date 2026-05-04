@@ -42,6 +42,7 @@ func allResourceScopes() []model.Scope {
 		// 下書きページ
 		model.ScopeDraftPageRead,
 		model.ScopeDraftPageWrite,
+		model.ScopeDraftPageDelete,
 		// 編集提案
 		model.ScopeSuggestionRead,
 		model.ScopeSuggestionWrite,

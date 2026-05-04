@@ -49,6 +49,7 @@ func TestGuestPolicy_AllWriteMethodsReturnFalse(t *testing.T) {
 		{"CanShowDraftPage(non-owner)", p.CanShowDraftPage(false)},
 		{"CanUpdateDraftPage(owner)", p.CanUpdateDraftPage(true)},
 		{"CanUpdateDraftPage(non-owner)", p.CanUpdateDraftPage(false)},
+		{"CanDeleteDraftPage", p.CanDeleteDraftPage()},
 		{"CanCreateSuggestion(public)", p.CanCreateSuggestion(publicTopic)},
 		{"CanApplySuggestion", p.CanApplySuggestion()},
 		{"CanCloseSuggestion(creator)", p.CanCloseSuggestion(true)},

@@ -25,6 +25,7 @@ module Scope
   # 下書きページ関連スコープ
   DRAFT_PAGE_READ = T.let("draft_page:read", String)
   DRAFT_PAGE_WRITE = T.let("draft_page:write", String)
+  DRAFT_PAGE_DELETE = T.let("draft_page:delete", String)
 
   # 編集提案関連スコープ
   SUGGESTION_READ = T.let("suggestion:read", String)
