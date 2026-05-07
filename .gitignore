@@ -1,12 +1,14 @@
 .DS_Store
-apm_modules/
 test-results/
 
 /.claude/*.local.json
+/.claude/rules/korylus
+/.claude/skills/korylus-*
 /.env.op
 /.pnpm-store
 /compose-up.sh
 /docker-compose.override.yml
 /docs/private
+/docs/README.md
 /node_modules
 /tmp

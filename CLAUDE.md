@@ -15,15 +15,18 @@ WikinoはWikiアプリケーションです。
 ├── rails/               # Rails版の実装（既存の本番システム）
 ├── caddy/               # リバースプロキシ設定
 ├── docs/                # Wikino固有のドキュメント（仕様書、作業計画書など）
-├── .claude/             # AIガイドライン・スキル（apm install で自動配置）
-├── .github/             # 共通のCI/CD設定
-├── apm.yml              # APM（Agent Package Manager）の依存関係定義
-├── apm.lock.yaml        # APM のロックファイル
-├── apm_modules/         # APM の作業ディレクトリ
-├── Dockerfile.dev       # 統合開発コンテナのDockerfile
-├── docker-compose.yml   # Docker Compose設定
-├── mise.toml            # 開発ツールバージョン管理（Go, Ruby）
-└── CLAUDE.md            # このファイル（プロジェクト全体のガイド）
+├── .claude/
+│   ├── rules/
+│   │   ├── korylus/     # Korylus 共通ガイドライン (korylus-guidelines をマウント)
+│   │   └── wikino/      # Wikino 固有ガイドライン (Git 管理)
+│   └── skills/
+│       ├── korylus/     # Korylus 共通スキル (korylus-guidelines をマウント)
+│       └── wikino/      # Wikino 固有スキル (Git 管理)
+├── .github/             # 共通の CI/CD 設定
+├── Dockerfile.dev       # 統合開発コンテナの Dockerfile
+├── docker-compose.yml   # Docker Compose 設定
+├── mise.toml            # 開発ツールバージョン管理 (Go, Ruby)
+└── CLAUDE.md            # このファイル (プロジェクト全体のガイド)
 ```
 
 ## Rails から Go への移行について
@@ -119,7 +122,7 @@ make dev
 | `rails-css`    | Rails 版 CSS の監視・再ビルド               |
 | `rails-js`     | Rails 版 JavaScript の監視・再ビルド        |
 
-環境変数や Go / Rails 固有のセットアップ手順は、`.claude/rules/go-development.md` と `.claude/rules/rails-common.md` を参照してください。
+環境変数や Go / Rails 固有のセットアップ手順は、`.claude/rules/korylus/go-development.md` と `.claude/rules/korylus/rails-common.md` を参照してください。
 
 ## ドキュメント
 
@@ -131,17 +134,19 @@ make dev
 
 ## 参照するガイドライン
 
-Claude Code は `.claude/rules/` 配下のガイドラインを自動で読み込むため、通常は特に意識せず書いて OK。ガイドラインの実体は `korylus-guidelines` から `apm install` で配置されています。
+Claude Code は `.claude/rules/` 配下のガイドラインを自動で読み込むため、通常は特に意識せず書いて OK。Korylus 共通ガイドラインの実体は `korylus-guidelines` リポジトリにあり、Docker Compose で `/korylus-guidelines/.claude/rules/korylus/` を `.claude/rules/korylus/` にマウントすることで参照しています (スキルも同様に `/korylus-guidelines/.claude/skills/korylus/` を `.claude/skills/korylus/` にマウント)。
 
-- **Korylus 共通**: `.claude/rules/common.md` / `.claude/rules/apm.md` / `.claude/rules/guidelines-authoring.md`
-- **Go 版**: `.claude/rules/go-*.md` (coding, architecture, handler, usecase, testing, validation, security, templ, i18n, development)
-- **Rails 版**: `.claude/rules/rails-*.md` (common, architecture, testing, security)
+- **Korylus 共通**: `.claude/rules/korylus/common.md` / `.claude/rules/korylus/guidelines-authoring.md`
+- **Go 版**: `.claude/rules/korylus/go-*.md` (coding, architecture, handler, usecase, testing, validation, security, templ, i18n, development)
+- **Rails 版**: `.claude/rules/korylus/rails-*.md` (common, architecture, testing, security)
 
-APM 管理下のファイルは `apm install` で上書きされます。編集したい場合は `korylus-guidelines` 側を修正してください。
+`.claude/rules/korylus/` 配下のファイルを編集すると、マウント元である `korylus-guidelines` リポジトリのファイルが直接更新されます。共通ガイドラインの修正は `korylus-guidelines` 側でコミットしてください。
 
 ## Wikino 固有のガイドライン
 
-`apm install` で配置される共通ガイドライン (`.claude/rules/`) に加えて、Wikino プロジェクト固有の規約を本セクションに記述する。Korylus の他プロダクトには適用されない、Wikino 独自のドメイン規約・セキュリティ規約を扱う。
+マウントされる共通ガイドライン (`.claude/rules/korylus/`) に加えて、Wikino プロジェクト固有の規約を本セクションに記述する。Korylus の他プロダクトには適用されない、Wikino 独自のドメイン規約・セキュリティ規約を扱う。
+
+当面は本ファイルに直接記述し、記述量が増えてきたタイミングでトピックごとに `.claude/rules/wikino/{topic}.md` に切り出す (Wikino リポジトリで Git 管理)。切り出す際は YAML フロントマターの `paths:` で自動読み込みの対象範囲を指定する (例: スペース ID クエリスコープのルールは `paths: ["go/**/*.{go,sql}"]`)。
 
 ### スペース ID によるクエリスコープ
 
@@ -200,7 +205,7 @@ Wikino で定義する環境変数には、外部ライブラリなどが指定�
 
 ### フィーチャーフラグによる開発
 
-Korylus 共通の方針は [.claude/rules/common.md](/workspace/.claude/rules/common.md) の「フィーチャーフラグによる開発」セクションを参照してください。
+Korylus 共通の方針は [.claude/rules/korylus/common.md](/workspace/.claude/rules/korylus/common.md) の「フィーチャーフラグによる開発」セクションを参照してください。
 
 Wikino における具体的な仕組み (DB スキーマ、リバースプロキシの判定ロジックなど) は仕様書を参照:
 
