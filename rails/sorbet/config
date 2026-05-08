@@ -1,3 +1,4 @@
 --dir
 .
 --ignore=/vendor/bundle
+--suppress-payload-superclass-redefinition-for=Net::IMAP::Literal

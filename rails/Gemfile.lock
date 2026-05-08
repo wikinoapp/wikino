@@ -135,7 +135,7 @@ GEM
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
     csv (3.3.5)
-    date (3.4.1)
+    date (3.5.1)
     diff-lcs (1.6.2)
     discard (1.4.0)
       activerecord (>= 4.2, < 9.0)
@@ -250,7 +250,7 @@ GEM
     msgpack (1.8.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
-    net-imap (0.5.8)
+    net-imap (0.5.14)
       date
       net-protocol
     net-pop (0.1.2)
@@ -511,7 +511,7 @@ GEM
       thor (>= 1.2.0)
       yard-sorbet
     thor (1.4.0)
-    timeout (0.4.3)
+    timeout (0.6.1)
     tsort (0.2.0)
     turbo-rails (2.0.16)
       actionpack (>= 7.1.0)
