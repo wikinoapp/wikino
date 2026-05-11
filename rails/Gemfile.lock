@@ -106,7 +106,7 @@ GEM
       erubi (~> 1.4)
       parser (>= 2.4)
       smart_properties
-    bigdecimal (4.1.1)
+    bigdecimal (4.1.2)
     bootsnap (1.18.6)
       msgpack (~> 1.2)
     builder (3.3.0)
@@ -232,7 +232,6 @@ GEM
     matrix (0.4.2)
     meta-tags (2.22.1)
       actionpack (>= 6.0.0, < 8.1)
-    method_source (1.1.0)
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
@@ -526,10 +525,10 @@ GEM
     useragent (0.16.11)
     vcr (6.3.1)
       base64
-    view_component (3.23.2)
-      activesupport (>= 5.2.0, < 8.1)
+    view_component (4.9.0)
+      actionview (>= 7.1.0)
+      activesupport (>= 7.1.0)
       concurrent-ruby (~> 1)
-      method_source (~> 1.0)
     vips (8.15.1)
       ffi (~> 1.12)
     websocket (1.2.11)
