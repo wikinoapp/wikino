@@ -29,3 +29,47 @@ func (q *Queries) GetSpaceByIdentifier(ctx context.Context, identifier string) (
 	)
 	return i, err
 }
+
+const listActiveSpacesByUser = `-- name: ListActiveSpacesByUser :many
+SELECT s.id, s.identifier, s.name, s.plan, s.joined_at, s.discarded_at, s.created_at, s.updated_at FROM spaces s
+INNER JOIN space_members sm ON sm.space_id = s.id
+WHERE sm.user_id = $1
+  AND sm.active = TRUE
+  AND s.discarded_at IS NULL
+ORDER BY sm.joined_at DESC
+`
+
+// ユーザーが参加中（active）かつ削除されていないスペースの一覧を取得する
+// Rails 版 current_user.active_space_records 相当
+// 並び順はユーザーがスペースに参加した日の降順（最近参加したスペースが上）
+func (q *Queries) ListActiveSpacesByUser(ctx context.Context, userID string) ([]Space, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveSpacesByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Space{}
+	for rows.Next() {
+		var i Space
+		if err := rows.Scan(
+			&i.ID,
+			&i.Identifier,
+			&i.Name,
+			&i.Plan,
+			&i.JoinedAt,
+			&i.DiscardedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

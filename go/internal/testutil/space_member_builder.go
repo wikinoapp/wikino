@@ -64,6 +64,12 @@ func (b *SpaceMemberBuilder) WithScopes(scopes []model.Scope) *SpaceMemberBuilde
 	return b
 }
 
+// WithJoinedAt は参加日時を設定します
+func (b *SpaceMemberBuilder) WithJoinedAt(joinedAt time.Time) *SpaceMemberBuilder {
+	b.joinedAt = joinedAt
+	return b
+}
+
 // Build はスペースメンバーを作成し、IDを返します
 func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	b.t.Helper()
