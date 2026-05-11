@@ -20,8 +20,6 @@ class MissionControl::Jobs::ApplicationController
     include ::Turbo::Streams::ActionHelper
     include ::Importmap::ImportmapTagsHelper
     include ::ActionController::Base::HelperMethods
-    include ::PreviewHelper
-    include ::MissionControl::ApplicationController::HelperMethods
     include ::MissionControl::Jobs::InterfaceHelper
     include ::MissionControl::Jobs::NavigationHelper
     include ::MissionControl::Jobs::JobsHelper
