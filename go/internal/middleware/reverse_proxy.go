@@ -36,7 +36,13 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	{
+		pattern: regexp.MustCompile(`^/home$`),
+		flag:    model.FeatureFlagHomeShow,
+		methods: []string{http.MethodGet},
+	},
+}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
