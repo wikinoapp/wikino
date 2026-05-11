@@ -878,6 +878,30 @@ other = "移動先トピックに同じタイトルのページが既に存在�
 description = "オープンな編集提案が存在するため移動不可エラー"
 other = "オープンな編集提案で参照されているページは移動できません"
 
+[home_show_title]
+description = "ホーム画面のタイトル (meta tag)"
+other = "ホーム"
+
+[home_heading]
+description = "ホーム画面のメイン見出し"
+other = "ホーム"
+
+[home_joined_spaces_heading]
+description = "ホーム画面の「参加中のスペース」見出し"
+other = "参加中のスペース"
+
+[home_new_space_button]
+description = "ホーム画面の「新規スペース」ボタン"
+other = "新規スペース"
+
+[home_no_joined_spaces_html]
+description = "ホーム画面の参加中スペースが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"
+
+[home_new_space_description_html]
+description = "ホーム画面の参加中スペースが 0 件のときの補足説明 (HTML を含む)"
+other = "ページはスペース内のトピックに作成することができます<br>まずはスペースを作成しましょう"
+
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"
 other = "下書きのページ"

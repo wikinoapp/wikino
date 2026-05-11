@@ -25,6 +25,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
+	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
@@ -301,8 +302,13 @@ func main() {
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
-		flashMgr,
 		getDraftPagesUC,
+		sidebarHelper,
+	)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo)
+	homeHandler := home.NewHandler(
+		cfg,
+		getHomeShowUC,
 		sidebarHelper,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
@@ -544,6 +550,9 @@ func main() {
 		r.Use(authMiddleware.RequireAuth)
 		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
+
+		// ホーム画面
+		r.Get("/home", homeHandler.Show)
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)

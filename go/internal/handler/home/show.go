@@ -1,4 +1,4 @@
-package draft_page_index
+package home
 
 import (
 	"log/slog"
@@ -8,30 +8,28 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
-	draftpagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/draft_page"
+	homepages "github.com/wikinoapp/wikino/go/internal/templates/pages/home"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Index は下書き一覧画面を表示します (GET /drafts)
-func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
+// Show はホーム画面を表示します (GET /home)
+func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	user := middleware.UserFromContext(ctx)
 
-	output, err := h.getDraftPagesUC.Execute(ctx, usecase.GetDraftPagesInput{
+	output, err := h.getHomeShowUC.Execute(ctx, usecase.GetHomeShowInput{
 		UserID: user.ID,
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "下書き一覧の取得に失敗", "error", err)
+		slog.ErrorContext(ctx, "ホーム画面の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	groups := viewmodel.NewDraftPageGroupsForIndex(output.DraftPages)
-
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "draft_page_index_title")
+	meta.SetTitle(ctx, "home_show_title")
 
 	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
 
@@ -39,7 +37,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		Meta: meta,
 
 		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameDraftPageIndex,
+			CurrentPageName:   templates.PageNameHome,
 			SignedIn:          true,
 			UserAtname:        user.Atname,
 			JoinedTopics:      sidebarContent.JoinedTopics,
@@ -47,14 +45,13 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
 		},
 		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameDraftPageIndex,
+			CurrentPageName: templates.PageNameHome,
 			SignedIn:        true,
 		},
 	}
 
-	content := draftpagepages.Index(draftpagepages.IndexData{
-		CSRFToken: middleware.GetCSRFTokenFromContext(ctx),
-		Groups:    groups,
+	content := homepages.Show(homepages.ShowPageData{
+		ActiveSpaces: viewmodel.NewSpaces(output.ActiveSpaces),
 	})
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

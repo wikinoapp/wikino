@@ -15,3 +15,12 @@ func NewSpace(space *model.Space) Space {
 		Identifier: NewSpaceIdentifier(space.Identifier),
 	}
 }
+
+// NewSpaces はモデルのスライスからSpaceのスライスを生成します
+func NewSpaces(spaces []*model.Space) []Space {
+	result := make([]Space, len(spaces))
+	for i, space := range spaces {
+		result[i] = NewSpace(space)
+	}
+	return result
+}
