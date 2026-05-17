@@ -1,15 +1,18 @@
-# コントリビューションについて
+<!-- last_synced: 2026-05-17 -->
 
-Wikino はオープンソースとして公開していますが、現在、外部からのプルリクエストは受け付けていません。
+# Contributing
 
-開発は基本的に個人 ([@shimbaco](https://github.com/shimbaco)) で進めており、外部からのコード貢献を適切にレビュー・管理する余裕がないためです。
-ソースコードは Wikino の仕組みに興味のある方への参考として公開しています。
+> English | [日本語](./CONTRIBUTING.ja.md)
 
-## 不具合報告・機能提案・質問について
+Wikino is open source, but we are not currently accepting external pull requests.
 
-不具合報告、機能提案、質問などは歓迎しています。
-[Discord サーバー](https://discord.gg/8qMetv8fUn)で受け付けているので、お気軽にご連絡ください。
+Development is primarily handled by a single person ([@shimbaco](https://github.com/shimbaco)), and we do not have the capacity to properly review and manage external code contributions. The source code is published as a reference for those interested in how Wikino works.
 
-## セキュリティに関する報告
+## Bug reports, feature requests, and questions
 
-セキュリティ上の脆弱性を発見した場合は、[SECURITY.md](./SECURITY.md) に記載されている方法でご報告ください。
+Bug reports, feature requests, and questions are all welcome.
+Please feel free to reach out via our [Discord server](https://discord.gg/8qMetv8fUn).
+
+## Security reports
+
+If you discover a security vulnerability, please report it using the method described in [SECURITY.md](./SECURITY.md).
