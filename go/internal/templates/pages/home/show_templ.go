@@ -50,7 +50,7 @@ func Show(data ShowPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"max-w-3xl w-full mx-auto\"><div class=\"flex flex-col gap-4\"><div class=\"px-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"max-w-3xl w-full mx-auto\"><div class=\"flex flex-col gap-6\"><div class=\"px-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
