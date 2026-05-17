@@ -549,3 +549,9 @@ module ActiveSupport::Testing::Assertions
   sig { type_parameters(:TResult).params(expression: T.any(Proc, Kernel), message: Kernel, from: T.anything, to: T.anything, block: T.proc.returns(T.type_parameter(:TResult))).returns(T.type_parameter(:TResult)) }
   def assert_changes(expression, message = T.unsafe(nil), from: T.unsafe(nil), to: T.unsafe(nil), &block); end
 end
+
+module ActiveSupport::Testing::ErrorReporterAssertions
+  # @version >= 7.1.0.rc1
+  sig { params(error_class: T.class_of(Exception), block: T.proc.void).returns(ActiveSupport::Testing::ErrorReporterAssertions::ErrorCollector::Report) }
+  def assert_error_reported(error_class = T.unsafe(nil), &block); end
+end
