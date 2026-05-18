@@ -9,6 +9,24 @@ import (
 // ShowPageData はホーム画面に渡すデータ構造体です
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
+	JoinedTopics []viewmodel.JoinedTopicCard
+}
+
+// NewTopicHref returns the href for the home page's "new topic" button. Rails has no
+// global new-topic page; topic creation always requires a space, so the button targets
+// the first joined space (sm.joined_at DESC). Returns an empty SafeURL when the user
+// has no joined spaces — templates check for "" to decide whether to render the button.
+//
+// [Ja] NewTopicHref は「新規トピック」ボタンの href を返す。
+// Rails にはグローバルな新規トピック画面が存在せず、トピック作成は必ずスペースを必要とする
+// ため、参加中スペース一覧の先頭 (sm.joined_at DESC) を遷移先に選ぶ。
+// 参加中スペースが 0 件のときは空の SafeURL を返すので、テンプレート側で空文字列判定して
+// ボタンの表示可否を制御する。
+func (d ShowPageData) NewTopicHref() templ.SafeURL {
+	if len(d.ActiveSpaces) == 0 {
+		return ""
+	}
+	return templ.SafeURL(string(templates.NewTopicPath(d.ActiveSpaces[0].Identifier)))
 }
 
 // Show はホーム画面のコンテンツを表示します
@@ -40,11 +58,39 @@ templ Show(data ShowPageData) {
 						</div>
 
 						if len(data.ActiveSpaces) == 0 {
-							@emptyState()
+							@spacesEmptyState()
 						} else {
 							<div class="grid grid-cols-2 gap-2 md:grid-cols-4">
 								for _, space := range data.ActiveSpaces {
 									@spaceCard(space)
+								}
+							</div>
+						}
+					</div>
+
+					<div class="flex flex-col gap-4 px-4">
+						<div class="flex items-center justify-between gap-4">
+							<h2 class="font-bold antialiased">
+								{ templates.T(ctx, "home_joined_topics_heading") }
+							</h2>
+
+							if href := data.NewTopicHref(); href != "" {
+								<a
+									href={ href }
+									class="btn-sm rounded-full"
+								>
+									@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
+									{ templates.T(ctx, "home_new_topic_button") }
+								</a>
+							}
+						</div>
+
+						if len(data.JoinedTopics) == 0 {
+							@topicsEmptyState()
+						} else {
+							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+								for _, topic := range data.JoinedTopics {
+									@joinedTopicCard(topic)
 								}
 							</div>
 						}
@@ -57,17 +103,56 @@ templ Show(data ShowPageData) {
 
 // spaceCard は参加中スペースのカードを表示します
 templ spaceCard(space viewmodel.Space) {
-	<a href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) } class="card py-4 rounded-xl hover:bg-muted/40 transition-colors">
-		<section class="px-4">
-			<div class="line-clamp-3 text-sm font-bold">
-				{ space.Name }
-			</div>
-		</section>
-	</a>
+	<div class="card min-h-[60px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+		<div class="card-body h-full">
+			<a
+				class="h-full"
+				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
+			>
+				<div class="flex items-center gap-2 h-full p-2">
+					@components.SpaceIcon(space)
+
+					<div class="line-clamp-2 text-sm font-bold">
+						{ space.Name }
+					</div>
+				</div>
+			</a>
+		</div>
+	</div>
 }
 
-// emptyState は参加中スペースが 0 件のときの空状態を表示します
-templ emptyState() {
+// joinedTopicCard は参加中トピックのカードを表示します
+templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
+	<div class="card min-h-[60px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+		<div class="card-body h-full">
+			<a
+				class="h-full"
+				href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
+			>
+				<div class="flex items-start gap-2 h-full p-2">
+					@components.SpaceIcon(topic.SpaceForIcon())
+
+					<div class="flex flex-col gap-0.5 min-w-0">
+						<span class="line-clamp-1 text-xs text-muted-foreground">
+							{ topic.SpaceName }
+						</span>
+
+						<span class="line-clamp-2 text-sm font-bold">
+							{ topic.Name }
+						</span>
+
+						<span class="text-xs text-muted-foreground">
+							{ templates.T(ctx, "home_topic_pages_count", map[string]any{"Count": topic.PublishedPagesCount}) }
+						</span>
+					</div>
+				</div>
+			</a>
+		</div>
+	</div>
+}
+
+// spacesEmptyState は参加中スペースが 0 件のときの空状態を表示します
+templ spacesEmptyState() {
 	<div class="card py-8 rounded-xl">
 		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center text-muted-foreground">
 			@templates.Icon("file-regular", "size-10 fill-muted-foreground")
@@ -77,6 +162,18 @@ templ emptyState() {
 			<div class="text-sm">
 				@templ.Raw(templates.T(ctx, "home_new_space_description_html"))
 			</div>
+		</div>
+	</div>
+}
+
+// topicsEmptyState は参加中トピックが 0 件のときの空状態を表示します
+templ topicsEmptyState() {
+	<div class="card py-8 rounded-xl">
+		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center text-muted-foreground">
+			@templates.Icon("file-regular", "size-10 fill-muted-foreground")
+			<p class="font-bold antialiased">
+				@templ.Raw(templates.T(ctx, "home_no_joined_topics_html"))
+			</p>
 		</div>
 	</div>
 }

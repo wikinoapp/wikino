@@ -902,6 +902,22 @@ other = "参加中のスペースは<br class=\"block sm:hidden\">ありませ�
 description = "ホーム画面の参加中スペースが 0 件のときの補足説明 (HTML を含む)"
 other = "ページはスペース内のトピックに作成することができます<br>まずはスペースを作成しましょう"
 
+[home_joined_topics_heading]
+description = "ホーム画面の「参加中のトピック」見出し"
+other = "参加中のトピック"
+
+[home_new_topic_button]
+description = "ホーム画面の「新規トピック」ボタン"
+other = "新規トピック"
+
+[home_no_joined_topics_html]
+description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"
+
+[home_topic_pages_count]
+description = "ホーム画面のトピックカードに表示する公開中ページ数"
+other = "{{.Count}} ページ"
+
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"
 other = "下書きのページ"
