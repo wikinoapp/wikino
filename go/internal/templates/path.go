@@ -30,12 +30,6 @@ func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber in
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
 }
 
-// NewTopicPath returns the URL for the new-topic creation page within a space.
-// [Ja] NewTopicPath はトピック新規作成のパスを生成します。
-func NewTopicPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
-	return Path("/s/" + string(spaceIdentifier) + "/topics/new")
-}
-
 // NewPagePath はページ新規作成のパスを生成します
 func NewPagePath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/pages/new", spaceIdentifier, topicNumber))

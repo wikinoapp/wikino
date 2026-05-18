@@ -906,10 +906,6 @@ other = "ページはスペース内のトピックに作成することがで�
 description = "ホーム画面の「参加中のトピック」見出し"
 other = "参加中のトピック"
 
-[home_new_topic_button]
-description = "ホーム画面の「新規トピック」ボタン"
-other = "新規トピック"
-
 [home_no_joined_topics_html]
 description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
 other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"

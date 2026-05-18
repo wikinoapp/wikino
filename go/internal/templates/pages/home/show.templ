@@ -12,23 +12,6 @@ type ShowPageData struct {
 	JoinedTopics []viewmodel.JoinedTopicCard
 }
 
-// NewTopicHref returns the href for the home page's "new topic" button. Rails has no
-// global new-topic page; topic creation always requires a space, so the button targets
-// the first joined space (sm.joined_at DESC). Returns an empty SafeURL when the user
-// has no joined spaces — templates check for "" to decide whether to render the button.
-//
-// [Ja] NewTopicHref は「新規トピック」ボタンの href を返す。
-// Rails にはグローバルな新規トピック画面が存在せず、トピック作成は必ずスペースを必要とする
-// ため、参加中スペース一覧の先頭 (sm.joined_at DESC) を遷移先に選ぶ。
-// 参加中スペースが 0 件のときは空の SafeURL を返すので、テンプレート側で空文字列判定して
-// ボタンの表示可否を制御する。
-func (d ShowPageData) NewTopicHref() templ.SafeURL {
-	if len(d.ActiveSpaces) == 0 {
-		return ""
-	}
-	return templ.SafeURL(string(templates.NewTopicPath(d.ActiveSpaces[0].Identifier)))
-}
-
 // Show はホーム画面のコンテンツを表示します
 templ Show(data ShowPageData) {
 	<div class="py-4">
@@ -69,21 +52,9 @@ templ Show(data ShowPageData) {
 					</div>
 
 					<div class="flex flex-col gap-4 px-4">
-						<div class="flex items-center justify-between gap-4">
-							<h2 class="font-bold antialiased">
-								{ templates.T(ctx, "home_joined_topics_heading") }
-							</h2>
-
-							if href := data.NewTopicHref(); href != "" {
-								<a
-									href={ href }
-									class="btn-sm rounded-full"
-								>
-									@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
-									{ templates.T(ctx, "home_new_topic_button") }
-								</a>
-							}
-						</div>
+						<h2 class="font-bold antialiased">
+							{ templates.T(ctx, "home_joined_topics_heading") }
+						</h2>
 
 						if len(data.JoinedTopics) == 0 {
 							@topicsEmptyState()
