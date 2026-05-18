@@ -78,13 +78,6 @@ func TestShow_Empty(t *testing.T) {
 	if !strings.Contains(body, "参加中のトピックは") {
 		t.Error("no joined topics empty state not found in response")
 	}
-	// The "new topic" button has no global URL in Rails so the home page does not render it
-	// when the user has no joined spaces (the target space cannot be derived).
-	// [Ja] Rails には新規トピックのグローバル URL が無いため、参加中スペースが 0 件のときは
-	// ホーム画面に「新規トピック」ボタンを描画しない。
-	if strings.Contains(body, "新規トピック") {
-		t.Error("new topic button should not be rendered when there are no joined spaces")
-	}
 }
 
 func TestShow_WithSpaces(t *testing.T) {
@@ -179,21 +172,6 @@ func TestShow_WithSpaces(t *testing.T) {
 		if !strings.Contains(body, expectedLabel) {
 			t.Errorf("space icon label for %q (%q) not found in response", s.identifier, expectedLabel)
 		}
-	}
-
-	// The "new topic" button is rendered with one of the joined space's identifiers when the
-	// user has at least one joined space (Rails has no global new-topic page; topic creation
-	// requires a space). The exact identifier depends on sm.joined_at ordering, so accept either.
-	// [Ja] 参加中スペースが 1 件以上あるときは、いずれかのスペースの identifier を埋め込んだ
-	// 「新規トピック」ボタンが描画される (Rails にはグローバルな新規トピック画面が無いため)。
-	// 並び順は sm.joined_at DESC のため、どちらの identifier が先頭になるかは決定論的に確定しない。
-	if !strings.Contains(body, "新規トピック") {
-		t.Error("new topic button label not found in response")
-	}
-	hasFirstLink := strings.Contains(body, "/s/home-space-1/topics/new")
-	hasSecondLink := strings.Contains(body, "/s/home-space-2/topics/new")
-	if !hasFirstLink && !hasSecondLink {
-		t.Error("new topic button link to one of the joined spaces not found in response")
 	}
 }
 

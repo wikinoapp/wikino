@@ -12,23 +12,6 @@ type ShowPageData struct {
 	JoinedTopics []viewmodel.JoinedTopicCard
 }
 
-// NewTopicHref returns the href for the home page's "new topic" button. Rails has no
-// global new-topic page; topic creation always requires a space, so the button targets
-// the first joined space (sm.joined_at DESC). Returns an empty SafeURL when the user
-// has no joined spaces — templates check for "" to decide whether to render the button.
-//
-// [Ja] NewTopicHref は「新規トピック」ボタンの href を返す。
-// Rails にはグローバルな新規トピック画面が存在せず、トピック作成は必ずスペースを必要とする
-// ため、参加中スペース一覧の先頭 (sm.joined_at DESC) を遷移先に選ぶ。
-// 参加中スペースが 0 件のときは空の SafeURL を返すので、テンプレート側で空文字列判定して
-// ボタンの表示可否を制御する。
-func (d ShowPageData) NewTopicHref() templ.SafeURL {
-	if len(d.ActiveSpaces) == 0 {
-		return ""
-	}
-	return templ.SafeURL(string(templates.NewTopicPath(d.ActiveSpaces[0].Identifier)))
-}
-
 // Show はホーム画面のコンテンツを表示します
 templ Show(data ShowPageData) {
 	<div class="py-4">
@@ -60,7 +43,7 @@ templ Show(data ShowPageData) {
 						if len(data.ActiveSpaces) == 0 {
 							@spacesEmptyState()
 						} else {
-							<div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
 								for _, space := range data.ActiveSpaces {
 									@spaceCard(space)
 								}
@@ -69,21 +52,9 @@ templ Show(data ShowPageData) {
 					</div>
 
 					<div class="flex flex-col gap-4 px-4">
-						<div class="flex items-center justify-between gap-4">
-							<h2 class="font-bold antialiased">
-								{ templates.T(ctx, "home_joined_topics_heading") }
-							</h2>
-
-							if href := data.NewTopicHref(); href != "" {
-								<a
-									href={ href }
-									class="btn-sm rounded-full"
-								>
-									@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
-									{ templates.T(ctx, "home_new_topic_button") }
-								</a>
-							}
-						</div>
+						<h2 class="font-bold antialiased">
+							{ templates.T(ctx, "home_joined_topics_heading") }
+						</h2>
 
 						if len(data.JoinedTopics) == 0 {
 							@topicsEmptyState()
@@ -110,7 +81,10 @@ templ spaceCard(space viewmodel.Space) {
 				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
 			>
 				<div class="flex items-center gap-2 h-full p-2">
-					@components.SpaceIcon(space)
+					@components.SpaceIcon(components.SpaceIconData{
+						Space: space,
+						Size:  components.SpaceIconSizeLg,
+					})
 
 					<div class="line-clamp-2 text-sm font-bold">
 						{ space.Name }
@@ -129,8 +103,11 @@ templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
 				class="h-full"
 				href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
 			>
-				<div class="flex items-start gap-2 h-full p-2">
-					@components.SpaceIcon(topic.SpaceForIcon())
+				<div class="flex items-center gap-2 h-full p-2">
+					@components.SpaceIcon(components.SpaceIconData{
+						Space: topic.SpaceForIcon(),
+						Size:  components.SpaceIconSizeMd,
+					})
 
 					<div class="flex flex-col gap-0.5 min-w-0">
 						<span class="line-clamp-1 text-xs text-muted-foreground">

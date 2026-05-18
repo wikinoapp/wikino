@@ -906,10 +906,6 @@ other = "Pages can be created in spaces.<br>First, create a space."
 description = "Home page 'Joined topics' section heading"
 other = "Joined topics"
 
-[home_new_topic_button]
-description = "Home page 'New topic' button label"
-other = "New topic"
-
 [home_no_joined_topics_html]
 description = "Home page heading shown when the user has no joined topics (contains HTML)"
 other = "No joined topics."
