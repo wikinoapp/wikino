@@ -11,15 +11,54 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// SpaceIconSize controls the rendered SpaceIcon size. Each size maps to a Tailwind
+// size-* class for the container and a matching text-* class for the label so the
+// first character stays readable at any size.
+//
+// [Ja] SpaceIconSize は SpaceIcon の表示サイズを切り替えるための型。コンテナ用の
+// size-* クラスと、ラベル文字用の text-* クラスをセットで切り替え、頭文字が
+// どのサイズでも読める比率になるようにする。
+type SpaceIconSize string
+
+const (
+	SpaceIconSizeSm SpaceIconSize = "sm" // size-4
+	SpaceIconSizeMd SpaceIconSize = "md" // size-8
+	SpaceIconSizeLg SpaceIconSize = "lg" // size-10
+)
+
+// SpaceIconData はスペースアイコンコンポーネントに渡すデータ構造体です
+type SpaceIconData struct {
+	Space viewmodel.Space
+	Size  SpaceIconSize
+}
+
+// sizeClass returns the Tailwind container size + label text-size classes for the data's Size.
+// Falls back to the md classes when Size is the zero value or an unknown variant.
+//
+// [Ja] sizeClass は Size に対応する Tailwind の size-* と text-* クラスを返す。
+// Size が未指定 (ゼロ値) または未知の値だった場合は md にフォールバックする。
+func (d SpaceIconData) sizeClass() string {
+	switch d.Size {
+	case SpaceIconSizeSm:
+		return "size-4 text-[10px]"
+	case SpaceIconSizeLg:
+		return "size-10 text-base"
+	default:
+		return "size-8 text-sm"
+	}
+}
+
 // SpaceIcon renders an icon with a deterministic background color and a first-character label
-// derived from the space identifier.
+// derived from the space identifier. The container and label sizes are controlled by
+// SpaceIconData.Size (sm / md / lg).
 // The background color is chosen by viewmodel.Space.IconBackgroundColor() which hashes the identifier.
 // The label is the first character of the identifier uppercased, returned by viewmodel.Space.IconLabel().
 //
 // [Ja] SpaceIcon はスペース識別子から決定的に決まる背景色と頭文字を持つアイコンを表示します。
+// コンテナとラベルのサイズは SpaceIconData.Size (sm / md / lg) で切り替えます。
 // 背景色は viewmodel.Space.IconBackgroundColor() で identifier をハッシュして選択され、
 // ラベルは viewmodel.Space.IconLabel() で identifier の先頭 1 文字を大文字化したものが使われます。
-func SpaceIcon(space viewmodel.Space) templ.Component {
+func SpaceIcon(data SpaceIconData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -40,33 +79,51 @@ func SpaceIcon(space viewmodel.Space) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex shrink-0 items-center justify-center rounded-md text-white font-bold antialiased size-8 text-sm\" style=\"")
+		var templ_7745c5c3_Var2 = []any{"flex shrink-0 items-center justify-center rounded-md text-white font-bold antialiased", data.sizeClass()}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(templ.SafeCSS("background-color: " + space.IconBackgroundColor()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 19, Col: 75}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" aria-hidden=\"true\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(space.IconLabel())
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var2).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 22, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" style=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(templ.SafeCSS("background-color: " + data.Space.IconBackgroundColor()))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 58, Col: 80}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" aria-hidden=\"true\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Space.IconLabel())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 61, Col: 26}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

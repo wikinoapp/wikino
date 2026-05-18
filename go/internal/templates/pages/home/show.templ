@@ -81,7 +81,10 @@ templ spaceCard(space viewmodel.Space) {
 				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
 			>
 				<div class="flex items-center gap-2 h-full p-2">
-					@components.SpaceIcon(space)
+					@components.SpaceIcon(components.SpaceIconData{
+						Space: space,
+						Size:  components.SpaceIconSizeLg,
+					})
 
 					<div class="line-clamp-2 text-sm font-bold">
 						{ space.Name }
@@ -100,8 +103,11 @@ templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
 				class="h-full"
 				href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
 			>
-				<div class="flex items-start gap-2 h-full p-2">
-					@components.SpaceIcon(topic.SpaceForIcon())
+				<div class="flex items-center gap-2 h-full p-2">
+					@components.SpaceIcon(components.SpaceIconData{
+						Space: topic.SpaceForIcon(),
+						Size:  components.SpaceIconSizeMd,
+					})
 
 					<div class="flex flex-col gap-0.5 min-w-0">
 						<span class="line-clamp-1 text-xs text-muted-foreground">
