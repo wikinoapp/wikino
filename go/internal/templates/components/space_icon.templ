@@ -1,0 +1,24 @@
+package components
+
+import (
+	"github.com/a-h/templ"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SpaceIcon renders an icon with a deterministic background color and a first-character label
+// derived from the space identifier.
+// The background color is chosen by viewmodel.Space.IconBackgroundColor() which hashes the identifier.
+// The label is the first character of the identifier uppercased, returned by viewmodel.Space.IconLabel().
+//
+// [Ja] SpaceIcon はスペース識別子から決定的に決まる背景色と頭文字を持つアイコンを表示します。
+// 背景色は viewmodel.Space.IconBackgroundColor() で identifier をハッシュして選択され、
+// ラベルは viewmodel.Space.IconLabel() で identifier の先頭 1 文字を大文字化したものが使われます。
+templ SpaceIcon(space viewmodel.Space) {
+	<div
+		class="flex shrink-0 items-center justify-center rounded-md text-white font-bold antialiased size-8 text-sm"
+		style={ templ.SafeCSS("background-color: " + space.IconBackgroundColor()) }
+		aria-hidden="true"
+	>
+		{ space.IconLabel() }
+	</div>
+}
