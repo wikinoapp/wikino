@@ -902,6 +902,22 @@ other = "No joined spaces."
 description = "Home page description shown when the user has no joined spaces (contains HTML)"
 other = "Pages can be created in spaces.<br>First, create a space."
 
+[home_joined_topics_heading]
+description = "Home page 'Joined topics' section heading"
+other = "Joined topics"
+
+[home_new_topic_button]
+description = "Home page 'New topic' button label"
+other = "New topic"
+
+[home_no_joined_topics_html]
+description = "Home page heading shown when the user has no joined topics (contains HTML)"
+other = "No joined topics."
+
+[home_topic_pages_count]
+description = "Published page count shown on each topic card on the home page"
+other = "{{.Count}} pages"
+
 [draft_page_index_title]
 description = "Draft page index page title"
 other = "Draft Pages"

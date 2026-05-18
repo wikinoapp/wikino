@@ -14,10 +14,11 @@ type SpaceBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	identifier string
-	name       string
-	plan       int32
-	joinedAt   time.Time
+	identifier  string
+	name        string
+	plan        int32
+	joinedAt    time.Time
+	discardedAt *time.Time
 }
 
 // NewSpaceBuilder は SpaceBuilder を生成します
@@ -52,6 +53,13 @@ func (b *SpaceBuilder) WithPlan(plan int32) *SpaceBuilder {
 	return b
 }
 
+// WithDiscarded は廃棄済み状態に設定します
+func (b *SpaceBuilder) WithDiscarded() *SpaceBuilder {
+	now := time.Now()
+	b.discardedAt = &now
+	return b
+}
+
 // Build はスペースを作成し、IDを返します
 func (b *SpaceBuilder) Build() model.SpaceID {
 	b.t.Helper()
@@ -60,10 +68,10 @@ func (b *SpaceBuilder) Build() model.SpaceID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO spaces (identifier, name, plan, joined_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO spaces (identifier, name, plan, joined_at, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.identifier, b.name, b.plan, b.joinedAt, now, now,
+		b.identifier, b.name, b.plan, b.joinedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペース作成に失敗: %v", err)
