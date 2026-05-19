@@ -61,7 +61,11 @@ func TestShow_Empty(t *testing.T) {
 	if !strings.Contains(body, "Wikinoへようこそ") {
 		t.Error("welcome empty state message not found in response")
 	}
-	if !strings.Contains(body, "まずはスペースを作成してページを書き始めましょう") {
+	// home_welcome_description_html embeds `<br class="md:hidden"/>` between the two halves,
+	// so assert each half independently.
+	// [Ja] home_welcome_description_html は前後 2 文の間に <br class="md:hidden"/> を挟むため、
+	// 半分ずつ独立して検証する。
+	if !strings.Contains(body, "まずはスペースを作成して") || !strings.Contains(body, "ページを書き始めましょう") {
 		t.Error("welcome empty state description not found in response")
 	}
 	if !strings.Contains(body, "/spaces/new") {
