@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
@@ -15,7 +17,8 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 	q := testutil.QueriesWithTx(tx)
 	spaceRepo := repository.NewSpaceRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
-	uc := NewGetHomeShowUsecase(spaceRepo, topicRepo)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	uc := NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
 
 	t.Run("参加中スペース・トピックが0件の場合は空のスライスが返る", func(t *testing.T) {
 		userID := testutil.NewUserBuilder(t, tx).
@@ -160,6 +163,70 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 		}
 		if _, ok := gotByName["Topic B"]; !ok {
 			t.Fatal("Topic B not found in JoinedTopics")
+		}
+	})
+
+	t.Run("下書きが0件のときは空スライスを返す", func(t *testing.T) {
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("ghs-drafts-empty@example.com").
+			WithAtname("ghsdraftsempty").
+			Build()
+
+		output, err := uc.Execute(context.Background(), GetHomeShowInput{
+			UserID: userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if len(output.DraftPages) != 0 {
+			t.Errorf("len(DraftPages) = %d, want 0", len(output.DraftPages))
+		}
+	})
+
+	t.Run("下書きが上限を超えるとhomeDraftPagesLimit件に制限される", func(t *testing.T) {
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("ghs-drafts-many@example.com").
+			WithAtname("ghsdraftsmany").
+			Build()
+
+		spaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("ghs-drafts-many-space").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			Build()
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("General").
+			Build()
+
+		// Create 7 drafts (> homeDraftPagesLimit which is 5).
+		// [Ja] 7 件作成 (上限 5 を超える)
+		for i := int32(1); i <= 7; i++ {
+			pageID := testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(model.PageNumber(i)).
+				WithTitle(fmt.Sprintf("Page %d", i)).
+				Build()
+			testutil.NewDraftPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithPageID(pageID).
+				WithSpaceMemberID(spaceMemberID).
+				WithTopicID(topicID).
+				Build()
+		}
+
+		output, err := uc.Execute(context.Background(), GetHomeShowInput{
+			UserID: userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if len(output.DraftPages) != 5 {
+			t.Errorf("len(DraftPages) = %d, want 5 (capped at homeDraftPagesLimit)", len(output.DraftPages))
 		}
 	})
 }

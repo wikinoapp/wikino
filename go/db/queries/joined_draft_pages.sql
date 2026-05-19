@@ -1,5 +1,5 @@
 -- name: ListDraftPagesByUser :many
--- ユーザーの下書きページ一覧を取得する（サイドバー表示用）
+-- ユーザーの下書きページ一覧を取得する（サイドバー / ホーム画面の下書きページ表示用）
 -- draft_pages → pages → topics → spaces → space_members を JOIN し、アクティブなスペースメンバーのスペースに限定
 SELECT
   dp.id AS draft_page_id,
@@ -10,7 +10,8 @@ SELECT
   p.number AS page_number,
   t.name AS topic_name,
   t.visibility AS topic_visibility,
-  s.identifier AS space_identifier
+  s.identifier AS space_identifier,
+  s.name AS space_name
 FROM draft_pages dp
 INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
 INNER JOIN topics t ON dp.topic_id = t.id AND dp.space_id = t.space_id

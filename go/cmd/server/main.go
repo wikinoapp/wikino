@@ -305,7 +305,7 @@ func main() {
 		getDraftPagesUC,
 		sidebarHelper,
 	)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
 	homeHandler := home.NewHandler(
 		cfg,
 		getHomeShowUC,

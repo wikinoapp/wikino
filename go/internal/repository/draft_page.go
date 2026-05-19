@@ -211,7 +211,7 @@ func (r *DraftPageRepository) UpdateTopicByPageID(ctx context.Context, pageID mo
 	})
 }
 
-// ListByUser はユーザーの下書きページ一覧を取得する（サイドバー表示用）
+// ListByUser はユーザーの下書きページ一覧を取得する（サイドバー / ホーム画面の下書きページ表示用）
 func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUser(ctx, query.ListDraftPagesByUserParams{
 		UserID: string(userID),
@@ -323,6 +323,7 @@ func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftP
 				Visibility: model.TopicVisibility(row.TopicVisibility),
 				Space: &model.Space{
 					Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+					Name:       row.SpaceName,
 				},
 			},
 		}

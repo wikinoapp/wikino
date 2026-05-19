@@ -943,6 +943,11 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		if string(drafts[0].Topic.Space.Identifier) != "draft-list-space" {
 			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-list-space'", drafts[0].Topic.Space.Identifier)
 		}
+		// Verify Space.Name is populated for the home page DraftPageCard. Builder default is "Test Space".
+		// [Ja] ホーム画面のカードでスペース名を表示するため Space.Name が設定されていることを確認する。SpaceBuilder のデフォルト名は "Test Space"。
+		if drafts[0].Topic.Space.Name != "Test Space" {
+			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Test Space'", drafts[0].Topic.Space.Name)
+		}
 	})
 
 	t.Run("LIMITが適用される", func(t *testing.T) {

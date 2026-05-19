@@ -66,16 +66,19 @@ func topicVisibilityIconName(v model.TopicVisibility) IconName {
 
 // JoinedTopicCard represents a topic card shown in the home page's "joined topics" section.
 // It carries the topic name and number along with the owning space's identifier and name
-// (used to render the per-card SpaceIcon and the space label) plus the published page count.
+// (used to render the per-card SpaceIcon and the space label), the topic visibility icon
+// (public/private) shown as the card's leading icon, and the published page count.
 //
 // [Ja] JoinedTopicCard はホーム画面の「参加中のトピック」セクションに表示するトピックカード。
-// トピック名・番号に加え、カード内の SpaceIcon とスペース名表示のために
-// スペース識別子と名前、公開中ページ数を保持する。
+// トピック名・番号に加え、カード内の SpaceIcon とスペース名表示のためのスペース識別子と名前、
+// カード左側のリーディングアイコンとして表示するトピックの公開範囲アイコン (公開 / 非公開)、
+// 公開中ページ数を保持する。
 type JoinedTopicCard struct {
 	Name                string
 	Number              int32
 	SpaceIdentifier     SpaceIdentifier
 	SpaceName           string
+	TopicIconName       IconName
 	PublishedPagesCount int32
 }
 
@@ -93,6 +96,7 @@ func NewJoinedTopicCard(topic *model.Topic, publishedPagesCount int32) JoinedTop
 		Number:              topic.Number,
 		SpaceIdentifier:     NewSpaceIdentifier(topic.Space.Identifier),
 		SpaceName:           topic.Space.Name,
+		TopicIconName:       topicVisibilityIconName(topic.Visibility),
 		PublishedPagesCount: publishedPagesCount,
 	}
 }
