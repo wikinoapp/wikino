@@ -914,10 +914,6 @@ other = "参加中のトピック"
 description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
 other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"
 
-[home_topic_pages_count]
-description = "ホーム画面のトピックカードに表示する公開中ページ数"
-other = "{{.Count}} ページ"
-
 [home_draft_pages_heading]
 description = "ホーム画面の「下書きのページ」見出し"
 other = "下書きのページ"

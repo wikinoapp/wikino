@@ -114,14 +114,6 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithTopicID(topicAID).
 			WithSpaceMemberID(spaceMemberID).
 			Build()
-		// Published page so PublishedPagesCount > 0.
-		// [Ja] PublishedPagesCount が 1 以上になるように公開ページを 1 件用意する。
-		testutil.NewPageBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithTopicID(topicAID).
-			WithNumber(1).
-			WithTitle("A-published").
-			Build()
 
 		topicBID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(spaceID).
@@ -147,19 +139,16 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			t.Fatalf("len(JoinedTopics) = %d, want 2", len(output.JoinedTopics))
 		}
 
-		gotByName := map[string]repository.JoinedTopicWithStats{}
-		for _, s := range output.JoinedTopics {
-			gotByName[s.Topic.Name] = s
+		gotByName := map[string]*model.Topic{}
+		for _, topic := range output.JoinedTopics {
+			gotByName[topic.Name] = topic
 		}
 		a, ok := gotByName["Topic A"]
 		if !ok {
 			t.Fatal("Topic A not found in JoinedTopics")
 		}
-		if a.PublishedPagesCount != 1 {
-			t.Errorf("Topic A PublishedPagesCount = %d, want 1", a.PublishedPagesCount)
-		}
-		if a.Topic.Space.ID != spaceID {
-			t.Errorf("Topic A Space.ID = %v, want %v", a.Topic.Space.ID, spaceID)
+		if a.Space.ID != spaceID {
+			t.Errorf("Topic A Space.ID = %v, want %v", a.Space.ID, spaceID)
 		}
 		if _, ok := gotByName["Topic B"]; !ok {
 			t.Fatal("Topic B not found in JoinedTopics")

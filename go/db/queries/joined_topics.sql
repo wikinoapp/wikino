@@ -1,43 +1,18 @@
 -- name: ListJoinedTopicsByUser :many
--- ユーザーが参加しているトピック一覧を取得する（サイドバー表示用）
--- topic_members → topics → spaces を JOIN し、アクティブなスペースメンバーのスペースに限定
-SELECT
-  t.id AS topic_id,
-  t.number AS topic_number,
-  t.name AS topic_name,
-  t.visibility AS topic_visibility,
-  s.id AS space_id,
-  s.identifier AS space_identifier,
-  s.name AS space_name
-FROM topic_members tm
-INNER JOIN topics t ON tm.topic_id = t.id AND t.space_id = tm.space_id
-INNER JOIN spaces s ON t.space_id = s.id
-INNER JOIN space_members sm ON tm.space_member_id = sm.id AND sm.space_id = tm.space_id
-WHERE sm.user_id = $1
-  AND sm.active = true
-  AND t.discarded_at IS NULL
-  AND s.discarded_at IS NULL
-ORDER BY tm.last_page_modified_at DESC NULLS LAST, t.number DESC
-LIMIT $2;
-
--- name: ListJoinedTopicsWithStatsByUser :many
--- Returns the topics the user is joined to, with the published page count attached
--- (for the home page). Augments ListJoinedTopicsByUser with published_pages_count via
--- LEFT JOIN LATERAL.
---
+-- Returns the topics the user is joined to (used by both the sidebar and the home page).
+-- topic_members → topics → spaces を JOIN し、アクティブなスペースメンバーのスペースに限定。
 -- Ordering uses topic_members.last_page_modified_at DESC NULLS LAST, then topic number
--- DESC. The intent is "sort by the viewer's own activity": the home page should surface
--- topics the user has most recently engaged with via a publish action. Tradeoffs to
--- accept:
+-- DESC. The intent is "sort by the viewer's own activity": both the sidebar and the home
+-- page surface topics the user has most recently engaged with via a publish action.
+-- Tradeoffs to accept:
 --   - topic_members.last_page_modified_at is updated only on the topic_member of the user
 --     who performed the publish (see publish_page.go / apply_suggestion.go), so passive
 --     viewing and other members' edits do not move a topic up.
 --   - Topics the user has joined but has never published in have NULL and fall to the
 --     bottom (NULLS LAST). Within the NULL bucket the higher topic number wins.
 --
--- [Ja] ユーザーが参加しているトピック一覧を、公開中ページ数を付けて取得する (ホーム画面表示用)。
--- 既存 ListJoinedTopicsByUser に LEFT JOIN LATERAL で published_pages_count を付加する。
---
+-- [Ja] ユーザーが参加しているトピック一覧を取得する（サイドバー / ホーム画面の両方で使用）。
+-- topic_members → topics → spaces を JOIN し、アクティブなスペースメンバーのスペースに限定。
 -- 並び順は topic_members.last_page_modified_at の降順 (NULLS LAST)、同点はトピック番号の降順。
 -- 「自分の作業視点」で並べたいため、自分が直近にページ公開操作を行ったトピックを上に出す。
 -- ただし以下のトレードオフは許容する:
@@ -53,21 +28,11 @@ SELECT
   t.visibility AS topic_visibility,
   s.id AS space_id,
   s.identifier AS space_identifier,
-  s.name AS space_name,
-  stats.published_pages_count
+  s.name AS space_name
 FROM topic_members tm
 INNER JOIN topics t ON tm.topic_id = t.id AND t.space_id = tm.space_id
 INNER JOIN spaces s ON t.space_id = s.id
 INNER JOIN space_members sm ON tm.space_member_id = sm.id AND sm.space_id = tm.space_id
-LEFT JOIN LATERAL (
-  SELECT COUNT(*) AS published_pages_count
-  FROM pages p
-  WHERE p.topic_id = t.id
-    AND p.space_id = t.space_id
-    AND p.published_at IS NOT NULL
-    AND p.discarded_at IS NULL
-    AND p.trashed_at IS NULL
-) stats ON TRUE
 WHERE sm.user_id = $1
   AND sm.active = true
   AND t.discarded_at IS NULL

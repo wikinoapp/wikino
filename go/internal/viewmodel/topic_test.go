@@ -152,3 +152,86 @@ func TestNewTopicForShow(t *testing.T) {
 		})
 	}
 }
+
+func TestNewJoinedTopicCard_FieldMapping(t *testing.T) {
+	t.Parallel()
+
+	t.Run("公開トピックは globe-regular アイコンを設定する", func(t *testing.T) {
+		topic := &model.Topic{
+			Number:     7,
+			Name:       "トピックA",
+			Visibility: model.TopicVisibilityPublic,
+			Space: &model.Space{
+				Identifier: "space-a",
+				Name:       "スペースA",
+			},
+		}
+		card := viewmodel.NewJoinedTopicCard(topic)
+
+		if card.Name != "トピックA" {
+			t.Errorf("Name = %q, want %q", card.Name, "トピックA")
+		}
+		if card.Number != 7 {
+			t.Errorf("Number = %d, want %d", card.Number, 7)
+		}
+		if string(card.SpaceIdentifier) != "space-a" {
+			t.Errorf("SpaceIdentifier = %q, want %q", string(card.SpaceIdentifier), "space-a")
+		}
+		if card.SpaceName != "スペースA" {
+			t.Errorf("SpaceName = %q, want %q", card.SpaceName, "スペースA")
+		}
+		if card.TopicIconName != "globe-regular" {
+			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "globe-regular")
+		}
+	})
+
+	t.Run("非公開トピックは lock-regular アイコンを設定する", func(t *testing.T) {
+		topic := &model.Topic{
+			Number:     3,
+			Name:       "プライベートトピック",
+			Visibility: model.TopicVisibilityPrivate,
+			Space: &model.Space{
+				Identifier: "space-b",
+				Name:       "スペースB",
+			},
+		}
+		card := viewmodel.NewJoinedTopicCard(topic)
+
+		if card.TopicIconName != "lock-regular" {
+			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "lock-regular")
+		}
+	})
+}
+
+func TestNewJoinedTopicCards(t *testing.T) {
+	t.Parallel()
+
+	topics := []*model.Topic{
+		{
+			Number:     1,
+			Name:       "T1",
+			Visibility: model.TopicVisibilityPublic,
+			Space:      &model.Space{Identifier: "s1", Name: "S1"},
+		},
+		{
+			Number:     2,
+			Name:       "T2",
+			Visibility: model.TopicVisibilityPrivate,
+			Space:      &model.Space{Identifier: "s2", Name: "S2"},
+		},
+	}
+
+	cards := viewmodel.NewJoinedTopicCards(topics)
+	if len(cards) != 2 {
+		t.Fatalf("len(cards) = %d, want 2", len(cards))
+	}
+	if cards[0].Name != "T1" || cards[1].Name != "T2" {
+		t.Errorf("topic names mismatch: got %q, %q", cards[0].Name, cards[1].Name)
+	}
+	if cards[0].TopicIconName != "globe-regular" {
+		t.Errorf("cards[0].TopicIconName = %q, want %q", cards[0].TopicIconName, "globe-regular")
+	}
+	if cards[1].TopicIconName != "lock-regular" {
+		t.Errorf("cards[1].TopicIconName = %q, want %q", cards[1].TopicIconName, "lock-regular")
+	}
+}

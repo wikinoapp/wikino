@@ -55,24 +55,14 @@ type GetHomeShowInput struct {
 	UserID model.UserID
 }
 
-// GetHomeShowOutput contains the data shown on the home page: the user's active spaces
-// and the topics the user is joined to (with the published page count for each topic).
+// GetHomeShowOutput contains the data shown on the home page: the user's active spaces,
+// the topics the user is joined to, and the draft pages the user is working on.
 //
-// JoinedTopics is intentionally typed as []repository.JoinedTopicWithStats so the UseCase
-// can hand the Repository result through unchanged. The Handler iterates over this slice
-// to build ViewModel cards; ViewModel itself stays decoupled from Infrastructure types via
-// viewmodel.NewJoinedTopicCard, which takes (*model.Topic, count int32).
-//
-// [Ja] GetHomeShowOutput はホーム画面に表示するデータ。ユーザーが参加中のスペース一覧と、
-// 参加中のトピック一覧 (各トピックの公開中ページ数付き) を保持する。
-//
-// JoinedTopics は意図的に []repository.JoinedTopicWithStats のままにしている。
-// UseCase は Repository 戻り値をそのまま渡し、ViewModel カードへの変換は Handler 側で
-// viewmodel.NewJoinedTopicCard((*model.Topic, count int32)) を介して行うことで、
-// ViewModel が Infrastructure 層に依存しない設計を維持している。
+// [Ja] GetHomeShowOutput はホーム画面に表示するデータ。ユーザーが参加中のスペース一覧、
+// 参加中のトピック一覧、ユーザーが作業中の下書きページを保持する。
 type GetHomeShowOutput struct {
 	ActiveSpaces []*model.Space
-	JoinedTopics []repository.JoinedTopicWithStats
+	JoinedTopics []*model.Topic
 	DraftPages   []*model.DraftPage
 }
 
@@ -83,7 +73,7 @@ func (uc *GetHomeShowUsecase) Execute(ctx context.Context, input GetHomeShowInpu
 		return nil, fmt.Errorf("参加中スペース一覧の取得に失敗: %w", err)
 	}
 
-	joinedTopics, err := uc.topicRepo.ListJoinedWithStatsByUser(ctx, input.UserID, homeJoinedTopicsLimit)
+	joinedTopics, err := uc.topicRepo.ListJoinedByUser(ctx, input.UserID, homeJoinedTopicsLimit)
 	if err != nil {
 		return nil, fmt.Errorf("参加中トピック一覧の取得に失敗: %w", err)
 	}

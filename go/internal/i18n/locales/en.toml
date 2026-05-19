@@ -914,10 +914,6 @@ other = "Joined topics"
 description = "Home page heading shown when the user has no joined topics (contains HTML)"
 other = "No joined topics."
 
-[home_topic_pages_count]
-description = "Published page count shown on each topic card on the home page"
-other = "{{.Count}} pages"
-
 [home_draft_pages_heading]
 description = "Home page 'Draft pages' section heading"
 other = "Draft pages"
