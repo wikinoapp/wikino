@@ -355,10 +355,14 @@ func TestShow_WithDraftPages(t *testing.T) {
 	if !strings.Contains(body, "/s/home-drafts-space/pages/11/edit") {
 		t.Error("draft page edit link not found in response")
 	}
-	// The "draft pages" heading itself links to /drafts when drafts exist.
-	// [Ja] 下書きが 1 件以上あるとき、「下書きのページ」見出し自体が /drafts へのリンクになる
+	// The "View all" link in the home draft pages section heading points to /drafts.
+	// The link is rendered only when at least one draft exists; the 0-draft case is
+	// covered by TestShow_DraftPagesEmpty.
+	//
+	// [Ja] ホームの下書きセクション見出しの「全て見る」リンクは /drafts に張られる。
+	// リンクは下書きが 1 件以上あるときだけ描画される (0 件時の挙動は TestShow_DraftPagesEmpty で検証)。
 	if !strings.Contains(body, `href="/drafts"`) {
-		t.Error("heading link to /drafts not found in response")
+		t.Error(`"View all" link to /drafts not found in response`)
 	}
 }
 
@@ -421,5 +425,14 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 	// 下書きが 0 件のときは下書きセクション固有の空状態が表示される。
 	if !strings.Contains(body, "下書きのページは") {
 		t.Error("no draft pages empty state not found in response")
+	}
+
+	// When there are 0 drafts, the "View all" link to /drafts must not be rendered
+	// (neither in the home content section nor in the sidebar — the sidebar's link
+	// only appears when draft count exceeds its limit).
+	// [Ja] 下書き 0 件のときは /drafts への「全て見る」リンクは描画されない
+	// (ホーム本体・サイドバーともに件数 0 件では出現しない)。
+	if strings.Contains(body, `href="/drafts"`) {
+		t.Error(`unexpected "View all" link to /drafts found when draft count is 0`)
 	}
 }

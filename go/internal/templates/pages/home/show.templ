@@ -85,13 +85,15 @@ templ Show(data ShowPageData) {
 									{ templates.T(ctx, "home_draft_pages_heading") }
 								</h2>
 
-								<a
-									class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
-									href={ templ.SafeURL(string(templates.DraftsPath())) }
-								>
-									{ templates.T(ctx, "home_draft_pages_view_all_link") }
-									@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
-								</a>
+								if len(data.DraftPages) > 0 {
+									<a
+										class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
+										href={ templ.SafeURL(string(templates.DraftsPath())) }
+									>
+										{ templates.T(ctx, "home_draft_pages_view_all_link") }
+										@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+									</a>
+								}
 							</div>
 
 							if len(data.DraftPages) == 0 {
@@ -115,7 +117,7 @@ templ Show(data ShowPageData) {
 
 // newSpaceButton は「新規スペース」ボタンを表示します
 templ newSpaceButton() {
-	<a href="/spaces/new" class="btn-sm rounded-full">
+	<a href={ templ.SafeURL(string(templates.NewSpacePath())) } class="btn-sm rounded-full">
 		@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
 		{ templates.T(ctx, "home_new_space_button") }
 	</a>
@@ -193,7 +195,7 @@ templ draftPageCard(draft viewmodel.DraftPageCard) {
 								Size:  components.SpaceIconSizeSm,
 							})
 
-							<span class="text-xs text-stone-500 line-clamp-1 shrink min-w-0">
+							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
 								{ draft.SpaceName }
 							</span>
 						</div>
@@ -201,9 +203,9 @@ templ draftPageCard(draft viewmodel.DraftPageCard) {
 						<span class="text-xs text-muted-foreground shrink-0">/</span>
 
 						<div class="flex items-center gap-0.5 min-w-0">
-							@templates.Icon(draft.TopicIconName, "flex-none size-4 fill-stone-500")
+							@templates.Icon(draft.TopicIconName, "flex-none size-4 fill-muted-foreground")
 
-							<span class="text-xs text-stone-500 line-clamp-1 shrink min-w-0">
+							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
 								{ draft.TopicName }
 							</span>
 						</div>
