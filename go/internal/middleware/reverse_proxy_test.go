@@ -109,6 +109,11 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			path:     "/",
 			expected: true,
 		},
+		{
+			name:     "ホーム画面",
+			path:     "/home",
+			expected: true,
+		},
 
 		// Rails版にプロキシするパス
 		// 完全一致の "/" がプレフィックス一致として動作しないことを確認
@@ -492,74 +497,6 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			name:     "ページ表示（GET）はmethodsフィルタによりマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
-			expected: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-			result := m.getFeatureFlagForRequest(req)
-			if result != tc.expected {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
-			}
-		})
-	}
-}
-
-func TestReverseProxyMiddleware_FeatureFlaggedPatterns_HomeShow(t *testing.T) {
-	// 本物の featureFlaggedPatterns を参照するためグローバル変数を上書きしない
-	// 他のテストが featureFlaggedPatterns を上書きしている間に並行実行されると壊れるため t.Parallel() は使用しない
-
-	cfg := &config.Config{
-		Domain: "wikino.app",
-	}
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
-	}
-
-	testCases := []struct {
-		name     string
-		method   string
-		path     string
-		expected model.FeatureFlagName
-	}{
-		{
-			name:     "GET /home は go_home_show フラグにマッチする",
-			method:   http.MethodGet,
-			path:     "/home",
-			expected: model.FeatureFlagHomeShow,
-		},
-		{
-			name:     "PATCH /home はメソッドフィルタによりマッチしない",
-			method:   http.MethodPatch,
-			path:     "/home",
-			expected: "",
-		},
-		{
-			name:     "POST /home は GET のみのフィルタによりマッチしない",
-			method:   http.MethodPost,
-			path:     "/home",
-			expected: "",
-		},
-		{
-			name:     "DELETE /home はメソッドフィルタによりマッチしない",
-			method:   http.MethodDelete,
-			path:     "/home",
-			expected: "",
-		},
-		{
-			name:     "/home の末尾セグメントがあるとマッチしない",
-			method:   http.MethodGet,
-			path:     "/home/edit",
-			expected: "",
-		},
-		{
-			name:     "/homepage のように前方一致だけではマッチしない",
-			method:   http.MethodGet,
-			path:     "/homepage",
 			expected: "",
 		},
 	}

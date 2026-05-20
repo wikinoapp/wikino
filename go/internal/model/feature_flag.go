@@ -6,8 +6,7 @@ import "time"
 // 新しいフィーチャーフラグを追加する場合は、ここに定数を追加する
 // （FeatureFlagExample は命名規則の例として残している未使用の定数）
 const (
-	FeatureFlagExample  FeatureFlagName = "go_example"
-	FeatureFlagHomeShow FeatureFlagName = "go_home_show"
+	FeatureFlagExample FeatureFlagName = "go_example"
 )
 
 // FeatureFlag はフィーチャーフラグのドメインモデル
