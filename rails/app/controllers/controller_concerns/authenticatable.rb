@@ -35,13 +35,13 @@ module ControllerConcerns
 
       if signed_in?
         flash[:notice] = t("messages.authentication.already_signed_in")
-        redirect_to home_path
+        redirect_to "/home"
       end
     end
 
     sig(:final) { returns(String) }
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || home_url
+      session.delete(:return_to_after_authenticating) || "#{Wikino.config.app_url}/home"
     end
 
     sig(:final) { returns(T.nilable(String)) }
