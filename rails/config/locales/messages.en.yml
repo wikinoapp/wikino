@@ -37,9 +37,6 @@ en:
         You will be notified by email when it is complete.
       succeeded_html: Export completed.
     home:
-      new_space_description_html: |-
-        Pages can be created in spaces.<br>
-        First, create a space.
       no_joined_spaces_html: No joined spaces.
     pages:
       are_you_sure_trash: Are you sure you want to move this page to trash?
