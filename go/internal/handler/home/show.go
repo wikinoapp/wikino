@@ -50,14 +50,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	joinedTopicCards := make([]viewmodel.JoinedTopicCard, len(output.JoinedTopics))
-	for i, stats := range output.JoinedTopics {
-		joinedTopicCards[i] = viewmodel.NewJoinedTopicCard(stats.Topic, stats.PublishedPagesCount)
-	}
-
 	content := homepages.Show(homepages.ShowPageData{
 		ActiveSpaces: viewmodel.NewSpaces(output.ActiveSpaces),
-		JoinedTopics: joinedTopicCards,
+		JoinedTopics: viewmodel.NewJoinedTopicCards(output.JoinedTopics),
+		DraftPages:   viewmodel.NewDraftPageCards(output.DraftPages),
 	})
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

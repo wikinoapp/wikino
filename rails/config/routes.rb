@@ -17,7 +17,6 @@ Rails.application.routes.draw do
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
   match "/attachments/:attachment_id",                                     via: :get,    as: :attachment,                                   to: "attachments/show#call"
   match "/attachments/signed_urls",                                        via: :post,   as: :attachment_signed_url_list,                   to: "attachments/signed_urls/create#call"
-  match "/home",                                                           via: :get,    as: :home,                                         to: "home/show#call"
   match "/draft_pages/sidebar",                                            via: :get,    as: :draft_page_sidebar,                           to: "draft_pages/sidebar#call"
   match "/joined_topics",                                                  via: :get,    as: :joined_topic_list,                            to: "joined_topics/index#call"
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")

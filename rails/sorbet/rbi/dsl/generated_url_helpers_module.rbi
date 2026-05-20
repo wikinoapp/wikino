@@ -31,9 +31,6 @@ module GeneratedUrlHelpersModule
   def draft_page_sidebar_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def home_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def joined_topic_list_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

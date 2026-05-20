@@ -54,7 +54,7 @@ func (d SpaceIconData) sizeClass() string {
 // ラベルは viewmodel.Space.IconLabel() で identifier の先頭 1 文字を大文字化したものが使われます。
 templ SpaceIcon(data SpaceIconData) {
 	<div
-		class={ "flex shrink-0 items-center justify-center rounded-md text-white font-bold antialiased", data.sizeClass() }
+		class={ "flex shrink-0 items-center justify-center rounded text-white font-bold antialiased", data.sizeClass() }
 		style={ templ.SafeCSS("background-color: " + data.Space.IconBackgroundColor()) }
 		aria-hidden="true"
 	>

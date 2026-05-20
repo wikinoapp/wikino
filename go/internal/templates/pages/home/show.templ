@@ -10,6 +10,7 @@ import (
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
 	JoinedTopics []viewmodel.JoinedTopicCard
+	DraftPages   []viewmodel.DraftPageCard
 }
 
 // Show はホーム画面のコンテンツを表示します
@@ -28,62 +29,112 @@ templ Show(data ShowPageData) {
 						})
 					</div>
 
-					<div class="flex flex-col gap-4 px-4">
-						<div class="flex items-center justify-between gap-4">
-							<h2 class="font-bold antialiased">
-								{ templates.T(ctx, "home_joined_spaces_heading") }
-							</h2>
+					if len(data.ActiveSpaces) == 0 && len(data.JoinedTopics) == 0 && len(data.DraftPages) == 0 {
+						<div class="px-4">
+							@components.EmptyState(components.EmptyStateData{
+								IconName:    "hand-waving-regular",
+								Message:     templates.T(ctx, "home_welcome_message"),
+								Description: templates.T(ctx, "home_welcome_description_html"),
+								Action:      newSpaceButton(),
+							})
+						</div>
+					} else {
+						<div class="flex flex-col gap-4 px-4">
+							<div class="flex items-center justify-between gap-4">
+								<h2 class="font-bold antialiased">
+									{ templates.T(ctx, "home_joined_spaces_heading") }
+								</h2>
 
-							<a href="/spaces/new" class="btn-sm rounded-full">
-								@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
-								{ templates.T(ctx, "home_new_space_button") }
-							</a>
+								@newSpaceButton()
+							</div>
+
+							if len(data.ActiveSpaces) == 0 {
+								@components.EmptyState(components.EmptyStateData{
+									Message: templates.T(ctx, "home_no_joined_spaces_html"),
+								})
+							} else {
+								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+									for _, space := range data.ActiveSpaces {
+										@spaceCard(space)
+									}
+								</div>
+							}
 						</div>
 
-						if len(data.ActiveSpaces) == 0 {
-							@spacesEmptyState()
-						} else {
-							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
-								for _, space := range data.ActiveSpaces {
-									@spaceCard(space)
+						<div class="flex flex-col gap-4 px-4">
+							<h2 class="font-bold antialiased">
+								{ templates.T(ctx, "home_joined_topics_heading") }
+							</h2>
+
+							if len(data.JoinedTopics) == 0 {
+								@components.EmptyState(components.EmptyStateData{
+									Message: templates.T(ctx, "home_no_joined_topics_html"),
+								})
+							} else {
+								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+									for _, topic := range data.JoinedTopics {
+										@joinedTopicCard(topic)
+									}
+								</div>
+							}
+						</div>
+
+						<div class="flex flex-col gap-4 px-4">
+							<div class="flex items-center justify-between gap-4">
+								<h2 class="font-bold antialiased">
+									{ templates.T(ctx, "home_draft_pages_heading") }
+								</h2>
+
+								if len(data.DraftPages) > 0 {
+									<a
+										class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
+										href={ templ.SafeURL(string(templates.DraftsPath())) }
+									>
+										{ templates.T(ctx, "home_draft_pages_view_all_link") }
+										@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+									</a>
 								}
 							</div>
-						}
-					</div>
 
-					<div class="flex flex-col gap-4 px-4">
-						<h2 class="font-bold antialiased">
-							{ templates.T(ctx, "home_joined_topics_heading") }
-						</h2>
-
-						if len(data.JoinedTopics) == 0 {
-							@topicsEmptyState()
-						} else {
-							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
-								for _, topic := range data.JoinedTopics {
-									@joinedTopicCard(topic)
-								}
-							</div>
-						}
-					</div>
+							if len(data.DraftPages) == 0 {
+								@components.EmptyState(components.EmptyStateData{
+									Message: templates.T(ctx, "home_no_draft_pages_html"),
+								})
+							} else {
+								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+									for _, draft := range data.DraftPages {
+										@draftPageCard(draft)
+									}
+								</div>
+							}
+						</div>
+					}
 				</div>
 			</div>
 		</div>
 	</div>
 }
 
+// newSpaceButton は「新規スペース」ボタンを表示します
+templ newSpaceButton() {
+	<a href={ templ.SafeURL(string(templates.NewSpacePath())) } class="btn-sm rounded-full">
+		@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
+		{ templates.T(ctx, "home_new_space_button") }
+	</a>
+}
+
 // spaceCard は参加中スペースのカードを表示します
 templ spaceCard(space viewmodel.Space) {
-	<div class="card min-h-[60px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
 		<div class="card-body h-full">
 			<a
 				class="h-full"
 				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
 			>
-				<div class="flex items-center gap-2 h-full p-2">
+				<div class="flex items-center gap-2 px-3 py-2 h-full">
 					@components.SpaceIcon(components.SpaceIconData{
 						Space: space,
-						Size:  components.SpaceIconSizeLg,
+						Size:  components.SpaceIconSizeMd,
 					})
 
 					<div class="line-clamp-2 text-sm font-bold">
@@ -97,29 +148,29 @@ templ spaceCard(space viewmodel.Space) {
 
 // joinedTopicCard は参加中トピックのカードを表示します
 templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
-	<div class="card min-h-[60px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
 		<div class="card-body h-full">
 			<a
 				class="h-full"
 				href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
 			>
-				<div class="flex items-center gap-2 h-full p-2">
-					@components.SpaceIcon(components.SpaceIconData{
-						Space: topic.SpaceForIcon(),
-						Size:  components.SpaceIconSizeMd,
-					})
+				<div class="flex items-center gap-2 px-3 py-2 h-full">
+					@templates.Icon(topic.TopicIconName, "flex-none size-6 fill-muted-foreground")
 
 					<div class="flex flex-col gap-0.5 min-w-0">
-						<span class="line-clamp-1 text-xs text-muted-foreground">
-							{ topic.SpaceName }
-						</span>
+						<div class="flex items-center gap-1 min-w-0">
+							@components.SpaceIcon(components.SpaceIconData{
+								Space: topic.SpaceForIcon(),
+								Size:  components.SpaceIconSizeSm,
+							})
 
-						<span class="line-clamp-2 text-sm font-bold">
+							<span class="line-clamp-1 text-xs text-muted-foreground shrink min-w-0">
+								{ topic.SpaceName }
+							</span>
+						</div>
+
+						<span class="line-clamp-1 text-sm font-bold">
 							{ topic.Name }
-						</span>
-
-						<span class="text-xs text-muted-foreground">
-							{ templates.T(ctx, "home_topic_pages_count", map[string]any{"Count": topic.PublishedPagesCount}) }
 						</span>
 					</div>
 				</div>
@@ -128,29 +179,43 @@ templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
 	</div>
 }
 
-// spacesEmptyState は参加中スペースが 0 件のときの空状態を表示します
-templ spacesEmptyState() {
-	<div class="card py-8 rounded-xl">
-		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center text-muted-foreground">
-			@templates.Icon("file-regular", "size-10 fill-muted-foreground")
-			<p class="font-bold antialiased">
-				@templ.Raw(templates.T(ctx, "home_no_joined_spaces_html"))
-			</p>
-			<div class="text-sm">
-				@templ.Raw(templates.T(ctx, "home_new_space_description_html"))
-			</div>
-		</div>
-	</div>
-}
+// draftPageCard は下書きページのカードを表示します
+templ draftPageCard(draft viewmodel.DraftPageCard) {
+	<div class="card min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+		<div class="card-body h-full">
+			<a
+				class="h-full"
+				href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+			>
+				<div class="flex flex-1 flex-col gap-1 px-3 py-2 h-full">
+					<div class="flex items-center gap-1 min-w-0">
+						<div class="flex items-center gap-1 min-w-0">
+							@components.SpaceIcon(components.SpaceIconData{
+								Space: draft.SpaceForIcon(),
+								Size:  components.SpaceIconSizeSm,
+							})
 
-// topicsEmptyState は参加中トピックが 0 件のときの空状態を表示します
-templ topicsEmptyState() {
-	<div class="card py-8 rounded-xl">
-		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center text-muted-foreground">
-			@templates.Icon("file-regular", "size-10 fill-muted-foreground")
-			<p class="font-bold antialiased">
-				@templ.Raw(templates.T(ctx, "home_no_joined_topics_html"))
-			</p>
+							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
+								{ draft.SpaceName }
+							</span>
+						</div>
+
+						<span class="text-xs text-muted-foreground shrink-0">/</span>
+
+						<div class="flex items-center gap-0.5 min-w-0">
+							@templates.Icon(draft.TopicIconName, "flex-none size-4 fill-muted-foreground")
+
+							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
+								{ draft.TopicName }
+							</span>
+						</div>
+					</div>
+
+					<span class="line-clamp-3 text-sm font-bold">
+						{ draft.DisplayTitle(ctx) }
+					</span>
+				</div>
+			</a>
 		</div>
 	</div>
 }

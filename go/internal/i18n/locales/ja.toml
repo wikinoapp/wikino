@@ -898,9 +898,13 @@ other = "新規スペース"
 description = "ホーム画面の参加中スペースが 0 件のときの見出しメッセージ (HTML を含む)"
 other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"
 
-[home_new_space_description_html]
-description = "ホーム画面の参加中スペースが 0 件のときの補足説明 (HTML を含む)"
-other = "ページはスペース内のトピックに作成することができます<br>まずはスペースを作成しましょう"
+[home_welcome_message]
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の見出し"
+other = "Wikinoへようこそ！"
+
+[home_welcome_description_html]
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の補足説明"
+other = "まずはスペースを作成して<br class=\"md:hidden\"/>ページを書き始めましょう"
 
 [home_joined_topics_heading]
 description = "ホーム画面の「参加中のトピック」見出し"
@@ -910,9 +914,21 @@ other = "参加中のトピック"
 description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
 other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"
 
-[home_topic_pages_count]
-description = "ホーム画面のトピックカードに表示する公開中ページ数"
-other = "{{.Count}} ページ"
+[home_draft_pages_heading]
+description = "ホーム画面の「下書きのページ」見出し"
+other = "下書きのページ"
+
+[home_draft_pages_view_all_link]
+description = "ホーム画面の「下書きのページ」セクションから下書き一覧ページへのリンクテキスト"
+other = "全て見る"
+
+[home_no_draft_pages_html]
+description = "ホーム画面の下書きが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "下書きのページは<br class=\"block sm:hidden\">ありません"
+
+[home_draft_pages_untitled]
+description = "ホーム画面の下書きカードでタイトルが未設定のときに表示する代替テキスト"
+other = "無題"
 
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"

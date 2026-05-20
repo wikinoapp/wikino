@@ -36,13 +36,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	{
-		pattern: regexp.MustCompile(`^/home$`),
-		flag:    model.FeatureFlagHomeShow,
-		methods: []string{http.MethodGet},
-	},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -64,6 +58,7 @@ var (
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
 	goHandledExactPaths = []string{
 		"/",              // トップページ
+		"/home",          // ホーム画面
 		"/manifest.json", // Web App Manifest
 	}
 

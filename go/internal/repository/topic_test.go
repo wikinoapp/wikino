@@ -420,321 +420,15 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		}
 	})
 
-	t.Run("トピックに参加していないユーザーは空のスライスを返す", func(t *testing.T) {
-		topics, err := repo.ListJoinedByUser(context.Background(), "00000000-0000-0000-0000-000000000000", 10)
-		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
-		}
-		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
-		}
-	})
-}
-
-func TestTopicRepository_ListJoinedWithStatsByUser(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	repo := NewTopicRepository(q)
-
-	// Use a single user / single space / three topics setup for this test.
-	// Topic A has multiple published pages, Topic B has zero published pages,
-	// and Topic C only has excluded pages (discarded / trashed).
-	//
-	// [Ja] 1 ユーザー / 1 スペース / 3 トピックの構成でテストする。
-	// Topic A は公開ページ複数 / Topic B は公開ページ 0 件 / Topic C は除外対象だけ。
-	userID := testutil.NewUserBuilder(t, tx).
-		WithEmail("joined-stats@example.com").
-		WithAtname("joinedstats").
-		Build()
-
-	spaceID := testutil.NewSpaceBuilder(t, tx).
-		WithIdentifier("joined-stats-space").
-		WithName("Joined Stats Space").
-		Build()
-
-	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(userID).
-		Build()
-
-	// Topic A: set topic_members.last_page_modified_at so it sorts to the top in the ordering test.
-	// [Ja] Topic A は topic_members.last_page_modified_at を設定し、並び順テストで先頭に来るようにする。
-	topicALastModified := time.Now().Add(-1 * time.Hour)
-	topicAID := testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(1).
-		WithName("Topic A").
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithSpaceMemberID(spaceMemberID).
-		WithLastPageModifiedAt(topicALastModified).
-		Build()
-
-	// Topic B / C: leave last_page_modified_at unset (NULL); they fall to the bottom under NULLS LAST.
-	// [Ja] Topic B / C は last_page_modified_at 未設定 (NULL)。NULLS LAST で末尾に並ぶ。
-	topicBID := testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(2).
-		WithName("Topic B").
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicBID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
-
-	topicCID := testutil.NewTopicBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithNumber(3).
-		WithName("Topic C").
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicCID).
-		WithSpaceMemberID(spaceMemberID).
-		Build()
-
-	// Topic A: 2 published pages plus one unpublished / one trashed / one discarded page.
-	// [Ja] Topic A は公開ページ 2 件、未公開 / ゴミ箱 / 削除済みも 1 件ずつ。
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithNumber(1).
-		WithTitle("A-published-1").
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithNumber(2).
-		WithTitle("A-published-2").
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithNumber(3).
-		WithTitle("A-unpublished").
-		WithUnpublished().
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithNumber(4).
-		WithTitle("A-trashed").
-		WithTrashed().
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicAID).
-		WithNumber(5).
-		WithTitle("A-discarded").
-		WithDiscarded().
-		Build()
-
-	// Topic B: zero published pages (only one unpublished page); stats should return count=0.
-	// [Ja] Topic B は公開ページ 0 件 (未公開だけが 1 件)。stats は count=0。
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicBID).
-		WithNumber(6).
-		WithTitle("B-unpublished").
-		WithUnpublished().
-		Build()
-
-	// Topic C: 除外対象のみ (削除済み + ゴミ箱)。
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicCID).
-		WithNumber(7).
-		WithTitle("C-discarded").
-		WithDiscarded().
-		Build()
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(topicCID).
-		WithNumber(8).
-		WithTitle("C-trashed").
-		WithTrashed().
-		Build()
-
-	t.Run("公開ページの件数を正しく返す", func(t *testing.T) {
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), userID, 10)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		if len(stats) != 3 {
-			t.Fatalf("len(stats) = %v, want 3", len(stats))
-		}
-
-		byName := map[string]JoinedTopicWithStats{}
-		for _, s := range stats {
-			byName[s.Topic.Name] = s
-		}
-
-		a, ok := byName["Topic A"]
-		if !ok {
-			t.Fatal("Topic A not found")
-		}
-		if a.PublishedPagesCount != 2 {
-			t.Errorf("Topic A PublishedPagesCount = %d, want 2", a.PublishedPagesCount)
-		}
-
-		b, ok := byName["Topic B"]
-		if !ok {
-			t.Fatal("Topic B not found")
-		}
-		if b.PublishedPagesCount != 0 {
-			t.Errorf("Topic B PublishedPagesCount = %d, want 0", b.PublishedPagesCount)
-		}
-
-		c, ok := byName["Topic C"]
-		if !ok {
-			t.Fatal("Topic C not found")
-		}
-		if c.PublishedPagesCount != 0 {
-			t.Errorf("Topic C PublishedPagesCount = %d, want 0", c.PublishedPagesCount)
-		}
-	})
-
-	t.Run("last_page_modified_at降順 NULLS LAST、同点はnumber降順で並ぶ", func(t *testing.T) {
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), userID, 10)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		if len(stats) != 3 {
-			t.Fatalf("len(stats) = %v, want 3", len(stats))
-		}
-		// Topic A is at the top because its tm.last_page_modified_at is set.
-		// [Ja] Topic A は tm.last_page_modified_at を設定済みで先頭。
-		if stats[0].Topic.Name != "Topic A" {
-			t.Errorf("stats[0].Topic.Name = %v, want Topic A", stats[0].Topic.Name)
-		}
-		// Topic B / C have NULL tm.last_page_modified_at, so number DESC orders them C (3) → B (2).
-		// [Ja] Topic B / C は tm.last_page_modified_at が NULL → number DESC で C (3) → B (2)。
-		if stats[1].Topic.Name != "Topic C" {
-			t.Errorf("stats[1].Topic.Name = %v, want Topic C", stats[1].Topic.Name)
-		}
-		if stats[2].Topic.Name != "Topic B" {
-			t.Errorf("stats[2].Topic.Name = %v, want Topic B", stats[2].Topic.Name)
-		}
-	})
-
-	t.Run("スペース情報が取得できる", func(t *testing.T) {
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), userID, 10)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		for _, s := range stats {
-			if s.Topic.Space.ID != spaceID {
-				t.Errorf("Space.ID = %v, want %v", s.Topic.Space.ID, spaceID)
-			}
-			if string(s.Topic.Space.Identifier) != "joined-stats-space" {
-				t.Errorf("Space.Identifier = %v, want joined-stats-space", s.Topic.Space.Identifier)
-			}
-			if s.Topic.Space.Name != "Joined Stats Space" {
-				t.Errorf("Space.Name = %v, want 'Joined Stats Space'", s.Topic.Space.Name)
-			}
-		}
-	})
-
-	t.Run("LIMITが正しく適用される", func(t *testing.T) {
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), userID, 2)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		if len(stats) != 2 {
-			t.Errorf("len(stats) = %v, want 2", len(stats))
-		}
-	})
-
-	t.Run("非アクティブなスペースメンバーのトピックは除外される", func(t *testing.T) {
-		inactiveUserID := testutil.NewUserBuilder(t, tx).
-			WithEmail("stats-inactive@example.com").
-			WithAtname("statsinactive").
-			Build()
-
-		inactiveSpaceID := testutil.NewSpaceBuilder(t, tx).
-			WithIdentifier("stats-inactive-space").
-			WithName("Stats Inactive Space").
-			Build()
-
-		inactiveSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-			WithSpaceID(inactiveSpaceID).
-			WithUserID(inactiveUserID).
-			WithActive(false).
-			Build()
-
-		inactiveTopicID := testutil.NewTopicBuilder(t, tx).
-			WithSpaceID(inactiveSpaceID).
-			WithNumber(1).
-			WithName("Stats Inactive Topic").
-			Build()
-
-		testutil.NewTopicMemberBuilder(t, tx).
-			WithSpaceID(inactiveSpaceID).
-			WithTopicID(inactiveTopicID).
-			WithSpaceMemberID(inactiveSpaceMemberID).
-			Build()
-
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), inactiveUserID, 10)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		if len(stats) != 0 {
-			t.Errorf("len(stats) = %v, want 0", len(stats))
-		}
-	})
-
-	t.Run("削除済みトピックは除外される", func(t *testing.T) {
-		discardedUserID := testutil.NewUserBuilder(t, tx).
-			WithEmail("stats-discarded@example.com").
-			WithAtname("statsdiscarded").
-			Build()
-
-		discardedSpaceID := testutil.NewSpaceBuilder(t, tx).
-			WithIdentifier("stats-discarded-space").
-			WithName("Stats Discarded Space").
-			Build()
-
-		discardedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-			WithSpaceID(discardedSpaceID).
-			WithUserID(discardedUserID).
-			Build()
-
-		discardedTopicID := testutil.NewTopicBuilder(t, tx).
-			WithSpaceID(discardedSpaceID).
-			WithNumber(1).
-			WithName("Stats Discarded Topic").
-			WithDiscarded().
-			Build()
-
-		testutil.NewTopicMemberBuilder(t, tx).
-			WithSpaceID(discardedSpaceID).
-			WithTopicID(discardedTopicID).
-			WithSpaceMemberID(discardedSpaceMemberID).
-			Build()
-
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), discardedUserID, 10)
-		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
-		}
-		if len(stats) != 0 {
-			t.Errorf("len(stats) = %v, want 0", len(stats))
-		}
-	})
-
 	t.Run("削除済みスペースのトピックは除外される", func(t *testing.T) {
 		discardedSpaceUserID := testutil.NewUserBuilder(t, tx).
-			WithEmail("stats-discarded-space@example.com").
-			WithAtname("statsdiscardedspace").
+			WithEmail("joined-discarded-space@example.com").
+			WithAtname("joineddiscardedspace").
 			Build()
 
 		discardedSpaceOnlyID := testutil.NewSpaceBuilder(t, tx).
-			WithIdentifier("stats-discarded-only-space").
-			WithName("Stats Discarded Only Space").
+			WithIdentifier("joined-discarded-only-space").
+			WithName("Joined Discarded Only Space").
 			WithDiscarded().
 			Build()
 
@@ -755,22 +449,22 @@ func TestTopicRepository_ListJoinedWithStatsByUser(t *testing.T) {
 			WithSpaceMemberID(discardedSpaceMemberID).
 			Build()
 
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), discardedSpaceUserID, 10)
+		topics, err := repo.ListJoinedByUser(context.Background(), discardedSpaceUserID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser() error = %v", err)
 		}
-		if len(stats) != 0 {
-			t.Errorf("len(stats) = %v, want 0", len(stats))
+		if len(topics) != 0 {
+			t.Errorf("len(topics) = %v, want 0", len(topics))
 		}
 	})
 
 	t.Run("トピックに参加していないユーザーは空のスライスを返す", func(t *testing.T) {
-		stats, err := repo.ListJoinedWithStatsByUser(context.Background(), "00000000-0000-0000-0000-000000000000", 10)
+		topics, err := repo.ListJoinedByUser(context.Background(), "00000000-0000-0000-0000-000000000000", 10)
 		if err != nil {
-			t.Fatalf("ListJoinedWithStatsByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser() error = %v", err)
 		}
-		if len(stats) != 0 {
-			t.Errorf("len(stats) = %v, want 0", len(stats))
+		if len(topics) != 0 {
+			t.Errorf("len(topics) = %v, want 0", len(topics))
 		}
 	})
 }

@@ -15,6 +15,12 @@ func SpacePath(identifier viewmodel.SpaceIdentifier) Path {
 	return Path("/s/" + string(identifier))
 }
 
+// NewSpacePath generates the path to the new space form (currently proxied to the Rails version).
+// [Ja] 新規スペース作成フォームのパスを生成します (現状は Rails 版にプロキシされる)。
+func NewSpacePath() Path {
+	return Path("/spaces/new")
+}
+
 // HomePath はホームのパスを生成します
 func HomePath() Path {
 	return Path("/home")

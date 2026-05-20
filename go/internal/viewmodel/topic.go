@@ -66,35 +66,38 @@ func topicVisibilityIconName(v model.TopicVisibility) IconName {
 
 // JoinedTopicCard represents a topic card shown in the home page's "joined topics" section.
 // It carries the topic name and number along with the owning space's identifier and name
-// (used to render the per-card SpaceIcon and the space label) plus the published page count.
+// (used to render the per-card SpaceIcon and the space label), and the topic visibility
+// icon (public/private) shown as the card's leading icon.
 //
 // [Ja] JoinedTopicCard はホーム画面の「参加中のトピック」セクションに表示するトピックカード。
-// トピック名・番号に加え、カード内の SpaceIcon とスペース名表示のために
-// スペース識別子と名前、公開中ページ数を保持する。
+// トピック名・番号に加え、カード内の SpaceIcon とスペース名表示のためのスペース識別子と名前、
+// カード左側のリーディングアイコンとして表示するトピックの公開範囲アイコン (公開 / 非公開) を保持する。
 type JoinedTopicCard struct {
-	Name                string
-	Number              int32
-	SpaceIdentifier     SpaceIdentifier
-	SpaceName           string
-	PublishedPagesCount int32
+	Name            string
+	Number          int32
+	SpaceIdentifier SpaceIdentifier
+	SpaceName       string
+	TopicIconName   IconName
 }
 
-// NewJoinedTopicCard builds a JoinedTopicCard from a topic and its published page count.
-// Repository converts query stats to (Topic, PublishedPagesCount) pairs; the caller iterates
-// over those pairs and feeds each one to this constructor, keeping ViewModel free of any
-// dependency on the Infrastructure layer.
-//
-// [Ja] NewJoinedTopicCard は model.Topic と公開中ページ数から JoinedTopicCard を生成する。
-// Repository 戻り値の (Topic, PublishedPagesCount) ペアを 1 件ずつ受け取る形にすることで、
-// ViewModel が Infrastructure 層 (repository パッケージ) に依存しないように分離している。
-func NewJoinedTopicCard(topic *model.Topic, publishedPagesCount int32) JoinedTopicCard {
+// NewJoinedTopicCard はモデルからホーム画面用 JoinedTopicCard を生成する
+func NewJoinedTopicCard(topic *model.Topic) JoinedTopicCard {
 	return JoinedTopicCard{
-		Name:                topic.Name,
-		Number:              topic.Number,
-		SpaceIdentifier:     NewSpaceIdentifier(topic.Space.Identifier),
-		SpaceName:           topic.Space.Name,
-		PublishedPagesCount: publishedPagesCount,
+		Name:            topic.Name,
+		Number:          topic.Number,
+		SpaceIdentifier: NewSpaceIdentifier(topic.Space.Identifier),
+		SpaceName:       topic.Space.Name,
+		TopicIconName:   topicVisibilityIconName(topic.Visibility),
 	}
+}
+
+// NewJoinedTopicCards はモデルのスライスからホーム画面用 JoinedTopicCard のスライスを生成する
+func NewJoinedTopicCards(topics []*model.Topic) []JoinedTopicCard {
+	result := make([]JoinedTopicCard, len(topics))
+	for i, t := range topics {
+		result[i] = NewJoinedTopicCard(t)
+	}
+	return result
 }
 
 // SpaceForIcon returns a Space view-model populated with the fields required to render

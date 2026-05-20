@@ -898,9 +898,13 @@ other = "New space"
 description = "Home page heading shown when the user has no joined spaces (contains HTML)"
 other = "No joined spaces."
 
-[home_new_space_description_html]
-description = "Home page description shown when the user has no joined spaces (contains HTML)"
-other = "Pages can be created in spaces.<br>First, create a space."
+[home_welcome_message]
+description = "Heading shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+other = "Welcome to Wikino!"
+
+[home_welcome_description_html]
+description = "Description shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+other = "Create your first space to start writing pages."
 
 [home_joined_topics_heading]
 description = "Home page 'Joined topics' section heading"
@@ -910,9 +914,21 @@ other = "Joined topics"
 description = "Home page heading shown when the user has no joined topics (contains HTML)"
 other = "No joined topics."
 
-[home_topic_pages_count]
-description = "Published page count shown on each topic card on the home page"
-other = "{{.Count}} pages"
+[home_draft_pages_heading]
+description = "Home page 'Draft pages' section heading"
+other = "Draft pages"
+
+[home_draft_pages_view_all_link]
+description = "Link text from the home page 'Draft pages' section to the draft pages index"
+other = "View all"
+
+[home_no_draft_pages_html]
+description = "Home page heading shown when the user has no draft pages (contains HTML)"
+other = "No draft pages."
+
+[home_draft_pages_untitled]
+description = "Fallback text shown on a home page draft card when the title is empty"
+other = "Untitled"
 
 [draft_page_index_title]
 description = "Draft page index page title"

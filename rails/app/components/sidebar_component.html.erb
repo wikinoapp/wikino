@@ -13,7 +13,7 @@
       <ul class="px-2">
         <% if signed_in? %>
           <li>
-            <%= link_to home_path, title: t("nouns.home") do %>
+            <%= link_to "/home", title: t("nouns.home") do %>
               <%= render BaseUI::IconComponent.new(
                 name: current_page_name == PageName::Home ? "house-fill" : "house-regular",
                 size: "16px",

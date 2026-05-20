@@ -7,8 +7,6 @@ ja:
         new: アカウント情報の登録
       email_confirmations:
         edit: 確認用コード入力
-      home:
-        show: ホーム
       topics:
         new: "新規トピック | %{space_name}"
         show: "%{topic_name} | %{space_name}"
