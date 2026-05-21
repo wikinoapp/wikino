@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
@@ -56,6 +57,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
@@ -74,6 +76,23 @@ func main() {
 		slog.Error("設定の読み込みに失敗しました", "error", err)
 		os.Exit(1)
 	}
+
+	// Initialize Sentry. Empty DSN (e.g. local development) disables Sentry and
+	// the deferred Flush becomes a no-op.
+	//
+	// [Ja] Sentry を初期化する。DSN が空 (ローカル開発など) の場合は Sentry が無効化され、
+	// defer された Flush も no-op になる。
+	if err := wikinosentry.Init(wikinosentry.Config{
+		DSN:              cfg.SentryDSN,
+		Environment:      cfg.SentryEnvironment,
+		Release:          cfg.AssetVersion,
+		TracesSampleRate: cfg.SentryTracesSampleRate,
+		Debug:            cfg.SentryDebug,
+	}); err != nil {
+		slog.Error("Sentryの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer wikinosentry.Flush(2 * time.Second)
 
 	// データベース接続
 	db, err := sql.Open("postgres", cfg.DatabaseDSN())
@@ -491,6 +510,41 @@ func main() {
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
+
+	// Recoverer must be registered before sentryhttp (= outer in the chain) so
+	// that the re-panic from sentryhttp (Repanic: true) is caught here and a
+	// 500 response is written. The Sentry SDK's own README also instructs to
+	// place the recovery middleware on the outside of sentryhttp.
+	//
+	// [Ja] Recoverer は sentryhttp より前 (= 外側) に登録する。sentryhttp が
+	// Repanic: true で再 panic したものをここで握り潰して 500 を返す。
+	// Sentry SDK 公式 README も「recovery middleware は sentryhttp より外側に
+	// 置く」と指示している。
+	r.Use(chimiddleware.Recoverer)
+
+	// sentryhttp captures panics, sets per-request Hub on the context, and
+	// starts a Sentry performance transaction for each request. Repanic: true
+	// re-throws after capture so that Recoverer (outer) returns 500 to the
+	// client and the Go runtime's normal panic semantics are preserved.
+	//
+	// [Ja] sentryhttp はリクエスト単位の Hub を context に積み、panic を捕捉
+	// して Sentry に送信し、パフォーマンストランザクションを開始する。
+	// Repanic: true により捕捉後に再 panic することで、外側の Recoverer が
+	// 500 を返し、Go runtime の通常の panic セマンティクスも維持できる。
+	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
+	r.Use(sentryHTTP.Handle)
+
+	// SentryTransaction rewrites the transaction name with chi's route pattern.
+	// It must be registered after sentryhttp (= inside the wrapper) so that the
+	// LIFO defer order guarantees the rewrite happens before sentryhttp's
+	// transaction.Finish() and before recoverWithSentry captures a panic event.
+	//
+	// [Ja] SentryTransaction はトランザクション名を chi のルートパターンに
+	// 上書きするミドルウェア。sentryhttp の後 (= 内側) に登録することで、LIFO の
+	// defer 順序により sentryhttp の transaction.Finish() や recoverWithSentry
+	// の panic 捕捉より先に名前の上書きが走ることを保証する。
+	r.Use(middleware.SentryTransaction)
+
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
 	r.Use(flashMgr.Middleware)
