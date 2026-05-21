@@ -5,6 +5,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
 // SentryTransaction wires chi's matched route pattern into Sentry as the
@@ -106,4 +108,78 @@ func matchedRoutePattern(r *http.Request) string {
 		return ""
 	}
 	return rctx.RoutePattern()
+}
+
+// SentryUserContext attaches the authenticated user to the Sentry Hub scope so
+// subsequent events captured during this request carry the user's ID and (when
+// available) Atname as Username. Register this middleware AFTER both:
+//
+//   - the auth middleware that populates UserFromContext (so the user is
+//     available on the context), and
+//   - sentryhttp (so a per-request Hub is on the context to scope the user to
+//     this request rather than the global hub).
+//
+// The middleware silently no-ops when:
+//
+//   - the request is unauthenticated (UserFromContext(ctx) == nil), so anonymous
+//     traffic never inherits a stale user from a previous request, and
+//   - the context has no Sentry Hub (e.g. paths routed outside the main
+//     sentryhttp chain such as static files), so the middleware is safe to add
+//     anywhere in the tree.
+//
+// The Hub stored on the request context is a per-request clone created by
+// sentryhttp, so calling SetUser here does not leak user information into other
+// requests' scopes.
+//
+// [Ja] 認証済みユーザー情報を Sentry の Hub スコープに紐付ける。本ミドルウェア
+// 通過後に同一リクエスト内でキャプチャされたイベントには、ユーザーの ID と
+// (利用可能なら) Atname が Username として乗る。以下の **両方** より後に登録
+// すること:
+//
+//   - UserFromContext を埋める認証ミドルウェア (ユーザーを context から
+//     取り出せるようにするため)
+//   - sentryhttp (グローバル Hub ではなくリクエスト単位の Hub にユーザーを
+//     スコープするため)
+//
+// 以下のケースでは何もせず次のハンドラーに進む:
+//
+//   - 未認証リクエスト (UserFromContext(ctx) == nil)。匿名トラフィックが
+//     直前のリクエストのユーザー情報を引き継ぐのを防ぐ。
+//   - context に Sentry Hub が存在しない (例: 静的ファイル経路など、本番の
+//     sentryhttp チェーンを通らないパス)。ツリーのどこに置いても安全に動く。
+//
+// リクエスト context に乗っている Hub は sentryhttp が clone した
+// リクエスト単位のものなので、ここで SetUser を呼んでも他のリクエストの
+// スコープに漏れることはない。
+func SentryUserContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		user := UserFromContext(ctx)
+		if user == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		hub := sentry.GetHubFromContext(ctx)
+		if hub == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		hub.Scope().SetUser(sentryUserFromModel(user))
+		next.ServeHTTP(w, r)
+	})
+}
+
+// sentryUserFromModel builds a sentry.User from the domain user, omitting the
+// Username when Atname is empty so events from users that predate atname
+// assignment still carry a stable ID.
+//
+// [Ja] domain の User から sentry.User を組み立てる。Atname が空の場合は
+// Username を省略し、Atname 未設定の (移行前データなどの) ユーザーでも
+// 安定した ID は乗るようにする。
+func sentryUserFromModel(user *model.User) sentry.User {
+	su := sentry.User{ID: user.ID.String()}
+	if user.Atname != "" {
+		su.Username = user.Atname
+	}
+	return su
 }
