@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
@@ -198,8 +199,15 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		ctx := r.Context()
 
-		// 詳細なエラーログを出力（開発者向け）
+		// Detailed error log for developers. The "source" attribute lets the
+		// Sentry beforeSend hook drop this event: Rails-side proxy failures
+		// belong to the Rails Sentry project, not the Go one.
+		//
+		// [Ja] 開発者向けの詳細エラーログ。"source" 属性を載せておくと
+		// Sentry の beforeSend で本イベントを破棄できる (Rails 側のプロキシ
+		// 失敗は Rails の Sentry プロジェクトで扱うべきため)。
 		slog.ErrorContext(ctx, "Rails版へのプロキシでエラーが発生",
+			wikinosentry.SourceAttrKey, wikinosentry.ReverseProxySource,
 			"error", err,
 			"path", r.URL.Path,
 			"method", r.Method,

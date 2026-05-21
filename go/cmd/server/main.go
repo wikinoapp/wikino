@@ -94,6 +94,20 @@ func main() {
 	}
 	defer wikinosentry.Flush(2 * time.Second)
 
+	// Route slog through Sentry: Error-level records become Sentry events while
+	// every level still reaches stderr through the underlying text handler.
+	// SetDefault must happen before any code path that can call slog.Error
+	// (DB connection, river client, etc.) so the Sentry handler covers
+	// startup failures too.
+	//
+	// [Ja] slog のデフォルトロガーを Sentry 連携付きハンドラーに差し替える。
+	// Error レベル以上は Sentry イベント化され、全レベルは引き続き標準エラー
+	// 出力にも届く。slog.Error を呼ぶ可能性のある処理 (DB 接続、river 起動など)
+	// より前に呼ぶことで、起動時のエラーも Sentry に届くようにする。
+	slog.SetDefault(slog.New(wikinosentry.NewSlogHandler(
+		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
+	)))
+
 	// データベース接続
 	db, err := sql.Open("postgres", cfg.DatabaseDSN())
 	if err != nil {

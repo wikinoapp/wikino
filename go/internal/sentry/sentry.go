@@ -94,12 +94,25 @@ func Init(cfg Config) error {
 
 // beforeSend filters events before sending them to Sentry.
 // Errors caused by client disconnects or normal aborts are dropped,
-// and sensitive data is masked from the rest.
+// reverse-proxy 502 noise is filtered out via the "source" tag, and the rest
+// has its sensitive data masked.
 //
 // [Ja] Sentry にイベントを送信する前にフィルタリングを行う。
-// クライアント切断や正常な中断由来のエラーは破棄し、それ以外はセンシティブデータをマスクする。
+// クライアント切断や正常な中断由来のエラーは破棄し、リバースプロキシ経由の
+// 502 ノイズは "source" タグで識別して捨てる。残りはセンシティブデータをマスクする。
 func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	if hint != nil && shouldDropError(hint.OriginalException) {
+		return nil
+	}
+
+	// Drop events tagged as reverse-proxy 502s: those failures belong to the
+	// Rails Sentry project, not the Go one. sentryslog stamps the slog
+	// attribute "source" onto event.Tags, so a simple tag check suffices.
+	//
+	// [Ja] リバースプロキシ経由で出された 502 由来のイベントは捨てる。Rails 側の
+	// 障害は Rails の Sentry プロジェクトで扱うべきため。sentryslog は slog
+	// 属性 "source" を event.Tags にそのまま乗せるので、タグ照合で判別できる。
+	if event.Tags[SourceAttrKey] == ReverseProxySource {
 		return nil
 	}
 
