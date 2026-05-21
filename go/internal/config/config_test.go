@@ -12,19 +12,23 @@ func setupTestEnv(t *testing.T) func() {
 
 	// 既存の環境変数を保存
 	savedEnvs := map[string]string{
-		"APP_ENV":                     os.Getenv("APP_ENV"),
-		"DATABASE_URL":                os.Getenv("DATABASE_URL"),
-		"WIKINO_PORT":                 os.Getenv("WIKINO_PORT"),
-		"WIKINO_DOMAIN":               os.Getenv("WIKINO_DOMAIN"),
-		"WIKINO_COOKIE_DOMAIN":        os.Getenv("WIKINO_COOKIE_DOMAIN"),
-		"WIKINO_SESSION_SECURE":       os.Getenv("WIKINO_SESSION_SECURE"),
-		"WIKINO_SESSION_HTTPONLY":     os.Getenv("WIKINO_SESSION_HTTPONLY"),
-		"WIKINO_DISABLE_RATE_LIMIT":   os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
-		"WIKINO_RAILS_APP_URL":        os.Getenv("WIKINO_RAILS_APP_URL"),
-		"WIKINO_TURNSTILE_SITE_KEY":   os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
-		"WIKINO_TURNSTILE_SECRET_KEY": os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
-		"WIKINO_MAINTENANCE_MODE":     os.Getenv("WIKINO_MAINTENANCE_MODE"),
-		"WIKINO_ADMIN_IP":             os.Getenv("WIKINO_ADMIN_IP"),
+		"APP_ENV":                          os.Getenv("APP_ENV"),
+		"DATABASE_URL":                     os.Getenv("DATABASE_URL"),
+		"WIKINO_PORT":                      os.Getenv("WIKINO_PORT"),
+		"WIKINO_DOMAIN":                    os.Getenv("WIKINO_DOMAIN"),
+		"WIKINO_COOKIE_DOMAIN":             os.Getenv("WIKINO_COOKIE_DOMAIN"),
+		"WIKINO_SESSION_SECURE":            os.Getenv("WIKINO_SESSION_SECURE"),
+		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
+		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
+		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
+		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
+		"WIKINO_TURNSTILE_SECRET_KEY":      os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
+		"WIKINO_MAINTENANCE_MODE":          os.Getenv("WIKINO_MAINTENANCE_MODE"),
+		"WIKINO_ADMIN_IP":                  os.Getenv("WIKINO_ADMIN_IP"),
+		"WIKINO_SENTRY_DSN":                os.Getenv("WIKINO_SENTRY_DSN"),
+		"WIKINO_SENTRY_ENVIRONMENT":        os.Getenv("WIKINO_SENTRY_ENVIRONMENT"),
+		"WIKINO_SENTRY_TRACES_SAMPLE_RATE": os.Getenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE"),
+		"WIKINO_SENTRY_DEBUG":              os.Getenv("WIKINO_SENTRY_DEBUG"),
 	}
 
 	// 必須の環境変数を設定
@@ -35,6 +39,13 @@ func setupTestEnv(t *testing.T) func() {
 	_ = os.Setenv("WIKINO_COOKIE_DOMAIN", ".test.wikino.app")
 	_ = os.Setenv("WIKINO_SESSION_SECURE", "false")
 	_ = os.Setenv("WIKINO_SESSION_HTTPONLY", "true")
+
+	// Reset Sentry env vars so each test can control them independently.
+	// [Ja] Sentry 関連は各テストが独立して状態を制御できるよう、デフォルトでは未設定にする。
+	_ = os.Unsetenv("WIKINO_SENTRY_DSN")
+	_ = os.Unsetenv("WIKINO_SENTRY_ENVIRONMENT")
+	_ = os.Unsetenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE")
+	_ = os.Unsetenv("WIKINO_SENTRY_DEBUG")
 
 	// クリーンアップ関数を返す
 	return func() {
@@ -579,6 +590,164 @@ func TestParseAdminIPs(t *testing.T) {
 			got := parseAdminIPs(tt.input)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseAdminIPs(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestLoad_SentryConfig は Sentry 環境変数の読み込みをテスト
+func TestLoad_SentryConfig(t *testing.T) {
+	tests := []struct {
+		name                 string
+		dsn                  string
+		environment          string
+		tracesSampleRate     string
+		debug                string
+		wantDSN              string
+		wantEnvironment      string
+		wantTracesSampleRate float64
+		wantDebug            bool
+	}{
+		{
+			name:                 "全て未設定 (Sentry 無効化、Environment は APP_ENV にフォールバック)",
+			dsn:                  "",
+			environment:          "",
+			tracesSampleRate:     "",
+			debug:                "",
+			wantDSN:              "",
+			wantEnvironment:      "test", // setupTestEnv で APP_ENV=test に設定済み
+			wantTracesSampleRate: 0.5,
+			wantDebug:            false,
+		},
+		{
+			name:                 "全て設定",
+			dsn:                  "https://example@o0.ingest.sentry.io/0",
+			environment:          "prod",
+			tracesSampleRate:     "0.25",
+			debug:                "true",
+			wantDSN:              "https://example@o0.ingest.sentry.io/0",
+			wantEnvironment:      "prod",
+			wantTracesSampleRate: 0.25,
+			wantDebug:            true,
+		},
+		{
+			name:                 "DSN のみ設定 (他はデフォルト)",
+			dsn:                  "https://example@o0.ingest.sentry.io/0",
+			environment:          "",
+			tracesSampleRate:     "",
+			debug:                "",
+			wantDSN:              "https://example@o0.ingest.sentry.io/0",
+			wantEnvironment:      "test",
+			wantTracesSampleRate: 0.5,
+			wantDebug:            false,
+		},
+		{
+			name:                 "Debug が true 以外の値は false 扱い",
+			dsn:                  "",
+			environment:          "",
+			tracesSampleRate:     "",
+			debug:                "yes",
+			wantDSN:              "",
+			wantEnvironment:      "test",
+			wantTracesSampleRate: 0.5,
+			wantDebug:            false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := setupTestEnv(t)
+			defer cleanup()
+
+			if tt.dsn != "" {
+				_ = os.Setenv("WIKINO_SENTRY_DSN", tt.dsn)
+			}
+			if tt.environment != "" {
+				_ = os.Setenv("WIKINO_SENTRY_ENVIRONMENT", tt.environment)
+			}
+			if tt.tracesSampleRate != "" {
+				_ = os.Setenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE", tt.tracesSampleRate)
+			}
+			if tt.debug != "" {
+				_ = os.Setenv("WIKINO_SENTRY_DEBUG", tt.debug)
+			}
+
+			cfg, err := Load()
+			if err != nil {
+				t.Fatalf("Load() failed: %v", err)
+			}
+
+			if cfg.SentryDSN != tt.wantDSN {
+				t.Errorf("SentryDSN = %q, want %q", cfg.SentryDSN, tt.wantDSN)
+			}
+			if cfg.SentryEnvironment != tt.wantEnvironment {
+				t.Errorf("SentryEnvironment = %q, want %q", cfg.SentryEnvironment, tt.wantEnvironment)
+			}
+			if cfg.SentryTracesSampleRate != tt.wantTracesSampleRate {
+				t.Errorf("SentryTracesSampleRate = %v, want %v", cfg.SentryTracesSampleRate, tt.wantTracesSampleRate)
+			}
+			if cfg.SentryDebug != tt.wantDebug {
+				t.Errorf("SentryDebug = %v, want %v", cfg.SentryDebug, tt.wantDebug)
+			}
+		})
+	}
+}
+
+// TestLoad_SentryEnvironment_FallbackToAppEnv は SentryEnvironment が APP_ENV にフォールバックすることをテスト
+func TestLoad_SentryEnvironment_FallbackToAppEnv(t *testing.T) {
+	tests := []struct {
+		name    string
+		appEnv  string
+		wantEnv string
+	}{
+		{name: "dev へフォールバック", appEnv: "dev", wantEnv: "dev"},
+		{name: "test へフォールバック", appEnv: "test", wantEnv: "test"},
+		{name: "prod へフォールバック", appEnv: "prod", wantEnv: "prod"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := setupTestEnv(t)
+			defer cleanup()
+
+			_ = os.Setenv("APP_ENV", tt.appEnv)
+			_ = os.Unsetenv("WIKINO_SENTRY_ENVIRONMENT")
+
+			cfg, err := Load()
+			if err != nil {
+				t.Fatalf("Load() failed: %v", err)
+			}
+
+			if cfg.SentryEnvironment != tt.wantEnv {
+				t.Errorf("SentryEnvironment = %q, want %q", cfg.SentryEnvironment, tt.wantEnv)
+			}
+		})
+	}
+}
+
+// TestParseSentryTracesSampleRate は parseSentryTracesSampleRate 関数のテスト
+func TestParseSentryTracesSampleRate(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  float64
+	}{
+		{name: "空文字列はデフォルト 0.5", input: "", want: 0.5},
+		{name: "下限 0.0", input: "0.0", want: 0.0},
+		{name: "中間値 0.5", input: "0.5", want: 0.5},
+		{name: "0.25 を受理", input: "0.25", want: 0.25},
+		{name: "上限 1.0", input: "1.0", want: 1.0},
+		{name: "範囲外 (負数) はデフォルト 0.5", input: "-0.1", want: 0.5},
+		{name: "範囲外 (1.0 超過) はデフォルト 0.5", input: "1.5", want: 0.5},
+		{name: "パース不可文字列はデフォルト 0.5", input: "abc", want: 0.5},
+		{name: "整数表記も許容", input: "1", want: 1.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseSentryTracesSampleRate(tt.input)
+			if got != tt.want {
+				t.Errorf("parseSentryTracesSampleRate(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})
 	}

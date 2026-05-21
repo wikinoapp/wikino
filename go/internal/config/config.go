@@ -62,6 +62,13 @@ type Config struct {
 	// 添付ファイルの保存先S3互換ストレージ
 	// R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築に使う
 	R2BucketName string
+
+	// Sentry (error tracking)
+	// [Ja] Sentry (エラー追跡)
+	SentryDSN              string
+	SentryEnvironment      string
+	SentryTracesSampleRate float64
+	SentryDebug            bool
 }
 
 // Load は環境変数から設定を読み込みます
@@ -153,6 +160,19 @@ func Load() (*Config, error) {
 	// S3互換ストレージのバケット名（imgproxy のソース URL 構築に使用）
 	cfg.R2BucketName = os.Getenv("WIKINO_R2_BUCKET_NAME")
 
+	// Sentry (optional — error tracking service).
+	// An empty DSN disables Sentry entirely.
+	//
+	// [Ja] Sentry (オプショナル - エラー追跡サービス)。
+	// DSN が空のときは Sentry を完全に無効化する。
+	cfg.SentryDSN = os.Getenv("WIKINO_SENTRY_DSN")
+	cfg.SentryEnvironment = os.Getenv("WIKINO_SENTRY_ENVIRONMENT")
+	if cfg.SentryEnvironment == "" {
+		cfg.SentryEnvironment = env
+	}
+	cfg.SentryTracesSampleRate = parseSentryTracesSampleRate(os.Getenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE"))
+	cfg.SentryDebug = os.Getenv("WIKINO_SENTRY_DEBUG") == "true"
+
 	return cfg, nil
 }
 
@@ -217,4 +237,24 @@ func parseAdminIPs(s string) []string {
 		}
 	}
 	return ips
+}
+
+// parseSentryTracesSampleRate parses the Sentry traces sample rate from a string.
+// Returns the default 0.5 for empty input, parse failures, and out-of-range values
+// (less than 0.0 or greater than 1.0).
+//
+// [Ja] 文字列から Sentry トレースサンプリングレートをパースする。
+// 空文字列、パース失敗、範囲外 (0.0 未満または 1.0 超過) の場合はデフォルト値 0.5 を返す。
+func parseSentryTracesSampleRate(s string) float64 {
+	if s == "" {
+		return 0.5
+	}
+	rate, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0.5
+	}
+	if rate < 0.0 || rate > 1.0 {
+		return 0.5
+	}
+	return rate
 }
