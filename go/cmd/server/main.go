@@ -565,6 +565,16 @@ func main() {
 	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
+		// SentryUserContext must run after the auth middleware so the user is
+		// already on the context. It attaches the user to this request's Sentry
+		// Hub scope; anonymous traffic no-ops, so SetUser (which permits both
+		// authenticated and anonymous requests) is the right placement.
+		//
+		// [Ja] SentryUserContext は認証ミドルウェアの後に置く (context にユーザー
+		// が乗ってから読むため)。本ミドルウェアは本リクエストの Sentry Hub
+		// スコープにユーザーを紐付け、未認証時は no-op になるため、認証必須でない
+		// SetUser の後に置いても問題ない。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
@@ -580,6 +590,17 @@ func main() {
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
+		// SentryUserContext is included here for consistency with the other
+		// groups. RequireNoAuth blocks authenticated requests with a redirect, so
+		// in practice the user is always nil and the middleware no-ops -- but
+		// keeping every group's chain uniform avoids surprises if a future route
+		// reuses this group with a different auth policy.
+		//
+		// [Ja] 他グループとチェーン構成を揃えるためここにも置く。RequireNoAuth は
+		// 認証済みリクエストをリダイレクトで弾くため、実際にはユーザーは常に
+		// nil で本ミドルウェアは no-op だが、将来このグループを別ポリシーで再利用
+		// しても破綻しないよう全グループでチェーンを統一する。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/sign_in", signInHandler.New)
 		r.Post("/sign_in", signInHandler.Create)
@@ -602,6 +623,12 @@ func main() {
 	// 認証済みユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
+		// SentryUserContext runs after RequireAuth so every request hitting an
+		// authenticated route carries the user on the Sentry Hub scope.
+		//
+		// [Ja] RequireAuth の後に置くことで、認証必須ルートに届くリクエストは
+		// すべて Sentry Hub スコープにユーザー情報が乗った状態になる。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
 
