@@ -32,3 +32,4 @@ func (p *GuestPolicy) CanRemoveSuggestionPage(_ *model.Suggestion) bool    { ret
 func (p *GuestPolicy) CanEditSuggestionPage() bool                         { return false }
 func (p *GuestPolicy) CanCreateSuggestionComment() bool                    { return false }
 func (p *GuestPolicy) CanUpdateSuggestionComment(_ *model.Suggestion) bool { return false }
+func (p *GuestPolicy) CanCreateTopic() bool                                { return false }
