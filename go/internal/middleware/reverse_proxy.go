@@ -37,7 +37,20 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// Space detail page (GET /s/:identifier). The trailing "$" keeps this from
+	// matching sub-paths such as /s/:id/topics/..., which stay handled by
+	// goHandledRegexPatterns.
+	//
+	// [Ja] スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
+	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
+	// goHandledRegexPatterns 側で処理されたままにする。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+$`),
+		flag:    model.FeatureFlagSpaceShow,
+		methods: []string{http.MethodGet},
+	},
+}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
