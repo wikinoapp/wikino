@@ -45,7 +45,7 @@ jobs:
           git diff --exit-code go.mod go.sum
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9.2.0
+        uses: golangci/golangci-lint-action@v9.2.1
         with:
           version: v2.11.4
           working-directory: go
