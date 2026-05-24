@@ -81,6 +81,57 @@ func (r *PageRepository) FindRegularByTopicPaginated(ctx context.Context, topicI
 	}, nil
 }
 
+// FindPinnedBySpace returns pinned active pages across a space (published, not discarded,
+// not trashed, and whose topic is not discarded), ordered by pinned_at DESC, id DESC.
+// When publicOnly is true, only pages in public topics are returned (for non-member viewers).
+//
+// [Ja] FindPinnedBySpace はスペース内のピン留めされたアクティブなページ (公開済み・未廃棄・
+// 未ゴミ箱・トピック未廃棄) を pinned_at DESC, id DESC で取得する。publicOnly が true のときは
+// 公開トピックのページのみを返す (非メンバー閲覧者向け)。
+func (r *PageRepository) FindPinnedBySpace(ctx context.Context, spaceID model.SpaceID, publicOnly bool) ([]*model.Page, error) {
+	rows, err := r.q.FindPinnedPagesBySpace(ctx, query.FindPinnedPagesBySpaceParams{
+		SpaceID:    string(spaceID),
+		PublicOnly: publicOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// FindRegularBySpacePaginated returns non-pinned active pages across a space with offset
+// pagination, ordered by modified_at DESC, id DESC. When publicOnly is true, only pages in
+// public topics are returned (for non-member viewers).
+//
+// [Ja] FindRegularBySpacePaginated はスペース内の通常ページ (ピン留めなし) をオフセット
+// ページネーションで取得する。並び順は modified_at DESC, id DESC。publicOnly が true のときは
+// 公開トピックのページのみを返す (非メンバー閲覧者向け)。
+func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceID model.SpaceID, publicOnly bool, page int32, limit int32) (*PaginatedPages, error) {
+	totalCount, err := r.q.CountRegularPagesBySpace(ctx, query.CountRegularPagesBySpaceParams{
+		SpaceID:    string(spaceID),
+		PublicOnly: publicOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.q.FindRegularPagesBySpacePaginated(ctx, query.FindRegularPagesBySpacePaginatedParams{
+		SpaceID:    string(spaceID),
+		PublicOnly: publicOnly,
+		RowLimit:   limit,
+		RowOffset:  offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
+}
+
 // FindLinkedPagesPaginated はリンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
 func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountLinkedPages(ctx, query.CountLinkedPagesParams{
