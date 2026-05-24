@@ -105,3 +105,7 @@ func (p *MemberPolicy) CanCreateSuggestionComment() bool {
 func (p *MemberPolicy) CanUpdateSuggestionComment(suggestion *model.Suggestion) bool {
 	return p.effectiveScopes[model.ScopeSuggestionCommentWrite] && suggestion.Status == model.SuggestionStatusOpen
 }
+
+func (p *MemberPolicy) CanCreateTopic() bool {
+	return p.effectiveScopes[model.ScopeTopicWrite]
+}

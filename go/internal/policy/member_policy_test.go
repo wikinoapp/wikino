@@ -573,6 +573,40 @@ func TestMemberPolicy_CanUpdateSuggestionComment(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanCreateTopic(t *testing.T) {
+	t.Parallel()
+
+	t.Run("topic:writeで作成可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeTopicWrite}, nil)
+
+		if !p.CanCreateTopic() {
+			t.Error("topic:write を持つメンバーはトピックを作成可能であるべき")
+		}
+	})
+
+	t.Run("space:adminで作成可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanCreateTopic() {
+			t.Error("space:admin は topic:write を含意展開するためトピックを作成可能であるべき")
+		}
+	})
+
+	t.Run("topic:writeなしで作成不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeTopicRead}, nil)
+
+		if p.CanCreateTopic() {
+			t.Error("topic:write を持たないメンバーはトピックを作成できないべき")
+		}
+	})
+}
+
 // TestMemberPolicy_Authorizer は MemberPolicy が Authorizer インターフェースを満たすことを検証する
 func TestMemberPolicy_Authorizer(t *testing.T) {
 	t.Parallel()
