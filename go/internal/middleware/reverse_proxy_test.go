@@ -138,12 +138,12 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "作品一覧ページ（/worksは/のプレフィックスだがRails版）",
+			name:     "作品一覧ページ (/worksは/のプレフィックスだがRails版)",
 			path:     "/works",
 			expected: false,
 		},
 		{
-			name:     "タイムラインページ（/timelineは/のプレフィックスだがRails版）",
+			name:     "タイムラインページ (/timelineは/のプレフィックスだがRails版)",
 			path:     "/timeline",
 			expected: false,
 		},
@@ -452,13 +452,13 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 		expected model.FeatureFlagName
 	}{
 		{
-			name:     "マッチするパス（ページ表示）",
+			name:     "マッチするパス (ページ表示)",
 			method:   http.MethodGet,
 			path:     "/@username/space_atname/pages/abc123",
 			expected: "go_page_show",
 		},
 		{
-			name:     "マッチするパス（設定）",
+			name:     "マッチするパス (設定)",
 			method:   http.MethodGet,
 			path:     "/settings",
 			expected: "go_settings",
@@ -476,27 +476,92 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "ページ編集画面（GET）",
+			name:     "ページ編集画面 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ更新（PATCH）",
+			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ更新（POST）はMethod Override前のためPATCHパターンにマッチする",
+			name:     "ページ更新 (POST) はMethod Override前のためPATCHパターンにマッチする",
 			method:   http.MethodPost,
 			path:     "/s/my-space/pages/1",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ表示（GET）はmethodsフィルタによりマッチしない",
+			name:     "ページ表示 (GET) はmethodsフィルタによりマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			result := m.getFeatureFlagForRequest(req)
+			if result != tc.expected {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestReverseProxyMiddleware_getFeatureFlagForRequest_SpaceShow(t *testing.T) {
+	// The production featureFlaggedPatterns slice is read directly here, so
+	// t.Parallel() is intentionally omitted to avoid running concurrently with
+	// tests that swap out this global variable.
+	//
+	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
+	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		expected model.FeatureFlagName
+	}{
+		{
+			name:     "スペース詳細 (GET) は go_space_show を返す",
+			method:   http.MethodGet,
+			path:     "/s/my-space",
+			expected: model.FeatureFlagSpaceShow,
+		},
+		{
+			name:     "スペース詳細 (POST) はmethodsフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space",
+			expected: "",
+		},
+		{
+			// The trailing "$" prevents matching sub-paths under /s/:id, so
+			// /s/:id/topics/... etc. stay handled by goHandledRegexPatterns.
+			//
+			// [Ja] 末尾 $ により /s/:id 配下のサブパスにはマッチせず、
+			// /s/:id/topics/... 等は引き続き goHandledRegexPatterns が処理する
+			name:     "スペース配下のトピックパスはマッチしない (既存Goハンドラーが優先)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1",
+			expected: "",
+		},
+		{
+			name:     "スペース識別子の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/",
 			expected: "",
 		},
 	}
@@ -787,13 +852,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "ページ更新（PATCH）",
+			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
 			expected: true,
 		},
 		{
-			name:     "ページ更新（POST→PATCH、Method Override前）",
+			name:     "ページ更新 (POST→PATCH、Method Override前)",
 			method:   http.MethodPost,
 			path:     "/s/my-space/pages/1",
 			expected: true,
@@ -811,7 +876,7 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "バックリンク一覧（個別）",
+			name:     "バックリンク一覧 (個別)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/links/2/backlink_list",
 			expected: true,
@@ -829,7 +894,7 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "og:image エンドポイント（GET）",
+			name:     "og:image エンドポイント (GET)",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: true,
@@ -837,19 +902,19 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 
 		// Rails版に転送するパス
 		{
-			name:     "ページ表示（GET）はRails版に転送",
+			name:     "ページ表示 (GET) はRails版に転送",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
 			expected: false,
 		},
 		{
-			name:     "og:image エンドポイント（POST）はGETのみフィルタによりマッチしない",
+			name:     "og:image エンドポイント (POST) はGETのみフィルタによりマッチしない",
 			method:   http.MethodPost,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
 		},
 		{
-			name:     "og:image エンドポイント（PATCH）はGETのみフィルタによりマッチしない",
+			name:     "og:image エンドポイント (PATCH) はGETのみフィルタによりマッチしない",
 			method:   http.MethodPatch,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
