@@ -24,3 +24,17 @@ SELECT t.* FROM topics t
 INNER JOIN topic_members tm ON t.id = tm.topic_id
 WHERE tm.space_member_id = $1 AND t.space_id = $2 AND t.discarded_at IS NULL
 ORDER BY t.number;
+
+-- name: FindFirstJoinedTopicBySpaceMember :one
+-- Returns the topic with the smallest id among those the space member has joined
+-- (not-discarded topics only), scoped to the given space. Used by the empty-state
+-- "create a new page" link on the space detail page.
+--
+-- [Ja] スペースメンバーが参加しているトピックのうち id が最小のもの (削除されていない
+-- トピックのみ) を、指定スペースにスコープして返す。スペース詳細画面の空状態で表示する
+-- 「新しいページを作る」導線で使用する。
+SELECT t.* FROM topics t
+INNER JOIN topic_members tm ON t.id = tm.topic_id
+WHERE tm.space_member_id = $1 AND t.space_id = $2 AND t.discarded_at IS NULL
+ORDER BY t.id ASC
+LIMIT 1;

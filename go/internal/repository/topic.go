@@ -88,6 +88,28 @@ func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemb
 	return r.toModels(rows), nil
 }
 
+// FindFirstJoinedBySpaceMember returns the topic with the smallest id among those the
+// space member has joined (not-discarded topics only), scoped to the given space. Returns
+// (nil, nil) when none is found. Used by the empty-state "create a new page" link on the
+// space detail page.
+//
+// [Ja] FindFirstJoinedBySpaceMember はスペースメンバーが参加しているトピックのうち id が
+// 最小のもの (削除されていないトピックのみ) を、指定スペースにスコープして返す。未存在の
+// 場合は (nil, nil) を返す。スペース詳細画面の空状態で表示する「新しいページを作る」導線で使用する。
+func (r *TopicRepository) FindFirstJoinedBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.Topic, error) {
+	row, err := r.q.FindFirstJoinedTopicBySpaceMember(ctx, query.FindFirstJoinedTopicBySpaceMemberParams{
+		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindByIDsAndSpace はIDリストとスペースIDでトピックを一括取得する
 func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.TopicID, spaceID model.SpaceID) ([]*model.Topic, error) {
 	if len(ids) == 0 {
