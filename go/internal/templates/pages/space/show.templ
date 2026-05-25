@@ -1,0 +1,163 @@
+package space
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData is the data passed to the space detail page.
+// [Ja] ShowData はスペース詳細画面に渡すデータ構造体です。
+type ShowData struct {
+	Space       viewmodel.Space
+	PinnedPages []viewmodel.CardLinkPage
+	Pages       []viewmodel.CardLinkPage
+	Pagination  viewmodel.Pagination
+	JoinedSpace bool
+
+	// HasFirstTopic reports whether the member has a joined topic; FirstTopicNumber is
+	// meaningful only when it is true (used by the empty-state "new page" link).
+	//
+	// [Ja] HasFirstTopic はメンバーに参加中トピックがあるかを表す。FirstTopicNumber は
+	// true のときだけ意味を持つ (空状態の「新規ページ」導線で使う)。
+	HasFirstTopic    bool
+	FirstTopicNumber int32
+
+	CanCreateTopic bool
+}
+
+// paginationPath builds the offset pagination path for the space detail page.
+// [Ja] paginationPath はスペース詳細画面のオフセットページネーション用パスを生成します。
+func (d ShowData) paginationPath(page int) string {
+	return fmt.Sprintf("/s/%s?page=%d", d.Space.Identifier, page)
+}
+
+// noTopicsEmptyStateData builds the empty state shown to a member who has not joined any topic.
+// The "new topic" guidance and link appear only when the member can create topics.
+//
+// [Ja] noTopicsEmptyStateData は参加トピックが無いメンバーに表示する空状態を組み立てる。
+// 「新規トピック」の補足とリンクはトピック作成権限があるときだけ表示する。
+func noTopicsEmptyStateData(ctx context.Context, data ShowData) components.EmptyStateData {
+	d := components.EmptyStateData{
+		Message: templates.T(ctx, "space_show_no_topics_message"),
+	}
+	if data.CanCreateTopic {
+		d.Description = templates.T(ctx, "space_show_no_topics_description_html")
+		d.Action = newTopicButton(data.Space.Identifier)
+	}
+	return d
+}
+
+// noPagesEmptyStateData builds the empty state shown when the space has no pages to list.
+// The "new page" guidance and link appear only when the member has a joined topic to write into.
+//
+// [Ja] noPagesEmptyStateData は一覧するページが無いときに表示する空状態を組み立てる。
+// 「新規ページ」の補足とリンクは書き込み先の参加トピックがあるときだけ表示する。
+func noPagesEmptyStateData(ctx context.Context, data ShowData) components.EmptyStateData {
+	d := components.EmptyStateData{
+		Message: templates.T(ctx, "space_show_no_pages_message"),
+	}
+	if data.HasFirstTopic {
+		d.Description = templates.T(ctx, "space_show_new_page_description")
+		d.Action = newPageButton(data.Space.Identifier, data.FirstTopicNumber)
+	}
+	return d
+}
+
+// Show renders the space detail page content.
+// [Ja] Show はスペース詳細画面のコンテンツを表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="flex flex-col gap-4">
+			@components.TopNav(components.TopNavData{
+				MaxWidthClass: "max-w-3xl",
+				Items: []components.BreadcrumbItem{
+					{
+						Path:      templates.HomePath(),
+						IconName:  "house-regular",
+						AriaLabel: templates.T(ctx, "breadcrumb_home"),
+					},
+				},
+			})
+
+			<div class="max-w-3xl w-full mx-auto">
+				<div class="flex flex-col gap-6">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title: data.Space.Name,
+						})
+					</div>
+
+					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
+						<div class="flex flex-col gap-6 px-4">
+							if len(data.PinnedPages) > 0 {
+								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+									for _, page := range data.PinnedPages {
+										@components.CardLinkPage(page, data.Space.Identifier)
+									}
+								</div>
+							}
+
+							if len(data.Pages) > 0 {
+								<div class="flex flex-col gap-6">
+									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+										for _, page := range data.Pages {
+											@components.CardLinkPage(page, data.Space.Identifier)
+										}
+									</div>
+
+									@components.PaginationNav(
+										data.Pagination,
+										data.paginationPath(data.Pagination.Current-1),
+										data.paginationPath(data.Pagination.Current+1),
+									)
+								</div>
+							}
+						</div>
+					} else {
+						<div class="px-4">
+							@showEmptyState(data)
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// showEmptyState renders the empty state, branching on whether the member has a joined topic.
+// [Ja] showEmptyState は参加トピックの有無で分岐して空状態を表示します。
+templ showEmptyState(data ShowData) {
+	if data.JoinedSpace && !data.HasFirstTopic {
+		@components.EmptyState(noTopicsEmptyStateData(ctx, data))
+	} else {
+		@components.EmptyState(noPagesEmptyStateData(ctx, data))
+	}
+}
+
+// newTopicButton renders the link to the new topic form.
+// [Ja] newTopicButton は新規トピック作成フォームへのリンクを表示します。
+templ newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) {
+	<a
+		href={ templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))) }
+		class="btn btn-sm rounded-full"
+	>
+		@templates.Icon("plus-regular", "size-[18px] fill-primary-foreground")
+		{ templates.T(ctx, "space_show_new_topic_button") }
+	</a>
+}
+
+// newPageButton renders the link to the new page form for the member's first joined topic.
+// [Ja] newPageButton はメンバーの最初の参加トピックへの新規ページ作成フォームへのリンクを表示します。
+templ newPageButton(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) {
+	<a
+		href={ templ.SafeURL(string(templates.NewPagePath(spaceIdentifier, topicNumber))) }
+		class="btn btn-sm rounded-full"
+	>
+		@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+		{ templates.T(ctx, "space_show_new_page_button") }
+	</a>
+}
