@@ -1020,6 +1020,35 @@ other = "ページ"
 description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
 
+# スペース詳細
+[space_show_title]
+description = "スペース詳細画面のタイトル（{space_name}）"
+other = "{{.SpaceName}}"
+
+[space_show_no_topics_message]
+description = "スペース詳細画面でトピックがない場合のメッセージ"
+other = "トピックはありません"
+
+[space_show_no_topics_description_html]
+description = "スペース詳細画面でトピックがない場合の説明文（HTMLを含む）"
+other = "トピックはページを分類するためのものです<br>トピックを作成してページを追加できるようにしましょう"
+
+[space_show_new_topic_button]
+description = "スペース詳細画面の新規トピック作成ボタン"
+other = "新規トピック"
+
+[space_show_no_pages_message]
+description = "スペース詳細画面でページがない場合のメッセージ"
+other = "ページはありません"
+
+[space_show_new_page_description]
+description = "スペース詳細画面でページがない場合の説明文"
+other = "最初の1ページ目を作成しましょう"
+
+[space_show_new_page_button]
+description = "スペース詳細画面の新規ページ作成ボタン"
+other = "新規ページ"
+
 # ページネーション
 [pagination_previous]
 description = "ページネーションの前のページへのリンク"
