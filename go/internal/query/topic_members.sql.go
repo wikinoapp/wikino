@@ -41,6 +41,52 @@ func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg 
 	return i, err
 }
 
+const listTopicMembersBySpaceMemberAndTopics = `-- name: ListTopicMembersBySpaceMemberAndTopics :many
+SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND space_id = $2 AND topic_id = ANY($3::uuid[])
+`
+
+type ListTopicMembersBySpaceMemberAndTopicsParams struct {
+	SpaceMemberID string   `json:"space_member_id"`
+	SpaceID       string   `json:"space_id"`
+	Column3       []string `json:"column_3"`
+}
+
+// Fetch the topic memberships for the given topic ids in one query (used to avoid N+1
+// when resolving per-topic permissions on the space detail page).
+// [Ja] トピック ID リストでトピックメンバーを 1 クエリ一括取得する (スペース詳細の権限判定で N+1 を避けるために使用)。
+func (q *Queries) ListTopicMembersBySpaceMemberAndTopics(ctx context.Context, arg ListTopicMembersBySpaceMemberAndTopicsParams) ([]TopicMember, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicMembersBySpaceMemberAndTopics, arg.SpaceMemberID, arg.SpaceID, pq.Array(arg.Column3))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TopicMember{}
+	for rows.Next() {
+		var i TopicMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.SpaceMemberID,
+			&i.JoinedAt,
+			&i.LastPageModifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateTopicMemberLastPageModifiedAt = `-- name: UpdateTopicMemberLastPageModifiedAt :exec
 UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4 AND space_id = $5
 `

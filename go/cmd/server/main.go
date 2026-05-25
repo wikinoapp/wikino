@@ -40,6 +40,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
@@ -382,6 +383,12 @@ func main() {
 		movePageUC,
 		sidebarHelper,
 	)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	spaceHandler := spacehandler.NewHandler(
+		cfg,
+		getSpaceShowUC,
+		sidebarHelper,
+	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	topicHandler := topichandler.NewHandler(
 		cfg,
@@ -591,6 +598,10 @@ func main() {
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
+
+		// Space detail page (public-topic pages are viewable even by non-members).
+		// [Ja] スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
+		r.Get("/s/{space_identifier}", spaceHandler.Show)
 
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)

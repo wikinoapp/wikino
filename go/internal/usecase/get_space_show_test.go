@@ -19,7 +19,8 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
-	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	// Space owner (holds the space:admin scope by default).
 	// [Ja] スペースオーナー (デフォルトで space:admin スコープを持つ)。
@@ -170,6 +171,16 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.FirstJoinedTopic != nil {
 			t.Error("FirstJoinedTopic should be nil for guest")
 		}
+		// The public topic label is still resolved for the guest's visible cards.
+		// [Ja] ゲストに見えるカードのために公開トピックのラベルは解決される。
+		if output.TopicMap[publicTopicID] == nil {
+			t.Error("TopicMap should contain the public topic for a guest")
+		}
+		// A guest cannot edit any page.
+		// [Ja] ゲストはどのページも編集できない。
+		if output.CanEditPageByTopic[publicTopicID] {
+			t.Error("CanEditPageByTopic should be false for a guest")
+		}
 	})
 
 	t.Run("ログイン済みでも非メンバーは公開トピックのページのみ取得できる", func(t *testing.T) {
@@ -243,6 +254,22 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if !output.CanCreateTopic {
 			t.Error("CanCreateTopic should be true for space:admin member")
 		}
+		// TopicMap covers both topics that the listed pages belong to (for card labels).
+		// [Ja] TopicMap は一覧ページが属する両トピックを含む (カードラベル用)。
+		if output.TopicMap[publicTopicID] == nil {
+			t.Error("TopicMap should contain the public topic")
+		}
+		if output.TopicMap[privateTopicID] == nil {
+			t.Error("TopicMap should contain the private topic")
+		}
+		// space:admin implies page:write across every topic, so both topics are editable.
+		// [Ja] space:admin は全トピックで page:write を含意するため、両トピックとも編集可能。
+		if !output.CanEditPageByTopic[publicTopicID] {
+			t.Error("CanEditPageByTopic should be true for the public topic for a space:admin member")
+		}
+		if !output.CanEditPageByTopic[privateTopicID] {
+			t.Error("CanEditPageByTopic should be true for the private topic for a space:admin member")
+		}
 		// The owner has not joined any topic (no topic_member), so FirstJoinedTopic is nil.
 		// [Ja] オーナーはどのトピックにも参加していない (topic_member なし) ため FirstJoinedTopic は nil。
 		if output.FirstJoinedTopic != nil {
@@ -269,6 +296,14 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		}
 		if output.CanCreateTopic {
 			t.Error("CanCreateTopic should be false for a member without topic:write scope")
+		}
+		// A member with only page:read (no page:write) cannot edit pages in any topic.
+		// [Ja] page:read のみ (page:write 無し) のメンバーはどのトピックのページも編集できない。
+		if output.CanEditPageByTopic[publicTopicID] {
+			t.Error("CanEditPageByTopic should be false for a member without page:write scope")
+		}
+		if output.CanEditPageByTopic[privateTopicID] {
+			t.Error("CanEditPageByTopic should be false for a member without page:write scope")
 		}
 	})
 
@@ -314,7 +349,8 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
-	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	userID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-empty@example.com").

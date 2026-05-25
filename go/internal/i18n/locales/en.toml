@@ -1020,6 +1020,51 @@ other = "Pages"
 description = "Suggestions tab label on the topic show page"
 other = "Suggestions"
 
+# Space show
+[space_show_title]
+description = "Space show page title ({space_name})"
+other = "{{.SpaceName}}"
+
+[space_show_no_topics_message]
+description = "Message when there are no topics in the space"
+other = "No topics."
+
+[space_show_no_topics_description_html]
+description = "Description when there are no topics in the space (contains HTML)"
+other = "Topics are used to classify pages.<br>Create a topic to add pages."
+
+[space_show_new_topic_button]
+description = "New topic button on the space show page"
+other = "New topic"
+
+[space_show_no_pages_message]
+description = "Message when there are no pages in the space"
+other = "No pages."
+
+[space_show_new_page_description]
+description = "Description when there are no pages in the space"
+other = "Create your first page."
+
+[space_show_new_page_button]
+description = "New page button on the space show page"
+other = "New page"
+
+[space_show_options_rss_feed]
+description = "RSS feed link in the options menu on the space show page"
+other = "RSS feed"
+
+[space_show_options_new_topic]
+description = "New topic link in the options menu on the space show page"
+other = "New topic"
+
+[space_show_options_trash]
+description = "Trash link in the options menu on the space show page"
+other = "Trash"
+
+[space_show_options_settings]
+description = "Settings link in the options menu on the space show page"
+other = "Settings"
+
 # Pagination
 [pagination_previous]
 description = "Link to the previous page in pagination"

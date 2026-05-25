@@ -21,6 +21,24 @@ func NewSpacePath() Path {
 	return Path("/spaces/new")
 }
 
+// AtomPath generates the path to the space RSS (Atom) feed.
+// [Ja] AtomPath はスペースの RSS (Atom) フィードのパスを生成します。
+func AtomPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/atom", spaceIdentifier))
+}
+
+// TrashPath generates the path to the space trash (currently proxied to the Rails version).
+// [Ja] TrashPath はスペースのゴミ箱のパスを生成します (現状は Rails 版にプロキシされる)。
+func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
+}
+
+// SpaceSettingsPath generates the path to the space settings (currently proxied to the Rails version).
+// [Ja] SpaceSettingsPath はスペース設定のパスを生成します (現状は Rails 版にプロキシされる)。
+func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
+}
+
 // HomePath はホームのパスを生成します
 func HomePath() Path {
 	return Path("/home")
@@ -34,6 +52,12 @@ func TopicPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Pat
 // TopicSettingsPath はトピック設定のパスを生成します
 func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
+}
+
+// NewTopicPath generates the path to the new topic form (currently proxied to the Rails version).
+// [Ja] 新規トピック作成フォームのパスを生成します (現状は Rails 版にプロキシされる)。
+func NewTopicPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/new", spaceIdentifier))
 }
 
 // NewPagePath はページ新規作成のパスを生成します
