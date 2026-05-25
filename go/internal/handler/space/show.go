@@ -62,19 +62,23 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pages span multiple topics here, but the usecase does not return per-page topic data,
-	// so cards are rendered without topic labels (topicMap is nil).
+	// Pages span multiple topics here, so each card shows its topic label (via TopicMap) and an
+	// edit affordance gated on the per-topic page-edit permission resolved by the usecase.
 	//
-	// [Ja] スペース横断のためページは複数トピックに跨るが、UseCase はページごとのトピック情報を
-	// 返さないため、カードはトピックラベルなしで描画する (topicMap は nil)。
+	// [Ja] スペース横断のためページは複数トピックに跨るので、各カードはトピックラベル (TopicMap 経由) と、
+	// UseCase が解決したトピックごとのページ編集権限に応じた編集導線を表示する。
 	pinnedPageVMs := make([]viewmodel.CardLinkPage, len(output.PinnedPages))
 	for i, pg := range output.PinnedPages {
-		pinnedPageVMs[i] = viewmodel.NewCardLinkPage(pg, nil)
+		card := viewmodel.NewCardLinkPage(pg, output.TopicMap)
+		card.CanEdit = output.CanEditPageByTopic[pg.TopicID]
+		pinnedPageVMs[i] = card
 	}
 
 	pageVMs := make([]viewmodel.CardLinkPage, len(output.Pages))
 	for i, pg := range output.Pages {
-		pageVMs[i] = viewmodel.NewCardLinkPage(pg, nil)
+		card := viewmodel.NewCardLinkPage(pg, output.TopicMap)
+		card.CanEdit = output.CanEditPageByTopic[pg.TopicID]
+		pageVMs[i] = card
 	}
 
 	spaceVM := viewmodel.NewSpace(output.Space)

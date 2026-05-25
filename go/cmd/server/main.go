@@ -383,7 +383,7 @@ func main() {
 		movePageUC,
 		sidebarHelper,
 	)
-	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
 		getSpaceShowUC,

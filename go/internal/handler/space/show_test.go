@@ -47,11 +47,12 @@ func setupHandler(t *testing.T, queries *query.Queries) *spacehandler.Handler {
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
-	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	return spacehandler.NewHandler(cfg, getSpaceShowUC, sidebarHelper)
 }
@@ -97,7 +98,7 @@ func TestShow_メンバーがピン留めと通常ページを閲覧できる(t 
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(1).
-		WithName("テストトピック").
+		WithName("テストトピックラベル").
 		WithVisibility(0).
 		Build()
 	testutil.NewPageBuilder(t, tx).
@@ -140,6 +141,19 @@ func TestShow_メンバーがピン留めと通常ページを閲覧できる(t 
 	}
 	if !strings.Contains(body, "ピン留めページ") {
 		t.Error("response should contain the pinned page title")
+	}
+	// Cards show the topic label (pages span topics on the space detail).
+	// [Ja] カードはトピックラベルを表示する (スペース詳細はページが複数トピックに跨る)。
+	if !strings.Contains(body, "テストトピックラベル") {
+		t.Error("response should contain the topic label on the cards")
+	}
+	// A space:admin member can edit, so the per-card edit links are rendered.
+	// [Ja] space:admin メンバーは編集できるため、カードごとの編集リンクが描画される。
+	if !strings.Contains(body, "/s/ss-pages/pages/1/edit") {
+		t.Error("response should contain the edit link for the regular page")
+	}
+	if !strings.Contains(body, "/s/ss-pages/pages/2/edit") {
+		t.Error("response should contain the edit link for the pinned page")
 	}
 }
 
@@ -199,6 +213,16 @@ func TestShow_ゲストは公開トピックのページのみ閲覧できる(t 
 	}
 	if strings.Contains(body, "非公開ページ") {
 		t.Error("response should not contain the private-topic page title for a guest")
+	}
+	// The topic label is shown to guests too.
+	// [Ja] トピックラベルはゲストにも表示される。
+	if !strings.Contains(body, "公開トピック") {
+		t.Error("response should contain the topic label for the public-topic card")
+	}
+	// A guest cannot edit, so no per-card edit link is rendered.
+	// [Ja] ゲストは編集できないため、カードの編集リンクは描画されない。
+	if strings.Contains(body, "/s/ss-guest/pages/1/edit") {
+		t.Error("response should not contain an edit link for a guest")
 	}
 }
 

@@ -18,6 +18,7 @@ type GetSpaceShowUsecase struct {
 	spaceMemberRepo *repository.SpaceMemberRepository
 	pageRepo        *repository.PageRepository
 	topicRepo       *repository.TopicRepository
+	topicMemberRepo *repository.TopicMemberRepository
 }
 
 // NewGetSpaceShowUsecase creates a GetSpaceShowUsecase.
@@ -27,12 +28,14 @@ func NewGetSpaceShowUsecase(
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
 ) *GetSpaceShowUsecase {
 	return &GetSpaceShowUsecase{
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		pageRepo:        pageRepo,
 		topicRepo:       topicRepo,
+		topicMemberRepo: topicMemberRepo,
 	}
 }
 
@@ -57,6 +60,22 @@ type GetSpaceShowOutput struct {
 	PinnedPages []*model.Page
 	Pages       []*model.Page
 	TotalCount  int64
+
+	// TopicMap maps each listed page's topic id to its topic, so the cards can show a topic
+	// label. Pages on the space detail span multiple topics, unlike the topic detail page.
+	//
+	// [Ja] TopicMap は一覧する各ページの topic id をトピックへ対応付け、カードにトピックラベルを
+	// 表示できるようにする。スペース詳細はトピック詳細と違いページが複数トピックに跨る。
+	TopicMap map[model.TopicID]*model.Topic
+
+	// CanEditPageByTopic reports, per topic id, whether the current user may edit pages in that
+	// topic (page:write scope). It is empty for guests. The space detail spans multiple topics,
+	// so edit permission is resolved per topic rather than once for the whole page.
+	//
+	// [Ja] CanEditPageByTopic は topic id ごとに、現在のユーザーがそのトピックのページを編集できるか
+	// (page:write スコープ) を表す。ゲストでは空。スペース詳細は複数トピックに跨るため、編集権限は
+	// ページ全体で一度ではなくトピックごとに判定する。
+	CanEditPageByTopic map[model.TopicID]bool
 
 	// FirstJoinedTopic is the member's joined topic with the smallest id (nil for guests or for
 	// members who have not joined any topic). Used by the empty-state "create a new page" link.
@@ -109,6 +128,13 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 		return nil, fmt.Errorf("通常ページの取得に失敗: %w", err)
 	}
 
+	// Resolve the topic label and per-topic page-edit permission for the listed pages.
+	// [Ja] 一覧するページのトピックラベルとトピックごとのページ編集権限を解決する。
+	topicMap, canEditPageByTopic, err := uc.resolvePageTopicViews(ctx, space.ID, spaceMember, pinnedPages, paginatedResult.Pages)
+	if err != nil {
+		return nil, err
+	}
+
 	// Fetch the first joined topic for every member so the empty state can offer a "new page"
 	// link. It is consumed only when no pages are shown, but the fetch is not gated on emptiness:
 	// that keeps this in step with the Rails version and avoids tying the fetch condition to the
@@ -126,13 +152,92 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 	}
 
 	return &GetSpaceShowOutput{
-		Space:            space,
-		SpaceMember:      spaceMember,
-		PinnedPages:      pinnedPages,
-		Pages:            paginatedResult.Pages,
-		TotalCount:       paginatedResult.TotalCount,
-		FirstJoinedTopic: firstJoinedTopic,
-		JoinedSpace:      joinedSpace,
-		CanCreateTopic:   authorizer.CanCreateTopic(),
+		Space:              space,
+		SpaceMember:        spaceMember,
+		PinnedPages:        pinnedPages,
+		Pages:              paginatedResult.Pages,
+		TotalCount:         paginatedResult.TotalCount,
+		TopicMap:           topicMap,
+		CanEditPageByTopic: canEditPageByTopic,
+		FirstJoinedTopic:   firstJoinedTopic,
+		JoinedSpace:        joinedSpace,
+		CanCreateTopic:     authorizer.CanCreateTopic(),
 	}, nil
+}
+
+// resolvePageTopicViews builds the topic map (for card labels) and the per-topic page-edit
+// permission map for the given page groups. It runs a constant number of queries regardless of
+// the number of topics: one to fetch the topics by id, and (for members) one to fetch the
+// member's topic memberships in bulk, avoiding an N+1 over topics. Edit permission is resolved
+// per distinct topic and skipped entirely for guests since they cannot edit. A member with a
+// space-level page:write scope (e.g. space:admin) can edit pages in every topic even without a
+// per-topic membership, which newAuthorizer handles by merging space and topic scopes.
+//
+// [Ja] resolvePageTopicViews は与えられたページ群について、カードラベル用のトピックマップと
+// トピックごとのページ編集権限マップを構築する。クエリ回数はトピック数に依らず一定で、トピックの
+// 一括取得に 1 回、(メンバーの場合) トピックメンバーの一括取得に 1 回だけ実行し、トピックに対する
+// N+1 を避ける。編集権限はトピックごとに判定し、編集できないゲストではスキップする。スペースレベルの
+// page:write スコープ (例: space:admin) を持つメンバーは、トピックメンバーでなくても全トピックの
+// ページを編集できる。これは newAuthorizer がスペーススコープとトピックスコープを統合して扱う。
+func (uc *GetSpaceShowUsecase) resolvePageTopicViews(
+	ctx context.Context,
+	spaceID model.SpaceID,
+	spaceMember *model.SpaceMember,
+	pageGroups ...[]*model.Page,
+) (map[model.TopicID]*model.Topic, map[model.TopicID]bool, error) {
+	// Collect the distinct topic ids across all page groups.
+	// [Ja] 全ページ群から重複のないトピック id を集める。
+	topicIDSet := make(map[model.TopicID]struct{})
+	for _, pages := range pageGroups {
+		for _, pg := range pages {
+			topicIDSet[pg.TopicID] = struct{}{}
+		}
+	}
+
+	topicMap := make(map[model.TopicID]*model.Topic, len(topicIDSet))
+	canEditPageByTopic := make(map[model.TopicID]bool, len(topicIDSet))
+	if len(topicIDSet) == 0 {
+		return topicMap, canEditPageByTopic, nil
+	}
+
+	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
+	for topicID := range topicIDSet {
+		topicIDs = append(topicIDs, topicID)
+	}
+
+	topics, err := uc.topicRepo.FindByIDsAndSpace(ctx, topicIDs, spaceID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ページのトピックの取得に失敗: %w", err)
+	}
+	for _, topic := range topics {
+		topicMap[topic.ID] = topic
+	}
+
+	// Guests cannot edit, so leave the permission map empty (lookups default to false).
+	// [Ja] ゲストは編集できないため、権限マップは空のままにする (参照は false になる)。
+	if spaceMember == nil {
+		return topicMap, canEditPageByTopic, nil
+	}
+
+	// Fetch the member's topic memberships for all listed topics in one query, then resolve the
+	// page-edit permission per topic. Topics where the member has no membership get a nil
+	// topicMember, which still grants edit access when the space scope alone includes page:write.
+	//
+	// [Ja] 一覧トピック全てのトピックメンバーを 1 クエリで取得し、トピックごとに編集権限を判定する。
+	// メンバーシップが無いトピックは topicMember が nil になるが、スペーススコープだけで page:write を
+	// 含む場合は nil でも編集可能になる。
+	topicMembers, err := uc.topicMemberRepo.ListBySpaceMemberAndTopics(ctx, spaceID, spaceMember.ID, topicIDs)
+	if err != nil {
+		return nil, nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
+	}
+	topicMemberByTopic := make(map[model.TopicID]*model.TopicMember, len(topicMembers))
+	for _, topicMember := range topicMembers {
+		topicMemberByTopic[topicMember.TopicID] = topicMember
+	}
+
+	for _, topicID := range topicIDs {
+		canEditPageByTopic[topicID] = newAuthorizer(spaceMember, topicMemberByTopic[topicID]).CanUpdatePage()
+	}
+
+	return topicMap, canEditPageByTopic, nil
 }
