@@ -1022,7 +1022,7 @@ other = "編集提案"
 
 # スペース詳細
 [space_show_title]
-description = "スペース詳細画面のタイトル（{space_name}）"
+description = "スペース詳細画面のタイトル ({space_name})"
 other = "{{.SpaceName}}"
 
 [space_show_no_topics_message]
@@ -1030,7 +1030,7 @@ description = "スペース詳細画面でトピックがない場合のメッ�
 other = "トピックはありません"
 
 [space_show_no_topics_description_html]
-description = "スペース詳細画面でトピックがない場合の説明文（HTMLを含む）"
+description = "スペース詳細画面でトピックがない場合の説明文 (HTML を含む)"
 other = "トピックはページを分類するためのものです<br>トピックを作成してページを追加できるようにしましょう"
 
 [space_show_new_topic_button]
@@ -1048,6 +1048,22 @@ other = "最初の1ページ目を作成しましょう"
 [space_show_new_page_button]
 description = "スペース詳細画面の新規ページ作成ボタン"
 other = "新規ページ"
+
+[space_show_options_rss_feed]
+description = "スペース詳細画面のオプションメニューの RSS フィードリンク"
+other = "RSSフィード"
+
+[space_show_options_new_topic]
+description = "スペース詳細画面のオプションメニューの新規トピックリンク"
+other = "新規トピック"
+
+[space_show_options_trash]
+description = "スペース詳細画面のオプションメニューのゴミ箱リンク"
+other = "ゴミ箱"
+
+[space_show_options_settings]
+description = "スペース詳細画面のオプションメニューの設定リンク"
+other = "設定"
 
 # ページネーション
 [pagination_previous]

@@ -80,6 +80,14 @@ templ Show(data ShowData) {
 						IconName:  "house-regular",
 						AriaLabel: templates.T(ctx, "breadcrumb_home"),
 					},
+					// The space is the current page, so show its name as a plain (unlinked) trailing
+					// crumb. This adds the "›" separator after the home icon for a clearer breadcrumb.
+					//
+					// [Ja] スペースは現在地のため、スペース名はリンク無しの末尾パンくずとして表示する。
+					// ホームアイコンの後に "›" 区切りが入り、パンくずとして分かりやすくなる。
+					{
+						Label: data.Space.Name,
+					},
 				},
 			})
 
@@ -87,7 +95,8 @@ templ Show(data ShowData) {
 				<div class="flex flex-col gap-6">
 					<div class="px-4">
 						@components.MainTitle(components.MainTitleData{
-							Title: data.Space.Name,
+							Title:   data.Space.Name,
+							Actions: showActions(data),
 						})
 					</div>
 
@@ -123,6 +132,73 @@ templ Show(data ShowData) {
 						</div>
 					}
 				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// showActions renders the space options dropdown shown in the page header.
+// The RSS feed link is always shown; the topic / trash / settings links appear only to space members.
+//
+// [Ja] showActions はページヘッダーに表示するスペースオプションのドロップダウンを表示します。
+// RSS フィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
+templ showActions(data ShowData) {
+	<div id="space-options-dropdown" class="dropdown-menu">
+		<button
+			type="button"
+			id="space-options-dropdown-trigger"
+			aria-haspopup="menu"
+			aria-controls="space-options-dropdown-menu"
+			aria-expanded="false"
+			class="btn-sm-icon-outline border-primary rounded-full"
+		>
+			@templates.Icon("dots-three-regular")
+		</button>
+
+		<div id="space-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+			<div role="menu" id="space-options-dropdown-menu" aria-labelledby="space-options-dropdown-trigger">
+				<div role="menuitem">
+					<a
+						class="flex gap-2 items-center w-full"
+						href={ templ.SafeURL(string(templates.AtomPath(data.Space.Identifier))) }
+						target="_blank"
+					>
+						@templates.Icon("rss-regular", "size-[18px]")
+						{ templates.T(ctx, "space_show_options_rss_feed") }
+					</a>
+				</div>
+
+				if data.JoinedSpace {
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.NewTopicPath(data.Space.Identifier))) }
+						>
+							@templates.Icon("plus-regular", "size-[18px]")
+							{ templates.T(ctx, "space_show_options_new_topic") }
+						</a>
+					</div>
+
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.TrashPath(data.Space.Identifier))) }
+						>
+							@templates.Icon("trash-regular", "size-[18px]")
+							{ templates.T(ctx, "space_show_options_trash") }
+						</a>
+					</div>
+
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.SpaceSettingsPath(data.Space.Identifier))) }
+						>
+							@templates.Icon("gear-regular", "size-[18px]")
+							{ templates.T(ctx, "space_show_options_settings") }
+						</a>
+					</div>
+				}
 			</div>
 		</div>
 	</div>

@@ -327,6 +327,91 @@ func TestShow_参加トピックがありページが無いメンバーにペー
 	}
 }
 
+func TestShow_メンバーにスペースオプションメニューが全て表示される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ownerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-options-owner@example.com").
+		WithAtname("ssoptionsowner").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-options").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(ownerID).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ss-options", map[string]string{
+		"space_identifier": "ss-options",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "ssoptionsowner"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	// The options dropdown shows the RSS feed plus the member-only topic / trash / settings links.
+	// [Ja] オプションメニューには RSS フィードと、メンバー限定のトピック / ゴミ箱 / 設定リンクが表示される。
+	for _, want := range []string{
+		"/s/ss-options/atom",
+		"/s/ss-options/topics/new",
+		"/s/ss-options/trash",
+		"/s/ss-options/settings",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response should contain the options menu link %q", want)
+		}
+	}
+}
+
+func TestShow_ゲストにはオプションメニューのRSSのみ表示される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-guest-options").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ss-guest-options", map[string]string{
+		"space_identifier": "ss-guest-options",
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	// A guest sees only the RSS feed link; the member-only links must not appear.
+	// [Ja] ゲストには RSS フィードリンクのみが見え、メンバー限定リンクは表示されない。
+	if !strings.Contains(body, "/s/ss-guest-options/atom") {
+		t.Error("response should contain the RSS feed link for a guest")
+	}
+	if strings.Contains(body, "/s/ss-guest-options/trash") {
+		t.Error("response should not contain the trash link for a guest")
+	}
+	if strings.Contains(body, "/s/ss-guest-options/settings") {
+		t.Error("response should not contain the settings link for a guest")
+	}
+}
+
 func TestShow_ページネーションの次ページリンクが表示される(t *testing.T) {
 	t.Parallel()
 

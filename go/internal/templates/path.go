@@ -21,6 +21,24 @@ func NewSpacePath() Path {
 	return Path("/spaces/new")
 }
 
+// AtomPath generates the path to the space RSS (Atom) feed.
+// [Ja] AtomPath はスペースの RSS (Atom) フィードのパスを生成します。
+func AtomPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/atom", spaceIdentifier))
+}
+
+// TrashPath generates the path to the space trash (currently proxied to the Rails version).
+// [Ja] TrashPath はスペースのゴミ箱のパスを生成します (現状は Rails 版にプロキシされる)。
+func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
+}
+
+// SpaceSettingsPath generates the path to the space settings (currently proxied to the Rails version).
+// [Ja] SpaceSettingsPath はスペース設定のパスを生成します (現状は Rails 版にプロキシされる)。
+func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
+}
+
 // HomePath はホームのパスを生成します
 func HomePath() Path {
 	return Path("/home")

@@ -109,6 +109,14 @@ func Show(data ShowData) templ.Component {
 					IconName:  "house-regular",
 					AriaLabel: templates.T(ctx, "breadcrumb_home"),
 				},
+				// The space is the current page, so show its name as a plain (unlinked) trailing
+				// crumb. This adds the "›" separator after the home icon for a clearer breadcrumb.
+				//
+				// [Ja] スペースは現在地のため、スペース名はリンク無しの末尾パンくずとして表示する。
+				// ホームアイコンの後に "›" 区切りが入り、パンくずとして分かりやすくなる。
+				{
+					Label: data.Space.Name,
+				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -119,7 +127,8 @@ func Show(data ShowData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.MainTitle(components.MainTitleData{
-			Title: data.Space.Name,
+			Title:   data.Space.Name,
+			Actions: showActions(data),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -203,9 +212,12 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showEmptyState renders the empty state, branching on whether the member has a joined topic.
-// [Ja] showEmptyState は参加トピックの有無で分岐して空状態を表示します。
-func showEmptyState(data ShowData) templ.Component {
+// showActions renders the space options dropdown shown in the page header.
+// The RSS feed link is always shown; the topic / trash / settings links appear only to space members.
+//
+// [Ja] showActions はページヘッダーに表示するスペースオプションのドロップダウンを表示します。
+// RSS フィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
+func showActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -224,6 +236,175 @@ func showEmptyState(data ShowData) templ.Component {
 		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
 		if templ_7745c5c3_Var2 == nil {
 			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div id=\"space-options-dropdown\" class=\"dropdown-menu\"><button type=\"button\" id=\"space-options-dropdown-trigger\" aria-haspopup=\"menu\" aria-controls=\"space-options-dropdown-menu\" aria-expanded=\"false\" class=\"btn-sm-icon-outline border-primary rounded-full\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templates.Icon("dots-three-regular").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</button><div id=\"space-options-dropdown-popover\" data-popover aria-hidden=\"true\" class=\"min-w-56\" data-align=\"end\"><div role=\"menu\" id=\"space-options-dropdown-menu\" aria-labelledby=\"space-options-dropdown-trigger\"><div role=\"menuitem\"><a class=\"flex gap-2 items-center w-full\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 templ.SafeURL
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.AtomPath(data.Space.Identifier))))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 163, Col: 77}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" target=\"_blank\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templates.Icon("rss-regular", "size-[18px]").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_rss_feed"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 167, Col: 55}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</a></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if data.JoinedSpace {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div role=\"menuitem\"><a class=\"flex gap-2 items-center w-full\" href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 templ.SafeURL
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewTopicPath(data.Space.Identifier))))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 175, Col: 82}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templates.Icon("plus-regular", "size-[18px]").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_new_topic"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 178, Col: 57}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</a></div><div role=\"menuitem\"><a class=\"flex gap-2 items-center w-full\" href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 templ.SafeURL
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TrashPath(data.Space.Identifier))))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 185, Col: 79}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templates.Icon("trash-regular", "size-[18px]").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_trash"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 188, Col: 53}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</a></div><div role=\"menuitem\"><a class=\"flex gap-2 items-center w-full\" href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 templ.SafeURL
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsPath(data.Space.Identifier))))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 195, Col: 87}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templates.Icon("gear-regular", "size-[18px]").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_settings"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 198, Col: 56}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</a></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// showEmptyState renders the empty state, branching on whether the member has a joined topic.
+// [Ja] showEmptyState は参加トピックの有無で分岐して空状態を表示します。
+func showEmptyState(data ShowData) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if data.JoinedSpace && !data.HasFirstTopic {
@@ -259,25 +440,25 @@ func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 templ.SafeURL
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))))
+		var templ_7745c5c3_Var13 templ.SafeURL
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 145, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 221, Col: 71}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" class=\"btn btn-sm rounded-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"btn btn-sm rounded-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -285,16 +466,16 @@ func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_new_topic_button"))
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_new_topic_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 149, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 225, Col: 51}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -320,25 +501,25 @@ func newPageButton(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32)
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var7 templ.SafeURL
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(spaceIdentifier, topicNumber))))
+		var templ_7745c5c3_Var16 templ.SafeURL
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(spaceIdentifier, topicNumber))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 157, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 233, Col: 83}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"btn btn-sm rounded-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" class=\"btn btn-sm rounded-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -346,16 +527,16 @@ func newPageButton(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_new_page_button"))
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_new_page_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 161, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 237, Col: 50}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

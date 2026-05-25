@@ -1049,6 +1049,22 @@ other = "Create your first page."
 description = "New page button on the space show page"
 other = "New page"
 
+[space_show_options_rss_feed]
+description = "RSS feed link in the options menu on the space show page"
+other = "RSS feed"
+
+[space_show_options_new_topic]
+description = "New topic link in the options menu on the space show page"
+other = "New topic"
+
+[space_show_options_trash]
+description = "Trash link in the options menu on the space show page"
+other = "Trash"
+
+[space_show_options_settings]
+description = "Settings link in the options menu on the space show page"
+other = "Settings"
+
 # Pagination
 [pagination_previous]
 description = "Link to the previous page in pagination"
