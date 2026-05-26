@@ -64,6 +64,21 @@ func (r *TopicRepository) ListActiveBySpace(ctx context.Context, spaceID model.S
 	return r.toModels(rows), nil
 }
 
+// ListPublicBySpace returns the active public topics (not-discarded, visibility = public) in the
+// given space, ordered by number. Used by the topic section shown to non-members (guests) on the
+// space detail page, where only public topics are visible.
+//
+// [Ja] ListPublicBySpace は指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を
+// number 順で返す。スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、
+// ここでは公開トピックのみが見える。
+func (r *TopicRepository) ListPublicBySpace(ctx context.Context, spaceID model.SpaceID) ([]*model.Topic, error) {
+	rows, err := r.q.ListPublicTopicsBySpace(ctx, string(spaceID))
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
 // FindBySpaceAndNames はスペースIDと名前リストでトピックを取得する（Wikiリンク解析時のトピック一括検索用）
 func (r *TopicRepository) FindBySpaceAndNames(ctx context.Context, spaceID model.SpaceID, names []string) ([]*model.Topic, error) {
 	rows, err := r.q.FindTopicsBySpaceAndNames(ctx, query.FindTopicsBySpaceAndNamesParams{

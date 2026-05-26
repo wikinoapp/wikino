@@ -6,6 +6,18 @@ SELECT * FROM topics WHERE space_id = $1 AND number = $2 AND discarded_at IS NUL
 -- スペースID でアクティブなトピック一覧を取得する（削除されていないトピックのみ）
 SELECT * FROM topics WHERE space_id = $1 AND discarded_at IS NULL ORDER BY number;
 
+-- name: ListPublicTopicsBySpace :many
+-- Returns the active public topics in the given space (not-discarded, visibility = public),
+-- ordered by number. Used by the topic section shown to non-members (guests) on the space
+-- detail page, where only public topics are visible.
+--
+-- [Ja] 指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を number 順で返す。
+-- スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、ここでは公開
+-- トピックのみが見える。
+SELECT * FROM topics
+WHERE space_id = $1 AND visibility = 0 AND discarded_at IS NULL
+ORDER BY number;
+
 -- name: FindTopicsBySpaceAndNames :many
 -- スペースID と名前リストでトピックを取得する（削除されていないトピックのみ、Wikiリンク解析時のトピック一括検索用）
 SELECT * FROM topics WHERE space_id = $1 AND name = ANY($2::varchar[]) AND discarded_at IS NULL;
