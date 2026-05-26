@@ -1041,12 +1041,12 @@ other = "New topic"
 description = "Message when there are no pages in the space"
 other = "No pages."
 
-[space_show_new_page_description]
-description = "Description when there are no pages in the space"
-other = "Create your first page."
+[space_show_topics_heading]
+description = "Heading of the topic section on the space show page"
+other = "Topics"
 
-[space_show_new_page_button]
-description = "New page button on the space show page"
+[space_show_topic_new_page]
+description = "Tooltip of the per-topic new page action in the topic section on the space show page"
 other = "New page"
 
 [space_show_options_rss_feed]

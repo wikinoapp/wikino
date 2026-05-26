@@ -97,11 +97,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Pages:          pageVMs,
 		Pagination:     pagination,
 		JoinedSpace:    output.JoinedSpace,
+		SectionTopics:  viewmodel.NewTopicsForSpaceSection(output.SectionTopics, output.CanCreatePageByTopic),
+		HasFirstTopic:  output.FirstJoinedTopic != nil,
 		CanCreateTopic: output.CanCreateTopic,
-	}
-	if output.FirstJoinedTopic != nil {
-		showData.HasFirstTopic = true
-		showData.FirstTopicNumber = output.FirstJoinedTopic.Number
 	}
 	content := spacepages.Show(showData)
 

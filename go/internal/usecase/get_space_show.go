@@ -77,6 +77,26 @@ type GetSpaceShowOutput struct {
 	// ページ全体で一度ではなくトピックごとに判定する。
 	CanEditPageByTopic map[model.TopicID]bool
 
+	// SectionTopics are the topics shown in the topic section: the topics the member has joined,
+	// or (for non-members and guests) the space's public topics. Each links to its topic detail and,
+	// where CanCreatePageByTopic is true, offers a per-topic "new page" action. This replaces the
+	// space-level empty-state "new page" button, which implicitly fixed the destination topic.
+	//
+	// [Ja] SectionTopics はトピックセクションに表示するトピック。メンバーは参加中のトピック、
+	// 非メンバー・ゲストはスペースの公開トピック。各トピックはトピック詳細へリンクし、
+	// CanCreatePageByTopic が true のトピックではトピックごとの「新規ページ」アクションを出す。
+	// これはスペースレベルの空状態「新規ページ」ボタン (作成先トピックを暗黙に固定していた) を置き換える。
+	SectionTopics []*model.Topic
+
+	// CanCreatePageByTopic reports, per section topic id, whether the current user may create a page
+	// in that topic (page:write scope). It is empty for guests. The topic section shows the per-topic
+	// "new page" action only for topics whose value is true.
+	//
+	// [Ja] CanCreatePageByTopic はセクショントピックの id ごとに、現在のユーザーがそのトピックに
+	// ページを作成できるか (page:write スコープ) を表す。ゲストでは空。トピックセクションは値が true の
+	// トピックにのみトピックごとの「新規ページ」アクションを出す。
+	CanCreatePageByTopic map[model.TopicID]bool
+
 	// FirstJoinedTopic is the member's joined topic with the smallest id (nil for guests or for
 	// members who have not joined any topic). Used by the empty-state "create a new page" link.
 	//
@@ -135,6 +155,13 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 		return nil, err
 	}
 
+	// Resolve the topics shown in the topic section and the per-topic page-create permission.
+	// [Ja] トピックセクションに表示するトピックと、トピックごとのページ作成権限を解決する。
+	sectionTopics, canCreatePageByTopic, err := uc.resolveSectionTopics(ctx, space.ID, spaceMember)
+	if err != nil {
+		return nil, err
+	}
+
 	// Fetch the first joined topic for every member so the empty state can offer a "new page"
 	// link. It is consumed only when no pages are shown, but the fetch is not gated on emptiness:
 	// that keeps this in step with the Rails version and avoids tying the fetch condition to the
@@ -152,16 +179,18 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 	}
 
 	return &GetSpaceShowOutput{
-		Space:              space,
-		SpaceMember:        spaceMember,
-		PinnedPages:        pinnedPages,
-		Pages:              paginatedResult.Pages,
-		TotalCount:         paginatedResult.TotalCount,
-		TopicMap:           topicMap,
-		CanEditPageByTopic: canEditPageByTopic,
-		FirstJoinedTopic:   firstJoinedTopic,
-		JoinedSpace:        joinedSpace,
-		CanCreateTopic:     authorizer.CanCreateTopic(),
+		Space:                space,
+		SpaceMember:          spaceMember,
+		PinnedPages:          pinnedPages,
+		Pages:                paginatedResult.Pages,
+		TotalCount:           paginatedResult.TotalCount,
+		TopicMap:             topicMap,
+		CanEditPageByTopic:   canEditPageByTopic,
+		SectionTopics:        sectionTopics,
+		CanCreatePageByTopic: canCreatePageByTopic,
+		FirstJoinedTopic:     firstJoinedTopic,
+		JoinedSpace:          joinedSpace,
+		CanCreateTopic:       authorizer.CanCreateTopic(),
 	}, nil
 }
 
@@ -240,4 +269,74 @@ func (uc *GetSpaceShowUsecase) resolvePageTopicViews(
 	}
 
 	return topicMap, canEditPageByTopic, nil
+}
+
+// resolveSectionTopics fetches the topics shown in the space detail's topic section and resolves,
+// per topic, whether the current user may create a page in it. Members see the topics they have
+// joined; non-members (guests included) see only public topics. The per-topic create permission is
+// resolved with one bulk fetch of the member's topic memberships to avoid an N+1 over topics, and
+// is empty for guests since they cannot create pages. A member with a space-level page:write scope
+// (e.g. space:admin) can create pages even in a topic without a per-topic membership, which
+// newAuthorizer handles by merging space and topic scopes.
+//
+// [Ja] resolveSectionTopics はスペース詳細のトピックセクションに表示するトピックを取得し、
+// トピックごとに現在のユーザーがそこにページを作成できるかを解決する。メンバーは参加中のトピックを、
+// 非メンバー (ゲスト含む) は公開トピックのみを見る。トピックごとの作成権限はトピックメンバーの
+// 一括取得 1 回で解決し、トピックに対する N+1 を避ける。ゲストはページを作成できないため空になる。
+// スペースレベルの page:write スコープ (例: space:admin) を持つメンバーは、トピックメンバーで
+// なくてもページを作成できる。これは newAuthorizer がスペーススコープとトピックスコープを統合して扱う。
+func (uc *GetSpaceShowUsecase) resolveSectionTopics(
+	ctx context.Context,
+	spaceID model.SpaceID,
+	spaceMember *model.SpaceMember,
+) ([]*model.Topic, map[model.TopicID]bool, error) {
+	// Guests (and logged-in non-members) see only public topics and cannot create pages, so leave
+	// the permission map empty (lookups default to false).
+	//
+	// [Ja] ゲスト (およびログイン済み非メンバー) は公開トピックのみを見てページを作成できないため、
+	// 権限マップは空のままにする (参照は false になる)。
+	if spaceMember == nil {
+		topics, err := uc.topicRepo.ListPublicBySpace(ctx, spaceID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("公開トピックの取得に失敗: %w", err)
+		}
+		return topics, map[model.TopicID]bool{}, nil
+	}
+
+	// Members see the topics they have joined.
+	// [Ja] メンバーは参加中のトピックを見る。
+	topics, err := uc.topicRepo.ListJoinedBySpaceMember(ctx, spaceMember.ID, spaceID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("参加トピックの取得に失敗: %w", err)
+	}
+
+	canCreatePageByTopic := make(map[model.TopicID]bool, len(topics))
+	if len(topics) == 0 {
+		return topics, canCreatePageByTopic, nil
+	}
+
+	topicIDs := make([]model.TopicID, len(topics))
+	for i, topic := range topics {
+		topicIDs[i] = topic.ID
+	}
+
+	// Fetch the member's topic memberships for all section topics in one query, then resolve the
+	// page-create permission per topic.
+	//
+	// [Ja] セクションの全トピックのトピックメンバーを 1 クエリで取得し、トピックごとに
+	// ページ作成権限を判定する。
+	topicMembers, err := uc.topicMemberRepo.ListBySpaceMemberAndTopics(ctx, spaceID, spaceMember.ID, topicIDs)
+	if err != nil {
+		return nil, nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
+	}
+	topicMemberByTopic := make(map[model.TopicID]*model.TopicMember, len(topicMembers))
+	for _, topicMember := range topicMembers {
+		topicMemberByTopic[topicMember.TopicID] = topicMember
+	}
+
+	for _, topicID := range topicIDs {
+		canCreatePageByTopic[topicID] = newAuthorizer(spaceMember, topicMemberByTopic[topicID]).CanCreatePage()
+	}
+
+	return topics, canCreatePageByTopic, nil
 }

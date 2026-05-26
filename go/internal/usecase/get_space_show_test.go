@@ -55,7 +55,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
 		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	limitedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(limitedID).
 		WithScopes([]model.Scope{model.ScopePageRead}).
@@ -84,6 +84,16 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
 		WithSpaceMemberID(joinedMemberSpaceMemberID).
+		Build()
+	// Make the limited member join the public topic with no extra topic scopes, so the topic section
+	// lists it but CanCreatePageByTopic stays false (the member lacks page:write).
+	//
+	// [Ja] 限定メンバーを追加のトピックスコープ無しで公開トピックに参加させ、トピックセクションには
+	// 表示されるが CanCreatePageByTopic は false のままになる (page:write を持たない) ようにする。
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithSpaceMemberID(limitedSpaceMemberID).
 		Build()
 
 	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -181,6 +191,17 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.CanEditPageByTopic[publicTopicID] {
 			t.Error("CanEditPageByTopic should be false for a guest")
 		}
+		// The topic section shows only public topics to a guest, with no create action anywhere.
+		// [Ja] トピックセクションはゲストには公開トピックのみを表示し、どこにも作成導線を出さない。
+		if len(output.SectionTopics) != 1 {
+			t.Fatalf("len(SectionTopics) = %d, want 1 (public topic only)", len(output.SectionTopics))
+		}
+		if output.SectionTopics[0].ID != publicTopicID {
+			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+		}
+		if output.CanCreatePageByTopic[publicTopicID] {
+			t.Error("CanCreatePageByTopic should be false for a guest")
+		}
 	})
 
 	t.Run("ログイン済みでも非メンバーは公開トピックのページのみ取得できる", func(t *testing.T) {
@@ -217,6 +238,20 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		}
 		if output.FirstJoinedTopic != nil {
 			t.Error("FirstJoinedTopic should be nil for a logged-in non-member")
+		}
+		// A logged-in non-member goes through the same nil-spaceMember path as a guest, so the
+		// topic section shows only public topics with no create action anywhere.
+		//
+		// [Ja] ログイン済み非メンバーはゲストと同じ spaceMember == nil 経路を通るため、トピック
+		// セクションには公開トピックのみが表示され、どこにも作成導線は出ない。
+		if len(output.SectionTopics) != 1 {
+			t.Fatalf("len(SectionTopics) = %d, want 1 (public topic only)", len(output.SectionTopics))
+		}
+		if output.SectionTopics[0].ID != publicTopicID {
+			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+		}
+		if output.CanCreatePageByTopic[publicTopicID] {
+			t.Error("CanCreatePageByTopic should be false for a logged-in non-member")
 		}
 	})
 
@@ -275,6 +310,14 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.FirstJoinedTopic != nil {
 			t.Error("FirstJoinedTopic should be nil for a member who has not joined any topic")
 		}
+		// The topic section lists the member's joined topics, so it is empty for the owner who has
+		// joined none, even though space:admin grants access to every topic's pages.
+		//
+		// [Ja] トピックセクションはメンバーの参加トピックを並べるため、space:admin が全トピックの
+		// ページへのアクセスを与えていても、どのトピックにも参加していないオーナーでは空になる。
+		if len(output.SectionTopics) != 0 {
+			t.Errorf("len(SectionTopics) = %d, want 0 (owner joined no topic)", len(output.SectionTopics))
+		}
 	})
 
 	t.Run("topic_writeを持たないメンバーはCanCreateTopicがfalse", func(t *testing.T) {
@@ -304,6 +347,20 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		}
 		if output.CanEditPageByTopic[privateTopicID] {
 			t.Error("CanEditPageByTopic should be false for a member without page:write scope")
+		}
+		// The limited member has joined the public topic, so the section lists it, but without
+		// page:write the per-topic create action stays off.
+		//
+		// [Ja] 限定メンバーは公開トピックに参加しているためセクションに表示されるが、page:write が
+		// 無いためトピックごとの作成導線は出ない。
+		if len(output.SectionTopics) != 1 {
+			t.Fatalf("len(SectionTopics) = %d, want 1 (joined public topic)", len(output.SectionTopics))
+		}
+		if output.SectionTopics[0].ID != publicTopicID {
+			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+		}
+		if output.CanCreatePageByTopic[publicTopicID] {
+			t.Error("CanCreatePageByTopic should be false for a member without page:write scope")
 		}
 	})
 
@@ -336,6 +393,20 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		}
 		if output.FirstJoinedTopic.ID != publicTopicID {
 			t.Errorf("FirstJoinedTopic.ID = %v, want %v", output.FirstJoinedTopic.ID, publicTopicID)
+		}
+		// The joined member sees the joined public topic in the section and, holding space:admin
+		// (which implies page:write), may create a page there.
+		//
+		// [Ja] 参加メンバーはセクションに参加中の公開トピックを見て、space:admin (page:write を含意) を
+		// 持つためそこにページを作成できる。
+		if len(output.SectionTopics) != 1 {
+			t.Fatalf("len(SectionTopics) = %d, want 1 (joined public topic)", len(output.SectionTopics))
+		}
+		if output.SectionTopics[0].ID != publicTopicID {
+			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+		}
+		if !output.CanCreatePageByTopic[publicTopicID] {
+			t.Error("CanCreatePageByTopic should be true for a space:admin member in the joined topic")
 		}
 	})
 }
@@ -406,6 +477,20 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 		}
 		if output.FirstJoinedTopic.ID != joinedTopicID {
 			t.Errorf("FirstJoinedTopic.ID = %v, want %v", output.FirstJoinedTopic.ID, joinedTopicID)
+		}
+		// Even with no pages, the joined topic appears in the section with a create action, which is
+		// the per-topic replacement for the old space-level empty-state "new page" button.
+		//
+		// [Ja] ページが無くても参加トピックは作成導線付きでセクションに現れる。これは旧来の
+		// スペースレベル空状態「新規ページ」ボタンを置き換えるトピックごとの導線である。
+		if len(output.SectionTopics) != 1 {
+			t.Fatalf("len(SectionTopics) = %d, want 1 (joined topic)", len(output.SectionTopics))
+		}
+		if output.SectionTopics[0].ID != joinedTopicID {
+			t.Errorf("SectionTopics[0].ID = %v, want %v (joined topic)", output.SectionTopics[0].ID, joinedTopicID)
+		}
+		if !output.CanCreatePageByTopic[joinedTopicID] {
+			t.Error("CanCreatePageByTopic should be true for a space:admin member in the joined topic")
 		}
 	})
 }

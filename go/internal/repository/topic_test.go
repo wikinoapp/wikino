@@ -139,6 +139,103 @@ func TestTopicRepository_ListActiveBySpace(t *testing.T) {
 	})
 }
 
+func TestTopicRepository_ListPublicBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewTopicRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("public-topic-space").
+		WithName("Public Topic Space").
+		Build()
+
+	// Create public topics out of number order to verify ORDER BY number.
+	// [Ja] ORDER BY number を検証するため、number 順とは異なる順序で公開トピックを作成する。
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Public Second").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public First").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	// A private topic and a discarded public topic must both be excluded.
+	// [Ja] 非公開トピックと廃棄済みの公開トピックは、いずれも除外される。
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(4).
+		WithName("Discarded Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		WithDiscarded().
+		Build()
+
+	// A public topic in another space must not leak into the target space's results,
+	// verifying the space_id scoping of the query.
+	// [Ja] 別スペースの公開トピックが対象スペースの結果に混入しないこと (クエリの space_id
+	// スコープが効いていること) を検証する。
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("other-public-topic-space").
+		WithName("Other Public Topic Space").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	t.Run("公開トピックのみをナンバー順で取得できる", func(t *testing.T) {
+		topics, err := repo.ListPublicBySpace(context.Background(), spaceID)
+		if err != nil {
+			t.Fatalf("ListPublicBySpace() error = %v", err)
+		}
+		// len == 2 and the exact names below also confirm the other space's public
+		// topic ("Other Space Public") is excluded by the space_id scoping.
+		// [Ja] len == 2 と下の名前一致により、別スペースの公開トピック ("Other Space
+		// Public") が space_id スコープで除外されることも合わせて確認している。
+		if len(topics) != 2 {
+			t.Fatalf("len(topics) = %v, want 2", len(topics))
+		}
+		if topics[0].Name != "Public First" {
+			t.Errorf("topics[0].Name = %v, want 'Public First'", topics[0].Name)
+		}
+		if topics[1].Name != "Public Second" {
+			t.Errorf("topics[1].Name = %v, want 'Public Second'", topics[1].Name)
+		}
+		for _, topic := range topics {
+			if topic.Visibility != model.TopicVisibilityPublic {
+				t.Errorf("topic %q Visibility = %v, want TopicVisibilityPublic", topic.Name, topic.Visibility)
+			}
+		}
+	})
+
+	t.Run("トピックがないスペースは空のスライスを返す", func(t *testing.T) {
+		topics, err := repo.ListPublicBySpace(context.Background(), "00000000-0000-0000-0000-000000000000")
+		if err != nil {
+			t.Fatalf("ListPublicBySpace() error = %v", err)
+		}
+		if len(topics) != 0 {
+			t.Errorf("len(topics) = %v, want 0", len(topics))
+		}
+	})
+}
+
 func TestTopicRepository_FindBySpaceAndNames(t *testing.T) {
 	t.Parallel()
 

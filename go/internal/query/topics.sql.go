@@ -226,6 +226,52 @@ func (q *Queries) ListActiveTopicsBySpace(ctx context.Context, spaceID string) (
 	return items, nil
 }
 
+const listPublicTopicsBySpace = `-- name: ListPublicTopicsBySpace :many
+SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics
+WHERE space_id = $1 AND visibility = 0 AND discarded_at IS NULL
+ORDER BY number
+`
+
+// Returns the active public topics in the given space (not-discarded, visibility = public),
+// ordered by number. Used by the topic section shown to non-members (guests) on the space
+// detail page, where only public topics are visible.
+//
+// [Ja] 指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を number 順で返す。
+// スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、ここでは公開
+// トピックのみが見える。
+func (q *Queries) ListPublicTopicsBySpace(ctx context.Context, spaceID string) ([]Topic, error) {
+	rows, err := q.db.QueryContext(ctx, listPublicTopicsBySpace, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Topic{}
+	for rows.Next() {
+		var i Topic
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.Number,
+			&i.Name,
+			&i.Description,
+			&i.Visibility,
+			&i.DiscardedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTopicsJoinedBySpaceMember = `-- name: ListTopicsJoinedBySpaceMember :many
 SELECT t.id, t.space_id, t.number, t.name, t.description, t.visibility, t.discarded_at, t.created_at, t.updated_at FROM topics t
 INNER JOIN topic_members tm ON t.id = tm.topic_id

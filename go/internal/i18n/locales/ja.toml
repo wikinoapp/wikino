@@ -1041,12 +1041,12 @@ other = "新規トピック"
 description = "スペース詳細画面でページがない場合のメッセージ"
 other = "ページはありません"
 
-[space_show_new_page_description]
-description = "スペース詳細画面でページがない場合の説明文"
-other = "最初の1ページ目を作成しましょう"
+[space_show_topics_heading]
+description = "スペース詳細画面のトピックセクションの見出し"
+other = "トピック"
 
-[space_show_new_page_button]
-description = "スペース詳細画面の新規ページ作成ボタン"
+[space_show_topic_new_page]
+description = "スペース詳細画面のトピックセクションでトピックごとに表示する新規ページ作成アクションのツールチップ"
 other = "新規ページ"
 
 [space_show_options_rss_feed]
