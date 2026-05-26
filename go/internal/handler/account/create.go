@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -60,7 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// セッションを作成
 	sessionOutput, err := h.createUserSessionUC.Execute(ctx, usecase.CreateUserSessionInput{
 		UserID:    output.UserID,
-		IPAddress: r.RemoteAddr,
+		IPAddress: clientip.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	})
 	if err != nil {

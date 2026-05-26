@@ -2,6 +2,7 @@ package email_confirmation_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -381,6 +382,88 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("X-Forwarded-For", "192.168.1.100")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = i18n.SetLocale(ctx, "ja")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setup.handler.Create(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("6th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "リクエストが多すぎます") {
+		t.Error("rate limit exceeded message not found in response")
+	}
+}
+
+// TestCreate_RateLimit_PrioritizesCFConnectingIP locks in that the IP rate-limit
+// key is derived from internal/clientip (CF-Connecting-IP first). Requests that
+// share the same CF-Connecting-IP fall into one bucket even when X-Forwarded-For
+// differs, so the limit triggers on the 6th request; if the handler keyed on
+// X-Forwarded-For instead, each request would land in a separate bucket and never
+// be limited.
+//
+// [Ja] IP レート制限キーが internal/clientip (CF-Connecting-IP 優先) から導出される
+// ことを固定する。X-Forwarded-For が異なっても CF-Connecting-IP が同じなら同一バケットに
+// 入り、6 回目で制限が発火する。もしハンドラーが X-Forwarded-For をキーにしていたら、
+// 各リクエストは別バケットになり制限されない。
+func TestCreate_RateLimit_PrioritizesCFConnectingIP(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	setup := newTestHandlerForCreate(t, queries, true)
+
+	const cfConnectingIP = "203.0.113.10"
+
+	// Stay within the limits: 5 requests (IP cap is 5/hour), each with a distinct
+	// email to avoid the per-email cap (3/hour) and a varying X-Forwarded-For so
+	// only the shared CF-Connecting-IP can be the rate-limit key.
+	// [Ja] 制限内に収める: IP 上限 (5/時間) ぶんの 5 回。メール上限 (3/時間) を避けるため
+	// 各リクエストは別メールにし、X-Forwarded-For を毎回変えることで、共通の
+	// CF-Connecting-IP だけがレート制限キーになり得る状況を作る。
+	for i := 0; i < 5; i++ {
+		form := url.Values{}
+		form.Set("email", fmt.Sprintf("cfip%d@example.com", i))
+		form.Set("event", "signup")
+		form.Set("csrf_token", "test-csrf-token")
+		form.Set("cf-turnstile-response", "test-token")
+
+		req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("CF-Connecting-IP", cfConnectingIP)
+		req.Header.Set("X-Forwarded-For", fmt.Sprintf("198.51.100.%d", i+1))
+
+		ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+		ctx = i18n.SetLocale(ctx, "ja")
+		req = req.WithContext(ctx)
+
+		rr := httptest.NewRecorder()
+		setup.handler.Create(rr, req)
+
+		if rr.Code != http.StatusFound {
+			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+		}
+	}
+
+	// The 6th request shares the CF-Connecting-IP (with yet another X-Forwarded-For),
+	// so it is rejected by the IP rate limit.
+	// [Ja] 6 回目は CF-Connecting-IP が同じ (X-Forwarded-For はさらに別) なので IP 制限で拒否される。
+	form := url.Values{}
+	form.Set("email", "cfip5@example.com")
+	form.Set("event", "signup")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Set("cf-turnstile-response", "test-token")
+
+	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("CF-Connecting-IP", cfConnectingIP)
+	req.Header.Set("X-Forwarded-For", "198.51.100.200")
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = i18n.SetLocale(ctx, "ja")

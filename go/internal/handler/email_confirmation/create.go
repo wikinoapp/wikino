@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -55,7 +56,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate Limiting: IP単位
-	clientIP := getClientIP(r)
+	clientIP := clientip.GetClientIP(r)
 	if err := h.limiter.Allow(ctx, ratelimit.CheckInput{
 		Key:    ratelimit.IPKey(clientIP),
 		Limit:  rateLimitIPLimit,
@@ -168,18 +169,4 @@ func parseEmailConfirmationEvent(event string) model.EmailConfirmationEvent {
 	default:
 		return model.EmailConfirmationEventSignUp
 	}
-}
-
-// getClientIP はリクエストからクライアントのIPアドレスを取得します
-func getClientIP(r *http.Request) string {
-	// X-Forwarded-For ヘッダーを確認（プロキシ経由の場合）
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return xff
-	}
-	// X-Real-IP ヘッダーを確認
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return xri
-	}
-	// RemoteAddr から取得
-	return r.RemoteAddr
 }

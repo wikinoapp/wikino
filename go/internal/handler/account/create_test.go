@@ -409,3 +409,78 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 		t.Errorf("wrong redirect location: got %v want %v", location, "/sign_up")
 	}
 }
+
+// TestCreate_SessionIPAddress_PrioritizesCFConnectingIP locks in that the created
+// session records the client IP resolved by internal/clientip (CF-Connecting-IP
+// first), not the raw r.RemoteAddr. chi's RealIP middleware was removed, so the
+// session IP now comes from clientip.GetClientIP; sending CF-Connecting-IP and a
+// different X-Forwarded-For proves CF-Connecting-IP wins.
+//
+// [Ja] 作成されるセッションの IP が、生の r.RemoteAddr ではなく internal/clientip
+// (CF-Connecting-IP 優先) で解決したクライアント IP で記録されることを固定する。
+// chi の RealIP ミドルウェアを削除したためセッション IP は clientip.GetClientIP 由来になる。
+// CF-Connecting-IP と異なる X-Forwarded-For を同時に送り、CF-Connecting-IP が勝つことを確認する。
+func TestCreate_SessionIPAddress_PrioritizesCFConnectingIP(t *testing.T) {
+	t.Parallel()
+
+	handler, _, emailConfirmationRepo := setupHandler(t)
+
+	testID := time.Now().UnixNano()
+	testEmail := fmt.Sprintf("session_ip_%d@example.com", testID)
+	testAtname := fmt.Sprintf("si%d", testID%1000000000000)
+
+	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
+
+	form := url.Values{}
+	form.Set("atname", testAtname)
+	form.Set("password", "password123")
+
+	req := httptest.NewRequest(http.MethodPost, "/accounts", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept-Language", "ja")
+	req.Header.Set("CF-Connecting-IP", "203.0.113.7")
+	req.Header.Set("X-Forwarded-For", "198.51.100.9")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = timezone.ToContext(ctx, "America/New_York")
+	req = req.WithContext(ctx)
+
+	req.AddCookie(&http.Cookie{
+		Name:  session.EmailConfirmationCookieName,
+		Value: ecID,
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusFound {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+	}
+
+	// Pull the session token out of the response cookie.
+	// [Ja] レスポンスの Cookie からセッショントークンを取り出す。
+	var sessionToken string
+	for _, cookie := range rr.Result().Cookies() {
+		if cookie.Name == session.CookieName {
+			sessionToken = cookie.Value
+			break
+		}
+	}
+	if sessionToken == "" {
+		t.Fatal("session cookie not set")
+	}
+
+	// Read the persisted session back and verify the recorded IP.
+	// [Ja] 永続化されたセッションを読み戻し、記録された IP を検証する。
+	userSessionRepo := repository.NewUserSessionRepository(query.New(testutil.GetTestDB()))
+	sess, err := userSessionRepo.FindByToken(t.Context(), sessionToken)
+	if err != nil {
+		t.Fatalf("failed to find session: %v", err)
+	}
+	if sess == nil {
+		t.Fatal("session not found")
+	}
+	if sess.IPAddress != "203.0.113.7" {
+		t.Errorf("session IP address: got %q want %q", sess.IPAddress, "203.0.113.7")
+	}
+}
