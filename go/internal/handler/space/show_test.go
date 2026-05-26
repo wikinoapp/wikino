@@ -224,6 +224,19 @@ func TestShow_ゲストは公開トピックのページのみ閲覧できる(t 
 	if strings.Contains(body, "/s/ss-guest/pages/1/edit") {
 		t.Error("response should not contain an edit link for a guest")
 	}
+	// The topic section lists only public topics for a guest; the private topic must not appear.
+	// [Ja] トピックセクションはゲストには公開トピックのみを並べ、非公開トピックは現れてはならない。
+	if !strings.Contains(body, "/s/ss-guest/topics/1\"") {
+		t.Error("response should contain the public topic detail link in the topic section")
+	}
+	if strings.Contains(body, "/s/ss-guest/topics/2") {
+		t.Error("response should not contain the private topic detail link for a guest")
+	}
+	// A guest cannot create pages, so no per-topic new page action is rendered.
+	// [Ja] ゲストはページを作成できないため、トピックごとの新規ページ作成アクションは描画されない。
+	if strings.Contains(body, "/s/ss-guest/topics/1/pages/new") {
+		t.Error("response should not contain a new page link for a guest")
+	}
 }
 
 func TestShow_参加トピックが無いメンバーにトピック作成導線が出る(t *testing.T) {
@@ -272,7 +285,7 @@ func TestShow_参加トピックが無いメンバーにトピック作成導線
 	}
 }
 
-func TestShow_参加トピックがありページが無いメンバーにページ作成導線が出る(t *testing.T) {
+func TestShow_メンバーにトピックセクションと作成導線が表示され空状態のボタンは消える(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -319,11 +332,23 @@ func TestShow_参加トピックがありページが無いメンバーにペー
 	if !strings.Contains(body, "ページはありません") {
 		t.Error("response should contain the no-pages empty state message")
 	}
-	if !strings.Contains(body, "新規ページ") {
-		t.Error("response should contain the new page button")
+	// The joined topic appears in the topic section, linking to its detail page.
+	// [Ja] 参加トピックがトピックセクションに表示され、詳細ページへリンクする。
+	if !strings.Contains(body, "参加トピック") {
+		t.Error("response should contain the joined topic name in the topic section")
 	}
+	if !strings.Contains(body, "/s/ss-nopage/topics/5\"") {
+		t.Error("response should contain the topic detail link in the topic section")
+	}
+	// The member may write, so the per-topic new page action appears in the section.
+	// [Ja] メンバーは書き込めるため、トピックごとの新規ページ作成アクションがセクションに表示される。
 	if !strings.Contains(body, "/s/ss-nopage/topics/5/pages/new") {
-		t.Error("response should contain the new page form link for the first joined topic")
+		t.Error("response should contain the per-topic new page link in the topic section")
+	}
+	// The space-level empty-state "new page" button is gone; its guidance text must not appear.
+	// [Ja] スペースレベルの空状態「新規ページ」ボタンは消え、その説明文が表示されてはならない。
+	if strings.Contains(body, "最初の1ページ目を作成しましょう") {
+		t.Error("response should not contain the removed empty-state new page guidance")
 	}
 }
 
