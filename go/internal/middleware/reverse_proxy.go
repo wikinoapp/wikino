@@ -242,25 +242,38 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	}, nil
 }
 
-// Middleware はHTTPミドルウェアを返す
+// Middleware returns the HTTP middleware.
+// [Ja] Middleware は HTTP ミドルウェアを返す。
 func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// device_token Cookie が存在しない場合は自動生成してセット
-		m.ensureDeviceToken(w, r)
-
-		// 1. 常にGoで処理するパス（完全一致・プレフィックス一致）
+		// 1. Paths always handled by Go (exact match / prefix match).
+		// [Ja] 1. 常に Go で処理するパス (完全一致・プレフィックス一致)
 		if m.isGoHandledPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 2. 常にGoで処理するパス（正規表現 + メソッドフィルタ）
+		// 2. Paths always handled by Go (regex + method filter).
+		// [Ja] 2. 常に Go で処理するパス (正規表現 + メソッドフィルタ)
 		if m.isGoHandledByRegex(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 3. フィーチャーフラグで制御するパス
+		// Issue device_token only for real content pages that are proxied to
+		// Rails or evaluated against a feature flag. Attaching Set-Cookie to
+		// static assets and health checks (= paths always handled by Go) hurts
+		// CDN caching and lets the token be issued multiple times on the first
+		// load, so limit issuance to requests that fell through to this point.
+		//
+		// [Ja] device_token は Rails 転送対象・フラグ評価対象の実コンテンツ
+		// ページにのみ発行する。静的アセット・ヘルスチェック (= 常に Go で処理する
+		// パス) に Set-Cookie を付けると CDN キャッシュを損ね、初回ロードで
+		// トークンが多重発行されるため、ここまで判定を通り抜けたリクエストに限定する。
+		m.ensureDeviceToken(w, r)
+
+		// 3. Paths controlled by a feature flag.
+		// [Ja] 3. フィーチャーフラグで制御するパス
 		if flagName := m.getFeatureFlagForRequest(r); flagName != "" {
 			if m.isFeatureFlagEnabled(r, flagName) {
 				next.ServeHTTP(w, r)
@@ -268,7 +281,8 @@ func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// 4. その他はすべてRailsにプロキシ
+		// 4. Everything else is proxied to Rails.
+		// [Ja] 4. その他はすべて Rails にプロキシ
 		m.proxy.ServeHTTP(w, r)
 	})
 }

@@ -1034,6 +1034,91 @@ func TestReverseProxyMiddleware_ensureDeviceToken(t *testing.T) {
 	})
 }
 
+func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
+	// This test reads the production featureFlaggedPatterns slice (for the
+	// /s/:identifier feature-flag path), so t.Parallel() is intentionally
+	// omitted to avoid running concurrently with tests that swap out this
+	// global variable.
+	//
+	// [Ja] 本テストは本番の featureFlaggedPatterns を読む (/s/:identifier の
+	// フラグ評価パスのため) ため、このグローバル変数を上書きする他テストと
+	// 並行実行されないよう t.Parallel() は意図的に使用しない。
+
+	// Mock server standing in for the Rails version.
+	// [Ja] Rails 版をモックするテストサーバー
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Rails response"))
+	}))
+	defer railsServer.Close()
+
+	cfg := &config.Config{
+		Domain:        "wikino.app",
+		CookieDomain:  "wikino.app",
+		SessionSecure: true,
+	}
+
+	// featureFlagRepo is nil, so the feature-flag path falls back to Rails. The
+	// subject of this test is the device_token placement, not the flag decision.
+	//
+	// [Ja] featureFlagRepo は nil とし、フラグ評価対象パスは Rails にフォールバック
+	// させる。本テストの対象はフラグ判定ではなく device_token の発行位置のため。
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	goHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Go response"))
+	})
+
+	handler := m.Middleware(goHandler)
+
+	testCases := []struct {
+		name             string
+		method           string
+		path             string
+		wantDeviceCookie bool
+	}{
+		// Paths always handled by Go: device_token must NOT be issued because
+		// ensureDeviceToken runs only after the Go-path checks.
+		//
+		// [Ja] 常に Go で処理するパス: ensureDeviceToken は Go パス判定の後でのみ
+		// 走るため device_token は発行されない
+		{name: "静的アセットには発行しない", method: http.MethodGet, path: "/static/css/app.css", wantDeviceCookie: false},
+		{name: "ヘルスチェックには発行しない", method: http.MethodGet, path: "/health", wantDeviceCookie: false},
+		{name: "ホーム画面 (完全一致) には発行しない", method: http.MethodGet, path: "/home", wantDeviceCookie: false},
+		{name: "正規表現マッチの Go パスには発行しない", method: http.MethodGet, path: "/s/my-space/pages/1/edit", wantDeviceCookie: false},
+
+		// Rails-proxied / feature-flag paths: device_token must be issued.
+		// [Ja] Rails 転送・フラグ評価対象パス: device_token が発行される
+		{name: "Rails 転送パスには発行する", method: http.MethodGet, path: "/settings", wantDeviceCookie: true},
+		{name: "フラグ評価対象パスには発行する", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			rr := httptest.NewRecorder()
+
+			handler.ServeHTTP(rr, req)
+
+			gotDeviceCookie := false
+			for _, c := range rr.Result().Cookies() {
+				if c.Name == DeviceTokenCookieName {
+					gotDeviceCookie = true
+					break
+				}
+			}
+
+			if gotDeviceCookie != tc.wantDeviceCookie {
+				t.Errorf("device_token Cookie の発行 = %v, want %v (path: %q)", gotDeviceCookie, tc.wantDeviceCookie, tc.path)
+			}
+		})
+	}
+}
+
 func TestRender502ErrorHTML(t *testing.T) {
 	t.Parallel()
 
