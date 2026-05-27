@@ -1,5 +1,5 @@
 ---
-last_synced: 2026-05-15
+last_synced: 2026-05-27
 ---
 
 # Wikino Development Guide
@@ -22,7 +22,7 @@ This repository manages two subprojects—the Go version and the Rails version�
 ├── go/                  # Go version implementation (features being migrated gradually)
 ├── rails/               # Rails version implementation (existing production system)
 ├── caddy/               # Reverse proxy configuration
-├── docs/                # Wikino-specific documentation (specs, work plans, etc.)
+├── docs/                # Wikino-specific documentation (ADR, work plans, etc.)
 ├── .github/             # Shared CI/CD configuration
 ├── Dockerfile.dev       # Dockerfile for the integrated development container
 ├── docker-compose.yml   # Docker Compose configuration
@@ -70,9 +70,11 @@ See [Makefile](./Makefile), [go/Makefile](./go/Makefile), and [rails/Makefile](.
 
 ## Documentation
 
-Specifications for each feature are managed under the `docs/specs/` directory. To understand the current state of the system, refer to the specifications first.
+The current state of the system (validation, permissions, structure) is owned by the code and tests. Documentation focuses on the _why_ behind design decisions, recorded as **ADR (Architecture Decision Record)**, and on in-progress changes (work plans, reviews).
 
-- [docs/specs/](./docs/specs/) - Specifications for each feature
+To understand why something is built the way it is, read the ADRs first; to understand how it currently behaves, read the code and tests.
+
+- [docs/README.md](./docs/README.md) - Documentation guide. ADRs live in `docs/private/adr/`
 
 ## Language and Writing Conventions
 
