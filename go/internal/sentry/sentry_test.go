@@ -197,15 +197,17 @@ func TestBeforeSend_FiltersRequestData(t *testing.T) {
 			expected: "username=user&email=test@example.com",
 		},
 		{
-			// tokenize: 1 トークンで "token" には完全一致しない → 旧部分一致仕様だと
-			// マスクされていたが、トークン境界マッチではマスクしない。
-			// [Ja] tokenize は 1 トークンで "token" に完全一致せず、トークン境界マッチでは対象外。
+			// "tokenize" matches "token" only as a substring, not as a whole token,
+			// so token-boundary matching leaves it unmasked.
+			//
+			// [Ja] tokenize は 1 トークンで "token" に完全一致せず、トークン境界マッチ
+			// では対象外。
 			name:     "tokenizeのように単語の一部に含むだけはマスクしない",
 			data:     "tokenize=true&secretive=note",
 			expected: "tokenize=true&secretive=note",
 		},
 		{
-			// snake_case で分割した結果に "password" / "secret" トークンが含まれるためマスク。
+			// snake_case splitting yields the "password" / "secret" tokens, so the value is masked.
 			// [Ja] snake_case 分割で password / secret トークンが含まれるためマスクされること。
 			name:     "snake_caseの内側にセンシティブトークンを含む場合はマスク",
 			data:     "old_password=old&account_secret=hidden",
@@ -274,15 +276,16 @@ func TestBeforeSend_FiltersQueryString(t *testing.T) {
 			expected: "page=1&limit=10&sort=created_at",
 		},
 		{
-			// monkey / okeydokey は 1 トークンで "key" には完全一致しないため、
-			// 旧部分一致仕様だと FILTERED 化されていたが、トークン境界マッチでは保持される。
+			// "monkey" / "okeydokey" match "key" only as a substring, not as a whole
+			// token, so token-boundary matching keeps them.
+			//
 			// [Ja] monkey / okeydokey は 1 トークンで "key" に完全一致せず、保持される。
 			name:     "keyを単語の一部に含むだけのパラメータはマスクしない",
 			query:    "monkey=banana&okeydokey=hi",
 			expected: "monkey=banana&okeydokey=hi",
 		},
 		{
-			// snake_case / kebab-case で分割した結果に "key" / "token" トークンが含まれるためマスク。
+			// snake_case / kebab-case splitting yields the "key" / "token" tokens, so it is masked.
 			// [Ja] snake_case / kebab-case で分割した結果に key / token トークンが含まれるためマスクされること。
 			name:     "kebabや snake_case の内側にセンシティブトークンを含む場合はマスク",
 			query:    "api-key=k&csrf_token=t",
