@@ -147,8 +147,11 @@ func TestIndex_WithDrafts(t *testing.T) {
 	}
 }
 
-// docs/specs/suggestion/overview.md の下書き一覧画面の仕様に対応する回帰テスト。
-// トピックグループごとに編集提案ボタンが表示され、正しい作成画面のパスにリンクすることを検証する。
+// Regression test verifying that a suggestion button is shown per topic group
+// on the draft list screen and links to the correct creation screen path.
+//
+// [Ja] 下書き一覧画面でトピックグループごとに編集提案ボタンが表示され、
+// 正しい作成画面のパスにリンクすることを検証する回帰テスト。
 func TestIndex_編集提案ボタンがトピックグループに表示される(t *testing.T) {
 	t.Parallel()
 

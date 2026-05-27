@@ -1,5 +1,5 @@
 ---
-last_synced: 2026-05-15
+last_synced: 2026-05-27
 ---
 
 # Wikino 開発ガイドライン
@@ -22,7 +22,7 @@ WikinoはWikiアプリケーションです。
 ├── go/                  # Go版の実装（段階的に機能を移行中）
 ├── rails/               # Rails版の実装（既存の本番システム）
 ├── caddy/               # リバースプロキシ設定
-├── docs/                # Wikino固有のドキュメント（仕様書、作業計画書など）
+├── docs/                # Wikino固有のドキュメント (ADR、作業計画書など)
 ├── .github/             # 共通の CI/CD 設定
 ├── Dockerfile.dev       # 統合開発コンテナの Dockerfile
 ├── docker-compose.yml   # Docker Compose 設定
@@ -70,9 +70,11 @@ Wikino ではフィーチャーブランチではなく **フィーチャーフ�
 
 ## ドキュメント
 
-各機能の仕様は `docs/specs/` ディレクトリで管理しています。システムの現在の状態を理解するには、まず仕様書を参照してください。
+システムの現在の状態 (バリデーション・権限・構造) はコードとテストを正本とします。ドキュメントは、設計判断の「なぜ」を記録する **ADR (Architecture Decision Record)** と、進行中の変更 (作業計画書・レビュー) に集中させます。
 
-- [docs/specs/](./docs/specs/) - 各機能の仕様書
+なぜその設計になっているかを理解するにはまず ADR を、現在どう動くかを理解するにはコードとテストを参照してください。
+
+- [docs/README.md](./docs/README.md) - ドキュメントガイド。ADR は `docs/private/adr/` に置いています
 
 ## 言語・文章ルール
 
