@@ -244,10 +244,10 @@ func TestNewTopicsForSpaceSection(t *testing.T) {
 	}
 }
 
-func TestNewJoinedTopicCard_FieldMapping(t *testing.T) {
+func TestNewCardLinkTopic_FieldMapping(t *testing.T) {
 	t.Parallel()
 
-	t.Run("公開トピックは globe-regular アイコンを設定する", func(t *testing.T) {
+	t.Run("公開トピックは globe-regular アイコンを設定し、作成権限を引き継ぐ", func(t *testing.T) {
 		topic := &model.Topic{
 			Number:     7,
 			Name:       "トピックA",
@@ -257,7 +257,7 @@ func TestNewJoinedTopicCard_FieldMapping(t *testing.T) {
 				Name:       "スペースA",
 			},
 		}
-		card := viewmodel.NewJoinedTopicCard(topic)
+		card := viewmodel.NewCardLinkTopic(topic, true)
 
 		if card.Name != "トピックA" {
 			t.Errorf("Name = %q, want %q", card.Name, "トピックA")
@@ -274,9 +274,12 @@ func TestNewJoinedTopicCard_FieldMapping(t *testing.T) {
 		if card.TopicIconName != "globe-regular" {
 			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "globe-regular")
 		}
+		if !card.CanCreatePage {
+			t.Error("CanCreatePage = false, want true")
+		}
 	})
 
-	t.Run("非公開トピックは lock-regular アイコンを設定する", func(t *testing.T) {
+	t.Run("非公開トピックは lock-regular アイコンを設定し、作成権限なしを引き継ぐ", func(t *testing.T) {
 		topic := &model.Topic{
 			Number:     3,
 			Name:       "プライベートトピック",
@@ -286,25 +289,30 @@ func TestNewJoinedTopicCard_FieldMapping(t *testing.T) {
 				Name:       "スペースB",
 			},
 		}
-		card := viewmodel.NewJoinedTopicCard(topic)
+		card := viewmodel.NewCardLinkTopic(topic, false)
 
 		if card.TopicIconName != "lock-regular" {
 			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "lock-regular")
 		}
+		if card.CanCreatePage {
+			t.Error("CanCreatePage = true, want false")
+		}
 	})
 }
 
-func TestNewJoinedTopicCards(t *testing.T) {
+func TestNewCardLinkTopics(t *testing.T) {
 	t.Parallel()
 
 	topics := []*model.Topic{
 		{
+			ID:         "topic-1",
 			Number:     1,
 			Name:       "T1",
 			Visibility: model.TopicVisibilityPublic,
 			Space:      &model.Space{Identifier: "s1", Name: "S1"},
 		},
 		{
+			ID:         "topic-2",
 			Number:     2,
 			Name:       "T2",
 			Visibility: model.TopicVisibilityPrivate,
@@ -312,7 +320,11 @@ func TestNewJoinedTopicCards(t *testing.T) {
 		},
 	}
 
-	cards := viewmodel.NewJoinedTopicCards(topics)
+	// Only topic-1 may be written to; topic-2 is missing from the map and defaults to false.
+	// [Ja] topic-1 のみ書き込み可。topic-2 はマップに無く false にフォールバックする。
+	canCreatePageByTopic := map[model.TopicID]bool{"topic-1": true}
+
+	cards := viewmodel.NewCardLinkTopics(topics, canCreatePageByTopic)
 	if len(cards) != 2 {
 		t.Fatalf("len(cards) = %d, want 2", len(cards))
 	}
@@ -324,5 +336,11 @@ func TestNewJoinedTopicCards(t *testing.T) {
 	}
 	if cards[1].TopicIconName != "lock-regular" {
 		t.Errorf("cards[1].TopicIconName = %q, want %q", cards[1].TopicIconName, "lock-regular")
+	}
+	if !cards[0].CanCreatePage {
+		t.Error("cards[0].CanCreatePage = false, want true")
+	}
+	if cards[1].CanCreatePage {
+		t.Error("cards[1].CanCreatePage = true, want false (missing from map)")
 	}
 }

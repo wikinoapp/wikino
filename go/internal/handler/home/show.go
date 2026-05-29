@@ -52,7 +52,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	content := homepages.Show(homepages.ShowPageData{
 		ActiveSpaces: viewmodel.NewSpaces(output.ActiveSpaces),
-		JoinedTopics: viewmodel.NewJoinedTopicCards(output.JoinedTopics),
+		// CanCreatePage is resolved in a later phase; pass a nil map so every card defaults to false for now.
+		// [Ja] CanCreatePage は後続フェーズで解決する。今は nil マップを渡して各カードを false 既定にする。
+		JoinedTopics: viewmodel.NewCardLinkTopics(output.JoinedTopics, nil),
 		DraftPages:   viewmodel.NewDraftPageCards(output.DraftPages),
 	})
 
