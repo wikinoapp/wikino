@@ -15,9 +15,9 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/pquerna/otp v1.5.0
 	github.com/resend/resend-go/v2 v2.28.0
-	github.com/riverqueue/river v0.37.1
-	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.37.1
-	github.com/riverqueue/river/rivertype v0.37.1
+	github.com/riverqueue/river v0.38.0
+	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.38.0
+	github.com/riverqueue/river/rivertype v0.38.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/sqlc-dev/sqlc v1.31.1
 	github.com/yuin/goldmark v1.8.2
@@ -71,8 +71,8 @@ require (
 	github.com/pingcap/log v1.1.0 // indirect
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20260418072757-ce92298d1124 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/riverqueue/river/riverdriver v0.37.1 // indirect
-	github.com/riverqueue/river/rivershared v0.37.1 // indirect
+	github.com/riverqueue/river/riverdriver v0.38.0 // indirect
+	github.com/riverqueue/river/rivershared v0.38.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
