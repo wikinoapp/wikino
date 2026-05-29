@@ -87,6 +87,60 @@ func (q *Queries) ListTopicMembersBySpaceMemberAndTopics(ctx context.Context, ar
 	return items, nil
 }
 
+const listTopicMembersByUserAndTopics = `-- name: ListTopicMembersByUserAndTopics :many
+SELECT tm.id, tm.space_id, tm.topic_id, tm.space_member_id, tm.joined_at, tm.last_page_modified_at, tm.created_at, tm.updated_at, tm.scopes FROM topic_members tm
+INNER JOIN space_members sm ON tm.space_member_id = sm.id AND tm.space_id = sm.space_id
+WHERE sm.user_id = $1 AND tm.space_id = ANY($2::uuid[]) AND tm.topic_id = ANY($3::uuid[])
+`
+
+type ListTopicMembersByUserAndTopicsParams struct {
+	UserID  string   `json:"user_id"`
+	Column2 []string `json:"column_2"`
+	Column3 []string `json:"column_3"`
+}
+
+// Fetch the topic memberships the given user holds across multiple topics in one query, joining
+// space_members to resolve the user (the user owns different space_members across spaces). Used to
+// avoid N+1 when resolving per-topic create permissions for joined topics spanning many spaces on
+// the home page. Scoped by space_id to satisfy the space_id query convention.
+//
+// [Ja] ユーザーが複数トピックで持つトピックメンバーを 1 クエリで一括取得する (スペースごとに
+// 別々の space_member を持つため space_members と JOIN してユーザーを解決する)。ホーム画面で
+// 複数スペースにまたがる参加中トピックのページ作成権限を解決する際の N+1 を避けるために使用。
+// space_id 条件でスコープし space_id クエリ規約を満たす。
+func (q *Queries) ListTopicMembersByUserAndTopics(ctx context.Context, arg ListTopicMembersByUserAndTopicsParams) ([]TopicMember, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicMembersByUserAndTopics, arg.UserID, pq.Array(arg.Column2), pq.Array(arg.Column3))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TopicMember{}
+	for rows.Next() {
+		var i TopicMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.SpaceMemberID,
+			&i.JoinedAt,
+			&i.LastPageModifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateTopicMemberLastPageModifiedAt = `-- name: UpdateTopicMemberLastPageModifiedAt :exec
 UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4 AND space_id = $5
 `

@@ -170,6 +170,132 @@ func TestTopicMemberRepository_ListBySpaceMemberAndTopics(t *testing.T) {
 	})
 }
 
+func TestTopicMemberRepository_ListByUserAndTopics(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewTopicMemberRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("tm-byuser-target@example.com").
+		WithAtname("tmbyusertarget").
+		Build()
+	otherUserID := testutil.NewUserBuilder(t, tx).
+		WithEmail("tm-byuser-other@example.com").
+		WithAtname("tmbyuserother").
+		Build()
+
+	// Two spaces the target user belongs to. The user owns a distinct space_member in each.
+	// [Ja] 対象ユーザーが参加する 2 スペース。ユーザーはスペースごとに別々の space_member を持つ。
+	spaceID1 := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("tm-byuser-space-1").
+		WithName("TopicMember ByUser Space 1").
+		Build()
+	spaceID2 := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("tm-byuser-space-2").
+		WithName("TopicMember ByUser Space 2").
+		Build()
+
+	spaceMember1ID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID1).
+		WithUserID(userID).
+		Build()
+	spaceMember2ID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID2).
+		WithUserID(userID).
+		Build()
+	// Another user who also belongs to space 1.
+	// [Ja] スペース 1 に参加する別ユーザー。
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID1).
+		WithUserID(otherUserID).
+		Build()
+
+	topic1ID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID1).WithNumber(1).WithName("S1 Topic 1").Build()
+	topic2ID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID2).WithNumber(1).WithName("S2 Topic 1").Build()
+	topic3ID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID1).WithNumber(2).WithName("S1 Topic 2").Build()
+
+	// The target user joins topic 1 (space 1) and topic 2 (space 2), but not topic 3.
+	// [Ja] 対象ユーザーはトピック 1 (スペース 1) とトピック 2 (スペース 2) に参加、トピック 3 には不参加。
+	topicMember1ID := testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID1).WithTopicID(topic1ID).WithSpaceMemberID(spaceMember1ID).Build()
+	topicMember2ID := testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID2).WithTopicID(topic2ID).WithSpaceMemberID(spaceMember2ID).Build()
+	// The other user joins topic 1: expected to be excluded since we filter by the target user.
+	// [Ja] 別ユーザーがトピック 1 に参加 (対象ユーザーで絞るため結果から除外される想定)。
+	testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID1).WithTopicID(topic1ID).WithSpaceMemberID(otherSpaceMemberID).Build()
+
+	t.Run("複数スペースにまたがるユーザーのメンバーシップを一括取得する", func(t *testing.T) {
+		members, err := repo.ListByUserAndTopics(
+			context.Background(),
+			userID,
+			[]model.SpaceID{spaceID1, spaceID2},
+			[]model.TopicID{topic1ID, topic2ID, topic3ID},
+		)
+		if err != nil {
+			t.Fatalf("ListByUserAndTopics() error = %v", err)
+		}
+
+		// Only the target user's memberships in topic 1 / topic 2 are returned. Topic 3 (not joined)
+		// and the other user's topic 1 membership are excluded.
+		//
+		// [Ja] 対象ユーザーのトピック 1 / トピック 2 のメンバーシップのみ返る。トピック 3 (未参加) と
+		// 別ユーザーのトピック 1 メンバーシップは除外される。
+		if len(members) != 2 {
+			t.Fatalf("len(members) = %d, want 2", len(members))
+		}
+		gotIDs := make(map[model.TopicMemberID]bool, len(members))
+		for _, m := range members {
+			gotIDs[m.ID] = true
+		}
+		if !gotIDs[topicMember1ID] || !gotIDs[topicMember2ID] {
+			t.Errorf("members = %v, want to contain %v and %v", gotIDs, topicMember1ID, topicMember2ID)
+		}
+	})
+
+	t.Run("指定スペースIDに含まれないトピックは返さない", func(t *testing.T) {
+		// topic1 belongs to space 1, but space 1 is excluded from spaceIDs, so it must not be returned
+		// even though the topic id is passed (space_id scoping via ANY filters it out).
+		//
+		// [Ja] topic1 はスペース 1 のトピックだが、spaceIDs からスペース 1 を外しているため、
+		// トピック ID を渡しても返らない (space_id スコープの ANY 条件で除外される)。
+		members, err := repo.ListByUserAndTopics(
+			context.Background(),
+			userID,
+			[]model.SpaceID{spaceID2},
+			[]model.TopicID{topic1ID, topic2ID},
+		)
+		if err != nil {
+			t.Fatalf("ListByUserAndTopics() error = %v", err)
+		}
+		if len(members) != 1 {
+			t.Fatalf("len(members) = %d, want 1", len(members))
+		}
+		if members[0].ID != topicMember2ID {
+			t.Errorf("members[0].ID = %v, want %v", members[0].ID, topicMember2ID)
+		}
+	})
+
+	t.Run("空のスペースIDリストはnilを返す", func(t *testing.T) {
+		members, err := repo.ListByUserAndTopics(context.Background(), userID, []model.SpaceID{}, []model.TopicID{topic1ID})
+		if err != nil {
+			t.Fatalf("ListByUserAndTopics() error = %v", err)
+		}
+		if members != nil {
+			t.Errorf("ListByUserAndTopics() = %v, want nil", members)
+		}
+	})
+
+	t.Run("空のトピックIDリストはnilを返す", func(t *testing.T) {
+		members, err := repo.ListByUserAndTopics(context.Background(), userID, []model.SpaceID{spaceID1}, []model.TopicID{})
+		if err != nil {
+			t.Fatalf("ListByUserAndTopics() error = %v", err)
+		}
+		if members != nil {
+			t.Errorf("ListByUserAndTopics() = %v, want nil", members)
+		}
+	})
+}
+
 func TestTopicMemberRepository_UpdateLastPageModifiedAt(t *testing.T) {
 	t.Parallel()
 

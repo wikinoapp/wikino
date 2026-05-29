@@ -118,7 +118,8 @@ type JoinedTopicCard struct {
 	TopicIconName   IconName
 }
 
-// NewJoinedTopicCard はモデルからホーム画面用 JoinedTopicCard を生成する
+// NewJoinedTopicCard builds a JoinedTopicCard for the home page from the model.
+// [Ja] NewJoinedTopicCard はモデルからホーム画面用 JoinedTopicCard を生成する。
 func NewJoinedTopicCard(topic *model.Topic) JoinedTopicCard {
 	return JoinedTopicCard{
 		Name:            topic.Name,
@@ -129,7 +130,8 @@ func NewJoinedTopicCard(topic *model.Topic) JoinedTopicCard {
 	}
 }
 
-// NewJoinedTopicCards はモデルのスライスからホーム画面用 JoinedTopicCard のスライスを生成する
+// NewJoinedTopicCards builds a slice of JoinedTopicCard for the home page from a slice of models.
+// [Ja] NewJoinedTopicCards はモデルのスライスからホーム画面用 JoinedTopicCard のスライスを生成する。
 func NewJoinedTopicCards(topics []*model.Topic) []JoinedTopicCard {
 	result := make([]JoinedTopicCard, len(topics))
 	for i, t := range topics {

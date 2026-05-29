@@ -13,14 +13,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowPageData はホーム画面に渡すデータ構造体です
+// ShowPageData is the data passed to the home page.
+// [Ja] ShowPageData はホーム画面に渡すデータ構造体です。
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
 	JoinedTopics []viewmodel.JoinedTopicCard
 	DraftPages   []viewmodel.DraftPageCard
 }
 
-// Show はホーム画面のコンテンツを表示します
+// Show renders the home page content.
+// [Ja] Show はホーム画面のコンテンツを表示します。
 func Show(data ShowPageData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -92,7 +94,7 @@ func Show(data ShowPageData) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "home_joined_spaces_heading"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 45, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 47, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -140,7 +142,7 @@ func Show(data ShowPageData) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "home_joined_topics_heading"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 66, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 68, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +182,7 @@ func Show(data ShowPageData) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "home_draft_pages_heading"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 85, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 87, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -198,7 +200,7 @@ func Show(data ShowPageData) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.DraftsPath())))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 91, Col: 62}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 93, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -211,7 +213,7 @@ func Show(data ShowPageData) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "home_draft_pages_view_all_link"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 93, Col: 62}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 95, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -295,7 +297,7 @@ func newSpaceButton() templ.Component {
 		var templ_7745c5c3_Var8 templ.SafeURL
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewSpacePath())))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 120, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 122, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -312,7 +314,7 @@ func newSpaceButton() templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "home_new_space_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 122, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 124, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -355,7 +357,7 @@ func spaceCard(space viewmodel.Space) templ.Component {
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpacePath(space.Identifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 132, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 134, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -379,7 +381,7 @@ func spaceCard(space viewmodel.Space) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(space.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 141, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 143, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -422,7 +424,7 @@ func joinedTopicCard(topic viewmodel.JoinedTopicCard) templ.Component {
 		var templ_7745c5c3_Var14 templ.SafeURL
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 155, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 157, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -454,7 +456,7 @@ func joinedTopicCard(topic viewmodel.JoinedTopicCard) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(topic.SpaceName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 168, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 170, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -467,7 +469,7 @@ func joinedTopicCard(topic viewmodel.JoinedTopicCard) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(topic.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 173, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 175, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -510,7 +512,7 @@ func draftPageCard(draft viewmodel.DraftPageCard) templ.Component {
 		var templ_7745c5c3_Var18 templ.SafeURL
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 188, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 190, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -534,7 +536,7 @@ func draftPageCard(draft viewmodel.DraftPageCard) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(draft.SpaceName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 199, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 201, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -555,7 +557,7 @@ func draftPageCard(draft viewmodel.DraftPageCard) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(draft.TopicName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 209, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 211, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -568,7 +570,7 @@ func draftPageCard(draft viewmodel.DraftPageCard) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(draft.DisplayTitle(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 215, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/home/show.templ`, Line: 217, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
