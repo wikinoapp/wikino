@@ -102,53 +102,50 @@ func topicVisibilityIconName(v model.TopicVisibility) IconName {
 	return "lock-regular"
 }
 
-// JoinedTopicCard represents a topic card shown in the home page's "joined topics" section.
-// It carries the topic name and number along with the owning space's identifier and name
-// (used to render the per-card SpaceIcon and the space label), and the topic visibility
-// icon (public/private) shown as the card's leading icon.
+// CardLinkTopic represents a reusable topic link card shared by the home page's "joined topics"
+// section and the space page's topic section. It carries the topic name and number, the owning
+// space's identifier (always set so path helpers can build links across multiple spaces) and
+// name (rendered as a label only when non-empty), the topic visibility icon (public/private)
+// shown as the card's leading icon, and whether the current user may create a page under the
+// topic (used to toggle the new-page link).
 //
-// [Ja] JoinedTopicCard はホーム画面の「参加中のトピック」セクションに表示するトピックカード。
-// トピック名・番号に加え、カード内の SpaceIcon とスペース名表示のためのスペース識別子と名前、
-// カード左側のリーディングアイコンとして表示するトピックの公開範囲アイコン (公開 / 非公開) を保持する。
-type JoinedTopicCard struct {
+// [Ja] CardLinkTopic はホーム画面の「参加中のトピック」セクションとスペース画面のトピック
+// セクションで共有する、再利用可能なトピックリンクカード。トピック名・番号に加え、スペース
+// 識別子 (複数スペースをまたぐリンクを組み立てられるよう常にセットする) と名前 (空でないときだけ
+// ラベルとして表示する)、カード左側のリーディングアイコンとして表示するトピックの公開範囲アイコン
+// (公開 / 非公開)、現在のユーザーがそのトピック配下でページを作成できるか (新規ページリンクの
+// 表示切り替えに使う) を保持する。
+type CardLinkTopic struct {
 	Name            string
 	Number          int32
 	SpaceIdentifier SpaceIdentifier
 	SpaceName       string
 	TopicIconName   IconName
+	CanCreatePage   bool
 }
 
-// NewJoinedTopicCard builds a JoinedTopicCard for the home page from the model.
-// [Ja] NewJoinedTopicCard はモデルからホーム画面用 JoinedTopicCard を生成する。
-func NewJoinedTopicCard(topic *model.Topic) JoinedTopicCard {
-	return JoinedTopicCard{
+// NewCardLinkTopic builds a CardLinkTopic from the model and the create permission.
+// [Ja] NewCardLinkTopic はモデルと作成権限から CardLinkTopic を生成する。
+func NewCardLinkTopic(topic *model.Topic, canCreatePage bool) CardLinkTopic {
+	return CardLinkTopic{
 		Name:            topic.Name,
 		Number:          topic.Number,
 		SpaceIdentifier: NewSpaceIdentifier(topic.Space.Identifier),
 		SpaceName:       topic.Space.Name,
 		TopicIconName:   topicVisibilityIconName(topic.Visibility),
+		CanCreatePage:   canCreatePage,
 	}
 }
 
-// NewJoinedTopicCards builds a slice of JoinedTopicCard for the home page from a slice of models.
-// [Ja] NewJoinedTopicCards はモデルのスライスからホーム画面用 JoinedTopicCard のスライスを生成する。
-func NewJoinedTopicCards(topics []*model.Topic) []JoinedTopicCard {
-	result := make([]JoinedTopicCard, len(topics))
+// NewCardLinkTopics builds the cards from the topics and the per-topic create permission map.
+// Topics missing from the map are treated as not creatable.
+//
+// [Ja] NewCardLinkTopics はトピックのスライスと、トピックごとの作成権限マップからカードの
+// スライスを生成する。マップに無いトピックは作成権限なし扱いになる。
+func NewCardLinkTopics(topics []*model.Topic, canCreatePageByTopic map[model.TopicID]bool) []CardLinkTopic {
+	result := make([]CardLinkTopic, len(topics))
 	for i, t := range topics {
-		result[i] = NewJoinedTopicCard(t)
+		result[i] = NewCardLinkTopic(t, canCreatePageByTopic[t.ID])
 	}
 	return result
-}
-
-// SpaceForIcon returns a Space view-model populated with the fields required to render
-// the per-card SpaceIcon (identifier drives the deterministic background color and first
-// character; name is kept available for future use).
-//
-// [Ja] SpaceForIcon はカード内の SpaceIcon を描画するために必要な Space ビューモデルを返す。
-// identifier は背景色と頭文字の決定に使われ、name は将来の利用に備えて保持する。
-func (c JoinedTopicCard) SpaceForIcon() Space {
-	return Space{
-		Name:       c.SpaceName,
-		Identifier: c.SpaceIdentifier,
-	}
 }

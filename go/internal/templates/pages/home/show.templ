@@ -10,7 +10,7 @@ import (
 // [Ja] ShowPageData はホーム画面に渡すデータ構造体です。
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
-	JoinedTopics []viewmodel.JoinedTopicCard
+	JoinedTopics []viewmodel.CardLinkTopic
 	DraftPages   []viewmodel.DraftPageCard
 }
 
@@ -149,7 +149,7 @@ templ spaceCard(space viewmodel.Space) {
 }
 
 // joinedTopicCard は参加中トピックのカードを表示します
-templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
+templ joinedTopicCard(topic viewmodel.CardLinkTopic) {
 	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
 		<div class="card-body h-full">
 			<a
@@ -160,16 +160,11 @@ templ joinedTopicCard(topic viewmodel.JoinedTopicCard) {
 					@templates.Icon(topic.TopicIconName, "flex-none size-6 fill-muted-foreground")
 
 					<div class="flex flex-col gap-0.5 min-w-0">
-						<div class="flex items-center gap-1 min-w-0">
-							@components.SpaceIcon(components.SpaceIconData{
-								Space: topic.SpaceForIcon(),
-								Size:  components.SpaceIconSizeSm,
-							})
-
-							<span class="line-clamp-1 text-xs text-muted-foreground shrink min-w-0">
+						if topic.SpaceName != "" {
+							<span class="line-clamp-1 text-xs text-muted-foreground min-w-0">
 								{ topic.SpaceName }
 							</span>
-						</div>
+						}
 
 						<span class="line-clamp-1 text-sm font-bold">
 							{ topic.Name }
