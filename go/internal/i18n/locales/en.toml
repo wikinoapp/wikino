@@ -1049,6 +1049,10 @@ other = "Topics"
 description = "Tooltip of the per-topic new page action in the topic section on the space show page"
 other = "New page"
 
+[card_link_topic_new_page]
+description = "Tooltip of the new page link shown on a topic link card"
+other = "New page"
+
 [space_show_options_rss_feed]
 description = "RSS feed link in the options menu on the space show page"
 other = "RSS feed"
