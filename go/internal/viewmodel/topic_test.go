@@ -153,71 +153,7 @@ func TestNewTopicForShow(t *testing.T) {
 	}
 }
 
-func TestNewTopicForSpaceSection(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name              string
-		topic             *model.Topic
-		canCreatePage     bool
-		wantName          string
-		wantNumber        int32
-		wantIconName      viewmodel.IconName
-		wantCanCreatePage bool
-	}{
-		{
-			name: "公開トピック、作成権限あり",
-			topic: &model.Topic{
-				ID:         "topic-1",
-				Number:     1,
-				Name:       "一般",
-				Visibility: model.TopicVisibilityPublic,
-			},
-			canCreatePage:     true,
-			wantName:          "一般",
-			wantNumber:        1,
-			wantIconName:      "globe-regular",
-			wantCanCreatePage: true,
-		},
-		{
-			name: "非公開トピック、作成権限なし",
-			topic: &model.Topic{
-				ID:         "topic-2",
-				Number:     2,
-				Name:       "秘密",
-				Visibility: model.TopicVisibilityPrivate,
-			},
-			canCreatePage:     false,
-			wantName:          "秘密",
-			wantNumber:        2,
-			wantIconName:      "lock-regular",
-			wantCanCreatePage: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := viewmodel.NewTopicForSpaceSection(tt.topic, tt.canCreatePage)
-
-			if got.Name != tt.wantName {
-				t.Errorf("Name = %q, want %q", got.Name, tt.wantName)
-			}
-			if got.Number != tt.wantNumber {
-				t.Errorf("Number = %d, want %d", got.Number, tt.wantNumber)
-			}
-			if got.IconName != tt.wantIconName {
-				t.Errorf("IconName = %q, want %q", got.IconName, tt.wantIconName)
-			}
-			if got.CanCreatePage != tt.wantCanCreatePage {
-				t.Errorf("CanCreatePage = %v, want %v", got.CanCreatePage, tt.wantCanCreatePage)
-			}
-		})
-	}
-}
-
-func TestNewTopicsForSpaceSection(t *testing.T) {
+func TestNewCardLinkTopicsForSpace(t *testing.T) {
 	t.Parallel()
 
 	topic1 := &model.Topic{ID: "topic-1", Number: 1, Name: "T1", Visibility: model.TopicVisibilityPublic}
@@ -227,20 +163,41 @@ func TestNewTopicsForSpaceSection(t *testing.T) {
 	// Only topic1 may be written to; topic2 is missing from the map and defaults to false.
 	// [Ja] topic1 のみ書き込み可。topic2 はマップに無く false にフォールバックする。
 	canCreatePageByTopic := map[model.TopicID]bool{"topic-1": true}
+	spaceIdentifier := viewmodel.NewSpaceIdentifier("my-space")
 
-	got := viewmodel.NewTopicsForSpaceSection(topics, canCreatePageByTopic)
+	got := viewmodel.NewCardLinkTopicsForSpace(topics, canCreatePageByTopic, spaceIdentifier)
 
 	if len(got) != 2 {
 		t.Fatalf("len(got) = %d, want 2", len(got))
+	}
+
+	// Every card uses the space identifier passed in (the topics carry no loaded Space) and hides the
+	// space name, while the visibility icon and create permission come from each topic / the map.
+	//
+	// [Ja] 各カードは渡されたスペース識別子を使い (トピックは Space を読み込んでいない)、スペース名は
+	// 非表示にする。一方、公開範囲アイコンと作成権限はトピックごと / マップから決まる。
+	if got[0].Name != "T1" || got[1].Name != "T2" {
+		t.Errorf("topic names mismatch: got %q, %q", got[0].Name, got[1].Name)
+	}
+	for i, card := range got {
+		if card.SpaceIdentifier != spaceIdentifier {
+			t.Errorf("got[%d].SpaceIdentifier = %q, want %q", i, card.SpaceIdentifier, spaceIdentifier)
+		}
+		if card.SpaceName != "" {
+			t.Errorf("got[%d].SpaceName = %q, want empty", i, card.SpaceName)
+		}
+	}
+	if got[0].TopicIconName != "globe-regular" {
+		t.Errorf("got[0].TopicIconName = %q, want %q", got[0].TopicIconName, "globe-regular")
+	}
+	if got[1].TopicIconName != "lock-regular" {
+		t.Errorf("got[1].TopicIconName = %q, want %q", got[1].TopicIconName, "lock-regular")
 	}
 	if !got[0].CanCreatePage {
 		t.Error("got[0].CanCreatePage = false, want true")
 	}
 	if got[1].CanCreatePage {
 		t.Error("got[1].CanCreatePage = true, want false (missing from map)")
-	}
-	if got[0].Name != "T1" || got[1].Name != "T2" {
-		t.Errorf("topic names mismatch: got %q, %q", got[0].Name, got[1].Name)
 	}
 }
 

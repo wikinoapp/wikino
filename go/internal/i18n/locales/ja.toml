@@ -1045,10 +1045,6 @@ other = "ページはありません"
 description = "スペース詳細画面のトピックセクションの見出し"
 other = "トピック"
 
-[space_show_topic_new_page]
-description = "スペース詳細画面のトピックセクションでトピックごとに表示する新規ページ作成アクションのツールチップ"
-other = "新規ページ"
-
 [card_link_topic_new_page]
 description = "トピックリンクカードに表示する新規ページ作成リンクのツールチップ"
 other = "新規ページ"
