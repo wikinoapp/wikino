@@ -1049,6 +1049,10 @@ other = "トピック"
 description = "スペース詳細画面のトピックセクションでトピックごとに表示する新規ページ作成アクションのツールチップ"
 other = "新規ページ"
 
+[card_link_topic_new_page]
+description = "トピックリンクカードに表示する新規ページ作成リンクのツールチップ"
+other = "新規ページ"
+
 [space_show_options_rss_feed]
 description = "スペース詳細画面のオプションメニューの RSS フィードリンク"
 other = "RSSフィード"
