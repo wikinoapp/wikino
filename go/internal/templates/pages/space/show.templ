@@ -19,15 +19,19 @@ type ShowData struct {
 	JoinedSpace bool
 
 	// SectionTopics are the topics shown in the topic section: the member's joined topics, or (for
-	// non-members and guests) the space's public topics. Each links to its detail and, where
-	// CanCreatePage is true, offers a per-topic "new page" action. This is the page-creation entry
-	// point, replacing the space-level empty-state "new page" button that implicitly fixed the topic.
+	// non-members and guests) the space's public topics. They are rendered with the shared
+	// CardLinkTopic component (the same card used on the home page), with the space name hidden since
+	// the space header already shows it. Each card links to its detail and, where CanCreatePage is
+	// true, offers a per-topic "new page" action. This is the page-creation entry point, replacing
+	// the space-level empty-state "new page" button that implicitly fixed the topic.
 	//
 	// [Ja] SectionTopics はトピックセクションに表示するトピック。メンバーは参加中トピック、
-	// 非メンバー・ゲストはスペースの公開トピック。各トピックは詳細へリンクし、CanCreatePage が
-	// true のときトピックごとの「新規ページ」アクションを出す。これがページ作成の導線であり、
-	// 作成先トピックを暗黙に固定していたスペースレベルの空状態「新規ページ」ボタンを置き換える。
-	SectionTopics []viewmodel.TopicForSpaceSection
+	// 非メンバー・ゲストはスペースの公開トピック。ホーム画面と同じ共有コンポーネント CardLinkTopic で
+	// 描画し、スペース名はヘッダーで既に表示しているためカード内では非表示にする。各カードは詳細へ
+	// リンクし、CanCreatePage が true のときトピックごとの「新規ページ」アクションを出す。これが
+	// ページ作成の導線であり、作成先トピックを暗黙に固定していたスペースレベルの空状態「新規ページ」
+	// ボタンを置き換える。
+	SectionTopics []viewmodel.CardLinkTopic
 
 	// HasFirstTopic reports whether the member has a joined topic. It only drives the empty-state
 	// branch (no joined topics vs. no pages); page creation is handled by the topic section.
@@ -235,11 +239,13 @@ templ newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) {
 	</a>
 }
 
-// topicSection renders the topic list for the space detail. Each topic links to its detail page,
-// and topics the user may write to expose a per-topic "new page" action. This is the page-creation
+// topicSection renders the topic list for the space detail as a grid of CardLinkTopic cards (the
+// same component the home page uses for joined topics). Each card links to its detail page, and
+// topics the user may write to expose a per-topic "new page" action. This is the page-creation
 // entry point. Nothing renders when there are no topics (the empty state covers that case).
 //
-// [Ja] topicSection はスペース詳細のトピック一覧を表示します。各トピックは詳細ページへリンクし、
+// [Ja] topicSection はスペース詳細のトピック一覧を CardLinkTopic カードのグリッドとして表示します
+// (ホーム画面が参加中トピックに使うのと同じコンポーネント)。各カードは詳細ページへリンクし、
 // ユーザーが書き込めるトピックにはトピックごとの「新規ページ」アクションを出します。これがページ作成の
 // 導線です。トピックが無いときは何も表示しません (その場合は空状態が担います)。
 templ topicSection(data ShowData) {
@@ -250,33 +256,9 @@ templ topicSection(data ShowData) {
 					{ templates.T(ctx, "space_show_topics_heading") }
 				</p>
 
-				<div class="flex flex-col">
+				<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-2">
 					for _, topic := range data.SectionTopics {
-						<div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-stone-100">
-							if topic.CanCreatePage {
-								<a
-									href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, topic.Number))) }
-									class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none transition duration-150 ease-in-out hover:bg-brand-300/40"
-									title={ templates.T(ctx, "space_show_topic_new_page") }
-								>
-									@templates.Icon("pencil-simple-line-regular", "size-4 fill-muted-foreground")
-								</a>
-							}
-
-							<a
-								href={ templ.SafeURL(string(templates.TopicPath(data.Space.Identifier, topic.Number))) }
-								class={ "flex w-full items-center gap-2 rounded-md p-2 text-foreground",
-									templ.KV("pr-12", topic.CanCreatePage) }
-							>
-								<div class="w-[16px] shrink-0">
-									@templates.Icon(topic.IconName, "size-[16px] fill-muted-foreground")
-								</div>
-
-								<span class="line-clamp-1 text-sm">
-									{ topic.Name }
-								</span>
-							</a>
-						</div>
+						@components.CardLinkTopic(topic)
 					}
 				</div>
 			</div>

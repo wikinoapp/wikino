@@ -1045,10 +1045,6 @@ other = "No pages."
 description = "Heading of the topic section on the space show page"
 other = "Topics"
 
-[space_show_topic_new_page]
-description = "Tooltip of the per-topic new page action in the topic section on the space show page"
-other = "New page"
-
 [card_link_topic_new_page]
 description = "Tooltip of the new page link shown on a topic link card"
 other = "New page"
