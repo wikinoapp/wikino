@@ -310,9 +310,8 @@ func (uc *GetSpaceShowUsecase) resolveSectionTopics(
 		return nil, nil, fmt.Errorf("参加トピックの取得に失敗: %w", err)
 	}
 
-	canCreatePageByTopic := make(map[model.TopicID]bool, len(topics))
 	if len(topics) == 0 {
-		return topics, canCreatePageByTopic, nil
+		return topics, map[model.TopicID]bool{}, nil
 	}
 
 	topicIDs := make([]model.TopicID, len(topics))
@@ -329,14 +328,12 @@ func (uc *GetSpaceShowUsecase) resolveSectionTopics(
 	if err != nil {
 		return nil, nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
-	topicMemberByTopic := make(map[model.TopicID]*model.TopicMember, len(topicMembers))
-	for _, topicMember := range topicMembers {
-		topicMemberByTopic[topicMember.TopicID] = topicMember
-	}
 
-	for _, topicID := range topicIDs {
-		canCreatePageByTopic[topicID] = newAuthorizer(spaceMember, topicMemberByTopic[topicID]).CanCreatePage()
-	}
+	// All section topics belong to this single space, so every topic resolves against the same member.
+	// [Ja] セクションのトピックはすべて同一スペースに属するため、各トピックは同じメンバーで判定する。
+	canCreatePageByTopic := buildCanCreatePageByTopic(topics, topicMembers, func(*model.Topic) *model.SpaceMember {
+		return spaceMember
+	})
 
 	return topics, canCreatePageByTopic, nil
 }
