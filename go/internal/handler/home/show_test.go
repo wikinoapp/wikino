@@ -34,10 +34,12 @@ func TestShow_Empty(t *testing.T) {
 		Domain: "localhost",
 	}
 	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
 
@@ -119,10 +121,12 @@ func TestShow_WithSpaces(t *testing.T) {
 		Domain: "localhost",
 	}
 	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
 
@@ -229,10 +233,12 @@ func TestShow_WithJoinedTopics(t *testing.T) {
 		Domain: "localhost",
 	}
 	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
 
@@ -310,10 +316,12 @@ func TestShow_WithDraftPages(t *testing.T) {
 		Domain: "localhost",
 	}
 	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
 
@@ -398,10 +406,12 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 		Domain: "localhost",
 	}
 	spaceRepo := repository.NewSpaceRepository(queries)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
 

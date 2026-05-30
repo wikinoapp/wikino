@@ -16,9 +16,11 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	draftPageRepo := repository.NewDraftPageRepository(q)
-	uc := NewGetHomeShowUsecase(spaceRepo, topicRepo, draftPageRepo)
+	uc := NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
 	t.Run("参加中スペース・トピックが0件の場合は空のスライスが返る", func(t *testing.T) {
 		userID := testutil.NewUserBuilder(t, tx).
@@ -216,6 +218,97 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 		}
 		if len(output.DraftPages) != 5 {
 			t.Errorf("len(DraftPages) = %d, want 5 (capped at homeDraftPagesLimit)", len(output.DraftPages))
+		}
+	})
+
+	t.Run("参加中トピックごとにCanCreatePageが解決される", func(t *testing.T) {
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("ghs-cancreate@example.com").
+			WithAtname("ghscancreate").
+			Build()
+
+		// Space 1: the user is a space admin, so they can create pages in its topic even without a
+		// topic-level page:write scope.
+		// [Ja] スペース 1: ユーザーはスペース管理者なので、トピックレベルの page:write が無くても
+		// そのトピックにページを作成できる。
+		adminSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("ghs-cancreate-admin").
+			Build()
+		adminSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(adminSpaceID).
+			WithUserID(userID).
+			Build()
+		adminTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(adminSpaceID).
+			WithNumber(1).
+			WithName("Admin Topic").
+			Build()
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(adminSpaceID).
+			WithTopicID(adminTopicID).
+			WithSpaceMemberID(adminSpaceMemberID).
+			Build()
+
+		// Space 2: the user is a member without any space-level scope. Page-create permission is then
+		// decided per topic by the topic membership's scopes.
+		// [Ja] スペース 2: ユーザーはスペースレベルのスコープを持たないメンバー。ページ作成権限は
+		// トピックメンバーのスコープによってトピックごとに決まる。
+		memberSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("ghs-cancreate-member").
+			Build()
+		memberSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(memberSpaceID).
+			WithUserID(userID).
+			WithScopes([]model.Scope{}).
+			Build()
+
+		// Topic with a topic-level page:write scope → can create.
+		// [Ja] トピックレベルの page:write スコープを持つトピック → 作成可能。
+		writableTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(memberSpaceID).
+			WithNumber(1).
+			WithName("Writable Topic").
+			Build()
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(memberSpaceID).
+			WithTopicID(writableTopicID).
+			WithSpaceMemberID(memberSpaceMemberID).
+			WithScopes([]model.Scope{model.ScopePageWrite}).
+			Build()
+
+		// Topic without any scope → cannot create.
+		// [Ja] スコープを持たないトピック → 作成不可。
+		readonlyTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(memberSpaceID).
+			WithNumber(2).
+			WithName("Readonly Topic").
+			Build()
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(memberSpaceID).
+			WithTopicID(readonlyTopicID).
+			WithSpaceMemberID(memberSpaceMemberID).
+			WithScopes([]model.Scope{}).
+			Build()
+
+		output, err := uc.Execute(context.Background(), GetHomeShowInput{
+			UserID: userID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+
+		want := map[model.TopicID]bool{
+			adminTopicID:    true,
+			writableTopicID: true,
+			readonlyTopicID: false,
+		}
+		for topicID, wantCanCreate := range want {
+			if got := output.CanCreatePageByTopic[topicID]; got != wantCanCreate {
+				t.Errorf("CanCreatePageByTopic[%v] = %v, want %v", topicID, got, wantCanCreate)
+			}
 		}
 	})
 }
