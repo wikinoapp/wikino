@@ -33,13 +33,6 @@ type ShowData struct {
 	// ボタンを置き換える。
 	SectionTopics []viewmodel.CardLinkTopic
 
-	// HasFirstTopic reports whether the member has a joined topic. It only drives the empty-state
-	// branch (no joined topics vs. no pages); page creation is handled by the topic section.
-	//
-	// [Ja] HasFirstTopic はメンバーに参加中トピックがあるかを表す。空状態の分岐 (参加トピック無し /
-	// ページ無し) の判定にのみ使う。ページ作成はトピックセクションが担う。
-	HasFirstTopic bool
-
 	CanCreateTopic bool
 }
 
@@ -101,7 +94,6 @@ templ Show(data ShowData) {
 					},
 				},
 			})
-
 			<div class="max-w-3xl w-full mx-auto">
 				<div class="flex flex-col gap-6">
 					<div class="px-4">
@@ -110,40 +102,8 @@ templ Show(data ShowData) {
 							Actions: showActions(data),
 						})
 					</div>
-
 					@topicSection(data)
-
-					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
-						<div class="flex flex-col gap-6 px-4">
-							if len(data.PinnedPages) > 0 {
-								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-									for _, page := range data.PinnedPages {
-										@components.CardLinkPage(page, data.Space.Identifier)
-									}
-								</div>
-							}
-
-							if len(data.Pages) > 0 {
-								<div class="flex flex-col gap-6">
-									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-										for _, page := range data.Pages {
-											@components.CardLinkPage(page, data.Space.Identifier)
-										}
-									</div>
-
-									@components.PaginationNav(
-										data.Pagination,
-										data.paginationPath(data.Pagination.Current-1),
-										data.paginationPath(data.Pagination.Current+1),
-									)
-								</div>
-							}
-						</div>
-					} else {
-						<div class="px-4">
-							@showEmptyState(data)
-						</div>
-					}
+					@pagesSection(data)
 				</div>
 			</div>
 		</div>
@@ -167,7 +127,6 @@ templ showActions(data ShowData) {
 		>
 			@templates.Icon("dots-three-regular")
 		</button>
-
 		<div id="space-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
 			<div role="menu" id="space-options-dropdown-menu" aria-labelledby="space-options-dropdown-trigger">
 				<div role="menuitem">
@@ -180,7 +139,6 @@ templ showActions(data ShowData) {
 						{ templates.T(ctx, "space_show_options_rss_feed") }
 					</a>
 				</div>
-
 				if data.JoinedSpace {
 					<div role="menuitem">
 						<a
@@ -191,7 +149,6 @@ templ showActions(data ShowData) {
 							{ templates.T(ctx, "space_show_options_new_topic") }
 						</a>
 					</div>
-
 					<div role="menuitem">
 						<a
 							class="flex gap-2 items-center w-full"
@@ -201,7 +158,6 @@ templ showActions(data ShowData) {
 							{ templates.T(ctx, "space_show_options_trash") }
 						</a>
 					</div>
-
 					<div role="menuitem">
 						<a
 							class="flex gap-2 items-center w-full"
@@ -215,16 +171,6 @@ templ showActions(data ShowData) {
 			</div>
 		</div>
 	</div>
-}
-
-// showEmptyState renders the empty state, branching on whether the member has a joined topic.
-// [Ja] showEmptyState は参加トピックの有無で分岐して空状態を表示します。
-templ showEmptyState(data ShowData) {
-	if data.JoinedSpace && !data.HasFirstTopic {
-		@components.EmptyState(noTopicsEmptyStateData(ctx, data))
-	} else {
-		@components.EmptyState(noPagesEmptyStateData(ctx))
-	}
 }
 
 // newTopicButton renders the link to the new topic form.
@@ -242,26 +188,69 @@ templ newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) {
 // topicSection renders the topic list for the space detail as a grid of CardLinkTopic cards (the
 // same component the home page uses for joined topics). Each card links to its detail page, and
 // topics the user may write to expose a per-topic "new page" action. This is the page-creation
-// entry point. Nothing renders when there are no topics (the empty state covers that case).
+// entry point. When there are no topics, the "no topics" empty state is shown in place of the grid,
+// so the heading always renders.
 //
 // [Ja] topicSection はスペース詳細のトピック一覧を CardLinkTopic カードのグリッドとして表示します
 // (ホーム画面が参加中トピックに使うのと同じコンポーネント)。各カードは詳細ページへリンクし、
 // ユーザーが書き込めるトピックにはトピックごとの「新規ページ」アクションを出します。これがページ作成の
-// 導線です。トピックが無いときは何も表示しません (その場合は空状態が担います)。
+// 導線です。トピックが無いときはグリッドの代わりに「トピックがありません」の空状態を表示するため、
+// 見出しは常に描画されます。
 templ topicSection(data ShowData) {
-	if len(data.SectionTopics) > 0 {
-		<div class="px-4">
-			<div class="flex flex-col gap-2">
-				<p class="text-xs font-bold text-muted-foreground px-2">
-					{ templates.T(ctx, "space_show_topics_heading") }
-				</p>
-
-				<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-2">
-					for _, topic := range data.SectionTopics {
-						@components.CardLinkTopic(topic)
-					}
-				</div>
+	<div class="flex flex-col gap-4 px-4">
+		<h2 class="font-bold antialiased">
+			{ templates.T(ctx, "space_show_topics_heading") }
+		</h2>
+		if len(data.SectionTopics) > 0 {
+			<div class="grid grid-cols-2 items-stretch gap-2 md:grid-cols-3">
+				for _, topic := range data.SectionTopics {
+					@components.CardLinkTopic(topic)
+				}
 			</div>
-		</div>
-	}
+		} else {
+			@components.EmptyState(noTopicsEmptyStateData(ctx, data))
+		}
+	</div>
+}
+
+// pagesSection renders the page list for the space detail: pinned pages first, then the paginated
+// regular pages. When there are no pages at all, the "no pages" empty state is shown in place of the
+// lists, so the heading always renders.
+//
+// [Ja] pagesSection はスペース詳細のページ一覧を表示します。先頭にピン留めページ、続いてページ送り
+// 対象の通常ページを並べます。ページが 1 件も無いときは一覧の代わりに「ページがありません」の空状態を
+// 表示するため、見出しは常に描画されます。
+templ pagesSection(data ShowData) {
+	<div class="flex flex-col gap-4 px-4">
+		<h2 class="font-bold antialiased">
+			{ templates.T(ctx, "space_show_pages_heading") }
+		</h2>
+		if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
+			<div class="flex flex-col gap-6">
+				if len(data.PinnedPages) > 0 {
+					<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+						for _, page := range data.PinnedPages {
+							@components.CardLinkPage(page, data.Space.Identifier)
+						}
+					</div>
+				}
+				if len(data.Pages) > 0 {
+					<div class="flex flex-col gap-6">
+						<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+							for _, page := range data.Pages {
+								@components.CardLinkPage(page, data.Space.Identifier)
+							}
+						</div>
+						@components.PaginationNav(
+							data.Pagination,
+							data.paginationPath(data.Pagination.Current-1),
+							data.paginationPath(data.Pagination.Current+1),
+						)
+					</div>
+				}
+			</div>
+		} else {
+			@components.EmptyState(noPagesEmptyStateData(ctx))
+		}
+	</div>
 }

@@ -1041,6 +1041,10 @@ other = "New topic"
 description = "Message when there are no pages in the space"
 other = "No pages."
 
+[space_show_pages_heading]
+description = "Heading of the pages section on the space show page"
+other = "Pages"
+
 [space_show_topics_heading]
 description = "Heading of the topic section on the space show page"
 other = "Topics"

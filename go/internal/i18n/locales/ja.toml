@@ -1041,6 +1041,10 @@ other = "新規トピック"
 description = "スペース詳細画面でページがない場合のメッセージ"
 other = "ページはありません"
 
+[space_show_pages_heading]
+description = "スペース詳細画面のページセクションの見出し"
+other = "ページ"
+
 [space_show_topics_heading]
 description = "スペース詳細画面のトピックセクションの見出し"
 other = "トピック"

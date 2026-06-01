@@ -1,4 +1,4 @@
-.PHONY: test test-file console server lint lint-fix fmt zeitwerk sorbet sorbet-update db-migrate db-rollback db-setup graphql-dump help
+.PHONY: test test-file console server lint lint-fix fmt zeitwerk sorbet sorbet-update db-migrate db-rollback db-setup help
 
 # デフォルトの環境を設定（外部から指定された場合はそちらを使用）
 # 例: APP_ENV=test make db-migrate
@@ -9,6 +9,7 @@ OP_RUN := APP_ENV=$(APP_ENV) op run --env-file=".env.local" --
 # テスト専用（常にtest環境）
 OP_RUN_TEST := APP_ENV=test op run --env-file=".env.local" --
 
+## テスト
 test: ## 全テストを実行
 	$(OP_RUN_TEST) bin/rspec
 
@@ -18,6 +19,7 @@ test-file: ## 特定のテストファイルを実行 (例: make test-file FILE=
 setup: ## セットアップコマンド
 	$(OP_RUN) bin/setup
 
+## 開発サーバー
 console: ## Railsコンソールを起動
 	$(OP_RUN) bin/rails console
 
