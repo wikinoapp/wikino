@@ -16,7 +16,7 @@ type SpaceIconSize string
 
 const (
 	SpaceIconSizeSm SpaceIconSize = "sm" // size-4
-	SpaceIconSizeMd SpaceIconSize = "md" // size-8
+	SpaceIconSizeMd SpaceIconSize = "md" // size-6
 	SpaceIconSizeLg SpaceIconSize = "lg" // size-10
 )
 
@@ -38,7 +38,7 @@ func (d SpaceIconData) sizeClass() string {
 	case SpaceIconSizeLg:
 		return "size-10 text-base"
 	default:
-		return "size-8 text-sm"
+		return "size-6 text-sm"
 	}
 }
 
