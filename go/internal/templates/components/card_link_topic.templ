@@ -16,9 +16,9 @@ import (
 // デバイスではホバー時、タッチデバイスでは常時表示) を出す。CardLinkPage の CanEdit
 // パターンを踏襲している。
 templ CardLinkTopic(topic viewmodel.CardLinkTopic) {
-	<div class="group card relative min-h-[74px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+	<div class="group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
 		if topic.CanCreatePage {
-			<div class="touch:hidden non-touch:flex absolute right-2 top-2 z-10">
+			<div class="touch:hidden non-touch:flex items-center absolute right-2 inset-y-0 z-10">
 				<a
 					href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
 					class="
@@ -42,7 +42,7 @@ templ CardLinkTopic(topic viewmodel.CardLinkTopic) {
 				>
 					<div class="flex gap-2 h-full">
 						<div class="flex items-center h-full">
-							@templates.Icon(topic.TopicIconName, "flex-none size-6 fill-muted-foreground")
+							@templates.Icon(topic.TopicIconName, "flex-none size-4 md:size-6 fill-muted-foreground")
 						</div>
 
 						<div class="flex flex-col gap-0.5 min-w-0">
@@ -52,7 +52,7 @@ templ CardLinkTopic(topic viewmodel.CardLinkTopic) {
 								</span>
 							}
 
-							<span class="line-clamp-2 text-sm font-bold">
+							<span class="line-clamp-1 text-sm font-bold">
 								{ topic.Name }
 							</span>
 						</div>
