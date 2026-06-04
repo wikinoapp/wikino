@@ -4,14 +4,16 @@
 # SentryEventFilter scrubs sensitive parameters from Sentry events before they
 # leave the application. Acts as defense in depth on top of Sentry's
 # `send_default_pii = false` so that even if request data is captured the
-# obvious secrets (passwords, CSRF tokens, Turnstile responses) are masked.
+# obvious secrets (passwords, CSRF tokens, Turnstile responses) and PII
+# (email addresses) are masked.
 #
 # [Ja] Sentry へ送信される直前のイベントから機密パラメータを除去するフィルタ。
 # `send_default_pii = false` の挙動と併用して、平文パスワード・CSRF トークン・
-# Turnstile レスポンスといった機微情報が Sentry の管理画面に残らないように
-# 多層防御として動作する。
+# Turnstile レスポンスといった機微情報や PII (メールアドレス) が Sentry の
+# 管理画面に残らないように多層防御として動作する。
 class SentryEventFilter
   SENSITIVE_KEYS = %w[
+    email
     password
     password_confirmation
     csrf_token
