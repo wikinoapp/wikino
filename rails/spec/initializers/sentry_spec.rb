@@ -88,13 +88,21 @@ RSpec.describe "config/initializers/sentry.rb" do # rubocop:disable RSpec/Descri
       expect(before_send).to respond_to(:call)
     end
 
-    it "password を [FILTERED] に置き換えること" do
-      event = build_event(data: {"password" => "super-secret", "email" => "user@example.com"})
+    it "password を [FILTERED] に置き換え、非センシティブキーはそのまま通すこと" do
+      event = build_event(data: {"password" => "super-secret", "username" => "alice"})
 
       result = before_send.call(event, {})
 
       expect(result.request.data["password"]).to eq("[FILTERED]")
-      expect(result.request.data["email"]).to eq("user@example.com")
+      expect(result.request.data["username"]).to eq("alice")
+    end
+
+    it "email を [FILTERED] に置き換えること" do
+      event = build_event(data: {"email" => "user@example.com"})
+
+      result = before_send.call(event, {})
+
+      expect(result.request.data["email"]).to eq("[FILTERED]")
     end
 
     it "password_confirmation を [FILTERED] に置き換えること" do
@@ -152,6 +160,23 @@ RSpec.describe "config/initializers/sentry.rb" do # rubocop:disable RSpec/Descri
       result = before_send.call(event, {})
 
       expect(result.request.data["items"][0]["user"]["password"]).to eq("[FILTERED]")
+    end
+
+    it "ネストしたハッシュ内の email も置き換えること" do
+      event = build_event(data: {"user" => {"email" => "user@example.com"}})
+
+      result = before_send.call(event, {})
+
+      expect(result.request.data["user"]["email"]).to eq("[FILTERED]")
+    end
+
+    it "配列の中のハッシュに含まれる email も置き換えること" do
+      event = build_event(data: {"members" => [{"email" => "a@example.com"}, {"email" => "b@example.com"}]})
+
+      result = before_send.call(event, {})
+
+      expect(result.request.data["members"][0]["email"]).to eq("[FILTERED]")
+      expect(result.request.data["members"][1]["email"]).to eq("[FILTERED]")
     end
 
     it "request.data が nil でも例外にならないこと" do

@@ -320,6 +320,143 @@ func TestBeforeSend_FiltersQueryString(t *testing.T) {
 	}
 }
 
+func TestBeforeSend_FiltersTags(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		tags     map[string]string
+		expected map[string]string
+	}{
+		{
+			// sentryslog stamps slog attributes onto event.Tags, so the
+			// "email" attribute on email-send failure logs lands here.
+			//
+			// [Ja] sentryslog は slog 属性を event.Tags に乗せるため、メール
+			// 送信失敗ログの "email" 属性はここに届く。
+			name: "emailタグをマスク",
+			tags: map[string]string{
+				"email": "user@example.com",
+			},
+			expected: map[string]string{
+				"email": "[FILTERED]",
+			},
+		},
+		{
+			name: "password/secret/tokenタグをマスク",
+			tags: map[string]string{
+				"password": "secret123",
+				"secret":   "hidden",
+				"token":    "abc123",
+			},
+			expected: map[string]string{
+				"password": "[FILTERED]",
+				"secret":   "[FILTERED]",
+				"token":    "[FILTERED]",
+			},
+		},
+		{
+			// snake_case splitting yields the "email" / "token" tokens, so the value is masked.
+			// [Ja] snake_case 分割で email / token トークンが含まれるためマスクされること。
+			name: "snake_caseの内側にセンシティブトークンを含む場合はマスク",
+			tags: map[string]string{
+				"user_email": "user@example.com",
+				"api_token":  "abc123",
+			},
+			expected: map[string]string{
+				"user_email": "[FILTERED]",
+				"api_token":  "[FILTERED]",
+			},
+		},
+		{
+			name: "大文字小文字を区別しない",
+			tags: map[string]string{
+				"EMAIL": "user@example.com",
+				"Token": "abc123",
+			},
+			expected: map[string]string{
+				"EMAIL": "[FILTERED]",
+				"Token": "[FILTERED]",
+			},
+		},
+		{
+			// "emailing" / "tokenize" match "email" / "token" only as a
+			// substring, not as a whole token, so token-boundary matching
+			// leaves them unmasked.
+			//
+			// [Ja] emailing / tokenize は 1 トークンで email / token に完全一致
+			// せず、トークン境界マッチでは対象外。
+			name: "単語の一部に含むだけのキーはマスクしない",
+			tags: map[string]string{
+				"emailing": "enabled",
+				"tokenize": "true",
+			},
+			expected: map[string]string{
+				"emailing": "enabled",
+				"tokenize": "true",
+			},
+		},
+		{
+			// Operationally useful tags such as wikino_source / kind must pass
+			// through untouched.
+			//
+			// [Ja] wikino_source / kind のような運用上有用なタグはそのまま
+			// 通すこと。
+			name: "センシティブでないタグは変更しない",
+			tags: map[string]string{
+				"wikino_source": "river",
+				"kind":          "send_email_confirmation",
+				"job.queue":     "default",
+			},
+			expected: map[string]string{
+				"wikino_source": "river",
+				"kind":          "send_email_confirmation",
+				"job.queue":     "default",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			event := &sentry.Event{
+				Tags: tt.tags,
+			}
+
+			result := beforeSend(event, nil)
+			if result == nil {
+				t.Fatal("beforeSend は通常イベントを破棄してはならない")
+			}
+
+			for key, expectedValue := range tt.expected {
+				if result.Tags[key] != expectedValue {
+					t.Errorf("タグ %s: got %q, want %q", key, result.Tags[key], expectedValue)
+				}
+			}
+		})
+	}
+}
+
+func TestBeforeSend_HandlesNilTags(t *testing.T) {
+	t.Parallel()
+
+	// Events without tags (e.g. plain CaptureException) must not panic.
+	// [Ja] タグの無いイベント (素の CaptureException 等) でも panic しないこと。
+	event := &sentry.Event{
+		Tags: nil,
+	}
+
+	result := beforeSend(event, nil)
+	if result == nil {
+		t.Fatal("beforeSend は通常イベントを破棄してはならない")
+	}
+
+	if result.Tags != nil {
+		t.Error("nilのTagsはnilのままであるべき")
+	}
+}
+
 func TestBeforeSend_HandlesNilRequest(t *testing.T) {
 	t.Parallel()
 

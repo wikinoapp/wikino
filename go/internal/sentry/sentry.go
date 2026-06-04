@@ -34,19 +34,37 @@ var sensitiveHeaders = []string{
 	"x-csrf-token",
 }
 
-// sensitiveBodyKeys is the list of request body keys to mask (partial match, lowercase).
-// [Ja] マスクすべきリクエストボディのキー (部分一致、小文字)。
+// sensitiveBodyKeys is the list of request body keys to mask (token-boundary match, lowercase).
+// [Ja] マスクすべきリクエストボディのキー (トークン境界一致、小文字)。
 var sensitiveBodyKeys = []string{
 	"password",
 	"token",
 	"secret",
 }
 
-// sensitiveQueryKeys is the list of query parameter keys to mask (partial match, lowercase).
-// [Ja] マスクすべきクエリパラメータのキー (部分一致、小文字)。
+// sensitiveQueryKeys is the list of query parameter keys to mask (token-boundary match, lowercase).
+// [Ja] マスクすべきクエリパラメータのキー (トークン境界一致、小文字)。
 var sensitiveQueryKeys = []string{
 	"token",
 	"key",
+}
+
+// sensitiveTagKeys is the list of tag keys to mask (token-boundary match,
+// lowercase). Sentry tags are populated from slog attributes by sentryslog,
+// so PII logged as a structured attribute (e.g. "email" on email-send failure
+// logs) would reach Sentry unmasked without this filter. The stderr log keeps
+// the original value, so debugging is still possible there.
+//
+// [Ja] マスクすべきタグのキー (トークン境界一致、小文字)。Sentry のタグには
+// sentryslog 経由で slog 属性がそのまま乗るため、構造化属性としてログに載せた
+// PII (例: メール送信失敗ログの "email" 属性) がマスクされないまま Sentry に
+// 届いてしまう。標準エラー出力側のログには元の値が残るため、デバッグは
+// そちらで行える。
+var sensitiveTagKeys = []string{
+	"email",
+	"password",
+	"secret",
+	"token",
 }
 
 // ignoredErrorPatterns lists message-level patterns that skip Sentry capture (regular expression).
@@ -116,6 +134,8 @@ func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 		return nil
 	}
 
+	filterTags(event)
+
 	if event.Request != nil {
 		filterRequestHeaders(event.Request)
 		filterRequestData(event.Request)
@@ -140,6 +160,24 @@ func shouldDropError(err error) bool {
 		return true
 	}
 	return false
+}
+
+// filterTags masks sensitive tag values such as email addresses. Unlike the
+// request filters below, this also covers events generated from slog records,
+// whose attributes sentryslog stamps onto event.Tags. Keys are matched by
+// token boundary via matchesSensitiveTokenKey, consistent with the body /
+// query filters.
+//
+// [Ja] センシティブなタグ (メールアドレス等) をマスクする。下のリクエスト系
+// フィルタと異なり、sentryslog が slog 属性を event.Tags に乗せて生成した
+// イベントもカバーする。キー判定はボディ / クエリのフィルタと同じく
+// matchesSensitiveTokenKey によるトークン境界一致で行う。
+func filterTags(event *sentry.Event) {
+	for key := range event.Tags {
+		if matchesSensitiveTokenKey(key, sensitiveTagKeys) {
+			event.Tags[key] = maskedValue
+		}
+	}
 }
 
 // filterRequestHeaders masks sensitive HTTP headers in the request.
