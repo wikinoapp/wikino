@@ -37,20 +37,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	// Space detail page (GET /s/:identifier). The trailing "$" keeps this from
-	// matching sub-paths such as /s/:id/topics/..., which stay handled by
-	// goHandledRegexPatterns.
-	//
-	// [Ja] スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
-	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
-	// goHandledRegexPatterns 側で処理されたままにする。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+$`),
-		flag:    model.FeatureFlagSpaceShow,
-		methods: []string{http.MethodGet},
-	},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -105,6 +92,14 @@ type goHandledPattern struct {
 // Go版で処理するURLパターン（正規表現マッチング）
 // プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
 var goHandledRegexPatterns = []goHandledPattern{
+	// Space detail page (GET /s/:identifier). The trailing "$" keeps this from
+	// matching sub-paths such as /s/:id/topics/..., which are matched by their
+	// own patterns below.
+	//
+	// [Ja] スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
+	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
+	// 下記の各パターンで処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
