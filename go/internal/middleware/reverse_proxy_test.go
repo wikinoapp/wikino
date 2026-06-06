@@ -512,71 +512,6 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 	}
 }
 
-func TestReverseProxyMiddleware_getFeatureFlagForRequest_SpaceShow(t *testing.T) {
-	// The production featureFlaggedPatterns slice is read directly here, so
-	// t.Parallel() is intentionally omitted to avoid running concurrently with
-	// tests that swap out this global variable.
-	//
-	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
-	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
-
-	cfg := &config.Config{
-		Domain: "wikino.app",
-	}
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
-	}
-
-	testCases := []struct {
-		name     string
-		method   string
-		path     string
-		expected model.FeatureFlagName
-	}{
-		{
-			name:     "スペース詳細 (GET) は go_space_show を返す",
-			method:   http.MethodGet,
-			path:     "/s/my-space",
-			expected: model.FeatureFlagSpaceShow,
-		},
-		{
-			name:     "スペース詳細 (POST) はmethodsフィルタによりマッチしない",
-			method:   http.MethodPost,
-			path:     "/s/my-space",
-			expected: "",
-		},
-		{
-			// The trailing "$" prevents matching sub-paths under /s/:id, so
-			// /s/:id/topics/... etc. stay handled by goHandledRegexPatterns.
-			//
-			// [Ja] 末尾 $ により /s/:id 配下のサブパスにはマッチせず、
-			// /s/:id/topics/... 等は引き続き goHandledRegexPatterns が処理する
-			name:     "スペース配下のトピックパスはマッチしない (既存Goハンドラーが優先)",
-			method:   http.MethodGet,
-			path:     "/s/my-space/topics/1",
-			expected: "",
-		},
-		{
-			name:     "スペース識別子の後にスラッシュが続くパスはマッチしない",
-			method:   http.MethodGet,
-			path:     "/s/my-space/",
-			expected: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-			result := m.getFeatureFlagForRequest(req)
-			if result != tc.expected {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
-			}
-		})
-	}
-}
-
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
 
@@ -828,6 +763,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 	}{
 		// Go版で処理するパス
 		{
+			name:     "スペース詳細 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space",
+			expected: true,
+		},
+		{
+			name:     "スペース配下のトピックパスはスペース詳細パターンではなくトピックパターンにマッチする",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1",
+			expected: true,
+		},
+		{
 			name:     "ページ編集画面",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
@@ -901,6 +848,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 		},
 
 		// Rails版に転送するパス
+		{
+			name:     "スペース詳細 (POST) はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space",
+			expected: false,
+		},
+		{
+			name:     "スペース識別子の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/",
+			expected: false,
+		},
 		{
 			name:     "ページ表示 (GET) はRails版に転送",
 			method:   http.MethodGet,
@@ -1035,14 +994,14 @@ func TestReverseProxyMiddleware_ensureDeviceToken(t *testing.T) {
 }
 
 func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
-	// This test reads the production featureFlaggedPatterns slice (for the
-	// /s/:identifier feature-flag path), so t.Parallel() is intentionally
+	// The middleware reads the global featureFlaggedPatterns slice for requests
+	// that fall through the always-Go checks, so t.Parallel() is intentionally
 	// omitted to avoid running concurrently with tests that swap out this
 	// global variable.
 	//
-	// [Ja] 本テストは本番の featureFlaggedPatterns を読む (/s/:identifier の
-	// フラグ評価パスのため) ため、このグローバル変数を上書きする他テストと
-	// 並行実行されないよう t.Parallel() は意図的に使用しない。
+	// [Ja] 常に Go で処理するパス判定を通り抜けたリクエストに対してミドルウェアが
+	// グローバルの featureFlaggedPatterns を読むため、このグローバル変数を
+	// 上書きする他テストと並行実行されないよう t.Parallel() は意図的に使用しない。
 
 	// Mock server standing in for the Rails version.
 	// [Ja] Rails 版をモックするテストサーバー
@@ -1058,11 +1017,11 @@ func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
 		SessionSecure: true,
 	}
 
-	// featureFlagRepo is nil, so the feature-flag path falls back to Rails. The
-	// subject of this test is the device_token placement, not the flag decision.
+	// featureFlagRepo is nil: the subject of this test is the device_token
+	// placement, not the flag decision.
 	//
-	// [Ja] featureFlagRepo は nil とし、フラグ評価対象パスは Rails にフォールバック
-	// させる。本テストの対象はフラグ判定ではなく device_token の発行位置のため。
+	// [Ja] featureFlagRepo は nil とする。本テストの対象はフラグ判定ではなく
+	// device_token の発行位置のため。
 	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
@@ -1090,11 +1049,11 @@ func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
 		{name: "ヘルスチェックには発行しない", method: http.MethodGet, path: "/health", wantDeviceCookie: false},
 		{name: "ホーム画面 (完全一致) には発行しない", method: http.MethodGet, path: "/home", wantDeviceCookie: false},
 		{name: "正規表現マッチの Go パスには発行しない", method: http.MethodGet, path: "/s/my-space/pages/1/edit", wantDeviceCookie: false},
+		{name: "常時 Go 化されたスペース詳細には発行しない", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: false},
 
-		// Rails-proxied / feature-flag paths: device_token must be issued.
-		// [Ja] Rails 転送・フラグ評価対象パス: device_token が発行される
+		// Rails-proxied paths: device_token must be issued.
+		// [Ja] Rails 転送パス: device_token が発行される
 		{name: "Rails 転送パスには発行する", method: http.MethodGet, path: "/settings", wantDeviceCookie: true},
-		{name: "フラグ評価対象パスには発行する", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: true},
 	}
 
 	for _, tc := range testCases {
