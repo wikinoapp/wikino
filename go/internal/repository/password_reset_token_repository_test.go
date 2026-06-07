@@ -185,6 +185,49 @@ func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 	})
 }
 
+// Verifies the ON DELETE CASCADE contract that the Rails-side deletion
+// paths rely on: deleting a users row directly must also delete its
+// password reset tokens without an explicit DELETE on password_reset_tokens.
+//
+// [Ja] Rails 側の削除経路が頼る ON DELETE CASCADE の契約を検証する。
+// users の行を直接 DELETE したとき、password_reset_tokens への明示的な
+// DELETE なしでトークンも一緒に消えること。
+func TestPasswordResetTokenRepository_CascadeOnUserDelete(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPasswordResetTokenRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("prt-cascade@example.com").
+		WithAtname("prt_cascade_user").
+		Build()
+
+	testutil.NewPasswordResetTokenBuilder(t, tx).
+		WithUserID(userID).
+		WithTokenDigest("cascade_user_delete_token").
+		Build()
+
+	t.Run("ユーザーの行を直接DELETEするとトークンも消える", func(t *testing.T) {
+		// Delete the parent users row directly (without going through application code)
+		// [Ja] 親の users の行を直接削除 (アプリケーションコードを経由しない)
+		_, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", string(userID))
+		if err != nil {
+			t.Fatalf("DELETE users error = %v", err)
+		}
+
+		token, err := repo.FindByTokenDigest(ctx, "cascade_user_delete_token")
+		if err != nil {
+			t.Fatalf("FindByTokenDigest() error = %v", err)
+		}
+		if token != nil {
+			t.Errorf("FindByTokenDigest() = %v, want nil (token should be cascade-deleted)", token)
+		}
+	})
+}
+
 func TestPasswordResetToken_IsExpired(t *testing.T) {
 	t.Parallel()
 
