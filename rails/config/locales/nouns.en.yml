@@ -29,7 +29,6 @@ en:
     links: Links
     menu: Menu
     modified_at: Modified at
-    new_page: New page
     new_topic: New topic
     next_page: Next
     optional: Optional
@@ -40,7 +39,6 @@ en:
     privacy_policy: Privacy policy
     profile: Profile
     roadmap: Roadmap
-    rss_feed: RSS feed
     search: Search
     search_keyword: Search keyword
     search_or_create: Search or create

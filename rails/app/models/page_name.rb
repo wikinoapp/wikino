@@ -23,7 +23,6 @@ class PageName < T::Enum
     SignInTwoFactor = new
     SignInTwoFactorRecovery = new
     SignUp = new
-    SpaceDetail = new
     SpaceNew = new
     SpaceSettings = new
     SpaceSettingsAttachments = new

@@ -151,9 +151,6 @@ module GeneratedUrlHelpersModule
   def space_settings_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def space_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def terms_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

@@ -62,6 +62,5 @@ ja:
           attachments:
             index: "添付ファイル | %{space_name}"
           show: "設定 | %{space_name}"
-        show: "%{space_name}"
       welcome:
         show: リンクで見つかるWikiアプリ

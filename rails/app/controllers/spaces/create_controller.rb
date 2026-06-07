@@ -24,7 +24,7 @@ module Spaces
       )
 
       flash[:notice] = t("messages.spaces.created")
-      redirect_to space_path(result.space_record.identifier)
+      redirect_to "/s/#{result.space_record.identifier}"
     rescue ApplicationService::RecordNotUniqueError => e
       form.not_nil!.errors.add(e.attribute, e.message)
       render_new_view(form:)

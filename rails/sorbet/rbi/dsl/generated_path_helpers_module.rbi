@@ -121,9 +121,6 @@ module GeneratedPathHelpersModule
   def space_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def space_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def space_settings_attachment_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
