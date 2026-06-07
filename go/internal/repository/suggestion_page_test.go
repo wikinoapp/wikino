@@ -759,3 +759,195 @@ func TestSuggestionPageRepository_ExistsByPageIDAndOpenStatus(t *testing.T) {
 		}
 	})
 }
+
+// Verifies the ON DELETE contract on suggestion_pages that the Rails-side
+// deletion paths rely on: deleting a pages row cascades to suggestion_pages,
+// while deleting a page_revisions / attachments row only nulls the reference.
+//
+// [Ja] Rails 側の削除経路が頼る suggestion_pages の ON DELETE の契約を検証
+// する。pages の行の削除は suggestion_pages に連鎖し、page_revisions /
+// attachments の行の削除は参照を NULL にするだけであること。
+func TestSuggestionPageRepository_OnDeleteContract(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("sp-ondelete@example.com").
+		WithAtname("sp_ondelete").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("sp-ondelete").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("ページの行を直接DELETEすると提案ページも消える", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Cascade Page").
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			Build()
+
+		// Delete the parent pages row directly (without going through application code)
+		// [Ja] 親の pages の行を直接削除 (アプリケーションコードを経由しない)
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM pages WHERE id = $1 AND space_id = $2",
+			string(pageID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE pages error = %v", err)
+		}
+
+		var count int
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT COUNT(*) FROM suggestion_pages WHERE id = $1 AND space_id = $2",
+			string(suggestionPageID), string(spaceID),
+		).Scan(&count); err != nil {
+			t.Fatalf("SELECT COUNT(*) FROM suggestion_pages error = %v", err)
+		}
+		if count != 0 {
+			t.Errorf("suggestion_pages count = %d, want 0 (should be cascade-deleted)", count)
+		}
+
+		// The suggestion itself must survive (only its page entry disappears).
+		// [Ja] 提案自体は残ること (提案ページのエントリだけが消える)。
+		var suggestionCount int
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT COUNT(*) FROM suggestions WHERE id = $1 AND space_id = $2",
+			string(suggestionID), string(spaceID),
+		).Scan(&suggestionCount); err != nil {
+			t.Fatalf("SELECT COUNT(*) FROM suggestions error = %v", err)
+		}
+		if suggestionCount != 1 {
+			t.Errorf("suggestions count = %d, want 1 (suggestion must not be deleted)", suggestionCount)
+		}
+	})
+
+	t.Run("ページリビジョンの行を直接DELETEすると参照がNULLになる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Revision Page").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTitle("Revision Page").
+			WithBody("body").
+			WithBodyHTML("<p>body</p>").
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM page_revisions WHERE id = $1 AND space_id = $2",
+			string(pageRevisionID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE page_revisions error = %v", err)
+		}
+
+		var pageRevisionIsNull bool
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT page_revision_id IS NULL FROM suggestion_pages WHERE id = $1 AND space_id = $2",
+			string(suggestionPageID), string(spaceID),
+		).Scan(&pageRevisionIsNull); err != nil {
+			t.Fatalf("SELECT suggestion_pages.page_revision_id error = %v", err)
+		}
+		if !pageRevisionIsNull {
+			t.Error("suggestion_pages.page_revision_id should be NULL after deleting the page revision")
+		}
+	})
+
+	t.Run("添付ファイルの行を直接DELETEすると注目画像の参照がNULLになる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(3).
+			WithTitle("Featured Image Page").
+			Build()
+
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithFeaturedImageAttachmentID(attachmentID).
+			Build()
+
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM attachments WHERE id = $1 AND space_id = $2",
+			string(attachmentID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE attachments error = %v", err)
+		}
+
+		var featuredImageIsNull bool
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT featured_image_attachment_id IS NULL FROM suggestion_pages WHERE id = $1 AND space_id = $2",
+			string(suggestionPageID), string(spaceID),
+		).Scan(&featuredImageIsNull); err != nil {
+			t.Fatalf("SELECT suggestion_pages.featured_image_attachment_id error = %v", err)
+		}
+		if !featuredImageIsNull {
+			t.Error("suggestion_pages.featured_image_attachment_id should be NULL after deleting the attachment")
+		}
+	})
+}
