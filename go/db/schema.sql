@@ -1720,7 +1720,7 @@ ALTER TABLE ONLY public.draft_pages
 --
 
 ALTER TABLE ONLY public.feature_flags
-    ADD CONSTRAINT feature_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT feature_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -2008,7 +2008,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.password_reset_tokens
-    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -2183,4 +2183,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260412091757'),
     ('20260427014536'),
     ('20260607074459'),
-    ('20260607080412');
+    ('20260607080412'),
+    ('20260607082306');
