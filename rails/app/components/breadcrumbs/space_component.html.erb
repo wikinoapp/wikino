@@ -8,7 +8,7 @@
   <% end %>
 
   <%= breadcrumb.with_item do %>
-    <%= link_to space.name, space_path(space.identifier) %>
+    <%= link_to space.name, "/s/#{space.identifier}" %>
   <% end %>
 
   <% items.each do |item| %>

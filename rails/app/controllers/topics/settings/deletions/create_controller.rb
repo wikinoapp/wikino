@@ -40,7 +40,7 @@ module Topics
           Topics::SoftDestroyService.new.call(topic_record:)
 
           flash[:notice] = t("messages.topics.deleted")
-          redirect_to space_path(space_record.identifier)
+          redirect_to "/s/#{space_record.identifier}"
         end
 
         sig { returns(ActionController::Parameters) }

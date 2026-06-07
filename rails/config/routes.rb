@@ -20,7 +20,6 @@ Rails.application.routes.draw do
   match "/draft_pages/sidebar",                                            via: :get,    as: :draft_page_sidebar,                           to: "draft_pages/sidebar#call"
   match "/joined_topics",                                                  via: :get,    as: :joined_topic_list,                            to: "joined_topics/index#call"
   match "/privacy",                                                        via: :get,    as: :privacy,                                      to: redirect("https://wikino.app/s/wikino/pages/42")
-  match "/s/:space_identifier",                                            via: :get,    as: :space,                                        to: "spaces/show#call"
   match "/s/:space_identifier/atom",                                       via: :get,    as: :atom,                                         to: "atom/show#call"
   match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
   match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"

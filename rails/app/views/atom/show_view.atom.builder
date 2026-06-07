@@ -1,4 +1,4 @@
-atom_feed(root_url: space_url(space.identifier), schema_date:) do |feed|
+atom_feed(root_url: "#{Wikino.config.app_url}/s/#{space.identifier}", schema_date:) do |feed|
   feed.title("#{space.name} | Wikino")
 
   feed.updated(pages[0].modified_at) if pages.size > 0
