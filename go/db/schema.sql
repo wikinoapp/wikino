@@ -1005,6 +1005,20 @@ CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at ON public.draft_p
 
 
 --
+-- Name: idx_draft_page_revisions_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_draft_page_revisions_space_id ON public.draft_page_revisions USING btree (space_id);
+
+
+--
+-- Name: idx_draft_page_revisions_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_draft_page_revisions_space_member_id ON public.draft_page_revisions USING btree (space_member_id);
+
+
+--
 -- Name: idx_feature_flags_device_token; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1054,6 +1068,13 @@ CREATE INDEX idx_rate_limits_window_start ON public.rate_limits USING btree (win
 
 
 --
+-- Name: idx_suggestion_comments_created_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_comments_created_space_member_id ON public.suggestion_comments USING btree (created_space_member_id);
+
+
+--
 -- Name: idx_suggestion_comments_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1075,6 +1096,13 @@ CREATE UNIQUE INDEX idx_suggestion_comments_suggestion_id_number ON public.sugge
 
 
 --
+-- Name: idx_suggestion_page_revisions_editor_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_page_revisions_editor_space_member_id ON public.suggestion_page_revisions USING btree (editor_space_member_id);
+
+
+--
 -- Name: idx_suggestion_page_revisions_space_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1086,6 +1114,27 @@ CREATE INDEX idx_suggestion_page_revisions_space_id ON public.suggestion_page_re
 --
 
 CREATE INDEX idx_suggestion_page_revisions_suggestion_page_id_created_at ON public.suggestion_page_revisions USING btree (suggestion_page_id, created_at);
+
+
+--
+-- Name: idx_suggestion_pages_featured_image_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_pages_featured_image_attachment_id ON public.suggestion_pages USING btree (featured_image_attachment_id) WHERE (featured_image_attachment_id IS NOT NULL);
+
+
+--
+-- Name: idx_suggestion_pages_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_pages_page_id ON public.suggestion_pages USING btree (page_id);
+
+
+--
+-- Name: idx_suggestion_pages_page_revision_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_suggestion_pages_page_revision_id ON public.suggestion_pages USING btree (page_revision_id) WHERE (page_revision_id IS NOT NULL);
 
 
 --
@@ -1191,6 +1240,13 @@ CREATE INDEX index_attachments_on_processing_status ON public.attachments USING 
 --
 
 CREATE INDEX index_attachments_on_space_id ON public.attachments USING btree (space_id);
+
+
+--
+-- Name: index_draft_pages_on_featured_image_attachment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_draft_pages_on_featured_image_attachment_id ON public.draft_pages USING btree (featured_image_attachment_id) WHERE (featured_image_attachment_id IS NOT NULL);
 
 
 --
@@ -1632,7 +1688,7 @@ CREATE UNIQUE INDEX river_job_unique_idx ON public.river_job USING btree (unique
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id);
+    ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id) ON DELETE CASCADE;
 
 
 --
@@ -1640,7 +1696,7 @@ ALTER TABLE ONLY public.draft_page_revisions
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT draft_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -1648,7 +1704,7 @@ ALTER TABLE ONLY public.draft_page_revisions
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_space_member_id_fkey FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT draft_page_revisions_space_member_id_fkey FOREIGN KEY (space_member_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -1656,7 +1712,7 @@ ALTER TABLE ONLY public.draft_page_revisions
 --
 
 ALTER TABLE ONLY public.draft_pages
-    ADD CONSTRAINT draft_pages_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id);
+    ADD CONSTRAINT draft_pages_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id) ON DELETE SET NULL;
 
 
 --
@@ -1664,7 +1720,7 @@ ALTER TABLE ONLY public.draft_pages
 --
 
 ALTER TABLE ONLY public.feature_flags
-    ADD CONSTRAINT feature_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT feature_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -1672,7 +1728,7 @@ ALTER TABLE ONLY public.feature_flags
 --
 
 ALTER TABLE ONLY public.draft_pages
-    ADD CONSTRAINT fk_draft_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+    ADD CONSTRAINT fk_draft_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id) ON DELETE SET NULL;
 
 
 --
@@ -1944,7 +2000,7 @@ ALTER TABLE ONLY public.user_two_factor_auths
 --
 
 ALTER TABLE ONLY public.suggestion_pages
-    ADD CONSTRAINT fk_suggestion_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
+    ADD CONSTRAINT fk_suggestion_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id) ON DELETE SET NULL;
 
 
 --
@@ -1952,7 +2008,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.password_reset_tokens
-    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -1968,7 +2024,7 @@ ALTER TABLE ONLY public.river_client_queue
 --
 
 ALTER TABLE ONLY public.suggestion_comments
-    ADD CONSTRAINT suggestion_comments_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT suggestion_comments_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -1976,7 +2032,7 @@ ALTER TABLE ONLY public.suggestion_comments
 --
 
 ALTER TABLE ONLY public.suggestion_comments
-    ADD CONSTRAINT suggestion_comments_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT suggestion_comments_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -1984,7 +2040,7 @@ ALTER TABLE ONLY public.suggestion_comments
 --
 
 ALTER TABLE ONLY public.suggestion_comments
-    ADD CONSTRAINT suggestion_comments_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id);
+    ADD CONSTRAINT suggestion_comments_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id) ON DELETE CASCADE;
 
 
 --
@@ -1992,7 +2048,7 @@ ALTER TABLE ONLY public.suggestion_comments
 --
 
 ALTER TABLE ONLY public.suggestion_page_revisions
-    ADD CONSTRAINT suggestion_page_revisions_editor_space_member_id_fkey FOREIGN KEY (editor_space_member_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT suggestion_page_revisions_editor_space_member_id_fkey FOREIGN KEY (editor_space_member_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -2000,7 +2056,7 @@ ALTER TABLE ONLY public.suggestion_page_revisions
 --
 
 ALTER TABLE ONLY public.suggestion_page_revisions
-    ADD CONSTRAINT suggestion_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT suggestion_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -2008,7 +2064,7 @@ ALTER TABLE ONLY public.suggestion_page_revisions
 --
 
 ALTER TABLE ONLY public.suggestion_page_revisions
-    ADD CONSTRAINT suggestion_page_revisions_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id);
+    ADD CONSTRAINT suggestion_page_revisions_suggestion_page_id_fkey FOREIGN KEY (suggestion_page_id) REFERENCES public.suggestion_pages(id) ON DELETE CASCADE;
 
 
 --
@@ -2016,7 +2072,7 @@ ALTER TABLE ONLY public.suggestion_page_revisions
 --
 
 ALTER TABLE ONLY public.suggestion_pages
-    ADD CONSTRAINT suggestion_pages_page_id_fkey FOREIGN KEY (page_id) REFERENCES public.pages(id);
+    ADD CONSTRAINT suggestion_pages_page_id_fkey FOREIGN KEY (page_id) REFERENCES public.pages(id) ON DELETE CASCADE;
 
 
 --
@@ -2024,7 +2080,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.suggestion_pages
-    ADD CONSTRAINT suggestion_pages_page_revision_id_fkey FOREIGN KEY (page_revision_id) REFERENCES public.page_revisions(id);
+    ADD CONSTRAINT suggestion_pages_page_revision_id_fkey FOREIGN KEY (page_revision_id) REFERENCES public.page_revisions(id) ON DELETE SET NULL;
 
 
 --
@@ -2032,7 +2088,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.suggestion_pages
-    ADD CONSTRAINT suggestion_pages_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT suggestion_pages_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -2040,7 +2096,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.suggestion_pages
-    ADD CONSTRAINT suggestion_pages_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id);
+    ADD CONSTRAINT suggestion_pages_suggestion_id_fkey FOREIGN KEY (suggestion_id) REFERENCES public.suggestions(id) ON DELETE CASCADE;
 
 
 --
@@ -2048,7 +2104,7 @@ ALTER TABLE ONLY public.suggestion_pages
 --
 
 ALTER TABLE ONLY public.suggestions
-    ADD CONSTRAINT suggestions_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT suggestions_created_space_member_id_fkey FOREIGN KEY (created_space_member_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -2056,7 +2112,7 @@ ALTER TABLE ONLY public.suggestions
 --
 
 ALTER TABLE ONLY public.suggestions
-    ADD CONSTRAINT suggestions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT suggestions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -2064,7 +2120,7 @@ ALTER TABLE ONLY public.suggestions
 --
 
 ALTER TABLE ONLY public.suggestions
-    ADD CONSTRAINT suggestions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id);
+    ADD CONSTRAINT suggestions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE CASCADE;
 
 
 --
@@ -2125,4 +2181,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260409023339'),
     ('20260409023341'),
     ('20260412091757'),
-    ('20260427014536');
+    ('20260427014536'),
+    ('20260607074459'),
+    ('20260607080412'),
+    ('20260607082306');

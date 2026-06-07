@@ -1,0 +1,63 @@
+package components
+
+import (
+	"github.com/a-h/templ"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// defaultEmptyStateIcon is used when EmptyStateData.IconName is left empty.
+//
+// [Ja] EmptyStateData.IconName が未指定のときに使われるデフォルトアイコン。
+const defaultEmptyStateIcon viewmodel.IconName = "file-dashed-regular"
+
+// EmptyStateData is the data structure passed to the EmptyState component.
+// Message and Description are rendered as raw HTML so that callers can include
+// inline markup (e.g. `<br>`) inside translated messages. Message, Description,
+// IconName, and Action are each optional; when IconName is empty,
+// `defaultEmptyStateIcon` is used.
+//
+// [Ja] EmptyStateData は EmptyState コンポーネントに渡すデータ構造体。
+// Message と Description は HTML として描画されるため、翻訳メッセージに `<br>` のような
+// インラインマークアップを含められる。Message / Description / IconName / Action は
+// それぞれ任意で、IconName が未指定のときは `defaultEmptyStateIcon` が使われる。
+type EmptyStateData struct {
+	Message     string
+	Description string
+	IconName    viewmodel.IconName
+	Action      templ.Component
+}
+
+// EmptyState はリスト系セクションが 0 件のときの空状態を表示する汎用コンポーネントです
+templ EmptyState(data EmptyStateData) {
+	<div class="flex items-center justify-center px-4 py-10 border-1 border-dashed rounded-xl">
+		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center">
+			<div class="bg-stone-200/50 rounded-xl p-2">
+				if data.IconName != "" {
+					@templates.Icon(data.IconName, "size-10 fill-brand-800")
+				} else {
+					@templates.Icon(defaultEmptyStateIcon, "size-10 fill-brand-800")
+				}
+			</div>
+
+			<div class="flex flex-col gap-2">
+				if data.Message != "" {
+					<p class="font-bold antialiased">
+						@templ.Raw(data.Message)
+					</p>
+				}
+
+				if data.Description != "" {
+					<div class="text-sm text-muted-foreground">
+						@templ.Raw(data.Description)
+					</div>
+				}
+			</div>
+
+			if data.Action != nil {
+				@data.Action
+			}
+		</div>
+	</div>
+}

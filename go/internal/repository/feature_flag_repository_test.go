@@ -202,3 +202,67 @@ func TestFeatureFlagRepository_IsEnabledForDevice(t *testing.T) {
 		}
 	})
 }
+
+// Verifies the ON DELETE CASCADE contract that the Rails-side deletion
+// paths rely on: deleting a users row directly must also delete its
+// feature flags without an explicit DELETE on feature_flags.
+//
+// [Ja] Rails 側の削除経路が頼る ON DELETE CASCADE の契約を検証する。
+// users の行を直接 DELETE したとき、feature_flags への明示的な
+// DELETE なしでフラグも一緒に消えること。
+func TestFeatureFlagRepository_CascadeOnUserDelete(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ff-cascade@example.com").
+		WithAtname("ff_cascade_user").
+		Build()
+
+	userFlagID := testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(userID).
+		WithName("go_cascade_test").
+		Build()
+
+	deviceFlagID := testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken("ff-cascade-device-token").
+		WithName("go_cascade_test").
+		Build()
+
+	t.Run("ユーザーの行を直接DELETEするとユーザー紐づけのフラグも消える", func(t *testing.T) {
+		// Delete the parent users row directly (without going through application code)
+		// [Ja] 親の users の行を直接削除 (アプリケーションコードを経由しない)
+		_, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", string(userID))
+		if err != nil {
+			t.Fatalf("DELETE users error = %v", err)
+		}
+
+		var userFlagCount int
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT COUNT(*) FROM feature_flags WHERE id = $1",
+			string(userFlagID),
+		).Scan(&userFlagCount); err != nil {
+			t.Fatalf("SELECT COUNT(*) FROM feature_flags error = %v", err)
+		}
+		if userFlagCount != 0 {
+			t.Errorf("user flag count = %d, want 0 (should be cascade-deleted)", userFlagCount)
+		}
+
+		// The device-token flag (user_id IS NULL) must survive the cascade.
+		// [Ja] デバイストークンのフラグ (user_id が NULL) は連鎖削除に巻き込まれないこと。
+		var deviceFlagCount int
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT COUNT(*) FROM feature_flags WHERE id = $1",
+			string(deviceFlagID),
+		).Scan(&deviceFlagCount); err != nil {
+			t.Fatalf("SELECT COUNT(*) FROM feature_flags error = %v", err)
+		}
+		if deviceFlagCount != 1 {
+			t.Errorf("device flag count = %d, want 1 (should not be cascade-deleted)", deviceFlagCount)
+		}
+	})
+}

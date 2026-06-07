@@ -37,6 +37,21 @@ func (r *SpaceRepository) FindByIdentifier(ctx context.Context, identifier model
 	return r.toModel(row), nil
 }
 
+// ListActiveByUser はユーザーが参加中（アクティブ）かつ削除されていないスペースの一覧を返す
+// Rails 版 current_user.active_space_records 相当。並び順はユーザーがスペースに参加した日の降順
+func (r *SpaceRepository) ListActiveByUser(ctx context.Context, userID model.UserID) ([]*model.Space, error) {
+	rows, err := r.q.ListActiveSpacesByUser(ctx, string(userID))
+	if err != nil {
+		return nil, err
+	}
+
+	spaces := make([]*model.Space, len(rows))
+	for i, row := range rows {
+		spaces[i] = r.toModel(row)
+	}
+	return spaces, nil
+}
+
 // toModel は query.Space を model.Space に変換する
 func (r *SpaceRepository) toModel(row query.Space) *model.Space {
 	var discardedAt *time.Time

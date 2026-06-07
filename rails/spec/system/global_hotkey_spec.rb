@@ -8,38 +8,18 @@ RSpec.describe "Global Hotkey", type: :system do
     user_record = create(:user_record, :with_password)
     sign_in(user_record:)
 
-    visit "/home"
+    visit "/settings"
 
     # sキーを押すと検索ページに遷移
     page.driver.browser.action.send_keys("s").perform
     expect(page).to have_current_path(search_path)
 
-    # ホームページに戻る
-    visit "/home"
+    # 設定ページに戻る
+    visit "/settings"
 
     # /キーを押すと検索ページに遷移
     page.driver.browser.action.send_keys("/").perform
     expect(page).to have_current_path(search_path)
-  end
-
-  it "スペース内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
-    user_record = create(:user_record, :with_password)
-    space_record = create(:space_record, identifier: "test-space")
-    create(:space_member_record, user_record:, space_record:)
-    sign_in(user_record:)
-
-    visit space_path(space_record.identifier)
-
-    # sキーを押すとspace:フィルターが付与された検索ページに遷移
-    page.driver.browser.action.send_keys("s").perform
-    expect(page).to have_current_path(search_path(q: "space:test-space"))
-
-    # スペースページに戻る
-    visit space_path(space_record.identifier)
-
-    # /キーを押すとspace:フィルターが付与された検索ページに遷移
-    page.driver.browser.action.send_keys("/").perform
-    expect(page).to have_current_path(search_path(q: "space:test-space"))
   end
 
   it "ページ内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do

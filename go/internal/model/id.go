@@ -161,6 +161,16 @@ func SpaceMemberIDsToStrings(ids []SpaceMemberID) []string {
 	return s
 }
 
+// SpaceIDsToStrings converts a slice of SpaceID to a slice of string.
+// [Ja] SpaceIDsToStrings は SpaceID スライスを string スライスに変換する。
+func SpaceIDsToStrings(ids []SpaceID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = string(id)
+	}
+	return s
+}
+
 // UserIDsToStrings はUserIDスライスをstringスライスに変換する
 func UserIDsToStrings(ids []UserID) []string {
 	s := make([]string, len(ids))

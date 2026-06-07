@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
@@ -58,6 +59,7 @@ var (
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
 	goHandledExactPaths = []string{
 		"/",              // トップページ
+		"/home",          // ホーム画面
 		"/manifest.json", // Web App Manifest
 	}
 
@@ -90,6 +92,14 @@ type goHandledPattern struct {
 // Go版で処理するURLパターン（正規表現マッチング）
 // プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
 var goHandledRegexPatterns = []goHandledPattern{
+	// Space detail page (GET /s/:identifier). The trailing "$" keeps this from
+	// matching sub-paths such as /s/:id/topics/..., which are matched by their
+	// own patterns below.
+	//
+	// [Ja] スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
+	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
+	// 下記の各パターンで処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
@@ -197,8 +207,15 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		ctx := r.Context()
 
-		// 詳細なエラーログを出力（開発者向け）
+		// Detailed error log for developers. The "source" attribute lets the
+		// Sentry beforeSend hook drop this event: Rails-side proxy failures
+		// belong to the Rails Sentry project, not the Go one.
+		//
+		// [Ja] 開発者向けの詳細エラーログ。"source" 属性を載せておくと
+		// Sentry の beforeSend で本イベントを破棄できる (Rails 側のプロキシ
+		// 失敗は Rails の Sentry プロジェクトで扱うべきため)。
 		slog.ErrorContext(ctx, "Rails版へのプロキシでエラーが発生",
+			wikinosentry.SourceAttrKey, wikinosentry.ReverseProxySource,
 			"error", err,
 			"path", r.URL.Path,
 			"method", r.Method,
@@ -220,25 +237,38 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	}, nil
 }
 
-// Middleware はHTTPミドルウェアを返す
+// Middleware returns the HTTP middleware.
+// [Ja] Middleware は HTTP ミドルウェアを返す。
 func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// device_token Cookie が存在しない場合は自動生成してセット
-		m.ensureDeviceToken(w, r)
-
-		// 1. 常にGoで処理するパス（完全一致・プレフィックス一致）
+		// 1. Paths always handled by Go (exact match / prefix match).
+		// [Ja] 1. 常に Go で処理するパス (完全一致・プレフィックス一致)
 		if m.isGoHandledPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 2. 常にGoで処理するパス（正規表現 + メソッドフィルタ）
+		// 2. Paths always handled by Go (regex + method filter).
+		// [Ja] 2. 常に Go で処理するパス (正規表現 + メソッドフィルタ)
 		if m.isGoHandledByRegex(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 3. フィーチャーフラグで制御するパス
+		// Issue device_token only for real content pages that are proxied to
+		// Rails or evaluated against a feature flag. Attaching Set-Cookie to
+		// static assets and health checks (= paths always handled by Go) hurts
+		// CDN caching and lets the token be issued multiple times on the first
+		// load, so limit issuance to requests that fell through to this point.
+		//
+		// [Ja] device_token は Rails 転送対象・フラグ評価対象の実コンテンツ
+		// ページにのみ発行する。静的アセット・ヘルスチェック (= 常に Go で処理する
+		// パス) に Set-Cookie を付けると CDN キャッシュを損ね、初回ロードで
+		// トークンが多重発行されるため、ここまで判定を通り抜けたリクエストに限定する。
+		m.ensureDeviceToken(w, r)
+
+		// 3. Paths controlled by a feature flag.
+		// [Ja] 3. フィーチャーフラグで制御するパス
 		if flagName := m.getFeatureFlagForRequest(r); flagName != "" {
 			if m.isFeatureFlagEnabled(r, flagName) {
 				next.ServeHTTP(w, r)
@@ -246,7 +276,8 @@ func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// 4. その他はすべてRailsにプロキシ
+		// 4. Everything else is proxied to Rails.
+		// [Ja] 4. その他はすべて Rails にプロキシ
 		m.proxy.ServeHTTP(w, r)
 	})
 }

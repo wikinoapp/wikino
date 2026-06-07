@@ -36,9 +36,6 @@ ja:
         完了したらメールでお知らせします
       succeeded_html: エクスポートが完了しました
     home:
-      new_space_description_html: |-
-        ページはスペース内のトピックに作成することができます<br>
-        まずはスペースを作成しましょう
       no_joined_spaces_html: 参加中のスペースは<br class="block sm:hidden">ありません
     pages:
       are_you_sure_trash: ページをゴミ箱に入れますか？
@@ -98,12 +95,6 @@ ja:
         どんなスペースを作ると良いかわからないときは
         %{space_best_practice_help_link} が参考になるかもしれません
       new_space: 新しいスペース
-      no_pages: ページはありません
-      no_topics: トピックはありません
-      new_page_description: 最初の1ページ目を作成しましょう
-      new_topic_description_html: |-
-        トピックはページを分類するためのものです<br>
-        トピックを作成してページを追加できるようにしましょう
       settings:
         deletions:
           new:

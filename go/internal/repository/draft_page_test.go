@@ -943,6 +943,11 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		if string(drafts[0].Topic.Space.Identifier) != "draft-list-space" {
 			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-list-space'", drafts[0].Topic.Space.Identifier)
 		}
+		// Verify Space.Name is populated for the home page DraftPageCard. Builder default is "Test Space".
+		// [Ja] ホーム画面のカードでスペース名を表示するため Space.Name が設定されていることを確認する。SpaceBuilder のデフォルト名は "Test Space"。
+		if drafts[0].Topic.Space.Name != "Test Space" {
+			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Test Space'", drafts[0].Topic.Space.Name)
+		}
 	})
 
 	t.Run("LIMITが適用される", func(t *testing.T) {
@@ -1013,6 +1018,151 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		}
 		if len(drafts) != 0 {
 			t.Errorf("ListByUser() returned %d drafts, want 0 (discarded page should be excluded)", len(drafts))
+		}
+	})
+}
+
+// Verifies the ON DELETE SET NULL contract on draft_pages that the Rails-side
+// deletion paths rely on: deleting the referenced suggestion_pages /
+// attachments row must null the reference while keeping the draft alive,
+// because drafts are user work-in-progress and must not be deleted along.
+//
+// [Ja] Rails 側の削除経路が頼る draft_pages の ON DELETE SET NULL の契約を
+// 検証する。参照先の suggestion_pages / attachments の行を削除したとき、
+// 参照は NULL になり下書き自体は残ること。下書きはユーザーの書きかけ原稿で
+// あり、巻き添えで消してはならない。
+func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-ondelete@example.com").
+		WithAtname("draft_ondelete").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-ondelete").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("提案ページの行を直接DELETEすると下書きの参照がNULLになる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Suggestion Page Draft").
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			Build()
+
+		draftPageID := testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithSuggestionPageID(suggestionPageID).
+			Build()
+
+		// Delete the referenced suggestion_pages row directly (without going through application code)
+		// [Ja] 参照先の suggestion_pages の行を直接削除 (アプリケーションコードを経由しない)
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM suggestion_pages WHERE id = $1 AND space_id = $2",
+			string(suggestionPageID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE suggestion_pages error = %v", err)
+		}
+
+		var suggestionPageIsNull bool
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT suggestion_page_id IS NULL FROM draft_pages WHERE id = $1 AND space_id = $2",
+			string(draftPageID), string(spaceID),
+		).Scan(&suggestionPageIsNull); err != nil {
+			t.Fatalf("SELECT draft_pages.suggestion_page_id error = %v", err)
+		}
+		if !suggestionPageIsNull {
+			t.Error("draft_pages.suggestion_page_id should be NULL after deleting the suggestion page")
+		}
+	})
+
+	t.Run("添付ファイルの行を直接DELETEすると下書きの注目画像の参照がNULLになる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Featured Image Draft").
+			Build()
+
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+
+		draftPageID := testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithFeaturedImageAttachmentID(attachmentID).
+			Build()
+
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM attachments WHERE id = $1 AND space_id = $2",
+			string(attachmentID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE attachments error = %v", err)
+		}
+
+		var featuredImageIsNull bool
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT featured_image_attachment_id IS NULL FROM draft_pages WHERE id = $1 AND space_id = $2",
+			string(draftPageID), string(spaceID),
+		).Scan(&featuredImageIsNull); err != nil {
+			t.Fatalf("SELECT draft_pages.featured_image_attachment_id error = %v", err)
+		}
+		if !featuredImageIsNull {
+			t.Error("draft_pages.featured_image_attachment_id should be NULL after deleting the attachment")
+		}
+
+		// The draft itself must survive the attachment deletion.
+		// [Ja] 下書き自体は添付ファイルの削除後も残ること。
+		var draftCount int
+		if err := tx.QueryRowContext(
+			ctx,
+			"SELECT COUNT(*) FROM draft_pages WHERE id = $1 AND space_id = $2",
+			string(draftPageID), string(spaceID),
+		).Scan(&draftCount); err != nil {
+			t.Fatalf("SELECT COUNT(*) FROM draft_pages error = %v", err)
+		}
+		if draftCount != 1 {
+			t.Errorf("draft_pages count = %d, want 1 (draft must not be deleted)", draftCount)
 		}
 	})
 }

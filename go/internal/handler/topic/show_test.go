@@ -403,8 +403,11 @@ func TestShow_正常系_ページ一覧が表示される(t *testing.T) {
 	}
 }
 
-// docs/specs/suggestion/overview.md のトピック詳細画面の仕様に対応する回帰テスト。
-// 閲覧可能なすべてのシナリオで編集提案タブが表示されることを検証する。
+// Regression test verifying that the suggestion tab is shown in every viewable
+// scenario on the topic detail screen.
+//
+// [Ja] トピック詳細画面で、閲覧可能なすべてのシナリオで編集提案タブが
+// 表示されることを検証する回帰テスト。
 func TestShow_編集提案タブが常に表示される(t *testing.T) {
 	t.Parallel()
 

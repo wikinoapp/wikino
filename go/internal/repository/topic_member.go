@@ -41,6 +41,62 @@ func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, s
 	return r.toModel(row), nil
 }
 
+// ListBySpaceMemberAndTopics fetches the topic memberships of the given space member for the
+// given topic ids in a single query. It replaces per-topic lookups (N+1) with one query where
+// permissions for many topics must be resolved at once, such as on the space detail page.
+//
+// [Ja] ListBySpaceMemberAndTopics は、スペースメンバーが参加しているトピックメンバーを
+// トピックIDリストで一括取得する。スペース詳細のように複数トピックの権限をまとめて
+// 判定する場面で、トピックごとの単発クエリ (N+1) を 1 回のクエリに置き換えるために使う。
+func (r *TopicMemberRepository) ListBySpaceMemberAndTopics(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, topicIDs []model.TopicID) ([]*model.TopicMember, error) {
+	if len(topicIDs) == 0 {
+		return nil, nil
+	}
+	rows, err := r.q.ListTopicMembersBySpaceMemberAndTopics(ctx, query.ListTopicMembersBySpaceMemberAndTopicsParams{
+		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
+		Column3:       model.TopicIDsToStrings(topicIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	topicMembers := make([]*model.TopicMember, len(rows))
+	for i, row := range rows {
+		topicMembers[i] = r.toModel(row)
+	}
+	return topicMembers, nil
+}
+
+// ListByUserAndTopics fetches the topic memberships the given user holds across the given topics in
+// a single query, joining space_members to resolve the user. It replaces per-topic lookups (N+1)
+// with one query where create permissions for topics spanning many spaces must be resolved at once,
+// such as on the home page.
+//
+// [Ja] ListByUserAndTopics は、ユーザーが指定したトピック群で持つトピックメンバーを 1 クエリで
+// 一括取得する (space_members と JOIN してユーザーを解決する)。ホーム画面のように複数スペースに
+// またがるトピックの作成権限をまとめて判定する場面で、トピックごとの単発クエリ (N+1) を 1 回の
+// クエリに置き換えるために使う。
+func (r *TopicMemberRepository) ListByUserAndTopics(ctx context.Context, userID model.UserID, spaceIDs []model.SpaceID, topicIDs []model.TopicID) ([]*model.TopicMember, error) {
+	if len(spaceIDs) == 0 || len(topicIDs) == 0 {
+		return nil, nil
+	}
+	rows, err := r.q.ListTopicMembersByUserAndTopics(ctx, query.ListTopicMembersByUserAndTopicsParams{
+		UserID:  string(userID),
+		Column2: model.SpaceIDsToStrings(spaceIDs),
+		Column3: model.TopicIDsToStrings(topicIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	topicMembers := make([]*model.TopicMember, len(rows))
+	for i, row := range rows {
+		topicMembers[i] = r.toModel(row)
+	}
+	return topicMembers, nil
+}
+
 // UpdateLastPageModifiedAt はトピックメンバーのlast_page_modified_atを更新する
 func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID, spaceMemberID model.SpaceMemberID, modifiedAt time.Time) error {
 	return r.q.UpdateTopicMemberLastPageModifiedAt(ctx, query.UpdateTopicMemberLastPageModifiedAtParams{

@@ -31,9 +31,6 @@ module GeneratedPathHelpersModule
   def draft_page_sidebar_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def home_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def joined_topic_list_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -122,9 +119,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def space_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_attachment_path(*args); end

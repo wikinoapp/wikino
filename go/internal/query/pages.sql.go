@@ -102,6 +102,36 @@ func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesPara
 	return count, err
 }
 
+const countRegularPagesBySpace = `-- name: CountRegularPagesBySpace :one
+SELECT COUNT(*)
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.pinned_at IS NULL
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($2::boolean IS FALSE OR t.visibility = 0)
+`
+
+type CountRegularPagesBySpaceParams struct {
+	SpaceID    string `json:"space_id"`
+	PublicOnly bool   `json:"public_only"`
+}
+
+// Returns the total count of non-pinned active pages across a space. Filtering matches
+// FindRegularPagesBySpacePaginated so the count and the page slice stay consistent.
+//
+// [Ja] スペース内の通常ページ (ピン留めなし) の総件数を返す。フィルタ条件は
+// FindRegularPagesBySpacePaginated と揃えており、件数とページ一覧の整合性を保つ。
+func (q *Queries) CountRegularPagesBySpace(ctx context.Context, arg CountRegularPagesBySpaceParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRegularPagesBySpace, arg.SpaceID, arg.PublicOnly)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countRegularPagesByTopic = `-- name: CountRegularPagesByTopic :one
 SELECT COUNT(*)
 FROM pages
@@ -596,6 +626,78 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 	return items, nil
 }
 
+const findPinnedPagesBySpace = `-- name: FindPinnedPagesBySpace :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.pinned_at IS NOT NULL
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($2::boolean IS FALSE OR t.visibility = 0)
+ORDER BY p.pinned_at DESC, p.id DESC
+`
+
+type FindPinnedPagesBySpaceParams struct {
+	SpaceID    string `json:"space_id"`
+	PublicOnly bool   `json:"public_only"`
+}
+
+// Returns pinned active pages across a space (published, not discarded, not trashed, and
+// whose topic is not discarded), ordered by pinned_at DESC, id DESC. The topic join also
+// enforces the "topic not discarded" part of the active scope, which a space-wide listing
+// needs because pages span multiple topics. The join is additionally scoped by
+// t.space_id = @space_id as a defensive measure, so topic visibility is always evaluated
+// within the requested space per the space_id query-scoping rule. When public_only is true,
+// only pages in public topics (visibility = 0) are returned, for non-member viewers.
+//
+// [Ja] スペース内のピン留めされたアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック
+// 未廃棄) を pinned_at DESC, id DESC で返す。トピック JOIN はアクティブ判定の「トピック未廃棄」
+// 条件も担う。スペース横断の一覧ではページが複数トピックにまたがるためこの JOIN が必要。
+// JOIN は防御的に t.space_id = @space_id でもスコープし、space_id クエリスコープのルールに従って
+// トピックの可視性を常に対象スペース内で評価する。public_only が true のときは公開トピック
+// (visibility = 0) のページのみに絞る (非メンバー閲覧者向け)。
+func (q *Queries) FindPinnedPagesBySpace(ctx context.Context, arg FindPinnedPagesBySpaceParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findPinnedPagesBySpace, arg.SpaceID, arg.PublicOnly)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findPinnedPagesByTopic = `-- name: FindPinnedPagesByTopic :many
 SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE topic_id = $1
@@ -615,6 +717,79 @@ type FindPinnedPagesByTopicParams struct {
 // トピック内のピン留めページを取得する（公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート）
 func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPagesByTopicParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findPinnedPagesByTopic, arg.TopicID, arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findRegularPagesBySpacePaginated = `-- name: FindRegularPagesBySpacePaginated :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.pinned_at IS NULL
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($2::boolean IS FALSE OR t.visibility = 0)
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $4
+OFFSET $3
+`
+
+type FindRegularPagesBySpacePaginatedParams struct {
+	SpaceID    string `json:"space_id"`
+	PublicOnly bool   `json:"public_only"`
+	RowOffset  int32  `json:"row_offset"`
+	RowLimit   int32  `json:"row_limit"`
+}
+
+// Returns non-pinned active pages across a space with offset pagination, ordered by
+// modified_at DESC, id DESC. Active and public_only handling matches FindPinnedPagesBySpace.
+//
+// [Ja] スペース内の通常ページ (ピン留めなし) をオフセットページネーションで取得する。
+// 並び順は modified_at DESC, id DESC。アクティブ判定と public_only の扱いは
+// FindPinnedPagesBySpace と同じ。
+func (q *Queries) FindRegularPagesBySpacePaginated(ctx context.Context, arg FindRegularPagesBySpacePaginatedParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findRegularPagesBySpacePaginated,
+		arg.SpaceID,
+		arg.PublicOnly,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

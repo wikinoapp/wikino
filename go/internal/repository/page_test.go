@@ -339,6 +339,437 @@ func TestPageRepository_FindRegularByTopicPaginated(t *testing.T) {
 	})
 }
 
+func TestPageRepository_FindPinnedBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pinned-space").
+		Build()
+
+	publicTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	privateTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// Two pinned pages in a public topic (verifies pinned_at DESC ordering).
+	// [Ja] 公開トピックのピン留めページ 2 件 (pinned_at DESC でソートされることを検証)。
+	pinnedPublicOldID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(1).
+		WithTitle("Pinned Public Old").
+		WithPinnedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	pinnedPublicNewID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(2).
+		WithTitle("Pinned Public New").
+		WithPinnedAt(baseTime.Add(3 * time.Hour)).
+		Build()
+
+	// A pinned page in a private topic (visible to members, hidden from non-members).
+	// [Ja] 非公開トピックのピン留めページ (メンバーには見えるが非メンバーには見えない)。
+	pinnedPrivateID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(3).
+		WithTitle("Pinned Private").
+		WithPinnedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// A pinned page in a discarded topic (latest pinned_at, but always excluded).
+	// [Ja] 廃棄済みトピックのピン留めページ (pinned_at は最新だが常に除外される)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(discardedTopicID).
+		WithNumber(4).
+		WithTitle("Pinned In Discarded Topic").
+		WithPinnedAt(baseTime.Add(4 * time.Hour)).
+		Build()
+
+	// A regular (non-pinned) page.
+	// [Ja] 通常ページ (ピン留めなし)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(5).
+		WithTitle("Regular Page").
+		Build()
+
+	// An unpublished page (pinned).
+	// [Ja] 非公開ページ (ピン留めあり)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(6).
+		WithTitle("Unpublished Pinned").
+		WithPinnedAt(baseTime.Add(5 * time.Hour)).
+		WithUnpublished().
+		Build()
+
+	// A discarded page (pinned).
+	// [Ja] 廃棄済みページ (ピン留めあり)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(7).
+		WithTitle("Discarded Pinned").
+		WithPinnedAt(baseTime.Add(6 * time.Hour)).
+		WithDiscarded().
+		Build()
+
+	// A trashed page (pinned).
+	// [Ja] ゴミ箱ページ (ピン留めあり)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(8).
+		WithTitle("Trashed Pinned").
+		WithPinnedAt(baseTime.Add(7 * time.Hour)).
+		WithTrashed().
+		Build()
+
+	t.Run("メンバー (publicOnly=false) は全トピックのピン留めページをpinned_at DESCで取得できる", func(t *testing.T) {
+		pages, err := repo.FindPinnedBySpace(context.Background(), spaceID, false)
+		if err != nil {
+			t.Fatalf("FindPinnedBySpace() error = %v", err)
+		}
+		if len(pages) != 3 {
+			t.Fatalf("len(pages) = %d, want 3", len(pages))
+		}
+		// Expected pinned_at DESC order: Public New (3h) → Private (2h) → Public Old (1h).
+		// [Ja] 期待される pinned_at DESC 順: Public New (3h) → Private (2h) → Public Old (1h)。
+		if pages[0].ID != pinnedPublicNewID {
+			t.Errorf("pages[0].ID = %v, want %v", pages[0].ID, pinnedPublicNewID)
+		}
+		if pages[1].ID != pinnedPrivateID {
+			t.Errorf("pages[1].ID = %v, want %v", pages[1].ID, pinnedPrivateID)
+		}
+		if pages[2].ID != pinnedPublicOldID {
+			t.Errorf("pages[2].ID = %v, want %v", pages[2].ID, pinnedPublicOldID)
+		}
+	})
+
+	t.Run("非メンバー (publicOnly=true) は公開トピックのピン留めページのみ取得できる", func(t *testing.T) {
+		pages, err := repo.FindPinnedBySpace(context.Background(), spaceID, true)
+		if err != nil {
+			t.Fatalf("FindPinnedBySpace() error = %v", err)
+		}
+		if len(pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(pages))
+		}
+		// Private-topic pages are excluded; only public-topic pages remain, in pinned_at DESC.
+		// [Ja] 非公開トピックのページが除外され、公開トピックのみ pinned_at DESC。
+		if pages[0].ID != pinnedPublicNewID {
+			t.Errorf("pages[0].ID = %v, want %v", pages[0].ID, pinnedPublicNewID)
+		}
+		if pages[1].ID != pinnedPublicOldID {
+			t.Errorf("pages[1].ID = %v, want %v", pages[1].ID, pinnedPublicOldID)
+		}
+	})
+}
+
+func TestPageRepository_FindRegularBySpacePaginated(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-regular-space").
+		Build()
+
+	publicTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	privateTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// Two regular pages in a public topic (verifies modified_at DESC ordering).
+	// [Ja] 公開トピックの通常ページ 2 件 (modified_at DESC でソートされることを検証)。
+	regularPublicOldID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(1).
+		WithTitle("Regular Public Old").
+		WithModifiedAt(baseTime).
+		Build()
+
+	regularPublicNewID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(2).
+		WithTitle("Regular Public New").
+		WithModifiedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// A regular page in a private topic (visible to members, hidden from non-members).
+	// [Ja] 非公開トピックの通常ページ (メンバーには見えるが非メンバーには見えない)。
+	regularPrivateID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(3).
+		WithTitle("Regular Private").
+		WithModifiedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+
+	// A regular page in a discarded topic (always excluded).
+	// [Ja] 廃棄済みトピックの通常ページ (常に除外される)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(discardedTopicID).
+		WithNumber(4).
+		WithTitle("Regular In Discarded Topic").
+		WithModifiedAt(baseTime.Add(3 * time.Hour)).
+		Build()
+
+	// A pinned page (excluded from the regular page list).
+	// [Ja] ピン留めページ (通常ページには含まれない)。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(5).
+		WithTitle("Pinned Page").
+		WithPinnedAt(baseTime).
+		Build()
+
+	// An unpublished page.
+	// [Ja] 非公開ページ。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(6).
+		WithTitle("Unpublished").
+		WithUnpublished().
+		Build()
+
+	// A discarded page.
+	// [Ja] 廃棄済みページ。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(7).
+		WithTitle("Discarded").
+		WithDiscarded().
+		Build()
+
+	// A trashed page.
+	// [Ja] ゴミ箱ページ。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(8).
+		WithTitle("Trashed").
+		WithTrashed().
+		Build()
+
+	t.Run("メンバー (publicOnly=false) は全トピックの通常ページをページネーションで取得できる", func(t *testing.T) {
+		// Page 1 (limit=2): modified_at DESC → Public New (2h) → Private (1h).
+		// [Ja] 1 ページ目 (limit=2): modified_at DESC で Public New (2h) → Private (1h)。
+		result, err := repo.FindRegularBySpacePaginated(context.Background(), spaceID, false, 1, 2)
+		if err != nil {
+			t.Fatalf("FindRegularBySpacePaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		if result.Pages[0].ID != regularPublicNewID {
+			t.Errorf("pages[0].ID = %v, want %v", result.Pages[0].ID, regularPublicNewID)
+		}
+		if result.Pages[1].ID != regularPrivateID {
+			t.Errorf("pages[1].ID = %v, want %v", result.Pages[1].ID, regularPrivateID)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+
+		// Page 2 (limit=2): Public Old (0h).
+		// [Ja] 2 ページ目 (limit=2): Public Old (0h)。
+		result, err = repo.FindRegularBySpacePaginated(context.Background(), spaceID, false, 2, 2)
+		if err != nil {
+			t.Fatalf("FindRegularBySpacePaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if result.Pages[0].ID != regularPublicOldID {
+			t.Errorf("pages[0].ID = %v, want %v", result.Pages[0].ID, regularPublicOldID)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+		}
+	})
+
+	t.Run("非メンバー (publicOnly=true) は公開トピックの通常ページのみ取得できる", func(t *testing.T) {
+		result, err := repo.FindRegularBySpacePaginated(context.Background(), spaceID, true, 1, 100)
+		if err != nil {
+			t.Fatalf("FindRegularBySpacePaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		// Private-topic pages are excluded; only public-topic pages remain, in modified_at DESC.
+		// [Ja] 非公開トピックのページが除外され、公開トピックのみ modified_at DESC。
+		if result.Pages[0].ID != regularPublicNewID {
+			t.Errorf("pages[0].ID = %v, want %v", result.Pages[0].ID, regularPublicNewID)
+		}
+		if result.Pages[1].ID != regularPublicOldID {
+			t.Errorf("pages[1].ID = %v, want %v", result.Pages[1].ID, regularPublicOldID)
+		}
+		if result.TotalCount != 2 {
+			t.Errorf("TotalCount = %d, want 2", result.TotalCount)
+		}
+	})
+}
+
+func TestPageRepository_FindBySpace_IDDescTiebreak(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-space-id-tiebreak").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	sameTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// Two pinned pages sharing the same pinned_at, to verify the id DESC tiebreaker.
+	// [Ja] 同一 pinned_at のピン留めページ 2 件。id DESC のタイブレークを検証する。
+	pinnedA := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Pinned A").
+		WithPinnedAt(sameTime).
+		Build()
+
+	pinnedB := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Pinned B").
+		WithPinnedAt(sameTime).
+		Build()
+
+	// Two regular pages sharing the same modified_at, to verify the id DESC tiebreaker.
+	// [Ja] 同一 modified_at の通常ページ 2 件。id DESC のタイブレークを検証する。
+	regularA := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Regular A").
+		WithModifiedAt(sameTime).
+		Build()
+
+	regularB := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Regular B").
+		WithModifiedAt(sameTime).
+		Build()
+
+	t.Run("ピン留めページは同一 pinned_at のとき id DESC で並ぶ", func(t *testing.T) {
+		pages, err := repo.FindPinnedBySpace(context.Background(), spaceID, false)
+		if err != nil {
+			t.Fatalf("FindPinnedBySpace() error = %v", err)
+		}
+		if len(pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(pages))
+		}
+		first, second := expectedIDDescOrder(pinnedA, pinnedB)
+		if pages[0].ID != first {
+			t.Errorf("pages[0].ID = %v, want %v", pages[0].ID, first)
+		}
+		if pages[1].ID != second {
+			t.Errorf("pages[1].ID = %v, want %v", pages[1].ID, second)
+		}
+	})
+
+	t.Run("通常ページは同一 modified_at のとき id DESC で並ぶ", func(t *testing.T) {
+		result, err := repo.FindRegularBySpacePaginated(context.Background(), spaceID, false, 1, 100)
+		if err != nil {
+			t.Fatalf("FindRegularBySpacePaginated() error = %v", err)
+		}
+		if len(result.Pages) != 2 {
+			t.Fatalf("len(pages) = %d, want 2", len(result.Pages))
+		}
+		first, second := expectedIDDescOrder(regularA, regularB)
+		if result.Pages[0].ID != first {
+			t.Errorf("pages[0].ID = %v, want %v", result.Pages[0].ID, first)
+		}
+		if result.Pages[1].ID != second {
+			t.Errorf("pages[1].ID = %v, want %v", result.Pages[1].ID, second)
+		}
+	})
+}
+
+// expectedIDDescOrder returns the two page IDs in the order an "id DESC" sort would
+// produce, i.e. the lexicographically larger id first. Page IDs are UUID (ULID) values
+// whose canonical string form sorts identically to the underlying bytes, so a string
+// comparison matches the database's ORDER BY id DESC.
+//
+// [Ja] expectedIDDescOrder は 2 つのページ ID を "id DESC" ソートが返す順 (辞書順で
+// 大きい方を先頭) に並べて返す。ページ ID は UUID (ULID) 値で、その正準文字列表現は
+// 元のバイト列と同じ順序でソートされるため、文字列比較は DB の ORDER BY id DESC と一致する。
+func expectedIDDescOrder(a, b model.PageID) (first, second model.PageID) {
+	if string(a) >= string(b) {
+		return a, b
+	}
+	return b, a
+}
+
 func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	t.Parallel()
 

@@ -106,7 +106,7 @@ GEM
       erubi (~> 1.4)
       parser (>= 2.4)
       smart_properties
-    bigdecimal (4.1.1)
+    bigdecimal (4.1.2)
     bootsnap (1.18.6)
       msgpack (~> 1.2)
     builder (3.3.0)
@@ -135,7 +135,7 @@ GEM
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
     csv (3.3.5)
-    date (3.4.1)
+    date (3.5.1)
     diff-lcs (1.6.2)
     discard (1.4.0)
       activerecord (>= 4.2, < 9.0)
@@ -232,7 +232,6 @@ GEM
     matrix (0.4.2)
     meta-tags (2.22.1)
       actionpack (>= 6.0.0, < 8.1)
-    method_source (1.1.0)
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
@@ -250,7 +249,7 @@ GEM
     msgpack (1.8.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
-    net-imap (0.5.8)
+    net-imap (0.5.14)
       date
       net-protocol
     net-pop (0.1.2)
@@ -261,11 +260,11 @@ GEM
       net-protocol
     netrc (0.11.0)
     nio4r (2.7.4)
-    nokogiri (1.19.2-aarch64-linux-gnu)
+    nokogiri (1.19.3-aarch64-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.19.2-arm64-darwin)
+    nokogiri (1.19.3-arm64-darwin)
       racc (~> 1.4)
-    nokogiri (1.19.2-x86_64-linux-gnu)
+    nokogiri (1.19.3-x86_64-linux-gnu)
       racc (~> 1.4)
     parallel (1.27.0)
     parser (3.3.8.0)
@@ -511,7 +510,7 @@ GEM
       thor (>= 1.2.0)
       yard-sorbet
     thor (1.4.0)
-    timeout (0.4.3)
+    timeout (0.6.1)
     tsort (0.2.0)
     turbo-rails (2.0.16)
       actionpack (>= 7.1.0)
@@ -526,10 +525,10 @@ GEM
     useragent (0.16.11)
     vcr (6.3.1)
       base64
-    view_component (3.23.2)
-      activesupport (>= 5.2.0, < 8.1)
+    view_component (4.9.0)
+      actionview (>= 7.1.0)
+      activesupport (>= 7.1.0)
       concurrent-ruby (~> 1)
-      method_source (~> 1.0)
     vips (8.15.1)
       ffi (~> 1.12)
     websocket (1.2.11)

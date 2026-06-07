@@ -109,6 +109,11 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			path:     "/",
 			expected: true,
 		},
+		{
+			name:     "ホーム画面",
+			path:     "/home",
+			expected: true,
+		},
 
 		// Rails版にプロキシするパス
 		// 完全一致の "/" がプレフィックス一致として動作しないことを確認
@@ -133,12 +138,12 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "作品一覧ページ（/worksは/のプレフィックスだがRails版）",
+			name:     "作品一覧ページ (/worksは/のプレフィックスだがRails版)",
 			path:     "/works",
 			expected: false,
 		},
 		{
-			name:     "タイムラインページ（/timelineは/のプレフィックスだがRails版）",
+			name:     "タイムラインページ (/timelineは/のプレフィックスだがRails版)",
 			path:     "/timeline",
 			expected: false,
 		},
@@ -447,13 +452,13 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 		expected model.FeatureFlagName
 	}{
 		{
-			name:     "マッチするパス（ページ表示）",
+			name:     "マッチするパス (ページ表示)",
 			method:   http.MethodGet,
 			path:     "/@username/space_atname/pages/abc123",
 			expected: "go_page_show",
 		},
 		{
-			name:     "マッチするパス（設定）",
+			name:     "マッチするパス (設定)",
 			method:   http.MethodGet,
 			path:     "/settings",
 			expected: "go_settings",
@@ -471,25 +476,25 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "ページ編集画面（GET）",
+			name:     "ページ編集画面 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ更新（PATCH）",
+			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ更新（POST）はMethod Override前のためPATCHパターンにマッチする",
+			name:     "ページ更新 (POST) はMethod Override前のためPATCHパターンにマッチする",
 			method:   http.MethodPost,
 			path:     "/s/my-space/pages/1",
 			expected: "go_page_edit",
 		},
 		{
-			name:     "ページ表示（GET）はmethodsフィルタによりマッチしない",
+			name:     "ページ表示 (GET) はmethodsフィルタによりマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
 			expected: "",
@@ -758,6 +763,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 	}{
 		// Go版で処理するパス
 		{
+			name:     "スペース詳細 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space",
+			expected: true,
+		},
+		{
+			name:     "スペース配下のトピックパスはスペース詳細パターンではなくトピックパターンにマッチする",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1",
+			expected: true,
+		},
+		{
 			name:     "ページ編集画面",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
@@ -782,13 +799,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "ページ更新（PATCH）",
+			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
 			expected: true,
 		},
 		{
-			name:     "ページ更新（POST→PATCH、Method Override前）",
+			name:     "ページ更新 (POST→PATCH、Method Override前)",
 			method:   http.MethodPost,
 			path:     "/s/my-space/pages/1",
 			expected: true,
@@ -806,7 +823,7 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "バックリンク一覧（個別）",
+			name:     "バックリンク一覧 (個別)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/links/2/backlink_list",
 			expected: true,
@@ -824,7 +841,7 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "og:image エンドポイント（GET）",
+			name:     "og:image エンドポイント (GET)",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: true,
@@ -832,19 +849,31 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 
 		// Rails版に転送するパス
 		{
-			name:     "ページ表示（GET）はRails版に転送",
+			name:     "スペース詳細 (POST) はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space",
+			expected: false,
+		},
+		{
+			name:     "スペース識別子の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/",
+			expected: false,
+		},
+		{
+			name:     "ページ表示 (GET) はRails版に転送",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
 			expected: false,
 		},
 		{
-			name:     "og:image エンドポイント（POST）はGETのみフィルタによりマッチしない",
+			name:     "og:image エンドポイント (POST) はGETのみフィルタによりマッチしない",
 			method:   http.MethodPost,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
 		},
 		{
-			name:     "og:image エンドポイント（PATCH）はGETのみフィルタによりマッチしない",
+			name:     "og:image エンドポイント (PATCH) はGETのみフィルタによりマッチしない",
 			method:   http.MethodPatch,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
@@ -962,6 +991,91 @@ func TestReverseProxyMiddleware_ensureDeviceToken(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
+	// The middleware reads the global featureFlaggedPatterns slice for requests
+	// that fall through the always-Go checks, so t.Parallel() is intentionally
+	// omitted to avoid running concurrently with tests that swap out this
+	// global variable.
+	//
+	// [Ja] 常に Go で処理するパス判定を通り抜けたリクエストに対してミドルウェアが
+	// グローバルの featureFlaggedPatterns を読むため、このグローバル変数を
+	// 上書きする他テストと並行実行されないよう t.Parallel() は意図的に使用しない。
+
+	// Mock server standing in for the Rails version.
+	// [Ja] Rails 版をモックするテストサーバー
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Rails response"))
+	}))
+	defer railsServer.Close()
+
+	cfg := &config.Config{
+		Domain:        "wikino.app",
+		CookieDomain:  "wikino.app",
+		SessionSecure: true,
+	}
+
+	// featureFlagRepo is nil: the subject of this test is the device_token
+	// placement, not the flag decision.
+	//
+	// [Ja] featureFlagRepo は nil とする。本テストの対象はフラグ判定ではなく
+	// device_token の発行位置のため。
+	m, err := NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	goHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("Go response"))
+	})
+
+	handler := m.Middleware(goHandler)
+
+	testCases := []struct {
+		name             string
+		method           string
+		path             string
+		wantDeviceCookie bool
+	}{
+		// Paths always handled by Go: device_token must NOT be issued because
+		// ensureDeviceToken runs only after the Go-path checks.
+		//
+		// [Ja] 常に Go で処理するパス: ensureDeviceToken は Go パス判定の後でのみ
+		// 走るため device_token は発行されない
+		{name: "静的アセットには発行しない", method: http.MethodGet, path: "/static/css/app.css", wantDeviceCookie: false},
+		{name: "ヘルスチェックには発行しない", method: http.MethodGet, path: "/health", wantDeviceCookie: false},
+		{name: "ホーム画面 (完全一致) には発行しない", method: http.MethodGet, path: "/home", wantDeviceCookie: false},
+		{name: "正規表現マッチの Go パスには発行しない", method: http.MethodGet, path: "/s/my-space/pages/1/edit", wantDeviceCookie: false},
+		{name: "常時 Go 化されたスペース詳細には発行しない", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: false},
+
+		// Rails-proxied paths: device_token must be issued.
+		// [Ja] Rails 転送パス: device_token が発行される
+		{name: "Rails 転送パスには発行する", method: http.MethodGet, path: "/settings", wantDeviceCookie: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			rr := httptest.NewRecorder()
+
+			handler.ServeHTTP(rr, req)
+
+			gotDeviceCookie := false
+			for _, c := range rr.Result().Cookies() {
+				if c.Name == DeviceTokenCookieName {
+					gotDeviceCookie = true
+					break
+				}
+			}
+
+			if gotDeviceCookie != tc.wantDeviceCookie {
+				t.Errorf("device_token Cookie の発行 = %v, want %v (path: %q)", gotDeviceCookie, tc.wantDeviceCookie, tc.path)
+			}
+		})
+	}
 }
 
 func TestRender502ErrorHTML(t *testing.T) {

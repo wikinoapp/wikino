@@ -18,10 +18,6 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	user := middleware.UserFromContext(ctx)
-	if user == nil {
-		http.Redirect(w, r, "/sign_in", http.StatusFound)
-		return
-	}
 
 	output, err := h.getDraftPagesUC.Execute(ctx, usecase.GetDraftPagesInput{
 		UserID: user.ID,

@@ -78,3 +78,49 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 	}
 	return items, nil
 }
+
+const listActiveSpaceMembersByUserAndSpaceIDs = `-- name: ListActiveSpaceMembersByUserAndSpaceIDs :many
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AND active = true
+`
+
+type ListActiveSpaceMembersByUserAndSpaceIDsParams struct {
+	UserID  string   `json:"user_id"`
+	Column2 []string `json:"column_2"`
+}
+
+// Fetch the active space memberships of the given user across multiple spaces in one query
+// (used to avoid N+1 when resolving per-topic permissions for joined topics on the home page).
+//
+// [Ja] ユーザーが複数スペースで持つアクティブなスペースメンバーを 1 クエリで一括取得する
+// (ホーム画面の参加中トピックでトピックごとの権限を解決する際の N+1 を避けるために使用)。
+func (q *Queries) ListActiveSpaceMembersByUserAndSpaceIDs(ctx context.Context, arg ListActiveSpaceMembersByUserAndSpaceIDsParams) ([]SpaceMember, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveSpaceMembersByUserAndSpaceIDs, arg.UserID, pq.Array(arg.Column2))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SpaceMember{}
+	for rows.Next() {
+		var i SpaceMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.UserID,
+			&i.JoinedAt,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

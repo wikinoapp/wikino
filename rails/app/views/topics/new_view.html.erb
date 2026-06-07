@@ -56,7 +56,7 @@
                 <%= t("verbs.create") %>
               <% end %>
 
-              <%= link_to t("nouns.cancel"), space_path(space.identifier), {
+              <%= link_to t("nouns.cancel"), "/s/#{space.identifier}", {
                 class: "btn-outline rounded-full w-fit"
               } %>
             </div>

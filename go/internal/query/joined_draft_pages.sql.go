@@ -20,7 +20,8 @@ SELECT
   p.number AS page_number,
   t.name AS topic_name,
   t.visibility AS topic_visibility,
-  s.identifier AS space_identifier
+  s.identifier AS space_identifier,
+  s.name AS space_name
 FROM draft_pages dp
 INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
 INNER JOIN topics t ON dp.topic_id = t.id AND dp.space_id = t.space_id
@@ -50,9 +51,10 @@ type ListDraftPagesByUserRow struct {
 	TopicName           string      `json:"topic_name"`
 	TopicVisibility     int32       `json:"topic_visibility"`
 	SpaceIdentifier     string      `json:"space_identifier"`
+	SpaceName           string      `json:"space_name"`
 }
 
-// ユーザーの下書きページ一覧を取得する（サイドバー表示用）
+// ユーザーの下書きページ一覧を取得する（サイドバー / ホーム画面の下書きページ表示用）
 // draft_pages → pages → topics → spaces → space_members を JOIN し、アクティブなスペースメンバーのスペースに限定
 func (q *Queries) ListDraftPagesByUser(ctx context.Context, arg ListDraftPagesByUserParams) ([]ListDraftPagesByUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listDraftPagesByUser, arg.UserID, arg.Limit)
@@ -73,6 +75,7 @@ func (q *Queries) ListDraftPagesByUser(ctx context.Context, arg ListDraftPagesBy
 			&i.TopicName,
 			&i.TopicVisibility,
 			&i.SpaceIdentifier,
+			&i.SpaceName,
 		); err != nil {
 			return nil, err
 		}

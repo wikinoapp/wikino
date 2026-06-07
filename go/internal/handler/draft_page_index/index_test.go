@@ -8,46 +8,14 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
-
-func TestIndex_NotLoggedIn(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-
-	cfg := &config.Config{
-		Env:    "test",
-		Domain: "localhost",
-	}
-	flashMgr := session.NewFlashManager("", false, true)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
-	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
-
-	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
-
-	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
-	rr := httptest.NewRecorder()
-	handler.Index(rr, req)
-
-	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
-	}
-
-	location := rr.Header().Get("Location")
-	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
-	}
-}
 
 func TestIndex_Empty(t *testing.T) {
 	t.Parallel()
@@ -64,17 +32,16 @@ func TestIndex_Empty(t *testing.T) {
 		Env:    "test",
 		Domain: "localhost",
 	}
-	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
-	req.Header.Set("Accept-Language", "ja")
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "dpiempty"})
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpiempty"})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -142,17 +109,16 @@ func TestIndex_WithDrafts(t *testing.T) {
 		Env:    "test",
 		Domain: "localhost",
 	}
-	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
-	req.Header.Set("Accept-Language", "ja")
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "dpidrafts"})
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpidrafts"})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -181,8 +147,11 @@ func TestIndex_WithDrafts(t *testing.T) {
 	}
 }
 
-// docs/specs/suggestion/overview.md の下書き一覧画面の仕様に対応する回帰テスト。
-// トピックグループごとに編集提案ボタンが表示され、正しい作成画面のパスにリンクすることを検証する。
+// Regression test verifying that a suggestion button is shown per topic group
+// on the draft list screen and links to the correct creation screen path.
+//
+// [Ja] 下書き一覧画面でトピックグループごとに編集提案ボタンが表示され、
+// 正しい作成画面のパスにリンクすることを検証する回帰テスト。
 func TestIndex_編集提案ボタンがトピックグループに表示される(t *testing.T) {
 	t.Parallel()
 
@@ -230,17 +199,16 @@ func TestIndex_編集提案ボタンがトピックグループに表示され�
 		Env:    "test",
 		Domain: "localhost",
 	}
-	flashMgr := session.NewFlashManager("", false, true)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, flashMgr, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
-	req.Header.Set("Accept-Language", "ja")
-	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "dpisuggbtn"})
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpisuggbtn"})
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()

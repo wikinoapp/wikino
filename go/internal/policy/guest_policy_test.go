@@ -60,6 +60,7 @@ func TestGuestPolicy_AllWriteMethodsReturnFalse(t *testing.T) {
 		{"CanEditSuggestionPage", p.CanEditSuggestionPage()},
 		{"CanCreateSuggestionComment", p.CanCreateSuggestionComment()},
 		{"CanUpdateSuggestionComment", p.CanUpdateSuggestionComment(openSuggestion)},
+		{"CanCreateTopic", p.CanCreateTopic()},
 	}
 
 	for _, tt := range tests {

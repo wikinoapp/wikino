@@ -139,6 +139,103 @@ func TestTopicRepository_ListActiveBySpace(t *testing.T) {
 	})
 }
 
+func TestTopicRepository_ListPublicBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewTopicRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("public-topic-space").
+		WithName("Public Topic Space").
+		Build()
+
+	// Create public topics out of number order to verify ORDER BY number.
+	// [Ja] ORDER BY number を検証するため、number 順とは異なる順序で公開トピックを作成する。
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Public Second").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public First").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	// A private topic and a discarded public topic must both be excluded.
+	// [Ja] 非公開トピックと廃棄済みの公開トピックは、いずれも除外される。
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(4).
+		WithName("Discarded Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		WithDiscarded().
+		Build()
+
+	// A public topic in another space must not leak into the target space's results,
+	// verifying the space_id scoping of the query.
+	// [Ja] 別スペースの公開トピックが対象スペースの結果に混入しないこと (クエリの space_id
+	// スコープが効いていること) を検証する。
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("other-public-topic-space").
+		WithName("Other Public Topic Space").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	t.Run("公開トピックのみをナンバー順で取得できる", func(t *testing.T) {
+		topics, err := repo.ListPublicBySpace(context.Background(), spaceID)
+		if err != nil {
+			t.Fatalf("ListPublicBySpace() error = %v", err)
+		}
+		// len == 2 and the exact names below also confirm the other space's public
+		// topic ("Other Space Public") is excluded by the space_id scoping.
+		// [Ja] len == 2 と下の名前一致により、別スペースの公開トピック ("Other Space
+		// Public") が space_id スコープで除外されることも合わせて確認している。
+		if len(topics) != 2 {
+			t.Fatalf("len(topics) = %v, want 2", len(topics))
+		}
+		if topics[0].Name != "Public First" {
+			t.Errorf("topics[0].Name = %v, want 'Public First'", topics[0].Name)
+		}
+		if topics[1].Name != "Public Second" {
+			t.Errorf("topics[1].Name = %v, want 'Public Second'", topics[1].Name)
+		}
+		for _, topic := range topics {
+			if topic.Visibility != model.TopicVisibilityPublic {
+				t.Errorf("topic %q Visibility = %v, want TopicVisibilityPublic", topic.Name, topic.Visibility)
+			}
+		}
+	})
+
+	t.Run("トピックがないスペースは空のスライスを返す", func(t *testing.T) {
+		topics, err := repo.ListPublicBySpace(context.Background(), "00000000-0000-0000-0000-000000000000")
+		if err != nil {
+			t.Fatalf("ListPublicBySpace() error = %v", err)
+		}
+		if len(topics) != 0 {
+			t.Errorf("len(topics) = %v, want 0", len(topics))
+		}
+	})
+}
+
 func TestTopicRepository_FindBySpaceAndNames(t *testing.T) {
 	t.Parallel()
 
@@ -420,6 +517,44 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		}
 	})
 
+	t.Run("削除済みスペースのトピックは除外される", func(t *testing.T) {
+		discardedSpaceUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("joined-discarded-space@example.com").
+			WithAtname("joineddiscardedspace").
+			Build()
+
+		discardedSpaceOnlyID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("joined-discarded-only-space").
+			WithName("Joined Discarded Only Space").
+			WithDiscarded().
+			Build()
+
+		discardedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(discardedSpaceOnlyID).
+			WithUserID(discardedSpaceUserID).
+			Build()
+
+		activeTopicInDiscardedSpaceID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(discardedSpaceOnlyID).
+			WithNumber(1).
+			WithName("Active Topic In Discarded Space").
+			Build()
+
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(discardedSpaceOnlyID).
+			WithTopicID(activeTopicInDiscardedSpaceID).
+			WithSpaceMemberID(discardedSpaceMemberID).
+			Build()
+
+		topics, err := repo.ListJoinedByUser(context.Background(), discardedSpaceUserID, 10)
+		if err != nil {
+			t.Fatalf("ListJoinedByUser() error = %v", err)
+		}
+		if len(topics) != 0 {
+			t.Errorf("len(topics) = %v, want 0", len(topics))
+		}
+	})
+
 	t.Run("トピックに参加していないユーザーは空のスライスを返す", func(t *testing.T) {
 		topics, err := repo.ListJoinedByUser(context.Background(), "00000000-0000-0000-0000-000000000000", 10)
 		if err != nil {
@@ -504,6 +639,193 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 		}
 		if len(topics) != 0 {
 			t.Errorf("len(topics) = %v, want 0", len(topics))
+		}
+	})
+}
+
+func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewTopicRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("first-joined-topic@example.com").
+		WithAtname("firstjoinedtopic").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("first-joined-space").
+		WithName("First Joined Space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	// Create two joined topics and verify the one with the smallest id (id ASC) is returned.
+	// [Ja] 参加トピックを 2 件作成し、id 昇順で最初のものが返ることを検証する。
+	topicID1 := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Joined Topic 1").
+		Build()
+
+	topicID2 := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Joined Topic 2").
+		Build()
+
+	// A topic the member has not joined (verify it is excluded from the result).
+	// [Ja] 参加していないトピック (結果に含まれないことを確認する)。
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Not Joined Topic").
+		Build()
+
+	for _, topicID := range []model.TopicID{topicID1, topicID2} {
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+	}
+
+	t.Run("参加トピックのうちid昇順で最初のものを返す", func(t *testing.T) {
+		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), spaceMemberID, spaceID)
+		if err != nil {
+			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+		}
+		if topic == nil {
+			t.Fatal("FindFirstJoinedBySpaceMember() returned nil, want topic")
+		}
+		// ULID-derived uuids sort the same way under string comparison as the DB's id ASC,
+		// so compute the expected value as the smaller id rather than relying on creation order.
+		//
+		// [Ja] ULID (uuid) は文字列比較が DB の id ASC と一致するため、生成順ではなく
+		// id の小さいほうを期待値として算出する。
+		wantID := topicID1
+		if string(topicID2) < string(topicID1) {
+			wantID = topicID2
+		}
+		if topic.ID != wantID {
+			t.Errorf("topic.ID = %v, want %v (joined topic with smallest id)", topic.ID, wantID)
+		}
+		if topic.Space.ID != spaceID {
+			t.Errorf("topic.Space.ID = %v, want %v", topic.Space.ID, spaceID)
+		}
+	})
+
+	t.Run("トピックに参加していないスペースメンバーはnilを返す", func(t *testing.T) {
+		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
+		if err != nil {
+			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+		}
+		if topic != nil {
+			t.Errorf("FindFirstJoinedBySpaceMember() = %v, want nil", topic)
+		}
+	})
+
+	t.Run("削除済みトピックは除外される", func(t *testing.T) {
+		discardedUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("first-joined-discarded@example.com").
+			WithAtname("firstjoineddiscarded").
+			Build()
+
+		discardedSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("first-joined-discarded-space").
+			WithName("First Joined Discarded Space").
+			Build()
+
+		discardedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(discardedSpaceID).
+			WithUserID(discardedUserID).
+			Build()
+
+		// This member has joined only a discarded topic, so the result is nil.
+		// [Ja] このメンバーは削除済みトピックにのみ参加しているため、結果は nil になる。
+		discardedTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(discardedSpaceID).
+			WithNumber(1).
+			WithName("Discarded Topic").
+			WithDiscarded().
+			Build()
+
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(discardedSpaceID).
+			WithTopicID(discardedTopicID).
+			WithSpaceMemberID(discardedSpaceMemberID).
+			Build()
+
+		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), discardedSpaceMemberID, discardedSpaceID)
+		if err != nil {
+			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+		}
+		if topic != nil {
+			t.Errorf("FindFirstJoinedBySpaceMember() = %v, want nil (discarded topic excluded)", topic)
+		}
+	})
+
+	t.Run("idが最小でも参加していないトピックは除外される", func(t *testing.T) {
+		// Isolated space so the smaller-id topic stays unjoined regardless of generation order.
+		// [Ja] 生成順に関わらず id の小さいトピックを未参加にできるよう、独立したスペースを使う。
+		excludeUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("first-joined-exclude@example.com").
+			WithAtname("firstjoinedexclude").
+			Build()
+
+		excludeSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("first-joined-exclude-space").
+			WithName("First Joined Exclude Space").
+			Build()
+
+		excludeSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(excludeSpaceID).
+			WithUserID(excludeUserID).
+			Build()
+
+		topicA := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(excludeSpaceID).
+			WithNumber(1).
+			WithName("Exclude Topic A").
+			Build()
+
+		topicB := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(excludeSpaceID).
+			WithNumber(2).
+			WithName("Exclude Topic B").
+			Build()
+
+		// Determine the larger id by string comparison (matches DB id ASC) to avoid relying on generation order.
+		// [Ja] 文字列比較 (DB の id ASC と一致) で id の大きいほうを判定し、生成順に依存しないようにする。
+		largerID := topicA
+		if string(topicB) > string(topicA) {
+			largerID = topicB
+		}
+
+		// Join only the larger-id topic, leaving the smaller-id topic unjoined.
+		// [Ja] id が大きいトピックにのみ参加し、id が小さいトピックは未参加のままにする。
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(excludeSpaceID).
+			WithTopicID(largerID).
+			WithSpaceMemberID(excludeSpaceMemberID).
+			Build()
+
+		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), excludeSpaceMemberID, excludeSpaceID)
+		if err != nil {
+			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+		}
+		if topic == nil {
+			t.Fatal("FindFirstJoinedBySpaceMember() returned nil, want joined topic")
+		}
+		// The joined larger-id topic must be returned, not the unjoined smaller-id topic.
+		// [Ja] 未参加で id が小さいトピックではなく、参加済みで id が大きいトピックが返る。
+		if topic.ID != largerID {
+			t.Errorf("topic.ID = %v, want %v (joined topic, even though the unjoined topic has a smaller id)", topic.ID, largerID)
 		}
 	})
 }

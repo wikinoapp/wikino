@@ -878,6 +878,58 @@ other = "A page with the same title already exists in the destination topic."
 description = "Cannot move page referenced by open suggestion error"
 other = "Pages referenced by open suggestions cannot be moved."
 
+[home_show_title]
+description = "Home page title (meta tag)"
+other = "Home"
+
+[home_heading]
+description = "Home page main heading"
+other = "Home"
+
+[home_joined_spaces_heading]
+description = "Home page 'Joined spaces' section heading"
+other = "Joined spaces"
+
+[home_new_space_button]
+description = "Home page 'New space' button label"
+other = "New space"
+
+[home_no_joined_spaces_html]
+description = "Home page heading shown when the user has no joined spaces (contains HTML)"
+other = "No joined spaces."
+
+[home_welcome_message]
+description = "Heading shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+other = "Welcome to Wikino!"
+
+[home_welcome_description_html]
+description = "Description shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+other = "Create your first space to start writing pages."
+
+[home_joined_topics_heading]
+description = "Home page 'Joined topics' section heading"
+other = "Joined topics"
+
+[home_no_joined_topics_html]
+description = "Home page heading shown when the user has no joined topics (contains HTML)"
+other = "No joined topics."
+
+[home_draft_pages_heading]
+description = "Home page 'Draft pages' section heading"
+other = "Draft pages"
+
+[home_draft_pages_view_all_link]
+description = "Link text from the home page 'Draft pages' section to the draft pages index"
+other = "View all"
+
+[home_no_draft_pages_html]
+description = "Home page heading shown when the user has no draft pages (contains HTML)"
+other = "No draft pages."
+
+[home_draft_pages_untitled]
+description = "Fallback text shown on a home page draft card when the title is empty"
+other = "Untitled"
+
 [draft_page_index_title]
 description = "Draft page index page title"
 other = "Draft Pages"
@@ -967,6 +1019,55 @@ other = "Pages"
 [topic_show_tab_suggestions]
 description = "Suggestions tab label on the topic show page"
 other = "Suggestions"
+
+# Space show
+[space_show_title]
+description = "Space show page title ({space_name})"
+other = "{{.SpaceName}}"
+
+[space_show_no_topics_message]
+description = "Message when there are no topics in the space"
+other = "No topics."
+
+[space_show_no_topics_description_html]
+description = "Description when there are no topics in the space (contains HTML)"
+other = "Topics are used to classify pages.<br>Create a topic to add pages."
+
+[space_show_new_topic_button]
+description = "New topic button on the space show page"
+other = "New topic"
+
+[space_show_no_pages_message]
+description = "Message when there are no pages in the space"
+other = "No pages."
+
+[space_show_pages_heading]
+description = "Heading of the pages section on the space show page"
+other = "Pages"
+
+[space_show_topics_heading]
+description = "Heading of the topic section on the space show page"
+other = "Topics"
+
+[card_link_topic_new_page]
+description = "Tooltip of the new page link shown on a topic link card"
+other = "New page"
+
+[space_show_options_rss_feed]
+description = "RSS feed link in the options menu on the space show page"
+other = "RSS feed"
+
+[space_show_options_new_topic]
+description = "New topic link in the options menu on the space show page"
+other = "New topic"
+
+[space_show_options_trash]
+description = "Trash link in the options menu on the space show page"
+other = "Trash"
+
+[space_show_options_settings]
+description = "Settings link in the options menu on the space show page"
+other = "Settings"
 
 # Pagination
 [pagination_previous]

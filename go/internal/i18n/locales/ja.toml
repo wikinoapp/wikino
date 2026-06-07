@@ -878,6 +878,58 @@ other = "移動先トピックに同じタイトルのページが既に存在�
 description = "オープンな編集提案が存在するため移動不可エラー"
 other = "オープンな編集提案で参照されているページは移動できません"
 
+[home_show_title]
+description = "ホーム画面のタイトル (meta tag)"
+other = "ホーム"
+
+[home_heading]
+description = "ホーム画面のメイン見出し"
+other = "ホーム"
+
+[home_joined_spaces_heading]
+description = "ホーム画面の「参加中のスペース」見出し"
+other = "参加中のスペース"
+
+[home_new_space_button]
+description = "ホーム画面の「新規スペース」ボタン"
+other = "新規スペース"
+
+[home_no_joined_spaces_html]
+description = "ホーム画面の参加中スペースが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"
+
+[home_welcome_message]
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の見出し"
+other = "Wikinoへようこそ！"
+
+[home_welcome_description_html]
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の補足説明"
+other = "まずはスペースを作成して<br class=\"md:hidden\"/>ページを書き始めましょう"
+
+[home_joined_topics_heading]
+description = "ホーム画面の「参加中のトピック」見出し"
+other = "参加中のトピック"
+
+[home_no_joined_topics_html]
+description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"
+
+[home_draft_pages_heading]
+description = "ホーム画面の「下書きのページ」見出し"
+other = "下書きのページ"
+
+[home_draft_pages_view_all_link]
+description = "ホーム画面の「下書きのページ」セクションから下書き一覧ページへのリンクテキスト"
+other = "全て見る"
+
+[home_no_draft_pages_html]
+description = "ホーム画面の下書きが 0 件のときの見出しメッセージ (HTML を含む)"
+other = "下書きのページは<br class=\"block sm:hidden\">ありません"
+
+[home_draft_pages_untitled]
+description = "ホーム画面の下書きカードでタイトルが未設定のときに表示する代替テキスト"
+other = "無題"
+
 [draft_page_index_title]
 description = "下書き一覧ページのタイトル"
 other = "下書きのページ"
@@ -967,6 +1019,55 @@ other = "ページ"
 [topic_show_tab_suggestions]
 description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
+
+# スペース詳細
+[space_show_title]
+description = "スペース詳細画面のタイトル ({space_name})"
+other = "{{.SpaceName}}"
+
+[space_show_no_topics_message]
+description = "スペース詳細画面でトピックがない場合のメッセージ"
+other = "トピックはありません"
+
+[space_show_no_topics_description_html]
+description = "スペース詳細画面でトピックがない場合の説明文 (HTML を含む)"
+other = "トピックはページを分類するためのものです<br>トピックを作成してページを追加できるようにしましょう"
+
+[space_show_new_topic_button]
+description = "スペース詳細画面の新規トピック作成ボタン"
+other = "新規トピック"
+
+[space_show_no_pages_message]
+description = "スペース詳細画面でページがない場合のメッセージ"
+other = "ページはありません"
+
+[space_show_pages_heading]
+description = "スペース詳細画面のページセクションの見出し"
+other = "ページ"
+
+[space_show_topics_heading]
+description = "スペース詳細画面のトピックセクションの見出し"
+other = "トピック"
+
+[card_link_topic_new_page]
+description = "トピックリンクカードに表示する新規ページ作成リンクのツールチップ"
+other = "新規ページ"
+
+[space_show_options_rss_feed]
+description = "スペース詳細画面のオプションメニューの RSS フィードリンク"
+other = "RSSフィード"
+
+[space_show_options_new_topic]
+description = "スペース詳細画面のオプションメニューの新規トピックリンク"
+other = "新規トピック"
+
+[space_show_options_trash]
+description = "スペース詳細画面のオプションメニューのゴミ箱リンク"
+other = "ゴミ箱"
+
+[space_show_options_settings]
+description = "スペース詳細画面のオプションメニューの設定リンク"
+other = "設定"
 
 # ページネーション
 [pagination_previous]

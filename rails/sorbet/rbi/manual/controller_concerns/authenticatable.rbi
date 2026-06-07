@@ -15,12 +15,6 @@ module ControllerConcerns
     def flash
     end
 
-    def home_path
-    end
-
-    def home_url
-    end
-
     def redirect_to(*args)
     end
 
@@ -31,12 +25,6 @@ module ControllerConcerns
     end
 
     def sign_in_path
-    end
-
-    def space_path(*args)
-    end
-
-    def space_url(*args)
     end
 
     def t(*args)

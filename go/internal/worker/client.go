@@ -10,10 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/email"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
+	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -73,12 +75,22 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	slog.InfoContext(ctx, "CleanupRateLimitsWorker を登録しました")
 
 	// River クライアントの作成
+	// Wire the Sentry middleware via Config.Middleware. The deprecated
+	// WorkerMiddleware field is avoided so future river upgrades that remove
+	// it will not require revisiting this site.
+	//
+	// [Ja] Sentry ミドルウェアは Config.Middleware に登録する。
+	// 将来 river のアップデートで削除される可能性のある WorkerMiddleware
+	// フィールドは使わないことで、削除時の再対応を不要にする。
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 10},
 		},
 		Workers: workers,
-		Logger:  slog.Default(),
+		Middleware: []rivertype.Middleware{
+			wikinosentry.RiverWorkerMiddleware(),
+		},
+		Logger: slog.Default(),
 	})
 	if err != nil {
 		pool.Close()

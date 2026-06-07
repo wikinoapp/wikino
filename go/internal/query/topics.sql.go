@@ -11,6 +11,43 @@ import (
 	"github.com/lib/pq"
 )
 
+const findFirstJoinedTopicBySpaceMember = `-- name: FindFirstJoinedTopicBySpaceMember :one
+SELECT t.id, t.space_id, t.number, t.name, t.description, t.visibility, t.discarded_at, t.created_at, t.updated_at FROM topics t
+INNER JOIN topic_members tm ON t.id = tm.topic_id
+WHERE tm.space_member_id = $1 AND t.space_id = $2 AND t.discarded_at IS NULL
+ORDER BY t.id ASC
+LIMIT 1
+`
+
+type FindFirstJoinedTopicBySpaceMemberParams struct {
+	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
+}
+
+// Returns the topic with the smallest id among those the space member has joined
+// (not-discarded topics only), scoped to the given space. Used by the empty-state
+// "create a new page" link on the space detail page.
+//
+// [Ja] スペースメンバーが参加しているトピックのうち id が最小のもの (削除されていない
+// トピックのみ) を、指定スペースにスコープして返す。スペース詳細画面の空状態で表示する
+// 「新しいページを作る」導線で使用する。
+func (q *Queries) FindFirstJoinedTopicBySpaceMember(ctx context.Context, arg FindFirstJoinedTopicBySpaceMemberParams) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, findFirstJoinedTopicBySpaceMember, arg.SpaceMemberID, arg.SpaceID)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Number,
+		&i.Name,
+		&i.Description,
+		&i.Visibility,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const findTopicBySpaceAndID = `-- name: FindTopicBySpaceAndID :one
 SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND id = $2 AND discarded_at IS NULL
 `
@@ -158,6 +195,52 @@ SELECT id, space_id, number, name, description, visibility, discarded_at, create
 // スペースID でアクティブなトピック一覧を取得する（削除されていないトピックのみ）
 func (q *Queries) ListActiveTopicsBySpace(ctx context.Context, spaceID string) ([]Topic, error) {
 	rows, err := q.db.QueryContext(ctx, listActiveTopicsBySpace, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Topic{}
+	for rows.Next() {
+		var i Topic
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.Number,
+			&i.Name,
+			&i.Description,
+			&i.Visibility,
+			&i.DiscardedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPublicTopicsBySpace = `-- name: ListPublicTopicsBySpace :many
+SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics
+WHERE space_id = $1 AND visibility = 0 AND discarded_at IS NULL
+ORDER BY number
+`
+
+// Returns the active public topics in the given space (not-discarded, visibility = public),
+// ordered by number. Used by the topic section shown to non-members (guests) on the space
+// detail page, where only public topics are visible.
+//
+// [Ja] 指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を number 順で返す。
+// スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、ここでは公開
+// トピックのみが見える。
+func (q *Queries) ListPublicTopicsBySpace(ctx context.Context, spaceID string) ([]Topic, error) {
+	rows, err := q.db.QueryContext(ctx, listPublicTopicsBySpace, spaceID)
 	if err != nil {
 		return nil, err
 	}

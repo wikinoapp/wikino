@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
@@ -25,6 +26,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
+	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
@@ -38,6 +40,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
+	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
@@ -55,6 +58,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
@@ -73,6 +77,37 @@ func main() {
 		slog.Error("設定の読み込みに失敗しました", "error", err)
 		os.Exit(1)
 	}
+
+	// Initialize Sentry. Empty DSN (e.g. local development) disables Sentry and
+	// the deferred Flush becomes a no-op.
+	//
+	// [Ja] Sentry を初期化する。DSN が空 (ローカル開発など) の場合は Sentry が無効化され、
+	// defer された Flush も no-op になる。
+	if err := wikinosentry.Init(wikinosentry.Config{
+		DSN:              cfg.SentryDSN,
+		Environment:      cfg.SentryEnvironment,
+		Release:          cfg.AssetVersion,
+		TracesSampleRate: cfg.SentryTracesSampleRate,
+		Debug:            cfg.SentryDebug,
+	}); err != nil {
+		slog.Error("Sentryの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer wikinosentry.Flush(2 * time.Second)
+
+	// Route slog through Sentry: Error-level records become Sentry events while
+	// every level still reaches stderr through the underlying text handler.
+	// SetDefault must happen before any code path that can call slog.Error
+	// (DB connection, river client, etc.) so the Sentry handler covers
+	// startup failures too.
+	//
+	// [Ja] slog のデフォルトロガーを Sentry 連携付きハンドラーに差し替える。
+	// Error レベル以上は Sentry イベント化され、全レベルは引き続き標準エラー
+	// 出力にも届く。slog.Error を呼ぶ可能性のある処理 (DB 接続、river 起動など)
+	// より前に呼ぶことで、起動時のエラーも Sentry に届くようにする。
+	slog.SetDefault(slog.New(wikinosentry.NewSlogHandler(
+		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
+	)))
 
 	// データベース接続
 	db, err := sql.Open("postgres", cfg.DatabaseDSN())
@@ -301,8 +336,13 @@ func main() {
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
-		flashMgr,
 		getDraftPagesUC,
+		sidebarHelper,
+	)
+	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
+	homeHandler := home.NewHandler(
+		cfg,
+		getHomeShowUC,
 		sidebarHelper,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
@@ -341,6 +381,12 @@ func main() {
 		flashMgr,
 		getPageMoveDataUC,
 		movePageUC,
+		sidebarHelper,
+	)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	spaceHandler := spacehandler.NewHandler(
+		cfg,
+		getSpaceShowUC,
 		sidebarHelper,
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
@@ -484,7 +530,48 @@ func main() {
 	// 共通ミドルウェア
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.RequestID)
-	r.Use(chimiddleware.RealIP)
+	// Client IP is resolved on demand via internal/clientip (CF-Connecting-IP first),
+	// so chi's IP middleware is intentionally not registered. chi's RealIP is also
+	// deprecated for IP spoofing (GHSA-3fxj-6jh8-hvhx) and must not be reintroduced.
+	//
+	// [Ja] クライアント IP は internal/clientip (CF-Connecting-IP 優先) で都度解決するため、
+	// chi の IP ミドルウェアは意図的に登録しない。chi の RealIP は IP spoofing
+	// (GHSA-3fxj-6jh8-hvhx) のため deprecated でもあり、再導入しないこと。
+
+	// Recoverer must be registered before sentryhttp (= outer in the chain) so
+	// that the re-panic from sentryhttp (Repanic: true) is caught here and a
+	// 500 response is written. The Sentry SDK's own README also instructs to
+	// place the recovery middleware on the outside of sentryhttp.
+	//
+	// [Ja] Recoverer は sentryhttp より前 (= 外側) に登録する。sentryhttp が
+	// Repanic: true で再 panic したものをここで握り潰して 500 を返す。
+	// Sentry SDK 公式 README も「recovery middleware は sentryhttp より外側に
+	// 置く」と指示している。
+	r.Use(chimiddleware.Recoverer)
+
+	// sentryhttp captures panics, sets per-request Hub on the context, and
+	// starts a Sentry performance transaction for each request. Repanic: true
+	// re-throws after capture so that Recoverer (outer) returns 500 to the
+	// client and the Go runtime's normal panic semantics are preserved.
+	//
+	// [Ja] sentryhttp はリクエスト単位の Hub を context に積み、panic を捕捉
+	// して Sentry に送信し、パフォーマンストランザクションを開始する。
+	// Repanic: true により捕捉後に再 panic することで、外側の Recoverer が
+	// 500 を返し、Go runtime の通常の panic セマンティクスも維持できる。
+	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
+	r.Use(sentryHTTP.Handle)
+
+	// SentryTransaction rewrites the transaction name with chi's route pattern.
+	// It must be registered after sentryhttp (= inside the wrapper) so that the
+	// LIFO defer order guarantees the rewrite happens before sentryhttp's
+	// transaction.Finish() and before recoverWithSentry captures a panic event.
+	//
+	// [Ja] SentryTransaction はトランザクション名を chi のルートパターンに
+	// 上書きするミドルウェア。sentryhttp の後 (= 内側) に登録することで、LIFO の
+	// defer 順序により sentryhttp の transaction.Finish() や recoverWithSentry
+	// の panic 捕捉より先に名前の上書きが走ることを保証する。
+	r.Use(middleware.SentryTransaction)
+
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
 	r.Use(flashMgr.Middleware)
@@ -505,8 +592,22 @@ func main() {
 	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
+		// SentryUserContext must run after the auth middleware so the user is
+		// already on the context. It attaches the user to this request's Sentry
+		// Hub scope; anonymous traffic no-ops, so SetUser (which permits both
+		// authenticated and anonymous requests) is the right placement.
+		//
+		// [Ja] SentryUserContext は認証ミドルウェアの後に置く (context にユーザー
+		// が乗ってから読むため)。本ミドルウェアは本リクエストの Sentry Hub
+		// スコープにユーザーを紐付け、未認証時は no-op になるため、認証必須でない
+		// SetUser の後に置いても問題ない。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
+
+		// Space detail page (public-topic pages are viewable even by non-members).
+		// [Ja] スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
+		r.Get("/s/{space_identifier}", spaceHandler.Show)
 
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
@@ -520,6 +621,17 @@ func main() {
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
+		// SentryUserContext is included here for consistency with the other
+		// groups. RequireNoAuth blocks authenticated requests with a redirect, so
+		// in practice the user is always nil and the middleware no-ops -- but
+		// keeping every group's chain uniform avoids surprises if a future route
+		// reuses this group with a different auth policy.
+		//
+		// [Ja] 他グループとチェーン構成を揃えるためここにも置く。RequireNoAuth は
+		// 認証済みリクエストをリダイレクトで弾くため、実際にはユーザーは常に
+		// nil で本ミドルウェアは no-op だが、将来このグループを別ポリシーで再利用
+		// しても破綻しないよう全グループでチェーンを統一する。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/sign_in", signInHandler.New)
 		r.Post("/sign_in", signInHandler.Create)
@@ -542,8 +654,17 @@ func main() {
 	// 認証済みユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
+		// SentryUserContext runs after RequireAuth so every request hitting an
+		// authenticated route carries the user on the Sentry Hub scope.
+		//
+		// [Ja] RequireAuth の後に置くことで、認証必須ルートに届くリクエストは
+		// すべて Sentry Hub スコープにユーザー情報が乗った状態になる。
+		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
+
+		// ホーム画面
+		r.Get("/home", homeHandler.Show)
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)

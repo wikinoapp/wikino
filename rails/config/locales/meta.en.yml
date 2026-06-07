@@ -7,8 +7,6 @@ en:
         new: Create an account
       email_confirmations:
         edit: Verification
-      home:
-        show: Home
       topics:
         new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
@@ -64,6 +62,5 @@ en:
           attachments:
             index: "Attachments | %{space_name}"
           show: "Settings | %{space_name}"
-        show: "%{space_name}"
       welcome:
         show: Find through links.

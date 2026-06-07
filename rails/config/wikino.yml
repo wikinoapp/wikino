@@ -1,5 +1,6 @@
 shared:
   app_url: <%= ENV["WIKINO_URL"] %>
+  asset_version: <%= ENV["WIKINO_ASSET_VERSION"] %>
   email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
   host: "<%= (Rails.env.test? && !ENV['CI']) ? `hostname`.strip.downcase : ENV['WIKINO_DOMAIN'] %>"
   resend_api_key: <%= ENV["WIKINO_RESEND_API_KEY"] %>
@@ -13,3 +14,5 @@ shared:
     - me
     - self
   sentry_dsn: <%= ENV["WIKINO_SENTRY_DSN"] %>
+  sentry_environment: <%= ENV["WIKINO_SENTRY_ENVIRONMENT"] %>
+  sentry_traces_sample_rate: <%= ENV["WIKINO_SENTRY_TRACES_SAMPLE_RATE"] %>
