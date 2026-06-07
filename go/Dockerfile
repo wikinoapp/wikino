@@ -4,7 +4,7 @@
 # Build stage
 # [Ja] ビルドステージ
 # ========================================
-FROM golang:1.26.2-alpine3.21 AS builder
+FROM golang:1.26.4-alpine3.23 AS builder
 
 WORKDIR /app
 
@@ -30,8 +30,8 @@ RUN apk add --no-cache git libstdc++ curl
 # 完全に一致させ、フロントエンドビルドを開発・本番で再現可能にする。
 # /usr/local/bin/corepack の symlink は COPY によって実体ファイルになるため、
 # 後で symlink を作り直す。
-COPY --from=node:24.13.0-alpine3.21 /usr/local/bin/node /usr/local/bin/node
-COPY --from=node:24.13.0-alpine3.21 /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/corepack
+COPY --from=node:24.13.0-alpine3.23 /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24.13.0-alpine3.23 /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/corepack
 RUN ln -sf /usr/local/lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack && \
     corepack enable && \
     corepack prepare pnpm@10.25.0 --activate
@@ -133,7 +133,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Runtime stage
 # [Ja] 実行ステージ
 # ========================================
-FROM alpine:3.21
+FROM alpine:3.23
 
 WORKDIR /app
 
