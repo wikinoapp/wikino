@@ -186,6 +186,65 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		}
 	})
 
+	// Verifies the ON DELETE CASCADE contract that the Rails-side deletion
+	// paths rely on: deleting a draft_pages row directly must also delete
+	// its revisions without an explicit DELETE on draft_page_revisions.
+	//
+	// [Ja] Rails 側の削除経路が頼る ON DELETE CASCADE の契約を検証する。
+	// draft_pages の行を直接 DELETE したとき、draft_page_revisions への明示的な
+	// DELETE なしでリビジョンも一緒に消えること。
+	t.Run("下書きページの行を直接DELETEするとリビジョンも消える", func(t *testing.T) {
+		// Create an independent Page and DraftPage for this verification (to avoid interference with other subtests)
+		// [Ja] 検証用に独立した Page と DraftPage を作成 (他サブテストの干渉を避けるため)
+		cascadePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(3).
+			WithTitle("Cascade Test Page").
+			Build()
+
+		cascadeDraftPageID := testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(cascadePageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("Cascade Draft Title").
+			WithBody("cascade draft body").
+			WithBodyHTML("<p>cascade draft body</p>").
+			Build()
+
+		_, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
+			DraftPageID:   cascadeDraftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         "Cascade Test",
+			Body:          "cascade body",
+			BodyHTML:      "<p>cascade body</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+
+		// Delete the parent draft_pages row directly (without going through application code)
+		// [Ja] 親の draft_pages の行を直接削除 (アプリケーションコードを経由しない)
+		_, err = tx.ExecContext(
+			context.Background(),
+			"DELETE FROM draft_pages WHERE id = $1 AND space_id = $2",
+			string(cascadeDraftPageID), string(spaceID),
+		)
+		if err != nil {
+			t.Fatalf("DELETE draft_pages error = %v", err)
+		}
+
+		count, err := repo.CountByDraftPageID(context.Background(), cascadeDraftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("CountByDraftPageID() error = %v", err)
+		}
+		if count != 0 {
+			t.Errorf("count = %d, want 0 (revisions should be cascade-deleted)", count)
+		}
+	})
+
 	t.Run("同じ下書きに対して複数のリビジョンを作成できる", func(t *testing.T) {
 		revision1, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
 			DraftPageID:   draftPageID,

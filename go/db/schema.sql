@@ -1005,6 +1005,20 @@ CREATE INDEX idx_draft_page_revisions_draft_page_id_created_at ON public.draft_p
 
 
 --
+-- Name: idx_draft_page_revisions_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_draft_page_revisions_space_id ON public.draft_page_revisions USING btree (space_id);
+
+
+--
+-- Name: idx_draft_page_revisions_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_draft_page_revisions_space_member_id ON public.draft_page_revisions USING btree (space_member_id);
+
+
+--
 -- Name: idx_feature_flags_device_token; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1632,7 +1646,7 @@ CREATE UNIQUE INDEX river_job_unique_idx ON public.river_job USING btree (unique
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id);
+    ADD CONSTRAINT draft_page_revisions_draft_page_id_fkey FOREIGN KEY (draft_page_id) REFERENCES public.draft_pages(id) ON DELETE CASCADE;
 
 
 --
@@ -1640,7 +1654,7 @@ ALTER TABLE ONLY public.draft_page_revisions
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT draft_page_revisions_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -1648,7 +1662,7 @@ ALTER TABLE ONLY public.draft_page_revisions
 --
 
 ALTER TABLE ONLY public.draft_page_revisions
-    ADD CONSTRAINT draft_page_revisions_space_member_id_fkey FOREIGN KEY (space_member_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT draft_page_revisions_space_member_id_fkey FOREIGN KEY (space_member_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -2125,4 +2139,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260409023339'),
     ('20260409023341'),
     ('20260412091757'),
-    ('20260427014536');
+    ('20260427014536'),
+    ('20260607074459');
