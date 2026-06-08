@@ -943,7 +943,7 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		if string(drafts[0].Topic.Space.Identifier) != "draft-list-space" {
 			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-list-space'", drafts[0].Topic.Space.Identifier)
 		}
-		// Verify Space.Name is populated for the home page DraftPageCard. Builder default is "Test Space".
+		// Verify Space.Name is populated for the home page CardLinkDraftPage. Builder default is "Test Space".
 		// [Ja] ホーム画面のカードでスペース名を表示するため Space.Name が設定されていることを確認する。SpaceBuilder のデフォルト名は "Test Space"。
 		if drafts[0].Topic.Space.Name != "Test Space" {
 			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Test Space'", drafts[0].Topic.Space.Name)
@@ -1018,6 +1018,223 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		}
 		if len(drafts) != 0 {
 			t.Errorf("ListByUser() returned %d drafts, want 0 (discarded page should be excluded)", len(drafts))
+		}
+	})
+}
+
+func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-sm-list@example.com").
+		WithAtname("draftsmlist").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-sm-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	now := time.Now()
+
+	// Create 3 drafts with staggered modified_at to test ordering.
+	// [Ja] 下書きを 3 件作成 (modified_at の順序をテストするため時間をずらす)。
+	pageID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Page 1").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID1).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 1").
+		WithModifiedAt(now.Add(-2 * time.Hour)).
+		Build()
+
+	pageID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Page 2").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID2).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 2").
+		WithModifiedAt(now).
+		Build()
+
+	pageID3 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Page 3").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID3).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft 3").
+		WithModifiedAt(now.Add(-1 * time.Hour)).
+		Build()
+
+	t.Run("スペースメンバーの下書き一覧をmodified_at降順で取得できる", func(t *testing.T) {
+		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
+		if err != nil {
+			t.Fatalf("ListBySpaceMember() error = %v", err)
+		}
+		if len(drafts) != 3 {
+			t.Fatalf("ListBySpaceMember() returned %d drafts, want 3", len(drafts))
+		}
+
+		if drafts[0].Title == nil || *drafts[0].Title != "Draft 2" {
+			t.Errorf("drafts[0].Title = %v, want 'Draft 2'", drafts[0].Title)
+		}
+		if drafts[1].Title == nil || *drafts[1].Title != "Draft 3" {
+			t.Errorf("drafts[1].Title = %v, want 'Draft 3'", drafts[1].Title)
+		}
+		if drafts[2].Title == nil || *drafts[2].Title != "Draft 1" {
+			t.Errorf("drafts[2].Title = %v, want 'Draft 1'", drafts[2].Title)
+		}
+
+		// Verify the related entities are populated for the card view-model.
+		// [Ja] 関連エンティティの情報が正しいことを確認する。
+		if drafts[0].Page == nil || drafts[0].Page.Number != 2 {
+			t.Errorf("drafts[0].Page.Number = %v, want 2", drafts[0].Page)
+		}
+		if drafts[0].Topic == nil || drafts[0].Topic.Name != "General" {
+			t.Errorf("drafts[0].Topic.Name = %v, want 'General'", drafts[0].Topic)
+		}
+		if drafts[0].Topic.Space == nil || string(drafts[0].Topic.Space.Identifier) != "draft-sm-space" {
+			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-sm-space'", drafts[0].Topic.Space)
+		}
+	})
+
+	t.Run("LIMITが適用される", func(t *testing.T) {
+		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 2)
+		if err != nil {
+			t.Fatalf("ListBySpaceMember() error = %v", err)
+		}
+		if len(drafts) != 2 {
+			t.Fatalf("ListBySpaceMember() returned %d drafts, want 2", len(drafts))
+		}
+	})
+
+	t.Run("提案編集用の下書き (suggestion_page_id 付き) も含まれる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(4).
+			WithTitle("Suggestion Page").
+			Build()
+		pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTitle("Suggestion Page").
+			WithBody("body").
+			WithBodyHTML("<p>body</p>").
+			Build()
+		suggestionID := testutil.NewSuggestionBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			Build()
+		suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			Build()
+		testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithSuggestionPageID(suggestionPageID).
+			WithTitle("Suggestion Draft").
+			WithModifiedAt(now.Add(1 * time.Hour)).
+			Build()
+
+		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
+		if err != nil {
+			t.Fatalf("ListBySpaceMember() error = %v", err)
+		}
+		found := false
+		for _, d := range drafts {
+			if d.Title != nil && *d.Title == "Suggestion Draft" {
+				found = true
+			}
+		}
+		if !found {
+			t.Error("suggestion-edit draft should be included in the list")
+		}
+	})
+
+	t.Run("別のスペースメンバーの下書きは含まれない", func(t *testing.T) {
+		otherUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("draft-sm-other@example.com").
+			WithAtname("draftsmother").
+			Build()
+		otherMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithUserID(otherUserID).
+			Build()
+
+		drafts, err := repo.ListBySpaceMember(context.Background(), otherMemberID, spaceID, 20)
+		if err != nil {
+			t.Fatalf("ListBySpaceMember() error = %v", err)
+		}
+		if len(drafts) != 0 {
+			t.Errorf("ListBySpaceMember() returned %d drafts, want 0 for a member with no drafts", len(drafts))
+		}
+	})
+
+	t.Run("論理削除されたページの下書きは除外される", func(t *testing.T) {
+		discardedPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(5).
+			WithTitle("Discarded Page").
+			WithDiscarded().
+			Build()
+		testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(discardedPageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("Draft on discarded page").
+			WithModifiedAt(now.Add(2 * time.Hour)).
+			Build()
+
+		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
+		if err != nil {
+			t.Fatalf("ListBySpaceMember() error = %v", err)
+		}
+		for _, d := range drafts {
+			if d.Title != nil && *d.Title == "Draft on discarded page" {
+				t.Error("draft on a discarded page should be excluded")
+			}
 		}
 	})
 }
