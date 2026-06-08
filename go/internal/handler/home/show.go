@@ -53,7 +53,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	content := homepages.Show(homepages.ShowPageData{
 		ActiveSpaces: viewmodel.NewSpaces(output.ActiveSpaces),
 		JoinedTopics: viewmodel.NewCardLinkTopics(output.JoinedTopics, output.CanCreatePageByTopic),
-		DraftPages:   viewmodel.NewDraftPageCards(output.DraftPages),
+		DraftPages:   viewmodel.NewCardLinkDraftPages(output.DraftPages),
 	})
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)
