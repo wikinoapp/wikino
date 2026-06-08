@@ -5,11 +5,10 @@ package components
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
+import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
 // Head はHTMLのheadセクションの共通メタタグを出力します
 func Head(meta viewmodel.PageMeta) templ.Component {

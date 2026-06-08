@@ -62,13 +62,11 @@ templ Edit(data EditPageData) {
 					},
 				},
 			})
-
 			<div class="max-w-6xl w-full mx-auto lg:px-4">
 				<div class="lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-6">
 					<aside class="hidden lg:block">
 						@draftPageColumn(data)
 					</aside>
-
 					<div class="max-w-3xl w-full mx-auto min-w-0">
 						<div class="flex flex-col gap-4">
 							if data.IsSuggestionMode() {
@@ -90,7 +88,6 @@ templ Edit(data EditPageData) {
 									</div>
 								</div>
 							}
-
 							<div class="px-4 lg:hidden">
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftPagesDrawerID,
@@ -98,186 +95,171 @@ templ Edit(data EditPageData) {
 									IconName: "files-regular",
 								})
 							</div>
-
 							if data.FormErrors != nil && data.FormErrors.HasErrors() {
 								<div class="px-4">
 									@components.FormErrors(data.FormErrors)
 								</div>
 							}
-
 							@components.ContentCard() {
-						<form
-							if data.IsSuggestionMode() {
-								action={ templ.SafeURL(data.SuggestionURL) }
-							} else {
-								action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
-							}
-							class="form grid gap-6"
-							hx-on:submit="disableSubmitButtons(this)"
-							method="POST"
-						>
-							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-							<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
-							<input type="hidden" name="_method" value="PATCH"/>
-
-							<div class="grid gap-2">
-								<label for="page_title">
-									{ templates.T(ctx, "page_edit_title_label") }
-								</label>
-
-								<input
-									id="page_title"
-									name="title"
-									type="text"
-									value={ data.Page.Title }
-									if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
-										aria-invalid="true"
-									} else {
-										aria-invalid="false"
-									}
-									if data.Page.AutofocusTitle() {
-										autofocus
-									}
-								/>
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
-									for _, errorMsg := range data.FormErrors.GetFieldErrors("title") {
-										<p class="text-sm text-error">
-											@templ.Raw(errorMsg)
-										</p>
-									}
-								}
-							</div>
-
-							<div class="grid gap-2">
-								<label for="page_body">
-									{ templates.T(ctx, "page_edit_body_label") }
-								</label>
-
-								<div
-									data-markdown-editor
-									data-markdown-editor-textarea="#page_body"
-									data-markdown-editor-title="#page_title"
-									data-markdown-editor-body={ data.Page.Body }
-									data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
-									data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
-									data-markdown-editor-csrf-token={ data.CSRFToken }
-									data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
-									data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
-								></div>
-								<textarea
-									class="hidden"
-									id="page_body"
-									name="body"
-									data-markdown-editor-target="textarea"
-								>{ data.Page.Body }</textarea>
-							</div>
-
-							<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-								<div class="flex gap-2">
+								<form
 									if data.IsSuggestionMode() {
-										<button
-											class="btn-primary rounded-full w-fit"
-											type="submit"
-										>
-											@templates.Icon("paper-plane-tilt-regular")
-											{ templates.T(ctx, "page_edit_update_suggestion_button") }
-										</button>
+										action={ templ.SafeURL(data.SuggestionURL) }
 									} else {
-										<button
-											class="btn-primary rounded-full w-fit"
-											type="submit"
-										>
-											@templates.Icon("paper-plane-tilt-regular")
-											{ templates.T(ctx, "page_edit_publish_to_topic_button") }
-										</button>
+										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									}
-
-									if !data.IsSuggestionMode() {
-										<div class="flex">
-											<button
-												class="btn-secondary rounded-l-full w-fit border-r-0"
-												type="submit"
-												formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
-											>
-												@templates.Icon("floppy-disk-regular")
-												{ templates.T(ctx, "page_edit_save_draft_button") }
-											</button>
-
-											<div id="save-draft-dropdown" class="dropdown-menu">
+									class="form grid gap-6"
+									hx-on:submit="disableSubmitButtons(this)"
+									method="POST"
+								>
+									<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+									<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
+									<input type="hidden" name="_method" value="PATCH"/>
+									<div class="grid gap-2">
+										<label for="page_title">
+											{ templates.T(ctx, "page_edit_title_label") }
+										</label>
+										<input
+											id="page_title"
+											name="title"
+											type="text"
+											value={ data.Page.Title }
+											if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+												aria-invalid="true"
+											} else {
+												aria-invalid="false"
+											}
+											if data.Page.AutofocusTitle() {
+												autofocus
+											}
+										/>
+										if data.FormErrors != nil && data.FormErrors.HasFieldError("title") {
+											for _, errorMsg := range data.FormErrors.GetFieldErrors("title") {
+												<p class="text-sm text-error">
+													@templ.Raw(errorMsg)
+												</p>
+											}
+										}
+									</div>
+									<div class="grid gap-2">
+										<label for="page_body">
+											{ templates.T(ctx, "page_edit_body_label") }
+										</label>
+										<div
+											data-markdown-editor
+											data-markdown-editor-textarea="#page_body"
+											data-markdown-editor-title="#page_title"
+											data-markdown-editor-body={ data.Page.Body }
+											data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
+											data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
+											data-markdown-editor-csrf-token={ data.CSRFToken }
+											data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
+											data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
+										></div>
+										<textarea
+											class="hidden"
+											id="page_body"
+											name="body"
+											data-markdown-editor-target="textarea"
+										>{ data.Page.Body }</textarea>
+									</div>
+									<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+										<div class="flex gap-2">
+											if data.IsSuggestionMode() {
 												<button
-													type="button"
-													id="save-draft-dropdown-trigger"
-													aria-haspopup="menu"
-													aria-controls="save-draft-dropdown-menu"
-													aria-expanded="false"
-													class="btn-secondary rounded-r-full rounded-l-none w-fit px-2 border-l border-brand-600/15"
+													class="btn-primary rounded-full w-fit"
+													type="submit"
 												>
-													@templates.Icon("caret-down-regular", "size-[14px]")
+													@templates.Icon("paper-plane-tilt-regular")
+													{ templates.T(ctx, "page_edit_update_suggestion_button") }
 												</button>
-
-												<div id="save-draft-dropdown-popover" data-popover aria-hidden="true" class="min-w-64" data-align="end">
-													<div role="menu" id="save-draft-dropdown-menu" aria-labelledby="save-draft-dropdown-trigger">
-														<div role="menuitem">
-															<button
-																type="submit"
-																formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL)) }
-																class="flex gap-2 items-center w-full"
-															>
-																@templates.Icon("git-pull-request-regular", "size-[18px]")
-																{ templates.T(ctx, "page_edit_save_draft_and_create_suggestion_button") }
-															</button>
+											} else {
+												<button
+													class="btn-primary rounded-full w-fit"
+													type="submit"
+												>
+													@templates.Icon("paper-plane-tilt-regular")
+													{ templates.T(ctx, "page_edit_publish_to_topic_button") }
+												</button>
+											}
+											if !data.IsSuggestionMode() {
+												<div class="flex">
+													<button
+														class="btn-secondary rounded-l-full w-fit border-r-0"
+														type="submit"
+														formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+													>
+														@templates.Icon("floppy-disk-regular")
+														{ templates.T(ctx, "page_edit_save_draft_button") }
+													</button>
+													<div id="save-draft-dropdown" class="dropdown-menu">
+														<button
+															type="button"
+															id="save-draft-dropdown-trigger"
+															aria-haspopup="menu"
+															aria-controls="save-draft-dropdown-menu"
+															aria-expanded="false"
+															class="btn-secondary rounded-r-full rounded-l-none w-fit px-2 border-l border-brand-600/15"
+														>
+															@templates.Icon("caret-down-regular", "size-[14px]")
+														</button>
+														<div id="save-draft-dropdown-popover" data-popover aria-hidden="true" class="min-w-64" data-align="end">
+															<div role="menu" id="save-draft-dropdown-menu" aria-labelledby="save-draft-dropdown-trigger">
+																<div role="menuitem">
+																	<button
+																		type="submit"
+																		formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL)) }
+																		class="flex gap-2 items-center w-full"
+																	>
+																		@templates.Icon("git-pull-request-regular", "size-[18px]")
+																		{ templates.T(ctx, "page_edit_save_draft_and_create_suggestion_button") }
+																	</button>
+																</div>
+															</div>
 														</div>
 													</div>
 												</div>
-											</div>
+											} else {
+												<button
+													class="btn-secondary rounded-full w-fit"
+													type="submit"
+													formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+												>
+													@templates.Icon("floppy-disk-regular")
+													{ templates.T(ctx, "page_edit_save_draft_button") }
+												</button>
+											}
 										</div>
-									} else {
-										<button
-											class="btn-secondary rounded-full w-fit"
-											type="submit"
-											formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
-										>
-											@templates.Icon("floppy-disk-regular")
-											{ templates.T(ctx, "page_edit_save_draft_button") }
-										</button>
-									}
+										<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
+											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+											<a
+												class="btn-outline rounded-full w-fit"
+												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
+											>
+												{ templates.T(ctx, "page_edit_cancel") }
+											</a>
+										</div>
+									</div>
+								</form>
+							}
+							<div class="flex flex-col gap-4 px-4">
+								<div
+									id="page-link-list"
+									hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
+									hx-trigger="draft-autosaved from:window"
+									hx-swap="none"
+								>
+									@components.LinkList(data.LinkList)
 								</div>
-
-								<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
-									<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
-
-									<a
-										class="btn-outline rounded-full w-fit"
-										href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
-									>
-										{ templates.T(ctx, "page_edit_cancel") }
-									</a>
+								<div
+									id="page-backlink-list"
+								>
+									@components.PageBacklinkList(data.BacklinkList)
 								</div>
 							</div>
-						</form>
-					}
-
-					<div class="flex flex-col gap-4 px-4">
-						<div
-							id="page-link-list"
-							hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
-							hx-trigger="draft-autosaved from:window"
-							hx-swap="none"
-						>
-							@components.LinkList(data.LinkList)
-						</div>
-
-						<div
-							id="page-backlink-list"
-						>
-							@components.PageBacklinkList(data.BacklinkList)
-						</div>
-					</div>
 						</div>
 					</div>
 				</div>
 			</div>
-
 			@components.Drawer(components.DrawerData{
 				ID:      draftPagesDrawerID,
 				Side:    "left",
@@ -300,7 +282,6 @@ templ draftPageColumn(data EditPageData) {
 			<h2 class="font-bold antialiased">
 				{ templates.T(ctx, "page_edit_draft_pages_heading") }
 			</h2>
-
 			<a
 				class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
 				href={ templ.SafeURL(string(templates.DraftsPath())) }
@@ -309,7 +290,6 @@ templ draftPageColumn(data EditPageData) {
 				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
 			</a>
 		</div>
-
 		<div class="flex flex-col gap-2">
 			for _, draft := range data.DraftPages {
 				@components.CardLinkDraftPage(draft)

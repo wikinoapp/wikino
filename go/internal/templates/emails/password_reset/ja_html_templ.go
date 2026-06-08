@@ -5,10 +5,8 @@ package password_reset
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
 
 // JaHTML は日本語HTMLテンプレート
 func JaHTML(data Data) templ.Component {
