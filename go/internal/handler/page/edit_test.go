@@ -17,7 +17,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -89,7 +88,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
-		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
 
@@ -313,6 +311,118 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	// 下書きアラートが表示されていることを確認
 	if !strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("draft alert message not found in response")
+	}
+}
+
+func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draftcol@example.com").
+		WithAtname("draftcoluser").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draftcol-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// The page being edited (page 1).
+	// [Ja] 編集対象のページ (page 1)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edited Page").
+		WithBody("body").
+		Build()
+
+	// Another draft within the same space (listed in the left column).
+	// [Ja] 同一スペース内の別の下書き (左カラムに一覧表示される)
+	otherPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Other Page").
+		WithBody("other body").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(otherPageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Sidebar Column Draft").
+		WithBody("draft body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/draftcol-space/pages/1/edit", map[string]string{
+		"space_identifier": "draftcol-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// The other draft appears in the left column and links to its editor.
+	// [Ja] 左カラムに別の下書きが表示され、その編集画面へのリンクを持つこと
+	if !strings.Contains(body, "Sidebar Column Draft") {
+		t.Error("draft list column does not contain the other draft")
+	}
+	if !strings.Contains(body, "/s/draftcol-space/pages/2/edit") {
+		t.Error("draft card link to the other page's editor not found")
+	}
+
+	// The draft list "view all" link is shown in the heading.
+	// [Ja] 下書き一覧の「すべて表示」リンクが見出しに表示されること
+	if !strings.Contains(body, "すべて表示") {
+		t.Error("draft list view-all link not found")
+	}
+
+	// The narrow-screen drawer (panel and open button) is wired up.
+	// [Ja] 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
+	if !strings.Contains(body, `id="page-edit-draft-pages-drawer"`) {
+		t.Error("draft list drawer not found")
+	}
+	if !strings.Contains(body, `data-drawer-open="page-edit-draft-pages-drawer"`) {
+		t.Error("draft list drawer open button not found")
+	}
+
+	// The page editor renders neither the global sidebar nor the TopNav toggle that controls it.
+	// (The mobile BottomNav menu button is a shared component left out of this task's scope.)
+	// [Ja] 編集画面ではグローバルサイドバーも、それを操作する TopNav の開閉ボタンも描画しないこと
+	// (モバイルの BottomNav メニューボタンは本タスクのスコープ外の共通コンポーネント)
+	if strings.Contains(body, `id="sidebar"`) {
+		t.Error("global sidebar should not be rendered on the page editor")
+	}
+	if strings.Contains(body, "サイドバーの開閉") {
+		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
 	}
 }
 

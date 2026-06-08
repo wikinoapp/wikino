@@ -9,6 +9,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// draftPagesDrawerID is the element id pairing the draft list drawer with its open button.
+// [Ja] draftPagesDrawerID は下書き一覧ドロワーと開閉ボタンを対応付ける要素 id。
+const draftPagesDrawerID = "page-edit-draft-pages-drawer"
+
 // EditPageData はページ編集画面に渡すデータ構造体です
 type EditPageData struct {
 	CSRFToken               string
@@ -23,6 +27,10 @@ type EditPageData struct {
 	SuggestionURL           string
 	SuggestionShowURL       string
 	CreateSuggestionSaveURL string
+
+	// DraftPages is the space member's own draft list shown in the left column (and mobile drawer).
+	// [Ja] DraftPages は左カラム (および狭幅時のドロワー) に表示するスペースメンバー自身の下書き一覧。
+	DraftPages []viewmodel.CardLinkDraftPage
 }
 
 // IsSuggestionMode は編集提案モードかどうかを返します
@@ -35,7 +43,8 @@ templ Edit(data EditPageData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
 			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
+				MaxWidthClass:     "max-w-6xl",
+				HideSidebarToggle: true,
 				Items: []components.BreadcrumbItem{
 					{
 						Path:      templates.HomePath(),
@@ -54,35 +63,49 @@ templ Edit(data EditPageData) {
 				},
 			})
 
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-4">
-					if data.IsSuggestionMode() {
-						<div class="px-4">
-							<div class="alert">
-								@templates.Icon("warning-circle-regular", "fill-info")
-								<h2>
-									@templ.Raw(templates.T(ctx, "page_edit_suggestion_editing", map[string]any{"Number": data.SuggestionNumber, "URL": data.SuggestionShowURL}))
-								</h2>
-							</div>
-						</div>
-					} else if data.Page.ShowingDraft {
-						<div class="px-4">
-							<div class="alert">
-								@templates.Icon("warning-circle-regular", "fill-info")
-								<h2>
-									{ templates.T(ctx, "page_edit_current_page_is_draft") }
-								</h2>
-							</div>
-						</div>
-					}
+			<div class="max-w-6xl w-full mx-auto lg:px-4">
+				<div class="lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-6">
+					<aside class="hidden lg:block">
+						@draftPageColumn(data)
+					</aside>
 
-					if data.FormErrors != nil && data.FormErrors.HasErrors() {
-						<div class="px-4">
-							@components.FormErrors(data.FormErrors)
-						</div>
-					}
+					<div class="max-w-3xl w-full mx-auto min-w-0">
+						<div class="flex flex-col gap-4">
+							if data.IsSuggestionMode() {
+								<div class="px-4">
+									<div class="alert">
+										@templates.Icon("warning-circle-regular", "fill-info")
+										<h2>
+											@templ.Raw(templates.T(ctx, "page_edit_suggestion_editing", map[string]any{"Number": data.SuggestionNumber, "URL": data.SuggestionShowURL}))
+										</h2>
+									</div>
+								</div>
+							} else if data.Page.ShowingDraft {
+								<div class="px-4">
+									<div class="alert">
+										@templates.Icon("warning-circle-regular", "fill-info")
+										<h2>
+											{ templates.T(ctx, "page_edit_current_page_is_draft") }
+										</h2>
+									</div>
+								</div>
+							}
 
-					@components.ContentCard() {
+							<div class="px-4 lg:hidden">
+								@components.DrawerOpenButton(components.DrawerOpenData{
+									DrawerID: draftPagesDrawerID,
+									Label:    templates.T(ctx, "page_edit_draft_pages_toggle_label"),
+									IconName: "files-regular",
+								})
+							</div>
+
+							if data.FormErrors != nil && data.FormErrors.HasErrors() {
+								<div class="px-4">
+									@components.FormErrors(data.FormErrors)
+								</div>
+							}
+
+							@components.ContentCard() {
 						<form
 							if data.IsSuggestionMode() {
 								action={ templ.SafeURL(data.SuggestionURL) }
@@ -250,8 +273,47 @@ templ Edit(data EditPageData) {
 							@components.PageBacklinkList(data.BacklinkList)
 						</div>
 					</div>
+						</div>
+					</div>
 				</div>
 			</div>
+
+			@components.Drawer(components.DrawerData{
+				ID:      draftPagesDrawerID,
+				Side:    "left",
+				Content: draftPageColumn(data),
+			})
+		</div>
+	</div>
+}
+
+// draftPageColumn renders the draft list shown in the left column on wide screens and inside the
+// mobile drawer on narrow screens. It lists the space member's own drafts within the current space
+// and links to the full draft list. The same component feeds both the static column and the drawer.
+//
+// [Ja] draftPageColumn は広い画面では左カラム、狭い画面ではモバイルドロワー内に表示する下書き一覧を
+// 描画する。現在のスペース内のスペースメンバー自身の下書きを一覧し、下書き一覧ページへリンクする。
+// 同じコンポーネントを静的カラムとドロワーの両方に流用する。
+templ draftPageColumn(data EditPageData) {
+	<div class="flex flex-col gap-4 p-4 lg:p-0">
+		<div class="flex items-center justify-between gap-4">
+			<h2 class="font-bold antialiased">
+				{ templates.T(ctx, "page_edit_draft_pages_heading") }
+			</h2>
+
+			<a
+				class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
+				href={ templ.SafeURL(string(templates.DraftsPath())) }
+			>
+				{ templates.T(ctx, "page_edit_draft_pages_view_all_link") }
+				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+			</a>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			for _, draft := range data.DraftPages {
+				@components.CardLinkDraftPage(draft)
+			}
 		</div>
 	</div>
 }

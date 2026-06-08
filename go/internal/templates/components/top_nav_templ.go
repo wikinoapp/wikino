@@ -24,6 +24,12 @@ type BreadcrumbItem struct {
 type TopNavData struct {
 	Items         []BreadcrumbItem
 	MaxWidthClass string // パンくずリストのmax-widthクラス (例: "max-w-3xl")
+
+	// HideSidebarToggle hides the global sidebar toggle button. The page editor sets this because it
+	// renders no global sidebar (the draft list column takes over in-screen draft navigation).
+	// [Ja] HideSidebarToggle はグローバルサイドバーの開閉ボタンを非表示にする。ページ編集画面は
+	// グローバルサイドバーを描画しない (下書き一覧カラムが画面内の下書きナビゲーションを担う) ため設定する。
+	HideSidebarToggle bool
 }
 
 // TopNav はパンくずリストを含むトップナビゲーションを表示します
@@ -52,9 +58,11 @@ func TopNav(data TopNavData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = sidebarToggleButton().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if !data.HideSidebarToggle {
+			templ_7745c5c3_Err = sidebarToggleButton().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
 		if templ_7745c5c3_Err != nil {
@@ -144,7 +152,7 @@ func sidebarToggleButton() templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "sidebar_toggle_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 53, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 61, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -195,7 +203,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "top_nav_breadcrumb_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 62, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 70, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -233,7 +241,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var8 templ.SafeURL
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 73, Col: 114}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 81, Col: 114}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -246,7 +254,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.AriaLabel)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 73, Col: 144}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 81, Col: 144}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 					if templ_7745c5c3_Err != nil {
@@ -272,7 +280,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var10 templ.SafeURL
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 77, Col: 120}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 85, Col: 120}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -291,7 +299,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var11 string
 					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 81, Col: 20}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 89, Col: 20}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
@@ -317,7 +325,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var12 string
 					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 89, Col: 19}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/top_nav.templ`, Line: 97, Col: 19}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 					if templ_7745c5c3_Err != nil {

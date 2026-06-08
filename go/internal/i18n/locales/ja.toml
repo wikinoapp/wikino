@@ -693,6 +693,18 @@ other = "キャンセル"
 description = "下書きを表示中のアラートメッセージ"
 other = "現在下書きを表示しています"
 
+[page_edit_draft_pages_heading]
+description = "ページ編集画面の下書き一覧カラムの見出し"
+other = "下書き"
+
+[page_edit_draft_pages_view_all_link]
+description = "ページ編集画面の下書き一覧カラムから下書き一覧ページへのリンクテキスト"
+other = "すべて表示"
+
+[page_edit_draft_pages_toggle_label]
+description = "ページ編集画面で下書き一覧カラムを開く開閉ボタンのラベル (画面幅が狭いとき)"
+other = "下書き一覧"
+
 [page_edit_links_heading]
 description = "ページ編集画面のリンク一覧の見出し"
 other = "リンク"

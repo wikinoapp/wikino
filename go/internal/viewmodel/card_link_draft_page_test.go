@@ -153,3 +153,41 @@ func TestNewCardLinkDraftPages(t *testing.T) {
 		t.Errorf("topic names mismatch: got %q, %q", cards[0].TopicName, cards[1].TopicName)
 	}
 }
+
+func TestNewCardLinkDraftPagesWithoutSpace(t *testing.T) {
+	t.Parallel()
+
+	drafts := []*model.DraftPage{
+		{
+			Title: strPtr("下書き1"),
+			Page:  &model.Page{Number: 1},
+			Topic: &model.Topic{Name: "T1", Space: &model.Space{Identifier: "s1", Name: "S1"}},
+		},
+		{
+			Title: strPtr("下書き2"),
+			Page:  &model.Page{Number: 2},
+			Topic: &model.Topic{Name: "T2", Space: &model.Space{Identifier: "s2", Name: "S2"}},
+		},
+	}
+
+	cards := viewmodel.NewCardLinkDraftPagesWithoutSpace(drafts)
+	if len(cards) != 2 {
+		t.Fatalf("len(cards) = %d, want 2", len(cards))
+	}
+
+	for i, card := range cards {
+		// SpaceName must be empty so the editor omits the space label.
+		// [Ja] スペース名は空 (編集画面ではスペースラベルを表示しない)
+		if card.SpaceName != "" {
+			t.Errorf("cards[%d].SpaceName = %q, want empty", i, card.SpaceName)
+		}
+		// SpaceIdentifier is kept for the page editor link.
+		// [Ja] リンク生成に必要な SpaceIdentifier は保持する
+		if card.SpaceIdentifier == "" {
+			t.Errorf("cards[%d].SpaceIdentifier should be kept, got empty", i)
+		}
+	}
+	if cards[0].TopicName != "T1" || cards[1].TopicName != "T2" {
+		t.Errorf("topic names mismatch: got %q, %q", cards[0].TopicName, cards[1].TopicName)
+	}
+}

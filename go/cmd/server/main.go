@@ -328,7 +328,6 @@ func main() {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
-		sidebarHelper,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
