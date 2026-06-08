@@ -133,9 +133,10 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		HideFooter:  true,
 		HideSidebar: true,
 		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
+			CurrentPageName:   templates.PageNamePageEdit,
+			SignedIn:          true,
+			SpaceIdentifier:   spaceIdentVM,
+			HideSidebarToggle: true,
 		},
 	}
 

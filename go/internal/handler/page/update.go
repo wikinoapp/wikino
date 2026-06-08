@@ -172,9 +172,10 @@ func (h *Handler) renderEditWithErrors(
 		HideFooter:  true,
 		HideSidebar: true,
 		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        currentUser != nil,
-			SpaceIdentifier: spaceIdentVM,
+			CurrentPageName:   templates.PageNamePageEdit,
+			SignedIn:          currentUser != nil,
+			SpaceIdentifier:   spaceIdentVM,
+			HideSidebarToggle: true,
 		},
 	}
 

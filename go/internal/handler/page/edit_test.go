@@ -414,15 +414,18 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		t.Error("draft list drawer open button not found")
 	}
 
-	// The page editor renders neither the global sidebar nor the TopNav toggle that controls it.
-	// (The mobile BottomNav menu button is a shared component left out of this task's scope.)
-	// [Ja] 編集画面ではグローバルサイドバーも、それを操作する TopNav の開閉ボタンも描画しないこと
-	// (モバイルの BottomNav メニューボタンは本タスクのスコープ外の共通コンポーネント)
+	// The page editor renders neither the global sidebar nor any button that opens it (the TopNav
+	// toggle and the mobile BottomNav menu button), since the sidebar is hidden here.
+	// [Ja] 編集画面ではグローバルサイドバーも、それを開くボタン (TopNav の開閉ボタンとモバイルの
+	// BottomNav メニューボタン) も描画しないこと (ここではサイドバーを非表示にするため)
 	if strings.Contains(body, `id="sidebar"`) {
 		t.Error("global sidebar should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "サイドバーの開閉") {
 		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
+	}
+	if strings.Contains(body, "basecoat:sidebar") {
+		t.Error("no sidebar-opening button should be rendered on the page editor (TopNav or BottomNav)")
 	}
 }
 
