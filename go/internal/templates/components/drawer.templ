@@ -1,0 +1,97 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DrawerData is the data passed to the Drawer component. The drawer overlays arbitrary content
+// on top of the page and can slide in from either side. It stays hidden until its open button
+// (DrawerOpenButton with a matching DrawerID) is clicked, and closes on backdrop click or Esc.
+//
+// [Ja] DrawerData は Drawer コンポーネントに渡すデータです。ドロワーは任意のコンテンツをページの
+// 上にオーバーレイ表示し、左右どちらからでもスライドインできます。対応する DrawerID を持つ開く
+// ボタン (DrawerOpenButton) がクリックされるまで非表示で、背景クリックまたは Esc で閉じます。
+type DrawerData struct {
+	// ID is the unique element id used to pair the drawer with its toggle button.
+	// [Ja] ID はドロワーと開閉ボタンを対応付けるための一意な要素 id です。
+	ID string
+
+	// Side is the edge the panel slides in from: "left" or "right".
+	// [Ja] Side はパネルがスライドインする端で、"left" または "right" を指定します。
+	Side string
+
+	// Content is the arbitrary content rendered inside the drawer panel.
+	// [Ja] Content はドロワーパネル内に表示する任意のコンテンツです。
+	Content templ.Component
+}
+
+// Drawer renders an overlay drawer that hosts arbitrary content. Opening and closing is driven by
+// the shared drawer JavaScript in web/drawer.ts, which keys off the data attributes below.
+//
+// [Ja] Drawer は任意のコンテンツを収めるオーバーレイ式のドロワーを表示します。開閉は web/drawer.ts の
+// 共通ドロワー JavaScript が下記の data 属性を手がかりに制御します。
+templ Drawer(data DrawerData) {
+	<div
+		id={ data.ID }
+		class="fixed inset-0 z-40 hidden"
+		data-drawer
+		role="dialog"
+		aria-modal="true"
+		aria-hidden="true"
+	>
+		<div class="absolute inset-0 bg-black/30" data-drawer-close></div>
+		<div class={ "absolute top-0 bottom-0 flex w-80 max-w-[80%] flex-col overflow-y-auto bg-white shadow-lg", drawerPanelSideClass(data.Side) }>
+			@data.Content
+		</div>
+	</div>
+}
+
+// drawerPanelSideClass returns the Tailwind class that pins the panel to the requested side.
+// It defaults to the left edge for any unknown side value.
+//
+// [Ja] drawerPanelSideClass は指定された側にパネルを寄せる Tailwind クラスを返します。
+// 未知の side 値の場合は左端を既定とします。
+func drawerPanelSideClass(side string) string {
+	if side == "right" {
+		return "right-0"
+	}
+	return "left-0"
+}
+
+// DrawerOpenData is the data passed to the DrawerOpenButton component.
+//
+// [Ja] DrawerOpenData は DrawerOpenButton コンポーネントに渡すデータです。
+type DrawerOpenData struct {
+	// DrawerID is the id of the Drawer this button opens.
+	// [Ja] DrawerID はこのボタンが開く Drawer の id です。
+	DrawerID string
+
+	// Label is the visible button text.
+	// [Ja] Label はボタンに表示するテキストです。
+	Label string
+
+	// IconName is the icon shown before the label.
+	// [Ja] IconName はラベルの前に表示するアイコンです。
+	IconName viewmodel.IconName
+}
+
+// DrawerOpenButton renders the icon + text button that opens the paired drawer. Callers place it
+// separately from the drawer itself (for example above the edit form). The drawer JavaScript keeps
+// aria-expanded in sync with the drawer's open state.
+//
+// [Ja] DrawerOpenButton は対応するドロワーを開くアイコン + テキストのボタンを表示します。
+// 呼び出し側はドロワー本体とは別に (例えば編集フォームの上に) 配置します。aria-expanded は
+// ドロワーの開閉状態に合わせてドロワー JavaScript が同期します。
+templ DrawerOpenButton(data DrawerOpenData) {
+	<button
+		type="button"
+		class="btn-sm-outline"
+		data-drawer-open={ data.DrawerID }
+		aria-controls={ data.DrawerID }
+		aria-expanded="false"
+	>
+		@templates.Icon(data.IconName, "size-4")
+		{ data.Label }
+	</button>
+}
