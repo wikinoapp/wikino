@@ -168,4 +168,65 @@ func TestGetPageDetailUsecase_Execute(t *testing.T) {
 			t.Fatal("DraftPage should not be nil when draft exists")
 		}
 	})
+
+	t.Run("IncludeDraftPagesがfalseの場合はDraftPagesを取得しない", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetPageDetailInput{
+			SpaceIdentifier: "gpd-space",
+			PageNumber:      1,
+			UserID:          ownerID,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+		if output.DraftPages != nil {
+			t.Errorf("DraftPages should be nil when IncludeDraftPages is false, got %d entries", len(output.DraftPages))
+		}
+	})
+
+	t.Run("IncludeDraftPagesがtrueの場合は同一スペースの下書き一覧を取得する", func(t *testing.T) {
+		// Create a draft owned by this subtest so the assertion does not depend on other subtests' data.
+		// [Ja] アサーションが他サブテストのデータに依存しないよう、このサブテスト専用の下書きを作成する。
+		listPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(20).
+			WithTitle("一覧確認用ページ").
+			WithLinkedPageIDs([]model.PageID{}).
+			Build()
+		testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(listPageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithTitle("一覧確認用下書き").
+			Build()
+
+		output, err := uc.Execute(context.Background(), GetPageDetailInput{
+			SpaceIdentifier:   "gpd-space",
+			PageNumber:        1,
+			UserID:            ownerID,
+			IncludeDraftPages: true,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if output == nil {
+			t.Fatal("output should not be nil")
+		}
+
+		// The draft created above must appear in the list.
+		// [Ja] 上で作成した下書きが一覧に含まれることを確認する。
+		found := false
+		for _, d := range output.DraftPages {
+			if d.Title != nil && *d.Title == "一覧確認用下書き" {
+				found = true
+			}
+		}
+		if !found {
+			t.Error("created draft should be included when IncludeDraftPages is true")
+		}
+	})
 }

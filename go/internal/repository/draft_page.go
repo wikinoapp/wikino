@@ -223,6 +223,23 @@ func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserI
 	return r.toDraftPagesFromJoinedRows(rows), nil
 }
 
+// ListBySpaceMember fetches a space member's own draft pages within a single space, newest first
+// (for the page editor's draft list column). Suggestion-edit drafts are included.
+//
+// [Ja] ListBySpaceMember は同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で
+// 取得する (ページ編集画面の下書き一覧カラム用)。提案編集用の下書きも含める。
+func (r *DraftPageRepository) ListBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID, limit int32) ([]*model.DraftPage, error) {
+	rows, err := r.q.ListDraftPagesBySpaceMember(ctx, query.ListDraftPagesBySpaceMemberParams{
+		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
+		Limit:         limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toDraftPagesFromSpaceMemberRows(rows), nil
+}
+
 // ListByUserForIndex はユーザーの下書きページ一覧を取得する（下書き一覧画面用）
 func (r *DraftPageRepository) ListByUserForIndex(ctx context.Context, userID model.UserID) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUserForIndex(ctx, string(userID))
@@ -285,6 +302,54 @@ func (r *DraftPageRepository) toDraftPagesFromIndexRows(rows []query.ListDraftPa
 
 // toDraftPagesFromJoinedRows は query.ListDraftPagesByUserRow のスライスを model.DraftPage のスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftPagesByUserRow) []*model.DraftPage {
+	drafts := make([]*model.DraftPage, len(rows))
+	for i, row := range rows {
+		var draftTitle *string
+		if row.DraftPageTitle != nil {
+			switch v := row.DraftPageTitle.(type) {
+			case string:
+				draftTitle = &v
+			case []byte:
+				s := string(v)
+				draftTitle = &s
+			}
+		}
+
+		var pageTitle *string
+		if row.PageTitle != nil {
+			switch v := row.PageTitle.(type) {
+			case string:
+				pageTitle = &v
+			case []byte:
+				s := string(v)
+				pageTitle = &s
+			}
+		}
+
+		drafts[i] = &model.DraftPage{
+			ID:         model.DraftPageID(row.DraftPageID),
+			Title:      draftTitle,
+			ModifiedAt: row.DraftPageModifiedAt,
+			Page: &model.Page{
+				ID:     model.PageID(row.PageID),
+				Title:  pageTitle,
+				Number: model.PageNumber(row.PageNumber),
+			},
+			Topic: &model.Topic{
+				Name:       row.TopicName,
+				Visibility: model.TopicVisibility(row.TopicVisibility),
+				Space: &model.Space{
+					Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+					Name:       row.SpaceName,
+				},
+			},
+		}
+	}
+	return drafts
+}
+
+// toDraftPagesFromSpaceMemberRows は query.ListDraftPagesBySpaceMemberRow のスライスを model.DraftPage のスライスに変換する
+func (r *DraftPageRepository) toDraftPagesFromSpaceMemberRows(rows []query.ListDraftPagesBySpaceMemberRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
 	for i, row := range rows {
 		var draftTitle *string

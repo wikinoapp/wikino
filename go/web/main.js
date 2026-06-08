@@ -1,5 +1,6 @@
 import "basecoat-css/all";
 
+import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
 
@@ -30,5 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
   initializeGlobalHotkey();
   initSidebarLocalStoragePersistence();
+  initializeDrawers();
   setTimeZoneCookie();
 });

@@ -10,6 +10,91 @@ import (
 	"time"
 )
 
+const listDraftPagesBySpaceMember = `-- name: ListDraftPagesBySpaceMember :many
+SELECT
+  dp.id AS draft_page_id,
+  dp.title AS draft_page_title,
+  dp.modified_at AS draft_page_modified_at,
+  p.id AS page_id,
+  p.title AS page_title,
+  p.number AS page_number,
+  t.name AS topic_name,
+  t.visibility AS topic_visibility,
+  s.identifier AS space_identifier,
+  s.name AS space_name
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND dp.space_id = p.space_id
+INNER JOIN topics t ON dp.topic_id = t.id AND dp.space_id = t.space_id
+INNER JOIN spaces s ON dp.space_id = s.id
+WHERE dp.space_member_id = $1
+  AND dp.space_id = $2
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND s.discarded_at IS NULL
+ORDER BY dp.modified_at DESC
+LIMIT $3
+`
+
+type ListDraftPagesBySpaceMemberParams struct {
+	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
+	Limit         int32  `json:"limit"`
+}
+
+type ListDraftPagesBySpaceMemberRow struct {
+	DraftPageID         string      `json:"draft_page_id"`
+	DraftPageTitle      interface{} `json:"draft_page_title"`
+	DraftPageModifiedAt time.Time   `json:"draft_page_modified_at"`
+	PageID              string      `json:"page_id"`
+	PageTitle           interface{} `json:"page_title"`
+	PageNumber          int32       `json:"page_number"`
+	TopicName           string      `json:"topic_name"`
+	TopicVisibility     int32       `json:"topic_visibility"`
+	SpaceIdentifier     string      `json:"space_identifier"`
+	SpaceName           string      `json:"space_name"`
+}
+
+// Fetch a space member's own draft pages within a single space, newest first (for the page editor's draft list column).
+// Joins draft_pages → pages → topics → spaces, scoped to the given space and space member.
+// Suggestion-edit drafts (those with suggestion_page_id set) are intentionally included, matching the home / sidebar list behavior.
+//
+// [Ja] 同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で取得する (ページ編集画面の下書き一覧カラム用)。
+// draft_pages → pages → topics → spaces を JOIN し、指定スペース・スペースメンバーに限定する。
+// 提案編集用の下書き (suggestion_page_id 付き) も、ホーム / サイドバー一覧と同じく除外せず含める。
+func (q *Queries) ListDraftPagesBySpaceMember(ctx context.Context, arg ListDraftPagesBySpaceMemberParams) ([]ListDraftPagesBySpaceMemberRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPagesBySpaceMember, arg.SpaceMemberID, arg.SpaceID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDraftPagesBySpaceMemberRow{}
+	for rows.Next() {
+		var i ListDraftPagesBySpaceMemberRow
+		if err := rows.Scan(
+			&i.DraftPageID,
+			&i.DraftPageTitle,
+			&i.DraftPageModifiedAt,
+			&i.PageID,
+			&i.PageTitle,
+			&i.PageNumber,
+			&i.TopicName,
+			&i.TopicVisibility,
+			&i.SpaceIdentifier,
+			&i.SpaceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDraftPagesByUser = `-- name: ListDraftPagesByUser :many
 SELECT
   dp.id AS draft_page_id,
