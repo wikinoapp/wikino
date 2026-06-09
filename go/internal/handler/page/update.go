@@ -11,7 +11,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -70,9 +69,10 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 	if ve := model.AsValidationError(err); ve != nil {
 		// バリデーションエラー → フォーム再描画
 		output, getErr := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
-			SpaceIdentifier: spaceIdentifier,
-			PageNumber:      pageNumber,
-			UserID:          user.ID,
+			SpaceIdentifier:   spaceIdentifier,
+			PageNumber:        pageNumber,
+			UserID:            user.ID,
+			IncludeDraftPages: true,
 		})
 		if getErr != nil || output == nil {
 			slog.ErrorContext(ctx, "フォーム再表示用データの取得に失敗", "error", getErr, "original_error", ve.Error())
@@ -155,33 +155,27 @@ func (h *Handler) renderEditWithErrors(
 		LinkList:      linkResult.LinkList,
 		BacklinkList:  linkResult.BacklinkList,
 		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
+		// The editor stays within a single space, so omit the space label on each draft card.
+		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
+		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)
-	var userAtname string
-	var sidebarContent sidebar.SidebarContent
-	if currentUser != nil {
-		userAtname = currentUser.Atname
-		sidebarContent = h.sidebarHelper.Content(ctx, currentUser.ID)
-	}
 
+	// The page editor hides the global sidebar: the left draft list column takes over in-screen
+	// draft navigation, so HideSidebar is set and no Sidebar data is built.
+	// [Ja] ページ編集画面はグローバルサイドバーを非表示にする。左カラムの下書き一覧が画面内の下書き
+	// ナビゲーションを担うため、HideSidebar を立て、Sidebar データは構築しない。
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		HideFooter: true,
-		Sidebar: components.SidebarData{
+		HideFooter:  true,
+		HideSidebar: true,
+		BottomNav: components.BottomNavData{
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          currentUser != nil,
-			UserAtname:        userAtname,
 			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        currentUser != nil,
-			SpaceIdentifier: spaceIdentVM,
+			HideSidebarToggle: true,
 		},
 	}
 

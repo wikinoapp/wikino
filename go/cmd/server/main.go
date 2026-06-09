@@ -34,6 +34,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_preview"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -328,7 +329,6 @@ func main() {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
-		sidebarHelper,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
@@ -374,6 +374,10 @@ func main() {
 	)
 	pageLinkListHandler := page_link_list.NewHandler(
 		getLinkListUC,
+	)
+	getPagePreviewUC := usecase.NewGetPagePreviewUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	pagePreviewHandler := page_preview.NewHandler(
+		getPagePreviewUC,
 	)
 	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	pageMoveHandler := page_move.NewHandler(
@@ -672,6 +676,7 @@ func main() {
 		// ページ編集・公開
 		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
+		r.Post("/s/{space_identifier}/pages/{page_number}/preview", pagePreviewHandler.Create)
 
 		// 下書きページSSE・自動保存API
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)

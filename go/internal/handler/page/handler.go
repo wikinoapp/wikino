@@ -4,7 +4,6 @@ package page
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -15,7 +14,6 @@ type Handler struct {
 	getPageDetailUC   *usecase.GetPageDetailUsecase
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
 	publishPageUC     *usecase.PublishPageUsecase
-	sidebarHelper     *sidebar.Helper
 }
 
 // NewHandler は新しいページハンドラーを作成します
@@ -25,7 +23,6 @@ func NewHandler(
 	getPageDetailUC *usecase.GetPageDetailUsecase,
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:               cfg,
@@ -33,6 +30,5 @@ func NewHandler(
 		getPageDetailUC:   getPageDetailUC,
 		getEditLinkDataUC: getEditLinkDataUC,
 		publishPageUC:     publishPageUC,
-		sidebarHelper:     sidebarHelper,
 	}
 }

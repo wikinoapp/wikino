@@ -17,7 +17,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -89,7 +88,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
-		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
 
@@ -220,6 +218,12 @@ func TestEdit(t *testing.T) {
 		t.Error("draft alert should not be shown when no draft exists")
 	}
 
+	// The draft list column shows the empty state when the member has no drafts.
+	// [Ja] メンバーに下書きが 1 件もないとき、下書き一覧カラムに空状態テキストが表示されること
+	if !strings.Contains(body, "下書きはありません") {
+		t.Error("draft list empty state text not found when no draft exists")
+	}
+
 	// パンくずリストにトピックへのリンクが含まれているか確認
 	if !strings.Contains(body, "/s/my-space/topics/1") {
 		t.Error("topic link not found in breadcrumb")
@@ -313,6 +317,121 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	// 下書きアラートが表示されていることを確認
 	if !strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("draft alert message not found in response")
+	}
+}
+
+func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draftcol@example.com").
+		WithAtname("draftcoluser").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draftcol-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// The page being edited (page 1).
+	// [Ja] 編集対象のページ (page 1)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edited Page").
+		WithBody("body").
+		Build()
+
+	// Another draft within the same space (listed in the left column).
+	// [Ja] 同一スペース内の別の下書き (左カラムに一覧表示される)
+	otherPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Other Page").
+		WithBody("other body").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(otherPageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Sidebar Column Draft").
+		WithBody("draft body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/draftcol-space/pages/1/edit", map[string]string{
+		"space_identifier": "draftcol-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// The other draft appears in the left column and links to its editor.
+	// [Ja] 左カラムに別の下書きが表示され、その編集画面へのリンクを持つこと
+	if !strings.Contains(body, "Sidebar Column Draft") {
+		t.Error("draft list column does not contain the other draft")
+	}
+	if !strings.Contains(body, "/s/draftcol-space/pages/2/edit") {
+		t.Error("draft card link to the other page's editor not found")
+	}
+
+	// The draft list "view all" link is shown in the heading.
+	// [Ja] 下書き一覧の「すべて表示」リンクが見出しに表示されること
+	if !strings.Contains(body, "すべて表示") {
+		t.Error("draft list view-all link not found")
+	}
+
+	// The narrow-screen drawer (panel and open button) is wired up.
+	// [Ja] 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
+	if !strings.Contains(body, `id="page-edit-draft-pages-drawer"`) {
+		t.Error("draft list drawer not found")
+	}
+	if !strings.Contains(body, `data-drawer-open="page-edit-draft-pages-drawer"`) {
+		t.Error("draft list drawer open button not found")
+	}
+
+	// The page editor renders neither the global sidebar nor any button that opens it (the TopNav
+	// toggle and the mobile BottomNav menu button), since the sidebar is hidden here.
+	// [Ja] 編集画面ではグローバルサイドバーも、それを開くボタン (TopNav の開閉ボタンとモバイルの
+	// BottomNav メニューボタン) も描画しないこと (ここではサイドバーを非表示にするため)
+	if strings.Contains(body, `id="sidebar"`) {
+		t.Error("global sidebar should not be rendered on the page editor")
+	}
+	if strings.Contains(body, "サイドバーの開閉") {
+		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
+	}
+	if strings.Contains(body, "basecoat:sidebar") {
+		t.Error("no sidebar-opening button should be rendered on the page editor (TopNav or BottomNav)")
 	}
 }
 
@@ -613,6 +732,114 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 	// hx-swap="none"が指定されていること（OOBスワップのみで更新するため）
 	if !strings.Contains(body, `hx-swap="none"`) {
 		t.Error("hx-swap=none not found - OOB swap will not work correctly")
+	}
+}
+
+func TestEdit_PreviewTab(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("preview-tab@example.com").
+		WithAtname("previewtab").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("preview-tab-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Preview Tab Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/preview-tab-space/pages/1/edit", map[string]string{
+		"space_identifier": "preview-tab-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// The tabs container and both tabs are rendered.
+	// [Ja] タブのコンテナと編集/プレビューの両タブが描画されること
+	if !strings.Contains(body, `id="page-edit-tabs"`) {
+		t.Error("tabs container not found in response")
+	}
+	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
+		t.Error("edit tab not found in response")
+	}
+	if !strings.Contains(body, `id="page-edit-tab-preview"`) {
+		t.Error("preview tab not found in response")
+	}
+
+	// The preview tab POSTs the current form values to the preview endpoint via htmx.
+	// [Ja] プレビュータブが htmx でフォームの現在値をプレビューエンドポイントに POST すること
+	if !strings.Contains(body, `hx-post="/s/preview-tab-space/pages/1/preview"`) {
+		t.Error("preview tab hx-post to the preview endpoint not found in response")
+	}
+
+	// The CSRF token is included, but _method is excluded so the override middleware does not
+	// rewrite the preview POST into a PATCH.
+	// [Ja] CSRF トークンは含めるが、override ミドルウェアがプレビュー POST を PATCH に書き換えない
+	// よう _method は除外していること
+	if !strings.Contains(body, `hx-include="#page_title, #page_body, #page-edit-csrf-token"`) {
+		t.Error("preview tab hx-include with the expected fields not found in response")
+	}
+	if !strings.Contains(body, `id="page-edit-csrf-token"`) {
+		t.Error("csrf token input id used by hx-include not found in response")
+	}
+
+	// The result is swapped into the preview panel, with a loading indicator.
+	// [Ja] 結果はプレビューパネルにスワップされ、ローディング表示が用意されていること
+	if !strings.Contains(body, `hx-target="#page-edit-preview-content"`) {
+		t.Error("preview tab hx-target not found in response")
+	}
+	if !strings.Contains(body, `id="page-edit-preview-content"`) {
+		t.Error("preview content panel not found in response")
+	}
+	if !strings.Contains(body, `id="page-edit-preview-loading"`) {
+		t.Error("preview loading indicator not found in response")
+	}
+
+	// The tab labels are localized. Match each label adjacent to its closing </button> tag
+	// so the preview assertion is not satisfied by the loading text ("プレビューを生成中...").
+	//
+	// [Ja] タブのラベルが翻訳されていること。プレビューのアサーションがローディングテキスト
+	// ("プレビューを生成中...") で成立しないよう、各ラベルを閉じ </button> タグ隣接で検証する。
+	if !strings.Contains(body, "編集</button>") {
+		t.Error("edit tab label not found in response")
+	}
+	if !strings.Contains(body, "プレビュー</button>") {
+		t.Error("preview tab label not found in response")
 	}
 }
 
