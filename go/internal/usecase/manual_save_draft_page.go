@@ -97,8 +97,13 @@ func (uc *ManualSaveDraftPageUsecase) pageAccessRepos() pageAccessRepos {
 func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAccessData, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
 	now := time.Now()
 
-	// トランザクション前: 下書き保存に必要な事前計算データを取得
-	saveData, err := calculateDraftPageSaveData(ctx, input.Body, data.topic.Name, data.space.ID, uc.topicRepo, uc.attachmentRepo)
+	// Before the transaction: extract the featured image only. The body HTML
+	// rendering and wiki link resolution are unified into saveDraftPageContent,
+	// which runs inside the transaction.
+	//
+	// [Ja] トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML 本体のレンダリングと
+	// Wiki リンクの解決はトランザクション内の saveDraftPageContent に一本化した。
+	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, data.space.ID, uc.attachmentRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -120,19 +125,18 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		TopicID:                   data.page.TopicID,
 		Title:                     input.Title,
 		Body:                      input.Body,
-		BodyHTML:                  saveData.bodyHTML,
-		FeaturedImageAttachmentID: saveData.featuredImageAttachmentID,
-		WikilinkKeys:              saveData.wikilinkKeys,
-		TopicMap:                  saveData.topicMap,
+		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		SpaceIdentifier:           input.SpaceIdentifier,
 		CurrentTopicName:          data.topic.Name,
 	}
 
-	// DraftPageのfind_or_create・リンク解決・更新
+	// DraftPageのfind_or_create・レンダリング・更新
 	result, err := saveDraftPageContent(ctx, contentInput, now,
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
+		uc.topicRepo,
+		uc.attachmentRepo,
 	)
 	if err != nil {
 		return nil, err
