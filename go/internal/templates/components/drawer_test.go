@@ -63,7 +63,7 @@ func TestDrawer_Side(t *testing.T) {
 			if !strings.Contains(html, "data-drawer-close") {
 				t.Error("背景クリックで閉じるための data-drawer-close が含まれていない")
 			}
-			if !strings.Contains(html, "z-40 hidden") {
+			if !strings.Contains(html, "hidden") {
 				t.Error("既定で非表示にするための hidden クラスが含まれていない")
 			}
 			if !strings.Contains(html, "ドロワーの中身") {

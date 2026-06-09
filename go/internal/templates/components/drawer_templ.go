@@ -72,7 +72,7 @@ func Drawer(data DrawerData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 z-40 hidden\" data-drawer role=\"dialog\" aria-modal=\"true\" aria-hidden=\"true\"><div class=\"absolute inset-0 bg-black/30\" data-drawer-close></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 z-overlay hidden\" data-drawer role=\"dialog\" aria-modal=\"true\" aria-hidden=\"true\"><div class=\"absolute inset-0 bg-black/30\" data-drawer-close></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
