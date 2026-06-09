@@ -61,6 +61,24 @@ func NewCardLinkDraftPages(drafts []*model.DraftPage) []CardLinkDraftPage {
 	return result
 }
 
+// NewCardLinkDraftPagesWithoutSpace builds draft page cards for the page editor's draft list column.
+// The editor stays within a single space, so the space label is omitted by leaving SpaceName empty;
+// the card then shows only the topic name and title. SpaceIdentifier is kept because the card still
+// links to the page editor.
+//
+// [Ja] NewCardLinkDraftPagesWithoutSpace はページ編集画面の下書き一覧カラム用の下書きカードを生成する。
+// 編集画面は同一スペース内のため、SpaceName を空にしてスペースラベルを省く (カードはトピック名と
+// タイトルのみを表示する)。カードはページ編集画面へのリンクを保持するため SpaceIdentifier は残す。
+func NewCardLinkDraftPagesWithoutSpace(drafts []*model.DraftPage) []CardLinkDraftPage {
+	result := make([]CardLinkDraftPage, len(drafts))
+	for i, d := range drafts {
+		card := NewCardLinkDraftPage(d)
+		card.SpaceName = ""
+		result[i] = card
+	}
+	return result
+}
+
 // SpaceForIcon returns a Space view-model populated with the fields required to render
 // the small SpaceIcon next to the space name on each draft card (identifier drives the
 // deterministic background color and first character; name is kept available for future use).

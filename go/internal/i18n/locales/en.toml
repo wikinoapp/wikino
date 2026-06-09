@@ -689,9 +689,41 @@ other = "Publish to topic"
 description = "Label for the cancel link"
 other = "Cancel"
 
+[page_edit_tabs_label]
+description = "Label for the edit/preview tab group on the page edit screen"
+other = "Edit and preview"
+
+[page_edit_tab_edit]
+description = "Label for the edit tab on the page edit screen"
+other = "Edit"
+
+[page_edit_tab_preview]
+description = "Label for the preview tab on the page edit screen"
+other = "Preview"
+
+[page_edit_preview_loading]
+description = "Loading text shown while generating the preview on the page edit screen"
+other = "Generating preview..."
+
 [page_edit_current_page_is_draft]
 description = "Alert message when viewing a draft"
 other = "You are currently viewing a draft."
+
+[page_edit_draft_pages_heading]
+description = "Heading for the draft list column on the page edit screen"
+other = "Drafts"
+
+[page_edit_draft_pages_view_all_link]
+description = "Link text from the page edit screen draft list column to the draft pages index"
+other = "View all"
+
+[page_edit_draft_pages_toggle_label]
+description = "Label for the button that opens the draft list column on the page edit screen (narrow screens)"
+other = "Drafts"
+
+[page_edit_draft_pages_empty]
+description = "Empty state text shown in the page edit screen draft list column when there are no drafts"
+other = "No drafts yet."
 
 [page_edit_links_heading]
 description = "Heading for the link list on the page edit screen"

@@ -135,12 +135,6 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		return nil, err
 	}
 
-	// トランザクション前: Wikiリンクのスキャン・トピック検索
-	keys, topicMapForLinks, err := scanAndLookupWikilinks(ctx, input.Body, data.topic.Name, data.space.ID, uc.topicRepo)
-	if err != nil {
-		return nil, fmt.Errorf("wikiリンクのスキャンに失敗しました: %w", err)
-	}
-
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗しました: %w", err)
@@ -157,19 +151,24 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// リンク先ページの自動作成
-	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, keys, topicMapForLinks, data.space.ID, data.spaceMember.ID, pageRepo, pageEditorRepo,
-	)
+	// Render the body HTML through markup.RenderHTML, the same unified path used by the
+	// preview and page detail screens. The resolver auto-creates missing linked pages
+	// within this transaction and records their IDs.
+	//
+	// [Ja] プレビュー・ページ詳細画面と同じ統合経路 markup.RenderHTML で本文 HTML を
+	// レンダリングする。resolver がこのトランザクション内で存在しないリンク先ページを自動作成し、
+	// その ID を記録する。
+	resolver := &linkCreatingPageLocationResolver{
+		spaceMemberID:  data.spaceMember.ID,
+		topicRepo:      uc.topicRepo,
+		pageRepo:       pageRepo,
+		pageEditorRepo: pageEditorRepo,
+	}
+	bodyHTML, err := markup.RenderHTML(ctx, input.Body, data.topic.Name, data.space.ID, input.SpaceIdentifier, resolver, uc.attachmentRepo)
 	if err != nil {
-		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
+		return nil, fmt.Errorf("本文のレンダリングに失敗しました: %w", err)
 	}
-
-	// bodyHTML内のWikiリンクを<a>タグに変換
-	bodyHTML := pd.bodyHTML
-	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, data.topic.Name, input.SpaceIdentifier, pageLocations)
-	}
+	linkedPageIDs := resolver.linkedPageIDs
 
 	// 添付ファイル参照の書き込み
 	if err := applyAttachmentRefChanges(ctx, data.page.ID, data.space.ID, pd.attachmentRefsToAdd, pd.attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
@@ -271,17 +270,24 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 
 // publishData はページ公開の事前計算データ
 type publishData struct {
-	bodyHTML                  string
 	featuredImageAttachmentID *model.AttachmentID
 	attachmentRefsToAdd       []model.AttachmentID
 	attachmentRefsToRemove    []model.AttachmentID
 }
 
-// calculatePublishData はMarkdownレンダリング・添付ファイル参照の差分計算・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを行う
+// calculatePublishData computes the attachment-reference diff and the featured image.
+// The body HTML itself is rendered inside the save transaction through markup.RenderHTML
+// (the same path as preview / page detail), so here Markdown is rendered only once to
+// extract the attachment IDs needed for the reference diff.
+//
+// [Ja] calculatePublishData は添付ファイル参照の差分計算とアイキャッチ画像抽出を行う。
+// bodyHTML 本体のレンダリングは保存トランザクション内の markup.RenderHTML
+// (プレビュー・ページ詳細と同じ経路) に一本化したため、ここでは参照差分に必要な添付 ID 抽出を
+// 目的に Markdown を 1 度だけレンダリングする。
 func (uc *PublishPageUsecase) calculatePublishData(ctx context.Context, body string, pageID model.PageID, spaceID model.SpaceID) (*publishData, error) {
-	bodyHTML := markup.RenderMarkdown(body)
+	rawHTML := markup.RenderMarkdown(body)
 
-	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, bodyHTML, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
+	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, rawHTML, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の差分計算に失敗しました: %w", err)
 	}
@@ -291,15 +297,7 @@ func (uc *PublishPageUsecase) calculatePublishData(ctx context.Context, body str
 		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
 	}
 
-	bodyHTML, err = markup.FilterAttachments(ctx, bodyHTML, spaceID, uc.attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("添付ファイルのフィルター処理に失敗しました: %w", err)
-	}
-
-	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
-
 	return &publishData{
-		bodyHTML:                  bodyHTML,
 		featuredImageAttachmentID: featuredImageAttachmentID,
 		attachmentRefsToAdd:       toAdd,
 		attachmentRefsToRemove:    toRemove,

@@ -80,6 +80,12 @@ func PageDraftPageRevisionPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNu
 	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page_revision", spaceIdentifier, pageNumber))
 }
 
+// PagePreviewPath generates the path to the page preview.
+// [Ja] PagePreviewPath はページプレビューのパスを生成します。
+func PagePreviewPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/preview", spaceIdentifier, pageNumber))
+}
+
 // SearchPath は検索のパスを生成します
 func SearchPath() Path {
 	return Path("/search")

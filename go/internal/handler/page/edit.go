@@ -41,9 +41,10 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	// UseCaseでデータを取得
 	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
-		SpaceIdentifier: spaceIdentifier,
-		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
+		SpaceIdentifier:   spaceIdentifier,
+		PageNumber:        int32(pageNumber),
+		UserID:            user.ID,
+		IncludeDraftPages: true,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
@@ -109,6 +110,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		BacklinkList:            linkResult.BacklinkList,
 		ManualSaveURL:           manualSaveURL,
 		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
+		// The editor stays within a single space, so omit the space label on each draft card.
+		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
+		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 	}
 
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {
@@ -119,26 +123,20 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	content := pagepages.Edit(editData)
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
+	// The page editor hides the global sidebar: the left draft list column takes over in-screen
+	// draft navigation, so HideSidebar is set and no Sidebar data is built.
+	// [Ja] ページ編集画面はグローバルサイドバーを非表示にする。左カラムの下書き一覧が画面内の下書き
+	// ナビゲーションを担うため、HideSidebar を立て、Sidebar データは構築しない。
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		HideFooter: true,
-		Sidebar: components.SidebarData{
+		HideFooter:  true,
+		HideSidebar: true,
+		BottomNav: components.BottomNavData{
 			CurrentPageName:   templates.PageNamePageEdit,
 			SignedIn:          true,
-			UserAtname:        user.Atname,
 			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNamePageEdit,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
+			HideSidebarToggle: true,
 		},
 	}
 

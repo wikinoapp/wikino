@@ -16,30 +16,51 @@ import (
 // findOrCreateRetryLimit はfind_or_create時のリトライ上限
 const findOrCreateRetryLimit = 3
 
-// scanAndLookupWikilinks はbodyからWikiリンクキーを抽出し、トピック名でバッチ検索してトピックMapを返す
-func scanAndLookupWikilinks(
-	ctx context.Context,
-	body string,
-	currentTopicName string,
-	spaceID model.SpaceID,
-	topicRepo *repository.TopicRepository,
-) ([]markup.WikilinkKey, map[string]*model.Topic, error) {
-	keys := markup.ScanWikilinks(body, currentTopicName)
-	if len(keys) == 0 {
-		return nil, nil, nil
-	}
+// linkCreatingPageLocationResolver is the markup.PageLocationResolver used by the save
+// paths (publish / draft save). Unlike previewPageLocationResolver, it auto-creates
+// missing linked pages (and their page_editors) as a side effect and records the
+// resulting linked page IDs so the page / draft_page row can persist them. Because it
+// performs writes, it must be constructed with transaction-bound page repositories and
+// used inside that transaction.
+//
+// [Ja] linkCreatingPageLocationResolver は保存経路 (公開・下書き保存) が使う
+// markup.PageLocationResolver。previewPageLocationResolver と異なり、存在しないリンク先
+// ページ (と page_editors) を副作用として自動作成し、得られたリンク先ページ ID を記録して
+// page / draft_page 行に永続化できるようにする。書き込みを行うため、トランザクションに
+// バインドした page リポジトリで構築し、そのトランザクション内で使う。
+type linkCreatingPageLocationResolver struct {
+	spaceMemberID  model.SpaceMemberID
+	topicRepo      *repository.TopicRepository
+	pageRepo       *repository.PageRepository
+	pageEditorRepo *repository.PageEditorRepository
 
-	topicNames := uniqueTopicNames(keys)
-	topics, err := topicRepo.FindBySpaceAndNames(ctx, spaceID, topicNames)
+	// linkedPageIDs holds the IDs resolved or created during ResolveByKeys, for the
+	// caller to persist on the page / draft_page row.
+	// [Ja] linkedPageIDs は ResolveByKeys で解決・作成されたリンク先ページ ID を保持し、
+	// 呼び出し元が page / draft_page 行に永続化するために使う。
+	linkedPageIDs []model.PageID
+}
+
+// ResolveByKeys resolves wiki link keys to page locations, auto-creating missing pages.
+// [Ja] ResolveByKeys は Wiki リンクキーをページ位置情報に解決し、存在しないページを自動作成する。
+func (r *linkCreatingPageLocationResolver) ResolveByKeys(ctx context.Context, keys []markup.WikilinkKey, spaceID model.SpaceID) ([]markup.PageLocation, error) {
+	topics, err := r.topicRepo.FindBySpaceAndNames(ctx, spaceID, uniqueTopicNames(keys))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	topicMap := make(map[string]*model.Topic, len(topics))
 	for _, t := range topics {
 		topicMap[t.Name] = t
 	}
 
-	return keys, topicMap, nil
+	linkedPageIDs, locations, err := resolveAndCreateLinkedPages(
+		ctx, keys, topicMap, spaceID, r.spaceMemberID, r.pageRepo, r.pageEditorRepo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	r.linkedPageIDs = linkedPageIDs
+	return locations, nil
 }
 
 // resolveAndCreateLinkedPages は事前に取得したWikiリンクキーとトピックMapを使い、リンク先ページを自動作成する

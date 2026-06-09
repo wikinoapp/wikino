@@ -1,0 +1,25 @@
+package page
+
+// PreviewData はページ編集画面のプレビューパネルに渡すデータです
+type PreviewData struct {
+	// Title is the preview target title (plain text, auto-escaped by the template).
+	// [Ja] Title はプレビュー対象のタイトル (プレーンテキスト、テンプレート側で自動エスケープ)。
+	Title string
+
+	// BodyHTML is the rendered and sanitized body HTML.
+	// [Ja] BodyHTML はレンダリング・サニタイズ済みの本文 HTML。
+	BodyHTML string
+}
+
+// Preview はプレビューパネルに差し込む HTML フラグメントを返します。
+// 本文はサーバー側でサニタイズ済みのため @templ.Raw で展開します。
+templ Preview(data PreviewData) {
+	<div class="flex flex-col gap-4">
+		if data.Title != "" {
+			<h1 class="text-2xl font-bold antialiased break-words">{ data.Title }</h1>
+		}
+		<div class="wikino-markdown">
+			@templ.Raw(data.BodyHTML)
+		</div>
+	</div>
+}

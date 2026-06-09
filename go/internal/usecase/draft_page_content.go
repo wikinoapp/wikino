@@ -19,10 +19,7 @@ type saveDraftPageContentInput struct {
 	TopicID                   model.TopicID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	FeaturedImageAttachmentID *model.AttachmentID
-	WikilinkKeys              []markup.WikilinkKey
-	TopicMap                  map[string]*model.Topic
 	SpaceIdentifier           model.SpaceIdentifier
 	CurrentTopicName          string
 }
@@ -33,7 +30,7 @@ type saveDraftPageContentOutput struct {
 	BodyHTML  string
 }
 
-// saveDraftPageContent はDraftPageのfind_or_create・リンク解決・更新を行う共通ロジック
+// saveDraftPageContent はDraftPageのfind_or_create・レンダリング・更新を行う共通ロジック
 func saveDraftPageContent(
 	ctx context.Context,
 	input saveDraftPageContentInput,
@@ -41,6 +38,8 @@ func saveDraftPageContent(
 	draftPageRepo *repository.DraftPageRepository,
 	pageRepo *repository.PageRepository,
 	pageEditorRepo *repository.PageEditorRepository,
+	topicRepo *repository.TopicRepository,
+	attachmentRepo *repository.AttachmentRepository,
 ) (*saveDraftPageContentOutput, error) {
 	// 1. DraftPageをfind_or_createで取得・作成
 	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, input, now)
@@ -48,21 +47,26 @@ func saveDraftPageContent(
 		return nil, fmt.Errorf("下書きページの取得・作成に失敗しました: %w", err)
 	}
 
-	// 2. Wikiリンクのリンク先ページ自動作成（事前にスキャン・トピック検索済みのデータを使用）
-	linkedPageIDs, pageLocations, err := resolveAndCreateLinkedPages(
-		ctx, input.WikilinkKeys, input.TopicMap, input.SpaceID, input.SpaceMemberID, pageRepo, pageEditorRepo,
-	)
+	// 2. Render the body HTML through markup.RenderHTML, the same unified path used by the
+	// preview and page detail screens. The resolver auto-creates missing linked pages
+	// within this transaction and records their IDs.
+	//
+	// [Ja] プレビュー・ページ詳細画面と同じ統合経路 markup.RenderHTML で本文 HTML を
+	// レンダリングする。resolver がこのトランザクション内で存在しないリンク先ページを自動作成し、
+	// その ID を記録する。
+	resolver := &linkCreatingPageLocationResolver{
+		spaceMemberID:  input.SpaceMemberID,
+		topicRepo:      topicRepo,
+		pageRepo:       pageRepo,
+		pageEditorRepo: pageEditorRepo,
+	}
+	bodyHTML, err := markup.RenderHTML(ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceIdentifier, resolver, attachmentRepo)
 	if err != nil {
-		return nil, fmt.Errorf("wikiリンクの解析に失敗しました: %w", err)
+		return nil, fmt.Errorf("本文のレンダリングに失敗しました: %w", err)
 	}
+	linkedPageIDs := resolver.linkedPageIDs
 
-	// 3. bodyHTML内のWikiリンクを<a>タグに変換
-	bodyHTML := input.BodyHTML
-	if len(pageLocations) > 0 {
-		bodyHTML = markup.ReplaceWikilinks(bodyHTML, input.CurrentTopicName, input.SpaceIdentifier, pageLocations)
-	}
-
-	// 4. DraftPageを更新
+	// 3. DraftPageを更新
 	updatedDraftPage, err := draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
 		ID:                        draftPage.ID,
 		SpaceID:                   input.SpaceID,
@@ -81,50 +85,6 @@ func saveDraftPageContent(
 	return &saveDraftPageContentOutput{
 		DraftPage: updatedDraftPage,
 		BodyHTML:  bodyHTML,
-	}, nil
-}
-
-// draftPageSaveData は下書き保存の事前計算データ
-type draftPageSaveData struct {
-	bodyHTML                  string
-	featuredImageAttachmentID *model.AttachmentID
-	wikilinkKeys              []markup.WikilinkKey
-	topicMap                  map[string]*model.Topic
-}
-
-// calculateDraftPageSaveData はMarkdownレンダリング・Wikiリンクスキャン・トピック検索・アイキャッチ画像抽出・添付ファイルフィルター・画像ラッピングを行う
-func calculateDraftPageSaveData(
-	ctx context.Context,
-	body string,
-	currentTopicName string,
-	spaceID model.SpaceID,
-	topicRepo *repository.TopicRepository,
-	attachmentRepo *repository.AttachmentRepository,
-) (*draftPageSaveData, error) {
-	bodyHTML := markup.RenderMarkdown(body)
-
-	wikilinkKeys, topicMap, err := scanAndLookupWikilinks(ctx, body, currentTopicName, spaceID, topicRepo)
-	if err != nil {
-		return nil, fmt.Errorf("wikiリンクのスキャンに失敗しました: %w", err)
-	}
-
-	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, body, spaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
-	}
-
-	bodyHTML, err = markup.FilterAttachments(ctx, bodyHTML, spaceID, attachmentRepo)
-	if err != nil {
-		return nil, fmt.Errorf("添付ファイルのフィルター処理に失敗しました: %w", err)
-	}
-
-	bodyHTML = markup.WrapStandaloneImageLinks(bodyHTML)
-
-	return &draftPageSaveData{
-		bodyHTML:                  bodyHTML,
-		featuredImageAttachmentID: featuredImageAttachmentID,
-		wikilinkKeys:              wikilinkKeys,
-		topicMap:                  topicMap,
 	}, nil
 }
 
