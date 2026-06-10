@@ -552,6 +552,27 @@ func TestEdit_RevisionColumn(t *testing.T) {
 		t.Error("edit history drawer open button not found")
 	}
 
+	// The OOB swap targets of the manual save response wrap both column instances with
+	// distinct ids.
+	//
+	// [Ja] 手動保存レスポンスの OOB スワップターゲットが、カラム 2 箇所を別々の id で
+	// 包んでいること
+	if !strings.Contains(body, `id="page-revision-list"`) {
+		t.Error("static revision list OOB target not found")
+	}
+	if !strings.Contains(body, `id="page-revision-list-drawer"`) {
+		t.Error("drawer revision list OOB target not found")
+	}
+
+	// The save-draft button sends an htmx PATCH so saving does not navigate away.
+	// [Ja] 「下書き保存」ボタンが htmx の PATCH で送信され、保存で画面遷移しないこと
+	if !strings.Contains(body, `id="page-edit-save-draft-button"`) {
+		t.Error("save draft button not found")
+	}
+	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision"`) {
+		t.Error("save draft button hx-patch attribute not found")
+	}
+
 	// The empty state must not be shown when revisions exist.
 	// [Ja] リビジョンが存在するときは空状態テキストが表示されないこと
 	if strings.Contains(body, "編集履歴はありません") {
@@ -1177,6 +1198,12 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	// 下書き保存ボタンが表示されていることを確認
 	if !strings.Contains(body, "下書き保存") {
 		t.Error("save draft button should be shown in suggestion mode")
+	}
+
+	// The suggestion-mode save button also sends an htmx PATCH without navigation.
+	// [Ja] 編集提案モードの「下書き保存」ボタンも htmx の PATCH で画面遷移なしに送信されること
+	if !strings.Contains(body, `hx-patch="/s/suggestion-edit-space/pages/1/draft_page_revision"`) {
+		t.Error("save draft button hx-patch attribute not found in suggestion mode")
 	}
 
 	// 通常の下書きアラートが表示されていないことを確認（編集提案メッセージが代わりに表示される）

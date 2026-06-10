@@ -377,6 +377,7 @@ func main() {
 		flashMgr,
 		manualSaveDraftPageUC,
 		getDraftPageRevisionDiffUC,
+		getPageDetailUC,
 	)
 	restoreDraftPageRevisionUC := usecase.NewRestoreDraftPageRevisionUsecase(
 		db,

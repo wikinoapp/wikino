@@ -2,6 +2,7 @@ package draft_page_revision_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -21,15 +22,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
-func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Handler {
-	t.Helper()
-
-	db := testutil.GetTestDB()
-
+// newTestHandler builds the handler with all dependent usecases wired to the given queries.
+// [Ja] newTestHandler は依存するユースケース一式を queries に結線したハンドラーを生成します。
+func newTestHandler(db *sql.DB, queries *query.Queries) *draft_page_revision.Handler {
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
@@ -44,7 +43,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			spaceRepo,
 			spaceMemberRepo,
 			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(queries),
+			draftPageRevisionRepo,
 			pageRepo,
 			repository.NewPageEditorRepository(queries),
 			topicRepo,
@@ -58,9 +57,27 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			topicRepo,
 			topicMemberRepo,
 			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(queries),
+			draftPageRevisionRepo,
+		),
+		usecase.NewGetPageDetailUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			draftPageRepo,
+			draftPageRevisionRepo,
+			topicRepo,
+			topicMemberRepo,
+			repository.NewSuggestionPageRepository(queries),
+			repository.NewSuggestionRepository(queries),
 		),
 	)
+}
+
+// setupHandler はテスト用のハンドラーを生成するヘルパーです
+func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Handler {
+	t.Helper()
+
+	return newTestHandler(testutil.GetTestDB(), queries)
 }
 
 // newRequestWithChiParams はchiのURLパラメータ付きPATCHリクエストを作成するヘルパーです
@@ -198,37 +215,7 @@ func TestUpdate_Success(t *testing.T) {
 		WithBody("Draft body").
 		Build()
 
-	spaceRepo := repository.NewSpaceRepository(q)
-	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
-	draftPageRepo := repository.NewDraftPageRepository(q)
-	pageRepo := repository.NewPageRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
-	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	attachmentRepo := repository.NewAttachmentRepository(q)
-	handler := draft_page_revision.NewHandler(
-		session.NewFlashManager("", false, false),
-		usecase.NewManualSaveDraftPageUsecase(
-			db,
-			spaceRepo,
-			spaceMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-			pageRepo,
-			repository.NewPageEditorRepository(q),
-			topicRepo,
-			topicMemberRepo,
-			attachmentRepo,
-		),
-		usecase.NewGetDraftPageRevisionDiffUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			topicRepo,
-			topicMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-		),
-	)
+	handler := newTestHandler(db, q)
 
 	formData := url.Values{}
 	formData.Set("title", "Draft Title")
@@ -289,37 +276,7 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 		WithTitle("Test Page").
 		Build()
 
-	spaceRepo := repository.NewSpaceRepository(q)
-	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
-	draftPageRepo := repository.NewDraftPageRepository(q)
-	pageRepo := repository.NewPageRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
-	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	attachmentRepo := repository.NewAttachmentRepository(q)
-	handler := draft_page_revision.NewHandler(
-		session.NewFlashManager("", false, false),
-		usecase.NewManualSaveDraftPageUsecase(
-			db,
-			spaceRepo,
-			spaceMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-			pageRepo,
-			repository.NewPageEditorRepository(q),
-			topicRepo,
-			topicMemberRepo,
-			attachmentRepo,
-		),
-		usecase.NewGetDraftPageRevisionDiffUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			topicRepo,
-			topicMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-		),
-	)
+	handler := newTestHandler(db, q)
 
 	formData := url.Values{}
 	formData.Set("title", "新規下書き")
@@ -387,37 +344,7 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 		WithBody("Draft body").
 		Build()
 
-	spaceRepo := repository.NewSpaceRepository(q)
-	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
-	draftPageRepo := repository.NewDraftPageRepository(q)
-	pageRepo := repository.NewPageRepository(q)
-	topicRepo := repository.NewTopicRepository(q)
-	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	attachmentRepo := repository.NewAttachmentRepository(q)
-	handler := draft_page_revision.NewHandler(
-		session.NewFlashManager("", false, false),
-		usecase.NewManualSaveDraftPageUsecase(
-			db,
-			spaceRepo,
-			spaceMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-			pageRepo,
-			repository.NewPageEditorRepository(q),
-			topicRepo,
-			topicMemberRepo,
-			attachmentRepo,
-		),
-		usecase.NewGetDraftPageRevisionDiffUsecase(
-			spaceRepo,
-			spaceMemberRepo,
-			pageRepo,
-			topicRepo,
-			topicMemberRepo,
-			draftPageRepo,
-			repository.NewDraftPageRevisionRepository(q),
-		),
-	)
+	handler := newTestHandler(db, q)
 
 	formData := url.Values{}
 	formData.Set("title", "Draft Title")
@@ -441,5 +368,94 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 	expectedLocation := fmt.Sprintf("/s/dpr-suggest-redir-sp/topics/1/suggestions/new?draft_page_ids=%s", string(draftPageID))
 	if location != expectedLocation {
 		t.Errorf("wrong redirect location: got %v, want %v", location, expectedLocation)
+	}
+}
+
+// TestUpdate_HTMXRequest verifies that a manual save sent by htmx responds without navigation:
+// it returns the OOB swap fragment that refreshes the saved-at indicator and both edit history
+// columns instead of redirecting.
+//
+// [Ja] TestUpdate_HTMXRequest は htmx からの手動保存が画面遷移なしで応答することを検証する。
+// リダイレクトの代わりに、保存時刻表示と編集履歴カラム 2 箇所を更新する OOB スワップ
+// フラグメントが返る。
+func TestUpdate_HTMXRequest(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("dpr-htmx@example.com").
+		WithAtname("dprhtmx").
+		Build()
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("dpr-htmx-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft Title").
+		WithBody("Draft body").
+		Build()
+
+	handler := newTestHandler(db, q)
+
+	formData := url.Values{}
+	formData.Set("title", "Saved Title")
+	formData.Set("body", "Saved body")
+	req := newRequestWithChiParams(t, "/s/dpr-htmx-space/pages/1/draft_page_revision", map[string]string{
+		"space_identifier": "dpr-htmx-space",
+		"page_number":      "1",
+	}, formData)
+	req.Header.Set("HX-Request", "true")
+
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+	if location := rr.Header().Get("Location"); location != "" {
+		t.Errorf("htmx request should not redirect, got Location: %v", location)
+	}
+
+	body := rr.Body.String()
+	expectedChecks := []string{
+		`id="page-draft-saved-at" hx-swap-oob="outerHTML"`,
+		`id="page-revision-list" hx-swap-oob="innerHTML"`,
+		`id="page-revision-list-drawer" hx-swap-oob="innerHTML"`,
+		// The save created the draft's first revision, so the refreshed history shows v1.
+		// [Ja] この保存で下書きの最初のリビジョンが作成されるため、更新後の履歴に v1 が表示される。
+		"v1",
+	}
+	for _, expected := range expectedChecks {
+		if !strings.Contains(body, expected) {
+			t.Errorf("response doesn't contain: %q", expected)
+		}
 	}
 }

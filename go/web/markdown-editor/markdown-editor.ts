@@ -24,6 +24,7 @@ import { EditorView } from "codemirror";
 import { fileDropHandler } from "./file-drop-handler";
 import { FileUploadHandler } from "./file-upload-handler";
 import { insertNewlineAndContinueList } from "./list-continuation";
+import { clickManualSaveButton, handleManualSaveShortcut } from "./manual-save-handler";
 import { pasteHandler } from "./paste-handler";
 import { handleSubmitShortcut } from "./submit-handler";
 import { handleTab, handleShiftTab } from "./tab-handler";
@@ -70,6 +71,7 @@ function createEditor(config: EditorConfig): EditorView {
         { key: "Tab", run: handleTab },
         { key: "Shift-Tab", run: handleShiftTab },
         { key: "Mod-Enter", run: handleSubmitShortcut },
+        { key: "Mod-s", run: handleManualSaveShortcut },
         ...closeBracketsKeymap,
         ...defaultKeymap,
         ...searchKeymap,
@@ -161,6 +163,25 @@ export function initializeEditors(): void {
       topicNumber,
       titleInput,
       spaceIdentifier,
+    });
+
+    // Mod-s on the title input also triggers a manual save. The CodeMirror keymap only covers
+    // the editor body, and without this the browser's "save page" dialog would appear while the
+    // title is focused.
+    //
+    // [Ja] タイトル入力欄での Mod-s でも手動保存を実行する。CodeMirror のキーマップはエディタ
+    // 本文しかカバーせず、これが無いとタイトルにフォーカス中はブラウザの「ページを保存」
+    // ダイアログが出てしまう。
+    titleInput.addEventListener("keydown", (event) => {
+      // Match the CodeMirror Mod-s binding exactly: ignore Shift/Alt combinations so
+      // browser shortcuts like Ctrl+Shift+S keep working while the title is focused.
+      //
+      // [Ja] CodeMirror の Mod-s バインドと同じ完全一致にする。Shift / Alt 併用時は無視し、
+      // タイトルにフォーカス中も Ctrl+Shift+S などのブラウザショートカットを妨げない。
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        clickManualSaveButton();
+      }
     });
 
     const uploadHandler = new FileUploadHandler(view, spaceIdentifier, csrfToken);
