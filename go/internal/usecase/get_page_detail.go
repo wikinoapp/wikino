@@ -14,16 +14,23 @@ import (
 // [Ja] editDraftPagesLimit はページ編集画面の下書き一覧カラムに表示する下書きページ数の上限。
 const editDraftPagesLimit = 20
 
+// editDraftRevisionsLimit is the upper bound on the number of revisions shown in the page editor's
+// edit history column.
+//
+// [Ja] editDraftRevisionsLimit はページ編集画面の編集履歴カラムに表示するリビジョン数の上限。
+const editDraftRevisionsLimit = 20
+
 // GetPageDetailUsecase はページ詳細画面のデータ取得ユースケース
 type GetPageDetailUsecase struct {
-	spaceRepo          *repository.SpaceRepository
-	spaceMemberRepo    *repository.SpaceMemberRepository
-	pageRepo           *repository.PageRepository
-	draftPageRepo      *repository.DraftPageRepository
-	topicRepo          *repository.TopicRepository
-	topicMemberRepo    *repository.TopicMemberRepository
-	suggestionPageRepo *repository.SuggestionPageRepository
-	suggestionRepo     *repository.SuggestionRepository
+	spaceRepo             *repository.SpaceRepository
+	spaceMemberRepo       *repository.SpaceMemberRepository
+	pageRepo              *repository.PageRepository
+	draftPageRepo         *repository.DraftPageRepository
+	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	topicRepo             *repository.TopicRepository
+	topicMemberRepo       *repository.TopicMemberRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
+	suggestionRepo        *repository.SuggestionRepository
 }
 
 // NewGetPageDetailUsecase は GetPageDetailUsecase を生成する
@@ -32,20 +39,22 @@ func NewGetPageDetailUsecase(
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
 	draftPageRepo *repository.DraftPageRepository,
+	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionPageRepo *repository.SuggestionPageRepository,
 	suggestionRepo *repository.SuggestionRepository,
 ) *GetPageDetailUsecase {
 	return &GetPageDetailUsecase{
-		spaceRepo:          spaceRepo,
-		spaceMemberRepo:    spaceMemberRepo,
-		pageRepo:           pageRepo,
-		draftPageRepo:      draftPageRepo,
-		topicRepo:          topicRepo,
-		topicMemberRepo:    topicMemberRepo,
-		suggestionPageRepo: suggestionPageRepo,
-		suggestionRepo:     suggestionRepo,
+		spaceRepo:             spaceRepo,
+		spaceMemberRepo:       spaceMemberRepo,
+		pageRepo:              pageRepo,
+		draftPageRepo:         draftPageRepo,
+		draftPageRevisionRepo: draftPageRevisionRepo,
+		topicRepo:             topicRepo,
+		topicMemberRepo:       topicMemberRepo,
+		suggestionPageRepo:    suggestionPageRepo,
+		suggestionRepo:        suggestionRepo,
 	}
 }
 
@@ -61,6 +70,14 @@ type GetPageDetailInput struct {
 	// [Ja] IncludeDraftPages はスペースメンバーの下書き一覧 (編集画面の下書き一覧カラム用) の取得を要求する。
 	// オートセーブ用フラグメントエンドポイントは不要なクエリを避けるため false のままにする。
 	IncludeDraftPages bool
+
+	// IncludeDraftRevisions requests the draft's edit history (revision list and total count, for the
+	// editor's edit history column). Callers that do not render the column leave it false to skip
+	// the extra queries.
+	//
+	// [Ja] IncludeDraftRevisions は下書きの編集履歴 (編集画面の編集履歴カラム用のリビジョン一覧と総件数)
+	// の取得を要求する。カラムを描画しない呼び出し元は不要なクエリを避けるため false のままにする。
+	IncludeDraftRevisions bool
 }
 
 // GetPageDetailOutput はページ詳細取得の出力
@@ -80,6 +97,22 @@ type GetPageDetailOutput struct {
 	// [Ja] DraftPages は編集画面の下書き一覧カラム用のスペースメンバーの下書き一覧。
 	// GetPageDetailInput.IncludeDraftPages が指定されない限り nil。
 	DraftPages []*model.DraftPage
+
+	// DraftPageRevisions is the draft's revision list for the editor's edit history column, newest
+	// first and capped at editDraftRevisionsLimit. It is nil unless
+	// GetPageDetailInput.IncludeDraftRevisions is set and a draft exists.
+	//
+	// [Ja] DraftPageRevisions は編集画面の編集履歴カラム用の下書きのリビジョン一覧 (新しい順、
+	// 最大 editDraftRevisionsLimit 件)。GetPageDetailInput.IncludeDraftRevisions が指定され、
+	// かつ下書きが存在する場合以外は nil。
+	DraftPageRevisions []*model.DraftPageRevision
+
+	// DraftPageRevisionTotalCount is the total number of revisions of the draft (not capped by the
+	// list limit). Version numbers in the edit history column are derived from this count.
+	//
+	// [Ja] DraftPageRevisionTotalCount は下書きのリビジョン総件数 (一覧の上限ではキャップしない)。
+	// 編集履歴カラムのバージョン番号はこの件数から算出する。
+	DraftPageRevisionTotalCount int64
 }
 
 // Execute はページ詳細画面に必要なデータを取得する
@@ -155,15 +188,35 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		}
 	}
 
+	// Fetch the draft's edit history for the editor's edit history column (only when requested).
+	// Without a draft there are no revisions, so the column data stays empty.
+	//
+	// [Ja] 編集画面の編集履歴カラム用に、下書きの編集履歴を取得する (要求された場合のみ)。
+	// 下書きが無ければリビジョンも存在しないため、カラム用データは空のままにする。
+	var draftPageRevisions []*model.DraftPageRevision
+	var draftPageRevisionTotalCount int64
+	if input.IncludeDraftRevisions && draftPage != nil {
+		draftPageRevisions, err = uc.draftPageRevisionRepo.ListByDraftPageID(ctx, draftPage.ID, space.ID, editDraftRevisionsLimit)
+		if err != nil {
+			return nil, fmt.Errorf("リビジョン一覧の取得に失敗: %w", err)
+		}
+		draftPageRevisionTotalCount, err = uc.draftPageRevisionRepo.CountByDraftPageID(ctx, draftPage.ID, space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("リビジョン件数の取得に失敗: %w", err)
+		}
+	}
+
 	return &GetPageDetailOutput{
-		Space:         space,
-		SpaceMember:   spaceMember,
-		Page:          pg,
-		Topic:         topic,
-		TopicMember:   topicMember,
-		DraftPage:     draftPage,
-		Suggestion:    suggestion,
-		CanUpdatePage: canUpdatePage,
-		DraftPages:    draftPages,
+		Space:                       space,
+		SpaceMember:                 spaceMember,
+		Page:                        pg,
+		Topic:                       topic,
+		TopicMember:                 topicMember,
+		DraftPage:                   draftPage,
+		Suggestion:                  suggestion,
+		CanUpdatePage:               canUpdatePage,
+		DraftPages:                  draftPages,
+		DraftPageRevisions:          draftPageRevisions,
+		DraftPageRevisionTotalCount: draftPageRevisionTotalCount,
 	}, nil
 }

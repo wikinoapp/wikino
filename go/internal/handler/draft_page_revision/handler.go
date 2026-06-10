@@ -8,17 +8,20 @@ import (
 
 // Handler は下書きリビジョンハンドラー
 type Handler struct {
-	flashMgr              *session.FlashManager
-	manualSaveDraftPageUC *usecase.ManualSaveDraftPageUsecase
+	flashMgr                   *session.FlashManager
+	manualSaveDraftPageUC      *usecase.ManualSaveDraftPageUsecase
+	getDraftPageRevisionDiffUC *usecase.GetDraftPageRevisionDiffUsecase
 }
 
 // NewHandler は新しい下書きリビジョンハンドラーを作成します
 func NewHandler(
 	flashMgr *session.FlashManager,
 	manualSaveDraftPageUC *usecase.ManualSaveDraftPageUsecase,
+	getDraftPageRevisionDiffUC *usecase.GetDraftPageRevisionDiffUsecase,
 ) *Handler {
 	return &Handler{
-		flashMgr:              flashMgr,
-		manualSaveDraftPageUC: manualSaveDraftPageUC,
+		flashMgr:                   flashMgr,
+		manualSaveDraftPageUC:      manualSaveDraftPageUC,
+		getDraftPageRevisionDiffUC: getDraftPageRevisionDiffUC,
 	}
 }

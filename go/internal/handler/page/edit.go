@@ -41,10 +41,11 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	// UseCaseでデータを取得
 	output, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
-		SpaceIdentifier:   spaceIdentifier,
-		PageNumber:        int32(pageNumber),
-		UserID:            user.ID,
-		IncludeDraftPages: true,
+		SpaceIdentifier:       spaceIdentifier,
+		PageNumber:            int32(pageNumber),
+		UserID:                user.ID,
+		IncludeDraftPages:     true,
+		IncludeDraftRevisions: true,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "ページ詳細の取得に失敗", "error", err)
@@ -112,7 +113,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
 		// The editor stays within a single space, so omit the space label on each draft card.
 		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
-		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
+		DraftPages:     viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
+		DraftRevisions: viewmodel.NewDraftPageRevisions(output.DraftPageRevisions, output.DraftPageRevisionTotalCount),
 	}
 
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {

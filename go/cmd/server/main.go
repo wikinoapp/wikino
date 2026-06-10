@@ -24,6 +24,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision_restore"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
@@ -313,6 +314,7 @@ func main() {
 		spaceMemberRepo,
 		pageRepo,
 		draftPageRepo,
+		draftPageRevisionRepo,
 		topicRepo,
 		topicMemberRepo,
 		suggestionPageRepo,
@@ -362,9 +364,35 @@ func main() {
 		deleteDraftPageUC,
 		getEditLinkDataUC,
 	)
+	getDraftPageRevisionDiffUC := usecase.NewGetDraftPageRevisionDiffUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
 		flashMgr,
 		manualSaveDraftPageUC,
+		getDraftPageRevisionDiffUC,
+	)
+	restoreDraftPageRevisionUC := usecase.NewRestoreDraftPageRevisionUsecase(
+		db,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		pageEditorRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+		attachmentRepo,
+	)
+	draftPageRevisionRestoreHandler := draft_page_revision_restore.NewHandler(
+		flashMgr,
+		restoreDraftPageRevisionUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
 		getBacklinkListUC,
@@ -685,6 +713,14 @@ func main() {
 
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
+
+		// Draft page revision diff fragment (htmx).
+		// [Ja] 下書きリビジョン差分フラグメント (htmx)。
+		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}", draftPageRevisionHandler.Show)
+
+		// Draft page revision restore.
+		// [Ja] 下書きリビジョン復元。
+		r.Post("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore", draftPageRevisionRestoreHandler.Create)
 
 		// リンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)

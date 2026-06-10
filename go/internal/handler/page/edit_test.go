@@ -42,6 +42,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	draftPageRepo := repository.NewDraftPageRepository(queries)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
@@ -52,6 +53,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		spaceMemberRepo,
 		pageRepo,
 		draftPageRepo,
+		draftPageRevisionRepo,
 		topicRepo,
 		topicMemberRepo,
 		suggestionPageRepo,
@@ -61,7 +63,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
-	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	attachmentRepo := repository.NewAttachmentRepository(queries)
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
@@ -222,6 +223,12 @@ func TestEdit(t *testing.T) {
 	// [Ja] メンバーに下書きが 1 件もないとき、下書き一覧カラムに空状態テキストが表示されること
 	if !strings.Contains(body, "下書きはありません") {
 		t.Error("draft list empty state text not found when no draft exists")
+	}
+
+	// The edit history column shows the empty state when there is no draft (hence no revisions).
+	// [Ja] 下書きが無い (= リビジョンも無い) とき、編集履歴カラムに空状態テキストが表示されること
+	if !strings.Contains(body, "編集履歴はありません") {
+		t.Error("edit history empty state text not found when no draft exists")
 	}
 
 	// パンくずリストにトピックへのリンクが含まれているか確認
@@ -432,6 +439,123 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 	}
 	if strings.Contains(body, "basecoat:sidebar") {
 		t.Error("no sidebar-opening button should be rendered on the page editor (TopNav or BottomNav)")
+	}
+}
+
+func TestEdit_RevisionColumn(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("revcol@example.com").
+		WithAtname("revcoluser").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("revcol-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edited Page").
+		WithBody("body").
+		Build()
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft With Revisions").
+		WithBody("draft body").
+		Build()
+
+	// Two saved revisions: the column should list v1 and v2.
+	// [Ja] 保存済みリビジョン 2 件: カラムに v1 と v2 が表示されること
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
+	for _, title := range []string{"Rev One", "Rev Two"} {
+		_, err := draftPageRevisionRepo.Create(context.Background(), repository.CreateDraftPageRevisionInput{
+			DraftPageID:   draftPageID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         title,
+			Body:          "body of " + title,
+			BodyHTML:      "<p>body of " + title + "</p>",
+		})
+		if err != nil {
+			t.Fatalf("Create() revision error = %v", err)
+		}
+	}
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/revcol-space/pages/1/edit", map[string]string{
+		"space_identifier": "revcol-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// The edit history column heading is shown.
+	// [Ja] 編集履歴カラムの見出しが表示されること
+	if !strings.Contains(body, "編集履歴") {
+		t.Error("edit history heading not found")
+	}
+
+	// Version numbers derived from the total count appear (oldest = v1).
+	// [Ja] 総件数から算出したバージョン番号が表示されること (最古 = v1)
+	if !strings.Contains(body, "v2") {
+		t.Error("version v2 not found in the edit history column")
+	}
+	if !strings.Contains(body, "v1") {
+		t.Error("version v1 not found in the edit history column")
+	}
+
+	// The newest revision gets the "current" badge.
+	// [Ja] 最新リビジョンに「現在」バッジが付くこと
+	if !strings.Contains(body, "現在") {
+		t.Error("current badge not found in the edit history column")
+	}
+
+	// The narrow-screen drawer (panel and open button) is wired up.
+	// [Ja] 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
+	if !strings.Contains(body, `id="page-edit-draft-revisions-drawer"`) {
+		t.Error("edit history drawer not found")
+	}
+	if !strings.Contains(body, `data-drawer-open="page-edit-draft-revisions-drawer"`) {
+		t.Error("edit history drawer open button not found")
+	}
+
+	// The empty state must not be shown when revisions exist.
+	// [Ja] リビジョンが存在するときは空状態テキストが表示されないこと
+	if strings.Contains(body, "編集履歴はありません") {
+		t.Error("edit history empty state should not be shown when revisions exist")
 	}
 }
 
@@ -1036,6 +1160,18 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	// _method=PATCH が含まれていることを確認（PATCHメソッドで送信）
 	if !strings.Contains(body, `value="PATCH"`) {
 		t.Error("_method=PATCH should be present in suggestion mode")
+	}
+
+	// The edit history column is rendered in suggestion mode too (suggestion edits are also backed
+	// by draft pages and their revisions).
+	//
+	// [Ja] 編集提案モードでも編集履歴カラムが描画されること (編集提案の編集も実体は下書きページと
+	// そのリビジョンであるため)
+	if !strings.Contains(body, "編集履歴") {
+		t.Error("edit history heading not found in suggestion mode")
+	}
+	if !strings.Contains(body, `id="page-edit-draft-revisions-drawer"`) {
+		t.Error("edit history drawer not found in suggestion mode")
 	}
 
 	// 下書き保存ボタンが表示されていることを確認

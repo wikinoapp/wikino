@@ -45,6 +45,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 			spaceMemberRepo,
 			pageRepo,
 			draftPageRepo,
+			draftPageRevisionRepo,
 			topicRepo,
 			topicMemberRepo,
 			repository.NewSuggestionPageRepository(queries),
