@@ -13,6 +13,10 @@ other = "Wikinoはオンラインで情報を共有・整理できるWikiアプ�
 description = "フラッシュメッセージの閉じるボタンのラベル"
 other = "閉じる"
 
+[dialog_close]
+description = "ダイアログの閉じるボタンのラベル"
+other = "閉じる"
+
 [label_error]
 description = "エラーラベルの汎用表示"
 other = "エラー"
@@ -725,6 +729,50 @@ other = "下書き一覧"
 description = "ページ編集画面の下書き一覧カラムで下書きが 1 件もないときの空状態テキスト"
 other = "下書きはありません"
 
+[page_edit_revisions_heading]
+description = "ページ編集画面の編集履歴カラムの見出し"
+other = "編集履歴"
+
+[page_edit_revisions_toggle_label]
+description = "ページ編集画面で編集履歴カラムを開く開閉ボタンのラベル (画面幅が狭いとき)"
+other = "編集履歴"
+
+[page_edit_revisions_empty]
+description = "ページ編集画面の編集履歴カラムでリビジョンが 1 件もないときの空状態テキスト"
+other = "編集履歴はありません"
+
+[page_edit_revisions_current_badge]
+description = "ページ編集画面の編集履歴カラムで最新リビジョンに表示するバッジ"
+other = "現在"
+
+[page_edit_revision_diff_heading]
+description = "ページ編集画面のリビジョン差分モーダルの見出し"
+other = "変更内容"
+
+[page_edit_revision_diff_title_change]
+description = "リビジョン差分モーダルのタイトル変更ラベル"
+other = "タイトルの変更"
+
+[page_edit_revision_diff_loading]
+description = "リビジョン差分モーダルで差分取得中に表示するローディングテキスト"
+other = "差分を読み込み中..."
+
+[page_edit_revision_diff_restore_button]
+description = "リビジョン差分モーダルの復元ボタン"
+other = "このバージョンに戻す"
+
+[page_edit_revision_diff_restore_confirm_message]
+description = "リビジョン差分モーダルのインライン復元確認メッセージ"
+other = "本当にこのバージョンに戻しますか？"
+
+[page_edit_revision_diff_restore_confirm_button]
+description = "リビジョン差分モーダルの復元確定ボタン"
+other = "戻す"
+
+[page_edit_revision_diff_restore_cancel_button]
+description = "リビジョン差分モーダルの復元キャンセルボタン"
+other = "キャンセル"
+
 [page_edit_links_heading]
 description = "ページ編集画面のリンク一覧の見出し"
 other = "リンク"
@@ -799,6 +847,10 @@ other = "ページを公開しました"
 [flash_draft_page_saved]
 description = "下書き保存成功メッセージ"
 other = "下書きを保存しました"
+
+[flash_draft_page_revision_restored]
+description = "下書きリビジョン復元成功メッセージ"
+other = "下書きを選択したバージョンに戻しました"
 
 # 編集提案ページ更新成功
 [flash_suggestion_page_updated]
