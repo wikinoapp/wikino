@@ -30,6 +30,26 @@ const revisionDiffDialogID = "page-edit-revision-diff-dialog"
 // [Ja] revisionDiffContentID は差分モーダル内の htmx スワップ先の要素 id。
 const revisionDiffContentID = "page-edit-revision-diff-content"
 
+// pageRevisionListID / pageRevisionListDrawerID are the OOB swap targets wrapping the edit
+// history column in the static right column and inside the drawer. The manual save response
+// swaps both: OOB matches by id, so two identical ids would update only one of them.
+//
+// [Ja] pageRevisionListID / pageRevisionListDrawerID は、静的な右カラムとドロワー内の編集履歴
+// カラムを包む OOB スワップターゲットの id。手動保存のレスポンスは両方をスワップする (OOB は
+// id 一致で対象を選ぶため、同一 id を 2 つ置くと片方しか更新されない)。
+const pageRevisionListID = "page-revision-list"
+
+const pageRevisionListDrawerID = "page-revision-list-drawer"
+
+// saveDraftButtonID is the element id of the manual save ("save draft") button. The CodeMirror
+// Mod-s keymap (web/markdown-editor/manual-save-handler.ts) locates the button by this id, so
+// keep the two in sync.
+//
+// [Ja] saveDraftButtonID は手動保存 (「下書き保存」) ボタンの要素 id。CodeMirror の Mod-s
+// キーマップ (web/markdown-editor/manual-save-handler.ts) がこの id でボタンを特定するため、
+// 両者を同期させること。
+const saveDraftButtonID = "page-edit-save-draft-button"
+
 // revisionDiffLoadingID is the element id of the loading indicator inside the diff modal.
 // [Ja] revisionDiffLoadingID は差分モーダル内のローディングインジケーターの要素 id。
 const revisionDiffLoadingID = "page-edit-revision-diff-loading"
@@ -286,10 +306,21 @@ templ Edit(data EditPageData) {
 											}
 											if !data.IsSuggestionMode() {
 												<div class="flex">
+													// Manual save goes through htmx (PATCH) instead of a form submit so the page
+													// does not navigate: the editor keeps its cursor/scroll position and the
+													// response OOB-swaps the saved-at indicator and both edit history columns.
+													//
+													// [Ja] 手動保存はフォーム送信ではなく htmx (PATCH) で行い、画面遷移させない。
+													// エディタのカーソル・スクロール位置が維持され、レスポンスが保存時刻表示と
+													// 編集履歴カラム 2 箇所を OOB スワップで更新する。
 													<button
+														id={ saveDraftButtonID }
 														class="btn-secondary rounded-l-full w-fit border-r-0"
-														type="submit"
-														formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+														type="button"
+														hx-patch={ data.ManualSaveURL }
+														hx-include="#page_title, #page_body, #page-edit-csrf-token"
+														hx-swap="none"
+														hx-disable="this"
 													>
 														@templates.Icon("floppy-disk-regular")
 														{ templates.T(ctx, "page_edit_save_draft_button") }
@@ -322,10 +353,16 @@ templ Edit(data EditPageData) {
 													</div>
 												</div>
 											} else {
+												// Suggestion mode saves the same way: htmx PATCH without navigation.
+												// [Ja] 編集提案モードでも同じく htmx の PATCH で画面遷移せずに保存する。
 												<button
+													id={ saveDraftButtonID }
 													class="btn-secondary rounded-full w-fit"
-													type="submit"
-													formaction={ string(templ.SafeURL(data.ManualSaveURL)) }
+													type="button"
+													hx-patch={ data.ManualSaveURL }
+													hx-include="#page_title, #page_body, #page-edit-csrf-token"
+													hx-swap="none"
+													hx-disable="this"
 												>
 													@templates.Icon("floppy-disk-regular")
 													{ templates.T(ctx, "page_edit_save_draft_button") }
@@ -362,7 +399,9 @@ templ Edit(data EditPageData) {
 						</div>
 					</div>
 					<aside class="hidden lg:block">
-						@draftRevisionColumn(data)
+						<div id={ pageRevisionListID }>
+							@draftRevisionColumn(data.revisionColumnData())
+						</div>
 					</aside>
 				</div>
 			</div>
@@ -374,7 +413,7 @@ templ Edit(data EditPageData) {
 			@components.Drawer(components.DrawerData{
 				ID:      draftRevisionsDrawerID,
 				Side:    "right",
-				Content: draftRevisionColumn(data),
+				Content: drawerDraftRevisionList(data),
 			})
 			@components.Dialog(components.DialogData{
 				ID:            revisionDiffDialogID,
@@ -421,6 +460,37 @@ templ draftPageColumn(data EditPageData) {
 	</div>
 }
 
+// draftRevisionColumnData carries the inputs of the edit history column. It is a dedicated
+// struct (instead of EditPageData) so the manual save response fragment can render the column
+// without building the full edit page data.
+//
+// [Ja] draftRevisionColumnData は編集履歴カラムの入力を保持する。EditPageData ではなく専用の
+// 構造体にすることで、手動保存のレスポンスフラグメントが編集画面全体のデータを組み立てずに
+// カラムを描画できるようにする。
+type draftRevisionColumnData struct {
+	SpaceIdentifier viewmodel.SpaceIdentifier
+	PageNumber      int32
+	Revisions       []viewmodel.DraftPageRevision
+}
+
+// revisionColumnData extracts the edit history column inputs from the edit page data.
+// [Ja] revisionColumnData は編集画面データから編集履歴カラムの入力を取り出す。
+func (d EditPageData) revisionColumnData() draftRevisionColumnData {
+	return draftRevisionColumnData{
+		SpaceIdentifier: d.Space.Identifier,
+		PageNumber:      d.Page.Number,
+		Revisions:       d.DraftRevisions,
+	}
+}
+
+// drawerDraftRevisionList wraps the edit history column with the drawer-side OOB swap target id.
+// [Ja] drawerDraftRevisionList は編集履歴カラムをドロワー側の OOB スワップターゲット id で包む。
+templ drawerDraftRevisionList(data EditPageData) {
+	<div id={ pageRevisionListDrawerID }>
+		@draftRevisionColumn(data.revisionColumnData())
+	</div>
+}
+
 // draftRevisionColumn renders the edit history of the draft being edited, shown in the right
 // column on wide screens and inside the right-side drawer on narrow screens. The same component
 // feeds both. Entries form a vertical timeline, newest first: each shows a version number
@@ -429,18 +499,18 @@ templ draftPageColumn(data EditPageData) {
 // [Ja] draftRevisionColumn は編集中の下書きの編集履歴を描画する。広い画面では右カラム、狭い画面では
 // 右側のドロワー内に表示し、同じコンポーネントを両方に流用する。エントリは新しい順の縦のタイムラインで、
 // 各エントリにバージョン番号 (最古 = v1) と作成日時を表示し、最新のエントリにのみ「現在」バッジを付ける。
-templ draftRevisionColumn(data EditPageData) {
+templ draftRevisionColumn(data draftRevisionColumnData) {
 	<div class="flex flex-col gap-4 p-4 lg:p-0">
 		<h2 class="font-bold antialiased">
 			{ templates.T(ctx, "page_edit_revisions_heading") }
 		</h2>
-		if len(data.DraftRevisions) == 0 {
+		if len(data.Revisions) == 0 {
 			<p class="text-sm text-muted-foreground">
 				{ templates.T(ctx, "page_edit_revisions_empty") }
 			</p>
 		} else {
 			<ol class="ml-1.5 flex flex-col border-l border-border">
-				for _, revision := range data.DraftRevisions {
+				for _, revision := range data.Revisions {
 					<li class="relative pb-5 pl-4 last:pb-0">
 						if revision.IsCurrent {
 							<span class="absolute top-1.5 -left-[4.5px] size-2 rounded-full bg-foreground" aria-hidden="true"></span>
@@ -457,7 +527,7 @@ templ draftRevisionColumn(data EditPageData) {
 						<button
 							type="button"
 							class="flex w-full cursor-pointer flex-col gap-1 rounded-md text-left transition-colors hover:bg-muted"
-							hx-get={ string(templates.PageDraftPageRevisionShowPath(data.Space.Identifier, data.Page.Number, revision.ID)) }
+							hx-get={ string(templates.PageDraftPageRevisionShowPath(data.SpaceIdentifier, data.PageNumber, revision.ID)) }
 							hx-target={ "#" + revisionDiffContentID }
 							hx-swap="innerHTML"
 							hx-indicator={ "#" + revisionDiffLoadingID }
