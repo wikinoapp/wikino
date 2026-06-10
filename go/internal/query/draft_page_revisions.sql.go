@@ -82,3 +82,128 @@ func (q *Queries) DeleteDraftPageRevisionsByDraftPageID(ctx context.Context, arg
 	_, err := q.db.ExecContext(ctx, deleteDraftPageRevisionsByDraftPageID, arg.DraftPageID, arg.SpaceID)
 	return err
 }
+
+const findDraftPageRevisionByID = `-- name: FindDraftPageRevisionByID :one
+SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions WHERE id = $1 AND space_id = $2
+`
+
+type FindDraftPageRevisionByIDParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// Returns a single draft page revision by ID, scoped by space_id.
+// [Ja] 下書きページリビジョンを ID で取得する (スペース ID でスコープ)。
+func (q *Queries) FindDraftPageRevisionByID(ctx context.Context, arg FindDraftPageRevisionByIDParams) (DraftPageRevision, error) {
+	row := q.db.QueryRowContext(ctx, findDraftPageRevisionByID, arg.ID, arg.SpaceID)
+	var i DraftPageRevision
+	err := row.Scan(
+		&i.ID,
+		&i.DraftPageID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const findPreviousDraftPageRevision = `-- name: FindPreviousDraftPageRevision :one
+SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions
+WHERE draft_page_id = $1 AND space_id = $2
+  AND (created_at < $3 OR (created_at = $3 AND id < $4))
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+`
+
+type FindPreviousDraftPageRevisionParams struct {
+	DraftPageID string    `json:"draft_page_id"`
+	SpaceID     string    `json:"space_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+}
+
+// Returns the revision immediately preceding the given one within the same draft
+// page, used as the comparison target for diffs. "Preceding" is defined by the
+// (created_at, id) total order that ListDraftPageRevisionsByDraftPageID also uses,
+// so the previous revision is the newest one strictly older than the target.
+//
+// [Ja] 同一下書きページ内で対象リビジョンの直前のリビジョンを返す。差分の比較対象に使う。
+// 「直前」は ListDraftPageRevisionsByDraftPageID と同じ (created_at, id) の全順序で定義し、
+// 対象より厳密に古いもののうち最も新しいものを返す。
+func (q *Queries) FindPreviousDraftPageRevision(ctx context.Context, arg FindPreviousDraftPageRevisionParams) (DraftPageRevision, error) {
+	row := q.db.QueryRowContext(ctx, findPreviousDraftPageRevision,
+		arg.DraftPageID,
+		arg.SpaceID,
+		arg.CreatedAt,
+		arg.ID,
+	)
+	var i DraftPageRevision
+	err := row.Scan(
+		&i.ID,
+		&i.DraftPageID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		&i.Title,
+		&i.Body,
+		&i.BodyHtml,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listDraftPageRevisionsByDraftPageID = `-- name: ListDraftPageRevisionsByDraftPageID :many
+SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions
+WHERE draft_page_id = $1 AND space_id = $2
+ORDER BY created_at DESC, id DESC
+LIMIT $3
+`
+
+type ListDraftPageRevisionsByDraftPageIDParams struct {
+	DraftPageID string `json:"draft_page_id"`
+	SpaceID     string `json:"space_id"`
+	Limit       int32  `json:"limit"`
+}
+
+// Returns revisions for a draft page, newest first, capped at the given limit.
+// The order is created_at DESC, id DESC so that revisions sharing a created_at
+// (e.g. created within the same instant) still have a stable total order. The
+// version-number calculation in the upper layers depends on this stable order.
+//
+// [Ja] 下書きページのリビジョンを新しい順 (最大 limit 件) で返す。
+// 並び順は created_at DESC, id DESC とし、created_at が同一のリビジョン
+// (同一時刻に作成された場合など) でも安定した全順序になるようにする。
+// 上位層でのバージョン番号の算出がこの安定した順序に依存する。
+func (q *Queries) ListDraftPageRevisionsByDraftPageID(ctx context.Context, arg ListDraftPageRevisionsByDraftPageIDParams) ([]DraftPageRevision, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPageRevisionsByDraftPageID, arg.DraftPageID, arg.SpaceID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DraftPageRevision{}
+	for rows.Next() {
+		var i DraftPageRevision
+		if err := rows.Scan(
+			&i.ID,
+			&i.DraftPageID,
+			&i.SpaceID,
+			&i.SpaceMemberID,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
