@@ -51,6 +51,15 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Han
 			topicMemberRepo,
 			attachmentRepo,
 		),
+		usecase.NewGetDraftPageRevisionDiffUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
+			draftPageRepo,
+			repository.NewDraftPageRevisionRepository(queries),
+		),
 	)
 }
 
@@ -210,6 +219,15 @@ func TestUpdate_Success(t *testing.T) {
 			topicMemberRepo,
 			attachmentRepo,
 		),
+		usecase.NewGetDraftPageRevisionDiffUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
+			draftPageRepo,
+			repository.NewDraftPageRevisionRepository(q),
+		),
 	)
 
 	formData := url.Values{}
@@ -291,6 +309,15 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 			topicRepo,
 			topicMemberRepo,
 			attachmentRepo,
+		),
+		usecase.NewGetDraftPageRevisionDiffUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
+			draftPageRepo,
+			repository.NewDraftPageRevisionRepository(q),
 		),
 	)
 
@@ -380,6 +407,15 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 			topicRepo,
 			topicMemberRepo,
 			attachmentRepo,
+		),
+		usecase.NewGetDraftPageRevisionDiffUsecase(
+			spaceRepo,
+			spaceMemberRepo,
+			pageRepo,
+			topicRepo,
+			topicMemberRepo,
+			draftPageRepo,
+			repository.NewDraftPageRevisionRepository(q),
 		),
 	)
 

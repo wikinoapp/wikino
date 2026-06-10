@@ -13,6 +13,10 @@ other = "Wikino is a wiki application for sharing and organizing information onl
 description = "Dismiss button label for the flash message"
 other = "Dismiss"
 
+[dialog_close]
+description = "Close button label for dialogs"
+other = "Close"
+
 [label_error]
 description = "Generic error label"
 other = "Error"
@@ -725,6 +729,50 @@ other = "Drafts"
 description = "Empty state text shown in the page edit screen draft list column when there are no drafts"
 other = "No drafts yet."
 
+[page_edit_revisions_heading]
+description = "Heading for the edit history column on the page edit screen"
+other = "Edit history"
+
+[page_edit_revisions_toggle_label]
+description = "Label for the button that opens the edit history column on the page edit screen (narrow screens)"
+other = "Edit history"
+
+[page_edit_revisions_empty]
+description = "Empty state text shown in the page edit screen edit history column when there are no revisions"
+other = "No edit history yet."
+
+[page_edit_revisions_current_badge]
+description = "Badge shown on the newest revision in the page edit screen edit history column"
+other = "Current"
+
+[page_edit_revision_diff_heading]
+description = "Heading of the revision diff modal on the page edit screen"
+other = "Changes"
+
+[page_edit_revision_diff_title_change]
+description = "Title change label in the revision diff modal"
+other = "Title change"
+
+[page_edit_revision_diff_loading]
+description = "Loading text shown while fetching the diff in the revision diff modal"
+other = "Loading diff..."
+
+[page_edit_revision_diff_restore_button]
+description = "Restore button in the revision diff modal"
+other = "Restore this version"
+
+[page_edit_revision_diff_restore_confirm_message]
+description = "Inline restore confirmation message in the revision diff modal"
+other = "Really restore this version?"
+
+[page_edit_revision_diff_restore_confirm_button]
+description = "Restore confirm button in the revision diff modal"
+other = "Restore"
+
+[page_edit_revision_diff_restore_cancel_button]
+description = "Restore cancel button in the revision diff modal"
+other = "Cancel"
+
 [page_edit_links_heading]
 description = "Heading for the link list on the page edit screen"
 other = "Links"
@@ -799,6 +847,10 @@ other = "Page saved."
 [flash_draft_page_saved]
 description = "Draft page saved success message"
 other = "Draft saved."
+
+[flash_draft_page_revision_restored]
+description = "Draft page revision restored success message"
+other = "Restored the draft to the selected version."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
