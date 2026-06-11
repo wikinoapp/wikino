@@ -988,6 +988,145 @@ func TestEdit_PreviewTab(t *testing.T) {
 	}
 }
 
+func TestEdit_ZenMode(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("zen-mode@example.com").
+		WithAtname("zenmode").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("zen-mode-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Zen Mode Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// The "page-edit-zen" substring alone matches the always-present Tailwind variant classes
+	// (in-[.page-edit-zen]:lg:hidden etc.), so assert on the full class attribute of the container.
+	//
+	// [Ja] "page-edit-zen" の部分一致では常に存在する Tailwind バリアントクラス
+	// (in-[.page-edit-zen]:lg:hidden など) にもマッチしてしまうため、コンテナの class 属性全体で
+	// 検証する。
+	const containerClassOff = `class="max-w-6xl w-full mx-auto lg:px-4"`
+	const containerClassOn = `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`
+
+	tests := []struct {
+		name        string
+		cookieValue string // empty = no cookie. [Ja] 空はクッキーなし
+		wantZen     bool
+	}{
+		{
+			name:        "正常系: クッキーなしの場合は通常モードで表示する",
+			cookieValue: "",
+			wantZen:     false,
+		},
+		{
+			name:        "正常系: クッキーが1の場合はZenモードで表示する",
+			cookieValue: "1",
+			wantZen:     true,
+		},
+		{
+			name:        "正常系: クッキーが1以外の値の場合は通常モードで表示する",
+			cookieValue: "0",
+			wantZen:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/zen-mode-space/pages/1/edit", map[string]string{
+				"space_identifier": "zen-mode-space",
+				"page_number":      "1",
+			})
+			if tt.cookieValue != "" {
+				req.AddCookie(&http.Cookie{Name: "wikino_zen_mode", Value: tt.cookieValue})
+			}
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+			ctx = i18n.SetLocale(ctx, i18n.LangJa)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Edit(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+
+			// The toggle button is rendered with its label and the server-rendered pressed state.
+			// [Ja] トグルボタンがラベルとサーバー描画の押下状態付きで描画されること
+			if !strings.Contains(body, "data-zen-mode-toggle") {
+				t.Error("zen mode toggle button not found in response")
+			}
+			if !strings.Contains(body, "Zen モード") {
+				t.Error("zen mode button label not found in response")
+			}
+
+			if tt.wantZen {
+				if !strings.Contains(body, containerClassOn) {
+					t.Error("zen mode class not found on the editor container")
+				}
+				if !strings.Contains(body, `aria-pressed="true"`) {
+					t.Error(`aria-pressed="true" not found on the zen mode toggle`)
+				}
+			} else {
+				if !strings.Contains(body, containerClassOff) {
+					t.Error("editor container without the zen mode class not found")
+				}
+				if strings.Contains(body, containerClassOn) {
+					t.Error("zen mode class should not be set on the editor container")
+				}
+				if !strings.Contains(body, `aria-pressed="false"`) {
+					t.Error(`aria-pressed="false" not found on the zen mode toggle`)
+				}
+			}
+
+			// The Tailwind variant classes reacting to Zen mode are present on the layout elements
+			// (hide the side columns / link lists, collapse the grid, widen the center column).
+			//
+			// [Ja] Zen モードに反応する Tailwind バリアントクラスがレイアウト要素に付いていること
+			// (左右カラム・リンク一覧の非表示、グリッド解除、中央カラムの拡幅)。
+			if !strings.Contains(body, "in-[.page-edit-zen]:lg:hidden") {
+				t.Error("zen mode side column hide class not found in response")
+			}
+			if !strings.Contains(body, "in-[.page-edit-zen]:hidden") {
+				t.Error("zen mode link list hide class not found in response")
+			}
+			if !strings.Contains(body, "in-[.page-edit-zen]:lg:block") {
+				t.Error("zen mode grid collapse class not found in response")
+			}
+			if !strings.Contains(body, "in-[.page-edit-zen]:max-w-4xl") {
+				t.Error("zen mode center column widen class not found in response")
+			}
+		})
+	}
+}
+
 func TestEdit_EnglishLocale(t *testing.T) {
 	t.Parallel()
 

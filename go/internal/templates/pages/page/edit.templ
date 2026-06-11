@@ -54,6 +54,16 @@ const saveDraftButtonID = "page-edit-save-draft-button"
 // [Ja] revisionDiffLoadingID は差分モーダル内のローディングインジケーターの要素 id。
 const revisionDiffLoadingID = "page-edit-revision-diff-loading"
 
+// zenModeClass is the class toggled on the editor container ([data-zen-mode-container]) to enter
+// Zen mode. Descendants react to it through Tailwind's in-[.page-edit-zen]: variant in this
+// template, and the toggle script (web/zen-mode.ts) flips the same class, so keep the three in
+// sync.
+//
+// [Ja] zenModeClass は Zen モードに入るときエディタコンテナ ([data-zen-mode-container]) に
+// 付け外しするクラス。子孫要素は本テンプレート内の Tailwind の in-[.page-edit-zen]: バリアントで
+// 反応し、切り替えスクリプト (web/zen-mode.ts) も同じクラスを反転するため、三者を同期させること。
+const zenModeClass = "page-edit-zen"
+
 // revisionDiffOpenScript clears stale diff content and opens the shared diff modal. It is built
 // from the element id constants above so the ids live in one place. Passing it through
 // templ.JSUnsafeFuncCall is safe because the script is a compile-time constant with no user input.
@@ -88,6 +98,13 @@ type EditPageData struct {
 	//
 	// [Ja] DraftRevisions は右カラム (および狭幅時のドロワー) に表示する下書きの編集履歴 (新しい順)。
 	DraftRevisions []viewmodel.DraftPageRevision
+
+	// ZenMode is the initial Zen mode state read from the cookie. Rendering the initial class on
+	// the server avoids a layout flash that would occur if the client toggled it after first paint.
+	//
+	// [Ja] ZenMode はクッキーから読み取った Zen モードの初期状態。サーバー側で初期クラスを描画する
+	// ことで、初回描画後にクライアントで切り替えた場合に起きるレイアウトのちらつきを防ぐ。
+	ZenMode bool
 }
 
 // IsSuggestionMode は編集提案モードかどうかを返します
@@ -119,12 +136,24 @@ templ Edit(data EditPageData) {
 					},
 				},
 			})
-			<div class="max-w-6xl w-full mx-auto lg:px-4">
-				<div class="lg:grid lg:grid-cols-[18rem_minmax(0,1fr)_18rem] lg:gap-6">
-					<aside class="hidden lg:block">
+			// The Zen mode class is rendered on the server from the cookie so the page opens in the
+			// saved mode without a layout flash. The toggle script flips the class client-side only.
+			//
+			// [Ja] Zen モードのクラスはクッキーを基にサーバー側で描画し、保存されたモードのまま
+			// ちらつきなく開けるようにする。切り替えスクリプトはクライアント側でクラスを反転するだけ。
+			<div class={ "max-w-6xl w-full mx-auto lg:px-4", templ.KV(zenModeClass, data.ZenMode) } data-zen-mode-container>
+				// In Zen mode the 3-column grid collapses to a single block: with both side columns
+				// hidden, keeping the grid would leave two empty 18rem tracks around the center column.
+				//
+				// [Ja] Zen モードでは 3 カラムグリッドを単一ブロックに解除する。左右カラム非表示のまま
+				// グリッドを残すと、中央カラムの両側に空の 18rem トラックが残ってしまうため。
+				<div class="lg:grid lg:grid-cols-[18rem_minmax(0,1fr)_18rem] lg:gap-6 in-[.page-edit-zen]:lg:block">
+					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
 						@draftPageColumn(data)
 					</aside>
-					<div class="max-w-3xl w-full mx-auto min-w-0">
+					// In Zen mode the center column widens a bit, from max-w-3xl (48rem) to 4xl (56rem).
+					// [Ja] Zen モードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ少し広げる。
+					<div class="max-w-3xl w-full mx-auto min-w-0 in-[.page-edit-zen]:max-w-4xl">
 						<div class="flex flex-col gap-4">
 							if data.IsSuggestionMode() {
 								<div class="px-4">
@@ -145,7 +174,7 @@ templ Edit(data EditPageData) {
 									</div>
 								</div>
 							}
-							<div class="px-4 lg:hidden flex gap-2">
+							<div class="px-4 lg:hidden flex gap-2 in-[.page-edit-zen]:hidden">
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftPagesDrawerID,
 									Label:    templates.T(ctx, "page_edit_draft_pages_toggle_label"),
@@ -182,40 +211,62 @@ templ Edit(data EditPageData) {
 									// [Ja] タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
 									// プレビュー表示中も表示されるようにする。
 									<div class="tabs" id="page-edit-tabs">
-										<nav role="tablist" aria-orientation="horizontal" aria-label={ templates.T(ctx, "page_edit_tabs_label") }>
-											<button
-												type="button"
-												role="tab"
-												id="page-edit-tab-edit"
-												aria-controls="page-edit-panel-edit"
-												aria-selected="true"
-												tabindex="0"
-											>
-												{ templates.T(ctx, "page_edit_tab_edit") }
-											</button>
-											// Selecting the preview tab POSTs the current form values and renders the result
-											// into the preview panel. _method is intentionally excluded from hx-include so the
-											// method-override middleware does not rewrite this POST into a PATCH.
+										// The Zen mode toggle sits at the right end of the tab row. Basecoat's tabs
+										// styles match [role=tablist] by descendant selector, so wrapping the nav in
+										// a flex row does not break them.
+										//
+										// [Ja] Zen モードのトグルはタブ行の右端に置く。Basecoat の tabs スタイルは
+										// [role=tablist] を子孫セレクタで対象にするため、nav を flex 行で包んでも崩れない。
+										<div class="flex items-center justify-between gap-2">
+											<nav role="tablist" aria-orientation="horizontal" aria-label={ templates.T(ctx, "page_edit_tabs_label") }>
+												<button
+													type="button"
+													role="tab"
+													id="page-edit-tab-edit"
+													aria-controls="page-edit-panel-edit"
+													aria-selected="true"
+													tabindex="0"
+												>
+													{ templates.T(ctx, "page_edit_tab_edit") }
+												</button>
+												// Selecting the preview tab POSTs the current form values and renders the result
+												// into the preview panel. _method is intentionally excluded from hx-include so the
+												// method-override middleware does not rewrite this POST into a PATCH.
+												//
+												// [Ja] プレビュータブを選ぶとフォームの現在値を POST し、結果をプレビューパネルに描画する。
+												// _method は hx-include から意図的に除外している (method override ミドルウェアが
+												// この POST を PATCH に書き換えないようにするため)。
+												<button
+													type="button"
+													role="tab"
+													id="page-edit-tab-preview"
+													aria-controls="page-edit-panel-preview"
+													aria-selected="false"
+													tabindex="-1"
+													hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
+													hx-include="#page_title, #page_body, #page-edit-csrf-token"
+													hx-target="#page-edit-preview-content"
+													hx-swap="innerHTML"
+													hx-indicator="#page-edit-preview-loading"
+												>
+													{ templates.T(ctx, "page_edit_tab_preview") }
+												</button>
+											</nav>
+											// The toggle only flips a class client-side (and persists it to a cookie),
+											// so it is a plain button outside the tab list, not a tab.
 											//
-											// [Ja] プレビュータブを選ぶとフォームの現在値を POST し、結果をプレビューパネルに描画する。
-											// _method は hx-include から意図的に除外している (method override ミドルウェアが
-											// この POST を PATCH に書き換えないようにするため)。
+											// [Ja] トグルはクライアント側でクラスを反転してクッキーへ保存するだけ
+											// なので、タブではなくタブリスト外の通常のボタンとして置く。
 											<button
 												type="button"
-												role="tab"
-												id="page-edit-tab-preview"
-												aria-controls="page-edit-panel-preview"
-												aria-selected="false"
-												tabindex="-1"
-												hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
-												hx-include="#page_title, #page_body, #page-edit-csrf-token"
-												hx-target="#page-edit-preview-content"
-												hx-swap="innerHTML"
-												hx-indicator="#page-edit-preview-loading"
+												class="btn-sm-outline rounded-full w-fit"
+												data-zen-mode-toggle
+												aria-pressed={ fmt.Sprintf("%t", data.ZenMode) }
 											>
-												{ templates.T(ctx, "page_edit_tab_preview") }
+												@templates.Icon("corners-out-regular", "size-4")
+												{ templates.T(ctx, "page_edit_zen_mode_button") }
 											</button>
-										</nav>
+										</div>
 										<div
 											role="tabpanel"
 											id="page-edit-panel-edit"
@@ -381,7 +432,7 @@ templ Edit(data EditPageData) {
 									</div>
 								</form>
 							}
-							<div class="flex flex-col gap-4 px-4">
+							<div class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:hidden">
 								<div
 									id="page-link-list"
 									hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
@@ -398,7 +449,7 @@ templ Edit(data EditPageData) {
 							</div>
 						</div>
 					</div>
-					<aside class="hidden lg:block">
+					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
 						<div id={ pageRevisionListID }>
 							@draftRevisionColumn(data.revisionColumnData())
 						</div>
