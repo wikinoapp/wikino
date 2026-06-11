@@ -70,6 +70,9 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	})
 	req.Body = toReadCloser(form.Encode())
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// Send the Zen mode cookie to verify the validation-error re-render also keeps Zen mode on.
+	// [Ja] バリデーションエラーの再描画でも Zen モードが維持されることを検証するため、Zen モードクッキーを送る。
+	req.AddCookie(&http.Cookie{Name: "wikino_zen_mode", Value: "1"})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
@@ -104,6 +107,17 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	// パンくずリストが表示されていること
 	if !strings.Contains(body, "General") {
 		t.Error("topic name not found in breadcrumb")
+	}
+
+	// The re-rendered editor keeps the Zen mode class read from the cookie. Assert on the full
+	// class attribute because the bare "page-edit-zen" substring also matches the always-present
+	// Tailwind variant classes (in-[.page-edit-zen]:lg:hidden etc.).
+	//
+	// [Ja] 再描画されたエディタにクッキー由来の Zen モードクラスが付くこと。"page-edit-zen" の
+	// 部分一致では常に存在する Tailwind バリアントクラス (in-[.page-edit-zen]:lg:hidden など) にも
+	// マッチしてしまうため、class 属性全体で検証する。
+	if !strings.Contains(body, `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`) {
+		t.Error("zen mode class not found on the editor container after validation error re-render")
 	}
 }
 

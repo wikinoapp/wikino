@@ -158,6 +158,7 @@ func (h *Handler) renderEditWithErrors(
 		// The editor stays within a single space, so omit the space label on each draft card.
 		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
+		ZenMode:    zenModeFromRequest(r),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)

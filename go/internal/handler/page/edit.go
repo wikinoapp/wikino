@@ -18,6 +18,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// zenModeCookieName is the cookie holding the editor's Zen mode state ("1" = on; off is the
+// cookie's absence). It is written by web/zen-mode.ts, so it is not HttpOnly; keep the name in
+// sync with that script.
+//
+// [Ja] zenModeCookieName はエディタの Zen モード状態を保持するクッキー ("1" で ON。OFF は
+// クッキーなし)。web/zen-mode.ts が書き込むため HttpOnly ではない。名前は同スクリプトと
+// 同期させること。
+const zenModeCookieName = "wikino_zen_mode"
+
+// zenModeFromRequest reads the Zen mode state from the request cookie.
+// [Ja] zenModeFromRequest はリクエストのクッキーから Zen モード状態を読み取ります。
+func zenModeFromRequest(r *http.Request) bool {
+	cookie, err := r.Cookie(zenModeCookieName)
+	return err == nil && cookie.Value == "1"
+}
+
 // Edit はページ編集フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -115,6 +131,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages:     viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 		DraftRevisions: viewmodel.NewDraftPageRevisions(output.DraftPageRevisions, output.DraftPageRevisionTotalCount),
+		ZenMode:        zenModeFromRequest(r),
 	}
 
 	if output.Suggestion != nil && output.DraftPage != nil && output.DraftPage.SuggestionPageID != nil {
