@@ -705,6 +705,10 @@ other = "Edit"
 description = "Label for the preview tab on the page edit screen"
 other = "Preview"
 
+[page_edit_zen_mode_button]
+description = "Label for the Zen mode toggle button on the page edit screen"
+other = "Zen mode"
+
 [page_edit_preview_loading]
 description = "Loading text shown while generating the preview on the page edit screen"
 other = "Generating preview..."

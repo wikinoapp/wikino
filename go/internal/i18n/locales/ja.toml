@@ -705,6 +705,10 @@ other = "編集"
 description = "ページ編集画面のプレビュータブのラベル"
 other = "プレビュー"
 
+[page_edit_zen_mode_button]
+description = "ページ編集画面の Zen モード切り替えボタンのラベル"
+other = "Zen モード"
+
 [page_edit_preview_loading]
 description = "ページ編集画面でプレビュー生成中に表示するローディングテキスト"
 other = "プレビューを生成中..."
