@@ -783,13 +783,13 @@ func TestGetAssetVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{Env: tt.env, AssetVersion: tt.assetVersion}
+			cfg := &Config{Env: tt.env, GitRev: tt.assetVersion}
 
 			got1 := cfg.GetAssetVersion()
 			got2 := cfg.GetAssetVersion()
 
 			if tt.wantStatic {
-				// 静的値（AssetVersion）が返されるべき
+				// 静的値（GitRev）が返されるべき
 				if got1 != tt.assetVersion {
 					t.Errorf("GetAssetVersion() = %v, want %v", got1, tt.assetVersion)
 				}

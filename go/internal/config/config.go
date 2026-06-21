@@ -44,8 +44,14 @@ type Config struct {
 	MaintenanceMode bool
 	AdminIPs        []string
 
-	// アセットバージョン（CDNキャッシュ対策用）
-	AssetVersion string
+	// GitRev is the deploy's Git commit hash (short form). It is used directly
+	// as the Sentry release, and as the production/test asset version for CDN
+	// cache busting via GetAssetVersion.
+	//
+	// [Ja] GitRev はデプロイの Git コミットハッシュ (短縮版)。Sentry の release に
+	// そのまま使うほか、GetAssetVersion 経由で本番/テスト環境の CDN キャッシュ対策用
+	// アセットバージョンとしても使う。
+	GitRev string
 
 	// Resend（メール送信）
 	ResendAPIKey    string
@@ -144,8 +150,10 @@ func Load() (*Config, error) {
 		cfg.AdminIPs = parseAdminIPs(adminIPStr)
 	}
 
-	// アセットバージョン（Gitコミットハッシュ）を設定
-	cfg.AssetVersion = getGitCommitHash()
+	// Set the Git commit hash captured at startup.
+	//
+	// [Ja] 起動時に取得した Git コミットハッシュを設定する。
+	cfg.GitRev = getGitCommitHash()
 
 	// Resend（メール送信）設定（オプショナル - テスト環境ではモックを使用）
 	cfg.ResendAPIKey = os.Getenv("WIKINO_RESEND_API_KEY")
@@ -221,11 +229,12 @@ func (c *Config) AppURL() string {
 // 提供する変数なので WIKINO_ プレフィックスは付けない)。ローカルの git コマンドは
 // 開発用のフォールバックで、最後の手段が "dev"。
 func getGitCommitHash() string {
-	// Dokku provides the full deploy SHA here; shorten it to the 7-character
-	// form that the local `git rev-parse --short` path also produces.
+	// Dokku provides the full deploy SHA here; shorten it to 7 characters to
+	// roughly match the abbreviated form the local `git rev-parse --short` path
+	// produces.
 	//
-	// [Ja] Dokku はここに完全なデプロイ SHA を渡すので、ローカルの
-	// `git rev-parse --short` と同じ 7 文字の短縮形に揃える。
+	// [Ja] Dokku はここに完全なデプロイ SHA を渡すので、7 文字に短縮して
+	// ローカルの `git rev-parse --short` が返す短縮形におおよそ揃える。
 	if rev := strings.TrimSpace(os.Getenv("GIT_REV")); rev != "" {
 		const shortHashLen = 7
 		if len(rev) > shortHashLen {
@@ -254,7 +263,7 @@ func (c *Config) GetAssetVersion() string {
 		return strconv.FormatInt(time.Now().UnixMilli(), 10)
 	}
 	// 本番/テスト環境では起動時に設定されたGitコミットハッシュを返す
-	return c.AssetVersion
+	return c.GitRev
 }
 
 // parseAdminIPs はカンマ区切りのIP文字列をスライスに変換します

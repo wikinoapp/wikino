@@ -88,7 +88,7 @@ func main() {
 	if err := wikinosentry.Init(wikinosentry.Config{
 		DSN:              cfg.SentryDSN,
 		Environment:      cfg.SentryEnvironment,
-		Release:          cfg.AssetVersion,
+		Release:          cfg.GitRev,
 		TracesSampleRate: cfg.SentryTracesSampleRate,
 		Debug:            cfg.SentryDebug,
 	}); err != nil {
