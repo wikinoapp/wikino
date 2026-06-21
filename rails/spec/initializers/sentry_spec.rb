@@ -33,17 +33,29 @@ RSpec.describe "config/initializers/sentry.rb" do # rubocop:disable RSpec/Descri
   end
 
   describe "release" do
-    it "WIKINO_ASSET_VERSION 未指定時は release を設定せず SDK の自動検出に委ねること" do
-      # `Wikino.config.asset_version.presence` が nil の場合、initializer は
+    it "GIT_REV 未指定時は release を設定せず SDK の自動検出に委ねること" do
+      # `Wikino.config.git_rev.presence` が nil の場合、initializer は
       # `config.release` を一切代入しないため、`Sentry.configuration.release` は
       # SDK の自動検出に依存する。テスト環境では自動検出ソースが無いので nil/空となる。
-      # [Ja] asset_version が空のときに release を空文字で上書きしないという
-      # 実装判断 (採用しなかった方針も参照) を回帰防止する。
-      if Wikino.config.asset_version.present?
-        skip "WIKINO_ASSET_VERSION がセットされている環境ではこのケースを検証できない"
+      # [Ja] git_rev が空のときに release を空文字で上書きしないという実装判断を
+      # 回帰防止する。
+      if Wikino.config.git_rev.present?
+        skip "GIT_REV がセットされている環境ではこのケースを検証できない"
       end
 
       expect(config.release).to be_blank
+    end
+
+    it "GIT_REV 設定時はそのコミットハッシュを release に設定すること" do
+      # Dokku が提供する GIT_REV を release タグに採用し、「次のリリースで resolve」
+      # が機能するようにする実装判断を回帰防止する。
+      # [Ja] GIT_REV (Dokku 提供のコミットハッシュ) を release に採用する実装判断を
+      # 回帰防止する。
+      if Wikino.config.git_rev.blank?
+        skip "GIT_REV が未設定の環境ではこのケースを検証できない"
+      end
+
+      expect(config.release).to eq(Wikino.config.git_rev)
     end
   end
 

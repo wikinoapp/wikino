@@ -17,13 +17,16 @@ Sentry.init do |config|
   # [Ja] WIKINO_SENTRY_ENVIRONMENT 未指定時は Rails.env を environment タグとして使う。
   config.environment = Wikino.config.sentry_environment.presence || Rails.env
 
-  # Tag events with the deployed asset version so error grouping respects
-  # release boundaries. Skip when the version is missing to keep Sentry's
+  # Tag events with the deployed commit hash (GIT_REV, provided by Dokku) so error
+  # grouping respects release boundaries and Sentry's "resolve in the next release"
+  # workflow can tell deploys apart. Skip when missing to keep Sentry's
   # auto-detection from being overridden with an empty string.
-  # [Ja] デプロイ単位でエラーを分離できるよう、リリースタグにアセットバージョンを設定する。
-  # 値が空の場合は Sentry の自動検出を空文字で上書きしないよう設定自体を行わない。
-  asset_version = Wikino.config.asset_version.presence
-  config.release = asset_version if asset_version
+  #
+  # [Ja] デプロイ単位でエラーを分離し「次のリリースで resolve」を機能させるため、
+  # リリースタグに Dokku 提供のコミットハッシュ (GIT_REV) を設定する。値が空の場合は
+  # Sentry の自動検出を空文字で上書きしないよう設定自体を行わない。
+  git_rev = Wikino.config.git_rev.presence
+  config.release = git_rev if git_rev
 
   config.traces_sample_rate = SentryConfig.resolve_traces_sample_rate(Wikino.config.sentry_traces_sample_rate)
   config.profiles_sample_rate = 0.5
