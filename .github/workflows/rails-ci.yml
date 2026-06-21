@@ -21,7 +21,7 @@ jobs:
       run:
         working-directory: rails
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -43,7 +43,7 @@ jobs:
       run:
         working-directory: rails
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -78,7 +78,7 @@ jobs:
       run:
         working-directory: rails
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
@@ -94,7 +94,7 @@ jobs:
       run:
         working-directory: rails
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Ruby and install gems
         uses: ruby/setup-ruby@v1
         with:
@@ -110,7 +110,7 @@ jobs:
       run:
         working-directory: rails
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
@@ -154,7 +154,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install libvips
         run: |
           sudo apt-get update
