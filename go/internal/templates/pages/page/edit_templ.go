@@ -186,7 +186,7 @@ func Edit(data EditPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" data-zen-mode-container><div class=\"lg:grid lg:grid-cols-[18rem_minmax(0,1fr)_18rem] lg:gap-6 in-[.page-edit-zen]:lg:block\"><aside class=\"hidden lg:block in-[.page-edit-zen]:lg:hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" data-zen-mode-container><div class=\"lg:grid lg:grid-cols-[14rem_minmax(0,1fr)_14rem] lg:gap-2 in-[.page-edit-zen]:lg:block\"><aside class=\"hidden lg:block in-[.page-edit-zen]:lg:hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -246,7 +246,7 @@ func Edit(data EditPageData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"px-4 lg:hidden flex gap-2 in-[.page-edit-zen]:hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"px-4 lg:hidden flex justify-between gap-2 in-[.page-edit-zen]:hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

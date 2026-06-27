@@ -143,11 +143,11 @@ templ Edit(data EditPageData) {
 			// ちらつきなく開けるようにする。切り替えスクリプトはクライアント側でクラスを反転するだけ。
 			<div class={ "max-w-6xl w-full mx-auto lg:px-4", templ.KV(zenModeClass, data.ZenMode) } data-zen-mode-container>
 				// In Zen mode the 3-column grid collapses to a single block: with both side columns
-				// hidden, keeping the grid would leave two empty 18rem tracks around the center column.
+				// hidden, keeping the grid would leave two empty 14rem tracks around the center column.
 				//
 				// [Ja] Zen モードでは 3 カラムグリッドを単一ブロックに解除する。左右カラム非表示のまま
-				// グリッドを残すと、中央カラムの両側に空の 18rem トラックが残ってしまうため。
-				<div class="lg:grid lg:grid-cols-[18rem_minmax(0,1fr)_18rem] lg:gap-6 in-[.page-edit-zen]:lg:block">
+				// グリッドを残すと、中央カラムの両側に空の 14rem トラックが残ってしまうため。
+				<div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)_14rem] lg:gap-2 in-[.page-edit-zen]:lg:block">
 					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
 						@draftPageColumn(data)
 					</aside>
@@ -174,7 +174,7 @@ templ Edit(data EditPageData) {
 									</div>
 								</div>
 							}
-							<div class="px-4 lg:hidden flex gap-2 in-[.page-edit-zen]:hidden">
+							<div class="px-4 lg:hidden flex justify-between gap-2 in-[.page-edit-zen]:hidden">
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftPagesDrawerID,
 									Label:    templates.T(ctx, "page_edit_draft_pages_toggle_label"),
