@@ -18,10 +18,24 @@ cleanup() {
   if [ -n "$E2E_SERVER_PID" ]; then
     echo "==> サーバーを停止 (PID: $E2E_SERVER_PID)"
     kill "$E2E_SERVER_PID" 2>/dev/null || true
+  fi
+
+  # Free the port before waiting on the wrapper PID. `op run -- go run` does not
+  # forward SIGTERM to the compiled child binary, so the child keeps holding the
+  # port and the wrapper never exits; a bare `wait` on the wrapper PID then blocks
+  # forever. Killing the actual port holder first lets the wrapper exit so the
+  # `wait` below can reap it instead of hanging.
+  #
+  # [Ja] ラッパー PID を wait する前にポートを解放する。`op run -- go run` は
+  # SIGTERM をコンパイル済みの子プロセスに伝播しないため、子がポートを保持し続け
+  # ラッパーも終了しない。その状態でラッパー PID を素朴に wait するとハングする。
+  # 先に実際のポート保持プロセスを kill するとラッパーが終了でき、下の wait は
+  # ハングせずにそれを回収できる。
+  fuser -k "${E2E_PORT}/tcp" 2>/dev/null || true
+
+  if [ -n "$E2E_SERVER_PID" ]; then
     wait "$E2E_SERVER_PID" 2>/dev/null || true
   fi
-  # go runの子プロセスがポートを保持している場合に備えて確実に解放する
-  fuser -k "${E2E_PORT}/tcp" 2>/dev/null || true
 }
 
 trap cleanup EXIT

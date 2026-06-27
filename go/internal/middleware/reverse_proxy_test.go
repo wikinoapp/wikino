@@ -781,6 +781,12 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "ページプレビュー (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/preview",
+			expected: true,
+		},
+		{
 			name:     "下書きページ表示",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/draft_page",
@@ -864,6 +870,12 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "ページ表示 (GET) はRails版に転送",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
+			expected: false,
+		},
+		{
+			name:     "ページプレビュー (PATCH) はPOSTのみフィルタによりマッチしない",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1/preview",
 			expected: false,
 		},
 		{

@@ -952,12 +952,17 @@ func TestEdit_PreviewTab(t *testing.T) {
 		t.Error("preview tab hx-post to the preview endpoint not found in response")
 	}
 
-	// The CSRF token is included, but _method is excluded so the override middleware does not
-	// rewrite the preview POST into a PATCH.
-	// [Ja] CSRF トークンは含めるが、override ミドルウェアがプレビュー POST を PATCH に書き換えない
-	// よう _method は除外していること
+	// The CSRF token is included, while hx-params="not _method" drops the enclosing form's
+	// hidden _method=PATCH so the override middleware does not rewrite the preview POST into
+	// a PATCH.
+	// [Ja] CSRF トークンは含めつつ、hx-params="not _method" で囲みフォームの hidden な
+	// _method=PATCH を除外し、override ミドルウェアがプレビュー POST を PATCH に書き換えない
+	// ようにしていること
 	if !strings.Contains(body, `hx-include="#page_title, #page_body, #page-edit-csrf-token"`) {
 		t.Error("preview tab hx-include with the expected fields not found in response")
+	}
+	if !strings.Contains(body, `hx-params="not _method"`) {
+		t.Error("preview tab hx-params excluding _method not found in response")
 	}
 	if !strings.Contains(body, `id="page-edit-csrf-token"`) {
 		t.Error("csrf token input id used by hx-include not found in response")

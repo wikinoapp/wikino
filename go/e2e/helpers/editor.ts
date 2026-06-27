@@ -13,6 +13,31 @@ function getEditor(page: Page): Locator {
   return page.locator(EDITOR_SELECTOR);
 }
 
+/**
+ * Wait until the markdown editor is fully initialized.
+ *
+ * Waiting for ".cm-content" only proves the CodeMirror view exists. The
+ * upload-driving listeners (file-drop / paste) are attached slightly later,
+ * and the container's `_editorView` is assigned last — after every handler is
+ * wired up. A synthetic drag-and-drop event dispatched during that window is
+ * silently dropped (the "file-drop" CustomEvent has no listener yet), so wait
+ * for `_editorView` before dispatching one.
+ *
+ * [Ja] マークダウンエディタの初期化完了を待つ。
+ *
+ * ".cm-content" を待つだけでは CodeMirror ビューの存在しか保証できない。
+ * アップロードを駆動するリスナー (file-drop / paste) は少し後に登録され、
+ * コンテナの `_editorView` は最後 — 全ハンドラ登録後 — に代入される。その窓の間に
+ * ディスパッチした合成ドラッグ&ドロップは黙って失われる ("file-drop" CustomEvent を
+ * 聞くリスナーがまだ無い) ため、ディスパッチ前に `_editorView` を待つ。
+ */
+export async function waitForEditorReady(page: Page): Promise<void> {
+  await page.waitForFunction((selector) => {
+    const el = document.querySelector(selector) as (HTMLElement & { _editorView?: unknown }) | null;
+    return Boolean(el && el._editorView);
+  }, CONTAINER_SELECTOR);
+}
+
 /** エディタにテキストを入力する */
 export async function fillInEditor(page: Page, text: string): Promise<void> {
   const editor = getEditor(page);
