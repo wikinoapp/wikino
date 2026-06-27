@@ -104,6 +104,14 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
+	// Preview fragment (POST /s/:identifier/pages/:number/preview). The Go route is
+	// POST-only, so restrict the method; otherwise the request falls through to Rails,
+	// which has no such route and returns a RoutingError.
+	//
+	// [Ja] プレビュー用フラグメント (POST /s/:identifier/pages/:number/preview)。Go ルートは
+	// POST のみなのでメソッドを限定する。限定しないとリクエストが Rails に転送され、Rails には
+	// このルートが無いため RoutingError になる。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/preview$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},

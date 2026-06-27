@@ -230,12 +230,19 @@ templ Edit(data EditPageData) {
 													{ templates.T(ctx, "page_edit_tab_edit") }
 												</button>
 												// Selecting the preview tab POSTs the current form values and renders the result
-												// into the preview panel. _method is intentionally excluded from hx-include so the
-												// method-override middleware does not rewrite this POST into a PATCH.
+												// into the preview panel. This button lives inside the edit form, and htmx includes
+												// the enclosing form's inputs by default — including the hidden _method=PATCH. So
+												// hx-params="not _method" drops _method; without it the method-override middleware
+												// rewrites this POST into a PATCH and chi (which only has a POST preview route) 405s.
+												// hx-include cannot narrow the form's default inclusion (it only adds elements), so it
+												// cannot exclude _method on its own.
 												//
 												// [Ja] プレビュータブを選ぶとフォームの現在値を POST し、結果をプレビューパネルに描画する。
-												// _method は hx-include から意図的に除外している (method override ミドルウェアが
-												// この POST を PATCH に書き換えないようにするため)。
+												// このボタンは編集フォームの内側にあり、htmx は既定で囲みフォームの入力値を含める
+												// (hidden の _method=PATCH も含む)。そのため hx-params="not _method" で _method を外す。
+												// 外さないと method override ミドルウェアがこの POST を PATCH に書き換え、chi には
+												// プレビュー用の POST ルートしか無いため 405 になる。hx-include はフォームの既定の包含を
+												// 絞り込めず (要素を追加するだけ)、単独では _method を除外できない。
 												<button
 													type="button"
 													role="tab"
@@ -245,6 +252,7 @@ templ Edit(data EditPageData) {
 													tabindex="-1"
 													hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
 													hx-include="#page_title, #page_body, #page-edit-csrf-token"
+													hx-params="not _method"
 													hx-target="#page-edit-preview-content"
 													hx-swap="innerHTML"
 													hx-indicator="#page-edit-preview-loading"
