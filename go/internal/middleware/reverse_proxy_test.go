@@ -805,6 +805,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "下書きリビジョン差分 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123",
+			expected: true,
+		},
+		{
+			name:     "下書きリビジョン復元 (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123/restore",
+			expected: true,
+		},
+		{
 			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
@@ -876,6 +888,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "ページプレビュー (PATCH) はPOSTのみフィルタによりマッチしない",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1/preview",
+			expected: false,
+		},
+		{
+			name:     "下書きリビジョン差分 (POST) はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123",
+			expected: false,
+		},
+		{
+			name:     "下書きリビジョン復元 (GET) はPOSTのみフィルタによりマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123/restore",
 			expected: false,
 		},
 		{

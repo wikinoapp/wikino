@@ -23,9 +23,11 @@ templ DraftPageShowResponse(data DraftPageShowResponseData) {
 			@templ.Raw(templates.T(ctx, "page_edit_draft_saved_time", map[string]any{"Time": templates.FormatTime(ctx, data.ModifiedAt)}))
 		</div>
 	}
+
 	<div id="page-link-list" hx-swap-oob="innerHTML">
 		@LinkList(data.LinkList)
 	</div>
+
 	<div id="page-backlink-list" hx-swap-oob="innerHTML">
 		@PageBacklinkList(data.BacklinkList)
 	</div>

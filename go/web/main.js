@@ -3,6 +3,7 @@ import "basecoat-css/all";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializePlatform } from "./platform";
 import { initializeZenMode } from "./zen-mode";
 
 const SIDEBAR_STORAGE_KEY = "wikinoSidebarOpen";
@@ -34,5 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initSidebarLocalStoragePersistence();
   initializeDrawers();
   initializeZenMode();
+  initializePlatform();
   setTimeZoneCookie();
 });

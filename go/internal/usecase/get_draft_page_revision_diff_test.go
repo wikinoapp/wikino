@@ -106,6 +106,11 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		if output.PreviousRevision == nil || output.PreviousRevision.ID != rev1.ID {
 			t.Fatalf("PreviousRevision = %+v, want ID %s", output.PreviousRevision, rev1.ID)
 		}
+		// rev2 is the newest revision, so it is the current one.
+		// [Ja] rev2 は最新リビジョンなので現在のものとして扱われる。
+		if !output.IsCurrent {
+			t.Error("IsCurrent = false, want true (最新リビジョン)")
+		}
 	})
 
 	t.Run("最古のリビジョンでは直前リビジョンがnilになる", func(t *testing.T) {
@@ -123,6 +128,11 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		}
 		if output.PreviousRevision != nil {
 			t.Errorf("PreviousRevision = %+v, want nil", output.PreviousRevision)
+		}
+		// rev1 is older than rev2, so it is not the current revision.
+		// [Ja] rev1 は rev2 より古いため現在のリビジョンではない。
+		if output.IsCurrent {
+			t.Error("IsCurrent = true, want false (最新でないリビジョン)")
 		}
 	})
 
