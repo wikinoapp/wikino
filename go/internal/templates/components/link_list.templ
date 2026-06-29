@@ -7,29 +7,27 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// LinkList はリンク一覧を表示します。リンクが空の場合は何も表示しません。
+// LinkList renders the link list, and renders nothing when there are no links.
+// The heading (h2) lives in the caller so its style can differ per screen.
+//
+// [Ja] リンク一覧を表示します。リンクが空の場合は何も表示しません。
+// 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 templ LinkList(data viewmodel.LinkList) {
 	if len(data.Items) > 0 {
-		<div class="flex flex-col gap-4">
-			<h2 class="text-2xl/8 font-bold antialiased">
-				{ templates.T(ctx, "page_edit_links_heading") }
-			</h2>
-
-			<div class="flex flex-col gap-2">
-				for _, item := range data.Items {
-					<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-						@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
-						@BacklinkList(item.BacklinkList)
-					</div>
-				}
-				<div
-					id="page-link-list-pagination"
-					class="contents"
-				>
-					if data.Pagination.HasNext {
-						@linkListLoadMore(data)
-					}
+		<div class="flex flex-col gap-2">
+			for _, item := range data.Items {
+				<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+					@BacklinkList(item.BacklinkList)
 				</div>
+			}
+			<div
+				id="page-link-list-pagination"
+				class="contents"
+			>
+				if data.Pagination.HasNext {
+					@linkListLoadMore(data)
+				}
 			</div>
 		</div>
 	}

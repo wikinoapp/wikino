@@ -39,11 +39,6 @@ func TestPageBacklinkList_WithBacklinks(t *testing.T) {
 
 	html := buf.String()
 
-	// 見出しが表示されること
-	if !strings.Contains(html, "バックリンク") {
-		t.Error("バックリンクの見出しが表示されていない")
-	}
-
 	// リンク先のタイトルが表示されること
 	if !strings.Contains(html, "リンク元ページ") {
 		t.Error("バックリンクのタイトルが表示されていない")
@@ -74,11 +69,9 @@ func TestPageBacklinkList_Empty(t *testing.T) {
 
 	html := buf.String()
 
-	// 何も表示されないこと
-	if strings.Contains(html, "バックリンク") {
-		t.Error("バックリンクが空のとき、見出しが表示されてはいけない")
-	}
-
+	// The heading (h2) was moved to the caller, so the component alone never renders it.
+	//
+	// [Ja] 見出し (h2) は呼び出し側に移したため、コンポーネント単体では描画されない。
 	if strings.TrimSpace(html) != "" {
 		t.Errorf("バックリンクが空のとき、HTMLは空であるべき: got %q", html)
 	}
@@ -150,11 +143,6 @@ func TestPageBacklinkList_WithPagination(t *testing.T) {
 
 	html := buf.String()
 
-	// 見出しが表示されること
-	if !strings.Contains(html, "バックリンク") {
-		t.Error("バックリンクの見出しが表示されていない")
-	}
-
 	// ページネーションコンテナが表示されること
 	if !strings.Contains(html, "page-backlink-list-pagination") {
 		t.Error("ページネーションコンテナが表示されていない")
@@ -194,11 +182,6 @@ func TestPageBacklinkList_WithoutPagination(t *testing.T) {
 	}
 
 	html := buf.String()
-
-	// 見出しが表示されること
-	if !strings.Contains(html, "バックリンク") {
-		t.Error("バックリンクの見出しが表示されていない")
-	}
 
 	// 「もっと見る」ボタンが表示されないこと（HasNext=false）
 	if strings.Contains(html, "/backlinks?page=") {

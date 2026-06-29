@@ -151,6 +151,7 @@ templ Edit(data EditPageData) {
 					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
 						@draftPageColumn(data)
 					</aside>
+
 					// In Zen mode the center column widens a bit, from max-w-3xl (48rem) to 4xl (56rem).
 					// [Ja] Zen モードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ少し広げる。
 					<div class="max-w-3xl w-full mx-auto min-w-0 in-[.page-edit-zen]:max-w-4xl">
@@ -174,23 +175,27 @@ templ Edit(data EditPageData) {
 									</div>
 								</div>
 							}
+
 							<div class="px-4 lg:hidden flex justify-between gap-2 in-[.page-edit-zen]:hidden">
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftPagesDrawerID,
 									Label:    templates.T(ctx, "page_edit_draft_pages_toggle_label"),
 									IconName: "files-regular",
 								})
+
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftRevisionsDrawerID,
 									Label:    templates.T(ctx, "page_edit_revisions_toggle_label"),
 									IconName: "clock-counter-clockwise-regular",
 								})
 							</div>
+
 							if data.FormErrors != nil && data.FormErrors.HasErrors() {
 								<div class="px-4">
 									@components.FormErrors(data.FormErrors)
 								</div>
 							}
+
 							@components.ContentCard() {
 								<form
 									if data.IsSuggestionMode() {
@@ -218,9 +223,15 @@ templ Edit(data EditPageData) {
 										// [Ja] Zen モードのトグルはタブ行の右端に置く。Basecoat の tabs スタイルは
 										// [role=tablist] を子孫セレクタで対象にするため、nav を flex 行で包んでも崩れない。
 										<div class="flex items-center justify-between gap-2">
-											<nav role="tablist" aria-orientation="horizontal" aria-label={ templates.T(ctx, "page_edit_tabs_label") }>
+											<nav
+												aria-label={ templates.T(ctx, "page_edit_tabs_label") }
+												aria-orientation="horizontal"
+												class="rounded-full"
+												role="tablist"
+											>
 												<button
 													type="button"
+													class="cursor-pointer rounded-full"
 													role="tab"
 													id="page-edit-tab-edit"
 													aria-controls="page-edit-panel-edit"
@@ -229,30 +240,30 @@ templ Edit(data EditPageData) {
 												>
 													{ templates.T(ctx, "page_edit_tab_edit") }
 												</button>
-												// Selecting the preview tab POSTs the current form values and renders the result
-												// into the preview panel. This button lives inside the edit form, and htmx includes
-												// the enclosing form's inputs by default — including the hidden _method=PATCH. So
-												// hx-params="not _method" drops _method; without it the method-override middleware
-												// rewrites this POST into a PATCH and chi (which only has a POST preview route) 405s.
-												// hx-include cannot narrow the form's default inclusion (it only adds elements), so it
-												// cannot exclude _method on its own.
+
+												// Selecting the preview tab POSTs the current edit form and renders the result
+												// into the preview panel. The button lives inside the edit form, so htmx 4
+												// collects the whole form via FormData — including the hidden _method=PATCH.
+												// htmx 4 has no hx-params to drop a field, so we blank out _method with hx-vals.
+												// The method-override middleware ignores an empty _method, so the request stays a
+												// POST; otherwise it is rewritten to PATCH and chi (POST-only preview route) 405s.
 												//
-												// [Ja] プレビュータブを選ぶとフォームの現在値を POST し、結果をプレビューパネルに描画する。
-												// このボタンは編集フォームの内側にあり、htmx は既定で囲みフォームの入力値を含める
-												// (hidden の _method=PATCH も含む)。そのため hx-params="not _method" で _method を外す。
-												// 外さないと method override ミドルウェアがこの POST を PATCH に書き換え、chi には
-												// プレビュー用の POST ルートしか無いため 405 になる。hx-include はフォームの既定の包含を
-												// 絞り込めず (要素を追加するだけ)、単独では _method を除外できない。
+												// [Ja] プレビュータブを選ぶと編集フォームを POST し、結果をプレビューパネルに描画する。
+												// このボタンは編集フォームの内側にあり、htmx 4 はフォーム全体を FormData で収集するため
+												// hidden の _method=PATCH も送られる。htmx 4 にはフィールドを除外する hx-params が無いので、
+												// hx-vals で _method を空文字列に上書きする。method override ミドルウェアは空の _method を
+												// 無視するためリクエストは POST のままになる。上書きしないと POST が PATCH に書き換えられ、
+												// chi にはプレビュー用 POST ルートしか無いため 405 になる。
 												<button
 													type="button"
+													class="cursor-pointer rounded-full"
 													role="tab"
 													id="page-edit-tab-preview"
 													aria-controls="page-edit-panel-preview"
 													aria-selected="false"
 													tabindex="-1"
 													hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
-													hx-include="#page_title, #page_body, #page-edit-csrf-token"
-													hx-params="not _method"
+													hx-vals={ `{"_method": ""}` }
 													hx-target="#page-edit-preview-content"
 													hx-swap="innerHTML"
 													hx-indicator="#page-edit-preview-loading"
@@ -338,13 +349,32 @@ templ Edit(data EditPageData) {
 											tabindex="-1"
 											hidden
 										>
-											<div id="page-edit-preview-loading" class="htmx-indicator text-sm text-muted-foreground">
+											// htmx adds .htmx-request to the hx-indicator target (this element) while the
+											// request is in flight. Toggle display (hidden -> block) keyed on that class so the
+											// idle indicator collapses to zero height and leaves no gap above the preview.
+											//
+											// [Ja] htmx はリクエスト中、hx-indicator の対象 (この要素) に .htmx-request を付ける。
+											// そのクラスに合わせて display を切り替え (hidden → block) し、待機中はインジケーターの
+											// 高さを 0 に畳んでプレビューの上に余白を残さないようにする。
+											<div id="page-edit-preview-loading" class="hidden [&.htmx-request]:block text-sm text-muted-foreground">
 												{ templates.T(ctx, "page_edit_preview_loading") }
 											</div>
 											<div id="page-edit-preview-content" class="min-w-0"></div>
 										</div>
 									</div>
-									<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+									// The action row is one line on wide screens and two tiers below 1152px. 1152px = the
+									// max-w-6xl container width, the point where the fixed 3-column grid's center column
+									// reaches its max (~656px) — the only width where the buttons, the saved-at indicator and
+									// cancel all fit on one line (narrower, the saved-at wraps). Below it the buttons stay on
+									// top and saved-at + cancel drop to a second tier, right-aligned together (saved-at next
+									// to cancel), keeping cancel clear of the primary top-left buttons for touch mistap safety.
+									//
+									// [Ja] 操作行は広い画面では 1 行、1152px 未満では 2 段にする。1152px は max-w-6xl コンテナの幅で、
+									// 固定 3 カラムグリッドの中央カラムが最大 (約 656px) に達する地点であり、ボタン・保存時刻表示・
+									// キャンセルが 1 行に収まる唯一の幅 (これより狭いと保存時刻が折り返す)。未満ではボタンを上段に、
+									// 保存時刻とキャンセルを下段へ送って右揃えでまとめて並べ (保存時刻=キャンセルの隣)、キャンセルを
+									// 左上の主要ボタンから離してタッチ時の誤タップを防ぐ。
+									<div class="flex flex-col gap-2 min-[1152px]:flex-row min-[1152px]:items-center">
 										<div class="flex gap-2">
 											if data.IsSuggestionMode() {
 												<button
@@ -353,6 +383,7 @@ templ Edit(data EditPageData) {
 												>
 													@templates.Icon("paper-plane-tilt-regular")
 													{ templates.T(ctx, "page_edit_update_suggestion_button") }
+													@components.KeyboardHint(components.KeyboardHintData{IconName: "arrow-elbow-down-left-regular", ColorClass: "bg-primary-foreground/20 text-primary-foreground"})
 												</button>
 											} else {
 												<button
@@ -361,8 +392,10 @@ templ Edit(data EditPageData) {
 												>
 													@templates.Icon("paper-plane-tilt-regular")
 													{ templates.T(ctx, "page_edit_publish_to_topic_button") }
+													@components.KeyboardHint(components.KeyboardHintData{IconName: "arrow-elbow-down-left-regular", ColorClass: "bg-primary-foreground/20 text-primary-foreground"})
 												</button>
 											}
+
 											if !data.IsSuggestionMode() {
 												<div class="flex">
 													// Manual save goes through htmx (PATCH) instead of a form submit so the page
@@ -383,6 +416,7 @@ templ Edit(data EditPageData) {
 													>
 														@templates.Icon("floppy-disk-regular")
 														{ templates.T(ctx, "page_edit_save_draft_button") }
+														@components.KeyboardHint(components.KeyboardHintData{Key: "S", ColorClass: "bg-secondary-foreground/8 text-secondary-foreground"})
 													</button>
 													<div id="save-draft-dropdown" class="dropdown-menu">
 														<button
@@ -425,11 +459,12 @@ templ Edit(data EditPageData) {
 												>
 													@templates.Icon("floppy-disk-regular")
 													{ templates.T(ctx, "page_edit_save_draft_button") }
+													@components.KeyboardHint(components.KeyboardHintData{Key: "S", ColorClass: "bg-secondary-foreground/8 text-secondary-foreground"})
 												</button>
 											}
 										</div>
-										<div class="flex flex-1 items-center justify-between flex-row-reverse md:flex-row gap-2 w-full">
-											<div id="page-draft-saved-at" class="text-xs text-right text-muted-foreground"></div>
+										<div class="flex items-center justify-end gap-2 min-[1152px]:flex-1 min-[1152px]:justify-between">
+											<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap"></div>
 											<a
 												class="btn-outline rounded-full w-fit"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
@@ -440,23 +475,47 @@ templ Edit(data EditPageData) {
 									</div>
 								</form>
 							}
+
 							<div class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:hidden">
-								<div
-									id="page-link-list"
-									hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
-									hx-trigger="draft-autosaved from:window"
-									hx-swap="none"
-								>
-									@components.LinkList(data.LinkList)
+								// The headings sit outside #page-link-list / #page-backlink-list so the draft-autosave
+								// OOB swap re-renders only the lists, leaving each heading (and its style) untouched.
+								// not-has-[#id>*]:hidden hides a section while its list is empty, so heading visibility
+								// still tracks the list content after every swap.
+								//
+								// [Ja] 見出しは #page-link-list / #page-backlink-list の外に置く。こうすると下書き自動保存の
+								// OOB スワップがリストだけを再描画し、各見出し (とそのスタイル) は書き換わらない。
+								// リストが空の間は not-has-[#id>*]:hidden でセクションごと隠すため、見出しの表示は
+								// スワップ後もリストの内容に追従する。
+								<div class="flex flex-col gap-4 not-has-[#page-link-list>*]:hidden">
+									<h2 class="font-bold antialiased">
+										{ templates.T(ctx, "page_edit_links_heading") }
+									</h2>
+
+									<div
+										id="page-link-list"
+										hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
+										hx-trigger="draft-autosaved from:window"
+										hx-swap="none"
+									>
+										@components.LinkList(data.LinkList)
+									</div>
 								</div>
-								<div
-									id="page-backlink-list"
-								>
-									@components.PageBacklinkList(data.BacklinkList)
+
+								<div class="flex flex-col gap-4 not-has-[#page-backlink-list>*]:hidden">
+									<h2 class="font-bold antialiased">
+										{ templates.T(ctx, "page_edit_backlinks_heading") }
+									</h2>
+
+									<div
+										id="page-backlink-list"
+									>
+										@components.PageBacklinkList(data.BacklinkList)
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
+
 					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
 						<div id={ pageRevisionListID }>
 							@draftRevisionColumn(data.revisionColumnData())
@@ -464,16 +523,19 @@ templ Edit(data EditPageData) {
 					</aside>
 				</div>
 			</div>
+
 			@components.Drawer(components.DrawerData{
 				ID:      draftPagesDrawerID,
 				Side:    "left",
 				Content: draftPageColumn(data),
 			})
+
 			@components.Drawer(components.DrawerData{
 				ID:      draftRevisionsDrawerID,
 				Side:    "right",
 				Content: drawerDraftRevisionList(data),
 			})
+
 			@components.Dialog(components.DialogData{
 				ID:            revisionDiffDialogID,
 				Title:         templates.T(ctx, "page_edit_revision_diff_heading"),
@@ -563,19 +625,27 @@ templ draftRevisionColumn(data draftRevisionColumnData) {
 		<h2 class="font-bold antialiased">
 			{ templates.T(ctx, "page_edit_revisions_heading") }
 		</h2>
+
 		if len(data.Revisions) == 0 {
 			<p class="text-sm text-muted-foreground">
 				{ templates.T(ctx, "page_edit_revisions_empty") }
 			</p>
 		} else {
-			<ol class="ml-1.5 flex flex-col border-l border-border">
+			<ol class="ml-1.5 flex flex-col gap-4 border-l border-border">
 				for _, revision := range data.Revisions {
-					<li class="relative pb-5 pl-4 last:pb-0">
+					<li class="relative pl-4">
 						if revision.IsCurrent {
-							<span class="absolute top-1.5 -left-[4.5px] size-2 rounded-full bg-foreground" aria-hidden="true"></span>
+							<span
+								aria-hidden="true"
+								class="absolute top-3.5 -left-[4.5px] size-2 rounded-full bg-foreground"
+							></span>
 						} else {
-							<span class="absolute top-1.5 -left-[4.5px] size-2 rounded-full border border-muted-foreground bg-background" aria-hidden="true"></span>
+							<span
+								class="absolute top-3.5 -left-[4.5px] size-2 rounded-full border border-muted-foreground bg-background"
+								aria-hidden="true"
+							></span>
 						}
+
 						// Clicking an entry opens the shared diff modal right away and fetches the diff
 						// fragment into it via htmx. Stale content from a previously viewed revision is
 						// cleared first so only the loading indicator shows while the request is in flight.
@@ -585,7 +655,7 @@ templ draftRevisionColumn(data draftRevisionColumnData) {
 						// ローディングインジケーターのみ表示されるようにする。
 						<button
 							type="button"
-							class="flex w-full cursor-pointer flex-col gap-1 rounded-md text-left transition-colors hover:bg-muted"
+							class="flex w-full cursor-pointer flex-col gap-1 rounded-md text-left transition-colors hover:bg-muted p-2"
 							hx-get={ string(templates.PageDraftPageRevisionShowPath(data.SpaceIdentifier, data.PageNumber, revision.ID)) }
 							hx-target={ "#" + revisionDiffContentID }
 							hx-swap="innerHTML"
@@ -596,12 +666,14 @@ templ draftRevisionColumn(data draftRevisionColumnData) {
 								<span class="text-sm font-bold antialiased">
 									{ fmt.Sprintf("v%d", revision.Version) }
 								</span>
+
 								if revision.IsCurrent {
 									<span class="badge bg-muted text-muted-foreground">
 										{ templates.T(ctx, "page_edit_revisions_current_badge") }
 									</span>
 								}
 							</div>
+
 							<div class="text-xs text-muted-foreground">
 								@components.RelativeTime(components.RelativeTimeData{Time: revision.CreatedAt})
 							</div>
@@ -620,8 +692,22 @@ templ draftRevisionColumn(data draftRevisionColumnData) {
 // [Ja] revisionDiffDialogContent はリビジョン差分モーダルの本文を描画する。htmx リクエスト中に
 // 表示するローディングインジケーターと、差分フラグメントの描画先となるスワップターゲットを置く。
 templ revisionDiffDialogContent() {
-	<div id={ revisionDiffLoadingID } class="htmx-indicator text-sm text-muted-foreground">
+	// htmx adds .htmx-request to the hx-indicator target (this element) while the request is in
+	// flight. Toggle display (hidden -> block) keyed on that class so the idle indicator collapses
+	// to zero height and leaves no gap above the diff.
+	//
+	// [Ja] htmx はリクエスト中、hx-indicator の対象 (この要素) に .htmx-request を付ける。そのクラスに
+	// 合わせて display を切り替え (hidden → block) し、待機中はインジケーターの高さを 0 に畳んで差分の
+	// 上に余白を残さないようにする。
+	<div
+		class="hidden [&.htmx-request]:block text-sm text-muted-foreground"
+		id={ revisionDiffLoadingID }
+	>
 		{ templates.T(ctx, "page_edit_revision_diff_loading") }
 	</div>
-	<div id={ revisionDiffContentID } class="min-w-0"></div>
+
+	<div
+		class="min-w-0"
+		id={ revisionDiffContentID }
+	></div>
 }

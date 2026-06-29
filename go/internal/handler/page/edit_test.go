@@ -878,6 +878,28 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 	if !strings.Contains(body, `hx-swap="none"`) {
 		t.Error("hx-swap=none not found - OOB swap will not work correctly")
 	}
+
+	// The link heading (h2) sits outside #page-link-list (out of the OOB swap target) and is always
+	// rendered: it stays in the DOM even when there are no links (this case) and the not-has CSS
+	// hides the section instead.
+	//
+	// [Ja] 見出し (h2) は #page-link-list の外 (OOB スワップ対象外) にあり、常にレンダリングされる。
+	// リンクが無いこのケースでも DOM 上には存在し、CSS の not-has でセクションごと非表示になる。
+	if !strings.Contains(body, `<h2 class="font-bold antialiased">`) {
+		t.Error("リンク見出しの h2 が見つからない (呼び出し側でのレンダリングが壊れている可能性)")
+	}
+
+	// The section hides itself via the not-has variant while its list is empty. With this CSS hook,
+	// heading visibility tracks the content without re-rendering the heading.
+	//
+	// [Ja] セクションは not-has バリアントでリストが空のとき非表示になる。
+	// この CSS フックにより、見出しを再描画せずに表示・非表示が内容に追従する。
+	if !strings.Contains(body, `not-has-[#page-link-list>*]:hidden`) {
+		t.Error("リンクセクションの表示制御クラス not-has-[#page-link-list>*]:hidden が見つからない")
+	}
+	if !strings.Contains(body, `not-has-[#page-backlink-list>*]:hidden`) {
+		t.Error("バックリンクセクションの表示制御クラス not-has-[#page-backlink-list>*]:hidden が見つからない")
+	}
 }
 
 func TestEdit_PreviewTab(t *testing.T) {
@@ -952,20 +974,24 @@ func TestEdit_PreviewTab(t *testing.T) {
 		t.Error("preview tab hx-post to the preview endpoint not found in response")
 	}
 
-	// The CSRF token is included, while hx-params="not _method" drops the enclosing form's
-	// hidden _method=PATCH so the override middleware does not rewrite the preview POST into
-	// a PATCH.
-	// [Ja] CSRF トークンは含めつつ、hx-params="not _method" で囲みフォームの hidden な
-	// _method=PATCH を除外し、override ミドルウェアがプレビュー POST を PATCH に書き換えない
-	// ようにしていること
-	if !strings.Contains(body, `hx-include="#page_title, #page_body, #page-edit-csrf-token"`) {
-		t.Error("preview tab hx-include with the expected fields not found in response")
+	// htmx 4 collects the whole edit form (including the hidden _method=PATCH) when the preview
+	// tab fires, so the button blanks _method via hx-vals. The override middleware ignores an
+	// empty _method, so the preview request stays a POST instead of being rewritten to PATCH.
+	// The rendered double quotes are HTML-escaped to &#34; (the browser decodes them back).
+	//
+	// [Ja] プレビュータブ発火時、htmx 4 は編集フォーム全体 (hidden の _method=PATCH を含む) を
+	// 収集するため、ボタンは hx-vals で _method を空にする。override ミドルウェアは空の _method を
+	// 無視するので、プレビュー要求は PATCH に書き換えられず POST のままになる。レンダリングされる
+	// 二重引用符は &#34; に HTML エスケープされる (ブラウザがデコードして元に戻す)。
+	if !strings.Contains(body, `hx-vals="{&#34;_method&#34;: &#34;&#34;}"`) {
+		t.Error("preview tab hx-vals blanking _method not found in response")
 	}
-	if !strings.Contains(body, `hx-params="not _method"`) {
-		t.Error("preview tab hx-params excluding _method not found in response")
-	}
+	// The CSRF token input stays in the form, so the auto-collected preview POST carries it and
+	// passes the CSRF middleware.
+	// [Ja] CSRF トークン入力はフォーム内に残るため、自動収集されるプレビュー POST に含まれ、
+	// CSRF ミドルウェアを通過する。
 	if !strings.Contains(body, `id="page-edit-csrf-token"`) {
-		t.Error("csrf token input id used by hx-include not found in response")
+		t.Error("csrf token input not found in response")
 	}
 
 	// The result is swapped into the preview panel, with a loading indicator.
@@ -990,6 +1016,198 @@ func TestEdit_PreviewTab(t *testing.T) {
 	}
 	if !strings.Contains(body, "プレビュー</button>") {
 		t.Error("preview tab label not found in response")
+	}
+}
+
+func TestEdit_KeyboardHint(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("keyboard-hint@example.com").
+		WithAtname("keyboardhint").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("keyboard-hint-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Keyboard Hint Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/keyboard-hint-space/pages/1/edit", map[string]string{
+		"space_identifier": "keyboard-hint-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// Both the ⌘ (Mac) and Ctrl (other) variants are rendered so CSS can switch by html[data-os].
+	// The modifier and key are glued (no separator) to keep each chip narrow. The publish button
+	// hints Mod-Enter, rendered as the return-arrow icon glued after the modifier; the save button
+	// hints Mod-s as glued text.
+	//
+	// [Ja] ⌘ (Mac) と Ctrl (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
+	// 修飾キーとキーは区切り無しで詰めてチップを細く保つ。公開ボタンは Mod-Enter を修飾キーの直後に
+	// 詰めた折り返し矢印アイコンで、保存ボタンは Mod-s を詰めたテキストで表記すること。
+	if !strings.Contains(body, `>⌘<svg class="size-3.5"`) {
+		t.Error("publish button Mac shortcut hint (⌘ + return-arrow icon) not found in response")
+	}
+	if !strings.Contains(body, `>Ctrl<svg class="size-3.5"`) {
+		t.Error("publish button non-Mac shortcut hint (Ctrl + return-arrow icon) not found in response")
+	}
+	// The return-arrow key is rendered with the arrow-elbow-down-left icon (its path's leading
+	// move/vertical-line command), not the small ↵ glyph.
+	//
+	// [Ja] 折り返しキーは小さな ↵ グリフではなく arrow-elbow-down-left アイコン (パス先頭の
+	// move/vertical-line コマンド) で描画すること。
+	if !strings.Contains(body, "M200,32V176") {
+		t.Error("publish button shortcut hint does not use the arrow-elbow-down-left icon")
+	}
+	if !strings.Contains(body, ">⌘S</kbd>") {
+		t.Error("save button Mac shortcut hint (⌘S) not found in response")
+	}
+	if !strings.Contains(body, ">CtrlS</kbd>") {
+		t.Error("save button non-Mac shortcut hint (CtrlS) not found in response")
+	}
+
+	// The hint chips toggle by OS only on non-touch devices via the platform-attribute variants.
+	// [Ja] 表記チップはタッチ以外の端末で、プラットフォーム属性バリアントにより OS で出し分けること。
+	if !strings.Contains(body, "non-touch:in-[[data-os=mac]]:inline-flex") {
+		t.Error("Mac keyboard hint display-control class not found in response")
+	}
+	if !strings.Contains(body, "non-touch:in-[[data-os=other]]:inline-flex") {
+		t.Error("non-Mac keyboard hint display-control class not found in response")
+	}
+
+	// Each chip tints itself in its host button's foreground color (foreground-colored text over a
+	// low-opacity foreground background): publish tints btn-primary, save tints btn-secondary.
+	//
+	// [Ja] 各チップはホストボタンの前景色で淡く染める (前景色の文字 + 低不透明度の前景色背景)。
+	// 公開は btn-primary を、保存は btn-secondary を染めること。
+	if !strings.Contains(body, "bg-primary-foreground/20 text-primary-foreground") {
+		t.Error("publish keyboard hint tinted color classes (bg-primary-foreground/20 text-primary-foreground) not found in response")
+	}
+	if !strings.Contains(body, "bg-secondary-foreground/8 text-secondary-foreground") {
+		t.Error("save keyboard hint tinted color classes (bg-secondary-foreground/8 text-secondary-foreground) not found in response")
+	}
+
+	// The chips are decorative, so screen readers read only the button label.
+	// [Ja] チップは装飾的なため、スクリーンリーダーはボタンラベルのみを読み上げること。
+	if !strings.Contains(body, `<kbd class="kbd hidden non-touch:in-[[data-os=mac]]:inline-flex bg-secondary-foreground/8 text-secondary-foreground" aria-hidden="true">`) {
+		t.Error("keyboard hint kbd chip with aria-hidden not found in response")
+	}
+}
+
+func TestEdit_ActionRowLayout(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("action-row@example.com").
+		WithAtname("actionrow").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("action-row-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Action Row Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/action-row-space/pages/1/edit", map[string]string{
+		"space_identifier": "action-row-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	// The action row is one line on wide screens and collapses to two tiers below the 1152px
+	// container width, where the fixed center column is too narrow for everything on one line.
+	//
+	// [Ja] 操作行は広い画面では 1 行、1152px のコンテナ幅未満では 2 段に折り返すこと (この幅未満では
+	// 中央カラムが狭く 1 行に収まらないため)。
+	if !strings.Contains(body, `<div class="flex flex-col gap-2 min-[1152px]:flex-row min-[1152px]:items-center">`) {
+		t.Error("action row responsive layout container not found in response")
+	}
+
+	// The saved-at indicator and cancel sit in one container, un-reversed (saved-at then cancel).
+	// On the two-tier layout they group at the right (justify-end); on one line they spread
+	// (min-[1152px]:justify-between). The time never wraps.
+	//
+	// [Ja] 保存時刻表示とキャンセルは 1 つのコンテナに反転させず (保存時刻→キャンセル順) 並べる。
+	// 2 段時は右揃えでまとめ (justify-end)、1 行時は左右へ振り分ける (min-[1152px]:justify-between)。
+	// 時刻は折り返さないこと。
+	if !strings.Contains(body, `<div class="flex items-center justify-end gap-2 min-[1152px]:flex-1 min-[1152px]:justify-between">`) {
+		t.Error("saved-at + cancel container (un-reversed, right-aligned on two tiers, responsive) not found in response")
+	}
+	if !strings.Contains(body, `<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap">`) {
+		t.Error("saved-at indicator with whitespace-nowrap not found in response")
+	}
+	if strings.Contains(body, "flex-row-reverse") {
+		t.Error("action row should not reverse saved-at and cancel order (flex-row-reverse found)")
 	}
 }
 
