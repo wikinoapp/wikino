@@ -32,9 +32,12 @@ func newTestRevisionDiff(t *testing.T, oldTitle, newTitle, oldBody, newBody stri
 	return viewmodel.NewDraftPageRevisionDiff(revision, previous)
 }
 
-// renderRevisionDiff renders the DraftPageRevisionDiff component to a string.
+// renderRevisionDiff renders the DraftPageRevisionDiff component to a string. isCurrent toggles
+// whether the shown revision is the newest one (which hides the restore area).
+//
 // [Ja] renderRevisionDiff は DraftPageRevisionDiff コンポーネントを文字列にレンダリングする。
-func renderRevisionDiff(t *testing.T, ctx context.Context, diff viewmodel.DraftPageRevisionDiff) string {
+// isCurrent は表示中のリビジョンが最新かどうか (最新のときは復元領域を隠す) を切り替える。
+func renderRevisionDiff(t *testing.T, ctx context.Context, diff viewmodel.DraftPageRevisionDiff, isCurrent bool) string {
 	t.Helper()
 
 	var buf bytes.Buffer
@@ -42,6 +45,7 @@ func renderRevisionDiff(t *testing.T, ctx context.Context, diff viewmodel.DraftP
 		Diff:       diff,
 		RestoreURL: "/s/test-space/pages/1/draft_page_revisions/test-revision-id/restore",
 		CSRFToken:  "test-csrf-token",
+		IsCurrent:  isCurrent,
 	}).Render(ctx, &buf); err != nil {
 		t.Fatalf("レンダリングに失敗: %v", err)
 	}
@@ -57,7 +61,7 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		t.Parallel()
 
 		diff := newTestRevisionDiff(t, "Old Title", "New Title", "line one\n", "line one\nline two\n")
-		html := renderRevisionDiff(t, ctx, diff)
+		html := renderRevisionDiff(t, ctx, diff, false)
 
 		if !strings.Contains(html, "タイトルの変更") {
 			t.Error("タイトル変更ラベルが含まれていない")
@@ -74,7 +78,7 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		t.Parallel()
 
 		diff := newTestRevisionDiff(t, "Same Title", "Same Title", "a\n", "a\nb\n")
-		html := renderRevisionDiff(t, ctx, diff)
+		html := renderRevisionDiff(t, ctx, diff, false)
 
 		if strings.Contains(html, "タイトルの変更") {
 			t.Error("タイトル変更ラベルが含まれている")
@@ -85,18 +89,18 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		t.Parallel()
 
 		diff := newTestRevisionDiff(t, "Old Title", "New Title", "same\n", "same\n")
-		html := renderRevisionDiff(t, ctx, diff)
+		html := renderRevisionDiff(t, ctx, diff, false)
 
 		if !strings.Contains(html, "本文に変更はありません") {
 			t.Error("差分なしメッセージが含まれていない")
 		}
 	})
 
-	t.Run("復元ボタンとインライン確認を表示する", func(t *testing.T) {
+	t.Run("現在でないバージョンでは復元ボタンとインライン確認を表示する", func(t *testing.T) {
 		t.Parallel()
 
 		diff := newTestRevisionDiff(t, "Old Title", "New Title", "a\n", "b\n")
-		html := renderRevisionDiff(t, ctx, diff)
+		html := renderRevisionDiff(t, ctx, diff, false)
 
 		if !strings.Contains(html, "このバージョンに戻す") {
 			t.Error("復元ボタンが含まれていない")
@@ -116,6 +120,33 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		// [Ja] 確認 UI は初期状態で非表示で、ボタン領域をインラインで置き換える (2 重モーダルなし)。
 		if !strings.Contains(html, `id="page-edit-revision-restore-confirm" class="hidden"`) {
 			t.Error("インライン確認が初期非表示になっていない")
+		}
+	})
+
+	t.Run("現在のバージョンでは復元ボタンを表示しない", func(t *testing.T) {
+		t.Parallel()
+
+		// The newest revision is the draft's current state, so restoring to it is a no-op and
+		// the restore area is hidden. The diff itself is still rendered.
+		//
+		// [Ja] 最新リビジョンは下書きの現在状態のため、そこへの復元は no-op であり復元領域は隠れる。
+		// 差分自体は引き続き描画される。
+		diff := newTestRevisionDiff(t, "Old Title", "New Title", "a\n", "b\n")
+		html := renderRevisionDiff(t, ctx, diff, true)
+
+		if strings.Contains(html, "このバージョンに戻す") {
+			t.Error("現在のバージョンで復元ボタンが含まれている")
+		}
+		if strings.Contains(html, "本当にこのバージョンに戻しますか？") {
+			t.Error("現在のバージョンでインライン確認メッセージが含まれている")
+		}
+		if strings.Contains(html, `action="/s/test-space/pages/1/draft_page_revisions/test-revision-id/restore"`) {
+			t.Error("現在のバージョンで復元フォームのaction属性が含まれている")
+		}
+		// The diff body is still shown even when the restore area is hidden.
+		// [Ja] 復元領域が隠れていても差分本文は表示される。
+		if !strings.Contains(html, "タイトルの変更") {
+			t.Error("差分のタイトル変更ラベルが含まれていない")
 		}
 	})
 }

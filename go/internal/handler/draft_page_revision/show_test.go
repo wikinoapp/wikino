@@ -216,11 +216,14 @@ func TestShow_Success(t *testing.T) {
 		}
 	}
 
-	// The fragment must include the inline restore form posting to the revision's restore URL.
-	// [Ja] フラグメントには、このリビジョンの復元 URL へ POST するインライン復元フォームが含まれること。
+	// revision2 is the newest revision, so it is the current one: restoring to the current state
+	// is a no-op and the inline restore form is hidden.
+	//
+	// [Ja] revision2 は最新リビジョン (= 現在) のため、現在の状態への復元は no-op であり、インライン
+	// 復元フォームは表示されない。
 	restoreAction := `action="/s/dpr-show-success-space/pages/1/draft_page_revisions/` + string(fixture.revision2.ID) + `/restore"`
-	if !strings.Contains(body, restoreAction) {
-		t.Errorf("response doesn't contain restore form action %q", restoreAction)
+	if strings.Contains(body, restoreAction) {
+		t.Errorf("response should not contain restore form action %q (current revision)", restoreAction)
 	}
 }
 
@@ -250,6 +253,16 @@ func TestShow_OldestRevisionShowsFullAddition(t *testing.T) {
 	}
 	if strings.Contains(body, "line two") {
 		t.Errorf("response should not contain %q (added later in v2)", "line two")
+	}
+
+	// revision1 is not the newest revision, so the inline restore form posting to its restore URL
+	// is shown (only the current revision hides it).
+	//
+	// [Ja] revision1 は最新リビジョンではないため、その復元 URL へ POST するインライン復元フォームが
+	// 表示されること (隠れるのは現在のリビジョンのみ)。
+	restoreAction := `action="/s/dpr-show-oldest-space/pages/1/draft_page_revisions/` + string(fixture.revision1.ID) + `/restore"`
+	if !strings.Contains(body, restoreAction) {
+		t.Errorf("response doesn't contain restore form action %q", restoreAction)
 	}
 }
 

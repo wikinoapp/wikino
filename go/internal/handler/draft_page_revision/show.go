@@ -75,6 +75,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Diff:       diff,
 		RestoreURL: restoreURL,
 		CSRFToken:  middleware.GetCSRFTokenFromContext(ctx),
+		IsCurrent:  output.IsCurrent,
 	}).Render(ctx, w); err != nil {
 		slog.ErrorContext(ctx, "下書きリビジョン差分のレンダリングに失敗", "error", err)
 	}

@@ -71,6 +71,16 @@ type GetDraftPageRevisionDiffOutput struct {
 	// [Ja] PreviousRevision は Revision の直前のリビジョン (差分の比較対象)。Revision が最古の
 	// 場合は nil となり、差分は全文追加として表示する。
 	PreviousRevision *model.DraftPageRevision
+
+	// IsCurrent reports whether Revision is the newest revision of the draft (the one shown
+	// with the "current" badge in the edit history). Restoring the draft to its current state
+	// is a no-op that only piles up a duplicate revision, so the diff modal hides the restore
+	// button for it.
+	//
+	// [Ja] IsCurrent は Revision が下書きの最新リビジョン (編集履歴で「現在」バッジが付くもの)
+	// かどうかを表す。現在の状態への復元は重複リビジョンを積むだけの no-op のため、差分モーダルは
+	// このとき復元ボタンを隠す。
+	IsCurrent bool
 }
 
 // Execute fetches the target revision and the one immediately preceding it.
@@ -120,9 +130,24 @@ func (uc *GetDraftPageRevisionDiffUsecase) Execute(ctx context.Context, input Ge
 		return nil, fmt.Errorf("直前リビジョンの取得に失敗: %w", err)
 	}
 
+	// Decide whether the selected revision is the newest one. Fetch the single latest revision
+	// (newest-first, limit 1) and compare IDs, mirroring how manual save detects the latest
+	// revision. This reuses the existing ListByDraftPageID method, so no new query definition
+	// is needed.
+	//
+	// [Ja] 選択されたリビジョンが最新かどうかを判定する。最新リビジョンを 1 件 (新しい順・limit 1)
+	// 取得して ID を比較する。手動保存が最新リビジョンを判定するのと同じ方法で、既存の
+	// ListByDraftPageID を流用するため新しいクエリ定義は不要。
+	latest, err := uc.draftPageRevisionRepo.ListByDraftPageID(ctx, draftPage.ID, data.space.ID, 1)
+	if err != nil {
+		return nil, fmt.Errorf("最新リビジョンの取得に失敗: %w", err)
+	}
+	isCurrent := len(latest) > 0 && latest[0].ID == revision.ID
+
 	return &GetDraftPageRevisionDiffOutput{
 		Revision:         revision,
 		PreviousRevision: previous,
+		IsCurrent:        isCurrent,
 	}, nil
 }
 
