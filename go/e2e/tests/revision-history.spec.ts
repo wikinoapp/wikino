@@ -58,9 +58,14 @@ test.describe("編集履歴", () => {
     // [Ja] バージョンをクリックすると差分モーダルが開き、htmx が差分フラグメントをモーダル内へ取得する。
     await versionButton.click();
 
-    // The diff fragment (which includes the restore button) must render — no routing error.
-    // [Ja] 差分フラグメント (復元ボタンを含む) が描画されること (ルーティングエラーにならないこと)。
-    await expect(page.locator("#page-edit-revision-diff-content")).toContainText("このバージョンに戻す", {
+    // The diff fragment must render into the modal — no routing error. The clicked version is the
+    // newest revision (the current one), whose restore button is intentionally hidden, so assert on
+    // the diff body instead: the seeded marker text shows up as an added line in the rendered diff.
+    //
+    // [Ja] 差分フラグメントがモーダルに描画されること (ルーティングエラーにならないこと)。クリックした
+    // バージョンは最新リビジョン (現在) で復元ボタンは意図的に隠れるため、復元ボタンではなく差分本文で
+    // 確認する: 投入したマーカー文字列が差分の追加行として現れる。
+    await expect(page.locator("#page-edit-revision-diff-content")).toContainText("E2E revision history marker body", {
       timeout: 5000,
     });
   });
