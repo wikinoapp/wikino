@@ -50,10 +50,13 @@ templ Dialog(data DialogData) {
 			<header>
 				<h2 id={ data.ID + "-title" }>{ data.Title }</h2>
 			</header>
+
 			<section class="overflow-y-auto">
 				@data.Content
 			</section>
+
 			<button
+				class="cursor-pointer"
 				type="button"
 				aria-label={ templates.T(ctx, "dialog_close") }
 				onclick="this.closest('dialog').close()"
