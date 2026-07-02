@@ -218,14 +218,14 @@ templ Edit(data EditPageData) {
 									// Tabs wrap only the editable fields. The button row below stays outside the tab panels
 									// so it remains visible while previewing.
 									//
-									// [Ja] タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
-									// プレビュー表示中も表示されるようにする。
-									//
 									// min-w-0 lets the preview <pre> overflow-auto contain long code lines:
 									// without it this grid item grows to the <pre> min-content width and
 									// pushes the center column past its max width.
 									//
-									// [Ja] min-w-0 でプレビューの <pre> の overflow-auto が長いコード行を収める。
+									// [Ja] タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
+									// プレビュー表示中も表示されるようにする。
+									//
+									// min-w-0 でプレビューの <pre> の overflow-auto が長いコード行を収める。
 									// 付けないとこの grid アイテムが <pre> の min-content 幅まで広がり、
 									// 中央カラムが最大幅を超える。
 									<div
