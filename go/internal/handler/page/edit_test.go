@@ -250,7 +250,7 @@ func TestEdit(t *testing.T) {
 
 	// The edit history column shows the empty state when there is no draft (hence no revisions).
 	// [Ja] 下書きが無い (= リビジョンも無い) とき、編集履歴カラムに空状態テキストが表示されること
-	if !strings.Contains(body, "編集履歴はありません") {
+	if !strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
 		t.Error("edit history empty state text not found when no draft exists")
 	}
 
@@ -598,7 +598,7 @@ func TestEdit_RevisionColumn(t *testing.T) {
 
 	// The empty state must not be shown when revisions exist.
 	// [Ja] リビジョンが存在するときは空状態テキストが表示されないこと
-	if strings.Contains(body, "編集履歴はありません") {
+	if strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
 		t.Error("edit history empty state should not be shown when revisions exist")
 	}
 }

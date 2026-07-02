@@ -739,7 +739,7 @@ other = "No drafts yet."
 
 [page_edit_revisions_heading]
 description = "Heading for the edit history column on the page edit screen"
-other = "Edit history"
+other = "Draft edit history"
 
 [page_edit_revisions_toggle_label]
 description = "Label for the button that opens the edit history column on the page edit screen (narrow screens)"
@@ -747,7 +747,7 @@ other = "Edit history"
 
 [page_edit_revisions_empty]
 description = "Empty state text shown in the page edit screen edit history column when there are no revisions"
-other = "No edit history yet."
+other = "Your draft edits will appear here after you save."
 
 [page_edit_revisions_current_badge]
 description = "Badge shown on the newest revision in the page edit screen edit history column"

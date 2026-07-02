@@ -739,7 +739,7 @@ other = "下書きはありません"
 
 [page_edit_revisions_heading]
 description = "ページ編集画面の編集履歴カラムの見出し"
-other = "編集履歴"
+other = "下書きの編集履歴"
 
 [page_edit_revisions_toggle_label]
 description = "ページ編集画面で編集履歴カラムを開く開閉ボタンのラベル (画面幅が狭いとき)"
@@ -747,7 +747,7 @@ other = "編集履歴"
 
 [page_edit_revisions_empty]
 description = "ページ編集画面の編集履歴カラムでリビジョンが 1 件もないときの空状態テキスト"
-other = "編集履歴はありません"
+other = "下書きを保存すると、ここに編集履歴が表示されます"
 
 [page_edit_revisions_current_badge]
 description = "ページ編集画面の編集履歴カラムで最新リビジョンに表示するバッジ"
