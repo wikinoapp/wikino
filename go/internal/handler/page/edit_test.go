@@ -189,6 +189,29 @@ func TestEdit(t *testing.T) {
 		t.Error("method override PATCH not found in response")
 	}
 
+	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
+	// inset as bottom padding below md so the fixed nav doesn't cover the last content even when a
+	// PWA standalone display lifts the nav above the home indicator. Match the full opening tag so
+	// the assertion stays pinned to the wrapper.
+	//
+	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
+	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
+	// ナビをホームインジケータの上へ押し上げても足りるようにする)。ラッパーに固定するため開始タグ
+	// 全体で照合する。
+	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
+		t.Error("content wrapper bottom-nav padding class not found in response")
+	}
+
+	// The fixed bottom-nav wrapper carries pb-safe so a PWA standalone display lifts the nav pill
+	// above the home indicator. Match the full opening tag so the assertion stays pinned to the
+	// wrapper.
+	//
+	// [Ja] 下部ナビの固定ラッパーが pb-safe を持ち、PWA スタンドアロン表示でナビのピルをホーム
+	// インジケータの上へ押し上げること。ラッパーに固定するため開始タグ全体で照合する。
+	if !strings.Contains(body, `<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">`) {
+		t.Error("bottom nav fixed wrapper pb-safe class not found in response")
+	}
+
 	// 日本語のラベルが含まれているか確認
 	if !strings.Contains(body, "タイトル") {
 		t.Error("Japanese title label not found in response")
