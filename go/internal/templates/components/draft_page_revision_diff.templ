@@ -113,6 +113,7 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 								<button type="submit" class="btn-primary rounded-full w-fit">
+									@templates.Icon("clock-counter-clockwise-regular")
 									{ templates.T(ctx, "page_edit_revision_diff_restore_confirm_button") }
 								</button>
 							</form>
