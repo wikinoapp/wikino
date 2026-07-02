@@ -1096,19 +1096,20 @@ func TestEdit_KeyboardHint(t *testing.T) {
 
 	body := rr.Body.String()
 
-	// Both the ⌘ (Mac) and Ctrl (other) variants are rendered so CSS can switch by html[data-os].
-	// The modifier and key are glued (no separator) to keep each chip narrow. The publish button
-	// hints Mod-Enter, rendered as the return-arrow icon glued after the modifier; the save button
-	// hints Mod-s as glued text.
+	// Both the ⌘ (Mac) and Ctrl+ (other) variants are rendered so CSS can switch by html[data-os].
+	// The Mac modifier glues to the key with no separator to keep each chip narrow, while the non-Mac
+	// modifier is "Ctrl+" so it reads with a "+" before the key. The publish button hints Mod-Enter,
+	// rendered as the return-arrow icon after the modifier; the save button hints Mod-s as text.
 	//
-	// [Ja] ⌘ (Mac) と Ctrl (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
-	// 修飾キーとキーは区切り無しで詰めてチップを細く保つ。公開ボタンは Mod-Enter を修飾キーの直後に
-	// 詰めた折り返し矢印アイコンで、保存ボタンは Mod-s を詰めたテキストで表記すること。
+	// [Ja] ⌘ (Mac) と Ctrl+ (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
+	// Mac の修飾キーは区切り無しでキーに詰めてチップを細く保ち、非 Mac の修飾キーは "Ctrl+" で
+	// キーの前に "+" が入る。公開ボタンは Mod-Enter を修飾キーの直後の折り返し矢印アイコンで、
+	// 保存ボタンは Mod-s をテキストで表記すること。
 	if !strings.Contains(body, `>⌘<svg class="size-3.5"`) {
 		t.Error("publish button Mac shortcut hint (⌘ + return-arrow icon) not found in response")
 	}
-	if !strings.Contains(body, `>Ctrl<svg class="size-3.5"`) {
-		t.Error("publish button non-Mac shortcut hint (Ctrl + return-arrow icon) not found in response")
+	if !strings.Contains(body, `>Ctrl+<svg class="size-3.5"`) {
+		t.Error("publish button non-Mac shortcut hint (Ctrl+ and return-arrow icon) not found in response")
 	}
 	// The return-arrow key is rendered with the arrow-elbow-down-left icon (its path's leading
 	// move/vertical-line command), not the small ↵ glyph.
@@ -1121,8 +1122,8 @@ func TestEdit_KeyboardHint(t *testing.T) {
 	if !strings.Contains(body, ">⌘S</kbd>") {
 		t.Error("save button Mac shortcut hint (⌘S) not found in response")
 	}
-	if !strings.Contains(body, ">CtrlS</kbd>") {
-		t.Error("save button non-Mac shortcut hint (CtrlS) not found in response")
+	if !strings.Contains(body, ">Ctrl+S</kbd>") {
+		t.Error("save button non-Mac shortcut hint (Ctrl+S) not found in response")
 	}
 
 	// The hint chips toggle by OS only on non-touch devices via the platform-attribute variants.
