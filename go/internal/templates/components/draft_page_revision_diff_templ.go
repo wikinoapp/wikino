@@ -256,10 +256,14 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+			templ_7745c5c3_Err = templates.Icon("clock-counter-clockwise-regular").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_confirm_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 116, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 117, Col: 77}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -289,7 +293,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_cancel_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 125, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 126, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {

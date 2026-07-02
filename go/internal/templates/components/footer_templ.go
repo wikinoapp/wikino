@@ -34,7 +34,7 @@ func Footer() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<footer class=\"mt-auto px-4 pt-[3rem] pb-[calc(var(--bottom-nav-max-height)+3rem)] md:pb-[3rem] text-center flex items-center justify-center flex-wrap gap-4\"><ul class=\"flex items-center justify-center gap-4 basis-full md:basis-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<footer class=\"mt-auto px-4 pt-[3rem] pb-[3rem] text-center flex items-center justify-center flex-wrap gap-4\"><ul class=\"flex items-center justify-center gap-4 basis-full md:basis-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -46,10 +46,11 @@ type KeyboardHintData struct {
 }
 
 // KeyboardHint renders a button's keyboard shortcut as a basecoat .kbd chip tinted in the host
-// button's foreground color (see ColorClass) so it reads as a subtle block. The modifier and key are glued
-// with no separator (e.g. "⌘S", or ⌘ + the return-arrow icon) to keep the chip narrow, because the
-// hint shares the editor's fixed-width center column with the action buttons and the saved-at
-// indicator. Both the ⌘ (Mac) and the Ctrl (other) variants are rendered, and CSS shows only the
+// button's foreground color (see ColorClass) so it reads as a subtle block. The Mac modifier glues
+// to the key with no separator (e.g. "⌘S", or ⌘ + the return-arrow icon) to keep the chip narrow,
+// because the hint shares the editor's fixed-width center column with the action buttons and the
+// saved-at indicator; the non-Mac modifier is "Ctrl+", so it reads with a "+" before the key (e.g.
+// "Ctrl+S"). Both the ⌘ (Mac) and the Ctrl+ (other) variants are rendered, and CSS shows only the
 // one matching html[data-os], which the client sets once on load (web/platform.ts). The chip is
 // hidden on touch devices via non-touch: because the shortcut needs a physical keyboard and mobile
 // width is the tightest. It is aria-hidden so screen readers announce only the button label, not
@@ -57,9 +58,10 @@ type KeyboardHintData struct {
 //
 // [Ja] KeyboardHint はボタンのキーボードショートカットを basecoat の .kbd チップとして描画する。
 // チップの配色はホストのボタンの前景色で淡く染め (ColorClass を参照)、控えめなブロックとして見せる。
-// 修飾キーとキーは区切りを入れず詰めて描画し (例: "⌘S"、または ⌘ + 折り返し矢印アイコン)、チップを
-// 細く保つ。この表記は編集画面の固定幅の中央カラムを操作ボタンや保存時刻表示と共有しており、横幅に
-// 余裕がないためである。⌘ (Mac) 版と Ctrl (それ以外) 版の両方を描画し、クライアントが読み込み時に
+// Mac の修飾キーは区切りを入れずキーに詰めて描画し (例: "⌘S"、または ⌘ + 折り返し矢印アイコン)、
+// チップを細く保つ。この表記は編集画面の固定幅の中央カラムを操作ボタンや保存時刻表示と共有しており、
+// 横幅に余裕がないためである。非 Mac の修飾キーは "Ctrl+" で、キーの前に "+" が入る (例: "Ctrl+S")。
+// ⌘ (Mac) 版と Ctrl+ (それ以外) 版の両方を描画し、クライアントが読み込み時に
 // 1 度付与する html[data-os] (web/platform.ts) に一致する側だけを CSS で表示する。ショートカットには
 // 物理キーボードが必要で、横幅が最も苦しいのもモバイルのため、チップは non-touch: でタッチ端末では
 // 隠す。スクリーンリーダーには生の修飾キー・キーのグリフではなくボタンラベルだけを読ませるため
@@ -89,7 +91,7 @@ func KeyboardHint(data KeyboardHintData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = keyboardHintChip(data, "non-touch:in-[[data-os=other]]:inline-flex", "Ctrl").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = keyboardHintChip(data, "non-touch:in-[[data-os=other]]:inline-flex", "Ctrl+").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,7 +101,7 @@ func KeyboardHint(data KeyboardHintData) templ.Component {
 
 // keyboardHintChip renders one OS variant of the hint. osVariantClass is the platform-attribute
 // variant that flips the chip from hidden to inline-flex for the matching html[data-os]; modifier
-// is the modifier glyph ("⌘" or "Ctrl"). gap-0 glues the modifier to the icon; the icon inherits
+// is the modifier glyph ("⌘" or "Ctrl+"). gap-0 glues the modifier to the icon; the icon inherits
 // the chip's text color through the SVG's fill=currentColor, so it matches the modifier under the
 // tinted ColorClass. The modifier is a separate node from the icon so templ renders the icon
 // (text glued directly before @-calls is treated as literal text), and templ trims the whitespace
@@ -107,7 +109,7 @@ func KeyboardHint(data KeyboardHintData) templ.Component {
 //
 // [Ja] keyboardHintChip は表記の OS 別の 1 つを描画する。osVariantClass は一致する html[data-os] の
 // ときチップを hidden から inline-flex へ切り替えるプラットフォーム属性バリアント、modifier は修飾キー
-// のグリフ ("⌘" または "Ctrl")。gap-0 で修飾キーとアイコンを詰める。アイコンは SVG の
+// のグリフ ("⌘" または "Ctrl+")。gap-0 で修飾キーとアイコンを詰める。アイコンは SVG の
 // fill=currentColor によりチップの文字色を継承するため、淡く染めた ColorClass のもとで修飾キーと同じ色に
 // なる。修飾キーをアイコンとは別ノードにしているのは、templ にアイコンを描画させるためである (@ 呼び出し
 // の直前に詰めたテキストはリテラル文字列として扱われる)。2 つのノード間の空白は templ が除去するため、
@@ -159,7 +161,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 83, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 85, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -199,7 +201,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 87, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 89, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -208,7 +210,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(data.Key)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 87, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 89, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {

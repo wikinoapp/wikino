@@ -7,6 +7,16 @@ module Attachments
       include ControllerConcerns::Authenticatable
       include ControllerConcerns::SpaceAware
 
+      # Preview requests from the Go page editor use Go's own CSRF token scheme, which Rails
+      # cannot verify, so opt out of Rails-side forgery protection (same as
+      # Attachments::Presigns::CreateController). Protected instead by session restoration,
+      # per-attachment view authorization (can_view_attachment?), and the SameSite cookie policy.
+      #
+      # [Ja] Go版のページ編集画面のプレビューからのリクエストはGo独自のCSRFトークンを使用しているため、
+      # Rails側のCSRF検証を適用できない (Attachments::Presigns::CreateControllerと同じ対応)。
+      # セッション復元・添付ごとの閲覧権限チェック (can_view_attachment?)・SameSite Cookieポリシーで保護する。
+      skip_forgery_protection
+
       before_action :restore_user_session
 
       # POST /attachments/signed_urls

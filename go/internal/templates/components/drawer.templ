@@ -7,11 +7,12 @@ import (
 
 // DrawerData is the data passed to the Drawer component. The drawer overlays arbitrary content
 // on top of the page and can slide in from either side. It stays hidden until its open button
-// (DrawerOpenButton with a matching DrawerID) is clicked, and closes on backdrop click or Esc.
+// (DrawerOpenButton with a matching DrawerID) is clicked, and closes via the close button,
+// a backdrop click, or Esc.
 //
 // [Ja] DrawerData は Drawer コンポーネントに渡すデータです。ドロワーは任意のコンテンツをページの
 // 上にオーバーレイ表示し、左右どちらからでもスライドインできます。対応する DrawerID を持つ開く
-// ボタン (DrawerOpenButton) がクリックされるまで非表示で、背景クリックまたは Esc で閉じます。
+// ボタン (DrawerOpenButton) がクリックされるまで非表示で、閉じるボタン・背景クリック・Esc で閉じます。
 type DrawerData struct {
 	// ID is the unique element id used to pair the drawer with its toggle button.
 	// [Ja] ID はドロワーと開閉ボタンを対応付けるための一意な要素 id です。
@@ -41,7 +42,17 @@ templ Drawer(data DrawerData) {
 		aria-hidden="true"
 	>
 		<div class="absolute inset-0 bg-black/30" data-drawer-close></div>
-		<div class={ "absolute top-0 bottom-0 flex w-80 max-w-[80%] flex-col overflow-y-auto bg-white shadow-lg", drawerPanelSideClass(data.Side) }>
+		<div class={ "absolute top-0 bottom-0 flex w-80 max-w-[80%] flex-col overflow-y-auto bg-background shadow-lg", drawerPanelSideClass(data.Side) }>
+			<div class="flex justify-end p-2">
+				<button
+					class="cursor-pointer"
+					type="button"
+					aria-label={ templates.T(ctx, "drawer_close") }
+					data-drawer-close
+				>
+					@templates.Icon("x-regular", "size-4")
+				</button>
+			</div>
 			@data.Content
 		</div>
 	</div>

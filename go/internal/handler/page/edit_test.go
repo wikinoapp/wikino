@@ -189,6 +189,29 @@ func TestEdit(t *testing.T) {
 		t.Error("method override PATCH not found in response")
 	}
 
+	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
+	// inset as bottom padding below md so the fixed nav doesn't cover the last content even when a
+	// PWA standalone display lifts the nav above the home indicator. Match the full opening tag so
+	// the assertion stays pinned to the wrapper.
+	//
+	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
+	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
+	// ナビをホームインジケータの上へ押し上げても足りるようにする)。ラッパーに固定するため開始タグ
+	// 全体で照合する。
+	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
+		t.Error("content wrapper bottom-nav padding class not found in response")
+	}
+
+	// The fixed bottom-nav wrapper carries pb-safe so a PWA standalone display lifts the nav pill
+	// above the home indicator. Match the full opening tag so the assertion stays pinned to the
+	// wrapper.
+	//
+	// [Ja] 下部ナビの固定ラッパーが pb-safe を持ち、PWA スタンドアロン表示でナビのピルをホーム
+	// インジケータの上へ押し上げること。ラッパーに固定するため開始タグ全体で照合する。
+	if !strings.Contains(body, `<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">`) {
+		t.Error("bottom nav fixed wrapper pb-safe class not found in response")
+	}
+
 	// 日本語のラベルが含まれているか確認
 	if !strings.Contains(body, "タイトル") {
 		t.Error("Japanese title label not found in response")
@@ -227,7 +250,7 @@ func TestEdit(t *testing.T) {
 
 	// The edit history column shows the empty state when there is no draft (hence no revisions).
 	// [Ja] 下書きが無い (= リビジョンも無い) とき、編集履歴カラムに空状態テキストが表示されること
-	if !strings.Contains(body, "編集履歴はありません") {
+	if !strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
 		t.Error("edit history empty state text not found when no draft exists")
 	}
 
@@ -575,7 +598,7 @@ func TestEdit_RevisionColumn(t *testing.T) {
 
 	// The empty state must not be shown when revisions exist.
 	// [Ja] リビジョンが存在するときは空状態テキストが表示されないこと
-	if strings.Contains(body, "編集履歴はありません") {
+	if strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
 		t.Error("edit history empty state should not be shown when revisions exist")
 	}
 }
@@ -961,6 +984,17 @@ func TestEdit_PreviewTab(t *testing.T) {
 	if !strings.Contains(body, `id="page-edit-tabs"`) {
 		t.Error("tabs container not found in response")
 	}
+
+	// The tabs container carries min-w-0 so the preview's <pre> overflow-auto contains long
+	// code lines instead of the grid item widening past the center column. Matching the whole
+	// start tag ties min-w-0 to this container (min-w-0 also appears on other elements).
+	//
+	// [Ja] タブコンテナが min-w-0 を持ち、プレビューの <pre> の overflow-auto が長いコード行を
+	// 収める (grid アイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0 が
+	// このコンテナに付いていることを担保する (min-w-0 は他の要素にも現れる)。
+	if !strings.Contains(body, `<div class="tabs gap-4 min-w-0" id="page-edit-tabs">`) {
+		t.Error("tabs container is missing min-w-0 (guards preview code block overflow)")
+	}
 	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
 		t.Error("edit tab not found in response")
 	}
@@ -1073,19 +1107,20 @@ func TestEdit_KeyboardHint(t *testing.T) {
 
 	body := rr.Body.String()
 
-	// Both the ⌘ (Mac) and Ctrl (other) variants are rendered so CSS can switch by html[data-os].
-	// The modifier and key are glued (no separator) to keep each chip narrow. The publish button
-	// hints Mod-Enter, rendered as the return-arrow icon glued after the modifier; the save button
-	// hints Mod-s as glued text.
+	// Both the ⌘ (Mac) and Ctrl+ (other) variants are rendered so CSS can switch by html[data-os].
+	// The Mac modifier glues to the key with no separator to keep each chip narrow, while the non-Mac
+	// modifier is "Ctrl+" so it reads with a "+" before the key. The publish button hints Mod-Enter,
+	// rendered as the return-arrow icon after the modifier; the save button hints Mod-s as text.
 	//
-	// [Ja] ⌘ (Mac) と Ctrl (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
-	// 修飾キーとキーは区切り無しで詰めてチップを細く保つ。公開ボタンは Mod-Enter を修飾キーの直後に
-	// 詰めた折り返し矢印アイコンで、保存ボタンは Mod-s を詰めたテキストで表記すること。
+	// [Ja] ⌘ (Mac) と Ctrl+ (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
+	// Mac の修飾キーは区切り無しでキーに詰めてチップを細く保ち、非 Mac の修飾キーは "Ctrl+" で
+	// キーの前に "+" が入る。公開ボタンは Mod-Enter を修飾キーの直後の折り返し矢印アイコンで、
+	// 保存ボタンは Mod-s をテキストで表記すること。
 	if !strings.Contains(body, `>⌘<svg class="size-3.5"`) {
 		t.Error("publish button Mac shortcut hint (⌘ + return-arrow icon) not found in response")
 	}
-	if !strings.Contains(body, `>Ctrl<svg class="size-3.5"`) {
-		t.Error("publish button non-Mac shortcut hint (Ctrl + return-arrow icon) not found in response")
+	if !strings.Contains(body, `>Ctrl+<svg class="size-3.5"`) {
+		t.Error("publish button non-Mac shortcut hint (Ctrl+ and return-arrow icon) not found in response")
 	}
 	// The return-arrow key is rendered with the arrow-elbow-down-left icon (its path's leading
 	// move/vertical-line command), not the small ↵ glyph.
@@ -1098,8 +1133,8 @@ func TestEdit_KeyboardHint(t *testing.T) {
 	if !strings.Contains(body, ">⌘S</kbd>") {
 		t.Error("save button Mac shortcut hint (⌘S) not found in response")
 	}
-	if !strings.Contains(body, ">CtrlS</kbd>") {
-		t.Error("save button non-Mac shortcut hint (CtrlS) not found in response")
+	if !strings.Contains(body, ">Ctrl+S</kbd>") {
+		t.Error("save button non-Mac shortcut hint (Ctrl+S) not found in response")
 	}
 
 	// The hint chips toggle by OS only on non-touch devices via the platform-attribute variants.
@@ -1189,7 +1224,7 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 	//
 	// [Ja] 操作行は広い画面では 1 行、1152px のコンテナ幅未満では 2 段に折り返すこと (この幅未満では
 	// 中央カラムが狭く 1 行に収まらないため)。
-	if !strings.Contains(body, `<div class="flex flex-col gap-2 min-[1152px]:flex-row min-[1152px]:items-center">`) {
+	if !strings.Contains(body, `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">`) {
 		t.Error("action row responsive layout container not found in response")
 	}
 
@@ -1329,22 +1364,49 @@ func TestEdit_ZenMode(t *testing.T) {
 				}
 			}
 
-			// The Tailwind variant classes reacting to Zen mode are present on the layout elements
-			// (hide the side columns / link lists, collapse the grid, widen the center column).
+			// Zen mode only reshapes the desktop (lg+) layout, so every Zen variant is gated to lg:
+			// the side columns and link/backlink lists hide, the grid collapses, and the center
+			// column widens only at lg. On mobile there are no side columns to collapse.
 			//
-			// [Ja] Zen モードに反応する Tailwind バリアントクラスがレイアウト要素に付いていること
-			// (左右カラム・リンク一覧の非表示、グリッド解除、中央カラムの拡幅)。
-			if !strings.Contains(body, "in-[.page-edit-zen]:lg:hidden") {
+			// [Ja] Zen モードはデスクトップ (lg 以上) のレイアウトだけを変えるため、Zen バリアントは
+			// すべて lg 限定になる (左右カラム・リンク / バックリンク一覧の非表示、グリッド解除、
+			// 中央カラムの拡幅はいずれも lg でのみ効く)。モバイルには畳む対象のサイドカラムが無い。
+
+			// The side columns wrap their Zen hide with lg, asserted on the full class to pin it to
+			// the always-lg-hidden side columns rather than the link/backlink section, which now
+			// shares the same in-[.page-edit-zen]:lg:hidden variant.
+			//
+			// [Ja] 左右サイドカラムは Zen 非表示を lg でラップする。同じ in-[.page-edit-zen]:lg:hidden
+			// バリアントを持つようになったリンク / バックリンクセクションではなく、常に lg 非表示の
+			// サイドカラムに固定するため、class 属性全体で検証する。
+			if !strings.Contains(body, `class="hidden lg:block in-[.page-edit-zen]:lg:hidden"`) {
 				t.Error("zen mode side column hide class not found in response")
 			}
-			if !strings.Contains(body, "in-[.page-edit-zen]:hidden") {
-				t.Error("zen mode link list hide class not found in response")
+			// The link/backlink section wraps its Zen hide with lg so the lists stay visible on
+			// mobile even when the Zen cookie is set (asserted on the full class to pin it to the
+			// link section, not the always-lg-hidden side columns).
+			//
+			// [Ja] リンク / バックリンク一覧セクションは Zen 非表示を lg でラップし、Zen クッキーが
+			// 設定されていてもモバイルでは一覧を表示したままにする (常に lg 非表示のサイドカラムでは
+			// なくリンクセクションに固定するため、class 属性全体で検証する)。
+			if !strings.Contains(body, `class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden"`) {
+				t.Error("zen mode link list lg-only hide class not found in response")
 			}
 			if !strings.Contains(body, "in-[.page-edit-zen]:lg:block") {
 				t.Error("zen mode grid collapse class not found in response")
 			}
-			if !strings.Contains(body, "in-[.page-edit-zen]:max-w-4xl") {
+			if !strings.Contains(body, "in-[.page-edit-zen]:lg:max-w-4xl") {
 				t.Error("zen mode center column widen class not found in response")
+			}
+			// The Zen toggle is hidden below lg (mobile has no side columns to collapse, and a
+			// hidden toggle with Zen on would trap the mobile user), and restored to inline-flex at
+			// lg. Assert on the full class so it stays pinned to the toggle button.
+			//
+			// [Ja] Zen トグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
+			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
+			// トグルボタンに固定するため class 属性全体で検証する。
+			if !strings.Contains(body, `class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"`) {
+				t.Error("zen mode toggle lg-only display class not found in response")
 			}
 		})
 	}
