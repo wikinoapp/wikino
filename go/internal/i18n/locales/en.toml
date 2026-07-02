@@ -17,6 +17,10 @@ other = "Dismiss"
 description = "Close button label for dialogs"
 other = "Close"
 
+[drawer_close]
+description = "Close button label for drawers"
+other = "Close"
+
 [label_error]
 description = "Generic error label"
 other = "Error"

@@ -76,6 +76,70 @@ func TestDrawer_Side(t *testing.T) {
 	}
 }
 
+func TestDrawer_PanelBackground(t *testing.T) {
+	t.Parallel()
+
+	content := components.Drawer(components.DrawerData{
+		ID:      "draft-list-drawer",
+		Side:    "left",
+		Content: templ.Raw("ドロワーの中身"),
+	})
+
+	var buf bytes.Buffer
+	if err := content.Render(t.Context(), &buf); err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	// The panel uses bg-background so its color matches the app body instead of pure white.
+	//
+	// [Ja] パネルは bg-background を使い、純白ではなく本体 (body) と同じ色に揃える。
+	if !strings.Contains(html, "bg-background") {
+		t.Error("パネルの背景を本体と揃える bg-background クラスが含まれていない")
+	}
+	if strings.Contains(html, "bg-white") {
+		t.Error("パネルに bg-white が残っている")
+	}
+}
+
+func TestDrawer_CloseButton(t *testing.T) {
+	t.Parallel()
+
+	content := components.Drawer(components.DrawerData{
+		ID:      "draft-list-drawer",
+		Side:    "left",
+		Content: templ.Raw("ドロワーの中身"),
+	})
+
+	var buf bytes.Buffer
+	if err := content.Render(t.Context(), &buf); err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	// The panel has a visible close button. The shared drawer JS closes the drawer via
+	// data-drawer-close, the button carries an accessible label, and the x icon is shown.
+	//
+	// [Ja] パネルは可視の閉じるボタンを持つ。共通ドロワー JS が data-drawer-close で閉じ、
+	// ボタンにはアクセシブルなラベルが付き、× アイコンが表示される。
+	if !strings.Contains(html, "data-drawer-close") {
+		t.Error("クリックで閉じるための data-drawer-close が含まれていない")
+	}
+	if !strings.Contains(html, `aria-label="閉じる"`) {
+		t.Error("閉じるボタンのアクセシブルなラベル (aria-label) が含まれていない")
+	}
+	// x-regular renders as an inline SVG, so assert on the icon's unique path data
+	// (the two crossing strokes of the × mark) instead of the icon name.
+	//
+	// [Ja] x-regular はインライン SVG として描画されるため、アイコン名ではなくその固有の
+	// パスデータ (× の 2 本の交差ストローク) で検証する。
+	if !strings.Contains(html, "M205.66,194.34") {
+		t.Error("閉じるボタンの x-regular アイコンが含まれていない")
+	}
+}
+
 func TestDrawerOpenButton(t *testing.T) {
 	t.Parallel()
 

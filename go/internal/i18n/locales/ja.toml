@@ -17,6 +17,10 @@ other = "閉じる"
 description = "ダイアログの閉じるボタンのラベル"
 other = "閉じる"
 
+[drawer_close]
+description = "ドロワーの閉じるボタンのラベル"
+other = "閉じる"
+
 [label_error]
 description = "エラーラベルの汎用表示"
 other = "エラー"
